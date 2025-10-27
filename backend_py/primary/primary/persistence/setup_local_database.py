@@ -32,6 +32,8 @@ COSMOS_SCHEMA: List[Dict[str, Any]] = [
 def wait_for_emulator(uri: str, key: str, retries: int = 50, delay: int = 10) -> CosmosClient:
     probe_url = f"{uri.rstrip('/')}/_explorer/emulator.pem"
     # pylint: disable=protected-access
+    # Disabling SSL certificate verification is safe here because this code is used exclusively
+    # with the local Cosmos DB Emulator for development and testing. Never use this in production.
     context = ssl._create_unverified_context()  # nosec
 
     for attempt in range(retries):

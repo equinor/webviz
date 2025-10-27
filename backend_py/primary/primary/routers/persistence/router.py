@@ -35,13 +35,13 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/sessions", summary="List all sessions")
+@router.get("/sessions")
 @no_cache
 async def get_sessions_metadata(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
     sort_by: Optional[SessionSortBy] = Query(None, description="Field to sort by (e.g., 'metadata.title')"),
-    sort_direction: Optional[SortDirection] = Query(SortDirection.ASC, description="Sort direction: 'asc' or 'desc'"),
+    sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
     sort_lowercase: bool = Query(False, description="Use case-insensitive sorting"),
     page_size: int = Query(10, ge=1, le=100, description="Limit the number of results"),
     filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
@@ -82,7 +82,7 @@ async def get_sessions_metadata(
         return schemas.Page(items=[to_api_session_metadata(item) for item in items], pageToken=token)
 
 
-@router.get("/sessions/{session_id}", summary="Get a session by ID")
+@router.get("/sessions/{session_id}")
 @no_cache
 async def get_session(
     session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
@@ -102,7 +102,7 @@ async def get_session(
         return to_api_session(session)
 
 
-@router.get("/sessions/metadata/{session_id}", summary="Get session metadata by ID")
+@router.get("/sessions/metadata/{session_id}")
 @no_cache
 async def get_session_metadata(
     session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
@@ -123,7 +123,7 @@ async def get_session_metadata(
         return to_api_session_metadata(session)
 
 
-@router.post("/sessions", summary="Create a new session")
+@router.post("/sessions")
 async def create_session(
     session: schemas.NewSession, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:
@@ -151,7 +151,7 @@ async def create_session(
         return session_id
 
 
-@router.put("/sessions/{session_id}", summary="Update a session")
+@router.put("/sessions/{session_id}")
 async def update_session(
     session_id: str,
     session_update: schemas.SessionUpdate,
@@ -188,7 +188,7 @@ async def update_session(
         return to_api_session(updated_session)
 
 
-@router.delete("/sessions/{session_id}", summary="Delete a session")
+@router.delete("/sessions/{session_id}")
 async def delete_session(
     session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> None:
@@ -207,7 +207,8 @@ async def delete_session(
         await session_store.delete_async(session_id)
 
 
-@router.get("/snapshot_access_logs", summary="List access logs for visited snapshots")
+@router.get("/snapshot_access_logs")
+@no_cache
 # pylint: disable=too-many-arguments
 async def get_snapshot_access_logs(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -270,7 +271,7 @@ async def get_snapshot_access_logs(
         return schemas.Page(items=[to_api_snapshot_access_log(item) for item in items], pageToken=cont_token)
 
 
-@router.get("/snapshots", summary="List your snapshots")
+@router.get("/snapshots")
 @no_cache
 async def get_snapshots_metadata(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -294,7 +295,7 @@ async def get_snapshots_metadata(
     Snapshots are immutable records that can be shared with others.
     They are separate from sessions and are intended for point-in-time captures.
 
-    Note: Consider using `/visited_snapshots` to see both your snapshots and ones shared with you.
+    Note: Consider using `/snapshot_access_logs` to see both your snapshots and ones shared with you.
     """
     snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     async with snapshot_store:
@@ -318,7 +319,7 @@ async def get_snapshots_metadata(
         return schemas.Page(items=[to_api_snapshot_metadata(item) for item in items], pageToken=cont_token)
 
 
-@router.get("/snapshots/{snapshot_id}", summary="Get a snapshot by ID")
+@router.get("/snapshots/{snapshot_id}")
 @no_cache
 async def get_snapshot(
     snapshot_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
@@ -350,7 +351,7 @@ async def get_snapshot(
         return to_api_snapshot(snapshot)
 
 
-@router.post("/snapshots", summary="Create a new snapshot")
+@router.post("/snapshots")
 async def create_snapshot(
     snapshot: schemas.NewSnapshot, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:
@@ -387,7 +388,7 @@ async def create_snapshot(
         return snapshot_id
 
 
-@router.delete("/snapshots/{snapshot_id}", summary="Delete a snapshot")
+@router.delete("/snapshots/{snapshot_id}")
 async def delete_snapshot(
     snapshot_id: str,
     background_tasks: BackgroundTasks,

@@ -10,6 +10,7 @@ from primary.persistence._utils import query_by_page
 from .cosmos_database import CosmosDatabase
 from .exceptions import (
     DatabaseAccessError,
+    DatabaseAccessIntegrityError,
     DatabaseAccessNotFoundError,
     DatabaseAccessConflictError,
     DatabaseAccessPreconditionFailedError,
@@ -182,7 +183,7 @@ class CosmosContainer(Generic[T]):
             validated = self._validation_model.model_validate(updated_item).model_dump(by_alias=True, mode="json")
 
             if validated.get("id") and validated["id"] != item_id:
-                raise ValueError(f"id mismatch: payload id {validated['id']} != path id {item_id}")
+                raise DatabaseAccessIntegrityError(f"id mismatch: payload id {validated['id']} != path id {item_id}")
 
             await self._container.replace_item(item=item_id, body=validated)
 

@@ -121,8 +121,6 @@ class SnapshotStore:
         sort_by: Optional[SnapshotSortBy] = None,
         sort_direction: Optional[SortDirection] = None,
         sort_lowercase: bool = False,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
         filters: Optional[List[Filter]] = None,
     ) -> Tuple[List[SnapshotDocument], Optional[str]]:
         """
