@@ -10,8 +10,7 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-
+import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "./interfaces";
 import {
@@ -69,7 +68,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const selectedRftTimestampsUtcMs = useAtomValue(selectedRftTimestampsUtcMsAtom);
     const setUserSelectedRftTimestampsUtcMs = useSetAtom(userSelectedRftTimestampsUtcMsAtom);
 
-    const rftTableDefErrorMessage = usePropagateApiErrorToStatusWriter(rftTableDefinition, statusWriter) ?? "";
+    const rftTableDefErrorMessage = usePropagateQueryErrorToStatusWriter(rftTableDefinition, statusWriter) ?? "";
 
     function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
         setUserSelectedEnsembleIdent(ensembleIdent);
@@ -90,6 +89,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                 <EnsembleDropdown
                     ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
+                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>

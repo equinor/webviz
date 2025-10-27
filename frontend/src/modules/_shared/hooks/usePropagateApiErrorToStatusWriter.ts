@@ -3,12 +3,10 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import type { SettingsStatusWriter, ViewStatusWriter } from "@framework/StatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
-function propagateError(
-    queryResult: UseQueryResult<any, any>,
+function createErrorMessageFromHelper(
+    helper: ApiErrorHelper | null,
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string | null {
-    const helper = ApiErrorHelper.fromQueryResult(queryResult);
-
     let errorMessage: string | null = null;
     if (helper?.hasError()) {
         errorMessage = helper.makeFullErrorMessage();
@@ -19,16 +17,45 @@ function propagateError(
     return errorMessage;
 }
 
+function propagateApiError(error: Error, statusWriter: ViewStatusWriter | SettingsStatusWriter): string | null {
+    const helper = ApiErrorHelper.fromError(error);
+
+    return createErrorMessageFromHelper(helper, statusWriter);
+}
+
 export function usePropagateApiErrorToStatusWriter(
-    queryResult: UseQueryResult<any, any>,
+    error: Error,
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string | null {
-    return propagateError(queryResult, statusWriter);
+    return propagateApiError(error, statusWriter);
 }
 
 export function usePropagateAllApiErrorsToStatusWriter(
+    errors: Error[],
+    statusWriter: ViewStatusWriter | SettingsStatusWriter,
+): (string | null)[] {
+    return errors.map((err) => propagateApiError(err, statusWriter)).filter((error) => error);
+}
+
+function propagateQueryError(
+    queryResult: UseQueryResult<any, any>,
+    statusWriter: ViewStatusWriter | SettingsStatusWriter,
+): string | null {
+    const helper = ApiErrorHelper.fromQueryResult(queryResult);
+
+    return createErrorMessageFromHelper(helper, statusWriter);
+}
+
+export function usePropagateQueryErrorToStatusWriter(
+    queryResult: UseQueryResult<any, any>,
+    statusWriter: ViewStatusWriter | SettingsStatusWriter,
+): string | null {
+    return propagateQueryError(queryResult, statusWriter);
+}
+
+export function usePropagateQueryErrorsToStatusWriter(
     queryResults: UseQueryResult<any, any>[],
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): (string | null)[] {
-    return queryResults.map((res) => propagateError(res, statusWriter)).filter((error) => error);
+    return queryResults.map((res) => propagateQueryError(res, statusWriter)).filter((error) => error);
 }

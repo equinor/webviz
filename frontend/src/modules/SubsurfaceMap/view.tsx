@@ -3,21 +3,17 @@ import React from "react";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import {
-    DataFormatEnum_api,
-    type BoundingBox2D_api,
-    type PolygonData_api,
-    type SurfaceDef_api,
-    type WellboreTrajectory_api,
-} from "@api";
+import { type BoundingBox2D_api, type PolygonData_api, type SurfaceDef_api, type WellboreTrajectory_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { Wellbore } from "@framework/types/wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { SurfaceDataFormat } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
@@ -92,13 +88,13 @@ export function View({
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
     const syncedSettingKeys = viewContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-    const surfaceColorScale = workbenchSettings.useContinuousColorScale({
+    const surfaceColorScale = useContinuousColorScale(workbenchSettings, {
         gradientType: ColorScaleGradientType.Sequential,
     });
     const colorTables = createContinuousColorScaleForMap(surfaceColorScale);
     const show3D: boolean = viewSettings?.show3d ?? true;
 
-    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr, DataFormatEnum_api.FLOAT, null, true);
+    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr, SurfaceDataFormat.FLOAT, null, true);
 
     let hasMeshSurfData = false;
     let resampleTo: SurfaceDef_api | null = null;
@@ -108,7 +104,7 @@ export function View({
     }
     const propertySurfDataQuery = useSurfaceDataQueryByAddress(
         propertySurfAddr,
-        DataFormatEnum_api.FLOAT,
+        SurfaceDataFormat.FLOAT,
         resampleTo,
         hasMeshSurfData,
     );

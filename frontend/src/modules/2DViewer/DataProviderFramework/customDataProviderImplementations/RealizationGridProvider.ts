@@ -1,8 +1,6 @@
 import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
-import type { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
-import { transformGridMappedProperty, transformGridSurface } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import type {
     AreSettingsValidArgs,
     CustomDataProviderImplementation,
@@ -12,6 +10,13 @@ import type {
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { RealizationGridData } from "@modules/_shared/DataProviderFramework/visualization/utils/types";
+import {
+    transformGridMappedProperty,
+    transformGridSurface,
+    type GridMappedProperty_trans,
+    type GridSurface_trans,
+} from "@modules/_shared/utils/queryDataTransforms";
 
 const realizationGridSettings = [
     Setting.ENSEMBLE,
@@ -22,14 +27,10 @@ const realizationGridSettings = [
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
     Setting.COLOR_SCALE,
+    Setting.OPACITY_PERCENT,
 ] as const;
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
-
-export type RealizationGridData = {
-    gridSurfaceData: GridSurface_trans;
-    gridParameterData: GridMappedProperty_trans;
-};
 
 type StoredData = {
     availableGridDimensions: {
@@ -47,6 +48,7 @@ export class RealizationGridProvider
     getDefaultSettingsValues() {
         return {
             [Setting.SHOW_GRID_LINES]: false,
+            [Setting.OPACITY_PERCENT]: 100,
         };
     }
 

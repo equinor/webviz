@@ -18,7 +18,7 @@ export const handler: CacheBustingPlugin["Handler"] = ({ plugin }) => {
             location: "query",
             explode: false,
             name: cacheKey,
-            schema: { type: "number" },
+            schema: { type: "string" },
             style: "form",
         };
     }

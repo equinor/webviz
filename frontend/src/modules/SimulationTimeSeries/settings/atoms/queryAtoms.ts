@@ -4,6 +4,7 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
 
@@ -22,6 +23,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                             case_uuid: ensembleIdent.getCaseUuid(),
                             ensemble_name: ensembleIdent.getEnsembleName(),
                             include_derived_vectors: true,
+                            ...makeCacheBustingQueryParam(ensembleIdent),
                         },
                         throwOnError: true,
                     });
@@ -53,6 +55,10 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                             reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
                             reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
                             include_derived_vectors: true,
+                            ...makeCacheBustingQueryParam(
+                                ensembleIdent.getComparisonEnsembleIdent(),
+                                ensembleIdent.getReferenceEnsembleIdent(),
+                            ),
                         },
                         throwOnError: true,
                     });

@@ -29,7 +29,6 @@ export default defineConfig({
         transforms: {
             // (Revert v0.66) Only generate a single payload type
             readWrite: false,
-            enums: { mode: "root" },
         },
     },
     plugins: [

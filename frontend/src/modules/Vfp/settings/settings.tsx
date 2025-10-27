@@ -11,8 +11,7 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-
+import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { PressureOption, VfpParam, VfpType } from "../types";
@@ -43,7 +42,6 @@ import {
     selectedWfrIndicesAtom,
 } from "./atoms/derivedAtoms";
 import { vfpTableQueryAtom } from "./atoms/queryAtoms";
-
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
@@ -85,7 +83,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedColorBy = useAtomValue(selectedColorByAtom);
     const setUserSelectedColorBy = useSetAtom(userSelectedColorByAtom);
 
-    usePropagateApiErrorToStatusWriter(vfpTableQuery, statusWriter);
+    usePropagateQueryErrorToStatusWriter(vfpTableQuery, statusWriter);
 
     function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
         setUserSelectedEnsembleIdent(ensembleIdent);
@@ -154,6 +152,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 <EnsembleDropdown
                     ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
+                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>

@@ -1,6 +1,5 @@
 import type { ColorScaleSerialization } from "@lib/utils/ColorScale";
 
-
 import type { GroupType } from "../groups/groupTypes";
 import type { Setting, Settings } from "../settings/settingsDefinitions";
 
@@ -28,24 +27,28 @@ export interface SerializedItem {
 
 export type SerializedSettingsState<
     TSettings extends Settings,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
 > = {
     [K in TSettingKey]: string;
 };
 
 export interface SerializedDataProvider<
     TSettings extends Settings,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
 > extends SerializedItem {
     type: SerializedType.DATA_PROVIDER;
     dataProviderType: string;
     settings: SerializedSettingsState<TSettings, TSettingKey>;
 }
 
-export interface SerializedGroup extends SerializedItem {
+export interface SerializedGroup<
+    TSettings extends Settings,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+> extends SerializedItem {
     type: SerializedType.GROUP;
     groupType: GroupType;
     color: string;
+    settings: SerializedSettingsState<TSettings, TSettingKey>;
     children: SerializedItem[];
 }
 

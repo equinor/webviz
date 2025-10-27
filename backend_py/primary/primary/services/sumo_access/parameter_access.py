@@ -21,18 +21,18 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ParameterAccess:
-    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
-        self._iteration_name: str = iteration_name
+        self._ensemble_name: str = ensemble_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
-            uuid=self._case_uuid, iteration=self._iteration_name
+            uuid=self._case_uuid, ensemble=self._ensemble_name
         )
 
     @classmethod
-    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "ParameterAccess":
+    def from_ensemble_name(cls, access_token: str, case_uuid: str, ensemble_name: str) -> "ParameterAccess":
         sumo_client = create_sumo_client(access_token)
-        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
     async def get_parameters_and_sensitivities_async(self) -> EnsembleParameters:
         """Retrieve parameters for an ensemble"""
@@ -43,7 +43,7 @@ class ParameterAccess:
             parameter_agg = await parameter_table_context.aggregation_async(operation="collection")
         except Exception as exp:
             raise ServiceRequestError(
-                f"No parameters found for case {self._case_uuid} and iteration {self._iteration_name}",
+                f"No parameters found for case {self._case_uuid} and ensemble {self._ensemble_name}",
                 Service.SUMO,
             ) from exp
         perf_metrics.record_lap("aggregate")
@@ -56,7 +56,7 @@ class ParameterAccess:
         perf_metrics.record_lap("transform")
 
         LOGGER.debug(
-            f"ParameterAccess.get_parameters_and_sensitivities_async() took: {perf_metrics.to_string()}, {self._case_uuid=}, {self._iteration_name=}"
+            f"ParameterAccess.get_parameters_and_sensitivities_async() took: {perf_metrics.to_string()}, {self._case_uuid=}, {self._ensemble_name=}"
         )
 
         return EnsembleParameters(

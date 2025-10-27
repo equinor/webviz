@@ -5,8 +5,7 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
-import type { HistogramBinRange } from "@modules/_shared/histogram";
-import { makeHistogramBinRangesFromMinAndMaxValues, makeHistogramTrace } from "@modules/_shared/histogram";
+import { makeHistogramTrace } from "@modules/_shared/histogram";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
@@ -37,46 +36,17 @@ export function makePlotData(
     ensembleSet: EnsembleSet,
     colorSet: ColorSet,
 ): (table: Table) => Partial<PlotData>[] {
-    return (table: Table): Partial<PlotData>[] => {
-        let binRanges: HistogramBinRange[] = [];
-        if (plotType === PlotType.HISTOGRAM) {
-            const column = table.getColumn(firstResultName);
-            if (!column) {
-                return [];
-            }
-            const resultMinAndMax = column.reduce(
-                (acc: { min: number; max: number }, value: string | number) => {
-                    if (typeof value !== "number") {
-                        return acc;
-                    }
-                    return {
-                        min: Math.min(acc.min, value),
-                        max: Math.max(acc.max, value),
-                    };
-                },
-                { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY },
-            );
-            binRanges = makeHistogramBinRangesFromMinAndMaxValues({
-                xMin: resultMinAndMax.min,
-                xMax: resultMinAndMax.max,
-                numBins: 20,
-            });
-        }
+    // Maps to store already used colors and position for each key for consistency across subplots
+    const keyToColor: Map<string, string> = new Map();
+    const boxPlotKeyToPositionMap: Map<string, number> = new Map();
+    const NUM_HISTOGRAM_BINS = 10;
 
+    return (table: Table): Partial<PlotData>[] => {
         if (table.getColumn(colorBy) === undefined) {
             throw new Error(`Column to color by "${colorBy}" not found in the table.`);
         }
 
         const collection = table.splitByColumn(colorBy);
-
-        let boxPlotColorByPositionMap: Map<string | number, number> = new Map();
-        if (plotType === PlotType.BOX) {
-            // To distribute the box plots in vertical direction, use index as yAxis position
-            if (collection.getNumTables() > 1) {
-                const colorByValues = table.getColumn(colorBy)?.getUniqueValues() ?? [];
-                boxPlotColorByPositionMap = new Map(colorByValues.map((value, index) => [value.toString(), index]));
-            }
-        }
 
         const data: Partial<PlotData>[] = [];
         let color = colorSet.getFirstColor();
@@ -94,22 +64,32 @@ export function makePlotData(
                 }
             }
 
-            if (plotType === PlotType.HISTOGRAM) {
-                data.push(...makeHistogram(title, table, firstResultName, color, binRanges));
-            } else if (plotType === PlotType.CONVERGENCE) {
-                data.push(...makeConvergencePlot(title, table, firstResultName, color));
-            } else if (plotType === PlotType.DISTRIBUTION) {
-                data.push(...makeDensityPlot(title, table, firstResultName, color));
-            } else if (plotType === PlotType.BOX) {
-                const yAxisPosition = boxPlotColorByPositionMap.get(key.toString());
-                data.push(...makeBoxPlot(title, table, firstResultName, color, yAxisPosition));
-            } else if (plotType === PlotType.SCATTER) {
-                data.push(...makeScatterPlot(title, table, firstResultName, secondResultNameOrSelectorName, color));
-            } else if (plotType === PlotType.BAR) {
-                data.push(...makeBarPlot(title, table, firstResultName, secondResultNameOrSelectorName, color));
+            // Extract color or current collection key
+            let keyColor = keyToColor.get(key.toString());
+            if (keyColor === undefined) {
+                keyColor = color;
+                keyToColor.set(key.toString(), keyColor);
+                color = colorSet.getNextColor();
             }
 
-            color = colorSet.getNextColor();
+            if (plotType === PlotType.HISTOGRAM) {
+                data.push(...makeHistogram(title, table, firstResultName, keyColor, NUM_HISTOGRAM_BINS));
+            } else if (plotType === PlotType.CONVERGENCE) {
+                data.push(...makeConvergencePlot(title, table, firstResultName, keyColor));
+            } else if (plotType === PlotType.DISTRIBUTION) {
+                data.push(...makeDensityPlot(title, table, firstResultName, keyColor));
+            } else if (plotType === PlotType.BOX) {
+                let yAxisPosition = boxPlotKeyToPositionMap.get(key.toString());
+                if (yAxisPosition === undefined) {
+                    yAxisPosition = -boxPlotKeyToPositionMap.size; // Negative value for placing top down
+                    boxPlotKeyToPositionMap.set(key.toString(), yAxisPosition);
+                }
+                data.push(...makeBoxPlot(title, table, firstResultName, keyColor, yAxisPosition));
+            } else if (plotType === PlotType.SCATTER) {
+                data.push(...makeScatterPlot(title, table, firstResultName, secondResultNameOrSelectorName, keyColor));
+            } else if (plotType === PlotType.BAR) {
+                data.push(...makeBarPlot(title, table, firstResultName, secondResultNameOrSelectorName, keyColor));
+            }
         }
 
         return data;
@@ -237,7 +217,7 @@ function makeHistogram(
     table: Table,
     resultName: string,
     color: string,
-    binRanges: HistogramBinRange[],
+    numBins: number,
 ): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
@@ -248,11 +228,12 @@ function makeHistogram(
 
     const histogram = makeHistogramTrace({
         xValues: resultColumn.getAllRowValues() as number[],
-        bins: binRanges,
+        numBins: numBins,
         color,
     });
 
     histogram.name = title;
+    histogram.legendgroup = title;
     histogram.showlegend = true;
 
     data.push(histogram);
@@ -273,6 +254,7 @@ function makeDensityPlot(title: string, table: Table, resultName: string, color:
     data.push({
         x: xValues,
         name: title,
+        legendgroup: title,
         type: "violin",
         marker: {
             color,
@@ -307,6 +289,7 @@ function makeBoxPlot(
     data.push({
         x: resultColumn.getAllRowValues(),
         name: title,
+        legendgroup: title,
         type: "box",
         marker: {
             color,
@@ -341,6 +324,7 @@ function makeScatterPlot(
         x: firstResultColumn.getAllRowValues(),
         y: secondResultColumn.getAllRowValues(),
         name: title,
+        legendgroup: title,
         mode: "markers",
         marker: {
             color,

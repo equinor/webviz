@@ -130,6 +130,13 @@ export type FetchDataParams<
     >(
         options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
     ) => Promise<TData>;
+
+    /**
+     * A function that is called when the fetch is cancelled or finished.
+     * It can be used to clean up any resources that were allocated during the fetch.
+     * @param callback The callback function to call when the fetch is cancelled or finished.
+     */
+    onFetchCancelOrFinish: (callback: () => void) => void;
 } & DataProviderInformationAccessors<TSettings, TData, TStoredData>;
 
 export interface CustomDataProviderImplementation<

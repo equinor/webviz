@@ -12,7 +12,7 @@ export interface Config {
 
     /**
      * The query parameter to use for caching
-     * @default "t"
+     * @default "f"
      */
     cacheKey?: string | IR.ParameterObject;
 }

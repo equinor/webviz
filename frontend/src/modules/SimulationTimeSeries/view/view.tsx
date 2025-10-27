@@ -7,6 +7,7 @@ import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
@@ -43,8 +44,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const setActiveTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
 
     // Color palettes
-    const colorSet = workbenchSettings.useColorSet();
-    const parameterColorScale = workbenchSettings.useContinuousColorScale({
+    const colorSet = useColorSet(workbenchSettings);
+    const parameterColorScale = useContinuousColorScale(workbenchSettings, {
         gradientType: ColorScaleGradientType.Diverging,
     });
     const vectorHexColorMap: VectorHexColorMap = {};
@@ -76,7 +77,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         ensemblesWithoutParameter.push(...selectedDeltaEnsembles);
     }
 
-    useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);
+    useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap);
 
     const handleClickInChart = React.useCallback(
@@ -115,7 +116,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     layout={plotBuilder.makePlotLayout()}
                 />
             ) : (
-                <ContentError>One or more queries have an error state.</ContentError>
+                <ContentError>One or more queries have an error state. See the log for details.</ContentError>
             )}
         </div>
     );

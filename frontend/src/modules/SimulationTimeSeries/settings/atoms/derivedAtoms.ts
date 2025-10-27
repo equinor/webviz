@@ -15,7 +15,6 @@ import { createVectorSelectorDataFromVectors } from "@modules/_shared/components
 import { simulationVectorDefinition } from "@modules/_shared/reservoirSimulationStringUtils";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 
-
 import type { VectorSpec } from "../../typesAndEnums";
 import { StatisticsType, VisualizationMode } from "../../typesAndEnums";
 import { EnsembleVectorListsHelper } from "../../utils/ensemblesVectorListHelper";
@@ -43,11 +42,12 @@ export const selectedEnsembleIdentsAtom = atom<(RegularEnsembleIdent | DeltaEnse
     const ensembleSet = get(EnsembleSetAtom);
     const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
-    const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>
-        ensembleSet.hasEnsemble(ensemble),
-    );
-    const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
+    // No fixup when user has explicitly selected an empty list
+    if (userSelectedEnsembleIdents && userSelectedEnsembleIdents.length === 0) {
+        return [];
+    }
 
+    const validatedEnsembleIdents = fixupEnsembleIdents(userSelectedEnsembleIdents, ensembleSet);
     return validatedEnsembleIdents ?? [];
 });
 

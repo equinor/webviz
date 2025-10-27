@@ -13,7 +13,6 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 
-
 import type { Interfaces } from "../interfaces";
 import {
     ColorBy,
@@ -40,7 +39,6 @@ import {
 } from "./atoms/derivedAtoms";
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
-
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -130,6 +128,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
                     ensembles={ensembleSet.getRegularEnsembleArray()}
+                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                     onChange={handleEnsembleSelectionChange}
                     value={selectedEnsembleIdents}
                     size={5}

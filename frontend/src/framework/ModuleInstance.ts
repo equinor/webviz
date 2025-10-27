@@ -9,14 +9,13 @@ import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannel
 import type { InitialSettings } from "./InitialSettings";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
-import type { ImportState, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
+import type { ImportStatus, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
-import type { Workbench } from "./Workbench";
 
-export enum ModuleInstanceState {
+export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
     OK,
     ERROR,
@@ -26,30 +25,41 @@ export enum ModuleInstanceState {
 export enum ModuleInstanceTopic {
     TITLE = "title",
     SYNCED_SETTINGS = "synced-settings",
-    STATE = "state",
-    IMPORT_STATE = "import-state",
+    LIFECYCLE_STATE = "state",
+    IMPORT_STATUS = "import-status",
 }
 
 export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.TITLE]: string;
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
-    [ModuleInstanceTopic.STATE]: ModuleInstanceState;
-    [ModuleInstanceTopic.IMPORT_STATE]: ImportState;
+    [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
+    [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
 };
 
 export interface ModuleInstanceOptions<TInterfaceTypes extends ModuleInterfaceTypes> {
     module: Module<TInterfaceTypes>;
-    workbench: Workbench;
-    instanceNumber: number;
+    id: string;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
+
+export type ModuleInstanceFullState = {
+    id: string;
+    name: string;
+    dataChannelReceiverSubscriptions: {
+        idString: string;
+        listensToModuleInstanceId: string;
+        channelIdString: string;
+        contentIdStrings: string[];
+    }[];
+    syncedSettingKeys: SyncSettingKey[];
+};
 
 export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _id: string;
     private _title: string;
     private _initialized: boolean = false;
-    private _moduleInstanceState: ModuleInstanceState = ModuleInstanceState.INITIALIZING;
+    private _moduleInstanceState: ModuleInstanceLifeCycleState = ModuleInstanceLifeCycleState.INITIALIZING;
     private _fatalError: { err: Error; errInfo: ErrorInfo } | null = null;
     private _syncedSettingKeys: SyncSettingKey[] = [];
     private _module: Module<TInterfaceTypes>;
@@ -68,7 +78,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes>) {
-        this._id = `${options.module.getName()}-${options.instanceNumber}`;
+        this._id = options.id;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
 
@@ -86,6 +96,30 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         if (options.channelDefinitions) {
             this._channelManager.registerChannels(options.channelDefinitions);
         }
+    }
+
+    setFullState(fullState: ModuleInstanceFullState): void {
+        this._syncedSettingKeys = fullState.syncedSettingKeys;
+
+        this._id = fullState.id;
+        this._title = fullState.name;
+    }
+
+    getFullState(): ModuleInstanceFullState {
+        return {
+            id: this._id,
+            name: this._module.getName(),
+            dataChannelReceiverSubscriptions: this._channelManager
+                .getReceivers()
+                .filter((receiver) => receiver.hasActiveSubscription())
+                .map((receiver) => ({
+                    idString: receiver.getIdString(),
+                    listensToModuleInstanceId: receiver.getChannel()?.getManager().getModuleInstanceId() ?? "",
+                    channelIdString: receiver.getChannel()?.getIdString() ?? "",
+                    contentIdStrings: receiver.getContentIdStrings(),
+                })),
+            syncedSettingKeys: this._syncedSettingKeys,
+        };
     }
 
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
@@ -113,7 +147,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     initialize(): void {
         this._context = new ModuleContext<TInterfaceTypes>(this);
         this._initialized = true;
-        this.setModuleInstanceState(ModuleInstanceState.OK);
+        this.setModuleInstanceState(ModuleInstanceLifeCycleState.OK);
     }
 
     makeSettingsToViewInterface(
@@ -228,7 +262,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         return this._module.settingsFC;
     }
 
-    getImportState(): ImportState {
+    getImportState(): ImportStatus {
         return this._module.getImportState();
     }
 
@@ -288,10 +322,10 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
             if (topic === ModuleInstanceTopic.SYNCED_SETTINGS) {
                 return this.getSyncedSettingKeys();
             }
-            if (topic === ModuleInstanceTopic.STATE) {
+            if (topic === ModuleInstanceTopic.LIFECYCLE_STATE) {
                 return this.getModuleInstanceState();
             }
-            if (topic === ModuleInstanceTopic.IMPORT_STATE) {
+            if (topic === ModuleInstanceTopic.IMPORT_STATUS) {
                 return this.getImportState();
             }
         };
@@ -307,17 +341,17 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         return this._statusController;
     }
 
-    private setModuleInstanceState(moduleInstanceState: ModuleInstanceState): void {
+    private setModuleInstanceState(moduleInstanceState: ModuleInstanceLifeCycleState): void {
         this._moduleInstanceState = moduleInstanceState;
-        this.notifySubscribers(ModuleInstanceTopic.STATE);
+        this.notifySubscribers(ModuleInstanceTopic.LIFECYCLE_STATE);
     }
 
-    getModuleInstanceState(): ModuleInstanceState {
+    getModuleInstanceState(): ModuleInstanceLifeCycleState {
         return this._moduleInstanceState;
     }
 
     setFatalError(err: Error, errInfo: ErrorInfo): void {
-        this.setModuleInstanceState(ModuleInstanceState.ERROR);
+        this.setModuleInstanceState(ModuleInstanceLifeCycleState.ERROR);
         this._fatalError = {
             err,
             errInfo,
@@ -332,7 +366,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     }
 
     reset(): Promise<void> {
-        this.setModuleInstanceState(ModuleInstanceState.RESETTING);
+        this.setModuleInstanceState(ModuleInstanceLifeCycleState.RESETTING);
 
         return new Promise((resolve) => {
             this._module.onInstanceUnload(this._id);
@@ -352,6 +386,16 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
 
     unload() {
         this._module.onInstanceUnload(this._id);
+    }
+
+    beforeDestroy(): void {
+        this._channelManager.unregisterAllChannels();
+        this._channelManager.unregisterAllReceivers();
+        this._context = null;
+        this._settingsToViewInterface = null;
+        this._viewToSettingsInterface = null;
+        this._settingsToViewInterfaceEffectsAtom = null;
+        this._viewToSettingsInterfaceEffectsAtom = null;
     }
 }
 

@@ -4,9 +4,8 @@ import {
     type Options,
     getFields,
     getCases,
-    getEnsembles,
     getEnsembleDetails,
-    postGetTimestampsForEnsembles,
+    postRefreshFingerprintsForEnsembles,
     getVectorList,
     getDeltaEnsembleVectorList,
     getRealizationsVectorData,
@@ -23,6 +22,7 @@ import {
     getRealizationSurfacesMetadata,
     getObservedSurfacesMetadata,
     getSurfaceData,
+    getStatisticalSurfaceDataHybrid,
     postGetSurfaceIntersection,
     postGetSampleSurfaceInPoints,
     getDeltaSurfaceData,
@@ -57,9 +57,11 @@ import {
     getInlineSlice,
     getCrosslineSlice,
     getDepthSlice,
+    getSeismicSlices,
     postGetSeismicFence,
     getPolygonsDirectory,
     getPolygonsData,
+    getUserInfo,
     getUserPhoto,
     getObservations,
     getTableDefinition,
@@ -78,11 +80,10 @@ import { queryOptions, type UseMutationOptions, type DefaultError } from "@tanst
 import type {
     GetFieldsData_api,
     GetCasesData_api,
-    GetEnsemblesData_api,
     GetEnsembleDetailsData_api,
-    PostGetTimestampsForEnsemblesData_api,
-    postGetTimestampsForEnsemblesError,
-    postGetTimestampsForEnsemblesResponse,
+    PostRefreshFingerprintsForEnsemblesData_api,
+    postRefreshFingerprintsForEnsemblesError,
+    postRefreshFingerprintsForEnsemblesResponse,
     GetVectorListData_api,
     GetDeltaEnsembleVectorListData_api,
     GetRealizationsVectorDataData_api,
@@ -103,6 +104,7 @@ import type {
     GetRealizationSurfacesMetadataData_api,
     GetObservedSurfacesMetadataData_api,
     GetSurfaceDataData_api,
+    GetStatisticalSurfaceDataHybridData_api,
     PostGetSurfaceIntersectionData_api,
     postGetSurfaceIntersectionError,
     postGetSurfaceIntersectionResponse,
@@ -143,11 +145,13 @@ import type {
     GetInlineSliceData_api,
     GetCrosslineSliceData_api,
     GetDepthSliceData_api,
+    GetSeismicSlicesData_api,
     PostGetSeismicFenceData_api,
     postGetSeismicFenceError,
     postGetSeismicFenceResponse,
     GetPolygonsDirectoryData_api,
     GetPolygonsDataData_api,
+    GetUserInfoData_api,
     GetUserPhotoData_api,
     GetObservationsData_api,
     GetTableDefinitionData_api,
@@ -247,27 +251,6 @@ export const getCasesOptions = (options: Options<GetCasesData_api>) => {
     });
 };
 
-export const getEnsemblesQueryKey = (options: Options<GetEnsemblesData_api>) => createQueryKey("getEnsembles", options);
-
-/**
- * Get Ensembles
- * Get list of ensembles for a case
- */
-export const getEnsemblesOptions = (options: Options<GetEnsemblesData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getEnsembles({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getEnsemblesQueryKey(options),
-    });
-};
-
 export const getEnsembleDetailsQueryKey = (options: Options<GetEnsembleDetailsData_api>) =>
     createQueryKey("getEnsembleDetails", options);
 
@@ -290,17 +273,20 @@ export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsDat
     });
 };
 
-export const postGetTimestampsForEnsemblesQueryKey = (options: Options<PostGetTimestampsForEnsemblesData_api>) =>
-    createQueryKey("postGetTimestampsForEnsembles", options);
+export const postRefreshFingerprintsForEnsemblesQueryKey = (
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api>,
+) => createQueryKey("postRefreshFingerprintsForEnsembles", options);
 
 /**
- * Post Get Timestamps For Ensembles
- * Fetches ensemble timestamps for a list of ensembles
+ * Post Refresh Fingerprints For Ensembles
+ * Retrieves freshly calculated fingerprints for a list of ensembles
  */
-export const postGetTimestampsForEnsemblesOptions = (options: Options<PostGetTimestampsForEnsemblesData_api>) => {
+export const postRefreshFingerprintsForEnsemblesOptions = (
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api>,
+) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGetTimestampsForEnsembles({
+            const { data } = await postRefreshFingerprintsForEnsembles({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -308,28 +294,28 @@ export const postGetTimestampsForEnsemblesOptions = (options: Options<PostGetTim
             });
             return data;
         },
-        queryKey: postGetTimestampsForEnsemblesQueryKey(options),
+        queryKey: postRefreshFingerprintsForEnsemblesQueryKey(options),
     });
 };
 
 /**
- * Post Get Timestamps For Ensembles
- * Fetches ensemble timestamps for a list of ensembles
+ * Post Refresh Fingerprints For Ensembles
+ * Retrieves freshly calculated fingerprints for a list of ensembles
  */
-export const postGetTimestampsForEnsemblesMutation = (
-    options?: Partial<Options<PostGetTimestampsForEnsemblesData_api>>,
+export const postRefreshFingerprintsForEnsemblesMutation = (
+    options?: Partial<Options<PostRefreshFingerprintsForEnsemblesData_api>>,
 ): UseMutationOptions<
-    postGetTimestampsForEnsemblesResponse,
-    AxiosError<postGetTimestampsForEnsemblesError>,
-    Options<PostGetTimestampsForEnsemblesData_api>
+    postRefreshFingerprintsForEnsemblesResponse,
+    AxiosError<postRefreshFingerprintsForEnsemblesError>,
+    Options<PostRefreshFingerprintsForEnsemblesData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        postGetTimestampsForEnsemblesResponse,
-        AxiosError<postGetTimestampsForEnsemblesError>,
-        Options<PostGetTimestampsForEnsemblesData_api>
+        postRefreshFingerprintsForEnsemblesResponse,
+        AxiosError<postRefreshFingerprintsForEnsemblesError>,
+        Options<PostRefreshFingerprintsForEnsemblesData_api>
     > = {
         mutationFn: async (fnOptions) => {
-            const { data } = await postGetTimestampsForEnsembles({
+            const { data } = await postRefreshFingerprintsForEnsembles({
                 ...options,
                 ...fnOptions,
                 throwOnError: true,
@@ -809,6 +795,27 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
             return data;
         },
         queryKey: getSurfaceDataQueryKey(options),
+    });
+};
+
+export const getStatisticalSurfaceDataHybridQueryKey = (options: Options<GetStatisticalSurfaceDataHybridData_api>) =>
+    createQueryKey("getStatisticalSurfaceDataHybrid", options);
+
+/**
+ * Get Statistical Surface Data Hybrid
+ */
+export const getStatisticalSurfaceDataHybridOptions = (options: Options<GetStatisticalSurfaceDataHybridData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getStatisticalSurfaceDataHybrid({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getStatisticalSurfaceDataHybridQueryKey(options),
     });
 };
 
@@ -1652,6 +1659,28 @@ export const getDepthSliceOptions = (options: Options<GetDepthSliceData_api>) =>
     });
 };
 
+export const getSeismicSlicesQueryKey = (options: Options<GetSeismicSlicesData_api>) =>
+    createQueryKey("getSeismicSlices", options);
+
+/**
+ * Get Seismic Slices
+ * Get a seismic depth slice from a seismic cube.
+ */
+export const getSeismicSlicesOptions = (options: Options<GetSeismicSlicesData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getSeismicSlices({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getSeismicSlicesQueryKey(options),
+    });
+};
+
 export const postGetSeismicFenceQueryKey = (options: Options<PostGetSeismicFenceData_api>) =>
     createQueryKey("postGetSeismicFence", options);
 
@@ -1757,11 +1786,31 @@ export const getPolygonsDataOptions = (options: Options<GetPolygonsDataData_api>
     });
 };
 
+export const getUserInfoQueryKey = (options: Options<GetUserInfoData_api>) => createQueryKey("getUserInfo", options);
+
+/**
+ * Get User Info
+ */
+export const getUserInfoOptions = (options: Options<GetUserInfoData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getUserInfo({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getUserInfoQueryKey(options),
+    });
+};
+
 export const getUserPhotoQueryKey = (options: Options<GetUserPhotoData_api>) => createQueryKey("getUserPhoto", options);
 
 /**
  * Get User Photo
- * Get username, display name and avatar from Microsoft Graph API for a given user email
+ * Get username, display name and avatar from Microsoft Graph API for a given user email or graph identity
  */
 export const getUserPhotoOptions = (options: Options<GetUserPhotoData_api>) => {
     return queryOptions({

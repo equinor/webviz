@@ -10,6 +10,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { ErrorWrapper } from "@lib/components/ErrorWrapper";
@@ -19,6 +20,7 @@ import { Select } from "@lib/components/Select";
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
     settingsContext: SettingsContext<any>;
+    workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     availableTableNames: string[];
     availableIndicesWithValues: InplaceVolumesIndexWithValues_api[];
@@ -233,8 +235,9 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 <EnsembleSelect
                     ensembles={props.ensembleSet.getRegularEnsembleArray()}
                     value={ensembleIdents}
-                    onChange={handleEnsembleIdentsChange}
                     size={5}
+                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                    onChange={handleEnsembleIdentsChange}
                 />
             </CollapsibleGroup>
             <PendingWrapper isPending={props.isPending ?? false} errorMessage={props.errorMessage}>
@@ -274,7 +277,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                         expanded
                                     >
                                         <Select
-                                            options={indexWithValues.values.toSorted().map((value) => ({
+                                            options={indexWithValues.values.map((value) => ({
                                                 value: value,
                                                 label: value.toString(),
                                             }))}

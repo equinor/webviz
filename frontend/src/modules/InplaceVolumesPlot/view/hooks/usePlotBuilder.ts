@@ -47,7 +47,7 @@ export function useBuildPlotAndTable(
 
     const table = makeTableFromApiData(aggregatedTableDataQueries.tablesData);
 
-    let title = `${plotTypeToStringMapping[plotType]} plot of mean/p10/p90`;
+    let title = `${plotTypeToStringMapping[plotType]} plot`;
     if (firstResultName) {
         title += ` for ${firstResultName}`;
     }
@@ -84,6 +84,10 @@ export function useBuildPlotAndTable(
     } else if (plotType === PlotType.CONVERGENCE) {
         plotbuilder.setXAxisOptions({ title: { text: "Realizations", standoff: 5 } });
         plotbuilder.setYAxisOptions({ title: { text: firstResultName ?? "", standoff: 5 } });
+    } else if (plotType === PlotType.BOX) {
+        plotbuilder.setYAxisOptions({ showticklabels: false });
+    } else if (plotType === PlotType.HISTOGRAM) {
+        plotbuilder.setYAxisOptions({ title: { text: "Percentage (%)" } });
     }
 
     const horizontalSpacing = 80 / width;

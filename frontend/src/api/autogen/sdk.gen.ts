@@ -7,15 +7,12 @@ import type {
     GetCasesData_api,
     GetCasesResponse_api,
     GetCasesError_api,
-    GetEnsemblesData_api,
-    GetEnsemblesResponse_api,
-    GetEnsemblesError_api,
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsResponse_api,
     GetEnsembleDetailsError_api,
-    PostGetTimestampsForEnsemblesData_api,
-    PostGetTimestampsForEnsemblesResponse_api,
-    PostGetTimestampsForEnsemblesError_api,
+    PostRefreshFingerprintsForEnsemblesData_api,
+    PostRefreshFingerprintsForEnsemblesResponse_api,
+    PostRefreshFingerprintsForEnsemblesError_api,
     GetVectorListData_api,
     GetVectorListResponse_api,
     GetVectorListError_api,
@@ -64,6 +61,9 @@ import type {
     GetSurfaceDataData_api,
     GetSurfaceDataResponse_api,
     GetSurfaceDataError_api,
+    GetStatisticalSurfaceDataHybridData_api,
+    GetStatisticalSurfaceDataHybridResponse_api,
+    GetStatisticalSurfaceDataHybridError_api,
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionResponse_api,
     PostGetSurfaceIntersectionError_api,
@@ -166,6 +166,9 @@ import type {
     GetDepthSliceData_api,
     GetDepthSliceResponse_api,
     GetDepthSliceError_api,
+    GetSeismicSlicesData_api,
+    GetSeismicSlicesResponse_api,
+    GetSeismicSlicesError_api,
     PostGetSeismicFenceData_api,
     PostGetSeismicFenceResponse_api,
     PostGetSeismicFenceError_api,
@@ -175,6 +178,9 @@ import type {
     GetPolygonsDataData_api,
     GetPolygonsDataResponse_api,
     GetPolygonsDataError_api,
+    GetUserInfoData_api,
+    GetUserInfoResponse_api,
+    GetUserInfoError_api,
     GetUserPhotoData_api,
     GetUserPhotoResponse_api,
     GetUserPhotoError_api,
@@ -254,20 +260,6 @@ export const getCases = <ThrowOnError extends boolean = false>(options: Options<
 };
 
 /**
- * Get Ensembles
- * Get list of ensembles for a case
- */
-export const getEnsembles = <ThrowOnError extends boolean = false>(
-    options: Options<GetEnsemblesData_api, ThrowOnError>,
-) => {
-    return (options.client ?? _heyApiClient).get<GetEnsemblesResponse_api, GetEnsemblesError_api, ThrowOnError>({
-        responseType: "json",
-        url: "/cases/{case_uuid}/ensembles",
-        ...options,
-    });
-};
-
-/**
  * Get Ensemble Details
  * Get more detailed information for an ensemble
  */
@@ -286,19 +278,19 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Post Get Timestamps For Ensembles
- * Fetches ensemble timestamps for a list of ensembles
+ * Post Refresh Fingerprints For Ensembles
+ * Retrieves freshly calculated fingerprints for a list of ensembles
  */
-export const postGetTimestampsForEnsembles = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetTimestampsForEnsemblesData_api, ThrowOnError>,
+export const postRefreshFingerprintsForEnsembles = <ThrowOnError extends boolean = false>(
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api, ThrowOnError>,
 ) => {
     return (options.client ?? _heyApiClient).post<
-        PostGetTimestampsForEnsemblesResponse_api,
-        PostGetTimestampsForEnsemblesError_api,
+        PostRefreshFingerprintsForEnsemblesResponse_api,
+        PostRefreshFingerprintsForEnsemblesError_api,
         ThrowOnError
     >({
         responseType: "json",
-        url: "/ensembles/get_timestamps",
+        url: "/ensembles/refresh_fingerprints",
         ...options,
         headers: {
             "Content-Type": "application/json",
@@ -634,6 +626,23 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
     return (options.client ?? _heyApiClient).get<GetSurfaceDataResponse_api, GetSurfaceDataError_api, ThrowOnError>({
         responseType: "json",
         url: "/surface/surface_data",
+        ...options,
+    });
+};
+
+/**
+ * Get Statistical Surface Data Hybrid
+ */
+export const getStatisticalSurfaceDataHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<GetStatisticalSurfaceDataHybridData_api, ThrowOnError>,
+) => {
+    return (options.client ?? _heyApiClient).get<
+        GetStatisticalSurfaceDataHybridResponse_api,
+        GetStatisticalSurfaceDataHybridError_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/surface/statistical_surface_data/hybrid",
         ...options,
     });
 };
@@ -1231,6 +1240,22 @@ export const getDepthSlice = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get Seismic Slices
+ * Get a seismic depth slice from a seismic cube.
+ */
+export const getSeismicSlices = <ThrowOnError extends boolean = false>(
+    options: Options<GetSeismicSlicesData_api, ThrowOnError>,
+) => {
+    return (options.client ?? _heyApiClient).get<GetSeismicSlicesResponse_api, GetSeismicSlicesError_api, ThrowOnError>(
+        {
+            responseType: "json",
+            url: "/seismic/get_seismic_slices/",
+            ...options,
+        },
+    );
+};
+
+/**
  * Post Get Seismic Fence
  * Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system.
  *
@@ -1290,8 +1315,21 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get User Info
+ */
+export const getUserInfo = <ThrowOnError extends boolean = false>(
+    options: Options<GetUserInfoData_api, ThrowOnError>,
+) => {
+    return (options.client ?? _heyApiClient).get<GetUserInfoResponse_api, GetUserInfoError_api, ThrowOnError>({
+        responseType: "json",
+        url: "/graph/user_info/{user_id_or_email}",
+        ...options,
+    });
+};
+
+/**
  * Get User Photo
- * Get username, display name and avatar from Microsoft Graph API for a given user email
+ * Get username, display name and avatar from Microsoft Graph API for a given user email or graph identity
  */
 export const getUserPhoto = <ThrowOnError extends boolean = false>(
     options: Options<GetUserPhotoData_api, ThrowOnError>,
