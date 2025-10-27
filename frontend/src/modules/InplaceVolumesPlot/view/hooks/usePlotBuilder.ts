@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import { useAtomValue } from "jotai";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
@@ -9,7 +7,7 @@ import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumes/tableUtils";
 import type { Interfaces } from "@modules/InplaceVolumesPlot/interfaces";
 import { type InplaceVolumesPlotOptions } from "@modules/InplaceVolumesPlot/settings/components/inplaceVolumesPlotOptionsDialog";
-import { PlotType, plotTypeToStringMapping } from "@modules/InplaceVolumesPlot/typesAndEnums";
+import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 import { PlotBuilder } from "@modules/InplaceVolumesPlot/view/utils/PlotBuilder";
 
 import {
