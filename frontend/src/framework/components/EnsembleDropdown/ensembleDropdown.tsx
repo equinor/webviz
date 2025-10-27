@@ -30,6 +30,20 @@ export type EnsembleDropdownProps = (
 export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     const { onChange, ensembles, allowDeltaEnsembles, value, ensembleRealizationFilterFunction, ...rest } = props;
 
+    const optionsArray = React.useMemo<DropdownOption[]>(() => {
+        return ensembles.map((ens) => ({
+            value: ens.getIdent().toString(),
+            label: ens.getDisplayName(),
+            adornment: (
+                <EnsembleColorTile
+                    ensemble={ens}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    wrapperClassName="w-7 h-7"
+                />
+            ),
+        }));
+    }, [ensembles, ensembleRealizationFilterFunction]);
+
     const handleSelectionChange = React.useCallback(
         function handleSelectionChange(selectedEnsembleIdentStr: string) {
             const foundEnsemble = ensembles.find(
@@ -51,21 +65,6 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
         },
         [allowDeltaEnsembles, ensembles, onChange],
     );
-
-    const optionsArray: DropdownOption[] = [];
-    for (const ens of ensembles) {
-        optionsArray.push({
-            value: ens.getIdent().toString(),
-            label: ens.getDisplayName(),
-            adornment: (
-                <EnsembleColorTile
-                    ensemble={ens}
-                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                    wrapperClassName="w-7 h-7"
-                />
-            ),
-        });
-    }
 
     return <Dropdown options={optionsArray} value={value?.toString()} onChange={handleSelectionChange} {...rest} />;
 }
