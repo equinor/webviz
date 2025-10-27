@@ -40,8 +40,6 @@ class QueryCollationOptions:
     limit: int | None = None
     offset: int | None = 0
     filters: list[Filter] | None = None
-
-    # NEW: Reference to the document model
     document_model: Type[BaseModel] | None = None
 
     def _field_has_lowercase_variant(self, field_path: str) -> bool:

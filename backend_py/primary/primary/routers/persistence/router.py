@@ -3,12 +3,15 @@ from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
 
+from primary.persistence.session_store.documents import SessionDocument
+from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument, SnapshotDocument
+from primary.persistence.cosmosdb.filter_factory import FilterFactory
 from primary.persistence.session_store.session_store import SessionStore
 from primary.persistence.session_store.types import SessionSortBy
 from primary.persistence.tasks.mark_logs_deleted_task import mark_logs_deleted_task
 from primary.persistence.snapshot_store.snapshot_store import SnapshotStore
 from primary.persistence.snapshot_store.snapshot_access_log_store import SnapshotAccessLogStore
-from primary.persistence.cosmosdb.query_collation_options import Filter, SortDirection
+from primary.persistence.cosmosdb.query_collation_options import SortDirection
 from primary.persistence.snapshot_store.types import (
     SnapshotAccessLogSortBy,
     SnapshotSortBy,
@@ -58,13 +61,14 @@ async def get_sessions_metadata(
     """
     session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
+        filter_factory = FilterFactory(SessionDocument)
         filters = []
         if filter_title:
-            filters.append(Filter("metadata.title__lower", filter_title.lower(), "CONTAINS"))
+            filters.append(filter_factory.create("metadata.title__lower", filter_title.lower(), "CONTAINS"))
         if filter_updated_from:
-            filters.append(Filter("metadata.updated_at", filter_updated_from, "MORE", "_from"))
+            filters.append(filter_factory.create("metadata.updated_at", filter_updated_from, "MORE", "_from"))
         if filter_updated_to:
-            filters.append(Filter("metadata.updated_at", filter_updated_to, "LESS", "_to"))
+            filters.append(filter_factory.create("metadata.updated_at", filter_updated_to, "LESS", "_to"))
 
         items, token = await session_store.get_many_async(
             page_token=cursor,
@@ -203,9 +207,9 @@ async def delete_session(
         await session_store.delete_async(session_id)
 
 
-@router.get("/visited_snapshots", summary="List snapshots you've visited")
+@router.get("/snapshot_access_logs", summary="List access logs for visited snapshots")
 # pylint: disable=too-many-arguments
-async def get_visited_snapshots(
+async def get_snapshot_access_logs(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
     page_size: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
@@ -241,17 +245,18 @@ async def get_visited_snapshots(
     log_store = SnapshotAccessLogStore.create(authenticated_user.get_user_id())
 
     async with log_store:
+        filter_factory = FilterFactory(SnapshotAccessLogDocument)
         filters = []
         if filter_title:
-            filters.append(Filter("snapshot_metadata.title__lower", filter_title.lower(), "CONTAINS"))
+            filters.append(filter_factory.create("snapshot_metadata.title__lower", filter_title.lower(), "CONTAINS"))
         if filter_created_from:
-            filters.append(Filter("snapshot_metadata.created_at", filter_created_from, "MORE", "_from"))
+            filters.append(filter_factory.create("snapshot_metadata.created_at", filter_created_from, "MORE", "_from"))
         if filter_created_to:
-            filters.append(Filter("snapshot_metadata.created_at", filter_created_to, "LESS", "_to"))
+            filters.append(filter_factory.create("snapshot_metadata.created_at", filter_created_to, "LESS", "_to"))
         if filter_last_visited_from:
-            filters.append(Filter("last_visited_at", filter_last_visited_from, "MORE", "_from"))
+            filters.append(filter_factory.create("last_visited_at", filter_last_visited_from, "MORE", "_from"))
         if filter_last_visited_to:
-            filters.append(Filter("last_visited_at", filter_last_visited_to, "LESS", "_to"))
+            filters.append(filter_factory.create("last_visited_at", filter_last_visited_to, "LESS", "_to"))
 
         (items, cont_token) = await log_store.get_many_for_user_async(
             page_token=cursor,
@@ -293,13 +298,14 @@ async def get_snapshots_metadata(
     """
     snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     async with snapshot_store:
+        filter_factory = FilterFactory(SnapshotDocument)
         filters = []
         if filter_title:
-            filters.append(Filter("metadata.title__lower", filter_title.lower(), "CONTAINS"))
+            filters.append(filter_factory.create("metadata.title__lower", filter_title.lower(), "CONTAINS"))
         if filter_created_from:
-            filters.append(Filter("metadata.created_at", filter_created_from, "MORE", "_from"))
+            filters.append(filter_factory.create("metadata.created_at", filter_created_from, "MORE", "_from"))
         if filter_created_to:
-            filters.append(Filter("metadata.created_at", filter_created_to, "LESS", "_to"))
+            filters.append(filter_factory.create("metadata.created_at", filter_created_to, "LESS", "_to"))
 
         items, cont_token = await snapshot_store.get_many_async(
             page_token=cursor,
@@ -342,30 +348,6 @@ async def get_snapshot(
         # deleted but deletion of logs has failed
         await log_store.log_snapshot_visit_async(snapshot_id, snapshot.owner_id)
         return to_api_snapshot(snapshot)
-
-
-@router.get("/snapshots/metadata/{snapshot_id}", summary="Get snapshot metadata by ID")
-@no_cache
-async def get_snapshot_metadata(
-    snapshot_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
-) -> schemas.SnapshotMetadata:
-    """
-    Retrieve only the metadata for a specific snapshot.
-
-    Returns snapshot metadata without the content, useful for:
-    - Lightweight operations
-    - Checking snapshot details before fetching full content
-    - Building snapshot lists or previews
-
-    Note: Unlike `/snapshots/{snapshot_id}`, this endpoint does NOT track visits.
-    Use the full snapshot endpoint to automatically log access.
-
-    Any user with the snapshot ID can access snapshots (they are shareable).
-    """
-    snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
-    async with snapshot_store:
-        snapshot = await snapshot_store.get_async(snapshot_id)
-        return to_api_snapshot_metadata(snapshot)
 
 
 @router.post("/snapshots", summary="Create a new snapshot")
