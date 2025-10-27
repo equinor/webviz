@@ -107,7 +107,7 @@ type BuildUrlFn = <
         url: string;
     },
 >(
-    options: Pick<TData, "url"> & Omit<Options<TData>, "axios">,
+    options: Pick<TData, "url"> & Options<TData>,
 ) => string;
 
 export type Client = CoreClient<RequestFn, Config, MethodFn, BuildUrlFn, SseFn> & {

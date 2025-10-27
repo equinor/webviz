@@ -17,7 +17,7 @@ export default defineConfig({
         lint: "eslint",
         path: "./src/api/autogen/",
         // (Revert v0.67) Don't append js to relative paths
-        tsConfigPath: "off",
+        tsConfigPath: null,
     },
     parser: {
         hooks: {
@@ -54,7 +54,8 @@ export default defineConfig({
             case: "preserve",
             // ? It might be possible to handle this via a plugin, but I could not figure out how. This works for now...
             definitions: { name: (name) => addSuffix(name) },
-            responses: { name: (name) => addSuffix(name, "Response") },
+            responses: { name: (name) => addSuffix(name, "Responses") },
+            // response: { name: (name) => addSuffix(name, "Response") },
             requests: { name: (name) => addSuffix(name, "Data") },
             errors: { name: (name) => addSuffix(name, "Error") },
             webhooks: { name: (name) => addSuffix(name, "Hook") },
