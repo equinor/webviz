@@ -136,7 +136,12 @@ class CosmosContainer(Generic[T]):
         query_iterable = self._container.query_items(query=query, parameters=parameters, max_item_count=page_size)
 
         pager = query_by_page(query_iterable, page_token)
-        page = await anext(pager)
+
+        try:
+            page = await anext(pager)
+        except StopAsyncIteration:
+            # No items found - return empty list and no continuation token
+            return ([], None)
 
         token = pager.continuation_token
 
