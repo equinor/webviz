@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Help, Warning } from "@mui/icons-material";
+import { Help, Info, Warning } from "@mui/icons-material";
 import { cloneDeep, isEqual } from "lodash";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
@@ -20,6 +20,7 @@ import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 import { Tooltip } from "@lib/components/Tooltip";
+import { InplaceVolumesSelectorMapping } from "@modules/_shared/InplaceVolumes/types";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -247,7 +248,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             <PendingWrapper isPending={props.isPending ?? false} errorMessage={props.errorMessage}>
                 <div className="flex flex-col gap-2">{props.additionalSettings}</div>
                 <div className="flex flex-col gap-2">
-                    <CollapsibleGroup title="Table sources" expanded>
+                    <CollapsibleGroup title="Grid sources" expanded>
                         <ErrorWrapper
                             isError={tableSourceOptions.length === 0 && !props.isPending}
                             message={"No table names"}
@@ -271,8 +272,8 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                         </>
                                     }
                                 >
-                                    <IconButton color="danger" size="small">
-                                        <Warning className="mr-2" fontSize="medium" />
+                                    <IconButton size="small">
+                                        <Info className="mr-2" fontSize="medium" />
                                     </IconButton>
                                 </Tooltip>
                             </div>
@@ -294,7 +295,10 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                 {props.availableIndicesWithValues.map((indexWithValues) => (
                                     <CollapsibleGroup
                                         key={indexWithValues.indexColumn}
-                                        title={indexWithValues.indexColumn}
+                                        title={
+                                            InplaceVolumesSelectorMapping[indexWithValues.indexColumn] ??
+                                            indexWithValues.indexColumn
+                                        }
                                         expanded
                                     >
                                         <Select

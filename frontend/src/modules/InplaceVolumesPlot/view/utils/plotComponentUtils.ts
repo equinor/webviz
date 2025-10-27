@@ -5,13 +5,15 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
-import { makeHistogramTrace } from "@modules/_shared/histogram";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
 import type { RealizationAndResult } from "./convergenceCalculation";
 import { calcConvergenceArray } from "./convergenceCalculation";
+import { makePlotlyBarTraces, type BarSortBy } from "./plotly/bar";
+import { makePlotlyBoxPlotTraces } from "./plotly/box";
+import { makePlotlyHistogramTraces } from "./plotly/histogram";
 
 export function makeFormatLabelFunction(
     ensembleSet: EnsembleSet,
@@ -35,18 +37,25 @@ export function makePlotData(
     colorBy: string,
     ensembleSet: EnsembleSet,
     colorSet: ColorSet,
+    histogramBins: number,
+    barSortBy: BarSortBy,
+    showStatisticalMarkers: boolean,
+    showRealizationPoints: boolean,
+    hasMultipleTraces: boolean,
 ): (table: Table) => Partial<PlotData>[] {
-    // Maps to store already used colors and position for each key for consistency across subplots
-    const keyToColor: Map<string, string> = new Map();
-    const boxPlotKeyToPositionMap: Map<string, number> = new Map();
-    const NUM_HISTOGRAM_BINS = 10;
-
     return (table: Table): Partial<PlotData>[] => {
+        // Maps to store already used colors and position for each key for consistency across subplots
+        const keyToColor: Map<string, string> = new Map();
+        const boxPlotKeyToPositionMap: Map<string, number> = new Map();
         if (table.getColumn(colorBy) === undefined) {
             throw new Error(`Column to color by "${colorBy}" not found in the table.`);
         }
 
-        const collection = table.splitByColumn(colorBy);
+        const needsColorByColumn =
+            (plotType === PlotType.BAR && colorBy === secondResultNameOrSelectorName) ||
+            (plotType === PlotType.SCATTER && colorBy === secondResultNameOrSelectorName);
+
+        const collection = table.splitByColumn(colorBy, needsColorByColumn);
 
         const data: Partial<PlotData>[] = [];
         let color = colorSet.getFirstColor();
@@ -73,7 +82,18 @@ export function makePlotData(
             }
 
             if (plotType === PlotType.HISTOGRAM) {
-                data.push(...makeHistogram(title, table, firstResultName, keyColor, NUM_HISTOGRAM_BINS));
+                data.push(
+                    ...makeHistogram(
+                        title,
+                        table,
+                        firstResultName,
+                        keyColor,
+                        histogramBins,
+                        showStatisticalMarkers,
+                        showRealizationPoints,
+                        !hasMultipleTraces,
+                    ),
+                );
             } else if (plotType === PlotType.CONVERGENCE) {
                 data.push(...makeConvergencePlot(title, table, firstResultName, keyColor));
             } else if (plotType === PlotType.DISTRIBUTION) {
@@ -84,11 +104,31 @@ export function makePlotData(
                     yAxisPosition = -boxPlotKeyToPositionMap.size; // Negative value for placing top down
                     boxPlotKeyToPositionMap.set(key.toString(), yAxisPosition);
                 }
-                data.push(...makeBoxPlot(title, table, firstResultName, keyColor, yAxisPosition));
+                data.push(
+                    ...makeBoxPlot(
+                        title,
+                        table,
+                        firstResultName,
+                        keyColor,
+                        yAxisPosition,
+                        showStatisticalMarkers,
+                        showRealizationPoints,
+                    ),
+                );
             } else if (plotType === PlotType.SCATTER) {
                 data.push(...makeScatterPlot(title, table, firstResultName, secondResultNameOrSelectorName, keyColor));
             } else if (plotType === PlotType.BAR) {
-                data.push(...makeBarPlot(title, table, firstResultName, secondResultNameOrSelectorName, keyColor));
+                data.push(
+                    ...makeBarPlot(
+                        title,
+                        table,
+                        firstResultName,
+                        secondResultNameOrSelectorName,
+                        keyColor,
+                        barSortBy,
+                        showStatisticalMarkers,
+                    ),
+                );
             }
         }
 
@@ -102,10 +142,11 @@ function makeBarPlot(
     resultName: string,
     selectorName: string,
     color: string,
+    barSortBy: BarSortBy,
+    showStatisticalMarkers: boolean,
 ): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
-
     const resultColumn = table.getColumn(resultName);
+
     if (!resultColumn) {
         return [];
     }
@@ -114,17 +155,16 @@ function makeBarPlot(
         return [];
     }
 
-    data.push({
-        x: selectorColumn.getAllRowValues(),
-        y: resultColumn.getAllRowValues(),
-        name: title,
-        type: "bar",
-        marker: {
-            color,
-        },
+    return makePlotlyBarTraces({
+        title,
+        yValues: resultColumn.getAllRowValues() as number[],
+        xValues: selectorColumn.getAllRowValues(),
+        resultName,
+        selectorName,
+        color,
+        barSortBy,
+        showStatisticalMarkers,
     });
-
-    return data;
 }
 
 function makeConvergencePlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
@@ -218,27 +258,25 @@ function makeHistogram(
     resultName: string,
     color: string,
     numBins: number,
+    showStatisticalMarkers: boolean,
+    showRealizationPoints: boolean,
+    showStatisticalLabels: boolean,
 ): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
-
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
         return [];
     }
 
-    const histogram = makeHistogramTrace({
-        xValues: resultColumn.getAllRowValues() as number[],
-        numBins: numBins,
+    return makePlotlyHistogramTraces({
+        title,
+        values: resultColumn.getAllRowValues() as number[],
+        resultName,
         color,
+        numBins,
+        showStatisticalMarkers,
+        showRealizationPoints,
+        showStatisticalLabels,
     });
-
-    histogram.name = title;
-    histogram.legendgroup = title;
-    histogram.showlegend = true;
-
-    data.push(histogram);
-
-    return data;
 }
 
 function makeDensityPlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
@@ -278,27 +316,22 @@ function makeBoxPlot(
     resultName: string,
     color: string,
     yAxisPosition?: number,
+    showStatisticalMarkers?: boolean,
+    showRealizationPoints?: boolean,
 ): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
-
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
         return [];
     }
-
-    data.push({
-        x: resultColumn.getAllRowValues(),
-        name: title,
-        legendgroup: title,
-        type: "box",
-        marker: {
-            color,
-        },
-        // @ts-expect-error - missing arguments in the plotly types
-        y0: yAxisPosition ?? 0,
+    return makePlotlyBoxPlotTraces({
+        title,
+        values: resultColumn.getAllRowValues() as number[],
+        resultName,
+        color,
+        yAxisPosition,
+        showStatisticalMarkers: showStatisticalMarkers ?? false,
+        showRealizationPoints: showRealizationPoints ?? false,
     });
-
-    return data;
 }
 
 function makeScatterPlot(

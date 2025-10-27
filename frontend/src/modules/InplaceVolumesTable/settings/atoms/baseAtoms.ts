@@ -13,7 +13,10 @@ export const userSelectedResultNamesAtom = atom<string[]>([]);
 
 export const userSelectedGroupByIndicesAtom = atom<string[] | null>(null);
 export const selectedTableTypeAtom = atom<TableType>(TableType.STATISTICAL);
-export const selectedStatisticOptionsAtom = atom<InplaceVolumesStatistic_api[]>(
-    Object.values(InplaceVolumesStatistic_api),
-);
+export const selectedStatisticOptionsAtom = atom<InplaceVolumesStatistic_api[]>([
+    InplaceVolumesStatistic_api.MEAN,
+    InplaceVolumesStatistic_api.STDDEV,
+    InplaceVolumesStatistic_api.P10,
+    InplaceVolumesStatistic_api.P90,
+]);
 export const selectedIndexValueCriteriaAtom = atom<IndexValueCriteria>(IndexValueCriteria.REQUIRE_EQUALITY);

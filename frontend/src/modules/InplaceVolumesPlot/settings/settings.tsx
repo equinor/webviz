@@ -1,5 +1,6 @@
 import type React from "react";
 
+import { Tune } from "@mui/icons-material";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
@@ -9,9 +10,12 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
+import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
+import { SettingConfigButton } from "@lib/components/SettingConfigButton";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { InplaceVolumesSelectorMapping } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { Interfaces } from "../interfaces";
@@ -28,6 +32,7 @@ import {
     userSelectedSelectorColumnAtom,
     userSelectedSubplotByAtom,
     userSelectedTableNamesAtom,
+    plotOptionsAtom,
 } from "./atoms/baseAtoms";
 import {
     selectedColorByAtom,
@@ -41,7 +46,11 @@ import {
     tableDefinitionsAccessorAtom,
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
-import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
+import {
+    InplaceVolumesPlotOptionsDialog,
+    InplaceVolumesPlotOptionsDialogPreview,
+} from "./components/inplaceVolumesPlotOptionsDialog";
+import { makeBarGroupingOptions, makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -75,6 +84,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedPlotType, setSelectedPlotType] = useAtom(userSelectedPlotTypeAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
 
+    const [plotOptions, setPlotOptions] = useAtom(plotOptionsAtom);
+
     useApplyInitialSettingsToState(
         props.initialSettings,
         "selectedIndexValueCriteria",
@@ -97,9 +108,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
 
     // Create selector options
-    const selectorOptions: DropdownOption<string>[] = [
-        ...tableDefinitionsAccessor.getCommonSelectorColumns().map((name) => ({ label: name, value: name })),
-    ];
+    const selectorOptions = makeBarGroupingOptions(tableDefinitionsAccessor);
 
     const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames);
     const colorByOptions = makeColorByOptions(tableDefinitionsAccessor, selectedSubplotBy, selectedTableNames);
@@ -109,53 +118,69 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     }
 
     const plotSettings = (
-        <CollapsibleGroup title="Plot settings" expanded>
-            <div className="flex flex-col gap-2">
-                <Label text="Plot type">
-                    <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
-                </Label>
-                <Label text="First Result">
-                    <Dropdown
-                        value={selectedFirstResultName ?? undefined}
-                        options={resultNameOptions}
-                        onChange={setSelectedFirstResultName}
-                    />
-                </Label>
-                {selectedPlotType !== PlotType.BAR ? (
-                    <Label text="Second Result">
+        <>
+            <CollapsibleGroup title="Plot settings & data selection" expanded>
+                <div className="flex flex-col gap-2">
+                    <SettingConfigButton
+                        className="w-full"
+                        size="medium"
+                        formTitle="Plot settings"
+                        title="Configure visualization"
+                        formContent={
+                            <InplaceVolumesPlotOptionsDialog
+                                options={plotOptions}
+                                onPlotTypeChange={setSelectedPlotType}
+                                plotType={selectedPlotType}
+                                onOptionsChange={setPlotOptions}
+                            />
+                        }
+                    >
+                        <InplaceVolumesPlotOptionsDialogPreview value={selectedPlotType} />
+                    </SettingConfigButton>
+
+                    <Label text="Response">
                         <Dropdown
-                            value={selectedSecondResultName ?? undefined}
+                            value={selectedFirstResultName ?? undefined}
                             options={resultNameOptions}
-                            onChange={setSelectedSecondResultName}
-                            disabled={selectedPlotType !== PlotType.SCATTER}
+                            onChange={setSelectedFirstResultName}
                         />
                     </Label>
-                ) : (
-                    <Label text="Selector">
+                    {selectedPlotType !== PlotType.BAR ? (
+                        <Label text="Second Response(Cross Plot)">
+                            <Dropdown
+                                value={selectedSecondResultName ?? undefined}
+                                options={resultNameOptions}
+                                onChange={setSelectedSecondResultName}
+                                disabled={selectedPlotType !== PlotType.SCATTER}
+                            />
+                        </Label>
+                    ) : (
+                        <Label text="Category for each bar">
+                            <Dropdown
+                                value={selectedSelectorColumn ?? undefined}
+                                options={selectorOptions}
+                                onChange={setSelectedSelectorColumn}
+                                disabled={selectedPlotType !== PlotType.BAR}
+                            />
+                        </Label>
+                    )}
+                    <Label text="Subplot by">
                         <Dropdown
-                            value={selectedSelectorColumn ?? undefined}
-                            options={selectorOptions}
-                            onChange={setSelectedSelectorColumn}
-                            disabled={selectedPlotType !== PlotType.BAR}
+                            value={selectedSubplotBy ?? undefined}
+                            options={subplotOptions}
+                            onChange={setSelectedSubplotBy}
                         />
                     </Label>
-                )}
-                <Label text="Subplot by">
-                    <Dropdown
-                        value={selectedSubplotBy ?? undefined}
-                        options={subplotOptions}
-                        onChange={setSelectedSubplotBy}
-                    />
-                </Label>
-                <Label text="Color by">
-                    <Dropdown
-                        value={selectedColorBy ?? undefined}
-                        options={colorByOptions}
-                        onChange={setSelectedColorBy}
-                    />
-                </Label>
-            </div>
-        </CollapsibleGroup>
+                    <Label text="Color by">
+                        <Dropdown
+                            value={selectedColorBy ?? undefined}
+                            options={colorByOptions}
+                            onChange={setSelectedColorBy}
+                        />
+                    </Label>
+                </div>
+            </CollapsibleGroup>{" "}
+        </>
     );
 
     return (

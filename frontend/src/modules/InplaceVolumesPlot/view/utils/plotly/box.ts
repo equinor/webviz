@@ -2,15 +2,17 @@ import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/m
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import type { PlotData } from "plotly.js";
 
-export function makeBoxPlot(
-    title: string,
-    values: number[],
-    resultName: string,
-    color: string,
-    showStatisticalMarkers: boolean,
-    showRealizationPoints: boolean,
-    yAxisPosition?: number,
-): Partial<PlotData>[] {
+export type PlotlyBoxPlotTracesOptions = {
+    title: string;
+    values: number[];
+    resultName: string;
+    color: string;
+    yAxisPosition?: number;
+    showStatisticalMarkers: boolean;
+    showRealizationPoints: boolean;
+};
+export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Partial<PlotData>[] {
+    const { title, values, resultName, color, yAxisPosition, showStatisticalMarkers, showRealizationPoints } = options;
     const data: Partial<PlotData>[] = [];
 
     data.push({

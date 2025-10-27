@@ -1,6 +1,6 @@
 import type { DropdownOption } from "@lib/components/Dropdown";
 import type { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
-import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
+import { TableOriginKey, InplaceVolumesSelectorMapping } from "@modules/_shared/InplaceVolumes/types";
 
 export function makeSubplotByOptions(
     tableDefinitionsAccessor: TableDefinitionsAccessor,
@@ -12,11 +12,11 @@ export function makeSubplotByOptions(
     const options: DropdownOption<string>[] = [
         {
             value: TableOriginKey.ENSEMBLE,
-            label: "ENSEMBLE",
+            label: InplaceVolumesSelectorMapping[TableOriginKey.ENSEMBLE],
         },
         {
             value: TableOriginKey.TABLE_NAME,
-            label: "TABLE NAME",
+            label: InplaceVolumesSelectorMapping[TableOriginKey.TABLE_NAME],
         },
     ];
 
@@ -27,13 +27,21 @@ export function makeSubplotByOptions(
     for (const indexWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
         options.push({
             value: indexWithValues.indexColumn,
-            label: indexWithValues.indexColumn,
+            label: InplaceVolumesSelectorMapping[indexWithValues.indexColumn] ?? indexWithValues.indexColumn,
         });
     }
 
     return options;
 }
-
+export function makeBarGroupingOptions(tableDefinitionsAccessor: TableDefinitionsAccessor): DropdownOption<string>[] {
+    return [
+        ...tableDefinitionsAccessor.getCommonSelectorColumns().map((name) => {
+            const label = InplaceVolumesSelectorMapping[name] ?? name;
+            const displayLabel = name === "REAL" ? label : `${label} (mean over realizations)`;
+            return { label: displayLabel, value: name };
+        }),
+    ];
+}
 export function makeColorByOptions(
     tableDefinitionsAccessor: TableDefinitionsAccessor,
     selectedSubplotBy: string,
@@ -47,7 +55,7 @@ export function makeColorByOptions(
     if (numEnsembleIdents > 1 && selectedSubplotBy !== TableOriginKey.ENSEMBLE) {
         options.push({
             value: TableOriginKey.ENSEMBLE,
-            label: "ENSEMBLE",
+            label: InplaceVolumesSelectorMapping[TableOriginKey.ENSEMBLE],
         });
         return options;
     }
@@ -55,7 +63,7 @@ export function makeColorByOptions(
     if (numTableNames > 1 && selectedSubplotBy !== TableOriginKey.TABLE_NAME) {
         options.push({
             value: TableOriginKey.TABLE_NAME,
-            label: "TABLE NAME",
+            label: InplaceVolumesSelectorMapping[TableOriginKey.TABLE_NAME],
         });
         return options;
     }
@@ -63,14 +71,14 @@ export function makeColorByOptions(
     if (selectedSubplotBy !== TableOriginKey.ENSEMBLE) {
         options.push({
             value: TableOriginKey.ENSEMBLE,
-            label: "ENSEMBLE",
+            label: InplaceVolumesSelectorMapping[TableOriginKey.ENSEMBLE],
         });
     }
 
     if (selectedSubplotBy !== TableOriginKey.TABLE_NAME) {
         options.push({
             value: TableOriginKey.TABLE_NAME,
-            label: "TABLE NAME",
+            label: InplaceVolumesSelectorMapping[TableOriginKey.TABLE_NAME],
         });
     }
 
@@ -82,7 +90,7 @@ export function makeColorByOptions(
         if (selectedSubplotBy !== indexWithValues.indexColumn) {
             options.push({
                 value: indexWithValues.indexColumn,
-                label: indexWithValues.indexColumn,
+                label: InplaceVolumesSelectorMapping[indexWithValues.indexColumn] ?? indexWithValues.indexColumn,
             });
         }
     }

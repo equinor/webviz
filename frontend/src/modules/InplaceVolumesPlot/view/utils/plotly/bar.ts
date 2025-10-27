@@ -7,23 +7,46 @@ export enum BarSortBy {
     Xvalues = "xvalues",
     Yvalues = "yvalues",
 }
-
-export function makeBarPlot(
-    title: string,
-    yValues: number[],
-    xValues: (string | number)[],
-    resultName: string,
-    selectorName: string,
-    color: string,
-    barSortBy: BarSortBy,
-    showStatisticalMarkers: boolean,
-): Partial<PlotData>[] {
+export const MAX_LABELS_FOR_BARS = 20;
+export type PlotlyBarTracesOptions = {
+    title: string;
+    yValues: number[];
+    xValues: (string | number)[];
+    resultName: string;
+    selectorName: string;
+    color: string;
+    barSortBy: BarSortBy;
+    showStatisticalMarkers: boolean;
+};
+export function makePlotlyBarTraces({
+    title,
+    yValues,
+    xValues,
+    resultName,
+    selectorName,
+    color,
+    barSortBy,
+    showStatisticalMarkers,
+}: PlotlyBarTracesOptions): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
-    // Build data points for sorting
-    const dataPoints = xValues.map((x, i) => ({ x, y: yValues[i] }));
+    // Aggregate data by x-value(group category), and calculate mean of y-values (response) for each unique x.
+    // This is safe because the backend always returned data summed over realizations for each group.
+    // Thus the mean calculation will be the ensemble mean for each group.
+    const aggregatedSums = new Map<string | number, number>();
+    const counts = new Map<string | number, number>();
 
-    // Sort using the utility function
+    xValues.forEach((x, i) => {
+        const currentSum = aggregatedSums.get(x) || 0;
+        const currentCount = counts.get(x) || 0;
+        aggregatedSums.set(x, currentSum + yValues[i]);
+        counts.set(x, currentCount + 1);
+    });
+    const dataPoints = Array.from(aggregatedSums.entries()).map(([x, sum]) => ({
+        x,
+        y: sum / (counts.get(x) || 1),
+    }));
+
     const sortedPoints = sortBarPlotData(dataPoints, barSortBy);
 
     // Extract sorted x and y values
@@ -35,6 +58,8 @@ export function makeBarPlot(
         (p) => `<b>${selectorName}:</b> ${p.x}<br><b>${resultName}:</b> ${formatNumber(Number(p.y))}<extra></extra>`,
     );
 
+    const showText = sortedXValues.length <= MAX_LABELS_FOR_BARS;
+
     data.push({
         x: sortedXValues,
         y: sortedYValues,
@@ -44,6 +69,9 @@ export function makeBarPlot(
             color,
             opacity: 0.8,
         },
+        text: showText ? sortedYValues.map((v) => formatNumber(v)) : undefined,
+        textposition: showText ? "inside" : undefined,
+        textfont: showText ? { color: "black", size: 12 } : undefined,
         hovertemplate: hoverText,
         hoverlabel: {
             bgcolor: "white",
