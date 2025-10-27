@@ -1464,7 +1464,7 @@ export const getSnapshotAccessLogs = <ThrowOnError extends boolean = false>(
  * Snapshots are immutable records that can be shared with others.
  * They are separate from sessions and are intended for point-in-time captures.
  *
- * Note: Consider using `/visited_snapshots` to see both your snapshots and ones shared with you.
+ * Note: Consider using `/persistence/snapshot_access_logs` to see both your snapshots and ones shared with you.
  */
 export const getSnapshotsMetadata = <ThrowOnError extends boolean = false>(
     options?: Options<GetSnapshotsMetadataData_api, ThrowOnError>,
