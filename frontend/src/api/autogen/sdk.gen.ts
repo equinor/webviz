@@ -1545,7 +1545,7 @@ export const deleteSnapshot = <ThrowOnError extends boolean = false>(
  * - Updates the "last visited" timestamp
  * - Creates an access log entry if this is your first visit
  *
- * This allows you to see your viewing history in `/visited_snapshots`.
+ * This allows you to see your viewing history in `/persistence/snapshot_access_logs`.
  *
  * Any user with the snapshot ID can access snapshots (they are shareable).
  */
