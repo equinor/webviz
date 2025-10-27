@@ -1,6 +1,17 @@
 import type { PlotData } from "plotly.js";
 
-export function makeDistributionPlot(title: string, values: number[], color: string): Partial<PlotData>[] {
+export type PlotlyDensityTracesOptions = {
+    title: string;
+    values: number[];
+    color: string;
+    showRealizationPoints: boolean;
+};
+export function makePlotlyDensityTraces({
+    title,
+    values,
+    color,
+    showRealizationPoints,
+}: PlotlyDensityTracesOptions): Partial<PlotData>[] {
     return [
         {
             x: values,
@@ -8,14 +19,18 @@ export function makeDistributionPlot(title: string, values: number[], color: str
             legendgroup: title,
             type: "violin",
             marker: { color },
-            // @ts-expect-error - arguments in the plotly types
             side: "positive",
             y0: 0,
             orientation: "h",
             spanmode: "hard",
             meanline: { visible: true },
-            points: false,
-            hoverinfo: "none",
+            hovertemplate: `<b>%{x}</b> <br>Realization: <b>%{pointNumber}</b> <extra></extra>`,
+            hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
+            hoverinfo: "x",
+            // @ts-expect-error - arguments in the plotly types
+            hoveron: "points+kde",
+            points: showRealizationPoints ? "all" : false,
+            pointpos: -0.3,
         },
     ];
 }

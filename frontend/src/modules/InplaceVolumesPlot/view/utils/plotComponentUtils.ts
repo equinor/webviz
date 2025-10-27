@@ -13,7 +13,10 @@ import type { RealizationAndResult } from "./convergenceCalculation";
 import { calcConvergenceArray } from "./convergenceCalculation";
 import { makePlotlyBarTraces, type BarSortBy } from "./plotly/bar";
 import { makePlotlyBoxPlotTraces } from "./plotly/box";
+import { makePlotlyConvergenceTraces } from "./plotly/convergence";
+import { makePlotlyDensityTraces } from "./plotly/distribution";
 import { makePlotlyHistogramTraces } from "./plotly/histogram";
+import { makePlotlyScatterTraces } from "./plotly/scatter";
 
 export function makeFormatLabelFunction(
     ensembleSet: EnsembleSet,
@@ -97,7 +100,7 @@ export function makePlotData(
             } else if (plotType === PlotType.CONVERGENCE) {
                 data.push(...makeConvergencePlot(title, table, firstResultName, keyColor));
             } else if (plotType === PlotType.DISTRIBUTION) {
-                data.push(...makeDensityPlot(title, table, firstResultName, keyColor));
+                data.push(...makeDensityPlot(title, table, firstResultName, keyColor, showRealizationPoints));
             } else if (plotType === PlotType.BOX) {
                 let yAxisPosition = boxPlotKeyToPositionMap.get(key.toString());
                 if (yAxisPosition === undefined) {
@@ -168,88 +171,15 @@ function makeBarPlot(
 }
 
 function makeConvergencePlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
-
-    const realizationAndResultArray: RealizationAndResult[] = [];
-    const reals = table.getColumn("REAL");
-    const results = table.getColumn(resultName);
-    if (!reals) {
+    const realValues = table.getColumn("REAL")?.getAllRowValues() as number[];
+    const resultValues = table.getColumn(resultName)?.getAllRowValues() as number[];
+    if (!realValues) {
         throw new Error("REAL column not found");
     }
-    if (!results) {
+    if (!resultValues) {
         return [];
     }
-    for (let i = 0; i < reals.getNumRows(); i++) {
-        realizationAndResultArray.push({
-            realization: reals.getRowValue(i) as number,
-            resultValue: results.getRowValue(i) as number,
-        });
-    }
-
-    const convergenceArr = calcConvergenceArray(realizationAndResultArray);
-
-    let lightColor = color;
-    const rgbColor = parse(color);
-    if (rgbColor) {
-        rgbColor.alpha = 0.3;
-        lightColor = formatRgb(rgbColor);
-    }
-
-    data.push(
-        {
-            x: convergenceArr.map((el) => el.realization),
-            y: convergenceArr.map((el) => el.p90),
-            name: "P90",
-            type: "scatter",
-            legendgroup: title,
-            legendgrouptitle: {
-                text: title,
-            },
-            line: {
-                color,
-                width: 1,
-                dash: "dashdot",
-            },
-            mode: "lines",
-        },
-        {
-            x: convergenceArr.map((el) => el.realization),
-            y: convergenceArr.map((el) => el.mean),
-            name: "Mean",
-            legendgroup: title,
-            legendgrouptitle: {
-                text: title,
-            },
-            type: "scatter",
-            line: {
-                color,
-                width: 1,
-            },
-            mode: "lines",
-            fill: "tonexty",
-            fillcolor: lightColor,
-        },
-        {
-            x: convergenceArr.map((el) => el.realization),
-            y: convergenceArr.map((el) => el.p10),
-            name: "P10",
-            type: "scatter",
-            legendgroup: title,
-            legendgrouptitle: {
-                text: title,
-            },
-            line: {
-                color,
-                width: 1,
-                dash: "dash",
-            },
-            mode: "lines",
-            fill: "tonexty",
-            fillcolor: lightColor,
-        },
-    );
-
-    return data;
+    return makePlotlyConvergenceTraces({ title, realValues, resultValues, color });
 }
 
 function makeHistogram(
@@ -279,9 +209,13 @@ function makeHistogram(
     });
 }
 
-function makeDensityPlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
-
+function makeDensityPlot(
+    title: string,
+    table: Table,
+    resultName: string,
+    color: string,
+    showRealizationPoints: boolean,
+): Partial<PlotData>[] {
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
         return [];
@@ -289,25 +223,12 @@ function makeDensityPlot(title: string, table: Table, resultName: string, color:
 
     const xValues = resultColumn.getAllRowValues().map((el) => parseFloat(el.toString()));
 
-    data.push({
-        x: xValues,
-        name: title,
-        legendgroup: title,
-        type: "violin",
-        marker: {
-            color,
-        },
-        // @ts-expect-error - arguments in the plotly types
-        side: "positive",
-        y0: 0,
-        orientation: "h",
-        spanmode: "hard",
-        meanline: { visible: true },
-        points: false,
-        hoverinfo: "none",
+    return makePlotlyDensityTraces({
+        title,
+        values: xValues,
+        color,
+        showRealizationPoints,
     });
-
-    return data;
 }
 
 function makeBoxPlot(
@@ -341,8 +262,6 @@ function makeScatterPlot(
     secondResultName: string,
     color: string,
 ): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
-
     const firstResultColumn = table.getColumn(firstResultName);
     if (!firstResultColumn) {
         return [];
@@ -353,18 +272,17 @@ function makeScatterPlot(
         return [];
     }
 
-    data.push({
-        x: firstResultColumn.getAllRowValues(),
-        y: secondResultColumn.getAllRowValues(),
-        name: title,
-        legendgroup: title,
-        mode: "markers",
-        marker: {
-            color,
-            size: 5,
-        },
-        type: "scatter",
+    return makePlotlyScatterTraces({
+        title,
+        xValues: firstResultColumn.getAllRowValues() as number[],
+        yValues: secondResultColumn.getAllRowValues() as number[],
+        realizations:
+            table
+                .getColumn("REAL")
+                ?.getAllRowValues()
+                .map((v) => v.toString()) ?? [],
+        color,
+        xAxisLabel: firstResultName,
+        yAxisLabel: secondResultName,
     });
-
-    return data;
 }
