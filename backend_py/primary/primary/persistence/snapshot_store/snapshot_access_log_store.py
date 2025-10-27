@@ -73,8 +73,6 @@ class SnapshotAccessLogStore:
         sort_by: Optional[SnapshotAccessLogSortBy] = None,
         sort_direction: Optional[SortDirection] = None,
         sort_lowercase: bool = False,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
         filters: Optional[List[Filter]] = None,
     ) -> Tuple[List[SnapshotAccessLogDocument], Optional[str]]:
         """
@@ -101,15 +99,11 @@ class SnapshotAccessLogStore:
             filter_list = filters or []
             filter_list.insert(0, Filter("visitor_id", self._user_id))
 
-            use_page_based = page_token is not None or page_size is not None
-
             # Build query with collation options
             collation_options = QueryCollationOptions(
                 sort_lowercase=sort_lowercase,
                 sort_dir=sort_direction,
                 sort_by=sort_by.value if sort_by else None,
-                offset=None if use_page_based else offset,
-                limit=None if use_page_based else limit,
                 filters=filter_list,
                 document_model=SnapshotAccessLogDocument,
             )
@@ -121,18 +115,12 @@ class SnapshotAccessLogStore:
             if search_options:
                 query = f"{query} {search_options}"
 
-            # Use page-based pagination if continuation_token or page_size is provided
-            if use_page_based:
-                return await self._access_log_container.query_items_by_page_token_async(
-                    query=query,
-                    parameters=params,
-                    page_size=page_size,
-                    page_token=page_token,
-                )
-
-            # Otherwise, return all items (respecting limit/offset)
-            items = await self._access_log_container.query_items_async(query=query, parameters=params)
-            return items, None
+            return await self._access_log_container.query_items_by_page_token_async(
+                query=query,
+                parameters=params,
+                page_size=page_size,
+                page_token=page_token,
+            )
 
         except DatabaseAccessError as err:
             raise ServiceRequestError(f"Failed to get access logs: {str(err)}", Service.DATABASE) from err
