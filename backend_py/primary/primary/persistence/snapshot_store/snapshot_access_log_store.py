@@ -81,8 +81,8 @@ class SnapshotAccessLogStore:
         Get multiple access logs with support for pagination, sorting, filtering, and limits.
 
         Args:
-            page_token: Token for pagination (if using page-based pagination)
-            page_size: Number of items per page (for page-based pagination)
+            page_token: Token for pagination (if using page-based pagination) - this has precedence over offset/limit
+            page_size: Number of items per page (for page-based pagination) - this has precedence over offset/limit
             sort_by: Field name to sort by (e.g., "snapshot_metadata.title")
             sort_direction: Direction to sort (ASC or DESC)
             sort_lowercase: Whether to use case-insensitive sorting
@@ -157,6 +157,7 @@ class SnapshotAccessLogStore:
                 snapshot = await snapshot_store.get_async(snapshot_id)
 
                 new_log = SnapshotAccessLogDocument(
+                    id=make_access_log_item_id(snapshot_id, self._user_id),
                     visitor_id=self._user_id,
                     snapshot_id=snapshot_id,
                     snapshot_owner_id=snapshot_owner_id,

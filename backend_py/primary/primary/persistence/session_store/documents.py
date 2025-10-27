@@ -3,6 +3,8 @@ from pydantic import BaseModel, ConfigDict, computed_field
 
 
 class SessionMetadata(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     # Publicly editable fields
     title: str
     description: str | None
@@ -29,11 +31,11 @@ class SessionMetadata(BaseModel):
 
 
 class SessionDocument(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     # id of the session document - has to be at top level - also used as partition key
     id: str
 
     owner_id: str
     metadata: SessionMetadata
     content: str
-
-    model_config = ConfigDict(extra="ignore")

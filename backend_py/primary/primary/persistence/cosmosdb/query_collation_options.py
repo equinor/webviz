@@ -127,7 +127,6 @@ class QueryCollationOptions:
                 sort_by_field = self.sort_by
                 # Optional: Warn if lowercase was requested but not available
                 if self.sort_lowercase and self.document_model is not None:
-                    # Should we use the logger instead?
                     LOGGER.warning(
                         f"Lowercase sorting requested for '{self.sort_by}', "
                         f"but '{self.sort_by}{LOWER_CASE_PREFIX}' field not found in document model. "

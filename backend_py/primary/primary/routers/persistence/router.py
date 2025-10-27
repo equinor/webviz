@@ -18,9 +18,6 @@ from primary.middleware.add_browser_cache import no_cache
 
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
 from .converters import (
-    from_api_new_session,
-    from_api_new_snapshot,
-    from_api_session_update,
     to_api_session_metadata,
     to_api_session,
     to_api_snapshot,
@@ -38,7 +35,7 @@ router = APIRouter()
 @router.get("/sessions")
 @no_cache
 async def get_sessions_metadata(
-    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
     sort_by: Optional[SessionSortBy] = Query(None, description="Field to sort by (e.g., 'metadata.title')"),
     sort_direction: Optional[SortDirection] = Query(SortDirection.ASC, description="Sort direction: 'asc' or 'desc'"),
@@ -54,7 +51,7 @@ async def get_sessions_metadata(
 
     Returns a paginated response with items and continuation token.
     """
-    session_store = SessionStore.create(user.get_user_id())
+    session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
         filters = []
         if filter_title:
@@ -73,15 +70,15 @@ async def get_sessions_metadata(
             filters=filters if filters else None,
         )
 
-        return schemas.Page(items=[to_api_session_metadata(item) for item in items], continuation_token=token)
+        return schemas.Page(items=[to_api_session_metadata(item) for item in items], pageToken=token)
 
 
 @router.get("/sessions/{session_id}")
 @no_cache
 async def get_session(
-    session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+    session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.Session:
-    session_store = SessionStore.create(user.get_user_id())
+    session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
         session = await session_store.get_async(session_id)
         return to_api_session(session)
@@ -90,9 +87,9 @@ async def get_session(
 @router.get("/sessions/metadata/{session_id}")
 @no_cache
 async def get_session_metadata(
-    session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+    session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.SessionMetadata:
-    session_store = SessionStore.create(user.get_user_id())
+    session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
         session = await session_store.get_async(session_id)
         return to_api_session_metadata(session)
@@ -100,29 +97,38 @@ async def get_session_metadata(
 
 @router.post("/sessions")
 async def create_session(
-    session: schemas.NewSession, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+    session: schemas.NewSession, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:
-    session_store = SessionStore.create(user.get_user_id())
+    session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
-        session_id = await session_store.create_async(from_api_new_session(session))
+        session_id = await session_store.create_async(
+            title=session.title, description=session.description, content=session.content
+        )
         return session_id
 
 
-@router.put("/sessions/{session_id}", description="Updates a session object. Allows for partial update objects")
+@router.put("/sessions/{session_id}")
 async def update_session(
     session_id: str,
     session_update: schemas.SessionUpdate,
-    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> schemas.Session:
-    session_store = SessionStore.create(user.get_user_id())
+    session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
-        updated_session = await session_store.update_async(session_id, from_api_session_update(session_update))
+        updated_session = await session_store.update_async(
+            session_id,
+            title=session_update.title,
+            description=session_update.description,
+            content=session_update.content,
+        )
         return to_api_session(updated_session)
 
 
 @router.delete("/sessions/{session_id}")
-async def delete_session(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)) -> None:
-    session_store = SessionStore.create(user.get_user_id())
+async def delete_session(
+    session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+) -> None:
+    session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
         await session_store.delete_async(session_id)
 
@@ -130,7 +136,7 @@ async def delete_session(session_id: str, user: AuthenticatedUser = Depends(Auth
 @router.get("/visited_snapshots")
 # pylint: disable=too-many-arguments
 async def get_visited_snapshots(
-    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     # ! Must be named "cursor" or "page" to make hey-api generate infinite-queries
     # ! When we've updated to the latest hey-api version, we can change this to something custom
     cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
@@ -146,7 +152,7 @@ async def get_visited_snapshots(
     filter_last_visited_to: Optional[str] = Query(None, description="Filter results by date of last visit"),
 ) -> schemas.Page[schemas.SnapshotAccessLog]:
 
-    log_store = SnapshotAccessLogStore.create(user.get_user_id())
+    log_store = SnapshotAccessLogStore.create(authenticated_user.get_user_id())
 
     async with log_store:
         filters = []
@@ -170,13 +176,14 @@ async def get_visited_snapshots(
             filters=filters if filters else None,
         )
 
-        return schemas.Page(items=[to_api_snapshot_access_log(item) for item in items], continuation_token=cont_token)
+        return schemas.Page(items=[to_api_snapshot_access_log(item) for item in items], pageToken=cont_token)
 
 
+# Check if can be removed
 @router.get("/snapshots")
 @no_cache
 async def get_snapshots_metadata(
-    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     # ! Must be named "cursor" or "page" to make hey-api generate infinite-queries
     # ! When we've updated to the latest hey-api version, we can change this to something custom
     cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
@@ -189,7 +196,7 @@ async def get_snapshots_metadata(
     filter_created_from: Optional[str] = Query(None, description="Filter results by date"),
     filter_created_to: Optional[str] = Query(None, description="Filter results by date"),
 ) -> schemas.Page[schemas.SnapshotMetadata]:
-    snapshot_store = SnapshotStore.create(user.get_user_id())
+    snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     async with snapshot_store:
         filters = []
         if filter_title:
@@ -207,16 +214,16 @@ async def get_snapshots_metadata(
             sort_lowercase=sort_lowercase,
             filters=filters if filters else None,
         )
-        return schemas.Page(items=[to_api_snapshot_metadata(item) for item in items], continuation_token=cont_token)
+        return schemas.Page(items=[to_api_snapshot_metadata(item) for item in items], pageToken=cont_token)
 
 
 @router.get("/snapshots/{snapshot_id}")
 @no_cache
 async def get_snapshot(
-    snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+    snapshot_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.Snapshot:
-    snapshot_store = SnapshotStore.create(user.get_user_id())
-    log_store = SnapshotAccessLogStore.create(user_id=user.get_user_id())
+    snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
+    log_store = SnapshotAccessLogStore.create(user_id=authenticated_user.get_user_id())
 
     async with snapshot_store, log_store:
         snapshot = await snapshot_store.get_async(snapshot_id)
@@ -226,12 +233,13 @@ async def get_snapshot(
         return to_api_snapshot(snapshot)
 
 
+# Check if can be removed
 @router.get("/snapshots/metadata/{snapshot_id}")
 @no_cache
 async def get_snapshot_metadata(
-    snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+    snapshot_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.SnapshotMetadata:
-    snapshot_store = SnapshotStore.create(user.get_user_id())
+    snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     async with snapshot_store:
         snapshot = await snapshot_store.get_async(snapshot_id)
         return to_api_snapshot_metadata(snapshot)
@@ -239,16 +247,20 @@ async def get_snapshot_metadata(
 
 @router.post("/snapshots")
 async def create_snapshot(
-    snapshot: schemas.NewSnapshot, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+    snapshot: schemas.NewSnapshot, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:
-    snapshot_access = SnapshotStore.create(user.get_user_id())
-    log_store = SnapshotAccessLogStore.create(user.get_user_id())
+    snapshot_access = SnapshotStore.create(authenticated_user.get_user_id())
+    log_store = SnapshotAccessLogStore.create(authenticated_user.get_user_id())
 
     async with snapshot_access, log_store:
-        snapshot_id = await snapshot_access.create_async(from_api_new_snapshot(snapshot))
+        snapshot_id = await snapshot_access.create_async(
+            title=snapshot.title, description=snapshot.description, content=snapshot.content
+        )
 
         # We count snapshot creation as implicit visit. This also makes it so we can get recently created ones alongside other shared screenshots
-        await log_store.log_snapshot_visit_async(snapshot_id=snapshot_id, snapshot_owner_id=user.get_user_id())
+        await log_store.log_snapshot_visit_async(
+            snapshot_id=snapshot_id, snapshot_owner_id=authenticated_user.get_user_id()
+        )
         return snapshot_id
 
 
@@ -256,9 +268,9 @@ async def create_snapshot(
 async def delete_snapshot(
     snapshot_id: str,
     background_tasks: BackgroundTasks,
-    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> None:
-    snapshot_store = SnapshotStore.create(user.get_user_id())
+    snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     async with snapshot_store:
         await snapshot_store.delete_async(snapshot_id)
 

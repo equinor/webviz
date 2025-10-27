@@ -2,8 +2,6 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, computed_field
 
-from .utils import make_access_log_item_id
-
 
 class SnapshotMetadata(BaseModel):
     title: str
@@ -27,17 +25,18 @@ class SnapshotMetadata(BaseModel):
 
 
 class SnapshotDocument(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     id: str  # id of the snapshot document - has to be at top level - also used as partition key
     owner_id: str
     metadata: SnapshotMetadata
     content: str
 
-    model_config = ConfigDict(extra="ignore")
-
 
 class SnapshotAccessLogDocument(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
+    id: str  # id of the access log document - has to be at top level
     visitor_id: str  # user id of the visitor - also used as partition key
     snapshot_id: str
     snapshot_owner_id: str
@@ -48,11 +47,3 @@ class SnapshotAccessLogDocument(BaseModel):
     snapshot_deleted_at: datetime | None = None
 
     snapshot_metadata: SnapshotMetadata
-
-    # Internal item id
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    # pylint: disable=invalid-name
-    # -> pylint v2 will complain about names that are shorter than 3 characters
-    def id(self) -> str:
-        return make_access_log_item_id(self.snapshot_id, self.visitor_id)
