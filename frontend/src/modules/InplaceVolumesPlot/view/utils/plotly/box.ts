@@ -1,6 +1,7 @@
+import type { PlotData } from "plotly.js";
+
 import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
-import type { PlotData } from "plotly.js";
 
 export type PlotlyBoxPlotTracesOptions = {
     title: string;

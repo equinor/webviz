@@ -1,4 +1,3 @@
-import { formatRgb, parse } from "culori";
 import type { PlotData } from "plotly.js";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
@@ -9,8 +8,6 @@ import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
-import type { RealizationAndResult } from "./convergenceCalculation";
-import { calcConvergenceArray } from "./convergenceCalculation";
 import { makePlotlyBarTraces, type BarSortBy } from "./plotly/bar";
 import { makePlotlyBoxPlotTraces } from "./plotly/box";
 import { makePlotlyConvergenceTraces } from "./plotly/convergence";

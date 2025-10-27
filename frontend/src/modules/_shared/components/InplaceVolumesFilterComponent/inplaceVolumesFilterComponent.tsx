@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Help, Info, Warning } from "@mui/icons-material";
+import { Info } from "@mui/icons-material";
 import { cloneDeep, isEqual } from "lodash";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";

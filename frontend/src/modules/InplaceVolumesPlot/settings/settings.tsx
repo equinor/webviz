@@ -1,6 +1,5 @@
 import type React from "react";
 
-import { Tune } from "@mui/icons-material";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
@@ -10,12 +9,10 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
-import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { SettingConfigButton } from "@lib/components/SettingConfigButton";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
-import { InplaceVolumesSelectorMapping } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { Interfaces } from "../interfaces";

@@ -1,7 +1,8 @@
-import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import { sortBy } from "lodash";
 import type { Dash, PlotData } from "plotly.js";
+
+import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
+import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 export enum BarSortBy {
     Xvalues = "xvalues",

@@ -31,6 +31,7 @@ export function makePlotlyDensityTraces({
             hoveron: "points+kde",
             points: showRealizationPoints ? "all" : false,
             pointpos: -0.3,
+            jitter: 0.1,
         },
     ];
 }
