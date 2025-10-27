@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
@@ -48,6 +48,8 @@ import {
     InplaceVolumesPlotOptionsDialogPreview,
 } from "./components/inplaceVolumesPlotOptionsDialog";
 import { makeBarGroupingOptions, makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
+import { Button } from "@lib/components/Button";
+import { Dialog } from "@lib/components/Dialog";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -82,6 +84,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
 
     const [plotOptions, setPlotOptions] = useAtom(plotOptionsAtom);
+
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+    const dialogButtonRef = React.useRef<HTMLDivElement | null>(null);
 
     useApplyInitialSettingsToState(
         props.initialSettings,
@@ -134,7 +139,22 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     >
                         <InplaceVolumesPlotOptionsDialogPreview value={selectedPlotType} />
                     </SettingConfigButton>
-
+                    <Button ref={dialogButtonRef} onClick={() => setDialogOpen(!dialogOpen)}>
+                        Open Dialog
+                    </Button>
+                    <Dialog
+                        open={dialogOpen}
+                        width={300}
+                        height={400}
+                        onClose={() => setDialogOpen(false)}
+                        anchorEl={dialogButtonRef}
+                        isDraggable
+                        keepMounted
+                        title="Test Dialog"
+                        showCloseCross
+                    >
+                        Test
+                    </Dialog>
                     <Label text="Response">
                         <Dropdown
                             value={selectedFirstResultName ?? undefined}

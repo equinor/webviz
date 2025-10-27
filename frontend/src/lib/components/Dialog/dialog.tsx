@@ -4,6 +4,8 @@ import { Close } from "@mui/icons-material";
 
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { useDraggable } from "@lib/hooks/useDraggable";
+import { useIsVisible } from "@lib/hooks/useIsVisible";
 
 export type DialogDrawerProps = {
     content: React.ReactNode;
@@ -26,11 +28,22 @@ export type DialogProps = {
     actions?: React.ReactNode;
     showCloseCross?: boolean;
     drawer?: DialogDrawerProps;
+    isDraggable?: boolean;
+    anchorEl?: React.RefObject<HTMLElement | null>;
+    keepMounted?: boolean;
 };
 
 export const Dialog: React.FC<DialogProps> = (props) => {
-    const wrapperRef = React.useRef<HTMLDivElement>(null);
-    const dialogRef = React.useRef<HTMLDivElement>(null);
+    const wrapperRef = React.useRef<HTMLDivElement | null>(null);
+    const dialogRef = React.useRef<HTMLDivElement | null>(null);
+    const headerRef = React.useRef<HTMLDivElement | null>(null);
+
+    const { isDragging } = useDraggable({
+        handleRef: headerRef,
+        draggableRef: dialogRef,
+        isDraggable: props.isDraggable ?? false,
+    });
+    const isVisible = useIsVisible({ ref: props.anchorEl ?? null });
 
     const handleClose = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         props.onClose?.(e);
@@ -43,13 +56,19 @@ export const Dialog: React.FC<DialogProps> = (props) => {
         handleClose(e);
     };
 
+    const shouldHideForAnchor = props.anchorEl && !isVisible;
+
+    if (shouldHideForAnchor && !props.keepMounted) {
+        return null;
+    }
+
     return createPortal(
         <div
             ref={wrapperRef}
             className={resolveClassNames("fixed inset-0 w-full h-full z-50", {
                 "pointer-events-none": !props.modal,
                 "bg-slate-600/50": props.modal,
-                hidden: !props.open,
+                hidden: !props.open || shouldHideForAnchor,
             })}
             onClick={handleBackgroundClick}
         >
@@ -57,10 +76,10 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             <div
                 ref={dialogRef}
                 className={
-                    "fixed left-1/2 top-1/2 border rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col overflow-hidden"
+                    "left-1/2 top-1/2 fixed border rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col overflow-hidden"
                 }
                 style={{
-                    transform: `translate(-50%, -50%)`,
+                    transform: "translate(-50%, -50%)",
                     height: props.height,
                     width: props.width,
                     minWidth: props.minWidth,
@@ -68,7 +87,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                 }}
             >
                 {/* Header */}
-                <div className="flex justify-between p-4 border-b shadow-inner">
+                <div className="flex justify-between p-4 border-b shadow-inner" ref={headerRef}>
                     <h2 className="text-slate-800 font-bold text-lg">{props.title}</h2>
                     {props.showCloseCross && (
                         <div
