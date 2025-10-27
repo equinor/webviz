@@ -27,7 +27,7 @@ class SnapshotMetadata(BaseModel):
 
 
 class SnapshotDocument(BaseModel):
-    id: str  # Partition key
+    id: str  # id of the snapshot document - has to be at top level - also used as partition key
     owner_id: str
     metadata: SnapshotMetadata
     content: str
@@ -38,7 +38,7 @@ class SnapshotDocument(BaseModel):
 class SnapshotAccessLogDocument(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    visitor_id: str  # Partition key
+    visitor_id: str  # user id of the visitor - also used as partition key
     snapshot_id: str
     snapshot_owner_id: str
     visits: int = 0
@@ -53,6 +53,6 @@ class SnapshotAccessLogDocument(BaseModel):
     @computed_field  # type: ignore[prop-decorator]
     @property
     # pylint: disable=invalid-name
-    # ↳ pylint v2 will complain about names that are shorter than 3 characters
+    # -> pylint v2 will complain about names that are shorter than 3 characters
     def id(self) -> str:
         return make_access_log_item_id(self.snapshot_id, self.visitor_id)

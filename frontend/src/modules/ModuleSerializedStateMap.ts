@@ -64,7 +64,7 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "ParameterDistributionMatrix": {
+  "ParameterDistributions": {
     settings?: never,
     view?: never,
   },
@@ -96,6 +96,10 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "SensitivityPlot": {
+    settings?: never,
+    view?: never,
+  },
   "SimulationTimeSeries": {
     settings?: never,
     view?: never,
@@ -117,10 +121,6 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "TimeSeriesParameterDistribution": {
-    settings?: never,
-    view?: never,
-  },
-  "TornadoChart": {
     settings?: never,
     view?: never,
   },
