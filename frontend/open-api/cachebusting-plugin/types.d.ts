@@ -5,10 +5,6 @@ export interface Config {
      * The name of the plugin.
      */
     name: "cache-busting";
-    // /**
-    //  * Name of the generated file.
-    //  */
-    // output: "";
 
     /**
      * The query parameter to use for caching
