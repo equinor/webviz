@@ -72,8 +72,8 @@ export function Settings({
                     if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
                         return (
                             <ContentWarning>
-                                <p>A selected ensemble is not a regular ensemble.</p>
-                                <p>Unable to compute parameter correlations.</p>
+                                <p>Delta ensemble detected in data channel.</p>
+                                <p>Cannot determine sensitivities.</p>
                             </ContentWarning>
                         );
                     }
