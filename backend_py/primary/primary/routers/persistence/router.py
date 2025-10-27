@@ -32,7 +32,7 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/sessions")
+@router.get("/sessions", summary="List all sessions")
 @no_cache
 async def get_sessions_metadata(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -41,15 +41,20 @@ async def get_sessions_metadata(
     sort_direction: Optional[SortDirection] = Query(SortDirection.ASC, description="Sort direction: 'asc' or 'desc'"),
     sort_lowercase: bool = Query(False, description="Use case-insensitive sorting"),
     page_size: int = Query(10, ge=1, le=100, description="Limit the number of results"),
-    # ? Is this becoming too many args? Should we make a post-search endpoint instead?
     filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
     filter_updated_from: Optional[str] = Query(None, description="Filter results by date"),
     filter_updated_to: Optional[str] = Query(None, description="Filter results by date"),
 ) -> schemas.Page[schemas.SessionMetadata]:
     """
-    Get session metadata with pagination and sorting.
+    Get a paginated list of session metadata for the authenticated user.
 
-    Returns a paginated response with items and continuation token.
+    This endpoint returns session metadata (without content) with support for:
+    - **Pagination**: Use the continuation token to fetch subsequent pages
+    - **Sorting**: Sort by various fields in ascending or descending order
+    - **Case-insensitive sorting**: Optional lowercase sorting for text fields
+    - **Filtering**: Filter by title and date ranges
+
+    The response includes a continuation token for fetching the next page of results.
     """
     session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
@@ -73,32 +78,67 @@ async def get_sessions_metadata(
         return schemas.Page(items=[to_api_session_metadata(item) for item in items], pageToken=token)
 
 
-@router.get("/sessions/{session_id}")
+@router.get("/sessions/{session_id}", summary="Get a session by ID")
 @no_cache
 async def get_session(
     session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.Session:
+    """
+    Retrieve a complete session by its ID.
+
+    Returns the full session document including:
+    - Session metadata (title, description, timestamps, version, etc.)
+    - Complete session content
+
+    Only the session owner can access this endpoint.
+    """
     session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
         session = await session_store.get_async(session_id)
         return to_api_session(session)
 
 
-@router.get("/sessions/metadata/{session_id}")
+@router.get("/sessions/metadata/{session_id}", summary="Get session metadata by ID")
 @no_cache
 async def get_session_metadata(
     session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.SessionMetadata:
+    """
+    Retrieve only the metadata for a specific session.
+
+    Returns session metadata without the content, useful for:
+    - Listing sessions with details
+    - Checking version or timestamps
+    - Lightweight operations that don't need full content
+
+    Only the session owner can access this endpoint.
+    """
     session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
         session = await session_store.get_async(session_id)
         return to_api_session_metadata(session)
 
 
-@router.post("/sessions")
+@router.post("/sessions", summary="Create a new session")
 async def create_session(
     session: schemas.NewSession, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:
+    """
+    Create a new session for the authenticated user.
+
+    Provide:
+    - **title**: Session title (required)
+    - **description**: Optional description
+    - **content**: Session content (required)
+
+    The system automatically generates:
+    - Unique session ID
+    - Creation and update timestamps
+    - Version number (starts at 1)
+    - Content hash for integrity checking
+
+    Returns the ID of the newly created session.
+    """
     session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
         session_id = await session_store.create_async(
@@ -107,12 +147,32 @@ async def create_session(
         return session_id
 
 
-@router.put("/sessions/{session_id}")
+@router.put("/sessions/{session_id}", summary="Update a session")
 async def update_session(
     session_id: str,
     session_update: schemas.SessionUpdate,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> schemas.Session:
+    """
+    Update an existing session with partial or complete changes.
+
+    You can update any combination of:
+    - **title**: New session title
+    - **description**: New description
+    - **content**: New session content
+
+    All fields are optional - only provided fields will be updated.
+
+    The system automatically:
+    - Updates the `updated_at` timestamp
+    - Increments the version number
+    - Recalculates the content hash if content changed
+    - Preserves ownership and creation metadata
+
+    Returns the complete updated session.
+
+    Only the session owner can update their sessions.
+    """
     session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
         updated_session = await session_store.update_async(
@@ -124,34 +184,60 @@ async def update_session(
         return to_api_session(updated_session)
 
 
-@router.delete("/sessions/{session_id}")
+@router.delete("/sessions/{session_id}", summary="Delete a session")
 async def delete_session(
     session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> None:
+    """
+    Permanently delete a session.
+
+    This operation:
+    - Removes the session document from the database
+    - Cannot be undone
+    - Requires ownership verification
+
+    Only the session owner can delete their sessions.
+    """
     session_store = SessionStore.create(authenticated_user.get_user_id())
     async with session_store:
         await session_store.delete_async(session_id)
 
 
-@router.get("/visited_snapshots")
+@router.get("/visited_snapshots", summary="List snapshots you've visited")
 # pylint: disable=too-many-arguments
 async def get_visited_snapshots(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    # ! Must be named "cursor" or "page" to make hey-api generate infinite-queries
-    # ! When we've updated to the latest hey-api version, we can change this to something custom
     cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
     page_size: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
     sort_by: Optional[SnapshotAccessLogSortBy] = Query(None, description="Sort the result by"),
     sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
     sort_lowercase: bool = Query(False, description="Use case-insensitive sorting"),
-    # ? Is this becoming too many args? Should we make a post-search endpoint instead?
     filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
     filter_created_from: Optional[str] = Query(None, description="Filter results by date"),
     filter_created_to: Optional[str] = Query(None, description="Filter results by date"),
     filter_last_visited_from: Optional[str] = Query(None, description="Filter results by date of last visit"),
     filter_last_visited_to: Optional[str] = Query(None, description="Filter results by date of last visit"),
 ) -> schemas.Page[schemas.SnapshotAccessLog]:
+    """
+    Get a list of all snapshots you have visited.
 
+    This endpoint tracks your interaction history with snapshots, including:
+    - Snapshots you've created (counted as implicit visits)
+    - Snapshots you've viewed
+    - Snapshots shared with you that you've accessed
+
+    Each access log entry includes:
+    - **Visit count**: Number of times you've viewed the snapshot
+    - **First visited**: Timestamp of your first visit
+    - **Last visited**: Timestamp of your most recent visit
+    - **Snapshot metadata**: Title, description, creation date
+    - **Deletion status**: Whether the snapshot has been deleted
+
+    Supports pagination, sorting, and filtering by:
+    - Title (case insensitive)
+    - Creation date range
+    - Last visited date range
+    """
     log_store = SnapshotAccessLogStore.create(authenticated_user.get_user_id())
 
     async with log_store:
@@ -179,23 +265,32 @@ async def get_visited_snapshots(
         return schemas.Page(items=[to_api_snapshot_access_log(item) for item in items], pageToken=cont_token)
 
 
-# Check if can be removed
-@router.get("/snapshots")
+@router.get("/snapshots", summary="List your snapshots")
 @no_cache
 async def get_snapshots_metadata(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    # ! Must be named "cursor" or "page" to make hey-api generate infinite-queries
-    # ! When we've updated to the latest hey-api version, we can change this to something custom
     cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
     page_size: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
     sort_by: Optional[SnapshotSortBy] = Query(None, description="Sort the result by"),
     sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
     sort_lowercase: bool = Query(False, description="Use case-insensitive sorting"),
-    # ? Is this becoming too many args? Should we make a post-search endpoint instead?
     filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
     filter_created_from: Optional[str] = Query(None, description="Filter results by date"),
     filter_created_to: Optional[str] = Query(None, description="Filter results by date"),
 ) -> schemas.Page[schemas.SnapshotMetadata]:
+    """
+    Get a paginated list of your snapshot metadata.
+
+    Returns metadata for snapshots you own (without content) with support for:
+    - **Pagination**: Use continuation tokens for large result sets
+    - **Sorting**: Sort by title, creation date, etc.
+    - **Filtering**: Filter by title and date ranges
+
+    Snapshots are immutable records that can be shared with others.
+    They are separate from sessions and are intended for point-in-time captures.
+
+    Note: Consider using `/visited_snapshots` to see both your snapshots and ones shared with you.
+    """
     snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     async with snapshot_store:
         filters = []
@@ -217,11 +312,27 @@ async def get_snapshots_metadata(
         return schemas.Page(items=[to_api_snapshot_metadata(item) for item in items], pageToken=cont_token)
 
 
-@router.get("/snapshots/{snapshot_id}")
+@router.get("/snapshots/{snapshot_id}", summary="Get a snapshot by ID")
 @no_cache
 async def get_snapshot(
     snapshot_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.Snapshot:
+    """
+    Retrieve a complete snapshot by its ID.
+
+    Returns the full snapshot document including:
+    - Snapshot metadata (title, description, creation date, etc.)
+    - Complete snapshot content
+
+    **Important**: This endpoint automatically tracks your visit:
+    - Increments the visit counter
+    - Updates the "last visited" timestamp
+    - Creates an access log entry if this is your first visit
+
+    This allows you to see your viewing history in `/visited_snapshots`.
+
+    Any user with the snapshot ID can access snapshots (they are shareable).
+    """
     snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     log_store = SnapshotAccessLogStore.create(user_id=authenticated_user.get_user_id())
 
@@ -233,22 +344,52 @@ async def get_snapshot(
         return to_api_snapshot(snapshot)
 
 
-# Check if can be removed
-@router.get("/snapshots/metadata/{snapshot_id}")
+@router.get("/snapshots/metadata/{snapshot_id}", summary="Get snapshot metadata by ID")
 @no_cache
 async def get_snapshot_metadata(
     snapshot_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.SnapshotMetadata:
+    """
+    Retrieve only the metadata for a specific snapshot.
+
+    Returns snapshot metadata without the content, useful for:
+    - Lightweight operations
+    - Checking snapshot details before fetching full content
+    - Building snapshot lists or previews
+
+    Note: Unlike `/snapshots/{snapshot_id}`, this endpoint does NOT track visits.
+    Use the full snapshot endpoint to automatically log access.
+
+    Any user with the snapshot ID can access snapshots (they are shareable).
+    """
     snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     async with snapshot_store:
         snapshot = await snapshot_store.get_async(snapshot_id)
         return to_api_snapshot_metadata(snapshot)
 
 
-@router.post("/snapshots")
+@router.post("/snapshots", summary="Create a new snapshot")
 async def create_snapshot(
     snapshot: schemas.NewSnapshot, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:
+    """
+    Create a new snapshot for point-in-time capture.
+
+    Provide:
+    - **title**: Snapshot title (required)
+    - **description**: Optional description
+    - **content**: Snapshot content (required)
+
+    The system automatically:
+    - Generates a unique snapshot ID
+    - Records creation timestamp
+    - Calculates content hash for integrity
+    - **Logs an implicit visit** (so it appears in your visited snapshots)
+
+    Snapshots are immutable and can be shared with others via their ID.
+
+    Returns the ID of the newly created snapshot.
+    """
     snapshot_access = SnapshotStore.create(authenticated_user.get_user_id())
     log_store = SnapshotAccessLogStore.create(authenticated_user.get_user_id())
 
@@ -264,12 +405,27 @@ async def create_snapshot(
         return snapshot_id
 
 
-@router.delete("/snapshots/{snapshot_id}")
+@router.delete("/snapshots/{snapshot_id}", summary="Delete a snapshot")
 async def delete_snapshot(
     snapshot_id: str,
     background_tasks: BackgroundTasks,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> None:
+    """
+    Permanently delete a snapshot.
+
+    This operation:
+    - Removes the snapshot document from the database
+    - Marks all access logs as deleted (background task)
+    - Cannot be undone
+    - Requires ownership verification
+
+    **Background Processing:**
+    Access logs are marked as deleted asynchronously to avoid blocking the response.
+    This typically completes within seconds for snapshots with <150 visitor logs.
+
+    Only the snapshot owner can delete their snapshots.
+    """
     snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     async with snapshot_store:
         await snapshot_store.delete_async(snapshot_id)
