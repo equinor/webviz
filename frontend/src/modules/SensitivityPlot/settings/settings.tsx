@@ -5,11 +5,13 @@ import { useAtom, useSetAtom } from "jotai";
 import { KeyKind } from "@framework/DataChannelTypes";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 
 import { SensitivitySortBy } from "../../_shared/SensitivityProcessing/types";
 import type { Interfaces } from "../interfaces";
@@ -66,16 +68,22 @@ export function Settings({
             const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdentString;
             if (typeof ensembleIdentString === "string") {
                 try {
-                    const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
-                    const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-                    if (ensemble) {
-                        sensitivityNames.push(
-                            ...(ensemble
-                                .getSensitivities()
-                                ?.getSensitivityArr()
-                                .map((el) => el.name) ?? []),
+                    const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+                    if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
+                        return (
+                            <ContentWarning>
+                                <p>A selected ensemble is not a regular ensemble.</p>
+                                <p>Unable to compute parameter correlations.</p>
+                            </ContentWarning>
                         );
                     }
+
+                    sensitivityNames.push(
+                        ...(ensemble
+                            .getSensitivities()
+                            ?.getSensitivityArr()
+                            .map((el) => el.name) ?? []),
+                    );
                 } catch (e) {
                     console.error(e);
                 }

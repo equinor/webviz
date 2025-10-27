@@ -1,6 +1,6 @@
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ViewContext } from "@framework/ModuleContext";
-import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -12,12 +12,17 @@ export interface EnsembleResponse {
     name: string;
     unit: string;
 }
+export enum ResponseChannelStatus {
+    NO_CHANNEL = "NO_CHANNEL",
+    EMPTY_CHANNEL = "EMPTY_CHANNEL",
+    INVALID_ENSEMBLE = "INVALID_ENSEMBLE",
+    VALID_CHANNEL = "VALID_CHANNEL",
+}
 export interface ResponseChannelData {
     ensembleResponse: EnsembleResponse | null;
     channelEnsemble: RegularEnsemble | null;
     displayName: string | null;
-    hasChannel: boolean;
-    hasChannelContents: boolean;
+    status: ResponseChannelStatus;
 }
 
 export function useResponseChannel(
@@ -32,6 +37,14 @@ export function useResponseChannel(
     });
 
     const hasChannel = !!responseReceiver.channel;
+    if (!hasChannel) {
+        return {
+            ensembleResponse: null,
+            channelEnsemble: null,
+            displayName: null,
+            status: ResponseChannelStatus.NO_CHANNEL,
+        };
+    }
     const hasChannelContents = hasChannel && responseReceiver.channel!.contents.length > 0;
 
     if (!hasChannelContents) {
@@ -39,12 +52,23 @@ export function useResponseChannel(
             ensembleResponse: null,
             channelEnsemble: null,
             displayName: responseReceiver.channel?.displayName ?? null,
-            hasChannel,
-            hasChannelContents,
+            status: ResponseChannelStatus.EMPTY_CHANNEL,
         };
     }
 
     const content = responseReceiver.channel!.contents[0];
+
+    const ensembleIdentString = content.metaData.ensembleIdentString;
+    const channelEnsemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+
+    if (!channelEnsemble || !(channelEnsemble instanceof RegularEnsemble)) {
+        return {
+            ensembleResponse: null,
+            channelEnsemble: null,
+            displayName: responseReceiver.channel?.displayName ?? null,
+            status: ResponseChannelStatus.INVALID_ENSEMBLE,
+        };
+    }
     const realizations: number[] = [];
     const values: number[] = [];
 
@@ -52,12 +76,6 @@ export function useResponseChannel(
         realizations.push(el.key as number);
         values.push(el.value as number);
     });
-
-    let channelEnsemble: RegularEnsemble | null = null;
-    if (content.metaData.ensembleIdentString) {
-        const ensembleIdent = RegularEnsembleIdent.fromString(content.metaData.ensembleIdentString);
-        channelEnsemble = ensembleSet.findEnsemble(ensembleIdent);
-    }
     const ensembleResponse = {
         realizations,
         values,
@@ -69,7 +87,6 @@ export function useResponseChannel(
         ensembleResponse,
         channelEnsemble,
         displayName: responseReceiver.channel?.displayName ?? null,
-        hasChannel,
-        hasChannelContents,
+        status: ResponseChannelStatus.VALID_CHANNEL,
     };
 }

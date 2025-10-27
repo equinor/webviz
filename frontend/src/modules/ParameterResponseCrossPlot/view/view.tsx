@@ -110,7 +110,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
                     setContent(
                         <ContentWarning>
-                            <p>A selected ensemble is not a regular ensemble.</p>
+                            <p>Delta ensemble detected in the data channel.</p>
                             <p>Unable to compute parameter correlations.</p>
                         </ContentWarning>,
                     );

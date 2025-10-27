@@ -11,8 +11,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
-import { ContentInfo } from "@modules/_shared/components/ContentMessage";
-import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createRankedParameterCorrelations, getRankedParameterData } from "@modules/_shared/rankParameter";
@@ -64,22 +63,22 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
         startTransition(function makeContent() {
             if (!receiverResponse.channel) {
                 setContent(
-                    <ContentInfo>
+                    <ContentWarning>
                         <span>
                             Data channel required for use. Add a main module to the workbench and use the data channels
                             icon <Input fontSize="small" />
                         </span>
                         <Tag label="Response" />
-                    </ContentInfo>,
+                    </ContentWarning>,
                 );
                 return;
             }
 
             if (receiverResponse.channel.contents.length === 0) {
                 setContent(
-                    <ContentInfo>
+                    <ContentWarning>
                         No data on <Tag label={receiverResponse.displayName} />
-                    </ContentInfo>,
+                    </ContentWarning>,
                 );
                 return;
             }
@@ -99,7 +98,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
             if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
                 setContent(
                     <ContentWarning>
-                        <p>A selected ensemble is not a regular ensemble.</p>
+                        <p>Delta ensemble detected in the data channel.</p>
                         <p>Unable to compute parameter correlations.</p>
                     </ContentWarning>,
                 );
