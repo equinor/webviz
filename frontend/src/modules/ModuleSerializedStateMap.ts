@@ -13,10 +13,6 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "3DViewerNew": {
-    settings?: never,
-    view?: never,
-  },
   "DbgWorkbenchSpy": {
     settings?: never,
     view?: never,
@@ -42,10 +38,6 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "InplaceVolumesTable": {
-    settings?: never,
-    view?: never,
-  },
-  "InplaceVolumetrics": {
     settings?: never,
     view?: never,
   },
@@ -97,15 +89,19 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "SeismicMap": {
+    settings?: never,
+    view?: never,
+  },
+  "Sensitivity": {
+    settings?: never,
+    view?: never,
+  },
   "SensitivityPlot": {
     settings?: never,
     view?: never,
   },
   "SimulationTimeSeries": {
-    settings?: never,
-    view?: never,
-  },
-  "SimulationTimeSeriesMatrix": {
     settings?: never,
     view?: never,
   },
@@ -122,6 +118,10 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "TimeSeriesParameterDistribution": {
+    settings?: never,
+    view?: never,
+  },
+  "TopographicMap": {
     settings?: never,
     view?: never,
   },

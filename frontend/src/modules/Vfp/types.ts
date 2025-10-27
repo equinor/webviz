@@ -1,3 +1,5 @@
+import type { VfpApiDataAccessor } from "./utils/vfpApiDataAccessor";
+
 export enum QueryStatus {
     Loading = "Loading",
     Error = "Error",
@@ -20,3 +22,9 @@ export enum VfpType {
     VFPPROD = "VFPPROD",
     VFPINJ = "VFPINJ",
 }
+
+export type VfpDataAccessorWithStatus = {
+    vfpApiDataAccessor: VfpApiDataAccessor | null;
+    isFetching: boolean;
+    isError: boolean;
+};
