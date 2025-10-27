@@ -102,9 +102,9 @@ import type {
     UpdateSessionError_api,
     UpdateSessionResponse_api,
     GetSessionMetadataData_api,
-    GetVisitedSnapshotsData_api,
-    GetVisitedSnapshotsError_api,
-    GetVisitedSnapshotsResponse_api,
+    GetSnapshotAccessLogsData_api,
+    GetSnapshotAccessLogsError_api,
+    GetSnapshotAccessLogsResponse_api,
     GetSnapshotsMetadataData_api,
     GetSnapshotsMetadataError_api,
     GetSnapshotsMetadataResponse_api,
@@ -114,7 +114,6 @@ import type {
     DeleteSnapshotData_api,
     DeleteSnapshotError_api,
     GetSnapshotData_api,
-    GetSnapshotMetadataData_api,
     LoginRouteData_api,
     AuthorizedCallbackRouteData_api,
     GetAliveData_api,
@@ -197,12 +196,11 @@ import {
     getSession,
     updateSession,
     getSessionMetadata,
-    getVisitedSnapshots,
+    getSnapshotAccessLogs,
     getSnapshotsMetadata,
     createSnapshot,
     deleteSnapshot,
     getSnapshot,
-    getSnapshotMetadata,
     loginRoute,
     authorizedCallbackRoute,
     getAlive,
@@ -1828,14 +1826,14 @@ export const getSessionMetadataOptions = (options: Options<GetSessionMetadataDat
     });
 };
 
-export const getVisitedSnapshotsQueryKey = (options?: Options<GetVisitedSnapshotsData_api>) => [
-    createQueryKey("getVisitedSnapshots", options),
+export const getSnapshotAccessLogsQueryKey = (options?: Options<GetSnapshotAccessLogsData_api>) => [
+    createQueryKey("getSnapshotAccessLogs", options),
 ];
 
-export const getVisitedSnapshotsOptions = (options?: Options<GetVisitedSnapshotsData_api>) => {
+export const getSnapshotAccessLogsOptions = (options?: Options<GetSnapshotAccessLogsData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getVisitedSnapshots({
+            const { data } = await getSnapshotAccessLogs({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1843,27 +1841,30 @@ export const getVisitedSnapshotsOptions = (options?: Options<GetVisitedSnapshots
             });
             return data;
         },
-        queryKey: getVisitedSnapshotsQueryKey(options),
+        queryKey: getSnapshotAccessLogsQueryKey(options),
     });
 };
 
-export const getVisitedSnapshotsInfiniteQueryKey = (
-    options?: Options<GetVisitedSnapshotsData_api>,
-): QueryKey<Options<GetVisitedSnapshotsData_api>> => [createQueryKey("getVisitedSnapshots", options, true)];
+export const getSnapshotAccessLogsInfiniteQueryKey = (
+    options?: Options<GetSnapshotAccessLogsData_api>,
+): QueryKey<Options<GetSnapshotAccessLogsData_api>> => [createQueryKey("getSnapshotAccessLogs", options, true)];
 
-export const getVisitedSnapshotsInfiniteOptions = (options?: Options<GetVisitedSnapshotsData_api>) => {
+export const getSnapshotAccessLogsInfiniteOptions = (options?: Options<GetSnapshotAccessLogsData_api>) => {
     return infiniteQueryOptions<
-        GetVisitedSnapshotsResponse_api,
-        AxiosError<GetVisitedSnapshotsError_api>,
-        InfiniteData<GetVisitedSnapshotsResponse_api>,
-        QueryKey<Options<GetVisitedSnapshotsData_api>>,
-        string | null | Pick<QueryKey<Options<GetVisitedSnapshotsData_api>>[0], "body" | "headers" | "path" | "query">
+        GetSnapshotAccessLogsResponse_api,
+        AxiosError<GetSnapshotAccessLogsError_api>,
+        InfiniteData<GetSnapshotAccessLogsResponse_api>,
+        QueryKey<Options<GetSnapshotAccessLogsData_api>>,
+        string | null | Pick<QueryKey<Options<GetSnapshotAccessLogsData_api>>[0], "body" | "headers" | "path" | "query">
     >(
         // @ts-ignore
         {
             queryFn: async ({ pageParam, queryKey, signal }) => {
                 // @ts-ignore
-                const page: Pick<QueryKey<Options<GetVisitedSnapshotsData_api>>[0], "body" | "headers" | "path" | "query"> =
+                const page: Pick<
+                    QueryKey<Options<GetSnapshotAccessLogsData_api>>[0],
+                    "body" | "headers" | "path" | "query"
+                > =
                     typeof pageParam === "object"
                         ? pageParam
                         : {
@@ -1872,7 +1873,7 @@ export const getVisitedSnapshotsInfiniteOptions = (options?: Options<GetVisitedS
                               },
                           };
                 const params = createInfiniteParams(queryKey, page);
-                const { data } = await getVisitedSnapshots({
+                const { data } = await getSnapshotAccessLogs({
                     ...options,
                     ...params,
                     signal,
@@ -1880,7 +1881,7 @@ export const getVisitedSnapshotsInfiniteOptions = (options?: Options<GetVisitedS
                 });
                 return data;
             },
-            queryKey: getVisitedSnapshotsInfiniteQueryKey(options),
+            queryKey: getSnapshotAccessLogsInfiniteQueryKey(options),
         },
     );
 };
@@ -2010,25 +2011,6 @@ export const getSnapshotOptions = (options: Options<GetSnapshotData_api>) => {
             return data;
         },
         queryKey: getSnapshotQueryKey(options),
-    });
-};
-
-export const getSnapshotMetadataQueryKey = (options: Options<GetSnapshotMetadataData_api>) => [
-    createQueryKey("getSnapshotMetadata", options),
-];
-
-export const getSnapshotMetadataOptions = (options: Options<GetSnapshotMetadataData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getSnapshotMetadata({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getSnapshotMetadataQueryKey(options),
     });
 };
 

@@ -450,17 +450,17 @@ export type Observations_api = {
 
 export type PageSessionMetadata_api = {
     items: Array<SessionMetadata_api>;
-    continuation_token?: string | null;
+    pageToken?: string | null;
 };
 
 export type PageSnapshotAccessLog_api = {
     items: Array<SnapshotAccessLog_api>;
-    continuation_token?: string | null;
+    pageToken?: string | null;
 };
 
 export type PageSnapshotMetadata_api = {
     items: Array<SnapshotMetadata_api>;
-    continuation_token?: string | null;
+    pageToken?: string | null;
 };
 
 export type PointSetXy_api = {
@@ -747,7 +747,7 @@ export type SessionMetadata_api = {
     createdAt: string;
     updatedAt: string;
     version: number;
-    content_hash: string;
+    contentHash: string;
 };
 
 export enum SessionSortBy_api {
@@ -791,7 +791,7 @@ export type SnapshotMetadata_api = {
     title: string;
     description: string | null;
     createdAt: string;
-    content_hash: string;
+    contentHash: string;
 };
 
 export enum SnapshotSortBy_api {
@@ -4263,7 +4263,7 @@ export type GetSessionMetadataResponses_api = {
 
 export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
 
-export type GetVisitedSnapshotsData_api = {
+export type GetSnapshotAccessLogsData_api = {
     body?: never;
     path?: never;
     query?: {
@@ -4309,26 +4309,26 @@ export type GetVisitedSnapshotsData_api = {
         filter_last_visited_to?: string | null;
         t?: number;
     };
-    url: "/persistence/visited_snapshots";
+    url: "/persistence/snapshot_access_logs";
 };
 
-export type GetVisitedSnapshotsErrors_api = {
+export type GetSnapshotAccessLogsErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetVisitedSnapshotsError_api = GetVisitedSnapshotsErrors_api[keyof GetVisitedSnapshotsErrors_api];
+export type GetSnapshotAccessLogsError_api = GetSnapshotAccessLogsErrors_api[keyof GetSnapshotAccessLogsErrors_api];
 
-export type GetVisitedSnapshotsResponses_api = {
+export type GetSnapshotAccessLogsResponses_api = {
     /**
      * Successful Response
      */
     200: PageSnapshotAccessLog_api;
 };
 
-export type GetVisitedSnapshotsResponse_api = GetVisitedSnapshotsResponses_api[keyof GetVisitedSnapshotsResponses_api];
+export type GetSnapshotAccessLogsResponse_api = GetSnapshotAccessLogsResponses_api[keyof GetSnapshotAccessLogsResponses_api];
 
 export type GetSnapshotsMetadataData_api = {
     body?: never;
@@ -4471,35 +4471,6 @@ export type GetSnapshotResponses_api = {
 };
 
 export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshotResponses_api];
-
-export type GetSnapshotMetadataData_api = {
-    body?: never;
-    path: {
-        snapshot_id: string;
-    };
-    query?: {
-        t?: number;
-    };
-    url: "/persistence/snapshots/metadata/{snapshot_id}";
-};
-
-export type GetSnapshotMetadataErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetSnapshotMetadataError_api = GetSnapshotMetadataErrors_api[keyof GetSnapshotMetadataErrors_api];
-
-export type GetSnapshotMetadataResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: SnapshotMetadata_api;
-};
-
-export type GetSnapshotMetadataResponse_api = GetSnapshotMetadataResponses_api[keyof GetSnapshotMetadataResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;
