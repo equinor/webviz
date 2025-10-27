@@ -5,6 +5,8 @@ from azure.cosmos.aio import ContainerProxy
 from azure.cosmos import exceptions
 from pydantic import BaseModel, ValidationError
 
+from primary.persistence._utils import query_by_page
+
 from .cosmos_database import CosmosDatabase
 from .exceptions import (
     DatabaseAccessError,
@@ -123,6 +125,24 @@ class CosmosContainer(Generic[T]):
             raise
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("query_items_async", error)
+
+    async def query_items_by_page_token_async(
+        self,
+        query: str,
+        page_token: str | None,
+        parameters: Optional[List[Dict[str, object]]] = None,
+        page_size: Optional[int] = None,
+    ) -> tuple[list[T], str | None]:
+        query_iterable = self._container.query_items(query=query, parameters=parameters, max_item_count=page_size)
+
+        pager = query_by_page(query_iterable, page_token)
+        page = await anext(pager)
+
+        token = pager.continuation_token
+
+        items = [self._validation_model.model_validate(item) async for item in page]
+
+        return (items, token)
 
     async def get_item_async(self, item_id: str, partition_key: str) -> T:
         try:

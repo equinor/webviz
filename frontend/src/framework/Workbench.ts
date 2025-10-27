@@ -1,7 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-
-import { getRecentSnapshotsQueryKey } from "@api";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ConfirmationService } from "./ConfirmationService";
@@ -25,10 +23,11 @@ import {
     removeSessionIdFromUrl,
     removeSnapshotIdFromUrl,
 } from "./internal/WorkbenchSession/utils/url";
-import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
+import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSessionPersistenceService";
 import type { Template } from "./TemplateRegistry";
 import { ApiErrorHelper } from "./utils/ApiErrorHelper";
 import type { WorkbenchServices } from "./WorkbenchServices";
+import { getVisitedSnapshotsQueryKey } from "@api";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",
@@ -380,7 +379,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, false);
 
         // Reset this, so it'll fetch fresh copies
-        this._queryClient.resetQueries({ queryKey: getRecentSnapshotsQueryKey() });
+        this._queryClient.resetQueries({ queryKey: getVisitedSnapshotsQueryKey() });
 
         return snapshotId;
     }

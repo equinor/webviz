@@ -2,11 +2,11 @@ import type React from "react";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getRecentSnapshotsOptions, getRecentSnapshotsQueryKey } from "@api";
 import { GuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { timeAgo } from "@lib/utils/dates";
+import { getVisitedSnapshotsOptions, getVisitedSnapshotsQueryKey } from "@api";
 
 export type RecentSnapshotsProps = {
     workbench: Workbench;
@@ -14,7 +14,7 @@ export type RecentSnapshotsProps = {
 
 export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
     const recentSnapshotsQuery = useQuery({
-        ...getRecentSnapshotsOptions(),
+        ...getVisitedSnapshotsOptions(),
         refetchInterval: 10000,
     });
 
@@ -30,7 +30,7 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
 
         props.workbench.getGuiMessageBroker().setState(GuiState.IsLoadingSession, false);
         // Reset query so that fresh snapshots are fetched when we return to the start page
-        props.workbench.getQueryClient().resetQueries({ queryKey: getRecentSnapshotsQueryKey() });
+        props.workbench.getQueryClient().resetQueries({ queryKey: getVisitedSnapshotsQueryKey() });
     }
 
     if (recentSnapshotsQuery.isPending) {
@@ -45,13 +45,13 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
         return <span className="text-red-800">Could not fetch recent snapshots...</span>;
     }
 
-    if (!recentSnapshotsQuery.data.length) {
+    if (!recentSnapshotsQuery.data.items.length) {
         return <span className="text-gray-500">No recently visited snapshots.</span>;
     }
 
     return (
         <ul className="pl-5">
-            {recentSnapshotsQuery.data.map((snapshot) => (
+            {recentSnapshotsQuery.data.items.map((snapshot) => (
                 <li key={snapshot.snapshotId} className="flex justify-between gap-4">
                     <a
                         className="text-blue-600 hover:underline"

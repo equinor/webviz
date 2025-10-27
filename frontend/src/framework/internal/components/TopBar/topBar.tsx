@@ -9,7 +9,7 @@ import FmuLogo from "@assets/fmu.svg";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
-import { WorkbenchSessionPersistenceServiceTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionPersistenceService";
+import { WorkbenchSessionPersistenceServiceTopic } from "@framework/internal/WorkbenchSessionPersistenceService";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";

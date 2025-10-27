@@ -1,31 +1,31 @@
 import logging
-from typing import List, Optional
+from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 
 from primary.persistence.session_store.session_store import SessionStore
-from primary.persistence.session_store.types import NewSession, SessionSortBy, SessionUpdate
+from primary.persistence.session_store.types import SessionSortBy
 from primary.persistence.tasks.mark_logs_deleted_task import mark_logs_deleted_task
 from primary.persistence.snapshot_store.snapshot_store import SnapshotStore
 from primary.persistence.snapshot_store.snapshot_access_log_store import SnapshotAccessLogStore
-from primary.persistence.cosmosdb.query_collation_options import QueryCollationOptions, SortDirection
+from primary.persistence.cosmosdb.query_collation_options import Filter, SortDirection
 from primary.persistence.snapshot_store.types import (
-    NewSnapshot,
-    SnapshotSortBy,
     SnapshotAccessLogSortBy,
+    SnapshotSortBy,
 )
 from primary.middleware.add_browser_cache import no_cache
 
 
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
 from .converters import (
+    from_api_new_session,
+    from_api_new_snapshot,
+    from_api_session_update,
     to_api_session_metadata,
-    to_api_session_metadata_summary,
-    to_api_session_record,
+    to_api_session,
     to_api_snapshot,
     to_api_snapshot_access_log,
     to_api_snapshot_metadata,
-    to_api_snapshot_metadata_summary,
 )
 
 
@@ -35,153 +35,220 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/sessions", response_model=List[schemas.SessionMetadataWithId])
+@router.get("/sessions")
 @no_cache
 async def get_sessions_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    sort_by: Optional[SessionSortBy] = Query(None, description="Sort the result by"),
+    cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
+    sort_by: Optional[SessionSortBy] = Query(None, description="Field to sort by (e.g., 'metadata.title')"),
     sort_direction: Optional[SortDirection] = Query(SortDirection.ASC, description="Sort direction: 'asc' or 'desc'"),
-    limit: int = Query(10, ge=1, le=100, description="Limit the number of results"),
-    page: int = Query(0, ge=0),
-) -> list[schemas.SessionMetadataWithId]:
-    access = SessionStore.create(user.get_user_id())
-    async with access:
-        items = await access.get_filtered_sessions_metadata_for_user_async(
+    sort_lowercase: bool = Query(False, description="Use case-insensitive sorting"),
+    page_size: int = Query(10, ge=1, le=100, description="Limit the number of results"),
+    # ? Is this becoming too many args? Should we make a post-search endpoint instead?
+    filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
+    filter_updated_from: Optional[str] = Query(None, description="Filter results by date"),
+    filter_updated_to: Optional[str] = Query(None, description="Filter results by date"),
+) -> schemas.Page[schemas.SessionMetadata]:
+    """
+    Get session metadata with pagination and sorting.
+
+    Returns a paginated response with items and continuation token.
+    """
+    session_store = SessionStore.create(user.get_user_id())
+    async with session_store:
+        filters = []
+        if filter_title:
+            filters.append(Filter("metadata.title__lower", filter_title.lower(), "CONTAINS"))
+        if filter_updated_from:
+            filters.append(Filter("metadata.updated_at", filter_updated_from, "MORE", "_from"))
+        if filter_updated_to:
+            filters.append(Filter("metadata.updated_at", filter_updated_to, "LESS", "_to"))
+
+        items, token = await session_store.get_many_async(
+            page_token=cursor,
+            page_size=page_size,
             sort_by=sort_by,
             sort_direction=sort_direction,
-            limit=limit,
-            offset=limit * page,
+            sort_lowercase=sort_lowercase,
+            filters=filters if filters else None,
         )
 
-        return [to_api_session_metadata_summary(item) for item in items]
+        return schemas.Page(items=[to_api_session_metadata(item) for item in items], continuation_token=token)
 
 
-@router.get("/sessions/{session_id}", response_model=schemas.SessionDocument)
+@router.get("/sessions/{session_id}")
 @no_cache
 async def get_session(
     session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
-) -> schemas.SessionDocument:
-    access = SessionStore.create(user.get_user_id())
-    async with access:
-        session = await access.get_session_by_id_async(session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
-        return to_api_session_record(session)
+) -> schemas.Session:
+    session_store = SessionStore.create(user.get_user_id())
+    async with session_store:
+        session = await session_store.get_async(session_id)
+        return to_api_session(session)
 
 
-@router.get("/sessions/metadata/{session_id}", response_model=schemas.SessionMetadata)
+@router.get("/sessions/metadata/{session_id}")
 @no_cache
 async def get_session_metadata(
     session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.SessionMetadata:
-    access = SessionStore.create(user.get_user_id())
-    async with access:
-        metadata = await access.get_session_metadata_async(session_id)
-        if not metadata:
-            raise HTTPException(status_code=404, detail="Session metadata not found")
-        return to_api_session_metadata(metadata)
+    session_store = SessionStore.create(user.get_user_id())
+    async with session_store:
+        session = await session_store.get_async(session_id)
+        return to_api_session_metadata(session)
 
 
-@router.post("/sessions", response_model=str)
+@router.post("/sessions")
 async def create_session(
-    session: NewSession, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+    session: schemas.NewSession, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:
-    access = SessionStore.create(user.get_user_id())
-    async with access:
-        session_id = await access.insert_session_async(session)
+    session_store = SessionStore.create(user.get_user_id())
+    async with session_store:
+        session_id = await session_store.create_async(from_api_new_session(session))
         return session_id
 
 
 @router.put("/sessions/{session_id}", description="Updates a session object. Allows for partial update objects")
 async def update_session(
     session_id: str,
-    session_update: SessionUpdate,
+    session_update: schemas.SessionUpdate,
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> schemas.SessionDocument:
-    access = SessionStore.create(user.get_user_id())
-    async with access:
-        updated_session = await access.update_session_async(session_id, session_update)
-        return to_api_session_record(updated_session)
+) -> schemas.Session:
+    session_store = SessionStore.create(user.get_user_id())
+    async with session_store:
+        updated_session = await session_store.update_async(session_id, from_api_session_update(session_update))
+        return to_api_session(updated_session)
 
 
 @router.delete("/sessions/{session_id}")
 async def delete_session(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)) -> None:
-    access = SessionStore.create(user.get_user_id())
-    async with access:
-        await access.delete_session_async(session_id)
+    session_store = SessionStore.create(user.get_user_id())
+    async with session_store:
+        await session_store.delete_async(session_id)
 
 
-@router.get("/recent_snapshots", response_model=list[schemas.SnapshotAccessLog])
-async def get_recent_snapshots(
+@router.get("/visited_snapshots")
+# pylint: disable=too-many-arguments
+async def get_visited_snapshots(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    # ! Must be named "cursor" or "page" to make hey-api generate infinite-queries
+    # ! When we've updated to the latest hey-api version, we can change this to something custom
+    cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
+    page_size: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
     sort_by: Optional[SnapshotAccessLogSortBy] = Query(None, description="Sort the result by"),
     sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
-    limit: Optional[int] = Query(None, ge=1, le=100, description="Limit the number of results"),
-    offset: Optional[int] = Query(None, ge=0, description="The offset of the results"),
-) -> list[schemas.SnapshotAccessLog]:
-    async with SnapshotAccessLogStore.create(user.get_user_id()) as log_access:
-        collation_options = QueryCollationOptions(sort_by=sort_by, sort_dir=sort_direction, limit=limit, offset=offset)
+    sort_lowercase: bool = Query(False, description="Use case-insensitive sorting"),
+    # ? Is this becoming too many args? Should we make a post-search endpoint instead?
+    filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
+    filter_created_from: Optional[str] = Query(None, description="Filter results by date"),
+    filter_created_to: Optional[str] = Query(None, description="Filter results by date"),
+    filter_last_visited_from: Optional[str] = Query(None, description="Filter results by date of last visit"),
+    filter_last_visited_to: Optional[str] = Query(None, description="Filter results by date of last visit"),
+) -> schemas.Page[schemas.SnapshotAccessLog]:
 
-        recent_logs = await log_access.get_access_logs_for_user_async(collation_options)
+    log_store = SnapshotAccessLogStore.create(user.get_user_id())
 
-        return [to_api_snapshot_access_log(log) for log in recent_logs]
+    async with log_store:
+        filters = []
+        if filter_title:
+            filters.append(Filter("snapshot_metadata.title__lower", filter_title.lower(), "CONTAINS"))
+        if filter_created_from:
+            filters.append(Filter("snapshot_metadata.created_at", filter_created_from, "MORE", "_from"))
+        if filter_created_to:
+            filters.append(Filter("snapshot_metadata.created_at", filter_created_to, "LESS", "_to"))
+        if filter_last_visited_from:
+            filters.append(Filter("last_visited_at", filter_last_visited_from, "MORE", "_from"))
+        if filter_last_visited_to:
+            filters.append(Filter("last_visited_at", filter_last_visited_to, "LESS", "_to"))
+
+        (items, cont_token) = await log_store.get_many_for_user_async(
+            page_token=cursor,
+            page_size=page_size,
+            sort_by=sort_by,
+            sort_direction=sort_direction,
+            sort_lowercase=sort_lowercase,
+            filters=filters if filters else None,
+        )
+
+        return schemas.Page(items=[to_api_snapshot_access_log(item) for item in items], continuation_token=cont_token)
 
 
-@router.get("/snapshots", response_model=List[schemas.SnapshotMetadata])
+@router.get("/snapshots")
 @no_cache
 async def get_snapshots_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    sort_by: Optional[SnapshotSortBy] = Query(SnapshotSortBy.UPDATED_AT, description="Sort the result by"),
-    sort_direction: Optional[SortDirection] = Query(SortDirection.DESC, description="Sort direction: 'asc' or 'desc'"),
-    limit: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
-) -> List[schemas.SnapshotMetadata]:
-    access = SnapshotStore.create(user.get_user_id())
-    async with access:
-        items = await access.get_filtered_snapshots_metadata_for_user_async(
-            sort_by=sort_by, sort_direction=sort_direction, limit=limit, offset=0
+    # ! Must be named "cursor" or "page" to make hey-api generate infinite-queries
+    # ! When we've updated to the latest hey-api version, we can change this to something custom
+    cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
+    page_size: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
+    sort_by: Optional[SnapshotSortBy] = Query(None, description="Sort the result by"),
+    sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
+    sort_lowercase: bool = Query(False, description="Use case-insensitive sorting"),
+    # ? Is this becoming too many args? Should we make a post-search endpoint instead?
+    filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
+    filter_created_from: Optional[str] = Query(None, description="Filter results by date"),
+    filter_created_to: Optional[str] = Query(None, description="Filter results by date"),
+) -> schemas.Page[schemas.SnapshotMetadata]:
+    snapshot_store = SnapshotStore.create(user.get_user_id())
+    async with snapshot_store:
+        filters = []
+        if filter_title:
+            filters.append(Filter("metadata.title__lower", filter_title.lower(), "CONTAINS"))
+        if filter_created_from:
+            filters.append(Filter("metadata.created_at", filter_created_from, "MORE", "_from"))
+        if filter_created_to:
+            filters.append(Filter("metadata.created_at", filter_created_to, "LESS", "_to"))
+
+        items, cont_token = await snapshot_store.get_many_async(
+            page_token=cursor,
+            page_size=page_size,
+            sort_by=sort_by,
+            sort_direction=sort_direction,
+            sort_lowercase=sort_lowercase,
+            filters=filters if filters else None,
         )
-        return [to_api_snapshot_metadata_summary(item) for item in items]
+        return schemas.Page(items=[to_api_snapshot_metadata(item) for item in items], continuation_token=cont_token)
 
 
-@router.get("/snapshots/{snapshot_id}", response_model=schemas.Snapshot)
+@router.get("/snapshots/{snapshot_id}")
 @no_cache
 async def get_snapshot(
     snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.Snapshot:
-    snapshot_access = SnapshotStore.create(user.get_user_id())
-    log_access = SnapshotAccessLogStore.create(user_id=user.get_user_id())
+    snapshot_store = SnapshotStore.create(user.get_user_id())
+    log_store = SnapshotAccessLogStore.create(user_id=user.get_user_id())
 
-    async with snapshot_access, log_access:
-        snapshot = await snapshot_access.get_snapshot_by_id_async(snapshot_id)
+    async with snapshot_store, log_store:
+        snapshot = await snapshot_store.get_async(snapshot_id)
         # Should we clear the log if a snapshot was not found? This could mean that the snapshot was
         # deleted but deletion of logs has failed
-        await log_access.log_snapshot_visit_async(snapshot_id, snapshot.owner_id)
+        await log_store.log_snapshot_visit_async(snapshot_id, snapshot.owner_id)
         return to_api_snapshot(snapshot)
 
 
-@router.get("/snapshots/metadata/{snapshot_id}", response_model=schemas.SnapshotMetadata)
+@router.get("/snapshots/metadata/{snapshot_id}")
 @no_cache
 async def get_snapshot_metadata(
     snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.SnapshotMetadata:
-    access = SnapshotStore.create(user.get_user_id())
-    async with access:
-        metadata = await access.get_snapshot_metadata_async(snapshot_id)
-        return to_api_snapshot_metadata(metadata)
+    snapshot_store = SnapshotStore.create(user.get_user_id())
+    async with snapshot_store:
+        snapshot = await snapshot_store.get_async(snapshot_id)
+        return to_api_snapshot_metadata(snapshot)
 
 
-@router.post("/snapshots", response_model=str)
+@router.post("/snapshots")
 async def create_snapshot(
-    session: NewSnapshot, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+    snapshot: schemas.NewSnapshot, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:
     snapshot_access = SnapshotStore.create(user.get_user_id())
-    log_access = SnapshotAccessLogStore.create(user.get_user_id())
+    log_store = SnapshotAccessLogStore.create(user.get_user_id())
 
-    async with snapshot_access, log_access:
-        snapshot_id = await snapshot_access.insert_snapshot_async(session)
+    async with snapshot_access, log_store:
+        snapshot_id = await snapshot_access.create_async(from_api_new_snapshot(snapshot))
 
         # We count snapshot creation as implicit visit. This also makes it so we can get recently created ones alongside other shared screenshots
-        await log_access.log_snapshot_visit_async(snapshot_id=snapshot_id, snapshot_owner_id=user.get_user_id())
+        await log_store.log_snapshot_visit_async(snapshot_id=snapshot_id, snapshot_owner_id=user.get_user_id())
         return snapshot_id
 
 
@@ -191,9 +258,9 @@ async def delete_snapshot(
     background_tasks: BackgroundTasks,
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> None:
-    snapshot_access = SnapshotStore.create(user.get_user_id())
-    async with snapshot_access:
-        await snapshot_access.delete_snapshot_async(snapshot_id)
+    snapshot_store = SnapshotStore.create(user.get_user_id())
+    async with snapshot_store:
+        await snapshot_store.delete_async(snapshot_id)
 
     # This is the fastest solution for the moment. As we are expecting <= 150 logs per snapshot
     # and consistency is not critical, we can afford to do this in the background and without

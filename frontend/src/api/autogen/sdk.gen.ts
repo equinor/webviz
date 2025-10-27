@@ -216,9 +216,9 @@ import type {
     GetSessionMetadataData_api,
     GetSessionMetadataResponse_api,
     GetSessionMetadataError_api,
-    GetRecentSnapshotsData_api,
-    GetRecentSnapshotsResponse_api,
-    GetRecentSnapshotsError_api,
+    GetVisitedSnapshotsData_api,
+    GetVisitedSnapshotsResponse_api,
+    GetVisitedSnapshotsError_api,
     GetSnapshotsMetadataData_api,
     GetSnapshotsMetadataResponse_api,
     GetSnapshotsMetadataError_api,
@@ -233,9 +233,6 @@ import type {
     GetSnapshotMetadataData_api,
     GetSnapshotMetadataResponse_api,
     GetSnapshotMetadataError_api,
-    SnapshotPreviewData_api,
-    SnapshotPreviewResponse_api,
-    SnapshotPreviewError_api,
     LoginRouteData_api,
     LoginRouteError_api,
     AuthorizedCallbackRouteData_api,
@@ -1288,6 +1285,9 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(options: Optio
 
 /**
  * Get Sessions Metadata
+ * Get session metadata with pagination and sorting.
+ *
+ * Returns a paginated response with items and continuation token.
  */
 export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
     options?: Options<GetSessionsMetadataData_api, ThrowOnError>,
@@ -1366,14 +1366,14 @@ export const getSessionMetadata = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Recent Snapshots
+ * Get Visited Snapshots
  */
-export const getRecentSnapshots = <ThrowOnError extends boolean = false>(
-    options?: Options<GetRecentSnapshotsData_api, ThrowOnError>,
+export const getVisitedSnapshots = <ThrowOnError extends boolean = false>(
+    options?: Options<GetVisitedSnapshotsData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetRecentSnapshotsResponse_api, GetRecentSnapshotsError_api, ThrowOnError>({
+    return (options?.client ?? client).get<GetVisitedSnapshotsResponse_api, GetVisitedSnapshotsError_api, ThrowOnError>({
         ...options,
-        url: "/persistence/recent_snapshots",
+        url: "/persistence/visited_snapshots",
     });
 };
 
@@ -1436,19 +1436,6 @@ export const getSnapshotMetadata = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetSnapshotMetadataResponse_api, GetSnapshotMetadataError_api, ThrowOnError>({
         ...options,
         url: "/persistence/snapshots/metadata/{snapshot_id}",
-    });
-};
-
-/**
- * Snapshot Preview
- */
-export const snapshotPreview = <ThrowOnError extends boolean = false>(
-    options: Options<SnapshotPreviewData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<SnapshotPreviewResponse_api, SnapshotPreviewError_api, ThrowOnError>({
-        ...options,
-        responseType: "text",
-        url: "/persistence/snapshot_preview/{snapshot_id}",
     });
 };
 

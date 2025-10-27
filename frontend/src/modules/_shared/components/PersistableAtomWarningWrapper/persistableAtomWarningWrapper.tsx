@@ -11,7 +11,7 @@ export type PersistableAtomWarningWrapperProps<T> = {
 };
 
 export function PersistableAtomWarningWrapper<T>(props: PersistableAtomWarningWrapperProps<T>) {
-    const { isValidInContext, _source } = useAtomValue(props.atom);
+    const { isValidInContext } = useAtomValue(props.atom);
 
     let warningMessage = makePersistableAtomWarningMessage(props.atom);
 

@@ -448,6 +448,21 @@ export type Observations_api = {
     rft?: Array<RftObservations_api>;
 };
 
+export type PageSessionMetadata_api = {
+    items: Array<SessionMetadata_api>;
+    continuation_token?: string | null;
+};
+
+export type PageSnapshotAccessLog_api = {
+    items: Array<SnapshotAccessLog_api>;
+    continuation_token?: string | null;
+};
+
+export type PageSnapshotMetadata_api = {
+    items: Array<SnapshotMetadata_api>;
+    continuation_token?: string | null;
+};
+
 export type PointSetXy_api = {
     x_points: Array<number>;
     y_points: Array<number>;
@@ -719,52 +734,35 @@ export enum SensitivityType_api {
     SCENARIO = "scenario",
 }
 
-export type SessionDocument_api = {
-    id: string;
-    ownerId: string;
+export type Session_api = {
     metadata: SessionMetadata_api;
     content: string;
 };
 
 export type SessionMetadata_api = {
-    title: string;
-    description: string | null;
-    createdAt: string;
-    updatedAt: string;
-    version: number;
-    hash: string;
-};
-
-export type SessionMetadataUpdate_api = {
-    title?: string;
-    description?: string | null;
-};
-
-export type SessionMetadataWithId_api = {
-    title: string;
-    description: string | null;
-    createdAt: string;
-    updatedAt: string;
-    version: number;
-    hash: string;
     id: string;
+    ownerId: string;
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+    content_hash: string;
 };
 
 export enum SessionSortBy_api {
-    CREATED_AT = "created_at",
-    UPDATED_AT = "updated_at",
-    TITLE = "title",
-    TITLE_LOWER = "title_lower",
+    METADATA_CREATED_AT = "metadata.created_at",
+    METADATA_UPDATED_AT = "metadata.updated_at",
+    METADATA_TITLE = "metadata.title",
 }
 
 export type SessionUpdate_api = {
-    id: string;
-    metadata?: SessionMetadataUpdate_api;
-    content?: string;
+    title?: string | null;
+    description?: string | null;
+    content?: string | null;
 };
 
 export type Snapshot_api = {
-    id: string;
     metadata: SnapshotMetadata_api;
     content: string;
 };
@@ -788,12 +786,12 @@ export enum SnapshotAccessLogSortBy_api {
 }
 
 export type SnapshotMetadata_api = {
+    id: string;
     ownerId: string;
     title: string;
     description: string | null;
     createdAt: string;
-    updatedAt: string;
-    hash: string;
+    content_hash: string;
 };
 
 export enum SnapshotSortBy_api {
@@ -4070,7 +4068,11 @@ export type GetSessionsMetadataData_api = {
     path?: never;
     query?: {
         /**
-         * Sort the result by
+         * Continuation token for pagination
+         */
+        cursor?: string | null;
+        /**
+         * Field to sort by (e.g., 'metadata.title')
          */
         sort_by?: SessionSortBy_api | null;
         /**
@@ -4078,10 +4080,25 @@ export type GetSessionsMetadataData_api = {
          */
         sort_direction?: SortDirection_api | null;
         /**
+         * Use case-insensitive sorting
+         */
+        sort_lowercase?: boolean;
+        /**
          * Limit the number of results
          */
-        limit?: number;
-        page?: number;
+        page_size?: number;
+        /**
+         * Filter results by title (case insensitive)
+         */
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_updated_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_updated_to?: string | null;
         t?: number;
     };
     url: "/persistence/sessions";
@@ -4100,7 +4117,7 @@ export type GetSessionsMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<SessionMetadataWithId_api>;
+    200: PageSessionMetadata_api;
 };
 
 export type GetSessionsMetadataResponse_api = GetSessionsMetadataResponses_api[keyof GetSessionsMetadataResponses_api];
@@ -4183,7 +4200,7 @@ export type GetSessionResponses_api = {
     /**
      * Successful Response
      */
-    200: SessionDocument_api;
+    200: Session_api;
 };
 
 export type GetSessionResponse_api = GetSessionResponses_api[keyof GetSessionResponses_api];
@@ -4212,7 +4229,7 @@ export type UpdateSessionResponses_api = {
     /**
      * Successful Response
      */
-    200: SessionDocument_api;
+    200: Session_api;
 };
 
 export type UpdateSessionResponse_api = UpdateSessionResponses_api[keyof UpdateSessionResponses_api];
@@ -4246,10 +4263,18 @@ export type GetSessionMetadataResponses_api = {
 
 export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
 
-export type GetRecentSnapshotsData_api = {
+export type GetVisitedSnapshotsData_api = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Continuation token for pagination
+         */
+        cursor?: string | null;
+        /**
+         * Limit the number of results
+         */
+        page_size?: number | null;
         /**
          * Sort the result by
          */
@@ -4259,40 +4284,64 @@ export type GetRecentSnapshotsData_api = {
          */
         sort_direction?: SortDirection_api | null;
         /**
-         * Limit the number of results
+         * Use case-insensitive sorting
          */
-        limit?: number | null;
+        sort_lowercase?: boolean;
         /**
-         * The offset of the results
+         * Filter results by title (case insensitive)
          */
-        offset?: number | null;
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_to?: string | null;
+        /**
+         * Filter results by date of last visit
+         */
+        filter_last_visited_from?: string | null;
+        /**
+         * Filter results by date of last visit
+         */
+        filter_last_visited_to?: string | null;
         t?: number;
     };
-    url: "/persistence/recent_snapshots";
+    url: "/persistence/visited_snapshots";
 };
 
-export type GetRecentSnapshotsErrors_api = {
+export type GetVisitedSnapshotsErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetRecentSnapshotsError_api = GetRecentSnapshotsErrors_api[keyof GetRecentSnapshotsErrors_api];
+export type GetVisitedSnapshotsError_api = GetVisitedSnapshotsErrors_api[keyof GetVisitedSnapshotsErrors_api];
 
-export type GetRecentSnapshotsResponses_api = {
+export type GetVisitedSnapshotsResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<SnapshotAccessLog_api>;
+    200: PageSnapshotAccessLog_api;
 };
 
-export type GetRecentSnapshotsResponse_api = GetRecentSnapshotsResponses_api[keyof GetRecentSnapshotsResponses_api];
+export type GetVisitedSnapshotsResponse_api = GetVisitedSnapshotsResponses_api[keyof GetVisitedSnapshotsResponses_api];
 
 export type GetSnapshotsMetadataData_api = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Continuation token for pagination
+         */
+        cursor?: string | null;
+        /**
+         * Limit the number of results
+         */
+        page_size?: number | null;
         /**
          * Sort the result by
          */
@@ -4302,9 +4351,21 @@ export type GetSnapshotsMetadataData_api = {
          */
         sort_direction?: SortDirection_api | null;
         /**
-         * Limit the number of results
+         * Use case-insensitive sorting
          */
-        limit?: number | null;
+        sort_lowercase?: boolean;
+        /**
+         * Filter results by title (case insensitive)
+         */
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_to?: string | null;
         t?: number;
     };
     url: "/persistence/snapshots";
@@ -4323,7 +4384,7 @@ export type GetSnapshotsMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<SnapshotMetadata_api>;
+    200: PageSnapshotMetadata_api;
 };
 
 export type GetSnapshotsMetadataResponse_api = GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
@@ -4439,35 +4500,6 @@ export type GetSnapshotMetadataResponses_api = {
 };
 
 export type GetSnapshotMetadataResponse_api = GetSnapshotMetadataResponses_api[keyof GetSnapshotMetadataResponses_api];
-
-export type SnapshotPreviewData_api = {
-    body?: never;
-    path: {
-        snapshot_id: string;
-    };
-    query?: {
-        t?: number;
-    };
-    url: "/persistence/snapshot_preview/{snapshot_id}";
-};
-
-export type SnapshotPreviewErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type SnapshotPreviewError_api = SnapshotPreviewErrors_api[keyof SnapshotPreviewErrors_api];
-
-export type SnapshotPreviewResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: string;
-};
-
-export type SnapshotPreviewResponse_api = SnapshotPreviewResponses_api[keyof SnapshotPreviewResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;

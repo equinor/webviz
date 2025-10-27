@@ -17,11 +17,14 @@ import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunct
 import {
     createSessionWithCacheUpdate,
     createSnapshotWithCacheUpdate,
-    updateSessionWithCacheUpdate,
-} from "./utils/crudHelpers";
-import { hashSessionContentString, objectToJsonString } from "./utils/hash";
-import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
-import { makeWorkbenchSessionLocalStorageString, makeWorkbenchSessionStateString } from "./utils/serialization";
+    updateSessionAndCache,
+} from "./WorkbenchSession/utils/crudHelpers";
+import { hashSessionContentString, objectToJsonString } from "./WorkbenchSession/utils/hash";
+import { localStorageKeyForSessionId } from "./WorkbenchSession/utils/localStorageHelpers";
+import {
+    makeWorkbenchSessionLocalStorageString,
+    makeWorkbenchSessionStateString,
+} from "./WorkbenchSession/utils/serialization";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -399,13 +402,10 @@ export class WorkbenchSessionPersistenceService
                 if (!id) {
                     throw new Error("Session ID is not set. Cannot update session state.");
                 }
-                await updateSessionWithCacheUpdate(queryClient, {
-                    id,
+                await updateSessionAndCache(queryClient, id, {
+                    title: metadata.title,
+                    description: metadata.description ?? null,
                     content: objectToJsonString(this._workbenchSession.getContent()),
-                    metadata: {
-                        title: metadata.title,
-                        description: metadata.description,
-                    },
                 });
                 // On successful update, we can safely remove the local storage recovery entry
                 this.removeFromLocalStorage();

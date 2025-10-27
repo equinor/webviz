@@ -28,21 +28,22 @@ export async function createSessionWithCacheUpdate(
     return response.data;
 }
 
-export async function updateSessionWithCacheUpdate(
+export async function updateSessionAndCache(
     queryClient: QueryClient,
-    sessionData: SessionUpdate_api,
+    sessionId: string,
+    sessionUpdate: SessionUpdate_api,
 ): Promise<void> {
     await updateSession<true>({
         throwOnError: true,
         path: {
-            session_id: sessionData.id,
+            session_id: sessionId,
         },
-        body: sessionData,
+        body: sessionUpdate,
     });
 
     // Invalidate the cache for the session to ensure the updated session is fetched
     queryClient.invalidateQueries({
-        queryKey: getSessionQueryKey({ path: { session_id: sessionData.id } }),
+        queryKey: getSessionQueryKey({ path: { session_id: sessionId } }),
     });
     queryClient.invalidateQueries({
         queryKey: getSessionsMetadataQueryKey(),

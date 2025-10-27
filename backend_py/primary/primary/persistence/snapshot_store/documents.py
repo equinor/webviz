@@ -1,15 +1,33 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
-from pydantic import computed_field
-
-
-from .types import SnapshotMetadata
+from typing import Optional
+from pydantic import BaseModel, ConfigDict, computed_field
 
 from .utils import make_access_log_item_id
 
 
+class SnapshotMetadata(BaseModel):
+    title: str
+    description: Optional[str] = None
+    created_at: datetime
+    content_hash: str
+
+    # Computed lowercase fields for case-insensitive collation
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def title__lower(self) -> str:
+        return self.title.lower()
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def description__lower(self) -> str | None:
+        if self.description is None:
+            return None
+
+        return self.description.lower()
+
+
 class SnapshotDocument(BaseModel):
-    id: str  # Partition key
+    id: str  # id of the snapshot document - has to be at top level - also used as partition key
     owner_id: str
     metadata: SnapshotMetadata
     content: str
@@ -20,7 +38,7 @@ class SnapshotDocument(BaseModel):
 class SnapshotAccessLogDocument(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    visitor_id: str  # Partition key
+    visitor_id: str  # user id of the visitor - also used as partition key
     snapshot_id: str
     snapshot_owner_id: str
     visits: int = 0
@@ -35,6 +53,6 @@ class SnapshotAccessLogDocument(BaseModel):
     @computed_field  # type: ignore[prop-decorator]
     @property
     # pylint: disable=invalid-name
-    # ↳ pylint v2 will complain about names that are shorter than 3 characters
+    # -> pylint v2 will complain about names that are shorter than 3 characters
     def id(self) -> str:
         return make_access_log_item_id(self.snapshot_id, self.visitor_id)

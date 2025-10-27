@@ -22,9 +22,9 @@ export function RecentSessions(props: RecentSessionsProps) {
     const sessionsQuery = useQuery({
         ...getSessionsMetadataOptions({
             query: {
-                sort_by: SessionSortBy_api.UPDATED_AT,
+                sort_by: SessionSortBy_api.METADATA_UPDATED_AT,
                 sort_direction: SortDirection_api.DESC,
-                limit: 5,
+                page_size: 5,
             },
         }),
         refetchInterval: 10000,
@@ -55,10 +55,10 @@ export function RecentSessions(props: RecentSessionsProps) {
             return <span className="text-red-800">Could not fetch recent sessions...</span>;
         }
 
-        if (state === "success" && sessionsQuery.data && sessionsQuery.data.length > 0) {
+        if (state === "success" && sessionsQuery.data && sessionsQuery.data.items.length > 0) {
             return (
                 <ul className="pl-5">
-                    {sessionsQuery.data.map((session) => (
+                    {sessionsQuery.data.items.map((session) => (
                         <li key={session.id} className="flex items-center justify-between gap-4">
                             <a
                                 href="#"
