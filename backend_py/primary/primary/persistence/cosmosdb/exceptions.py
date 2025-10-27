@@ -35,3 +35,7 @@ class DatabaseAccessThrottledError(DatabaseAccessError):
 
 class DatabaseAccessTransportError(DatabaseAccessError):
     """Other transport / HTTP errors."""
+
+
+class DatabaseAccessIntegrityError(DatabaseAccessError):
+    """Data integrity error."""

@@ -41,7 +41,7 @@ async def get_sessions_metadata(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
     sort_by: Optional[SessionSortBy] = Query(None, description="Field to sort by (e.g., 'metadata.title')"),
-    sort_direction: Optional[SortDirection] = Query(SortDirection.ASC, description="Sort direction: 'asc' or 'desc'"),
+    sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
     sort_lowercase: bool = Query(False, description="Use case-insensitive sorting"),
     page_size: int = Query(10, ge=1, le=100, description="Limit the number of results"),
     filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
@@ -295,7 +295,7 @@ async def get_snapshots_metadata(
     Snapshots are immutable records that can be shared with others.
     They are separate from sessions and are intended for point-in-time captures.
 
-    Note: Consider using `/visited_snapshots` to see both your snapshots and ones shared with you.
+    Note: Consider using `/snapshot_access_logs` to see both your snapshots and ones shared with you.
     """
     snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     async with snapshot_store:

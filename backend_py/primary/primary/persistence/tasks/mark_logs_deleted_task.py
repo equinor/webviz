@@ -12,6 +12,10 @@ LOGGER = logging.getLogger(__name__)
 DATABASE_NAME = "persistence"
 CONTAINER_NAME = "snapshot_access_logs"
 
+# To avoid overwhelming the database with too many concurrent PATCH operations
+# (which can lead to throttling or Request Unit (RU) spikes), we limit concurrency.
+MAX_CONCURRENT_PATCH_OPS = 32
+
 
 async def mark_logs_deleted_task(snapshot_id: str) -> None:
     """
@@ -45,7 +49,7 @@ async def mark_logs_deleted_task(snapshot_id: str) -> None:
         ]
 
         # Limit concurrency to avoid RU spikes/throttling
-        sem = asyncio.Semaphore(32)
+        sem = asyncio.Semaphore(MAX_CONCURRENT_PATCH_OPS)
 
         async def _patch_one(rec: Dict[str, Any]) -> bool:
             async with sem:
