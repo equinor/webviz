@@ -121,7 +121,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 if (isNewModule && moduleName) {
                     const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
                     if (layoutElement) {
-                        const instance = dashboard.makeAndAddModuleInstance(moduleName, layoutElement);
+                        const instance = dashboard.makeAndAddModuleInstance(moduleName);
+                        dashboard.setLayout(currentLayout);
                         layoutElement.moduleInstanceId = instance.getId();
                         layoutElement.moduleName = instance.getName();
                     }
@@ -373,7 +374,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         rows = Math.ceil(minimizedLayouts.length / elementsPerRow);
     }
 
-    function computeModuleLayoutProps(moduleInstance: ModuleInstance<any>) {
+    function computeModuleLayoutProps(moduleInstance: ModuleInstance<any, any>) {
         const moduleId = moduleInstance.getId();
         const layoutElement = layout.find((element) => element.moduleInstanceId === moduleId);
 

@@ -1,10 +1,40 @@
+import type { QueryClient } from "@tanstack/query-core";
+
+import { getSessionOptions, getSnapshotOptions } from "@api";
+
 import {
     localStorageKeyForSessionId,
     WORKBENCH_SESSION_LOCAL_STORAGE_KEY_PREFIX,
     WORKBENCH_SESSION_LOCAL_STORAGE_KEY_TEMP,
 } from "./localStorageHelpers";
-import { deserializeFromLocalStorage } from "./serialization";
+import {
+    deserializeSessionFromBackend,
+    deserializeFromLocalStorage,
+    deserializeSnapshotFromBackend,
+} from "./serialization";
 import type { WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
+
+export async function loadWorkbenchSessionFromBackend(
+    queryClient: QueryClient,
+    sessionId: string,
+): Promise<WorkbenchSessionDataContainer> {
+    const sessionData = await queryClient.fetchQuery({
+        ...getSessionOptions({ path: { session_id: sessionId } }),
+    });
+
+    return deserializeSessionFromBackend(sessionData);
+}
+
+export async function loadSnapshotFromBackend(
+    queryClient: QueryClient,
+    snapshotId: string,
+): Promise<WorkbenchSessionDataContainer> {
+    const snapshotData = await queryClient.fetchQuery({
+        ...getSnapshotOptions({ path: { snapshot_id: snapshotId } }),
+    });
+
+    return deserializeSnapshotFromBackend(snapshotData);
+}
 
 export async function loadWorkbenchSessionFromLocalStorage(
     sessionId: string | null,

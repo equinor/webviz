@@ -1,4 +1,4 @@
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -15,32 +15,24 @@ import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePr
 
 import type { Interfaces } from "../interfaces";
 import { PressureOption, VfpParam, VfpType } from "../types";
-import { VfpDataAccessor } from "../utils/vfpDataAccessor";
+import type { VfpApiDataAccessor } from "../utils/vfpApiDataAccessor";
 
-import {
-    userSelectedAlqIndicesAtom,
-    userSelectedColorByAtom,
-    userSelectedEnsembleIdentAtom,
-    userSelectedGfrIndicesAtom,
-    userSelectedPressureOptionAtom,
-    userSelectedRealizationNumberAtom,
-    userSelectedThpIndicesAtom,
-    userSelectedVfpTableNameAtom,
-    userSelectedWfrIndicesAtom,
-    validRealizationNumbersAtom,
-} from "./atoms/baseAtoms";
+import { selectedPressureOptionAtom } from "./atoms/baseAtoms";
 import {
     availableVfpTableNamesAtom,
+    availableRealizationNumbersAtom,
+    vfpDataAccessorWithStatusAtom,
+} from "./atoms/derivedAtoms";
+import {
     selectedAlqIndicesAtom,
     selectedColorByAtom,
     selectedEnsembleIdentAtom,
     selectedGfrIndicesAtom,
-    selectedPressureOptionAtom,
     selectedRealizationNumberAtom,
     selectedThpIndicesAtom,
     selectedVfpTableNameAtom,
     selectedWfrIndicesAtom,
-} from "./atoms/derivedAtoms";
+} from "./atoms/persistableFixableAtoms";
 import { vfpTableQueryAtom } from "./atoms/queryAtoms";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
@@ -49,74 +41,57 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const vfpTableQuery = useAtomValue(vfpTableQueryAtom);
 
-    const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
-    const setUserSelectedEnsembleIdent = useSetAtom(userSelectedEnsembleIdentAtom);
+    const vfpDataAccessorWithStatus = useAtomValue(vfpDataAccessorWithStatusAtom);
+    const vfpDataAccessor = vfpDataAccessorWithStatus.vfpApiDataAccessor;
 
-    const selectedRealizationNumber = useAtomValue(selectedRealizationNumberAtom);
-    const setUserSelectedRealizationNumber = useSetAtom(userSelectedRealizationNumberAtom);
+    const [userSelectedPressureOption, setUserSelectedPressureOption] = useAtom(selectedPressureOptionAtom);
 
-    const selectedVfpTableName = useAtomValue(selectedVfpTableNameAtom);
-    const setUserSelectedVfpName = useSetAtom(userSelectedVfpTableNameAtom);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
+    const [selectedRealizationNumber, setSelectedRealizationNumber] = useAtom(selectedRealizationNumberAtom);
+    const [selectedVfpTableName, setSelectedVfpTableName] = useAtom(selectedVfpTableNameAtom);
+    const [selectedThpIndicies, setSelectedThpIndices] = useAtom(selectedThpIndicesAtom);
+    const [selectedWfrIndicies, setSelectedWfrIndices] = useAtom(selectedWfrIndicesAtom);
+    const [selectedGfrIndicies, setSelectedGfrIndices] = useAtom(selectedGfrIndicesAtom);
+    const [selectedAlqIndicies, setSelectedAlqIndices] = useAtom(selectedAlqIndicesAtom);
+    const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
 
-    const setValidRealizationNumbersAtom = useSetAtom(validRealizationNumbersAtom);
-    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
-    const validRealizations = selectedEnsembleIdent ? [...filterEnsembleRealizationsFunc(selectedEnsembleIdent)] : null;
-    setValidRealizationNumbersAtom(validRealizations);
-
+    const availableRealizationNumbers = useAtomValue(availableRealizationNumbersAtom);
     const validVfpTableNames = useAtomValue(availableVfpTableNamesAtom);
-
-    const selectedThpIndicies = useAtomValue(selectedThpIndicesAtom);
-    const setUserSelectedThpIndices = useSetAtom(userSelectedThpIndicesAtom);
-
-    const selectedWfrIndicies = useAtomValue(selectedWfrIndicesAtom);
-    const setUserSelectedWfrIndices = useSetAtom(userSelectedWfrIndicesAtom);
-
-    const selectedGfrIndicies = useAtomValue(selectedGfrIndicesAtom);
-    const setUserSelectedGfrIndices = useSetAtom(userSelectedGfrIndicesAtom);
-
-    const selectedAlqIndicies = useAtomValue(selectedAlqIndicesAtom);
-    const setUserSelectedAlqIndices = useSetAtom(userSelectedAlqIndicesAtom);
-
-    const selectedPressureOption = useAtomValue(selectedPressureOptionAtom);
-    const setUserSelectedPressureOption = useSetAtom(userSelectedPressureOptionAtom);
-
-    const selectedColorBy = useAtomValue(selectedColorByAtom);
-    const setUserSelectedColorBy = useSetAtom(userSelectedColorByAtom);
 
     usePropagateApiErrorToStatusWriter(vfpTableQuery, statusWriter);
 
     function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
-        setUserSelectedEnsembleIdent(ensembleIdent);
+        setSelectedEnsembleIdent(ensembleIdent);
     }
 
     function handleRealizationNumberChange(value: string) {
         const realizationNumber = parseInt(value);
-        setUserSelectedRealizationNumber(realizationNumber);
+        setSelectedRealizationNumber(realizationNumber);
     }
 
     function handleVfpNameSelectionChange(value: string) {
         const vfpName = value;
-        setUserSelectedVfpName(vfpName);
+        setSelectedVfpTableName(vfpName);
     }
 
     function handleThpIndicesSelectionChange(thpIndices: string[]) {
         const thpIndicesNumbers = thpIndices.map((value) => parseInt(value));
-        setUserSelectedThpIndices(thpIndicesNumbers);
+        setSelectedThpIndices(thpIndicesNumbers);
     }
 
     function handleWfrIndicesSelectionChange(wfrIndices: string[]) {
         const wfrIndicesNumbers = wfrIndices.map((value) => parseInt(value));
-        setUserSelectedWfrIndices(wfrIndicesNumbers);
+        setSelectedWfrIndices(wfrIndicesNumbers);
     }
 
     function handleGfrIndicesSelectionChange(gfrIndices: string[]) {
         const gfrIndicesNumbers = gfrIndices.map((value) => parseInt(value));
-        setUserSelectedGfrIndices(gfrIndicesNumbers);
+        setSelectedGfrIndices(gfrIndicesNumbers);
     }
 
     function handleAlqIndicesSelectionChange(alqIndices: string[]) {
         const alqIndicesNumbers = alqIndices.map((value) => parseInt(value));
-        setUserSelectedAlqIndices(alqIndicesNumbers);
+        setSelectedAlqIndices(alqIndicesNumbers);
     }
 
     function handlePressureOptionChange(_: React.ChangeEvent<HTMLInputElement>, pressureOption: PressureOption) {
@@ -124,18 +99,15 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     }
 
     function handleColorByChange(vfpParam: string) {
-        setUserSelectedColorBy(vfpParam as VfpParam);
+        setSelectedColorBy(vfpParam as VfpParam);
     }
 
     let thpLabel = "THP";
     let wfrLabel = "WFR";
     let gfrLabel = "GFR";
     let alqLabel = "ALQ";
-    const vfpTableData = vfpTableQuery?.data;
-    let vfpDataAccessor: VfpDataAccessor | null = null;
     let vfpType: VfpType | null = null;
-    if (vfpTableData) {
-        vfpDataAccessor = new VfpDataAccessor(vfpTableData);
+    if (vfpDataAccessor) {
         thpLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true);
         vfpType = vfpDataAccessor.getVfpType();
 
@@ -151,19 +123,23 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             <CollapsibleGroup expanded={true} title="Ensemble">
                 <EnsembleDropdown
                     ensembles={ensembleSet.getRegularEnsembleArray()}
-                    value={selectedEnsembleIdent}
-                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
+                    value={selectedEnsembleIdent.value}
+                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Realization">
                 <Dropdown
                     options={
-                        validRealizations?.map((real) => {
+                        availableRealizationNumbers?.map((real) => {
                             return { value: real.toString(), label: real.toString() };
                         }) ?? []
                     }
-                    value={selectedRealizationNumber?.toString() ?? undefined}
+                    value={
+                        selectedRealizationNumber.value !== null
+                            ? selectedRealizationNumber.value.toString()
+                            : undefined
+                    }
                     onChange={handleRealizationNumberChange}
                 />
             </CollapsibleGroup>
@@ -174,7 +150,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             return { value: name, label: name };
                         }) ?? []
                     }
-                    value={selectedVfpTableName ?? undefined}
+                    value={selectedVfpTableName.value ?? undefined}
                     onChange={handleVfpNameSelectionChange}
                 />
             </CollapsibleGroup>
@@ -183,18 +159,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     <Label text={thpLabel}>
                         <Select
                             options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.THP))}
-                            value={selectedThpIndicies?.map((value) => value.toString()) ?? []}
+                            value={selectedThpIndicies.value?.map((value) => value.toString()) ?? []}
                             onChange={handleThpIndicesSelectionChange}
                             size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.THP) ?? 5)}
                             multiple={true}
                         />
                     </Label>
                     {vfpDataAccessor?.isProdTable() && (
-                        <div>
+                        <>
                             <Label text={wfrLabel}>
                                 <Select
                                     options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.WFR))}
-                                    value={selectedWfrIndicies?.map((value) => value.toString()) ?? []}
+                                    value={selectedWfrIndicies.value?.map((value) => value.toString()) ?? []}
                                     onChange={handleWfrIndicesSelectionChange}
                                     size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.WFR) ?? 5)}
                                     multiple={true}
@@ -203,7 +179,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             <Label text={gfrLabel}>
                                 <Select
                                     options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.GFR))}
-                                    value={selectedGfrIndicies?.map((value) => value.toString()) ?? []}
+                                    value={selectedGfrIndicies.value?.map((value) => value.toString()) ?? []}
                                     onChange={handleGfrIndicesSelectionChange}
                                     size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.GFR) ?? 5)}
                                     multiple={true}
@@ -212,13 +188,13 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             <Label text={alqLabel}>
                                 <Select
                                     options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.ALQ))}
-                                    value={selectedAlqIndicies?.map((value) => value.toString()) ?? []}
+                                    value={selectedAlqIndicies.value?.map((value) => value.toString()) ?? []}
                                     onChange={handleAlqIndicesSelectionChange}
                                     size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.ALQ) ?? 5)}
                                     multiple={true}
                                 />
                             </Label>
-                        </div>
+                        </>
                     )}
                 </div>
             </CollapsibleGroup>
@@ -228,14 +204,14 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         { label: "BHP", value: PressureOption.BHP },
                         { label: "DP (BHP-THP)", value: PressureOption.DP },
                     ]}
-                    value={selectedPressureOption}
+                    value={userSelectedPressureOption}
                     onChange={handlePressureOptionChange}
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Color By" expanded={true}>
                 <Dropdown
                     options={makeColorByOptions(vfpType, vfpDataAccessor)}
-                    value={selectedColorBy ?? undefined}
+                    value={selectedColorBy.value ?? undefined}
                     onChange={handleColorByChange}
                 />
             </CollapsibleGroup>
@@ -247,7 +223,7 @@ function makeFilterOptions(values: number[] | undefined): SelectOption[] {
     return values?.map((value, index) => ({ label: value.toString(), value: index.toString() })) ?? [];
 }
 
-function makeColorByOptions(vfpType: VfpType | null, vfpDataAccessor: VfpDataAccessor | null): SelectOption[] {
+function makeColorByOptions(vfpType: VfpType | null, vfpDataAccessor: VfpApiDataAccessor | null): SelectOption[] {
     const options = [{ label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP }];
     if (vfpType === VfpType.VFPPROD) {
         options.push(

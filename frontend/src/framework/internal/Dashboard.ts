@@ -1,13 +1,12 @@
 import type { JTDSchemaType } from "ajv/dist/core";
 import { v4 } from "uuid";
 
-import { InitialSettings } from "@framework/InitialSettings";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { AtomStoreMaster } from "../AtomStoreMaster";
-import type { ModuleInstance, ModuleInstanceFullState } from "../ModuleInstance";
+import type { ModuleInstance, ModuleInstanceSerializedState } from "../ModuleInstance";
 import { ModuleRegistry } from "../ModuleRegistry";
 
 export type LayoutElement = {
@@ -21,7 +20,7 @@ export type LayoutElement = {
     maximized?: boolean;
 };
 
-export type ModuleInstanceStateAndLayoutInfo = ModuleInstanceFullState & {
+export type ModuleInstanceStateAndLayoutInfo = ModuleInstanceSerializedState & {
     layoutInfo: Omit<LayoutElement, "moduleInstanceId" | "moduleName">;
 };
 
@@ -50,6 +49,13 @@ const moduleInstanceSchema: JTDSchemaType<ModuleInstanceStateAndLayoutInfo> = {
     properties: {
         id: { type: "string" },
         name: { type: "string" },
+        serializedState: {
+            optionalProperties: {
+                view: { type: "string" },
+                settings: { type: "string" },
+            },
+            nullable: true,
+        },
         syncedSettingKeys: {
             elements: {
                 enum: Object.values(SyncSettingKey),
@@ -93,7 +99,7 @@ export enum DashboardTopic {
 
 export type DashboardTopicPayloads = {
     [DashboardTopic.Layout]: LayoutElement[];
-    [DashboardTopic.ModuleInstances]: ModuleInstance<any>[];
+    [DashboardTopic.ModuleInstances]: ModuleInstance<any, any>[];
     [DashboardTopic.ActiveModuleInstanceId]: string | null;
 };
 
@@ -104,7 +110,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     private _name: string;
     private _description?: string;
     private _layout: LayoutElement[] = [];
-    private _moduleInstances: ModuleInstance<any>[] = [];
+    private _moduleInstances: ModuleInstance<any, any>[] = [];
     private _activeModuleInstanceId: string | null = null;
     private _atomStoreMaster: AtomStoreMaster;
 
@@ -153,64 +159,13 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
     }
 
-    applyTemplate(template: Template): void {
-        this.clearLayout();
-
-        template.moduleInstances.forEach((el) => {
-            this.makeAndAddModuleInstance(el.moduleName, { ...el.layout, moduleName: el.moduleName });
-        });
-
-        for (let i = 0; i < this._moduleInstances.length; i++) {
-            const moduleInstance = this._moduleInstances[i];
-            const templateModule = template.moduleInstances[i];
-            if (templateModule.syncedSettings) {
-                for (const syncSettingKey of templateModule.syncedSettings) {
-                    moduleInstance.addSyncedSetting(syncSettingKey);
-                }
-            }
-
-            const initialSettings: Record<string, unknown> = templateModule.initialSettings || {};
-
-            if (templateModule.dataChannelsToInitialSettingsMapping) {
-                for (const propName of Object.keys(templateModule.dataChannelsToInitialSettingsMapping)) {
-                    const dataChannel = templateModule.dataChannelsToInitialSettingsMapping[propName];
-
-                    const moduleInstanceIndex = template.moduleInstances.findIndex(
-                        (el) => el.instanceRef === dataChannel.listensToInstanceRef,
-                    );
-                    if (moduleInstanceIndex === -1) {
-                        throw new Error("Could not find module instance for data channel");
-                    }
-
-                    const listensToModuleInstance = this._moduleInstances[moduleInstanceIndex];
-                    const channel = listensToModuleInstance.getChannelManager().getChannel(dataChannel.channelIdString);
-                    if (!channel) {
-                        throw new Error("Could not find channel");
-                    }
-
-                    const receiver = moduleInstance.getChannelManager().getReceiver(propName);
-
-                    if (!receiver) {
-                        throw new Error("Could not find receiver");
-                    }
-
-                    receiver.subscribeToChannel(channel, "All");
-                }
-            }
-
-            moduleInstance.setInitialSettings(new InitialSettings(initialSettings));
-        }
-
-        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
-    }
-
-    getModuleInstances(): ModuleInstance<any>[] {
+    getModuleInstances(): ModuleInstance<any, any>[] {
         return this._moduleInstances;
     }
 
     serializeState(): SerializedDashboard {
         const moduleInstances = this._moduleInstances.map((moduleInstance) => {
-            const fullState = moduleInstance.getFullState();
+            const moduleState = moduleInstance.serialize();
 
             const layoutInfo = this._layout.find((el) => el.moduleInstanceId === moduleInstance.getId());
 
@@ -219,7 +174,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             }
 
             return {
-                ...fullState,
+                ...moduleState,
                 layoutInfo: {
                     relX: layoutInfo.relX,
                     relY: layoutInfo.relY,
@@ -248,15 +203,26 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this.clearLayout();
 
         for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name, layoutInfo } = serializedInstance;
+            const { id, name } = serializedInstance;
 
             const module = ModuleRegistry.getModule(name);
             if (!module) {
                 throw new Error(`Module ${name} not found`);
             }
-            const moduleInstance = module.makeInstance(id);
-            moduleInstance.setFullState(serializedInstance);
+            const moduleInstance = module.makeInstance(id, this._atomStoreMaster);
             this.registerModuleInstance(moduleInstance);
+        }
+
+        // Doing this after all module instances have been registered
+        // ensures that the module instances are available for data channel initialization.
+        for (const serializedInstance of serializedDashboard.moduleInstances) {
+            const { id, name, layoutInfo } = serializedInstance;
+            const moduleInstance = this.getModuleInstance(id);
+            if (!moduleInstance) {
+                throw new Error(`Module instance with ID ${id} not found`);
+            }
+
+            moduleInstance.initiateDeserialization(serializedInstance, this);
 
             this._layout.push({
                 moduleInstanceId: id,
@@ -284,23 +250,24 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
     }
 
-    registerModuleInstance(moduleInstance: ModuleInstance<any>): void {
+    registerModuleInstance(moduleInstance: ModuleInstance<any, any>): void {
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
-        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
+    makeAndAddModuleInstance(moduleName: string): ModuleInstance<any, any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
         }
 
-        const moduleInstance = module.makeInstance(v4());
-        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
+        const id = v4();
+        const moduleInstance = module.makeInstance(id, this._atomStoreMaster);
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
+        if (this._moduleInstances.length === 1) {
+            this._activeModuleInstanceId = moduleInstance.getId();
+        }
 
-        this._layout = [...this._layout, { ...layout, moduleInstanceId: moduleInstance.getId() }];
         this._activeModuleInstanceId = moduleInstance.getId();
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
@@ -330,7 +297,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    getModuleInstance(id: string): ModuleInstance<any> | undefined {
+    getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
         return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
@@ -351,19 +318,31 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         dashboard._id = serializedDashboard.id;
         dashboard._name = serializedDashboard.name;
         dashboard._description = serializedDashboard.description;
+        dashboard._activeModuleInstanceId = serializedDashboard.activeModuleInstanceId;
 
         const layout: LayoutElement[] = [];
 
         for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name, layoutInfo } = serializedInstance;
+            const { id, name } = serializedInstance;
 
             const module = ModuleRegistry.getModule(name);
             if (!module) {
                 throw new Error(`Module ${name} not found`);
             }
-            const moduleInstance = module.makeInstance(id);
-            moduleInstance.setFullState(serializedInstance);
+            const moduleInstance = module.makeInstance(id, atomStoreMaster);
             dashboard.registerModuleInstance(moduleInstance);
+        }
+
+        // Doing this after all module instances have been registered
+        // ensures that the module instances are available for data channel initialization.
+        for (const serializedInstance of serializedDashboard.moduleInstances) {
+            const { id, name, layoutInfo } = serializedInstance;
+            const moduleInstance = dashboard.getModuleInstance(id);
+            if (!moduleInstance) {
+                throw new Error(`Module instance with ID ${id} not found`);
+            }
+
+            moduleInstance.initiateDeserialization(serializedInstance, dashboard);
 
             layout.push({
                 moduleInstanceId: id,
@@ -375,6 +354,87 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
                 minimized: layoutInfo.minimized,
                 maximized: layoutInfo.maximized,
             });
+        }
+
+        dashboard.setLayout(layout);
+
+        return dashboard;
+    }
+
+    static async fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster): Promise<Dashboard> {
+        const dashboard = new Dashboard(atomStoreMaster);
+        dashboard._id = v4();
+        dashboard._description = template.description;
+
+        const layout: LayoutElement[] = [];
+        const moduleInstances: ModuleInstance<any, any>[] = [];
+        const moduleInstanceRefMap: Record<string, ModuleInstance<any, any>> = {};
+
+        for (const module of template.moduleInstances) {
+            const moduleInstance = await dashboard.makeAndAddModuleInstance(module.moduleName);
+            layout.push({
+                moduleInstanceId: moduleInstance.getId(),
+                moduleName: module.moduleName,
+                relX: module.layout.relX,
+                relY: module.layout.relY,
+                relHeight: module.layout.relHeight,
+                relWidth: module.layout.relWidth,
+                minimized: module.layout.minimized,
+                maximized: module.layout.maximized,
+            });
+
+            if (module.syncedSettings) {
+                for (const syncedSetting of module.syncedSettings) {
+                    moduleInstance.addSyncedSetting(syncedSetting);
+                }
+            }
+
+            if (module.instanceRef) {
+                moduleInstanceRefMap[module.instanceRef] = moduleInstance;
+            }
+
+            if (module.initialState) {
+                moduleInstance.initiateTemplateStateApplication(module.initialState);
+            }
+
+            moduleInstances.push(moduleInstance);
+        }
+
+        for (const [idx, module] of template.moduleInstances.entries()) {
+            const moduleInstance = moduleInstances[idx];
+            if (!moduleInstance) {
+                throw new Error(`Module instance with reference ${module.instanceRef} not found`);
+            }
+
+            if (module.dataChannelsToInitialSettingsMapping) {
+                for (const [key, dataChannelConfig] of Object.entries(module.dataChannelsToInitialSettingsMapping)) {
+                    const listensToModuleInstance = moduleInstanceRefMap[dataChannelConfig.listensToInstanceRef];
+                    if (!listensToModuleInstance) {
+                        throw new Error(
+                            `Module instance with reference ${dataChannelConfig.listensToInstanceRef} not found`,
+                        );
+                    }
+
+                    const channel = listensToModuleInstance
+                        .getChannelManager()
+                        .getChannel(dataChannelConfig.channelIdString);
+
+                    if (!channel) {
+                        throw new Error(
+                            `Channel with ID ${dataChannelConfig.channelIdString} not found in module instance ${moduleInstance.getId()}`,
+                        );
+                    }
+
+                    const receiver = moduleInstance.getChannelManager().getReceiver(key);
+                    if (!receiver) {
+                        throw new Error(
+                            `Receiver with ID ${key} not found in module instance ${moduleInstance.getId()}`,
+                        );
+                    }
+
+                    receiver.subscribeToChannel(channel, "All");
+                }
+            }
         }
 
         dashboard.setLayout(layout);

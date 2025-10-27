@@ -30,8 +30,17 @@ export enum GuiState {
     AppInitialized = "appInitialized",
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
     NumberOfEffectiveRealizationFilters = "numberOfEffectiveRealizationFilters",
+    SaveSessionDialogOpen = "saveSessionDialogOpen",
+    EditSessionDialogOpen = "editSessionDialogOpen",
+    SessionHasUnsavedChanges = "sessionHasUnsavedChanges",
+    IsSavingSession = "isSavingSession",
     IsLoadingSession = "isLoadingSession",
+    IsMakingSnapshot = "isMakingSnapshot",
     EnsembleDialogOpen = "ensembleDialogOpen",
+    MultiSessionsRecoveryDialogOpen = "multiSessionsRecoveryDialogOpen",
+    ActiveSessionRecoveryDialogOpen = "activeSessionRecoveryDialogOpen",
+    MakeSnapshotDialogOpen = "makeSnapshotDialogOpen",
+    TemplatesDialogOpen = "templatesDialogOpen",
 }
 
 export enum GuiEvent {
@@ -98,7 +107,16 @@ type GuiStateValueTypes = {
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
     [GuiState.NumberOfEffectiveRealizationFilters]: number;
     [GuiState.IsLoadingSession]: boolean;
+    [GuiState.IsSavingSession]: boolean;
     [GuiState.EnsembleDialogOpen]: boolean;
+    [GuiState.MultiSessionsRecoveryDialogOpen]: boolean;
+    [GuiState.ActiveSessionRecoveryDialogOpen]: boolean;
+    [GuiState.MakeSnapshotDialogOpen]: boolean;
+    [GuiState.IsMakingSnapshot]: boolean;
+    [GuiState.SaveSessionDialogOpen]: boolean;
+    [GuiState.EditSessionDialogOpen]: boolean;
+    [GuiState.SessionHasUnsavedChanges]: boolean;
+    [GuiState.TemplatesDialogOpen]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -112,8 +130,17 @@ defaultStates.set(GuiState.AppInitialized, false);
 defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
 defaultStates.set(GuiState.NumberOfEffectiveRealizationFilters, 0);
 defaultStates.set(GuiState.IsLoadingSession, false);
+defaultStates.set(GuiState.IsSavingSession, false);
 defaultStates.set(GuiState.EditDataChannelConnections, false);
 defaultStates.set(GuiState.EnsembleDialogOpen, false);
+defaultStates.set(GuiState.MultiSessionsRecoveryDialogOpen, false);
+defaultStates.set(GuiState.ActiveSessionRecoveryDialogOpen, false);
+defaultStates.set(GuiState.MakeSnapshotDialogOpen, false);
+defaultStates.set(GuiState.IsMakingSnapshot, false);
+defaultStates.set(GuiState.SaveSessionDialogOpen, false);
+defaultStates.set(GuiState.EditSessionDialogOpen, false);
+defaultStates.set(GuiState.SessionHasUnsavedChanges, false);
+defaultStates.set(GuiState.TemplatesDialogOpen, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,
