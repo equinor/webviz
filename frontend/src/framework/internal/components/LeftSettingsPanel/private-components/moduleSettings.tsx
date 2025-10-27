@@ -88,6 +88,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 "flex-col h-full w-full relative",
             )}
             style={{ contain: "content" }}
+            id="module-settings-panel"
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
                 <div className="flex justify-center items-center p-2 bg-slate-100 h-10 shadow-sm">
