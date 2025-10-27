@@ -295,7 +295,7 @@ async def get_snapshots_metadata(
     Snapshots are immutable records that can be shared with others.
     They are separate from sessions and are intended for point-in-time captures.
 
-    Note: Consider using `/snapshot_access_logs` to see both your snapshots and ones shared with you.
+    Note: Consider using `/persistence/snapshot_access_logs` to see both your snapshots and ones shared with you.
     """
     snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
     async with snapshot_store:
