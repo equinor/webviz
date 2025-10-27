@@ -120,8 +120,8 @@ class SessionStore:
         Read multiple sessions with support for pagination, sorting, filtering, and limits.
 
         Args:
-            page_token: Token for pagination (if using page-based pagination) - this has precedence over offset/limit
-            page_size: Number of items per page (for page-based pagination) - this has precedence over offset/limit
+            page_token: Token for pagination (if using page-based pagination)
+            page_size: Number of items per page (for page-based pagination)
             sort_by: Field name to sort by
             sort_direction: Direction to sort (ASC or DESC)
             sort_lowercase: Whether to use case-insensitive sorting

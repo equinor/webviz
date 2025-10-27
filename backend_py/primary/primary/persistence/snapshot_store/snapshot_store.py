@@ -129,13 +129,11 @@ class SnapshotStore:
         Get multiple snapshots with support for pagination, sorting, filtering, and limits.
 
         Args:
-            page_token: Token for pagination (if using page-based pagination) - this has precedence over offset/limit
-            page_size: Number of items per page (for page-based pagination) - this has precedence over offset/limit
+            page_token: Token for pagination (if using page-based pagination)
+            page_size: Number of items per page (for page-based pagination)
             sort_by: Field name to sort by
             sort_direction: Direction to sort (ASC or DESC)
             sort_lowercase: Whether to use case-insensitive sorting
-            limit: Maximum number of items to return (for offset-based pagination)
-            offset: Number of items to skip (for offset-based pagination)
             filters: List of filters to apply
 
         Returns:
@@ -149,15 +147,11 @@ class SnapshotStore:
             filter_list = filters or []
             filter_list.insert(0, Filter("owner_id", self._user_id))
 
-            use_page_based = page_token is not None or page_size is not None
-
             # Build query with collation options
             collation_options = QueryCollationOptions(
                 sort_lowercase=sort_lowercase,
                 sort_dir=sort_direction,
                 sort_by=sort_by.value if sort_by else None,
-                offset=None if use_page_based else offset,
-                limit=None if use_page_based else limit,
                 filters=filter_list,
                 document_model=SnapshotDocument,
             )
@@ -169,18 +163,12 @@ class SnapshotStore:
             if search_options:
                 query = f"{query} {search_options}"
 
-            # Use page-based pagination if continuation_token or page_size is provided
-            if use_page_based:
-                return await self._snapshot_container.query_items_by_page_token_async(
-                    query=query,
-                    parameters=params,
-                    page_size=page_size,
-                    page_token=page_token,
-                )
-
-            # Otherwise, return all items (respecting limit/offset)
-            items = await self._snapshot_container.query_items_async(query=query, parameters=params)
-            return items, None
+            return await self._snapshot_container.query_items_by_page_token_async(
+                query=query,
+                parameters=params,
+                page_size=page_size,
+                page_token=page_token,
+            )
 
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)
