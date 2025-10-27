@@ -4,7 +4,7 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { Dropdown, type DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Slider } from "@lib/components/Slider";
-import { plotTypeToStringMapping, type PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
+import { plotTypeToStringMapping, PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 import { BarSortBy } from "@modules/InplaceVolumesPlot/view/utils/plotly/bar";
 
 export enum HistogramType {
@@ -85,9 +85,9 @@ export function InplaceVolumesPlotOptionsDialog({
     for (const [type, label] of Object.entries(plotTypeToStringMapping)) {
         plotTypeOptions.push({ label, value: type as PlotType });
     }
+
     const dialogContent = (
         <div className="flex flex-col gap-6 p-4 ">
-            {/* Histogram-specific options */}
             <div className="flex flex-col gap-3 pb-3 border-b border-gray-200">
                 <Label text="Plot type">
                     <div className="flex">
@@ -96,51 +96,57 @@ export function InplaceVolumesPlotOptionsDialog({
                         </div>
                     </div>
                 </Label>
-                <div className="text-sm font-medium text-gray-700">Histogram Display</div>
-                <Label text="Histogram Type">
-                    <Dropdown
-                        options={[
-                            { label: "Stacked", value: HistogramType.Stack },
-                            { label: "Grouped", value: HistogramType.Group },
-                            { label: "Overlayed", value: HistogramType.Overlay },
-                            { label: "Relative", value: HistogramType.Relative },
-                        ]}
-                        value={options.histogramType}
-                        onChange={handleHistogramTypeChange}
-                    />
-                </Label>
-                <div className="text-xs text-gray-500 -mt-2">
-                    Controls how multiple data series are displayed (only applies to histogram plots)
-                </div>
-                <Label text="Max number of histogram bins" key="number-of-histogram-bins">
-                    <Slider
-                        value={options.histogramBins}
-                        onChange={handleHistogramBinsChange}
-                        min={5}
-                        step={1}
-                        max={30}
-                        valueLabelDisplay="auto"
-                    />
-                </Label>
             </div>
 
-            {/* Bar-specific options */}
-            <div className="flex flex-col gap-3 pb-3 border-b border-gray-200">
-                <div className="text-sm font-medium text-gray-700">Bar Chart Display</div>
-                <Label text="Sort Bars By">
-                    <Dropdown
-                        options={[
-                            { label: "Selector Values", value: BarSortBy.Xvalues },
-                            { label: "Response Values", value: BarSortBy.Yvalues },
-                        ]}
-                        value={options.barSortBy}
-                        onChange={handleBarSortByChange}
-                    />
-                </Label>
-                <div className="text-xs text-gray-500 -mt-2">
-                    Sort bars by selector (x-axis) or response (y-axis) values (only applies to bar plots)
+            {/* Histogram-specific options - only show for histogram plots */}
+            {plotType === PlotType.HISTOGRAM && (
+                <div className="flex flex-col gap-3 pb-3 border-b border-gray-200">
+                    <div className="text-sm font-medium text-gray-700">Histogram Display</div>
+                    <Label text="Histogram Type">
+                        <Dropdown
+                            options={[
+                                { label: "Stacked", value: HistogramType.Stack },
+                                { label: "Grouped", value: HistogramType.Group },
+                                { label: "Overlayed", value: HistogramType.Overlay },
+                                { label: "Relative", value: HistogramType.Relative },
+                            ]}
+                            value={options.histogramType}
+                            onChange={handleHistogramTypeChange}
+                        />
+                    </Label>
+                    <div className="text-xs text-gray-500 -mt-2">Controls how multiple data series are displayed</div>
+                    <Label text="Max number of histogram bins" key="number-of-histogram-bins">
+                        <Slider
+                            value={options.histogramBins}
+                            onChange={handleHistogramBinsChange}
+                            min={5}
+                            step={1}
+                            max={30}
+                            valueLabelDisplay="auto"
+                        />
+                    </Label>
                 </div>
-            </div>
+            )}
+
+            {/* Bar-specific options - only show for bar plots */}
+            {plotType === PlotType.BAR && (
+                <div className="flex flex-col gap-3 pb-3 border-b border-gray-200">
+                    <div className="text-sm font-medium text-gray-700">Bar Chart Display</div>
+                    <Label text="Sort Bars By">
+                        <Dropdown
+                            options={[
+                                { label: "Selector Values", value: BarSortBy.Xvalues },
+                                { label: "Response Values", value: BarSortBy.Yvalues },
+                            ]}
+                            value={options.barSortBy}
+                            onChange={handleBarSortByChange}
+                        />
+                    </Label>
+                    <div className="text-xs text-gray-500 -mt-2">
+                        Sort bars by selector (x-axis) or response (y-axis) values
+                    </div>
+                </div>
+            )}
 
             {/* Statistical visualization options */}
             <div className="flex flex-col gap-3 pb-3 border-b border-gray-200">

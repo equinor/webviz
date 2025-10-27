@@ -18,6 +18,8 @@ export function makePlotlyScatterTraces({
     xAxisLabel,
     yAxisLabel,
 }: PlotlyScatterTracesOptions): Partial<PlotData>[] {
+    const markerColor = `${color}80`;
+    const lineColor = `${color}FF`;
     return [
         {
             x: xValues,
@@ -26,7 +28,16 @@ export function makePlotlyScatterTraces({
             text: realizations,
             legendgroup: title,
             mode: "markers",
-            marker: { color, size: 5 },
+            marker: {
+                symbol: "circle",
+                size: 10,
+                color: markerColor,
+                opacity: 1,
+                line: {
+                    color: lineColor,
+                    width: 1,
+                },
+            },
             type: "scatter",
             hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
             hovertemplate: `${xAxisLabel} = <b>%{x}</b> <br>${yAxisLabel} = <b>%{y}</b> <br>Realization = <b>%{text}</b> <extra></extra>`,
