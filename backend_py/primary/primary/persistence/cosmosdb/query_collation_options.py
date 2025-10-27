@@ -40,8 +40,6 @@ class QueryCollationOptions:
     limit: int | None = None
     offset: int | None = 0
     filters: list[Filter] | None = None
-
-    # NEW: Reference to the document model
     document_model: Type[BaseModel] | None = None
 
     def _field_has_lowercase_variant(self, field_path: str) -> bool:
@@ -127,7 +125,6 @@ class QueryCollationOptions:
                 sort_by_field = self.sort_by
                 # Optional: Warn if lowercase was requested but not available
                 if self.sort_lowercase and self.document_model is not None:
-                    # Should we use the logger instead?
                     LOGGER.warning(
                         f"Lowercase sorting requested for '{self.sort_by}', "
                         f"but '{self.sort_by}{LOWER_CASE_PREFIX}' field not found in document model. "

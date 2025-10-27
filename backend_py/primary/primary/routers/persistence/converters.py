@@ -1,26 +1,6 @@
-from primary.persistence.snapshot_store.types import NewSnapshot
 from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument, SnapshotDocument
 from primary.persistence.session_store.documents import SessionDocument
-from primary.persistence.session_store.types import NewSession, SessionMetadataUpdate, SessionUpdate
 from . import schemas
-
-
-def from_api_new_session(api_session: schemas.NewSession) -> NewSession:
-    return NewSession(
-        title=api_session.title,
-        description=api_session.description,
-        content=api_session.content,
-    )
-
-
-def from_api_session_update(api_update: schemas.SessionUpdate) -> SessionUpdate:
-    return SessionUpdate(
-        metadata=SessionMetadataUpdate(
-            title=api_update.title,
-            description=api_update.description,
-        ),
-        content=api_update.content,
-    )
 
 
 def to_api_session_metadata(session: SessionDocument) -> schemas.SessionMetadata:
@@ -32,7 +12,7 @@ def to_api_session_metadata(session: SessionDocument) -> schemas.SessionMetadata
         createdAt=session.metadata.created_at.isoformat(),
         updatedAt=session.metadata.updated_at.isoformat(),
         version=session.metadata.version,
-        content_hash=session.metadata.content_hash,
+        contentHash=session.metadata.content_hash,
     )
 
 
@@ -43,14 +23,6 @@ def to_api_session(document: SessionDocument) -> schemas.Session:
     )
 
 
-def from_api_new_snapshot(api_snapshot: schemas.NewSnapshot) -> NewSnapshot:
-    return NewSnapshot(
-        title=api_snapshot.title,
-        description=api_snapshot.description,
-        content=api_snapshot.content,
-    )
-
-
 def to_api_snapshot_metadata(snapshot: SnapshotDocument) -> schemas.SnapshotMetadata:
     return schemas.SnapshotMetadata(
         id=snapshot.id,
@@ -58,7 +30,7 @@ def to_api_snapshot_metadata(snapshot: SnapshotDocument) -> schemas.SnapshotMeta
         title=snapshot.metadata.title,
         description=snapshot.metadata.description,
         createdAt=snapshot.metadata.created_at.isoformat(),
-        content_hash=snapshot.metadata.content_hash,
+        contentHash=snapshot.metadata.content_hash,
     )
 
 
@@ -76,7 +48,7 @@ def to_api_access_log_snapshot_metadata(access_log: SnapshotAccessLogDocument) -
         title=access_log.snapshot_metadata.title,
         description=access_log.snapshot_metadata.description,
         createdAt=access_log.snapshot_metadata.created_at.isoformat(),
-        content_hash=access_log.snapshot_metadata.content_hash,
+        contentHash=access_log.snapshot_metadata.content_hash,
     )
 
 

@@ -1,8 +1,6 @@
 from typing import Generic, List, Optional, TypeVar
 from pydantic import BaseModel
 
-from primary.persistence.snapshot_store.utils import make_access_log_item_id
-
 
 # Type variable for the generic item type
 T = TypeVar("T")
@@ -10,7 +8,7 @@ T = TypeVar("T")
 
 class Page(BaseModel, Generic[T]):
     items: List[T]
-    continuation_token: Optional[str] = None
+    pageToken: Optional[str] = None
 
 
 class SessionMetadata(BaseModel):
@@ -23,7 +21,7 @@ class SessionMetadata(BaseModel):
     createdAt: str
     updatedAt: str
     version: int
-    content_hash: str
+    contentHash: str
 
 
 class Session(BaseModel):
@@ -37,7 +35,7 @@ class SnapshotMetadata(BaseModel):
     title: str
     description: Optional[str]
     createdAt: str
-    content_hash: str
+    contentHash: str
 
 
 class Snapshot(BaseModel):
@@ -54,18 +52,6 @@ class SnapshotAccessLog(BaseModel):
     snapshotDeleted: bool
 
     snapshotMetadata: SnapshotMetadata
-
-    # Internal item id
-    @property
-    # pylint: disable=invalid-name
-    # ↳ pylint v2 will complain about names that are shorter than 3 characters
-    def id(self) -> str:
-        return make_access_log_item_id(self.snapshotId, self.visitorId)
-
-
-class SnapshotAccessLogIndexPage(BaseModel):
-    items: list[SnapshotAccessLog]
-    continuation_token: str | None
 
 
 class NewSession(BaseModel):
