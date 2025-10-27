@@ -27,7 +27,7 @@ import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSessionP
 import type { Template } from "./TemplateRegistry";
 import { ApiErrorHelper } from "./utils/ApiErrorHelper";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import { getVisitedSnapshotsQueryKey } from "@api";
+import { getSnapshotAccessLogsQueryKey } from "@api";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",
@@ -378,8 +378,8 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         const snapshotId = await this._workbenchSessionPersistenceService.makeSnapshot(title, description);
         this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, false);
 
-        // Reset this, so it'll fetch fresh copies
-        this._queryClient.resetQueries({ queryKey: getVisitedSnapshotsQueryKey() });
+        // Reset this, so it'll fetch fresh copies - is this working without any options?
+        this._queryClient.resetQueries({ queryKey: getSnapshotAccessLogsQueryKey() });
 
         return snapshotId;
     }

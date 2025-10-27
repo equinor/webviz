@@ -53,7 +53,7 @@ export function deserializeSessionFromBackend(raw: Session_api): WorkbenchSessio
             description: raw.metadata.description ?? undefined,
             createdAt: new Date(raw.metadata.createdAt).getTime(),
             updatedAt: new Date(raw.metadata.updatedAt).getTime(),
-            hash: raw.metadata.content_hash,
+            hash: raw.metadata.contentHash,
             lastModifiedMs: new Date(raw.metadata.updatedAt).getTime(), // Fallback to now if not provided
         },
         content: parsed,
@@ -81,7 +81,7 @@ export function deserializeSnapshotFromBackend(raw: Snapshot_api): WorkbenchSess
             createdAt: new Date(raw.metadata.createdAt).getTime(),
             // Snapshots cannot be updated, so we use createdAt for both fields
             updatedAt: new Date(raw.metadata.createdAt).getTime(),
-            hash: raw.metadata.content_hash,
+            hash: raw.metadata.contentHash,
             lastModifiedMs: new Date().getTime(), // Fallback to now if not provided
         },
         content: parsed,

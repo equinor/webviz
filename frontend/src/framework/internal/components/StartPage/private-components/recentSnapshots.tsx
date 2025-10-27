@@ -6,7 +6,12 @@ import { GuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { timeAgo } from "@lib/utils/dates";
-import { getVisitedSnapshotsOptions, getVisitedSnapshotsQueryKey } from "@api";
+import {
+    getSnapshotAccessLogsOptions,
+    getSnapshotAccessLogsQueryKey,
+    SnapshotAccessLogSortBy_api,
+    SortDirection_api,
+} from "@api";
 
 export type RecentSnapshotsProps = {
     workbench: Workbench;
@@ -14,7 +19,13 @@ export type RecentSnapshotsProps = {
 
 export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
     const recentSnapshotsQuery = useQuery({
-        ...getVisitedSnapshotsOptions(),
+        ...getSnapshotAccessLogsOptions({
+            query: {
+                sort_by: SnapshotAccessLogSortBy_api.LAST_VISITED_AT,
+                sort_direction: SortDirection_api.DESC,
+                page_size: 5,
+            },
+        }),
         refetchInterval: 10000,
     });
 
@@ -30,7 +41,7 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
 
         props.workbench.getGuiMessageBroker().setState(GuiState.IsLoadingSession, false);
         // Reset query so that fresh snapshots are fetched when we return to the start page
-        props.workbench.getQueryClient().resetQueries({ queryKey: getVisitedSnapshotsQueryKey() });
+        props.workbench.getQueryClient().resetQueries({ queryKey: getSnapshotAccessLogsQueryKey() });
     }
 
     if (recentSnapshotsQuery.isPending) {
