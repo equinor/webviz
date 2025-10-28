@@ -52,7 +52,12 @@ export function useBuildPlotAndTable(
     }: InplaceVolumesPlotOptions = { ...viewContext.useSettingsToViewInterfaceValue("plotOptions") };
 
     // Return null if there is no data to plot
-    if (aggregatedTableDataQueries.tablesData.length === 0 || !firstResultName) {
+    if (
+        aggregatedTableDataQueries.tablesData.length === 0 ||
+        !firstResultName ||
+        plotType === PlotType.STATISTICAL_TABLE ||
+        plotType === PlotType.REALIZATION_TABLE
+    ) {
         return null;
     }
 

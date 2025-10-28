@@ -8,6 +8,7 @@ import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { Table } from "@lib/components/Table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import type { Interfaces } from "../interfaces";
@@ -18,6 +19,7 @@ import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useBuildPlotAndTable } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
+import { useStatisticalTable } from "./hooks/useTableBuilder";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -43,15 +45,23 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         ensembleSet,
         colorSet,
         divBoundingRect.width,
-        divBoundingRect.height,
+        divBoundingRect.height / 2,
         hoveredRegion?.regionName ?? null,
         hoveredZone?.zoneName ?? null,
         hoveredFacies?.faciesName ?? null,
     );
 
-    const table = plotAndTableData?.table;
-    const plots = plotAndTableData?.plots;
-
+    const table = plotAndTableData?.table ?? null;
+    const plots = plotAndTableData?.plots ?? null;
+    const { columns, rows } = useStatisticalTable(
+        table,
+        ensembleSet,
+        divBoundingRect.width,
+        divBoundingRect.height,
+        hoveredRegion?.regionName ?? null,
+        hoveredZone?.zoneName ?? null,
+        hoveredFacies?.faciesName ?? null,
+    );
     usePublishToDataChannels(props.viewContext, ensembleSet, colorSet, colorBy, table, resultName ?? undefined);
 
     function createErrorMessage(): string | null {
@@ -73,7 +83,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     return (
         <div ref={divRef} className="w-full h-full relative">
             <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
-                {plots ?? <div style={{ height: divBoundingRect.height }} />}
+                {plots ?? <div style={{ height: divBoundingRect.height / 2 }} />}
+                <Table columns={columns} rows={rows} />
             </PendingWrapper>
         </div>
     );

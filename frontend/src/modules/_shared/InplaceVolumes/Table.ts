@@ -213,4 +213,62 @@ export class Table {
 
         return new TableCollection(columnName, uniqueValues, tables);
     }
+    splitByColumns(columnNames: string[], keepColumns: boolean = false): TableCollection {
+        // Validate all columns exist
+        const columns = columnNames.map((name) => {
+            const col = this.getColumn(name);
+            if (!col) {
+                throw new Error(`Column not found: ${name}`);
+            }
+            return col;
+        });
+
+        // Build groups: combinedKey -> row indices and values
+        const groups = new Map<string, { indices: number[]; values: (string | number)[] }>();
+
+        for (let rowIdx = 0; rowIdx < this.getNumRows(); rowIdx++) {
+            const values = columns.map((col) => col.getRowValue(rowIdx));
+            const combinedKey = values.map((v) => String(v)).join("|");
+
+            if (!groups.has(combinedKey)) {
+                groups.set(combinedKey, { indices: [], values });
+            }
+            groups.get(combinedKey)!.indices.push(rowIdx);
+        }
+
+        // Build tables for each group
+        const tables: Table[] = [];
+        const uniqueValues: (string | number)[] = [];
+        const columnIndices = columnNames.map((name) => this._columns.findIndex((c) => c.getName() === name));
+
+        for (const [combinedKey, { indices, values }] of groups) {
+            // Store the combined key as the unique value
+            uniqueValues.push(combinedKey);
+
+            const newColumns: Column[] = [];
+
+            for (let colIdx = 0; colIdx < this._columns.length; colIdx++) {
+                // Skip split columns unless keepColumns is true
+                if (!keepColumns && columnIndices.includes(colIdx)) {
+                    continue;
+                }
+
+                const originalCol = this._columns[colIdx];
+                const newCol = originalCol.cloneEmpty();
+
+                for (const rowIdx of indices) {
+                    newCol.addRowValue(originalCol.getRowValue(rowIdx));
+                }
+
+                newColumns.push(newCol);
+            }
+
+            tables.push(new Table(newColumns));
+        }
+
+        // Use combined column name for the collection
+        const collectionName = columnNames.join("_");
+
+        return new TableCollection(collectionName, uniqueValues, tables);
+    }
 }
