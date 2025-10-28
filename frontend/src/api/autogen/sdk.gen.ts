@@ -6,213 +6,213 @@ import type {
     AuthorizedCallbackRouteData_api,
     AuthorizedCallbackRouteResponses_api,
     DeprecatedGetStratigraphicUnitsData_api,
-    DeprecatedGetStratigraphicUnitsError_api,
+    DeprecatedGetStratigraphicUnitsErrors_api,
     DeprecatedGetStratigraphicUnitsResponses_api,
     DeprecatedGetWellborePicksForWellboreData_api,
-    DeprecatedGetWellborePicksForWellboreError_api,
+    DeprecatedGetWellborePicksForWellboreErrors_api,
     DeprecatedGetWellborePicksForWellboreResponses_api,
     GetAliveData_api,
     GetAliveProtectedData_api,
     GetAliveProtectedResponses_api,
     GetAliveResponses_api,
     GetCasesData_api,
-    GetCasesError_api,
+    GetCasesErrors_api,
     GetCasesResponses_api,
     GetCrosslineSliceData_api,
-    GetCrosslineSliceError_api,
+    GetCrosslineSliceErrors_api,
     GetCrosslineSliceResponses_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
-    GetDeltaEnsembleRealizationsVectorDataError_api,
+    GetDeltaEnsembleRealizationsVectorDataErrors_api,
     GetDeltaEnsembleRealizationsVectorDataResponses_api,
     GetDeltaEnsembleStatisticalVectorDataData_api,
-    GetDeltaEnsembleStatisticalVectorDataError_api,
+    GetDeltaEnsembleStatisticalVectorDataErrors_api,
     GetDeltaEnsembleStatisticalVectorDataResponses_api,
     GetDeltaEnsembleVectorListData_api,
-    GetDeltaEnsembleVectorListError_api,
+    GetDeltaEnsembleVectorListErrors_api,
     GetDeltaEnsembleVectorListResponses_api,
     GetDeltaSurfaceDataData_api,
-    GetDeltaSurfaceDataError_api,
+    GetDeltaSurfaceDataErrors_api,
     GetDeltaSurfaceDataResponses_api,
     GetDepthSliceData_api,
-    GetDepthSliceError_api,
+    GetDepthSliceErrors_api,
     GetDepthSliceResponses_api,
     GetDrilledWellboreHeadersData_api,
-    GetDrilledWellboreHeadersError_api,
+    GetDrilledWellboreHeadersErrors_api,
     GetDrilledWellboreHeadersResponses_api,
     GetEnsembleDetailsData_api,
-    GetEnsembleDetailsError_api,
+    GetEnsembleDetailsErrors_api,
     GetEnsembleDetailsResponses_api,
     GetFieldsData_api,
     GetFieldsResponses_api,
     GetGridModelsInfoData_api,
-    GetGridModelsInfoError_api,
+    GetGridModelsInfoErrors_api,
     GetGridModelsInfoResponses_api,
     GetGridParameterData_api,
-    GetGridParameterError_api,
+    GetGridParameterErrors_api,
     GetGridParameterResponses_api,
     GetGridSurfaceData_api,
-    GetGridSurfaceError_api,
+    GetGridSurfaceErrors_api,
     GetGridSurfaceResponses_api,
     GetHistoricalVectorDataData_api,
-    GetHistoricalVectorDataError_api,
+    GetHistoricalVectorDataErrors_api,
     GetHistoricalVectorDataResponses_api,
     GetInlineSliceData_api,
-    GetInlineSliceError_api,
+    GetInlineSliceErrors_api,
     GetInlineSliceResponses_api,
     GetIsSensitivityRunData_api,
-    GetIsSensitivityRunError_api,
+    GetIsSensitivityRunErrors_api,
     GetIsSensitivityRunResponses_api,
     GetLogCurveDataData_api,
-    GetLogCurveDataError_api,
+    GetLogCurveDataErrors_api,
     GetLogCurveDataResponses_api,
     GetLoggedInUserData_api,
-    GetLoggedInUserError_api,
+    GetLoggedInUserErrors_api,
     GetLoggedInUserResponses_api,
     GetMisfitSurfaceDataData_api,
-    GetMisfitSurfaceDataError_api,
+    GetMisfitSurfaceDataErrors_api,
     GetMisfitSurfaceDataResponses_api,
     GetObservationsData_api,
-    GetObservationsError_api,
+    GetObservationsErrors_api,
     GetObservationsResponses_api,
     GetObservedSurfacesMetadataData_api,
-    GetObservedSurfacesMetadataError_api,
+    GetObservedSurfacesMetadataErrors_api,
     GetObservedSurfacesMetadataResponses_api,
     GetParameterData_api,
-    GetParameterError_api,
+    GetParameterErrors_api,
     GetParameterNamesAndDescriptionData_api,
-    GetParameterNamesAndDescriptionError_api,
+    GetParameterNamesAndDescriptionErrors_api,
     GetParameterNamesAndDescriptionResponses_api,
     GetParameterResponses_api,
     GetParametersData_api,
-    GetParametersError_api,
+    GetParametersErrors_api,
     GetParametersResponses_api,
     GetPolygonsDataData_api,
-    GetPolygonsDataError_api,
+    GetPolygonsDataErrors_api,
     GetPolygonsDataResponses_api,
     GetPolygonsDirectoryData_api,
-    GetPolygonsDirectoryError_api,
+    GetPolygonsDirectoryErrors_api,
     GetPolygonsDirectoryResponses_api,
     GetRealizationDataData_api,
-    GetRealizationDataError_api,
+    GetRealizationDataErrors_api,
     GetRealizationDataResponses_api,
     GetRealizationFlowNetworkData_api,
-    GetRealizationFlowNetworkError_api,
+    GetRealizationFlowNetworkErrors_api,
     GetRealizationFlowNetworkResponses_api,
     GetRealizationSurfacesMetadataData_api,
-    GetRealizationSurfacesMetadataError_api,
+    GetRealizationSurfacesMetadataErrors_api,
     GetRealizationSurfacesMetadataResponses_api,
     GetRealizationsVectorDataData_api,
-    GetRealizationsVectorDataError_api,
+    GetRealizationsVectorDataErrors_api,
     GetRealizationsVectorDataResponses_api,
     GetRealizationVectorAtTimestampData_api,
-    GetRealizationVectorAtTimestampError_api,
+    GetRealizationVectorAtTimestampErrors_api,
     GetRealizationVectorAtTimestampResponses_api,
     GetSeismicCubeMetaListData_api,
-    GetSeismicCubeMetaListError_api,
+    GetSeismicCubeMetaListErrors_api,
     GetSeismicCubeMetaListResponses_api,
     GetSeismicSlicesData_api,
-    GetSeismicSlicesError_api,
+    GetSeismicSlicesErrors_api,
     GetSeismicSlicesResponses_api,
     GetSensitivitiesData_api,
-    GetSensitivitiesError_api,
+    GetSensitivitiesErrors_api,
     GetSensitivitiesResponses_api,
     GetStatisticalSurfaceDataHybridData_api,
-    GetStatisticalSurfaceDataHybridError_api,
+    GetStatisticalSurfaceDataHybridErrors_api,
     GetStatisticalSurfaceDataHybridResponses_api,
     GetStatisticalVectorDataData_api,
-    GetStatisticalVectorDataError_api,
+    GetStatisticalVectorDataErrors_api,
     GetStatisticalVectorDataPerSensitivityData_api,
-    GetStatisticalVectorDataPerSensitivityError_api,
+    GetStatisticalVectorDataPerSensitivityErrors_api,
     GetStatisticalVectorDataPerSensitivityResponses_api,
     GetStatisticalVectorDataResponses_api,
     GetStratigraphicUnitsForStratColumnData_api,
-    GetStratigraphicUnitsForStratColumnError_api,
+    GetStratigraphicUnitsForStratColumnErrors_api,
     GetStratigraphicUnitsForStratColumnResponses_api,
     GetSurfaceDataData_api,
-    GetSurfaceDataError_api,
+    GetSurfaceDataErrors_api,
     GetSurfaceDataResponses_api,
     GetTableDataData_api,
-    GetTableDataError_api,
+    GetTableDataErrors_api,
     GetTableDataResponses_api,
     GetTableDefinitionData_api,
-    GetTableDefinitionError_api,
+    GetTableDefinitionErrors_api,
     GetTableDefinitionResponses_api,
     GetTableDefinitionsData_api,
-    GetTableDefinitionsError_api,
+    GetTableDefinitionsErrors_api,
     GetTableDefinitionsResponses_api,
     GetTimestampsListData_api,
-    GetTimestampsListError_api,
+    GetTimestampsListErrors_api,
     GetTimestampsListResponses_api,
     GetUserInfoData_api,
-    GetUserInfoError_api,
+    GetUserInfoErrors_api,
     GetUserInfoResponses_api,
     GetUserPhotoData_api,
-    GetUserPhotoError_api,
+    GetUserPhotoErrors_api,
     GetUserPhotoResponses_api,
     GetVectorListData_api,
-    GetVectorListError_api,
+    GetVectorListErrors_api,
     GetVectorListResponses_api,
     GetVfpTableData_api,
-    GetVfpTableError_api,
+    GetVfpTableErrors_api,
     GetVfpTableNamesData_api,
-    GetVfpTableNamesError_api,
+    GetVfpTableNamesErrors_api,
     GetVfpTableNamesResponses_api,
     GetVfpTableResponses_api,
     GetWellboreCasingsData_api,
-    GetWellboreCasingsError_api,
+    GetWellboreCasingsErrors_api,
     GetWellboreCasingsResponses_api,
     GetWellboreCompletionsData_api,
-    GetWellboreCompletionsError_api,
+    GetWellboreCompletionsErrors_api,
     GetWellboreCompletionsResponses_api,
     GetWellboreLogCurveHeadersData_api,
-    GetWellboreLogCurveHeadersError_api,
+    GetWellboreLogCurveHeadersErrors_api,
     GetWellboreLogCurveHeadersResponses_api,
     GetWellborePerforationsData_api,
-    GetWellborePerforationsError_api,
+    GetWellborePerforationsErrors_api,
     GetWellborePerforationsResponses_api,
     GetWellborePickIdentifiersData_api,
-    GetWellborePickIdentifiersError_api,
+    GetWellborePickIdentifiersErrors_api,
     GetWellborePickIdentifiersResponses_api,
     GetWellborePicksForPickIdentifierData_api,
-    GetWellborePicksForPickIdentifierError_api,
+    GetWellborePicksForPickIdentifierErrors_api,
     GetWellborePicksForPickIdentifierResponses_api,
     GetWellborePicksInStratColumnData_api,
-    GetWellborePicksInStratColumnError_api,
+    GetWellborePicksInStratColumnErrors_api,
     GetWellborePicksInStratColumnResponses_api,
     GetWellboreStratigraphicColumnsData_api,
-    GetWellboreStratigraphicColumnsError_api,
+    GetWellboreStratigraphicColumnsErrors_api,
     GetWellboreStratigraphicColumnsResponses_api,
     GetWellCompletionsDataData_api,
-    GetWellCompletionsDataError_api,
+    GetWellCompletionsDataErrors_api,
     GetWellCompletionsDataResponses_api,
     GetWellTrajectoriesData_api,
-    GetWellTrajectoriesError_api,
+    GetWellTrajectoriesErrors_api,
     GetWellTrajectoriesResponses_api,
     LoginRouteData_api,
-    LoginRouteError_api,
+    LoginRouteErrors_api,
     LoginRouteResponses_api,
     PostGetAggregatedPerRealizationTableDataData_api,
-    PostGetAggregatedPerRealizationTableDataError_api,
+    PostGetAggregatedPerRealizationTableDataErrors_api,
     PostGetAggregatedPerRealizationTableDataResponses_api,
     PostGetAggregatedStatisticalTableDataData_api,
-    PostGetAggregatedStatisticalTableDataError_api,
+    PostGetAggregatedStatisticalTableDataErrors_api,
     PostGetAggregatedStatisticalTableDataResponses_api,
     PostGetPolylineIntersectionData_api,
-    PostGetPolylineIntersectionError_api,
+    PostGetPolylineIntersectionErrors_api,
     PostGetPolylineIntersectionResponses_api,
     PostGetSampleSurfaceInPointsData_api,
-    PostGetSampleSurfaceInPointsError_api,
+    PostGetSampleSurfaceInPointsErrors_api,
     PostGetSampleSurfaceInPointsResponses_api,
     PostGetSeismicFenceData_api,
-    PostGetSeismicFenceError_api,
+    PostGetSeismicFenceErrors_api,
     PostGetSeismicFenceResponses_api,
     PostGetSurfaceIntersectionData_api,
-    PostGetSurfaceIntersectionError_api,
+    PostGetSurfaceIntersectionErrors_api,
     PostGetSurfaceIntersectionResponses_api,
     PostLogoutData_api,
     PostLogoutResponses_api,
     PostRefreshFingerprintsForEnsemblesData_api,
-    PostRefreshFingerprintsForEnsemblesError_api,
+    PostRefreshFingerprintsForEnsemblesErrors_api,
     PostRefreshFingerprintsForEnsemblesResponses_api,
     RootData_api,
     RootResponses_api,
@@ -254,7 +254,7 @@ export const getFields = <ThrowOnError extends boolean = false>(options?: Option
  * Get list of cases for specified field
  */
 export const getCases = <ThrowOnError extends boolean = false>(options: Options<GetCasesData_api, ThrowOnError>) => {
-    return (options.client ?? client).get<GetCasesResponses_api, GetCasesError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetCasesResponses_api, GetCasesErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/cases",
         ...options,
@@ -269,7 +269,7 @@ export const getCases = <ThrowOnError extends boolean = false>(options: Options<
 export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
     options: Options<GetEnsembleDetailsData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetEnsembleDetailsResponses_api, GetEnsembleDetailsError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetEnsembleDetailsResponses_api, GetEnsembleDetailsErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/cases/{case_uuid}/ensembles/{ensemble_name}",
         ...options,
@@ -286,7 +286,7 @@ export const postRefreshFingerprintsForEnsembles = <ThrowOnError extends boolean
 ) => {
     return (options.client ?? client).post<
         PostRefreshFingerprintsForEnsemblesResponses_api,
-        PostRefreshFingerprintsForEnsemblesError_api,
+        PostRefreshFingerprintsForEnsemblesErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -309,7 +309,7 @@ export const postRefreshFingerprintsForEnsembles = <ThrowOnError extends boolean
 export const getVectorList = <ThrowOnError extends boolean = false>(
     options: Options<GetVectorListData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetVectorListResponses_api, GetVectorListError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetVectorListResponses_api, GetVectorListErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/timeseries/vector_list/",
         ...options,
@@ -330,7 +330,7 @@ export const getDeltaEnsembleVectorList = <ThrowOnError extends boolean = false>
 ) => {
     return (options.client ?? client).get<
         GetDeltaEnsembleVectorListResponses_api,
-        GetDeltaEnsembleVectorListError_api,
+        GetDeltaEnsembleVectorListErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -349,7 +349,7 @@ export const getRealizationsVectorData = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetRealizationsVectorDataResponses_api,
-        GetRealizationsVectorDataError_api,
+        GetRealizationsVectorDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -372,7 +372,7 @@ export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends bool
 ) => {
     return (options.client ?? client).get<
         GetDeltaEnsembleRealizationsVectorDataResponses_api,
-        GetDeltaEnsembleRealizationsVectorDataError_api,
+        GetDeltaEnsembleRealizationsVectorDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -394,7 +394,7 @@ export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends bool
 export const getTimestampsList = <ThrowOnError extends boolean = false>(
     options: Options<GetTimestampsListData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetTimestampsListResponses_api, GetTimestampsListError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetTimestampsListResponses_api, GetTimestampsListErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/timeseries/timestamps_list/",
         ...options,
@@ -409,7 +409,7 @@ export const getHistoricalVectorData = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetHistoricalVectorDataResponses_api,
-        GetHistoricalVectorDataError_api,
+        GetHistoricalVectorDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -428,7 +428,7 @@ export const getStatisticalVectorData = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetStatisticalVectorDataResponses_api,
-        GetStatisticalVectorDataError_api,
+        GetStatisticalVectorDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -451,7 +451,7 @@ export const getDeltaEnsembleStatisticalVectorData = <ThrowOnError extends boole
 ) => {
     return (options.client ?? client).get<
         GetDeltaEnsembleStatisticalVectorDataResponses_api,
-        GetDeltaEnsembleStatisticalVectorDataError_api,
+        GetDeltaEnsembleStatisticalVectorDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -470,7 +470,7 @@ export const getStatisticalVectorDataPerSensitivity = <ThrowOnError extends bool
 ) => {
     return (options.client ?? client).get<
         GetStatisticalVectorDataPerSensitivityResponses_api,
-        GetStatisticalVectorDataPerSensitivityError_api,
+        GetStatisticalVectorDataPerSensitivityErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -487,7 +487,7 @@ export const getRealizationVectorAtTimestamp = <ThrowOnError extends boolean = f
 ) => {
     return (options.client ?? client).get<
         GetRealizationVectorAtTimestampResponses_api,
-        GetRealizationVectorAtTimestampError_api,
+        GetRealizationVectorAtTimestampErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -504,13 +504,15 @@ export const getRealizationVectorAtTimestamp = <ThrowOnError extends boolean = f
 export const getTableDefinitions = <ThrowOnError extends boolean = false>(
     options: Options<GetTableDefinitionsData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetTableDefinitionsResponses_api, GetTableDefinitionsError_api, ThrowOnError>(
-        {
-            responseType: "json",
-            url: "/inplace_volumes/table_definitions/",
-            ...options,
-        },
-    );
+    return (options.client ?? client).get<
+        GetTableDefinitionsResponses_api,
+        GetTableDefinitionsErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/inplace_volumes/table_definitions/",
+        ...options,
+    });
 };
 
 /**
@@ -526,7 +528,7 @@ export const postGetAggregatedPerRealizationTableData = <ThrowOnError extends bo
 ) => {
     return (options.client ?? client).post<
         PostGetAggregatedPerRealizationTableDataResponses_api,
-        PostGetAggregatedPerRealizationTableDataError_api,
+        PostGetAggregatedPerRealizationTableDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -552,7 +554,7 @@ export const postGetAggregatedStatisticalTableData = <ThrowOnError extends boole
 ) => {
     return (options.client ?? client).post<
         PostGetAggregatedStatisticalTableDataResponses_api,
-        PostGetAggregatedStatisticalTableDataError_api,
+        PostGetAggregatedStatisticalTableDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -575,7 +577,7 @@ export const getRealizationSurfacesMetadata = <ThrowOnError extends boolean = fa
 ) => {
     return (options.client ?? client).get<
         GetRealizationSurfacesMetadataResponses_api,
-        GetRealizationSurfacesMetadataError_api,
+        GetRealizationSurfacesMetadataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -594,7 +596,7 @@ export const getObservedSurfacesMetadata = <ThrowOnError extends boolean = false
 ) => {
     return (options.client ?? client).get<
         GetObservedSurfacesMetadataResponses_api,
-        GetObservedSurfacesMetadataError_api,
+        GetObservedSurfacesMetadataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -631,7 +633,7 @@ export const getObservedSurfacesMetadata = <ThrowOnError extends boolean = false
 export const getSurfaceData = <ThrowOnError extends boolean = false>(
     options: Options<GetSurfaceDataData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetSurfaceDataResponses_api, GetSurfaceDataError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetSurfaceDataResponses_api, GetSurfaceDataErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/surface/surface_data",
         ...options,
@@ -646,7 +648,7 @@ export const getStatisticalSurfaceDataHybrid = <ThrowOnError extends boolean = f
 ) => {
     return (options.client ?? client).get<
         GetStatisticalSurfaceDataHybridResponses_api,
-        GetStatisticalSurfaceDataHybridError_api,
+        GetStatisticalSurfaceDataHybridErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -668,7 +670,7 @@ export const postGetSurfaceIntersection = <ThrowOnError extends boolean = false>
 ) => {
     return (options.client ?? client).post<
         PostGetSurfaceIntersectionResponses_api,
-        PostGetSurfaceIntersectionError_api,
+        PostGetSurfaceIntersectionErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -689,7 +691,7 @@ export const postGetSampleSurfaceInPoints = <ThrowOnError extends boolean = fals
 ) => {
     return (options.client ?? client).post<
         PostGetSampleSurfaceInPointsResponses_api,
-        PostGetSampleSurfaceInPointsError_api,
+        PostGetSampleSurfaceInPointsErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -708,13 +710,15 @@ export const postGetSampleSurfaceInPoints = <ThrowOnError extends boolean = fals
 export const getDeltaSurfaceData = <ThrowOnError extends boolean = false>(
     options: Options<GetDeltaSurfaceDataData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetDeltaSurfaceDataResponses_api, GetDeltaSurfaceDataError_api, ThrowOnError>(
-        {
-            responseType: "json",
-            url: "/surface/delta_surface_data",
-            ...options,
-        },
-    );
+    return (options.client ?? client).get<
+        GetDeltaSurfaceDataResponses_api,
+        GetDeltaSurfaceDataErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/surface/delta_surface_data",
+        ...options,
+    });
 };
 
 /**
@@ -725,7 +729,7 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetMisfitSurfaceDataResponses_api,
-        GetMisfitSurfaceDataError_api,
+        GetMisfitSurfaceDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -744,7 +748,7 @@ export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = f
 ) => {
     return (options.client ?? client).get<
         DeprecatedGetStratigraphicUnitsResponses_api,
-        DeprecatedGetStratigraphicUnitsError_api,
+        DeprecatedGetStratigraphicUnitsErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -761,7 +765,7 @@ export const getStratigraphicUnitsForStratColumn = <ThrowOnError extends boolean
 ) => {
     return (options.client ?? client).get<
         GetStratigraphicUnitsForStratColumnResponses_api,
-        GetStratigraphicUnitsForStratColumnError_api,
+        GetStratigraphicUnitsForStratColumnErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -780,7 +784,7 @@ export const getParameterNamesAndDescription = <ThrowOnError extends boolean = f
 ) => {
     return (options.client ?? client).get<
         GetParameterNamesAndDescriptionResponses_api,
-        GetParameterNamesAndDescriptionError_api,
+        GetParameterNamesAndDescriptionErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -797,7 +801,7 @@ export const getParameterNamesAndDescription = <ThrowOnError extends boolean = f
 export const getParameter = <ThrowOnError extends boolean = false>(
     options: Options<GetParameterData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetParameterResponses_api, GetParameterError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetParameterResponses_api, GetParameterErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/parameters/parameter/",
         ...options,
@@ -810,7 +814,7 @@ export const getParameter = <ThrowOnError extends boolean = false>(
 export const getParameters = <ThrowOnError extends boolean = false>(
     options: Options<GetParametersData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetParametersResponses_api, GetParametersError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetParametersResponses_api, GetParametersErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/parameters/parameters/",
         ...options,
@@ -825,13 +829,15 @@ export const getParameters = <ThrowOnError extends boolean = false>(
 export const getIsSensitivityRun = <ThrowOnError extends boolean = false>(
     options: Options<GetIsSensitivityRunData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetIsSensitivityRunResponses_api, GetIsSensitivityRunError_api, ThrowOnError>(
-        {
-            responseType: "json",
-            url: "/parameters/is_sensitivity_run/",
-            ...options,
-        },
-    );
+    return (options.client ?? client).get<
+        GetIsSensitivityRunResponses_api,
+        GetIsSensitivityRunErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/parameters/is_sensitivity_run/",
+        ...options,
+    });
 };
 
 /**
@@ -842,7 +848,7 @@ export const getIsSensitivityRun = <ThrowOnError extends boolean = false>(
 export const getSensitivities = <ThrowOnError extends boolean = false>(
     options: Options<GetSensitivitiesData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetSensitivitiesResponses_api, GetSensitivitiesError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetSensitivitiesResponses_api, GetSensitivitiesErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/parameters/sensitivities/",
         ...options,
@@ -857,7 +863,7 @@ export const getSensitivities = <ThrowOnError extends boolean = false>(
 export const getGridModelsInfo = <ThrowOnError extends boolean = false>(
     options: Options<GetGridModelsInfoData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetGridModelsInfoResponses_api, GetGridModelsInfoError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetGridModelsInfoResponses_api, GetGridModelsInfoErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/grid3d/grid_models_info/",
         ...options,
@@ -872,7 +878,7 @@ export const getGridModelsInfo = <ThrowOnError extends boolean = false>(
 export const getGridSurface = <ThrowOnError extends boolean = false>(
     options: Options<GetGridSurfaceData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetGridSurfaceResponses_api, GetGridSurfaceError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetGridSurfaceResponses_api, GetGridSurfaceErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/grid3d/grid_surface",
         ...options,
@@ -887,7 +893,7 @@ export const getGridSurface = <ThrowOnError extends boolean = false>(
 export const getGridParameter = <ThrowOnError extends boolean = false>(
     options: Options<GetGridParameterData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetGridParameterResponses_api, GetGridParameterError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetGridParameterResponses_api, GetGridParameterErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/grid3d/grid_parameter",
         ...options,
@@ -902,7 +908,7 @@ export const postGetPolylineIntersection = <ThrowOnError extends boolean = false
 ) => {
     return (options.client ?? client).post<
         PostGetPolylineIntersectionResponses_api,
-        PostGetPolylineIntersectionError_api,
+        PostGetPolylineIntersectionErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -923,7 +929,7 @@ export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetRealizationFlowNetworkResponses_api,
-        GetRealizationFlowNetworkError_api,
+        GetRealizationFlowNetworkErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -940,7 +946,7 @@ export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
 export const getTableData = <ThrowOnError extends boolean = false>(
     options: Options<GetTableDataData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetTableDataResponses_api, GetTableDataError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetTableDataResponses_api, GetTableDataErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/pvt/table_data/",
         ...options,
@@ -955,7 +961,7 @@ export const getWellCompletionsData = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetWellCompletionsDataResponses_api,
-        GetWellCompletionsDataError_api,
+        GetWellCompletionsDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -974,7 +980,7 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetDrilledWellboreHeadersResponses_api,
-        GetDrilledWellboreHeadersError_api,
+        GetDrilledWellboreHeadersErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -991,13 +997,15 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
 export const getWellTrajectories = <ThrowOnError extends boolean = false>(
     options: Options<GetWellTrajectoriesData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetWellTrajectoriesResponses_api, GetWellTrajectoriesError_api, ThrowOnError>(
-        {
-            responseType: "json",
-            url: "/well/well_trajectories/",
-            ...options,
-        },
-    );
+    return (options.client ?? client).get<
+        GetWellTrajectoriesResponses_api,
+        GetWellTrajectoriesErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/well/well_trajectories/",
+        ...options,
+    });
 };
 
 /**
@@ -1010,7 +1018,7 @@ export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>
 ) => {
     return (options.client ?? client).get<
         GetWellborePickIdentifiersResponses_api,
-        GetWellborePickIdentifiersError_api,
+        GetWellborePickIdentifiersErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1032,7 +1040,7 @@ export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean =
 ) => {
     return (options.client ?? client).get<
         GetWellborePicksForPickIdentifierResponses_api,
-        GetWellborePicksForPickIdentifierError_api,
+        GetWellborePicksForPickIdentifierErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1053,7 +1061,7 @@ export const deprecatedGetWellborePicksForWellbore = <ThrowOnError extends boole
 ) => {
     return (options.client ?? client).get<
         DeprecatedGetWellborePicksForWellboreResponses_api,
-        DeprecatedGetWellborePicksForWellboreError_api,
+        DeprecatedGetWellborePicksForWellboreErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1072,7 +1080,7 @@ export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = fal
 ) => {
     return (options.client ?? client).get<
         GetWellborePicksInStratColumnResponses_api,
-        GetWellborePicksInStratColumnError_api,
+        GetWellborePicksInStratColumnErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1089,7 +1097,7 @@ export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = f
 ) => {
     return (options.client ?? client).get<
         GetWellboreStratigraphicColumnsResponses_api,
-        GetWellboreStratigraphicColumnsError_api,
+        GetWellboreStratigraphicColumnsErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1108,7 +1116,7 @@ export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetWellboreCompletionsResponses_api,
-        GetWellboreCompletionsError_api,
+        GetWellboreCompletionsErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1125,7 +1133,7 @@ export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
 export const getWellboreCasings = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreCasingsData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetWellboreCasingsResponses_api, GetWellboreCasingsError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetWellboreCasingsResponses_api, GetWellboreCasingsErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/well/wellbore_casings/",
         ...options,
@@ -1142,7 +1150,7 @@ export const getWellborePerforations = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetWellborePerforationsResponses_api,
-        GetWellborePerforationsError_api,
+        GetWellborePerforationsErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1162,7 +1170,7 @@ export const getWellboreLogCurveHeaders = <ThrowOnError extends boolean = false>
 ) => {
     return (options.client ?? client).get<
         GetWellboreLogCurveHeadersResponses_api,
-        GetWellboreLogCurveHeadersError_api,
+        GetWellboreLogCurveHeadersErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1179,7 +1187,7 @@ export const getWellboreLogCurveHeaders = <ThrowOnError extends boolean = false>
 export const getLogCurveData = <ThrowOnError extends boolean = false>(
     options: Options<GetLogCurveDataData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetLogCurveDataResponses_api, GetLogCurveDataError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetLogCurveDataResponses_api, GetLogCurveDataErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/well/log_curve_data/",
         ...options,
@@ -1196,7 +1204,7 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetSeismicCubeMetaListResponses_api,
-        GetSeismicCubeMetaListError_api,
+        GetSeismicCubeMetaListErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1213,7 +1221,7 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
 export const getInlineSlice = <ThrowOnError extends boolean = false>(
     options: Options<GetInlineSliceData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetInlineSliceResponses_api, GetInlineSliceError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetInlineSliceResponses_api, GetInlineSliceErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/seismic/get_inline_slice/",
         ...options,
@@ -1228,7 +1236,7 @@ export const getInlineSlice = <ThrowOnError extends boolean = false>(
 export const getCrosslineSlice = <ThrowOnError extends boolean = false>(
     options: Options<GetCrosslineSliceData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetCrosslineSliceResponses_api, GetCrosslineSliceError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetCrosslineSliceResponses_api, GetCrosslineSliceErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/seismic/get_crossline_slice/",
         ...options,
@@ -1243,7 +1251,7 @@ export const getCrosslineSlice = <ThrowOnError extends boolean = false>(
 export const getDepthSlice = <ThrowOnError extends boolean = false>(
     options: Options<GetDepthSliceData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetDepthSliceResponses_api, GetDepthSliceError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetDepthSliceResponses_api, GetDepthSliceErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/seismic/get_depth_slice/",
         ...options,
@@ -1258,7 +1266,7 @@ export const getDepthSlice = <ThrowOnError extends boolean = false>(
 export const getSeismicSlices = <ThrowOnError extends boolean = false>(
     options: Options<GetSeismicSlicesData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetSeismicSlicesResponses_api, GetSeismicSlicesError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetSeismicSlicesResponses_api, GetSeismicSlicesErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/seismic/get_seismic_slices/",
         ...options,
@@ -1281,7 +1289,7 @@ export const postGetSeismicFence = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).post<
         PostGetSeismicFenceResponses_api,
-        PostGetSeismicFenceError_api,
+        PostGetSeismicFenceErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1304,7 +1312,7 @@ export const getPolygonsDirectory = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<
         GetPolygonsDirectoryResponses_api,
-        GetPolygonsDirectoryError_api,
+        GetPolygonsDirectoryErrors_api,
         ThrowOnError
     >({
         responseType: "json",
@@ -1319,7 +1327,7 @@ export const getPolygonsDirectory = <ThrowOnError extends boolean = false>(
 export const getPolygonsData = <ThrowOnError extends boolean = false>(
     options: Options<GetPolygonsDataData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetPolygonsDataResponses_api, GetPolygonsDataError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetPolygonsDataResponses_api, GetPolygonsDataErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/polygons/polygons_data/",
         ...options,
@@ -1332,7 +1340,7 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
 export const getUserInfo = <ThrowOnError extends boolean = false>(
     options: Options<GetUserInfoData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetUserInfoResponses_api, GetUserInfoError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetUserInfoResponses_api, GetUserInfoErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/graph/user_info/{user_id_or_email}",
         ...options,
@@ -1347,7 +1355,7 @@ export const getUserInfo = <ThrowOnError extends boolean = false>(
 export const getUserPhoto = <ThrowOnError extends boolean = false>(
     options: Options<GetUserPhotoData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetUserPhotoResponses_api, GetUserPhotoError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetUserPhotoResponses_api, GetUserPhotoErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/graph/user_photo/",
         ...options,
@@ -1362,7 +1370,7 @@ export const getUserPhoto = <ThrowOnError extends boolean = false>(
 export const getObservations = <ThrowOnError extends boolean = false>(
     options: Options<GetObservationsData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetObservationsResponses_api, GetObservationsError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetObservationsResponses_api, GetObservationsErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/observations/observations/",
         ...options,
@@ -1375,7 +1383,7 @@ export const getObservations = <ThrowOnError extends boolean = false>(
 export const getTableDefinition = <ThrowOnError extends boolean = false>(
     options: Options<GetTableDefinitionData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetTableDefinitionResponses_api, GetTableDefinitionError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetTableDefinitionResponses_api, GetTableDefinitionErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/rft/table_definition",
         ...options,
@@ -1388,7 +1396,7 @@ export const getTableDefinition = <ThrowOnError extends boolean = false>(
 export const getRealizationData = <ThrowOnError extends boolean = false>(
     options: Options<GetRealizationDataData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetRealizationDataResponses_api, GetRealizationDataError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetRealizationDataResponses_api, GetRealizationDataErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/rft/realization_data",
         ...options,
@@ -1401,7 +1409,7 @@ export const getRealizationData = <ThrowOnError extends boolean = false>(
 export const getVfpTableNames = <ThrowOnError extends boolean = false>(
     options: Options<GetVfpTableNamesData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetVfpTableNamesResponses_api, GetVfpTableNamesError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetVfpTableNamesResponses_api, GetVfpTableNamesErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/vfp/vfp_table_names/",
         ...options,
@@ -1414,7 +1422,7 @@ export const getVfpTableNames = <ThrowOnError extends boolean = false>(
 export const getVfpTable = <ThrowOnError extends boolean = false>(
     options: Options<GetVfpTableData_api, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetVfpTableResponses_api, GetVfpTableError_api, ThrowOnError>({
+    return (options.client ?? client).get<GetVfpTableResponses_api, GetVfpTableErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/vfp/vfp_table/",
         ...options,
@@ -1427,7 +1435,7 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(
 export const loginRoute = <ThrowOnError extends boolean = false>(
     options?: Options<LoginRouteData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<LoginRouteResponses_api, LoginRouteError_api, ThrowOnError>({
+    return (options?.client ?? client).get<LoginRouteResponses_api, LoginRouteErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/login",
         ...options,
@@ -1490,7 +1498,7 @@ export const postLogout = <ThrowOnError extends boolean = false>(
 export const getLoggedInUser = <ThrowOnError extends boolean = false>(
     options?: Options<GetLoggedInUserData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetLoggedInUserResponses_api, GetLoggedInUserError_api, ThrowOnError>({
+    return (options?.client ?? client).get<GetLoggedInUserResponses_api, GetLoggedInUserErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/logged_in_user",
         ...options,

@@ -48,17 +48,26 @@ export default defineConfig({
         {
             name: "@hey-api/typescript",
             enums: "typescript",
-
-            // Add `_api` suffix to generated types
-            // Because our suffix doesn't follow PascalCasing, we need to manually handle the generated names.
-            case: "preserve",
-            // ? It might be possible to handle this via a plugin, but I could not figure out how. This works for now...
+            // Add `_api` suffix to generated types.
+            // ! Casing mode is applied *after* any name additions. Since our _api breaks
+            // ! the standard PascalCase convention, we need to manually transform all
+            // ! names. It might be possible to handle this via a plugin, but I could not
+            // ! figure out how. This works for now...
+            case: "preserve", // Stops the generator from changing any casing
             definitions: { name: (name) => addSuffix(name) },
-            responses: { name: (name) => addSuffix(name, "Responses") },
-            // response: { name: (name) => addSuffix(name, "Response") },
             requests: { name: (name) => addSuffix(name, "Data") },
-            errors: { name: (name) => addSuffix(name, "Error") },
-            webhooks: { name: (name) => addSuffix(name, "Hook") },
+            responses: {
+                name: (name) => addSuffix(name, "Responses"),
+                response: (name) => addSuffix(name, "Response"),
+            },
+            errors: {
+                name: (name) => addSuffix(name, "Errors"),
+                error: (name) => addSuffix(name, "Error"),
+            },
+            webhooks: {
+                name: (name) => addSuffix(name, "WebHookRequest"),
+                payload: (name) => addSuffix(name, "WebhookPayload"),
+            },
         },
     ],
 });

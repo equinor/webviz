@@ -2801,7 +2801,7 @@ export type GetFieldsResponses_api = {
     200: Array<FieldInfo_api>;
 };
 
-export type getFieldsResponse = GetFieldsResponses_api[keyof GetFieldsResponses_api];
+export type GetFieldsResponse_api = GetFieldsResponses_api[keyof GetFieldsResponses_api];
 
 export type GetCasesData_api = {
     body?: never;
@@ -2818,14 +2818,14 @@ export type GetCasesData_api = {
     url: "/cases";
 };
 
-export type GetCasesError_api = {
+export type GetCasesErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getCasesError = GetCasesError_api[keyof GetCasesError_api];
+export type GetCasesError_api = GetCasesErrors_api[keyof GetCasesErrors_api];
 
 export type GetCasesResponses_api = {
     /**
@@ -2836,7 +2836,7 @@ export type GetCasesResponses_api = {
     200: Array<CaseInfo_api>;
 };
 
-export type getCasesResponse = GetCasesResponses_api[keyof GetCasesResponses_api];
+export type GetCasesResponse_api = GetCasesResponses_api[keyof GetCasesResponses_api];
 
 export type GetEnsembleDetailsData_api = {
     body?: never;
@@ -2860,14 +2860,14 @@ export type GetEnsembleDetailsData_api = {
     url: "/cases/{case_uuid}/ensembles/{ensemble_name}";
 };
 
-export type GetEnsembleDetailsError_api = {
+export type GetEnsembleDetailsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getEnsembleDetailsError = GetEnsembleDetailsError_api[keyof GetEnsembleDetailsError_api];
+export type GetEnsembleDetailsError_api = GetEnsembleDetailsErrors_api[keyof GetEnsembleDetailsErrors_api];
 
 export type GetEnsembleDetailsResponses_api = {
     /**
@@ -2876,7 +2876,7 @@ export type GetEnsembleDetailsResponses_api = {
     200: EnsembleDetails_api;
 };
 
-export type getEnsembleDetailsResponse = GetEnsembleDetailsResponses_api[keyof GetEnsembleDetailsResponses_api];
+export type GetEnsembleDetailsResponse_api = GetEnsembleDetailsResponses_api[keyof GetEnsembleDetailsResponses_api];
 
 export type PostRefreshFingerprintsForEnsemblesData_api = {
     /**
@@ -2892,15 +2892,15 @@ export type PostRefreshFingerprintsForEnsemblesData_api = {
     url: "/ensembles/refresh_fingerprints";
 };
 
-export type PostRefreshFingerprintsForEnsemblesError_api = {
+export type PostRefreshFingerprintsForEnsemblesErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type postRefreshFingerprintsForEnsemblesError =
-    PostRefreshFingerprintsForEnsemblesError_api[keyof PostRefreshFingerprintsForEnsemblesError_api];
+export type PostRefreshFingerprintsForEnsemblesError_api =
+    PostRefreshFingerprintsForEnsemblesErrors_api[keyof PostRefreshFingerprintsForEnsemblesErrors_api];
 
 export type PostRefreshFingerprintsForEnsemblesResponses_api = {
     /**
@@ -2911,7 +2911,7 @@ export type PostRefreshFingerprintsForEnsemblesResponses_api = {
     200: Array<string | null>;
 };
 
-export type postRefreshFingerprintsForEnsemblesResponse =
+export type PostRefreshFingerprintsForEnsemblesResponse_api =
     PostRefreshFingerprintsForEnsemblesResponses_api[keyof PostRefreshFingerprintsForEnsemblesResponses_api];
 
 export type GetVectorListData_api = {
@@ -2941,14 +2941,14 @@ export type GetVectorListData_api = {
     url: "/timeseries/vector_list/";
 };
 
-export type GetVectorListError_api = {
+export type GetVectorListErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getVectorListError = GetVectorListError_api[keyof GetVectorListError_api];
+export type GetVectorListError_api = GetVectorListErrors_api[keyof GetVectorListErrors_api];
 
 export type GetVectorListResponses_api = {
     /**
@@ -2959,7 +2959,7 @@ export type GetVectorListResponses_api = {
     200: Array<VectorDescription_api>;
 };
 
-export type getVectorListResponse = GetVectorListResponses_api[keyof GetVectorListResponses_api];
+export type GetVectorListResponse_api = GetVectorListResponses_api[keyof GetVectorListResponses_api];
 
 export type GetDeltaEnsembleVectorListData_api = {
     body?: never;
@@ -3000,15 +3000,15 @@ export type GetDeltaEnsembleVectorListData_api = {
     url: "/timeseries/delta_ensemble_vector_list/";
 };
 
-export type GetDeltaEnsembleVectorListError_api = {
+export type GetDeltaEnsembleVectorListErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getDeltaEnsembleVectorListError =
-    GetDeltaEnsembleVectorListError_api[keyof GetDeltaEnsembleVectorListError_api];
+export type GetDeltaEnsembleVectorListError_api =
+    GetDeltaEnsembleVectorListErrors_api[keyof GetDeltaEnsembleVectorListErrors_api];
 
 export type GetDeltaEnsembleVectorListResponses_api = {
     /**
@@ -3019,7 +3019,7 @@ export type GetDeltaEnsembleVectorListResponses_api = {
     200: Array<VectorDescription_api>;
 };
 
-export type getDeltaEnsembleVectorListResponse =
+export type GetDeltaEnsembleVectorListResponse_api =
     GetDeltaEnsembleVectorListResponses_api[keyof GetDeltaEnsembleVectorListResponses_api];
 
 export type GetRealizationsVectorDataData_api = {
@@ -3061,15 +3061,15 @@ export type GetRealizationsVectorDataData_api = {
     url: "/timeseries/realizations_vector_data/";
 };
 
-export type GetRealizationsVectorDataError_api = {
+export type GetRealizationsVectorDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getRealizationsVectorDataError =
-    GetRealizationsVectorDataError_api[keyof GetRealizationsVectorDataError_api];
+export type GetRealizationsVectorDataError_api =
+    GetRealizationsVectorDataErrors_api[keyof GetRealizationsVectorDataErrors_api];
 
 export type GetRealizationsVectorDataResponses_api = {
     /**
@@ -3080,7 +3080,7 @@ export type GetRealizationsVectorDataResponses_api = {
     200: Array<VectorRealizationData_api>;
 };
 
-export type getRealizationsVectorDataResponse =
+export type GetRealizationsVectorDataResponse_api =
     GetRealizationsVectorDataResponses_api[keyof GetRealizationsVectorDataResponses_api];
 
 export type GetDeltaEnsembleRealizationsVectorDataData_api = {
@@ -3132,15 +3132,15 @@ export type GetDeltaEnsembleRealizationsVectorDataData_api = {
     url: "/timeseries/delta_ensemble_realizations_vector_data/";
 };
 
-export type GetDeltaEnsembleRealizationsVectorDataError_api = {
+export type GetDeltaEnsembleRealizationsVectorDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getDeltaEnsembleRealizationsVectorDataError =
-    GetDeltaEnsembleRealizationsVectorDataError_api[keyof GetDeltaEnsembleRealizationsVectorDataError_api];
+export type GetDeltaEnsembleRealizationsVectorDataError_api =
+    GetDeltaEnsembleRealizationsVectorDataErrors_api[keyof GetDeltaEnsembleRealizationsVectorDataErrors_api];
 
 export type GetDeltaEnsembleRealizationsVectorDataResponses_api = {
     /**
@@ -3151,7 +3151,7 @@ export type GetDeltaEnsembleRealizationsVectorDataResponses_api = {
     200: Array<VectorRealizationData_api>;
 };
 
-export type getDeltaEnsembleRealizationsVectorDataResponse =
+export type GetDeltaEnsembleRealizationsVectorDataResponse_api =
     GetDeltaEnsembleRealizationsVectorDataResponses_api[keyof GetDeltaEnsembleRealizationsVectorDataResponses_api];
 
 export type GetTimestampsListData_api = {
@@ -3181,14 +3181,14 @@ export type GetTimestampsListData_api = {
     url: "/timeseries/timestamps_list/";
 };
 
-export type GetTimestampsListError_api = {
+export type GetTimestampsListErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getTimestampsListError = GetTimestampsListError_api[keyof GetTimestampsListError_api];
+export type GetTimestampsListError_api = GetTimestampsListErrors_api[keyof GetTimestampsListErrors_api];
 
 export type GetTimestampsListResponses_api = {
     /**
@@ -3199,7 +3199,7 @@ export type GetTimestampsListResponses_api = {
     200: Array<number>;
 };
 
-export type getTimestampsListResponse = GetTimestampsListResponses_api[keyof GetTimestampsListResponses_api];
+export type GetTimestampsListResponse_api = GetTimestampsListResponses_api[keyof GetTimestampsListResponses_api];
 
 export type GetHistoricalVectorDataData_api = {
     body?: never;
@@ -3234,14 +3234,15 @@ export type GetHistoricalVectorDataData_api = {
     url: "/timeseries/historical_vector_data/";
 };
 
-export type GetHistoricalVectorDataError_api = {
+export type GetHistoricalVectorDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getHistoricalVectorDataError = GetHistoricalVectorDataError_api[keyof GetHistoricalVectorDataError_api];
+export type GetHistoricalVectorDataError_api =
+    GetHistoricalVectorDataErrors_api[keyof GetHistoricalVectorDataErrors_api];
 
 export type GetHistoricalVectorDataResponses_api = {
     /**
@@ -3250,7 +3251,7 @@ export type GetHistoricalVectorDataResponses_api = {
     200: VectorHistoricalData_api;
 };
 
-export type getHistoricalVectorDataResponse =
+export type GetHistoricalVectorDataResponse_api =
     GetHistoricalVectorDataResponses_api[keyof GetHistoricalVectorDataResponses_api];
 
 export type GetStatisticalVectorDataData_api = {
@@ -3296,14 +3297,15 @@ export type GetStatisticalVectorDataData_api = {
     url: "/timeseries/statistical_vector_data/";
 };
 
-export type GetStatisticalVectorDataError_api = {
+export type GetStatisticalVectorDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getStatisticalVectorDataError = GetStatisticalVectorDataError_api[keyof GetStatisticalVectorDataError_api];
+export type GetStatisticalVectorDataError_api =
+    GetStatisticalVectorDataErrors_api[keyof GetStatisticalVectorDataErrors_api];
 
 export type GetStatisticalVectorDataResponses_api = {
     /**
@@ -3312,7 +3314,7 @@ export type GetStatisticalVectorDataResponses_api = {
     200: VectorStatisticData_api;
 };
 
-export type getStatisticalVectorDataResponse =
+export type GetStatisticalVectorDataResponse_api =
     GetStatisticalVectorDataResponses_api[keyof GetStatisticalVectorDataResponses_api];
 
 export type GetDeltaEnsembleStatisticalVectorDataData_api = {
@@ -3370,15 +3372,15 @@ export type GetDeltaEnsembleStatisticalVectorDataData_api = {
     url: "/timeseries/delta_ensemble_statistical_vector_data/";
 };
 
-export type GetDeltaEnsembleStatisticalVectorDataError_api = {
+export type GetDeltaEnsembleStatisticalVectorDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getDeltaEnsembleStatisticalVectorDataError =
-    GetDeltaEnsembleStatisticalVectorDataError_api[keyof GetDeltaEnsembleStatisticalVectorDataError_api];
+export type GetDeltaEnsembleStatisticalVectorDataError_api =
+    GetDeltaEnsembleStatisticalVectorDataErrors_api[keyof GetDeltaEnsembleStatisticalVectorDataErrors_api];
 
 export type GetDeltaEnsembleStatisticalVectorDataResponses_api = {
     /**
@@ -3387,7 +3389,7 @@ export type GetDeltaEnsembleStatisticalVectorDataResponses_api = {
     200: VectorStatisticData_api;
 };
 
-export type getDeltaEnsembleStatisticalVectorDataResponse =
+export type GetDeltaEnsembleStatisticalVectorDataResponse_api =
     GetDeltaEnsembleStatisticalVectorDataResponses_api[keyof GetDeltaEnsembleStatisticalVectorDataResponses_api];
 
 export type GetStatisticalVectorDataPerSensitivityData_api = {
@@ -3433,15 +3435,15 @@ export type GetStatisticalVectorDataPerSensitivityData_api = {
     url: "/timeseries/statistical_vector_data_per_sensitivity/";
 };
 
-export type GetStatisticalVectorDataPerSensitivityError_api = {
+export type GetStatisticalVectorDataPerSensitivityErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getStatisticalVectorDataPerSensitivityError =
-    GetStatisticalVectorDataPerSensitivityError_api[keyof GetStatisticalVectorDataPerSensitivityError_api];
+export type GetStatisticalVectorDataPerSensitivityError_api =
+    GetStatisticalVectorDataPerSensitivityErrors_api[keyof GetStatisticalVectorDataPerSensitivityErrors_api];
 
 export type GetStatisticalVectorDataPerSensitivityResponses_api = {
     /**
@@ -3452,7 +3454,7 @@ export type GetStatisticalVectorDataPerSensitivityResponses_api = {
     200: Array<VectorStatisticSensitivityData_api>;
 };
 
-export type getStatisticalVectorDataPerSensitivityResponse =
+export type GetStatisticalVectorDataPerSensitivityResponse_api =
     GetStatisticalVectorDataPerSensitivityResponses_api[keyof GetStatisticalVectorDataPerSensitivityResponses_api];
 
 export type GetRealizationVectorAtTimestampData_api = {
@@ -3488,15 +3490,15 @@ export type GetRealizationVectorAtTimestampData_api = {
     url: "/timeseries/realization_vector_at_timestamp/";
 };
 
-export type GetRealizationVectorAtTimestampError_api = {
+export type GetRealizationVectorAtTimestampErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getRealizationVectorAtTimestampError =
-    GetRealizationVectorAtTimestampError_api[keyof GetRealizationVectorAtTimestampError_api];
+export type GetRealizationVectorAtTimestampError_api =
+    GetRealizationVectorAtTimestampErrors_api[keyof GetRealizationVectorAtTimestampErrors_api];
 
 export type GetRealizationVectorAtTimestampResponses_api = {
     /**
@@ -3505,7 +3507,7 @@ export type GetRealizationVectorAtTimestampResponses_api = {
     200: EnsembleScalarResponse_api;
 };
 
-export type getRealizationVectorAtTimestampResponse =
+export type GetRealizationVectorAtTimestampResponse_api =
     GetRealizationVectorAtTimestampResponses_api[keyof GetRealizationVectorAtTimestampResponses_api];
 
 export type GetTableDefinitionsData_api = {
@@ -3529,14 +3531,14 @@ export type GetTableDefinitionsData_api = {
     url: "/inplace_volumes/table_definitions/";
 };
 
-export type GetTableDefinitionsError_api = {
+export type GetTableDefinitionsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getTableDefinitionsError = GetTableDefinitionsError_api[keyof GetTableDefinitionsError_api];
+export type GetTableDefinitionsError_api = GetTableDefinitionsErrors_api[keyof GetTableDefinitionsErrors_api];
 
 export type GetTableDefinitionsResponses_api = {
     /**
@@ -3547,7 +3549,7 @@ export type GetTableDefinitionsResponses_api = {
     200: Array<InplaceVolumesTableDefinition_api>;
 };
 
-export type getTableDefinitionsResponse = GetTableDefinitionsResponses_api[keyof GetTableDefinitionsResponses_api];
+export type GetTableDefinitionsResponse_api = GetTableDefinitionsResponses_api[keyof GetTableDefinitionsResponses_api];
 
 export type PostGetAggregatedPerRealizationTableDataData_api = {
     body: BodyPostGetAggregatedPerRealizationTableData_api;
@@ -3594,15 +3596,15 @@ export type PostGetAggregatedPerRealizationTableDataData_api = {
     url: "/inplace_volumes/get_aggregated_per_realization_table_data/";
 };
 
-export type PostGetAggregatedPerRealizationTableDataError_api = {
+export type PostGetAggregatedPerRealizationTableDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type postGetAggregatedPerRealizationTableDataError =
-    PostGetAggregatedPerRealizationTableDataError_api[keyof PostGetAggregatedPerRealizationTableDataError_api];
+export type PostGetAggregatedPerRealizationTableDataError_api =
+    PostGetAggregatedPerRealizationTableDataErrors_api[keyof PostGetAggregatedPerRealizationTableDataErrors_api];
 
 export type PostGetAggregatedPerRealizationTableDataResponses_api = {
     /**
@@ -3611,7 +3613,7 @@ export type PostGetAggregatedPerRealizationTableDataResponses_api = {
     200: InplaceVolumesTableDataPerFluidSelection_api;
 };
 
-export type postGetAggregatedPerRealizationTableDataResponse =
+export type PostGetAggregatedPerRealizationTableDataResponse_api =
     PostGetAggregatedPerRealizationTableDataResponses_api[keyof PostGetAggregatedPerRealizationTableDataResponses_api];
 
 export type PostGetAggregatedStatisticalTableDataData_api = {
@@ -3659,15 +3661,15 @@ export type PostGetAggregatedStatisticalTableDataData_api = {
     url: "/inplace_volumes/get_aggregated_statistical_table_data/";
 };
 
-export type PostGetAggregatedStatisticalTableDataError_api = {
+export type PostGetAggregatedStatisticalTableDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type postGetAggregatedStatisticalTableDataError =
-    PostGetAggregatedStatisticalTableDataError_api[keyof PostGetAggregatedStatisticalTableDataError_api];
+export type PostGetAggregatedStatisticalTableDataError_api =
+    PostGetAggregatedStatisticalTableDataErrors_api[keyof PostGetAggregatedStatisticalTableDataErrors_api];
 
 export type PostGetAggregatedStatisticalTableDataResponses_api = {
     /**
@@ -3676,7 +3678,7 @@ export type PostGetAggregatedStatisticalTableDataResponses_api = {
     200: InplaceVolumesStatisticalTableDataPerFluidSelection_api;
 };
 
-export type postGetAggregatedStatisticalTableDataResponse =
+export type PostGetAggregatedStatisticalTableDataResponse_api =
     PostGetAggregatedStatisticalTableDataResponses_api[keyof PostGetAggregatedStatisticalTableDataResponses_api];
 
 export type GetRealizationSurfacesMetadataData_api = {
@@ -3700,15 +3702,15 @@ export type GetRealizationSurfacesMetadataData_api = {
     url: "/surface/realization_surfaces_metadata/";
 };
 
-export type GetRealizationSurfacesMetadataError_api = {
+export type GetRealizationSurfacesMetadataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getRealizationSurfacesMetadataError =
-    GetRealizationSurfacesMetadataError_api[keyof GetRealizationSurfacesMetadataError_api];
+export type GetRealizationSurfacesMetadataError_api =
+    GetRealizationSurfacesMetadataErrors_api[keyof GetRealizationSurfacesMetadataErrors_api];
 
 export type GetRealizationSurfacesMetadataResponses_api = {
     /**
@@ -3717,7 +3719,7 @@ export type GetRealizationSurfacesMetadataResponses_api = {
     200: SurfaceMetaSet_api;
 };
 
-export type getRealizationSurfacesMetadataResponse =
+export type GetRealizationSurfacesMetadataResponse_api =
     GetRealizationSurfacesMetadataResponses_api[keyof GetRealizationSurfacesMetadataResponses_api];
 
 export type GetObservedSurfacesMetadataData_api = {
@@ -3735,15 +3737,15 @@ export type GetObservedSurfacesMetadataData_api = {
     url: "/surface/observed_surfaces_metadata/";
 };
 
-export type GetObservedSurfacesMetadataError_api = {
+export type GetObservedSurfacesMetadataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getObservedSurfacesMetadataError =
-    GetObservedSurfacesMetadataError_api[keyof GetObservedSurfacesMetadataError_api];
+export type GetObservedSurfacesMetadataError_api =
+    GetObservedSurfacesMetadataErrors_api[keyof GetObservedSurfacesMetadataErrors_api];
 
 export type GetObservedSurfacesMetadataResponses_api = {
     /**
@@ -3752,7 +3754,7 @@ export type GetObservedSurfacesMetadataResponses_api = {
     200: SurfaceMetaSet_api;
 };
 
-export type getObservedSurfacesMetadataResponse =
+export type GetObservedSurfacesMetadataResponse_api =
     GetObservedSurfacesMetadataResponses_api[keyof GetObservedSurfacesMetadataResponses_api];
 
 export type GetSurfaceDataData_api = {
@@ -3782,14 +3784,14 @@ export type GetSurfaceDataData_api = {
     url: "/surface/surface_data";
 };
 
-export type GetSurfaceDataError_api = {
+export type GetSurfaceDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getSurfaceDataError = GetSurfaceDataError_api[keyof GetSurfaceDataError_api];
+export type GetSurfaceDataError_api = GetSurfaceDataErrors_api[keyof GetSurfaceDataErrors_api];
 
 export type GetSurfaceDataResponses_api = {
     /**
@@ -3800,7 +3802,7 @@ export type GetSurfaceDataResponses_api = {
     200: SurfaceDataFloat_api | SurfaceDataPng_api;
 };
 
-export type getSurfaceDataResponse = GetSurfaceDataResponses_api[keyof GetSurfaceDataResponses_api];
+export type GetSurfaceDataResponse_api = GetSurfaceDataResponses_api[keyof GetSurfaceDataResponses_api];
 
 export type GetStatisticalSurfaceDataHybridData_api = {
     body?: never;
@@ -3829,15 +3831,15 @@ export type GetStatisticalSurfaceDataHybridData_api = {
     url: "/surface/statistical_surface_data/hybrid";
 };
 
-export type GetStatisticalSurfaceDataHybridError_api = {
+export type GetStatisticalSurfaceDataHybridErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getStatisticalSurfaceDataHybridError =
-    GetStatisticalSurfaceDataHybridError_api[keyof GetStatisticalSurfaceDataHybridError_api];
+export type GetStatisticalSurfaceDataHybridError_api =
+    GetStatisticalSurfaceDataHybridErrors_api[keyof GetStatisticalSurfaceDataHybridErrors_api];
 
 export type GetStatisticalSurfaceDataHybridResponses_api = {
     /**
@@ -3848,7 +3850,7 @@ export type GetStatisticalSurfaceDataHybridResponses_api = {
     200: LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api | LroInProgressResp_api | LroFailureResp_api;
 };
 
-export type getStatisticalSurfaceDataHybridResponse =
+export type GetStatisticalSurfaceDataHybridResponse_api =
     GetStatisticalSurfaceDataHybridResponses_api[keyof GetStatisticalSurfaceDataHybridResponses_api];
 
 export type PostGetSurfaceIntersectionData_api = {
@@ -3896,15 +3898,15 @@ export type PostGetSurfaceIntersectionData_api = {
     url: "/surface/get_surface_intersection";
 };
 
-export type PostGetSurfaceIntersectionError_api = {
+export type PostGetSurfaceIntersectionErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type postGetSurfaceIntersectionError =
-    PostGetSurfaceIntersectionError_api[keyof PostGetSurfaceIntersectionError_api];
+export type PostGetSurfaceIntersectionError_api =
+    PostGetSurfaceIntersectionErrors_api[keyof PostGetSurfaceIntersectionErrors_api];
 
 export type PostGetSurfaceIntersectionResponses_api = {
     /**
@@ -3913,7 +3915,7 @@ export type PostGetSurfaceIntersectionResponses_api = {
     200: SurfaceIntersectionData_api;
 };
 
-export type postGetSurfaceIntersectionResponse =
+export type PostGetSurfaceIntersectionResponse_api =
     PostGetSurfaceIntersectionResponses_api[keyof PostGetSurfaceIntersectionResponses_api];
 
 export type PostGetSampleSurfaceInPointsData_api = {
@@ -3955,15 +3957,15 @@ export type PostGetSampleSurfaceInPointsData_api = {
     url: "/surface/get_sample_surface_in_points";
 };
 
-export type PostGetSampleSurfaceInPointsError_api = {
+export type PostGetSampleSurfaceInPointsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type postGetSampleSurfaceInPointsError =
-    PostGetSampleSurfaceInPointsError_api[keyof PostGetSampleSurfaceInPointsError_api];
+export type PostGetSampleSurfaceInPointsError_api =
+    PostGetSampleSurfaceInPointsErrors_api[keyof PostGetSampleSurfaceInPointsErrors_api];
 
 export type PostGetSampleSurfaceInPointsResponses_api = {
     /**
@@ -3974,7 +3976,7 @@ export type PostGetSampleSurfaceInPointsResponses_api = {
     200: Array<SurfaceRealizationSampleValues_api>;
 };
 
-export type postGetSampleSurfaceInPointsResponse =
+export type PostGetSampleSurfaceInPointsResponse_api =
     PostGetSampleSurfaceInPointsResponses_api[keyof PostGetSampleSurfaceInPointsResponses_api];
 
 export type GetDeltaSurfaceDataData_api = {
@@ -4010,14 +4012,14 @@ export type GetDeltaSurfaceDataData_api = {
     url: "/surface/delta_surface_data";
 };
 
-export type GetDeltaSurfaceDataError_api = {
+export type GetDeltaSurfaceDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getDeltaSurfaceDataError = GetDeltaSurfaceDataError_api[keyof GetDeltaSurfaceDataError_api];
+export type GetDeltaSurfaceDataError_api = GetDeltaSurfaceDataErrors_api[keyof GetDeltaSurfaceDataErrors_api];
 
 export type GetDeltaSurfaceDataResponses_api = {
     /**
@@ -4028,7 +4030,7 @@ export type GetDeltaSurfaceDataResponses_api = {
     200: Array<SurfaceDataFloat_api>;
 };
 
-export type getDeltaSurfaceDataResponse = GetDeltaSurfaceDataResponses_api[keyof GetDeltaSurfaceDataResponses_api];
+export type GetDeltaSurfaceDataResponse_api = GetDeltaSurfaceDataResponses_api[keyof GetDeltaSurfaceDataResponses_api];
 
 export type GetMisfitSurfaceDataData_api = {
     body?: never;
@@ -4075,14 +4077,14 @@ export type GetMisfitSurfaceDataData_api = {
     url: "/surface/misfit_surface_data";
 };
 
-export type GetMisfitSurfaceDataError_api = {
+export type GetMisfitSurfaceDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getMisfitSurfaceDataError = GetMisfitSurfaceDataError_api[keyof GetMisfitSurfaceDataError_api];
+export type GetMisfitSurfaceDataError_api = GetMisfitSurfaceDataErrors_api[keyof GetMisfitSurfaceDataErrors_api];
 
 export type GetMisfitSurfaceDataResponses_api = {
     /**
@@ -4093,7 +4095,8 @@ export type GetMisfitSurfaceDataResponses_api = {
     200: Array<SurfaceDataFloat_api>;
 };
 
-export type getMisfitSurfaceDataResponse = GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
+export type GetMisfitSurfaceDataResponse_api =
+    GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
 
 export type DeprecatedGetStratigraphicUnitsData_api = {
     body?: never;
@@ -4110,15 +4113,15 @@ export type DeprecatedGetStratigraphicUnitsData_api = {
     url: "/surface/deprecated_stratigraphic_units";
 };
 
-export type DeprecatedGetStratigraphicUnitsError_api = {
+export type DeprecatedGetStratigraphicUnitsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type deprecatedGetStratigraphicUnitsError =
-    DeprecatedGetStratigraphicUnitsError_api[keyof DeprecatedGetStratigraphicUnitsError_api];
+export type DeprecatedGetStratigraphicUnitsError_api =
+    DeprecatedGetStratigraphicUnitsErrors_api[keyof DeprecatedGetStratigraphicUnitsErrors_api];
 
 export type DeprecatedGetStratigraphicUnitsResponses_api = {
     /**
@@ -4129,7 +4132,7 @@ export type DeprecatedGetStratigraphicUnitsResponses_api = {
     200: Array<StratigraphicUnit_api>;
 };
 
-export type deprecatedGetStratigraphicUnitsResponse =
+export type DeprecatedGetStratigraphicUnitsResponse_api =
     DeprecatedGetStratigraphicUnitsResponses_api[keyof DeprecatedGetStratigraphicUnitsResponses_api];
 
 export type GetStratigraphicUnitsForStratColumnData_api = {
@@ -4147,15 +4150,15 @@ export type GetStratigraphicUnitsForStratColumnData_api = {
     url: "/surface/stratigraphic_units_for_strat_column";
 };
 
-export type GetStratigraphicUnitsForStratColumnError_api = {
+export type GetStratigraphicUnitsForStratColumnErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getStratigraphicUnitsForStratColumnError =
-    GetStratigraphicUnitsForStratColumnError_api[keyof GetStratigraphicUnitsForStratColumnError_api];
+export type GetStratigraphicUnitsForStratColumnError_api =
+    GetStratigraphicUnitsForStratColumnErrors_api[keyof GetStratigraphicUnitsForStratColumnErrors_api];
 
 export type GetStratigraphicUnitsForStratColumnResponses_api = {
     /**
@@ -4166,7 +4169,7 @@ export type GetStratigraphicUnitsForStratColumnResponses_api = {
     200: Array<StratigraphicUnit_api>;
 };
 
-export type getStratigraphicUnitsForStratColumnResponse =
+export type GetStratigraphicUnitsForStratColumnResponse_api =
     GetStratigraphicUnitsForStratColumnResponses_api[keyof GetStratigraphicUnitsForStratColumnResponses_api];
 
 export type GetParameterNamesAndDescriptionData_api = {
@@ -4202,15 +4205,15 @@ export type GetParameterNamesAndDescriptionData_api = {
     url: "/parameters/parameter_names_and_description/";
 };
 
-export type GetParameterNamesAndDescriptionError_api = {
+export type GetParameterNamesAndDescriptionErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getParameterNamesAndDescriptionError =
-    GetParameterNamesAndDescriptionError_api[keyof GetParameterNamesAndDescriptionError_api];
+export type GetParameterNamesAndDescriptionError_api =
+    GetParameterNamesAndDescriptionErrors_api[keyof GetParameterNamesAndDescriptionErrors_api];
 
 export type GetParameterNamesAndDescriptionResponses_api = {
     /**
@@ -4221,7 +4224,7 @@ export type GetParameterNamesAndDescriptionResponses_api = {
     200: Array<EnsembleParameterDescription_api>;
 };
 
-export type getParameterNamesAndDescriptionResponse =
+export type GetParameterNamesAndDescriptionResponse_api =
     GetParameterNamesAndDescriptionResponses_api[keyof GetParameterNamesAndDescriptionResponses_api];
 
 export type GetParameterData_api = {
@@ -4251,14 +4254,14 @@ export type GetParameterData_api = {
     url: "/parameters/parameter/";
 };
 
-export type GetParameterError_api = {
+export type GetParameterErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getParameterError = GetParameterError_api[keyof GetParameterError_api];
+export type GetParameterError_api = GetParameterErrors_api[keyof GetParameterErrors_api];
 
 export type GetParameterResponses_api = {
     /**
@@ -4269,7 +4272,7 @@ export type GetParameterResponses_api = {
     200: EnsembleParameter_api | null;
 };
 
-export type getParameterResponse = GetParameterResponses_api[keyof GetParameterResponses_api];
+export type GetParameterResponse_api = GetParameterResponses_api[keyof GetParameterResponses_api];
 
 export type GetParametersData_api = {
     body?: never;
@@ -4292,14 +4295,14 @@ export type GetParametersData_api = {
     url: "/parameters/parameters/";
 };
 
-export type GetParametersError_api = {
+export type GetParametersErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getParametersError = GetParametersError_api[keyof GetParametersError_api];
+export type GetParametersError_api = GetParametersErrors_api[keyof GetParametersErrors_api];
 
 export type GetParametersResponses_api = {
     /**
@@ -4310,7 +4313,7 @@ export type GetParametersResponses_api = {
     200: Array<EnsembleParameter_api>;
 };
 
-export type getParametersResponse = GetParametersResponses_api[keyof GetParametersResponses_api];
+export type GetParametersResponse_api = GetParametersResponses_api[keyof GetParametersResponses_api];
 
 export type GetIsSensitivityRunData_api = {
     body?: never;
@@ -4333,14 +4336,14 @@ export type GetIsSensitivityRunData_api = {
     url: "/parameters/is_sensitivity_run/";
 };
 
-export type GetIsSensitivityRunError_api = {
+export type GetIsSensitivityRunErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getIsSensitivityRunError = GetIsSensitivityRunError_api[keyof GetIsSensitivityRunError_api];
+export type GetIsSensitivityRunError_api = GetIsSensitivityRunErrors_api[keyof GetIsSensitivityRunErrors_api];
 
 export type GetIsSensitivityRunResponses_api = {
     /**
@@ -4351,7 +4354,7 @@ export type GetIsSensitivityRunResponses_api = {
     200: boolean;
 };
 
-export type getIsSensitivityRunResponse = GetIsSensitivityRunResponses_api[keyof GetIsSensitivityRunResponses_api];
+export type GetIsSensitivityRunResponse_api = GetIsSensitivityRunResponses_api[keyof GetIsSensitivityRunResponses_api];
 
 export type GetSensitivitiesData_api = {
     body?: never;
@@ -4374,14 +4377,14 @@ export type GetSensitivitiesData_api = {
     url: "/parameters/sensitivities/";
 };
 
-export type GetSensitivitiesError_api = {
+export type GetSensitivitiesErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getSensitivitiesError = GetSensitivitiesError_api[keyof GetSensitivitiesError_api];
+export type GetSensitivitiesError_api = GetSensitivitiesErrors_api[keyof GetSensitivitiesErrors_api];
 
 export type GetSensitivitiesResponses_api = {
     /**
@@ -4392,7 +4395,7 @@ export type GetSensitivitiesResponses_api = {
     200: Array<EnsembleSensitivity_api>;
 };
 
-export type getSensitivitiesResponse = GetSensitivitiesResponses_api[keyof GetSensitivitiesResponses_api];
+export type GetSensitivitiesResponse_api = GetSensitivitiesResponses_api[keyof GetSensitivitiesResponses_api];
 
 export type GetGridModelsInfoData_api = {
     body?: never;
@@ -4421,14 +4424,14 @@ export type GetGridModelsInfoData_api = {
     url: "/grid3d/grid_models_info/";
 };
 
-export type GetGridModelsInfoError_api = {
+export type GetGridModelsInfoErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getGridModelsInfoError = GetGridModelsInfoError_api[keyof GetGridModelsInfoError_api];
+export type GetGridModelsInfoError_api = GetGridModelsInfoErrors_api[keyof GetGridModelsInfoErrors_api];
 
 export type GetGridModelsInfoResponses_api = {
     /**
@@ -4439,7 +4442,7 @@ export type GetGridModelsInfoResponses_api = {
     200: Array<Grid3DInfo_api>;
 };
 
-export type getGridModelsInfoResponse = GetGridModelsInfoResponses_api[keyof GetGridModelsInfoResponses_api];
+export type GetGridModelsInfoResponse_api = GetGridModelsInfoResponses_api[keyof GetGridModelsInfoResponses_api];
 
 export type GetGridSurfaceData_api = {
     body?: never;
@@ -4510,14 +4513,14 @@ export type GetGridSurfaceData_api = {
     url: "/grid3d/grid_surface";
 };
 
-export type GetGridSurfaceError_api = {
+export type GetGridSurfaceErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getGridSurfaceError = GetGridSurfaceError_api[keyof GetGridSurfaceError_api];
+export type GetGridSurfaceError_api = GetGridSurfaceErrors_api[keyof GetGridSurfaceErrors_api];
 
 export type GetGridSurfaceResponses_api = {
     /**
@@ -4526,7 +4529,7 @@ export type GetGridSurfaceResponses_api = {
     200: Grid3DGeometry_api;
 };
 
-export type getGridSurfaceResponse = GetGridSurfaceResponses_api[keyof GetGridSurfaceResponses_api];
+export type GetGridSurfaceResponse_api = GetGridSurfaceResponses_api[keyof GetGridSurfaceResponses_api];
 
 export type GetGridParameterData_api = {
     body?: never;
@@ -4609,14 +4612,14 @@ export type GetGridParameterData_api = {
     url: "/grid3d/grid_parameter";
 };
 
-export type GetGridParameterError_api = {
+export type GetGridParameterErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getGridParameterError = GetGridParameterError_api[keyof GetGridParameterError_api];
+export type GetGridParameterError_api = GetGridParameterErrors_api[keyof GetGridParameterErrors_api];
 
 export type GetGridParameterResponses_api = {
     /**
@@ -4625,7 +4628,7 @@ export type GetGridParameterResponses_api = {
     200: Grid3DMappedProperty_api;
 };
 
-export type getGridParameterResponse = GetGridParameterResponses_api[keyof GetGridParameterResponses_api];
+export type GetGridParameterResponse_api = GetGridParameterResponses_api[keyof GetGridParameterResponses_api];
 
 export type PostGetPolylineIntersectionData_api = {
     body: BodyPostGetPolylineIntersection_api;
@@ -4672,15 +4675,15 @@ export type PostGetPolylineIntersectionData_api = {
     url: "/grid3d/get_polyline_intersection";
 };
 
-export type PostGetPolylineIntersectionError_api = {
+export type PostGetPolylineIntersectionErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type postGetPolylineIntersectionError =
-    PostGetPolylineIntersectionError_api[keyof PostGetPolylineIntersectionError_api];
+export type PostGetPolylineIntersectionError_api =
+    PostGetPolylineIntersectionErrors_api[keyof PostGetPolylineIntersectionErrors_api];
 
 export type PostGetPolylineIntersectionResponses_api = {
     /**
@@ -4689,7 +4692,7 @@ export type PostGetPolylineIntersectionResponses_api = {
     200: PolylineIntersection_api;
 };
 
-export type postGetPolylineIntersectionResponse =
+export type PostGetPolylineIntersectionResponse_api =
     PostGetPolylineIntersectionResponses_api[keyof PostGetPolylineIntersectionResponses_api];
 
 export type GetRealizationFlowNetworkData_api = {
@@ -4729,15 +4732,15 @@ export type GetRealizationFlowNetworkData_api = {
     url: "/flow_network/realization_flow_network/";
 };
 
-export type GetRealizationFlowNetworkError_api = {
+export type GetRealizationFlowNetworkErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getRealizationFlowNetworkError =
-    GetRealizationFlowNetworkError_api[keyof GetRealizationFlowNetworkError_api];
+export type GetRealizationFlowNetworkError_api =
+    GetRealizationFlowNetworkErrors_api[keyof GetRealizationFlowNetworkErrors_api];
 
 export type GetRealizationFlowNetworkResponses_api = {
     /**
@@ -4746,7 +4749,7 @@ export type GetRealizationFlowNetworkResponses_api = {
     200: FlowNetworkData_api;
 };
 
-export type getRealizationFlowNetworkResponse =
+export type GetRealizationFlowNetworkResponse_api =
     GetRealizationFlowNetworkResponses_api[keyof GetRealizationFlowNetworkResponses_api];
 
 export type GetTableDataData_api = {
@@ -4776,14 +4779,14 @@ export type GetTableDataData_api = {
     url: "/pvt/table_data/";
 };
 
-export type GetTableDataError_api = {
+export type GetTableDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getTableDataError = GetTableDataError_api[keyof GetTableDataError_api];
+export type GetTableDataError_api = GetTableDataErrors_api[keyof GetTableDataErrors_api];
 
 export type GetTableDataResponses_api = {
     /**
@@ -4794,7 +4797,7 @@ export type GetTableDataResponses_api = {
     200: Array<PvtData_api>;
 };
 
-export type getTableDataResponse = GetTableDataResponses_api[keyof GetTableDataResponses_api];
+export type GetTableDataResponse_api = GetTableDataResponses_api[keyof GetTableDataResponses_api];
 
 export type GetWellCompletionsDataData_api = {
     body?: never;
@@ -4823,14 +4826,14 @@ export type GetWellCompletionsDataData_api = {
     url: "/well_completions/well_completions_data/";
 };
 
-export type GetWellCompletionsDataError_api = {
+export type GetWellCompletionsDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getWellCompletionsDataError = GetWellCompletionsDataError_api[keyof GetWellCompletionsDataError_api];
+export type GetWellCompletionsDataError_api = GetWellCompletionsDataErrors_api[keyof GetWellCompletionsDataErrors_api];
 
 export type GetWellCompletionsDataResponses_api = {
     /**
@@ -4839,7 +4842,7 @@ export type GetWellCompletionsDataResponses_api = {
     200: WellCompletionsData_api;
 };
 
-export type getWellCompletionsDataResponse =
+export type GetWellCompletionsDataResponse_api =
     GetWellCompletionsDataResponses_api[keyof GetWellCompletionsDataResponses_api];
 
 export type GetDrilledWellboreHeadersData_api = {
@@ -4857,15 +4860,15 @@ export type GetDrilledWellboreHeadersData_api = {
     url: "/well/drilled_wellbore_headers/";
 };
 
-export type GetDrilledWellboreHeadersError_api = {
+export type GetDrilledWellboreHeadersErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getDrilledWellboreHeadersError =
-    GetDrilledWellboreHeadersError_api[keyof GetDrilledWellboreHeadersError_api];
+export type GetDrilledWellboreHeadersError_api =
+    GetDrilledWellboreHeadersErrors_api[keyof GetDrilledWellboreHeadersErrors_api];
 
 export type GetDrilledWellboreHeadersResponses_api = {
     /**
@@ -4876,7 +4879,7 @@ export type GetDrilledWellboreHeadersResponses_api = {
     200: Array<WellboreHeader_api>;
 };
 
-export type getDrilledWellboreHeadersResponse =
+export type GetDrilledWellboreHeadersResponse_api =
     GetDrilledWellboreHeadersResponses_api[keyof GetDrilledWellboreHeadersResponses_api];
 
 export type GetWellTrajectoriesData_api = {
@@ -4900,14 +4903,14 @@ export type GetWellTrajectoriesData_api = {
     url: "/well/well_trajectories/";
 };
 
-export type GetWellTrajectoriesError_api = {
+export type GetWellTrajectoriesErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getWellTrajectoriesError = GetWellTrajectoriesError_api[keyof GetWellTrajectoriesError_api];
+export type GetWellTrajectoriesError_api = GetWellTrajectoriesErrors_api[keyof GetWellTrajectoriesErrors_api];
 
 export type GetWellTrajectoriesResponses_api = {
     /**
@@ -4918,7 +4921,7 @@ export type GetWellTrajectoriesResponses_api = {
     200: Array<WellboreTrajectory_api>;
 };
 
-export type getWellTrajectoriesResponse = GetWellTrajectoriesResponses_api[keyof GetWellTrajectoriesResponses_api];
+export type GetWellTrajectoriesResponse_api = GetWellTrajectoriesResponses_api[keyof GetWellTrajectoriesResponses_api];
 
 export type GetWellborePickIdentifiersData_api = {
     body?: never;
@@ -4935,15 +4938,15 @@ export type GetWellborePickIdentifiersData_api = {
     url: "/well/wellbore_pick_identifiers/";
 };
 
-export type GetWellborePickIdentifiersError_api = {
+export type GetWellborePickIdentifiersErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getWellborePickIdentifiersError =
-    GetWellborePickIdentifiersError_api[keyof GetWellborePickIdentifiersError_api];
+export type GetWellborePickIdentifiersError_api =
+    GetWellborePickIdentifiersErrors_api[keyof GetWellborePickIdentifiersErrors_api];
 
 export type GetWellborePickIdentifiersResponses_api = {
     /**
@@ -4954,7 +4957,7 @@ export type GetWellborePickIdentifiersResponses_api = {
     200: Array<string>;
 };
 
-export type getWellborePickIdentifiersResponse =
+export type GetWellborePickIdentifiersResponse_api =
     GetWellborePickIdentifiersResponses_api[keyof GetWellborePickIdentifiersResponses_api];
 
 export type GetWellborePicksForPickIdentifierData_api = {
@@ -4978,15 +4981,15 @@ export type GetWellborePicksForPickIdentifierData_api = {
     url: "/well/wellbore_picks_for_pick_identifier/";
 };
 
-export type GetWellborePicksForPickIdentifierError_api = {
+export type GetWellborePicksForPickIdentifierErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getWellborePicksForPickIdentifierError =
-    GetWellborePicksForPickIdentifierError_api[keyof GetWellborePicksForPickIdentifierError_api];
+export type GetWellborePicksForPickIdentifierError_api =
+    GetWellborePicksForPickIdentifierErrors_api[keyof GetWellborePicksForPickIdentifierErrors_api];
 
 export type GetWellborePicksForPickIdentifierResponses_api = {
     /**
@@ -4997,7 +5000,7 @@ export type GetWellborePicksForPickIdentifierResponses_api = {
     200: Array<WellborePick_api>;
 };
 
-export type getWellborePicksForPickIdentifierResponse =
+export type GetWellborePicksForPickIdentifierResponse_api =
     GetWellborePicksForPickIdentifierResponses_api[keyof GetWellborePicksForPickIdentifierResponses_api];
 
 export type DeprecatedGetWellborePicksForWellboreData_api = {
@@ -5015,15 +5018,15 @@ export type DeprecatedGetWellborePicksForWellboreData_api = {
     url: "/well/deprecated_wellbore_picks_for_wellbore/";
 };
 
-export type DeprecatedGetWellborePicksForWellboreError_api = {
+export type DeprecatedGetWellborePicksForWellboreErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type deprecatedGetWellborePicksForWellboreError =
-    DeprecatedGetWellborePicksForWellboreError_api[keyof DeprecatedGetWellborePicksForWellboreError_api];
+export type DeprecatedGetWellborePicksForWellboreError_api =
+    DeprecatedGetWellborePicksForWellboreErrors_api[keyof DeprecatedGetWellborePicksForWellboreErrors_api];
 
 export type DeprecatedGetWellborePicksForWellboreResponses_api = {
     /**
@@ -5034,7 +5037,7 @@ export type DeprecatedGetWellborePicksForWellboreResponses_api = {
     200: Array<WellborePick_api>;
 };
 
-export type deprecatedGetWellborePicksForWellboreResponse =
+export type DeprecatedGetWellborePicksForWellboreResponse_api =
     DeprecatedGetWellborePicksForWellboreResponses_api[keyof DeprecatedGetWellborePicksForWellboreResponses_api];
 
 export type GetWellborePicksInStratColumnData_api = {
@@ -5058,15 +5061,15 @@ export type GetWellborePicksInStratColumnData_api = {
     url: "/well/wellbore_picks_in_strat_column";
 };
 
-export type GetWellborePicksInStratColumnError_api = {
+export type GetWellborePicksInStratColumnErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getWellborePicksInStratColumnError =
-    GetWellborePicksInStratColumnError_api[keyof GetWellborePicksInStratColumnError_api];
+export type GetWellborePicksInStratColumnError_api =
+    GetWellborePicksInStratColumnErrors_api[keyof GetWellborePicksInStratColumnErrors_api];
 
 export type GetWellborePicksInStratColumnResponses_api = {
     /**
@@ -5077,7 +5080,7 @@ export type GetWellborePicksInStratColumnResponses_api = {
     200: Array<WellborePick_api>;
 };
 
-export type getWellborePicksInStratColumnResponse =
+export type GetWellborePicksInStratColumnResponse_api =
     GetWellborePicksInStratColumnResponses_api[keyof GetWellborePicksInStratColumnResponses_api];
 
 export type GetWellboreStratigraphicColumnsData_api = {
@@ -5095,15 +5098,15 @@ export type GetWellboreStratigraphicColumnsData_api = {
     url: "/well/wellbore_stratigraphic_columns/";
 };
 
-export type GetWellboreStratigraphicColumnsError_api = {
+export type GetWellboreStratigraphicColumnsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getWellboreStratigraphicColumnsError =
-    GetWellboreStratigraphicColumnsError_api[keyof GetWellboreStratigraphicColumnsError_api];
+export type GetWellboreStratigraphicColumnsError_api =
+    GetWellboreStratigraphicColumnsErrors_api[keyof GetWellboreStratigraphicColumnsErrors_api];
 
 export type GetWellboreStratigraphicColumnsResponses_api = {
     /**
@@ -5114,7 +5117,7 @@ export type GetWellboreStratigraphicColumnsResponses_api = {
     200: Array<StratigraphicColumn_api>;
 };
 
-export type getWellboreStratigraphicColumnsResponse =
+export type GetWellboreStratigraphicColumnsResponse_api =
     GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
 
 export type GetWellboreCompletionsData_api = {
@@ -5132,14 +5135,14 @@ export type GetWellboreCompletionsData_api = {
     url: "/well/wellbore_completions/";
 };
 
-export type GetWellboreCompletionsError_api = {
+export type GetWellboreCompletionsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getWellboreCompletionsError = GetWellboreCompletionsError_api[keyof GetWellboreCompletionsError_api];
+export type GetWellboreCompletionsError_api = GetWellboreCompletionsErrors_api[keyof GetWellboreCompletionsErrors_api];
 
 export type GetWellboreCompletionsResponses_api = {
     /**
@@ -5150,7 +5153,7 @@ export type GetWellboreCompletionsResponses_api = {
     200: Array<WellboreCompletion_api>;
 };
 
-export type getWellboreCompletionsResponse =
+export type GetWellboreCompletionsResponse_api =
     GetWellboreCompletionsResponses_api[keyof GetWellboreCompletionsResponses_api];
 
 export type GetWellboreCasingsData_api = {
@@ -5168,14 +5171,14 @@ export type GetWellboreCasingsData_api = {
     url: "/well/wellbore_casings/";
 };
 
-export type GetWellboreCasingsError_api = {
+export type GetWellboreCasingsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getWellboreCasingsError = GetWellboreCasingsError_api[keyof GetWellboreCasingsError_api];
+export type GetWellboreCasingsError_api = GetWellboreCasingsErrors_api[keyof GetWellboreCasingsErrors_api];
 
 export type GetWellboreCasingsResponses_api = {
     /**
@@ -5186,7 +5189,7 @@ export type GetWellboreCasingsResponses_api = {
     200: Array<WellboreCasing_api>;
 };
 
-export type getWellboreCasingsResponse = GetWellboreCasingsResponses_api[keyof GetWellboreCasingsResponses_api];
+export type GetWellboreCasingsResponse_api = GetWellboreCasingsResponses_api[keyof GetWellboreCasingsResponses_api];
 
 export type GetWellborePerforationsData_api = {
     body?: never;
@@ -5203,14 +5206,15 @@ export type GetWellborePerforationsData_api = {
     url: "/well/wellbore_perforations/";
 };
 
-export type GetWellborePerforationsError_api = {
+export type GetWellborePerforationsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getWellborePerforationsError = GetWellborePerforationsError_api[keyof GetWellborePerforationsError_api];
+export type GetWellborePerforationsError_api =
+    GetWellborePerforationsErrors_api[keyof GetWellborePerforationsErrors_api];
 
 export type GetWellborePerforationsResponses_api = {
     /**
@@ -5221,7 +5225,7 @@ export type GetWellborePerforationsResponses_api = {
     200: Array<WellborePerforation_api>;
 };
 
-export type getWellborePerforationsResponse =
+export type GetWellborePerforationsResponse_api =
     GetWellborePerforationsResponses_api[keyof GetWellborePerforationsResponses_api];
 
 export type GetWellboreLogCurveHeadersData_api = {
@@ -5245,15 +5249,15 @@ export type GetWellboreLogCurveHeadersData_api = {
     url: "/well/wellbore_log_curve_headers/";
 };
 
-export type GetWellboreLogCurveHeadersError_api = {
+export type GetWellboreLogCurveHeadersErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getWellboreLogCurveHeadersError =
-    GetWellboreLogCurveHeadersError_api[keyof GetWellboreLogCurveHeadersError_api];
+export type GetWellboreLogCurveHeadersError_api =
+    GetWellboreLogCurveHeadersErrors_api[keyof GetWellboreLogCurveHeadersErrors_api];
 
 export type GetWellboreLogCurveHeadersResponses_api = {
     /**
@@ -5264,7 +5268,7 @@ export type GetWellboreLogCurveHeadersResponses_api = {
     200: Array<WellboreLogCurveHeader_api>;
 };
 
-export type getWellboreLogCurveHeadersResponse =
+export type GetWellboreLogCurveHeadersResponse_api =
     GetWellboreLogCurveHeadersResponses_api[keyof GetWellboreLogCurveHeadersResponses_api];
 
 export type GetLogCurveDataData_api = {
@@ -5298,14 +5302,14 @@ export type GetLogCurveDataData_api = {
     url: "/well/log_curve_data/";
 };
 
-export type GetLogCurveDataError_api = {
+export type GetLogCurveDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getLogCurveDataError = GetLogCurveDataError_api[keyof GetLogCurveDataError_api];
+export type GetLogCurveDataError_api = GetLogCurveDataErrors_api[keyof GetLogCurveDataErrors_api];
 
 export type GetLogCurveDataResponses_api = {
     /**
@@ -5314,7 +5318,7 @@ export type GetLogCurveDataResponses_api = {
     200: WellboreLogCurveData_api;
 };
 
-export type getLogCurveDataResponse = GetLogCurveDataResponses_api[keyof GetLogCurveDataResponses_api];
+export type GetLogCurveDataResponse_api = GetLogCurveDataResponses_api[keyof GetLogCurveDataResponses_api];
 
 export type GetSeismicCubeMetaListData_api = {
     body?: never;
@@ -5337,14 +5341,14 @@ export type GetSeismicCubeMetaListData_api = {
     url: "/seismic/seismic_cube_meta_list/";
 };
 
-export type GetSeismicCubeMetaListError_api = {
+export type GetSeismicCubeMetaListErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getSeismicCubeMetaListError = GetSeismicCubeMetaListError_api[keyof GetSeismicCubeMetaListError_api];
+export type GetSeismicCubeMetaListError_api = GetSeismicCubeMetaListErrors_api[keyof GetSeismicCubeMetaListErrors_api];
 
 export type GetSeismicCubeMetaListResponses_api = {
     /**
@@ -5355,7 +5359,7 @@ export type GetSeismicCubeMetaListResponses_api = {
     200: Array<SeismicCubeMeta_api>;
 };
 
-export type getSeismicCubeMetaListResponse =
+export type GetSeismicCubeMetaListResponse_api =
     GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
 
 export type GetInlineSliceData_api = {
@@ -5409,14 +5413,14 @@ export type GetInlineSliceData_api = {
     url: "/seismic/get_inline_slice/";
 };
 
-export type GetInlineSliceError_api = {
+export type GetInlineSliceErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getInlineSliceError = GetInlineSliceError_api[keyof GetInlineSliceError_api];
+export type GetInlineSliceError_api = GetInlineSliceErrors_api[keyof GetInlineSliceErrors_api];
 
 export type GetInlineSliceResponses_api = {
     /**
@@ -5425,7 +5429,7 @@ export type GetInlineSliceResponses_api = {
     200: SeismicSliceData_api;
 };
 
-export type getInlineSliceResponse = GetInlineSliceResponses_api[keyof GetInlineSliceResponses_api];
+export type GetInlineSliceResponse_api = GetInlineSliceResponses_api[keyof GetInlineSliceResponses_api];
 
 export type GetCrosslineSliceData_api = {
     body?: never;
@@ -5478,14 +5482,14 @@ export type GetCrosslineSliceData_api = {
     url: "/seismic/get_crossline_slice/";
 };
 
-export type GetCrosslineSliceError_api = {
+export type GetCrosslineSliceErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getCrosslineSliceError = GetCrosslineSliceError_api[keyof GetCrosslineSliceError_api];
+export type GetCrosslineSliceError_api = GetCrosslineSliceErrors_api[keyof GetCrosslineSliceErrors_api];
 
 export type GetCrosslineSliceResponses_api = {
     /**
@@ -5494,7 +5498,7 @@ export type GetCrosslineSliceResponses_api = {
     200: SeismicSliceData_api;
 };
 
-export type getCrosslineSliceResponse = GetCrosslineSliceResponses_api[keyof GetCrosslineSliceResponses_api];
+export type GetCrosslineSliceResponse_api = GetCrosslineSliceResponses_api[keyof GetCrosslineSliceResponses_api];
 
 export type GetDepthSliceData_api = {
     body?: never;
@@ -5547,14 +5551,14 @@ export type GetDepthSliceData_api = {
     url: "/seismic/get_depth_slice/";
 };
 
-export type GetDepthSliceError_api = {
+export type GetDepthSliceErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getDepthSliceError = GetDepthSliceError_api[keyof GetDepthSliceError_api];
+export type GetDepthSliceError_api = GetDepthSliceErrors_api[keyof GetDepthSliceErrors_api];
 
 export type GetDepthSliceResponses_api = {
     /**
@@ -5563,7 +5567,7 @@ export type GetDepthSliceResponses_api = {
     200: SeismicSliceData_api;
 };
 
-export type getDepthSliceResponse = GetDepthSliceResponses_api[keyof GetDepthSliceResponses_api];
+export type GetDepthSliceResponse_api = GetDepthSliceResponses_api[keyof GetDepthSliceResponses_api];
 
 export type GetSeismicSlicesData_api = {
     body?: never;
@@ -5628,14 +5632,14 @@ export type GetSeismicSlicesData_api = {
     url: "/seismic/get_seismic_slices/";
 };
 
-export type GetSeismicSlicesError_api = {
+export type GetSeismicSlicesErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getSeismicSlicesError = GetSeismicSlicesError_api[keyof GetSeismicSlicesError_api];
+export type GetSeismicSlicesError_api = GetSeismicSlicesErrors_api[keyof GetSeismicSlicesErrors_api];
 
 export type GetSeismicSlicesResponses_api = {
     /**
@@ -5646,7 +5650,7 @@ export type GetSeismicSlicesResponses_api = {
     200: [SeismicSliceData_api, SeismicSliceData_api, SeismicSliceData_api];
 };
 
-export type getSeismicSlicesResponse = GetSeismicSlicesResponses_api[keyof GetSeismicSlicesResponses_api];
+export type GetSeismicSlicesResponse_api = GetSeismicSlicesResponses_api[keyof GetSeismicSlicesResponses_api];
 
 export type PostGetSeismicFenceData_api = {
     body: BodyPostGetSeismicFence_api;
@@ -5693,14 +5697,14 @@ export type PostGetSeismicFenceData_api = {
     url: "/seismic/get_seismic_fence/";
 };
 
-export type PostGetSeismicFenceError_api = {
+export type PostGetSeismicFenceErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type postGetSeismicFenceError = PostGetSeismicFenceError_api[keyof PostGetSeismicFenceError_api];
+export type PostGetSeismicFenceError_api = PostGetSeismicFenceErrors_api[keyof PostGetSeismicFenceErrors_api];
 
 export type PostGetSeismicFenceResponses_api = {
     /**
@@ -5709,7 +5713,7 @@ export type PostGetSeismicFenceResponses_api = {
     200: SeismicFenceData_api;
 };
 
-export type postGetSeismicFenceResponse = PostGetSeismicFenceResponses_api[keyof PostGetSeismicFenceResponses_api];
+export type PostGetSeismicFenceResponse_api = PostGetSeismicFenceResponses_api[keyof PostGetSeismicFenceResponses_api];
 
 export type GetPolygonsDirectoryData_api = {
     body?: never;
@@ -5732,14 +5736,14 @@ export type GetPolygonsDirectoryData_api = {
     url: "/polygons/polygons_directory/";
 };
 
-export type GetPolygonsDirectoryError_api = {
+export type GetPolygonsDirectoryErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getPolygonsDirectoryError = GetPolygonsDirectoryError_api[keyof GetPolygonsDirectoryError_api];
+export type GetPolygonsDirectoryError_api = GetPolygonsDirectoryErrors_api[keyof GetPolygonsDirectoryErrors_api];
 
 export type GetPolygonsDirectoryResponses_api = {
     /**
@@ -5750,7 +5754,8 @@ export type GetPolygonsDirectoryResponses_api = {
     200: Array<PolygonsMeta_api>;
 };
 
-export type getPolygonsDirectoryResponse = GetPolygonsDirectoryResponses_api[keyof GetPolygonsDirectoryResponses_api];
+export type GetPolygonsDirectoryResponse_api =
+    GetPolygonsDirectoryResponses_api[keyof GetPolygonsDirectoryResponses_api];
 
 export type GetPolygonsDataData_api = {
     body?: never;
@@ -5791,14 +5796,14 @@ export type GetPolygonsDataData_api = {
     url: "/polygons/polygons_data/";
 };
 
-export type GetPolygonsDataError_api = {
+export type GetPolygonsDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getPolygonsDataError = GetPolygonsDataError_api[keyof GetPolygonsDataError_api];
+export type GetPolygonsDataError_api = GetPolygonsDataErrors_api[keyof GetPolygonsDataErrors_api];
 
 export type GetPolygonsDataResponses_api = {
     /**
@@ -5809,7 +5814,7 @@ export type GetPolygonsDataResponses_api = {
     200: Array<PolygonData_api>;
 };
 
-export type getPolygonsDataResponse = GetPolygonsDataResponses_api[keyof GetPolygonsDataResponses_api];
+export type GetPolygonsDataResponse_api = GetPolygonsDataResponses_api[keyof GetPolygonsDataResponses_api];
 
 export type GetUserInfoData_api = {
     body?: never;
@@ -5827,14 +5832,14 @@ export type GetUserInfoData_api = {
     url: "/graph/user_info/{user_id_or_email}";
 };
 
-export type GetUserInfoError_api = {
+export type GetUserInfoErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getUserInfoError = GetUserInfoError_api[keyof GetUserInfoError_api];
+export type GetUserInfoError_api = GetUserInfoErrors_api[keyof GetUserInfoErrors_api];
 
 export type GetUserInfoResponses_api = {
     /**
@@ -5845,7 +5850,7 @@ export type GetUserInfoResponses_api = {
     200: GraphUser_api | null;
 };
 
-export type getUserInfoResponse = GetUserInfoResponses_api[keyof GetUserInfoResponses_api];
+export type GetUserInfoResponse_api = GetUserInfoResponses_api[keyof GetUserInfoResponses_api];
 
 export type GetUserPhotoData_api = {
     body?: never;
@@ -5862,14 +5867,14 @@ export type GetUserPhotoData_api = {
     url: "/graph/user_photo/";
 };
 
-export type GetUserPhotoError_api = {
+export type GetUserPhotoErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getUserPhotoError = GetUserPhotoError_api[keyof GetUserPhotoError_api];
+export type GetUserPhotoError_api = GetUserPhotoErrors_api[keyof GetUserPhotoErrors_api];
 
 export type GetUserPhotoResponses_api = {
     /**
@@ -5878,7 +5883,7 @@ export type GetUserPhotoResponses_api = {
     200: GraphUserPhoto_api;
 };
 
-export type getUserPhotoResponse = GetUserPhotoResponses_api[keyof GetUserPhotoResponses_api];
+export type GetUserPhotoResponse_api = GetUserPhotoResponses_api[keyof GetUserPhotoResponses_api];
 
 export type GetObservationsData_api = {
     body?: never;
@@ -5895,14 +5900,14 @@ export type GetObservationsData_api = {
     url: "/observations/observations/";
 };
 
-export type GetObservationsError_api = {
+export type GetObservationsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getObservationsError = GetObservationsError_api[keyof GetObservationsError_api];
+export type GetObservationsError_api = GetObservationsErrors_api[keyof GetObservationsErrors_api];
 
 export type GetObservationsResponses_api = {
     /**
@@ -5911,7 +5916,7 @@ export type GetObservationsResponses_api = {
     200: Observations_api;
 };
 
-export type getObservationsResponse = GetObservationsResponses_api[keyof GetObservationsResponses_api];
+export type GetObservationsResponse_api = GetObservationsResponses_api[keyof GetObservationsResponses_api];
 
 export type GetTableDefinitionData_api = {
     body?: never;
@@ -5934,14 +5939,14 @@ export type GetTableDefinitionData_api = {
     url: "/rft/table_definition";
 };
 
-export type GetTableDefinitionError_api = {
+export type GetTableDefinitionErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getTableDefinitionError = GetTableDefinitionError_api[keyof GetTableDefinitionError_api];
+export type GetTableDefinitionError_api = GetTableDefinitionErrors_api[keyof GetTableDefinitionErrors_api];
 
 export type GetTableDefinitionResponses_api = {
     /**
@@ -5950,7 +5955,7 @@ export type GetTableDefinitionResponses_api = {
     200: RftTableDefinition_api;
 };
 
-export type getTableDefinitionResponse = GetTableDefinitionResponses_api[keyof GetTableDefinitionResponses_api];
+export type GetTableDefinitionResponse_api = GetTableDefinitionResponses_api[keyof GetTableDefinitionResponses_api];
 
 export type GetRealizationDataData_api = {
     body?: never;
@@ -5997,14 +6002,14 @@ export type GetRealizationDataData_api = {
     url: "/rft/realization_data";
 };
 
-export type GetRealizationDataError_api = {
+export type GetRealizationDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getRealizationDataError = GetRealizationDataError_api[keyof GetRealizationDataError_api];
+export type GetRealizationDataError_api = GetRealizationDataErrors_api[keyof GetRealizationDataErrors_api];
 
 export type GetRealizationDataResponses_api = {
     /**
@@ -6015,7 +6020,7 @@ export type GetRealizationDataResponses_api = {
     200: Array<RftRealizationData_api>;
 };
 
-export type getRealizationDataResponse = GetRealizationDataResponses_api[keyof GetRealizationDataResponses_api];
+export type GetRealizationDataResponse_api = GetRealizationDataResponses_api[keyof GetRealizationDataResponses_api];
 
 export type GetVfpTableNamesData_api = {
     body?: never;
@@ -6044,14 +6049,14 @@ export type GetVfpTableNamesData_api = {
     url: "/vfp/vfp_table_names/";
 };
 
-export type GetVfpTableNamesError_api = {
+export type GetVfpTableNamesErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getVfpTableNamesError = GetVfpTableNamesError_api[keyof GetVfpTableNamesError_api];
+export type GetVfpTableNamesError_api = GetVfpTableNamesErrors_api[keyof GetVfpTableNamesErrors_api];
 
 export type GetVfpTableNamesResponses_api = {
     /**
@@ -6062,7 +6067,7 @@ export type GetVfpTableNamesResponses_api = {
     200: Array<string>;
 };
 
-export type getVfpTableNamesResponse = GetVfpTableNamesResponses_api[keyof GetVfpTableNamesResponses_api];
+export type GetVfpTableNamesResponse_api = GetVfpTableNamesResponses_api[keyof GetVfpTableNamesResponses_api];
 
 export type GetVfpTableData_api = {
     body?: never;
@@ -6097,14 +6102,14 @@ export type GetVfpTableData_api = {
     url: "/vfp/vfp_table/";
 };
 
-export type GetVfpTableError_api = {
+export type GetVfpTableErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getVfpTableError = GetVfpTableError_api[keyof GetVfpTableError_api];
+export type GetVfpTableError_api = GetVfpTableErrors_api[keyof GetVfpTableErrors_api];
 
 export type GetVfpTableResponses_api = {
     /**
@@ -6115,7 +6120,7 @@ export type GetVfpTableResponses_api = {
     200: VfpProdTable_api | VfpInjTable_api;
 };
 
-export type getVfpTableResponse = GetVfpTableResponses_api[keyof GetVfpTableResponses_api];
+export type GetVfpTableResponse_api = GetVfpTableResponses_api[keyof GetVfpTableResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;
@@ -6130,14 +6135,14 @@ export type LoginRouteData_api = {
     url: "/login";
 };
 
-export type LoginRouteError_api = {
+export type LoginRouteErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type loginRouteError = LoginRouteError_api[keyof LoginRouteError_api];
+export type LoginRouteError_api = LoginRouteErrors_api[keyof LoginRouteErrors_api];
 
 export type LoginRouteResponses_api = {
     /**
@@ -6180,7 +6185,7 @@ export type GetAliveResponses_api = {
     200: string;
 };
 
-export type getAliveResponse = GetAliveResponses_api[keyof GetAliveResponses_api];
+export type GetAliveResponse_api = GetAliveResponses_api[keyof GetAliveResponses_api];
 
 export type GetAliveProtectedData_api = {
     body?: never;
@@ -6200,7 +6205,7 @@ export type GetAliveProtectedResponses_api = {
     200: string;
 };
 
-export type getAliveProtectedResponse = GetAliveProtectedResponses_api[keyof GetAliveProtectedResponses_api];
+export type GetAliveProtectedResponse_api = GetAliveProtectedResponses_api[keyof GetAliveProtectedResponses_api];
 
 export type PostLogoutData_api = {
     body?: never;
@@ -6220,7 +6225,7 @@ export type PostLogoutResponses_api = {
     200: string;
 };
 
-export type postLogoutResponse = PostLogoutResponses_api[keyof PostLogoutResponses_api];
+export type PostLogoutResponse_api = PostLogoutResponses_api[keyof PostLogoutResponses_api];
 
 export type GetLoggedInUserData_api = {
     body?: never;
@@ -6237,14 +6242,14 @@ export type GetLoggedInUserData_api = {
     url: "/logged_in_user";
 };
 
-export type GetLoggedInUserError_api = {
+export type GetLoggedInUserErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type getLoggedInUserError = GetLoggedInUserError_api[keyof GetLoggedInUserError_api];
+export type GetLoggedInUserError_api = GetLoggedInUserErrors_api[keyof GetLoggedInUserErrors_api];
 
 export type GetLoggedInUserResponses_api = {
     /**
@@ -6253,7 +6258,7 @@ export type GetLoggedInUserResponses_api = {
     200: UserInfo_api;
 };
 
-export type getLoggedInUserResponse = GetLoggedInUserResponses_api[keyof GetLoggedInUserResponses_api];
+export type GetLoggedInUserResponse_api = GetLoggedInUserResponses_api[keyof GetLoggedInUserResponses_api];
 
 export type RootData_api = {
     body?: never;
@@ -6273,4 +6278,4 @@ export type RootResponses_api = {
     200: string;
 };
 
-export type rootResponse = RootResponses_api[keyof RootResponses_api];
+export type RootResponse_api = RootResponses_api[keyof RootResponses_api];

@@ -146,28 +146,28 @@ import type {
     GetWellTrajectoriesData_api,
     LoginRouteData_api,
     PostGetAggregatedPerRealizationTableDataData_api,
-    postGetAggregatedPerRealizationTableDataError,
-    postGetAggregatedPerRealizationTableDataResponse,
+    PostGetAggregatedPerRealizationTableDataError_api,
+    PostGetAggregatedPerRealizationTableDataResponse_api,
     PostGetAggregatedStatisticalTableDataData_api,
-    postGetAggregatedStatisticalTableDataError,
-    postGetAggregatedStatisticalTableDataResponse,
+    PostGetAggregatedStatisticalTableDataError_api,
+    PostGetAggregatedStatisticalTableDataResponse_api,
     PostGetPolylineIntersectionData_api,
-    postGetPolylineIntersectionError,
-    postGetPolylineIntersectionResponse,
+    PostGetPolylineIntersectionError_api,
+    PostGetPolylineIntersectionResponse_api,
     PostGetSampleSurfaceInPointsData_api,
-    postGetSampleSurfaceInPointsError,
-    postGetSampleSurfaceInPointsResponse,
+    PostGetSampleSurfaceInPointsError_api,
+    PostGetSampleSurfaceInPointsResponse_api,
     PostGetSeismicFenceData_api,
-    postGetSeismicFenceError,
-    postGetSeismicFenceResponse,
+    PostGetSeismicFenceError_api,
+    PostGetSeismicFenceResponse_api,
     PostGetSurfaceIntersectionData_api,
-    postGetSurfaceIntersectionError,
-    postGetSurfaceIntersectionResponse,
+    PostGetSurfaceIntersectionError_api,
+    PostGetSurfaceIntersectionResponse_api,
     PostLogoutData_api,
-    postLogoutResponse,
+    PostLogoutResponse_api,
     PostRefreshFingerprintsForEnsemblesData_api,
-    postRefreshFingerprintsForEnsemblesError,
-    postRefreshFingerprintsForEnsemblesResponse,
+    PostRefreshFingerprintsForEnsemblesError_api,
+    PostRefreshFingerprintsForEnsemblesResponse_api,
     RootData_api,
 } from "../types.gen";
 
@@ -311,13 +311,13 @@ export const postRefreshFingerprintsForEnsemblesOptions = (
 export const postRefreshFingerprintsForEnsemblesMutation = (
     options?: Partial<Options<PostRefreshFingerprintsForEnsemblesData_api>>,
 ): UseMutationOptions<
-    postRefreshFingerprintsForEnsemblesResponse,
-    AxiosError<postRefreshFingerprintsForEnsemblesError>,
+    PostRefreshFingerprintsForEnsemblesResponse_api,
+    AxiosError<PostRefreshFingerprintsForEnsemblesError_api>,
     Options<PostRefreshFingerprintsForEnsemblesData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        postRefreshFingerprintsForEnsemblesResponse,
-        AxiosError<postRefreshFingerprintsForEnsemblesError>,
+        PostRefreshFingerprintsForEnsemblesResponse_api,
+        AxiosError<PostRefreshFingerprintsForEnsemblesError_api>,
         Options<PostRefreshFingerprintsForEnsemblesData_api>
     > = {
         mutationFn: async (fnOptions) => {
@@ -649,13 +649,13 @@ export const postGetAggregatedPerRealizationTableDataOptions = (
 export const postGetAggregatedPerRealizationTableDataMutation = (
     options?: Partial<Options<PostGetAggregatedPerRealizationTableDataData_api>>,
 ): UseMutationOptions<
-    postGetAggregatedPerRealizationTableDataResponse,
-    AxiosError<postGetAggregatedPerRealizationTableDataError>,
+    PostGetAggregatedPerRealizationTableDataResponse_api,
+    AxiosError<PostGetAggregatedPerRealizationTableDataError_api>,
     Options<PostGetAggregatedPerRealizationTableDataData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        postGetAggregatedPerRealizationTableDataResponse,
-        AxiosError<postGetAggregatedPerRealizationTableDataError>,
+        PostGetAggregatedPerRealizationTableDataResponse_api,
+        AxiosError<PostGetAggregatedPerRealizationTableDataError_api>,
         Options<PostGetAggregatedPerRealizationTableDataData_api>
     > = {
         mutationFn: async (fnOptions) => {
@@ -710,13 +710,13 @@ export const postGetAggregatedStatisticalTableDataOptions = (
 export const postGetAggregatedStatisticalTableDataMutation = (
     options?: Partial<Options<PostGetAggregatedStatisticalTableDataData_api>>,
 ): UseMutationOptions<
-    postGetAggregatedStatisticalTableDataResponse,
-    AxiosError<postGetAggregatedStatisticalTableDataError>,
+    PostGetAggregatedStatisticalTableDataResponse_api,
+    AxiosError<PostGetAggregatedStatisticalTableDataError_api>,
     Options<PostGetAggregatedStatisticalTableDataData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        postGetAggregatedStatisticalTableDataResponse,
-        AxiosError<postGetAggregatedStatisticalTableDataError>,
+        PostGetAggregatedStatisticalTableDataResponse_api,
+        AxiosError<PostGetAggregatedStatisticalTableDataError_api>,
         Options<PostGetAggregatedStatisticalTableDataData_api>
     > = {
         mutationFn: async (fnOptions) => {
@@ -878,13 +878,13 @@ export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfac
 export const postGetSurfaceIntersectionMutation = (
     options?: Partial<Options<PostGetSurfaceIntersectionData_api>>,
 ): UseMutationOptions<
-    postGetSurfaceIntersectionResponse,
-    AxiosError<postGetSurfaceIntersectionError>,
+    PostGetSurfaceIntersectionResponse_api,
+    AxiosError<PostGetSurfaceIntersectionError_api>,
     Options<PostGetSurfaceIntersectionData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        postGetSurfaceIntersectionResponse,
-        AxiosError<postGetSurfaceIntersectionError>,
+        PostGetSurfaceIntersectionResponse_api,
+        AxiosError<PostGetSurfaceIntersectionError_api>,
         Options<PostGetSurfaceIntersectionData_api>
     > = {
         mutationFn: async (fnOptions) => {
@@ -926,13 +926,13 @@ export const postGetSampleSurfaceInPointsOptions = (options: Options<PostGetSamp
 export const postGetSampleSurfaceInPointsMutation = (
     options?: Partial<Options<PostGetSampleSurfaceInPointsData_api>>,
 ): UseMutationOptions<
-    postGetSampleSurfaceInPointsResponse,
-    AxiosError<postGetSampleSurfaceInPointsError>,
+    PostGetSampleSurfaceInPointsResponse_api,
+    AxiosError<PostGetSampleSurfaceInPointsError_api>,
     Options<PostGetSampleSurfaceInPointsData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        postGetSampleSurfaceInPointsResponse,
-        AxiosError<postGetSampleSurfaceInPointsError>,
+        PostGetSampleSurfaceInPointsResponse_api,
+        AxiosError<PostGetSampleSurfaceInPointsError_api>,
         Options<PostGetSampleSurfaceInPointsData_api>
     > = {
         mutationFn: async (fnOptions) => {
@@ -1244,13 +1244,13 @@ export const postGetPolylineIntersectionOptions = (options: Options<PostGetPolyl
 export const postGetPolylineIntersectionMutation = (
     options?: Partial<Options<PostGetPolylineIntersectionData_api>>,
 ): UseMutationOptions<
-    postGetPolylineIntersectionResponse,
-    AxiosError<postGetPolylineIntersectionError>,
+    PostGetPolylineIntersectionResponse_api,
+    AxiosError<PostGetPolylineIntersectionError_api>,
     Options<PostGetPolylineIntersectionData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        postGetPolylineIntersectionResponse,
-        AxiosError<postGetPolylineIntersectionError>,
+        PostGetPolylineIntersectionResponse_api,
+        AxiosError<PostGetPolylineIntersectionError_api>,
         Options<PostGetPolylineIntersectionData_api>
     > = {
         mutationFn: async (fnOptions) => {
@@ -1773,13 +1773,13 @@ export const postGetSeismicFenceOptions = (options: Options<PostGetSeismicFenceD
 export const postGetSeismicFenceMutation = (
     options?: Partial<Options<PostGetSeismicFenceData_api>>,
 ): UseMutationOptions<
-    postGetSeismicFenceResponse,
-    AxiosError<postGetSeismicFenceError>,
+    PostGetSeismicFenceResponse_api,
+    AxiosError<PostGetSeismicFenceError_api>,
     Options<PostGetSeismicFenceData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        postGetSeismicFenceResponse,
-        AxiosError<postGetSeismicFenceError>,
+        PostGetSeismicFenceResponse_api,
+        AxiosError<PostGetSeismicFenceError_api>,
         Options<PostGetSeismicFenceData_api>
     > = {
         mutationFn: async (fnOptions) => {
@@ -2093,9 +2093,9 @@ export const postLogoutOptions = (options?: Options<PostLogoutData_api>) => {
  */
 export const postLogoutMutation = (
     options?: Partial<Options<PostLogoutData_api>>,
-): UseMutationOptions<postLogoutResponse, AxiosError<DefaultError>, Options<PostLogoutData_api>> => {
+): UseMutationOptions<PostLogoutResponse_api, AxiosError<DefaultError>, Options<PostLogoutData_api>> => {
     const mutationOptions: UseMutationOptions<
-        postLogoutResponse,
+        PostLogoutResponse_api,
         AxiosError<DefaultError>,
         Options<PostLogoutData_api>
     > = {
