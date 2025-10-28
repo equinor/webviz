@@ -36,7 +36,7 @@ function drawTemplatePreview(template: Template, width: number, height: number):
                             x={x + strokeWidth}
                             y={y + headerHeight / 2 + strokeWidth / 2}
                             dominantBaseline="middle"
-                            textAnchor="left"
+                            textAnchor="start"
                             fontSize="3"
                             fill="#000"
                         >

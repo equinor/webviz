@@ -1,5 +1,6 @@
 import { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
 
+import { SurfaceDataFormat } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -7,7 +8,6 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 import {
     type ObservedSurfaceData,
     type ObservedSurfaceSettings,
-    SurfaceDataFormat,
 } from "../customDataProviderImplementations/ObservedSurfaceProvider";
 
 export function makeObservedSurfaceLayer({

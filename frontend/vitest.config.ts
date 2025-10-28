@@ -1,5 +1,6 @@
 // vitest.config.ts
 import path from "path";
+
 import { defineConfig } from "vitest/config";
 
 import aliases from "./aliases.json";

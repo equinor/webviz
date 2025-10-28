@@ -2,7 +2,6 @@ import { atom } from "jotai";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
-
 import { userSelectedFieldIdentifierAtom } from "./baseAtoms";
 
 export const selectedFieldIdentifierAtom = atom((get) => {

@@ -1,9 +1,9 @@
-import { defineConfig, devices } from "@playwright/experimental-ct-react";
-import react from "@vitejs/plugin-react";
-import tailwindcssPlugin from "@tailwindcss/vite"
-
 import path from "path";
 import { fileURLToPath } from "url";
+
+import { defineConfig, devices } from "@playwright/experimental-ct-react";
+import tailwindcssPlugin from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
 import vitePluginChecker from "vite-plugin-checker";
 
 import aliases from "./aliases.json" assert { type: "json" };
@@ -38,24 +38,17 @@ export default defineConfig({
         /* Port to use for Playwright component endpoint. */
         ctPort: 3100,
         ctViteConfig: {
-            plugins: [
-                // @ts-expect-error -- CT uses wrong version of vite, so types dont match
-                react(),
-                // @ts-expect-error -- se above
-                vitePluginChecker({ typescript: true }),
-                // @ts-expect-error -- se above
-                tailwindcssPlugin()
-            ],
+            plugins: [react(), vitePluginChecker({ typescript: true }), tailwindcssPlugin()],
             resolve: {
                 alias: Object.keys(aliases.compilerOptions.paths).reduce(
                     (prev, current) => ({
                         ...prev,
                         [current.replace("/*", "")]: path.resolve(
                             __dirname,
-                            aliases.compilerOptions.paths[current][0].replace("/*", "")
+                            aliases.compilerOptions.paths[current][0].replace("/*", ""),
                         ),
                     }),
-                    {}
+                    {},
                 ),
             },
         },
