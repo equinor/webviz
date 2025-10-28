@@ -1,11 +1,10 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, computed_field
 
-"""
-CRITICAL: DATABASE SCHEMA - These models define the structure of session documents in Cosmos DB.
-Changes break existing data: renaming/removing fields breaks queries, changing types causes validation errors,
-making optional fields required breaks reads. Plan data migration first. Partition keys CANNOT be changed.
-"""
+
+# CRITICAL: DATABASE SCHEMA - These models define the structure of session documents in Cosmos DB.
+# Changes break existing data: renaming/removing fields breaks queries, changing types causes validation errors,
+# making optional fields required breaks reads. Plan data migration first. Partition keys CANNOT be changed.
 
 
 class SessionMetadata(BaseModel):
