@@ -1,8 +1,9 @@
-import { Input } from "@mui/base";
+import { Input } from "@mui/icons-material";
 
 import { KeyKind } from "@framework/DataChannelTypes";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ViewContext } from "@framework/ModuleContext";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Tag } from "@lib/components/Tag";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -15,12 +16,7 @@ export interface EnsembleResponse {
     name: string;
     unit: string;
 }
-export enum ResponseChannelStatus {
-    NO_CHANNEL = "NO_CHANNEL",
-    EMPTY_CHANNEL = "EMPTY_CHANNEL",
-    INVALID_ENSEMBLE = "INVALID_ENSEMBLE",
-    VALID_CHANNEL = "VALID_CHANNEL",
-}
+
 export interface ResponseChannelData {
     ensembleResponse: EnsembleResponse | null;
     channelEnsemble: RegularEnsemble | null;
@@ -76,14 +72,15 @@ export function useResponseChannel(
     const ensembleIdentString = content.metaData.ensembleIdentString;
     const channelEnsemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
 
-    if (!channelEnsemble || !(channelEnsemble instanceof RegularEnsemble)) {
+    if (!channelEnsemble || channelEnsemble instanceof DeltaEnsemble) {
+        const ensembleType = !channelEnsemble ? "Invalid" : "Delta";
         return {
             ensembleResponse: null,
             channelEnsemble: null,
             displayName: responseReceiver.channel?.displayName ?? null,
             warningContent: (
                 <ContentWarning>
-                    <p>Delta ensemble detected in data channel.</p>
+                    <p>{ensembleType} ensemble detected in data channel.</p>
                     <p>Unable to compute sensitivity responses.</p>
                 </ContentWarning>
             ),
