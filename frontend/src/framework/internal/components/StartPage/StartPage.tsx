@@ -54,7 +54,7 @@ export function StartPage(props: StartPageProps) {
             <div className="h-full w-full flex items-center justify-center min-h-0">
                 <div className="grid grid-cols-2 gap-x-16 gap-y-8">
                     <section className="flex flex-col gap-2">
-                        <Typography variant="h2">Start</Typography>
+                        <Typography variant="h3">Start</Typography>
                         <Tooltip
                             placement="right"
                             title="Create a new free session and save it later on demand."
@@ -84,7 +84,7 @@ export function StartPage(props: StartPageProps) {
                     </section>
                     <RecentSessions workbench={props.workbench} />
                     <section className="flex flex-col gap-4">
-                        <Typography variant="h2">Resources</Typography>
+                        <Typography variant="h3">Resources</Typography>
                         <a
                             href="https://github.com/equinor/webviz"
                             target="_blank"

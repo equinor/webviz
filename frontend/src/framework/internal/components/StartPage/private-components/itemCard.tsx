@@ -87,10 +87,10 @@ function TooltipContent(
 ): React.ReactNode {
     return (
         <div className="w-2xs whitespace-normal text-base">
-            <h3 className="text-xl">{props.title}</h3>
+            <h3 className="text-lg">{props.title}</h3>
 
             <hr className="h-px mb-2 bg-white/25" />
-            {props.description && <p>{props.description}</p>}
+            {props.description && <p className="text-sm">{props.description}</p>}
 
             {props.tooltipInfo && (
                 <ul className="mt-6 text-sm truncate">

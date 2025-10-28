@@ -7,6 +7,7 @@ import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Refresh } from "@mui/icons-material";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type RecentListProps<TItemType, TQueryData = unknown, TError = Error> = {
     title: string;
@@ -80,6 +81,10 @@ export function RecentList<TItemType, TQueryData = unknown>(
 
         if (itemsQuery.status === "success" && itemsQuery.data) {
             const transformedData = props.transformData(itemsQuery.data);
+
+            if (transformedData.length === 0) {
+                return <span className="text-gray-300 italic h-full flex flex-col justify-center">None found.</span>;
+            }
             return (
                 <ul>
                     {transformedData.map(function renderListItem(item) {
@@ -88,8 +93,6 @@ export function RecentList<TItemType, TQueryData = unknown>(
                 </ul>
             );
         }
-
-        return <div className="text-gray-500">No recent sessions found.</div>;
     }
 
     return (
@@ -98,17 +101,19 @@ export function RecentList<TItemType, TQueryData = unknown>(
                 <Typography className="flex gap-1 items-center justify-between" variant="h3">
                     {props.title}
                 </Typography>
-                <DenseIconButton onClick={handleRefreshClick}>
-                    <Refresh
-                        fontSize="small"
-                        className={resolveClassNames({ "animate-spin": isRefreshAnimationPlaying })}
-                    />
-                </DenseIconButton>
+                <Tooltip title="Refresh" placement="bottom" enterDelay="medium">
+                    <DenseIconButton onClick={handleRefreshClick}>
+                        <Refresh
+                            fontSize="small"
+                            className={resolveClassNames({ "animate-spin": isRefreshAnimationPlaying })}
+                        />
+                    </DenseIconButton>
+                </Tooltip>
             </div>
             <span className="text-gray-500 text-xs">
                 Last updated: <TimeAgo datetimeMs={lastUpdatedMs ?? Date.now()} updateIntervalMs={10000} />
             </span>
-            <div className="flex flex-col gap-2 mt-2">{makeContent()}</div>
+            <div className="flex flex-col gap-2 mt-2 min-h-16">{makeContent()}</div>
         </section>
     );
 }
