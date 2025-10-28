@@ -19,6 +19,7 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
 
+
 import {
     makeCaseRowData,
     makeCaseTableColumns,
@@ -39,6 +40,7 @@ export type CaseExplorerProps = {
     onCaseSelectionChange: (caseSelection: CaseSelection) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
+    const { onCaseSelectionChange } = props;
     const { userInfo } = useAuthProvider();
     const userName = React.useMemo(() => {
         return userInfo?.username.replace("@equinor.com", "").toLowerCase() ?? "";
@@ -58,6 +60,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         ...(showOnlyOfficialCases && { status: ["official"] }),
     });
 
+    // Keep the prevCaseSelection state that was already defined
     const [prevCaseSelection, setPrevCaseSelection] = React.useState<CaseSelection | null>(null);
 
     // --- Queries ---
@@ -171,10 +174,13 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         };
     }, [casesQuery.data, selectedCaseUuid, selectedStandardResults]);
 
-    if (!isEqual(currentCaseSelection, prevCaseSelection)) {
-        props.onCaseSelectionChange(currentCaseSelection);
-        setPrevCaseSelection(currentCaseSelection);
-    }
+    // Add useEffect that compares with previous selection before calling the callback
+    React.useEffect(() => {
+        if (!isEqual(currentCaseSelection, prevCaseSelection)) {
+            setPrevCaseSelection(currentCaseSelection);
+            onCaseSelectionChange(currentCaseSelection);
+        }
+    }, [currentCaseSelection, onCaseSelectionChange, prevCaseSelection]);
 
     // --- Handlers ---
     function handleFieldChanged(fieldIdentifier: string) {
@@ -271,7 +277,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             selectedRows={[selectedCaseUuid]}
                             filters={tableFiltersState}
                             selectable
-                            onSelectedRowsChange={(caseIds) => setSelectedCaseId((prev) => caseIds?.[0] ?? prev)}
+                            onSelectedRowsChange={(caseIds) => setSelectedCaseId((prev) => caseIds[0] ?? prev)}
                             onFiltersChange={setTableFiltersState}
                             onDataCollated={(data) => setNumberOfCases(data.length)}
                         />

@@ -40,5 +40,4 @@ class EnsembleDetails(BaseModel):
     caseUuid: str
     realizations: Sequence[int]
     stratigraphicColumnIdentifier: str
-    timestamps: EnsembleTimestamps
     standardResults: Sequence[str]

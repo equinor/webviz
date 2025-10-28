@@ -10,9 +10,9 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsResponse_api,
     GetEnsembleDetailsError_api,
-    PostGetTimestampsForEnsemblesData_api,
-    PostGetTimestampsForEnsemblesResponse_api,
-    PostGetTimestampsForEnsemblesError_api,
+    PostRefreshFingerprintsForEnsemblesData_api,
+    PostRefreshFingerprintsForEnsemblesResponse_api,
+    PostRefreshFingerprintsForEnsemblesError_api,
     GetVectorListData_api,
     GetVectorListResponse_api,
     GetVectorListError_api,
@@ -284,15 +284,15 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Post Get Timestamps For Ensembles
- * Fetches ensemble timestamps for a list of ensembles
+ * Post Refresh Fingerprints For Ensembles
+ * Retrieves freshly calculated fingerprints for a list of ensembles
  */
-export const postGetTimestampsForEnsembles = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetTimestampsForEnsemblesData_api, ThrowOnError>,
+export const postRefreshFingerprintsForEnsembles = <ThrowOnError extends boolean = false>(
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).post<
-        PostGetTimestampsForEnsemblesResponse_api,
-        PostGetTimestampsForEnsemblesError_api,
+        PostRefreshFingerprintsForEnsemblesResponse_api,
+        PostRefreshFingerprintsForEnsemblesError_api,
         ThrowOnError
     >({
         ...options,
@@ -300,7 +300,7 @@ export const postGetTimestampsForEnsembles = <ThrowOnError extends boolean = fal
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/ensembles/get_timestamps",
+        url: "/ensembles/refresh_fingerprints",
     });
 };
 
