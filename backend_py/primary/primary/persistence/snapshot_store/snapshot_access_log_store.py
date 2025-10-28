@@ -64,7 +64,7 @@ class SnapshotAccessLogStore:
             DatabaseAccessNotFoundError: If no log exists
             DatabaseAccessError: If the database operation fails
         """
-        item_id = make_access_log_item_id(snapshot_id, self._user_id)
+        item_id = _make_access_log_item_id(snapshot_id, self._user_id)
         return await self._access_log_container.get_item_async(item_id, partition_key=self._user_id)
 
     async def get_many_for_user_async(
@@ -144,7 +144,7 @@ class SnapshotAccessLogStore:
                 snapshot = await snapshot_store.get_async(snapshot_id)
 
                 new_log = SnapshotAccessLogDocument(
-                    id=make_access_log_item_id(snapshot_id, self._user_id),
+                    id=_make_access_log_item_id(snapshot_id, self._user_id),
                     visitor_id=self._user_id,
                     snapshot_id=snapshot_id,
                     snapshot_owner_id=snapshot_owner_id,
@@ -221,5 +221,5 @@ class SnapshotAccessLogStore:
             raise ServiceRequestError(f"Failed to log snapshot visit: {str(err)}", Service.DATABASE) from err
 
 
-def make_access_log_item_id(snapshot_id: str, visitor_id: str) -> str:
+def _make_access_log_item_id(snapshot_id: str, visitor_id: str) -> str:
     return f"{snapshot_id}__{visitor_id}"
