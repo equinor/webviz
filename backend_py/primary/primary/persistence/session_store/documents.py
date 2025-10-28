@@ -7,6 +7,7 @@ Changes break existing data: renaming/removing fields breaks queries, changing t
 making optional fields required breaks reads. Plan data migration first. Partition keys CANNOT be changed.
 """
 
+
 class SessionMetadata(BaseModel):
     model_config = ConfigDict(extra="ignore")
 

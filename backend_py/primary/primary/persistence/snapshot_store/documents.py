@@ -8,6 +8,7 @@ Changes break existing data: renaming/removing fields breaks queries, changing t
 making optional fields required breaks reads. Plan data migration first. Partition keys CANNOT be changed.
 """
 
+
 class SnapshotMetadata(BaseModel):
     title: str
     description: Optional[str] = None
