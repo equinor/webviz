@@ -15,7 +15,6 @@ from primary.config import (
     COSMOS_DB_PROD_CONNECTION_STRING,
     COSMOS_DB_EMULATOR_URI,
     COSMOS_DB_EMULATOR_KEY,
-    COSMOS_DB_SKIP_SETUP,
 )
 
 LOGGER = logging.getLogger(__name__)
