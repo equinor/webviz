@@ -358,6 +358,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         if (isPersisted(dataContainer)) {
             session.setId(dataContainer.id);
             session.setIsPersisted(true);
+            session.setIsSnapshot(dataContainer.isSnapshot);
         }
 
         session.setMetadata(dataContainer.metadata);

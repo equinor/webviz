@@ -1,5 +1,12 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
+
+import {
+    deleteSessionMutation,
+    getSnapshotAccessLogsQueryKey,
+    updateSessionMutation,
+    type SessionUpdate_api,
+} from "@api";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ConfirmationService } from "./ConfirmationService";
@@ -9,6 +16,7 @@ import { EnsembleUpdateMonitor } from "./internal/EnsembleUpdateMonitor";
 import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
+import { removeSessionQueryData, replaceSessionQueryData } from "./internal/WorkbenchSession/utils/crudHelpers";
 import {
     loadAllWorkbenchSessionsFromLocalStorage,
     loadSnapshotFromBackend,
@@ -27,7 +35,6 @@ import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSessionP
 import type { Template } from "./TemplateRegistry";
 import { ApiErrorHelper } from "./utils/ApiErrorHelper";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import { getSnapshotAccessLogsQueryKey } from "@api";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",
@@ -213,7 +220,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         }
     }
 
-    private async openSnapshot(snapshotId: string): Promise<void> {
+    async openSnapshot(snapshotId: string): Promise<void> {
         try {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
@@ -277,6 +284,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             lastModifiedMs: Date.now(),
         });
         this._workbenchSession.setIsSnapshot(false);
+        this._workbenchSession.setIsPersisted(false);
         this._workbenchSessionPersistenceService.setWorkbenchSession(this._workbenchSession);
         removeSnapshotIdFromUrl();
     }
@@ -366,6 +374,20 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
         }
+    }
+
+    async updateSession(sessionId: string, updatedSession: SessionUpdate_api) {
+        const queryClient = this._queryClient;
+
+        await queryClient
+            .getMutationCache()
+            .build(queryClient, {
+                ...updateSessionMutation(),
+                onSuccess(data) {
+                    replaceSessionQueryData(queryClient, data);
+                },
+            })
+            .execute({ path: { session_id: sessionId }, body: updatedSession });
     }
 
     async makeSnapshot(title: string, description: string): Promise<string | null> {
@@ -578,6 +600,27 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this.unloadCurrentSession();
 
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+    }
+
+    async deleteSession(sessionId: string): Promise<void> {
+        const result = await ConfirmationService.confirm({
+            title: "Are you sure?",
+            message:
+                "This session will be deleted. This action can not be reversed. Note that any snapshots made from this session will still be available",
+            actions: [
+                { id: "cancel", label: "Cancel" },
+                { id: "delete", label: "Delete", color: "danger" },
+            ],
+        });
+
+        if (result !== "delete") return;
+
+        await this._queryClient
+            .getMutationCache()
+            .build(this._queryClient, deleteSessionMutation())
+            .execute({ path: { session_id: sessionId } });
+
+        removeSessionQueryData(this._queryClient, sessionId);
     }
 
     getWorkbenchSession(): PrivateWorkbenchSession {

@@ -1,24 +1,25 @@
 import type React from "react";
 
-import { useQuery } from "@tanstack/react-query";
-
+import {
+    getSnapshotAccessLogsOptions,
+    getSnapshotAccessLogsQueryKey,
+    SnapshotAccessLogSortBy_api,
+    SortDirection_api,
+    type SnapshotAccessLog_api,
+} from "@api";
 import { GuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { timeAgo } from "@lib/utils/dates";
-import { getSnapshotAccessLogsOptions, getSnapshotAccessLogsQueryKey } from "@api";
+
+import { ItemCard } from "./itemCard";
+import { RecentList } from "./recentList";
 
 export type RecentSnapshotsProps = {
     workbench: Workbench;
 };
 
 export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
-    const recentSnapshotsQuery = useQuery({
-        ...getSnapshotAccessLogsOptions(),
-        refetchInterval: 10000,
-    });
-
-    async function handleSnapshotClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    async function handleSnapshotClick(id: string, e: React.MouseEvent<HTMLAnchorElement>) {
         e.preventDefault();
 
         // Load the selected snapshot
@@ -33,39 +34,37 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
         props.workbench.getQueryClient().resetQueries({ queryKey: getSnapshotAccessLogsQueryKey() });
     }
 
-    if (recentSnapshotsQuery.isPending) {
-        return (
-            <span className="text-gray-500 flex items-center gap-2">
-                <CircularProgress size="extra-small" /> Loading recent snapshots...
-            </span>
-        );
-    }
-
-    if (recentSnapshotsQuery.isError) {
-        return <span className="text-red-800">Could not fetch recent snapshots...</span>;
-    }
-
-    if (!recentSnapshotsQuery.data.items.length) {
-        return <span className="text-gray-500">No recently visited snapshots.</span>;
-    }
-
     return (
-        <ul className="pl-5">
-            {recentSnapshotsQuery.data.items.map((snapshot) => (
-                <li key={snapshot.snapshotId} className="flex justify-between gap-4">
-                    <a
-                        className="text-blue-600 hover:underline"
-                        href={`/snapshot/${snapshot.snapshotId}`}
-                        onClick={handleSnapshotClick}
-                    >
-                        {snapshot.snapshotMetadata.title}
-                    </a>
-
-                    <span className="text-gray-500">
-                        ~ {timeAgo(Date.now() - new Date(snapshot.lastVisitedAt ?? "").getTime())}
-                    </span>
-                </li>
-            ))}
-        </ul>
+        <RecentList
+            title="Recent snapshots"
+            useQueryOptions={{
+                ...getSnapshotAccessLogsOptions({
+                    query: {
+                        sort_by: SnapshotAccessLogSortBy_api.LAST_VISITED_AT,
+                        sort_direction: SortDirection_api.DESC,
+                        page_size: 5,
+                    },
+                }),
+            }}
+            transformData={(data) => data.items}
+            renderItem={(item: SnapshotAccessLog_api) => (
+                <ItemCard
+                    href={`/snapshot/${item.snapshotId}`}
+                    key={item.snapshotId}
+                    id={item.snapshotId}
+                    title={item.snapshotMetadata.title}
+                    timestamp={item.lastVisitedAt ?? ""}
+                    description={item.snapshotMetadata.description}
+                    ownerId={item.snapshotMetadata.ownerId}
+                    onClick={handleSnapshotClick}
+                    tooltipInfo={{
+                        Visited: `${item.visits} time${item.visits === 1 ? "" : "s"}`,
+                        Created: timeAgo(Date.now() - new Date(item.snapshotMetadata.createdAt ?? "").getTime()),
+                        "Last opened": timeAgo(Date.now() - new Date(item.lastVisitedAt ?? "").getTime()),
+                    }}
+                />
+            )}
+            makeItemKey={(item: SnapshotAccessLog_api) => item.snapshotId}
+        />
     );
 }

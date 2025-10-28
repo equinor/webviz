@@ -173,11 +173,7 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
         WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO,
     );
 
-    // A session is considered to have unsaved changes if it has changes and is persisted.
-    // Unsaved changes are not tracked for non-persisted sessions, as they have never been saved.
-    // Snapshots are never persisted, so they cannot have unsaved changes.
-    //
-    const hasChanges = persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null && isPersisted;
+    const hasChanges = (persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null) || !isPersisted;
 
     function makeContent() {
         let content: React.ReactNode = null;
