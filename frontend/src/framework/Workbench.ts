@@ -5,6 +5,7 @@ import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunct
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
+import { HoverService } from "./HoverService";
 import { DashboardTopic } from "./internal/Dashboard";
 import { EnsembleUpdateMonitor } from "./internal/EnsembleUpdateMonitor";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
@@ -35,6 +36,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     private _workbenchSession: PrivateWorkbenchSession | null = null;
     private _workbenchServices: PrivateWorkbenchServices;
+    private _hoverService: HoverService;
     private _guiMessageBroker: GuiMessageBroker;
     private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
@@ -49,6 +51,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._queryClient = queryClient;
         this._atomStoreMaster = new AtomStoreMaster();
         this._workbenchServices = new PrivateWorkbenchServices(this);
+        this._hoverService = new HoverService();
         this._guiMessageBroker = new GuiMessageBroker();
         this._ensembleUpdateMonitor = new EnsembleUpdateMonitor(queryClient, this);
     }
@@ -190,6 +193,10 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     getWorkbenchServices(): WorkbenchServices {
         return this._workbenchServices;
+    }
+
+    getHoverService(): HoverService {
+        return this._hoverService;
     }
 
     getGuiMessageBroker(): GuiMessageBroker {
