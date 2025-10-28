@@ -3,7 +3,7 @@ import React from "react";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import { type BoundingBox2D_api, type PolygonData_api, type SurfaceDef_api, type WellboreTrajectory_api } from "@api";
+import { type BoundingBox2d_api, type PolygonData_api, type SurfaceDef_api, type WellboreTrajectory_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
@@ -35,7 +35,7 @@ type Bounds = [number, number, number, number];
 const updateViewPortBounds = (
     existingViewPortBounds: Bounds | undefined,
     resetBounds: boolean,
-    surfaceBB: BoundingBox2D_api,
+    surfaceBB: BoundingBox2d_api,
 ): Bounds => {
     const updatedBounds: Bounds = [surfaceBB.min_x, surfaceBB.min_y, surfaceBB.max_x, surfaceBB.max_y];
 

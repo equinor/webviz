@@ -1,10 +1,21 @@
 import { defineConfig } from "@hey-api/openapi-ts";
-import { startCase } from "lodash";
+import { upperFirst } from "lodash";
 
 import { makePlugin as cacheBustingPlugin } from "./open-api/cachebusting-plugin";
 
+function toPascalCase(str: string): string {
+    const camelCase = str
+        .replace(/[_-]+/g, " ")
+        .split(" ")
+        .map((word) => upperFirst(word))
+        .join("");
+
+    // PascalCase should just be camelcase with the first letter upper-cased
+    return upperFirst(camelCase);
+}
+
 function addSuffix(name: string, categoricalSuffix = "", coreSuffix = "_api"): string {
-    const pascalCasedName = startCase(name).replaceAll(" ", "");
+    const pascalCasedName = toPascalCase(name);
     const suffixedName = pascalCasedName + categoricalSuffix + coreSuffix;
 
     return suffixedName;

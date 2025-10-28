@@ -105,7 +105,7 @@ export type BodyPostGetSurfaceIntersection_api = {
 /**
  * BoundingBox2d
  */
-export type BoundingBox2D_api = {
+export type BoundingBox2d_api = {
     /**
      * Min X
      */
@@ -129,7 +129,7 @@ export type BoundingBox2D_api = {
  *
  * Bounding box for a 3D grid geometry
  */
-export type BoundingBox3D_api = {
+export type BoundingBox3d_api = {
     /**
      * Xmin
      */
@@ -598,7 +598,7 @@ export type GraphUserPhoto_api = {
  *
  * Specification of a 3D grid dimensions
  */
-export type Grid3DDimensions_api = {
+export type Grid3dDimensions_api = {
     /**
      * I Count
      */
@@ -614,13 +614,13 @@ export type Grid3DDimensions_api = {
     /**
      * Subgrids
      */
-    subgrids: Array<Grid3DZone_api>;
+    subgrids: Array<Grid3dZone_api>;
 };
 
 /**
  * Grid3dGeometry
  */
-export type Grid3DGeometry_api = {
+export type Grid3dGeometry_api = {
     polys_b64arr: B64UintArray_api;
     points_b64arr: B64FloatArray_api;
     poly_source_cell_indices_b64arr: B64UintArray_api;
@@ -663,23 +663,23 @@ export type Grid3DGeometry_api = {
  *
  * Metadata for a 3D grid model, including its properties and geometry
  */
-export type Grid3DInfo_api = {
+export type Grid3dInfo_api = {
     /**
      * Grid Name
      */
     grid_name: string;
-    bbox: BoundingBox3D_api;
-    dimensions: Grid3DDimensions_api;
+    bbox: BoundingBox3d_api;
+    dimensions: Grid3dDimensions_api;
     /**
      * Property Info Arr
      */
-    property_info_arr: Array<Grid3DPropertyInfo_api>;
+    property_info_arr: Array<Grid3dPropertyInfo_api>;
 };
 
 /**
  * Grid3dMappedProperty
  */
-export type Grid3DMappedProperty_api = {
+export type Grid3dMappedProperty_api = {
     poly_props_b64arr: B64FloatArray_api;
     /**
      * Min Grid Prop Value
@@ -696,7 +696,7 @@ export type Grid3DMappedProperty_api = {
  *
  * Metadata for a 3D grid property
  */
-export type Grid3DPropertyInfo_api = {
+export type Grid3dPropertyInfo_api = {
     /**
      * Property Name
      */
@@ -712,7 +712,7 @@ export type Grid3DPropertyInfo_api = {
  *
  * Named subset of 3D grid layers (Zone)
  */
-export type Grid3DZone_api = {
+export type Grid3dZone_api = {
     /**
      * Name
      */
@@ -1346,7 +1346,7 @@ export type SeismicCubeMeta_api = {
      * Isdepth
      */
     isDepth: boolean;
-    bbox: BoundingBox3D_api;
+    bbox: BoundingBox3d_api;
     spec: SeismicCubeSpec_api;
 };
 
@@ -1760,7 +1760,7 @@ export type SurfaceDataFloat_api = {
      */
     format?: "float";
     surface_def: SurfaceDef_api;
-    transformed_bbox_utm: BoundingBox2D_api;
+    transformed_bbox_utm: BoundingBox2d_api;
     /**
      * Value Min
      */
@@ -1781,7 +1781,7 @@ export type SurfaceDataPng_api = {
      */
     format?: "png";
     surface_def: SurfaceDef_api;
-    transformed_bbox_utm: BoundingBox2D_api;
+    transformed_bbox_utm: BoundingBox2d_api;
     /**
      * Value Min
      */
@@ -4439,7 +4439,7 @@ export type GetGridModelsInfoResponses_api = {
      *
      * Successful Response
      */
-    200: Array<Grid3DInfo_api>;
+    200: Array<Grid3dInfo_api>;
 };
 
 export type GetGridModelsInfoResponse_api = GetGridModelsInfoResponses_api[keyof GetGridModelsInfoResponses_api];
@@ -4526,7 +4526,7 @@ export type GetGridSurfaceResponses_api = {
     /**
      * Successful Response
      */
-    200: Grid3DGeometry_api;
+    200: Grid3dGeometry_api;
 };
 
 export type GetGridSurfaceResponse_api = GetGridSurfaceResponses_api[keyof GetGridSurfaceResponses_api];
@@ -4625,7 +4625,7 @@ export type GetGridParameterResponses_api = {
     /**
      * Successful Response
      */
-    200: Grid3DMappedProperty_api;
+    200: Grid3dMappedProperty_api;
 };
 
 export type GetGridParameterResponse_api = GetGridParameterResponses_api[keyof GetGridParameterResponses_api];
