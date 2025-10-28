@@ -4094,7 +4094,7 @@ export type GetSessionsMetadataData_api = {
          * Filter results by date
          */
         filter_updated_to?: string | null;
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/sessions";
 };
@@ -4121,7 +4121,7 @@ export type CreateSessionData_api = {
     body: NewSession_api;
     path?: never;
     query?: {
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/sessions";
 };
@@ -4150,7 +4150,7 @@ export type DeleteSessionData_api = {
         session_id: string;
     };
     query?: {
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/sessions/{session_id}";
 };
@@ -4177,7 +4177,7 @@ export type GetSessionData_api = {
         session_id: string;
     };
     query?: {
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/sessions/{session_id}";
 };
@@ -4206,7 +4206,7 @@ export type UpdateSessionData_api = {
         session_id: string;
     };
     query?: {
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/sessions/{session_id}";
 };
@@ -4235,7 +4235,7 @@ export type GetSessionMetadataData_api = {
         session_id: string;
     };
     query?: {
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/sessions/metadata/{session_id}";
 };
@@ -4302,7 +4302,7 @@ export type GetSnapshotAccessLogsData_api = {
          * Filter results by date of last visit
          */
         filter_last_visited_to?: string | null;
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/snapshot_access_logs";
 };
@@ -4361,7 +4361,7 @@ export type GetSnapshotsMetadataData_api = {
          * Filter results by date
          */
         filter_created_to?: string | null;
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/snapshots";
 };
@@ -4388,7 +4388,7 @@ export type CreateSnapshotData_api = {
     body: NewSnapshot_api;
     path?: never;
     query?: {
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/snapshots";
 };
@@ -4417,7 +4417,7 @@ export type DeleteSnapshotData_api = {
         snapshot_id: string;
     };
     query?: {
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/snapshots/{snapshot_id}";
 };
@@ -4444,7 +4444,7 @@ export type GetSnapshotData_api = {
         snapshot_id: string;
     };
     query?: {
-        t?: number;
+        zCacheBust?: string;
     };
     url: "/persistence/snapshots/{snapshot_id}";
 };
