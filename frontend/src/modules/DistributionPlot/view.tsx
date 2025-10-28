@@ -17,9 +17,10 @@ import { ContentWarning } from "@modules/_shared/components/ContentMessage/conte
 import { Plot } from "@modules/_shared/components/Plot";
 import { makeSubplots } from "@modules/_shared/Figure";
 import { makeHistogramTrace } from "@modules/_shared/histogram";
+import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { Interfaces } from "./interfaces";
-import { PlotType } from "./typesAndEnums";
+import { BarSortBy, PlotType } from "./typesAndEnums";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
@@ -47,10 +48,16 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const [prevNumBins, setPrevNumBins] = React.useState<number | null>(null);
     const [prevOrientation, setPrevOrientation] = React.useState<"v" | "h" | null>(null);
     const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
+    const [prevSharedXAxes, setPrevSharedXAxes] = React.useState<boolean | null>(null);
+    const [prevSharedYAxes, setPrevSharedYAxes] = React.useState<boolean | null>(null);
+    const [prevBarSortBy, setPrevBarSortBy] = React.useState<BarSortBy>(BarSortBy.Value);
 
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
+    const sharedXAxes = viewContext.useSettingsToViewInterfaceValue("sharedXAxes");
+    const sharedYAxes = viewContext.useSettingsToViewInterfaceValue("sharedYAxes");
     const numBins = viewContext.useSettingsToViewInterfaceValue("numBins");
     const orientation = viewContext.useSettingsToViewInterfaceValue("orientation");
+    const barSortBy = viewContext.useSettingsToViewInterfaceValue("barSortBy");
 
     const statusWriter = useViewStatusWriter(viewContext);
 
@@ -84,7 +91,10 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         plotType !== prevPlotType ||
         numBins !== prevNumBins ||
         orientation !== prevOrientation ||
-        wrapperDivSize !== prevSize
+        wrapperDivSize !== prevSize ||
+        sharedXAxes !== prevSharedXAxes ||
+        sharedYAxes !== prevSharedYAxes ||
+        barSortBy !== prevBarSortBy
     ) {
         setRevNumberX(receiverX.revisionNumber);
         setRevNumberY(receiverY.revisionNumber);
@@ -93,6 +103,9 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         setPrevNumBins(numBins);
         setPrevOrientation(orientation);
         setPrevSize(wrapperDivSize);
+        setPrevSharedXAxes(sharedXAxes);
+        setPrevSharedYAxes(sharedYAxes);
+        setPrevBarSortBy(barSortBy);
 
         startTransition(function makeContent() {
             if (!receiverX.channel) {
@@ -167,8 +180,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     numCols,
                     width: wrapperDivSize.width,
                     height: wrapperDivSize.height,
-                    sharedXAxes: false,
-                    sharedYAxes: false,
+                    sharedXAxes: sharedXAxes,
+                    sharedYAxes: sharedYAxes,
                     verticalSpacing: 100 / (wrapperDivSize.height - 50),
                     horizontalSpacing: 0.2 / numCols,
 
@@ -255,9 +268,12 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         const data = receiverX.channel.contents[cellIndex];
                         const keyData = data.dataArray.map((el: any) => el.key);
                         const valueData = data.dataArray.map((el: any) => el.value);
-
                         const dataTitle = makeTitleFromChannelContent(data);
                         const kindOfKeyTitle = `${receiverX.channel.kindOfKey}`;
+                        const hoverText = data.dataArray.map(
+                            (el) =>
+                                `${kindOfKeyTitle}: <b>${el.key}</b><br>${dataTitle}: <b>${formatNumber(Number(el.value))}</b><extra></extra>`,
+                        );
 
                         const trace: Partial<PlotData> = {
                             x: orientation === "h" ? valueData : keyData,
@@ -269,18 +285,31 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             showlegend: false,
                             type: "bar",
                             orientation,
+                            hovertemplate: hoverText,
+                            hoverlabel: {
+                                bgcolor: "white",
+                                font: { size: 12, color: "black" },
+                            },
                         };
 
-                        const xAxisTitle = orientation === "h" ? dataTitle : kindOfKeyTitle;
-                        const yAxisTitle = orientation === "h" ? kindOfKeyTitle : dataTitle;
+                        const xAxisTitle = orientation === "h" ? dataTitle : `${kindOfKeyTitle} (hover to see values)`;
+                        const yAxisTitle = orientation === "h" ? `${kindOfKeyTitle} (hover to see values)` : dataTitle;
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
+                        const xBinsInDescendingOrder = orientation === "v" && barSortBy === BarSortBy.Value;
+                        const yBinsInDescendingOrder = orientation === "h" && barSortBy === BarSortBy.Value;
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex + 1}`]: {
                                 title: { text: xAxisTitle },
+                                type: xBinsInDescendingOrder ? "category" : "linear",
+                                categoryorder: xBinsInDescendingOrder ? "total descending" : "trace",
+                                showticklabels: xBinsInDescendingOrder ? false : true,
                             },
                             [`yaxis${cellIndex + 1}`]: {
                                 title: { text: yAxisTitle },
+                                type: yBinsInDescendingOrder ? "category" : "linear",
+                                categoryorder: yBinsInDescendingOrder ? "total descending" : "trace",
+                                showticklabels: yBinsInDescendingOrder ? false : true,
                             },
                         };
                         figure.updateLayout(patch);
@@ -306,8 +335,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     numCols: receiverY.channel.contents.length,
                     width: wrapperDivSize.width,
                     height: wrapperDivSize.height,
-                    sharedXAxes: true,
-                    sharedYAxes: true,
+                    sharedXAxes: sharedXAxes,
+                    sharedYAxes: sharedYAxes,
                     verticalSpacing: 20 / (wrapperDivSize.height - 80),
                     horizontalSpacing: 20 / (wrapperDivSize.width - 80),
                     margin: {
@@ -336,12 +365,11 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                 let cellIndex = 0;
 
-                receiverX.channel.contents.forEach((contentX, rowIndex, rowArr) => {
+                receiverX.channel.contents.forEach((contentX, rowIndex) => {
                     if (!receiverY.channel) {
                         return;
                     }
 
-                    const numRows = rowArr.length;
                     receiverY.channel.contents.forEach((contentY, colIndex) => {
                         cellIndex++;
 
@@ -405,7 +433,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                                         : undefined,
                             },
                             showlegend: false,
-                            type: "scattergl",
+                            type: "scatter",
                             hovertemplate: realizations.map((real) =>
                                 dataColor
                                     ? makeHoverTextWithColor(contentX, contentY, dataColor, real)
@@ -415,22 +443,22 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
 
-                        if (rowIndex === numRows - 1) {
-                            const patch: Partial<Layout> = {
-                                [`xaxis${cellIndex}`]: {
-                                    title: {
-                                        text: makeTitleFromChannelContent(contentX),
-                                        font,
-                                    },
+                        // if (rowIndex === numRows - 1) {
+                        const patch: Partial<Layout> = {
+                            [`xaxis${cellIndex}`]: {
+                                title: {
+                                    text: makeTitleFromChannelContent(contentY),
+                                    font,
                                 },
-                            };
-                            figure.updateLayout(patch);
-                        }
+                            },
+                        };
+                        figure.updateLayout(patch);
+                        // }
                         if (colIndex === 0) {
                             const patch: Partial<Layout> = {
                                 [`yaxis${cellIndex}`]: {
                                     title: {
-                                        text: makeTitleFromChannelContent(contentY),
+                                        text: makeTitleFromChannelContent(contentX),
                                         font,
                                     },
                                 },
