@@ -44,7 +44,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                 enterDelay="medium"
             >
                 <a
-                    className="flex gap-4 items-center px-2 py-1 rounded hover:bg-indigo-100"
+                    className="flex gap-4 items-center px-2 py-1 rounded hover:bg-indigo-100 text-indigo-600"
                     href={props.href}
                     onClick={(evt) => props.onClick?.(props.id, evt)}
                 >
