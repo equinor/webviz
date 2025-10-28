@@ -1281,7 +1281,7 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(options: Optio
 };
 
 /**
- * List all sessions
+ * Get Sessions Metadata
  * Get a paginated list of session metadata for the authenticated user.
  *
  * This endpoint returns session metadata (without content) with support for:
@@ -1302,7 +1302,7 @@ export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create a new session
+ * Create Session
  * Create a new session for the authenticated user.
  *
  * Provide:
@@ -1332,7 +1332,7 @@ export const createSession = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Delete a session
+ * Delete Session
  * Permanently delete a session.
  *
  * This operation:
@@ -1352,7 +1352,7 @@ export const deleteSession = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get a session by ID
+ * Get Session
  * Retrieve a complete session by its ID.
  *
  * Returns the full session document including:
@@ -1369,7 +1369,7 @@ export const getSession = <ThrowOnError extends boolean = false>(options: Option
 };
 
 /**
- * Update a session
+ * Update Session
  * Update an existing session with partial or complete changes.
  *
  * You can update any combination of:
@@ -1403,7 +1403,7 @@ export const updateSession = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get session metadata by ID
+ * Get Session Metadata
  * Retrieve only the metadata for a specific session.
  *
  * Returns session metadata without the content, useful for:
@@ -1423,7 +1423,7 @@ export const getSessionMetadata = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * List access logs for visited snapshots
+ * Get Snapshot Access Logs
  * Get a list of all snapshots you have visited.
  *
  * This endpoint tracks your interaction history with snapshots, including:
@@ -1453,7 +1453,7 @@ export const getSnapshotAccessLogs = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * List your snapshots
+ * Get Snapshots Metadata
  * Get a paginated list of your snapshot metadata.
  *
  * Returns metadata for snapshots you own (without content) with support for:
@@ -1476,7 +1476,7 @@ export const getSnapshotsMetadata = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create a new snapshot
+ * Create Snapshot
  * Create a new snapshot for point-in-time capture.
  *
  * Provide:
@@ -1508,7 +1508,7 @@ export const createSnapshot = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Delete a snapshot
+ * Delete Snapshot
  * Permanently delete a snapshot.
  *
  * This operation:
@@ -1533,7 +1533,7 @@ export const deleteSnapshot = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get a snapshot by ID
+ * Get Snapshot
  * Retrieve a complete snapshot by its ID.
  *
  * Returns the full snapshot document including:
