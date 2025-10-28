@@ -20,14 +20,12 @@ type SaveSessionDialogInputFeedback = {
 };
 
 export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
-    const [saveSessionDialogOpen, setSaveSessionDialogOpen] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.SaveSessionDialogOpen,
-    );
+    const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.SaveSessionDialogOpen);
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
     const [inputFeedback, setInputFeedback] = React.useState<SaveSessionDialogInputFeedback>({});
+    const inputRef = React.useRef<HTMLInputElement>(null);
 
     function handleSave() {
         if (title.trim() === "") {
@@ -51,17 +49,26 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
     }
 
     function handleCancel() {
-        setSaveSessionDialogOpen(false);
+        setIsOpen(false);
         setTitle("");
         setDescription("");
         setInputFeedback({});
     }
 
+    React.useEffect(
+        function focusInput() {
+            if (isOpen && inputRef.current) {
+                inputRef.current.focus();
+            }
+        },
+        [isOpen],
+    );
+
     const layout = props.workbench.getWorkbenchSession().getActiveDashboard()?.getLayout() || [];
 
     return (
         <Dialog
-            open={saveSessionDialogOpen}
+            open={isOpen}
             onClose={handleCancel}
             title="Save Session as ..."
             modal
@@ -83,6 +90,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                     <Label text="Title">
                         <>
                             <Input
+                                inputRef={inputRef}
                                 placeholder="Enter session title"
                                 type="text"
                                 value={title}
