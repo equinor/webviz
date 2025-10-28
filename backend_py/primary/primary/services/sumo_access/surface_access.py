@@ -363,7 +363,6 @@ class SurfaceAccess:
             aggregation=False,
             ensemble=self._ensemble_name,
             name=name,
-            tagname=attribute,
             realization=realizations if realizations is not None else True,
             time=_time_or_interval_str_to_sumo_time_filter(time_or_interval_str),
         )
