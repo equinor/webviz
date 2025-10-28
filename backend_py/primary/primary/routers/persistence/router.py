@@ -59,7 +59,7 @@ async def get_sessions_metadata(
 
     The response includes a continuation token for fetching the next page of results.
     """
-    session_store = SessionStore.create(authenticated_user.get_user_id())
+    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
     async with session_store:
         filter_factory = FilterFactory(SessionDocument)
         filters = []
@@ -96,7 +96,7 @@ async def get_session(
 
     Only the session owner can access this endpoint.
     """
-    session_store = SessionStore.create(authenticated_user.get_user_id())
+    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
     async with session_store:
         session = await session_store.get_async(session_id)
         return to_api_session(session)
@@ -117,7 +117,7 @@ async def get_session_metadata(
 
     Only the session owner can access this endpoint.
     """
-    session_store = SessionStore.create(authenticated_user.get_user_id())
+    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
     async with session_store:
         session = await session_store.get_async(session_id)
         return to_api_session_metadata(session)
@@ -143,7 +143,7 @@ async def create_session(
 
     Returns the ID of the newly created session.
     """
-    session_store = SessionStore.create(authenticated_user.get_user_id())
+    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
     async with session_store:
         session_id = await session_store.create_async(
             title=session.title, description=session.description, content=session.content
@@ -177,7 +177,7 @@ async def update_session(
 
     Only the session owner can update their sessions.
     """
-    session_store = SessionStore.create(authenticated_user.get_user_id())
+    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
     async with session_store:
         updated_session = await session_store.update_async(
             session_id,
@@ -202,7 +202,7 @@ async def delete_session(
 
     Only the session owner can delete their sessions.
     """
-    session_store = SessionStore.create(authenticated_user.get_user_id())
+    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
     async with session_store:
         await session_store.delete_async(session_id)
 
@@ -243,7 +243,7 @@ async def get_snapshot_access_logs(
     - Creation date range
     - Last visited date range
     """
-    log_store = SnapshotAccessLogStore.create(authenticated_user.get_user_id())
+    log_store = SnapshotAccessLogStore.create_instance(authenticated_user.get_user_id())
 
     async with log_store:
         filter_factory = FilterFactory(SnapshotAccessLogDocument)
@@ -295,9 +295,9 @@ async def get_snapshots_metadata(
     Snapshots are immutable records that can be shared with others.
     They are separate from sessions and are intended for point-in-time captures.
 
-    Note: Consider using `/snapshot_access_logs` to see both your snapshots and ones shared with you.
+    Note: Consider using `/persistence/snapshot_access_logs` to see both your snapshots and ones shared with you.
     """
-    snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
+    snapshot_store = SnapshotStore.create_instance(authenticated_user.get_user_id())
     async with snapshot_store:
         filter_factory = FilterFactory(SnapshotDocument)
         filters = []
@@ -336,12 +336,12 @@ async def get_snapshot(
     - Updates the "last visited" timestamp
     - Creates an access log entry if this is your first visit
 
-    This allows you to see your viewing history in `/visited_snapshots`.
+    This allows you to see your viewing history in `/persistence/snapshot_access_logs`.
 
     Any user with the snapshot ID can access snapshots (they are shareable).
     """
-    snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
-    log_store = SnapshotAccessLogStore.create(user_id=authenticated_user.get_user_id())
+    snapshot_store = SnapshotStore.create_instance(authenticated_user.get_user_id())
+    log_store = SnapshotAccessLogStore.create_instance(user_id=authenticated_user.get_user_id())
 
     async with snapshot_store, log_store:
         snapshot = await snapshot_store.get_async(snapshot_id)
@@ -373,8 +373,8 @@ async def create_snapshot(
 
     Returns the ID of the newly created snapshot.
     """
-    snapshot_access = SnapshotStore.create(authenticated_user.get_user_id())
-    log_store = SnapshotAccessLogStore.create(authenticated_user.get_user_id())
+    snapshot_access = SnapshotStore.create_instance(authenticated_user.get_user_id())
+    log_store = SnapshotAccessLogStore.create_instance(authenticated_user.get_user_id())
 
     async with snapshot_access, log_store:
         snapshot_id = await snapshot_access.create_async(
@@ -409,7 +409,7 @@ async def delete_snapshot(
 
     Only the snapshot owner can delete their snapshots.
     """
-    snapshot_store = SnapshotStore.create(authenticated_user.get_user_id())
+    snapshot_store = SnapshotStore.create_instance(authenticated_user.get_user_id())
     async with snapshot_store:
         await snapshot_store.delete_async(snapshot_id)
 

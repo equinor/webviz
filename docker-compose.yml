@@ -16,7 +16,7 @@ services:
 
   backend-primary:
     depends_on:
-      cosmos-db:
+      cosmos-db-emulator:
         condition: service_healthy
     build:
       context: .
@@ -100,7 +100,7 @@ services:
       # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
       - REDIS_EXTRA_FLAGS=--maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel notice
 
-  cosmos-db:
+  cosmos-db-emulator:
     image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
     platform: linux/amd64
     tty: true
@@ -119,6 +119,6 @@ services:
       timeout: 5s
     volumes:
       - cosmosdrive:/var/lib/cosmosdb/emulator
-      
+
 volumes:
   cosmosdrive:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, NoReturn, Optional, Type
+from typing import Dict, NoReturn, Type
 
 from primary.services.service_exceptions import Service, ServiceRequestError
 
@@ -27,15 +27,12 @@ _DEFAULT_MESSAGES: Dict[Type[DatabaseAccessError], str] = {
 
 def convert_data_access_error_to_service_error(
     err: DatabaseAccessError,
-    *,
-    context: Optional[str] = None,
-    messages: Optional[Dict[Type[DatabaseAccessError], str]] = None,
 ) -> ServiceRequestError:
     """
     Convert a DatabaseAccess* error to a ServiceRequestError (without raising).
     You can customize messages per exception type via the 'messages' dict.
     """
-    msgs = {**_DEFAULT_MESSAGES, **(messages or {})}
+    msgs = {**_DEFAULT_MESSAGES}
 
     # Find the most specific message for the concrete type
     msg = None
@@ -55,22 +52,17 @@ def convert_data_access_error_to_service_error(
     if getattr(err, "activity_id", None):
         details.append(f"activity_id={err.activity_id}")
 
-    prefix = f"{context}: " if context else ""
     suffix = f" ({', '.join(details)})" if details else ""
-    message = f"{prefix}{msg}{suffix}"
+    message = f"{msg}{suffix}"
 
-    # Chain the original exception for traceback preservation
     return ServiceRequestError(message, Service.DATABASE)
 
 
 def raise_service_error_from_database_access(
     err: DatabaseAccessError,
-    *,
-    context: Optional[str] = None,
-    messages: Optional[Dict[Type[DatabaseAccessError], str]] = None,
 ) -> NoReturn:
     """
     Convert and raise immediately, chaining the original error.
     """
-    service_err = convert_data_access_error_to_service_error(err, context=context, messages=messages)
+    service_err = convert_data_access_error_to_service_error(err)
     raise service_err from err

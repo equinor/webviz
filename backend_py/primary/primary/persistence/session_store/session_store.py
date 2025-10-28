@@ -12,15 +12,15 @@ from primary.persistence.cosmosdb.error_converter import raise_service_error_fro
 
 from .documents import SessionDocument, SessionMetadata
 
+_CONTAINER_NAME = "sessions"
+_DATABASE_NAME = "persistence"
+
 
 class SessionStore:
     """
     A simple data store for session documents with CRUD operations.
     Supports pagination, sorting, filtering, and limits.
     """
-
-    CONTAINER_NAME = "sessions"
-    DATABASE_NAME = "persistence"
 
     def __init__(self, user_id: str, session_container: CosmosContainer[SessionDocument]):
         self._user_id = user_id
@@ -38,8 +38,8 @@ class SessionStore:
         await self._session_container.close_async()
 
     @classmethod
-    def create(cls, user_id: str) -> "SessionStore":
-        session_container = CosmosContainer.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SessionDocument)
+    def create_instance(cls, user_id: str) -> "SessionStore":
+        session_container = CosmosContainer.create_instance(_DATABASE_NAME, _CONTAINER_NAME, SessionDocument)
         return cls(user_id=user_id, session_container=session_container)
 
     async def create_async(self, title: str, description: Optional[str], content: str) -> str:

@@ -9,12 +9,12 @@ from primary.services.service_exceptions import ServiceRequestError
 
 LOGGER = logging.getLogger(__name__)
 
-DATABASE_NAME = "persistence"
-CONTAINER_NAME = "snapshot_access_logs"
+_DATABASE_NAME = "persistence"
+_CONTAINER_NAME = "snapshot_access_logs"
 
 # To avoid overwhelming the database with too many concurrent PATCH operations
 # (which can lead to throttling or Request Unit (RU) spikes), we limit concurrency.
-MAX_CONCURRENT_PATCH_OPS = 32
+_MAX_CONCURRENT_PATCH_OPS = 32
 
 
 async def mark_logs_deleted_task(snapshot_id: str) -> None:
@@ -22,8 +22,8 @@ async def mark_logs_deleted_task(snapshot_id: str) -> None:
     Marks all access-log docs for the given snapshot_id as deleted (PATCH /snapshot_deleted = true).
     Runs with bounded concurrency and is idempotent/safe to re-run.
     """
-    container: CosmosContainer[SnapshotAccessLogDocument] = CosmosContainer.create(
-        DATABASE_NAME, CONTAINER_NAME, SnapshotAccessLogDocument
+    container: CosmosContainer[SnapshotAccessLogDocument] = CosmosContainer.create_instance(
+        _DATABASE_NAME, _CONTAINER_NAME, SnapshotAccessLogDocument
     )
 
     try:
@@ -49,7 +49,7 @@ async def mark_logs_deleted_task(snapshot_id: str) -> None:
         ]
 
         # Limit concurrency to avoid RU spikes/throttling
-        sem = asyncio.Semaphore(MAX_CONCURRENT_PATCH_OPS)
+        sem = asyncio.Semaphore(_MAX_CONCURRENT_PATCH_OPS)
 
         async def _patch_one(rec: Dict[str, Any]) -> bool:
             async with sem:

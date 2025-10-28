@@ -21,7 +21,7 @@ class CosmosDatabase:
         self._database = self._client.get_database_client(database_name)
 
     @classmethod
-    def create(cls, database_name: str) -> "CosmosDatabase":
+    def create_instance(cls, database_name: str) -> "CosmosDatabase":
         if COSMOS_DB_PROD_CONNECTION_STRING:
             client = CosmosClient.from_connection_string(COSMOS_DB_PROD_CONNECTION_STRING)
         elif COSMOS_DB_EMULATOR_URI and COSMOS_DB_EMULATOR_KEY:

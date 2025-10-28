@@ -1,7 +1,6 @@
 import logging
 from typing import List, Optional
 
-import xtgeo
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Polygons
 
@@ -9,13 +8,23 @@ from fmu.sumo.explorer.objects import Polygons
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 from primary.services.service_exceptions import Service, InvalidDataError, NoDataError, MultipleDataMatchesError
 from .generic_types import SumoContent
-from .polygons_types import PolygonsMeta
+from .polygons_types import PolygonsMeta, PolygonData
 from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 
 
 class PolygonsAccess:
+    """
+    Access class for retrieving sets of polygons from Sumo.
+
+    This class handles polygons stored as individual items in dataio/sumo.
+    In practice these are polygon sets, such as fault networks, where each
+    polygon object in Sumo contains multiple geometrically distinct polygons
+    grouped by POLY_ID. The polygons are defined in UTM coordinates
+    (X_UTME, Y_UTMN, Z_TVDSS).
+    """
+
     def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
@@ -45,7 +54,7 @@ class PolygonsAccess:
 
         return poly_meta_arr
 
-    async def get_polygons_async(self, real_num: int, name: str, attribute: str) -> Optional[xtgeo.Polygons]:
+    async def get_polygons_async(self, real_num: int, name: str, attribute: str) -> list[PolygonData]:
         """
         Get polygons data
         """
@@ -73,24 +82,38 @@ class PolygonsAccess:
         sumo_polys = await poly_context.getitem_async(0)
         poly_df = await sumo_polys.to_pandas_async()
 
-        if set(["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID", "NAME"]) == set(poly_df.columns):
+        if all(col in poly_df.columns for col in ["X_UTME", "Y_UTMN", "Z_TVDSS", "POLY_ID"]):
             is_valid = True
 
         # Keep backward compatibility for older datasets
-        if set(["X", "Y", "Z", "ID"]) == set(poly_df.columns):
+        if all(col in poly_df.columns for col in ["X", "Y", "Z", "ID"]):
             poly_df = poly_df.rename(columns={"X": "X_UTME", "Y": "Y_UTMN", "Z": "Z_TVDSS", "ID": "POLY_ID"})
             is_valid = True
 
         if not is_valid:
             raise InvalidDataError(
-                f"Invalid polygons data found in Sumo for: {addr_str}. Expected columns ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID', 'NAME'], got {poly_df.columns.tolist()}",
+                f"Invalid polygons data found in Sumo for: {addr_str}. Expected columns ['X_UTME', 'Y_UTMN', 'Z_TVDSS', 'POLY_ID'], got {poly_df.columns.tolist()}",
                 service=Service.SUMO,
             )
-        xtgeo_polygons = xtgeo.Polygons(poly_df)
+
+        polydata: list[PolygonData] = []
+        has_name = "NAME" in poly_df.columns
+        for poly_id, pol_dframe in poly_df.groupby("POLY_ID"):
+            # Pick up individual polygons name from the data if it exist, if not encourage users to provide it!
+            name = pol_dframe["NAME"].iloc[0] if has_name else "NO_NAME_IN_METADATA"
+            polydata.append(
+                PolygonData(
+                    x_arr=pol_dframe["X_UTME"].tolist(),
+                    y_arr=pol_dframe["Y_UTMN"].tolist(),
+                    z_arr=pol_dframe["Z_TVDSS"].tolist(),
+                    poly_id=poly_id,
+                    name=name,
+                )
+            )
 
         LOGGER.debug(f"Got surface polygons from Sumo in: {timer.elapsed_ms()}ms ({addr_str})")
 
-        return xtgeo_polygons
+        return polydata
 
     def _make_addr_str(self, real_num: int, name: str, attribute: str, date_str: Optional[str]) -> str:
         addr_str = f"R:{real_num}__N:{name}__A:{attribute}__D:{date_str}__I:{self._ensemble_name}__C:{self._case_uuid}"

@@ -1,17 +1,20 @@
-from typing import List
 import asyncio
+import logging
+from typing import List, Coroutine, Any
 
-
-from fastapi import APIRouter, Depends, Path, Query, Body
-
+from fastapi import APIRouter, Depends, Path, Query, Body, Response
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.add_browser_cache import no_cache
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.sumo_inspector import SumoInspector
+from primary.services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from primary.services.utils.authenticated_user import AuthenticatedUser
-from primary.middleware.add_browser_cache import no_cache
+from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 from . import schemas
+
+LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -67,7 +70,6 @@ async def get_cases(
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
-@no_cache
 async def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
@@ -80,7 +82,6 @@ async def get_ensemble_details(
     realizations = await case_inspector.get_realizations_in_ensemble_async(ensemble_name)
     field_identifiers = await case_inspector.get_field_identifiers_async()
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
-    timestamps = await case_inspector.get_ensemble_timestamps_async(ensemble_name)
     standard_results = await case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
 
     if len(field_identifiers) != 1:
@@ -93,41 +94,42 @@ async def get_ensemble_details(
         realizations=realizations,
         fieldIdentifier=field_identifiers[0],
         stratigraphicColumnIdentifier=stratigraphic_column_identifier,
-        timestamps=schemas.EnsembleTimestamps(
-            caseUpdatedAtUtcMs=timestamps.case_updated_at_utc_ms,
-            dataUpdatedAtUtcMs=timestamps.data_updated_at_utc_ms,
-        ),
         standardResults=standard_results,
     )
 
 
-@router.post("/ensembles/get_timestamps")
-@no_cache
-async def post_get_timestamps_for_ensembles(
+@router.post("/ensembles/refresh_fingerprints")
+async def post_refresh_fingerprints_for_ensembles(
+    # fmt:off
+    response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    ensemble_idents: list[schemas.EnsembleIdent] = Body(
-        description="A list of ensemble idents (aka; case uuid and ensemble name)"
-    ),
-) -> list[schemas.EnsembleTimestamps]:
+    ensemble_idents: list[schemas.EnsembleIdent] = Body(description="Ensembles to refresh and get fingerprints for, specified as pairs of caseUuid,ensembleName"),
+    # fmt:on
+) -> list[str | None]:
     """
-    Fetches ensemble timestamps for a list of ensembles
+    Retrieves freshly calculated fingerprints for a list of ensembles
     """
-    return await asyncio.gather(
-        *[_get_ensemble_timestamps_for_ident_async(authenticated_user, ident) for ident in ensemble_idents]
-    )
+    perf_metrics = ResponsePerfMetrics(response)
 
+    # For how long should we cache the calculated fingerprints?
+    # Given that currently we will have the frontend call this endpoint every 5 minutes, a TTL of 5 minutes seems reasonable
+    fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=5 * 60)
 
-async def _get_ensemble_timestamps_for_ident_async(
-    authenticated_user: AuthenticatedUser, ensemble_ident: schemas.EnsembleIdent
-) -> schemas.EnsembleTimestamps:
-    case_uuid = ensemble_ident.caseUuid
-    ensemble_name = ensemble_ident.ensembleName
+    coros_arr: list[Coroutine[Any, Any, str]] = []
+    for ident in ensemble_idents:
+        coros_arr.append(fingerprinter.calc_and_store_ensemble_fp_async(ident.caseUuid, ident.ensembleName))
 
-    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    raw_results = await asyncio.gather(*coros_arr, return_exceptions=True)
+    perf_metrics.record_lap("calc-and-write-fingerprints")
 
-    timestamps = await case_inspector.get_ensemble_timestamps_async(ensemble_name)
+    ret_fingerprints: list[str | None] = []
+    for i, raw_res in enumerate(raw_results):
+        if isinstance(raw_res, str):
+            ret_fingerprints.append(raw_res)
+        else:
+            LOGGER.warning(f"Unable to calculate fingerprint for ensemble {ensemble_idents[i]}: {raw_res}")
+            ret_fingerprints.append(None)
 
-    return schemas.EnsembleTimestamps(
-        caseUpdatedAtUtcMs=timestamps.case_updated_at_utc_ms,
-        dataUpdatedAtUtcMs=timestamps.data_updated_at_utc_ms,
-    )
+    LOGGER.debug(f"Calculated and refreshed {len(ret_fingerprints)} fingerprints in: {perf_metrics.to_string()}")
+
+    return ret_fingerprints
