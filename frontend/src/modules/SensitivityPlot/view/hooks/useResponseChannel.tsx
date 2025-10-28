@@ -1,9 +1,12 @@
+import { Input } from "@mui/base";
+
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
+import { Tag } from "@lib/components/Tag";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
 export interface EnsembleResponse {
@@ -22,7 +25,7 @@ export interface ResponseChannelData {
     ensembleResponse: EnsembleResponse | null;
     channelEnsemble: RegularEnsemble | null;
     displayName: string | null;
-    status: ResponseChannelStatus;
+    warningContent: React.ReactNode | null;
 }
 
 export function useResponseChannel(
@@ -42,7 +45,15 @@ export function useResponseChannel(
             ensembleResponse: null,
             channelEnsemble: null,
             displayName: null,
-            status: ResponseChannelStatus.NO_CHANNEL,
+            warningContent: (
+                <ContentWarning>
+                    <span>
+                        Data channel required for use. Add a main module to the workbench and use the data channels icon
+                        <Input />
+                    </span>
+                    <Tag label="Response" />
+                </ContentWarning>
+            ),
         };
     }
     const hasChannelContents = hasChannel && responseReceiver.channel!.contents.length > 0;
@@ -52,7 +63,11 @@ export function useResponseChannel(
             ensembleResponse: null,
             channelEnsemble: null,
             displayName: responseReceiver.channel?.displayName ?? null,
-            status: ResponseChannelStatus.EMPTY_CHANNEL,
+            warningContent: (
+                <ContentWarning>
+                    No data received on channel {responseReceiver.channel?.displayName ?? "Unknown"}
+                </ContentWarning>
+            ),
         };
     }
 
@@ -66,7 +81,12 @@ export function useResponseChannel(
             ensembleResponse: null,
             channelEnsemble: null,
             displayName: responseReceiver.channel?.displayName ?? null,
-            status: ResponseChannelStatus.INVALID_ENSEMBLE,
+            warningContent: (
+                <ContentWarning>
+                    <p>Delta ensemble detected in data channel.</p>
+                    <p>Unable to compute sensitivity responses.</p>
+                </ContentWarning>
+            ),
         };
     }
     const realizations: number[] = [];
@@ -87,6 +107,6 @@ export function useResponseChannel(
         ensembleResponse,
         channelEnsemble,
         displayName: responseReceiver.channel?.displayName ?? null,
-        status: ResponseChannelStatus.VALID_CHANNEL,
+        warningContent: null,
     };
 }

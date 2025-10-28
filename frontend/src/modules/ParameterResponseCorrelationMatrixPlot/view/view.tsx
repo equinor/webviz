@@ -5,6 +5,7 @@ import { isEqual } from "lodash";
 
 import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
@@ -190,10 +191,11 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             });
             for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
                 const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-                if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
+                if (!ensemble || ensemble instanceof DeltaEnsemble) {
+                    const ensembleType = !ensemble ? "Invalid" : "Delta";
                     setContent(
                         <ContentWarning>
-                            <p>Delta ensemble detected in one of the data channels.</p>
+                            <p>{ensembleType} ensemble detected in the data channel.</p>
                             <p>Unable to compute parameter correlations.</p>
                         </ContentWarning>,
                     );

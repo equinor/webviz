@@ -1,12 +1,9 @@
 import React from "react";
 
-import { Input } from "@mui/icons-material";
-
 import type { ModuleViewProps } from "@framework/Module";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { ContentInfo, ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { computeSensitivitiesForResponse } from "@modules/_shared/SensitivityProcessing/sensitivityProcessing";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing/types";
@@ -16,7 +13,7 @@ import type { Interfaces } from "../interfaces";
 import { DisplayComponentType } from "../typesAndEnums";
 
 import SensitivityTable from "./components/sensitivityTable";
-import { ResponseChannelStatus, useResponseChannel } from "./hooks/useResponseChannel";
+import { useResponseChannel } from "./hooks/useResponseChannel";
 import { useSensitivityChart } from "./hooks/useSensitivityChart";
 import { SensitivityDataScaler } from "./utils/sensitivityDataScaler";
 
@@ -73,32 +70,8 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     viewContext.setInstanceTitle(instanceTitle);
 
     function makeViewContent(): React.ReactNode {
-        if (responseChannelData.status == ResponseChannelStatus.NO_CHANNEL) {
-            return (
-                <ContentWarning>
-                    <span>
-                        Data channel required for use. Add a main module to the workbench and use the data channels icon{" "}
-                        <Input />
-                    </span>
-                    <Tag label="Response" />
-                </ContentWarning>
-            );
-        }
-
-        if (responseChannelData.status == ResponseChannelStatus.EMPTY_CHANNEL) {
-            return (
-                <ContentWarning>
-                    No data received on channel {responseChannelData.displayName ?? "Unknown"}
-                </ContentWarning>
-            );
-        }
-        if (responseChannelData.status == ResponseChannelStatus.INVALID_ENSEMBLE) {
-            return (
-                <ContentWarning>
-                    <p>Delta ensemble detected in data channel.</p>
-                    <p>Unable to compute sensitivity responses.</p>
-                </ContentWarning>
-            );
+        if (responseChannelData.warningContent) {
+            return responseChannelData.warningContent;
         }
         if (!computedSensitivityResponseDataset) {
             return <ContentWarning>No sensitivities available</ContentWarning>;

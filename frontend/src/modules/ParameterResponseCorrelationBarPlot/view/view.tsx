@@ -4,8 +4,8 @@ import { Input, Warning } from "@mui/icons-material";
 import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 
 import { KeyKind } from "@framework/DataChannelTypes";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleViewProps } from "@framework/Module";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Tag } from "@lib/components/Tag";
@@ -149,10 +149,11 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     const responseChannelData = receiverResponse.channel.contents[cellIndex];
                     const ensembleIdentString = responseChannelData.metaData.ensembleIdentString;
                     const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-                    if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
+                    if (!ensemble || ensemble instanceof DeltaEnsemble) {
+                        const ensembleType = !ensemble ? "Invalid" : "Delta";
                         setContent(
                             <ContentWarning>
-                                <p>Delta ensemble detected in the data channel.</p>
+                                <p>{ensembleType} ensemble detected in the data channel.</p>
                                 <p>Unable to compute parameter correlations.</p>
                             </ContentWarning>,
                         );
