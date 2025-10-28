@@ -35,36 +35,38 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
     }
 
     return (
-        <RecentList
-            title="Recent snapshots"
-            useQueryOptions={{
-                ...getSnapshotAccessLogsOptions({
-                    query: {
-                        sort_by: SnapshotAccessLogSortBy_api.LAST_VISITED_AT,
-                        sort_direction: SortDirection_api.DESC,
-                        page_size: 5,
-                    },
-                }),
-            }}
-            transformData={(data) => data.items}
-            renderItem={(item: SnapshotAccessLog_api) => (
-                <ItemCard
-                    href={`/snapshot/${item.snapshotId}`}
-                    key={item.snapshotId}
-                    id={item.snapshotId}
-                    title={item.snapshotMetadata.title}
-                    timestamp={item.lastVisitedAt ?? ""}
-                    description={item.snapshotMetadata.description}
-                    ownerId={item.snapshotMetadata.ownerId}
-                    onClick={handleSnapshotClick}
-                    tooltipInfo={{
-                        Visited: `${item.visits} time${item.visits === 1 ? "" : "s"}`,
-                        Created: timeAgo(Date.now() - new Date(item.snapshotMetadata.createdAt ?? "").getTime()),
-                        "Last opened": timeAgo(Date.now() - new Date(item.lastVisitedAt ?? "").getTime()),
-                    }}
-                />
-            )}
-            makeItemKey={(item: SnapshotAccessLog_api) => item.snapshotId}
-        />
+        <div className="min-w-64 w-72">
+            <RecentList
+                title="Recent snapshots"
+                useQueryOptions={{
+                    ...getSnapshotAccessLogsOptions({
+                        query: {
+                            sort_by: SnapshotAccessLogSortBy_api.LAST_VISITED_AT,
+                            sort_direction: SortDirection_api.DESC,
+                            page_size: 5,
+                        },
+                    }),
+                }}
+                transformData={(data) => data.items}
+                renderItem={(item: SnapshotAccessLog_api) => (
+                    <ItemCard
+                        href={`/snapshot/${item.snapshotId}`}
+                        key={item.snapshotId}
+                        id={item.snapshotId}
+                        title={item.snapshotMetadata.title}
+                        timestamp={item.lastVisitedAt ?? ""}
+                        description={item.snapshotMetadata.description}
+                        ownerId={item.snapshotMetadata.ownerId}
+                        onClick={handleSnapshotClick}
+                        tooltipInfo={{
+                            Visited: `${item.visits} time${item.visits === 1 ? "" : "s"}`,
+                            Created: timeAgo(Date.now() - new Date(item.snapshotMetadata.createdAt ?? "").getTime()),
+                            "Last opened": timeAgo(Date.now() - new Date(item.lastVisitedAt ?? "").getTime()),
+                        }}
+                    />
+                )}
+                makeItemKey={(item: SnapshotAccessLog_api) => item.snapshotId}
+            />
+        </div>
     );
 }

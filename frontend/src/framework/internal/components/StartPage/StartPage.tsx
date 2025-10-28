@@ -52,7 +52,7 @@ export function StartPage(props: StartPageProps) {
     return (
         <>
             <div className="h-full w-full flex items-center justify-center min-h-0">
-                <div className="grid grid-cols-2 gap-x-16 gap-y-8">
+                <div className="grid grid-cols-2 gap-x-12 gap-y-8">
                     <section className="flex flex-col gap-2">
                         <Typography variant="h3">Start</Typography>
                         <Tooltip
