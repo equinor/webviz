@@ -9,9 +9,11 @@ from primary.services.service_exceptions import Service, ServiceRequestError
 
 from primary.persistence.cosmosdb.query_collation_options import Filter, QueryCollationOptions, SortDirection
 from .documents import SnapshotAccessLogDocument
-from .utils import make_access_log_item_id
 
 from .snapshot_store import SnapshotStore
+
+_DATABASE_NAME = "persistence"
+_CONTAINER_NAME = "snapshot_access_logs"
 
 
 class SnapshotAccessLogStore:
@@ -22,9 +24,6 @@ class SnapshotAccessLogStore:
     for tracking and managing snapshot access logs.
     """
 
-    DATABASE_NAME = "persistence"
-    CONTAINER_NAME = "snapshot_access_logs"
-
     def __init__(
         self,
         user_id: str,
@@ -34,8 +33,10 @@ class SnapshotAccessLogStore:
         self._access_log_container = access_log_container
 
     @classmethod
-    def create(cls, user_id: str) -> "SnapshotAccessLogStore":
-        access_log_container = CosmosContainer.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SnapshotAccessLogDocument)
+    def create_instance(cls, user_id: str) -> "SnapshotAccessLogStore":
+        access_log_container = CosmosContainer.create_instance(
+            _DATABASE_NAME, _CONTAINER_NAME, SnapshotAccessLogDocument
+        )
         return cls(user_id, access_log_container)
 
     async def __aenter__(self) -> "SnapshotAccessLogStore":
@@ -123,7 +124,7 @@ class SnapshotAccessLogStore:
         except DatabaseAccessError as err:
             raise ServiceRequestError(f"Failed to get access logs: {str(err)}", Service.DATABASE) from err
 
-    async def create_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
+    async def _create_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
         """
         Create a new access log entry for a snapshot and persist it to the database.
 
@@ -139,7 +140,7 @@ class SnapshotAccessLogStore:
         """
         try:
             # Use SnapshotStore to get snapshot metadata
-            async with SnapshotStore.create(self._user_id) as snapshot_store:
+            async with SnapshotStore.create_instance(self._user_id) as snapshot_store:
                 snapshot = await snapshot_store.get_async(snapshot_id)
 
                 new_log = SnapshotAccessLogDocument(
@@ -157,7 +158,7 @@ class SnapshotAccessLogStore:
         except DatabaseAccessError as err:
             raise ServiceRequestError(f"Failed to create access log: {str(err)}", Service.DATABASE) from err
 
-    async def get_existing_or_new_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
+    async def _get_existing_or_new_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
         """
         Get an existing access log or create a new one if it doesn't exist.
 
@@ -176,7 +177,7 @@ class SnapshotAccessLogStore:
         try:
             return await self.get_for_snapshot_async(snapshot_id)
         except DatabaseAccessNotFoundError:
-            return await self.create_async(snapshot_id=snapshot_id, snapshot_owner_id=snapshot_owner_id)
+            return await self._create_async(snapshot_id=snapshot_id, snapshot_owner_id=snapshot_owner_id)
         except DatabaseAccessError as err:
             raise ServiceRequestError(f"Failed to get or create access log: {str(err)}", Service.DATABASE) from err
 
@@ -203,7 +204,7 @@ class SnapshotAccessLogStore:
         """
         timestamp = datetime.now(timezone.utc)
         try:
-            log = await self.get_existing_or_new_async(snapshot_id, snapshot_owner_id)
+            log = await self._get_existing_or_new_async(snapshot_id, snapshot_owner_id)
 
             # Update visit tracking
             log.visits += 1
@@ -218,3 +219,7 @@ class SnapshotAccessLogStore:
             return log
         except DatabaseAccessError as err:
             raise ServiceRequestError(f"Failed to log snapshot visit: {str(err)}", Service.DATABASE) from err
+
+
+def make_access_log_item_id(snapshot_id: str, visitor_id: str) -> str:
+    return f"{snapshot_id}__{visitor_id}"

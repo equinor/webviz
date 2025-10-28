@@ -49,9 +49,11 @@ class CosmosContainer(Generic[T]):
         self._validation_model: Type[T] = validation_model
 
     @classmethod
-    def create(cls, database_name: str, container_name: str, validation_model: Type[T]) -> "CosmosContainer[T]":
+    def create_instance(
+        cls, database_name: str, container_name: str, validation_model: Type[T]
+    ) -> "CosmosContainer[T]":
         """Create a CosmosContainer instance."""
-        database = CosmosDatabase.create(database_name)
+        database = CosmosDatabase.create_instance(database_name)
         container = database.get_container(container_name)
         logger.debug("[CosmosContainer] Created for container '%s' in database '%s'", container_name, database_name)
         return cls(database_name, container_name, database, container, validation_model)

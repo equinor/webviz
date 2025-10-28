@@ -12,15 +12,15 @@ from primary.persistence.cosmosdb.error_converter import raise_service_error_fro
 from .documents import SnapshotDocument, SnapshotMetadata
 from .types import SnapshotSortBy
 
+_CONTAINER_NAME = "snapshots"
+_DATABASE_NAME = "persistence"
+
 
 class SnapshotStore:
     """
     A simple data store for snapshot documents with CRUD operations.
     Supports pagination, sorting, filtering, and limits.
     """
-
-    CONTAINER_NAME = "snapshots"
-    DATABASE_NAME = "persistence"
 
     def __init__(
         self,
@@ -42,8 +42,8 @@ class SnapshotStore:
         await self._snapshot_container.close_async()
 
     @classmethod
-    def create(cls, user_id: str) -> "SnapshotStore":
-        snapshot_container = CosmosContainer.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SnapshotDocument)
+    def create_instance(cls, user_id: str) -> "SnapshotStore":
+        snapshot_container = CosmosContainer.create_instance(_DATABASE_NAME, _CONTAINER_NAME, SnapshotDocument)
         return cls(user_id, snapshot_container)
 
     async def create_async(self, title: str, description: Optional[str], content: str) -> str:
