@@ -6,7 +6,9 @@ import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Dialog } from "@lib/components/Dialog";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -14,6 +16,7 @@ import { SettingConfigButton } from "@lib/components/SettingConfigButton";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { selectedResultNamesAtom } from "@modules/InplaceVolumesTable/settings/atoms/derivedAtoms";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
@@ -48,8 +51,6 @@ import {
     InplaceVolumesPlotOptionsDialogPreview,
 } from "./components/inplaceVolumesPlotOptionsDialog";
 import { makeBarGroupingOptions, makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
-import { Button } from "@lib/components/Button";
-import { Dialog } from "@lib/components/Dialog";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -122,39 +123,31 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const plotSettings = (
         <>
             <CollapsibleGroup title="Plot settings & data selection" expanded>
-                <div className="flex flex-col gap-2">
-                    <SettingConfigButton
-                        className="w-full"
-                        size="medium"
-                        formTitle="Plot settings"
-                        title="Configure visualization"
-                        formContent={
-                            <InplaceVolumesPlotOptionsDialog
-                                options={plotOptions}
-                                onPlotTypeChange={setSelectedPlotType}
-                                plotType={selectedPlotType}
-                                onOptionsChange={setPlotOptions}
+                <div className="flex">
+                    <div className="flex gap-3 pb-3 items-end w-full">
+                        <Label wrapperClassName="grow" text="Plot type">
+                            <Dropdown
+                                value={selectedPlotType}
+                                options={plotTypeOptions}
+                                onChange={setSelectedPlotType}
                             />
-                        }
-                    >
-                        <InplaceVolumesPlotOptionsDialogPreview value={selectedPlotType} />
-                    </SettingConfigButton>
-                    <Button ref={dialogButtonRef} onClick={() => setDialogOpen(!dialogOpen)}>
-                        Open Dialog
-                    </Button>
-                    <Dialog
-                        open={dialogOpen}
-                        width={300}
-                        height={400}
-                        onClose={() => setDialogOpen(false)}
-                        anchorEl={dialogButtonRef}
-                        isDraggable
-                        keepMounted
-                        title="Test Dialog"
-                        showCloseCross
-                    >
-                        Test
-                    </Dialog>
+                        </Label>
+                        <SettingConfigButton
+                            size="medium"
+                            formTitle="Plot settings"
+                            title="Configure visualization"
+                            formContent={
+                                <InplaceVolumesPlotOptionsDialog
+                                    options={plotOptions}
+                                    onPlotTypeChange={setSelectedPlotType}
+                                    plotType={selectedPlotType}
+                                    onOptionsChange={setPlotOptions}
+                                />
+                            }
+                        ></SettingConfigButton>
+                    </div>
+                </div>
+                <div>
                     <Label text="Response">
                         <Dropdown
                             value={selectedFirstResultName ?? undefined}
@@ -162,7 +155,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             onChange={setSelectedFirstResultName}
                         />
                     </Label>
-                    {selectedPlotType !== PlotType.BAR ? (
+                    {selectedSecondResultName !== undefined && (
                         <Label text="Second Response(Cross Plot)">
                             <Dropdown
                                 value={selectedSecondResultName ?? undefined}
@@ -171,7 +164,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 disabled={selectedPlotType !== PlotType.SCATTER}
                             />
                         </Label>
-                    ) : (
+                    )}
+                    {selectedSelectorColumn !== undefined && (
                         <Label text="Category for each bar">
                             <Dropdown
                                 value={selectedSelectorColumn ?? undefined}

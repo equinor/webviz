@@ -137,10 +137,13 @@ export const selectedFirstResultNameAtom = atom<string | null>((get) => {
     return fixedSelection[0];
 });
 
-export const selectedSecondResultNameAtom = atom<string | null>((get) => {
+export const selectedSecondResultNameAtom = atom<string | null | undefined>((get) => {
     const userSelectedResultName = get(userSelectedSecondResultNameAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-
+    const plotType = get(userSelectedPlotTypeAtom);
+    if (plotType !== PlotType.SCATTER) {
+        return undefined;
+    }
     if (!userSelectedResultName) {
         if (tableDefinitionsAccessor.getResultNamesIntersection().length === 0) {
             return null;
@@ -159,12 +162,12 @@ export const selectedSecondResultNameAtom = atom<string | null>((get) => {
     return fixedSelection[0];
 });
 
-export const selectedSelectorColumnAtom = atom<string | null>((get) => {
+export const selectedSelectorColumnAtom = atom<string | null | undefined>((get) => {
     const plotType = get(userSelectedPlotTypeAtom);
 
     // Only return a selector column for BAR plots
     if (plotType !== PlotType.BAR) {
-        return null;
+        return undefined;
     }
     const userSelectedSelectorColumn = get(userSelectedSelectorColumnAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);

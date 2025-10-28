@@ -31,7 +31,7 @@ export type InplaceVolumesPlotOptionsDialogProps = {
     onOptionsChange: (options: InplaceVolumesPlotOptions) => void;
 };
 export function InplaceVolumesPlotOptionsDialogPreview({ value }: { value: PlotType }) {
-    return <div className="rounded-sm  ">Plot type: {value}</div>;
+    return <div className="rounded-sm  "></div>;
 }
 export function InplaceVolumesPlotOptionsDialog({
     plotType,
@@ -88,16 +88,6 @@ export function InplaceVolumesPlotOptionsDialog({
 
     const dialogContent = (
         <div className="flex flex-col gap-6 p-4 ">
-            <div className="flex flex-col gap-3 pb-3 border-b border-gray-200">
-                <Label text="Plot type">
-                    <div className="flex">
-                        <div className="flex-1  mr-2">
-                            <Dropdown value={plotType} options={plotTypeOptions} onChange={onPlotTypeChange} />
-                        </div>
-                    </div>
-                </Label>
-            </div>
-
             {/* Histogram-specific options - only show for histogram plots */}
             {plotType === PlotType.HISTOGRAM && (
                 <div className="flex flex-col gap-3 pb-3 border-b border-gray-200">

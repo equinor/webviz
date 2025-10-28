@@ -2,8 +2,10 @@ import { atom } from "jotai";
 
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumes/queryHooks";
+import { makeTableFromApiData } from "@modules/_shared/InplaceVolumes/tableUtils";
 
 import { colorByAtom, filterAtom, selectorColumnAtom, subplotByAtom } from "./baseAtoms";
+import { aggregatedTableDataQueriesAtom } from "./queryAtoms";
 
 export const tableNamesAtom = atom((get) => {
     const filter = get(filterAtom);
@@ -59,4 +61,8 @@ export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     }
 
     return ensembleIdentsWithRealizations;
+});
+export const inplaceTableAtom = atom((get) => {
+    const aggregatedTableDataQueries = get(aggregatedTableDataQueriesAtom);
+    return makeTableFromApiData(aggregatedTableDataQueries.tablesData);
 });

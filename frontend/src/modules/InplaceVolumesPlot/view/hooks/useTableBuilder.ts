@@ -6,6 +6,8 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { TableColumns } from "@lib/components/Table/types";
 import type { TableRow } from "@lib/components/TableDeprecated/table";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
+import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+import { FormatListNumbered } from "@mui/icons-material";
 
 const numFormat = (number: number, isPercentage = false): string => {
     return (
@@ -153,11 +155,11 @@ export function createRows(
 
         const row: Record<string, any> = {
             ...metadata,
-            MIN: min,
-            P10: p10,
-            MEAN: mean,
-            P90: p90,
-            MAX: max,
+            MIN: formatNumber(min),
+            P10: formatNumber(p10),
+            MEAN: formatNumber(mean),
+            P90: formatNumber(p90),
+            MAX: formatNumber(max),
             COUNT: values.length,
         };
 
