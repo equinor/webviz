@@ -1,9 +1,9 @@
-import type { ParameterIdent } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 import { atom } from "jotai";
+
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { receivedChannelAtom } from "./baseAtoms";
 

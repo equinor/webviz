@@ -1,5 +1,4 @@
 import { KeyKind } from "@framework/DataChannelTypes";
-import { ParameterIdent } from "@framework/EnsembleParameters";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
