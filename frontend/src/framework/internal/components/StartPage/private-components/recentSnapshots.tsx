@@ -2,12 +2,11 @@ import type React from "react";
 
 import {
     getSnapshotAccessLogsOptions,
-    getSnapshotAccessLogsQueryKey,
     SnapshotAccessLogSortBy_api,
     SortDirection_api,
     type SnapshotAccessLog_api,
 } from "@api";
-import { GuiState } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { timeAgo } from "@lib/utils/dates";
 
@@ -19,19 +18,23 @@ export type RecentSnapshotsProps = {
 };
 
 export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
+    const [, setShowOverviewDialog] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SessionSnapshotOverviewDialogOpen,
+    );
+    const [, setOverviewContentMode] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SessionSnapshotOverviewDialogMode,
+    );
+
+    function handleMoreClick() {
+        setOverviewContentMode("snapshots");
+        setShowOverviewDialog(true);
+    }
+
     async function handleSnapshotClick(id: string, e: React.MouseEvent<HTMLAnchorElement>) {
+        props.workbench.openSnapshot(id);
         e.preventDefault();
-
-        // Load the selected snapshot
-        // TODO: Make this to a workbench method
-        props.workbench.getGuiMessageBroker().setState(GuiState.IsLoadingSession, true);
-
-        history.pushState(null, "", e.currentTarget.href);
-        await props.workbench.handleNavigation();
-
-        props.workbench.getGuiMessageBroker().setState(GuiState.IsLoadingSession, false);
-        // Reset query so that fresh snapshots are fetched when we return to the start page
-        props.workbench.getQueryClient().resetQueries({ queryKey: getSnapshotAccessLogsQueryKey() });
     }
 
     return (
@@ -47,6 +50,7 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
                         },
                     }),
                 }}
+                onDialogIconClick={handleMoreClick}
                 transformData={(data) => data.items}
                 renderItem={(item: SnapshotAccessLog_api) => (
                     <ItemCard

@@ -1,6 +1,7 @@
 import type React from "react";
 
 import { getSessionsMetadataOptions, SortDirection_api, SessionSortBy_api, type SessionMetadata_api } from "@api";
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { buildSessionUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import { timeAgo } from "@lib/utils/dates";
@@ -13,6 +14,20 @@ export type RecentSessionsProps = {
 };
 
 export function RecentSessions(props: RecentSessionsProps) {
+    const [, setShowOverviewDialog] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SessionSnapshotOverviewDialogOpen,
+    );
+    const [, setOverviewContentMode] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SessionSnapshotOverviewDialogMode,
+    );
+
+    function handleMoreClick() {
+        setOverviewContentMode("sessions");
+        setShowOverviewDialog(true);
+    }
+
     function handleSessionClick(sessionId: string, evt: React.MouseEvent) {
         evt.preventDefault();
         props.workbench.openSession(sessionId);
@@ -30,6 +45,7 @@ export function RecentSessions(props: RecentSessionsProps) {
                     },
                 }),
             }}
+            onDialogIconClick={handleMoreClick}
             transformData={(data) => data.items}
             renderItem={(item: SessionMetadata_api) => (
                 <ItemCard

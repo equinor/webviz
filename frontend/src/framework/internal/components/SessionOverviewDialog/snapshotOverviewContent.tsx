@@ -101,7 +101,7 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
             return (
                 <>
                     <div className="flex gap-1">
-                        <UserAvatar userEmail="anhun@equinor.com" />
+                        <UserAvatar userIdOrEmail="anhun@equinor.com" />
                         anhun
                     </div>
                 </>
@@ -247,6 +247,7 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
                         value={tableFilter.title ?? ""}
                         placeholder="Search title"
                         onValueChange={handleTitleFilterValueChange}
+                        className="h-6"
                     />
                 </Label>
 
@@ -255,7 +256,10 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
                 </Label> */}
 
                 <Label text="Last visited at" wrapperClassName="min-w-2xs">
-                    <DateRangePicker onChange={onFilterRangeChange} />
+                    <DateRangePicker
+                        onChange={onFilterRangeChange}
+                        className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300 h-10"
+                    />
                 </Label>
             </div>
 

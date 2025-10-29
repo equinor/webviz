@@ -66,7 +66,11 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
 
     return (
         <div className="flex gap-1 items-center text-sm italic text-gray-500">
-            <UserAvatar userEmail={props.owner?.id ?? ""} className="shrink-0 inline" />
+            <UserAvatar
+                userIdOrEmail={props.owner?.id ?? ""}
+                className="shrink-0 inline"
+                userDisplayName={props.owner?.display_name}
+            />
             <span className="truncate">{name}</span>
         </div>
     );

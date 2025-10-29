@@ -2,12 +2,9 @@ import React from "react";
 
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import type { DialogProps } from "@lib/components/Dialog/dialog";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Add, Delete, Edit, FileOpen, Link } from "@mui/icons-material";
 import { toast } from "react-toastify";
 
 import { SessionOverviewContent } from "./sessionOverviewContent";
@@ -68,35 +65,6 @@ export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.
         setDeletePending(false);
     }
 
-    const actions =
-        props.contentMode === "sessions" ? (
-            <>
-                <Button color="danger" disabled={!selectedEntryId || deletePending} onClick={deleteSelectedEntry}>
-                    {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
-                </Button>
-                <Button color="primary" disabled={!selectedEntryId} onClick={editSelectedEntry}>
-                    <Edit fontSize="inherit" /> Edit
-                </Button>
-
-                <Button color="primary" disabled={!selectedEntryId} onClick={goToSelectedEntry}>
-                    <FileOpen fontSize="inherit" /> Open
-                </Button>
-
-                <Button color="primary" variant="contained" onClick={props.onNewSession}>
-                    <Add fontSize="inherit" /> New session
-                </Button>
-            </>
-        ) : (
-            <>
-                <Button color="secondary" disabled={!selectedEntryId} onClick={copySelectedUrl}>
-                    <Link fontSize="inherit" /> Copy url
-                </Button>
-                <Button color="primary" disabled={!selectedEntryId} onClick={goToSelectedEntry}>
-                    <FileOpen fontSize="inherit" /> Open
-                </Button>
-            </>
-        );
-
     return (
         <>
             <Dialog
@@ -130,7 +98,6 @@ export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.
                 }
                 modal
                 {...props}
-                actions={actions}
                 width={1500}
                 showCloseCross
             >

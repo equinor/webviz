@@ -33,6 +33,9 @@ import {
     TABLE_HEIGHT,
     HEADER_HEIGHT,
 } from "./constants";
+import { Button } from "@lib/components/Button";
+import { Add, Delete, Edit, FileOpen } from "@mui/icons-material";
+import { CircularProgress } from "@lib/components/CircularProgress";
 
 type TableFilter = {
     title?: string;
@@ -185,7 +188,8 @@ export type SessionOverviewContentProps = {
 };
 
 export function SessionOverviewContent(props: SessionOverviewContentProps): React.ReactNode {
-    // ? Should this be opened via gui-events?
+    const [selectedEntryId, setSelectedEntryId] = React.useState<string | null>(null);
+    const [deletePending, setDeletePending] = React.useState<boolean>(false);
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
     const [tableFilter, setTableFilter] = React.useState<TableFilter>({});
@@ -255,6 +259,17 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
         });
     }
 
+    async function deleteSelectedEntry() {
+        if (!selectedEntryId) return;
+
+        setDeletePending(true);
+
+        await props.workbench.deleteSession(selectedEntryId);
+
+        setSelectedEntryId(null);
+        setDeletePending(false);
+    }
+
     return (
         <>
             <div className="mb-8 flex gap-4">
@@ -263,12 +278,30 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
                         value={tableFilter.title ?? ""}
                         placeholder="Search title"
                         onValueChange={handleTitleFilterValueChange}
+                        className="h-6"
                     />
                 </Label>
 
                 <Label text="Updated at" wrapperClassName="min-w-2xs">
-                    <DateRangePicker onChange={onFilterRangeChange} />
+                    <DateRangePicker
+                        onChange={onFilterRangeChange}
+                        className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300 h-10"
+                    />
                 </Label>
+            </div>
+            <div className="flex gap-2 mb-2 justify-end">
+                <Button color="danger" disabled={!selectedEntryId || deletePending} onClick={deleteSelectedEntry}>
+                    {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
+                </Button>
+                <Button color="primary" disabled={!selectedEntryId}>
+                    <Edit fontSize="inherit" /> Edit
+                </Button>
+                <Button color="primary" disabled={!selectedEntryId}>
+                    <FileOpen fontSize="inherit" /> Open
+                </Button>
+                <Button color="primary">
+                    <Add fontSize="inherit" /> New session
+                </Button>
             </div>
             <Table
                 rowIdentifier="id"

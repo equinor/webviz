@@ -1,5 +1,3 @@
-import React from "react";
-
 import { Icon, Typography } from "@equinor/eds-core-react";
 import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
@@ -7,7 +5,7 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 
-import { SessionOverviewDialog, type ModalContentMode } from "../SessionOverviewDialog/sessionOverviewDialog";
+import { SessionOverviewDialog } from "../SessionOverviewDialog/sessionOverviewDialog";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
@@ -19,8 +17,14 @@ export type StartPageProps = {
 };
 
 export function StartPage(props: StartPageProps) {
-    const [showOverviewDialog, setShowOverviewDialog] = React.useState(false);
-    const [overviewContentMode, setOverviewContentMode] = React.useState<ModalContentMode>("sessions");
+    const [showOverviewDialog, setShowOverviewDialog] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SessionSnapshotOverviewDialogOpen,
+    );
+    const [overviewContentMode, setOverviewContentMode] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SessionSnapshotOverviewDialogMode,
+    );
 
     const [, setIsOpenTemplatesDialog] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -44,11 +48,6 @@ export function StartPage(props: StartPageProps) {
         setOverviewContentMode("sessions");
     }
 
-    function openOverviewDialogOnSnapshots() {
-        setShowOverviewDialog(true);
-        setOverviewContentMode("snapshots");
-    }
-
     return (
         <>
             <div className="h-full w-full flex items-center justify-center min-h-0">
@@ -68,7 +67,7 @@ export function StartPage(props: StartPageProps) {
                         <Tooltip placement="right" title="Open an existing session." enterDelay="medium">
                             <Button variant="text" onClick={openOverviewDialogOnSessions}>
                                 <Icon name="folder_open" />
-                                Open session...
+                                Open session or snapshot...
                             </Button>
                         </Tooltip>
                         <Tooltip
@@ -89,11 +88,11 @@ export function StartPage(props: StartPageProps) {
                             href="https://github.com/equinor/webviz"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-2 text-indigo-600 hover:underline"
                         >
                             <Icon name="github" />
                             Webviz on GitHub
-                            <Icon name="external_link" />
+                            <Icon name="external_link" className="h-4" />
                         </a>
                     </section>
                     <RecentSnapshots workbench={props.workbench} />
