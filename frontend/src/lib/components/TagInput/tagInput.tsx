@@ -5,6 +5,7 @@ import { inRange, omit } from "lodash";
 import { Key } from "ts-key-enum";
 
 import { Tooltip } from "@lib/components/Tooltip";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { IconButton } from "../IconButton";
 
@@ -62,6 +63,11 @@ export type TagInputProps = {
      * If true, the inputs placeholder value will always be shown
      */
     alwaysShowPlaceholder?: boolean;
+
+    /**
+     * Forces the input to show it's focused stylization
+     */
+    showAsFocused?: boolean;
 
     /**
      * Validates a tag being added. If false is returned, the tag will not be added
@@ -362,7 +368,12 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
         <>
             <div
                 ref={ref}
-                className="input-comp flex items-center gap-1 bg-white border border-gray-300 px-2 py-1.5 rounded focus-within:outline focus-within:outline-blue-500"
+                className={resolveClassNames(
+                    "input-comp flex items-center gap-1 bg-white border border-gray-300 px-2 py-1.5 rounded focus-within:outline outline-blue-500",
+                    {
+                        outline: props.showAsFocused,
+                    },
+                )}
                 onBlur={onRootBlur}
                 onClick={() => innerInputRef.current?.focus()}
             >

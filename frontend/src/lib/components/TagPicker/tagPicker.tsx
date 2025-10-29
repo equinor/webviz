@@ -49,6 +49,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
     // --- State variables
     const [inputValue, setInputValue] = React.useState("");
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
+    const [showInputAsFocused, setShowInputAsFocused] = React.useState(false);
     const [focusedItemIndex, setFocusedItemIndex] = React.useState<number>(-1);
     const [itemFocusMode, setItemFocusMode] = React.useState<ItemFocusMode>("keyboard");
 
@@ -96,6 +97,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
     // --- Callbacks
     const handleInputFocus = React.useCallback(function handleInputFocus() {
         setDropdownVisible(true);
+        setShowInputAsFocused(true);
     }, []);
 
     const handleFocusOut = React.useCallback(
@@ -104,6 +106,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 !tagInputRef.current?.contains(evt.relatedTarget as Node) &&
                 !dropdownRef.current?.contains(evt.relatedTarget as Node)
             ) {
+                setShowInputAsFocused(false);
                 setDropdownVisible(false);
                 flushDebounce();
             }
@@ -233,6 +236,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 inputRef={filterInputRef}
                 placeholder={tagInputPlaceholder}
                 tags={selection}
+                showAsFocused={showInputAsFocused}
                 alwaysShowPlaceholder={props.showListAsSelectionCount}
                 backspaceDeleteMode={props.showListAsSelectionCount ? "none" : "hard"}
                 tagListSelectionMode={props.showListAsSelectionCount ? "none" : "multiple"}
