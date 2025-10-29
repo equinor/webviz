@@ -172,12 +172,10 @@ async def get_grid_properties_info_async(cpgrid: CPGrid) -> List[Grid3dPropertyI
     for property_name in interval_property_names:
 
         for interval in interval_property_intervals:
-            start_date = iso_str_to_date_str(interval[0])
-            end_date = iso_str_to_date_str(interval[1])
             property_info_arr.append(
                 Grid3dPropertyInfo(
                     property_name=property_name,
-                    iso_date_or_interval=f"{start_date}/{end_date}",
+                    iso_date_or_interval=f"{iso_str_to_date_str(interval[0])}/{iso_str_to_date_str(interval[1])}",
                 )
             )
 
