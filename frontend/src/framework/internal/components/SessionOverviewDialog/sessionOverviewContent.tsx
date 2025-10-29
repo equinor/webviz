@@ -337,6 +337,7 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
                 controlledCollation
                 onSelectedRowsChange={(selection) => setSelectedSessionId(selection[0])}
                 onVisibleRowRangeChange={onTableScrollIndexChange}
+                noDataMessage="No sessions found."
             />
             <EditSessionMetadataDialog
                 workbench={props.workbench}

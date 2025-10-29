@@ -87,7 +87,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
             const transformedData = props.transformData(itemsQuery.data);
 
             if (transformedData.length === 0) {
-                return <span className="text-gray-300 italic h-full flex flex-col justify-center">None found.</span>;
+                return <span className="text-gray-400 italic h-full flex flex-col justify-center">None found.</span>;
             }
             return (
                 <>

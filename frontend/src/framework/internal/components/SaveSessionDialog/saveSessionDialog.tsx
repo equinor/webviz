@@ -5,7 +5,7 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import { Input } from "@lib/components/Input";
+import { TextLengthControlledInput } from "@lib/components/InputTextLengthController/inputTextLengthController";
 import { Label } from "@lib/components/Label";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
@@ -89,12 +89,13 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                 <div className="flex flex-col gap-2 grow min-w-0">
                     <Label text="Title">
                         <>
-                            <Input
+                            <TextLengthControlledInput
                                 inputRef={inputRef}
                                 placeholder="Enter session title"
                                 type="text"
                                 value={title}
-                                onChange={(e) => setTitle(e.target.value)}
+                                onControlledValueChange={(value) => setTitle(value)}
+                                maxLength={30}
                                 error={!!inputFeedback.title}
                                 autoFocus
                             />
@@ -105,11 +106,12 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                     </Label>
                     <Label text="Description (optional)">
                         <>
-                            <Input
+                            <TextLengthControlledInput
+                                maxLength={250}
+                                onControlledValueChange={(value) => setDescription(value)}
                                 placeholder="Enter session description"
                                 value={description}
                                 multiline
-                                onChange={(e) => setDescription(e.target.value)}
                                 error={!!inputFeedback.description}
                             />
                             {inputFeedback.description && (

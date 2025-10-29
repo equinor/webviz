@@ -16,6 +16,7 @@ export type InputProps = InputUnstyledProps & {
     rounded?: "all" | "left" | "right" | "none";
     debounceTimeMs?: number;
     onValueChange?: (value: string) => void;
+    uirevision?: number;
 };
 
 function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElement>) {
@@ -33,10 +34,12 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
 
     const [value, setValue] = React.useState<unknown>(propsValue);
     const [prevValue, setPrevValue] = React.useState<unknown>(propsValue);
+    const [uirevision, setUirevision] = React.useState<number | undefined>(props.uirevision);
 
-    if (propsValue !== prevValue) {
+    if (propsValue !== prevValue || props.uirevision !== uirevision) {
         setValue(propsValue);
         setPrevValue(propsValue);
+        setUirevision(props.uirevision);
     }
 
     const internalRef = React.useRef<HTMLInputElement>(null);
