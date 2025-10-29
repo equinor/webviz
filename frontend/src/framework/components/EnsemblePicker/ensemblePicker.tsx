@@ -31,18 +31,16 @@ export type EnsemblePickerProps = (
 export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
     const { onChange, ensembles, value, allowDeltaEnsembles, ensembleRealizationFilterFunction } = props;
 
-    const optionsArray: TagOption[] = [];
-    for (const ens of ensembles) {
-        optionsArray.push({
+    const selectedArray = React.useMemo<string[]>(() => {
+        return value.map((ident) => ident.toString());
+    }, [value]);
+
+    const optionsArray = React.useMemo<TagOption[]>(() => {
+        return ensembles.map((ens) => ({
             value: ens.getIdent().toString(),
             label: ens.getDisplayName(),
-        });
-    }
-
-    const selectedArray: string[] = [];
-    for (const ident of value) {
-        selectedArray.push(ident.toString());
-    }
+        }));
+    }, [ensembles]);
 
     const handleSelectionChange = React.useCallback(
         function handleSelectionChanged(selectedEnsembleIdentStringArray: string[]) {
