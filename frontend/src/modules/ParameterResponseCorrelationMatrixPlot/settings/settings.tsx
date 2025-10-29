@@ -2,10 +2,10 @@ import React from "react";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { KeyKind } from "@framework/DataChannelTypes";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";

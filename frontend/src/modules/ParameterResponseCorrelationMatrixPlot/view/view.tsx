@@ -3,14 +3,14 @@ import React from "react";
 import { Input, Warning } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
-import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
-import { KeyKind } from "@framework/DataChannelTypes";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { KeyKind } from "@framework/types/dataChannnel";
+import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
 import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";

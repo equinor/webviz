@@ -3,11 +3,11 @@ import React from "react";
 import { Input, Warning } from "@mui/icons-material";
 import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 
-import { KeyKind } from "@framework/DataChannelTypes";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";

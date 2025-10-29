@@ -1,5 +1,5 @@
-import type { ChannelReceiverDefinition } from "@framework/DataChannelTypes";
-import { KeyKind } from "@framework/DataChannelTypes";
+import type { ChannelReceiverDefinition } from "@framework/types/dataChannnel";
+import { KeyKind } from "@framework/types/dataChannnel";
 
 export const receiverDefs: ChannelReceiverDefinition[] = [
     {
