@@ -13,12 +13,12 @@ import {
 export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
     const firstResultName = get(firstResultNameAtom);
     const secondResultName = get(secondResultNameAtom);
-    console.log("first", firstResultName, "second", secondResultName);
+
     const resultNames: string[] = [];
     if (firstResultName !== null) {
         resultNames.push(firstResultName);
     }
-    if (secondResultName !== null) {
+    if (secondResultName !== null && secondResultName !== undefined) {
         resultNames.push(secondResultName);
     }
 

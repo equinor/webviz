@@ -39,6 +39,7 @@ export const groupByIndicesAtom = atom((get) => {
     }
     if (
         selectorColumn !== null &&
+        selectorColumn !== undefined &&
         validIndexColumns.includes(selectorColumn) &&
         !groupByIndices.includes(selectorColumn)
     ) {

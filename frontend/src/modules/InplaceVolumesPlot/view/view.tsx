@@ -36,16 +36,17 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const resultName = useAtomValue(firstResultNameAtom);
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
-
+    const showTableAtBottom = props.viewContext.useSettingsToViewInterfaceValue("showTableAtBottom");
     statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
     useMakeViewStatusWriterMessages(statusWriter);
     const colorBy = useAtomValue(colorByAtom);
+    const plotHeight = showTableAtBottom ? divBoundingRect.height * 0.7 : divBoundingRect.height;
     const plotAndTableData = useBuildPlotAndTable(
         props.viewContext,
         ensembleSet,
         colorSet,
         divBoundingRect.width,
-        divBoundingRect.height / 2,
+        plotHeight,
         hoveredRegion?.regionName ?? null,
         hoveredZone?.zoneName ?? null,
         hoveredFacies?.faciesName ?? null,
@@ -83,8 +84,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     return (
         <div ref={divRef} className="w-full h-full relative">
             <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
-                {plots ?? <div style={{ height: divBoundingRect.height / 2 }} />}
-                <Table columns={columns} rows={rows} />
+                {plots ?? <div style={{ height: plotHeight }} />}
+                {showTableAtBottom && <Table columns={columns} rows={rows} />}
             </PendingWrapper>
         </div>
     );

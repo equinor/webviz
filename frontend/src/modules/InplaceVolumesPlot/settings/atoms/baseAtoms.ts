@@ -30,3 +30,4 @@ export const plotOptionsAtom = atom<InplaceVolumesPlotOptions>({
     sharedYAxis: false,
     hideConstants: false,
 });
+export const showTableAtBottomAtom = atom<boolean>(true);

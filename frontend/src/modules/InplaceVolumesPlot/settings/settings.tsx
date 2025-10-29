@@ -7,6 +7,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dialog } from "@lib/components/Dialog";
 import type { DropdownOption } from "@lib/components/Dropdown";
@@ -33,6 +34,7 @@ import {
     userSelectedSubplotByAtom,
     userSelectedTableNamesAtom,
     plotOptionsAtom,
+    showTableAtBottomAtom,
 } from "./atoms/baseAtoms";
 import {
     selectedColorByAtom,
@@ -84,6 +86,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedPlotType, setSelectedPlotType] = useAtom(userSelectedPlotTypeAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
 
+    const [showTableAtBottom, setShowTableAtBottom] = useAtom(showTableAtBottomAtom);
     const [plotOptions, setPlotOptions] = useAtom(plotOptionsAtom);
 
     const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -187,6 +190,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             value={selectedColorBy ?? undefined}
                             options={colorByOptions}
                             onChange={setSelectedColorBy}
+                        />
+                    </Label>
+                    <Label wrapperClassName="mt-2" position="left" text="Show table at bottom">
+                        <Checkbox
+                            checked={showTableAtBottom}
+                            onChange={(e) => setShowTableAtBottom(e.target.checked)}
                         />
                     </Label>
                 </div>

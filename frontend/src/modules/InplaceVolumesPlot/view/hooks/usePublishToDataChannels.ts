@@ -52,7 +52,7 @@ export function usePublishToDataChannels(
     ensembleSet: EnsembleSet,
     colorSet: ColorSet,
     colorBy: string,
-    table?: Table,
+    table: Table | null,
     resultName?: string,
 ) {
     const contents: ChannelContentDefinition[] = [];

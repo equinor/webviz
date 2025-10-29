@@ -7,7 +7,6 @@ import type { TableColumns } from "@lib/components/Table/types";
 import type { TableRow } from "@lib/components/TableDeprecated/table";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
-import { FormatListNumbered } from "@mui/icons-material";
 
 const numFormat = (number: number, isPercentage = false): string => {
     return (
@@ -62,7 +61,7 @@ function getValueColumn(table: Table): string {
 
     // Find the value column (typically STOIIP, GIIP, etc.)
     // It's the column that's not a grouping column and not REAL
-    const nonGroupingColumns = tableColumns.filter((col) => !GROUPING_COLUMNS.includes(col) && col !== "REAL");
+    const nonGroupingColumns = tableColumns.filter((col) => !GROUPING_COLUMNS.includes(col as any) && col !== "REAL");
 
     return nonGroupingColumns[0] || "STOIIP";
 }
@@ -122,7 +121,7 @@ export function createRows(
 
             // Handle ENSEMBLE object
             if (col === "ENSEMBLE") {
-                value = ensembleIdentToNameMap.get(value) || value;
+                value = ensembleIdentToNameMap.get(value as any) || value;
             }
 
             keyParts.push(String(value));
