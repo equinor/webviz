@@ -33,9 +33,9 @@ const realizationGridSettings = [
  * Represents [start, end, step] for each of the three dimensions (i, j, k).
  */
 const DEFAULT_GRID_LAYER_RANGE: [[number, number, number], [number, number, number], [number, number, number]] = [
-    [0, 1, 0],
-    [0, 1, 0],
-    [0, 1, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
 ];
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
