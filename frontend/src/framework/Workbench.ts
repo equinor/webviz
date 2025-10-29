@@ -237,6 +237,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
                 );
                 this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 0);
             }
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
             return;
         } catch (error: any) {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);

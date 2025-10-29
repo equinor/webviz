@@ -19,7 +19,7 @@ import { Table } from "@lib/components/Table";
 import type { TableColumns, TableSorting } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { formatDate } from "@lib/utils/dates";
-import { Add, Delete, Edit, FileOpen } from "@mui/icons-material";
+import { Add, Close, Delete, Edit, FileOpen, Search } from "@mui/icons-material";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { InfiniteData } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
@@ -36,6 +36,7 @@ import {
     TABLE_HEIGHT,
     HEADER_HEIGHT,
 } from "./constants";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 
 type TableFilter = {
     title?: string;
@@ -292,13 +293,18 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
             <div className="mb-8 flex gap-4">
                 <Label text="Title" wrapperClassName="grow">
                     <Input
+                        startAdornment={<Search fontSize="small" />}
+                        endAdornment={
+                            <DenseIconButton onClick={() => handleTitleFilterValueChange("")} title="Clear filter">
+                                <Close fontSize="inherit" />
+                            </DenseIconButton>
+                        }
                         value={tableFilter.title ?? ""}
                         placeholder="Search title"
                         onValueChange={handleTitleFilterValueChange}
                         className="h-6"
                     />
                 </Label>
-
                 <Label text="Updated at" wrapperClassName="min-w-2xs">
                     <DateRangePicker
                         onChange={handleDateFilterRangeChange}
@@ -311,14 +317,19 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
                     <Add fontSize="inherit" /> New session
                 </Button>
                 <span className="grow" />
-                <Button color="danger" disabled={!selectedSessionId || deletePending} onClick={handleDeleteClick}>
-                    {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
-                </Button>
-                <Button color="primary" disabled={!selectedSessionId} onClick={handleEditClick}>
+                <Button color="primary" disabled={!selectedSessionId} onClick={handleEditClick} size="medium">
                     <Edit fontSize="inherit" /> Edit
                 </Button>
-                <Button color="primary" disabled={!selectedSessionId} onClick={handleOpenSessionClick}>
+                <Button color="primary" disabled={!selectedSessionId} onClick={handleOpenSessionClick} size="medium">
                     <FileOpen fontSize="inherit" /> Open
+                </Button>
+                <Button
+                    color="danger"
+                    disabled={!selectedSessionId || deletePending}
+                    onClick={handleDeleteClick}
+                    size="medium"
+                >
+                    {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
                 </Button>
             </div>
             <Table

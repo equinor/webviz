@@ -16,7 +16,7 @@ export type SessionOverviewDialogProps = {
 
 export type ModalContentMode = "sessions" | "snapshots";
 
-export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.ReactNode {
+export function PersistenceManagementDialog(props: SessionOverviewDialogProps): React.ReactNode {
     const [isOpen, setIsOpen] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogOpen,

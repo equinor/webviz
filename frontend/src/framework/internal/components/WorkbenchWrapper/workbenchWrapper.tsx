@@ -20,7 +20,7 @@ import { LeftNavBar } from "../LeftNavBar";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { RightNavBar } from "../RightNavBar";
 import { SaveSessionDialog } from "../SaveSessionDialog";
-import { SessionOverviewDialog } from "../SessionOverviewDialog";
+import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
 
@@ -75,7 +75,7 @@ export function WorkbenchWrapper() {
             </ActiveSessionBoundary>
             <TemplatesDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
-            <SessionOverviewDialog workbench={workbench} />
+            <PersistenceManagementDialog workbench={workbench} />
             {content}
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
         </>

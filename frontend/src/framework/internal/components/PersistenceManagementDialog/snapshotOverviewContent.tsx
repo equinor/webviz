@@ -1,7 +1,7 @@
 import React from "react";
 
-import type { GetSnapshotAccessLogsData_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
-import { getSnapshotAccessLogsInfiniteOptions, SnapshotAccessLogSortBy_api } from "@api";
+import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
+import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
 import { DateRangePicker } from "@equinor/eds-core-react";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
@@ -12,7 +12,7 @@ import { Table } from "@lib/components/Table";
 import type { TableColumns, TableSorting } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { formatDate } from "@lib/utils/dates";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { omit } from "lodash";
 import { toast } from "react-toastify";
 
@@ -27,6 +27,10 @@ import {
     TABLE_HEIGHT,
     USE_ALTERNATING_COLUMN_COLORS,
 } from "./constants";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Close, Delete, FileOpen, Search } from "@mui/icons-material";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -96,13 +100,14 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         sortable: false,
         filter: false,
         sizeInPercent: 11,
-        renderData() {
-            // TODO: Need new backend oid
+        renderData(userId: string) {
+            const ownerInfo = useUserGraphInfo(userId);
+            const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
             return (
                 <>
                     <div className="flex gap-1">
-                        <UserAvatar userIdOrEmail="anhun@equinor.com" />
-                        anhun
+                        <UserAvatar userIdOrEmail={userId} userDisplayName={ownerInfo?.display_name} />
+                        {name}
                     </div>
                 </>
             );
@@ -120,6 +125,15 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         },
     },
 ];
+
+function useUserGraphInfo(ownerId: string | undefined): GraphUser_api | null {
+    const userInfoQuery = useQuery({
+        ...getUserInfoOptions({ path: { user_id_or_email: ownerId ?? "" } }),
+        enabled: Boolean(ownerId),
+    });
+
+    return userInfoQuery.data ?? null;
+}
 
 function columnIdToApiSortField(columnId: string): SnapshotAccessLogSortBy_api {
     switch (columnId as keyof FlattenedSnapshotAccessLog_api) {
@@ -157,6 +171,9 @@ export type SnapshotOverviewContentProps = {
 };
 
 export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): React.ReactNode {
+    const [selectedSnapshotId, setSelectedSnapshotId] = React.useState<string | null>(null);
+    const [deletePending, setDeletePending] = React.useState<boolean>(false);
+
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
     const [tableFilter, setTableFilter] = React.useState<TableFilter>({});
     const [tableSortState, setTableSortState] = React.useState<TableSorting>([
@@ -209,6 +226,27 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
         });
     }
 
+    async function handleDeleteClick() {
+        if (!selectedSnapshotId) return;
+
+        setDeletePending(true);
+
+        const success = await props.workbench.deleteSession(selectedSnapshotId);
+        setDeletePending(false);
+
+        if (!success) {
+            return;
+        }
+
+        setSelectedSnapshotId(null);
+    }
+
+    function handleOpenSnapshotClick() {
+        if (!selectedSnapshotId) return;
+
+        props.workbench.openSnapshot(selectedSnapshotId);
+    }
+
     const tableData = React.useMemo(() => {
         if (!sessionsQuery.data) return [];
 
@@ -238,6 +276,12 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
             <div className="mb-8 flex gap-4">
                 <Label text="Title" wrapperClassName="grow">
                     <Input
+                        startAdornment={<Search fontSize="small" />}
+                        endAdornment={
+                            <DenseIconButton onClick={() => handleTitleFilterValueChange("")} title="Clear filter">
+                                <Close fontSize="inherit" />
+                            </DenseIconButton>
+                        }
                         value={tableFilter.title ?? ""}
                         placeholder="Search title"
                         onValueChange={handleTitleFilterValueChange}
@@ -256,7 +300,14 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
                     />
                 </Label>
             </div>
-
+            <div className="flex gap-2 mb-2 justify-end">
+                <Button color="primary" disabled={!selectedSnapshotId} onClick={handleOpenSnapshotClick}>
+                    <FileOpen fontSize="inherit" /> Open
+                </Button>
+                <Button color="danger" disabled={!selectedSnapshotId || deletePending} onClick={handleDeleteClick}>
+                    {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
+                </Button>
+            </div>
             <Table
                 rowIdentifier="snapshotId"
                 alternatingColumnColors={USE_ALTERNATING_COLUMN_COLORS}
@@ -271,6 +322,7 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
                 selectable
                 controlledCollation
                 onVisibleRowRangeChange={onTableScrollIndexChange}
+                onSelectedRowsChange={(selection) => setSelectedSnapshotId(selection[0])}
             />
         </>
     );
