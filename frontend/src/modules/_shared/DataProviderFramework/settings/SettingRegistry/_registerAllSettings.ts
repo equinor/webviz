@@ -12,6 +12,7 @@ import { Direction as GridLayerDirection, GridLayerSetting } from "../implementa
 import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { LogCurveSetting } from "../implementations/LogCurveSetting";
+import { PolygonVisualizationSetting } from "../implementations/PolygonVisualizationSetting";
 import { SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
@@ -67,6 +68,7 @@ SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity [%]", Sl
 });
 SettingRegistry.registerSetting(Setting.POLYGONS_ATTRIBUTE, "Polygons Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.POLYGONS_NAME, "Polygons Name", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.POLYGON_VISUALIZATION, "Polygon Visualization", PolygonVisualizationSetting);
 SettingRegistry.registerSetting(Setting.REALIZATION, "Realization", DropdownNumberSetting);
 SettingRegistry.registerSetting(Setting.REALIZATIONS, "Realizations", SelectNumberSetting);
 SettingRegistry.registerSetting(
