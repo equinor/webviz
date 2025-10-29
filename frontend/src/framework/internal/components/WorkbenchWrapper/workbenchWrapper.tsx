@@ -16,11 +16,11 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
-import { EditSessionDialog } from "../EditSessionDialog";
 import { LeftNavBar } from "../LeftNavBar";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { RightNavBar } from "../RightNavBar";
 import { SaveSessionDialog } from "../SaveSessionDialog";
+import { SessionOverviewDialog } from "../SessionOverviewDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
 
@@ -72,10 +72,10 @@ export function WorkbenchWrapper() {
                 <SaveSessionDialog workbench={workbench} />
                 <CreateSnapshotDialog workbench={workbench} />
                 <ActiveSessionRecoveryDialog workbench={workbench} />
-                <EditSessionDialog workbench={workbench} />
             </ActiveSessionBoundary>
             <TemplatesDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
+            <SessionOverviewDialog workbench={workbench} />
             {content}
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
         </>

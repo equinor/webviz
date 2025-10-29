@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
+import { toast } from "react-toastify";
 
 import {
     deleteSessionMutation,
@@ -376,8 +377,12 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         }
     }
 
-    async updateSession(sessionId: string, updatedSession: SessionUpdate_api) {
+    async updateSession(sessionId: string, sessionUpdate: SessionUpdate_api): Promise<boolean> {
         const queryClient = this._queryClient;
+
+        this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
+
+        let success = false;
 
         await queryClient
             .getMutationCache()
@@ -385,9 +390,25 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
                 ...updateSessionMutation(),
                 onSuccess(data) {
                     replaceSessionQueryData(queryClient, data);
+                    toast.success("Session successfully updated.");
+                    success = true;
+                },
+                onError(error) {
+                    console.error("Failed to update session:", error);
+                    const apiError = ApiErrorHelper.fromError(error);
+                    if (!apiError) {
+                        toast.error("An unknown error occurred while updating the session.");
+                        return;
+                    }
+                    console.error("API error details:", apiError.getMessage());
+                    toast.error(`Failed to update session: ${apiError.getMessage()}`);
                 },
             })
-            .execute({ path: { session_id: sessionId }, body: updatedSession });
+            .execute({ path: { session_id: sessionId }, body: sessionUpdate });
+
+        this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
+
+        return success;
     }
 
     async makeSnapshot(title: string, description: string): Promise<string | null> {
@@ -431,7 +452,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             }
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
             this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
-            this._guiMessageBroker.setState(GuiState.EditSessionDialogOpen, false);
             this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
             return;
         }
@@ -602,7 +622,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
-    async deleteSession(sessionId: string): Promise<void> {
+    async deleteSession(sessionId: string): Promise<boolean> {
         const result = await ConfirmationService.confirm({
             title: "Are you sure?",
             message:
@@ -613,14 +633,22 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             ],
         });
 
-        if (result !== "delete") return;
+        if (result !== "delete") return false;
+
+        let success = false;
 
         await this._queryClient
             .getMutationCache()
-            .build(this._queryClient, deleteSessionMutation())
+            .build(this._queryClient, {
+                ...deleteSessionMutation(),
+                onSuccess: () => {
+                    success = true;
+                    removeSessionQueryData(this._queryClient, sessionId);
+                },
+            })
             .execute({ path: { session_id: sessionId } });
 
-        removeSessionQueryData(this._queryClient, sessionId);
+        return success;
     }
 
     getWorkbenchSession(): PrivateWorkbenchSession {

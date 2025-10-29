@@ -1,126 +1,69 @@
-import React from "react";
+import type React from "react";
 
-import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
+import { WorkbenchTopic } from "@framework/Workbench";
 import { Dialog } from "@lib/components/Dialog";
-import type { DialogProps } from "@lib/components/Dialog/dialog";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { toast } from "react-toastify";
 
 import { SessionOverviewContent } from "./sessionOverviewContent";
 import { SnapshotOverviewContent } from "./snapshotOverviewContent";
 
 export type SessionOverviewDialogProps = {
     workbench: Workbench;
-    contentMode: ModalContentMode;
-    onNewSession?: () => void;
-    onChangeModalMode?: (newMode: ModalContentMode) => void;
-} & Pick<DialogProps, "open" | "onClose">;
+};
 
 export type ModalContentMode = "sessions" | "snapshots";
 
 export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.ReactNode {
-    const [prevMode, setPrevMode] = React.useState(props.contentMode);
-    const [selectedEntryId, setSelectedEntryId] = React.useState<string | null>(null);
+    const [isOpen, setIsOpen] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SessionSnapshotOverviewDialogOpen,
+    );
+    const hasActiveSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
 
-    const [deletePending, setDeletePending] = React.useState<boolean>(false);
-    const [entryEditOpen, setEntryEditOpen] = React.useState(false);
-
-    if (props.contentMode !== prevMode) {
-        setPrevMode(props.contentMode);
-        setEntryEditOpen(false);
-        setSelectedEntryId(null);
-    }
-
-    function editSelectedEntry() {
-        if (!selectedEntryId) return;
-        setEntryEditOpen(true);
-    }
-
-    function goToSelectedEntry() {
-        if (!selectedEntryId) return;
-        if (props.contentMode === "sessions") {
-            props.workbench.openSession(selectedEntryId);
-        } else {
-            props.workbench.openSnapshot(selectedEntryId);
-        }
-    }
-
-    function copySelectedUrl() {
-        if (!selectedEntryId) return;
-        if (props.contentMode === "snapshots") {
-            navigator.clipboard.writeText(buildSnapshotUrl(selectedEntryId));
-            toast.info("Url copied");
-        }
-    }
-
-    async function deleteSelectedEntry() {
-        if (!selectedEntryId || props.contentMode !== "sessions") return;
-
-        setDeletePending(true);
-
-        await props.workbench.deleteSession(selectedEntryId);
-
-        setSelectedEntryId(null);
-        setDeletePending(false);
-    }
+    const [contentMode, setContentMode] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SessionSnapshotOverviewDialogMode,
+    );
 
     return (
-        <>
-            <Dialog
-                title={
-                    // Padding an border sizes are a bit weird here; this is to align with the close-cross and modal heading border
-                    <div className="-mb-4 font-bold text-lg flex items-end">
-                        <button
-                            className={resolveClassNames("-mb-[2px] px-2 pt-1 pb-2.5 hover:bg-blue-50 rounded-t", {
-                                "border-blue-500 border-b-[3px]": props.contentMode === "sessions",
-                                "text-gray-500 border-b-[3px] border-transparent hover:border-gray-200":
-                                    props.contentMode !== "sessions",
-                            })}
-                            onClick={() => props.onChangeModalMode?.("sessions")}
-                        >
-                            Sessions
-                        </button>
-                        <button
-                            className={resolveClassNames(
-                                "-mb-[2px] px-2 pt-1 pb-2.5 hover:bg-blue-50 rounded-t ml-2 ",
-                                {
-                                    "border-blue-500 border-b-[3px]": props.contentMode === "snapshots",
-                                    "text-gray-500 border-b-[3px] border-transparent hover:border-gray-200":
-                                        props.contentMode !== "snapshots",
-                                },
-                            )}
-                            onClick={() => props.onChangeModalMode?.("snapshots")}
-                        >
-                            Snapshots
-                        </button>
-                    </div>
-                }
-                modal
-                {...props}
-                width={1500}
-                showCloseCross
-            >
-                {props.contentMode === "sessions" && (
-                    <SessionOverviewContent
-                        editOpen={entryEditOpen}
-                        selectedSession={selectedEntryId}
-                        workbench={props.workbench}
-                        onSelectSession={setSelectedEntryId}
-                        onEditClose={() => setEntryEditOpen(false)}
-                    />
-                )}
-
-                {props.contentMode === "snapshots" && (
-                    <SnapshotOverviewContent
-                        editOpen={entryEditOpen}
-                        selectedSession={selectedEntryId}
-                        workbench={props.workbench}
-                        onSelectSession={setSelectedEntryId}
-                        onEditClose={() => setEntryEditOpen(false)}
-                    />
-                )}
-            </Dialog>
-        </>
+        <Dialog
+            title={
+                // Padding an border sizes are a bit weird here; this is to align with the close-cross and modal heading border
+                <div className="-mb-4 font-bold text-lg flex items-end">
+                    <button
+                        className={resolveClassNames("-mb-[2px] px-2 pt-1 pb-2.5 hover:bg-blue-50 rounded-t", {
+                            "border-blue-500 border-b-[3px]": contentMode === "sessions",
+                            "text-gray-500 border-b-[3px] border-transparent hover:border-gray-200":
+                                contentMode !== "sessions",
+                        })}
+                        onClick={() => setContentMode("sessions")}
+                    >
+                        Sessions
+                    </button>
+                    <button
+                        className={resolveClassNames("-mb-[2px] px-2 pt-1 pb-2.5 hover:bg-blue-50 rounded-t ml-2 ", {
+                            "border-blue-500 border-b-[3px]": contentMode === "snapshots",
+                            "text-gray-500 border-b-[3px] border-transparent hover:border-gray-200":
+                                contentMode !== "snapshots",
+                        })}
+                        onClick={() => setContentMode("snapshots")}
+                    >
+                        Snapshots
+                    </button>
+                </div>
+            }
+            modal
+            open={isOpen && !hasActiveSession}
+            onClose={() => setIsOpen(false)}
+            width={1500}
+            showCloseCross
+            height={700}
+        >
+            {contentMode === "sessions" && <SessionOverviewContent workbench={props.workbench} />}
+            {contentMode === "snapshots" && <SnapshotOverviewContent workbench={props.workbench} />}
+        </Dialog>
     );
 }

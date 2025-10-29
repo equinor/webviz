@@ -180,15 +180,12 @@ function useInfiniteSessionMetadataQuery(querySortParams: Options<GetSessionsMet
 }
 
 export type SessionOverviewContentProps = {
-    selectedSession: string | null;
     workbench: Workbench;
-    editOpen: boolean;
-    onSelectSession: (sessionId: string | null) => void;
-    onEditClose: () => void;
 };
 
 export function SessionOverviewContent(props: SessionOverviewContentProps): React.ReactNode {
-    const [selectedEntryId, setSelectedEntryId] = React.useState<string | null>(null);
+    const [editSessionDialogOpen, setEditSessionDialogOpen] = React.useState<boolean>(false);
+    const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
     const [deletePending, setDeletePending] = React.useState<boolean>(false);
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
@@ -224,6 +221,11 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
         setVisibleRowRange({ start, end });
     }, []);
 
+    const selectedSession = React.useMemo(() => {
+        if (!selectedSessionId) return null;
+        return tableData.find((session) => session.id === selectedSessionId) || null;
+    }, [tableData, selectedSessionId]);
+
     React.useEffect(
         function maybeRefetchNextPageEffect() {
             if (!visibleRowRange || visibleRowRange.end === -1) return;
@@ -236,12 +238,7 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
         [sessionsQuery, tableData.length, visibleRowRange],
     );
 
-    const selectedSession = React.useMemo(() => {
-        if (!props.selectedSession) return null;
-        return tableData.find((session) => session.id === props.selectedSession) || null;
-    }, [tableData, props.selectedSession]);
-
-    function onFilterRangeChange(newRange: null | EdsFilterRange) {
+    function handleDateFilterRangeChange(newRange: null | EdsFilterRange) {
         setTableFilter((prev) => {
             return {
                 ...prev,
@@ -259,15 +256,35 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
         });
     }
 
-    async function deleteSelectedEntry() {
-        if (!selectedEntryId) return;
+    async function handleDeleteClick() {
+        if (!selectedSessionId) return;
 
         setDeletePending(true);
 
-        await props.workbench.deleteSession(selectedEntryId);
-
-        setSelectedEntryId(null);
+        const success = await props.workbench.deleteSession(selectedSessionId);
         setDeletePending(false);
+
+        if (!success) {
+            return;
+        }
+
+        setSelectedSessionId(null);
+    }
+
+    function handleEditClick() {
+        if (!selectedSessionId) return;
+
+        setEditSessionDialogOpen(true);
+    }
+
+    function handleOpenSessionClick() {
+        if (!selectedSessionId) return;
+
+        props.workbench.openSession(selectedSessionId);
+    }
+
+    function handleNewSessionClick() {
+        props.workbench.startNewSession();
     }
 
     return (
@@ -284,23 +301,24 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
 
                 <Label text="Updated at" wrapperClassName="min-w-2xs">
                     <DateRangePicker
-                        onChange={onFilterRangeChange}
+                        onChange={handleDateFilterRangeChange}
                         className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300 h-10"
                     />
                 </Label>
             </div>
-            <div className="flex gap-2 mb-2 justify-end">
-                <Button color="danger" disabled={!selectedEntryId || deletePending} onClick={deleteSelectedEntry}>
+            <div className="flex gap-2 mb-2">
+                <Button color="primary" onClick={handleNewSessionClick} variant="contained" size="medium">
+                    <Add fontSize="inherit" /> New session
+                </Button>
+                <span className="grow" />
+                <Button color="danger" disabled={!selectedSessionId || deletePending} onClick={handleDeleteClick}>
                     {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
                 </Button>
-                <Button color="primary" disabled={!selectedEntryId}>
+                <Button color="primary" disabled={!selectedSessionId} onClick={handleEditClick}>
                     <Edit fontSize="inherit" /> Edit
                 </Button>
-                <Button color="primary" disabled={!selectedEntryId}>
+                <Button color="primary" disabled={!selectedSessionId} onClick={handleOpenSessionClick}>
                     <FileOpen fontSize="inherit" /> Open
-                </Button>
-                <Button color="primary">
-                    <Add fontSize="inherit" /> New session
                 </Button>
             </div>
             <Table
@@ -314,21 +332,20 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
                 headerHeight={HEADER_HEIGHT}
                 sorting={tableSortState}
                 onSortingChange={setTableSortState}
+                selectedRows={selectedSessionId ? [selectedSessionId] : []}
                 selectable
                 controlledCollation
-                onSelectedRowsChange={(selection) => setSelectedEntryId(selection[0])}
+                onSelectedRowsChange={(selection) => setSelectedSessionId(selection[0])}
                 onVisibleRowRangeChange={onTableScrollIndexChange}
             />
-
-            {selectedSession && (
-                <EditSessionMetadataDialog
-                    workbench={props.workbench}
-                    sessionId={selectedSession.id}
-                    sessionMetadata={selectedSession}
-                    open={props.editOpen}
-                    onClose={props.onEditClose}
-                />
-            )}
+            <EditSessionMetadataDialog
+                workbench={props.workbench}
+                id={selectedSessionId}
+                open={editSessionDialogOpen}
+                title={selectedSession?.title || ""}
+                description={selectedSession?.description || ""}
+                onClose={() => setEditSessionDialogOpen(false)}
+            />
         </>
     );
 }

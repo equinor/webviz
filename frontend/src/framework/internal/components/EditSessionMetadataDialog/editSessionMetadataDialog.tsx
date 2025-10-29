@@ -1,50 +1,52 @@
 import React from "react";
 
-import type { SessionMetadata_api } from "@api";
-import type { Workbench } from "@framework/Workbench";
+import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
-// import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
 export type EditSessionMetadataDialogProps = {
-    open: boolean;
-    sessionId: string;
-    sessionMetadata: SessionMetadata_api;
     workbench: Workbench;
-    onSaved?: () => void;
+    id: string | null;
+    title: string;
+    description?: string;
+    open: boolean;
     onClose?: () => void;
 };
 
-type EditingInputFeedback = {
+type EditSessionDialogInputFeedback = {
     title?: string;
     description?: string;
 };
 
 export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps): React.ReactNode {
-    const [prevOpen, setPrevOpen] = React.useState(props.open);
-    const [title, setTitle] = React.useState<string>("");
-    const [description, setDescription] = React.useState<string>("");
+    const hasActiveSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
+    const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 
-    const [inputFeedback, setInputFeedback] = React.useState<EditingInputFeedback>({});
-    const [isSaving, setIsSaving] = React.useState(false);
+    const [title, setTitle] = React.useState<string>(props.title);
+    const [description, setDescription] = React.useState<string>(props.description ?? "");
+    const [inputFeedback, setInputFeedback] = React.useState<EditSessionDialogInputFeedback>({});
 
-    if (prevOpen !== props.open) {
-        setPrevOpen(props.open);
-        if (props.open) {
-            setTitle(props.sessionMetadata.title);
-            setDescription(props.sessionMetadata.description ?? "");
-        }
+    const [prevTitle, setPrevTitle] = React.useState<string>(props.title);
+    const [prevDescription, setPrevDescription] = React.useState<string>(props.description ?? "");
+
+    if (prevTitle !== props.title) {
+        setPrevTitle(props.title);
+        setTitle(props.title);
     }
 
-    // const [savePending, setSavePending] = React.useState(false);
+    if (prevDescription !== props.description) {
+        setPrevDescription(props.description ?? "");
+        setDescription(props.description ?? "");
+    }
 
-    // const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
-
-    async function handleSave() {
+    function handleSave() {
         if (title.trim() === "") {
             setInputFeedback((prev) => ({ ...prev, title: "Title is required." }));
             return;
@@ -52,36 +54,59 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
             setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
-        setIsSaving(true);
+        if (hasActiveSession) {
+            const activeWorkbenchSession = props.workbench.getWorkbenchSession();
+            if (activeWorkbenchSession && (activeWorkbenchSession.getId() === props.id || props.id === null)) {
+                props.workbench.getWorkbenchSession().updateMetadata({ title, description });
+                props.workbench
+                    .saveCurrentSession()
+                    .then(() => {
+                        setInputFeedback({});
+                    })
+                    .catch((error) => {
+                        console.error("Failed to save session:", error);
+                    });
+                return;
+            }
+        }
 
-        await props.workbench.updateSession(props.sessionId, {
-            title: title,
-            description: description === "" ? null : description,
-        });
+        if (props.id === null) {
+            console.error("Cannot update session metadata: session ID is null");
+            return;
+        }
 
-        setIsSaving(false);
-
-        props.onSaved?.();
-        handleClose();
+        props.workbench
+            .updateSession(props.id, { title, description })
+            .then((result) => {
+                setInputFeedback({});
+                if (result) {
+                    props.onClose?.();
+                }
+            })
+            .catch((error) => {
+                console.error("Failed to update session metadata:", error);
+            });
     }
 
-    function handleClose() {
-        setTitle("");
-        setDescription("");
+    function handleCancel() {
         setInputFeedback({});
         props.onClose?.();
     }
 
+    const layout = hasActiveSession
+        ? (props.workbench.getWorkbenchSession().getActiveDashboard().getLayout() ?? [])
+        : [];
+
     return (
         <Dialog
             open={props.open}
-            onClose={handleClose}
-            title="Save Session"
+            onClose={handleCancel}
+            title="Edit session"
             modal
             showCloseCross
             actions={
                 <>
-                    <Button variant="text" disabled={isSaving} onClick={handleClose}>
+                    <Button variant="text" disabled={isSaving} onClick={handleCancel}>
                         Cancel
                     </Button>
                     <Button variant="text" color="success" disabled={isSaving} onClick={handleSave}>
@@ -89,9 +114,10 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                     </Button>
                 </>
             }
+            zIndex={60}
         >
             <div className="flex gap-4 items-center">
-                {/* <DashboardPreview height={100} width={100} layout={layout} /> */}
+                <DashboardPreview height={100} width={100} layout={layout} />
                 <div className="flex flex-col gap-2 grow min-w-0">
                     <Label text="Title">
                         <>
@@ -108,7 +134,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                             )}
                         </>
                     </Label>
-                    <Label text="Description">
+                    <Label text="Description (optional)">
                         <>
                             <Input
                                 placeholder="Enter session description"

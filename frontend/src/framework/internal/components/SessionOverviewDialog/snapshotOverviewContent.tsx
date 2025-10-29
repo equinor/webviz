@@ -153,16 +153,10 @@ export function flattenSnapshotAccessLogEntry(logEntry: SnapshotAccessLog_api): 
 }
 
 export type SnapshotOverviewContentProps = {
-    selectedSession: string | null;
     workbench: Workbench;
-    editOpen: boolean;
-    onSelectSession: (sessionId: string | null) => void;
-    onEditClose: () => void;
 };
 
 export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): React.ReactNode {
-    // ? Should this be opened via gui-events?
-
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
     const [tableFilter, setTableFilter] = React.useState<TableFilter>({});
     const [tableSortState, setTableSortState] = React.useState<TableSorting>([
@@ -276,7 +270,6 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
                 onSortingChange={setTableSortState}
                 selectable
                 controlledCollation
-                onSelectedRowsChange={(selection) => props.onSelectSession(selection[0])}
                 onVisibleRowRangeChange={onTableScrollIndexChange}
             />
         </>

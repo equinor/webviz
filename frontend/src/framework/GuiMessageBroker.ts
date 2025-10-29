@@ -31,7 +31,6 @@ export enum GuiState {
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
     NumberOfEffectiveRealizationFilters = "numberOfEffectiveRealizationFilters",
     SaveSessionDialogOpen = "saveSessionDialogOpen",
-    EditSessionDialogOpen = "editSessionDialogOpen",
     SessionHasUnsavedChanges = "sessionHasUnsavedChanges",
     IsSavingSession = "isSavingSession",
     IsLoadingSession = "isLoadingSession",
@@ -116,7 +115,6 @@ type GuiStateValueTypes = {
     [GuiState.MakeSnapshotDialogOpen]: boolean;
     [GuiState.IsMakingSnapshot]: boolean;
     [GuiState.SaveSessionDialogOpen]: boolean;
-    [GuiState.EditSessionDialogOpen]: boolean;
     [GuiState.SessionHasUnsavedChanges]: boolean;
     [GuiState.TemplatesDialogOpen]: boolean;
     [GuiState.SessionSnapshotOverviewDialogOpen]: boolean;
@@ -141,8 +139,6 @@ defaultStates.set(GuiState.MultiSessionsRecoveryDialogOpen, false);
 defaultStates.set(GuiState.ActiveSessionRecoveryDialogOpen, false);
 defaultStates.set(GuiState.MakeSnapshotDialogOpen, false);
 defaultStates.set(GuiState.IsMakingSnapshot, false);
-defaultStates.set(GuiState.SaveSessionDialogOpen, false);
-defaultStates.set(GuiState.EditSessionDialogOpen, false);
 defaultStates.set(GuiState.SessionHasUnsavedChanges, false);
 defaultStates.set(GuiState.TemplatesDialogOpen, false);
 defaultStates.set(GuiState.SessionSnapshotOverviewDialogOpen, false);

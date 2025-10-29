@@ -5,8 +5,6 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 
-import { SessionOverviewDialog } from "../SessionOverviewDialog/sessionOverviewDialog";
-
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
 
@@ -17,11 +15,11 @@ export type StartPageProps = {
 };
 
 export function StartPage(props: StartPageProps) {
-    const [showOverviewDialog, setShowOverviewDialog] = useGuiState(
+    const [, setShowOverviewDialog] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogOpen,
     );
-    const [overviewContentMode, setOverviewContentMode] = useGuiState(
+    const [, setOverviewContentMode] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogMode,
     );
@@ -37,10 +35,6 @@ export function StartPage(props: StartPageProps) {
 
     function handleOpenTemplatesDialog() {
         setIsOpenTemplatesDialog(true);
-    }
-
-    function closeOverviewDialog() {
-        setShowOverviewDialog(false);
     }
 
     function openOverviewDialogOnSessions() {
@@ -98,14 +92,6 @@ export function StartPage(props: StartPageProps) {
                     <RecentSnapshots workbench={props.workbench} />
                 </div>
             </div>
-            <SessionOverviewDialog
-                workbench={props.workbench}
-                open={showOverviewDialog}
-                contentMode={overviewContentMode}
-                onNewSession={handleNewSession}
-                onClose={closeOverviewDialog}
-                onChangeModalMode={setOverviewContentMode}
-            />
         </>
     );
 }
