@@ -7,7 +7,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Virtualization } from "../../Virtualization";
 
 const DEFAULT_RECT_MIN_WIDTH = 120;
-const BORDER_WIDTH = 10;
+const BORDER_WIDTH = 1;
 
 export type ItemFocusMode = "keyboard" | "mouse";
 
