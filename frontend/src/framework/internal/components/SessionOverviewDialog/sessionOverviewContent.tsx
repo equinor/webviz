@@ -11,12 +11,15 @@ import { getSessionsMetadata, SessionSortBy_api } from "@api";
 import { DateRangePicker } from "@equinor/eds-core-react";
 import type { Workbench } from "@framework/Workbench";
 import type { Options } from "@hey-api/client-axios";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Table } from "@lib/components/Table";
 import type { TableColumns, TableSorting } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { formatDate } from "@lib/utils/dates";
+import { Add, Delete, Edit, FileOpen } from "@mui/icons-material";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { InfiniteData } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
@@ -33,9 +36,6 @@ import {
     TABLE_HEIGHT,
     HEADER_HEIGHT,
 } from "./constants";
-import { Button } from "@lib/components/Button";
-import { Add, Delete, Edit, FileOpen } from "@mui/icons-material";
-import { CircularProgress } from "@lib/components/CircularProgress";
 
 type TableFilter = {
     title?: string;
@@ -316,7 +316,7 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
                 onSortingChange={setTableSortState}
                 selectable
                 controlledCollation
-                onSelectedRowsChange={(selection) => props.onSelectSession(selection[0])}
+                onSelectedRowsChange={(selection) => setSelectedEntryId(selection[0])}
                 onVisibleRowRangeChange={onTableScrollIndexChange}
             />
 
