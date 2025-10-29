@@ -10,7 +10,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "./interfaces";
 
@@ -25,7 +25,7 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
     const timeStampUtcMs = viewContext.useSettingsToViewInterfaceValue("timeStampsUtcMs");
 
     const statusWriter = useViewStatusWriter(viewContext);
-    const statusError = usePropagateApiErrorToStatusWriter(rftDataQuery, statusWriter);
+    const statusError = usePropagateQueryErrorToStatusWriter(rftDataQuery, statusWriter);
 
     let content = null;
 

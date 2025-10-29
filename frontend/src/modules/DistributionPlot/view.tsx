@@ -277,10 +277,10 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex + 1}`]: {
-                                title: xAxisTitle,
+                                title: { text: xAxisTitle },
                             },
                             [`yaxis${cellIndex + 1}`]: {
-                                title: yAxisTitle,
+                                title: { text: yAxisTitle },
                             },
                         };
                         figure.updateLayout(patch);
@@ -336,17 +336,17 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                 let cellIndex = 0;
 
-                receiverX.channel.contents.forEach((contentRow, rowIndex, rowArr) => {
+                receiverX.channel.contents.forEach((contentX, rowIndex, rowArr) => {
                     if (!receiverY.channel) {
                         return;
                     }
 
                     const numRows = rowArr.length;
-                    receiverY.channel.contents.forEach((contentCol, colIndex) => {
+                    receiverY.channel.contents.forEach((contentY, colIndex) => {
                         cellIndex++;
 
-                        const dataX = contentCol;
-                        const dataY = contentRow;
+                        const dataX = contentX;
+                        const dataY = contentY;
 
                         const xValues: number[] = [];
                         const yValues: number[] = [];
@@ -354,18 +354,18 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         const realizations: number[] = [];
 
                         let color = colorSet.getFirstColor();
-                        const preferredColorX = contentRow.metaData.preferredColor;
-                        const preferredColorY = contentCol.metaData.preferredColor;
+                        const preferredColorX = contentX.metaData.preferredColor;
+                        const preferredColorY = contentY.metaData.preferredColor;
 
                         if (preferredColorX && preferredColorY) {
                             if (preferredColorX === preferredColorY) {
                                 color = preferredColorX;
                             }
                         }
-
-                        const keysX = dataX.dataArray.map((el: any) => el.key);
-                        const keysY = dataY.dataArray.map((el: any) => el.key);
-                        const keysColor = dataColor?.dataArray.map((el: any) => el.key) ?? [];
+                        // sort the keys
+                        const keysX = dataX.dataArray.map((el: any) => el.key).sort((a, b) => a - b);
+                        const keysY = dataY.dataArray.map((el: any) => el.key).sort((a, b) => a - b);
+                        const keysColor = dataColor?.dataArray.map((el: any) => el.key).sort((a, b) => a - b) ?? [];
                         if (
                             keysX.length === keysY.length &&
                             (dataColor === null || keysColor.length === keysX.length) &&
@@ -408,8 +408,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             type: "scattergl",
                             hovertemplate: realizations.map((real) =>
                                 dataColor
-                                    ? makeHoverTextWithColor(contentRow, contentCol, dataColor, real)
-                                    : makeHoverText(contentRow, contentCol, real),
+                                    ? makeHoverTextWithColor(contentX, contentY, dataColor, real)
+                                    : makeHoverText(contentX, contentY, real),
                             ),
                         };
 
@@ -418,8 +418,10 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         if (rowIndex === numRows - 1) {
                             const patch: Partial<Layout> = {
                                 [`xaxis${cellIndex}`]: {
-                                    title: makeTitleFromChannelContent(contentCol),
-                                    font,
+                                    title: {
+                                        text: makeTitleFromChannelContent(contentX),
+                                        font,
+                                    },
                                 },
                             };
                             figure.updateLayout(patch);
@@ -427,8 +429,10 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         if (colIndex === 0) {
                             const patch: Partial<Layout> = {
                                 [`yaxis${cellIndex}`]: {
-                                    title: makeTitleFromChannelContent(contentRow),
-                                    font,
+                                    title: {
+                                        text: makeTitleFromChannelContent(contentY),
+                                        font,
+                                    },
                                 },
                             };
                             figure.updateLayout(patch);

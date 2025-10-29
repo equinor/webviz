@@ -1,5 +1,7 @@
 import type React from "react";
 
+export type TContext<TData extends Record<string, any>> = { entry: TData; selected: boolean };
+
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 // - Table column configuration
 export type DataColumn<TData extends Record<string, any>, TK extends keyof TData> = {
@@ -14,9 +16,10 @@ export type DataColumn<TData extends Record<string, any>, TK extends keyof TData
 
     filter?: boolean | CustomColumnFilter<TData, TK>;
 
-    formatValue?: (value: TData[TK], entry: TData) => string;
-    formatStyle?: (value: TData[TK], entry: TData) => React.CSSProperties;
-    renderData?: (value: TData[TK], entry: TData) => React.ReactNode;
+    showTooltip?: boolean;
+    formatValue?: (value: TData[TK], context: TContext<TData>) => string;
+    formatStyle?: (value: TData[TK], context: TContext<TData>) => React.CSSProperties;
+    renderData?: (value: TData[TK], context: TContext<TData>) => React.ReactNode;
 };
 
 type DataColumnAllKeys<TData extends Record<string, any>> = {
@@ -59,7 +62,7 @@ export type CustomColumnFilter<TData extends Record<string, any>, TDataKey exten
         filterValue: any,
         dataValue: TData[TDataKey],
         dataDef: DataCellDef<TData, TDataKey>,
-        entry: TData,
+        context: TContext<TData>,
     ) => boolean;
 };
 
@@ -90,9 +93,10 @@ export type FilterCellDef<TData extends Record<string, any>> = {
 export type DataCellDef<TData extends Record<string, any>, TK extends keyof TData> = {
     columnId: keyof TData;
     colGroupIndex: number;
-    format?: (value: TData[TK], entry: TData) => string;
-    style?: (value: TData[TK], entry: TData) => React.CSSProperties;
-    render?: (value: TData[TK], entry: TData) => React.ReactNode;
+    showTooltip?: boolean;
+    format?: (value: TData[TK], context: TContext<TData>) => string;
+    style?: (value: TData[TK], context: TContext<TData>) => React.CSSProperties;
+    render?: (value: TData[TK], context: TContext<TData>) => React.ReactNode;
     filter?: CustomColumnFilter<TData, TK>["predicate"];
 };
 

@@ -15,7 +15,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { FrequencyEnumToStringMapping, NodeTypeEnumToStringMapping } from "../types";
@@ -70,7 +70,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const FlowNetworkQueryResult = useAtomValue(flowNetworkQueryResultAtom);
 
-    usePropagateApiErrorToStatusWriter(FlowNetworkQueryResult, statusWriter);
+    usePropagateQueryErrorToStatusWriter(FlowNetworkQueryResult, statusWriter);
 
     const setValidRealizationNumbersAtom = useSetAtom(validRealizationNumbersAtom);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
@@ -144,6 +144,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 <EnsembleDropdown
                     ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
+                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>

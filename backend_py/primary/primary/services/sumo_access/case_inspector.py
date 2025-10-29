@@ -5,7 +5,6 @@ from fmu.sumo.explorer.explorer import SumoClient
 from fmu.sumo.explorer.objects import Case, SearchContext
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from webviz_pkg.core_utils.timestamp_utils import iso_str_to_timestamp_utc_ms
 from primary.services.service_exceptions import (
     Service,
     NoDataError,
@@ -19,15 +18,9 @@ from .sumo_client_factory import create_sumo_client
 LOGGER = logging.getLogger(__name__)
 
 
-class EnsembleTimestamps(BaseModel):
-    case_updated_at_utc_ms: int
-    data_updated_at_utc_ms: int
-
-
 class EnsembleInfo(BaseModel):
     name: str
     realization_count: int
-    timestamps: EnsembleTimestamps
 
 
 class CaseInspector:
@@ -49,33 +42,6 @@ class CaseInspector:
 
         return self._cached_case_context
 
-    async def _get_case_updated_timestamp_async(self) -> int:
-        case = await self._get_or_create_case_context_async()
-        timestamp_str = case.metadata["_sumo"]["timestamp"]  # Returns a datetime string.
-        return iso_str_to_timestamp_utc_ms(timestamp_str)
-
-    async def _get_ensemble_data_update_timestamp_async(self, ensemble_name: str) -> int:
-        timer = PerfMetrics()
-        case_context = await self._get_or_create_case_context_async()
-
-        search_context = SearchContext(self._sumo_client).filter(
-            uuid=case_context.uuid, ensemble=ensemble_name, realization=True
-        )
-
-        data_timestamp_int = await search_context.metrics.max_async("_sumo.timestamp")
-
-        timer.record_lap("aggregate_data_timestamps")
-        LOGGER.debug(f"get_last_data_change_timestamp_async {timer.to_string()}")
-
-        return data_timestamp_int or -1
-
-    async def get_ensemble_timestamps_async(self, ensemble_name: str) -> EnsembleTimestamps:
-        case_updated_at = await self._get_case_updated_timestamp_async()
-        # Data is occasionally None. This is likely due to data errors, so we just default to 0 (since an ensemble with bad data probably won't be used)
-        data_updated_at = await self._get_ensemble_data_update_timestamp_async(ensemble_name) or 0
-
-        return EnsembleTimestamps(case_updated_at_utc_ms=case_updated_at, data_updated_at_utc_ms=data_updated_at)
-
     async def get_case_name_async(self) -> str:
         """Get name of the case"""
         case = await self._get_or_create_case_context_async()
@@ -86,9 +52,7 @@ class CaseInspector:
         ensemble_obj = await search_context.get_ensemble_by_uuid_async(ensemble_uuid)
         realization_count = len(await ensemble_obj.realizations_async)
 
-        ensemble_timestamps = await self.get_ensemble_timestamps_async(ensemble_obj.name)
-
-        return EnsembleInfo(name=ensemble_obj.name, realization_count=realization_count, timestamps=ensemble_timestamps)
+        return EnsembleInfo(name=ensemble_obj.name, realization_count=realization_count)
 
     async def get_ensembles_async(self) -> list[EnsembleInfo]:
         """Get list of ensembles for a case"""
@@ -140,3 +104,10 @@ class CaseInspector:
         case = await self._get_or_create_case_context_async()
         field_identifiers = await case.fieldidentifiers_async
         return field_identifiers
+
+    async def get_standard_results_in_ensemble_async(self, ensemble_name: str) -> list[str]:
+        """Retrieve the standard results for a specific ensemble"""
+        case = await self._get_or_create_case_context_async()
+        ensemble = case.filter(ensemble=ensemble_name)
+        standard_results = await ensemble.standard_results_async
+        return standard_results

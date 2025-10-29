@@ -7,10 +7,14 @@ import { isEnsembleIdentOfType } from "./utils/ensembleIdentUtils";
 export class EnsembleSet {
     private _regularEnsembleArray: RegularEnsemble[];
     private _deltaEnsembleArray: DeltaEnsemble[];
+    private _allEnsemblesArray: (RegularEnsemble | DeltaEnsemble)[];
 
     constructor(ensembles: RegularEnsemble[], deltaEnsembles: DeltaEnsemble[] = []) {
         this._regularEnsembleArray = ensembles;
         this._deltaEnsembleArray = deltaEnsembles;
+
+        // Precomputed for reference stability across renders
+        this._allEnsemblesArray = [...ensembles, ...deltaEnsembles];
     }
 
     /**
@@ -58,7 +62,7 @@ export class EnsembleSet {
      * @returns An array of all ensembles in the set.
      */
     getEnsembleArray(): readonly (RegularEnsemble | DeltaEnsemble)[] {
-        return [...this._regularEnsembleArray, ...this._deltaEnsembleArray];
+        return this._allEnsemblesArray;
     }
 
     /**

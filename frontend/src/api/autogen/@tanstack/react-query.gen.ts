@@ -2,93 +2,13 @@
 
 import type { Options } from "@hey-api/client-axios";
 import { queryOptions, type UseMutationOptions, type DefaultError } from "@tanstack/react-query";
-import type { AxiosError } from "axios";
-
-import {
-    getFields,
-    getCases,
-    getEnsembles,
-    getEnsembleDetails,
-    postGetTimestampsForEnsembles,
-    getVectorList,
-    getDeltaEnsembleVectorList,
-    getRealizationsVectorData,
-    getDeltaEnsembleRealizationsVectorData,
-    getTimestampsList,
-    getHistoricalVectorData,
-    getStatisticalVectorData,
-    getDeltaEnsembleStatisticalVectorData,
-    getStatisticalVectorDataPerSensitivity,
-    getRealizationVectorAtTimestamp,
-    getTableDefinitions,
-    postGetAggregatedPerRealizationTableData,
-    postGetAggregatedStatisticalTableData,
-    getRealizationSurfacesMetadata,
-    getObservedSurfacesMetadata,
-    getSurfaceData,
-    getStatisticalSurfaceDataHybrid,
-    postGetSurfaceIntersection,
-    postGetSampleSurfaceInPoints,
-    getDeltaSurfaceData,
-    getMisfitSurfaceData,
-    deprecatedGetStratigraphicUnits,
-    getStratigraphicUnitsForStratColumn,
-    getParameterNamesAndDescription,
-    getParameter,
-    getParameters,
-    getIsSensitivityRun,
-    getSensitivities,
-    getGridModelsInfo,
-    getGridSurface,
-    getGridParameter,
-    postGetPolylineIntersection,
-    getRealizationFlowNetwork,
-    getTableData,
-    getWellCompletionsData,
-    getDrilledWellboreHeaders,
-    getWellTrajectories,
-    getWellborePickIdentifiers,
-    getWellborePicksForPickIdentifier,
-    deprecatedGetWellborePicksForWellbore,
-    getWellborePicksInStratColumn,
-    getWellboreStratigraphicColumns,
-    getWellboreCompletions,
-    getWellboreCasings,
-    getWellborePerforations,
-    getWellboreLogCurveHeaders,
-    getLogCurveData,
-    getSeismicCubeMetaList,
-    getInlineSlice,
-    getCrosslineSlice,
-    getDepthSlice,
-    getSeismicSlices,
-    postGetSeismicFence,
-    getPolygonsDirectory,
-    getPolygonsData,
-    getUserInfo,
-    getUserPhoto,
-    getObservations,
-    getTableDefinition,
-    getRealizationData,
-    getVfpTableNames,
-    getVfpTable,
-    loginRoute,
-    authorizedCallbackRoute,
-    getAlive,
-    getAliveProtected,
-    postLogout,
-    getLoggedInUser,
-    root,
-    client,
-} from "../sdk.gen";
 import type {
     GetFieldsData_api,
     GetCasesData_api,
-    GetEnsemblesData_api,
     GetEnsembleDetailsData_api,
-    PostGetTimestampsForEnsemblesData_api,
-    PostGetTimestampsForEnsemblesError_api,
-    PostGetTimestampsForEnsemblesResponse_api,
+    PostRefreshFingerprintsForEnsemblesData_api,
+    PostRefreshFingerprintsForEnsemblesError_api,
+    PostRefreshFingerprintsForEnsemblesResponse_api,
     GetVectorListData_api,
     GetDeltaEnsembleVectorListData_api,
     GetRealizationsVectorDataData_api,
@@ -172,6 +92,83 @@ import type {
     GetLoggedInUserData_api,
     RootData_api,
 } from "../types.gen";
+import {
+    getFields,
+    getCases,
+    getEnsembleDetails,
+    postRefreshFingerprintsForEnsembles,
+    getVectorList,
+    getDeltaEnsembleVectorList,
+    getRealizationsVectorData,
+    getDeltaEnsembleRealizationsVectorData,
+    getTimestampsList,
+    getHistoricalVectorData,
+    getStatisticalVectorData,
+    getDeltaEnsembleStatisticalVectorData,
+    getStatisticalVectorDataPerSensitivity,
+    getRealizationVectorAtTimestamp,
+    getTableDefinitions,
+    postGetAggregatedPerRealizationTableData,
+    postGetAggregatedStatisticalTableData,
+    getRealizationSurfacesMetadata,
+    getObservedSurfacesMetadata,
+    getSurfaceData,
+    getStatisticalSurfaceDataHybrid,
+    postGetSurfaceIntersection,
+    postGetSampleSurfaceInPoints,
+    getDeltaSurfaceData,
+    getMisfitSurfaceData,
+    deprecatedGetStratigraphicUnits,
+    getStratigraphicUnitsForStratColumn,
+    getParameterNamesAndDescription,
+    getParameter,
+    getParameters,
+    getIsSensitivityRun,
+    getSensitivities,
+    getGridModelsInfo,
+    getGridSurface,
+    getGridParameter,
+    postGetPolylineIntersection,
+    getRealizationFlowNetwork,
+    getTableData,
+    getWellCompletionsData,
+    getDrilledWellboreHeaders,
+    getWellTrajectories,
+    getWellborePickIdentifiers,
+    getWellborePicksForPickIdentifier,
+    deprecatedGetWellborePicksForWellbore,
+    getWellborePicksInStratColumn,
+    getWellboreStratigraphicColumns,
+    getWellboreCompletions,
+    getWellboreCasings,
+    getWellborePerforations,
+    getWellboreLogCurveHeaders,
+    getLogCurveData,
+    getSeismicCubeMetaList,
+    getInlineSlice,
+    getCrosslineSlice,
+    getDepthSlice,
+    getSeismicSlices,
+    postGetSeismicFence,
+    getPolygonsDirectory,
+    getPolygonsData,
+    getUserInfo,
+    getUserPhoto,
+    getObservations,
+    getTableDefinition,
+    getRealizationData,
+    getVfpTableNames,
+    getVfpTable,
+    loginRoute,
+    authorizedCallbackRoute,
+    getAlive,
+    getAliveProtected,
+    postLogout,
+    getLoggedInUser,
+    root,
+    client,
+} from "../sdk.gen";
+import type { AxiosError } from "axios";
 
 type QueryKey<TOptions extends Options> = [
     Pick<TOptions, "baseURL" | "body" | "headers" | "path" | "query"> & {
@@ -241,23 +238,6 @@ export const getCasesOptions = (options: Options<GetCasesData_api>) => {
     });
 };
 
-export const getEnsemblesQueryKey = (options: Options<GetEnsemblesData_api>) => [createQueryKey("getEnsembles", options)];
-
-export const getEnsemblesOptions = (options: Options<GetEnsemblesData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getEnsembles({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getEnsemblesQueryKey(options),
-    });
-};
-
 export const getEnsembleDetailsQueryKey = (options: Options<GetEnsembleDetailsData_api>) => [
     createQueryKey("getEnsembleDetails", options),
 ];
@@ -277,14 +257,16 @@ export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsDat
     });
 };
 
-export const postGetTimestampsForEnsemblesQueryKey = (options: Options<PostGetTimestampsForEnsemblesData_api>) => [
-    createQueryKey("postGetTimestampsForEnsembles", options),
-];
+export const postRefreshFingerprintsForEnsemblesQueryKey = (
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api>,
+) => [createQueryKey("postRefreshFingerprintsForEnsembles", options)];
 
-export const postGetTimestampsForEnsemblesOptions = (options: Options<PostGetTimestampsForEnsemblesData_api>) => {
+export const postRefreshFingerprintsForEnsemblesOptions = (
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api>,
+) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGetTimestampsForEnsembles({
+            const { data } = await postRefreshFingerprintsForEnsembles({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -292,20 +274,20 @@ export const postGetTimestampsForEnsemblesOptions = (options: Options<PostGetTim
             });
             return data;
         },
-        queryKey: postGetTimestampsForEnsemblesQueryKey(options),
+        queryKey: postRefreshFingerprintsForEnsemblesQueryKey(options),
     });
 };
 
-export const postGetTimestampsForEnsemblesMutation = (
-    options?: Partial<Options<PostGetTimestampsForEnsemblesData_api>>,
+export const postRefreshFingerprintsForEnsemblesMutation = (
+    options?: Partial<Options<PostRefreshFingerprintsForEnsemblesData_api>>,
 ) => {
     const mutationOptions: UseMutationOptions<
-        PostGetTimestampsForEnsemblesResponse_api,
-        AxiosError<PostGetTimestampsForEnsemblesError_api>,
-        Options<PostGetTimestampsForEnsemblesData_api>
+        PostRefreshFingerprintsForEnsemblesResponse_api,
+        AxiosError<PostRefreshFingerprintsForEnsemblesError_api>,
+        Options<PostRefreshFingerprintsForEnsemblesData_api>
     > = {
         mutationFn: async (localOptions) => {
-            const { data } = await postGetTimestampsForEnsembles({
+            const { data } = await postRefreshFingerprintsForEnsembles({
                 ...options,
                 ...localOptions,
                 throwOnError: true,
