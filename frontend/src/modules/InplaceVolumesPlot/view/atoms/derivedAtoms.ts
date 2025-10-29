@@ -35,7 +35,11 @@ export const groupByIndicesAtom = atom((get) => {
     if (validIndexColumns.includes(colorBy as any)) {
         groupByIndices.push(colorBy);
     }
-    if (selectorColumn !== null && validIndexColumns.includes(selectorColumn)) {
+    if (
+        selectorColumn !== null &&
+        validIndexColumns.includes(selectorColumn) &&
+        !groupByIndices.includes(selectorColumn)
+    ) {
         groupByIndices.push(selectorColumn);
     }
     return groupByIndices;

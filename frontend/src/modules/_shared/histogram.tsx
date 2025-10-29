@@ -5,11 +5,13 @@ export function makeHistogramTrace({
     numBins,
     color,
     showPercentageInBar,
+    opacity = 0.8,
 }: {
     xValues: number[];
     numBins: number;
     color: string;
     showPercentageInBar?: boolean;
+    opacity?: number;
 }): Partial<PlotData> {
     const xMin = xValues.reduce((min, v) => Math.min(min, v), Infinity);
     const xMax = xValues.reduce((max, v) => Math.max(max, v), -Infinity);
@@ -37,6 +39,7 @@ export function makeHistogramTrace({
 
         marker: {
             color: color,
+            opacity: opacity,
             line: {
                 color: "black",
                 width: 1,

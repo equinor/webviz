@@ -9,6 +9,8 @@ import {
     TableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,
 } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
+import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
 import { makeColorByOptions, makeSubplotByOptions } from "../utils/plotDimensionUtils";
 
@@ -22,6 +24,7 @@ import {
     userSelectedSelectorColumnAtom,
     userSelectedSubplotByAtom,
     userSelectedTableNamesAtom,
+    userSelectedPlotTypeAtom,
 } from "./baseAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
@@ -106,7 +109,7 @@ export const selectedTableNamesAtom = atom<string[]>((get) => {
     const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
 
     if (!userSelectedTableNames) {
-        return uniqueTableNames;
+        return uniqueTableNames.length > 0 ? [uniqueTableNames[0]] : [];
     }
 
     return fixupUserSelection(userSelectedTableNames, uniqueTableNames);
@@ -157,6 +160,12 @@ export const selectedSecondResultNameAtom = atom<string | null>((get) => {
 });
 
 export const selectedSelectorColumnAtom = atom<string | null>((get) => {
+    const plotType = get(userSelectedPlotTypeAtom);
+
+    // Only return a selector column for BAR plots
+    if (plotType !== PlotType.BAR) {
+        return null;
+    }
     const userSelectedSelectorColumn = get(userSelectedSelectorColumnAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
@@ -192,7 +201,18 @@ export const selectedSubplotByAtom = atom<string>((get) => {
     const userSelectedSubplotBy = get(userSelectedSubplotByAtom);
     const selectedTableNames = get(selectedTableNamesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+    const numEnsembleIdents = tableDefinitionsAccessor.getUniqueEnsembleIdents().length;
+    const numTableNames = selectedTableNames.length;
 
+    // If multiple ensembles AND multiple table names, subplot MUST be one of them
+    if (numEnsembleIdents > 1 && numTableNames > 1) {
+        // Force to ENSEMBLE if current selection is invalid
+        if (userSelectedSubplotBy !== TableOriginKey.ENSEMBLE && userSelectedSubplotBy !== TableOriginKey.TABLE_NAME) {
+            return TableOriginKey.ENSEMBLE;
+        }
+        // Keep valid selection
+        return userSelectedSubplotBy;
+    }
     const validOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames).map((el) => el.value);
     const fixedSelection = fixupUserSelection([userSelectedSubplotBy], validOptions);
 
@@ -202,9 +222,19 @@ export const selectedSubplotByAtom = atom<string>((get) => {
 export const selectedColorByAtom = atom<string>((get) => {
     const userSelectedColorBy = get(userSelectedColorByAtom);
     const userSelectedSubplotBy = get(userSelectedSubplotByAtom);
+    const selectedSubplotBy = get(selectedSubplotByAtom);
     const selectedTableNames = get(selectedTableNamesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+    const numEnsembleIdents = tableDefinitionsAccessor.getUniqueEnsembleIdents().length;
+    const numTableNames = selectedTableNames.length;
 
+    // If multiple ensembles AND multiple table names, colorBy MUST be the other one
+    if (numEnsembleIdents > 1 && numTableNames > 1) {
+        if (selectedSubplotBy === TableOriginKey.ENSEMBLE) {
+            return TableOriginKey.TABLE_NAME;
+        }
+        return TableOriginKey.ENSEMBLE;
+    }
     const validOptions = makeColorByOptions(tableDefinitionsAccessor, userSelectedSubplotBy, selectedTableNames).map(
         (el) => el.value,
     );

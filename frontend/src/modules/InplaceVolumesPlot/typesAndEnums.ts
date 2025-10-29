@@ -11,11 +11,11 @@ export enum PlotType {
 
 export const plotTypeToStringMapping: Record<PlotType, string> = {
     [PlotType.HISTOGRAM]: "Histogram",
-    [PlotType.SCATTER]: "Scatter",
-    [PlotType.DISTRIBUTION]: "Distribution",
     [PlotType.BOX]: "Box",
     [PlotType.BAR]: "Bar",
-    [PlotType.CONVERGENCE]: "Convergence",
+    [PlotType.CONVERGENCE]: "Ensemble Convergence",
+    [PlotType.DISTRIBUTION]: "Density",
+    [PlotType.SCATTER]: "Cross plot",
 };
 
 export type InplaceVolumesFilterSelections = Omit<InplaceVolumesFilterSettings, "allowIndicesValuesIntersection"> & {

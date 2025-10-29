@@ -27,7 +27,6 @@ export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
     const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
-
     const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
     return useGetAggregatedPerRealizationTableDataQueries(

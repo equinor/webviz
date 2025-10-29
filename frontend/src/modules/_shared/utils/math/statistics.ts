@@ -25,3 +25,20 @@ export const computeQuantile = (data: number[], quantile: number): number => {
         return sortedValues[lowerRank] * (1 - fraction) + sortedValues[lowerRank + 1] * fraction;
     }
 };
+export const computeReservesP90 = (data: number[]): number => {
+    // P90: Conservative estimate - 90% probability of at least this value
+    // This is the 10th percentile (low value)
+    return computeQuantile(data, 0.1);
+};
+
+export const computeReservesP10 = (data: number[]): number => {
+    // P10: Optimistic estimate - 10% probability of at least this value
+    // This is the 90th percentile (high value)
+    return computeQuantile(data, 0.9);
+};
+
+export const computeReservesP50 = (data: number[]): number => {
+    // P50: Median estimate - 50% probability of at least this value
+    // This is the 50th percentile (median)
+    return computeQuantile(data, 0.5);
+};

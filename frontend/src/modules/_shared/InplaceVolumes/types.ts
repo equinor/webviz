@@ -37,7 +37,22 @@ export enum TableOriginKey {
     TABLE_NAME = "TABLE_NAME",
     FLUID = "FLUID",
 }
-
+export enum InplaceSelectorKey {
+    ZONE = "ZONE",
+    REGION = "REGION",
+    FACIES = "FACIES",
+    LICENCE = "LICENCE",
+}
+export const InplaceVolumesSelectorMapping: Record<string, string> = {
+    [TableOriginKey.ENSEMBLE]: "Ensemble",
+    [TableOriginKey.TABLE_NAME]: "Grid source",
+    [TableOriginKey.FLUID]: "Fluid zone",
+    [InplaceSelectorKey.ZONE]: "Zone",
+    [InplaceSelectorKey.REGION]: "Region",
+    [InplaceSelectorKey.FACIES]: "Facies",
+    [InplaceSelectorKey.LICENCE]: "Licence",
+    REAL: "Realization",
+};
 export type StatisticalColumns = Partial<{
     [key in InplaceVolumesStatistic_api]: Column<number>;
 }>;
