@@ -5,6 +5,7 @@ import { isEqual } from "lodash";
 
 import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
@@ -15,8 +16,7 @@ import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
-import { ContentInfo } from "@modules/_shared/components/ContentMessage";
-import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
@@ -119,7 +119,6 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
         startTransition(function makeContent() {
             // Content when no data channels are defined
-            console.log(parameterIdents.length);
 
             if (receiverResponses.every((response) => !response.channel)) {
                 setContent(
@@ -169,11 +168,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             );
             // Content when no data is received on any of the channels
             if (usedChannels.length === usedChannelsWithoutData.length) {
-                setContent(
-                    <ContentInfo>
-                        <span>No data received on any of the channels. Check relevant modules for issues.</span>
-                    </ContentInfo>,
-                );
+                setContent(<ContentWarning>No data received on any of the channels.</ContentWarning>);
                 return;
             }
             // Add a warning when some channels have no data
@@ -183,19 +178,6 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                         .map((response) => response.displayName)
                         .join(", ")}`,
                 );
-            }
-
-            // Content when no parameters are selected
-            if (parameterIdents.length === 0) {
-                setContent(
-                    <ContentWarning>
-                        <Warning fontSize="large" className="mb-2" />
-                        No parameters selected or available. Please select parameters in the settings pane. If
-                        parameters are selected but not available, ensure that the connected ensembles have continuous
-                        and varying parameters.
-                    </ContentWarning>,
-                );
-                return;
             }
 
             // Create a map to group responses by ensemble
@@ -216,6 +198,31 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                     receiveResponsesPerEnsembleIdent.get(ensembleIdentString)?.push(content);
                 });
             });
+            for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
+                const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+                if (!ensemble || ensemble instanceof DeltaEnsemble) {
+                    const ensembleType = !ensemble ? "Invalid" : "Delta";
+                    setContent(
+                        <ContentWarning>
+                            <p>{ensembleType} ensemble detected in the data channel.</p>
+                            <p>Unable to compute parameter correlations.</p>
+                        </ContentWarning>,
+                    );
+                    return;
+                }
+            }
+            // Content when no parameters are selected
+            if (parameterIdents.length === 0) {
+                setContent(
+                    <ContentWarning>
+                        <Warning fontSize="large" className="mb-2" />
+                        No parameters selected or available. Please select parameters in the settings pane. If
+                        parameters are selected but not available, ensure that the connected ensembles have continuous
+                        and varying parameters.
+                    </ContentWarning>,
+                );
+                return;
+            }
 
             const numContents = receiveResponsesPerEnsembleIdent.size;
 
@@ -233,6 +240,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 showLabels,
                 useFixedColorRange,
             });
+
             fillParameterCorrelationMatrixFigure(
                 figure,
                 parameterIdents,
