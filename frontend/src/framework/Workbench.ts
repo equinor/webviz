@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 
 import {
     deleteSessionMutation,
+    deleteSnapshotMutation,
     getSnapshotAccessLogsQueryKey,
     updateSessionMutation,
     type SessionUpdate_api,
@@ -17,7 +18,11 @@ import { EnsembleUpdateMonitor } from "./internal/EnsembleUpdateMonitor";
 import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
-import { removeSessionQueryData, replaceSessionQueryData } from "./internal/WorkbenchSession/utils/crudHelpers";
+import {
+    removeSessionQueryData,
+    removeSnapshotQueryData,
+    replaceSessionQueryData,
+} from "./internal/WorkbenchSession/utils/crudHelpers";
 import {
     loadAllWorkbenchSessionsFromLocalStorage,
     loadSnapshotFromBackend,
@@ -638,16 +643,54 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         let success = false;
 
-        await this._queryClient
-            .getMutationCache()
-            .build(this._queryClient, {
-                ...deleteSessionMutation(),
-                onSuccess: () => {
-                    success = true;
-                    removeSessionQueryData(this._queryClient, sessionId);
-                },
-            })
-            .execute({ path: { session_id: sessionId } });
+        try {
+            await this._queryClient
+                .getMutationCache()
+                .build(this._queryClient, {
+                    ...deleteSessionMutation(),
+                    onSuccess: () => {
+                        success = true;
+                        removeSessionQueryData(this._queryClient, sessionId);
+                    },
+                })
+                .execute({ path: { session_id: sessionId } });
+        } catch (error) {
+            toast.error("An error occurred while deleting the session.");
+            console.error("Failed to delete session:", error);
+        }
+
+        return success;
+    }
+
+    async deleteSnapshot(snapshotId: string): Promise<boolean> {
+        const result = await ConfirmationService.confirm({
+            title: "Are you sure?",
+            message: "This snapshot will be deleted. This action can not be reversed.",
+            actions: [
+                { id: "cancel", label: "Cancel" },
+                { id: "delete", label: "Delete", color: "danger" },
+            ],
+        });
+
+        if (result !== "delete") return false;
+
+        let success = false;
+
+        try {
+            await this._queryClient
+                .getMutationCache()
+                .build(this._queryClient, {
+                    ...deleteSnapshotMutation(),
+                    onSuccess: () => {
+                        success = true;
+                        removeSnapshotQueryData(this._queryClient, snapshotId);
+                    },
+                })
+                .execute({ path: { snapshot_id: snapshotId } });
+        } catch (error) {
+            toast.error("An error occurred while deleting the snapshot.");
+            console.error("Failed to delete snapshot:", error);
+        }
 
         return success;
     }

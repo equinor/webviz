@@ -290,7 +290,7 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
 
     return (
         <>
-            <div className="mb-8 flex gap-4">
+            <div className="mb-4 flex gap-4">
                 <Label text="Title" wrapperClassName="grow">
                     <Input
                         startAdornment={<Search fontSize="small" />}

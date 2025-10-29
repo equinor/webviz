@@ -231,7 +231,7 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
 
         setDeletePending(true);
 
-        const success = await props.workbench.deleteSession(selectedSnapshotId);
+        const success = await props.workbench.deleteSnapshot(selectedSnapshotId);
         setDeletePending(false);
 
         if (!success) {
@@ -273,7 +273,7 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
 
     return (
         <>
-            <div className="mb-8 flex gap-4">
+            <div className="mb-4 flex gap-4">
                 <Label text="Title" wrapperClassName="grow">
                     <Input
                         startAdornment={<Search fontSize="small" />}
@@ -301,10 +301,15 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
                 </Label>
             </div>
             <div className="flex gap-2 mb-2 justify-end">
-                <Button color="primary" disabled={!selectedSnapshotId} onClick={handleOpenSnapshotClick}>
+                <Button color="primary" disabled={!selectedSnapshotId} onClick={handleOpenSnapshotClick} size="medium">
                     <FileOpen fontSize="inherit" /> Open
                 </Button>
-                <Button color="danger" disabled={!selectedSnapshotId || deletePending} onClick={handleDeleteClick}>
+                <Button
+                    color="danger"
+                    disabled={!selectedSnapshotId || deletePending}
+                    onClick={handleDeleteClick}
+                    size="medium"
+                >
                     {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
                 </Button>
             </div>
