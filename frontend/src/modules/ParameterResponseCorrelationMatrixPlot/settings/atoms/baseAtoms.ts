@@ -1,9 +1,8 @@
-import type { KeyKind } from "@framework/DataChannelTypes";
 import { atom } from "jotai";
 
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { ChannelReceiverReturnData } from "@framework/types/dataChannnel";
+import type { KeyKind, ChannelReceiverReturnData } from "@framework/types/dataChannnel";
 
 import { PlotType, type CorrelationSettings } from "../../typesAndEnums";
 export const receivedChannelAtom = atom<ChannelReceiverReturnData<KeyKind.REALIZATION[]>[]>([]);
