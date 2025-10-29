@@ -7,6 +7,9 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Virtualization } from "../../Virtualization";
 
 const DEFAULT_RECT_MIN_WIDTH = 120;
+const BORDER_WIDTH = 10;
+
+export type ItemFocusMode = "keyboard" | "mouse";
 
 export type DropdownItemListProps<T> = {
     anchorElRef: React.RefObject<HTMLElement>;
@@ -16,6 +19,7 @@ export type DropdownItemListProps<T> = {
     dropdownMaxHeight: number;
     itemFocusIndex?: number;
     minWidth?: number;
+    itemFocusMode?: ItemFocusMode;
     renderItem?: (item: T, index: number) => React.ReactNode;
 };
 
@@ -52,6 +56,7 @@ export function DropdownItemListComponent<T>(
 
     const virtualizerStartIndex = React.useMemo(() => {
         if (props.itemFocusIndex === undefined) return;
+        if (props.itemFocusMode === "mouse") return;
         if (!innerDropdownRef.current) return;
 
         const virtualizationTopIndex = Math.round(innerDropdownRef.current.scrollTop / props.optionHeight);
@@ -62,7 +67,7 @@ export function DropdownItemListComponent<T>(
         } else if (props.itemFocusIndex >= virtualizationBottomIndex) {
             return Math.max(0, props.itemFocusIndex - props.dropdownMaxHeight / props.optionHeight + 1);
         }
-    }, [props.dropdownMaxHeight, props.itemFocusIndex, props.optionHeight]);
+    }, [props.itemFocusIndex, props.itemFocusMode, props.optionHeight, props.dropdownMaxHeight]);
 
     React.useLayoutEffect(
         function computeDropdownRectEffect() {
@@ -72,13 +77,12 @@ export function DropdownItemListComponent<T>(
             const listLength = Math.max(props.items.length * props.optionHeight, props.optionHeight);
             let isFlipped = false;
 
-            // 9 added to accommodate for border + padding in the list container
-            const dropdownHeight = Math.min(listLength + 1, props.dropdownMaxHeight);
+            const dropdownHeight = Math.min(listLength, props.dropdownMaxHeight);
 
             const newDropdownRect: DropdownRect = {
                 minWidth: props.minWidth ?? DEFAULT_RECT_MIN_WIDTH,
                 width: anchorRect.width,
-                height: dropdownHeight,
+                height: dropdownHeight + BORDER_WIDTH,
             };
 
             const anchorTop = anchorRect.y;
@@ -94,10 +98,8 @@ export function DropdownItemListComponent<T>(
             } else {
                 // If neither has space, put it below, but squish the height to fit
                 newDropdownRect.top = anchorRect.y + anchorRect.height;
-                newDropdownRect.height = Math.min(
-                    dropdownHeight,
-                    window.innerHeight - anchorRect.y - anchorRect.height,
-                );
+                newDropdownRect.height =
+                    Math.min(dropdownHeight, window.innerHeight - anchorRect.y - anchorRect.height) + BORDER_WIDTH;
             }
 
             if (anchorRect.x + anchorRect.width > window.innerWidth / 2) {
@@ -115,13 +117,13 @@ export function DropdownItemListComponent<T>(
     return createPortal(
         <ul
             className={resolveClassNames(
-                "absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border gap-1 px-2",
+                "absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 px-2",
                 {
-                    "border-t-0 rounded-t-none": !dropdownFlipped,
-                    "border-b-0 rounded-b-none": dropdownFlipped,
+                    "border-t-0! rounded-t-none": !dropdownFlipped,
+                    "border-b-0! rounded-b-none": dropdownFlipped,
                 },
             )}
-            style={{ ...dropdownRect }}
+            style={{ ...dropdownRect, borderWidth: `${BORDER_WIDTH}px` }}
             ref={innerDropdownRef}
         >
             {props.items.length === 0 && (

@@ -42,11 +42,13 @@ export function EnsembleTag(props: EnsembleTagProps): React.ReactNode {
                 <EnsembleColorTile
                     ensemble={ensemble}
                     ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                    wrapperClassName="w-5"
+                    wrapperClassName="w-6 h-6"
                     badgeClassName={TAG_BACKGROUND_COLOR}
                 />
             )}
-            <span className="truncate whitespace-normal">{props.label ?? String(props.tag)}</span>
+            <Tooltip title={props.label ?? props.tag} enterDelay="long">
+                <span className="truncate whitespace-normal">{props.label ?? String(props.tag)}</span>
+            </Tooltip>
             <Tooltip title="Remove ensemble" enterDelay="medium">
                 <IconButton className="align-text-bottom" size="small" onClick={props.onRemove}>
                     <Close fontSize="inherit" />

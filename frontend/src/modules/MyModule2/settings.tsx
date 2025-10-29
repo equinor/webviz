@@ -9,7 +9,7 @@ import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Label } from "@lib/components/Label";
 import { Switch } from "@lib/components/Switch";
 import type { TagProps } from "@lib/components/TagInput";
@@ -76,6 +76,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
                 ensembles={ensembleSet.getEnsembleArray()}
                 value={ensembleSelection}
                 allowDeltaEnsembles={true}
+                ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
                 onChange={setEnsembleSelection}
             />
             <div className="mb-12">

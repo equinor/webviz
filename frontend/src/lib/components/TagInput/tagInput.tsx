@@ -395,7 +395,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
                         {/* Invisible spacer-element. Used to  have the input wrap as it's value grows */}
                         {/* ! Classes that affect size should be present in both this and the input */}
                         <span
-                            className={`--input-sizer invisible pointer-events-none select-none grow max-w-full min-w-2  ${props.inputProps?.className ?? ""}`}
+                            className={`--input-sizer invisible pointer-events-none select-none grow max-w-full min-w-2 ${props.inputProps?.className ?? ""}`}
                             aria-hidden
                         >
                             {inputValue}

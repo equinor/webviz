@@ -10,6 +10,7 @@ import { TagInput } from "../TagInput";
 
 import { useDebouncedStateEmit, useOnScreenChangeHandler } from "./hooks";
 import { DefaultTagOption, type TagOptionProps } from "./private-components/defaultTagOption";
+import type { ItemFocusMode } from "./private-components/dropdownItemList";
 import { DropdownItemList } from "./private-components/dropdownItemList";
 
 const TAG_OPTION_HEIGHT = 32;
@@ -49,6 +50,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
     const [inputValue, setInputValue] = React.useState("");
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
     const [focusedItemIndex, setFocusedItemIndex] = React.useState<number>(-1);
+    const [itemFocusMode, setItemFocusMode] = React.useState<ItemFocusMode>("keyboard");
 
     const [selection, debouncedOnChange, flushDebounce] = useDebouncedStateEmit(
         props.selection,
@@ -153,7 +155,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
     );
 
     const handleToggleTag = React.useCallback(
-        function handleToggleTag(tag: string) {
+        function handleToggleTag(tag: string, listIndex: number) {
             const newSelection = [...selection];
             const tagIndex = selection.indexOf(tag);
 
@@ -163,6 +165,8 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 newSelection.splice(tagIndex, 1);
             }
 
+            setFocusedItemIndex(listIndex);
+            setItemFocusMode("keyboard");
             handleTagsChange(newSelection);
         },
         [handleTagsChange, selection],
@@ -181,9 +185,9 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 if (!dropdownVisible) {
                     setDropdownVisible(true);
                 } else if (focusedItemIndex !== -1) {
-                    handleToggleTag(filteredTags[focusedItemIndex].value);
+                    handleToggleTag(filteredTags[focusedItemIndex].value, focusedItemIndex);
                 } else if (filteredTags.length === 1) {
-                    handleToggleTag(filteredTags[0].value);
+                    handleToggleTag(filteredTags[0].value, 0);
                 } else if (filteredTags.length > 0) {
                     setFocusedItemIndex(0);
                 }
@@ -201,6 +205,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
 
                 if (evt.shiftKey) selectionMove *= 10;
 
+                setItemFocusMode("keyboard");
                 setFocusedItemIndex((prev) => clamp(prev + selectionMove, 0, filteredTags.length - 1));
             }
         },
@@ -215,6 +220,11 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
             if (!isOnScreen) setDropdownVisible(false);
         }, []),
     );
+
+    const handleListOptionHover = React.useCallback(function handleListOptionHover(index: number) {
+        setItemFocusMode("mouse");
+        setFocusedItemIndex(index);
+    }, []);
 
     return (
         <BaseComponent ref={ref} disabled={props.disabled}>
@@ -248,6 +258,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                     items={filteredTags}
                     optionHeight={TAG_OPTION_HEIGHT}
                     itemFocusIndex={focusedItemIndex}
+                    itemFocusMode={itemFocusMode}
                     dropdownMaxHeight={DROPDOWN_MAX_HEIGHT}
                     emptyListText={props.tagOptions.length === 0 ? NO_TAGS_TEXT : NO_MATCHING_TAGS_TEXT}
                     minWidth={props.dropdownMinWidth}
@@ -259,8 +270,8 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                                 isSelected: selection.includes(option.value),
                                 isFocused: focusedItemIndex === index,
                                 height: TAG_OPTION_HEIGHT,
-                                onToggle: () => handleToggleTag(option.value),
-                                onHover: () => setFocusedItemIndex(index),
+                                onToggle: () => handleToggleTag(option.value, index),
+                                onHover: () => handleListOptionHover(index),
                             })}
                         </React.Fragment>
                     )}
