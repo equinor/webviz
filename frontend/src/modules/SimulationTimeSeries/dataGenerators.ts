@@ -1,7 +1,7 @@
 import type { VectorRealizationData_api } from "@api";
-import type { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ChannelContentMetaData, DataGenerator } from "@framework/types/dataChannnel";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import type { VectorSpec } from "./typesAndEnums";

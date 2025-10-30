@@ -14,12 +14,8 @@ async def test_get_cases(test_user: router.AuthenticatedUser, sumo_test_ensemble
     cases = await router.get_cases(test_user, sumo_test_ensemble_ahm.field_identifier)
     assert all(isinstance(c, schemas.CaseInfo) for c in cases)
     assert any(c.uuid == sumo_test_ensemble_ahm.case_uuid for c in cases)
-
-
-async def test_get_ensembles(test_user: router.AuthenticatedUser, sumo_test_ensemble_ahm: SumoTestEnsemble) -> None:
-    ensembles = await router.get_ensembles(test_user, sumo_test_ensemble_ahm.case_uuid)
-    assert all(isinstance(e, schemas.EnsembleInfo) for e in ensembles)
-    assert any(e.name == sumo_test_ensemble_ahm.ensemble_name for e in ensembles)
+    case = next(c for c in cases if c.uuid == sumo_test_ensemble_ahm.case_uuid)
+    assert any(e.name == sumo_test_ensemble_ahm.ensemble_name for e in case.ensembles)
 
 
 async def test_get_ensemble_details(
