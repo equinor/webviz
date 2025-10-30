@@ -13,6 +13,13 @@ import { isPersistableAtom, Source } from "@framework/utils/atomUtils";
 
 import { hashSessionContentString, objectToJsonString } from "./WorkbenchSession/utils/hash";
 
+export class ModuleStateSerializationError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "ModuleStateSerializationError";
+    }
+}
+
 type StringifiedSerializedModuleComponentsState = {
     settings?: string;
     view?: string;
@@ -193,8 +200,9 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
                 console.warn(`Validation failed for settings in ${this._moduleInstance.getName()}`, {
                     settingsErrors: validateSettings.errors,
                 });
-                this._serializedState = null;
-                return; // Invalid settings, do not apply state
+                throw new ModuleStateSerializationError(
+                    `Invalid settings state for module instance ${this._moduleInstance.getName()}`,
+                );
             }
         }
 
@@ -207,8 +215,9 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
                 console.warn(`Validation failed for view in ${this._moduleInstance.getName()}`, {
                     viewErrors: validateView.errors,
                 });
-                this._serializedState = null;
-                return;
+                throw new ModuleStateSerializationError(
+                    `Invalid view state for module instance ${this._moduleInstance.getName()}`,
+                );
             }
         }
 
