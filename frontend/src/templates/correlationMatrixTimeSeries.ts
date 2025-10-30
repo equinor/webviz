@@ -1,8 +1,8 @@
-import { KeyKind } from "@framework/DataChannelTypes";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { ChannelIds as InplaceChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 import { ChannelIds as TimeSeriesChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
