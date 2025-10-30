@@ -10,6 +10,8 @@ import * as bbox from "@lib/utils/bbox";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
 import { RealizationGridProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
+import { makeDrilledWellborePicksLayer2D } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellborePicksLayer2D";
+import { makeDrilledWellTrajectoriesLayer2D } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 import { makeObservedSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeObservedSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
@@ -28,8 +30,6 @@ import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFra
 import { makeSurfaceLayerBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeSurfaceLayerBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
-import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
-import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePolygonsLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
 import { makeRealizationSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationSurfaceLayer";
@@ -103,7 +103,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELLBORE_PICKS,
     DrilledWellborePicksProvider,
     {
-        transformToVisualization: makeDrilledWellborePicksLayer,
+        transformToVisualization: makeDrilledWellborePicksLayer2D,
         transformToBoundingBox: makeDrilledWellborePicksBoundingBox,
     },
 );
@@ -111,7 +111,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELL_TRAJECTORIES,
     DrilledWellTrajectoriesProvider,
     {
-        transformToVisualization: makeDrilledWellTrajectoriesLayer,
+        transformToVisualization: makeDrilledWellTrajectoriesLayer2D,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
     },
 );
