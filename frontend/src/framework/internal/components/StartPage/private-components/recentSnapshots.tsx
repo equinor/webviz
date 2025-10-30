@@ -61,6 +61,7 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
                         timestamp={item.lastVisitedAt ?? ""}
                         description={item.snapshotMetadata.description}
                         ownerId={item.snapshotMetadata.ownerId}
+                        isDeleted={item.snapshotDeleted}
                         onClick={handleSnapshotClick}
                         tooltipInfo={{
                             Visited: `${item.visits} time${item.visits === 1 ? "" : "s"}`,

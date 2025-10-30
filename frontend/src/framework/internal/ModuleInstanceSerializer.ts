@@ -1,4 +1,4 @@
-import { Ajv } from "ajv/dist/jtd";
+import { Ajv, type ValidateFunction } from "ajv/dist/jtd";
 import { atom, type Atom, type Setter } from "jotai";
 
 import type { AtomStore } from "@framework/AtomStoreMaster";
@@ -29,6 +29,10 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
     private _persistenceAtom: Atom<TSerializedState | undefined>;
     private _lastSerializedHash: string | null = null;
     private _debouncedNotifyChange: () => void;
+    private _validationFunctions: {
+        settings?: ValidateFunction<TSerializedState["settings"]>;
+        view?: ValidateFunction<TSerializedState["view"]>;
+    };
 
     constructor(
         moduleInstance: ModuleInstance<any, TSerializedState>,
@@ -44,6 +48,18 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
         this._debouncedNotifyChange = debounce(() => {
             onStateChange?.();
         }, 200);
+
+        // Prepare validation functions
+        const validateSettings = this._serializedStateSchema?.settings
+            ? ajv.compile(this._serializedStateSchema.settings)
+            : undefined;
+        const validateView = this._serializedStateSchema?.view
+            ? ajv.compile(this._serializedStateSchema.view)
+            : undefined;
+        this._validationFunctions = {
+            settings: validateSettings,
+            view: validateView,
+        };
 
         this._persistenceAtom = atom<TSerializedState | undefined>((get) => {
             if (hasSerialization(this._serializationFunctions)) {
@@ -169,9 +185,9 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
             return;
         }
 
-        if (this._serializedStateSchema.settings) {
+        const validateSettings = this._validationFunctions.settings;
+        if (validateSettings) {
             // If possible, compilation should only be performed once - as soon as the schema is available - move to constructor?
-            const validateSettings = ajv.compile(this._serializedStateSchema.settings);
             const isSettingsValid = parsedSettings === undefined || validateSettings(parsedSettings);
             if (!isSettingsValid) {
                 console.warn(`Validation failed for settings in ${this._moduleInstance.getName()}`, {
@@ -182,9 +198,9 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
             }
         }
 
-        if (this._serializedStateSchema.view) {
+        const validateView = this._validationFunctions.view;
+        if (validateView) {
             // If possible, compilation should only be performed once - as soon as the schema is available - move to constructor?
-            const validateView = ajv.compile(this._serializedStateSchema.view);
             const isViewValid = parsedView === undefined || validateView(parsedView);
 
             if (!isViewValid) {

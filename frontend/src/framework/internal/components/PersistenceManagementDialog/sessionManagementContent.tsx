@@ -13,11 +13,13 @@ import type { Workbench } from "@framework/Workbench";
 import type { Options } from "@hey-api/client-axios";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Table } from "@lib/components/Table";
 import type { TableColumns, TableSorting } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
+import { Tooltip } from "@lib/components/Tooltip";
 import { formatDate } from "@lib/utils/dates";
 import { Add, Close, Delete, Edit, FileOpen, Search } from "@mui/icons-material";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -36,7 +38,6 @@ import {
     TABLE_HEIGHT,
     HEADER_HEIGHT,
 } from "./constants";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 
 type TableFilter = {
     title?: string;
@@ -184,7 +185,7 @@ export type SessionOverviewContentProps = {
     workbench: Workbench;
 };
 
-export function SessionOverviewContent(props: SessionOverviewContentProps): React.ReactNode {
+export function SessionManagementContent(props: SessionOverviewContentProps): React.ReactNode {
     const [editSessionDialogOpen, setEditSessionDialogOpen] = React.useState<boolean>(false);
     const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
     const [deletePending, setDeletePending] = React.useState<boolean>(false);
@@ -313,24 +314,37 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
                 </Label>
             </div>
             <div className="flex gap-2 mb-2">
-                <Button color="primary" onClick={handleNewSessionClick} variant="contained" size="medium">
-                    <Add fontSize="inherit" /> New session
-                </Button>
+                <Tooltip title="Start and open new session" placement="bottom" enterDelay="medium">
+                    <Button color="primary" onClick={handleNewSessionClick} variant="contained" size="medium">
+                        <Add fontSize="inherit" /> New session
+                    </Button>
+                </Tooltip>
                 <span className="grow" />
-                <Button color="primary" disabled={!selectedSessionId} onClick={handleEditClick} size="medium">
-                    <Edit fontSize="inherit" /> Edit
-                </Button>
-                <Button color="primary" disabled={!selectedSessionId} onClick={handleOpenSessionClick} size="medium">
-                    <FileOpen fontSize="inherit" /> Open
-                </Button>
-                <Button
-                    color="danger"
-                    disabled={!selectedSessionId || deletePending}
-                    onClick={handleDeleteClick}
-                    size="medium"
-                >
-                    {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
-                </Button>
+                <Tooltip title="Edit the selected session" placement="bottom" enterDelay="medium">
+                    <Button color="primary" disabled={!selectedSessionId} onClick={handleEditClick} size="medium">
+                        <Edit fontSize="inherit" /> Edit
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Open the selectedsession" placement="bottom" enterDelay="medium">
+                    <Button
+                        color="primary"
+                        disabled={!selectedSessionId}
+                        onClick={handleOpenSessionClick}
+                        size="medium"
+                    >
+                        <FileOpen fontSize="inherit" /> Open
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Delete the selected session" placement="bottom" enterDelay="medium">
+                    <Button
+                        color="danger"
+                        disabled={!selectedSessionId || deletePending}
+                        onClick={handleDeleteClick}
+                        size="medium"
+                    >
+                        {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
+                    </Button>
+                </Tooltip>
             </div>
             <Table
                 rowIdentifier="id"

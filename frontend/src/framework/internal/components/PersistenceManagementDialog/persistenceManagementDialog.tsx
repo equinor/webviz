@@ -7,8 +7,8 @@ import { Dialog } from "@lib/components/Dialog";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { SessionOverviewContent } from "./sessionOverviewContent";
-import { SnapshotOverviewContent } from "./snapshotOverviewContent";
+import { SessionManagementContent } from "./sessionManagementContent";
+import { SnapshotManagementContent } from "./snapshotManagementContent";
 
 export type SessionOverviewDialogProps = {
     workbench: Workbench;
@@ -62,8 +62,8 @@ export function PersistenceManagementDialog(props: SessionOverviewDialogProps): 
             showCloseCross
             height={700}
         >
-            {contentMode === "sessions" && <SessionOverviewContent workbench={props.workbench} />}
-            {contentMode === "snapshots" && <SnapshotOverviewContent workbench={props.workbench} />}
+            {contentMode === "sessions" && <SessionManagementContent workbench={props.workbench} />}
+            {contentMode === "snapshots" && <SnapshotManagementContent workbench={props.workbench} />}
         </Dialog>
     );
 }

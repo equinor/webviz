@@ -4,6 +4,7 @@ import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
 import { Tooltip } from "@lib/components/Tooltip";
 import { timeAgo } from "@lib/utils/dates";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useQuery } from "@tanstack/react-query";
 
 import { UserAvatar } from "../../UserAvatar";
@@ -14,11 +15,9 @@ export type ItemCardProps = {
     timestamp: string;
     description: string | null;
     href: string;
-
     ownerId?: string;
-
+    isDeleted?: boolean;
     tooltipInfo?: Record<string, string>;
-
     onClick?: (id: string, evt: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
 };
 
@@ -36,28 +35,38 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
         };
     }, [ownerInfo, props.tooltipInfo]);
 
+    function handleClick(evt: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
+        if (props.isDeleted) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            return;
+        }
+        props.onClick?.(props.id, evt);
+    }
+
     return (
-        <li className="max-w-sm">
-            <Tooltip
-                title={<TooltipContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />}
-                placement="left"
-                enterDelay="medium"
+        <Tooltip
+            title={<TooltipContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />}
+            placement="left"
+            enterDelay="medium"
+        >
+            <a
+                className={resolveClassNames("flex gap-4 items-center px-2 py-1 rounded text-indigo-600", {
+                    "opacity-50 italic line-through": props.isDeleted,
+                    "hover:bg-indigo-100": !props.isDeleted,
+                })}
+                href={props.href}
+                onClick={handleClick}
             >
-                <a
-                    className="flex gap-4 items-center px-2 py-1 rounded hover:bg-indigo-100 text-indigo-600"
-                    href={props.href}
-                    onClick={(evt) => props.onClick?.(props.id, evt)}
-                >
-                    <div className="overflow-hidden truncate">
-                        <span>{props.title}</span>
-                    </div>
-                    {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                    <span className="ml-auto text-gray-500 whitespace-nowrap text-xs">
-                        ~ {timeAgo(Date.now() - new Date(props.timestamp).getTime())}
-                    </span>
-                </a>
-            </Tooltip>
-        </li>
+                <div className="overflow-hidden truncate">
+                    <span>{props.title}</span>
+                </div>
+                {showOwnerRow && <OwnerLine owner={ownerInfo} />}
+                <span className="ml-auto text-gray-500 whitespace-nowrap text-xs">
+                    ~ {timeAgo(Date.now() - new Date(props.timestamp).getTime())}
+                </span>
+            </a>
+        </Tooltip>
     );
 }
 
@@ -89,13 +98,14 @@ function useUserGraphInfo(ownerId: string | undefined): GraphUser_api | null {
 function TooltipContent(
     props: { owner: GraphUser_api | null; tooltipInfo?: Record<string, string> } & ItemCardProps,
 ): React.ReactNode {
+    if (props.isDeleted) {
+        return "This item has been deleted.";
+    }
     return (
         <div className="w-2xs whitespace-normal text-base">
             <h3 className="text-lg">{props.title}</h3>
-
             <hr className="h-px mb-2 bg-white/25" />
             {props.description && <p className="text-sm">{props.description}</p>}
-
             {props.tooltipInfo && (
                 <ul className="mt-6 text-sm truncate">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
