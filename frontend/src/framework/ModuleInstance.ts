@@ -25,6 +25,7 @@ import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
+import { type PublishSubscribe, PublishSubscribeDelegate } from "@lib/utils/NewPublishSubscribeDelegate";
 
 export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
@@ -46,7 +47,7 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
     [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
-    [ModuleInstanceTopic.SERIALIZED_STATE]: ModuleComponentsStateBase;
+    [ModuleInstanceTopic.SERIALIZED_STATE]: void;
 };
 
 export interface ModuleInstanceOptions<
@@ -81,7 +82,8 @@ export type ModuleInstanceSerializedState = {
 export class ModuleInstance<
     TInterfaceTypes extends ModuleInterfaceTypes,
     TSerializedStateSchema extends ModuleComponentsStateBase,
-> {
+> implements PublishSubscribe<ModuleInstanceTopicValueTypes>
+{
     private _id: string;
     private _title: string;
     private _initialized: boolean = false;
@@ -93,6 +95,7 @@ export class ModuleInstance<
     private _subscribers: Map<keyof ModuleInstanceTopicValueTypes, Set<() => void>> = new Map();
     private _initialSettings: InitialSettings | null = null;
     private _statusController: ModuleInstanceStatusControllerInternal = new ModuleInstanceStatusControllerInternal();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<ModuleInstanceTopicValueTypes>();
 
     // ChannelManager should be elevated to Dashboard level and shared among module instances in the dashboard
     private _channelManager: ChannelManager;
@@ -132,6 +135,10 @@ export class ModuleInstance<
         if (options.channelDefinitions) {
             this._channelManager.registerChannels(options.channelDefinitions);
         }
+    }
+
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<ModuleInstanceTopicValueTypes> {
+        return this._publishSubscribeDelegate;
     }
 
     serialize(): ModuleInstanceSerializedState {
@@ -233,7 +240,7 @@ export class ModuleInstance<
     }
 
     handleStateChange(): void {
-        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
+        this._publishSubscribeDelegate.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
     }
 
     makeSettingsToViewInterface(

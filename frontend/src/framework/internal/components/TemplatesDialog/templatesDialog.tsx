@@ -54,7 +54,7 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
             onClose={handleClose}
             title="Templates"
             height="80%"
-            width="60%"
+            width="80%"
             minWidth={800}
         >
             <div className="h-full flex flex-col">
@@ -89,7 +89,7 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
                                 ))}
                         </div>
                     </div>
-                    <div className="relative min-w-[400px] w-[400px] h-full">
+                    <div className="relative min-w-[360px] w-[360px] h-full">
                         <div className="w-full flex flex-col h-full max-h-full overflow-y-auto border-l border-gray-200 bg-gray-50">
                             <TemplateDetails template={template} onApply={applyTemplate} />
                             <div className="min-h-32" />

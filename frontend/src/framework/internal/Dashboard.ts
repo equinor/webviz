@@ -428,7 +428,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
                     const receiver = moduleInstance.getChannelManager().getReceiver(key);
                     if (!receiver) {
                         throw new Error(
-                            `Receiver with ID ${key} not found in module instance ${moduleInstance.getId()}`,
+                            `Receiver with ID '${key}' not found in module instance '${moduleInstance.getName()} (${moduleInstance.getId()})'`,
                         );
                     }
 

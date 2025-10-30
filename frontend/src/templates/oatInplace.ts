@@ -48,7 +48,7 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                response: {
+                channelResponse: {
                     listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
@@ -70,7 +70,7 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                response: {
+                channelResponse: {
                     listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,

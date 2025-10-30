@@ -28,7 +28,7 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                response: {
+                channelResponse: {
                     listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.REALIZATION_VALUE,

@@ -6,7 +6,7 @@ import {
     PrivateWorkbenchSessionTopic,
     type PrivateWorkbenchSession,
 } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
-import { ModuleInstanceTopic } from "@framework/ModuleInstance";
+import { ModuleInstanceTopic, type ModuleInstance } from "@framework/ModuleInstance";
 import { UserCreatedItemsEvent } from "@framework/UserCreatedItems";
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
@@ -25,6 +25,8 @@ import {
     makeWorkbenchSessionLocalStorageString,
     makeWorkbenchSessionStateString,
 } from "./WorkbenchSession/utils/serialization";
+import { ChannelManagerNotificationTopic } from "./DataChannels/ChannelManager";
+import { ChannelReceiverNotificationTopic } from "./DataChannels/ChannelReceiver";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -512,7 +514,39 @@ export class WorkbenchSessionPersistenceService
                         this.schedulePullFullSessionState();
                     }),
                 );
+                this.subscribeToChannelReceiverUpdates(moduleInstance);
             }
+        }
+    }
+
+    private subscribeToChannelReceiverUpdates(moduleInstance: ModuleInstance<any, any>) {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to subscribe to channel receiver updates.");
+        }
+
+        const channelManager = moduleInstance.getChannelManager();
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "module-instances",
+            channelManager.subscribe(ChannelManagerNotificationTopic.RECEIVERS_CHANGE, () => {
+                this.schedulePullFullSessionState();
+            }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "module-instances",
+            channelManager.subscribe(ChannelManagerNotificationTopic.CHANNELS_CHANGE, () => {
+                this.schedulePullFullSessionState();
+            }),
+        );
+
+        for (const receiver of channelManager.getReceivers()) {
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "module-instances",
+                receiver.subscribe(ChannelReceiverNotificationTopic.CHANNEL_CHANGE, () => {
+                    this.schedulePullFullSessionState();
+                }),
+            );
         }
     }
 }
