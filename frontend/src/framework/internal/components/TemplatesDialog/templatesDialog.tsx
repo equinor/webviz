@@ -5,10 +5,11 @@ import { ModuleDataTags, type ModuleDataTagId } from "@framework/ModuleDataTags"
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { TemplateRegistry, type Template } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Button } from "@lib/components/Button";
+import { Search } from "@mui/icons-material";
 
 export type TemplatesDialogProps = {
     workbench: Workbench;
@@ -61,9 +62,10 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
                     <div className="overflow-y-auto grow min-h-0 max-h-full flex flex-col gap-4">
                         <div>
                             <Input
+                                startAdornment={<Search fontSize="small" />}
                                 value={searchQuery}
                                 onChange={handleSearchQueryChange}
-                                placeholder="Filter templates..."
+                                placeholder="Enter any keyword or data tag to filter templates..."
                             />
                         </div>
                         <div className="overflow-y-auto grow min-h-0">
@@ -87,7 +89,7 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
                                 ))}
                         </div>
                     </div>
-                    <div className="relative min-w-[280px] w-[280px] h-full">
+                    <div className="relative min-w-[400px] w-[400px] h-full">
                         <div className="w-full flex flex-col h-full max-h-full overflow-y-auto border-l border-gray-200 bg-gray-50">
                             <TemplateDetails template={template} onApply={applyTemplate} />
                             <div className="min-h-32" />

@@ -2,13 +2,13 @@ import React from "react";
 
 import { Input, type InputProps } from "../Input/input";
 
-export type TextLengthControlledInputProps = InputProps & {
+export type CharLimitedInputProps = InputProps & {
     maxLength: number;
     value: string;
     onControlledValueChange: (newValue: string) => void;
 };
 
-export function TextLengthControlledInput(props: TextLengthControlledInputProps): React.ReactNode {
+export function CharLimitedInput(props: CharLimitedInputProps): React.ReactNode {
     const { onControlledValueChange, maxLength, value, ...rest } = props;
 
     const [controlledValue, setControlledValue] = React.useState<string>(value);

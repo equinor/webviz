@@ -5,7 +5,7 @@ import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import { TextLengthControlledInput } from "@lib/components/InputTextLengthController/inputTextLengthController";
+import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { Label } from "@lib/components/Label";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
@@ -121,7 +121,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                 <div className="flex flex-col gap-2 grow min-w-0">
                     <Label text="Title">
                         <>
-                            <TextLengthControlledInput
+                            <CharLimitedInput
                                 onControlledValueChange={(value) => setTitle(value)}
                                 maxLength={30}
                                 placeholder="Enter session title"
@@ -137,7 +137,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                     </Label>
                     <Label text="Description (optional)">
                         <>
-                            <TextLengthControlledInput
+                            <CharLimitedInput
                                 maxLength={250}
                                 onControlledValueChange={(value) => setDescription(value)}
                                 placeholder="Enter session description"
