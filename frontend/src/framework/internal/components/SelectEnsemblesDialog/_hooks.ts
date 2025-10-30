@@ -4,7 +4,7 @@ export function useResponsiveDialogSizePercent(): { width: number; height: numbe
     const [dialogWidthPercent, setDialogWidthPercent] = React.useState(0);
     const [dialogHeightPercent, setDialogHeightPercent] = React.useState(0);
 
-    React.useLayoutEffect(() => {
+    React.useLayoutEffect(function mountResizeListener() {
         // Calculate dialog width and height percentage based on window size
         // - Width:
         //    - Use full width for small windows, standard 75% for larger ones

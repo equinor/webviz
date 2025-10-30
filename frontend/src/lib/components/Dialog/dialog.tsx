@@ -58,9 +58,9 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             {/* Main dialog */}
             <div
                 ref={dialogRef}
-                className={resolveClassNames(
-                    "fixed left-1/2 top-1/2 border rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col overflow-hidden",
-                )}
+                className={
+                    "fixed left-1/2 top-1/2 border rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col overflow-hidden"
+                }
                 style={{
                     transform: `translate(-50%, -50%)`,
                     height: props.height,
