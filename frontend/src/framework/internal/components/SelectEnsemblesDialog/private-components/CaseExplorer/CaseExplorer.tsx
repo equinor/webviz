@@ -9,8 +9,8 @@ import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
 import type { TableFilters } from "@lib/components/Table/types";
@@ -258,9 +258,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     </QueryStateWrapper>
                 </div>
             </div>
-            <PendingWrapper
+            <StatusWrapper
                 className="grow min-h-0"
-                isPending={false}
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
             >
                 <div className="flex flex-col h-full">
@@ -284,7 +283,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         />
                     </div>
                 </div>
-            </PendingWrapper>
+            </StatusWrapper>
         </div>
     );
 }
