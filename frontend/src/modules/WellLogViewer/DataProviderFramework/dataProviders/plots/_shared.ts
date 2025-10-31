@@ -35,7 +35,9 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
     const { availableSettingsUpdater, helperDependency } = args;
 
     const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal }) => {
-        const wellboreId = getGlobalSetting("wellboreUuid") ?? "";
+        const wellboreId = getGlobalSetting("wellboreUuid");
+
+        if (!wellboreId) return null;
 
         return await args.queryClient.fetchQuery({
             ...getWellboreLogCurveHeadersOptions({
