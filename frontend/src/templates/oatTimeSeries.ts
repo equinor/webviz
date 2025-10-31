@@ -1,7 +1,7 @@
-import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { ChannelIds } from "@modules/SimulationTimeSeriesSensitivity/channelDefs";
 
 const template: Template = {
@@ -28,7 +28,7 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                response: {
+                channelResponse: {
                     listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.REALIZATION_VALUE,

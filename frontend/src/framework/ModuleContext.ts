@@ -10,7 +10,6 @@
  */
 
 /* eslint-disable react-hooks/rules-of-hooks */
-import type { ChannelContentDefinition, KeyKind } from "./DataChannelTypes";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 import type { ModuleInterfaceTypes } from "./Module";
@@ -18,6 +17,7 @@ import type { ModuleInstance, ModuleInstanceTopicValueTypes } from "./ModuleInst
 import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "./ModuleInstance";
 import type { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import type { SyncSettingKey } from "./SyncSettings";
+import type { ChannelContentDefinition, KeyKind } from "./types/dataChannnel";
 import type { InterfaceBaseType } from "./UniDirectionalModuleComponentsInterface";
 import { useInterfaceValue } from "./UniDirectionalModuleComponentsInterface";
 

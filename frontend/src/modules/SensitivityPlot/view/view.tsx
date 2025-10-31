@@ -1,12 +1,9 @@
 import React from "react";
 
-import { Input } from "@mui/icons-material";
-
 import type { ModuleViewProps } from "@framework/Module";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { computeSensitivitiesForResponse } from "@modules/_shared/SensitivityProcessing/sensitivityProcessing";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing/types";
@@ -73,31 +70,16 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     viewContext.setInstanceTitle(instanceTitle);
 
     function makeViewContent(): React.ReactNode {
-        if (!responseChannelData.hasChannel) {
-            return (
-                <ContentInfo>
-                    <span>
-                        Data channel required for use. Add a main module to the workbench and use the data channels icon{" "}
-                        <Input />
-                    </span>
-                    <Tag label="Response" />
-                </ContentInfo>
-            );
+        if (responseChannelData.warningContent) {
+            return responseChannelData.warningContent;
         }
-
-        if (!responseChannelData.hasChannelContents) {
-            return (
-                <ContentInfo>No data received on channel {responseChannelData.displayName ?? "Unknown"}</ContentInfo>
-            );
-        }
-
         if (!computedSensitivityResponseDataset) {
-            return <ContentInfo>No sensitivities available</ContentInfo>;
+            return <ContentWarning>No sensitivities available</ContentWarning>;
         }
 
         if (displayComponentType === DisplayComponentType.SENSITIVITY_CHART) {
             if (!sensitivityChartBuilder) {
-                return <ContentInfo>No chart data available</ContentInfo>;
+                return <ContentWarning>No chart data available</ContentWarning>;
             }
             return (
                 <Plot layout={sensitivityChartBuilder.makePlotLayout()} data={sensitivityChartBuilder.makePlotData()} />

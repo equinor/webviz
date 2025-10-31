@@ -11,6 +11,7 @@ from primary import config
 from primary.services.sumo_access.sumo_blob_access import get_sas_token_and_blob_base_uri_for_case_async
 from primary.services.sumo_access.sumo_client_factory import create_sumo_client
 from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
+from primary.services.sumo_access.surface_access import filter_search_context_on_attribute
 
 LOGGER = logging.getLogger(__name__)
 
@@ -111,10 +112,12 @@ async def _get_object_uuids_for_surface_realizations_async(
         uuid=case_uuid,
         ensemble=ensemble_name,
         name=surface_name,
-        tagname=surface_attribute,
         realization=realizations if realizations is not None else True,
     )
-
+    search_context = filter_search_context_on_attribute(
+        search_context=search_context,
+        attribute=surface_attribute,
+    )
     ret_list: List[_RealizationObjectId] = []
 
     # Getting just the object uuids seems easy, but we want them paired with realization numbers

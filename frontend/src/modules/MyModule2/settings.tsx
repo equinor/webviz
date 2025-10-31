@@ -5,7 +5,11 @@ import { Check } from "@mui/icons-material";
 import { useAtom } from "jotai";
 import { random, range } from "lodash";
 
+import { Checkbox } from "@lib/components/Checkbox";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import type { TagProps } from "@lib/components/TagInput";
 import type { TagOption, TagOptionProps } from "@lib/components/TagPicker";
@@ -30,6 +34,9 @@ export function Settings(): React.ReactNode {
 
     const [tagSelection, setTagSelection] = React.useState<string[]>([]);
     const [tagSelection2, setTagSelection2] = React.useState<string[]>([]);
+
+    const [isPending, setIsPending] = React.useState(false);
+    const [statusMessage, setStatusMessage] = React.useState<string | undefined>(undefined);
 
     const tags = React.useMemo(() => {
         return range(0, 100).map<TagOption>((i) => ({ value: String(i), label: `Tag ${i}` }));
@@ -113,6 +120,53 @@ export function Settings(): React.ReactNode {
             <Tooltip title="This is long delay" enterDelay="long">
                 <div className="p-1">This text has a tooltip with long delay</div>
             </Tooltip>
+
+            <Label text="Status message" wrapperClassName="pt-2">
+                <div className="pt-2 flex flex-col gap-2">
+                    <Dropdown
+                        value={statusMessage ?? ""}
+                        onChange={(val) => setStatusMessage(val === "" ? undefined : val)}
+                        options={[
+                            undefined,
+                            "This is an info message",
+                            "This is a warning message",
+                            "This is an error message",
+                        ].map((msg, idx) => ({
+                            label: msg ?? "No message",
+                            value: msg ?? "",
+                            key: idx,
+                        }))}
+                    />
+                    <Label text="StatusWrapper example">
+                        <StatusWrapper
+                            errorMessage={statusMessage === "This is an error message" ? statusMessage : undefined}
+                            warningMessage={statusMessage === "This is a warning message" ? statusMessage : undefined}
+                            infoMessage={statusMessage === "This is an info message" ? statusMessage : undefined}
+                        >
+                            <div className="h-12">This box is wrapped in a StatusWrapper</div>
+                        </StatusWrapper>
+                    </Label>
+                    <Label text="PendingWrapper example">
+                        <>
+                            <Checkbox
+                                label="Pending"
+                                checked={isPending}
+                                onChange={(e) => setIsPending(e.target.checked)}
+                            />
+                            <PendingWrapper
+                                isPending={isPending}
+                                errorMessage={statusMessage === "This is an error message" ? statusMessage : undefined}
+                                warningMessage={
+                                    statusMessage === "This is a warning message" ? statusMessage : undefined
+                                }
+                                infoMessage={statusMessage === "This is an info message" ? statusMessage : undefined}
+                            >
+                                <div className="h-12">This box is wrapped in a PendingWrapper</div>
+                            </PendingWrapper>
+                        </>
+                    </Label>
+                </div>
+            </Label>
         </>
     );
 }

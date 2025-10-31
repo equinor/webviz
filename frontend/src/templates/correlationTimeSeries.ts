@@ -1,7 +1,7 @@
-import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 
 const template: Template = {
@@ -25,30 +25,6 @@ const template: Template = {
             },
             */
             syncedSettings: [SyncSettingKey.PARAMETER],
-        }),
-        createTemplateModuleInstance("ParameterResponseCrossPlot", {
-            instanceRef: "MyParameterResponseCrossPlotInstance",
-            layout: {
-                relHeight: 0.5,
-                relWidth: 0.5,
-                relX: 0,
-                relY: 0.5,
-            },
-            syncedSettings: [SyncSettingKey.PARAMETER],
-
-            dataChannelsToInitialSettingsMapping: {
-                channelResponse: {
-                    listensToInstanceRef: "MainSimulationTimeSeriesInstance",
-                    kindOfKey: KeyKind.REALIZATION,
-                    channelIdString: ChannelIds.TIME_SERIES,
-                },
-            },
-            /*
-            initialState: {
-                crossPlottingType: KeyKind.REALIZATION,
-                parameterIdentString: "FWL_CENTRAL~@@~GLOBVAR",
-            },
-            */
         }),
         createTemplateModuleInstance("ParameterResponseCrossPlot", {
             instanceRef: "MyParameterResponseCrossPlotInstance",

@@ -14,6 +14,10 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "3DViewerNew": {
+    settings?: never,
+    view?: never,
+  },
   "DbgWorkbenchSpy": {
     settings?: never,
     view?: never,
@@ -26,11 +30,23 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "Grid3D": {
+    settings?: never,
+    view?: never,
+  },
+  "Grid3DIntersection": {
+    settings?: never,
+    view?: never,
+  },
   "InplaceVolumesPlot": {
     settings?: Partial<InplaceVolumesPlotSettings>,
     view?: never,
   },
   "InplaceVolumesTable": {
+    settings?: never,
+    view?: never,
+  },
+  "InplaceVolumetrics": {
     settings?: never,
     view?: never,
   },
@@ -78,6 +94,10 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "SeismicIntersection": {
+    settings?: never,
+    view?: never,
+  },
   "SensitivityPlot": {
     settings?: never,
     view?: never,
@@ -86,11 +106,23 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "SimulationTimeSeriesMatrix": {
+    settings?: never,
+    view?: never,
+  },
   "SimulationTimeSeriesSensitivity": {
     settings?: never,
     view?: never,
   },
+  "StructuralUncertaintyIntersection": {
+    settings?: never,
+    view?: never,
+  },
   "SubsurfaceMap": {
+    settings?: never,
+    view?: never,
+  },
+  "TimeSeriesParameterDistribution": {
     settings?: never,
     view?: never,
   },

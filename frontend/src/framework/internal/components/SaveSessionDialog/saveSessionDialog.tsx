@@ -5,7 +5,7 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import { TextLengthControlledInput } from "@lib/components/InputTextLengthController/inputTextLengthController";
+import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { Label } from "@lib/components/Label";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
@@ -89,7 +89,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                 <div className="flex flex-col gap-2 grow min-w-0">
                     <Label text="Title">
                         <>
-                            <TextLengthControlledInput
+                            <CharLimitedInput
                                 inputRef={inputRef}
                                 placeholder="Enter session title"
                                 type="text"
@@ -106,7 +106,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                     </Label>
                     <Label text="Description (optional)">
                         <>
-                            <TextLengthControlledInput
+                            <CharLimitedInput
                                 maxLength={250}
                                 onControlledValueChange={(value) => setDescription(value)}
                                 placeholder="Enter session description"

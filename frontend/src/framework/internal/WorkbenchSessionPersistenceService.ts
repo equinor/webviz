@@ -1,16 +1,11 @@
 import { toast } from "react-toastify";
 
 import { getSessionMetadataOptions, getSessionsMetadataQueryKey } from "@api";
-import { DashboardTopic } from "@framework/internal/Dashboard";
 import {
     PrivateWorkbenchSessionTopic,
     type PrivateWorkbenchSession,
 } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
-import { ModuleInstanceTopic } from "@framework/ModuleInstance";
-import { UserCreatedItemsEvent } from "@framework/UserCreatedItems";
 import type { Workbench } from "@framework/Workbench";
-import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
-import { WorkbenchSettingsTopic } from "@framework/WorkbenchSettings";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
@@ -24,7 +19,7 @@ import { localStorageKeyForSessionId } from "./WorkbenchSession/utils/localStora
 import {
     makeWorkbenchSessionLocalStorageString,
     makeWorkbenchSessionStateString,
-} from "./WorkbenchSession/utils/serialization";
+} from "./WorkbenchSession/utils/deserialization";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -93,8 +88,6 @@ export class WorkbenchSessionPersistenceService
         this.updatePersistenceInfo();
 
         this.subscribeToSessionChanges();
-        this.subscribeToDashboardUpdates();
-        this.subscribeToModuleInstanceUpdates();
 
         if (this._fetchingInterval) {
             clearInterval(this._fetchingInterval);
@@ -162,57 +155,9 @@ export class WorkbenchSessionPersistenceService
             "workbench-session",
             this._workbenchSession
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.DASHBOARDS)(() => {
-                this.schedulePullFullSessionState();
-                this.subscribeToDashboardUpdates();
-            }),
-        );
-
-        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "workbench-session",
-            this._workbenchSession
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(WorkbenchSessionTopic.ENSEMBLE_SET)(() => {
-                this.schedulePullFullSessionState();
-                this.subscribeToModuleInstanceUpdates();
-            }),
-        );
-
-        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "workbench-session",
-            this._workbenchSession
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(WorkbenchSessionTopic.REALIZATION_FILTER_SET)(() => {
+                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.SERIALIZED_STATE)(() => {
                 this.schedulePullFullSessionState();
             }),
-        );
-
-        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "workbench-session",
-            this._workbenchSession
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.METADATA)(() => {
-                this.schedulePullFullSessionState();
-            }),
-        );
-
-        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "workbench-session",
-            this._workbenchSession
-                .getWorkbenchSettings()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS)(() => {
-                this.schedulePullFullSessionState();
-            }),
-        );
-
-        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "workbench-session",
-            this._workbenchSession
-                .getUserCreatedItems()
-                .subscribe(UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE, () => {
-                    this.schedulePullFullSessionState();
-                }),
         );
     }
 
@@ -453,66 +398,5 @@ export class WorkbenchSessionPersistenceService
 
     private unsubscribeFromSessionUpdates() {
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
-    }
-
-    private subscribeToDashboardUpdates() {
-        if (!this._workbenchSession) {
-            throw new Error("No active workbench session to subscribe to dashboard updates.");
-        }
-
-        this._unsubscribeFunctionsManagerDelegate.unsubscribe("dashboards");
-
-        const dashboards = this._workbenchSession.getDashboards();
-
-        for (const dashboard of dashboards) {
-            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-                "dashboards",
-                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.Layout)(() => {
-                    this.schedulePullFullSessionState();
-                }),
-            );
-            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-                "dashboards",
-                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ModuleInstances)(() => {
-                    this.schedulePullFullSessionState();
-                    this.subscribeToModuleInstanceUpdates();
-                }),
-            );
-            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-                "dashboards",
-                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ActiveModuleInstanceId)(
-                    () => {
-                        this.schedulePullFullSessionState();
-                    },
-                ),
-            );
-        }
-    }
-
-    private subscribeToModuleInstanceUpdates() {
-        if (!this._workbenchSession) {
-            throw new Error("No active workbench session to subscribe to module instance updates.");
-        }
-
-        this._unsubscribeFunctionsManagerDelegate.unsubscribe("module-instances");
-
-        const dashboards = this._workbenchSession.getDashboards();
-        for (const dashboard of dashboards) {
-            const moduleInstances = dashboard.getModuleInstances();
-            for (const moduleInstance of moduleInstances) {
-                this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-                    "module-instances",
-                    moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SERIALIZED_STATE)(() => {
-                        this.schedulePullFullSessionState();
-                    }),
-                );
-                this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-                    "module-instances",
-                    moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SYNCED_SETTINGS)(() => {
-                        this.schedulePullFullSessionState();
-                    }),
-                );
-            }
-        }
     }
 }

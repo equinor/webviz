@@ -1,4 +1,4 @@
-import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
+import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
 
 export function makeTitleFromChannelContent(content: ChannelReceiverChannelContent<any>, useLineBreak = true): string {
     let title = "";

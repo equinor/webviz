@@ -33,7 +33,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
     const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
 
-    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
 
     const moduleInstanceLifecycleState = useModuleInstanceTopicValue(
         props.moduleInstance,

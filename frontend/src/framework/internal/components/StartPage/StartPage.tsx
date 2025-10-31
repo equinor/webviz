@@ -82,7 +82,7 @@ export function StartPage(props: StartPageProps) {
                             href="https://github.com/equinor/webviz"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-indigo-600 hover:underline"
+                            className="flex items-center gap-2 text-indigo-600 hover:bg-indigo-100 rounded px-4 py-2 font-medium"
                         >
                             <Icon name="github" />
                             Webviz on GitHub

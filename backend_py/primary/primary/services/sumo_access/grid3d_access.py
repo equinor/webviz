@@ -7,7 +7,7 @@ from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import CPGrid
 
-
+from webviz_pkg.core_utils.timestamp_utils import iso_str_to_date_str
 from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
@@ -166,15 +166,16 @@ async def get_grid_properties_info_async(cpgrid: CPGrid) -> List[Grid3dPropertyI
             property_info_arr.append(
                 Grid3dPropertyInfo(
                     property_name=property_name,
-                    iso_date_or_interval=timestamp,
+                    iso_date_or_interval=iso_str_to_date_str(timestamp),
                 )
             )
     for property_name in interval_property_names:
+
         for interval in interval_property_intervals:
             property_info_arr.append(
                 Grid3dPropertyInfo(
                     property_name=property_name,
-                    iso_date_or_interval=f"{interval[0]}/{interval[1]}",
+                    iso_date_or_interval=f"{iso_str_to_date_str(interval[0])}/{iso_str_to_date_str(interval[1])}",
                 )
             )
 

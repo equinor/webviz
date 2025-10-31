@@ -3,8 +3,8 @@ import React from "react";
 import { Close } from "@mui/icons-material";
 import { createPortal } from "react-dom";
 
-import type { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
+import type { ChannelContentDefinition } from "@framework/types/dataChannnel";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Overlay } from "@lib/components/Overlay";

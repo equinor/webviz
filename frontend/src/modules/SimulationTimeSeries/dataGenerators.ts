@@ -1,23 +1,19 @@
 import type { VectorRealizationData_api } from "@api";
-import type { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ChannelContentMetaData, DataGenerator } from "@framework/types/dataChannnel";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import type { VectorSpec } from "./typesAndEnums";
 
-// As of now, the publish to data channels only supports regular ensembles
-export interface RegularEnsembleVectorSpec extends VectorSpec {
-    ensembleIdent: RegularEnsembleIdent;
-}
-
 export function makeVectorGroupDataGenerator(
-    regularEnsembleVectorSpecification: RegularEnsembleVectorSpec,
-    regularEnsembleVectorSpecificationsAndRealizationData: {
-        vectorSpecification: RegularEnsembleVectorSpec;
+    vectorSpecification: VectorSpec,
+    vectorSpecificationsAndRealizationData: {
+        vectorSpecification: VectorSpec;
         data: VectorRealizationData_api[];
     }[],
     activeTimestampUtcMs: number,
-    makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) => string,
+    makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string,
     preferredColor: string,
 ): DataGenerator {
     return () => {
@@ -28,10 +24,10 @@ export function makeVectorGroupDataGenerator(
             displayString: "",
         };
 
-        const vector = regularEnsembleVectorSpecificationsAndRealizationData.find(
+        const vector = vectorSpecificationsAndRealizationData.find(
             (vec) =>
-                vec.vectorSpecification.vectorName === regularEnsembleVectorSpecification.vectorName &&
-                vec.vectorSpecification.ensembleIdent.equals(regularEnsembleVectorSpecification.ensembleIdent),
+                vec.vectorSpecification.vectorName === vectorSpecification.vectorName &&
+                vec.vectorSpecification.ensembleIdent.equals(vectorSpecification.ensembleIdent),
         );
 
         if (vector) {

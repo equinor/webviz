@@ -1,4 +1,4 @@
-import type { DataElement, KeyType } from "@framework/DataChannelTypes";
+import type { ChannelContentMetaData, DataElement, KeyType } from "@framework/types/dataChannnel";
 
 export interface ChannelContentDefinition {
     readonly contentIdString: string;
@@ -8,13 +8,6 @@ export interface ChannelContentDefinition {
 
 export enum ChannelContentNotificationTopic {
     DATA_ARRAY_CHANGE = "data-array-change",
-}
-
-export interface ChannelContentMetaData {
-    readonly ensembleIdentString: string;
-    readonly unit?: string;
-    readonly displayString?: string;
-    readonly preferredColor?: string;
 }
 
 export type DataGenerator = () => DataGeneratorRet;

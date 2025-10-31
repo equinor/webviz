@@ -51,8 +51,8 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
             enterDelay="medium"
         >
             <a
-                className={resolveClassNames("flex gap-4 items-center px-2 py-1 rounded text-indigo-600", {
-                    "opacity-50 italic line-through": props.isDeleted,
+                className={resolveClassNames("flex gap-4 items-center px-2 py-1 rounded text-indigo-600 font-medium", {
+                    "opacity-50 italic line-through cursor-not-allowed": props.isDeleted,
                     "hover:bg-indigo-100": !props.isDeleted,
                 })}
                 href={props.href}
@@ -115,6 +115,7 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
+            <span className="italic mt-4 block text-gray-400 text-sm">Click to open</span>
         </div>
     );
 }

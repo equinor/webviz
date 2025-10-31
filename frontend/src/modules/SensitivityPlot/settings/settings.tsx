@@ -2,14 +2,15 @@ import React from "react";
 
 import { useAtom, useSetAtom } from "jotai";
 
-import { KeyKind } from "@framework/DataChannelTypes";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 
 import { SensitivitySortBy } from "../../_shared/SensitivityProcessing/types";
 import type { Interfaces } from "../interfaces";
@@ -64,22 +65,24 @@ export function Settings({
             responseReceiver.channel.contents[0].metaData.ensembleIdentString
         ) {
             const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdentString;
-            if (typeof ensembleIdentString === "string") {
-                try {
-                    const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
-                    const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-                    if (ensemble) {
-                        sensitivityNames.push(
-                            ...(ensemble
-                                .getSensitivities()
-                                ?.getSensitivityArr()
-                                .map((el) => el.name) ?? []),
-                        );
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
+
+            const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+            if (!ensemble || ensemble instanceof DeltaEnsemble) {
+                const ensembleType = !ensemble ? "Invalid" : "Delta";
+                return (
+                    <ContentWarning>
+                        <p>{ensembleType} ensemble detected in the data channel.</p>
+                        <p>Unable to compute parameter correlations.</p>
+                    </ContentWarning>
+                );
             }
+
+            sensitivityNames.push(
+                ...(ensemble
+                    .getSensitivities()
+                    ?.getSensitivityArr()
+                    .map((el) => el.name) ?? []),
+            );
         }
     }
 

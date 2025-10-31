@@ -3,20 +3,20 @@ import React from "react";
 import { Input, Warning } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
-import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
-import { KeyKind } from "@framework/DataChannelTypes";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { KeyKind } from "@framework/types/dataChannnel";
+import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
 import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
-import { ContentInfo } from "@modules/_shared/components/ContentMessage";
-import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
@@ -120,7 +120,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             // Content when no data channels are defined
             if (receiverResponses.every((response) => !response.channel)) {
                 setContent(
-                    <ContentInfo>
+                    <ContentWarning>
                         <span>
                             Data channel required for use. Add a main module to the workbench and use the data channels
                             <Input fontSize="small" />
@@ -131,7 +131,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                             <Tag label="Response" />
                             <Tag label="Response" />
                         </span>
-                    </ContentInfo>,
+                    </ContentWarning>,
                 );
                 return;
             }
@@ -142,11 +142,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             );
             // Content when no data is received on any of the channels
             if (usedChannels.length === usedChannelsWithoutData.length) {
-                setContent(
-                    <ContentInfo>
-                        <span>No data received on any of the channels. Check relevant modules for issues.</span>
-                    </ContentInfo>,
-                );
+                setContent(<ContentWarning>No data received on any of the channels.</ContentWarning>);
                 return;
             }
             // Add a warning when some channels have no data
@@ -193,6 +189,19 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 showLabels,
                 useFixedColorRange,
             });
+            for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
+                const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+                if (!ensemble || ensemble instanceof DeltaEnsemble) {
+                    const ensembleType = !ensemble ? "Invalid" : "Delta";
+                    setContent(
+                        <ContentWarning>
+                            <p>{ensembleType} ensemble detected in the data channel.</p>
+                            <p>Unable to compute parameter correlations.</p>
+                        </ContentWarning>,
+                    );
+                    return;
+                }
+            }
             fillParameterCorrelationMatrixFigure(
                 figure,
                 parameterIdents,

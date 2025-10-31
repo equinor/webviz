@@ -2,33 +2,16 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import type { DataElement, KeyKind, KeyKindToKeyTypeMapping } from "@framework/DataChannelTypes";
+import type {
+    ChannelReceiverChannelContent,
+    ChannelReceiverReturnData,
+    DataElement,
+    KeyKind,
+    KeyKindToKeyTypeMapping,
+} from "@framework/types/dataChannnel";
 
-
-import type { ChannelContentMetaData } from "../ChannelContent";
 import type { ChannelReceiver } from "../ChannelReceiver";
 import { ChannelReceiverNotificationTopic } from "../ChannelReceiver";
-
-export interface ChannelReceiverChannelContent<TKeyKinds extends KeyKind[]> {
-    idString: string;
-    displayName: string;
-    dataArray: DataElement<KeyKindToKeyTypeMapping[TKeyKinds[number]]>[];
-    metaData: ChannelContentMetaData;
-}
-
-export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> = {
-    readonly idString: string;
-    readonly displayName: string;
-    readonly isPending: boolean;
-    readonly revisionNumber: number;
-    readonly channel?: {
-        readonly idString: string;
-        readonly displayName: string;
-        readonly moduleInstanceId: string;
-        readonly kindOfKey: KeyKind | string;
-        readonly contents: ChannelReceiverChannelContent<TKeyKinds>[];
-    };
-};
 
 export function useChannelReceiver<TKeyKinds extends KeyKind[]>(
     receiver: ChannelReceiver,

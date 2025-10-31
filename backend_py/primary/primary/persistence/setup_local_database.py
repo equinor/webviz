@@ -11,7 +11,11 @@ from urllib.error import URLError
 
 from azure.cosmos import CosmosClient, PartitionKey, DatabaseProxy
 
-from primary.config import COSMOS_DB_PROD_CONNECTION_STRING, COSMOS_DB_EMULATOR_URI, COSMOS_DB_EMULATOR_KEY
+from primary.config import (
+    COSMOS_DB_PROD_CONNECTION_STRING,
+    COSMOS_DB_EMULATOR_URI,
+    COSMOS_DB_EMULATOR_KEY,
+)
 
 LOGGER = logging.getLogger(__name__)
 

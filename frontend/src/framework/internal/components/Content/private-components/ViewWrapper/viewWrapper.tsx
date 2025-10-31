@@ -41,7 +41,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const [prevX, setPrevX] = React.useState<number>(props.x);
     const [prevY, setPrevY] = React.useState<number>(props.y);
 
-    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
     const isActive = props.moduleInstance.getId() === activeModuleInstanceId;
 
     const ref = React.useRef<HTMLDivElement>(null);
