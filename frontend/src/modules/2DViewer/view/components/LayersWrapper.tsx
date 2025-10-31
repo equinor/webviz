@@ -2,10 +2,8 @@ import React from "react";
 
 import type { Layer } from "@deck.gl/core";
 import type { BoundingBox2D } from "@webviz/subsurface-viewer";
-import { CrosshairLayer } from "@webviz/subsurface-viewer/dist/layers";
-import _ from "lodash";
 
-import { type HoverService, HoverTopic, useHoverValue } from "@framework/HoverService";
+import { type HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -38,7 +36,6 @@ import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visual
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
 import { makeRealizationSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationSurfaceLayer";
 import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
-import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import {
     VisualizationAssembler,
@@ -47,8 +44,8 @@ import {
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
+import { HoverVisualizationWrapper } from "./HoverVisualizationWrapper";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "./SubsurfaceViewerWrapper";
-import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 
@@ -59,30 +56,10 @@ export type LayersWrapperProps = {
     viewContext: ViewContext<Interfaces>;
 };
 
-const HOVER_CROSSHAIR_LAYER_ID = "2d-hover-highlights";
-
 function bboxToBound2d(box: bbox.BBox | null): BoundingBox2D | undefined {
     if (!box) return undefined;
 
     return [box.min.x, box.min.y, box.max.x, box.max.y];
-}
-
-function useCrosshairLayer(
-    boundingBox: bbox.BBox | null,
-    hoverService: HoverService,
-    instanceId: string,
-): CrosshairLayer {
-    const { x, y } = useHoverValue(HoverTopic.WORLD_POS, hoverService, instanceId) ?? {};
-    const xInRange = boundingBox && x && _.inRange(x, boundingBox.min.x, boundingBox.max.x);
-    const yInRange = boundingBox && y && _.inRange(y, boundingBox.min.y, boundingBox.max.y);
-
-    return new CrosshairLayer({
-        id: HOVER_CROSSHAIR_LAYER_ID,
-        worldCoordinates: [x ?? 0, y ?? 0, 0],
-        sizePx: 40,
-        // Hide it crosshair with opacity to keep layer mounted
-        color: [255, 255, 255, xInRange && yInRange ? 225 : 0],
-    });
 }
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
@@ -156,28 +133,14 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const assemblerProduct = useVisualizationAssemblerProduct(props.layerManager, VISUALIZATION_ASSEMBLER);
 
-    const hoverVisualizations = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
-        assemblerProduct,
-        props.hoverService,
-        props.viewContext.getInstanceIdString(),
-    );
-
-    const globalAnnotations = assemblerProduct.annotations.filter((el) => "colorScale" in el);
-    const globalVisualizations = hoverVisualizations.find(({ groupId }) => groupId === "")?.hoverVisualizations ?? [];
-
     const viewports: ViewportTypeExtended[] = [];
     const deckGlLayers: Layer<any>[] = [];
-    const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
-    const globalLayerIds: string[] = [
-        "placeholder",
-        HOVER_CROSSHAIR_LAYER_ID,
-        ...globalVisualizations.map(({ id }) => id),
-    ];
+    const globalLayerIds: string[] = ["placeholder"];
 
     for (const item of assemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
             const colorScales = item.annotations.filter((el) => "colorScale" in el);
-            const layerIds: string[] = [];
+            const layerIds: string[] = ["placeholder"];
 
             for (const child of item.children) {
                 if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
@@ -189,12 +152,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                     }
                 }
             }
-
-            hoverVisualizations.forEach((hoverVisualization) => {
-                if (hoverVisualization.groupId === item.id) {
-                    layerIds.push(...hoverVisualization.hoverVisualizations.map((layer) => layer.id));
-                }
-            });
 
             viewports.push({
                 id: item.id,
@@ -214,7 +171,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             ...viewport,
             // Apply global layers/annotations
             layerIds: [...viewport.layerIds!],
-            colorScales: [...globalColorScales, ...viewport.colorScales!],
+            colorScales: [...viewport.colorScales!],
         })),
     };
 
@@ -250,21 +207,12 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         statusWriter.addError(message);
     }
 
-    const crossHairLayer = useCrosshairLayer(
-        prevBoundingBox,
-        props.hoverService,
-        props.viewContext.getInstanceIdString(),
-    );
-
     deckGlLayers.push(new PlaceholderLayer({ id: "placeholder" }));
     deckGlLayers.reverse();
-    // We want these to always be on top
-    deckGlLayers.push(crossHairLayer);
-    deckGlLayers.push(...hoverVisualizations.flatMap((hvs) => hvs.hoverVisualizations));
-
     return (
         <PendingWrapper className="w-full h-full flex flex-col" isPending={numLoadingLayers > 0}>
-            <SubsurfaceViewerWrapper
+            <HoverVisualizationWrapper
+                assemblerProduct={assemblerProduct}
                 instanceId={props.viewContext.getInstanceIdString()}
                 hoverService={props.hoverService}
                 views={views}

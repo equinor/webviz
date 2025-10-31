@@ -1,6 +1,7 @@
 import React from "react";
 
-import type { HoverData, HoverService, HoverTopic } from "@framework/HoverService";
+import type { HoverData, HoverService } from "@framework/HoverService";
+import { HoverTopic } from "@framework/HoverService";
 
 import {
     VisualizationItemType,
@@ -15,11 +16,6 @@ import {
 export type AssemblerProviderHoverVisualizations<TTarget extends VisualizationTarget> = {
     groupId?: string;
     hoverVisualizations: DataProviderHoverVisualizationTargetTypes[TTarget][];
-};
-
-type InternalAssemblerProviderHoverVisualizations<TTarget extends VisualizationTarget> = {
-    groupId?: string;
-    hoverVisualizations: Partial<Record<HoverTopic, DataProviderHoverVisualizationTargetTypes[TTarget][]>>;
 };
 
 type InternalAssemblerProviderHoverVisualizationFunctions<TTarget extends VisualizationTarget> = {
@@ -75,19 +71,14 @@ export function useSubscribedProviderHoverVisualizations<TTarget extends Visuali
         const visualizations = [] as AssemblerProviderHoverVisualizations<TTarget>[];
 
         for (const visualizationFunc of visualizationFunctions) {
+            const hoverFunctions = visualizationFunc.hoverVisualizationFunctions;
             const groupVisualization = [];
 
-            for (const topic in visualizationFunc.hoverVisualizationFunctions) {
-                const typedTopic = topic as HoverTopic;
-                const topicVisualization = visualizationFunc.hoverVisualizationFunctions[typedTopic] as
-                    | HoverVisualizationFunction<TTarget, typeof typedTopic>
-                    | undefined;
+            for (const untypedTopic in hoverFunctions) {
+                const { topic, topicVisualization } = getTypedTopicAndFunc(untypedTopic, hoverFunctions);
 
-                const data = hoverData[typedTopic];
-
-                if (topicVisualization && data !== undefined) {
-                    const visualization = topicVisualization(data);
-
+                if (topic && topicVisualization) {
+                    const visualization = topicVisualization(hoverData[topic] ?? null);
                     groupVisualization.push(visualization);
                 }
             }
@@ -101,22 +92,40 @@ export function useSubscribedProviderHoverVisualizations<TTarget extends Visuali
     }, [hoverData, visualizationFunctions]);
 }
 
+function getTypedTopicAndFunc<TTarget extends VisualizationTarget>(
+    untypedTopic: string,
+    functions: HoverVisualizationFunctions<TTarget>,
+) {
+    if (!Object.values<string>(HoverTopic).includes(untypedTopic)) return {};
+
+    const typedTopic = untypedTopic as HoverTopic;
+    type TFunc = HoverVisualizationFunction<TTarget, typeof typedTopic>;
+    const typedFunc = functions[typedTopic] as TFunc | undefined;
+
+    return {
+        topic: typedTopic,
+        topicVisualization: typedFunc,
+    };
+}
+
 function flattenVisualizationFunctionsRecursively<TTarget extends VisualizationTarget>(
     visualizationGroup: VisualizationGroup<TTarget> | AssemblerProduct<TTarget, any, any>,
 ): InternalAssemblerProviderHoverVisualizationFunctions<TTarget>[] {
     const visualizationFunctions: InternalAssemblerProviderHoverVisualizationFunctions<TTarget>[] = [];
-    if (visualizationGroup.hoverVisualizationFunctions) {
+    const groupId = Object.hasOwn(visualizationGroup, "id")
+        ? (visualizationGroup as VisualizationGroup<TTarget>).id
+        : undefined;
+
+    if (visualizationGroup.hoverVisualizationFunctions && groupId !== "") {
         visualizationFunctions.push({
-            groupId: Object.hasOwn(visualizationGroup, "id")
-                ? (visualizationGroup as VisualizationGroup<TTarget>).id
-                : undefined,
+            groupId,
             hoverVisualizationFunctions: visualizationGroup.hoverVisualizationFunctions,
         });
     }
 
     if (visualizationGroup.children) {
         for (const child of visualizationGroup.children) {
-            if (child.itemType === VisualizationItemType.GROUP) {
+            if (child.itemType === VisualizationItemType.GROUP && child.id !== "") {
                 visualizationFunctions.push(...flattenVisualizationFunctionsRecursively<TTarget>(child));
             }
         }
