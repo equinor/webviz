@@ -5,13 +5,13 @@ import type { Atom } from "jotai";
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
-import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import type { InitialSettings } from "./InitialSettings";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 import type { ImportStatus, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
+import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataChannnel";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
 

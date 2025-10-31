@@ -13,9 +13,9 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { ErrorWrapper } from "@lib/components/ErrorWrapper";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -244,9 +244,10 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 <div className="flex flex-col gap-2">{props.additionalSettings}</div>
                 <div className="flex flex-col gap-2">
                     <CollapsibleGroup title="Inplace volumes table names" expanded>
-                        <ErrorWrapper
-                            isError={tableSourceOptions.length === 0 && !props.isPending}
-                            message={"No table names"}
+                        <StatusWrapper
+                            errorMessage={
+                                !props.isPending && tableSourceOptions.length === 0 ? "No table names" : undefined
+                            }
                         >
                             <Select
                                 options={tableSourceOptions}
@@ -255,7 +256,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                 multiple
                                 size={3}
                             />
-                        </ErrorWrapper>
+                        </StatusWrapper>
                     </CollapsibleGroup>
                     <CollapsibleGroup title="Index filters" expanded>
                         <div className="flex flex-col gap-2">
@@ -266,9 +267,12 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                     onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
                                 />
                             </div>
-                            <ErrorWrapper
-                                isError={!props.areCurrentlySelectedTablesComparable}
-                                message={"Selected tables are not comparable due to mismatching index columns"}
+                            <StatusWrapper
+                                errorMessage={
+                                    !props.areCurrentlySelectedTablesComparable
+                                        ? "Selected tables are not comparable due to mismatching index columns"
+                                        : undefined
+                                }
                             >
                                 {props.availableIndicesWithValues.map((indexWithValues) => (
                                     <CollapsibleGroup
@@ -295,7 +299,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                         />
                                     </CollapsibleGroup>
                                 ))}
-                            </ErrorWrapper>
+                            </StatusWrapper>
                         </div>
                     </CollapsibleGroup>
                 </div>
