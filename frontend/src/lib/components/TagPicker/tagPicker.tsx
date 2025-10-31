@@ -10,10 +10,11 @@ import { TagInput } from "../TagInput";
 
 import { useDebouncedStateEmit, useOnScreenChangeHandler } from "./hooks";
 import { DefaultTagOption, type TagOptionProps } from "./private-components/defaultTagOption";
+import type { ItemFocusMode } from "./private-components/dropdownItemList";
 import { DropdownItemList } from "./private-components/dropdownItemList";
 
-const DROPDOWN_MAX_HEIGHT = 200;
 const TAG_OPTION_HEIGHT = 32;
+const DROPDOWN_MAX_HEIGHT = TAG_OPTION_HEIGHT * 6;
 
 const NO_MATCHING_TAGS_TEXT = "No matching options";
 const NO_TAGS_TEXT = "No options";
@@ -31,9 +32,10 @@ export type TagPickerProps<TValue extends string = string> = {
     placeholder?: string;
     showListAsSelectionCount?: boolean;
     debounceTimeMs?: number;
+    dropdownMinWidth?: number;
     renderTagOption?: (props: TagOptionProps) => React.ReactNode;
     onChange?: (newSelection: TValue[]) => void;
-} & Pick<TagInputProps, "renderTag"> &
+} & Pick<TagInputProps, "renderTag" | "inputProps"> &
     BaseComponentProps;
 
 export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactElement {
@@ -47,7 +49,9 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
     // --- State variables
     const [inputValue, setInputValue] = React.useState("");
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
+    const [showInputAsFocused, setShowInputAsFocused] = React.useState(false);
     const [focusedItemIndex, setFocusedItemIndex] = React.useState<number>(-1);
+    const [itemFocusMode, setItemFocusMode] = React.useState<ItemFocusMode>("keyboard");
 
     const [selection, debouncedOnChange, flushDebounce] = useDebouncedStateEmit(
         props.selection,
@@ -82,13 +86,18 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
 
     // Reset the dropdown item focus whenever filtered tags change, as the focused item likely went away.
     if (prevFilteredTags !== filteredTags) {
+        const prevFocusedTag = prevFilteredTags[focusedItemIndex];
+        // Avoid iterating a potentially long list if no item is focused
+        const newFocusedIndex = prevFocusedTag ? filteredTags.findIndex((t) => t.value === prevFocusedTag.value) : -1;
+
         setPrevFilteredTags(filteredTags);
-        setFocusedItemIndex(-1);
+        setFocusedItemIndex(newFocusedIndex);
     }
 
     // --- Callbacks
     const handleInputFocus = React.useCallback(function handleInputFocus() {
         setDropdownVisible(true);
+        setShowInputAsFocused(true);
     }, []);
 
     const handleFocusOut = React.useCallback(
@@ -97,6 +106,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 !tagInputRef.current?.contains(evt.relatedTarget as Node) &&
                 !dropdownRef.current?.contains(evt.relatedTarget as Node)
             ) {
+                setShowInputAsFocused(false);
                 setDropdownVisible(false);
                 flushDebounce();
             }
@@ -148,7 +158,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
     );
 
     const handleToggleTag = React.useCallback(
-        function handleToggleTag(tag: string) {
+        function handleToggleTag(tag: string, listIndex: number) {
             const newSelection = [...selection];
             const tagIndex = selection.indexOf(tag);
 
@@ -158,6 +168,8 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 newSelection.splice(tagIndex, 1);
             }
 
+            setFocusedItemIndex(listIndex);
+            setItemFocusMode("keyboard");
             handleTagsChange(newSelection);
         },
         [handleTagsChange, selection],
@@ -176,9 +188,9 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 if (!dropdownVisible) {
                     setDropdownVisible(true);
                 } else if (focusedItemIndex !== -1) {
-                    handleToggleTag(filteredTags[focusedItemIndex].value);
+                    handleToggleTag(filteredTags[focusedItemIndex].value, focusedItemIndex);
                 } else if (filteredTags.length === 1) {
-                    handleToggleTag(filteredTags[0].value);
+                    handleToggleTag(filteredTags[0].value, 0);
                 } else if (filteredTags.length > 0) {
                     setFocusedItemIndex(0);
                 }
@@ -196,6 +208,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
 
                 if (evt.shiftKey) selectionMove *= 10;
 
+                setItemFocusMode("keyboard");
                 setFocusedItemIndex((prev) => clamp(prev + selectionMove, 0, filteredTags.length - 1));
             }
         },
@@ -211,6 +224,11 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
         }, []),
     );
 
+    const handleListOptionHover = React.useCallback(function handleListOptionHover(index: number) {
+        setItemFocusMode("mouse");
+        setFocusedItemIndex(index);
+    }, []);
+
     return (
         <BaseComponent ref={ref} disabled={props.disabled}>
             <TagInput
@@ -218,6 +236,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 inputRef={filterInputRef}
                 placeholder={tagInputPlaceholder}
                 tags={selection}
+                showAsFocused={showInputAsFocused}
                 alwaysShowPlaceholder={props.showListAsSelectionCount}
                 backspaceDeleteMode={props.showListAsSelectionCount ? "none" : "hard"}
                 tagListSelectionMode={props.showListAsSelectionCount ? "none" : "multiple"}
@@ -232,6 +251,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                     onValueChange: setInputValue,
                     onFocus: handleInputFocus,
                     onKeyDown: handleInputKeyDown,
+                    ...props.inputProps,
                 }}
             />
 
@@ -242,8 +262,10 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                     items={filteredTags}
                     optionHeight={TAG_OPTION_HEIGHT}
                     itemFocusIndex={focusedItemIndex}
+                    itemFocusMode={itemFocusMode}
                     dropdownMaxHeight={DROPDOWN_MAX_HEIGHT}
                     emptyListText={props.tagOptions.length === 0 ? NO_TAGS_TEXT : NO_MATCHING_TAGS_TEXT}
+                    minWidth={props.dropdownMinWidth}
                     renderItem={(option, index) => (
                         <React.Fragment key={index}>
                             {renderTagOptionOrDefault({
@@ -252,8 +274,8 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                                 isSelected: selection.includes(option.value),
                                 isFocused: focusedItemIndex === index,
                                 height: TAG_OPTION_HEIGHT,
-                                onToggle: () => handleToggleTag(option.value),
-                                onHover: () => setFocusedItemIndex(index),
+                                onToggle: () => handleToggleTag(option.value, index),
+                                onHover: () => handleListOptionHover(index),
                             })}
                         </React.Fragment>
                     )}
