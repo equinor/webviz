@@ -1,7 +1,7 @@
 import React from "react";
 
 import { FilterAlt } from "@mui/icons-material";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
@@ -9,7 +9,6 @@ import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -28,6 +27,7 @@ import { Select } from "@lib/components/Select";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 
 import type { Interfaces } from "../interfaces";
@@ -51,13 +51,12 @@ import {
     groupByAtom,
     resampleFrequencyAtom,
     selectedVectorNamesAtom,
+    selectedVectorTagsAtom,
     showHistoricalAtom,
     showObservationsAtom,
     statisticsSelectionAtom,
     subplotLimitDirectionAtom,
     subplotMaxDirectionElementsAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedParameterIdentStringAtom,
     visualizationModeAtom,
 } from "./atoms/baseAtoms";
 import {
@@ -65,24 +64,17 @@ import {
     customVectorDefinitionsAtom,
     ensembleVectorListsHelperAtom,
     isVectorListQueriesFetchingAtom,
-    selectedEnsembleIdentsAtom,
-    selectedParameterIdentStringAtom,
     statisticsTypeAtom,
     vectorSelectorDataAtom,
 } from "./atoms/derivedAtoms";
+import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "./atoms/persistableFixableAtoms";
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-export function Settings({
-    initialSettings,
-    settingsContext,
-    workbenchSession,
-    workbenchServices,
-}: ModuleSettingsProps<Interfaces>) {
+export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
-    const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
     const [showParameterListFilter, setShowParameterListFilter] = React.useState(false);
 
     const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
@@ -94,34 +86,18 @@ export function Settings({
     const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
     const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
     const [statisticsSelection, setStatisticsSelection] = useAtom(statisticsSelectionAtom);
+    const [selectedVectorTags, setSelectedVectorTags] = useAtom(selectedVectorTagsAtom);
     const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
     const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
     const customVectorDefinitions = useAtomValue(customVectorDefinitionsAtom);
     const statisticsType = useAtomValue(statisticsTypeAtom);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
-    const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
+    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
     const continuousAndNonConstantParametersUnion = useAtomValue(continuousAndNonConstantParametersUnionAtom);
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
-    const setUserSelectedParameterIdentStr = useSetAtom(userSelectedParameterIdentStringAtom);
-    const selectedParameterIdentStr = useAtomValue(selectedParameterIdentStringAtom);
-
-    useApplyInitialSettingsToState(initialSettings, "selectedVectorTags", "array", setSelectedVectorTags);
-    useApplyInitialSettingsToState(initialSettings, "visualizationMode", "string", setVisualizationMode);
-    useApplyInitialSettingsToState(
-        initialSettings,
-        "colorRealizationsByParameter",
-        "boolean",
-        setColorRealizationsByParameter,
-    );
-    useApplyInitialSettingsToState(
-        initialSettings,
-        "selectedParameterIdentString",
-        "string",
-        setUserSelectedParameterIdentStr,
-    );
+    const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useAtom(selectedParameterIdentStringAtom);
 
     const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -129,10 +105,10 @@ export function Settings({
 
     // Receive global parameter string and update local state if different
     React.useEffect(() => {
-        if (globalSyncedParameter !== null && globalSyncedParameter !== selectedParameterIdentStr) {
-            setUserSelectedParameterIdentStr(globalSyncedParameter);
+        if (globalSyncedParameter !== null && globalSyncedParameter !== selectedParameterIdentStr.value) {
+            setSelectedParameterIdentStr(globalSyncedParameter);
         }
-    }, [globalSyncedParameter, setUserSelectedParameterIdentStr, selectedParameterIdentStr]);
+    }, [globalSyncedParameter, setSelectedParameterIdentStr, selectedParameterIdentStr]);
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
@@ -150,14 +126,14 @@ export function Settings({
 
     function handleColorByParameterChange(parameterIdentStrings: string[]) {
         if (parameterIdentStrings.length !== 0) {
-            setUserSelectedParameterIdentStr(parameterIdentStrings[0]);
+            setSelectedParameterIdentStr(parameterIdentStrings[0]);
             return;
         }
-        setUserSelectedParameterIdentStr(null);
+        setSelectedParameterIdentStr(null);
     }
 
     function handleEnsembleSelectChange(ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) {
-        setUserSelectedEnsembleIdents(ensembleIdentArray);
+        setSelectedEnsembleIdents(ensembleIdentArray);
     }
 
     function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
@@ -322,13 +298,15 @@ export function Settings({
                 />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Ensembles">
-                <EnsemblePicker
-                    ensembles={ensembleSet.getEnsembleArray()}
-                    value={selectedEnsembleIdents}
-                    allowDeltaEnsembles={true}
-                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
-                    onChange={handleEnsembleSelectChange}
-                />
+                <PersistableAtomWarningWrapper atom={selectedEnsembleIdentsAtom}>
+                    <EnsemblePicker
+                        ensembles={ensembleSet.getEnsembleArray()}
+                        value={selectedEnsembleIdents.value}
+                        allowDeltaEnsembles={true}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                        onChange={handleEnsembleSelectChange}
+                    />
+                </PersistableAtomWarningWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Vectors">
                 <Checkbox
@@ -424,19 +402,21 @@ export function Settings({
                                     </Label>
                                 </div>
                                 <div className={`${showParameterListFilter ? "pt-3" : "pt-1"}`}>
-                                    <Select
-                                        options={filteredParameterIdentList.map((elm) => ({
-                                            value: elm.toString(),
-                                            label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
-                                        }))}
-                                        size={6}
-                                        value={
-                                            selectedParameterIdentStr
-                                                ? [selectedParameterIdentStr.toString()]
-                                                : undefined
-                                        }
-                                        onChange={handleColorByParameterChange}
-                                    />
+                                    <PersistableAtomWarningWrapper atom={selectedParameterIdentStringAtom}>
+                                        <Select
+                                            options={filteredParameterIdentList.map((elm) => ({
+                                                value: elm.toString(),
+                                                label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
+                                            }))}
+                                            size={6}
+                                            value={
+                                                selectedParameterIdentStr
+                                                    ? [selectedParameterIdentStr.toString()]
+                                                    : undefined
+                                            }
+                                            onChange={handleColorByParameterChange}
+                                        />
+                                    </PersistableAtomWarningWrapper>
                                 </div>
                             </div>
                         </div>
