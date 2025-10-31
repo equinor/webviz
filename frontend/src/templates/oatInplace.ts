@@ -1,7 +1,7 @@
-import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 import { DisplayComponentType } from "@modules/SensitivityPlot/typesAndEnums";

@@ -1,9 +1,9 @@
 import { Input } from "@mui/icons-material";
 
-import { KeyKind } from "@framework/DataChannelTypes";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Tag } from "@lib/components/Tag";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";

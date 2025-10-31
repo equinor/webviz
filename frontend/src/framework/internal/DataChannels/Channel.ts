@@ -1,4 +1,4 @@
-import type { KeyKind } from "@framework/DataChannelTypes";
+import type { KeyKind } from "@framework/types/dataChannnel";
 
 import type { ChannelContentDefinition } from "./ChannelContent";
 import { ChannelContent, ChannelContentNotificationTopic } from "./ChannelContent";

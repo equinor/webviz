@@ -1,6 +1,6 @@
 import React from "react";
 
-import { type Layer } from "@deck.gl/core";
+import { OrbitView, type Layer } from "@deck.gl/core";
 import type { BoundingBox3D } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
@@ -208,7 +208,7 @@ export function DataProvidersWrapper(props: LayersWrapperProps): React.ReactNode
                 name: item.name,
                 color: item.color,
                 isSync: true,
-                show3D: true,
+                viewType: OrbitView,
                 layerIds,
                 colorScales,
             });

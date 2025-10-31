@@ -2,7 +2,6 @@ import type React from "react";
 
 import type { Getter, Setter } from "jotai";
 
-import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import type { HoverService } from "./HoverService";
 import type { InitialSettings } from "./InitialSettings";
 import type { SettingsContext, ViewContext } from "./ModuleContext";
@@ -10,6 +9,7 @@ import type { ModuleDataTagId } from "./ModuleDataTags";
 import { ModuleInstance, ModuleInstanceTopic } from "./ModuleInstance";
 import type { DrawPreviewFunc } from "./Preview";
 import type { SyncSettingKey } from "./SyncSettings";
+import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataChannnel";
 import type { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import type { WorkbenchServices } from "./WorkbenchServices";
 import type { WorkbenchSession } from "./WorkbenchSession";
