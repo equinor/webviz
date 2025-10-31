@@ -3,10 +3,10 @@ import React from "react";
 import { Warning } from "@mui/icons-material";
 import type { Layout, PlotData } from "plotly.js";
 
-import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
-import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";

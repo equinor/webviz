@@ -1,8 +1,8 @@
 import { useAtomValue } from "jotai";
 
 import type { VectorRealizationData_api } from "@api";
-import type { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import type { ViewContext } from "@framework/ModuleContext";
+import type { ChannelContentDefinition } from "@framework/types/dataChannnel";
 import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 import { makeVectorGroupDataGenerator } from "@modules/SimulationTimeSeries/dataGenerators";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
