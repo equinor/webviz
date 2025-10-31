@@ -1,12 +1,14 @@
 import React from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 
 import {
@@ -14,19 +16,21 @@ import {
     DataProviderManagerTopic,
 } from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
-import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
-import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
+import { dataProviderManagerAtom, dataProviderStateAtom, preferredViewLayoutAtom } from "./atoms/baseAtoms";
+import { fieldIdentifierAtom } from "./atoms/persistableAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const queryClient = useQueryClient();
 
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
+    const [dataProviderState, setDataProviderState] = useAtom(dataProviderStateAtom);
 
-    const fieldIdentifier = useAtomValue(selectedFieldIdentifierAtom);
-    const setFieldIdentifier = useSetAtom(userSelectedFieldIdentifierAtom);
-    const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
+    const dataProviderStateRef = React.useRef(dataProviderState);
+
+    const [fieldIdentifier, setFieldIdentifier] = useAtom(fieldIdentifierAtom);
+    const [, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
 
     const persistState = React.useCallback(
         function persistLayerManagerState() {
@@ -35,46 +39,35 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             }
 
             const serializedState = {
-                layerManager: dataProviderManager.serializeState(),
-                fieldIdentifier,
-                preferredViewLayout,
+                dataProviderManager: dataProviderManager.serializeState(),
             };
 
-            window.localStorage.setItem(
-                `${props.settingsContext.getInstanceIdString()}-settings`,
-                JSON.stringify(serializedState),
-            );
+            setDataProviderState(JSON.stringify(serializedState));
         },
-        [dataProviderManager, fieldIdentifier, preferredViewLayout, props.settingsContext],
+        [dataProviderManager, setDataProviderState],
     );
 
     const applyPersistedState = React.useCallback(
-        function applyPersistedState(layerManager: DataProviderManager) {
-            const serializedState = window.localStorage.getItem(
-                `${props.settingsContext.getInstanceIdString()}-settings`,
-            );
+        function applyPersistedState(dataProviderManager: DataProviderManager) {
+            const serializedState = dataProviderStateRef.current;
 
             if (!serializedState) {
                 return;
             }
 
             const parsedState = JSON.parse(serializedState);
-            if (parsedState.fieldIdentifier) {
-                setFieldIdentifier(parsedState.fieldIdentifier);
-            }
             if (parsedState.preferredViewLayout) {
                 setPreferredViewLayout(parsedState.preferredViewLayout);
             }
 
-            if (parsedState.layerManager) {
-                if (!layerManager) {
+            if (parsedState.dataProviderManager) {
+                if (!dataProviderManager) {
                     return;
                 }
-                layerManager.updateGlobalSetting("fieldId", parsedState.fieldIdentifier);
-                layerManager.deserializeState(parsedState.layerManager);
+                dataProviderManager.deserializeState(parsedState.dataProviderManager);
             }
         },
-        [setFieldIdentifier, setPreferredViewLayout, props.settingsContext],
+        [setPreferredViewLayout],
     );
 
     React.useEffect(
@@ -125,7 +118,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             if (!dataProviderManager) {
                 return;
             }
-            dataProviderManager.updateGlobalSetting("fieldId", fieldIdentifier);
+            dataProviderManager.updateGlobalSetting("fieldId", fieldIdentifier.value);
         },
         [fieldIdentifier, dataProviderManager],
     );
@@ -141,7 +134,13 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     return (
         <div className="h-full flex flex-col gap-1">
             <CollapsibleGroup title="Field" expanded>
-                <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier} />
+                <PersistableAtomWarningWrapper atom={fieldIdentifierAtom}>
+                    <FieldDropdown
+                        ensembleSet={ensembleSet}
+                        onChange={handleFieldChange}
+                        value={fieldIdentifier.value}
+                    />
+                </PersistableAtomWarningWrapper>
             </CollapsibleGroup>
             {dataProviderManager && (
                 <DataProviderManagerWrapper

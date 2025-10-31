@@ -1,16 +1,15 @@
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
-import { TemplateRegistry } from "@framework/TemplateRegistry";
+import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
-import { PlotType } from "@modules/DistributionPlot/typesAndEnums";
 import { ChannelIds } from "@modules/SimulationTimeSeriesSensitivity/channelDefs";
 
 const template: Template = {
+    name: "Sensitivity analysis of timeseries",
     description: "Simulation timeseries analysis for design matrix ensembles.",
     moduleInstances: [
-        {
+        createTemplateModuleInstance("SimulationTimeSeriesSensitivity", {
             instanceRef: "MainTimeSeriesSensitivityInstance",
-            moduleName: "SimulationTimeSeriesSensitivity",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -18,10 +17,9 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
-        },
-        {
-            instanceRef: "SensitivityPlotInstance",
-            moduleName: "SensitivityPlot",
+        }),
+        createTemplateModuleInstance("ParameterResponseCrossPlot", {
+            instanceRef: "MyParameterResponseCrossPlotInstance",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -30,16 +28,15 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                response: {
+                channelResponse: {
                     listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.REALIZATION_VALUE,
                 },
             },
-        },
-        {
+        }),
+        createTemplateModuleInstance("DistributionPlot", {
             instanceRef: "MyDistributionPlotInstance",
-            moduleName: "DistributionPlot",
             layout: {
                 relHeight: 0.5,
                 relWidth: 1,
@@ -54,12 +51,16 @@ const template: Template = {
                     channelIdString: ChannelIds.REALIZATION_VALUE,
                 },
             },
-            initialSettings: {
-                plotType: PlotType.Histogram,
-                crossPlottingType: KeyKind.REALIZATION,
+            /*
+            initialState: {
+                settings: {
+                    plotType: PlotType.Histogram,
+                    crossPlottingType: KeyKind.REALIZATION,
+                }
             },
-        },
+            */
+        }),
     ],
 };
 
-TemplateRegistry.registerTemplate("Sensitivity analysis of timeseries", template);
+TemplateRegistry.registerTemplate(template);

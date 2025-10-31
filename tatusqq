@@ -1,0 +1,62 @@
+[1mdiff --git a/frontend/src/modules/DistributionPlot/loadModule.tsx b/frontend/src/modules/DistributionPlot/loadModule.tsx[m
+[1mindex 97bbb2001..f33f70c48 100644[m
+[1m--- a/frontend/src/modules/DistributionPlot/loadModule.tsx[m
+[1m+++ b/frontend/src/modules/DistributionPlot/loadModule.tsx[m
+[36m@@ -2,11 +2,14 @@[m [mimport { ModuleRegistry } from "@framework/ModuleRegistry";[m
+ [m
+ import type { Interfaces } from "./interfaces";[m
+ import { settingsToViewInterfaceInitialization } from "./interfaces";[m
+[32m+[m[32mimport { serializeStateFunctions, type SerializedState } from "./persistence";[m
+[32m+[m[32mimport { MODULE_NAME } from "./registerModule";[m
+ import { Settings } from "./settings/settings";[m
+ import { View } from "./view";[m
+ [m
+[31m-const module = ModuleRegistry.initModule<Interfaces>("DistributionPlot", {[m
+[32m+[m[32mconst module = ModuleRegistry.initModule<Interfaces, SerializedState>(MODULE_NAME, {[m
+     settingsToViewInterfaceInitialization,[m
+[32m+[m[32m    ...serializeStateFunctions,[m
+ });[m
+ [m
+ module.viewFC = View;[m
+[1mdiff --git a/frontend/src/modules/DistributionPlot/registerModule.ts b/frontend/src/modules/DistributionPlot/registerModule.ts[m
+[1mindex f23aeb70a..24d0d0db5 100644[m
+[1m--- a/frontend/src/modules/DistributionPlot/registerModule.ts[m
+[1m+++ b/frontend/src/modules/DistributionPlot/registerModule.ts[m
+[36m@@ -3,14 +3,15 @@[m [mimport { ModuleRegistry } from "@framework/ModuleRegistry";[m
+ import { SyncSettingKey } from "@framework/SyncSettings";[m
+ [m
+ import type { Interfaces } from "./interfaces";[m
+[32m+[m[32mimport { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";[m
+ import { preview } from "./preview";[m
+ import { receiverDefs } from "./receiverDefs";[m
+[31m-[m
+[32m+[m[32mexport const MODULE_NAME = "DistributionPlot";[m
+ const description =[m
+     "Sub-module that can be connected to other modules via data channels for visualization of distribution data.";[m
+ [m
+[31m-ModuleRegistry.registerModule<Interfaces>({[m
+[31m-    moduleName: "DistributionPlot",[m
+[32m+[m[32mModuleRegistry.registerModule<Interfaces, SerializedState>({[m
+[32m+[m[32m    moduleName: MODULE_NAME,[m
+     defaultTitle: "Distribution plot",[m
+     category: ModuleCategory.SUB,[m
+     devState: ModuleDevState.PROD,[m
+[36m@@ -18,4 +19,5 @@[m [mModuleRegistry.registerModule<Interfaces>({[m
+     channelReceiverDefinitions: receiverDefs,[m
+     preview,[m
+     description,[m
+[32m+[m[32m    serializedStateSchema: SERIALIZED_STATE_SCHEMA,[m
+ });[m
+[1mdiff --git a/frontend/src/modules/DistributionPlot/settings/atoms/baseAtoms.ts b/frontend/src/modules/DistributionPlot/settings/atoms/baseAtoms.ts[m
+[1mindex 02fa97ecb..5716e772b 100644[m
+[1m--- a/frontend/src/modules/DistributionPlot/settings/atoms/baseAtoms.ts[m
+[1m+++ b/frontend/src/modules/DistributionPlot/settings/atoms/baseAtoms.ts[m
+[36m@@ -2,7 +2,7 @@[m [mimport { atom } from "jotai";[m
+ [m
+ import { BarSortBy, PlotType } from "@modules/DistributionPlot/typesAndEnums";[m
+ [m
+[31m-export const plotTypeAtom = atom<PlotType | null>(PlotType.Histogram);[m
+[32m+[m[32mexport const plotTypeAtom = atom<PlotType>(PlotType.Histogram);[m
+ export const numBinsAtom = atom<number>(10);[m
+ export const orientationAtom = atom<"h" | "v">("h");[m
+ export const sharedXAxesAtom = atom<boolean>(false);[m
