@@ -97,6 +97,17 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+<<<<<<< persistence/frontend-implementation
+=======
+  "SeismicMap": {
+    settings?: never,
+    view?: never,
+  },
+  "Sensitivity": {
+    settings?: never,
+    view?: never,
+  },
+>>>>>>> Implement VFP module persistence
   "SensitivityPlot": {
     settings?: never,
     view?: never,
@@ -125,6 +136,13 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+<<<<<<< persistence/frontend-implementation
+=======
+  "TopographicMap": {
+    settings?: never,
+    view?: never,
+  },
+>>>>>>> Implement VFP module persistence
   "Vfp": {
     settings?: never,
     view?: never,
