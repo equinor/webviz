@@ -1,13 +1,13 @@
 import React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 import { Frequency_api, NodeType_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { DiscreteSlider } from "@lib/components/DiscreteSlider";
@@ -15,37 +15,33 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
+import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { FrequencyEnumToStringMapping, NodeTypeEnumToStringMapping } from "../types";
 
-import {
-    selectedNodeTypesAtom,
-    selectedResamplingFrequencyAtom,
-    userSelectedDateTimeAtom,
-    userSelectedEdgeKeyAtom,
-    userSelectedEnsembleIdentAtom,
-    userSelectedNodeKeyAtom,
-    userSelectedRealizationNumberAtom,
-    validRealizationNumbersAtom,
-} from "./atoms/baseAtoms";
+import { selectedNodeTypesAtom, selectedResamplingFrequencyAtom } from "./atoms/baseAtoms";
 import {
     availableDateTimesAtom,
+    availableRealizationsAtom,
     edgeMetadataListAtom,
     flowNetworkQueryResultAtom,
     nodeMetadataListAtom,
+} from "./atoms/derivedAtoms";
+import {
     selectedDateTimeAtom,
     selectedEdgeKeyAtom,
     selectedEnsembleIdentAtom,
     selectedNodeKeyAtom,
-    selectedRealizationNumberAtom,
-} from "./atoms/derivedAtoms";
+    selectedRealizationAtom,
+} from "./atoms/persistableFixableAtoms";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
+    const availableRealizations = useAtomValue(availableRealizationsAtom);
     const availableDateTimes = useAtomValue(availableDateTimesAtom);
     const edgeMetadataList = useAtomValue(edgeMetadataListAtom);
     const nodeMetadataList = useAtomValue(nodeMetadataListAtom);
@@ -53,29 +49,15 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedResamplingFrequency, setSelectedResamplingFrequency] = useAtom(selectedResamplingFrequencyAtom);
     const [selectedNodeTypes, setSelectedNodeTypes] = useAtom(selectedNodeTypesAtom);
 
-    const selectedEdgeKey = useAtomValue(selectedEdgeKeyAtom);
-    const setUserSelectedEdgeKey = useSetAtom(userSelectedEdgeKeyAtom);
-
-    const selectedNodeKey = useAtomValue(selectedNodeKeyAtom);
-    const setUserSelectedNodeKey = useSetAtom(userSelectedNodeKeyAtom);
-
-    const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
-    const setUserSelectedEnsembleIdent = useSetAtom(userSelectedEnsembleIdentAtom);
-
-    const selectedRealizationNumber = useAtomValue(selectedRealizationNumberAtom);
-    const setUserSelectedRealizationNumber = useSetAtom(userSelectedRealizationNumberAtom);
-
-    const selectedDateTime = useAtomValue(selectedDateTimeAtom);
-    const setUserSelectedDateTime = useSetAtom(userSelectedDateTimeAtom);
+    const [selectedEdgeKey, setSelectedEdgeKey] = useAtom(selectedEdgeKeyAtom);
+    const [selectedNodeKey, setSelectedNodeKey] = useAtom(selectedNodeKeyAtom);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
+    const [selectedRealization, setSelectedRealization] = useAtom(selectedRealizationAtom);
+    const [selectedDateTime, setSelectedDateTime] = useAtom(selectedDateTimeAtom);
 
     const FlowNetworkQueryResult = useAtomValue(flowNetworkQueryResultAtom);
 
     usePropagateQueryErrorToStatusWriter(FlowNetworkQueryResult, statusWriter);
-
-    const setValidRealizationNumbersAtom = useSetAtom(validRealizationNumbersAtom);
-    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
-    const validRealizations = selectedEnsembleIdent ? [...filterEnsembleRealizationsFunc(selectedEnsembleIdent)] : null;
-    setValidRealizationNumbersAtom(validRealizations);
 
     const timeStepSliderDebounceTimeMs = 10;
     const timeStepSliderDebounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,15 +69,15 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     });
 
     function handleSelectedNodeKeyChange(value: string) {
-        setUserSelectedNodeKey(value);
+        setSelectedNodeKey(value);
     }
 
     function handleSelectedEdgeKeyChange(value: string) {
-        setUserSelectedEdgeKey(value);
+        setSelectedEdgeKey(value);
     }
 
     function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
-        setUserSelectedEnsembleIdent(ensembleIdent);
+        setSelectedEnsembleIdent(ensembleIdent);
     }
 
     function handleFrequencySelectionChange(newFrequencyStr: string) {
@@ -105,7 +87,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     function handleRealizationNumberChange(value: string) {
         const realizationNumber = parseInt(value);
-        setUserSelectedRealizationNumber(realizationNumber);
+        setSelectedRealization(realizationNumber);
     }
 
     function handleSelectedTimeStepIndexChange(value: number | number[]) {
@@ -118,7 +100,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         }
 
         timeStepSliderDebounceTimerRef.current = setTimeout(() => {
-            setUserSelectedDateTime(newDateTime);
+            setSelectedDateTime(newDateTime);
         }, timeStepSliderDebounceTimeMs);
     }
 
@@ -136,17 +118,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         [availableDateTimes],
     );
 
-    const selectedDateTimeIndex = selectedDateTime ? availableDateTimes.indexOf(selectedDateTime) : -1;
+    const selectedDateTimeIndex = selectedDateTime.value ? availableDateTimes.indexOf(selectedDateTime.value) : -1;
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Ensemble">
-                <EnsembleDropdown
-                    ensembles={ensembleSet.getRegularEnsembleArray()}
-                    value={selectedEnsembleIdent}
-                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
-                    onChange={handleEnsembleSelectionChange}
-                />
+                <PersistableAtomWarningWrapper atom={selectedEnsembleIdentAtom}>
+                    <EnsembleDropdown
+                        ensembles={ensembleSet.getRegularEnsembleArray()}
+                        value={selectedEnsembleIdent.value}
+                        onChange={handleEnsembleSelectionChange}
+                    />
+                </PersistableAtomWarningWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Frequency">
                 <Dropdown
@@ -160,15 +143,17 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             <CollapsibleGroup expanded={true} title="Data Fetching Options">
                 <div className="flex flex-col gap-2">
                     <Label text="Realization Number">
-                        <Dropdown
-                            options={
-                                validRealizations?.map((real) => {
-                                    return { value: real.toString(), label: real.toString() };
-                                }) ?? []
-                            }
-                            value={selectedRealizationNumber?.toString() ?? undefined}
-                            onChange={handleRealizationNumberChange}
-                        />
+                        <PersistableAtomWarningWrapper atom={selectedRealizationAtom}>
+                            <Dropdown
+                                options={
+                                    availableRealizations?.map((real) => {
+                                        return { value: real.toString(), label: real.toString() };
+                                    }) ?? []
+                                }
+                                value={selectedRealization.value?.toString() ?? undefined}
+                                onChange={handleRealizationNumberChange}
+                            />
+                        </PersistableAtomWarningWrapper>
                     </Label>
                     <Label text="Node Types">
                         <Select
@@ -191,29 +176,33 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 >
                     <div className="flex flex-col gap-2">
                         <Label text="Edge options">
-                            <Dropdown
-                                placeholder={!edgeMetadataList.length ? "No edge data available" : ""}
-                                disabled={!edgeMetadataList.length}
-                                options={edgeMetadataList.map((item) => {
-                                    return { label: item.label, value: item.key };
-                                })}
-                                value={selectedEdgeKey ?? ""}
-                                onChange={handleSelectedEdgeKeyChange}
-                            />
+                            <PersistableAtomWarningWrapper atom={selectedEdgeKeyAtom}>
+                                <Dropdown
+                                    placeholder={!edgeMetadataList.length ? "No edge data available" : ""}
+                                    disabled={!edgeMetadataList.length}
+                                    options={edgeMetadataList.map((item) => {
+                                        return { label: item.label, value: item.key };
+                                    })}
+                                    value={selectedEdgeKey.value ?? ""}
+                                    onChange={handleSelectedEdgeKeyChange}
+                                />
+                            </PersistableAtomWarningWrapper>
                         </Label>
                         <Label text="Node options">
-                            <Dropdown
-                                options={nodeMetadataList.map((item) => {
-                                    return { label: item.label, value: item.key };
-                                })}
-                                value={selectedNodeKey ?? ""}
-                                onChange={handleSelectedNodeKeyChange}
-                            />
+                            <PersistableAtomWarningWrapper atom={selectedNodeKeyAtom}>
+                                <Dropdown
+                                    options={nodeMetadataList.map((item) => {
+                                        return { label: item.label, value: item.key };
+                                    })}
+                                    value={selectedNodeKey.value ?? ""}
+                                    onChange={handleSelectedNodeKeyChange}
+                                />
+                            </PersistableAtomWarningWrapper>
                         </Label>
                         <Label text={"Time Steps"}>
                             <DiscreteSlider
                                 valueLabelDisplay="auto"
-                                value={selectedDateTimeIndex != -1 ? selectedDateTimeIndex : undefined}
+                                value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : undefined}
                                 values={availableDateTimes.map((_, index) => {
                                     return index;
                                 })}
