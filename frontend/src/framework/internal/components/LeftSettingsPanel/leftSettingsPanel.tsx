@@ -22,7 +22,7 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
         props.workbench.getWorkbenchSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
-    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
+    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
 
     const mainRef = React.useRef<HTMLDivElement>(null);

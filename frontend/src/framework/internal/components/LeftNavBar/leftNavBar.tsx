@@ -21,7 +21,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const workbenchSession = props.workbench.getWorkbenchSession();
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
-    const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
+    const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);
     const [ensembleDialogOpen, setEnsembleDialogOpen] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.EnsembleDialogOpen,

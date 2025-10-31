@@ -24,7 +24,7 @@ import { localStorageKeyForSessionId } from "./WorkbenchSession/utils/localStora
 import {
     makeWorkbenchSessionLocalStorageString,
     makeWorkbenchSessionStateString,
-} from "./WorkbenchSession/utils/serialization";
+} from "./WorkbenchSession/utils/deserialization";
 import { ChannelManagerNotificationTopic } from "./DataChannels/ChannelManager";
 import { ChannelReceiverNotificationTopic } from "./DataChannels/ChannelReceiver";
 
@@ -469,24 +469,24 @@ export class WorkbenchSessionPersistenceService
         for (const dashboard of dashboards) {
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dashboards",
-                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.Layout)(() => {
+                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.LAYOUT)(() => {
                     this.schedulePullFullSessionState();
                 }),
             );
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dashboards",
-                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ModuleInstances)(() => {
+                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.MODULE_INSTANCES)(() => {
                     this.schedulePullFullSessionState();
                     this.subscribeToModuleInstanceUpdates();
                 }),
             );
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dashboards",
-                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ActiveModuleInstanceId)(
-                    () => {
-                        this.schedulePullFullSessionState();
-                    },
-                ),
+                dashboard
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(DashboardTopic.ACTIVE_MODULE_INSTANCE_ID)(() => {
+                    this.schedulePullFullSessionState();
+                }),
             );
         }
     }
@@ -504,7 +504,7 @@ export class WorkbenchSessionPersistenceService
             for (const moduleInstance of moduleInstances) {
                 this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                     "module-instances",
-                    moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SERIALIZED_STATE)(() => {
+                    moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.STATE)(() => {
                         this.schedulePullFullSessionState();
                     }),
                 );

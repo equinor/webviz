@@ -31,30 +31,6 @@ const template: Template = {
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
-                relX: 0,
-                relY: 0.5,
-            },
-            syncedSettings: [SyncSettingKey.PARAMETER],
-
-            dataChannelsToInitialSettingsMapping: {
-                channelResponse: {
-                    listensToInstanceRef: "MainSimulationTimeSeriesInstance",
-                    kindOfKey: KeyKind.REALIZATION,
-                    channelIdString: ChannelIds.TIME_SERIES,
-                },
-            },
-            /*
-            initialState: {
-                crossPlottingType: KeyKind.REALIZATION,
-                parameterIdentString: "FWL_CENTRAL~@@~GLOBVAR",
-            },
-            */
-        }),
-        createTemplateModuleInstance("ParameterResponseCrossPlot", {
-            instanceRef: "MyParameterResponseCrossPlotInstance",
-            layout: {
-                relHeight: 0.5,
-                relWidth: 0.5,
                 relX: 0.5,
                 relY: 0,
             },

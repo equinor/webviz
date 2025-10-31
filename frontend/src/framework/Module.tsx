@@ -3,7 +3,7 @@ import type React from "react";
 import type { JTDSchemaType } from "ajv/dist/core";
 import type { Getter, Setter } from "jotai";
 
-import type { AtomStoreMaster } from "./AtomStoreMaster";
+import type { AtomStore, AtomStoreMaster } from "./AtomStoreMaster";
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import type { InitialSettings } from "./InitialSettings";
 import type { SettingsContext, ViewContext } from "./ModuleContext";
@@ -176,7 +176,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
     private _defaultTitle: string;
     public viewFC: ModuleView<TInterfaceTypes>;
     public settingsFC: ModuleSettings<TInterfaceTypes>;
-    protected _importState: ImportStatus = ImportStatus.NotImported;
+    protected _importStatus: ImportStatus = ImportStatus.NotImported;
     private _moduleInstances: ModuleInstance<TInterfaceTypes, TSerializedState>[] = [];
     private _settingsToViewInterfaceInitialization: InterfaceInitialization<
         Exclude<TInterfaceTypes["settingsToView"], undefined>
@@ -227,7 +227,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
     }
 
     getImportState(): ImportStatus {
-        return this._importState;
+        return this._importStatus;
     }
 
     getName(): string {
@@ -302,15 +302,14 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(id: string, atomStoreMaster: AtomStoreMaster): ModuleInstance<TInterfaceTypes, TSerializedState> {
+    makeInstance(id: string, atomStore: AtomStore): ModuleInstance<TInterfaceTypes, TSerializedState> {
         const instance = new ModuleInstance<TInterfaceTypes, TSerializedState>({
             module: this,
-            atomStoreMaster,
+            atomStore,
             id,
             channelDefinitions: this._channelDefinitions,
             channelReceiverDefinitions: this._channelReceiverDefinitions,
         });
-        atomStoreMaster.makeAtomStoreForModuleInstance(id);
         this._moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;
@@ -320,8 +319,8 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         this._onInstanceUnloadFunc?.(instanceId);
     }
 
-    private setImportState(state: ImportStatus): void {
-        this._importState = state;
+    private setImportState(status: ImportStatus): void {
+        this._importStatus = status;
         this._moduleInstances.forEach((instance) => {
             instance.notifySubscribers(ModuleInstanceTopic.IMPORT_STATUS);
         });
@@ -343,8 +342,8 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
     }
 
     private async maybeImportSelf(): Promise<void> {
-        if (this._importState !== ImportStatus.NotImported) {
-            if (this._importState === ImportStatus.Imported) {
+        if (this._importStatus !== ImportStatus.NotImported) {
+            if (this._importStatus === ImportStatus.Imported) {
                 this._moduleInstances.forEach((instance) => {
                     if (instance.isInitialized()) {
                         return;

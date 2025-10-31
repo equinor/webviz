@@ -4,7 +4,7 @@ import type { Atom } from "jotai";
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
-import type { AtomStoreMaster } from "./AtomStoreMaster";
+import type { AtomStore } from "./AtomStoreMaster";
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import type { InitialSettings } from "./InitialSettings";
 import type { Dashboard } from "./internal/Dashboard";
@@ -24,8 +24,7 @@ import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
-import { type PublishSubscribe, PublishSubscribeDelegate } from "@lib/utils/NewPublishSubscribeDelegate";
-import { usePublishSubscribeTopicValue } from "@lib/utils/ReactPublishSubscribeAdapter";
+import React from "react";
 
 export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
@@ -39,7 +38,7 @@ export enum ModuleInstanceTopic {
     SYNCED_SETTINGS = "synced-settings",
     LIFECYCLE_STATE = "state",
     IMPORT_STATUS = "import-status",
-    SERIALIZED_STATE = "serialized-state",
+    STATE = "serialized-state",
 }
 
 export type ModuleInstanceTopicValueTypes = {
@@ -47,7 +46,7 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
     [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
-    [ModuleInstanceTopic.SERIALIZED_STATE]: ModuleInstanceSerializedState;
+    [ModuleInstanceTopic.STATE]: void;
 };
 
 export interface ModuleInstanceOptions<
@@ -55,7 +54,7 @@ export interface ModuleInstanceOptions<
     TSerializedState extends ModuleComponentsStateBase,
 > {
     module: Module<TInterfaceTypes, TSerializedState>;
-    atomStoreMaster: AtomStoreMaster;
+    atomStore: AtomStore;
     id: string;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
@@ -82,8 +81,7 @@ export type ModuleInstanceSerializedState = {
 export class ModuleInstance<
     TInterfaceTypes extends ModuleInterfaceTypes,
     TSerializedStateSchema extends ModuleComponentsStateBase,
-> implements PublishSubscribe<ModuleInstanceTopicValueTypes>
-{
+> {
     private _id: string;
     private _title: string;
     private _initialized: boolean = false;
@@ -95,7 +93,6 @@ export class ModuleInstance<
     private _subscribers: Map<keyof ModuleInstanceTopicValueTypes, Set<() => void>> = new Map();
     private _initialSettings: InitialSettings | null = null;
     private _statusController: ModuleInstanceStatusControllerInternal = new ModuleInstanceStatusControllerInternal();
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<ModuleInstanceTopicValueTypes>();
 
     // ChannelManager should be elevated to Dashboard level and shared among module instances in the dashboard
     private _channelManager: ChannelManager;
@@ -108,7 +105,7 @@ export class ModuleInstance<
     > | null = null;
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
-    private _atomStoreMaster: AtomStoreMaster;
+    private _atomStore: AtomStore;
 
     private _dashboard: Dashboard | null = null;
     private _serializer: ModuleInstanceSerializer<TSerializedStateSchema> | null = null;
@@ -119,7 +116,7 @@ export class ModuleInstance<
         this._id = options.id;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
-        this._atomStoreMaster = options.atomStoreMaster;
+        this._atomStore = options.atomStore;
 
         this._channelManager = new ChannelManager(this._id);
 
@@ -135,10 +132,6 @@ export class ModuleInstance<
         if (options.channelDefinitions) {
             this._channelManager.registerChannels(options.channelDefinitions);
         }
-    }
-
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<ModuleInstanceTopicValueTypes> {
-        return this._publishSubscribeDelegate;
     }
 
     serialize(): ModuleInstanceSerializedState {
@@ -231,7 +224,7 @@ export class ModuleInstance<
         if (serializationFunctions) {
             this._serializer = new ModuleInstanceSerializer<TSerializedStateSchema>(
                 this,
-                this._atomStoreMaster.getAtomStoreForModuleInstance(this._id),
+                this._atomStore,
                 this._module.getSerializedStateSchema(),
                 serializationFunctions,
                 this.handleStateChange.bind(this),
@@ -243,7 +236,7 @@ export class ModuleInstance<
         if (!this._serializer) {
             return;
         }
-        this._publishSubscribeDelegate.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE, this.serialize());
+        this.notifySubscribers(ModuleInstanceTopic.STATE);
     }
 
     makeSettingsToViewInterface(
@@ -330,7 +323,7 @@ export class ModuleInstance<
 
     addSyncedSetting(settingKey: SyncSettingKey): void {
         this._syncedSettingKeys.push(settingKey);
-        this._publishSubscribeDelegate.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS, this._syncedSettingKeys);
+        this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
     }
 
     getSyncedSettingKeys(): SyncSettingKey[] {
@@ -343,7 +336,7 @@ export class ModuleInstance<
 
     removeSyncedSetting(settingKey: SyncSettingKey): void {
         this._syncedSettingKeys = this._syncedSettingKeys.filter((a) => a !== settingKey);
-        this._publishSubscribeDelegate.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS, this._syncedSettingKeys);
+        this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
     }
 
     isInitialized(): boolean {
@@ -482,6 +475,8 @@ export class ModuleInstance<
 
     unload() {
         this._module.onInstanceUnload(this._id);
+        this._channelManager.unregisterAllChannels();
+        this._channelManager.unregisterAllReceivers();
     }
 
     beforeDestroy(): void {
@@ -499,5 +494,9 @@ export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
     moduleInstance: ModuleInstance<any, any>,
     topic: T,
 ): ModuleInstanceTopicValueTypes[T] {
-    return usePublishSubscribeTopicValue(moduleInstance, topic);
+    const value = React.useSyncExternalStore<ModuleInstanceTopicValueTypes[T]>(
+        moduleInstance.makeSubscriberFunction(topic),
+        moduleInstance.makeSnapshotGetter(topic),
+    );
+    return value;
 }

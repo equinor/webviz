@@ -38,13 +38,13 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
     const [pointerOverDetails, setPointerOverDetails] = React.useState<boolean>(false);
 
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
-    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(ref);
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const moduleInstance = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances).find(
+    const moduleInstance = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES).find(
         (instance) => instance.getId() === activeModuleInstanceId,
     );
 

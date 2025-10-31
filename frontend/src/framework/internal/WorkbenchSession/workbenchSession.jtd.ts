@@ -12,7 +12,7 @@ import type {
     WorkbenchSessionContent,
     WorkbenchSessionMetadata,
 } from "./PrivateWorkbenchSession";
-import type { SerializedWorkbenchSession } from "./utils/serialization";
+import type { SerializedWorkbenchSession } from "./utils/deserialization";
 
 export const regularEnsembleSchema: JTDSchemaType<SerializedRegularEnsemble> = {
     properties: {

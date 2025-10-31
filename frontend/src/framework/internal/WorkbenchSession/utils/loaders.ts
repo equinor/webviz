@@ -11,7 +11,7 @@ import {
     deserializeSessionFromBackend,
     deserializeFromLocalStorage,
     deserializeSnapshotFromBackend,
-} from "./serialization";
+} from "./deserialization";
 import type { WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
 
 export async function loadWorkbenchSessionFromBackend(

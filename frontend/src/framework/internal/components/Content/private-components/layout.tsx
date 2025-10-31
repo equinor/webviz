@@ -50,12 +50,12 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
     const layoutDivSize = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
-    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
+    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     // We use a temporary layout while dragging elements around
     const [tempLayout, setTempLayout] = React.useState<LayoutElement[] | null>(null);
-    const trueLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
+    const trueLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);
     const layout = tempLayout ?? trueLayout;
 
     React.useEffect(() => {
