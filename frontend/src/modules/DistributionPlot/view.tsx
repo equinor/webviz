@@ -443,7 +443,6 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
 
-                        // if (rowIndex === numRows - 1) {
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex}`]: {
                                 title: {
@@ -453,7 +452,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             },
                         };
                         figure.updateLayout(patch);
-                        // }
+
                         if (colIndex === 0) {
                             const patch: Partial<Layout> = {
                                 [`yaxis${cellIndex}`]: {
