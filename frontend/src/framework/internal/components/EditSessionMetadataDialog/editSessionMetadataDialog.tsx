@@ -25,7 +25,7 @@ type EditSessionDialogInputFeedback = {
     description?: string;
 };
 
-export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps): React.ReactNode {
+export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps) {
     const hasActiveSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 

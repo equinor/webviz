@@ -1,6 +1,7 @@
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 
 const template: Template = {

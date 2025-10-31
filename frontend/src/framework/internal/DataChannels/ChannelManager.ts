@@ -3,11 +3,13 @@ import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { ChannelDefinition } from "./Channel";
 import { Channel } from "./Channel";
 import type { ChannelReceiverDefinition } from "./ChannelReceiver";
-import { ChannelReceiver } from "./ChannelReceiver";
+import { ChannelReceiver, ChannelReceiverNotificationTopic } from "./ChannelReceiver";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 export enum ChannelManagerNotificationTopic {
     CHANNELS_CHANGE = "channels-change",
     RECEIVERS_CHANGE = "receivers-change",
+    STATE = "state",
 }
 
 export type SerializedDataChannelReceiverSubscription = {
@@ -18,6 +20,8 @@ export type SerializedDataChannelReceiverSubscription = {
 };
 
 export class ChannelManager {
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
+
     private readonly _moduleInstanceId: string;
     private _channels: Channel[] = [];
     private _receivers: ChannelReceiver[] = [];
@@ -49,8 +53,8 @@ export class ChannelManager {
 
     registerChannels(channelDefinitions: ChannelDefinition[]): void {
         for (const channelDefinition of channelDefinitions) {
-            const newChannel = new Channel(this, channelDefinition);
-            this._channels.push(newChannel);
+            const channel = new Channel(this, channelDefinition);
+            this._channels.push(channel);
         }
 
         this.notifySubscribers(ChannelManagerNotificationTopic.CHANNELS_CHANGE);
@@ -60,6 +64,11 @@ export class ChannelManager {
         for (const receiverDefinition of receiverDefinitions) {
             const receiver = new ChannelReceiver(this, receiverDefinition);
             this._receivers.push(receiver);
+
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                receiver.getIdString(),
+                receiver.subscribe(ChannelReceiverNotificationTopic.CHANNEL_CHANGE, this.handleStateChange.bind(this)),
+            );
         }
 
         this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
@@ -79,6 +88,7 @@ export class ChannelManager {
             receiver.unsubscribeFromCurrentChannel();
         }
         this._receivers = [];
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
 
         this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
     }
@@ -148,6 +158,10 @@ export class ChannelManager {
         }
 
         this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
+    }
+
+    private handleStateChange(): void {
+        this.notifySubscribers(ChannelManagerNotificationTopic.STATE);
     }
 
     private notifySubscribers(topic: ChannelManagerNotificationTopic): void {

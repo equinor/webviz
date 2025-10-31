@@ -5,10 +5,14 @@ import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
 import type { AtomStore } from "./AtomStoreMaster";
-import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
+import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataChannnel";
 import type { InitialSettings } from "./InitialSettings";
 import type { Dashboard } from "./internal/Dashboard";
-import { ChannelManager, type SerializedDataChannelReceiverSubscription } from "./internal/DataChannels/ChannelManager";
+import {
+    ChannelManager,
+    ChannelManagerNotificationTopic,
+    type SerializedDataChannelReceiverSubscription,
+} from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceSerializer } from "./internal/ModuleInstanceSerializer";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 import type {
@@ -22,10 +26,10 @@ import type {
 } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
-import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataChannnel";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
 import React from "react";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
@@ -39,7 +43,7 @@ export enum ModuleInstanceTopic {
     SYNCED_SETTINGS = "synced-settings",
     LIFECYCLE_STATE = "state",
     IMPORT_STATUS = "import-status",
-    STATE = "serialized-state",
+    SERIALIZED_STATE = "serialized-state",
 }
 
 export type ModuleInstanceTopicValueTypes = {
@@ -47,7 +51,7 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
     [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
-    [ModuleInstanceTopic.STATE]: void;
+    [ModuleInstanceTopic.SERIALIZED_STATE]: void;
 };
 
 export interface ModuleInstanceOptions<
@@ -83,6 +87,8 @@ export class ModuleInstance<
     TInterfaceTypes extends ModuleInterfaceTypes,
     TSerializedStateSchema extends ModuleComponentsStateBase,
 > {
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
+
     private _id: string;
     private _title: string;
     private _initialized: boolean = false;
@@ -133,6 +139,11 @@ export class ModuleInstance<
         if (options.channelDefinitions) {
             this._channelManager.registerChannels(options.channelDefinitions);
         }
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "channel-manager",
+            this._channelManager.subscribe(ChannelManagerNotificationTopic.STATE, this.handleStateChange.bind(this)),
+        );
     }
 
     serialize(): ModuleInstanceSerializedState {
@@ -237,7 +248,7 @@ export class ModuleInstance<
         if (!this._serializer) {
             return;
         }
-        this.notifySubscribers(ModuleInstanceTopic.STATE);
+        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
     }
 
     makeSettingsToViewInterface(
@@ -325,6 +336,7 @@ export class ModuleInstance<
     addSyncedSetting(settingKey: SyncSettingKey): void {
         this._syncedSettingKeys.push(settingKey);
         this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
+        this.handleStateChange();
     }
 
     getSyncedSettingKeys(): SyncSettingKey[] {
@@ -338,6 +350,7 @@ export class ModuleInstance<
     removeSyncedSetting(settingKey: SyncSettingKey): void {
         this._syncedSettingKeys = this._syncedSettingKeys.filter((a) => a !== settingKey);
         this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
+        this.handleStateChange();
     }
 
     isInitialized(): boolean {

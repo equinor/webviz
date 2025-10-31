@@ -4,10 +4,10 @@ import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
-import { Dashboard, type SerializedDashboard } from "@framework/internal/Dashboard";
+import { Dashboard, DashboardTopic, type SerializedDashboard } from "@framework/internal/Dashboard";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { UserCreatedItems, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
+import { UserCreatedItems, UserCreatedItemsEvent, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
@@ -16,9 +16,14 @@ import {
     type UserEnsembleSetting,
     type UserDeltaEnsembleSetting,
 } from "../EnsembleSetLoader";
-import { PrivateWorkbenchSettings, type SerializedWorkbenchSettings } from "../PrivateWorkbenchSettings";
+import {
+    PrivateWorkbenchSettings,
+    PrivateWorkbenchSettingsTopic,
+    type SerializedWorkbenchSettings,
+} from "../PrivateWorkbenchSettings";
 
 import { isPersisted, type WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -62,6 +67,7 @@ export enum PrivateWorkbenchSessionTopic {
     METADATA = "Metadata",
     IS_PERSISTED = "IsPersisted",
     IS_SNAPSHOT = "IsSnapshot",
+    SERIALIZED_STATE = "SerializedState",
 }
 
 export type WorkbenchSessionTopicPayloads = {
@@ -73,10 +79,12 @@ export type WorkbenchSessionTopicPayloads = {
     [PrivateWorkbenchSessionTopic.METADATA]: WorkbenchSessionMetadata;
     [PrivateWorkbenchSessionTopic.IS_PERSISTED]: boolean;
     [PrivateWorkbenchSessionTopic.IS_SNAPSHOT]: boolean;
+    [PrivateWorkbenchSessionTopic.SERIALIZED_STATE]: void;
 };
 
 export class PrivateWorkbenchSession implements WorkbenchSession {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchSessionTopicPayloads>();
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
 
     private _id: string | null = null;
     private _isPersisted: boolean = false;
@@ -107,6 +115,19 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._userCreatedItems = new UserCreatedItems(this._atomStoreMaster);
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
         this._isSnapshot = isSnapshot;
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "settings",
+            this._settings
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PrivateWorkbenchSettingsTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "userCreatedItems",
+            this._userCreatedItems.subscribe(UserCreatedItemsEvent.SERIALIZED_STATE, this.handleStateChange.bind(this)),
+        );
     }
 
     getIsLoadedFromLocalStorage(): boolean {
@@ -159,6 +180,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     setMetadata(metadata: WorkbenchSessionMetadata): void {
         this._metadata = metadata;
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
+        this.handleStateChange();
     }
 
     updateMetadata(update: Partial<Omit<WorkbenchSessionMetadata, "createdAt">>, notify = true): void {
@@ -169,6 +191,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         }
 
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
+        this.handleStateChange();
     }
 
     getContent(): WorkbenchSessionContent {
@@ -251,6 +274,11 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.ENSEMBLE_SET);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
+        this.handleStateChange();
+    }
+
+    private handleStateChange(): void {
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.SERIALIZED_STATE);
     }
 
     getPublishSubscribeDelegate() {
@@ -278,6 +306,8 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                     return this._isPersisted;
                 case PrivateWorkbenchSessionTopic.IS_SNAPSHOT:
                     return this._isSnapshot;
+                case PrivateWorkbenchSessionTopic.SERIALIZED_STATE:
+                    return void 0;
                 default:
                     throw new Error(`No snapshot getter implemented for topic ${topic}`);
             }
@@ -298,15 +328,41 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return this._dashboards;
     }
 
+    private registerDashboard(dashboard: Dashboard): void {
+        this._dashboards.push(dashboard);
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            `dashboard-${dashboard.getId()}`,
+            dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+
+        this.handleStateChange();
+    }
+
+    private clearDashboards() {
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
+        this._dashboards = [];
+        this.handleStateChange();
+    }
+
     setDashboards(dashboards: Dashboard[]): void {
-        this._dashboards = dashboards;
+        this.clearDashboards();
+
+        for (const dashboard of dashboards) {
+            this.registerDashboard(dashboard);
+        }
+
         if (dashboards.length > 0) {
             this._activeDashboardId = dashboards[0].getId();
         } else {
             this._activeDashboardId = null;
         }
+
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
     }
 
     getEnsembleSet(): EnsembleSet {
@@ -329,6 +385,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             filterSet: this._realizationFilterSet,
         };
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
+        this.handleStateChange();
     }
 
     makeDefaultDashboard(): void {
@@ -336,6 +393,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._dashboards.push(d);
         this._activeDashboardId = d.getId();
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        this.handleStateChange();
     }
 
     clear(): void {
@@ -347,6 +405,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     beforeDestroy(): void {
         this.clear();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
 
     static async fromDataContainer(

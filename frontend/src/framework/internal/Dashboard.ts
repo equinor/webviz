@@ -96,14 +96,14 @@ export enum DashboardTopic {
     LAYOUT = "Layout",
     MODULE_INSTANCES = "ModuleInstances",
     ACTIVE_MODULE_INSTANCE_ID = "ActiveModuleInstanceId",
-    STATE = "State",
+    SERIALIZED_STATE = "SerializedState",
 }
 
 export type DashboardTopicPayloads = {
     [DashboardTopic.LAYOUT]: LayoutElement[];
     [DashboardTopic.MODULE_INSTANCES]: ModuleInstance<any, any>[];
     [DashboardTopic.ACTIVE_MODULE_INSTANCE_ID]: string | null;
-    [DashboardTopic.STATE]: void;
+    [DashboardTopic.SERIALIZED_STATE]: void;
 };
 
 export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
@@ -139,7 +139,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             if (topic === DashboardTopic.ACTIVE_MODULE_INSTANCE_ID) {
                 return this._activeModuleInstanceId;
             }
-            if (topic === DashboardTopic.STATE) {
+            if (topic === DashboardTopic.SERIALIZED_STATE) {
                 return;
             }
 
@@ -164,6 +164,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     setLayout(layout: LayoutElement[]): void {
         this._layout = layout;
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);
+        this.handleStateChange();
     }
 
     getModuleInstances(): ModuleInstance<any, any>[] {
@@ -249,10 +250,11 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._moduleInstances = [];
         this._layout = [];
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);
+        this.handleStateChange();
     }
 
     private handleStateChange(): void {
-        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.STATE);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.SERIALIZED_STATE);
     }
 
     private makeAndRegisterModuleInstance(moduleName: string, predefinedId?: string): ModuleInstance<any, any> {
@@ -271,7 +273,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             moduleInstance.getId(),
-            moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.STATE)(this.handleStateChange.bind(this)),
+            moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
         );
 
         return moduleInstance;
@@ -328,6 +332,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         }
         this._activeModuleInstanceId = moduleInstanceId;
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
+        this.handleStateChange();
     }
 
     getActiveModuleInstanceId(): string | null {
