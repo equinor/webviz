@@ -17,6 +17,7 @@ export type SerializedUserCreatedItems = {
 
 export enum UserCreatedItemsEvent {
     INTERSECTION_POLYLINES_CHANGE = "IntersectionPolylinesChange",
+    SERIALIZED_STATE = "SerializedState",
 }
 
 export const USER_CREATED_ITEMS_JTD_SCHEMA: JTDSchemaType<SerializedUserCreatedItems> = {
@@ -33,6 +34,7 @@ export class UserCreatedItems {
         this._intersectionPolylines = new IntersectionPolylines(atomStoreMaster);
         this._intersectionPolylines.subscribe(IntersectionPolylinesEvent.CHANGE, () => {
             this.notifySubscribers(UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE);
+            this.notifySubscribers(UserCreatedItemsEvent.SERIALIZED_STATE);
         });
     }
 
@@ -46,7 +48,7 @@ export class UserCreatedItems {
         this._intersectionPolylines.deserializeState(serializedState.intersectionPolylines);
     }
 
-    subscribe(event: UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE, cb: () => void): () => void {
+    subscribe(event: UserCreatedItemsEvent, cb: () => void): () => void {
         const subscribersSet = this._subscribersMap.get(event) || new Set();
         subscribersSet.add(cb);
         this._subscribersMap.set(event, subscribersSet);
@@ -55,7 +57,7 @@ export class UserCreatedItems {
         };
     }
 
-    private notifySubscribers(event: UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE): void {
+    private notifySubscribers(event: UserCreatedItemsEvent): void {
         const subscribersSet = this._subscribersMap.get(event);
         if (!subscribersSet) return;
 
