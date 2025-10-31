@@ -1,5 +1,4 @@
 import type { ErrorInfo } from "react";
-import React from "react";
 
 import type { Atom } from "jotai";
 import { atom } from "jotai";
@@ -26,6 +25,7 @@ import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
 import { type PublishSubscribe, PublishSubscribeDelegate } from "@lib/utils/NewPublishSubscribeDelegate";
+import { usePublishSubscribeTopicValue } from "@lib/utils/ReactPublishSubscribeAdapter";
 
 export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
@@ -47,7 +47,7 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
     [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
-    [ModuleInstanceTopic.SERIALIZED_STATE]: void;
+    [ModuleInstanceTopic.SERIALIZED_STATE]: ModuleInstanceSerializedState;
 };
 
 export interface ModuleInstanceOptions<
@@ -240,7 +240,10 @@ export class ModuleInstance<
     }
 
     handleStateChange(): void {
-        this._publishSubscribeDelegate.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
+        if (!this._serializer) {
+            return;
+        }
+        this._publishSubscribeDelegate.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE, this.serialize());
     }
 
     makeSettingsToViewInterface(
@@ -327,7 +330,7 @@ export class ModuleInstance<
 
     addSyncedSetting(settingKey: SyncSettingKey): void {
         this._syncedSettingKeys.push(settingKey);
-        this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
+        this._publishSubscribeDelegate.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS, this._syncedSettingKeys);
     }
 
     getSyncedSettingKeys(): SyncSettingKey[] {
@@ -340,7 +343,7 @@ export class ModuleInstance<
 
     removeSyncedSetting(settingKey: SyncSettingKey): void {
         this._syncedSettingKeys = this._syncedSettingKeys.filter((a) => a !== settingKey);
-        this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
+        this._publishSubscribeDelegate.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS, this._syncedSettingKeys);
     }
 
     isInitialized(): boolean {
@@ -496,10 +499,5 @@ export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
     moduleInstance: ModuleInstance<any, any>,
     topic: T,
 ): ModuleInstanceTopicValueTypes[T] {
-    const value = React.useSyncExternalStore<ModuleInstanceTopicValueTypes[T]>(
-        moduleInstance.makeSubscriberFunction(topic),
-        moduleInstance.makeSnapshotGetter(topic),
-    );
-
-    return value;
+    return usePublishSubscribeTopicValue(moduleInstance, topic);
 }

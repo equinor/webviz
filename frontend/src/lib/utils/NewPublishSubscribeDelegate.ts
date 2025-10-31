@@ -13,14 +13,27 @@ export interface PublishSubscribe<TTopicPayloads extends TopicPayloads> {
 export class PublishSubscribeDelegate<TTopicPayloads extends TopicPayloads> {
     private _subscribers = new Map<keyof TTopicPayloads, Set<(payload: any) => void>>();
     private _latestValues = new Map<keyof TTopicPayloads, any>();
+    private _hasValue = new Map<keyof TTopicPayloads, boolean>();
 
     /**
      * Notify subscribers with a payload
      */
-    notifySubscribers<T extends keyof TTopicPayloads>(topic: T, payload: TTopicPayloads[T]): void {
+    notifySubscribers<T extends keyof TTopicPayloads>(
+        topic: T,
+        ...args: TTopicPayloads[T] extends void ? [] : [payload: TTopicPayloads[T]]
+    ): void {
+        const payload = args.length > 0 ? args[0] : undefined;
+
+        // Store latest value (even if undefined for void types)
+        this._latestValues.set(topic, payload);
+        this._hasValue.set(topic, true);
+
+        // Notify all subscribers
         const subscribers = this._subscribers.get(topic);
-        if (subscribers) {
-            subscribers.forEach((subscriber) => subscriber(payload));
+        if (!subscribers) return;
+
+        for (const subscriber of subscribers) {
+            subscriber(payload);
         }
     }
 
@@ -29,9 +42,9 @@ export class PublishSubscribeDelegate<TTopicPayloads extends TopicPayloads> {
      */
     subscribe<T extends keyof TTopicPayloads>(topic: T, callback: (payload: TTopicPayloads[T]) => void): () => void {
         // Immediately call with current value if available
-        const currentValue = this._latestValues.get(topic);
-        if (currentValue !== undefined) {
-            callback(currentValue);
+        if (this._hasValue.get(topic)) {
+            const currentValue = this._latestValues.get(topic);
+            (callback as any)(currentValue);
         }
 
         // Add to subscribers
@@ -49,5 +62,9 @@ export class PublishSubscribeDelegate<TTopicPayloads extends TopicPayloads> {
      */
     getLatestValue<T extends keyof TTopicPayloads>(topic: T): TTopicPayloads[T] | undefined {
         return this._latestValues.get(topic);
+    }
+
+    hasValue(topic: keyof TTopicPayloads): boolean {
+        return this._hasValue.get(topic) ?? false;
     }
 }
