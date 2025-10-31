@@ -1,13 +1,9 @@
-import React from "react";
-
 import { Icon, Typography } from "@equinor/eds-core-react";
 import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
-
-import { SessionOverviewDialog, type ModalContentMode } from "../SessionOverviewDialog/sessionOverviewDialog";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
@@ -19,8 +15,14 @@ export type StartPageProps = {
 };
 
 export function StartPage(props: StartPageProps) {
-    const [showOverviewDialog, setShowOverviewDialog] = React.useState(false);
-    const [overviewContentMode, setOverviewContentMode] = React.useState<ModalContentMode>("sessions");
+    const [, setShowOverviewDialog] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SessionSnapshotOverviewDialogOpen,
+    );
+    const [, setOverviewContentMode] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SessionSnapshotOverviewDialogMode,
+    );
 
     const [, setIsOpenTemplatesDialog] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -35,26 +37,17 @@ export function StartPage(props: StartPageProps) {
         setIsOpenTemplatesDialog(true);
     }
 
-    function closeOverviewDialog() {
-        setShowOverviewDialog(false);
-    }
-
     function openOverviewDialogOnSessions() {
         setShowOverviewDialog(true);
         setOverviewContentMode("sessions");
     }
 
-    function openOverviewDialogOnSnapshots() {
-        setShowOverviewDialog(true);
-        setOverviewContentMode("snapshots");
-    }
-
     return (
         <>
             <div className="h-full w-full flex items-center justify-center min-h-0">
-                <div className="grid grid-cols-2 gap-x-16 gap-y-8">
+                <div className="grid grid-cols-2 gap-x-12 gap-y-8">
                     <section className="flex flex-col gap-2">
-                        <Typography variant="h2">Start</Typography>
+                        <Typography variant="h3">Start</Typography>
                         <Tooltip
                             placement="right"
                             title="Create a new free session and save it later on demand."
@@ -68,7 +61,7 @@ export function StartPage(props: StartPageProps) {
                         <Tooltip placement="right" title="Open an existing session." enterDelay="medium">
                             <Button variant="text" onClick={openOverviewDialogOnSessions}>
                                 <Icon name="folder_open" />
-                                Open session...
+                                Open session or snapshot...
                             </Button>
                         </Tooltip>
                         <Tooltip
@@ -84,29 +77,21 @@ export function StartPage(props: StartPageProps) {
                     </section>
                     <RecentSessions workbench={props.workbench} />
                     <section className="flex flex-col gap-4">
-                        <Typography variant="h2">Resources</Typography>
+                        <Typography variant="h3">Resources</Typography>
                         <a
                             href="https://github.com/equinor/webviz"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-2 text-indigo-600 hover:underline"
                         >
                             <Icon name="github" />
                             Webviz on GitHub
-                            <Icon name="external_link" />
+                            <Icon name="external_link" className="h-4" />
                         </a>
                     </section>
                     <RecentSnapshots workbench={props.workbench} />
                 </div>
             </div>
-            <SessionOverviewDialog
-                workbench={props.workbench}
-                open={showOverviewDialog}
-                contentMode={overviewContentMode}
-                onNewSession={handleNewSession}
-                onClose={closeOverviewDialog}
-                onChangeModalMode={setOverviewContentMode}
-            />
         </>
     );
 }

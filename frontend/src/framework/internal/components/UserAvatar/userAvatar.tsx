@@ -12,7 +12,8 @@ import { getSizeClass } from "@lib/utils/componentSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type UserAvatarProps = {
-    userEmail: string;
+    userIdOrEmail: string;
+    userDisplayName?: string;
     size?: SizeName;
     className?: React.HTMLAttributes<HTMLDivElement>["className"];
 };
@@ -29,7 +30,7 @@ function useUserInfoQuery(userEmail: string): UseQueryResult<GraphUserPhoto_api>
 }
 
 export const UserAvatar: React.FC<UserAvatarProps> = (props) => {
-    const userInfo = useUserInfoQuery(props.userEmail);
+    const userInfo = useUserInfoQuery(props.userIdOrEmail);
     const sizeOrDefault = props.size ?? "medium-small";
     const sizeClass = getSizeClass(sizeOrDefault);
 
@@ -42,13 +43,13 @@ export const UserAvatar: React.FC<UserAvatarProps> = (props) => {
             <img
                 src={`data:image/png;base64,${userInfo.data?.avatar_b64str}`}
                 alt="Avatar"
-                title={props.userEmail}
+                title={props.userDisplayName}
                 className={resolveClassNames(sizeClass, "rounded-full p-0.5", props.className)}
             />
         );
     }
     return (
-        <span title={props.userEmail} className={resolveClassNames(sizeClass, props.className)}>
+        <span title={props.userDisplayName} className={resolveClassNames(sizeClass, props.className)}>
             {/* size-auto ensures the icon follows the wrapper size-class */}
             <AccountCircle classes={{ root: "size-auto! " }} />
         </span>

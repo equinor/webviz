@@ -1,8 +1,10 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
+import { toast } from "react-toastify";
 
 import {
     deleteSessionMutation,
+    deleteSnapshotMutation,
     getSnapshotAccessLogsQueryKey,
     updateSessionMutation,
     type SessionUpdate_api,
@@ -16,7 +18,11 @@ import { EnsembleUpdateMonitor } from "./internal/EnsembleUpdateMonitor";
 import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
-import { removeSessionQueryData, replaceSessionQueryData } from "./internal/WorkbenchSession/utils/crudHelpers";
+import {
+    removeSessionQueryData,
+    removeSnapshotQueryData,
+    replaceSessionQueryData,
+} from "./internal/WorkbenchSession/utils/crudHelpers";
 import {
     loadAllWorkbenchSessionsFromLocalStorage,
     loadSnapshotFromBackend,
@@ -236,6 +242,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
                 );
                 this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 0);
             }
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
             return;
         } catch (error: any) {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
@@ -376,8 +383,12 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         }
     }
 
-    async updateSession(sessionId: string, updatedSession: SessionUpdate_api) {
+    async updateSession(sessionId: string, sessionUpdate: SessionUpdate_api): Promise<boolean> {
         const queryClient = this._queryClient;
+
+        this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
+
+        let success = false;
 
         await queryClient
             .getMutationCache()
@@ -385,9 +396,25 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
                 ...updateSessionMutation(),
                 onSuccess(data) {
                     replaceSessionQueryData(queryClient, data);
+                    toast.success("Session successfully updated.");
+                    success = true;
+                },
+                onError(error) {
+                    console.error("Failed to update session:", error);
+                    const apiError = ApiErrorHelper.fromError(error);
+                    if (!apiError) {
+                        toast.error("An unknown error occurred while updating the session.");
+                        return;
+                    }
+                    console.error("API error details:", apiError.getMessage());
+                    toast.error(`Failed to update session: ${apiError.getMessage()}`);
                 },
             })
-            .execute({ path: { session_id: sessionId }, body: updatedSession });
+            .execute({ path: { session_id: sessionId }, body: sessionUpdate });
+
+        this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
+
+        return success;
     }
 
     async makeSnapshot(title: string, description: string): Promise<string | null> {
@@ -431,7 +458,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             }
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
             this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
-            this._guiMessageBroker.setState(GuiState.EditSessionDialogOpen, false);
             this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
             return;
         }
@@ -602,7 +628,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
-    async deleteSession(sessionId: string): Promise<void> {
+    async deleteSession(sessionId: string): Promise<boolean> {
         const result = await ConfirmationService.confirm({
             title: "Are you sure?",
             message:
@@ -613,14 +639,60 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             ],
         });
 
-        if (result !== "delete") return;
+        if (result !== "delete") return false;
 
-        await this._queryClient
-            .getMutationCache()
-            .build(this._queryClient, deleteSessionMutation())
-            .execute({ path: { session_id: sessionId } });
+        let success = false;
 
-        removeSessionQueryData(this._queryClient, sessionId);
+        try {
+            await this._queryClient
+                .getMutationCache()
+                .build(this._queryClient, {
+                    ...deleteSessionMutation(),
+                    onSuccess: () => {
+                        success = true;
+                        removeSessionQueryData(this._queryClient, sessionId);
+                    },
+                })
+                .execute({ path: { session_id: sessionId } });
+        } catch (error) {
+            toast.error("An error occurred while deleting the session.");
+            console.error("Failed to delete session:", error);
+        }
+
+        return success;
+    }
+
+    async deleteSnapshot(snapshotId: string): Promise<boolean> {
+        const result = await ConfirmationService.confirm({
+            title: "Are you sure?",
+            message: "This snapshot will be deleted. This action can not be reversed.",
+            actions: [
+                { id: "cancel", label: "Cancel" },
+                { id: "delete", label: "Delete", color: "danger" },
+            ],
+        });
+
+        if (result !== "delete") return false;
+
+        let success = false;
+
+        try {
+            await this._queryClient
+                .getMutationCache()
+                .build(this._queryClient, {
+                    ...deleteSnapshotMutation(),
+                    onSuccess: () => {
+                        success = true;
+                        removeSnapshotQueryData(this._queryClient, snapshotId);
+                    },
+                })
+                .execute({ path: { snapshot_id: snapshotId } });
+        } catch (error) {
+            toast.error("An error occurred while deleting the snapshot.");
+            console.error("Failed to delete snapshot:", error);
+        }
+
+        return success;
     }
 
     getWorkbenchSession(): PrivateWorkbenchSession {

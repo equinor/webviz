@@ -1,18 +1,23 @@
 import React from "react";
 
-import type { GetSnapshotAccessLogsData_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
-import { getSnapshotAccessLogsInfiniteOptions, SnapshotAccessLogSortBy_api } from "@api";
+import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
+import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
 import { DateRangePicker } from "@equinor/eds-core-react";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import type { Options } from "@hey-api/client-axios";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Table } from "@lib/components/Table";
-import type { TableColumns, TableSorting } from "@lib/components/Table/types";
+import type { TableColumns, TableSorting, TContext } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
+import { Tooltip } from "@lib/components/Tooltip";
 import { formatDate } from "@lib/utils/dates";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { Close, Delete, FileOpen, Search } from "@mui/icons-material";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { omit } from "lodash";
 import { toast } from "react-toastify";
 
@@ -38,6 +43,16 @@ type TableFilter = {
     visitedAt?: FilterRange;
 };
 
+const makeRowStyle = (context: TContext<FlattenedSnapshotAccessLog_api>): React.CSSProperties => {
+    if (context.entry.snapshotDeleted) {
+        return {
+            textDecoration: "line-through",
+            opacity: 0.6,
+        };
+    }
+    return {};
+};
+
 const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
     {
         _type: "data",
@@ -46,7 +61,7 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         columnId: "visits",
         sortable: false, // The sorting adornments require too much space, so the table looks off
         filter: false,
-        formatStyle: () => ({ textAlign: "center", paddingRight: "0.5rem" }),
+        formatStyle: (v, context) => ({ textAlign: "center", paddingRight: "0.5rem", ...makeRowStyle(context) }),
     },
     {
         _type: "data",
@@ -54,6 +69,15 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         sizeInPercent: 24,
         columnId: "snapshotMetadata.title",
         filter: false,
+        renderData(value, context) {
+            const style = makeRowStyle(context);
+            return (
+                <span style={{ ...style, textDecoration: "inherit" }}>
+                    {value}
+                    {context.entry.snapshotDeleted && <strong className="text-red-600"> (deleted by owner)</strong>}
+                </span>
+            );
+        },
     },
     {
         _type: "data",
@@ -62,8 +86,16 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         sizeInPercent: 26,
         filter: false,
         sortable: false,
-        renderData(value) {
-            return value || <span className="text-gray-400 italic">N/A</span>;
+        formatStyle: (value, context) => {
+            let style = makeRowStyle(context);
+            if (!value) {
+                style = {
+                    ...style,
+                    color: "gray",
+                    fontStyle: "italic",
+                };
+            }
+            return style;
         },
     },
     {
@@ -74,12 +106,14 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         sortable: false,
         filter: false,
         sizeInPercent: 12,
-        renderData(snapshotId) {
+        renderData(snapshotId, context) {
+            const style = makeRowStyle(context);
             const url = buildSnapshotUrl(snapshotId);
             return (
                 <a
                     className="px-1 inline-block font-mono bg-gray-100 rounded border text-blue-700 border-gray-200"
                     href={url}
+                    style={style}
                     onClick={(evt) => {
                         evt.preventDefault();
                         navigator.clipboard.writeText(url);
@@ -96,15 +130,15 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         sortable: false,
         filter: false,
         sizeInPercent: 11,
-        renderData() {
-            // TODO: Need new backend oid
+        renderData: function OwnerField(userId: string, context) {
+            const style = makeRowStyle(context);
+            const ownerInfo = useUserGraphInfo(userId);
+            const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
             return (
-                <>
-                    <div className="flex gap-1">
-                        <UserAvatar userEmail="anhun@equinor.com" />
-                        anhun
-                    </div>
-                </>
+                <div className="flex gap-1" style={style}>
+                    <UserAvatar userIdOrEmail={userId} userDisplayName={ownerInfo?.display_name} />
+                    {name}
+                </div>
             );
         },
     },
@@ -115,11 +149,31 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         columnId: "lastVisitedAt",
         filter: false,
         renderData(value) {
-            if (!value) return <span className="text-gray-400 italic">N/A</span>;
+            if (!value) return "N/A";
             return formatDate(new Date(value));
+        },
+        formatStyle: (value, context) => {
+            const style = makeRowStyle(context);
+            if (!value) {
+                return {
+                    ...style,
+                    color: "gray",
+                    fontStyle: "italic",
+                };
+            }
+            return style;
         },
     },
 ];
+
+function useUserGraphInfo(ownerId: string | undefined): GraphUser_api | null {
+    const userInfoQuery = useQuery({
+        ...getUserInfoOptions({ path: { user_id_or_email: ownerId ?? "" } }),
+        enabled: Boolean(ownerId),
+    });
+
+    return userInfoQuery.data ?? null;
+}
 
 function columnIdToApiSortField(columnId: string): SnapshotAccessLogSortBy_api {
     switch (columnId as keyof FlattenedSnapshotAccessLog_api) {
@@ -153,15 +207,12 @@ export function flattenSnapshotAccessLogEntry(logEntry: SnapshotAccessLog_api): 
 }
 
 export type SnapshotOverviewContentProps = {
-    selectedSession: string | null;
     workbench: Workbench;
-    editOpen: boolean;
-    onSelectSession: (sessionId: string | null) => void;
-    onEditClose: () => void;
 };
 
-export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): React.ReactNode {
-    // ? Should this be opened via gui-events?
+export function SnapshotManagementContent(props: SnapshotOverviewContentProps): React.ReactNode {
+    const [selectedSnapshotId, setSelectedSnapshotId] = React.useState<string | null>(null);
+    const [deletePending, setDeletePending] = React.useState<boolean>(false);
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
     const [tableFilter, setTableFilter] = React.useState<TableFilter>({});
@@ -184,7 +235,7 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
         };
     }, [tableFilter, tableSortState]);
 
-    const sessionsQuery = useInfiniteQuery({
+    const snapshotsQuery = useInfiniteQuery({
         ...getSnapshotAccessLogsInfiniteOptions({
             query: { ...querySortParams, page_size: QUERY_PAGE_SIZE },
         }),
@@ -215,38 +266,73 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
         });
     }
 
-    const tableData = React.useMemo(() => {
-        if (!sessionsQuery.data) return [];
+    async function handleDeleteClick() {
+        if (!selectedSnapshotId) return;
 
-        return sessionsQuery.data?.pages?.flatMap(({ items }) => {
+        setDeletePending(true);
+
+        const success = await props.workbench.deleteSnapshot(selectedSnapshotId);
+        setDeletePending(false);
+
+        if (!success) {
+            return;
+        }
+
+        setSelectedSnapshotId(null);
+    }
+
+    function handleOpenSnapshotClick() {
+        if (!selectedSnapshotId) return;
+
+        props.workbench.openSnapshot(selectedSnapshotId);
+    }
+
+    const tableData = React.useMemo(() => {
+        if (!snapshotsQuery.data) return [];
+
+        return snapshotsQuery.data?.pages?.flatMap(({ items }) => {
             return items.map(flattenSnapshotAccessLogEntry);
         });
-    }, [sessionsQuery.data]);
+    }, [snapshotsQuery.data]);
 
     const onTableScrollIndexChange = React.useCallback((start: number, end: number) => {
         setVisibleRowRange({ start, end });
     }, []);
 
+    const selectedSnapshot = React.useMemo(() => {
+        if (!selectedSnapshotId) return null;
+        return tableData.find((snapshot) => snapshot.snapshotId === selectedSnapshotId) || null;
+    }, [tableData, selectedSnapshotId]);
+
     React.useEffect(
         function maybeRefetchNextPageEffect() {
             if (!visibleRowRange || visibleRowRange.end === -1) return;
-            if (!sessionsQuery.hasNextPage) return;
-            if (sessionsQuery.isFetchingNextPage) return;
+            if (!snapshotsQuery.hasNextPage) return;
+            if (snapshotsQuery.isFetchingNextPage) return;
             if (tableData.length - visibleRowRange?.end <= NEXT_PAGE_THRESHOLD) {
-                sessionsQuery.fetchNextPage();
+                snapshotsQuery.fetchNextPage();
             }
         },
-        [sessionsQuery, tableData.length, visibleRowRange],
+        [snapshotsQuery, tableData.length, visibleRowRange],
     );
+
+    const isSnapshotDeleted = selectedSnapshot?.snapshotDeleted ?? false;
 
     return (
         <>
-            <div className="mb-8 flex gap-4">
+            <div className="mb-4 flex gap-4">
                 <Label text="Title" wrapperClassName="grow">
                     <Input
+                        startAdornment={<Search fontSize="small" />}
+                        endAdornment={
+                            <DenseIconButton onClick={() => handleTitleFilterValueChange("")} title="Clear filter">
+                                <Close fontSize="inherit" />
+                            </DenseIconButton>
+                        }
                         value={tableFilter.title ?? ""}
                         placeholder="Search title"
                         onValueChange={handleTitleFilterValueChange}
+                        className="h-6"
                     />
                 </Label>
 
@@ -255,16 +341,48 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
                 </Label> */}
 
                 <Label text="Last visited at" wrapperClassName="min-w-2xs">
-                    <DateRangePicker onChange={onFilterRangeChange} />
+                    <DateRangePicker
+                        onChange={onFilterRangeChange}
+                        className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300 h-10"
+                    />
                 </Label>
             </div>
-
+            <div className="flex gap-2 mb-2 justify-end">
+                <Tooltip
+                    title={isSnapshotDeleted ? "Selected snapshot has been deleted" : "Open selected snapshot"}
+                    placement="top"
+                    enterDelay="medium"
+                >
+                    <Button
+                        color="primary"
+                        disabled={!selectedSnapshotId || selectedSnapshot?.snapshotDeleted}
+                        onClick={handleOpenSnapshotClick}
+                        size="medium"
+                    >
+                        <FileOpen fontSize="inherit" /> Open
+                    </Button>
+                </Tooltip>
+                <Tooltip
+                    title={isSnapshotDeleted ? "Selected snapshot has been deleted" : "Delete selected snapshot"}
+                    placement="top"
+                    enterDelay="medium"
+                >
+                    <Button
+                        color="danger"
+                        disabled={!selectedSnapshotId || deletePending || selectedSnapshot?.snapshotDeleted}
+                        onClick={handleDeleteClick}
+                        size="medium"
+                    >
+                        {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
+                    </Button>
+                </Tooltip>
+            </div>
             <Table
                 rowIdentifier="snapshotId"
                 alternatingColumnColors={USE_ALTERNATING_COLUMN_COLORS}
                 columns={TABLE_COLUMNS}
                 rows={tableData}
-                numPendingRows={sessionsQuery.isLoading || sessionsQuery.isFetchingNextPage ? QUERY_PAGE_SIZE : 0}
+                numPendingRows={snapshotsQuery.isLoading || snapshotsQuery.isFetchingNextPage ? QUERY_PAGE_SIZE : 0}
                 rowHeight={ROW_HEIGHT}
                 height={TABLE_HEIGHT}
                 headerHeight={HEADER_HEIGHT}
@@ -272,8 +390,8 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
                 onSortingChange={setTableSortState}
                 selectable
                 controlledCollation
-                onSelectedRowsChange={(selection) => props.onSelectSession(selection[0])}
                 onVisibleRowRangeChange={onTableScrollIndexChange}
+                onSelectedRowsChange={(selection) => setSelectedSnapshotId(selection[0])}
             />
         </>
     );

@@ -10,6 +10,7 @@ import {
     updateSession,
     type NewSession_api,
     type PageSessionMetadata_api,
+    type PageSnapshotMetadata_api,
     type Session_api,
     type SessionUpdate_api,
 } from "@api";
@@ -91,6 +92,7 @@ export function removeSessionQueryData(queryClient: QueryClient, deletedSessionI
         if (dropped) return { pageToken, items: newItems };
         return undefined;
     });
+
     queryClient.setQueriesData(
         sessionsInfiniteListFilter,
         function dropSessionFromList(oldData: InfiniteData<PageSessionMetadata_api>) {
@@ -106,6 +108,56 @@ export function removeSessionQueryData(queryClient: QueryClient, deletedSessionI
 
                 const newItems = items.filter((session) => {
                     if (session.id !== deletedSessionId) return true;
+
+                    dropped = true;
+                    return false;
+                });
+
+                return { pageToken, items: newItems };
+            });
+
+            if (dropped) return { pageParams, pages: newPages };
+            return undefined;
+        },
+    );
+}
+
+export function removeSnapshotQueryData(queryClient: QueryClient, deletedSnapshotId: string) {
+    const snapshotsListFilter = makeTanstackQueryFilters([getSnapshotsMetadataQueryKey()]);
+    const snapshotsInfiniteListFilter = { queryKey: ["getSnapshotsMetadata", "infinite"] };
+
+    queryClient.setQueriesData(snapshotsListFilter, function dropSnapshotFromList(page: PageSnapshotMetadata_api) {
+        if (!page) return undefined;
+
+        const { pageToken, items } = page;
+        let dropped = false;
+
+        const newItems = items.filter((snapshot) => {
+            if (snapshot.id !== deletedSnapshotId) return true;
+
+            dropped = true;
+            return false;
+        });
+
+        if (dropped) return { pageToken, items: newItems };
+        return undefined;
+    });
+
+    queryClient.setQueriesData(
+        snapshotsInfiniteListFilter,
+        function dropSnapshotFromList(oldData: InfiniteData<PageSnapshotMetadata_api>) {
+            if (!oldData) return undefined;
+
+            const pageParams = oldData.pageParams;
+            const existingPages = oldData.pages;
+
+            let dropped = false;
+
+            const newPages = existingPages.map((page) => {
+                const { pageToken, items } = page;
+
+                const newItems = items.filter((snapshot) => {
+                    if (snapshot.id !== deletedSnapshotId) return true;
 
                     dropped = true;
                     return false;

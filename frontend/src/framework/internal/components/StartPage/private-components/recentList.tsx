@@ -1,12 +1,16 @@
 import React from "react";
 
-import { Typography } from "@equinor/eds-core-react";
+import { Icon, Typography } from "@equinor/eds-core-react";
+import { folder_open } from "@equinor/eds-icons";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Refresh } from "@mui/icons-material";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+
+Icon.add({ folder_open });
 
 export type RecentListProps<TItemType, TQueryData = unknown, TError = Error> = {
     title: string;
@@ -15,6 +19,7 @@ export type RecentListProps<TItemType, TQueryData = unknown, TError = Error> = {
     refetchIntervalMs?: number;
     renderItem: (item: TItemType) => React.ReactNode;
     makeItemKey: (item: TItemType) => string;
+    onDialogIconClick?: () => void;
 };
 
 export function RecentList<TItemType, TQueryData = unknown>(
@@ -80,35 +85,48 @@ export function RecentList<TItemType, TQueryData = unknown>(
 
         if (itemsQuery.status === "success" && itemsQuery.data) {
             const transformedData = props.transformData(itemsQuery.data);
+
+            if (transformedData.length === 0) {
+                return <span className="text-gray-400 italic h-full flex flex-col justify-center">None found.</span>;
+            }
             return (
-                <ul>
-                    {transformedData.map(function renderListItem(item) {
-                        return <li key={props.makeItemKey(item)}>{props.renderItem(item)}</li>;
-                    })}
-                </ul>
+                <>
+                    <ul>
+                        {transformedData.map(function renderListItem(item) {
+                            return <li key={props.makeItemKey(item)}>{props.renderItem(item)}</li>;
+                        })}
+                    </ul>
+                </>
             );
         }
-
-        return <div className="text-gray-500">No recent sessions found.</div>;
     }
 
     return (
         <section className="flex gap-1 flex-col">
-            <div className="flex items-center gap-2 justify-between">
-                <Typography className="flex gap-1 items-center justify-between" variant="h3">
+            <div className="flex items-center gap-2">
+                <Typography variant="h3" className="grow">
                     {props.title}
                 </Typography>
-                <DenseIconButton onClick={handleRefreshClick}>
-                    <Refresh
-                        fontSize="small"
-                        className={resolveClassNames({ "animate-spin": isRefreshAnimationPlaying })}
-                    />
-                </DenseIconButton>
+                <Tooltip title="Refresh" placement="bottom" enterDelay="medium">
+                    <DenseIconButton onClick={handleRefreshClick}>
+                        <Refresh
+                            fontSize="small"
+                            className={resolveClassNames("text-indigo-800", {
+                                "animate-spin": isRefreshAnimationPlaying,
+                            })}
+                        />
+                    </DenseIconButton>
+                </Tooltip>
+                <Tooltip title="Show all" placement="bottom" enterDelay="medium">
+                    <DenseIconButton onClick={props.onDialogIconClick}>
+                        <Icon name="folder_open" className="text-indigo-800 h-5" />
+                    </DenseIconButton>
+                </Tooltip>
             </div>
             <span className="text-gray-500 text-xs">
                 Last updated: <TimeAgo datetimeMs={lastUpdatedMs ?? Date.now()} updateIntervalMs={10000} />
             </span>
-            <div className="flex flex-col gap-2 mt-2">{makeContent()}</div>
+            <div className="flex flex-col gap-2 mt-2 min-h-16">{makeContent()}</div>
         </section>
     );
 }
