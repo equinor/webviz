@@ -166,7 +166,7 @@ class SurfaceAccess:
             name=name,
             time=time_filter,
         )
-        search_context = _filter_search_context_on_attribute(search_context, attribute)
+        search_context = filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         if surf_count > 1:
@@ -218,7 +218,7 @@ class SurfaceAccess:
             name=name,
             time=time_filter,
         )
-        search_context = _filter_search_context_on_attribute(search_context, attribute)
+        search_context = filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         if surf_count > 1:
@@ -285,7 +285,7 @@ class SurfaceAccess:
             realization=realizations if realizations is not None else True,
             time=time_filter,
         )
-        search_context = _filter_search_context_on_attribute(search_context, attribute)
+        search_context = filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         perf_metrics.record_lap("locate")
@@ -363,11 +363,10 @@ class SurfaceAccess:
             aggregation=False,
             ensemble=self._ensemble_name,
             name=name,
-            tagname=attribute,
             realization=realizations if realizations is not None else True,
             time=_time_or_interval_str_to_sumo_time_filter(time_or_interval_str),
         )
-        search_context = _filter_search_context_on_attribute(search_context, attribute)
+        search_context = filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         perf_metrics.record_lap("locate")
@@ -566,7 +565,7 @@ def _should_treat_httpx_exception_as_timeout(httpx_exception: httpx.HTTPError) -
     return False
 
 
-def _filter_search_context_on_attribute(search_context: SearchContext, attribute: str) -> SearchContext:
+def filter_search_context_on_attribute(search_context: SearchContext, attribute: str) -> SearchContext:
     """Adds "attribute" filter to an existing search context. Attribute can be either a tagname or a standard result."""
 
     if attribute.endswith(" (standard result)"):

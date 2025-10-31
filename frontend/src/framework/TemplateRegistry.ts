@@ -3,6 +3,7 @@ import type { ModuleSerializedStateMap } from "@modules/ModuleSerializedStateMap
 import type { KeyKind } from "./DataChannelTypes";
 import type { LayoutElement } from "./internal/Dashboard";
 import type { SyncSettingKey } from "./SyncSettings";
+import type { KeyKind } from "./types/dataChannnel";
 
 export type DataChannelTemplate = {
     listensToInstanceRef: string;
