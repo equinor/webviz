@@ -8,9 +8,11 @@ import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/Wor
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
+import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
@@ -49,10 +51,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
     const [selectedRealizationNumber, setSelectedRealizationNumber] = useAtom(selectedRealizationNumberAtom);
     const [selectedVfpTableName, setSelectedVfpTableName] = useAtom(selectedVfpTableNameAtom);
-    const [selectedThpIndicies, setSelectedThpIndices] = useAtom(selectedThpIndicesAtom);
-    const [selectedWfrIndicies, setSelectedWfrIndices] = useAtom(selectedWfrIndicesAtom);
-    const [selectedGfrIndicies, setSelectedGfrIndices] = useAtom(selectedGfrIndicesAtom);
-    const [selectedAlqIndicies, setSelectedAlqIndices] = useAtom(selectedAlqIndicesAtom);
+    const [selectedThpIndices, setSelectedThpIndices] = useAtom(selectedThpIndicesAtom);
+    const [selectedWfrIndices, setSelectedWfrIndices] = useAtom(selectedWfrIndicesAtom);
+    const [selectedGfrIndices, setSelectedGfrIndices] = useAtom(selectedGfrIndicesAtom);
+    const [selectedAlqIndices, setSelectedAlqIndices] = useAtom(selectedAlqIndicesAtom);
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
 
     const availableRealizationNumbers = useAtomValue(availableRealizationNumbersAtom);
@@ -118,84 +120,129 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         }
     }
 
+    const errorMessage = vfpTableQuery.isError ? "Error loading VFP Table data.\n See the log for details." : undefined;
+    const infoMessage = vfpDataAccessor?.isInjTable() ? "Not available for VFP Injector tables" : undefined;
+
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup expanded={true} title="Ensemble">
-                <EnsembleDropdown
-                    ensembles={ensembleSet.getRegularEnsembleArray()}
-                    value={selectedEnsembleIdent.value}
-                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
-                    onChange={handleEnsembleSelectionChange}
-                />
+                <PersistableAtomWarningWrapper atom={selectedEnsembleIdentAtom}>
+                    <EnsembleDropdown
+                        ensembles={ensembleSet.getRegularEnsembleArray()}
+                        value={selectedEnsembleIdent.value}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                        onChange={handleEnsembleSelectionChange}
+                    />
+                </PersistableAtomWarningWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Realization">
-                <Dropdown
-                    options={
-                        availableRealizationNumbers?.map((real) => {
-                            return { value: real.toString(), label: real.toString() };
-                        }) ?? []
-                    }
-                    value={
-                        selectedRealizationNumber.value !== null
-                            ? selectedRealizationNumber.value.toString()
-                            : undefined
-                    }
-                    onChange={handleRealizationNumberChange}
-                />
+                <PersistableAtomWarningWrapper atom={selectedRealizationNumberAtom}>
+                    <Dropdown
+                        options={
+                            availableRealizationNumbers?.map((real) => {
+                                return { value: real.toString(), label: real.toString() };
+                            }) ?? []
+                        }
+                        value={
+                            selectedRealizationNumber.value !== null
+                                ? selectedRealizationNumber.value.toString()
+                                : undefined
+                        }
+                        onChange={handleRealizationNumberChange}
+                    />
+                </PersistableAtomWarningWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="VFP Name">
-                <Dropdown
-                    options={
-                        validVfpTableNames?.map((name) => {
-                            return { value: name, label: name };
-                        }) ?? []
-                    }
-                    value={selectedVfpTableName.value ?? undefined}
-                    onChange={handleVfpNameSelectionChange}
-                />
+                <PersistableAtomWarningWrapper atom={selectedVfpTableNameAtom}>
+                    <Dropdown
+                        options={
+                            validVfpTableNames?.map((name) => {
+                                return { value: name, label: name };
+                            }) ?? []
+                        }
+                        value={selectedVfpTableName.value ?? undefined}
+                        onChange={handleVfpNameSelectionChange}
+                    />
+                </PersistableAtomWarningWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup title="Filter" expanded={true}>
                 <div className="flex flex-col gap-2">
                     <Label text={thpLabel}>
-                        <Select
-                            options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.THP))}
-                            value={selectedThpIndicies.value?.map((value) => value.toString()) ?? []}
-                            onChange={handleThpIndicesSelectionChange}
-                            size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.THP) ?? 5)}
-                            multiple={true}
-                        />
+                        <PersistableAtomWarningWrapper atom={selectedThpIndicesAtom}>
+                            <PendingWrapper isPending={vfpTableQuery.isFetching} errorMessage={errorMessage}>
+                                <Select
+                                    options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.THP))}
+                                    value={selectedThpIndices.value?.map((value) => value.toString()) ?? []}
+                                    onChange={handleThpIndicesSelectionChange}
+                                    size={5}
+                                    multiple={true}
+                                />
+                            </PendingWrapper>
+                        </PersistableAtomWarningWrapper>
                     </Label>
-                    {vfpDataAccessor?.isProdTable() && (
-                        <>
-                            <Label text={wfrLabel}>
+                    <Label text={wfrLabel}>
+                        <PersistableAtomWarningWrapper atom={selectedWfrIndicesAtom}>
+                            <PendingWrapper
+                                isPending={vfpTableQuery.isFetching}
+                                errorMessage={errorMessage}
+                                infoMessage={infoMessage}
+                            >
                                 <Select
-                                    options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.WFR))}
-                                    value={selectedWfrIndicies.value?.map((value) => value.toString()) ?? []}
+                                    options={
+                                        !vfpDataAccessor || vfpDataAccessor?.isInjTable()
+                                            ? []
+                                            : makeFilterOptions(vfpDataAccessor.getVfpParamValues(VfpParam.WFR))
+                                    }
+                                    value={selectedWfrIndices.value?.map((value) => value.toString()) ?? []}
                                     onChange={handleWfrIndicesSelectionChange}
-                                    size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.WFR) ?? 5)}
+                                    size={5}
                                     multiple={true}
                                 />
-                            </Label>
-                            <Label text={gfrLabel}>
+                            </PendingWrapper>
+                        </PersistableAtomWarningWrapper>
+                    </Label>
+                    <Label text={gfrLabel}>
+                        <PersistableAtomWarningWrapper atom={selectedGfrIndicesAtom}>
+                            <PendingWrapper
+                                isPending={vfpTableQuery.isFetching}
+                                errorMessage={errorMessage}
+                                infoMessage={infoMessage}
+                            >
                                 <Select
-                                    options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.GFR))}
-                                    value={selectedGfrIndicies.value?.map((value) => value.toString()) ?? []}
+                                    options={
+                                        !vfpDataAccessor || vfpDataAccessor?.isInjTable()
+                                            ? []
+                                            : makeFilterOptions(vfpDataAccessor.getVfpParamValues(VfpParam.GFR))
+                                    }
+                                    value={selectedGfrIndices.value?.map((value) => value.toString()) ?? []}
                                     onChange={handleGfrIndicesSelectionChange}
-                                    size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.GFR) ?? 5)}
+                                    size={5}
                                     multiple={true}
                                 />
-                            </Label>
-                            <Label text={alqLabel}>
+                            </PendingWrapper>
+                        </PersistableAtomWarningWrapper>
+                    </Label>
+                    <Label text={alqLabel}>
+                        <PersistableAtomWarningWrapper atom={selectedAlqIndicesAtom}>
+                            <PendingWrapper
+                                isPending={vfpTableQuery.isFetching}
+                                errorMessage={errorMessage}
+                                infoMessage={infoMessage}
+                            >
                                 <Select
-                                    options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.ALQ))}
-                                    value={selectedAlqIndicies.value?.map((value) => value.toString()) ?? []}
+                                    options={
+                                        !vfpDataAccessor || vfpDataAccessor?.isInjTable()
+                                            ? []
+                                            : makeFilterOptions(vfpDataAccessor.getVfpParamValues(VfpParam.ALQ))
+                                    }
+                                    value={selectedAlqIndices.value?.map((value) => value.toString()) ?? []}
                                     onChange={handleAlqIndicesSelectionChange}
-                                    size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.ALQ) ?? 5)}
+                                    size={3}
                                     multiple={true}
                                 />
-                            </Label>
-                        </>
-                    )}
+                            </PendingWrapper>
+                        </PersistableAtomWarningWrapper>
+                    </Label>
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Pressure Option" expanded={true}>
@@ -209,11 +256,13 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Color By" expanded={true}>
-                <Dropdown
-                    options={makeColorByOptions(vfpType, vfpDataAccessor)}
-                    value={selectedColorBy.value ?? undefined}
-                    onChange={handleColorByChange}
-                />
+                <PersistableAtomWarningWrapper atom={selectedColorByAtom}>
+                    <Dropdown
+                        options={makeColorByOptions(vfpType, vfpDataAccessor)}
+                        value={selectedColorBy.value ?? undefined}
+                        onChange={handleColorByChange}
+                    />
+                </PersistableAtomWarningWrapper>
             </CollapsibleGroup>
         </div>
     );

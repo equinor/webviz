@@ -27,14 +27,14 @@ export const selectedRealizationNumberAtom = persistableFixableAtom<number | nul
     initialValue: null,
     isValidFunction: ({ get, value }) => {
         const availableRealizations = get(availableRealizationNumbersAtom);
-        if (!value) {
+        if (value === null) {
             return availableRealizations.length === 0;
         }
         return availableRealizations.includes(value);
     },
     fixupFunction: ({ get, value }) => {
         const availableRealizations = get(availableRealizationNumbersAtom);
-        if (!value) {
+        if (value === null || value === undefined) {
             return availableRealizations[0] ?? null;
         }
 

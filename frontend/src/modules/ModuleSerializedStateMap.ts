@@ -77,18 +77,6 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "SeismicIntersection": {
-    settings?: never,
-    view?: never,
-  },
-  "SeismicMap": {
-    settings?: never,
-    view?: never,
-  },
-  "Sensitivity": {
-    settings?: never,
-    view?: never,
-  },
   "SensitivityPlot": {
     settings?: never,
     view?: never,
@@ -98,6 +86,10 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "SimulationTimeSeriesSensitivity": {
+    settings?: never,
+    view?: never,
+  },
+  "StructuralUncertaintyIntersection": {
     settings?: never,
     view?: never,
   },
