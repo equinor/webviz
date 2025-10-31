@@ -89,7 +89,19 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "StructuralUncertaintyIntersection": {
+    settings?: never,
+    view?: never,
+  },
   "SubsurfaceMap": {
+    settings?: never,
+    view?: never,
+  },
+  "TimeSeriesParameterDistribution": {
+    settings?: never,
+    view?: never,
+  },
+  "TopographicMap": {
     settings?: never,
     view?: never,
   },
