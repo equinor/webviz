@@ -14,8 +14,15 @@ import "../../../../modules/registerAllModules";
 import "../../../../templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
+import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { LeftNavBar } from "../LeftNavBar";
+import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { RightNavBar } from "../RightNavBar";
+import { SaveSessionDialog } from "../SaveSessionDialog";
+import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
+import { StartPage } from "../StartPage/StartPage";
+import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -53,6 +60,8 @@ export function WorkbenchWrapper() {
                 </div>
             </>
         );
+    } else {
+        content = <StartPage workbench={workbench} />;
     }
 
     return (
@@ -60,7 +69,13 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <SelectEnsemblesDialog workbench={workbench} />
+                <SaveSessionDialog workbench={workbench} />
+                <CreateSnapshotDialog workbench={workbench} />
+                <ActiveSessionRecoveryDialog workbench={workbench} />
             </ActiveSessionBoundary>
+            <TemplatesDialog workbench={workbench} />
+            <MultiSessionsRecoveryDialog workbench={workbench} />
+            <PersistenceManagementDialog workbench={workbench} />
             {content}
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
         </>

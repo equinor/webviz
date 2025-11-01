@@ -17,7 +17,7 @@ export class AtomStoreMaster {
         });
     }
 
-    makeAtomStoreForModuleInstance(moduleInstanceId: string) {
+    makeAtomStoreForModuleInstance(moduleInstanceId: string): AtomStore {
         const atomStore = createStore();
         // Make the module's own id available within each module's store
         atomStore.set(CurrentModuleInstanceIdAtom, moduleInstanceId);
@@ -27,6 +27,8 @@ export class AtomStoreMaster {
         for (const [atom, value] of atomStates) {
             atomStore.set(atom, value);
         }
+
+        return atomStore;
     }
 
     getAtomStoreForModuleInstance(moduleInstanceId: string): AtomStore {

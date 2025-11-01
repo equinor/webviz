@@ -22,6 +22,10 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
     );
+    const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.TemplatesDialogOpen,
+    );
     const numberOfUnsavedRealizationFilters = useGuiValue(guiMessageBroker, GuiState.NumberOfUnsavedRealizationFilters);
     const numberOfEffectiveRealizationFilters = useGuiValue(
         guiMessageBroker,
@@ -54,7 +58,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     }
 
     function handleTemplatesListClick() {
-        togglePanelContent(RightDrawerContent.TemplatesList);
+        setIsTemplatesDialogOpen(true);
     }
 
     function handleRealizationFilterClick() {
@@ -77,8 +81,8 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     onClick={handleModulesListClick}
                 />
                 <NavBarButton
-                    active={drawerContent === RightDrawerContent.TemplatesList}
-                    tooltip="Show templates list"
+                    active={isTemplatesDialogOpen}
+                    tooltip="Show templates dialog"
                     icon={<GridView fontSize="small" className="size-5" />}
                     onClick={handleTemplatesListClick}
                 />
