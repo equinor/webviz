@@ -3,15 +3,14 @@ import type { InterfaceInitialization } from "@framework/UniDirectionalModuleCom
 import type { TableType } from "@modules/_shared/InplaceVolumes/types";
 
 import { selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./settings/atoms/baseAtoms";
+import { areSelectedTablesComparableAtom, areTableDefinitionSelectionsValidAtom } from "./settings/atoms/derivedAtoms";
 import {
-    areSelectedTablesComparableAtom,
-    areTableDefinitionSelectionsValidAtom,
     selectedGroupByIndicesAtom,
     selectedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
     selectedTableNamesAtom,
-} from "./settings/atoms/derivedAtoms";
+} from "./settings/atoms/persistableAtoms";
 import type { InplaceVolumesFilterSelections } from "./types";
 
 export type SettingsToViewInterface = {
@@ -30,14 +29,14 @@ export type Interfaces = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     filter: (get) => {
         return {
-            ensembleIdents: get(selectedEnsembleIdentsAtom),
-            tableNames: get(selectedTableNamesAtom),
-            indicesWithValues: get(selectedIndicesWithValuesAtom),
+            ensembleIdents: get(selectedEnsembleIdentsAtom).value,
+            tableNames: get(selectedTableNamesAtom).value,
+            indicesWithValues: get(selectedIndicesWithValuesAtom).value,
             areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };
     },
-    resultNames: (get) => get(selectedResultNamesAtom),
-    groupByIndices: (get) => get(selectedGroupByIndicesAtom),
+    resultNames: (get) => get(selectedResultNamesAtom).value,
+    groupByIndices: (get) => get(selectedGroupByIndicesAtom).value,
     tableType: (get) => get(selectedTableTypeAtom),
     statisticOptions: (get) => get(selectedStatisticOptionsAtom),
     areTableDefinitionSelectionsValid: (get) => get(areTableDefinitionSelectionsValidAtom),

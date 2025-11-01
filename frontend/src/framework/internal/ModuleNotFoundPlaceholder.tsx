@@ -1,11 +1,12 @@
 import { BugReport, Forum, WebAssetOff } from "@mui/icons-material";
 
+import type { AtomStore } from "@framework/AtomStoreMaster";
 import { ImportStatus, Module, ModuleCategory, ModuleDevState } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { Button } from "@lib/components/Button";
 import { Tag } from "@lib/components/Tag";
 
-export class ModuleNotFoundPlaceholder extends Module<any> {
+export class ModuleNotFoundPlaceholder extends Module<any, any> {
     constructor(moduleName: string) {
         super({
             name: moduleName,
@@ -13,11 +14,11 @@ export class ModuleNotFoundPlaceholder extends Module<any> {
             category: ModuleCategory.MAIN,
             devState: ModuleDevState.PROD,
         });
-        this._importState = ImportStatus.Imported;
+        this._importStatus = ImportStatus.Imported;
     }
 
-    makeInstance(id: string): ModuleInstance<any> {
-        const instance = super.makeInstance(id);
+    makeInstance(id: string, atomStore: AtomStore): ModuleInstance<any, any> {
+        const instance = super.makeInstance(id, atomStore);
         return instance;
     }
 
