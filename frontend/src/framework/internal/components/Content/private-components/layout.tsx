@@ -50,12 +50,12 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
     const layoutDivSize = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
-    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
+    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     // We use a temporary layout while dragging elements around
     const [tempLayout, setTempLayout] = React.useState<LayoutElement[] | null>(null);
-    const trueLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
+    const trueLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);
     const layout = tempLayout ?? trueLayout;
 
     React.useEffect(() => {
@@ -121,7 +121,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 if (isNewModule && moduleName) {
                     const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
                     if (layoutElement) {
-                        const instance = dashboard.makeAndAddModuleInstance(moduleName, layoutElement);
+                        const instance = dashboard.makeAndAddModuleInstance(moduleName);
+                        dashboard.setLayout(currentLayout);
                         layoutElement.moduleInstanceId = instance.getId();
                         layoutElement.moduleName = instance.getName();
                     }
@@ -373,7 +374,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         rows = Math.ceil(minimizedLayouts.length / elementsPerRow);
     }
 
-    function computeModuleLayoutProps(moduleInstance: ModuleInstance<any>) {
+    function computeModuleLayoutProps(moduleInstance: ModuleInstance<any, any>) {
         const moduleId = moduleInstance.getId();
         const layoutElement = layout.find((element) => element.moduleInstanceId === moduleId);
 

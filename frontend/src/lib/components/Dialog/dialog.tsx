@@ -28,6 +28,7 @@ export type DialogProps = {
     actions?: React.ReactNode;
     showCloseCross?: boolean;
     drawer?: DialogDrawerProps;
+    zIndex?: number;
 };
 
 export const Dialog: React.FC<DialogProps> = (props) => {
@@ -48,11 +49,12 @@ export const Dialog: React.FC<DialogProps> = (props) => {
     return createPortal(
         <div
             ref={wrapperRef}
-            className={resolveClassNames("fixed inset-0 w-full h-full z-50", {
+            className={resolveClassNames("fixed inset-0 w-full h-full", {
                 "pointer-events-none": !props.modal,
                 "bg-slate-600/50": props.modal,
                 hidden: !props.open,
             })}
+            style={{ zIndex: props.zIndex ?? 50 }}
             onClick={handleBackgroundClick}
         >
             {/* Main dialog */}
