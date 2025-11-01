@@ -4,7 +4,8 @@ import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
 import { PlotType } from "../typesAndEnums";
 
-import { plotTypeAtom, parameterIdentStringAtom, showTrendlineAtom } from "./atoms/baseAtoms";
+import { plotTypeAtom, showTrendlineAtom } from "./atoms/baseAtoms";
+import { parameterIdentStringAtom } from "./atoms/persistedAtoms";
 
 export type SerializedSettings = {
     plotType: PlotType;
@@ -27,7 +28,7 @@ export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
     return {
         plotType: get(plotTypeAtom),
-        parameterIdentString: get(parameterIdentStringAtom),
+        parameterIdentString: get(parameterIdentStringAtom).value,
         showTrendline: get(showTrendlineAtom),
     };
 };
