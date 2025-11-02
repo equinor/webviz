@@ -1,5 +1,7 @@
 import { isEqual } from "lodash";
 
+import type { JTDSchemaType } from "ajv/dist/jtd";
+
 import type { DeltaEnsemble } from "./DeltaEnsemble";
 import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import type { ContinuousParameter, DiscreteParameter, EnsembleParameters, Parameter } from "./EnsembleParameters";
@@ -19,6 +21,115 @@ import {
     isValueSelectionAnArrayOfString,
     makeRealizationNumberArrayFromSelections,
 } from "./utils/realizationFilterTypesUtils";
+
+export type SerializedRealizationFilter = {
+    assignedEnsembleIdentString: string;
+    includeExcludeFilter: IncludeExcludeFilter;
+    filterType: RealizationFilterType;
+    realizationNumberSelections: SerializedRealizationNumberSelection[];
+    parameterIdentStringToValueSelectionMap: SerializedParameterValueSelection[];
+};
+
+export type SerializedRealizationNumberSelection =
+    | { type: "single"; value: number }
+    | { type: "range"; range: NumberRange };
+
+export type SerializedParameterValueSelection = {
+    parameterIdentString: string;
+} & (SerializedContinuousParameterValueSelection | SerializedDiscreteParameterValueSelection);
+
+export type SerializedContinuousParameterValueSelection = {
+    type: "continuous";
+    range: NumberRange;
+};
+
+export type SerializedDiscreteParameterValueSelection = {
+    type: "discrete";
+    parameterIdentString: string;
+    values: SerializedDiscreteParameterValues;
+};
+
+export type SerializedDiscreteParameterValues =
+    | {
+          type: "string";
+          value: readonly string[];
+      }
+    | {
+          type: "number";
+          value: readonly number[];
+      };
+
+export const realizationFilterSchema: JTDSchemaType<SerializedRealizationFilter> = {
+    properties: {
+        assignedEnsembleIdentString: { type: "string" },
+        includeExcludeFilter: { enum: Object.values(IncludeExcludeFilter) },
+        filterType: { enum: Object.values(RealizationFilterType) },
+        realizationNumberSelections: {
+            elements: {
+                discriminator: "type",
+                mapping: {
+                    single: {
+                        properties: {
+                            value: { type: "float64" },
+                        },
+                    },
+                    range: {
+                        properties: {
+                            range: {
+                                properties: {
+                                    start: { type: "float64" },
+                                    end: { type: "float64" },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        parameterIdentStringToValueSelectionMap: {
+            elements: {
+                discriminator: "type",
+                mapping: {
+                    continuous: {
+                        properties: {
+                            parameterIdentString: { type: "string" },
+                            range: {
+                                properties: {
+                                    start: { type: "float64" },
+                                    end: { type: "float64" },
+                                },
+                            },
+                        },
+                    },
+                    discrete: {
+                        properties: {
+                            parameterIdentString: { type: "string" },
+                            values: {
+                                discriminator: "type",
+                                mapping: {
+                                    string: {
+                                        properties: {
+                                            value: {
+                                                elements: { type: "string" },
+                                            },
+                                        },
+                                    },
+                                    number: {
+                                        properties: {
+                                            value: {
+                                                elements: { type: "float64" },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+} as const;
 
 /**
  * Class for filtering realizations based on realization number or parameter values.
@@ -58,6 +169,96 @@ export class RealizationFilter {
 
         this._realizationNumberSelections = null;
         this._parameterIdentStringToValueSelectionMap = null;
+    }
+
+    serialize(): SerializedRealizationFilter {
+        const serializedRealizationNumberSelections: SerializedRealizationNumberSelection[] = [];
+        if (this._realizationNumberSelections !== null) {
+            for (const selection of this._realizationNumberSelections) {
+                if (typeof selection === "number") {
+                    serializedRealizationNumberSelections.push({ type: "single", value: selection });
+                } else {
+                    serializedRealizationNumberSelections.push({ type: "range", range: selection });
+                }
+            }
+        }
+
+        const serializedParameterIdentStringToValueSelectionMap: SerializedParameterValueSelection[] = [];
+        if (this._parameterIdentStringToValueSelectionMap !== null) {
+            for (const [parameterIdentString, valueSelection] of this._parameterIdentStringToValueSelectionMap) {
+                if (isValueSelectionAnArrayOfString(valueSelection)) {
+                    serializedParameterIdentStringToValueSelectionMap.push({
+                        type: "discrete",
+                        parameterIdentString,
+                        values: { type: "string", value: valueSelection },
+                    });
+                } else if (isValueSelectionAnArrayOfNumber(valueSelection)) {
+                    serializedParameterIdentStringToValueSelectionMap.push({
+                        type: "discrete",
+                        parameterIdentString,
+                        values: { type: "number", value: valueSelection },
+                    });
+                } else {
+                    serializedParameterIdentStringToValueSelectionMap.push({
+                        type: "continuous",
+                        parameterIdentString,
+                        range: valueSelection,
+                    });
+                }
+            }
+        }
+
+        return {
+            assignedEnsembleIdentString: this._assignedEnsemble.getIdent().toString(),
+            includeExcludeFilter: this._includeExcludeFilter,
+            filterType: this._filterType,
+            realizationNumberSelections: serializedRealizationNumberSelections,
+            parameterIdentStringToValueSelectionMap: serializedParameterIdentStringToValueSelectionMap,
+        };
+    }
+
+    static fromDeserialize(
+        assignedEnsemble: RegularEnsemble | DeltaEnsemble,
+        serialized: SerializedRealizationFilter,
+    ): RealizationFilter {
+        const filter = new RealizationFilter(assignedEnsemble);
+        filter._includeExcludeFilter = serialized.includeExcludeFilter;
+        filter._filterType = serialized.filterType;
+
+        const deserializedRealizationNumberSelections: RealizationNumberSelection[] = [];
+        for (const serializedSelection of serialized.realizationNumberSelections) {
+            if (serializedSelection.type === "single") {
+                deserializedRealizationNumberSelections.push(serializedSelection.value);
+            } else {
+                deserializedRealizationNumberSelections.push(serializedSelection.range);
+            }
+        }
+        filter._realizationNumberSelections = deserializedRealizationNumberSelections;
+
+        const deserializedParameterIdentStringToValueSelectionMap: Map<string, ParameterValueSelection> = new Map();
+        for (const serializedSelection of serialized.parameterIdentStringToValueSelectionMap) {
+            if (serializedSelection.type === "continuous") {
+                deserializedParameterIdentStringToValueSelectionMap.set(
+                    serializedSelection.parameterIdentString,
+                    serializedSelection.range,
+                );
+            } else {
+                if (serializedSelection.values.type === "string") {
+                    deserializedParameterIdentStringToValueSelectionMap.set(
+                        serializedSelection.parameterIdentString,
+                        serializedSelection.values.value,
+                    );
+                } else {
+                    deserializedParameterIdentStringToValueSelectionMap.set(
+                        serializedSelection.parameterIdentString,
+                        serializedSelection.values.value,
+                    );
+                }
+            }
+        }
+        filter._parameterIdentStringToValueSelectionMap = deserializedParameterIdentStringToValueSelectionMap;
+
+        return filter;
     }
 
     getAssignedEnsembleIdent(): RegularEnsembleIdent | DeltaEnsembleIdent {

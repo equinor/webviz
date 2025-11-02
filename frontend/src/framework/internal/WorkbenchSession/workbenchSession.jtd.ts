@@ -13,6 +13,7 @@ import type {
     WorkbenchSessionMetadata,
 } from "./PrivateWorkbenchSession";
 import type { SerializedWorkbenchSession } from "./utils/deserialization";
+import { realizationFilterSetSchema } from "@framework/RealizationFilterSet";
 
 export const regularEnsembleSchema: JTDSchemaType<SerializedRegularEnsemble> = {
     properties: {
@@ -63,6 +64,7 @@ export const workbenchSessionContentSchema: JTDSchemaType<WorkbenchSessionConten
         },
         settings: WORKBENCH_SETTINGS_JTD_SCHEMA,
         ensembleSet: ensembleSetSchema,
+        ensembleRealizationFilterSet: realizationFilterSetSchema,
         userCreatedItems: USER_CREATED_ITEMS_JTD_SCHEMA,
     },
 } as const;

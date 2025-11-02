@@ -5,7 +5,7 @@ import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
 import { Dashboard, DashboardTopic, type SerializedDashboard } from "@framework/internal/Dashboard";
-import { RealizationFilterSet } from "@framework/RealizationFilterSet";
+import { RealizationFilterSet, type SerializedRealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, UserCreatedItemsEvent, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
@@ -56,6 +56,7 @@ export type WorkbenchSessionContent = {
     activeDashboardId: string | null;
     dashboards: SerializedDashboard[];
     ensembleSet: SerializedEnsembleSet;
+    ensembleRealizationFilterSet: SerializedRealizationFilterSet;
     settings: SerializedWorkbenchSettings;
     userCreatedItems: SerializedUserCreatedItems;
 };
@@ -217,6 +218,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                     }),
                 ),
             },
+            ensembleRealizationFilterSet: this._realizationFilterSet.serialize(),
         };
     }
 
@@ -231,6 +233,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         this._settings.deserializeState(content.settings);
         this._userCreatedItems.deserializeState(content.userCreatedItems);
+        this._realizationFilterSet.deserialize(content.ensembleRealizationFilterSet, this._ensembleSet);
 
         const userEnsembleSettings: UserEnsembleSetting[] = content.ensembleSet.regularEnsembles.map((e) => ({
             ensembleIdent: RegularEnsembleIdent.fromString(e.ensembleIdent),
@@ -378,6 +381,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     notifyAboutEnsembleRealizationFilterChange(): void {
+        console.debug("Notifying about ensemble realization filter change");
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, {
             filterSet: this._realizationFilterSet,
         });
@@ -390,10 +394,9 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     makeDefaultDashboard(): void {
         const d = new Dashboard(this._atomStoreMaster);
-        this._dashboards.push(d);
+        this.registerDashboard(d);
         this._activeDashboardId = d.getId();
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
-        this.handleStateChange();
     }
 
     clear(): void {
