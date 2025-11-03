@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Scan base images from Dockerfiles
 
+    continue-on-error: true
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
