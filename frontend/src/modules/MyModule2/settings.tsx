@@ -5,6 +5,11 @@ import { Check } from "@mui/icons-material";
 import { useAtom } from "jotai";
 import { random, range } from "lodash";
 
+import { EnsemblePicker } from "@framework/components/EnsemblePicker";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -23,8 +28,11 @@ import {
     amtOfPendingDataAtom,
     fillPendingDataAtom,
 } from "./atoms";
+import type { Interfaces } from "./interfaces";
 
-export function Settings(): React.ReactNode {
+export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>): React.ReactNode {
+    const ensembleSet = useEnsembleSet(workbenchSession);
+
     const [alternateCols, setAlternateCols] = useAtom(alternateColColorsAtom);
     const [allowMultiSelect, setAllowMultiSelect] = useAtom(allowMultiSelectAtom);
     const [fillPendingData, setFillPendingData] = useAtom(fillPendingDataAtom);
@@ -35,6 +43,7 @@ export function Settings(): React.ReactNode {
     const [tagSelection, setTagSelection] = React.useState<string[]>([]);
     const [tagSelection2, setTagSelection2] = React.useState<string[]>([]);
 
+    const [ensembleSelection, setEnsembleSelection] = React.useState<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>([]);
     const [isPending, setIsPending] = React.useState(false);
     const [statusMessage, setStatusMessage] = React.useState<string | undefined>(undefined);
 
@@ -46,17 +55,36 @@ export function Settings(): React.ReactNode {
         <>
             <div className="mb-4">
                 <div className="mb-2 text-xs">Selected: {tagSelection.join(", ") || "none"}</div>
-                <Label text="X/N selected">
-                    <TagPicker
-                        placeholder="Select tags"
-                        tagOptions={tags}
-                        selection={tagSelection}
-                        showListAsSelectionCount
-                        onChange={setTagSelection}
-                    />
-                </Label>
+
+                <div className="grid grid-cols-[0.7fr_0.3fr] gap-2 ">
+                    <Label text="Standard picker">
+                        <TagPicker
+                            placeholder="Select tags"
+                            tagOptions={tags}
+                            selection={tagSelection}
+                            onChange={setTagSelection}
+                        />
+                    </Label>
+
+                    <Label text="X/N selected">
+                        <TagPicker
+                            placeholder="Select tags"
+                            tagOptions={tags}
+                            selection={tagSelection}
+                            showListAsSelectionCount
+                            onChange={setTagSelection}
+                        />
+                    </Label>
+                </div>
             </div>
 
+            <EnsemblePicker
+                ensembles={ensembleSet.getEnsembleArray()}
+                value={ensembleSelection}
+                allowDeltaEnsembles={true}
+                ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                onChange={setEnsembleSelection}
+            />
             <div className="mb-12">
                 <div className="mb-2 text-xs">Selected: {tagSelection2.join(", ") || "none"}</div>
                 <Label text="Custom tags and options">
