@@ -60,7 +60,7 @@ jobs:
           echo "Docker base images to scan:"
           cat unique_base_images.txt
 
-      - name: Scan base images with Trivy
+      - name: Scan base images with Trivy - fail if HIGH or CRITICAL vulnerability found
         run: |
           while read image; do
             echo "🔍 Scanning $image"
