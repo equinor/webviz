@@ -14,22 +14,43 @@ jobs:
 
       - name: Install Trivy
         uses: aquasecurity/setup-trivy@v0.2.3
-
-      - name: Find Dockerfiles and extract base images
-        id: extract
+      
+      - name: Extract and resolve base images from Dockerfiles
         run: |
-          echo "Searching for Dockerfiles..."
           find . -type f \( -iname 'Dockerfile' -o -iname '*.Dockerfile' \) > dockerfiles.txt
+          > resolved_images.txt
+
           echo "Found:"
           cat dockerfiles.txt
 
-          echo "Extracting base images..."
-          > base_images.txt
           while read file; do
-            grep -i '^FROM' "$file" | awk '{print $2}' >> base_images.txt
-          done < dockerfiles.txt
-
-          sort -u base_images.txt > unique_base_images.txt
+            echo "Processing $file"
+      
+            # Extract ARG definitions
+            declare -A args
+            while IFS= read -r line; do
+              if [[ "$line" =~ ^ARG[[:space:]]+([A-Za-z0-9_]+)=([^\"]+) ]]; then
+                key="${BASH_REMATCH[1]}"
+                value="${BASH_REMATCH[2]}"
+                args[$key]="$value"
+              fi
+            done < "$file"
+      
+            # Extract FROM lines and resolve variables
+            while IFS= read -r line; do
+              if [[ "$line" =~ ^FROM[[:space:]]+(.+) ]]; then
+                raw="${BASH_REMATCH[1]}"
+                resolved="$raw"
+                for key in "${!args[@]}"; do
+                  resolved="${resolved//\$\{$key\}/${args[$key]}}"
+                done
+                echo "$resolved" >> resolved_images.txt
+              fi
+            done < "$file"
+          done
+      
+          # Clean and deduplicate
+          grep -v '^$' resolved_images.txt | sort -u > unique_base_images.txt
           echo "Base images to scan:"
           cat unique_base_images.txt
 
