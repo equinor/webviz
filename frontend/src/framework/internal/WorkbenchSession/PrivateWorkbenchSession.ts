@@ -135,6 +135,11 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return this._id;
     }
 
+    resetId(): void {
+        this._id = null;
+        this.setIsPersisted(false);
+    }
+
     setId(id: string): void {
         if (this._id) throw new Error("Session ID already set");
         this._id = id;

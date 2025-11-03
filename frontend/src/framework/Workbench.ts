@@ -297,7 +297,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             lastModifiedMs: Date.now(),
         });
         this._workbenchSession.setIsSnapshot(false);
-        this._workbenchSession.setIsPersisted(false);
+        this._workbenchSession.resetId();
         this._workbenchSessionPersistenceService.setWorkbenchSession(this._workbenchSession);
         removeSnapshotIdFromUrl();
     }

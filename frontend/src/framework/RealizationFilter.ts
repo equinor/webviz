@@ -125,6 +125,10 @@ export class RealizationFilter {
         }
         this._realizationNumberSelections = deserializedRealizationNumberSelections;
 
+        if (serialized.realizationNumberSelections.length === 0) {
+            this._realizationNumberSelections = null;
+        }
+
         const deserializedParameterIdentStringToValueSelectionMap: Map<string, ParameterValueSelection> = new Map();
         for (const serializedSelection of serialized.parameterIdentStringToValueSelectionMap) {
             if (serializedSelection.type === "continuous") {
