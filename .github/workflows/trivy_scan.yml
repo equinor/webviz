@@ -1,0 +1,38 @@
+name: Trivy Scan of Docker config/images
+
+on:
+  pull_request:
+
+jobs:
+  trivy-scan:
+    name: Trivy Scan docker-compose and images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Trivy
+        uses: aquasecurity/trivy-action@master
+
+      # 1. Scan docker-compose.yml for misconfigurations
+      - name: Trivy config scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: 'docker-compose.yml'
+
+      # 2. Extract image names from docker-compose.yml
+      - name: Extract image names
+        run: |
+          grep 'image:' docker-compose.yml | awk '{print $2}' > images.txt
+          echo "Images to scan:"
+          cat images.txt
+
+      # 3. Scan each image for vulnerabilities
+      - name: Trivy image scan
+        run: |
+          while read image; do
+            echo "Scanning image: $image"
+            trivy image --severity HIGH,CRITICAL --exit-code 1 "$image"
+          done < images.txt
