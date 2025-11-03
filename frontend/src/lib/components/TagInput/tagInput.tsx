@@ -5,6 +5,7 @@ import { inRange, omit } from "lodash";
 import { Key } from "ts-key-enum";
 
 import { Tooltip } from "@lib/components/Tooltip";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { IconButton } from "../IconButton";
 
@@ -62,6 +63,11 @@ export type TagInputProps = {
      * If true, the inputs placeholder value will always be shown
      */
     alwaysShowPlaceholder?: boolean;
+
+    /**
+     * Forces the input to show it's focused stylization
+     */
+    showAsFocused?: boolean;
 
     /**
      * Validates a tag being added. If false is returned, the tag will not be added
@@ -362,11 +368,17 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
         <>
             <div
                 ref={ref}
-                className="input-comp flex items-center gap-1 bg-white border border-gray-300 px-2 py-1.5 rounded focus-within:outline focus-within:outline-blue-500"
+                className={resolveClassNames(
+                    "input-comp flex items-center gap-1 bg-white border border-gray-300 px-2 py-1.5 rounded focus-within:outline outline-blue-500",
+                    {
+                        outline: props.showAsFocused,
+                    },
+                )}
                 onBlur={onRootBlur}
+                onClick={() => innerInputRef.current?.focus()}
             >
                 <ul
-                    className="grow flex gap-1 flex-wrap min-w-0 "
+                    className="grow flex gap-1 flex-wrap min-w-0"
                     tabIndex={-1}
                     onFocus={() => innerInputRef.current?.focus()}
                     onCopy={copySelectedTags}
@@ -390,11 +402,11 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
                                   })}
                               </React.Fragment>
                           ))}
-                    <li className="relative grow flex -my-1 overflow-hidden">
+                    <li className="relative grow flex overflow-hidden">
                         {/* Invisible spacer-element. Used to  have the input wrap as it's value grows */}
                         {/* ! Classes that affect size should be present in both this and the input */}
                         <span
-                            className={`--input-sizer invisible pointer-events-none select-none grow max-w-full py-1 ${props.inputProps?.className}`}
+                            className={`--input-sizer invisible pointer-events-none select-none grow max-w-full min-w-2 ${props.inputProps?.className ?? ""}`}
                             aria-hidden
                         >
                             {inputValue}
@@ -405,7 +417,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
                             ref={innerInputRef}
                             placeholder={inputPlaceholder}
                             {...omit(props.inputProps, "onValueChange")}
-                            className={`absolute inset-0 py-1 outline-none min-w-0 ${props.inputProps?.className}`}
+                            className={`absolute inset-0 outline-none min-w-0 ${props.inputProps?.className ?? ""}`}
                             value={inputValue}
                             // ! Each listener here should emit the event up
                             onChange={handleInputChange}
