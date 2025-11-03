@@ -8,12 +8,15 @@ import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 
 type RightNavBarProps = {
     workbench: Workbench;
 };
 
 export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
+    const workbenchSession = props.workbench.getWorkbenchSession();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
@@ -22,6 +25,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
     );
+    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
     const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.TemplatesDialogOpen,
@@ -79,12 +83,16 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     tooltip="Show modules list"
                     icon={<WebAsset fontSize="small" className="size-5" />}
                     onClick={handleModulesListClick}
+                    disabled={isSnapshot}
+                    disabledTooltip="Modules cannot be changed in snapshot mode"
                 />
                 <NavBarButton
                     active={isTemplatesDialogOpen}
                     tooltip="Show templates dialog"
                     icon={<GridView fontSize="small" className="size-5" />}
                     onClick={handleTemplatesListClick}
+                    disabled={isSnapshot}
+                    disabledTooltip="Templates cannot be applied in snapshot mode"
                 />
                 <NavBarDivider />
                 <NavBarButton
@@ -98,8 +106,9 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                         numberOfEffectiveRealizationFilters,
                     )}
                     onClick={handleRealizationFilterClick}
+                    disabled={isSnapshot}
+                    disabledTooltip="Realization filters cannot be changed in snapshot mode"
                 />
-
                 <NavBarButton
                     icon={<History fontSize="small" className="size-5 mr-2" />}
                     active={drawerContent === RightDrawerContent.ModuleInstanceLog}

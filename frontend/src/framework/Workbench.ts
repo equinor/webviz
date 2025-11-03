@@ -33,6 +33,7 @@ import {
 import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils/localStorageHelpers";
 import {
     buildSessionUrl,
+    buildSnapshotUrl,
     readSessionIdFromUrl,
     readSnapshotIdFromUrl,
     removeSessionIdFromUrl,
@@ -230,6 +231,10 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     async openSnapshot(snapshotId: string): Promise<void> {
         try {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+
+            const url = buildSnapshotUrl(snapshotId);
+            window.history.pushState({}, "", url);
+
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
             const snapshot = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, snapshotData);
             await this.setWorkbenchSession(snapshot);
@@ -380,12 +385,12 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
-
-        const url = buildSessionUrl(sessionId);
-        window.history.pushState({}, "", url);
-
         try {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+
+            const url = buildSessionUrl(sessionId);
+            window.history.pushState({}, "", url);
+
             const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
             const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
             await this.setWorkbenchSession(session);
