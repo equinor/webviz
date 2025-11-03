@@ -3882,7 +3882,7 @@ name = "webviz-core-utils"
 version = "0.1.0"
 description = ""
 optional = false
-python-versions = "^3.13"
+python-versions = "^3.11"
 groups = ["main"]
 files = []
 develop = true
@@ -3900,7 +3900,7 @@ name = "webviz-server-schemas"
 version = "0.0.1"
 description = ""
 optional = false
-python-versions = "^3.13"
+python-versions = "^3.11"
 groups = ["main"]
 files = []
 develop = true
@@ -3912,6 +3912,39 @@ webviz-core-utils = {path = "../core_utils", develop = true}
 [package.source]
 type = "directory"
 url = "../libs/server_schemas"
+
+[[package]]
+name = "webviz-services"
+version = "0.0.1"
+description = ""
+optional = false
+python-versions = "^3.13"
+groups = ["main"]
+files = []
+develop = true
+
+[package.dependencies]
+fmu-datamodels = "0.14.0"
+fmu-sumo = "^2.6.1"
+httpx = "^0.28.1"
+numpy = "^2.2.0"
+orjson = "^3.8.10"
+pandas = {version = "^2.0.1", extras = ["performance"]}
+polars = "~1.33.0"
+pottery = "^3.0.0"
+pyarrow = "^21.0.0"
+pydantic = "^2.3.0"
+pyjwt = "^2.6.0"
+python-dotenv = "^1.1.0"
+redis = "^5.3.1"
+sumo-wrapper-python = "^1.1.2"
+webviz-core-utils = {path = "../core_utils", develop = true}
+webviz-server-schemas = {path = "../server_schemas", develop = true}
+xtgeo = "^4.11.0"
+
+[package.source]
+type = "directory"
+url = "../libs/services"
 
 [[package]]
 name = "wrapt"
@@ -4102,4 +4135,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "316a20a7fcbdd23f0e5c946b36ee4784f989aaf1921809f0641492b2d1afb4ba"
+content-hash = "00ebdbe5611be62ab53a3d0f9099fcf4012af778843a96b3e944f4e6d50f5a3f"

@@ -33,6 +33,7 @@ pottery = "^3.0.0"
 xtgeo = "^4.11.0"
 webviz-core-utils = { path = "../libs/core_utils", develop = true }
 webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
+webviz-services = { path = "../libs/services", develop = true }
 
 
 # Special cases
@@ -78,7 +79,7 @@ disable = [
     "too-many-positional-arguments",
 ]
 extension-pkg-whitelist = "pydantic"
-init-hook = 'import sys; sys.path.append("./pylint/plugins")'
+init-hook = 'import sys; sys.path.append("../pylint/plugins")'
 load-plugins = "async_suffix_checker"
 ignored-modules = ["pyarrow.compute"]
 good-names = ["i", "x", "df", "xy", "tg"]

@@ -4,7 +4,7 @@ from typing import List, Literal
 from pydantic import BaseModel, ConfigDict
 from webviz_core_utils.b64 import B64FloatArray
 
-from primary.services.sumo_access.generic_types import SumoContent
+from webviz_services.sumo_access.generic_types import SumoContent
 
 
 class SurfaceStatisticFunction(str, Enum):

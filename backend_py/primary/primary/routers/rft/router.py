@@ -4,8 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from primary.auth.auth_helper import AuthHelper
-from primary.services.sumo_access.rft_access import RftAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.sumo_access.rft_access import RftAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import schemas

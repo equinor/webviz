@@ -14,7 +14,7 @@ from webviz_core_utils.perf_metrics import PerfMetrics
 
 from primary import config
 from primary.middleware.add_browser_cache import no_cache
-from primary.services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 LOGGER = logging.getLogger(__name__)
 

@@ -4,22 +4,23 @@ from typing import Annotated, List, Optional, Literal
 
 import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
+
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_core_utils.type_utils import expect_type
+from webviz_services.sumo_access.case_inspector import CaseInspector
+from webviz_services.sumo_access.surface_access import SurfaceAccess
+from webviz_services.sumo_access.surface_access import ExpectedError, InProgress
+from webviz_services.smda_access import SmdaAccess, StratigraphicUnit
+from webviz_services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
+from webviz_services.smda_access.drogon import DrogonSmdaAccess
+from webviz_services.utils.statistic_function import StatisticFunction
+from webviz_services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
+from webviz_services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
+from webviz_services.surface_query_service.surface_query_service import RealizationSampleResult
 
-from primary.services.sumo_access.case_inspector import CaseInspector
-from primary.services.sumo_access.surface_access import SurfaceAccess
-from primary.services.sumo_access.surface_access import ExpectedError, InProgress
-from primary.services.smda_access import SmdaAccess, StratigraphicUnit
-from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from primary.services.smda_access.drogon import DrogonSmdaAccess
-from primary.services.utils.statistic_function import StatisticFunction
-from primary.services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
-from primary.services.utils.authenticated_user import AuthenticatedUser
-from primary.services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 from primary.auth.auth_helper import AuthHelper
-from primary.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
-from primary.services.surface_query_service.surface_query_service import RealizationSampleResult
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
 

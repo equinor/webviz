@@ -3,8 +3,8 @@ import logging
 from fastapi import APIRouter, Depends, Query
 
 from primary.auth.auth_helper import AuthHelper
-from primary.services.sumo_access.observation_access import ObservationAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.sumo_access.observation_access import ObservationAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
 
