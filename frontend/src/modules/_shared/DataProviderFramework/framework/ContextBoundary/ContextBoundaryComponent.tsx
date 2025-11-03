@@ -1,7 +1,8 @@
 import React from "react";
 
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { SettingsApplications } from "@mui/icons-material";
+
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { ActionGroup } from "../../Actions";
 import { Actions } from "../../Actions";
