@@ -9,8 +9,8 @@ import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
 import type { TableFilters } from "@lib/components/Table/types";
@@ -18,7 +18,6 @@ import { TagPicker } from "@lib/components/TagPicker";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
-
 
 import {
     makeCaseRowData,
@@ -231,35 +230,36 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     </QueryStateWrapper>
                 </Label>
                 <div className="grow flex flex-row gap-4 items-center">
-                    <Label position="left" text="Show my cases only">
-                        <Tooltip title="Show only my cases" enterDelay="medium">
+                    <Label position="left" text="Only my cases">
+                        <Tooltip title="Show only cases authored by me" enterDelay="medium">
                             <Switch checked={showOnlyMyCases} onChange={handleCasesByMeChange} />
                         </Tooltip>
                     </Label>
-                    <Label position="left" text="Show official cases only">
+                    <Label position="left" text="Only official cases">
                         <Tooltip title="Show only cases marked as official" enterDelay="medium">
                             <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
                         </Tooltip>
                     </Label>
                     <QueryStateWrapper
                         queryResult={casesQuery}
-                        className="h-full flex-1 min-h-0"
+                        className="h-full flex-1 min-h-0 min-w-56"
                         errorComponent={<div className="text-red-500">Error loading cases</div>}
                         loadingComponent={<CircularProgress />}
                     >
-                        <TagPicker
-                            className="bg-white"
-                            placeholder="Filter cases by Standard Results..."
-                            selection={selectedStandardResults}
-                            tagOptions={casesStandardResults.map((elm) => ({ label: elm, value: elm }))}
-                            onChange={(value) => setSelectedStandardResults([...value])}
-                        />
+                        <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
+                            <TagPicker
+                                className="bg-white"
+                                placeholder="Filter cases by Standard Results..."
+                                selection={selectedStandardResults}
+                                tagOptions={casesStandardResults.map((elm) => ({ label: elm, value: elm }))}
+                                onChange={(value) => setSelectedStandardResults([...value])}
+                            />
+                        </Tooltip>
                     </QueryStateWrapper>
                 </div>
             </div>
-            <PendingWrapper
+            <StatusWrapper
                 className="grow min-h-0"
-                isPending={false}
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
             >
                 <div className="flex flex-col h-full">
@@ -283,7 +283,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         />
                     </div>
                 </div>
-            </PendingWrapper>
+            </StatusWrapper>
         </div>
     );
 }
