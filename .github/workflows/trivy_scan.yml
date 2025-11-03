@@ -1,38 +1,41 @@
-name: Trivy Scan of Docker config/images
+name: Trivy Base Image Scan
 
 on:
   pull_request:
 
 jobs:
-  trivy-scan:
-    name: Trivy Scan docker-compose and images
+  scan-base-images:
     runs-on: ubuntu-latest
+    name: Scan base images from Dockerfiles
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Install Trivy
         uses: aquasecurity/trivy-action@master
 
-      # 1. Scan docker-compose.yml for misconfigurations
-      - name: Trivy config scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'config'
-          scan-ref: 'docker-compose.yml'
-
-      # 2. Extract image names from docker-compose.yml
-      - name: Extract image names
+      - name: Find Dockerfiles and extract base images
+        id: extract
         run: |
-          grep 'image:' docker-compose.yml | awk '{print $2}' > images.txt
-          echo "Images to scan:"
-          cat images.txt
+          echo "Searching for Dockerfiles..."
+          find . -type f -iname 'Dockerfile*' > dockerfiles.txt
+          echo "Found:"
+          cat dockerfiles.txt
 
-      # 3. Scan each image for vulnerabilities
-      - name: Trivy image scan
+          echo "Extracting base images..."
+          > base_images.txt
+          while read file; do
+            grep -i '^FROM' "$file" | awk '{print $2}' >> base_images.txt
+          done < dockerfiles.txt
+
+          sort -u base_images.txt > unique_base_images.txt
+          echo "Base images to scan:"
+          cat unique_base_images.txt
+
+      - name: Scan base images with Trivy
         run: |
           while read image; do
-            echo "Scanning image: $image"
+            echo "🔍 Scanning $image"
             trivy image --severity HIGH,CRITICAL --exit-code 1 "$image"
-          done < images.txt
+          done < unique_base_images.txt
