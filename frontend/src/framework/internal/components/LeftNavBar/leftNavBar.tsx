@@ -22,6 +22,8 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
     const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);
+    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
+
     const [ensembleDialogOpen, setEnsembleDialogOpen] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.EnsembleDialogOpen,
@@ -78,6 +80,8 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <NavBarButton
                     active={ensembleDialogOpen}
                     tooltip={"Open ensemble selection dialog"}
+                    disabledTooltip="Ensembles cannot be changed in snapshot mode"
+                    disabled={isSnapshot}
                     icon={
                         <Badge
                             invisible={ensembleSet.getEnsembleArray().length === 0 && !loadingEnsembleSet}
@@ -106,9 +110,12 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.SyncSettings}
                     tooltip="Show sync settings"
+                    disabledTooltip={
+                        layoutEmpty ? "Please add modules first" : "Sync settings cannot be changed in snapshot mode"
+                    }
                     icon={<Link fontSize="small" className="size-5" />}
                     onClick={handleSyncSettingsClick}
-                    disabled={layoutEmpty}
+                    disabled={layoutEmpty || isSnapshot}
                 />
                 <NavBarDivider />
                 <NavBarButton

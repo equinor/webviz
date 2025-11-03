@@ -44,6 +44,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
         props.workbench.getWorkbenchSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
+    const isSnapshot = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
+    );
     const moduleInstanceId = props.moduleInstance.getId();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
@@ -85,18 +89,24 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     const handleRemoveClick = React.useCallback(
         function handleRemoveClick(e: React.PointerEvent<HTMLButtonElement>) {
+            if (isSnapshot) {
+                return;
+            }
             guiMessageBroker.publishEvent(GuiEvent.RemoveModuleInstanceRequest, { moduleInstanceId: moduleInstanceId });
 
             e.preventDefault();
             e.stopPropagation();
         },
-        [guiMessageBroker, moduleInstanceId],
+        [isSnapshot, guiMessageBroker, moduleInstanceId],
     );
 
     const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
     const title = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.TITLE);
 
     function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        if (isSnapshot) {
+            return;
+        }
         props.onPointerDown?.(e);
     }
 
@@ -107,6 +117,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }
 
     function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+        if (isSnapshot) {
+            return;
+        }
         if (!dataChannelOriginRef.current) {
             return;
         }
@@ -141,7 +154,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 "flex items-center gap-0.5 px-1 select-none shadow-sm relative touch-none text-lg",
                 {
                     "cursor-grabbing": props.isDragged,
-                    "cursor-move": !props.isDragged,
+                    "cursor-move": !props.isDragged && !isSnapshot,
                     "bg-red-100": hasErrors,
                     "bg-slate-300": !hasErrors && props.isMinimized,
                     "bg-slate-100": !hasErrors && !props.isMinimized,
@@ -193,17 +206,23 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
                     className="cursor-grab touch-none"
-                    title="Connect data channels to other module instances"
+                    title={
+                        isSnapshot
+                            ? "Cannot change data channels in snapshot mode"
+                            : "Connect data channels to other module instances"
+                    }
                     onPointerDown={handleDataChannelOriginPointerDown}
+                    disabled={isSnapshot}
                 >
                     <Output fontSize="inherit" />
                 </DenseIconButton>
             )}
             {showDataChannelButtons && hasDataReceiver && (
                 <DenseIconButton
-                    title="Edit input data channels"
+                    title={isSnapshot ? "Cannot edit input data channels in snapshot mode" : "Edit input data channels"}
                     onPointerUp={handleReceiversPointerUp}
                     onPointerDown={handleReceiverPointerDown}
+                    disabled={isSnapshot}
                 >
                     <Input fontSize="inherit" />
                 </DenseIconButton>
@@ -218,10 +237,12 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     <OpenInFull fontSize="inherit" />
                 </DenseIconButton>
             )}
+
             <DenseIconButton
                 onPointerDown={handleRemoveClick}
                 onPointerUp={handlePointerUp}
-                title="Remove this module"
+                disabled={isSnapshot}
+                title={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}
                 colorScheme={DenseIconButtonColorScheme.DANGER}
             >
                 <Close fontSize="inherit" />
