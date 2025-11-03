@@ -14,10 +14,11 @@ import {
     useModuleInstanceTopicValue,
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import { type Workbench } from "@framework/Workbench";
+import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 import { CrashView } from "./crashView";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 type ViewContentProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -25,14 +26,16 @@ type ViewContentProps = {
 };
 
 export const ViewContent = React.memo((props: ViewContentProps) => {
-    const workbenchSession = props.workbench.getWorkbenchSession();
+    const workbenchSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.ACTIVE_SESSION);
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
     const moduleInstanceLifeCycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
         ModuleInstanceTopic.LIFECYCLE_STATE,
     );
 
-    const atomStore = workbenchSession.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
+    const atomStore = workbenchSession!
+        .getAtomStoreMaster()
+        .getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
     const handleModuleInstanceReload = React.useCallback(
         function handleModuleInstanceReload() {

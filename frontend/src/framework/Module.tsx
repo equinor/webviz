@@ -3,7 +3,7 @@ import type React from "react";
 import type { JTDSchemaType } from "ajv/dist/core";
 import type { Getter, Setter } from "jotai";
 
-import type { AtomStore, AtomStoreMaster } from "./AtomStoreMaster";
+import type { AtomStore } from "./AtomStoreMaster";
 import type { InitialSettings } from "./InitialSettings";
 import type { SettingsContext, ViewContext } from "./ModuleContext";
 import type { ModuleDataTagId } from "./ModuleDataTags";
@@ -199,7 +199,6 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
     private _dataTagIds: ModuleDataTagId[];
     private _serializedStateSchema: ModuleStateSchema<TSerializedState> | null;
     private _serializationFunctions: ModuleComponentSerializationFunctions<TSerializedState> | undefined;
-    private _atomStoreMaster: AtomStoreMaster | null = null;
 
     constructor(options: ModuleOptions<TSerializedState>) {
         this._name = options.name;
