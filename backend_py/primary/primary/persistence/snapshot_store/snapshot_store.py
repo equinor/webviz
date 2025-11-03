@@ -97,14 +97,6 @@ class SnapshotStore:
         """
         try:
             document = await self._snapshot_container.get_item_async(item_id=snapshot_id, partition_key=snapshot_id)
-
-            # Verify ownership
-            if document.owner_id != self._user_id:
-                raise ServiceRequestError(
-                    f"You do not have permission to access snapshot '{snapshot_id}'.",
-                    Service.DATABASE,
-                )
-
             return document
         except DatabaseAccessNotFoundError as e:
             raise ServiceRequestError(
