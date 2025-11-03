@@ -34,7 +34,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
             const wellboreTrajectory = findWellboreTrajectory(wellboreUuid, wellboreTrajectories);
 
             if (wellboreTrajectory) {
-                trajectoryData.push(wellTrajectoryToGeojson(wellboreTrajectory));
+                trajectoryData.push(wellTrajectoryToGeojson(wellboreTrajectory, { invertZAxis: true }));
             }
 
             return [
@@ -62,7 +62,10 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
             if (hoverData?.md) {
                 const wellboreTrajectory = findWellboreTrajectory(hoverData?.wellboreUuid, wellboreTrajectories);
                 if (wellboreTrajectory) {
-                    mdPointData.push(getInterpolatedPositionAtMd(hoverData.md, wellboreTrajectory));
+                    const interpolatedPosition = getInterpolatedPositionAtMd(hoverData.md, wellboreTrajectory);
+                    interpolatedPosition[2] *= -1; // TVD value is positive, so we flip of for the actual z-position
+
+                    mdPointData.push(interpolatedPosition);
                 }
             }
 

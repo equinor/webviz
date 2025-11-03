@@ -57,7 +57,8 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         const adjustedLayers = [...layers];
 
         const adjustedViewports = views.viewports.map((viewport) => {
-            const adjustedViewportLayerIds = viewport.layerIds ?? [];
+            const adjustedViewportLayerIds = viewport.layerIds ? [...viewport.layerIds] : [];
+
             if (viewport.id !== currentlyHoveredViewport) {
                 adjustedViewportLayerIds.push(HOVER_CROSSHAIR_LAYER_ID);
             }

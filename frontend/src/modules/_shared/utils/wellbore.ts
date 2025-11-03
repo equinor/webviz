@@ -126,10 +126,12 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
     };
 }
 
-export function zipCoords(x_arr: number[], y_arr: number[], z_arr: number[]): number[][] {
+export function zipCoords(x_arr: number[], y_arr: number[], z_arr: number[], invertZAxis?: boolean): number[][] {
+    const zSign = invertZAxis ? -1 : 1;
+
     const coords: number[][] = [];
     for (let i = 0; i < x_arr.length; i++) {
-        coords.push([x_arr[i], y_arr[i], z_arr[i]]);
+        coords.push([x_arr[i], y_arr[i], zSign * z_arr[i]]);
     }
 
     return coords;
@@ -137,21 +139,35 @@ export function zipCoords(x_arr: number[], y_arr: number[], z_arr: number[]): nu
 
 export function wellTrajectoryToGeojson(
     wellTrajectory: WellboreTrajectory_api,
-    selectedWellboreUuid?: string,
+    opts?: {
+        /** Inverts z-axis values (aka, TVD values).
+         * @default false
+         */
+        invertZAxis?: boolean;
+        /** Highlights a specified wellbore */
+        selectedWellboreUuid?: string;
+    },
 ): GeoWellFeature {
-    const wellHeadPoint: Point = {
-        type: "Point",
-        coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], wellTrajectory.tvdMslArr[0]],
-    };
     const trajectoryLineString: LineString = {
         type: "LineString",
-        coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
+        coordinates: zipCoords(
+            wellTrajectory.eastingArr,
+            wellTrajectory.northingArr,
+            wellTrajectory.tvdMslArr,
+            opts?.invertZAxis,
+        ),
+    };
+
+    const wellHeadPoint: Point = {
+        type: "Point",
+        coordinates: trajectoryLineString.coordinates[0],
     };
 
     let color = [150, 150, 150] as Color;
     let lineWidth = 2;
     let wellHeadSize = 1;
-    if (wellTrajectory.wellboreUuid === selectedWellboreUuid) {
+
+    if (wellTrajectory.wellboreUuid === opts?.selectedWellboreUuid) {
         color = [255, 0, 0];
         lineWidth = 5;
         wellHeadSize = 10;

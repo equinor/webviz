@@ -4,6 +4,7 @@ import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
 import type { BoundingBox2D, MapMouseEvent, ViewStateType, ViewportType, ViewsType } from "@webviz/subsurface-viewer";
+import { uniqBy } from "lodash";
 
 import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
@@ -23,6 +24,7 @@ export type SubsurfaceViewerWrapperProps = {
     views: ViewsTypeExtended;
     layers: DeckGlLayer[];
     bounds?: BoundingBox2D;
+    onViewportHover?: (viewport: ViewportType | null) => void;
 };
 
 export interface ViewportTypeExtended extends ViewportType {
@@ -37,6 +39,8 @@ export interface ViewsTypeExtended extends ViewsType {
 const PICKING_RADIUS = 20;
 
 export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): React.ReactNode {
+    const { onViewportHover } = props;
+
     const id = React.useId();
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
@@ -73,10 +77,13 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 x: screenX + viewport.x,
                 y: screenY + viewport.y,
                 radius: PICKING_RADIUS,
-                depth: 4,
+                depth: 6,
             });
 
-            pickInfoDict[viewport.id] = picks;
+            // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates
+            const uniquePicks = uniqBy(picks, (pick) => pick.sourceLayer?.id);
+
+            pickInfoDict[viewport.id] = uniquePicks;
         }
 
         setPickingInfoPerView(pickInfoDict);
@@ -133,10 +140,11 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
     const handleMouseEvent = React.useCallback(
         function handleMouseEvent(event: MapMouseEvent): void {
             if (event.type === "hover") {
+                onViewportHover?.(event.infos[0]?.viewport ?? null);
                 handleMouseHover(event);
             }
         },
-        [handleMouseHover],
+        [handleMouseHover, onViewportHover],
     );
 
     return (

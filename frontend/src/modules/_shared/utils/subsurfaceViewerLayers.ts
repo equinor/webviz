@@ -1,6 +1,6 @@
 import type { Layer, PickingInfo } from "@deck.gl/core";
 import type { LayerPickInfo } from "@webviz/subsurface-viewer";
-import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { ColormapLayer, Grid3DLayer, MapLayer } from "@webviz/subsurface-viewer/dist/layers";
 import type { Feature, GeometryCollection } from "geojson";
 import _ from "lodash";
 
@@ -69,7 +69,7 @@ function getTopicHoverDataFromPicks<TTopic extends keyof HoverData>(
 
         case HoverTopic.WORLD_POS: {
             const pickWithCoords =
-                getInfoPickForLayer<ColorMapPickInfo>(pickingInfos, ColormapLayer) ||
+                getInfoPickForLayer<ColorMapPickInfo>(pickingInfos, MapLayer) ||
                 getInfoPickForLayer<LayerPickInfo>(pickingInfos, Grid3DLayer);
 
             if (!pickWithCoords?.coordinate) return null;
