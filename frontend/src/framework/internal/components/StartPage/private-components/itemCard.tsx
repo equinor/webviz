@@ -5,10 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
 import { Tooltip } from "@lib/components/Tooltip";
-import { timeAgo } from "@lib/utils/dates";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { UserAvatar } from "../../UserAvatar";
+import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 
 export type ItemCardProps = {
     id: string;
@@ -59,12 +59,12 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                 href={props.href}
                 onClick={handleClick}
             >
-                <div className="overflow-hidden truncate">
+                <div className="w-24 overflow-hidden truncate grow">
                     <span>{props.title}</span>
                 </div>
                 {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="ml-auto text-gray-500 whitespace-nowrap text-xs">
-                    ~ {timeAgo(Date.now() - new Date(props.timestamp).getTime())}
+                <span className="w-24 ml-auto text-gray-500 whitespace-nowrap text-xs">
+                    ~ <TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} />
                 </span>
             </a>
         </Tooltip>
