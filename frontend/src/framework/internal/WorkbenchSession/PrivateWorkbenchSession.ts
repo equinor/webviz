@@ -1,13 +1,13 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
+import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
-import { Dashboard, type SerializedDashboard } from "@framework/internal/Dashboard";
-import { RealizationFilterSet } from "@framework/RealizationFilterSet";
+import { Dashboard, DashboardTopic, type SerializedDashboard } from "@framework/internal/Dashboard";
+import { RealizationFilterSet, type SerializedRealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { UserCreatedItems, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
+import { UserCreatedItems, UserCreatedItemsEvent, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
@@ -16,9 +16,14 @@ import {
     type UserEnsembleSetting,
     type UserDeltaEnsembleSetting,
 } from "../EnsembleSetLoader";
-import { PrivateWorkbenchSettings, type SerializedWorkbenchSettings } from "../PrivateWorkbenchSettings";
+import {
+    PrivateWorkbenchSettings,
+    PrivateWorkbenchSettingsTopic,
+    type SerializedWorkbenchSettings,
+} from "../PrivateWorkbenchSettings";
 
-import { type WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
+import { isPersisted, type WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -38,10 +43,20 @@ export type SerializedEnsembleSet = {
     deltaEnsembles: SerializedDeltaEnsemble[];
 };
 
+export type WorkbenchSessionMetadata = {
+    title: string;
+    description?: string;
+    updatedAt: number; // Timestamp of the last modification
+    createdAt: number; // Timestamp of creation
+    hash?: string; // Optional hash for content integrity
+    lastModifiedMs: number; // Last modified timestamp for internal use
+};
+
 export type WorkbenchSessionContent = {
     activeDashboardId: string | null;
     dashboards: SerializedDashboard[];
     ensembleSet: SerializedEnsembleSet;
+    ensembleRealizationFilterSet: SerializedRealizationFilterSet;
     settings: SerializedWorkbenchSettings;
     userCreatedItems: SerializedUserCreatedItems;
 };
@@ -50,6 +65,10 @@ export enum PrivateWorkbenchSessionTopic {
     IS_ENSEMBLE_SET_LOADING = "EnsembleSetLoadingState",
     ACTIVE_DASHBOARD = "ActiveDashboard",
     DASHBOARDS = "Dashboards",
+    METADATA = "Metadata",
+    IS_PERSISTED = "IsPersisted",
+    IS_SNAPSHOT = "IsSnapshot",
+    SERIALIZED_STATE = "SerializedState",
 }
 
 export type WorkbenchSessionTopicPayloads = {
@@ -58,11 +77,19 @@ export type WorkbenchSessionTopicPayloads = {
     [PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING]: boolean;
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
+    [PrivateWorkbenchSessionTopic.METADATA]: WorkbenchSessionMetadata;
+    [PrivateWorkbenchSessionTopic.IS_PERSISTED]: boolean;
+    [PrivateWorkbenchSessionTopic.IS_SNAPSHOT]: boolean;
+    [PrivateWorkbenchSessionTopic.SERIALIZED_STATE]: void;
 };
 
 export class PrivateWorkbenchSession implements WorkbenchSession {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchSessionTopicPayloads>();
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
 
+    private _id: string | null = null;
+    private _isPersisted: boolean = false;
+    private _isSnapshot: boolean;
     private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
     private _dashboards: Dashboard[] = [];
@@ -73,18 +100,99 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         filterSet: this._realizationFilterSet,
     };
     private _userCreatedItems: UserCreatedItems;
+    private _metadata: WorkbenchSessionMetadata = {
+        title: "New Workbench Session",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        lastModifiedMs: Date.now(),
+    };
     private _isEnsembleSetLoading: boolean = false;
+    private _loadedFromLocalStorage: boolean = false;
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
 
-    private constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient) {
-        this._atomStoreMaster = atomStoreMaster;
+    private constructor(queryClient: QueryClient, isSnapshot = false) {
+        this._atomStoreMaster = new AtomStoreMaster();
         this._queryClient = queryClient;
-        this._userCreatedItems = new UserCreatedItems(atomStoreMaster);
+        this._userCreatedItems = new UserCreatedItems(this._atomStoreMaster);
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
+        this._isSnapshot = isSnapshot;
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "settings",
+            this._settings
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PrivateWorkbenchSettingsTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "userCreatedItems",
+            this._userCreatedItems.subscribe(UserCreatedItemsEvent.SERIALIZED_STATE, this.handleStateChange.bind(this)),
+        );
+    }
+
+    getIsLoadedFromLocalStorage(): boolean {
+        return this._loadedFromLocalStorage;
+    }
+
+    setLoadedFromLocalStorage(loaded: boolean): void {
+        this._loadedFromLocalStorage = loaded;
+    }
+
+    getAtomStoreMaster(): AtomStoreMaster {
+        return this._atomStoreMaster;
+    }
+
+    getId(): string | null {
+        return this._id;
+    }
+
+    setId(id: string): void {
+        if (this._id) throw new Error("Session ID already set");
+        this._id = id;
     }
 
     getWorkbenchSettings(): PrivateWorkbenchSettings {
         return this._settings;
+    }
+
+    isSnapshot(): boolean {
+        return this._isSnapshot;
+    }
+
+    setIsSnapshot(isSnapshot: boolean): void {
+        this._isSnapshot = isSnapshot;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
+    }
+
+    getIsPersisted(): boolean {
+        return this._isPersisted;
+    }
+
+    setIsPersisted(val: boolean): void {
+        this._isPersisted = val;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_PERSISTED);
+    }
+
+    getMetadata(): WorkbenchSessionMetadata {
+        return this._metadata;
+    }
+
+    setMetadata(metadata: WorkbenchSessionMetadata): void {
+        this._metadata = metadata;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
+        this.handleStateChange();
+    }
+
+    updateMetadata(update: Partial<Omit<WorkbenchSessionMetadata, "createdAt">>, notify = true): void {
+        this._metadata = { ...this._metadata, ...update };
+
+        if (!notify) {
+            return;
+        }
+
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
+        this.handleStateChange();
     }
 
     getContent(): WorkbenchSessionContent {
@@ -110,10 +218,12 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                     }),
                 ),
             },
+            ensembleRealizationFilterSet: this._realizationFilterSet.serialize(),
         };
     }
 
     async loadContent(content: WorkbenchSessionContent): Promise<void> {
+        this._isPersisted = this._id !== null;
         this._activeDashboardId = content.activeDashboardId;
         this._dashboards = content.dashboards.map((s) => {
             const d = new Dashboard(this._atomStoreMaster);
@@ -123,6 +233,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         this._settings.deserializeState(content.settings);
         this._userCreatedItems.deserializeState(content.userCreatedItems);
+        this._realizationFilterSet.deserialize(content.ensembleRealizationFilterSet, this._ensembleSet);
 
         const userEnsembleSettings: UserEnsembleSetting[] = content.ensembleSet.regularEnsembles.map((e) => ({
             ensembleIdent: RegularEnsembleIdent.fromString(e.ensembleIdent),
@@ -166,6 +277,11 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.ENSEMBLE_SET);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
+        this.handleStateChange();
+    }
+
+    private handleStateChange(): void {
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.SERIALIZED_STATE);
     }
 
     getPublishSubscribeDelegate() {
@@ -187,6 +303,14 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                     return this.getActiveDashboard();
                 case PrivateWorkbenchSessionTopic.DASHBOARDS:
                     return this._dashboards;
+                case PrivateWorkbenchSessionTopic.METADATA:
+                    return this._metadata;
+                case PrivateWorkbenchSessionTopic.IS_PERSISTED:
+                    return this._isPersisted;
+                case PrivateWorkbenchSessionTopic.IS_SNAPSHOT:
+                    return this._isSnapshot;
+                case PrivateWorkbenchSessionTopic.SERIALIZED_STATE:
+                    return void 0;
                 default:
                     throw new Error(`No snapshot getter implemented for topic ${topic}`);
             }
@@ -207,6 +331,43 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return this._dashboards;
     }
 
+    private registerDashboard(dashboard: Dashboard): void {
+        this._dashboards.push(dashboard);
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            `dashboard-${dashboard.getId()}`,
+            dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+
+        this.handleStateChange();
+    }
+
+    private clearDashboards() {
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
+        this._dashboards = [];
+        this.handleStateChange();
+    }
+
+    setDashboards(dashboards: Dashboard[]): void {
+        this.clearDashboards();
+
+        for (const dashboard of dashboards) {
+            this.registerDashboard(dashboard);
+        }
+
+        if (dashboards.length > 0) {
+            this._activeDashboardId = dashboards[0].getId();
+        } else {
+            this._activeDashboardId = null;
+        }
+
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
+    }
+
     getEnsembleSet(): EnsembleSet {
         return this._ensembleSet;
     }
@@ -220,6 +381,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     notifyAboutEnsembleRealizationFilterChange(): void {
+        console.debug("Notifying about ensemble realization filter change");
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, {
             filterSet: this._realizationFilterSet,
         });
@@ -227,11 +389,12 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             filterSet: this._realizationFilterSet,
         };
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
+        this.handleStateChange();
     }
 
     makeDefaultDashboard(): void {
         const d = new Dashboard(this._atomStoreMaster);
-        this._dashboards.push(d);
+        this.registerDashboard(d);
         this._activeDashboardId = d.getId();
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
     }
@@ -245,22 +408,29 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     beforeDestroy(): void {
         this.clear();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
 
     static async fromDataContainer(
-        atomStoreMaster: AtomStoreMaster,
         queryClient: QueryClient,
         dataContainer: WorkbenchSessionDataContainer,
     ): Promise<PrivateWorkbenchSession> {
-        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient);
+        const session = new PrivateWorkbenchSession(queryClient);
 
+        if (isPersisted(dataContainer)) {
+            session.setId(dataContainer.id);
+            session.setIsPersisted(true);
+            session.setIsSnapshot(dataContainer.isSnapshot);
+        }
+
+        session.setMetadata(dataContainer.metadata);
         await session.loadContent(dataContainer.content);
 
         return session;
     }
 
-    static createEmpty(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient): PrivateWorkbenchSession {
-        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient);
+    static createEmpty(queryClient: QueryClient): PrivateWorkbenchSession {
+        const session = new PrivateWorkbenchSession(queryClient);
         session.makeDefaultDashboard();
         return session;
     }

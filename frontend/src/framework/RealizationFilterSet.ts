@@ -1,7 +1,23 @@
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import type { EnsembleSet } from "./EnsembleSet";
-import { RealizationFilter } from "./RealizationFilter";
+import { RealizationFilter, realizationFilterSchema, type SerializedRealizationFilter } from "./RealizationFilter";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+
+import type { JTDSchemaType } from "ajv/dist/jtd";
+
+export type SerializedRealizationFilterSet = Array<{
+    ensembleIdentString: string;
+    realizationFilter: SerializedRealizationFilter;
+}>;
+
+export const realizationFilterSetSchema: JTDSchemaType<SerializedRealizationFilterSet> = {
+    elements: {
+        properties: {
+            ensembleIdentString: { type: "string" },
+            realizationFilter: realizationFilterSchema,
+        },
+    },
+} as const;
 
 export class RealizationFilterSet {
     // Map of ensembleIdent string to RealizationFilter
@@ -38,6 +54,29 @@ export class RealizationFilterSet {
             if (!isEnsembleInMap) {
                 this._ensembleIdentStringRealizationFilterMap.set(ensembleIdentString, new RealizationFilter(ensemble));
             }
+        }
+    }
+
+    serialize(): SerializedRealizationFilterSet {
+        const serialized: SerializedRealizationFilterSet = [];
+        for (const [ensembleIdentString, realizationFilter] of this._ensembleIdentStringRealizationFilterMap) {
+            serialized.push({
+                ensembleIdentString,
+                realizationFilter: realizationFilter.serialize(),
+            });
+        }
+        return serialized;
+    }
+
+    deserialize(input: SerializedRealizationFilterSet, ensembleSet: EnsembleSet): void {
+        this._ensembleIdentStringRealizationFilterMap.clear();
+        for (const { ensembleIdentString, realizationFilter } of input) {
+            const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
+
+            this._ensembleIdentStringRealizationFilterMap.set(
+                ensembleIdentString,
+                RealizationFilter.fromDeserialize(ensembleSet.getEnsemble(ensembleIdent), realizationFilter),
+            );
         }
     }
 

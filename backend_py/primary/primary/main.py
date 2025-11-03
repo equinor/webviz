@@ -11,6 +11,7 @@ from starsessions import SessionMiddleware
 from starsessions.stores.redis import RedisStore
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
+from primary.persistence.setup_local_database import maybe_setup_local_database
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
@@ -34,6 +35,7 @@ from primary.routers.timeseries.router import router as timeseries_router
 from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
+from primary.routers.persistence.router import router as persistence_router
 from primary.services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
 from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.services.utils.task_meta_tracker import TaskMetaTrackerFactory
@@ -57,11 +59,15 @@ logging.getLogger("primary.services.surface_query_service").setLevel(logging.DEB
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
+logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 # logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
+
+# Setup Cosmos DB emulator database if running locally
+maybe_setup_local_database()
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -115,6 +121,7 @@ app.include_router(observations_router, prefix="/observations", tags=["observati
 app.include_router(rft_router, prefix="/rft", tags=["rft"])
 app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
+app.include_router(persistence_router, prefix="/persistence", tags=["persistence"])
 
 auth_helper = AuthHelper()
 app.include_router(auth_helper.router)

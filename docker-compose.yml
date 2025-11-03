@@ -15,6 +15,9 @@ services:
       - ./frontend/index.html:/usr/src/app/frontend/index.html
 
   backend-primary:
+    depends_on:
+      cosmos-db-emulator:
+        condition: service_healthy
     build:
       context: .
       dockerfile: ./backend_py/primary/Dockerfile
@@ -31,6 +34,7 @@ services:
       - WEBVIZ_SSDL_RESOURCE_SCOPE
       - WEBVIZ_SUMO_ENV
       - WEBVIZ_VDS_HOST_ADDRESS
+      - WEBVIZ_DB_CONNECTION_STRING
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - OTEL_RESOURCE_ATTRIBUTES=service.name=primary-backend, service.namespace=local
       - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
@@ -95,3 +99,26 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes
       # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
       - REDIS_EXTRA_FLAGS=--maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel notice
+
+  cosmos-db-emulator:
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+    platform: linux/amd64
+    tty: true
+    mem_limit: 4GB
+    ports:
+      - "8081:8081" # HTTPS endpoint
+      - "10250-10255:10250-10255" # Internal emulator ports (needed)
+    environment:
+      - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=1
+      - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
+    healthcheck:
+      test: curl -k https://127.0.0.1:8081/_explorer/emulator.pem || exit 1
+      interval: 10s
+      retries: 12 # 2 minutes
+      start_period: 30s
+      timeout: 5s
+    volumes:
+      - cosmosdrive:/var/lib/cosmosdb/emulator
+
+volumes:
+  cosmosdrive:

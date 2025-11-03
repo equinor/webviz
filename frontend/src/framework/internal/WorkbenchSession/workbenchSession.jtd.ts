@@ -10,8 +10,10 @@ import type {
     SerializedEnsembleSet,
     SerializedRegularEnsemble,
     WorkbenchSessionContent,
+    WorkbenchSessionMetadata,
 } from "./PrivateWorkbenchSession";
-import type { SerializedWorkbenchSession } from "./utils/serialization";
+import type { SerializedWorkbenchSession } from "./utils/deserialization";
+import { realizationFilterSetSchema } from "@framework/RealizationFilterSet";
 
 export const regularEnsembleSchema: JTDSchemaType<SerializedRegularEnsemble> = {
     properties: {
@@ -41,6 +43,19 @@ export const ensembleSetSchema: JTDSchemaType<SerializedEnsembleSet> = {
     },
 } as const;
 
+export const workbenchSessionMetadataSchema: JTDSchemaType<WorkbenchSessionMetadata> = {
+    properties: {
+        title: { type: "string" },
+        createdAt: { type: "float64" },
+        updatedAt: { type: "float64" },
+        lastModifiedMs: { type: "float64" },
+    },
+    optionalProperties: {
+        description: { type: "string" },
+        hash: { type: "string" },
+    },
+} as const;
+
 export const workbenchSessionContentSchema: JTDSchemaType<WorkbenchSessionContent> = {
     properties: {
         activeDashboardId: { type: "string", nullable: true },
@@ -49,12 +64,14 @@ export const workbenchSessionContentSchema: JTDSchemaType<WorkbenchSessionConten
         },
         settings: WORKBENCH_SETTINGS_JTD_SCHEMA,
         ensembleSet: ensembleSetSchema,
+        ensembleRealizationFilterSet: realizationFilterSetSchema,
         userCreatedItems: USER_CREATED_ITEMS_JTD_SCHEMA,
     },
 } as const;
 
 export const workbenchSessionSchema: JTDSchemaType<SerializedWorkbenchSession> = {
     properties: {
+        metadata: workbenchSessionMetadataSchema,
         content: workbenchSessionContentSchema,
     },
 } as const;
