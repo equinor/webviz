@@ -19,7 +19,7 @@ jobs:
         id: extract
         run: |
           echo "Searching for Dockerfiles..."
-          find . -type f -iname 'Dockerfile*' > dockerfiles.txt
+          find . -type f \( -iname 'Dockerfile' -o -iname '*.Dockerfile' \) > dockerfiles.txt
           echo "Found:"
           cat dockerfiles.txt
 
