@@ -41,6 +41,7 @@ import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSessionP
 import type { Template } from "./TemplateRegistry";
 import { ApiErrorHelper } from "./utils/ApiErrorHelper";
 import type { WorkbenchServices } from "./WorkbenchServices";
+import { SessionValidationError } from "./internal/WorkbenchSession/utils/deserialization";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",
@@ -359,10 +360,14 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             await this.setWorkbenchSession(session);
         } catch (error) {
             console.error("Failed to load session from backend:", error);
+            let errorExplanation = "The session might not exist or you might not have access to it.";
+            if (error instanceof SessionValidationError) {
+                errorExplanation = "The session data is invalid, corrupted or outdated.";
+            }
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
             const result = await ConfirmationService.confirm({
                 title: "Could not load session",
-                message: `Could not load session with ID ${sessionId}. The session might not exist or you might not have access to it.`,
+                message: `Could not load session with ID ${sessionId}. ${errorExplanation}`,
                 actions: [
                     {
                         id: "cancel",

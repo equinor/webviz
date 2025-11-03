@@ -17,17 +17,26 @@ export type SerializedWorkbenchSession = {
     metadata: WorkbenchSessionMetadata;
     content: WorkbenchSessionContent;
 };
+
 const ajv = new Ajv();
 const validateContent = ajv.compile(workbenchSessionContentSchema);
 const validateFull = ajv.compile(workbenchSessionSchema);
 
+export class SessionValidationError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "SessionValidationError";
+    }
+}
+
 export function deserializeFromLocalStorage(key: string): WorkbenchSessionDataContainer | null {
     const json = localStorage.getItem(key);
-    if (!json) return null;
-
+    if (!json) {
+        return null;
+    }
     const parsed = JSON.parse(json);
     if (!validateFull(parsed)) {
-        console.warn("Invalid session from localStorage", validateFull.errors);
+        console.warn(`Local storage session validation failed ${validateFull.errors}`);
         return null;
     }
 
@@ -44,7 +53,7 @@ export function deserializeFromLocalStorage(key: string): WorkbenchSessionDataCo
 export function deserializeSessionFromBackend(raw: Session_api): WorkbenchSessionDataContainer {
     const parsed = JSON.parse(raw.content);
     if (!validateContent(parsed)) {
-        throw new Error(`Backend session validation failed ${validateContent.errors}`);
+        throw new SessionValidationError(`Backend session validation failed ${validateContent.errors}`);
     }
 
     const session: WorkbenchSessionDataContainer = {
@@ -68,7 +77,7 @@ export function deserializeSessionFromBackend(raw: Session_api): WorkbenchSessio
 export function deserializeSnapshotFromBackend(raw: Snapshot_api): WorkbenchSessionDataContainer {
     const parsed = JSON.parse(raw.content);
     if (!validateContent(parsed)) {
-        throw new Error(`Backend session validation failed ${validateContent.errors}`);
+        throw new SessionValidationError(`Backend session validation failed ${validateContent.errors}`);
     }
 
     const snapshot: WorkbenchSessionDataContainer = {

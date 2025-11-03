@@ -217,13 +217,9 @@ export class RealizationFilter {
         };
     }
 
-    static fromDeserialize(
-        assignedEnsemble: RegularEnsemble | DeltaEnsemble,
-        serialized: SerializedRealizationFilter,
-    ): RealizationFilter {
-        const filter = new RealizationFilter(assignedEnsemble);
-        filter._includeExcludeFilter = serialized.includeExcludeFilter;
-        filter._filterType = serialized.filterType;
+    deserialize(serialized: SerializedRealizationFilter): void {
+        this._includeExcludeFilter = serialized.includeExcludeFilter;
+        this._filterType = serialized.filterType;
 
         const deserializedRealizationNumberSelections: RealizationNumberSelection[] = [];
         for (const serializedSelection of serialized.realizationNumberSelections) {
@@ -233,7 +229,7 @@ export class RealizationFilter {
                 deserializedRealizationNumberSelections.push(serializedSelection.range);
             }
         }
-        filter._realizationNumberSelections = deserializedRealizationNumberSelections;
+        this._realizationNumberSelections = deserializedRealizationNumberSelections;
 
         const deserializedParameterIdentStringToValueSelectionMap: Map<string, ParameterValueSelection> = new Map();
         for (const serializedSelection of serialized.parameterIdentStringToValueSelectionMap) {
@@ -256,9 +252,7 @@ export class RealizationFilter {
                 }
             }
         }
-        filter._parameterIdentStringToValueSelectionMap = deserializedParameterIdentStringToValueSelectionMap;
-
-        return filter;
+        this._parameterIdentStringToValueSelectionMap = deserializedParameterIdentStringToValueSelectionMap;
     }
 
     getAssignedEnsembleIdent(): RegularEnsembleIdent | DeltaEnsembleIdent {

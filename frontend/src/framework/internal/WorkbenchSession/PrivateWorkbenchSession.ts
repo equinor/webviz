@@ -233,7 +233,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         this._settings.deserializeState(content.settings);
         this._userCreatedItems.deserializeState(content.userCreatedItems);
-        this._realizationFilterSet.deserialize(content.ensembleRealizationFilterSet, this._ensembleSet);
+        this._realizationFilterSet.deserialize(content.ensembleRealizationFilterSet);
 
         const userEnsembleSettings: UserEnsembleSetting[] = content.ensembleSet.regularEnsembles.map((e) => ({
             ensembleIdent: RegularEnsembleIdent.fromString(e.ensembleIdent),
@@ -249,12 +249,16 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         }));
 
         await this.loadAndSetupEnsembleSet(userEnsembleSettings, userDeltaEnsembleSettings);
+
+        // This has to be done after loading the ensemble set
+        // in order to guarantee that all realization filters for the ensembles exist
+        this._realizationFilterSet.deserialize(content.ensembleRealizationFilterSet);
     }
 
     async loadAndSetupEnsembleSet(
         regularEnsembleSettings: UserEnsembleSetting[],
         deltaEnsembleSettings: UserDeltaEnsembleSetting[],
-    ): Promise<void> {
+    ): Promise<EnsembleSet> {
         this.setEnsembleSetLoading(true);
         const newSet = await loadMetadataFromBackendAndCreateEnsembleSet(
             this._queryClient,
@@ -263,6 +267,8 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         );
         await this.setEnsembleSet(newSet);
         this.setEnsembleSetLoading(false);
+
+        return newSet;
     }
 
     private setEnsembleSetLoading(isLoading: boolean) {

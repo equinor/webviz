@@ -52,7 +52,8 @@ export class RealizationFilterSet {
             const ensembleIdentString = ensemble.getIdent().toString();
             const isEnsembleInMap = this._ensembleIdentStringRealizationFilterMap.has(ensembleIdentString);
             if (!isEnsembleInMap) {
-                this._ensembleIdentStringRealizationFilterMap.set(ensembleIdentString, new RealizationFilter(ensemble));
+                const filter = new RealizationFilter(ensemble);
+                this._ensembleIdentStringRealizationFilterMap.set(ensembleIdentString, filter);
             }
         }
     }
@@ -68,15 +69,15 @@ export class RealizationFilterSet {
         return serialized;
     }
 
-    deserialize(input: SerializedRealizationFilterSet, ensembleSet: EnsembleSet): void {
-        this._ensembleIdentStringRealizationFilterMap.clear();
-        for (const { ensembleIdentString, realizationFilter } of input) {
-            const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
+    deserialize(input: SerializedRealizationFilterSet): void {
+        for (const filter of this._ensembleIdentStringRealizationFilterMap.values()) {
+            const serializedFilter = input.find(
+                (item) => item.ensembleIdentString === filter.getAssignedEnsembleIdent().toString(),
+            )?.realizationFilter;
 
-            this._ensembleIdentStringRealizationFilterMap.set(
-                ensembleIdentString,
-                RealizationFilter.fromDeserialize(ensembleSet.getEnsemble(ensembleIdent), realizationFilter),
-            );
+            if (serializedFilter) {
+                filter.deserialize(serializedFilter);
+            }
         }
     }
 
