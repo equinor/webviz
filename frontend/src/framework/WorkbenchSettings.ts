@@ -18,6 +18,7 @@ import type { ColorScaleOptions } from "@lib/utils/ColorScale";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { usePublishSubscribeTopicValue, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+
 import type { WorkbenchSettingsTopicPayloads } from "./internal/PrivateWorkbenchSettings";
 
 export enum WorkbenchSettingsTopic {

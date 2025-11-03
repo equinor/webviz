@@ -57,20 +57,22 @@ export function SessionRow(props: SessionRowProps): React.ReactNode {
                 {new Date(props.session.metadata.lastModifiedMs).toLocaleString()}
             </td>
             <td className="p-2 border-r border-b">{lastPersisted}</td>
-            <td className="p-2 flex gap-1 border-b">
-                <Button variant="text" onClick={() => props.onOpen(props.session.id ?? null)} size="small">
-                    <FileOpen fontSize="inherit" />
-                    Open
-                </Button>
-                <Button
-                    variant="text"
-                    onClick={() => props.onDiscard(props.session.id ?? null)}
-                    size="small"
-                    color="danger"
-                >
-                    <Delete fontSize="inherit" />
-                    Discard
-                </Button>
+            <td className="p-2 border-b">
+                <div className="flex gap-1">
+                    <Button variant="text" onClick={() => props.onOpen(props.session.id ?? null)} size="small">
+                        <FileOpen fontSize="inherit" />
+                        Open
+                    </Button>
+                    <Button
+                        variant="text"
+                        onClick={() => props.onDiscard(props.session.id ?? null)}
+                        size="small"
+                        color="danger"
+                    >
+                        <Delete fontSize="inherit" />
+                        Discard
+                    </Button>
+                </div>
             </td>
         </tr>
     );

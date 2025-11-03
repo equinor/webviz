@@ -1,23 +1,8 @@
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import type { EnsembleSet } from "./EnsembleSet";
-import { RealizationFilter, realizationFilterSchema, type SerializedRealizationFilter } from "./RealizationFilter";
+import { RealizationFilter } from "./RealizationFilter";
+import type { SerializedRealizationFilterSetState } from "./RealizationFilterSet.schema";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-
-import type { JTDSchemaType } from "ajv/dist/jtd";
-
-export type SerializedRealizationFilterSet = Array<{
-    ensembleIdentString: string;
-    realizationFilter: SerializedRealizationFilter;
-}>;
-
-export const realizationFilterSetSchema: JTDSchemaType<SerializedRealizationFilterSet> = {
-    elements: {
-        properties: {
-            ensembleIdentString: { type: "string" },
-            realizationFilter: realizationFilterSchema,
-        },
-    },
-} as const;
 
 export class RealizationFilterSet {
     // Map of ensembleIdent string to RealizationFilter
@@ -58,25 +43,25 @@ export class RealizationFilterSet {
         }
     }
 
-    serialize(): SerializedRealizationFilterSet {
-        const serialized: SerializedRealizationFilterSet = [];
+    serializeState(): SerializedRealizationFilterSetState {
+        const serialized: SerializedRealizationFilterSetState = [];
         for (const [ensembleIdentString, realizationFilter] of this._ensembleIdentStringRealizationFilterMap) {
             serialized.push({
                 ensembleIdentString,
-                realizationFilter: realizationFilter.serialize(),
+                realizationFilter: realizationFilter.serializeState(),
             });
         }
         return serialized;
     }
 
-    deserialize(input: SerializedRealizationFilterSet): void {
+    deserializeState(input: SerializedRealizationFilterSetState): void {
         for (const filter of this._ensembleIdentStringRealizationFilterMap.values()) {
             const serializedFilter = input.find(
                 (item) => item.ensembleIdentString === filter.getAssignedEnsembleIdent().toString(),
             )?.realizationFilter;
 
             if (serializedFilter) {
-                filter.deserialize(serializedFilter);
+                filter.deserializeState(serializedFilter);
             }
         }
     }

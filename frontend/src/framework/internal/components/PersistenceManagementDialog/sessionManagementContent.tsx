@@ -1,5 +1,12 @@
 import React from "react";
 
+import { DateRangePicker } from "@equinor/eds-core-react";
+import type { Options } from "@hey-api/client-axios";
+import { Add, Close, Delete, Edit, FileOpen, Search } from "@mui/icons-material";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import type { InfiniteData } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
+
 import type {
     GetSessionsMetadataData_api,
     GetSessionsMetadataError_api,
@@ -8,9 +15,7 @@ import type {
     SortDirection_api,
 } from "@api";
 import { getSessionsMetadata, SessionSortBy_api } from "@api";
-import { DateRangePicker } from "@equinor/eds-core-react";
 import type { Workbench } from "@framework/Workbench";
-import type { Options } from "@hey-api/client-axios";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
@@ -21,10 +26,7 @@ import type { TableColumns, TableSorting } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
 import { formatDate } from "@lib/utils/dates";
-import { Add, Close, Delete, Edit, FileOpen, Search } from "@mui/icons-material";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import type { InfiniteData } from "@tanstack/react-query";
-import type { AxiosError } from "axios";
+
 
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 

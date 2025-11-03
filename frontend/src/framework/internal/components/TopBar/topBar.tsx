@@ -228,11 +228,9 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                         })}
                     >
                         {metadata.title}
-                        {hasChanges && (
-                            <Tooltip title="You have unsaved changes">
-                                <span className="text-amber-600 ml-2 text-2xl">*</span>
-                            </Tooltip>
-                        )}
+                        <Tooltip title="You have unsaved changes">
+                            <span className="text-amber-600 ml-2 text-2xl">{hasChanges ? "*" : " "}</span>
+                        </Tooltip>
                     </Typography>
                 </>
             );

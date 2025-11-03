@@ -1,11 +1,16 @@
 import React from "react";
 
+import { DateRangePicker } from "@equinor/eds-core-react";
+import type { Options } from "@hey-api/client-axios";
+import { Close, Delete, FileOpen, Search } from "@mui/icons-material";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { omit } from "lodash";
+import { toast } from "react-toastify";
+
 import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
-import { DateRangePicker } from "@equinor/eds-core-react";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
-import type { Options } from "@hey-api/client-axios";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
@@ -16,10 +21,7 @@ import type { TableColumns, TableSorting, TContext } from "@lib/components/Table
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
 import { formatDate } from "@lib/utils/dates";
-import { Close, Delete, FileOpen, Search } from "@mui/icons-material";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { omit } from "lodash";
-import { toast } from "react-toastify";
+
 
 import { UserAvatar } from "../UserAvatar";
 

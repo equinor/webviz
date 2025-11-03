@@ -1,23 +1,20 @@
 import type { ModuleInstance } from "@framework/ModuleInstance";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import type { ChannelDefinition } from "./Channel";
 import { Channel } from "./Channel";
+import type {
+    SerializedDataChannelManagerState,
+    SerializedDataChannelReceiverSubscription,
+} from "./ChannelManager.schema";
 import type { ChannelReceiverDefinition } from "./ChannelReceiver";
 import { ChannelReceiver, ChannelReceiverNotificationTopic } from "./ChannelReceiver";
-import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 export enum ChannelManagerNotificationTopic {
     CHANNELS_CHANGE = "channels-change",
     RECEIVERS_CHANGE = "receivers-change",
     STATE = "state",
 }
-
-export type SerializedDataChannelReceiverSubscription = {
-    idString: string;
-    listensToModuleInstanceId: string;
-    channelIdString: string;
-    contentIdStrings: string[];
-};
 
 export class ChannelManager {
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
@@ -105,7 +102,7 @@ export class ChannelManager {
         };
     }
 
-    serialize(): SerializedDataChannelReceiverSubscription[] {
+    serializeState(): SerializedDataChannelManagerState {
         const subscriptions: SerializedDataChannelReceiverSubscription[] = [];
 
         for (const receiver of this._receivers) {
@@ -123,14 +120,16 @@ export class ChannelManager {
             subscriptions.push(subscription);
         }
 
-        return subscriptions;
+        return {
+            subscriptions,
+        };
     }
 
-    deserialize(
-        subscriptions: SerializedDataChannelReceiverSubscription[],
+    deserializeState(
+        serializedState: SerializedDataChannelManagerState,
         moduleInstances: ModuleInstance<any, any>[],
     ): void {
-        for (const subscription of subscriptions) {
+        for (const subscription of serializedState.subscriptions) {
             const listensToModuleInstance = moduleInstances.find(
                 (instance) => instance.getId() === subscription.listensToModuleInstanceId,
             );

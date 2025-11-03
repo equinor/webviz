@@ -18,9 +18,9 @@ import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/acti
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { LeftNavBar } from "../LeftNavBar";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
+import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
 import { RightNavBar } from "../RightNavBar";
 import { SaveSessionDialog } from "../SaveSessionDialog";
-import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
 

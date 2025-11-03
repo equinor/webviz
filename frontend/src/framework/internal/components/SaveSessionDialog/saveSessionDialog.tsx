@@ -3,9 +3,9 @@ import React from "react";
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { Label } from "@lib/components/Label";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";

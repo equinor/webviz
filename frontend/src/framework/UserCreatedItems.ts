@@ -1,30 +1,14 @@
 import React from "react";
 
-import type { JTDSchemaType } from "ajv/dist/core";
-
 import type { AtomStoreMaster } from "./AtomStoreMaster";
-import {
-    INTERSECTION_POLYLINES_JTD_SCHEMA,
-    IntersectionPolylines,
-    IntersectionPolylinesEvent,
-    type SerializedIntersectionPolylines,
-} from "./userCreatedItems/IntersectionPolylines";
+import { IntersectionPolylines, IntersectionPolylinesEvent } from "./userCreatedItems/IntersectionPolylines";
+import type { SerializedUserCreatedItemsState } from "./UserCreatedItems.schema";
 import type { WorkbenchSession } from "./WorkbenchSession";
-
-export type SerializedUserCreatedItems = {
-    intersectionPolylines: SerializedIntersectionPolylines;
-};
 
 export enum UserCreatedItemsEvent {
     INTERSECTION_POLYLINES_CHANGE = "IntersectionPolylinesChange",
     SERIALIZED_STATE = "SerializedState",
 }
-
-export const USER_CREATED_ITEMS_JTD_SCHEMA: JTDSchemaType<SerializedUserCreatedItems> = {
-    properties: {
-        intersectionPolylines: INTERSECTION_POLYLINES_JTD_SCHEMA,
-    },
-} as const;
 
 export class UserCreatedItems {
     private _intersectionPolylines: IntersectionPolylines;
@@ -38,13 +22,13 @@ export class UserCreatedItems {
         });
     }
 
-    serializeState(): SerializedUserCreatedItems {
+    serializeState(): SerializedUserCreatedItemsState {
         return {
             intersectionPolylines: this._intersectionPolylines.serializeState(),
         };
     }
 
-    deserializeState(serializedState: SerializedUserCreatedItems): void {
+    deserializeState(serializedState: SerializedUserCreatedItemsState): void {
         this._intersectionPolylines.deserializeState(serializedState.intersectionPolylines);
     }
 

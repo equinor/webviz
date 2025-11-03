@@ -1,18 +1,16 @@
 import type { ErrorInfo } from "react";
+import React from "react";
 
 import type { Atom } from "jotai";
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
+
 import type { AtomStore } from "./AtomStoreMaster";
-import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataChannnel";
 import type { InitialSettings } from "./InitialSettings";
 import type { Dashboard } from "./internal/Dashboard";
-import {
-    ChannelManager,
-    ChannelManagerNotificationTopic,
-    type SerializedDataChannelReceiverSubscription,
-} from "./internal/DataChannels/ChannelManager";
+import { ChannelManager, ChannelManagerNotificationTopic } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceSerializer } from "./internal/ModuleInstanceSerializer";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 import type {
@@ -25,11 +23,12 @@ import type {
     ModuleComponentSerializationFunctions,
 } from "./Module";
 import { ModuleContext } from "./ModuleContext";
+import type { SerializedModuleInstanceState } from "./ModuleInstance.schema";
 import type { SyncSettingKey } from "./SyncSettings";
+import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataChannnel";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
-import React from "react";
-import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
+
 
 export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
@@ -65,22 +64,9 @@ export interface ModuleInstanceOptions<
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
 
-type StringifiedSerializedModuleState = {
-    settings?: string;
-    view?: string;
-};
-
 export type PartialSerializedModuleState<T extends ModuleComponentsStateBase> = {
     settings?: Partial<T["settings"]>;
     view?: Partial<T["view"]>;
-};
-
-export type ModuleInstanceSerializedState = {
-    id: string;
-    name: string;
-    dataChannelReceiverSubscriptions: SerializedDataChannelReceiverSubscription[];
-    syncedSettingKeys: SyncSettingKey[];
-    serializedState: StringifiedSerializedModuleState | null;
 };
 
 export class ModuleInstance<
@@ -116,7 +102,7 @@ export class ModuleInstance<
 
     private _dashboard: Dashboard | null = null;
     private _serializer: ModuleInstanceSerializer<TSerializedStateSchema> | null = null;
-    private _storedSerializedState: ModuleInstanceSerializedState | null = null;
+    private _storedSerializedState: SerializedModuleInstanceState | null = null;
     private _storedTemplateState: PartialSerializedModuleState<TSerializedStateSchema> | null = null;
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateSchema>) {
@@ -146,29 +132,20 @@ export class ModuleInstance<
         );
     }
 
-    serialize(): ModuleInstanceSerializedState {
+    serializeState(): SerializedModuleInstanceState {
         return {
             id: this._id,
             name: this._module.getName(),
-            // Replace with channel manager's own serialization logic
-            dataChannelReceiverSubscriptions: this._channelManager
-                .getReceivers()
-                .filter((receiver) => receiver.hasActiveSubscription())
-                .map((receiver) => ({
-                    idString: receiver.getIdString(),
-                    listensToModuleInstanceId: receiver.getChannel()?.getManager().getModuleInstanceId() ?? "",
-                    channelIdString: receiver.getChannel()?.getIdString() ?? "",
-                    contentIdStrings: receiver.getContentIdStrings(),
-                })),
+            dataChannelManagerState: this._channelManager.serializeState(),
             syncedSettingKeys: this._syncedSettingKeys,
             serializedState: this._serializer?.getStringifiedSerializedState() ?? null,
         };
     }
 
-    initiateDeserialization(raw: ModuleInstanceSerializedState, dashboard: Dashboard): void {
+    initiateDeserialization(raw: SerializedModuleInstanceState, dashboard: Dashboard): void {
         this._storedSerializedState = raw;
         this._dashboard = dashboard;
-        this.deserialize();
+        this.deserializeState();
     }
 
     initiateTemplateStateApplication(initialState: PartialSerializedModuleState<TSerializedStateSchema>): void {
@@ -183,7 +160,7 @@ export class ModuleInstance<
         }
     }
 
-    private deserialize(): void {
+    private deserializeState(): void {
         if (this._initialized && this._storedSerializedState && this._dashboard) {
             this._syncedSettingKeys = this._storedSerializedState.syncedSettingKeys;
 
@@ -193,8 +170,8 @@ export class ModuleInstance<
                 this._serializer.deserializeState(this._storedSerializedState.serializedState);
             }
 
-            this._channelManager.deserialize(
-                this._storedSerializedState.dataChannelReceiverSubscriptions,
+            this._channelManager.deserializeState(
+                this._storedSerializedState.dataChannelManagerState,
                 this._dashboard.getModuleInstances(),
             );
 
@@ -228,7 +205,7 @@ export class ModuleInstance<
         this._context = new ModuleContext<TInterfaceTypes>(this);
         this._initialized = true;
         this.setModuleInstanceState(ModuleInstanceLifeCycleState.OK);
-        this.deserialize();
+        this.deserializeState();
         this.applyTemplateState();
     }
 

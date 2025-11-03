@@ -1,5 +1,3 @@
-import type { JTDSchemaType } from "ajv/dist/core";
-
 import {
     defaultColorPalettes,
     defaultContinuousDivergingColorPalettes,
@@ -16,6 +14,8 @@ import { ColorScale, ColorScaleGradientType, ColorScaleType, type ColorScaleOpti
 import { ColorSet } from "@lib/utils/ColorSet";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
+import type { SerializedWorkbenchSettingsState } from "./PrivateWorkbenchSettings.schema";
+
 export type UseDiscreteColorScaleOptions = {
     gradientType: ColorScaleGradientType;
 };
@@ -23,29 +23,6 @@ export type UseDiscreteColorScaleOptions = {
 export type UseContinuousColorScaleOptions = {
     gradientType: ColorScaleGradientType;
 };
-
-export type SerializedWorkbenchSettings = {
-    selectedColorPalettes: Record<ColorPaletteType, string>;
-    discreteColorScaleSteps: Record<ColorScaleDiscreteSteps, number>;
-};
-
-export const WORKBENCH_SETTINGS_JTD_SCHEMA: JTDSchemaType<SerializedWorkbenchSettings> = {
-    properties: {
-        selectedColorPalettes: {
-            properties: {
-                [ColorPaletteType.Categorical]: { type: "string" },
-                [ColorPaletteType.ContinuousDiverging]: { type: "string" },
-                [ColorPaletteType.ContinuousSequential]: { type: "string" },
-            },
-        },
-        discreteColorScaleSteps: {
-            properties: {
-                [ColorScaleDiscreteSteps.Sequential]: { type: "int32" },
-                [ColorScaleDiscreteSteps.Diverging]: { type: "int32" },
-            },
-        },
-    },
-} as const;
 
 export enum PrivateWorkbenchSettingsTopic {
     SERIALIZED_STATE = "SerializedState",
@@ -85,14 +62,14 @@ export class PrivateWorkbenchSettings implements WorkbenchSettings {
         this.loadStepsFromLocalStorage();
     }
 
-    serializeState(): SerializedWorkbenchSettings {
+    serializeState(): SerializedWorkbenchSettingsState {
         return {
             selectedColorPalettes: this._selectedColorPalettes,
             discreteColorScaleSteps: this._steps,
         };
     }
 
-    deserializeState(serializedState: SerializedWorkbenchSettings): void {
+    deserializeState(serializedState: SerializedWorkbenchSettingsState): void {
         this._selectedColorPalettes = serializedState.selectedColorPalettes;
         this._steps = serializedState.discreteColorScaleSteps;
     }

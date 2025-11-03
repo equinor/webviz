@@ -1,13 +1,12 @@
 import type { LayoutElement } from "../../Dashboard";
-
-import type { SerializedWorkbenchSession } from "./deserialization";
+import type { SerializedWorkbenchSessionState } from "../PrivateWorkbenchSession.schema";
 
 export enum WorkbenchSessionSource {
     LOCAL_STORAGE = "localStorage",
     BACKEND = "backend",
 }
 
-export type WorkbenchSessionDataContainer = SerializedWorkbenchSession &
+export type WorkbenchSessionDataContainer = SerializedWorkbenchSessionState &
     (
         | {
               id?: string; // Optional ID for the session (only when stored once), can be used to identify or restore the session
@@ -52,17 +51,20 @@ export function extractLayout(session: WorkbenchSessionDataContainer): LayoutEle
     const layout: LayoutElement[] = [];
 
     for (const serializedInstance of activeDashboard.moduleInstances) {
-        const { id, name, layoutInfo } = serializedInstance;
+        const {
+            moduleInstanceState: { id, name },
+            layoutState,
+        } = serializedInstance;
 
         layout.push({
             moduleInstanceId: id,
             moduleName: name,
-            relX: layoutInfo.relX,
-            relY: layoutInfo.relY,
-            relHeight: layoutInfo.relHeight,
-            relWidth: layoutInfo.relWidth,
-            minimized: layoutInfo.minimized,
-            maximized: layoutInfo.maximized,
+            relX: layoutState.relX,
+            relY: layoutState.relY,
+            relHeight: layoutState.relHeight,
+            relWidth: layoutState.relWidth,
+            minimized: layoutState.minimized,
+            maximized: layoutState.maximized,
         });
     }
 

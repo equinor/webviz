@@ -13,7 +13,7 @@ export type PersistableAtomWarningWrapperProps<T> = {
 export function PersistableAtomWarningWrapper<T>(props: PersistableAtomWarningWrapperProps<T>) {
     const { isValidInContext } = useAtomValue(props.atom);
 
-    let warningMessage = makePersistableAtomWarningMessage(props.atom);
+    const warningMessage = useMakePersistableAtomWarningMessage(props.atom);
 
     return (
         <div className="flex flex-col gap-2">
@@ -28,7 +28,7 @@ export function PersistableAtomWarningWrapper<T>(props: PersistableAtomWarningWr
     );
 }
 
-export function makePersistableAtomWarningMessage(atom: PersistableFixableAtom<any>): string | null {
+export function useMakePersistableAtomWarningMessage(atom: PersistableFixableAtom<any>): string | null {
     const { isValidInContext, _source } = useAtomValue(atom);
 
     if (!isValidInContext && _source) {

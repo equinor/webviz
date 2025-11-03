@@ -1,4 +1,5 @@
 import React from "react";
+
 import type { PublishSubscribe, TopicPayloads } from "./NewPublishSubscribeDelegate";
 
 export class ReactPublishSubscribeAdapter<TPayload> {

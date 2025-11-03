@@ -1,8 +1,9 @@
+import type { ViewStateType } from "@webviz/subsurface-viewer";
+import type { JTDSchemaType } from "ajv/dist/core";
+
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
-import type { ViewStateType } from "@webviz/subsurface-viewer";
-import type { JTDSchemaType } from "ajv/dist/core";
 
 import { viewStateAtom } from "./atoms/persistableAtoms";
 

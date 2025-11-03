@@ -3,15 +3,15 @@ import type { QueryClient } from "@tanstack/query-core";
 import { getSessionOptions, getSnapshotOptions } from "@api";
 
 import {
-    localStorageKeyForSessionId,
-    WORKBENCH_SESSION_LOCAL_STORAGE_KEY_PREFIX,
-    WORKBENCH_SESSION_LOCAL_STORAGE_KEY_TEMP,
-} from "./localStorageHelpers";
-import {
     deserializeSessionFromBackend,
     deserializeFromLocalStorage,
     deserializeSnapshotFromBackend,
 } from "./deserialization";
+import {
+    localStorageKeyForSessionId,
+    WORKBENCH_SESSION_LOCAL_STORAGE_KEY_PREFIX,
+    WORKBENCH_SESSION_LOCAL_STORAGE_KEY_TEMP,
+} from "./localStorageHelpers";
 import type { WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
 
 export async function loadWorkbenchSessionFromBackend(

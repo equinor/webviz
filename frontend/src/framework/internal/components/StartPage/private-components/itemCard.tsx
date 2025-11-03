@@ -1,11 +1,12 @@
 import React from "react";
 
+import { useQuery } from "@tanstack/react-query";
+
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
 import { Tooltip } from "@lib/components/Tooltip";
 import { timeAgo } from "@lib/utils/dates";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { useQuery } from "@tanstack/react-query";
 
 import { UserAvatar } from "../../UserAvatar";
 

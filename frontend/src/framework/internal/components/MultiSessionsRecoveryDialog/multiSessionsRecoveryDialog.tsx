@@ -69,7 +69,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
         >
             We found one or more previous sessions with unsaved changes. You can either discard them or open one of the
             sessions below to recover your work.
-            <table className="table-auto  border-collapse mt-4 border-spacing-4 text-sm">
+            <table className="table-auto w-full border-collapse mt-4 border-spacing-4 text-sm">
                 <thead>
                     <tr>
                         <th className="p-2 border-b">Name</th>

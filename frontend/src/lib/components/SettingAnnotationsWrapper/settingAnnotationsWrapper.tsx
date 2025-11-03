@@ -1,5 +1,6 @@
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Error, Info, Warning } from "@mui/icons-material";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type SettingAnnotation = {
     type: "warning" | "info" | "error";

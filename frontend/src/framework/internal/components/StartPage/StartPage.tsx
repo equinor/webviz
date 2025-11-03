@@ -1,5 +1,6 @@
 import { Icon, Typography } from "@equinor/eds-core-react";
 import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
+
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";

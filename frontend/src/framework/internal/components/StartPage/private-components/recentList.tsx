@@ -2,13 +2,14 @@ import React from "react";
 
 import { Icon, Typography } from "@equinor/eds-core-react";
 import { folder_open } from "@equinor/eds-icons";
+import { Refresh } from "@mui/icons-material";
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Refresh } from "@mui/icons-material";
-import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 
 Icon.add({ folder_open });
 

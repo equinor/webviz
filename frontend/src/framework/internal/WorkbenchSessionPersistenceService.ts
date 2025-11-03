@@ -14,12 +14,12 @@ import {
     createSnapshotWithCacheUpdate,
     updateSessionAndCache,
 } from "./WorkbenchSession/utils/crudHelpers";
-import { hashSessionContentString, objectToJsonString } from "./WorkbenchSession/utils/hash";
-import { localStorageKeyForSessionId } from "./WorkbenchSession/utils/localStorageHelpers";
 import {
     makeWorkbenchSessionLocalStorageString,
     makeWorkbenchSessionStateString,
 } from "./WorkbenchSession/utils/deserialization";
+import { hashSessionContentString, objectToJsonString } from "./WorkbenchSession/utils/hash";
+import { localStorageKeyForSessionId } from "./WorkbenchSession/utils/localStorageHelpers";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -243,7 +243,7 @@ export class WorkbenchSessionPersistenceService
             const snapshotId = await createSnapshotWithCacheUpdate(queryClient, {
                 title,
                 description,
-                content: objectToJsonString(this._workbenchSession.getContent()),
+                content: objectToJsonString(this._workbenchSession.serializeContentState()),
             });
             toast.dismiss(toastId);
             toast.success("Snapshot successfully created.");
@@ -350,7 +350,7 @@ export class WorkbenchSessionPersistenceService
                 await updateSessionAndCache(queryClient, id, {
                     title: metadata.title,
                     description: metadata.description ?? null,
-                    content: objectToJsonString(this._workbenchSession.getContent()),
+                    content: objectToJsonString(this._workbenchSession.serializeContentState()),
                 });
                 // On successful update, we can safely remove the local storage recovery entry
                 this.removeFromLocalStorage();
@@ -361,7 +361,7 @@ export class WorkbenchSessionPersistenceService
                 const id = await createSessionWithCacheUpdate(queryClient, {
                     title: metadata.title,
                     description: metadata.description ?? null,
-                    content: objectToJsonString(this._workbenchSession.getContent()),
+                    content: objectToJsonString(this._workbenchSession.serializeContentState()),
                 });
 
                 // ! Make sure you remove the localStorage backup BEFORE you store the new session id

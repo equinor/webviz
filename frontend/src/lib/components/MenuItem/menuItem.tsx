@@ -2,6 +2,7 @@ import type React from "react";
 
 import type { MenuItemProps as MuiMenuItemProps } from "@mui/base";
 import { MenuItem as MuiMenuItem } from "@mui/base";
+
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type MenuItemProps = MuiMenuItemProps;

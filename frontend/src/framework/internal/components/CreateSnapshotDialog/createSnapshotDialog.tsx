@@ -12,6 +12,7 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 
 export type MakeSnapshotDialogProps = {
     workbench: Workbench;
@@ -31,11 +32,13 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
     const [description, setDescription] = React.useState<string>("");
     const [snapshotUrl, setSnapshotUrl] = React.useState<string | null>(null);
     const [inputFeedback, setInputFeedback] = React.useState<MakeSnapshotDialogInputFeedback>({});
+
     const inputRef = React.useRef<HTMLInputElement>(null);
 
     function handleCreateSnapshot() {
         if (title.trim() === "") {
             setInputFeedback((prev) => ({ ...prev, title: "Title is required." }));
+            inputRef.current?.focus();
             return;
         } else {
             setInputFeedback((prev) => ({ ...prev, title: undefined }));
@@ -89,12 +92,13 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 <div className="flex flex-col gap-2 grow min-w-0">
                     <Label text="Title">
                         <>
-                            <Input
+                            <CharLimitedInput
+                                onControlledValueChange={(value) => setTitle(value)}
+                                maxLength={30}
                                 inputRef={inputRef}
                                 placeholder="Enter snapshot title"
                                 type="text"
                                 value={title}
-                                onChange={(e) => setTitle(e.target.value)}
                                 error={!!inputFeedback.title}
                                 autoFocus
                             />
@@ -105,11 +109,12 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                     </Label>
                     <Label text="Description">
                         <>
-                            <Input
+                            <CharLimitedInput
+                                maxLength={250}
+                                onControlledValueChange={(value) => setDescription(value)}
                                 placeholder="Enter snapshot description"
                                 value={description}
                                 multiline
-                                onChange={(e) => setDescription(e.target.value)}
                                 error={!!inputFeedback.description}
                             />
                             {inputFeedback.description && (

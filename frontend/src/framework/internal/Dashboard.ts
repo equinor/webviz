@@ -1,14 +1,14 @@
-import type { JTDSchemaType } from "ajv/dist/core";
 import { v4 } from "uuid";
 
-import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import type { AtomStoreMaster } from "../AtomStoreMaster";
-import { ModuleInstanceTopic, type ModuleInstance, type ModuleInstanceSerializedState } from "../ModuleInstance";
+import { ModuleInstanceTopic, type ModuleInstance } from "../ModuleInstance";
 import { ModuleRegistry } from "../ModuleRegistry";
-import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
+
+import type { SerializedDashboardState } from "./Dashboard.schema";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -20,77 +20,6 @@ export type LayoutElement = {
     minimized?: boolean;
     maximized?: boolean;
 };
-
-export type ModuleInstanceStateAndLayoutInfo = ModuleInstanceSerializedState & {
-    layoutInfo: Omit<LayoutElement, "moduleInstanceId" | "moduleName">;
-};
-
-export type SerializedDashboard = {
-    id: string;
-    name: string;
-    description?: string;
-    activeModuleInstanceId: string | null;
-    moduleInstances: ModuleInstanceStateAndLayoutInfo[];
-};
-
-const layoutElementSchema: JTDSchemaType<Omit<LayoutElement, "moduleInstanceId" | "moduleName">> = {
-    properties: {
-        relX: { type: "float32" },
-        relY: { type: "float32" },
-        relHeight: { type: "float32" },
-        relWidth: { type: "float32" },
-    },
-    optionalProperties: {
-        minimized: { type: "boolean" },
-        maximized: { type: "boolean" },
-    },
-} as const;
-
-const moduleInstanceSchema: JTDSchemaType<ModuleInstanceStateAndLayoutInfo> = {
-    properties: {
-        id: { type: "string" },
-        name: { type: "string" },
-        serializedState: {
-            optionalProperties: {
-                view: { type: "string" },
-                settings: { type: "string" },
-            },
-            nullable: true,
-        },
-        syncedSettingKeys: {
-            elements: {
-                enum: Object.values(SyncSettingKey),
-            },
-        },
-        dataChannelReceiverSubscriptions: {
-            elements: {
-                properties: {
-                    idString: { type: "string" },
-                    listensToModuleInstanceId: { type: "string" },
-                    channelIdString: { type: "string" },
-                    contentIdStrings: {
-                        elements: { type: "string" },
-                    },
-                },
-            },
-        },
-        layoutInfo: layoutElementSchema,
-    },
-} as const;
-
-export const DASHBOARD_JTD_SCHEMA: JTDSchemaType<SerializedDashboard> = {
-    properties: {
-        id: { type: "string" },
-        name: { type: "string" },
-        activeModuleInstanceId: { type: "string", nullable: true },
-        moduleInstances: {
-            elements: moduleInstanceSchema,
-        },
-    },
-    optionalProperties: {
-        description: { type: "string" },
-    },
-} as const;
 
 export enum DashboardTopic {
     LAYOUT = "Layout",
@@ -171,9 +100,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._moduleInstances;
     }
 
-    serializeState(): SerializedDashboard {
+    serializeState(): SerializedDashboardState {
         const moduleInstances = this._moduleInstances.map((moduleInstance) => {
-            const moduleState = moduleInstance.serialize();
+            const moduleInstanceState = moduleInstance.serializeState();
 
             const layoutInfo = this._layout.find((el) => el.moduleInstanceId === moduleInstance.getId());
 
@@ -182,8 +111,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             }
 
             return {
-                ...moduleState,
-                layoutInfo: {
+                moduleInstanceState,
+                layoutState: {
                     relX: layoutInfo.relX,
                     relY: layoutInfo.relY,
                     relHeight: layoutInfo.relHeight,
@@ -203,7 +132,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         };
     }
 
-    deserializeState(serializedDashboard: SerializedDashboard): void {
+    deserializeState(serializedDashboard: SerializedDashboardState): void {
         this._id = serializedDashboard.id;
         this._name = serializedDashboard.name;
         this._description = serializedDashboard.description;
@@ -211,30 +140,30 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this.clearLayout();
 
         for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name } = serializedInstance;
+            const { id, name } = serializedInstance.moduleInstanceState;
             this.makeAndRegisterModuleInstance(name, id);
         }
 
         // Doing this after all module instances have been registered
         // ensures that the module instances are available for data channel initialization.
         for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name, layoutInfo } = serializedInstance;
-            const moduleInstance = this.getModuleInstance(id);
+            const { moduleInstanceState, layoutState } = serializedInstance;
+            const moduleInstance = this.getModuleInstance(moduleInstanceState.id);
             if (!moduleInstance) {
-                throw new Error(`Module instance with ID ${id} not found`);
+                throw new Error(`Module instance with ID ${moduleInstanceState.id} not found`);
             }
 
-            moduleInstance.initiateDeserialization(serializedInstance, this);
+            moduleInstance.initiateDeserialization(moduleInstanceState, this);
 
             this._layout.push({
-                moduleInstanceId: id,
-                moduleName: name,
-                relX: layoutInfo.relX,
-                relY: layoutInfo.relY,
-                relHeight: layoutInfo.relHeight,
-                relWidth: layoutInfo.relWidth,
-                minimized: layoutInfo.minimized,
-                maximized: layoutInfo.maximized,
+                moduleInstanceId: moduleInstanceState.id,
+                moduleName: moduleInstanceState.name,
+                relX: layoutState.relX,
+                relY: layoutState.relY,
+                relHeight: layoutState.relHeight,
+                relWidth: layoutState.relWidth,
+                minimized: layoutState.minimized,
+                maximized: layoutState.maximized,
             });
         }
 
@@ -339,7 +268,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._activeModuleInstanceId;
     }
 
-    static fromPersistedState(serializedDashboard: SerializedDashboard, atomStoreMaster: AtomStoreMaster): Dashboard {
+    static fromPersistedState(
+        serializedDashboard: SerializedDashboardState,
+        atomStoreMaster: AtomStoreMaster,
+    ): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
         dashboard._id = serializedDashboard.id;
         dashboard._name = serializedDashboard.name;
@@ -349,30 +281,33 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         const layout: LayoutElement[] = [];
 
         for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name } = serializedInstance;
+            const { id, name } = serializedInstance.moduleInstanceState;
             dashboard.makeAndRegisterModuleInstance(name, id);
         }
 
         // Doing this after all module instances have been registered
         // ensures that the module instances are available for data channel initialization.
         for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name, layoutInfo } = serializedInstance;
+            const {
+                moduleInstanceState: { id, name },
+                layoutState,
+            } = serializedInstance;
             const moduleInstance = dashboard.getModuleInstance(id);
             if (!moduleInstance) {
                 throw new Error(`Module instance with ID ${id} not found`);
             }
 
-            moduleInstance.initiateDeserialization(serializedInstance, dashboard);
+            moduleInstance.initiateDeserialization(serializedInstance.moduleInstanceState, dashboard);
 
             layout.push({
                 moduleInstanceId: id,
                 moduleName: name,
-                relX: layoutInfo.relX,
-                relY: layoutInfo.relY,
-                relHeight: layoutInfo.relHeight,
-                relWidth: layoutInfo.relWidth,
-                minimized: layoutInfo.minimized,
-                maximized: layoutInfo.maximized,
+                relX: layoutState.relX,
+                relY: layoutState.relY,
+                relHeight: layoutState.relHeight,
+                relWidth: layoutState.relWidth,
+                minimized: layoutState.minimized,
+                maximized: layoutState.maximized,
             });
         }
 

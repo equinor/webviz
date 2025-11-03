@@ -3,9 +3,9 @@ import React from "react";
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { Label } from "@lib/components/Label";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
@@ -32,6 +32,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     const [title, setTitle] = React.useState<string>(props.title);
     const [description, setDescription] = React.useState<string>(props.description ?? "");
     const [inputFeedback, setInputFeedback] = React.useState<EditSessionDialogInputFeedback>({});
+    const inputRef = React.useRef<HTMLInputElement>(null);
 
     const [prevTitle, setPrevTitle] = React.useState<string>(props.title);
     const [prevDescription, setPrevDescription] = React.useState<string>(props.description ?? "");
@@ -49,6 +50,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     function handleSave() {
         if (title.trim() === "") {
             setInputFeedback((prev) => ({ ...prev, title: "Title is required." }));
+            inputRef.current?.focus();
             return;
         } else {
             setInputFeedback((prev) => ({ ...prev, title: undefined }));
@@ -97,6 +99,15 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         ? (props.workbench.getWorkbenchSession().getActiveDashboard().getLayout() ?? [])
         : [];
 
+    React.useEffect(
+        function focusInput() {
+            if (props.open && inputRef.current) {
+                inputRef.current.focus();
+            }
+        },
+        [props.open],
+    );
+
     return (
         <Dialog
             open={props.open}
@@ -124,6 +135,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                             <CharLimitedInput
                                 onControlledValueChange={(value) => setTitle(value)}
                                 maxLength={30}
+                                inputRef={inputRef}
                                 placeholder="Enter session title"
                                 type="text"
                                 value={title}

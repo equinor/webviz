@@ -4,26 +4,23 @@ import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
-import { Dashboard, DashboardTopic, type SerializedDashboard } from "@framework/internal/Dashboard";
-import { RealizationFilterSet, type SerializedRealizationFilterSet } from "@framework/RealizationFilterSet";
+import { Dashboard, DashboardTopic } from "@framework/internal/Dashboard";
+import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { UserCreatedItems, UserCreatedItemsEvent, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
+import { UserCreatedItems, UserCreatedItemsEvent } from "@framework/UserCreatedItems";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import {
     loadMetadataFromBackendAndCreateEnsembleSet,
     type UserEnsembleSetting,
     type UserDeltaEnsembleSetting,
 } from "../EnsembleSetLoader";
-import {
-    PrivateWorkbenchSettings,
-    PrivateWorkbenchSettingsTopic,
-    type SerializedWorkbenchSettings,
-} from "../PrivateWorkbenchSettings";
+import { PrivateWorkbenchSettings, PrivateWorkbenchSettingsTopic } from "../PrivateWorkbenchSettings";
 
+import type { SerializedWorkbenchSessionContentState } from "./PrivateWorkbenchSession.schema";
 import { isPersisted, type WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
-import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -50,15 +47,6 @@ export type WorkbenchSessionMetadata = {
     createdAt: number; // Timestamp of creation
     hash?: string; // Optional hash for content integrity
     lastModifiedMs: number; // Last modified timestamp for internal use
-};
-
-export type WorkbenchSessionContent = {
-    activeDashboardId: string | null;
-    dashboards: SerializedDashboard[];
-    ensembleSet: SerializedEnsembleSet;
-    ensembleRealizationFilterSet: SerializedRealizationFilterSet;
-    settings: SerializedWorkbenchSettings;
-    userCreatedItems: SerializedUserCreatedItems;
 };
 
 export enum PrivateWorkbenchSessionTopic {
@@ -195,7 +183,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this.handleStateChange();
     }
 
-    getContent(): WorkbenchSessionContent {
+    serializeContentState(): SerializedWorkbenchSessionContentState {
         return {
             activeDashboardId: this._activeDashboardId,
             settings: this._settings.serializeState(),
@@ -218,41 +206,43 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                     }),
                 ),
             },
-            ensembleRealizationFilterSet: this._realizationFilterSet.serialize(),
+            ensembleRealizationFilterSet: this._realizationFilterSet.serializeState(),
         };
     }
 
-    async loadContent(content: WorkbenchSessionContent): Promise<void> {
+    async deserializeContentState(contentState: SerializedWorkbenchSessionContentState): Promise<void> {
         this._isPersisted = this._id !== null;
-        this._activeDashboardId = content.activeDashboardId;
-        this._dashboards = content.dashboards.map((s) => {
+        this._activeDashboardId = contentState.activeDashboardId;
+        this._dashboards = contentState.dashboards.map((s) => {
             const d = new Dashboard(this._atomStoreMaster);
             d.deserializeState(s);
             return d;
         });
 
-        this._settings.deserializeState(content.settings);
-        this._userCreatedItems.deserializeState(content.userCreatedItems);
-        this._realizationFilterSet.deserialize(content.ensembleRealizationFilterSet);
+        this._settings.deserializeState(contentState.settings);
+        this._userCreatedItems.deserializeState(contentState.userCreatedItems);
+        this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
 
-        const userEnsembleSettings: UserEnsembleSetting[] = content.ensembleSet.regularEnsembles.map((e) => ({
+        const userEnsembleSettings: UserEnsembleSetting[] = contentState.ensembleSet.regularEnsembles.map((e) => ({
             ensembleIdent: RegularEnsembleIdent.fromString(e.ensembleIdent),
             customName: e.name,
             color: e.color,
         }));
 
-        const userDeltaEnsembleSettings: UserDeltaEnsembleSetting[] = content.ensembleSet.deltaEnsembles.map((e) => ({
-            comparisonEnsembleIdent: RegularEnsembleIdent.fromString(e.comparisonEnsembleIdent),
-            referenceEnsembleIdent: RegularEnsembleIdent.fromString(e.referenceEnsembleIdent),
-            customName: e.name,
-            color: e.color,
-        }));
+        const userDeltaEnsembleSettings: UserDeltaEnsembleSetting[] = contentState.ensembleSet.deltaEnsembles.map(
+            (e) => ({
+                comparisonEnsembleIdent: RegularEnsembleIdent.fromString(e.comparisonEnsembleIdent),
+                referenceEnsembleIdent: RegularEnsembleIdent.fromString(e.referenceEnsembleIdent),
+                customName: e.name,
+                color: e.color,
+            }),
+        );
 
         await this.loadAndSetupEnsembleSet(userEnsembleSettings, userDeltaEnsembleSettings);
 
         // This has to be done after loading the ensemble set
         // in order to guarantee that all realization filters for the ensembles exist
-        this._realizationFilterSet.deserialize(content.ensembleRealizationFilterSet);
+        this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
     }
 
     async loadAndSetupEnsembleSet(
@@ -430,7 +420,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         }
 
         session.setMetadata(dataContainer.metadata);
-        await session.loadContent(dataContainer.content);
+        await session.deserializeContentState(dataContainer.content);
 
         return session;
     }

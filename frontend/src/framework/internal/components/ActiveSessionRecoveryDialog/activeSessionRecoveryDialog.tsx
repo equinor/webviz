@@ -58,7 +58,7 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
     }
 
     function handleOpen() {
-        props.workbench.openSessionFromLocalStorage(activeSession.getId(), true);
+        props.workbench.updateSessionFromLocalStorage();
     }
 
     return (
@@ -71,7 +71,7 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
                 <>
                     <Button onClick={handleOpen} variant="text" disabled={isLoading}>
                         {isLoading && <CircularProgress size="small" />}
-                        Open
+                        Recover state
                     </Button>
                     <Button onClick={handleDiscard} variant="text" color="danger" disabled={isLoading}>
                         Discard
@@ -80,8 +80,8 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
             }
             width={800}
         >
-            We found an unsaved version of your current session in your local storage. You can either discard it or open
-            it to recover your work.
+            We found an unsaved version of your current session in your local storage. You can either discard or recover
+            it.
             <div className="flex gap-4 mt-4">
                 <DashboardPreview height={150} width={150} layout={session ? extractLayout(session) : []} />
                 <div className="flex flex-col gap-2">

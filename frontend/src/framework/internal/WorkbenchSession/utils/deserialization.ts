@@ -2,25 +2,19 @@ import { Ajv } from "ajv/dist/jtd";
 
 import type { Session_api, Snapshot_api } from "@api";
 
-import type {
-    PrivateWorkbenchSession,
-    WorkbenchSessionContent,
-    WorkbenchSessionMetadata,
-} from "../PrivateWorkbenchSession";
-import { workbenchSessionContentSchema, workbenchSessionSchema } from "../workbenchSession.jtd";
+import type { PrivateWorkbenchSession } from "../PrivateWorkbenchSession";
+import {
+    WORKBENCH_SESSION_CONTENT_STATE_SCHEMA,
+    WORKBENCH_SESSION_STATE_SCHEMA,
+} from "../PrivateWorkbenchSession.schema";
 
 import { objectToJsonString } from "./hash";
 import { sessionIdFromLocalStorageKey } from "./localStorageHelpers";
 import { WorkbenchSessionSource, type WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
 
-export type SerializedWorkbenchSession = {
-    metadata: WorkbenchSessionMetadata;
-    content: WorkbenchSessionContent;
-};
-
 const ajv = new Ajv();
-const validateContent = ajv.compile(workbenchSessionContentSchema);
-const validateFull = ajv.compile(workbenchSessionSchema);
+const validateContent = ajv.compile(WORKBENCH_SESSION_CONTENT_STATE_SCHEMA);
+const validateFull = ajv.compile(WORKBENCH_SESSION_STATE_SCHEMA);
 
 export class SessionValidationError extends Error {
     constructor(message: string) {
@@ -105,13 +99,13 @@ export function makeWorkbenchSessionStateString(session: PrivateWorkbenchSession
             title: session.getMetadata().title,
             description: session.getMetadata().description,
         },
-        content: session.getContent(),
+        content: session.serializeContentState(),
     });
 }
 
 export function makeWorkbenchSessionLocalStorageString(session: PrivateWorkbenchSession): string {
     return objectToJsonString({
         metadata: session.getMetadata(),
-        content: session.getContent(),
+        content: session.serializeContentState(),
     });
 }

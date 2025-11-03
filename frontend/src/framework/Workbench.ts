@@ -23,6 +23,7 @@ import {
     removeSnapshotQueryData,
     replaceSessionQueryData,
 } from "./internal/WorkbenchSession/utils/crudHelpers";
+import { SessionValidationError } from "./internal/WorkbenchSession/utils/deserialization";
 import {
     loadAllWorkbenchSessionsFromLocalStorage,
     loadSnapshotFromBackend,
@@ -41,7 +42,6 @@ import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSessionP
 import type { Template } from "./TemplateRegistry";
 import { ApiErrorHelper } from "./utils/ApiErrorHelper";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import { SessionValidationError } from "./internal/WorkbenchSession/utils/deserialization";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",
@@ -330,9 +330,40 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
 
             await this.setWorkbenchSession(session);
+
             this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
             this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
-            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+        } catch (error) {
+            console.error("Failed to load workbench session from local storage:", error);
+            if (confirm("Could not load workbench session from local storage. Discard corrupted session?")) {
+                this.discardLocalStorageSession(sessionId, false);
+                this.startNewSession();
+            }
+        }
+        this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+    }
+
+    async updateSessionFromLocalStorage(): Promise<void> {
+        if (!this._workbenchSession) {
+            console.warn("No session id provided for updating from local storage.");
+            return;
+        }
+
+        const sessionId = this._workbenchSession.getId() ?? null;
+
+        try {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+
+            const sessionData = await loadWorkbenchSessionFromLocalStorage(sessionId);
+            if (!sessionData) {
+                console.warn("No workbench session found in local storage.");
+                return;
+            }
+
+            this._workbenchSession.setMetadata(sessionData.metadata);
+            await this._workbenchSession.deserializeContentState(sessionData.content);
+
+            this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
         } catch (error) {
             console.error("Failed to load workbench session from local storage:", error);
             if (confirm("Could not load workbench session from local storage. Discard corrupted session?")) {
