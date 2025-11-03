@@ -24,9 +24,11 @@ function propagateApiError(error: Error, statusWriter: ViewStatusWriter | Settin
 }
 
 export function usePropagateApiErrorToStatusWriter(
-    error: Error,
+    error: Error | null,
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string | null {
+    if (!error) return null;
+
     return propagateApiError(error, statusWriter);
 }
 
