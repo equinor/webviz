@@ -213,11 +213,12 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     async deserializeContentState(contentState: SerializedWorkbenchSessionContentState): Promise<void> {
         this._isPersisted = this._id !== null;
         this._activeDashboardId = contentState.activeDashboardId;
-        this._dashboards = contentState.dashboards.map((s) => {
-            const d = new Dashboard(this._atomStoreMaster);
-            d.deserializeState(s);
-            return d;
-        });
+
+        for (const dashboard of contentState.dashboards) {
+            const newDashboard = new Dashboard(this._atomStoreMaster);
+            this.registerDashboard(newDashboard);
+            newDashboard.deserializeState(dashboard);
+        }
 
         this._settings.deserializeState(contentState.settings);
         this._userCreatedItems.deserializeState(contentState.userCreatedItems);

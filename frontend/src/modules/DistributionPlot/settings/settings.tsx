@@ -95,8 +95,8 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
         );
         if (plotType === PlotType.Histogram) {
             content.push(
-                <CollapsibleGroup title="Plot settings" expanded>
-                    <Label text="Number of bins" key="number-of-bins">
+                <CollapsibleGroup title="Plot settings" expanded key="number-of-bins">
+                    <Label text="Number of bins">
                         <Slider
                             value={numBins}
                             onChange={handleNumBinsChange}
@@ -111,15 +111,15 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
         }
         if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
             content.push(
-                <CollapsibleGroup title="Plot settings" expanded>
+                <CollapsibleGroup title="Plot settings" expanded key="scatter-2d-axes">
                     {axisContent}
                 </CollapsibleGroup>,
             );
         }
         if (plotType === PlotType.BarChart) {
             content.push(
-                <CollapsibleGroup title="Plot settings" expanded>
-                    <Label text="Orientation" key="orientation">
+                <CollapsibleGroup title="Plot settings" expanded key="orientation">
+                    <Label text="Orientation">
                         <RadioGroup
                             options={[
                                 {
@@ -135,7 +135,7 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                             value={orientation}
                         />
                     </Label>
-                    <Label text="Sort bars by" key="bar-sort-by">
+                    <Label text="Sort bars by">
                         <RadioGroup
                             options={[
                                 {

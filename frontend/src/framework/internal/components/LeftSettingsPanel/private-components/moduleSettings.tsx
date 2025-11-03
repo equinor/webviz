@@ -14,7 +14,7 @@ import {
     useModuleInstanceTopicValue,
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import type { Workbench } from "@framework/Workbench";
+import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -29,9 +29,9 @@ type ModuleSettingsProps = {
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
-    const workbenchSession = props.workbench.getWorkbenchSession();
+    const workbenchSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.ACTIVE_SESSION);
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
-    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+    const dashboard = usePublishSubscribeTopicValue(workbenchSession!, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
 
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
 
@@ -39,7 +39,9 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         props.moduleInstance,
         ModuleInstanceTopic.LIFECYCLE_STATE,
     );
-    const atomStore = workbenchSession.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
+    const atomStore = workbenchSession!
+        .getAtomStoreMaster()
+        .getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
     if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;

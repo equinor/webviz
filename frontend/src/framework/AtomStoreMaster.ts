@@ -18,6 +18,10 @@ export class AtomStoreMaster {
     }
 
     makeAtomStoreForModuleInstance(moduleInstanceId: string): AtomStore {
+        if (this._atomStores.has(moduleInstanceId)) {
+            throw new Error(`Atom store for module instance with id ${moduleInstanceId} already exists`);
+        }
+
         const atomStore = createStore();
         // Make the module's own id available within each module's store
         atomStore.set(CurrentModuleInstanceIdAtom, moduleInstanceId);
