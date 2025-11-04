@@ -299,6 +299,7 @@ export class StatisticalSurfaceProvider
                 surf_addr_str: surfAddrStr ?? "NO_SURF_ADDR",
                 data_format: this._dataFormat,
                 resample_to_def_str: null,
+                ...makeCacheBustingQueryParam(surfaceAddress ? ensembleIdent : null),
             },
         };
         const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);

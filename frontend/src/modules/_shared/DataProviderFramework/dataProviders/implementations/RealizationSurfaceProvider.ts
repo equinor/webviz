@@ -264,6 +264,7 @@ export class RealizationSurfaceProvider
                 surf_addr_str: surfAddrStr ?? "",
                 data_format: this._dataFormat,
                 resample_to_def_str: null,
+                ...makeCacheBustingQueryParam(surfaceAddress ? ensembleIdent : null),
             },
         });
 

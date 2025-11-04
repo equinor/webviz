@@ -9,23 +9,26 @@ import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
 
 import type { SurfaceDataFloat_trans } from "./queryDataTransforms";
 import { transformSurfaceData } from "./queryDataTransforms";
-import { type FullSurfaceAddress, encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
+import {
+    type FullSurfaceAddress,
+    encodeSurfAddrStr,
+    peekSurfaceAddressType,
+    peekSurfaceCaseUuid,
+    peekSurfaceEnsemble,
+} from "./surfaceAddress";
 
 export function useRealizationSurfacesMetadataQuery(
-    caseUuid: string | undefined,
-    ensembleName: string | undefined,
+    ensembleIdent: RegularEnsembleIdent | null,
 ): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
         ...getRealizationSurfacesMetadataOptions({
             query: {
-                case_uuid: caseUuid ?? "",
-                ensemble_name: ensembleName ?? "",
-                ...makeCacheBustingQueryParam(
-                    caseUuid && ensembleName ? new RegularEnsembleIdent(caseUuid, ensembleName) : null,
-                ),
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                ...makeCacheBustingQueryParam(ensembleIdent),
             },
         }),
-        enabled: Boolean(caseUuid && ensembleName),
+        enabled: Boolean(ensembleIdent),
     });
 }
 
@@ -49,10 +52,18 @@ export function useSurfaceDataQuery(
     resampleTo: SurfaceDef_api | null,
     allowEnable: boolean,
 ): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    let cacheBustingQueryParam: { zCacheBust?: string } | undefined = undefined;
     if (surfAddrStr) {
         const surfAddrType = peekSurfaceAddressType(surfAddrStr);
         if (surfAddrType !== "OBS" && surfAddrType !== "REAL" && surfAddrType !== "STAT") {
             throw new Error("Invalid surface address type for surface data query");
+        }
+
+        const surfAddrEnsemble = peekSurfaceEnsemble(surfAddrStr);
+        const surfAddrCaseUuid = peekSurfaceCaseUuid(surfAddrStr);
+        if (surfAddrCaseUuid && surfAddrEnsemble) {
+            const ensembleIdent = new RegularEnsembleIdent(surfAddrCaseUuid, surfAddrEnsemble);
+            cacheBustingQueryParam = makeCacheBustingQueryParam(ensembleIdent);
         }
     }
 
@@ -67,6 +78,7 @@ export function useSurfaceDataQuery(
                 surf_addr_str: surfAddrStr ?? "",
                 data_format: format,
                 resample_to_def_str: resampleToKeyValStr,
+                ...cacheBustingQueryParam,
             },
         }),
         select: transformSurfaceData,

@@ -61,10 +61,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
     const computedEnsembleIdent = fixupRegularEnsembleIdent(candidateEnsembleIdent, ensembleSet);
-    const realizationSurfacesMetaQuery = useRealizationSurfacesMetadataQuery(
-        computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName(),
-    );
+    const realizationSurfacesMetaQuery = useRealizationSurfacesMetadataQuery(computedEnsembleIdent);
     const observedSurfacesMetaQuery = useObservedSurfacesMetadataQuery(computedEnsembleIdent?.getCaseUuid());
 
     usePropagateApiErrorToStatusWriter(realizationSurfacesMetaQuery, statusWriter);

@@ -95,7 +95,6 @@ export class ObservedSurfaceProvider
                 ...getObservedSurfacesMetadataOptions({
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
-                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
@@ -197,6 +196,7 @@ export class ObservedSurfaceProvider
                 surf_addr_str: surfAddrStr ?? "",
                 data_format: this._dataFormat,
                 resample_to_def_str: null,
+                ...makeCacheBustingQueryParam(surfaceAddress ? ensembleIdent : null),
             },
         });
 
