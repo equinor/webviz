@@ -22,9 +22,9 @@ export function DefaultTagOption(props: TagOptionProps): React.ReactNode {
                 style={{ height: props.height }}
                 onMouseMove={props.onHover}
             >
-                <label className="flex size-full px-2 py-1 text-gray-900 cursor-pointer gap-2">
+                <label className="flex size-full px-2 py-1 text-gray-900 cursor-pointer gap-2 overflow-x-hidden">
                     <Checkbox className="w-full" checked={props.isSelected} onChange={props.onToggle} />
-                    {props.label ?? props.value}
+                    <span className="truncate">{props.label ?? props.value}</span>
                 </label>
             </li>
         </>
