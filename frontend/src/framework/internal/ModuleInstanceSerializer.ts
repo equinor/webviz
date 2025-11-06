@@ -121,7 +121,7 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
         );
 
         if (serializedSettings === undefined && serializedView === undefined && this._serializedState === null) {
-            return {}; // No state to serialize
+            return; // No state to serialize
         }
 
         // Validate against schema
@@ -132,8 +132,9 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
                 console.warn(`Validation failed for ${this._moduleInstance.getName()}`, {
                     settingsErrors: validateSettings.errors,
                 });
-                this._serializedState = null;
-                return; // Invalid state, do not serialize
+                throw new ModuleStateSerializationError(
+                    `Invalid settings state for module instance ${this._moduleInstance.getName()}`,
+                );
             }
         }
 
@@ -145,8 +146,9 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
                 console.warn(`Validation failed for ${this._moduleInstance.getName()}`, {
                     viewErrors: validateView.errors,
                 });
-                this._serializedState = null;
-                return; // Invalid state, do not serialize
+                throw new ModuleStateSerializationError(
+                    `Invalid view state for module instance ${this._moduleInstance.getName()}`,
+                );
             }
         }
 
@@ -169,17 +171,23 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
         } as TSerializedState;
     }
 
-    deserializeState(raw: StringifiedSerializedModuleComponentsState): void {
+    deserializeState(raw: StringifiedSerializedModuleComponentsState): {
+        settingsStateApplied: boolean;
+        viewStateApplied: boolean;
+    } | null {
         if (!this._serializedStateSchema) {
             console.warn(`No serialized state schema defined for module instance ${this._moduleInstance.getName()}`);
-            return; // No schema defined, cannot deserialize
+            return null; // No schema defined, cannot deserialize
         }
 
         if (!hasSerialization(this._serializationFunctions)) {
             console.warn(`No serialization functions defined for module instance ${this._moduleInstance.getName()}`);
             this._serializedState = null;
-            return; // No serialization functions, cannot deserialize
+            return null; // No serialization functions, cannot deserialize
         }
+
+        let isSettingsStateValid: boolean = true;
+        let isViewStateValid: boolean = true;
 
         let parsedSettings: unknown;
         let parsedView: unknown;
@@ -188,36 +196,27 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
             parsedView = raw.view ? JSON.parse(raw.view) : undefined;
         } catch (e) {
             console.warn(`Invalid JSON in module state for instance ${this._moduleInstance.getName()}:`, e);
-            this._serializedState = null;
-            return;
         }
 
         const validateSettings = this._validationFunctions.settings;
         if (validateSettings) {
-            // If possible, compilation should only be performed once - as soon as the schema is available - move to constructor?
-            const isSettingsValid = parsedSettings === undefined || validateSettings(parsedSettings);
-            if (!isSettingsValid) {
+            isSettingsStateValid = parsedSettings === undefined || validateSettings(parsedSettings);
+            if (!isSettingsStateValid) {
                 console.warn(`Validation failed for settings in ${this._moduleInstance.getName()}`, {
                     settingsErrors: validateSettings.errors,
                 });
-                throw new ModuleStateSerializationError(
-                    `Invalid settings state for module instance ${this._moduleInstance.getName()}`,
-                );
+                parsedSettings = undefined;
             }
         }
 
         const validateView = this._validationFunctions.view;
         if (validateView) {
-            // If possible, compilation should only be performed once - as soon as the schema is available - move to constructor?
-            const isViewValid = parsedView === undefined || validateView(parsedView);
-
-            if (!isViewValid) {
+            isViewStateValid = parsedView === undefined || validateView(parsedView);
+            if (!isViewStateValid) {
                 console.warn(`Validation failed for view in ${this._moduleInstance.getName()}`, {
                     viewErrors: validateView.errors,
                 });
-                throw new ModuleStateSerializationError(
-                    `Invalid view state for module instance ${this._moduleInstance.getName()}`,
-                );
+                parsedView = undefined;
             }
         }
 
@@ -227,6 +226,11 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
         } as TSerializedState;
 
         this.applyStateToAtoms(this._serializedState);
+
+        return {
+            settingsStateApplied: isSettingsStateValid,
+            viewStateApplied: isViewStateValid,
+        };
     }
 
     applyTemplateState(templateState: PartialSerializedModuleState<TSerializedState>): void {

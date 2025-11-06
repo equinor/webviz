@@ -29,7 +29,6 @@ import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataC
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
 
-
 export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
     OK,
@@ -43,6 +42,8 @@ export enum ModuleInstanceTopic {
     LIFECYCLE_STATE = "state",
     IMPORT_STATUS = "import-status",
     SERIALIZED_STATE = "serialized-state",
+    HAS_INVALID_PERSISTED_SETTINGS = "has-invalid-persisted-settings",
+    HAS_INVALID_PERSISTED_VIEW = "has-invalid-persisted-view",
 }
 
 export type ModuleInstanceTopicValueTypes = {
@@ -51,6 +52,8 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
     [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
     [ModuleInstanceTopic.SERIALIZED_STATE]: void;
+    [ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS]: boolean;
+    [ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW]: boolean;
 };
 
 export interface ModuleInstanceOptions<
@@ -104,6 +107,9 @@ export class ModuleInstance<
     private _serializer: ModuleInstanceSerializer<TSerializedStateSchema> | null = null;
     private _storedSerializedState: SerializedModuleInstanceState | null = null;
     private _storedTemplateState: PartialSerializedModuleState<TSerializedStateSchema> | null = null;
+
+    private _hasInvalidPersistedSettings: boolean = false;
+    private _hasInvalidPersistedView: boolean = false;
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateSchema>) {
         this._id = options.id;
@@ -167,7 +173,11 @@ export class ModuleInstance<
             this._id = this._storedSerializedState.id;
 
             if (this._storedSerializedState.serializedState && this._serializer) {
-                this._serializer.deserializeState(this._storedSerializedState.serializedState);
+                const result = this._serializer.deserializeState(this._storedSerializedState.serializedState);
+                if (result) {
+                    this.setInvalidPersistedSettingsFlag(!result.settingsStateApplied);
+                    this.setInvalidPersistedViewFlag(!result.viewStateApplied);
+                }
             }
 
             this._channelManager.deserializeState(
@@ -177,6 +187,29 @@ export class ModuleInstance<
 
             this._storedSerializedState = null;
         }
+    }
+
+    hasInvalidPersistedSettings(): boolean {
+        return this._hasInvalidPersistedSettings;
+    }
+
+    hasInvalidPersistedView(): boolean {
+        return this._hasInvalidPersistedView;
+    }
+
+    private setInvalidPersistedSettingsFlag(value: boolean): void {
+        this._hasInvalidPersistedSettings = value;
+        this.notifySubscribers(ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS);
+    }
+
+    private setInvalidPersistedViewFlag(value: boolean): void {
+        this._hasInvalidPersistedView = value;
+        this.notifySubscribers(ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW);
+    }
+
+    resetInvalidPersistedFlags(): void {
+        this.setInvalidPersistedSettingsFlag(false);
+        this.setInvalidPersistedViewFlag(false);
     }
 
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
@@ -408,6 +441,16 @@ export class ModuleInstance<
             if (topic === ModuleInstanceTopic.IMPORT_STATUS) {
                 return this.getImportState();
             }
+            if (topic === ModuleInstanceTopic.SERIALIZED_STATE) {
+                return;
+            }
+            if (topic === ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS) {
+                return this.hasInvalidPersistedSettings();
+            }
+            if (topic === ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW) {
+                return this.hasInvalidPersistedView();
+            }
+            throw `Unsupported topic '${topic}' in ModuleInstance snapshot getter.`;
         };
 
         return snapshotGetter;

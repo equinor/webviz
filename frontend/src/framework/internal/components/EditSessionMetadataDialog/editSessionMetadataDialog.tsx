@@ -112,7 +112,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         <Dialog
             open={props.open}
             onClose={handleCancel}
-            title="Edit session"
+            title="Edit session metadata"
             modal
             showCloseCross
             actions={

@@ -59,6 +59,17 @@ export const Header: React.FC<HeaderProps> = (props) => {
     );
     const devToolsVisible = useGuiValue(guiMessageBroker, GuiState.DevToolsVisible);
 
+    const persistedSettingsInvalid = useModuleInstanceTopicValue(
+        props.moduleInstance,
+        ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS,
+    );
+    const persistedViewInvalid = useModuleInstanceTopicValue(
+        props.moduleInstance,
+        ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW,
+    );
+
+    const invalidPersistedState = persistedSettingsInvalid || persistedViewInvalid;
+
     const handleMaximizeClick = React.useCallback(
         function handleMaximizeClick(e: React.PointerEvent<HTMLButtonElement>) {
             const currentLayout = dashboard.getLayout();
@@ -155,7 +166,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 {
                     "cursor-grabbing": props.isDragged,
                     "cursor-move": !props.isDragged && !isSnapshot,
-                    "bg-red-100": hasErrors,
+                    "bg-red-100": hasErrors || !invalidPersistedState,
                     "bg-slate-300": !hasErrors && props.isMinimized,
                     "bg-slate-100": !hasErrors && !props.isMinimized,
                 },
@@ -171,9 +182,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
             </div>
             <div className="grow flex items-center text-sm font-bold min-w-0 p-1.5">
-                <Tooltip title={title}>
-                    <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0">{title}</span>
-                </Tooltip>
+                <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0" title={title}>
+                    {title}
+                </span>
                 {devToolsVisible && (
                     <span
                         title={props.moduleInstance.getId()}

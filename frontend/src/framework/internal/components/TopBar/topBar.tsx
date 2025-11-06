@@ -143,7 +143,7 @@ function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
 
     return (
         <>
-            <TopBarButton onClick={handleEditTitleClick} title="Edit session">
+            <TopBarButton onClick={handleEditTitleClick} title="Edit session metadata">
                 <Edit fontSize="inherit" />
             </TopBarButton>
             <EditSessionMetadataDialog

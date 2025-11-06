@@ -403,7 +403,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
             const result = await ConfirmationService.confirm({
                 title: "Could not load session",
-                message: `Could not load session with ID ${sessionId}. ${errorExplanation}`,
+                message: `Could not load session with ID '${sessionId}'. ${errorExplanation}`,
                 actions: [
                     {
                         id: "cancel",
@@ -418,6 +418,9 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             if (result === "retry") {
                 // Retry loading the session
                 await this.openSession(sessionId);
+            }
+            if (result === "cancel") {
+                removeSessionIdFromUrl();
             }
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);

@@ -15,10 +15,11 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { CrashView } from "./crashView";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 type ViewContentProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -31,6 +32,10 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const moduleInstanceLifeCycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
         ModuleInstanceTopic.LIFECYCLE_STATE,
+    );
+    const moduleInstanceViewStateInvalid = useModuleInstanceTopicValue(
+        props.moduleInstance,
+        ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW,
     );
 
     const atomStore = workbenchSession!
@@ -93,6 +98,21 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const stateRelatedContent = makeStateRelatedContent();
     if (stateRelatedContent) {
         return <div className="h-full w-full flex flex-col justify-center items-center">{stateRelatedContent}</div>;
+    }
+
+    if (moduleInstanceViewStateInvalid) {
+        return (
+            <div className="flex flex-col gap-4 h-full w-full justify-center items-center">
+                <div className="text-red-600 m-2">
+                    The persisted view state for this module&apos;s view is invalid and could not be applied. It has
+                    most likely been outdated by a module update. You can reset the module to its default view to
+                    continue using it.
+                </div>
+                <Button onClick={() => props.moduleInstance.resetInvalidPersistedFlags()} variant="contained">
+                    Reset module
+                </Button>
+            </div>
+        );
     }
 
     if (moduleInstanceLifeCycleState === ModuleInstanceLifeCycleState.ERROR) {
