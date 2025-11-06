@@ -41,7 +41,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         ModuleInstanceTopic.LIFECYCLE_STATE,
     );
 
-    const moduleInstanceSettingsInvalid = useModuleInstanceTopicValue(
+    const moduleInstanceSettingsStateInvalid = useModuleInstanceTopicValue(
         props.moduleInstance,
         ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS,
     );
@@ -87,7 +87,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     }
 
     function makeContent() {
-        if (moduleInstanceSettingsInvalid) {
+        if (moduleInstanceSettingsStateInvalid) {
             return (
                 <div className="flex flex-col gap-4 h-full w-full justify-center items-center">
                     <div className="text-red-600 m-2">

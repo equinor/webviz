@@ -166,9 +166,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 {
                     "cursor-grabbing": props.isDragged,
                     "cursor-move": !props.isDragged && !isSnapshot,
-                    "bg-red-100": hasErrors || !invalidPersistedState,
-                    "bg-slate-300": !hasErrors && props.isMinimized,
-                    "bg-slate-100": !hasErrors && !props.isMinimized,
+                    "bg-red-100": hasErrors || invalidPersistedState,
+                    "bg-slate-300": !hasErrors && props.isMinimized && !invalidPersistedState,
+                    "bg-slate-100": !hasErrors && !props.isMinimized && !invalidPersistedState,
                 },
             )}
             onPointerDown={handlePointerDown}
