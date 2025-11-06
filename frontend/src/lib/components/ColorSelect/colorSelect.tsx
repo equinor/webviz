@@ -9,10 +9,12 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { DenseIconButton } from "../DenseIconButton";
 
 export type ColorSelectProps = {
+    id?: string;
     value: string;
     onChange: (value: string) => void;
     colors?: string[];
     dense?: boolean;
+    disabled?: boolean;
 };
 
 export function ColorSelect(props: ColorSelectProps): JSX.Element {
@@ -46,15 +48,21 @@ export function ColorSelect(props: ColorSelectProps): JSX.Element {
             return (
                 <>
                     {props.dense ? (
-                        <DenseIconButton onClick={handleButtonClick}>
+                        <DenseIconButton disabled={props.disabled} onClick={handleButtonClick}>
                             <ColorTile color={selectedColor} />
                         </DenseIconButton>
                     ) : (
-                        <Button endIcon={<ExpandMore fontSize="inherit" />} onClick={handleButtonClick}>
+                        <Button
+                            disabled={props.disabled}
+                            endIcon={<ExpandMore fontSize="inherit" />}
+                            onClick={handleButtonClick}
+                        >
                             <ColorTile color={selectedColor} />
                         </Button>
                     )}
                     <input
+                        id={props.id}
+                        disabled={props.disabled}
                         ref={inputRef}
                         type="color"
                         value={selectedColor}
@@ -71,7 +79,14 @@ export function ColorSelect(props: ColorSelectProps): JSX.Element {
             adornment: <ColorTile color={color} />,
         }));
 
-        return <Dropdown options={options} value={selectedColor} onChange={handleDropdownColorChange} />;
+        return (
+            <Dropdown
+                disabled={props.disabled}
+                options={options}
+                value={selectedColor}
+                onChange={handleDropdownColorChange}
+            />
+        );
     }
 
     return <div className="relative">{makeSelectComponent()}</div>;

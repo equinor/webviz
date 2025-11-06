@@ -106,7 +106,7 @@ export function makeCaseTableColumns(
                 render: (props) => (
                     <DateRangePicker
                         className="overflow-hidden border border-gray-300 rounded focus-within:border-indigo-500 webviz-eds-date-range-picker --compact"
-                        {...props}
+                        value={props.value ?? { from: null, to: null }}
                         onChange={props.onFilterChange}
                     />
                 ),
