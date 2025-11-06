@@ -11,6 +11,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -149,7 +150,12 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
                 <div className="p-1">This text has a tooltip with long delay</div>
             </Tooltip>
 
-            <Label text="Status message" wrapperClassName="pt-2">
+            <CollapsibleGroup
+                title="Status and Pending Wrapper Examples"
+                expanded={true}
+                hasError={statusMessage === "This is an error message"}
+                hasWarning={statusMessage === "This is a warning message"}
+            >
                 <div className="pt-2 flex flex-col gap-2">
                     <Dropdown
                         value={statusMessage ?? ""}
@@ -194,7 +200,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
                         </>
                     </Label>
                 </div>
-            </Label>
+            </CollapsibleGroup>
         </>
     );
 }
