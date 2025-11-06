@@ -90,7 +90,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         if (moduleInstanceSettingsStateInvalid) {
             return (
                 <div className="flex flex-col gap-4 h-full w-full justify-center items-center">
-                    <div className="text-red-600 m-2">
+                    <div className="text-red-600 m-2 text-center">
                         The persisted settings for this module&apos;s settings are invalid and could not be applied.
                         They have most likely been outdated by a module update. You can reset the module to its default
                         values to continue using it.

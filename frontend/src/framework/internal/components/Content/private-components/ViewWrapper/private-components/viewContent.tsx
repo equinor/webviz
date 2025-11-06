@@ -102,8 +102,8 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
 
     if (moduleInstanceViewStateInvalid) {
         return (
-            <div className="flex flex-col gap-4 h-full w-full justify-center items-center">
-                <div className="text-red-600 m-2">
+            <div className="flex flex-col gap-4 p-4 h-full w-full justify-center items-center">
+                <div className="text-red-600 m-2 text-center max-w-96">
                     The persisted view state for this module&apos;s view is invalid and could not be applied. It has
                     most likely been outdated by a module update. You can reset the module to its default view to
                     continue using it.
