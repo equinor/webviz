@@ -77,7 +77,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     private _id: string | null = null;
     private _isPersisted: boolean = false;
-    private _isSnapshot: boolean;
+    protected _isSnapshot: boolean;
     private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
     private _dashboards: Dashboard[] = [];
@@ -353,8 +353,8 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     setDashboards(dashboards: Dashboard[]): void {
+        this.assertIsNotSnapshot();
         this.clearDashboards();
-
         for (const dashboard of dashboards) {
             this.registerDashboard(dashboard);
         }
@@ -394,7 +394,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this.handleStateChange();
     }
 
-    makeDefaultDashboard(): void {
+    private makeDefaultDashboard(): void {
         const d = new Dashboard(this._atomStoreMaster);
         this.registerDashboard(d);
         this._activeDashboardId = d.getId();
@@ -435,5 +435,11 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         const session = new PrivateWorkbenchSession(queryClient);
         session.makeDefaultDashboard();
         return session;
+    }
+
+    private assertIsNotSnapshot(): asserts this is this & { _isSnapshot: false } {
+        if (this._isSnapshot) {
+            throw new Error("Operation not allowed on snapshot sessions");
+        }
     }
 }

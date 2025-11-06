@@ -675,8 +675,8 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             message:
                 "This session will be deleted. This action can not be reversed. Note that any snapshots made from this session will still be available",
             actions: [
-                { id: "cancel", label: "Cancel" },
-                { id: "delete", label: "Delete", color: "danger" },
+                { id: "cancel", label: "No, Cancel" },
+                { id: "delete", label: "Yes, delete", color: "danger" },
             ],
         });
 
@@ -708,8 +708,8 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             title: "Are you sure?",
             message: "This snapshot will be deleted. This action can not be reversed.",
             actions: [
-                { id: "cancel", label: "Cancel" },
-                { id: "delete", label: "Delete", color: "danger" },
+                { id: "cancel", label: "No, Cancel" },
+                { id: "delete", label: "Yes, delete", color: "danger" },
             ],
         });
 
@@ -755,16 +755,30 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._navigationObserver.beforeDestroy();
     }
 
-    clear(): void {
-        // this._workbenchSession.clear();
-    }
+    async applyTemplate(template: Template): Promise<boolean> {
+        if (!this._workbenchSession) {
+            await this.startNewSession();
+        } else {
+            const confirmationRequired =
+                this._workbenchSession.getDashboards().length > 0 &&
+                this._workbenchSession.getActiveDashboard().getModuleInstances().length > 0;
 
-    async makeSessionFromTemplate(template: Template): Promise<void> {
-        if (this._workbenchSession) {
-            this._workbenchSession.clear();
+            if (confirmationRequired) {
+                const result = await ConfirmationService.confirm({
+                    title: "Replace current dashboard with template?",
+                    message:
+                        "By applying this template, your current dashboard will be replaced and loose its state. Do you want to proceed?",
+                    actions: [
+                        { id: "cancel", label: "No, cancel" },
+                        { id: "delete", label: "Yes, proceed", color: "danger" },
+                    ],
+                });
+
+                if (result === "cancel") {
+                    return false;
+                }
+            }
         }
-
-        await this.startNewSession();
 
         if (!this._workbenchSession) {
             throw new Error("No active workbench session to apply the template to.");
@@ -772,7 +786,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         const dashboard = await Dashboard.fromTemplate(template, this._workbenchSession.getAtomStoreMaster());
         this._workbenchSession.setDashboards([dashboard]);
-
-        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+        return true;
     }
 }
