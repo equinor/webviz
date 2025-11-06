@@ -7,6 +7,7 @@ import {
     getRealizationSurfacesMetadataOptions,
     getSurfaceDataOptions,
 } from "@api";
+import { sortStringArray } from "@lib/utils/arrays";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -189,8 +190,7 @@ export class RealizationSurfaceProvider
                     ),
                 ),
             ];
-
-            return availableSurfaceNames;
+            return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
         });
 
         availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
