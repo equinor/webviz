@@ -19,20 +19,20 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
 
     // We only want to emit the changed value once we're done editing, to avoid re-renders as we type
     const [editingValue, setEditingValue] = React.useState<string | null>(null);
-    const activeValue = editingValue ?? props.tag.value;
+    const activeValue = editingValue ?? props.tag;
 
     // If focus moved to this tag, move the focus into it's input field.
     React.useEffect(() => {
         if (props.focused) {
             inputRef.current?.focus();
-            const cursorPos = props.focusMovementDirection === Direction.Backwards ? props.tag.value.length : 0;
+            const cursorPos = props.focusMovementDirection === Direction.Backwards ? props.tag.length : 0;
             inputRef.current?.setSelectionRange(cursorPos, cursorPos);
         }
-    }, [props.focusMovementDirection, props.focused, props.tag.value.length]);
+    }, [props.focusMovementDirection, props.focused, props.tag.length]);
 
     const validityInfo = React.useMemo<SelectionValidityInfo>(() => {
-        return computeTagValidityInfo(props.tag.value, props.realizationNumberLimits);
-    }, [props.tag.value, props.realizationNumberLimits]);
+        return computeTagValidityInfo(props.tag, props.realizationNumberLimits);
+    }, [props.tag, props.realizationNumberLimits]);
 
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
@@ -43,7 +43,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
     }
 
     function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
-        setEditingValue(props.tag.value);
+        setEditingValue(props.tag);
 
         e.stopPropagation();
 
@@ -62,7 +62,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
         if (editingValue === "") {
             props.onRemove?.();
         } else {
-            props.onChange?.({ ...props.tag, value: editingValue ?? "" });
+            props.onChange?.(editingValue ?? "");
             setEditingValue(null);
         }
     }
@@ -89,7 +89,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
         } else if (evt.key === Key.ArrowRight && target.selectionEnd === target.value.length && !isSelecting) {
             props.onMoveFocus?.(Direction.Forwards, evt.shiftKey);
             evt.preventDefault();
-        } else if (evt.key === Key.Backspace && props.tag.value === "") {
+        } else if (evt.key === Key.Backspace && props.tag === "") {
             props.onRemove?.();
             evt.preventDefault();
         }
@@ -133,7 +133,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
     return (
         <li
             className={resolveClassNames("flex items-center rounded-sm px-2 py-0.5 relative", {
-                "bg-blue-200": !props.focused,
+                "bg-blue-200": !props.focused || props.selected,
                 "bg-red-300": validityInfo.validity === SelectionValidity.InputError && !props.focused,
                 "bg-orange-300": validityInfo.validity === SelectionValidity.Invalid && !props.focused,
                 "outline outline-blue-600": props.focused || props.selected,
@@ -146,6 +146,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
                 ref={inputRef}
                 value={activeValue}
                 type="text"
+                disabled={props.selected}
                 className="bg-transparent outline-hidden"
                 style={{ width: getTextWidthWithFont(activeValue, "Equinor", 1.25) }}
                 onChange={handleChange}
@@ -158,7 +159,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
                 className={resolveClassNames(
                     "text-slate-800 hover:text-slate-600 text-sm cursor-pointer flex items-center",
                     {
-                        invisible: props.focused,
+                        invisible: props.focused && !props.selected,
                     },
                 )}
                 onClick={props.onRemove}

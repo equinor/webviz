@@ -4,7 +4,7 @@ from functools import wraps
 from typing import AsyncIterator, Iterator, Callable, Any
 
 from opentelemetry import trace
-from opentelemetry.trace import Span, Status, StatusCode
+from opentelemetry.trace import Span
 from opentelemetry.util.types import Attributes
 
 _tracer = trace.get_tracer("PrimaryBackendSpanInstrumentation")
@@ -18,7 +18,9 @@ async def start_otel_span_async(span_name: str, span_attributes: Attributes = No
     async with start_otel_span_async("span_name", {"key": "value"}) as span:
         my_value = await some_async_function()
     """
-    with _tracer.start_as_current_span(name=span_name, attributes=span_attributes) as span:
+    with _tracer.start_as_current_span(
+        name=span_name, record_exception=True, set_status_on_exception=True, attributes=span_attributes
+    ) as span:
         yield span
 
 
@@ -32,7 +34,9 @@ def start_otel_span(span_name: str, span_attributes: Attributes = None) -> Itera
         # Do something
         pass
     """
-    with _tracer.start_as_current_span(name=span_name, attributes=span_attributes) as span:
+    with _tracer.start_as_current_span(
+        name=span_name, record_exception=True, set_status_on_exception=True, attributes=span_attributes
+    ) as span:
         yield span
 
 
@@ -54,24 +58,14 @@ def otel_span_decorator(custom_span_name: str | None = None) -> Callable:
         @wraps(func)
         async def _wrapper_async(*args: Any, **kwargs: Any) -> Callable:
             span_name = custom_span_name or _get_full_function_name(func, args) + "()"
-            async with start_otel_span_async(span_name) as span:
-                try:
-                    return await func(*args, **kwargs)
-                except Exception as exc:
-                    span.record_exception(exc)
-                    span.set_status(Status(StatusCode.ERROR, str(exc)))
-                    raise
+            async with start_otel_span_async(span_name):
+                return await func(*args, **kwargs)
 
         @wraps(func)
         def _wrapper_sync(*args: Any, **kwargs: Any) -> Callable:
             span_name = custom_span_name or _get_full_function_name(func, args) + "()"
-            with _tracer.start_as_current_span(span_name) as span:
-                try:
-                    return func(*args, **kwargs)
-                except Exception as exc:
-                    span.record_exception(exc)
-                    span.set_status(Status(StatusCode.ERROR, str(exc)))
-                    raise
+            with _tracer.start_as_current_span(span_name):
+                return func(*args, **kwargs)
 
         if is_coroutine:
             return _wrapper_async

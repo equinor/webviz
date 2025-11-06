@@ -14,6 +14,7 @@ import type { ColorSet } from "@lib/utils/ColorSet";
 import type { AvailableValuesType } from "../interfacesAndTypes/utils";
 
 import type { IntersectionSettingValue } from "./implementations/IntersectionSetting";
+import type { PolygonVisualizationSpec } from "./implementations/PolygonVisualizationSetting";
 import type { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
 
 export enum SettingCategory {
@@ -24,6 +25,7 @@ export enum SettingCategory {
     // XYZ_NUMBER = "xyzNumber",
     XYZ_RANGE = "xyzRange",
     BOOLEAN = "boolean",
+    BOOLEAN_NUMBER = "booleanNumber",
     STATIC = "static",
     XYZ_VALUES_WITH_VISIBILITY = "rangesWithVisibility",
 }
@@ -44,6 +46,7 @@ export enum Setting {
     COLOR_SCALE = "colorScale",
     COLOR_SET = "colorSet",
     COLOR = "color",
+    CONTOURS = "contours",
     GRID_LAYER_RANGE = "gridLayerRange",
     GRID_LAYER_K = "gridLayerK",
     GRID_NAME = "gridName",
@@ -51,6 +54,7 @@ export enum Setting {
     OPACITY_PERCENT = "opacityPercent",
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
+    POLYGON_VISUALIZATION = "polygonVisualization",
     REALIZATION = "realization",
     STRAT_COLUMN = "stratColumn",
     REALIZATIONS = "realizations",
@@ -82,6 +86,7 @@ export const settingCategories = {
     [Setting.COLOR_SCALE]: SettingCategory.STATIC,
     [Setting.COLOR_SET]: SettingCategory.STATIC,
     [Setting.COLOR]: SettingCategory.STATIC,
+    [Setting.CONTOURS]: SettingCategory.BOOLEAN_NUMBER,
     [Setting.GRID_LAYER_RANGE]: SettingCategory.XYZ_RANGE,
     [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
     [Setting.GRID_NAME]: SettingCategory.SINGLE_SELECT,
@@ -89,6 +94,7 @@ export const settingCategories = {
     [Setting.OPACITY_PERCENT]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_SELECT,
+    [Setting.POLYGON_VISUALIZATION]: SettingCategory.STATIC,
     [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
     [Setting.REALIZATIONS]: SettingCategory.MULTI_SELECT,
     [Setting.SAMPLE_RESOLUTION_IN_METERS]: SettingCategory.NUMBER,
@@ -122,6 +128,7 @@ export type SettingTypes = {
     [Setting.COLOR_SCALE]: ColorScaleSpecification | null;
     [Setting.COLOR_SET]: ColorSet | null;
     [Setting.COLOR]: string | null;
+    [Setting.CONTOURS]: { enabled: boolean; value: number } | null;
     [Setting.GRID_LAYER_RANGE]: [[number, number], [number, number], [number, number]] | null;
     [Setting.GRID_LAYER_K]: number | null;
     [Setting.GRID_NAME]: string | null;
@@ -129,6 +136,7 @@ export type SettingTypes = {
     [Setting.OPACITY_PERCENT]: number | null;
     [Setting.POLYGONS_ATTRIBUTE]: string | null;
     [Setting.POLYGONS_NAME]: string | null;
+    [Setting.POLYGON_VISUALIZATION]: PolygonVisualizationSpec | null;
     [Setting.REALIZATION]: number | null;
     [Setting.REALIZATIONS]: number[] | null;
     [Setting.SAMPLE_RESOLUTION_IN_METERS]: number | null;
@@ -316,6 +324,28 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
         };
         return newValue;
     },
+    [SettingCategory.BOOLEAN_NUMBER]: <TSetting extends PossibleSettingsForCategory<SettingCategory.BOOLEAN_NUMBER>>(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
+        if (value === null) {
+            // Default: boolean false, number at min value or 0
+            const defaultNumber = availableValues ? availableValues[0] : 0;
+            return { enabled: false, value: defaultNumber } as SettingTypes[TSetting];
+        }
+
+        if (availableValues === null) {
+            // If no available values, return value as-is
+            return value;
+        }
+
+        const [min, max] = availableValues;
+
+        // Clamp the number value to the available range
+        const clampedNumber = Math.max(min, Math.min(max, value.value));
+
+        return { enabled: value.enabled, value: clampedNumber } as SettingTypes[TSetting];
+    },
     [SettingCategory.STATIC]: (value) => value,
     [SettingCategory.BOOLEAN]: (value) => value,
 };
@@ -379,6 +409,22 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
             value[2][0] <= zRange[1] &&
             value[2][1] >= zRange[0] &&
             value[2][1] <= zRange[1]
+        );
+    },
+    [SettingCategory.BOOLEAN_NUMBER]: (value, availableValues) => {
+        if (value === null) {
+            return false;
+        }
+        if (availableValues === null) {
+            // If no available values, just check type validity
+            return typeof value.enabled === "boolean" && typeof value.value === "number";
+        }
+        const [min, max] = availableValues;
+        return (
+            typeof value.enabled === "boolean" &&
+            typeof value.value === "number" &&
+            value.value >= min &&
+            value.value <= max
         );
     },
     [SettingCategory.STATIC]: () => true,

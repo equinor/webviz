@@ -16,7 +16,6 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
-import { showHistoricalAtom } from "@modules/SimulationTimeSeries/settings/atoms/baseAtoms";
 import type {
     EnsembleVectorObservationDataMap,
     VectorWithHistoricalData,
@@ -25,6 +24,7 @@ import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 import {
     resampleFrequencyAtom,
+    showHistoricalAtom,
     showObservationsAtom,
     vectorSpecificationsAtom,
     visualizationModeAtom,
@@ -329,6 +329,7 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
                 isFetching: results.some((result) => result.isFetching),
                 isError: results.some((result) => result.isError),
                 vectorsWithHistoricalData,
+                errors: results.filter((result) => result.isError).map((result) => result.error),
             };
         },
     };
@@ -405,6 +406,7 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
                 isFetching: results.some((result) => result.isFetching),
                 isError: results.some((result) => result.isError),
                 ensembleVectorObservationDataMap: combinedResult,
+                errors: results.filter((result) => result.isError).map((result) => result.error),
             };
         },
     };

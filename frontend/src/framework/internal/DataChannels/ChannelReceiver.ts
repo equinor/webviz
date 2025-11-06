@@ -1,4 +1,4 @@
-import type { KeyKind } from "@framework/DataChannelTypes";
+import type { KeyKind } from "@framework/types/dataChannnel";
 
 import type { Channel } from "./Channel";
 import { ChannelNotificationTopic } from "./Channel";
@@ -160,6 +160,7 @@ export class ChannelReceiver {
         this._channel?.unsubscribe(ChannelNotificationTopic.CONTENTS_ARRAY_CHANGE, this.handleContentsArrayChange);
         this._channel = null;
         this._contentIdStrings = [];
+        this.notifySubscribers(ChannelReceiverNotificationTopic.CHANNEL_CHANGE);
     }
 
     private handleContentsDataArrayChange(): void {

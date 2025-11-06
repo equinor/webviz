@@ -12,23 +12,25 @@ class EnsembleIdent(BaseModel):
     ensembleName: str
 
 
+class EnsembleInfo(BaseModel):
+    name: str
+    realizationCount: int
+    standardResults: Sequence[str]
+
+
 class CaseInfo(BaseModel):
     uuid: str
     name: str
     status: str
     user: str
     updatedAtUtcMs: int
+    description: str
+    ensembles: Sequence[EnsembleInfo]
 
 
 class EnsembleTimestamps(BaseModel):
     caseUpdatedAtUtcMs: int
     dataUpdatedAtUtcMs: int
-
-
-class EnsembleInfo(BaseModel):
-    name: str
-    realizationCount: int
-    timestamps: EnsembleTimestamps
 
 
 class EnsembleDetails(BaseModel):
@@ -38,4 +40,4 @@ class EnsembleDetails(BaseModel):
     caseUuid: str
     realizations: Sequence[int]
     stratigraphicColumnIdentifier: str
-    timestamps: EnsembleTimestamps
+    standardResults: Sequence[str]

@@ -1,3 +1,4 @@
+import { BooleanNumberSetting } from "../implementations/BooleanNumberSetting";
 import { BooleanSetting } from "../implementations/BooleanSetting";
 import { ColorScaleSetting } from "../implementations/ColorScaleSetting";
 import { ColorSetSetting } from "../implementations/ColorSetSetting";
@@ -11,6 +12,7 @@ import { Direction as GridLayerDirection, GridLayerSetting } from "../implementa
 import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { LogCurveSetting } from "../implementations/LogCurveSetting";
+import { PolygonVisualizationSetting } from "../implementations/PolygonVisualizationSetting";
 import { SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
@@ -52,7 +54,9 @@ SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SCALE, "Color Scale", ColorScaleSetting);
 SettingRegistry.registerSetting(Setting.COLOR, "Color", SingleColorSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SET, "Color Set", ColorSetSetting);
-
+SettingRegistry.registerSetting(Setting.CONTOURS, "Contours", BooleanNumberSetting, {
+    customConstructorParameters: [{ min: 10, max: 200 }],
+});
 SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", GridLayerSetting, {
     customConstructorParameters: [GridLayerDirection.K],
 });
@@ -64,6 +68,7 @@ SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity [%]", Sl
 });
 SettingRegistry.registerSetting(Setting.POLYGONS_ATTRIBUTE, "Polygons Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.POLYGONS_NAME, "Polygons Name", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.POLYGON_VISUALIZATION, "Polygon Visualization", PolygonVisualizationSetting);
 SettingRegistry.registerSetting(Setting.REALIZATION, "Realization", DropdownNumberSetting);
 SettingRegistry.registerSetting(Setting.REALIZATIONS, "Realizations", SelectNumberSetting);
 SettingRegistry.registerSetting(

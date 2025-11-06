@@ -4,3 +4,7 @@ export enum PlotType {
     Scatter = "scatter",
     ScatterWithColorMapping = "scatterWithColor",
 }
+export enum BarSortBy {
+    Value = "value",
+    Key = "key",
+}

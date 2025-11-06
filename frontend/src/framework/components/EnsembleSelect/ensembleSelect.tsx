@@ -5,9 +5,11 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
-import { ColorTile } from "@lib/components/ColorTile";
+import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import type { SelectOption, SelectProps } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
+
+import { EnsembleColorTile } from "../EnsembleColorTile";
 
 export type EnsembleSelectProps = (
     | {
@@ -24,11 +26,32 @@ export type EnsembleSelectProps = (
           value: RegularEnsembleIdent[];
           onChange: (ensembleIdentArray: RegularEnsembleIdent[]) => void;
       }
-) &
-    Omit<SelectProps<string>, "options" | "value" | "onChange">;
+) & { ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction } & Omit<
+        SelectProps<string>,
+        "options" | "value" | "onChange"
+    >;
 
 export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
-    const { onChange, ensembles, value, allowDeltaEnsembles, multiple, ...rest } = props;
+    const { onChange, ensembles, value, allowDeltaEnsembles, multiple, ensembleRealizationFilterFunction, ...rest } =
+        props;
+
+    const selectedArray = React.useMemo<string[]>(() => {
+        return value.map((ident) => ident.toString());
+    }, [value]);
+
+    const optionsArray = React.useMemo<SelectOption[]>(() => {
+        return ensembles.map((ens) => ({
+            value: ens.getIdent().toString(),
+            label: ens.getDisplayName(),
+            adornment: (
+                <EnsembleColorTile
+                    ensemble={ens}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    wrapperClassName="w-6 h-6"
+                />
+            ),
+        }));
+    }, [ensembles, ensembleRealizationFilterFunction]);
 
     const handleSelectionChange = React.useCallback(
         function handleSelectionChanged(selectedEnsembleIdentStringArray: string[]) {
@@ -57,32 +80,13 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
         [allowDeltaEnsembles, ensembles, onChange],
     );
 
-    const optionsArray: SelectOption[] = [];
-    for (const ens of ensembles) {
-        optionsArray.push({
-            value: ens.getIdent().toString(),
-            label: ens.getDisplayName(),
-            adornment: (
-                <span className="w-5">
-                    <ColorTile color={ens.getColor()} />
-                </span>
-            ),
-        });
-    }
-
-    const selectedArray: string[] = [];
-    for (const ident of value) {
-        selectedArray.push(ident.toString());
-    }
-
-    const isMultiple = multiple ?? true;
-
     return (
         <Select
             options={optionsArray}
             value={selectedArray}
+            optionHeight={30}
             onChange={handleSelectionChange}
-            multiple={isMultiple}
+            multiple={multiple ?? true}
             {...rest}
         />
     );
