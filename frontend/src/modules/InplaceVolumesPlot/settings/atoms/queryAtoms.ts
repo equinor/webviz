@@ -13,6 +13,7 @@ export type TableDefinitionsQueryResult = {
         tableDefinitions: InplaceVolumesTableDefinition_api[];
     }[];
     isLoading: boolean;
+    errors: Error[];
 };
 
 export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
@@ -40,10 +41,10 @@ export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
                     tableDefinitions: result.data ?? [],
                 }),
             );
-            const someLoading = results.some((result) => result.isLoading);
             return {
                 data: tableDefinitionsPerEnsembleIdent,
-                isLoading: someLoading,
+                isLoading: results.some((result) => result.isLoading),
+                errors: results.filter((result) => result.isError).map((result) => result.error!),
             };
         },
     };

@@ -4,6 +4,8 @@ import { CircularProgress } from "@mui/material";
 import { useAtomValue } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
+import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { InterfaceTypes } from "../interfaces";
 
@@ -11,12 +13,15 @@ import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { ProviderVisualizationWrapper } from "./components/ProviderVisualizationWrapper";
 
 export function View(props: ModuleViewProps<InterfaceTypes>) {
+    const statusWriter = useViewStatusWriter(props.viewContext);
     const providerManager = props.viewContext.useSettingsToViewInterfaceValue("providerManager");
     const selectedWellboreHeader = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
     const viewerHorizontal = props.viewContext.useSettingsToViewInterfaceValue("viewerHorizontal");
     const padDataWithEmptyRows = props.viewContext.useSettingsToViewInterfaceValue("padDataWithEmptyRows");
 
     const wellboreTrajectoryDataQuery = useAtomValue(wellboreTrajectoryQueryAtom);
+
+    usePropagateQueryErrorToStatusWriter(wellboreTrajectoryDataQuery, statusWriter);
 
     React.useEffect(
         function setModuleName() {
