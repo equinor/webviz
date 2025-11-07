@@ -1,13 +1,14 @@
 [tool.poetry]
 name = "repo-tools"
 version = "0.0.0"
-description = "Shared tooling only"
+description = "Shared config/tooling only"
 package-mode = false
 requires-poetry = ">=2.1"
 
 [build-system]
 requires = ["poetry-core>=1.9.0"]
 build-backend = "poetry.core.masonry.api"
+
 
 [tool.black]
 line-length = 120
@@ -16,6 +17,7 @@ line-length = 120
 [tool.mypy]
 python_version = "3.13"
 warn_unused_configs = true
+disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = ["fmu.sumo.*", "sumo.wrapper.*", "pandas", "requests_toolbelt.*", "msal"]
@@ -24,13 +26,6 @@ follow_untyped_imports = true
 [[tool.mypy.overrides]]
 module = ["xtgeo.*"]
 ignore_missing_imports = true
-
-
-# We would like to have a centralized pylint config here, but currently that doesn't seem to work.
-# It seems that pylint does not look for pyproject.toml files further up in the directory structure if
-# there is a pyproject.toml in the current working directory.
-#[tool.pylint]
-# ...
 
 
 [tool.pylint]

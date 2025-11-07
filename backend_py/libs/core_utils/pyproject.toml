@@ -20,13 +20,3 @@ mypy = "1.15.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.pylint]
-disable = [
-    "missing-docstring",
-    "line-too-long",
-    "logging-fstring-interpolation",
-    "duplicate-code",
-    "too-many-positional-arguments",
-]
-max-args = 9
