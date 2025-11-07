@@ -5,6 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_PY_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "$BACKEND_PY_DIR"
 
+echo "Running using python interpreter at:"
+which python
+
 status=0
 for path in \
     libs/core_utils/src/webviz_core_utils \
@@ -14,7 +17,7 @@ for path in \
 do
     echo
     echo "Running mypy on: $path"
-    poetry run mypy "$path" || status=$?
+    python -m mypy "$path" || status=$?
 done
 
 exit "$status"
