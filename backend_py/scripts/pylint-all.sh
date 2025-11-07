@@ -13,7 +13,8 @@ for path in \
     libs/core_utils/src/webviz_core_utils \
     libs/server_schemas/src/webviz_server_schemas \
     libs/services/src/webviz_services \
-    primary/primary
+    primary/primary \
+    primary/tests
 do
     echo
     echo "Running pylint on: $path"

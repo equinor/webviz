@@ -105,13 +105,13 @@ jobs:
           poetry install --with dev
 
       - name: 🕵️ Check code style & linting
-        working-directory: ./backend_py/primary
+        working-directory: ./backend_py
         run: |
           set -x
-          black --check primary/ tests/
-          pylint primary/ tests/
-          bandit --recursive primary/
-          mypy primary/
+          black --check .
+          scripts/pylint-all.sh
+          scripts/mypy-all.sh
+          bandit --recursive primary/ libs/ --exclude tests
 
       - name: 🤖 Run tests
         working-directory: ./backend_py/primary
