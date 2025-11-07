@@ -255,9 +255,6 @@ export class ModuleInstance<
     }
 
     handleStateChange(): void {
-        if (!this._serializer) {
-            return;
-        }
         this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
     }
 
