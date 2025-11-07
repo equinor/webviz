@@ -112,7 +112,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                 <NavBarButton
                     icon={<History fontSize="small" className="size-5 mr-2" />}
                     active={drawerContent === RightDrawerContent.ModuleInstanceLog}
-                    tooltip="Open module history"
+                    tooltip="Open module log"
                     onClick={handleModuleInstanceLogClick}
                 />
                 <NavBarDivider />

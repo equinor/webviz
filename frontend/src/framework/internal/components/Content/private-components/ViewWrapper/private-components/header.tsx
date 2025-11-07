@@ -164,14 +164,11 @@ export const Header: React.FC<HeaderProps> = (props) => {
             className={resolveClassNames(
                 "flex items-center gap-0.5 px-1 select-none shadow-sm relative touch-none text-lg",
                 {
-                    "cursor-grabbing": props.isDragged,
-                    "cursor-move": !props.isDragged && !isSnapshot,
                     "bg-red-100": hasErrors || invalidPersistedState,
                     "bg-slate-300": !hasErrors && props.isMinimized && !invalidPersistedState,
                     "bg-slate-100": !hasErrors && !props.isMinimized && !invalidPersistedState,
                 },
             )}
-            onPointerDown={handlePointerDown}
             onDoubleClick={handleDoubleClick}
         >
             <div
@@ -181,7 +178,13 @@ export const Header: React.FC<HeaderProps> = (props) => {
             >
                 <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
             </div>
-            <div className="grow flex items-center text-sm font-bold min-w-0 p-1.5">
+            <div
+                className={resolveClassNames("grow flex items-center text-sm font-bold min-w-0 p-1.5", {
+                    "cursor-grabbing": props.isDragged,
+                    "cursor-move": !props.isDragged && !isSnapshot,
+                })}
+                onPointerDown={handlePointerDown}
+            >
                 <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0" title={title}>
                     {title}
                 </span>

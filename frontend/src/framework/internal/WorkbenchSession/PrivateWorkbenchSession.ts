@@ -219,6 +219,8 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._isPersisted = this._id !== null;
         this._activeDashboardId = contentState.activeDashboardId;
 
+        this.clearDashboards();
+
         for (const dashboard of contentState.dashboards) {
             const newDashboard = new Dashboard(this._atomStoreMaster);
             this.registerDashboard(newDashboard);
@@ -346,9 +348,17 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this.handleStateChange();
     }
 
+    private unregisterDashboard(dashboard: Dashboard): void {
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
+        dashboard.beforeUnload();
+        this._dashboards = this._dashboards.filter((d) => d.getId() !== dashboard.getId());
+    }
+
     private clearDashboards() {
-        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
-        this._dashboards = [];
+        for (const dashboard of this._dashboards) {
+            this.unregisterDashboard(dashboard);
+        }
+
         this.handleStateChange();
     }
 

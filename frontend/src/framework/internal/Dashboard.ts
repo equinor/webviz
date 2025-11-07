@@ -316,6 +316,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return dashboard;
     }
 
+    beforeUnload(): void {
+        this.clearLayout();
+    }
+
     static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
         dashboard._id = v4();
