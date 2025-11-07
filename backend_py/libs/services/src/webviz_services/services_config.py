@@ -19,6 +19,7 @@ def init_services_config(config: ServicesConfig) -> None:
     """
     One-time initialization of configuration for the services package.
     """
+    # pylint: disable=global-statement
     global _global_config
     if _global_config is not None:
         return
