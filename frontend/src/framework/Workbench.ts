@@ -624,7 +624,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
                     "You have unsaved changes in your current session. By refreshing, you will lose these changes. Do you want to proceed?",
                 actions: [
                     { id: "cancel", label: "Cancel" },
-                    { id: "discard", label: "Discard & Refresh", color: "danger" },
+                    { id: "discard", label: "Discard changes and Refresh", color: "danger" },
                 ],
             });
 

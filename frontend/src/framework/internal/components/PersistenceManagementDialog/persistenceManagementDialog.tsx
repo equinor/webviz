@@ -10,13 +10,13 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { SessionManagementContent } from "./sessionManagementContent";
 import { SnapshotManagementContent } from "./snapshotManagementContent";
 
-export type SessionOverviewDialogProps = {
+export type PersistenceManagementDialogProps = {
     workbench: Workbench;
 };
 
 export type ModalContentMode = "sessions" | "snapshots";
 
-export function PersistenceManagementDialog(props: SessionOverviewDialogProps): React.ReactNode {
+export function PersistenceManagementDialog(props: PersistenceManagementDialogProps): React.ReactNode {
     const [isOpen, setIsOpen] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogOpen,
@@ -27,6 +27,8 @@ export function PersistenceManagementDialog(props: SessionOverviewDialogProps): 
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogMode,
     );
+
+    const isDialogOpen = isOpen && !hasActiveSession;
 
     return (
         <Dialog
@@ -56,14 +58,24 @@ export function PersistenceManagementDialog(props: SessionOverviewDialogProps): 
                 </div>
             }
             modal
-            open={isOpen && !hasActiveSession}
+            open={isDialogOpen}
             onClose={() => setIsOpen(false)}
             width={1500}
             showCloseCross
             height={700}
         >
-            {contentMode === "sessions" && <SessionManagementContent workbench={props.workbench} />}
-            {contentMode === "snapshots" && <SnapshotManagementContent workbench={props.workbench} />}
+            {contentMode === "sessions" && (
+                <SessionManagementContent
+                    workbench={props.workbench}
+                    active={isDialogOpen && contentMode === "sessions"}
+                />
+            )}
+            {contentMode === "snapshots" && (
+                <SnapshotManagementContent
+                    workbench={props.workbench}
+                    active={isDialogOpen && contentMode === "snapshots"}
+                />
+            )}
         </Dialog>
     );
 }

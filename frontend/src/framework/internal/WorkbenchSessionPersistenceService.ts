@@ -94,7 +94,7 @@ export class WorkbenchSessionPersistenceService
         }
         this._fetchingInterval = setInterval(() => {
             this.repeatedlyFetchSessionFromBackend();
-        }, 10000); // Fetch every 10 seconds
+        }, 5000); // Fetch every 10 seconds
     }
 
     async repeatedlyFetchSessionFromBackend() {

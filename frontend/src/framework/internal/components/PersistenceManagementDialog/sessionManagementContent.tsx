@@ -27,7 +27,6 @@ import { SortDirection as TableSortDirection } from "@lib/components/Table/types
 import { Tooltip } from "@lib/components/Tooltip";
 import { formatDate } from "@lib/utils/dates";
 
-
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 
 import { edsRangeChoiceToFilterRange } from "./_utils";
@@ -114,7 +113,10 @@ function tableSortDirToApiSortDir(sort: TableSortDirection): SortDirection_api {
     return sort as unknown as SortDirection_api;
 }
 
-function useInfiniteSessionMetadataQuery(querySortParams: Options<GetSessionsMetadataData_api>["query"]) {
+function useInfiniteSessionMetadataQuery(
+    querySortParams: Options<GetSessionsMetadataData_api>["query"],
+    enabled?: boolean,
+) {
     // ! We need to manually write out the query because hey-api generates keys in a way that messes with Tanstack's
     // ! ability to set query data (which we use after mutating metadata).
     // ! You'd think this would work, but if I try this; the data never loads, because it tries to get the query
@@ -180,11 +182,13 @@ function useInfiniteSessionMetadataQuery(querySortParams: Options<GetSessionsMet
 
             return data;
         },
+        enabled,
     });
 }
 
 export type SessionOverviewContentProps = {
     workbench: Workbench;
+    active: boolean;
 };
 
 export function SessionManagementContent(props: SessionOverviewContentProps): React.ReactNode {
@@ -213,7 +217,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         };
     }, [tableFilter, tableSortState]);
 
-    const sessionsQuery = useInfiniteSessionMetadataQuery(querySortParams);
+    const sessionsQuery = useInfiniteSessionMetadataQuery(querySortParams, props.active);
 
     const tableData = React.useMemo(() => {
         if (!sessionsQuery.data) return [];

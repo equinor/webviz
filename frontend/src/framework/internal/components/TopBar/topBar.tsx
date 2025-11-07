@@ -354,7 +354,6 @@ function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef
                     "text-cyan-600": active,
                     "!text-slate-800": props.variant === "text" || props.variant === undefined,
                 })}
-                title={title}
                 onClick={onClick}
                 disabled={disabled}
             >

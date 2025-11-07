@@ -2,10 +2,9 @@ import React from "react";
 
 import { DateRangePicker } from "@equinor/eds-core-react";
 import type { Options } from "@hey-api/client-axios";
-import { Close, Delete, FileOpen, Search } from "@mui/icons-material";
+import { Close, ContentCopy, Delete, FileOpen, Search } from "@mui/icons-material";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { omit } from "lodash";
-import { toast } from "react-toastify";
 
 import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
@@ -22,7 +21,6 @@ import { SortDirection as TableSortDirection } from "@lib/components/Table/types
 import { Tooltip } from "@lib/components/Tooltip";
 import { formatDate } from "@lib/utils/dates";
 
-
 import { UserAvatar } from "../UserAvatar";
 
 import { edsRangeChoiceToFilterRange, type EdsFilterRange, type FilterRange } from "./_utils";
@@ -34,6 +32,7 @@ import {
     TABLE_HEIGHT,
     USE_ALTERNATING_COLUMN_COLORS,
 } from "./constants";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -104,24 +103,53 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         // TODO: This too could be a "virtual" column
         _type: "data",
         columnId: "snapshotId",
-        label: "Url",
+        label: "URL",
         sortable: false,
         filter: false,
         sizeInPercent: 12,
-        renderData(snapshotId, context) {
-            const style = makeRowStyle(context);
+        renderData: function SnapshotUrlCell(snapshotId, context) {
+            const [copied, setCopied] = React.useState(false);
             const url = buildSnapshotUrl(snapshotId);
+
+            function handleCopyClick(event: React.MouseEvent) {
+                event.stopPropagation();
+
+                if (copied) {
+                    return;
+                }
+
+                navigator.clipboard.writeText(`${url}`);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
+
+            function handleMouseLeave() {
+                setCopied(false);
+            }
+
+            const style = makeRowStyle(context);
             return (
-                <a
-                    className="px-1 inline-block font-mono bg-gray-100 rounded border text-blue-700 border-gray-200"
-                    href={url}
-                    style={style}
-                    onClick={(evt) => {
-                        evt.preventDefault();
-                        navigator.clipboard.writeText(url);
-                        toast.info("Url copied");
-                    }}
-                >{`/${snapshotId}`}</a>
+                <div className="group relative flex items-center min-w-0" title={url} onMouseLeave={handleMouseLeave}>
+                    {/* Text */}
+                    <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
+
+                    {/* Copy (or Done) button, hidden until hover */}
+                    <button
+                        className={resolveClassNames(
+                            `absolute right-1 p-1 px-2 h-6 rounded-full
+                                    transition-opacity duration-200`,
+                            {
+                                "hover:text-slate-600 group-hover:bg-slate-100 active:bg-slate-400 text-slate-400 opacity-0 group-hover:opacity-100":
+                                    !copied,
+                            },
+                            { "bg-green-800 text-white": copied },
+                        )}
+                        title={copied ? "Copied!" : "Copy url to clipboard"}
+                        onClick={handleCopyClick}
+                    >
+                        {!copied ? <ContentCopy fontSize="inherit" /> : "Copied!"}
+                    </button>
+                </div>
             );
         },
     },
@@ -210,6 +238,7 @@ export function flattenSnapshotAccessLogEntry(logEntry: SnapshotAccessLog_api): 
 
 export type SnapshotOverviewContentProps = {
     workbench: Workbench;
+    active: boolean;
 };
 
 export function SnapshotManagementContent(props: SnapshotOverviewContentProps): React.ReactNode {
@@ -248,6 +277,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         getNextPageParam(lastPage) {
             return lastPage.pageToken;
         },
+        enabled: props.active,
     });
 
     function onFilterRangeChange(newRange: null | EdsFilterRange) {
