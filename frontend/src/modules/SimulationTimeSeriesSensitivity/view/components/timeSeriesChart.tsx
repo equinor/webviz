@@ -76,8 +76,23 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
         height: props.height,
         xaxis: { type: "date" },
         title: { text: props.title },
-        legend: { orientation: "h", valign: "bottom" },
-        margin: { t: 50, b: 100, r: 0 },
+        legend: {
+            orientation: "h",
+            valign: "bottom",
+            // At 0, the legend overlaps with the axis text. This value should
+            // generally avoid the text, but might be off for some screen sizes
+            y: -0.06,
+            x: 1,
+            xanchor: "right",
+            yanchor: "top",
+        },
+        margin: {
+            t: 50,
+            b: 40,
+            l: 60,
+            r: 30,
+        },
+
         shapes: [],
         annotations: [],
         uirevision: props.uirevision,
@@ -121,7 +136,6 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
         <Plot
             data={props.traceDataArr}
             layout={layout}
-            config={{ displayModeBar: false, responsive: true }}
             onClick={handleClick}
             onHover={handleHover}
             onUnhover={handleUnHover}

@@ -2,16 +2,17 @@ import React from "react";
 
 import { useAtom } from "jotai";
 
-import { KeyKind } from "@framework/DataChannelTypes";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
+import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 
 import type { Interfaces } from "../interfaces";
@@ -24,7 +25,6 @@ import {
     showLabelsAtom,
     useFixedColorRangeAtom,
 } from "./atoms/baseAtoms";
-import { ParametersSelector } from "./components/parameterSelector";
 
 const plotTypesOptions = [
     {

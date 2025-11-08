@@ -40,7 +40,7 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
         <tr
             className={resolveClassNames("group/tr border-b-2 last:border-b-0", {
                 "hover:bg-blue-100": !props.selected && isLoaded,
-                "bg-blue-300 text-white hover:bg-blue-200": props.selected && isLoaded,
+                "bg-blue-600 hover:bg-blue-700 text-white": props.selected && isLoaded,
             })}
             onMouseDown={handleMouseDown}
             onClick={(evt) => isLoaded && props.onClick(row, evt)}
@@ -63,17 +63,19 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                     );
 
                 const dataValue = row[cellDef.columnId];
-                const style = cellDef.style?.(dataValue, row);
-                const formattedData = cellDef?.format?.(dataValue, row);
+                const style = cellDef.style?.(dataValue, { entry: row, selected: props.selected });
+                const formattedData = cellDef?.format?.(dataValue, { entry: row, selected: props.selected });
+
+                const cellData = formattedData ?? dataValue;
 
                 return (
                     <td
                         key={String(cellDef.columnId)}
                         className=" border-slate-200 p-1 whitespace-nowrap truncate"
-                        title={formattedData}
+                        title={cellDef.showTooltip ? cellData : undefined}
                         style={{ height: props.height, ...style }}
                     >
-                        {cellDef.render?.(dataValue, row) ?? formattedData ?? dataValue}
+                        {cellDef.render?.(dataValue, { entry: row, selected: props.selected }) ?? cellData}
                     </td>
                 );
             })}

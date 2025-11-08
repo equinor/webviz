@@ -21,8 +21,36 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         copiedToClipboard: false,
     };
 
+    private _boundHandleWindowError: (event: ErrorEvent) => void;
+    private _boundHandleUnhandledRejection: (event: PromiseRejectionEvent) => void;
+
     static getDerivedStateFromError(err: Error): State {
         return { error: err, copiedToClipboard: false };
+    }
+
+    constructor(props: Props) {
+        super(props);
+
+        this._boundHandleWindowError = this.handleWindowError.bind(this);
+        this._boundHandleUnhandledRejection = this.handleUnhandledRejection.bind(this);
+    }
+
+    private handleWindowError(event: ErrorEvent) {
+        this.setState({ error: event.error });
+    }
+
+    private handleUnhandledRejection(event: PromiseRejectionEvent) {
+        this.setState({ error: event.reason });
+    }
+
+    componentDidMount() {
+        window.addEventListener("error", this._boundHandleWindowError);
+        window.addEventListener("unhandledrejection", this._boundHandleUnhandledRejection);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener("error", this._boundHandleWindowError);
+        window.removeEventListener("unhandledrejection", this._boundHandleUnhandledRejection);
     }
 
     render() {

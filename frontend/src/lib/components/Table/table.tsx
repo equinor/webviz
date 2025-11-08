@@ -225,12 +225,13 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
 
                 const filterFunc = dataDefinition.filter ? dataDefinition.filter : defaultDataFilterPredicate;
 
-                if (!filterFunc(filterValue, dataValue, dataDefinition, row)) return false;
+                const context = { entry: row as T, selected: selectedRows.includes(row._key) };
+                if (!filterFunc(filterValue, dataValue, dataDefinition, context)) return false;
             }
 
             return true;
         });
-    }, [props.controlledCollation, rowsWithKey, tableFilterState, colDataDefLookup]);
+    }, [props.controlledCollation, rowsWithKey, selectedRows, tableFilterState, colDataDefLookup]);
 
     // After filtering, sort remaining data according to tableSortState
     const sortedRows = React.useMemo(() => {
