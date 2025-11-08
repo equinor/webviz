@@ -115,7 +115,7 @@ jobs:
 
           # Then the dependencies for primary
           cd primary
-          poetry install --with dev
+          poetry install
 
       - name: 🕵️ Check code style & linting
         working-directory: ./backend_py
