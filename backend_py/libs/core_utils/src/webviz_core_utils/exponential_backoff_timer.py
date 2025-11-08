@@ -66,10 +66,10 @@ class ExponentialBackoffTimer:
             delay_s = raw_delay_s
         elif self._jitter == "full":
             # Full jitter
-            delay_s = random.uniform(0, raw_delay_s) # nosec bandit B311
+            delay_s = random.uniform(0, raw_delay_s)  # nosec bandit B311
         else:
             # float -> additive jitter
-            delay_s = raw_delay_s + random.uniform(0, self._jitter) # nosec bandit B311
+            delay_s = raw_delay_s + random.uniform(0, self._jitter)  # nosec bandit B311
 
         # Clamp the delay (on the low side, just use half the initial delay)
         delay_s = max(self._initial_delay_s / 2, min(delay_s, self._max_delay_s))
