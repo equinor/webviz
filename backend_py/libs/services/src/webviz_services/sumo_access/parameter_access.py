@@ -4,8 +4,9 @@ from typing import List, Optional
 import pandas as pd
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-from webviz_core_utils.perf_metrics import PerfMetrics
+from fmu.sumo.explorer.objects import Table
 
+from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_services.service_exceptions import InvalidDataError, ServiceRequestError, Service
 
 from .sumo_client_factory import create_sumo_client
@@ -47,6 +48,9 @@ class ParameterAccess:
                 Service.SUMO,
             ) from exp
         perf_metrics.record_lap("aggregate")
+
+        if not isinstance(parameter_agg, Table):
+            raise InvalidDataError("Did not get expected object type of Table for parameter aggregation", Service.SUMO)
 
         parameter_table = await parameter_agg.to_arrow_async()
         perf_metrics.record_lap("to_arrow")

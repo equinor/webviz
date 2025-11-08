@@ -4,8 +4,8 @@ import logging
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
-from webviz_core_utils.perf_metrics import PerfMetrics
 
+from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_services.service_exceptions import (
     InvalidDataError,
     InvalidParameterError,
@@ -109,7 +109,12 @@ class ArrowTableLoader:
                 )
 
             # Does the aggregation and gets the blob (also writes the resulting aggregation back into Sumo)
-            sumo_table_obj = await sc_agg_input_tables.aggregate_async(columns=[column_name], operation="collection")
+            new_agg_table_obj = await sc_agg_input_tables.aggregate_async(columns=[column_name], operation="collection")
+            if not isinstance(new_agg_table_obj, Table):
+                raise InvalidDataError(
+                    f"Failed to get aggregated object for: {column_name=}, {self._make_req_info_str()}", Service.SUMO
+                )
+            sumo_table_obj = new_agg_table_obj
             perf_metrics.record_lap("aggregate")
 
         arrow_table: pa.Table = await sumo_table_obj.to_arrow_async()

@@ -8,6 +8,7 @@ from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import CPGrid
 
 from webviz_core_utils.timestamp_utils import iso_str_to_date_str
+from webviz_services.service_exceptions import InvalidDataError, Service
 from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
@@ -97,7 +98,9 @@ async def _get_grid_model_meta_async(sumo_grid3d_search_context: SearchContext, 
     Older metadata using e.g. name or tagname for the grid geometry relationship are not supported.
     """
     # Get the grid object from the search context
-    sumo_grid_object: CPGrid = await sumo_grid3d_search_context.get_object_async(grid_uuid)
+    sumo_grid_object = await sumo_grid3d_search_context.get_object_async(grid_uuid)
+    if not isinstance(sumo_grid_object, CPGrid):
+        raise InvalidDataError(f"Did not get expected CPGrid object type for {grid_uuid=}", Service.SUMO)
 
     grid_metadata = sumo_grid_object.metadata
 
@@ -123,7 +126,7 @@ async def _get_grid_model_meta_async(sumo_grid3d_search_context: SearchContext, 
         k_count=grid_metadata["data"]["spec"]["nlay"],
         subgrids=subgrids,
     )
-    property_info_arr = await get_grid_properties_info_async(sumo_grid_object)
+    property_info_arr = await _get_grid_properties_info_async(sumo_grid_object)
     grid3d_info = Grid3dInfo(
         grid_name=grid_metadata["data"]["name"],
         bbox=bbox,
@@ -134,7 +137,7 @@ async def _get_grid_model_meta_async(sumo_grid3d_search_context: SearchContext, 
     return grid3d_info
 
 
-async def get_grid_properties_info_async(cpgrid: CPGrid) -> List[Grid3dPropertyInfo]:
+async def _get_grid_properties_info_async(cpgrid: CPGrid) -> List[Grid3dPropertyInfo]:
     """
     Get grid properties metadata for a given CPGrid object.
     This is a helper function to extract property metadata from a CPGrid instance.

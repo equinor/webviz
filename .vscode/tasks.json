@@ -16,7 +16,8 @@
                     "PATH": "${command:python.interpreterPath}:${env:PATH}"
                 }
             },
-            "label": "Run all mypy type checks"
+            "label": "Run all webviz mypy type checks",
+            "problemMatcher": []
         },
         {
             "type": "shell",
@@ -26,7 +27,7 @@
                     "PATH": "${command:python.interpreterPath}:${env:PATH}"
                 }
             },
-            "label": "Run all pylint checks"
+            "label": "Run all webviz pylint checks"
         }
     ]
 }
