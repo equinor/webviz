@@ -1,6 +1,6 @@
 [project]
 name = "webviz-core-utils"
-version = "0.1.0"
+version = "0.0.1"
 requires-python = "^3.11"
 dynamic = ["dependencies"]
 
@@ -11,11 +11,6 @@ packages = [{ include = "webviz_core_utils", from = "src" }]
 [tool.poetry.dependencies]
 numpy = "^2.2.3"
 pydantic = "^2.11.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.2"
-pylint = "^3.3.8"
-mypy = "1.15.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,13 +1,26 @@
-[tool.poetry]
+[project]
 name = "repo-tools"
+requires-python = "^3.13"
 version = "0.0.0"
-description = "Shared config/tooling only"
-package-mode = false
+description = "Shared config/tooling for the webviz monorepo"
+
+[tool.poetry]
 requires-poetry = ">=2.1"
+package-mode = false
 
 [build-system]
 requires = ["poetry-core>=1.9.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+bandit = "^1.8.6"
+black = "^25.9.0"
+mypy = "^1.18.2"
+pylint = "^3.3.9"
+pytest = "^8.4.2"
+pytest-timeout = "^2.4.0"
+pytest-asyncio = "^1.2.0"
+astroid = "^3.3.11"
 
 
 [tool.black]

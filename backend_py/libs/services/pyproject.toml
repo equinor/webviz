@@ -11,19 +11,23 @@ packages = [{ include = "webviz_services", from = "src" }]
 [tool.poetry.dependencies]
 redis = "^5.3.1"
 pyarrow = "^21.0.0"
-python-dotenv = "^1.1.0"
-pyjwt = "^2.6.0"
-pydantic = "^2.3.0"
+pydantic = "^2.11.0"
 numpy = "^2.2.0"
-orjson = "^3.8.10"
 pandas = { version = "^2.0.1", extras = ["performance"] }
 httpx = "^0.28.1"
 fmu-sumo = "^2.6.1"
 sumo-wrapper-python = "^1.1.2"
 pottery = "^3.0.0"
+requests-toolbelt = "^1.0.0"
 xtgeo = "^4.11.0"
 webviz-core-utils = { path = "../core_utils", develop = true }
 webviz-server-schemas = { path = "../server_schemas", develop = true }
+
+# These are really dev dependencies, but since dev dependencies are not transitively installed,
+# and they are needed for type checking, we put them here instead.
+types-redis = "^4.6.0"
+pyarrow-stubs = "^20.0.0.20250825"
+
 
 # Special cases
 ### Polars does breaking changes in minor versions
@@ -35,20 +39,6 @@ fmu-datamodels = "0.14.0"
 [tool.poetry.group.overrides.dependencies]
 # The `numba` dependency in `pandas` is a bit too loose, so it ends up pulling a release-candidate branch if we don't pin it
 numba = "0.61.2"
-
-
-[tool.poetry.group.dev.dependencies]
-black = "^25.1.0"
-pylint = "^3.3.8"
-pytest = "^8.3.2"
-mypy = "^1.15.0"
-bandit = "^1.7.5"
-types-requests = "^2.31.0.1"
-types-redis = "^4.6.0"
-pytest-timeout = "^2.3.1"
-pytest-asyncio = "^1.1.0"
-astroid = "^3.3.11"
-pyarrow-stubs = "^20.0.0.20250825"
 
 
 [build-system]

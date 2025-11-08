@@ -277,10 +277,10 @@ typing-extensions = ">=4.12.0"
 
 [[package]]
 name = "webviz-core-utils"
-version = "0.1.0"
+version = "0.0.1"
 description = ""
 optional = false
-python-versions = "^3.13"
+python-versions = "^3.11"
 groups = ["main"]
 files = []
 develop = true
@@ -295,5 +295,5 @@ url = "../core_utils"
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.13"
-content-hash = "5e6ccda2cbaae700f8909aeb4abbf8d6f7ed16ce704a83405cd5ba13cb7f0930"
+python-versions = "^3.11"
+content-hash = "cc9b97ca8712cadeb762e3230c28c9c0b3ce70b31c86fba2f003a435e6d4e88c"
