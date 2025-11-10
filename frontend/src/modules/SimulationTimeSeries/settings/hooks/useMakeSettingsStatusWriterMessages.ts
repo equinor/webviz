@@ -4,8 +4,8 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
+import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
-
 
 import { selectedVectorNamesAtom } from "../atoms/baseAtoms";
 import { ensembleVectorListsHelperAtom, selectedEnsembleIdentsAtom } from "../atoms/derivedAtoms";
@@ -13,22 +13,12 @@ import { vectorListQueriesAtom } from "../atoms/queryAtoms";
 
 export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatusWriter, selectedVectorTags: string[]) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
-
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
     const selectedVectorNames = useAtomValue(selectedVectorNamesAtom);
 
-    // Set error if all vector list queries fail
-    const hasEveryVectorListQueryError =
-        vectorListQueries.length > 0 && vectorListQueries.every((query) => query.isError);
-    if (hasEveryVectorListQueryError) {
-        let errorMessage = "Could not load vectors for selected ensemble";
-        if (vectorListQueries.length > 1) {
-            errorMessage += "s";
-        }
-        statusWriter.addError(errorMessage);
-    }
+    usePropagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
 
     // Set warning for vector names not existing in a selected ensemble
     function validateVectorNamesInEnsemble(

@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, st
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from webviz_pkg.core_utils.type_utils import expect_type
 
+from primary.services.service_exceptions import ServiceLayerException
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.surface_access import SurfaceAccess
 from primary.services.sumo_access.surface_access import ExpectedError, InProgress
@@ -76,18 +77,24 @@ async def get_realization_surfaces_metadata(
     """
     perf_metrics = ResponsePerfMetrics(response)
 
-    async with asyncio.TaskGroup() as tg:
-        access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-        case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    try:
+        async with asyncio.TaskGroup() as tg:
+            access = SurfaceAccess.from_ensemble_name(
+                authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+            )
+            case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
 
-        surf_meta_task = tg.create_task(access.get_realization_surfaces_metadata_async())
-        surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
+            surf_meta_task = tg.create_task(access.get_realization_surfaces_metadata_async())
+            surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
 
-        strat_column_ident = await case_inspector.get_stratigraphic_column_identifier_async()
-        strat_units_task = tg.create_task(
-            _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_ident)
-        )
-        strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
+            strat_column_ident = await case_inspector.get_stratigraphic_column_identifier_async()
+            strat_units_task = tg.create_task(
+                _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_ident)
+            )
+            strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
+    except* ServiceLayerException as exc_group:
+        for exc in exc_group.exceptions:
+            raise exc from exc_group  # Reraise the first exception
 
     perf_metrics.reset_lap_timer()
     sumo_surf_meta_set = surf_meta_task.result()
@@ -113,18 +120,22 @@ async def get_observed_surfaces_metadata(
     """
     perf_metrics = ResponsePerfMetrics(response)
 
-    async with asyncio.TaskGroup() as tg:
-        access = SurfaceAccess.from_case_uuid_no_ensemble(authenticated_user.get_sumo_access_token(), case_uuid)
-        case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    try:
+        async with asyncio.TaskGroup() as tg:
+            access = SurfaceAccess.from_case_uuid_no_ensemble(authenticated_user.get_sumo_access_token(), case_uuid)
+            case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
 
-        surf_meta_task = tg.create_task(access.get_observed_surfaces_metadata_async())
-        surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
+            surf_meta_task = tg.create_task(access.get_observed_surfaces_metadata_async())
+            surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
 
-        strat_column_ident = await case_inspector.get_stratigraphic_column_identifier_async()
-        strat_units_task = tg.create_task(
-            _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_ident)
-        )
-        strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
+            strat_column_ident = await case_inspector.get_stratigraphic_column_identifier_async()
+            strat_units_task = tg.create_task(
+                _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_ident)
+            )
+            strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
+    except* ServiceLayerException as exc_group:
+        for exc in exc_group.exceptions:
+            raise exc from exc_group  # Reraise the first exception
 
     perf_metrics.reset_lap_timer()
     sumo_surf_meta_set = surf_meta_task.result()

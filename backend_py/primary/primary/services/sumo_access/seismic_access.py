@@ -107,7 +107,7 @@ def _create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object: Cube) -> S
     t_end = sumo_cube_object["data"].get("time", {}).get("t1", {}).get("value", None)
 
     if not t_start and not t_end:
-        raise ValueError(f"Cube {sumo_cube_object['data']['tagname']} has no time information")
+        raise InvalidDataError(f"Cube {sumo_cube_object['data']['tagname']} has no time information", Service.SUMO)
 
     if t_start and not t_end:
         iso_string_or_time_interval = t_start
