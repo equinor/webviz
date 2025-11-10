@@ -94,7 +94,7 @@ async def get_realization_surfaces_metadata(
             strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
     except* ServiceLayerException as exc_group:
         for exc in exc_group.exceptions:
-            raise exc  # Reraise the first exception
+            raise exc from exc_group  # Reraise the first exception
 
     perf_metrics.reset_lap_timer()
     sumo_surf_meta_set = surf_meta_task.result()
@@ -135,7 +135,7 @@ async def get_observed_surfaces_metadata(
             strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
     except* ServiceLayerException as exc_group:
         for exc in exc_group.exceptions:
-            raise exc  # Reraise the first exception
+            raise exc from exc_group  # Reraise the first exception
 
     perf_metrics.reset_lap_timer()
     sumo_surf_meta_set = surf_meta_task.result()

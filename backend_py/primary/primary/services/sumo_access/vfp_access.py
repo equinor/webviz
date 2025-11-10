@@ -138,4 +138,4 @@ class VfpAccess:
                 bhp_unit=VFP_UNITS[unit_type][VfpParam.THP][thp_type],
             )
 
-        raise InvalidParameterError(f"VfpType {vfp_type} not handled.")
+        raise InvalidParameterError(f"VfpType {vfp_type} not handled.", Service.SUMO)

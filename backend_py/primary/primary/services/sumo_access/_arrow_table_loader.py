@@ -148,7 +148,7 @@ class ArrowTableLoader:
 
         except* ServiceLayerException as exc_group:
             for exc in exc_group.exceptions:
-                raise exc  # Reraise the first exception
+                raise exc from exc_group  # Reraise the first exception
 
         # If we only have one table, we can just return it directly
         if len(column_name_and_aggregated_table_pairs) == 1:
