@@ -1,12 +1,9 @@
 import polars as pl
 
-from .polars_column_utils import is_invalid_column
-
-from webviz_services.sumo_access.inplace_volumes_table_types import (
-    InplaceVolumes,
-)
-
+from webviz_services.sumo_access.inplace_volumes_table_types import InplaceVolumes
 from webviz_services.service_exceptions import Service, InvalidDataError
+
+from .polars_column_utils import is_invalid_column
 
 """
 This file contains general utility functions for handling DataFrames for inplace volumes.

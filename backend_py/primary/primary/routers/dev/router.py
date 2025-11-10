@@ -7,8 +7,6 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response
 
 from webviz_core_utils.background_tasks import run_in_background_task
-
-from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
 from webviz_services.user_session_manager.user_session_manager import UserSessionManager
 from webviz_services.user_session_manager.user_session_manager import UserComponent
 from webviz_services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
@@ -18,6 +16,8 @@ from webviz_services.user_grid3d_service.user_grid3d_service import UserGrid3dSe
 from webviz_services.service_exceptions import Service, ServiceUnavailableError, ServiceRequestError
 from webviz_services.utils.otel_span_tracing import start_otel_span_async
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
+
+from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 LOGGER = logging.getLogger(__name__)
