@@ -22,9 +22,10 @@ import {
     vec2FromPointerEvent,
 } from "@lib/utils/vec2";
 
+import { useActiveDashboard } from "../../ActiveDashboardBoundary";
+
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
-import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 
 type LayoutProps = {
     workbench: Workbench;

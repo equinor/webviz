@@ -1,7 +1,8 @@
-import { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import React from "react";
+
+import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import React from "react";
 
 export const ActiveSessionContext = React.createContext<PrivateWorkbenchSession | null>(null);
 

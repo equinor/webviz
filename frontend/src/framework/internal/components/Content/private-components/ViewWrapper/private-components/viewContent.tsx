@@ -2,6 +2,7 @@ import React from "react";
 
 import { Provider } from "jotai";
 
+import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
@@ -19,7 +20,6 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 import { CrashView } from "./crashView";
-import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
 
 type ViewContentProps = {
     moduleInstance: ModuleInstance<any, any>;

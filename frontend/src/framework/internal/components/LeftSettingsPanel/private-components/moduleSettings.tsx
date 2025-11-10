@@ -20,10 +20,10 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useActiveSession } from "../../ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
-import { useActiveSession } from "../../ActiveSessionBoundary";
 
 type ModuleSettingsProps = {
     moduleInstance: ModuleInstance<any, any>;

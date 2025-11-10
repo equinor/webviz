@@ -1,6 +1,7 @@
 import React from "react";
 
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
@@ -10,7 +11,6 @@ import { Label } from "@lib/components/Label";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 
 export type EditSessionMetadataDialogProps = {
     workbench: Workbench;

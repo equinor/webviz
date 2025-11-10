@@ -20,9 +20,9 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useActiveSession } from "../ActiveSessionBoundary";
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
-import { useActiveSession } from "../ActiveSessionBoundary";
 
 export type TopBarProps = {
     workbench: Workbench;

@@ -3,6 +3,7 @@ import React from "react";
 import { AddLink } from "@mui/icons-material";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
@@ -13,7 +14,6 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 
 export type MakeSnapshotDialogProps = {
     workbench: Workbench;

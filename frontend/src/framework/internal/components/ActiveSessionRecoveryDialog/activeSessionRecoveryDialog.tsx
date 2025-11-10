@@ -12,8 +12,8 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { timeAgo } from "@lib/utils/dates";
 
-import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 import { useActiveSession } from "../ActiveSessionBoundary";
+import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
 export type ActiveSessionRecoveryDialogProps = {
     workbench: Workbench;

@@ -2,9 +2,10 @@ import type React from "react";
 
 import type { Workbench } from "@framework/Workbench";
 
+import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
+
 import { DataChannelVisualizationLayer } from "./private-components/DataChannelVisualizationLayer";
 import { Layout } from "./private-components/layout";
-import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 
 type ContentProps = {
     workbench: Workbench;

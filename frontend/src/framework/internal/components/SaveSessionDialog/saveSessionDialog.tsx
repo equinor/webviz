@@ -1,6 +1,7 @@
 import React from "react";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
@@ -9,7 +10,6 @@ import { Dialog } from "@lib/components/Dialog";
 import { Label } from "@lib/components/Label";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 
 export type SaveSessionDialogProps = {
     workbench: Workbench;
