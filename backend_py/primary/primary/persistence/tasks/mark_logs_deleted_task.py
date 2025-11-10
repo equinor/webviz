@@ -17,10 +17,15 @@ _CONTAINER_NAME = "snapshot_access_logs"
 _MAX_CONCURRENT_PATCH_OPS = 32
 
 
-async def mark_logs_deleted_task(snapshot_id: str) -> None:
+async def mark_logs_deleted_task(snapshot_id: str, retry_count: int = 0, max_retries: int = 3) -> None:
     """
     Marks all access-log docs for the given snapshot_id as deleted (PATCH /snapshot_deleted = true).
     Runs with bounded concurrency and is idempotent/safe to re-run.
+
+    Args:
+        snapshot_id: The ID of the snapshot whose logs should be marked as deleted
+        retry_count: Current retry attempt (for internal use)
+        max_retries: Maximum number of retry attempts
     """
     container: CosmosContainer[SnapshotAccessLogDocument] = CosmosContainer.create_instance(
         _DATABASE_NAME, _CONTAINER_NAME, SnapshotAccessLogDocument
@@ -71,6 +76,7 @@ async def mark_logs_deleted_task(snapshot_id: str) -> None:
         results = await asyncio.gather(*(_patch_one(r) for r in rows))
         success = sum(1 for ok in results if ok)
         fail = len(rows) - success
+
         LOGGER.info(
             "Marked %d/%d access-log docs deleted for snapshot '%s' (failures=%d).",
             success,
@@ -79,5 +85,41 @@ async def mark_logs_deleted_task(snapshot_id: str) -> None:
             fail,
         )
 
+        # If there were failures and we haven't exceeded max retries, schedule a retry
+        if fail > 0 and retry_count < max_retries:
+            retry_delay = 2 ** retry_count  # Exponential backoff: 1s, 2s, 4s
+            LOGGER.warning(
+                "Scheduling retry %d/%d for snapshot '%s' in %d seconds (%d failures).",
+                retry_count + 1,
+                max_retries,
+                snapshot_id,
+                retry_delay,
+                fail,
+            )
+            await asyncio.sleep(retry_delay)
+            await mark_logs_deleted_task(snapshot_id, retry_count + 1, max_retries)
+        elif fail > 0:
+            LOGGER.error(
+                "Failed to mark all logs deleted for snapshot '%s' after %d retries. %d logs remain unmarked.",
+                snapshot_id,
+                max_retries,
+                fail,
+            )
+
+    except Exception as e:
+        LOGGER.error("Unexpected error in mark_logs_deleted_task for snapshot '%s': %s", snapshot_id, e)
+        # If this is a recoverable error and we haven't exceeded retries, try again
+        if retry_count < max_retries:
+            retry_delay = 2 ** retry_count
+            LOGGER.warning("Retrying mark_logs_deleted_task for snapshot '%s' in %d seconds.", snapshot_id, retry_delay)
+            await asyncio.sleep(retry_delay)
+            await mark_logs_deleted_task(snapshot_id, retry_count + 1, max_retries)
+        else:
+            LOGGER.error(
+                "Failed to complete mark_logs_deleted_task for snapshot '%s' after %d retries.",
+                snapshot_id,
+                max_retries,
+            )
+            raise
     finally:
         await container.close_async()

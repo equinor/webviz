@@ -15,6 +15,10 @@ from .types import SnapshotSortBy
 _CONTAINER_NAME = "snapshots"
 _DATABASE_NAME = "persistence"
 
+# CosmosDB has a 2MB document size limit
+# We use 1.5MB to leave room for metadata and safety margin
+_MAX_CONTENT_SIZE_BYTES = 1.5 * 1024 * 1024  # 1.5MB
+
 
 class SnapshotStore:
     """
@@ -59,11 +63,23 @@ class SnapshotStore:
             The ID of the created snapshot
 
         Raises:
+            ServiceRequestError: If content size exceeds maximum allowed size
             DatabaseAccessError: If the database operation fails
         """
+        # Validate content size
+        content_size = len(content.encode('utf-8'))
+        if content_size > _MAX_CONTENT_SIZE_BYTES:
+            raise ServiceRequestError(
+                f"Snapshot content size ({content_size / (1024*1024):.2f}MB) exceeds maximum allowed size of {_MAX_CONTENT_SIZE_BYTES / (1024*1024):.1f}MB",
+                Service.DATABASE
+            )
+
         try:
             now = datetime.now(timezone.utc)
-            snapshot_id = generate(size=8)
+            # Use 12 characters for security (~3.2 x 10^21 combinations)
+            # This provides strong protection against enumeration attacks
+            # while keeping URLs manageable for sharing
+            snapshot_id = generate(size=12)
 
             snapshot = SnapshotDocument(
                 id=snapshot_id,

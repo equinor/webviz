@@ -9,6 +9,9 @@ import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
+import { AUTO_SAVE_DEBOUNCE_MS, BACKEND_POLLING_INTERVAL_MS, MAX_CONTENT_SIZE_BYTES } from "./persistenceConstants";
+import { WindowActivityObserver, WindowActivityObserverTopic, WindowActivityState } from "./WindowActivityObserver";
+
 import {
     createSessionWithCacheUpdate,
     createSnapshotWithCacheUpdate,
@@ -36,9 +39,6 @@ export type WorkbenchSessionPersistenceServiceTopicPayloads = {
     [WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO]: WorkbenchSessionPersistenceInfo;
 };
 
-// Interval for fetching session metadata from the backend (in milliseconds) to check for external updates
-const BACKEND_SESSION_FETCH_INTERVAL_MS = 10000;
-
 export class WorkbenchSessionPersistenceService
     implements PublishSubscribe<WorkbenchSessionPersistenceServiceTopicPayloads>
 {
@@ -49,17 +49,13 @@ export class WorkbenchSessionPersistenceService
     private _lastPersistedHash: string | null = null;
     private _currentHash: string | null = null;
     private _currentStateString: string | null = null;
-    private _persistenceInfo: WorkbenchSessionPersistenceInfo = {
-        lastModifiedMs: 0,
-        hasChanges: false,
-        lastPersistedMs: null,
-        backendLastUpdatedMs: null,
-    };
     private _fetchingInterval: ReturnType<typeof setInterval> | null = null;
     private _pullDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _pullInProgress = false;
     private _pullCounter = 0;
+    private _saveInProgress = false;
 
+    // Persistence info - single source of truth
     private _lastPersistedMs: number | null = null;
     private _lastModifiedMs: number = 0;
     private _backendLastUpdatedMs: number | null = null;
@@ -91,13 +87,43 @@ export class WorkbenchSessionPersistenceService
         this.updatePersistenceInfo();
 
         this.subscribeToSessionChanges();
+        this.setupBackendPolling();
+    }
 
+    private setupBackendPolling() {
+        // Clear any existing polling
         if (this._fetchingInterval) {
             clearInterval(this._fetchingInterval);
         }
+
+        const windowActivityObserver = WindowActivityObserver.getInstance();
+
+        // Set up polling interval that respects window activity
         this._fetchingInterval = setInterval(() => {
-            this.repeatedlyFetchSessionFromBackend();
-        }, BACKEND_SESSION_FETCH_INTERVAL_MS);
+            // Only poll if window is visible (not hidden in background)
+            if (windowActivityObserver.isVisible()) {
+                this.repeatedlyFetchSessionFromBackend();
+            }
+        }, BACKEND_POLLING_INTERVAL_MS);
+
+        // Subscribe to window activity changes
+        // When window becomes visible again, immediately fetch to catch up
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "window-activity",
+            windowActivityObserver
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(WindowActivityObserverTopic.ACTIVITY_STATE)(() => {
+                const state = windowActivityObserver.getCurrentState();
+                if (
+                    state === WindowActivityState.ACTIVE &&
+                    this._workbenchSession &&
+                    !this._workbenchSession.isSnapshot()
+                ) {
+                    // Window became active - fetch immediately to catch up on any changes
+                    this.repeatedlyFetchSessionFromBackend();
+                }
+            }),
+        );
     }
 
     async repeatedlyFetchSessionFromBackend() {
@@ -165,7 +191,7 @@ export class WorkbenchSessionPersistenceService
     }
 
     hasChanges(): boolean {
-        return this._persistenceInfo.hasChanges;
+        return this._currentHash !== this._lastPersistedHash;
     }
 
     beforeDestroy(): void {
@@ -176,14 +202,9 @@ export class WorkbenchSessionPersistenceService
         this._lastPersistedHash = null;
         this._currentHash = null;
         this._currentStateString = null;
-        this._persistenceInfo = {
-            lastModifiedMs: 0,
-            hasChanges: false,
-            lastPersistedMs: null,
-            backendLastUpdatedMs: null,
-        };
         this._lastPersistedMs = null;
         this._lastModifiedMs = 0;
+        this._backendLastUpdatedMs = null;
 
         this.maybeClearPullDebounceTimeout();
 
@@ -195,7 +216,7 @@ export class WorkbenchSessionPersistenceService
             this._fetchingInterval = null;
         }
 
-        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO);
+        this.updatePersistenceInfo();
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<WorkbenchSessionPersistenceServiceTopicPayloads> {
@@ -205,9 +226,14 @@ export class WorkbenchSessionPersistenceService
     makeSnapshotGetter<T extends WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO>(
         topic: T,
     ): () => WorkbenchSessionPersistenceServiceTopicPayloads[T] {
-        const snapshotGetter = (): any => {
+        const snapshotGetter = (): WorkbenchSessionPersistenceServiceTopicPayloads[T] => {
             if (topic === WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO) {
-                return this._persistenceInfo;
+                return {
+                    lastModifiedMs: this._lastModifiedMs,
+                    hasChanges: this._currentHash !== this._lastPersistedHash,
+                    lastPersistedMs: this._lastPersistedMs,
+                    backendLastUpdatedMs: this._backendLastUpdatedMs,
+                } as WorkbenchSessionPersistenceServiceTopicPayloads[T];
             }
             throw new Error(`Unknown topic: ${topic}`);
         };
@@ -267,7 +293,7 @@ export class WorkbenchSessionPersistenceService
         }
     }
 
-    private schedulePullFullSessionState(delay: number = 200) {
+    private schedulePullFullSessionState(delay: number = AUTO_SAVE_DEBOUNCE_MS) {
         this.maybeClearPullDebounceTimeout();
 
         this._pullDebounceTimeout = setTimeout(() => {
@@ -283,7 +309,7 @@ export class WorkbenchSessionPersistenceService
         }
 
         if (this._pullInProgress && !immediate) {
-            // Do not allow concurrent pulls – let debounce handle retries
+            // Do not allow concurrent pulls – we debounce them instead
             return false;
         }
 
@@ -295,7 +321,7 @@ export class WorkbenchSessionPersistenceService
             const newStateString = makeWorkbenchSessionStateString(this._workbenchSession);
             const newHash = await hashSessionContentString(newStateString);
 
-            // Only apply if it's still the latest pull
+            // Only continue if it's still the latest pull
             if (localPullId !== this._pullCounter) {
                 return false;
             }
@@ -321,6 +347,12 @@ export class WorkbenchSessionPersistenceService
     }
 
     async persistSessionState() {
+        // Prevent concurrent save operations
+        if (this._saveInProgress) {
+            toast.warning("Save already in progress. Please wait...");
+            return;
+        }
+
         const queryClient = this._workbench.getQueryClient();
 
         if (!this._workbenchSession) {
@@ -331,21 +363,38 @@ export class WorkbenchSessionPersistenceService
             throw new Error("Current state string is not set. Cannot persist session state.");
         }
 
-        // Make sure we pull the latest session before we save
-        this.maybeClearPullDebounceTimeout();
-        await this.pullFullSessionState();
-
-        const metadata = this._workbenchSession.getMetadata();
-        const id = this._workbenchSession.getId();
-        const toastId = toast.loading("Persisting session state...");
-
-        if (this._currentHash === this._lastPersistedHash) {
-            toast.dismiss(toastId);
-            toast.info("No changes to persist.");
-            return;
-        }
+        this._saveInProgress = true;
+        let toastId: string | number | undefined;
 
         try {
+            // Make sure we pull the latest session before we save
+            this.maybeClearPullDebounceTimeout();
+            await this.pullFullSessionState({ immediate: true });
+
+            const metadata = this._workbenchSession.getMetadata();
+            const id = this._workbenchSession.getId();
+            toastId = toast.loading("Persisting session state...");
+
+            if (this._currentHash === this._lastPersistedHash) {
+                toast.dismiss(toastId);
+                toast.info("No changes to persist.");
+                return;
+            }
+
+            // Capture the content and hash at the time of save to detect any changes during save
+            const contentToSave = objectToJsonString(this._workbenchSession.serializeContentState());
+            const hashBeforeSave = this._currentHash;
+
+            // Validate content size before attempting to save
+            const contentSize = new Blob([contentToSave]).size;
+            if (contentSize > MAX_CONTENT_SIZE_BYTES) {
+                toast.dismiss(toastId);
+                toast.error(
+                    `Session is too large (${(contentSize / (1024 * 1024)).toFixed(2)}MB). Maximum size is ${(MAX_CONTENT_SIZE_BYTES / (1024 * 1024)).toFixed(1)}MB.`,
+                );
+                return;
+            }
+
             if (this._workbenchSession.getIsPersisted()) {
                 if (!id) {
                     throw new Error("Session ID is not set. Cannot update session state.");
@@ -353,7 +402,7 @@ export class WorkbenchSessionPersistenceService
                 await updateSessionAndCache(queryClient, id, {
                     title: metadata.title,
                     description: metadata.description ?? null,
-                    content: objectToJsonString(this._workbenchSession.serializeContentState()),
+                    content: contentToSave,
                 });
                 // On successful update, we can safely remove the local storage recovery entry
                 this.removeFromLocalStorage();
@@ -361,16 +410,16 @@ export class WorkbenchSessionPersistenceService
                 toast.dismiss(toastId);
                 toast.success("Session state updated successfully.");
             } else {
-                const id = await createSessionWithCacheUpdate(queryClient, {
+                const newId = await createSessionWithCacheUpdate(queryClient, {
                     title: metadata.title,
                     description: metadata.description ?? null,
-                    content: objectToJsonString(this._workbenchSession.serializeContentState()),
+                    content: contentToSave,
                 });
 
                 // ! Make sure you remove the localStorage backup BEFORE you store the new session id
                 this.removeFromLocalStorage();
 
-                this._workbenchSession.setId(id);
+                this._workbenchSession.setId(newId);
                 toast.dismiss(toastId);
                 toast.success("Session successfully created and persisted.");
             }
@@ -379,23 +428,28 @@ export class WorkbenchSessionPersistenceService
             queryClient.resetQueries({ queryKey: getSessionsMetadataQueryKey() });
 
             this._lastPersistedMs = Date.now();
-            this._lastPersistedHash = this._currentHash;
+            this._lastPersistedHash = hashBeforeSave;
             this._workbenchSession.setIsPersisted(true);
             this.updatePersistenceInfo();
+
+            // Check if there were changes during the save operation
+            if (this._currentHash !== hashBeforeSave) {
+                toast.info("New changes detected. Remember to save again.");
+            }
         } catch (error) {
             console.error("Failed to persist session state:", error);
-            toast.dismiss(toastId);
+            if (toastId) {
+                toast.dismiss(toastId);
+            }
             toast.error("Failed to persist session state. Please try again later.");
+        } finally {
+            this._saveInProgress = false;
         }
     }
 
     private updatePersistenceInfo() {
-        this._persistenceInfo = {
-            lastModifiedMs: this._lastModifiedMs,
-            hasChanges: this._currentHash !== this._lastPersistedHash,
-            lastPersistedMs: this._lastPersistedMs,
-            backendLastUpdatedMs: this._backendLastUpdatedMs,
-        };
+        // Notify subscribers that persistence info has changed
+        // The actual data is computed on-demand via makeSnapshotGetter
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO);
     }
 
