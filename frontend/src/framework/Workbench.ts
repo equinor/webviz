@@ -5,7 +5,6 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 import { ConfirmationService } from "./ConfirmationService";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { Dashboard } from "./internal/Dashboard";
-import { EnsembleUpdateMonitor } from "./internal/EnsembleUpdateMonitor";
 import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import type { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
@@ -45,14 +44,12 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     private _queryClient: QueryClient;
     private _sessionManager: WorkbenchSessionManager;
     private _navigationObserver: NavigationObserver;
-    private _ensembleUpdateMonitor: EnsembleUpdateMonitor;
     private _isInitialized: boolean = false;
 
     constructor(queryClient: QueryClient) {
         this._queryClient = queryClient;
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._guiMessageBroker = new GuiMessageBroker();
-        this._ensembleUpdateMonitor = new EnsembleUpdateMonitor(queryClient, this);
         this._sessionManager = new WorkbenchSessionManager(this, queryClient, this._guiMessageBroker);
 
         // Create NavigationObserver instance and register callbacks
@@ -200,6 +197,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     // ========== Lifecycle ==========
 
     beforeDestroy(): void {
-        this._navigationObserver.destroy();
+        this._navigationObserver.beforeDestroy();
+        this._sessionManager.beforeDestroy();
     }
 }

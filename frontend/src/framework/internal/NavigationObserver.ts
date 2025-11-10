@@ -33,7 +33,7 @@ export class NavigationObserver {
      * Register callback for beforeunload event.
      * Callback should return true if navigation should be blocked (show warning dialog).
      */
-    public setOnBeforeUnload(callback: (() => boolean) | null): void {
+    setOnBeforeUnload(callback: (() => boolean) | null): void {
         this._onBeforeUnloadCallback = callback;
     }
 
@@ -41,7 +41,7 @@ export class NavigationObserver {
      * Register callback for popstate event.
      * Callback should return true if navigation was handled successfully, false to cancel navigation.
      */
-    public setOnNavigate(callback: (() => Promise<boolean>) | null): void {
+    setOnNavigate(callback: (() => Promise<boolean>) | null): void {
         this._onNavigateCallback = callback;
     }
 
@@ -85,14 +85,14 @@ export class NavigationObserver {
     /**
      * Get the current URL
      */
-    public getCurrentUrl(): string {
+    getCurrentUrl(): string {
         return this._currentUrl;
     }
 
     /**
      * Clean up event listeners - MUST be called when Workbench is destroyed
      */
-    public destroy(): void {
+    beforeDestroy(): void {
         window.removeEventListener("beforeunload", this._boundHandleBeforeUnload);
         window.removeEventListener("popstate", this._boundHandlePopState);
 

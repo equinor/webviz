@@ -4,9 +4,9 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
  * Window activity state
  */
 export enum WindowActivityState {
-    ACTIVE = "active",     // Window is visible and focused
-    VISIBLE = "visible",   // Window is visible but not focused
-    HIDDEN = "hidden",     // Window is hidden (minimized, different tab, etc.)
+    ACTIVE = "active", // Window is visible and focused
+    VISIBLE = "visible", // Window is visible but not focused
+    HIDDEN = "hidden", // Window is hidden (minimized, different tab, etc.)
 }
 
 export enum WindowActivityObserverTopic {
@@ -67,7 +67,7 @@ export class WindowActivityObserver implements PublishSubscribe<WindowActivityOb
     /**
      * Get the singleton instance of WindowActivityObserver
      */
-    public static getInstance(): WindowActivityObserver {
+    static getInstance(): WindowActivityObserver {
         if (!WindowActivityObserver._instance) {
             WindowActivityObserver._instance = new WindowActivityObserver();
         }
@@ -141,36 +141,36 @@ export class WindowActivityObserver implements PublishSubscribe<WindowActivityOb
     /**
      * Get the current activity state
      */
-    public getCurrentState(): WindowActivityState {
+    getCurrentState(): WindowActivityState {
         return this._currentState;
     }
 
     /**
      * Check if the window is currently active (visible and focused)
      */
-    public isActive(): boolean {
+    isActive(): boolean {
         return this._currentState === WindowActivityState.ACTIVE;
     }
 
     /**
      * Check if the window is currently visible (may not be focused)
      */
-    public isVisible(): boolean {
+    isVisible(): boolean {
         return this._currentState === WindowActivityState.ACTIVE || this._currentState === WindowActivityState.VISIBLE;
     }
 
     /**
      * Check if the window is currently hidden
      */
-    public isHidden(): boolean {
+    isHidden(): boolean {
         return this._currentState === WindowActivityState.HIDDEN;
     }
 
-    public getPublishSubscribeDelegate(): PublishSubscribeDelegate<WindowActivityObserverTopicPayloads> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<WindowActivityObserverTopicPayloads> {
         return this._publishSubscribeDelegate;
     }
 
-    public makeSnapshotGetter<T extends WindowActivityObserverTopic.ACTIVITY_STATE>(
+    makeSnapshotGetter<T extends WindowActivityObserverTopic.ACTIVITY_STATE>(
         topic: T,
     ): () => WindowActivityObserverTopicPayloads[T] {
         return (): WindowActivityObserverTopicPayloads[T] => {
@@ -184,7 +184,7 @@ export class WindowActivityObserver implements PublishSubscribe<WindowActivityOb
     /**
      * Clean up event listeners (typically not needed for singleton, but provided for completeness)
      */
-    public destroy(): void {
+    destroy(): void {
         if (!this._isInitialized) {
             return;
         }

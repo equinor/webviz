@@ -2,12 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { toast } from "react-toastify";
 
-import {
-    deleteSessionMutation,
-    deleteSnapshotMutation,
-    updateSessionMutation,
-    type SessionUpdate_api,
-} from "@api";
+import { deleteSessionMutation, deleteSnapshotMutation, updateSessionMutation, type SessionUpdate_api } from "@api";
 import { ConfirmationService } from "@framework/ConfirmationService";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
@@ -28,8 +23,15 @@ import {
     loadWorkbenchSessionFromLocalStorage,
 } from "./utils/loaders";
 import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
-import { buildSessionUrl, buildSnapshotUrl, removeSessionIdFromUrl, removeSnapshotIdFromUrl , readSessionIdFromUrl, readSnapshotIdFromUrl } from "./utils/url";
-
+import {
+    buildSessionUrl,
+    buildSnapshotUrl,
+    removeSessionIdFromUrl,
+    removeSnapshotIdFromUrl,
+    readSessionIdFromUrl,
+    readSnapshotIdFromUrl,
+} from "./utils/url";
+import { EnsembleUpdateMonitor } from "../EnsembleUpdateMonitor";
 
 export enum WorkbenchSessionManagerTopic {
     ACTIVE_SESSION = "activeSession",
@@ -56,6 +58,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     private readonly _queryClient: QueryClient;
     private readonly _guiMessageBroker: GuiMessageBroker;
     private readonly _notifier: PersistenceNotifier;
+    private readonly _ensembleUpdateMonitor: EnsembleUpdateMonitor;
 
     private _activeSession: PrivateWorkbenchSession | null = null;
     private _persistenceOrchestrator: PersistenceOrchestrator | null = null;
@@ -70,6 +73,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this._queryClient = queryClient;
         this._guiMessageBroker = guiMessageBroker;
         this._notifier = notifier ?? ToastNotifier;
+
+        this._ensembleUpdateMonitor = new EnsembleUpdateMonitor(queryClient, this);
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<WorkbenchSessionManagerTopicPayloads> {
@@ -303,6 +308,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 await this._persistenceOrchestrator.start();
             }
 
+            await this._ensembleUpdateMonitor.pollImmediately();
+            this._ensembleUpdateMonitor.startPolling();
+
             this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION);
             this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionManagerTopic.ACTIVE_SESSION);
         } catch (error) {
@@ -326,6 +334,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this._persistenceOrchestrator.stop();
             this._persistenceOrchestrator = null;
         }
+
+        this._ensembleUpdateMonitor.stopPolling();
 
         this._activeSession = null;
     }
@@ -711,5 +721,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
 
         return success;
+    }
+
+    beforeDestroy(): void {
+        this._persistenceOrchestrator?.stop();
+        this._ensembleUpdateMonitor.stopPolling();
+        this.unloadSession();
     }
 }

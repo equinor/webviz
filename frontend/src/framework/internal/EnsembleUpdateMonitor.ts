@@ -3,9 +3,9 @@ import type { QueryClient } from "@tanstack/query-core";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { globalLog } from "@framework/Log";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { Workbench } from "@framework/Workbench";
 
 import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
+import type { WorkbenchSessionManager } from "./WorkbenchSession/WorkbenchSessionManager";
 
 const logger = globalLog.registerLogger("EnsembleUpdateMonitor");
 
@@ -18,11 +18,11 @@ export class EnsembleUpdateMonitor {
     private _isRunning: boolean = false;
     private _pollingTimeout: ReturnType<typeof setTimeout> | null = null;
     private _lastPollTimestamp: number | null = null;
-    private _workbench: Workbench;
+    private _sessionManager: WorkbenchSessionManager;
 
-    constructor(queryClient: QueryClient, workbench: Workbench) {
+    constructor(queryClient: QueryClient, sessionManager: WorkbenchSessionManager) {
         this._queryClient = queryClient;
-        this._workbench = workbench;
+        this._sessionManager = sessionManager;
     }
 
     startPolling() {
@@ -99,7 +99,7 @@ export class EnsembleUpdateMonitor {
         logger.console?.log(`checkForEnsembleUpdate - fetching...`);
 
         try {
-            const workbenchSession = this._workbench.getSessionManager().getActiveSession();
+            const workbenchSession = this._sessionManager.getActiveSession();
             if (!workbenchSession) {
                 console.warn(`No workbench session found, exiting...`);
                 return;
