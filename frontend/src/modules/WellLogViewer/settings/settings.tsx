@@ -3,7 +3,7 @@ import React from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
-import type { WellboreHeader_api } from "@api";
+import type { EnhancedWellboreHeader_api } from "@api";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
@@ -135,7 +135,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
 }
 
 // ? Duplicate from Intersection module code. Move to shared utility file?
-function makeWellHeaderOptions(wellHeaders: WellboreHeader_api[]): SelectOption[] {
+function makeWellHeaderOptions(wellHeaders: EnhancedWellboreHeader_api[]): SelectOption[] {
     return wellHeaders.map((wellHeader) => ({
         value: wellHeader.wellboreUuid,
         label: wellHeader.uniqueWellboreIdentifier,

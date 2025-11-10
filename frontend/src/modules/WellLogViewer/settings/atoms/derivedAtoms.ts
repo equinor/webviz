@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-import type { WellboreHeader_api } from "@api";
+import type { EnhancedWellboreHeader_api } from "@api";
 
 import { userSelectedFieldIdentAtom, userSelectedWellboreUuidAtom } from "./persistedAtoms";
 import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./queryAtoms";
@@ -15,7 +15,7 @@ export const selectedFieldIdentifierAtom = atom((get) => {
     return selectionIsValid ? selectedFieldId : availableFields[0].fieldIdentifier;
 });
 
-export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) => {
+export const selectedWellboreHeaderAtom = atom<EnhancedWellboreHeader_api | null>((get) => {
     const availableWellboreHeaders = get(drilledWellboreHeadersQueryAtom)?.data;
     const selectedWellboreId = get(userSelectedWellboreUuidAtom);
 

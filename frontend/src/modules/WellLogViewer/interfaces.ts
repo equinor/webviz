@@ -1,4 +1,4 @@
-import type { WellboreHeader_api } from "@api";
+import type { EnhancedWellboreHeader_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
@@ -14,7 +14,7 @@ export type SettingsToViewInterface = {
     providerManager: DataProviderManager | null;
 
     selectedField: string | null;
-    wellboreHeader: WellboreHeader_api | null;
+    wellboreHeader: EnhancedWellboreHeader_api | null;
     viewerHorizontal: boolean;
     padDataWithEmptyRows: boolean;
 };

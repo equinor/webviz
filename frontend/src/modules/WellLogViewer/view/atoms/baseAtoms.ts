@@ -1,8 +1,8 @@
 import { atom } from "jotai";
 
-import type { WellboreHeader_api } from "@api";
+import type { EnhancedWellboreHeader_api } from "@api";
 
-export const wellboreHeaderAtom = atom<WellboreHeader_api | null>(null);
+export const wellboreHeaderAtom = atom<EnhancedWellboreHeader_api | null>(null);
 export const selectedFieldIdentAtom = atom<string | null>(null);
 
 // Local switch to avoid unneccessary queries while applying interface effects.

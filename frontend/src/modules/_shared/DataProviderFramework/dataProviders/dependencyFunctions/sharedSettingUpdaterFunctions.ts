@@ -1,4 +1,4 @@
-import type { WellboreHeader_api } from "@api";
+import type { EnhancedWellboreHeader_api } from "@api";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionType } from "@framework/types/intersection";
@@ -47,7 +47,7 @@ export function getAvailableRealizationsForEnsembleIdent(
  * Get available intersection options for the given wellbore headers and custom intersection polylines.
  */
 export function getAvailableIntersectionOptions(
-    wellboreHeaders: WellboreHeader_api[],
+    wellboreHeaders: EnhancedWellboreHeader_api[],
     intersectionPolylines: IntersectionPolyline[],
 ): IntersectionSettingValue[] {
     const intersectionOptions: IntersectionSettingValue[] = [];
