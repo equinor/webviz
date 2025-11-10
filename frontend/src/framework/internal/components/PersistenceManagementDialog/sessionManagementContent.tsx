@@ -331,7 +331,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         <Edit fontSize="inherit" /> Edit
                     </Button>
                 </Tooltip>
-                <Tooltip title="Open the selectedsession" placement="bottom" enterDelay="medium">
+                <Tooltip title="Open the selected session" placement="bottom" enterDelay="medium">
                     <Button
                         color="primary"
                         disabled={!selectedSessionId}

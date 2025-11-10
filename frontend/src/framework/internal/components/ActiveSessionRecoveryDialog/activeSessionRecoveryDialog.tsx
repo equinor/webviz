@@ -83,7 +83,7 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
             We found an unsaved version of your current session in your local storage. You can either discard or recover
             it.
             <div className="flex gap-4 mt-4">
-                <DashboardPreview height={150} width={150} layout={session ? extractLayout(session) : []} />
+                <DashboardPreview height={150} width={150} layout={extractLayout(session)} />
                 <div className="flex flex-col gap-2">
                     <div className="flex flex-col gap-1">
                         <strong className="text-xs text-gray-500">Title</strong>

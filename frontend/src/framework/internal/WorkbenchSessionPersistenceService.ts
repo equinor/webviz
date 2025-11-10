@@ -36,6 +36,9 @@ export type WorkbenchSessionPersistenceServiceTopicPayloads = {
     [WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO]: WorkbenchSessionPersistenceInfo;
 };
 
+// Interval for fetching session metadata from the backend (in milliseconds) to check for external updates
+const BACKEND_SESSION_FETCH_INTERVAL_MS = 10000;
+
 export class WorkbenchSessionPersistenceService
     implements PublishSubscribe<WorkbenchSessionPersistenceServiceTopicPayloads>
 {
@@ -94,7 +97,7 @@ export class WorkbenchSessionPersistenceService
         }
         this._fetchingInterval = setInterval(() => {
             this.repeatedlyFetchSessionFromBackend();
-        }, 5000); // Fetch every 10 seconds
+        }, BACKEND_SESSION_FETCH_INTERVAL_MS);
     }
 
     async repeatedlyFetchSessionFromBackend() {

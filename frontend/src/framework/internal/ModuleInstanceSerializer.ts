@@ -74,7 +74,8 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
                     settings: this._serializationFunctions.serializeStateFunctions.settings?.(get),
                     view: this._serializationFunctions.serializeStateFunctions.view?.(get),
                 } as TSerializedState;
-                return (result satisfies TSerializedState) ? result : undefined;
+
+                return result;
             }
             return undefined; // No serialization functions provided
         });
@@ -159,16 +160,13 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
 
         const newHash = await hashSessionContentString(objectToJsonString(newSerializedState));
 
-        if (newHash !== this._lastSerializedHash) {
-            this._serializedState = newSerializedState;
-            this._lastSerializedHash = newHash;
-            this._debouncedNotifyChange?.();
+        if (newHash === this._lastSerializedHash) {
+            return; // No changes detected
         }
 
-        this._serializedState = {
-            settings: serializedSettings,
-            view: serializedView,
-        } as TSerializedState;
+        this._serializedState = newSerializedState;
+        this._lastSerializedHash = newHash;
+        this._debouncedNotifyChange?.();
     }
 
     deserializeState(raw: StringifiedSerializedModuleComponentsState): {

@@ -43,7 +43,6 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     setIfDefined(set, dataProviderStateAtom, raw.dataProviderData);
-    setIfDefined(set, dataProviderStateAtom, raw.dataProviderData);
     setIfDefined(set, fieldIdentifierAtom, raw.fieldIdentifier);
     setIfDefined(set, preferredViewLayoutAtom, raw.preferredViewLayout);
 };

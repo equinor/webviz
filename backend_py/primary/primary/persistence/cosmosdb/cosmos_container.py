@@ -237,5 +237,7 @@ class CosmosContainer(Generic[T]):
     async def close_async(self) -> None:
         """Close the container."""
         if self._database:
-            logger.debug("[CosmosContainer] Closing container '%s' in database '%s'", self._container_name, self._database_name)
+            logger.debug(
+                "[CosmosContainer] Closing container '%s' in database '%s'", self._container_name, self._database_name
+            )
             await self._database.close_async()

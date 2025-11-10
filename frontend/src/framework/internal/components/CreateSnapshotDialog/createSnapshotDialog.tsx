@@ -53,9 +53,6 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 setTitle("");
                 setDescription("");
                 setInputFeedback({});
-                if (!snapshotId) {
-                    return;
-                }
                 setSnapshotUrl(buildSnapshotUrl(snapshotId));
             })
             .catch((error) => {

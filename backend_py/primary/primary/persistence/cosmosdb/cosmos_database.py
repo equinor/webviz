@@ -10,6 +10,7 @@ from primary.services.service_exceptions import Service, ServiceRequestError
 
 logger = logging.getLogger(__name__)
 
+
 class CosmosDatabase:
     """
     CosmosDatabase provides access to a Cosmos DB database.
