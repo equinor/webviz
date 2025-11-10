@@ -50,7 +50,7 @@ numba = "0.61.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
-pylint = "^3.3.8"
+pylint = "4.0.2"
 pytest = "^8.3.2"
 mypy = "^1.15.0"
 bandit = "^1.7.5"
@@ -58,7 +58,7 @@ types-requests = "^2.31.0.1"
 types-redis = "^4.6.0"
 pytest-timeout = "^2.3.1"
 pytest-asyncio = "^1.1.0"
-astroid = "^3.3.11"
+astroid = "4.0.1"
 pyarrow-stubs = "^20.0.0.20250825"
 
 
