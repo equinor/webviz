@@ -1,4 +1,5 @@
 import { toast } from "react-toastify";
+
 import type { PersistenceNotifier } from "./PersistenceNotifier";
 
 export const ToastNotifier: PersistenceNotifier = {

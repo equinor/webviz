@@ -1,8 +1,9 @@
-import { localStorageKeyForSessionId } from "../../WorkbenchSession/utils/localStorageHelpers";
+import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 
 import { makeWorkbenchSessionLocalStorageString } from "../../WorkbenchSession/utils/deserialization";
+import { localStorageKeyForSessionId } from "../../WorkbenchSession/utils/localStorageHelpers";
 
-import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+
 
 /**
  * Handles saving and restoring workbench session backups to localStorage.

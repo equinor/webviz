@@ -1,14 +1,18 @@
-import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
-import { SessionStateTracker, type WorkbenchSessionPersistenceInfo } from "./SessionStateTracker";
+import { objectToJsonString } from "@framework/internal/WorkbenchSession/utils/hash";
 import type { Workbench } from "@framework/Workbench";
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
-import { PrivateWorkbenchSession, PrivateWorkbenchSessionTopic } from "../../WorkbenchSession/PrivateWorkbenchSession";
+
+import { WindowActivityObserver, WindowActivityObserverTopic, WindowActivityState } from "../../WindowActivityObserver";
+import type { PrivateWorkbenchSession} from "../../WorkbenchSession/PrivateWorkbenchSession";
+import { PrivateWorkbenchSessionTopic } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import { AUTO_SAVE_DEBOUNCE_MS, BACKEND_POLLING_INTERVAL_MS, MAX_CONTENT_SIZE_BYTES } from "../constants";
 import type { PersistenceNotifier } from "../ui/PersistenceNotifier";
-import { objectToJsonString } from "@framework/internal/WorkbenchSession/utils/hash";
+
+
 import { BackendSyncManager } from "./BackendSyncManager";
 import { LocalBackupManager } from "./LocalBackupManager";
-import { WindowActivityObserver, WindowActivityObserverTopic, WindowActivityState } from "../../WindowActivityObserver";
+import { SessionStateTracker, type WorkbenchSessionPersistenceInfo } from "./SessionStateTracker";
 
 export enum PersistenceOrchestratorTopic {
     PERSISTENCE_INFO = "PersistenceInfo",
@@ -141,8 +145,9 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
             this._notifier.dismiss(toastId);
             this._notifier.error("Failed to persist session. Please try again later.");
         } finally {
-            if (this._destroyed) return;
-            this._saveInProgress = false;
+            if (!this._destroyed) {
+                this._saveInProgress = false;
+            }
         }
     }
 

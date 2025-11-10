@@ -4,14 +4,15 @@ import {
     getSessionQueryKey,
     getSessionsMetadataQueryKey,
 } from "@api";
+import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import type { Workbench } from "@framework/Workbench";
+
 import {
     createSessionWithCacheUpdate,
     updateSessionAndCache,
     createSnapshotWithCacheUpdate,
 } from "../../WorkbenchSession/utils/crudHelpers";
 
-import type { Workbench } from "@framework/Workbench";
-import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 
 /**
  * Manages all backend persistence interactions (CRUD + metadata polling).

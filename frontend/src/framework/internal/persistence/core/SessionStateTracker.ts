@@ -1,4 +1,5 @@
 import { isEqual } from "lodash";
+
 import type { PrivateWorkbenchSession } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import { makeWorkbenchSessionStateString } from "../../WorkbenchSession/utils/deserialization";
 import { hashSessionContentString } from "../../WorkbenchSession/utils/hash";

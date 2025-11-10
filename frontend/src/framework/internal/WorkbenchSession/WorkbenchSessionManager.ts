@@ -1,32 +1,35 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { toast } from "react-toastify";
-import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
-import { PrivateWorkbenchSession } from "./PrivateWorkbenchSession";
-import type { Workbench } from "@framework/Workbench";
-import { PersistenceOrchestrator } from "../persistence/core/PersistenceOrchestrator";
-import type { PersistenceNotifier } from "../persistence/ui/PersistenceNotifier";
-import { ToastNotifier } from "../persistence/ui/ToastNotifier";
-import {
-    loadSnapshotFromBackend,
-    loadWorkbenchSessionFromBackend,
-    loadWorkbenchSessionFromLocalStorage,
-} from "./utils/loaders";
-import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
-import { buildSessionUrl, buildSnapshotUrl, removeSessionIdFromUrl, removeSnapshotIdFromUrl } from "./utils/url";
-import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
-import { GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
-import { ConfirmationService } from "@framework/ConfirmationService";
-import { SessionValidationError } from "./utils/deserialization";
-import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isAxiosError } from "axios";
-import { readSessionIdFromUrl, readSnapshotIdFromUrl } from "./utils/url";
+import { toast } from "react-toastify";
+
 import {
     deleteSessionMutation,
     deleteSnapshotMutation,
     updateSessionMutation,
     type SessionUpdate_api,
 } from "@api";
+import { ConfirmationService } from "@framework/ConfirmationService";
+import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
+import { GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
+import type { Workbench } from "@framework/Workbench";
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+
+import { PersistenceOrchestrator } from "../persistence/core/PersistenceOrchestrator";
+import type { PersistenceNotifier } from "../persistence/ui/PersistenceNotifier";
+import { ToastNotifier } from "../persistence/ui/ToastNotifier";
+
+import { PrivateWorkbenchSession } from "./PrivateWorkbenchSession";
 import { removeSessionQueryData, removeSnapshotQueryData, replaceSessionQueryData } from "./utils/crudHelpers";
+import { SessionValidationError } from "./utils/deserialization";
+import {
+    loadSnapshotFromBackend,
+    loadWorkbenchSessionFromBackend,
+    loadWorkbenchSessionFromLocalStorage,
+} from "./utils/loaders";
+import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
+import { buildSessionUrl, buildSnapshotUrl, removeSessionIdFromUrl, removeSnapshotIdFromUrl , readSessionIdFromUrl, readSnapshotIdFromUrl } from "./utils/url";
+
 
 export enum WorkbenchSessionManagerTopic {
     ACTIVE_SESSION = "activeSession",

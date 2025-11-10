@@ -8,15 +8,15 @@ import { Dashboard } from "./internal/Dashboard";
 import { EnsembleUpdateMonitor } from "./internal/EnsembleUpdateMonitor";
 import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
-import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
+import type { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
+import { loadAllWorkbenchSessionsFromLocalStorage } from "./internal/WorkbenchSession/utils/loaders";
+import { readSessionIdFromUrl, readSnapshotIdFromUrl } from "./internal/WorkbenchSession/utils/url";
 import {
     WorkbenchSessionManager,
     WorkbenchSessionManagerTopic,
 } from "./internal/WorkbenchSession/WorkbenchSessionManager";
-import { readSessionIdFromUrl, readSnapshotIdFromUrl } from "./internal/WorkbenchSession/utils/url";
 import type { Template } from "./TemplateRegistry";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import { loadAllWorkbenchSessionsFromLocalStorage } from "./internal/WorkbenchSession/utils/loaders";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",
