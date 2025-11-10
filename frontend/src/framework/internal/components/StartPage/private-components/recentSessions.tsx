@@ -30,7 +30,7 @@ export function RecentSessions(props: RecentSessionsProps) {
 
     function handleSessionClick(sessionId: string, evt: React.MouseEvent) {
         evt.preventDefault();
-        props.workbench.openSession(sessionId);
+        props.workbench.getSessionManager().openSession(sessionId);
     }
 
     return (

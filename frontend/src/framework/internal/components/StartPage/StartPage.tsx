@@ -31,7 +31,7 @@ export function StartPage(props: StartPageProps) {
     );
 
     function handleNewSession() {
-        props.workbench.startNewSession();
+        props.workbench.getSessionManager().startNewSession();
     }
 
     function handleOpenTemplatesDialog() {

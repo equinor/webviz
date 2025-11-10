@@ -41,11 +41,11 @@ export type HeaderProps = {
 
 export const Header: React.FC<HeaderProps> = (props) => {
     const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
     const isSnapshot = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
     const moduleInstanceId = props.moduleInstance.getId();
@@ -274,7 +274,7 @@ type StatusIndicatorProps = {
 function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
 

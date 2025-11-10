@@ -30,7 +30,7 @@ export type ModuleInstanceLogProps = {
 
 export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNode {
     const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
     const [details, setDetails] = React.useState<Record<string, unknown> | null>(null);

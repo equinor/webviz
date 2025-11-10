@@ -9,7 +9,7 @@ import FmuLogo from "@assets/fmu.svg";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
-import { WorkbenchSessionPersistenceServiceTopic } from "@framework/internal/WorkbenchSessionPersistenceService";
+import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";
@@ -81,12 +81,12 @@ type TopBarButtonsProps = {
 
 function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
     const isSnapshot = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
 
     function handleCloseSessionClick() {
-        props.workbench.maybeCloseCurrentSession();
+        props.workbench.getSessionManager().closeSession();
     }
 
     const closeButtonTitle = isSnapshot ? "Close snapshot" : "Close session";
@@ -124,12 +124,12 @@ function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
     const activeWorkbenchSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.ACTIVE_SESSION);
 
     const isPersisted = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_PERSISTED,
     );
 
     const isSnapshot = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
 
@@ -164,23 +164,23 @@ type SessionTitleProps = {
 
 function SessionTitle(props: SessionTitleProps): React.ReactNode {
     const metadata = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.METADATA,
     );
 
     const isPersisted = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_PERSISTED,
     );
 
     const isSnapshot = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
 
     const persistenceInfo = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSessionPersistenceService(),
-        WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO,
+        props.workbench.getSessionManager().getPersistenceOrchestrator()!,
+        PersistenceOrchestratorTopic.PERSISTENCE_INFO,
     );
 
     const hasChanges = (persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null) || !isPersisted;
@@ -248,7 +248,7 @@ type SessionFromSnapshotButtonProps = {
 
 function SessionFromSnapshotButton(props: SessionFromSnapshotButtonProps): React.ReactNode {
     const handleClick = () => {
-        props.workbench.makeSessionFromSnapshot();
+        props.workbench.getSessionManager().convertSnapshotToSession();
     };
 
     return (
@@ -286,23 +286,23 @@ type SessionSaveButtonProps = {
 
 function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     const persistenceInfo = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSessionPersistenceService(),
-        WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO,
+        props.workbench.getSessionManager().getPersistenceOrchestrator()!,
+        PersistenceOrchestratorTopic.PERSISTENCE_INFO,
     );
 
     const isPersisted = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_PERSISTED,
     );
 
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 
     const handleSaveClick = () => {
-        props.workbench.saveCurrentSession();
+        props.workbench.getSessionManager().saveActiveSession(true);
     };
 
     const handleSaveAsClick = () => {
-        props.workbench.saveCurrentSessionAs();
+        props.workbench.getSessionManager().showSaveAsDialog();
     };
 
     const saveEnabled = persistenceInfo.hasChanges && isPersisted;
@@ -371,12 +371,16 @@ type RefreshSessionButtonProps = {
 
 function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode {
     const persistenceInfo = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSessionPersistenceService(),
-        WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO,
+        props.workbench.getSessionManager().getPersistenceOrchestrator()!,
+        PersistenceOrchestratorTopic.PERSISTENCE_INFO,
     );
 
     function handleRefreshClick() {
-        props.workbench.maybeRefreshSession();
+        // Reload the session from the server
+        const sessionId = props.workbench.getSessionManager().getActiveSession().getId();
+        if (sessionId) {
+            props.workbench.getSessionManager().openSession(sessionId);
+        }
     }
 
     if (

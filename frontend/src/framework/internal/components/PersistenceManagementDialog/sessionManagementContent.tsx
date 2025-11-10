@@ -269,7 +269,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
 
         setDeletePending(true);
 
-        const success = await props.workbench.deleteSession(selectedSessionId);
+        const success = await props.workbench.getSessionManager().deleteSession(selectedSessionId);
         setDeletePending(false);
 
         if (!success) {
@@ -288,11 +288,11 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
     function handleOpenSessionClick() {
         if (!selectedSessionId) return;
 
-        props.workbench.openSession(selectedSessionId);
+        props.workbench.getSessionManager().openSession(selectedSessionId);
     }
 
     function handleNewSessionClick() {
-        props.workbench.startNewSession();
+        props.workbench.getSessionManager().startNewSession();
     }
 
     return (

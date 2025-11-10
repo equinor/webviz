@@ -144,9 +144,9 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                             <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
                                 <View
                                     viewContext={props.moduleInstance.getContext()}
-                                    workbenchSession={props.workbench.getWorkbenchSession()}
+                                    workbenchSession={props.workbench.getSessionManager().getActiveSession()}
                                     workbenchServices={props.workbench.getWorkbenchServices()}
-                                    workbenchSettings={props.workbench.getWorkbenchSession().getWorkbenchSettings()}
+                                    workbenchSettings={props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings()}
                                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}
                                 />
                             </ApplyInterfaceEffectsToView>

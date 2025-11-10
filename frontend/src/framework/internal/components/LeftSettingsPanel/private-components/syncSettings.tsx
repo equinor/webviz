@@ -18,7 +18,7 @@ type ModulesListProps = {
 
 export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);

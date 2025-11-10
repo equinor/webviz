@@ -18,7 +18,7 @@ type LeftNavBarProps = {
 };
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
-    const workbenchSession = props.workbench.getWorkbenchSession();
+    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
     const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);

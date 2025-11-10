@@ -19,6 +19,10 @@ _DATABASE_NAME = "persistence"
 # We use 1.5MB to leave room for metadata and safety margin
 _MAX_CONTENT_SIZE_BYTES = 1.5 * 1024 * 1024  # 1.5MB
 
+# Pagination limits
+_MAX_PAGE_SIZE = 100
+_DEFAULT_PAGE_SIZE = 20
+
 
 class SnapshotStore:
     """
@@ -67,11 +71,11 @@ class SnapshotStore:
             DatabaseAccessError: If the database operation fails
         """
         # Validate content size
-        content_size = len(content.encode('utf-8'))
+        content_size = len(content.encode("utf-8"))
         if content_size > _MAX_CONTENT_SIZE_BYTES:
             raise ServiceRequestError(
                 f"Snapshot content size ({content_size / (1024*1024):.2f}MB) exceeds maximum allowed size of {_MAX_CONTENT_SIZE_BYTES / (1024*1024):.1f}MB",
-                Service.DATABASE
+                Service.DATABASE,
             )
 
         try:
@@ -148,6 +152,14 @@ class SnapshotStore:
         Raises:
             DatabaseAccessError: If the database operation fails
         """
+        # Enforce pagination limits
+        if page_size is None:
+            page_size = _DEFAULT_PAGE_SIZE
+        elif page_size > _MAX_PAGE_SIZE:
+            page_size = _MAX_PAGE_SIZE
+        elif page_size < 1:
+            page_size = _DEFAULT_PAGE_SIZE
+
         try:
             # Always filter by owner_id
             filter_list = filters or []

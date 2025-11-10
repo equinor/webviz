@@ -57,11 +57,12 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         }
 
         if (hasActiveSession) {
-            const activeWorkbenchSession = props.workbench.getWorkbenchSession();
+            const activeWorkbenchSession = props.workbench.getSessionManager().getActiveSession();
             if (activeWorkbenchSession && (activeWorkbenchSession.getId() === props.id || props.id === null)) {
-                props.workbench.getWorkbenchSession().updateMetadata({ title, description });
+                props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
                 props.workbench
-                    .saveCurrentSession()
+                    .getSessionManager()
+                    .saveActiveSession()
                     .then(() => {
                         setInputFeedback({});
                     })
@@ -78,6 +79,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         }
 
         props.workbench
+            .getSessionManager()
             .updateSession(props.id, { title, description })
             .then((result) => {
                 setInputFeedback({});
@@ -96,7 +98,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     }
 
     const layout = hasActiveSession
-        ? (props.workbench.getWorkbenchSession().getActiveDashboard().getLayout() ?? [])
+        ? (props.workbench.getSessionManager().getActiveSession().getActiveDashboard().getLayout() ?? [])
         : [];
 
     React.useEffect(

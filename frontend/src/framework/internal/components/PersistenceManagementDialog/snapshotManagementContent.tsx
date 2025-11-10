@@ -308,7 +308,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
 
         setDeletePending(true);
 
-        const success = await props.workbench.deleteSnapshot(selectedSnapshotId);
+        const success = await props.workbench.getSessionManager().deleteSnapshot(selectedSnapshotId);
         setDeletePending(false);
 
         if (!success) {
@@ -321,7 +321,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
     function handleOpenSnapshotClick() {
         if (!selectedSnapshotId) return;
 
-        props.workbench.openSnapshot(selectedSnapshotId);
+        props.workbench.getSessionManager().openSnapshot(selectedSnapshotId);
     }
 
     const tableData = React.useMemo(() => {

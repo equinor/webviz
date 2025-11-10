@@ -114,9 +114,9 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                         <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
                             <Settings
                                 settingsContext={props.moduleInstance.getContext()}
-                                workbenchSession={props.workbench.getWorkbenchSession()}
+                                workbenchSession={props.workbench.getSessionManager().getActiveSession()}
                                 workbenchServices={props.workbench.getWorkbenchServices()}
-                                workbenchSettings={props.workbench.getWorkbenchSession().getWorkbenchSettings()}
+                                workbenchSettings={props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings()}
                                 initialSettings={props.moduleInstance.getInitialSettings() || undefined}
                             />
                         </ApplyInterfaceEffectsToSettings>

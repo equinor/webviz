@@ -44,12 +44,12 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
     }
 
     function handleDiscard(sessionId: string | null) {
-        props.workbench.discardLocalStorageSession(sessionId);
+        props.workbench.getSessionManager().discardLocalStorageSession(sessionId);
         loadSessions();
     }
 
     function handleOpen(sessionId: string | null) {
-        props.workbench.openSessionFromLocalStorage(sessionId);
+        props.workbench.getSessionManager().openFromLocalStorage(sessionId);
     }
 
     return (

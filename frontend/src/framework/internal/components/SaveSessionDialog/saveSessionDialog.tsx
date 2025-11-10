@@ -35,9 +35,10 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
-        props.workbench.getWorkbenchSession().updateMetadata({ title, description });
+        props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
         props.workbench
-            .saveCurrentSession(true)
+            .getSessionManager()
+            .saveActiveSession(true)
             .then(() => {
                 setTitle("");
                 setDescription("");
@@ -64,7 +65,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         [isOpen],
     );
 
-    const layout = props.workbench.getWorkbenchSession().getActiveDashboard()?.getLayout() || [];
+    const layout = props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() || [];
 
     return (
         <Dialog

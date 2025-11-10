@@ -18,7 +18,7 @@ type LeftSettingsPanelProps = {
 };
 
 export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
-    const workbenchSession = props.workbench.getWorkbenchSession();
+    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);

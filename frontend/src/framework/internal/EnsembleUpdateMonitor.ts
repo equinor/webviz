@@ -99,7 +99,7 @@ export class EnsembleUpdateMonitor {
         logger.console?.log(`checkForEnsembleUpdate - fetching...`);
 
         try {
-            const workbenchSession = this._workbench.getWorkbenchSession();
+            const workbenchSession = this._workbench.getSessionManager().getActiveSession();
             if (!workbenchSession) {
                 console.warn(`No workbench session found, exiting...`);
                 return;

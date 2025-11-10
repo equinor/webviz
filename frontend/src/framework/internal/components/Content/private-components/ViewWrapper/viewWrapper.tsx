@@ -33,7 +33,7 @@ type ViewWrapperProps = {
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
     const [prevWidth, setPrevWidth] = React.useState<number>(props.width);

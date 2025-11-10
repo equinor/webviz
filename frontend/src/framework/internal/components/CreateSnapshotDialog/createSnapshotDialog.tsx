@@ -44,8 +44,8 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
             setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
-        props.workbench
-            .makeSnapshot(title, description)
+        props.workbench.getSessionManager()
+            .createSnapshot(title, description)
             .then((snapshotId) => {
                 if (!snapshotId) {
                     return;
@@ -68,7 +68,7 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
         setSnapshotUrl(null);
     }
 
-    const layout = props.workbench.getWorkbenchSession().getActiveDashboard()?.getLayout() || [];
+    const layout = props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() || [];
 
     let content: React.ReactNode = null;
     let actions: React.ReactNode = null;

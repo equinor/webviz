@@ -87,7 +87,7 @@ async def mark_logs_deleted_task(snapshot_id: str, retry_count: int = 0, max_ret
 
         # If there were failures and we haven't exceeded max retries, schedule a retry
         if fail > 0 and retry_count < max_retries:
-            retry_delay = 2 ** retry_count  # Exponential backoff: 1s, 2s, 4s
+            retry_delay = 2**retry_count  # Exponential backoff: 1s, 2s, 4s
             LOGGER.warning(
                 "Scheduling retry %d/%d for snapshot '%s' in %d seconds (%d failures).",
                 retry_count + 1,
@@ -110,7 +110,7 @@ async def mark_logs_deleted_task(snapshot_id: str, retry_count: int = 0, max_ret
         LOGGER.error("Unexpected error in mark_logs_deleted_task for snapshot '%s': %s", snapshot_id, e)
         # If this is a recoverable error and we haven't exceeded retries, try again
         if retry_count < max_retries:
-            retry_delay = 2 ** retry_count
+            retry_delay = 2**retry_count
             LOGGER.warning("Retrying mark_logs_deleted_task for snapshot '%s' in %d seconds.", snapshot_id, retry_delay)
             await asyncio.sleep(retry_delay)
             await mark_logs_deleted_task(snapshot_id, retry_count + 1, max_retries)

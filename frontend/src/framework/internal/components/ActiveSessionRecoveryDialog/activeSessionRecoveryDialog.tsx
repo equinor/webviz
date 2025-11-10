@@ -24,7 +24,7 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
         GuiState.ActiveSessionRecoveryDialogOpen,
     );
 
-    const activeSession = props.workbench.getWorkbenchSession();
+    const activeSession = props.workbench.getSessionManager().getActiveSession();
     const isLoading = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
 
     const [session, setSession] = React.useState<WorkbenchSessionDataContainer | null>(null);
@@ -53,12 +53,12 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
     }
 
     function handleDiscard() {
-        props.workbench.discardLocalStorageSession(activeSession.getId(), false);
+        props.workbench.getSessionManager().discardLocalStorageSession(activeSession.getId(), false);
         setIsOpen(false);
     }
 
     function handleOpen() {
-        props.workbench.updateSessionFromLocalStorage();
+        props.workbench.getSessionManager().updateFromLocalStorage();
     }
 
     return (

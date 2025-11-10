@@ -16,7 +16,7 @@ type RightNavBarProps = {
 };
 
 export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
-    const workbenchSession = props.workbench.getWorkbenchSession();
+    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();

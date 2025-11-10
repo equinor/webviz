@@ -19,6 +19,10 @@ _DATABASE_NAME = "persistence"
 # We use 1.5MB to leave room for metadata and safety margin
 _MAX_CONTENT_SIZE_BYTES = 1.5 * 1024 * 1024  # 1.5MB
 
+# Pagination limits
+_MAX_PAGE_SIZE = 100
+_DEFAULT_PAGE_SIZE = 20
+
 
 class SessionStore:
     """
@@ -63,11 +67,11 @@ class SessionStore:
             DatabaseAccessError: If the database operation fails
         """
         # Validate content size
-        content_size = len(content.encode('utf-8'))
+        content_size = len(content.encode("utf-8"))
         if content_size > _MAX_CONTENT_SIZE_BYTES:
             raise ServiceRequestError(
                 f"Session content size ({content_size / (1024*1024):.2f}MB) exceeds maximum allowed size of {_MAX_CONTENT_SIZE_BYTES / (1024*1024):.1f}MB",
-                Service.DATABASE
+                Service.DATABASE,
             )
 
         try:
@@ -213,11 +217,11 @@ class SessionStore:
         """
         # Validate content size if content is being updated
         if content is not None:
-            content_size = len(content.encode('utf-8'))
+            content_size = len(content.encode("utf-8"))
             if content_size > _MAX_CONTENT_SIZE_BYTES:
                 raise ServiceRequestError(
                     f"Session content size ({content_size / (1024*1024):.2f}MB) exceeds maximum allowed size of {_MAX_CONTENT_SIZE_BYTES / (1024*1024):.1f}MB",
-                    Service.DATABASE
+                    Service.DATABASE,
                 )
 
         try:
