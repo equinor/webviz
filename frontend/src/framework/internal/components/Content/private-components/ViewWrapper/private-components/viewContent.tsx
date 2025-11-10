@@ -14,12 +14,12 @@ import {
     useModuleInstanceTopicValue,
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
+import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { CrashView } from "./crashView";
+import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
 
 type ViewContentProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -27,7 +27,7 @@ type ViewContentProps = {
 };
 
 export const ViewContent = React.memo((props: ViewContentProps) => {
-    const workbenchSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.ACTIVE_SESSION);
+    const workbenchSession = useActiveSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
     const moduleInstanceLifeCycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
@@ -38,9 +38,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW,
     );
 
-    const atomStore = workbenchSession!
-        .getAtomStoreMaster()
-        .getAtomStoreForModuleInstance(props.moduleInstance.getId());
+    const atomStore = workbenchSession.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
     const handleModuleInstanceReload = React.useCallback(
         function handleModuleInstanceReload() {
@@ -146,7 +144,10 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                                     viewContext={props.moduleInstance.getContext()}
                                     workbenchSession={props.workbench.getSessionManager().getActiveSession()}
                                     workbenchServices={props.workbench.getWorkbenchServices()}
-                                    workbenchSettings={props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings()}
+                                    workbenchSettings={props.workbench
+                                        .getSessionManager()
+                                        .getActiveSession()
+                                        .getWorkbenchSettings()}
                                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}
                                 />
                             </ApplyInterfaceEffectsToView>

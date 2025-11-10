@@ -14,7 +14,7 @@ import {
     useModuleInstanceTopicValue,
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
+import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -23,6 +23,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
+import { useActiveSession } from "../../ActiveSessionBoundary";
 
 type ModuleSettingsProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -30,9 +31,9 @@ type ModuleSettingsProps = {
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
-    const workbenchSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.ACTIVE_SESSION);
+    const workbenchSession = useActiveSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
-    const dashboard = usePublishSubscribeTopicValue(workbenchSession!, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
 
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
 
@@ -116,7 +117,10 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                                 settingsContext={props.moduleInstance.getContext()}
                                 workbenchSession={props.workbench.getSessionManager().getActiveSession()}
                                 workbenchServices={props.workbench.getWorkbenchServices()}
-                                workbenchSettings={props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings()}
+                                workbenchSettings={props.workbench
+                                    .getSessionManager()
+                                    .getActiveSession()
+                                    .getWorkbenchSettings()}
                                 initialSettings={props.moduleInstance.getInitialSettings() || undefined}
                             />
                         </ApplyInterfaceEffectsToSettings>

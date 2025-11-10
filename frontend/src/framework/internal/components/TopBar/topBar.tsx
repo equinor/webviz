@@ -22,6 +22,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
+import { useActiveSession } from "../ActiveSessionBoundary";
 
 export type TopBarProps = {
     workbench: Workbench;
@@ -121,7 +122,7 @@ type EditSessionButtonProps = {
 function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
     const [editSessionDialogOpen, setEditSessionDialogOpen] = React.useState<boolean>(false);
 
-    const activeWorkbenchSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.ACTIVE_SESSION);
+    const activeWorkbenchSession = useActiveSession();
 
     const isPersisted = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getActiveSession(),

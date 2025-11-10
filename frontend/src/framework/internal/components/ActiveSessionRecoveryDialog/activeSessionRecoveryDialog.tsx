@@ -13,6 +13,7 @@ import { Dialog } from "@lib/components/Dialog";
 import { timeAgo } from "@lib/utils/dates";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { useActiveSession } from "../ActiveSessionBoundary";
 
 export type ActiveSessionRecoveryDialogProps = {
     workbench: Workbench;
@@ -24,17 +25,17 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
         GuiState.ActiveSessionRecoveryDialogOpen,
     );
 
-    const activeSession = props.workbench.getSessionManager().getActiveSession();
+    const activeSession = useActiveSession();
     const isLoading = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
 
-    const [session, setSession] = React.useState<WorkbenchSessionDataContainer | null>(null);
+    const [sessionData, setSessionData] = React.useState<WorkbenchSessionDataContainer | null>(null);
 
     const loadSession = React.useCallback(
         async function loadSession() {
             const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
 
             const storedSession = loadedSessions.find((s) => s.id === activeSession.getId());
-            setSession(storedSession || null);
+            setSessionData(storedSession || null);
         },
         [activeSession],
     );
@@ -48,7 +49,7 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
         [isOpen, loadSession],
     );
 
-    if (!isOpen || !session) {
+    if (!isOpen || !sessionData) {
         return null;
     }
 
@@ -83,15 +84,15 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
             We found an unsaved version of your current session in your local storage. You can either discard or recover
             it.
             <div className="flex gap-4 mt-4">
-                <DashboardPreview height={150} width={150} layout={extractLayout(session)} />
+                <DashboardPreview height={150} width={150} layout={extractLayout(sessionData)} />
                 <div className="flex flex-col gap-2">
                     <div className="flex flex-col gap-1">
                         <strong className="text-xs text-gray-500">Title</strong>
-                        {session.metadata.title}
+                        {sessionData.metadata.title}
                     </div>
                     <div className="flex flex-col gap-1">
                         <strong className="text-xs text-gray-500">Last modified</strong>
-                        {timeAgo(Date.now() - session.metadata.lastModifiedMs)}
+                        {timeAgo(Date.now() - sessionData.metadata.lastModifiedMs)}
                     </div>
                     <div className="flex flex-col gap-1">
                         <strong className="text-xs text-gray-500">Last persisted</strong>
