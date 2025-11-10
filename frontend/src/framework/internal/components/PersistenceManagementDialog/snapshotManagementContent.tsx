@@ -20,6 +20,7 @@ import type { TableColumns, TableSorting, TContext } from "@lib/components/Table
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
 import { formatDate } from "@lib/utils/dates";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { UserAvatar } from "../UserAvatar";
 
@@ -32,7 +33,6 @@ import {
     TABLE_HEIGHT,
     USE_ALTERNATING_COLUMN_COLORS,
 } from "./constants";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -129,7 +129,12 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
 
             const style = makeRowStyle(context);
             return (
-                <div className="group relative flex items-center min-w-0" title={url} onMouseLeave={handleMouseLeave}>
+                <div
+                    className="group relative flex items-center min-w-0"
+                    style={style}
+                    title={url}
+                    onMouseLeave={handleMouseLeave}
+                >
                     {/* Text */}
                     <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
 

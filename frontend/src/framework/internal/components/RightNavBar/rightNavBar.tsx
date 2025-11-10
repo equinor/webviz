@@ -4,12 +4,12 @@ import { FilterAlt, Fullscreen, FullscreenExit, GridView, History, WebAsset } fr
 
 import { GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type RightNavBarProps = {
     workbench: Workbench;

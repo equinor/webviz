@@ -6,13 +6,13 @@ import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker"
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 
 export type MakeSnapshotDialogProps = {
     workbench: Workbench;

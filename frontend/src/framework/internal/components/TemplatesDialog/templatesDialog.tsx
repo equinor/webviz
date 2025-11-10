@@ -1,5 +1,7 @@
 import React from "react";
 
+import { Search } from "@mui/icons-material";
+
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleDataTags, type ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
@@ -9,7 +11,6 @@ import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Search } from "@mui/icons-material";
 
 export type TemplatesDialogProps = {
     workbench: Workbench;
