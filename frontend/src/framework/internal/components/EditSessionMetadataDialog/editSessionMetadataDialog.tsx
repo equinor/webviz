@@ -10,6 +10,7 @@ import { Label } from "@lib/components/Label";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 
 export type EditSessionMetadataDialogProps = {
     workbench: Workbench;
@@ -136,7 +137,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                         <>
                             <CharLimitedInput
                                 onControlledValueChange={(value) => setTitle(value)}
-                                maxLength={30}
+                                maxLength={MAX_TITLE_LENGTH}
                                 inputRef={inputRef}
                                 placeholder="Enter session title"
                                 type="text"
@@ -152,7 +153,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                     <Label text="Description (optional)">
                         <>
                             <CharLimitedInput
-                                maxLength={250}
+                                maxLength={MAX_DESCRIPTION_LENGTH}
                                 onControlledValueChange={(value) => setDescription(value)}
                                 placeholder="Enter session description"
                                 value={description}

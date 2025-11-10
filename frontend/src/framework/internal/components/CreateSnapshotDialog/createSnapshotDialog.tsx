@@ -13,6 +13,7 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 
 export type MakeSnapshotDialogProps = {
     workbench: Workbench;
@@ -44,7 +45,8 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
             setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
-        props.workbench.getSessionManager()
+        props.workbench
+            .getSessionManager()
             .createSnapshot(title, description)
             .then((snapshotId) => {
                 if (!snapshotId) {
@@ -91,7 +93,7 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                         <>
                             <CharLimitedInput
                                 onControlledValueChange={(value) => setTitle(value)}
-                                maxLength={30}
+                                maxLength={MAX_TITLE_LENGTH}
                                 inputRef={inputRef}
                                 placeholder="Enter snapshot title"
                                 type="text"
@@ -107,7 +109,7 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                     <Label text="Description">
                         <>
                             <CharLimitedInput
-                                maxLength={250}
+                                maxLength={MAX_DESCRIPTION_LENGTH}
                                 onControlledValueChange={(value) => setDescription(value)}
                                 placeholder="Enter snapshot description"
                                 value={description}
