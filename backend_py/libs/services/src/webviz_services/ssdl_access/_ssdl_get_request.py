@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from webviz_core_utils.perf_timer import PerfTimer
 
-from webviz_services.services_config import _get_services_config
+from webviz_services.services_config import get_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.service_exceptions import (
     Service,
@@ -20,7 +20,7 @@ async def ssdl_get_request_async(access_token: str, endpoint: str, params: Optio
     Generic GET request to SSDL API.
     Uses `next` pagination to get all results.
     """
-    services_config = _get_services_config()
+    services_config = get_services_config()
 
     urlstring = f"https://api.gateway.equinor.com/subsurfacedata/v3/api/v3.0/{endpoint}?"
     params = params if params else {}

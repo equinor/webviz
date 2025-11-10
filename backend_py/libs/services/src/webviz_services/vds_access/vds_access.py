@@ -9,7 +9,7 @@ import httpx
 
 from webviz_services.service_exceptions import InvalidDataError, Service
 
-from webviz_services.services_config import _get_services_config
+from webviz_services.services_config import get_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.service_exceptions import ServiceRequestError
 
@@ -61,7 +61,7 @@ class VdsAccess:
     @staticmethod
     async def _query_async(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
         """Query the service"""
-        services_config = _get_services_config()
+        services_config = get_services_config()
         try:
             response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.post(
                 f"{services_config.vds_host_address}/{endpoint}",

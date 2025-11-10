@@ -3,7 +3,7 @@ from typing import List
 
 from webviz_core_utils.perf_timer import PerfTimer
 
-from webviz_services.services_config import _get_services_config
+from webviz_services.services_config import get_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.service_exceptions import ServiceRequestError, NoDataError, Service
 
@@ -11,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _make_headers(access_token: str) -> dict:
-    services_config = _get_services_config()
+    services_config = get_services_config()
 
     return {
         "Content-Type": "application/json",

@@ -26,7 +26,7 @@ def init_services_config(config: ServicesConfig) -> None:
     _global_config = config
 
 
-def _get_services_config() -> ServicesConfig:
+def get_services_config() -> ServicesConfig:
     """
     Get the services configuration. Requires prior call to init_services_config().
     """

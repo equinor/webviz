@@ -1,6 +1,6 @@
 import httpx
 
-from webviz_services.services_config import _get_services_config
+from webviz_services.services_config import get_services_config
 from webviz_services.service_exceptions import AuthorizationError, Service
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 
@@ -15,7 +15,7 @@ async def get_sas_token_and_blob_base_uri_for_case_async(sumo_access_token: str,
         {blob_store_base_uri}/{my_blob_id}?{sas_token}
     """
 
-    services_config = _get_services_config()
+    services_config = get_services_config()
     sumo_base_uri = f"https://main-sumo-{services_config.sumo_env}.radix.equinor.com/api/v1"
 
     req_url = f"{sumo_base_uri}/objects('{case_uuid}')/authtoken"

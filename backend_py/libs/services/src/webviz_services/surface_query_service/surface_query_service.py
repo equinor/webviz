@@ -7,7 +7,7 @@ from fmu.sumo.explorer.objects import SearchContext
 from pydantic import BaseModel
 from webviz_core_utils.perf_metrics import PerfMetrics
 
-from webviz_services.services_config import _get_services_config
+from webviz_services.services_config import get_services_config
 from webviz_services.sumo_access.sumo_blob_access import get_sas_token_and_blob_base_uri_for_case_async
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
@@ -75,7 +75,7 @@ async def batch_sample_surface_in_points_async(
     LOGGER.info(f"Running async go point sampling for surface: {surface_name}")
 
     # URL of the Go server endpoint
-    services_config = _get_services_config()
+    services_config = get_services_config()
     go_service_endpoint = f"{services_config.surface_query_url}/sample_in_points"
     response: httpx.Response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.post(
         url=go_service_endpoint, json=request_body.model_dump(), timeout=300

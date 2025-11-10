@@ -4,7 +4,7 @@ from enum import Enum
 
 import redis
 
-from webviz_services.services_config import _get_services_config
+from webviz_services.services_config import get_services_config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ class UserSessionDirectory:
     def __init__(self, user_id: str) -> None:
         self._user_id = user_id
 
-        services_config = _get_services_config()
+        services_config = get_services_config()
         self._redis_client = redis.Redis.from_url(services_config.redis_user_session_url, decode_responses=True)
 
     def get_session_info(self, job_component_name: str, instance_str: str) -> SessionInfo | None:

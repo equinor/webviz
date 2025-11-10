@@ -3,7 +3,7 @@ import logging
 from sumo.wrapper import SumoClient, RetryStrategy
 from webviz_core_utils.perf_timer import PerfTimer
 
-from webviz_services.services_config import _get_services_config
+from webviz_services.services_config import get_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 
 LOGGER = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ def create_sumo_client(access_token: str) -> SumoClient:
     timer: PerfTimer | None = None
     # timer = PerfTimer()
 
-    services_config = _get_services_config()
+    services_config = get_services_config()
 
     if access_token == "DUMMY_TOKEN_FOR_TESTING":  # nosec bandit B105
         sumo_client = SumoClient(env=services_config.sumo_env, interactive=False)
