@@ -1,4 +1,3 @@
-import { ParameterIdent } from "@framework/EnsembleParameters";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
@@ -65,20 +64,6 @@ const template: Template = {
                 },
             },
             initialSettings: {
-                parameterIdents: [
-                    new ParameterIdent("KVKH_CHANNEL", "GLOBVAR"),
-                    new ParameterIdent("KVKH_CREVASSE", "GLOBVAR"),
-                    new ParameterIdent("KVKH_US", "GLOBVAR"),
-                    new ParameterIdent("KVKH_LS", "GLOBVAR"),
-                    new ParameterIdent("FWL_CENTRAL", "GLOBVAR"),
-                    new ParameterIdent("FWL_NORTH_HORST", "GLOBVAR"),
-                    new ParameterIdent("GOC_NORTH_HORST", "GLOBVAR"),
-                    new ParameterIdent("RELPERM_INT_WO", "GLOBVAR"),
-                    new ParameterIdent("RELPERM_INT_GO", "GLOBVAR"),
-                    new ParameterIdent("ISOTREND_ALT1W_VALYSAR", "GLOBVAR"),
-                    new ParameterIdent("ISOTREND_ALT1W_THERYS", "GLOBVAR"),
-                    new ParameterIdent("ISOTREND_ALT1W_VOLON", "GLOBVAR"),
-                ],
                 showLabels: true,
                 correlationSettings: {
                     hideIndividualCells: true,
