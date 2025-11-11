@@ -16,11 +16,11 @@ build-backend = "poetry.core.masonry.api"
 bandit = "^1.8.6"
 black = "^25.9.0"
 mypy = "^1.18.2"
-pylint = "^3.3.9"
+pylint = "^4.0.2"
 pytest = "^8.4.2"
 pytest-timeout = "^2.4.0"
 pytest-asyncio = "^1.2.0"
-astroid = "^3.3.11"
+astroid = "^4.0.1"
 
 
 [tool.black]
