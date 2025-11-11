@@ -222,6 +222,10 @@ async def get_snapshot_access_logs(
     filter_created_to: Optional[str] = Query(None, description="Filter results by date"),
     filter_last_visited_from: Optional[str] = Query(None, description="Filter results by date of last visit"),
     filter_last_visited_to: Optional[str] = Query(None, description="Filter results by date of last visit"),
+    filter_owner_id: Optional[str] = Query(None, description="Filter results by snapshot owner ID"),
+    filter_snapshot_deleted: Optional[bool] = Query(
+        None, description="Filter results by deletion status of the snapshot"
+    ),
 ) -> schemas.Page[schemas.SnapshotAccessLog]:
     """
     Get a list of all snapshots you have visited.
@@ -258,6 +262,10 @@ async def get_snapshot_access_logs(
             filters.append(filter_factory.create("last_visited_at", filter_last_visited_from, "MORE", "_from"))
         if filter_last_visited_to:
             filters.append(filter_factory.create("last_visited_at", filter_last_visited_to, "LESS", "_to"))
+        if filter_owner_id:
+            filters.append(filter_factory.create("snapshot_owner_id", filter_owner_id, "EQUAL"))
+        if filter_snapshot_deleted is not None:
+            filters.append(filter_factory.create("snapshot_deleted", str(filter_snapshot_deleted).lower(), "EQUAL"))
 
         (items, cont_token) = await log_store.get_many_for_user_async(
             page_token=cursor,

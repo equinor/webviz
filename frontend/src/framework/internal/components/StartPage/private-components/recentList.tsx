@@ -9,7 +9,6 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 Icon.add({ folder_open });
 
@@ -74,13 +73,13 @@ export function RecentList<TItemType, TQueryData = unknown>(
             if (itemsQuery.status === "pending") {
                 return (
                     <span className="text-gray-500 flex gap-2">
-                        <CircularProgress size="extra-small" /> Loading recent sessions...
+                        <CircularProgress size="extra-small" /> Loading recent items...
                     </span>
                 );
             }
 
             if (itemsQuery.status === "error") {
-                return <span className="text-red-800">Could not fetch recent sessions...</span>;
+                return <span className="text-red-800">Could not fetch recent items...</span>;
             }
         }
 
@@ -110,12 +109,11 @@ export function RecentList<TItemType, TQueryData = unknown>(
                 </Typography>
                 <Tooltip title="Refresh" placement="bottom" enterDelay="medium">
                     <DenseIconButton onClick={handleRefreshClick}>
-                        <Refresh
-                            fontSize="small"
-                            className={resolveClassNames("text-indigo-800", {
-                                "animate-spin": isRefreshAnimationPlaying,
-                            })}
-                        />
+                        {isRefreshAnimationPlaying ? (
+                            <CircularProgress size="medium-small" color="fill-indigo-800" />
+                        ) : (
+                            <Refresh fontSize="small" className="text-indigo-800" />
+                        )}
                     </DenseIconButton>
                 </Tooltip>
                 <Tooltip title="Show all" placement="bottom" enterDelay="medium">

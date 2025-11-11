@@ -9,8 +9,10 @@ import { GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiM
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { truncateString } from "@lib/utils/strings";
 
 import { EnsembleUpdateMonitor } from "../EnsembleUpdateMonitor";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../persistence/constants";
 import { PersistenceOrchestrator } from "../persistence/core/PersistenceOrchestrator";
 import type { PersistenceNotifier } from "../persistence/ui/PersistenceNotifier";
 import { ToastNotifier } from "../persistence/ui/ToastNotifier";
@@ -19,6 +21,7 @@ import { PrivateWorkbenchSession } from "./PrivateWorkbenchSession";
 import { removeSessionQueryData, removeSnapshotQueryData, replaceSessionQueryData } from "./utils/crudHelpers";
 import { SessionValidationError } from "./utils/deserialization";
 import {
+    loadAllWorkbenchSessionsFromLocalStorage,
     loadSnapshotFromBackend,
     loadWorkbenchSessionFromBackend,
     loadWorkbenchSessionFromLocalStorage,
@@ -31,6 +34,7 @@ import {
     removeSnapshotIdFromUrl,
     readSessionIdFromUrl,
     readSnapshotIdFromUrl,
+    UrlError,
 } from "./utils/url";
 
 export enum WorkbenchSessionManagerTopic {
@@ -128,6 +132,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         return this._persistenceOrchestrator;
     }
 
+    beforeDestroy(): void {
+        this._persistenceOrchestrator?.stop();
+        this._ensembleUpdateMonitor.stopPolling();
+        this.unloadSession();
+    }
+
     // ========== Session Lifecycle ==========
 
     async startNewSession(): Promise<PrivateWorkbenchSession> {
@@ -161,7 +171,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             if (error instanceof SessionValidationError) {
                 errorExplanation = "The session data is invalid, corrupted or outdated.";
             }
-            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
 
             const result = await ConfirmationService.confirm({
                 title: "Could not load session",
@@ -186,7 +195,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async openSnapshot(snapshotId: string): Promise<PrivateWorkbenchSession> {
         try {
-            this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+            this._guiMessageBroker.setState(GuiState.IsLoadingSnapshot, true);
 
             const url = buildSnapshotUrl(snapshotId);
             window.history.pushState({}, "", url);
@@ -232,8 +241,60 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             throw error;
         } finally {
-            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+            this._guiMessageBroker.setState(GuiState.IsLoadingSnapshot, false);
         }
+    }
+
+    /**
+     * Tries to open a snapshot or session from the URL.
+     * @returns True if a session or snapshot was opened, false otherwise.
+     */
+    async maybeOpenFromUrl(): Promise<boolean> {
+        let snapshotId: string | null = null;
+
+        // Check if a snapshot/session id is in the URL
+        try {
+            snapshotId = readSnapshotIdFromUrl();
+        } catch (error) {
+            if (error instanceof UrlError) {
+                console.warn("Invalid ID in URL, ignoring URL parameters.", error);
+                toast.error("Invalid snapshot ID in URL, ignoring URL parameters.");
+                return false;
+            }
+        }
+
+        if (snapshotId) {
+            await this.openSnapshot(snapshotId);
+            return true;
+        }
+
+        let sessionId: string | null = null;
+
+        try {
+            sessionId = readSessionIdFromUrl();
+        } catch (error) {
+            if (error instanceof UrlError) {
+                console.warn("Invalid ID in URL, ignoring URL parameters.", error);
+                toast.error("Invalid session ID in URL, ignoring URL parameters.");
+                return false;
+            }
+        }
+
+        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
+
+        if (sessionId) {
+            await this.openSession(sessionId);
+            if (storedSessions.find((el) => el.id === sessionId)) {
+                this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);
+            }
+            return true;
+        }
+
+        if (storedSessions.length > 0) {
+            this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, true);
+        }
+
+        return false;
     }
 
     async openFromLocalStorage(sessionId: string | null, forceOpen = false): Promise<PrivateWorkbenchSession> {
@@ -251,6 +312,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
             await this.setActiveSession(session);
+
+            if (session.getIsPersisted() && sessionId) {
+                const url = buildSessionUrl(sessionId);
+                window.history.pushState({}, "", url);
+            }
 
             this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
             this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
@@ -280,6 +346,53 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionManagerTopic.ACTIVE_SESSION);
+    }
+
+    /**
+     * Prompt user to save changes before closing current session.
+     * Returns true if session was closed successfully, false if user cancelled.
+     */
+    async maybeCloseCurrentSession(): Promise<boolean> {
+        if (!this.hasActiveSession()) {
+            return true;
+        }
+
+        if (this.hasDirtyChanges()) {
+            const result = await ConfirmationService.confirm({
+                title: "Unsaved Changes",
+                message: "You have unsaved changes in your current session. Do you want to save them before closing?",
+                actions: [
+                    { id: "cancel", label: "Cancel" },
+                    { id: "discard", label: "Discard Changes", color: "danger" },
+                    { id: "save", label: "Save Changes", color: "success" },
+                ],
+            });
+
+            if (result === "cancel") {
+                return false;
+            }
+
+            if (result === "save") {
+                const activeSession = this.getActiveSession();
+                if (!activeSession.getIsPersisted()) {
+                    this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
+                    return false; // Wait for user to save
+                }
+                await this.saveActiveSession(true);
+                this.closeSession();
+                return true;
+            }
+
+            if (result === "discard") {
+                this.closeSession();
+                return true;
+            }
+
+            throw new Error(`Unexpected confirmation result: ${result}`);
+        }
+
+        this.closeSession();
+        return true;
     }
 
     // ========== Internal Session Management ==========
@@ -411,12 +524,14 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
 
         // Update session metadata
+        const description = this._activeSession.getMetadata().description;
+        const now = Date.now();
         this._activeSession.setMetadata({
-            title: "New Session from Snapshot",
-            description: undefined,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            lastModifiedMs: Date.now(),
+            title: `${truncateString(this._activeSession.getMetadata().title, MAX_TITLE_LENGTH - 11)} (snapshot)`,
+            description: description ? truncateString(description, MAX_DESCRIPTION_LENGTH) : undefined,
+            createdAt: now,
+            updatedAt: now,
+            lastModifiedMs: now,
         });
         this._activeSession.setIsSnapshot(false);
         this._activeSession.resetId();
@@ -571,53 +686,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         return true;
     }
 
-    /**
-     * Prompt user to save changes before closing current session.
-     * Returns true if session was closed successfully, false if user cancelled.
-     */
-    private async maybeCloseCurrentSession(): Promise<boolean> {
-        if (!this.hasActiveSession()) {
-            return true;
-        }
-
-        if (this.hasDirtyChanges()) {
-            const result = await ConfirmationService.confirm({
-                title: "Unsaved Changes",
-                message: "You have unsaved changes in your current session. Do you want to save them before closing?",
-                actions: [
-                    { id: "cancel", label: "Cancel" },
-                    { id: "discard", label: "Discard Changes", color: "danger" },
-                    { id: "save", label: "Save Changes", color: "success" },
-                ],
-            });
-
-            if (result === "cancel") {
-                return false;
-            }
-
-            if (result === "save") {
-                const activeSession = this.getActiveSession();
-                if (!activeSession.getIsPersisted()) {
-                    this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
-                    return false; // Wait for user to save
-                }
-                await this.saveActiveSession(true);
-                this.closeSession();
-                return true;
-            }
-
-            if (result === "discard") {
-                this.closeSession();
-                return true;
-            }
-
-            throw new Error(`Unexpected confirmation result: ${result}`);
-        }
-
-        this.closeSession();
-        return true;
-    }
-
     // ========== Session Metadata Operations ==========
 
     async updateSession(sessionId: string, sessionUpdate: SessionUpdate_api): Promise<boolean> {
@@ -670,6 +738,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         if (result !== "delete") return false;
 
         let success = false;
+        const toastId = toast.loading("Deleting session...", { autoClose: false });
 
         try {
             await this._queryClient
@@ -677,12 +746,15 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 .build(this._queryClient, {
                     ...deleteSessionMutation(),
                     onSuccess: () => {
+                        toast.dismiss(toastId);
+                        toast.success("Session successfully deleted.");
                         success = true;
                         removeSessionQueryData(this._queryClient, sessionId);
                     },
                 })
                 .execute({ path: { session_id: sessionId } });
         } catch (error) {
+            toast.dismiss(toastId);
             toast.error("An error occurred while deleting the session.");
             console.error("Failed to delete session:", error);
         }
@@ -704,28 +776,27 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
         let success = false;
 
+        const toastId = toast.loading("Deleting snapshot...", { autoClose: false });
+
         try {
             await this._queryClient
                 .getMutationCache()
                 .build(this._queryClient, {
                     ...deleteSnapshotMutation(),
                     onSuccess: () => {
+                        toast.dismiss(toastId);
+                        toast.success("Snapshot successfully deleted.");
                         success = true;
-                        removeSnapshotQueryData(this._queryClient, snapshotId);
+                        removeSnapshotQueryData(this._queryClient);
                     },
                 })
                 .execute({ path: { snapshot_id: snapshotId } });
         } catch (error) {
+            toast.dismiss(toastId);
             toast.error("An error occurred while deleting the snapshot.");
             console.error("Failed to delete snapshot:", error);
         }
 
         return success;
-    }
-
-    beforeDestroy(): void {
-        this._persistenceOrchestrator?.stop();
-        this._ensembleUpdateMonitor.stopPolling();
-        this.unloadSession();
     }
 }

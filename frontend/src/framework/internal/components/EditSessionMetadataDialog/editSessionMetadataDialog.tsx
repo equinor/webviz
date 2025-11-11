@@ -10,6 +10,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { Label } from "@lib/components/Label";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { truncateString } from "@lib/utils/strings";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
@@ -32,10 +33,24 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         props.workbench.getSessionManager(),
         WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
     );
+
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 
-    const [title, setTitle] = React.useState<string>(props.title);
-    const [description, setDescription] = React.useState<string>(props.description ?? "");
+    const [title, setTitle] = React.useState<string>("");
+    const [description, setDescription] = React.useState<string>("");
+
+    const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
+    const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
+
+    if (props.title !== prevOriginalTitle) {
+        setPrevOriginalTitle(props.title);
+        setTitle(`${truncateString(props.title, MAX_TITLE_LENGTH)}`);
+    }
+    if (props.description !== prevOriginalDescription) {
+        setPrevOriginalDescription(props.description ?? "");
+        setDescription(`${truncateString(props.description ?? "", MAX_DESCRIPTION_LENGTH)}`);
+    }
+
     const [inputFeedback, setInputFeedback] = React.useState<EditSessionDialogInputFeedback>({});
     const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -99,6 +114,8 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
 
     function handleCancel() {
         setInputFeedback({});
+        setPrevOriginalTitle("");
+        setPrevOriginalDescription("");
         props.onClose?.();
     }
 

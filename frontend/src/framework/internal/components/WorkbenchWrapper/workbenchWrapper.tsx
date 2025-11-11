@@ -33,6 +33,7 @@ export function WorkbenchWrapper() {
     const [workbench] = React.useState(new Workbench(queryClient));
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
     const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
+    const isSnapshotLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSnapshot);
     const hasActiveSession = usePublishSubscribeTopicValue(
         workbench.getSessionManager(),
         WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
@@ -52,6 +53,8 @@ export function WorkbenchWrapper() {
         content = <LoadingOverlay text="Initializing application..." />;
     } else if (isSessionLoading) {
         content = <LoadingOverlay text="Loading session..." />;
+    } else if (isSnapshotLoading) {
+        content = <LoadingOverlay text="Loading snapshot..." />;
     } else if (!hasActiveSession) {
         content = <StartPage workbench={workbench} />;
     }

@@ -1,6 +1,32 @@
+/**
+ * Sorts object keys recursively to ensure deterministic JSON output
+ */
+function sortKeysRecursively(obj: unknown): unknown {
+    if (obj === null || obj === undefined) {
+        return obj;
+    }
+
+    if (Array.isArray(obj)) {
+        return obj.map(sortKeysRecursively);
+    }
+
+    if (typeof obj === 'object') {
+        const sorted: Record<string, unknown> = {};
+        const keys = Object.keys(obj).sort();
+        for (const key of keys) {
+            sorted[key] = sortKeysRecursively((obj as Record<string, unknown>)[key]);
+        }
+        return sorted;
+    }
+
+    return obj;
+}
+
 export function objectToJsonString(obj: unknown): string {
     try {
-        return JSON.stringify(obj, null, 2);
+        // Sort keys recursively to ensure deterministic output
+        const sorted = sortKeysRecursively(obj);
+        return JSON.stringify(sorted, null, 2);
     } catch (error) {
         console.error("Failed to convert object to JSON string. Offending object:", obj, "Error:", error);
         throw error;

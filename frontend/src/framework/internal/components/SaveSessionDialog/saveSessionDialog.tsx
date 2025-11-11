@@ -8,7 +8,9 @@ import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedIn
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { Label } from "@lib/components/Label";
+import { truncateString } from "@lib/utils/strings";
 
+import { useActiveSession } from "../ActiveSessionBoundary";
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
 export type SaveSessionDialogProps = {
@@ -21,10 +23,28 @@ type SaveSessionDialogInputFeedback = {
 };
 
 export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
-    const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.SaveSessionDialogOpen);
-    const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
+    const activeSession = useActiveSession();
+
+    const originalTitle = activeSession.getMetadata().title;
+    const originalDescription = activeSession.getMetadata().description ?? "";
+
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
+
+    const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
+    const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
+
+    if (originalTitle !== prevOriginalTitle) {
+        setPrevOriginalTitle(originalTitle);
+        setTitle(`${truncateString(originalTitle, MAX_TITLE_LENGTH)}`);
+    }
+    if (originalDescription !== prevOriginalDescription) {
+        setPrevOriginalDescription(originalDescription);
+        setDescription(originalDescription);
+    }
+
+    const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.SaveSessionDialogOpen);
+    const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
     const [inputFeedback, setInputFeedback] = React.useState<SaveSessionDialogInputFeedback>({});
     const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -41,8 +61,6 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             .getSessionManager()
             .saveActiveSession(true)
             .then(() => {
-                setTitle("");
-                setDescription("");
                 setInputFeedback({});
             })
             .catch((error) => {
@@ -52,8 +70,8 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
 
     function handleCancel() {
         setIsOpen(false);
-        setTitle("");
-        setDescription("");
+        setPrevOriginalTitle("");
+        setPrevOriginalDescription("");
         setInputFeedback({});
     }
 

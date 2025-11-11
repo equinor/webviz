@@ -20,7 +20,11 @@ import {
 import { PrivateWorkbenchSettings, PrivateWorkbenchSettingsTopic } from "../PrivateWorkbenchSettings";
 
 import type { SerializedWorkbenchSessionContentState } from "./PrivateWorkbenchSession.schema";
-import { isPersisted, type WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
+import {
+    isPersisted,
+    WorkbenchSessionSource,
+    type WorkbenchSessionDataContainer,
+} from "./utils/WorkbenchSessionDataContainer";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -89,7 +93,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     };
     private _userCreatedItems: UserCreatedItems;
     private _metadata: WorkbenchSessionMetadata = {
-        title: "New Workbench Session",
+        title: "New Session",
         createdAt: Date.now(),
         updatedAt: Date.now(),
         lastModifiedMs: Date.now(),
@@ -229,7 +233,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         this._settings.deserializeState(contentState.settings);
         this._userCreatedItems.deserializeState(contentState.userCreatedItems);
-        this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
 
         const userEnsembleSettings: UserEnsembleSetting[] = contentState.ensembleSet.regularEnsembles.map((e) => ({
             ensembleIdent: RegularEnsembleIdent.fromString(e.ensembleIdent),
@@ -435,6 +438,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             session.setIsSnapshot(dataContainer.isSnapshot);
         }
 
+        session.setLoadedFromLocalStorage(dataContainer.source === WorkbenchSessionSource.LOCAL_STORAGE);
         session.setMetadata(dataContainer.metadata);
         await session.deserializeContentState(dataContainer.content);
 

@@ -12,7 +12,9 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { truncateString } from "@lib/utils/strings";
 
+import { useActiveSession } from "../ActiveSessionBoundary";
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
 export type MakeSnapshotDialogProps = {
@@ -25,12 +27,30 @@ type MakeSnapshotDialogInputFeedback = {
 };
 
 export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactNode {
+    const activeSession = useActiveSession();
+
+    const originalTitle = activeSession.getMetadata().title;
+    const originalDescription = activeSession.getMetadata().description ?? "";
+
+    const [title, setTitle] = React.useState<string>("");
+    const [description, setDescription] = React.useState<string>("");
+
+    const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
+    const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
+
+    if (originalTitle !== prevOriginalTitle) {
+        setPrevOriginalTitle(originalTitle);
+        setTitle(`Snapshot: ${truncateString(originalTitle, MAX_TITLE_LENGTH)}`);
+    }
+    if (originalDescription !== prevOriginalDescription) {
+        setPrevOriginalDescription(originalDescription);
+        setDescription(originalDescription);
+    }
+
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.MakeSnapshotDialogOpen);
 
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsMakingSnapshot);
 
-    const [title, setTitle] = React.useState<string>("");
-    const [description, setDescription] = React.useState<string>("");
     const [snapshotUrl, setSnapshotUrl] = React.useState<string | null>(null);
     const [inputFeedback, setInputFeedback] = React.useState<MakeSnapshotDialogInputFeedback>({});
 
@@ -52,8 +72,6 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 if (!snapshotId) {
                     return;
                 }
-                setTitle("");
-                setDescription("");
                 setInputFeedback({});
                 setSnapshotUrl(buildSnapshotUrl(snapshotId));
             })
@@ -64,8 +82,8 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
 
     function handleCancel() {
         setIsOpen(false);
-        setTitle("");
-        setDescription("");
+        setPrevOriginalTitle("");
+        setPrevOriginalDescription("");
         setInputFeedback({});
         setSnapshotUrl(null);
     }

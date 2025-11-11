@@ -6,11 +6,13 @@ import {
     getSessionMetadataQueryKey,
     getSessionQueryKey,
     getSessionsMetadataQueryKey,
+    getSnapshotAccessLogsInfiniteQueryKey,
+    getSnapshotAccessLogsQueryKey,
+    getSnapshotsMetadataInfiniteQueryKey,
     getSnapshotsMetadataQueryKey,
     updateSession,
     type NewSession_api,
     type PageSessionMetadata_api,
-    type PageSnapshotMetadata_api,
     type Session_api,
     type SessionUpdate_api,
 } from "@api";
@@ -122,54 +124,13 @@ export function removeSessionQueryData(queryClient: QueryClient, deletedSessionI
     );
 }
 
-export function removeSnapshotQueryData(queryClient: QueryClient, deletedSnapshotId: string) {
-    const snapshotsListFilter = makeTanstackQueryFilters([getSnapshotsMetadataQueryKey()]);
-    const snapshotsInfiniteListFilter = { queryKey: ["getSnapshotsMetadata", "infinite"] };
-
-    queryClient.setQueriesData(snapshotsListFilter, function dropSnapshotFromList(page: PageSnapshotMetadata_api) {
-        if (!page) return undefined;
-
-        const { pageToken, items } = page;
-        let dropped = false;
-
-        const newItems = items.filter((snapshot) => {
-            if (snapshot.id !== deletedSnapshotId) return true;
-
-            dropped = true;
-            return false;
-        });
-
-        if (dropped) return { pageToken, items: newItems };
-        return undefined;
-    });
-
-    queryClient.setQueriesData(
-        snapshotsInfiniteListFilter,
-        function dropSnapshotFromList(oldData: InfiniteData<PageSnapshotMetadata_api>) {
-            if (!oldData) return undefined;
-
-            const pageParams = oldData.pageParams;
-            const existingPages = oldData.pages;
-
-            let dropped = false;
-
-            const newPages = existingPages.map((page) => {
-                const { pageToken, items } = page;
-
-                const newItems = items.filter((snapshot) => {
-                    if (snapshot.id !== deletedSnapshotId) return true;
-
-                    dropped = true;
-                    return false;
-                });
-
-                return { pageToken, items: newItems };
-            });
-
-            if (dropped) return { pageParams, pages: newPages };
-            return undefined;
-        },
-    );
+export function removeSnapshotQueryData(queryClient: QueryClient) {
+    // Invalidate all snapshot-related queries to force immediate refetch and re-render
+    // This is more reliable than manually filtering data for ensuring UI updates
+    queryClient.invalidateQueries(makeTanstackQueryFilters([getSnapshotsMetadataQueryKey()]));
+    queryClient.invalidateQueries(makeTanstackQueryFilters([getSnapshotsMetadataInfiniteQueryKey()]));
+    queryClient.invalidateQueries(makeTanstackQueryFilters([getSnapshotAccessLogsQueryKey()]));
+    queryClient.invalidateQueries(makeTanstackQueryFilters([getSnapshotAccessLogsInfiniteQueryKey()]));
 }
 
 export function replaceSessionQueryData(queryClient: QueryClient, newSession: Session_api) {

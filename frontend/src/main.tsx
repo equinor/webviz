@@ -52,7 +52,7 @@ root.render(
             <AuthProvider>
                 <CustomQueryClientProvider>
                     <>
-                        <ToastContainer stacked newestOnTop limit={3} position="bottom-right" />
+                        <ToastContainer limit={3} position="bottom-right" />
                         <App />
                     </>
                 </CustomQueryClientProvider>

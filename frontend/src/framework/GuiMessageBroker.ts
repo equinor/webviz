@@ -34,6 +34,7 @@ export enum GuiState {
     SessionHasUnsavedChanges = "sessionHasUnsavedChanges",
     IsSavingSession = "isSavingSession",
     IsLoadingSession = "isLoadingSession",
+    IsLoadingSnapshot = "isLoadingSnapshot",
     IsMakingSnapshot = "isMakingSnapshot",
     EnsembleDialogOpen = "ensembleDialogOpen",
     MultiSessionsRecoveryDialogOpen = "multiSessionsRecoveryDialogOpen",
@@ -108,6 +109,7 @@ type GuiStateValueTypes = {
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
     [GuiState.NumberOfEffectiveRealizationFilters]: number;
     [GuiState.IsLoadingSession]: boolean;
+    [GuiState.IsLoadingSnapshot]: boolean;
     [GuiState.IsSavingSession]: boolean;
     [GuiState.EnsembleDialogOpen]: boolean;
     [GuiState.MultiSessionsRecoveryDialogOpen]: boolean;
@@ -132,6 +134,7 @@ defaultStates.set(GuiState.AppInitialized, false);
 defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
 defaultStates.set(GuiState.NumberOfEffectiveRealizationFilters, 0);
 defaultStates.set(GuiState.IsLoadingSession, false);
+defaultStates.set(GuiState.IsLoadingSnapshot, false);
 defaultStates.set(GuiState.IsSavingSession, false);
 defaultStates.set(GuiState.EditDataChannelConnections, false);
 defaultStates.set(GuiState.EnsembleDialogOpen, false);

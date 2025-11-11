@@ -78,7 +78,25 @@ class FilterFactory:
                 return False
 
             field_type = current_model.__annotations__.get(part)
+
+            # If not in annotations, check if it's a computed field
             if field_type is None:
+                # Access model_computed_fields property correctly
+                model_computed_fields_prop = getattr(current_model, "model_computed_fields", None)
+                if model_computed_fields_prop and isinstance(model_computed_fields_prop, property):
+                    computed_fields = model_computed_fields_prop.fget(current_model)
+                else:
+                    computed_fields = {}
+
+                if part in computed_fields:
+                    # If this is the last part and it's a computed field, we found it
+                    if part == parts[-1]:
+                        self._field_cache[field_path] = True
+                        return True
+                    # Computed fields can't have nested fields
+                    self._field_cache[field_path] = False
+                    return False
+
                 self._field_cache[field_path] = False
                 return False
 
@@ -122,7 +140,24 @@ class FilterFactory:
                 return None
 
             field_type = current_model.__annotations__.get(part)
+
+            # If not in annotations, check if it's a computed field
             if field_type is None:
+                # Access model_computed_fields property correctly
+                model_computed_fields_prop = getattr(current_model, "model_computed_fields", None)
+                if model_computed_fields_prop and isinstance(model_computed_fields_prop, property):
+                    computed_fields = model_computed_fields_prop.fget(current_model)
+                else:
+                    computed_fields = {}
+
+                if part in computed_fields:
+                    # If this is the last part and it's a computed field, return its type
+                    if part == parts[-1]:
+                        computed_field_info = computed_fields[part]
+                        return computed_field_info.return_type if hasattr(computed_field_info, "return_type") else None
+                    # Computed fields can't have nested fields
+                    return None
+
                 return None
 
             # Handle Optional types

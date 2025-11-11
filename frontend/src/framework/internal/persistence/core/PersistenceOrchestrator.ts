@@ -4,11 +4,10 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { WindowActivityObserver, WindowActivityObserverTopic, WindowActivityState } from "../../WindowActivityObserver";
-import type { PrivateWorkbenchSession} from "../../WorkbenchSession/PrivateWorkbenchSession";
+import type { PrivateWorkbenchSession } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import { PrivateWorkbenchSessionTopic } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import { AUTO_SAVE_DEBOUNCE_MS, BACKEND_POLLING_INTERVAL_MS, MAX_CONTENT_SIZE_BYTES } from "../constants";
 import type { PersistenceNotifier } from "../ui/PersistenceNotifier";
-
 
 import { BackendSyncManager } from "./BackendSyncManager";
 import { LocalBackupManager } from "./LocalBackupManager";
@@ -37,6 +36,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
     private _pollingInterval: ReturnType<typeof setInterval> | null = null;
     private _saveInProgress: boolean = false;
     private _destroyed: boolean = false;
+    private _isInitializing: boolean = false;
 
     constructor(workbench: Workbench, session: PrivateWorkbenchSession, notifier: PersistenceNotifier) {
         this._session = session;
@@ -69,11 +69,23 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         if (this._pollingInterval) return; // already started
         if (this._session.isSnapshot()) return;
 
+        // Mark as initializing to prevent premature backups
+        this._isInitializing = true;
+
+        // Subscribe to changes BEFORE initializing to catch any changes during hash calculation
+        this.subscribeToSessionChanges();
+
         await this._tracker.initialize(this._session.getIsLoadedFromLocalStorage());
         this.notifyPersistenceInfoChanged();
 
-        this.subscribeToSessionChanges();
         this.startBackendPolling();
+
+        // Allow time for React components to mount and settle after session becomes active
+        // This prevents initial component effects from triggering spurious backups
+        // Use a delay longer than the debounce to ensure any pending refreshes are ignored
+        setTimeout(() => {
+            this._isInitializing = false;
+        }, AUTO_SAVE_DEBOUNCE_MS + 50);
     }
 
     stop() {
@@ -198,6 +210,9 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
     }
 
     private scheduleRefresh(delay = AUTO_SAVE_DEBOUNCE_MS) {
+        // Don't schedule refreshes during initialization
+        if (this._isInitializing) return;
+
         if (this._debounceTimeout) clearTimeout(this._debounceTimeout);
 
         this._debounceTimeout = setTimeout(async () => {

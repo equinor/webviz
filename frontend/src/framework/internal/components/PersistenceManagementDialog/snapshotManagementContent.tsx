@@ -2,12 +2,13 @@ import React from "react";
 
 import { DateRangePicker } from "@equinor/eds-core-react";
 import type { Options } from "@hey-api/client-axios";
-import { Close, ContentCopy, Delete, FileOpen, Search } from "@mui/icons-material";
+import { Close, ContentCopy, Delete, FileOpen, Refresh, Search } from "@mui/icons-material";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { omit } from "lodash";
 
 import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
+import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
@@ -15,6 +16,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
 import type { TableColumns, TableSorting, TContext } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
@@ -42,6 +44,8 @@ type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetad
 type TableFilter = {
     title?: string;
     visitedAt?: FilterRange;
+    ownerId?: string;
+    snapshotDeleted?: boolean;
 };
 
 const makeRowStyle = (context: TContext<FlattenedSnapshotAccessLog_api>): React.CSSProperties => {
@@ -247,6 +251,7 @@ export type SnapshotOverviewContentProps = {
 };
 
 export function SnapshotManagementContent(props: SnapshotOverviewContentProps): React.ReactNode {
+    const userId = useAuthProvider().userInfo?.user_id;
     const [selectedSnapshotId, setSelectedSnapshotId] = React.useState<string | null>(null);
     const [deletePending, setDeletePending] = React.useState<boolean>(false);
 
@@ -268,6 +273,8 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
             filter_title: tableFilter.title,
             filter_updated_from: tableFilter.visitedAt?.from,
             filter_updated_to: tableFilter.visitedAt?.to,
+            filter_owner_id: tableFilter.ownerId,
+            filter_snapshot_deleted: tableFilter.snapshotDeleted,
         };
     }, [tableFilter, tableSortState]);
 
@@ -285,7 +292,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         enabled: props.active,
     });
 
-    function onFilterRangeChange(newRange: null | EdsFilterRange) {
+    function handleFilterRangeChange(newRange: null | EdsFilterRange) {
         setTableFilter((prev) => {
             return {
                 ...prev,
@@ -299,6 +306,29 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
             return {
                 ...prev,
                 title: newValue || undefined,
+            };
+        });
+    }
+
+    function handleShowMySnapshotsOnlyChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const checked = e.target.checked;
+
+        if (!userId) return;
+        setTableFilter((prev) => {
+            return {
+                ...prev,
+                ownerId: checked ? userId : undefined,
+            };
+        });
+    }
+
+    function handleHideDeletedSnapshotsChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const checked = e.target.checked;
+
+        setTableFilter((prev) => {
+            return {
+                ...prev,
+                snapshotDeleted: checked ? true : undefined,
             };
         });
     }
@@ -322,6 +352,10 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         if (!selectedSnapshotId) return;
 
         props.workbench.getSessionManager().openSnapshot(selectedSnapshotId);
+    }
+
+    function handleRefreshClick() {
+        snapshotsQuery.refetch();
     }
 
     const tableData = React.useMemo(() => {
@@ -372,19 +406,19 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         className="h-6"
                     />
                 </Label>
-
-                {/* TODO: Allow the user to filter on owner. Awaiting fixed picker comp, which I think is being done on the ensemble dialog */}
-                {/* <Label text="Last visited at" wrapperClassName="">
-                </Label> */}
-
                 <Label text="Last visited at" wrapperClassName="min-w-2xs">
                     <DateRangePicker
-                        onChange={onFilterRangeChange}
+                        onChange={handleFilterRangeChange}
                         className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300 h-10"
                     />
                 </Label>
             </div>
-            <div className="flex gap-2 mb-2 justify-end">
+            <div className="flex gap-2 mb-2 items-center">
+                <Switch checked={tableFilter.ownerId === userId} onChange={handleShowMySnapshotsOnlyChange} />
+                <span className="text-sm mr-4">Show my snapshots only</span>
+                <Switch checked={tableFilter.snapshotDeleted} onChange={handleHideDeletedSnapshotsChange} />
+                <span className="text-sm">Hide deleted snapshots</span>
+                <span className="grow" />
                 <Tooltip
                     title={isSnapshotDeleted ? "Selected snapshot has been deleted" : "Open selected snapshot"}
                     placement="top"
@@ -411,6 +445,12 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         size="medium"
                     >
                         {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Refresh list" placement="top" enterDelay="medium">
+                    <Button color="primary" onClick={handleRefreshClick} size="medium">
+                        {snapshotsQuery.isFetching ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />}{" "}
+                        Refresh
                     </Button>
                 </Tooltip>
             </div>

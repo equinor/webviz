@@ -48,7 +48,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                 )}
             >
                 <LogoWithText />
-                <div className="flex gap-2 items-center grow">
+                <div className="flex gap-2 items-center grow min-w-0">
                     {hasActiveSession ? (
                         <>
                             <Title workbench={props.workbench} />
@@ -90,7 +90,7 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
     );
 
     function handleCloseSessionClick() {
-        props.workbench.getSessionManager().closeSession();
+        props.workbench.getSessionManager().maybeCloseCurrentSession();
     }
 
     const closeButtonTitle = isSnapshot ? "Close snapshot" : "Close session";
@@ -200,11 +200,11 @@ function SnapshotTitle(props: SnapshotTitleProps): React.ReactNode {
                 }
                 placement="bottom"
             >
-                <Typography variant="h5" className="overflow-ellipsis min-w-0 whitespace-nowrap">
+                <Typography variant="h5" className="min-w-0 truncate">
                     {metadata.title}
                 </Typography>
             </Tooltip>
-            <Typography variant="body_short" className="overflow-ellipsis min-w-0 whitespace-nowrap font-light">
+            <Typography variant="body_short" className="font-light">
                 (snapshot)
             </Typography>
             <Tooltip title="This session is a snapshot and cannot be edited.">
@@ -239,7 +239,7 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                     italic: !isPersisted,
                 })}
             >
-                {metadata.title}
+                <span className="truncate">{metadata.title}</span>
                 <Tooltip title="You have unsaved changes">
                     <span className="text-amber-600 ml-2 text-2xl">{hasChanges ? "*" : " "}</span>
                 </Tooltip>
@@ -259,8 +259,8 @@ function SessionFromSnapshotButton(props: SessionFromSnapshotButtonProps): React
 
     return (
         <div className="p-2 flex items-center text-sm gap-4">
-            <TopBarButton onClick={handleClick} title="Make a snapshot of the current session" variant="contained">
-                Create new session from snapshot
+            <TopBarButton onClick={handleClick} title="Make a new session of the current snapshot" variant="contained">
+                Make session
             </TopBarButton>
         </div>
     );

@@ -2,7 +2,7 @@ import { isEqual } from "lodash";
 
 import type { PrivateWorkbenchSession } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import { makeWorkbenchSessionStateString } from "../../WorkbenchSession/utils/deserialization";
-import { hashSessionContentString } from "../../WorkbenchSession/utils/hash";
+import { hashSessionContentString, objectToJsonString } from "../../WorkbenchSession/utils/hash";
 
 type InternalState = {
     currentHash: string | null;
@@ -11,6 +11,10 @@ type InternalState = {
     lastPersistedMs: number | null;
     lastModifiedMs: number;
     backendLastUpdatedMs: number | null;
+    lastPersistedMetadata: {
+        title: string;
+        description?: string;
+    } | null;
 };
 
 export type WorkbenchSessionPersistenceInfo = {
@@ -20,6 +24,9 @@ export type WorkbenchSessionPersistenceInfo = {
     backendLastUpdatedMs: number | null;
 };
 
+/**
+ * Tracks the state of a workbench session for persistence purposes.
+ */
 export class SessionStateTracker {
     private readonly _session: PrivateWorkbenchSession;
 
@@ -30,6 +37,7 @@ export class SessionStateTracker {
         lastPersistedMs: null,
         lastModifiedMs: 0,
         backendLastUpdatedMs: null,
+        lastPersistedMetadata: null,
     };
 
     private _snapshot: WorkbenchSessionPersistenceInfo = {
@@ -45,21 +53,57 @@ export class SessionStateTracker {
 
     async initialize(isLoadedFromLocalStorage: boolean): Promise<void> {
         const stateString = makeWorkbenchSessionStateString(this._session);
-        const hash = await hashSessionContentString(stateString);
 
         this._state.currentStateString = stateString;
-        this._state.currentHash = hash;
         this._state.lastModifiedMs = this._session.getMetadata().lastModifiedMs;
         this._state.lastPersistedMs = this._session.getMetadata().updatedAt;
 
-        // Only trust the persisted hash if not loaded from localStorage
-        this._state.lastPersistedHash = isLoadedFromLocalStorage ? null : hash;
+        // Use the backend's hash if available, otherwise use the calculated hash
+        const backendHash = this._session.getMetadata().hash;
+
+        if (!isLoadedFromLocalStorage && backendHash) {
+            // Use the hash provided by the backend as the source of truth for BOTH current and persisted
+            // This prevents false positives from deserialization artifacts
+            this._state.currentHash = backendHash;
+            this._state.lastPersistedHash = backendHash;
+            // Store the current metadata as last persisted since we just loaded from backend
+            this._state.lastPersistedMetadata = {
+                title: this._session.getMetadata().title,
+                description: this._session.getMetadata().description,
+            };
+        } else {
+            // Hash only the content to match backend behavior
+            const contentString = objectToJsonString(this._session.serializeContentState());
+            const hash = await hashSessionContentString(contentString);
+
+            this._state.currentHash = hash;
+
+            // Only set lastPersistedHash/Metadata if the session has been persisted to backend
+            // New sessions and localStorage sessions should have null to indicate they need saving
+            if (this._session.getIsPersisted() && !isLoadedFromLocalStorage) {
+                // Fallback case: loaded from backend but no hash provided
+                this._state.lastPersistedHash = hash;
+                this._state.lastPersistedMetadata = {
+                    title: this._session.getMetadata().title,
+                    description: this._session.getMetadata().description,
+                };
+            } else {
+                // New sessions or localStorage sessions don't have a trusted backend hash
+                this._state.lastPersistedHash = null;
+                this._state.lastPersistedMetadata = null;
+            }
+        }
+
         this.updateSnapshot();
     }
 
     async refresh(): Promise<boolean> {
+        // Hash only the content to match backend behavior
+        const newContentString = objectToJsonString(this._session.serializeContentState());
+        const newHash = await hashSessionContentString(newContentString);
+
+        // For state change detection, include metadata (title/description) as well
         const newStateString = makeWorkbenchSessionStateString(this._session);
-        const newHash = await hashSessionContentString(newStateString);
 
         if (newHash !== this._state.currentHash) {
             this._state.currentStateString = newStateString;
@@ -75,11 +119,25 @@ export class SessionStateTracker {
     markPersisted() {
         this._state.lastPersistedHash = this._state.currentHash;
         this._state.lastPersistedMs = Date.now();
+        this._state.lastPersistedMetadata = {
+            title: this._session.getMetadata().title,
+            description: this._session.getMetadata().description,
+        };
         this.updateSnapshot();
     }
 
     hasChanges(): boolean {
-        return this._state.currentHash !== this._state.lastPersistedHash;
+        // Check if content hash changed
+        const hashChanged = this._state.currentHash !== this._state.lastPersistedHash;
+
+        // Check if metadata (title/description) changed
+        const currentMetadata = this._session.getMetadata();
+        const metadataChanged =
+            this._state.lastPersistedMetadata !== null &&
+            (currentMetadata.title !== this._state.lastPersistedMetadata.title ||
+                currentMetadata.description !== this._state.lastPersistedMetadata.description);
+
+        return hashChanged || metadataChanged;
     }
 
     getPersistenceInfo(): WorkbenchSessionPersistenceInfo {
@@ -94,6 +152,7 @@ export class SessionStateTracker {
             lastPersistedMs: null,
             lastModifiedMs: 0,
             backendLastUpdatedMs: null,
+            lastPersistedMetadata: null,
         };
 
         this._snapshot = {

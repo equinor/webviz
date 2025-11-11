@@ -1,16 +1,13 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { ConfirmationService } from "./ConfirmationService";
-import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
+import { GuiMessageBroker } from "./GuiMessageBroker";
 import { Dashboard } from "./internal/Dashboard";
 import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
-import { loadAllWorkbenchSessionsFromLocalStorage } from "./internal/WorkbenchSession/utils/loaders";
-import { readSessionIdFromUrl, readSnapshotIdFromUrl, UrlError } from "./internal/WorkbenchSession/utils/url";
 import { WorkbenchSessionManager } from "./internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Template } from "./TemplateRegistry";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import { toast } from "react-toastify";
 
 /**
  * Main workbench coordinator.
@@ -22,11 +19,11 @@ import { toast } from "react-toastify";
  * - GUI state -> GuiMessageBroker
  */
 export class Workbench {
-    private _workbenchServices: PrivateWorkbenchServices;
-    private _guiMessageBroker: GuiMessageBroker;
-    private _queryClient: QueryClient;
-    private _sessionManager: WorkbenchSessionManager;
-    private _navigationObserver: NavigationObserver;
+    private readonly _workbenchServices: PrivateWorkbenchServices;
+    private readonly _guiMessageBroker: GuiMessageBroker;
+    private readonly _queryClient: QueryClient;
+    private readonly _sessionManager: WorkbenchSessionManager;
+    private readonly _navigationObserver: NavigationObserver;
     private _isInitialized: boolean = false;
 
     constructor(queryClient: QueryClient) {
@@ -40,8 +37,6 @@ export class Workbench {
         this._navigationObserver.setOnBeforeUnload(() => this.handleBeforeUnload());
         this._navigationObserver.setOnNavigate(async () => this.handleNavigation());
     }
-
-    // ========== Getters ==========
 
     getQueryClient(): QueryClient {
         return this._queryClient;
@@ -58,8 +53,6 @@ export class Workbench {
     getGuiMessageBroker(): GuiMessageBroker {
         return this._guiMessageBroker;
     }
-
-    // ========== Navigation ==========
 
     /**
      * Handle beforeunload event - check if there are unsaved changes.
@@ -78,8 +71,6 @@ export class Workbench {
         return this._sessionManager.handleNavigation();
     }
 
-    // ========== Initialization ==========
-
     async initialize() {
         if (this._isInitialized) {
             console.info(
@@ -88,54 +79,8 @@ export class Workbench {
             return;
         }
 
-        this._isInitialized = true;
-
-        let snapshotId: string | null = null;
-
-        // Check if a snapshot/session id is in the URL
-        try {
-            snapshotId = readSnapshotIdFromUrl();
-        } catch (error) {
-            if (error instanceof UrlError) {
-                console.warn("Invalid ID in URL, ignoring URL parameters.", error);
-                toast.error("Invalid snapshot ID in URL, ignoring URL parameters.");
-                return;
-            }
-        }
-
-        if (snapshotId) {
-            this._sessionManager.openSnapshot(snapshotId);
-            return;
-        }
-
-        let sessionId: string | null = null;
-
-        try {
-            sessionId = readSessionIdFromUrl();
-        } catch (error) {
-            if (error instanceof UrlError) {
-                console.warn("Invalid ID in URL, ignoring URL parameters.", error);
-                toast.error("Invalid session ID in URL, ignoring URL parameters.");
-                return;
-            }
-        }
-
-        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
-
-        if (sessionId) {
-            this._sessionManager.openSession(sessionId);
-            if (storedSessions.find((el) => el.id === sessionId)) {
-                this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);
-            }
-            return;
-        }
-
-        if (storedSessions.length > 0) {
-            this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, true);
-        }
+        await this._sessionManager.maybeOpenFromUrl();
     }
-
-    // ========== Template Application ==========
 
     async applyTemplate(template: Template): Promise<boolean> {
         if (!this._sessionManager.hasActiveSession()) {
@@ -168,8 +113,6 @@ export class Workbench {
         activeSession.setDashboards([dashboard]);
         return true;
     }
-
-    // ========== Lifecycle ==========
 
     beforeDestroy(): void {
         this._navigationObserver.beforeDestroy();
