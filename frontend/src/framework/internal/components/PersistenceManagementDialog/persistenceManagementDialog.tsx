@@ -2,13 +2,13 @@ import type React from "react";
 
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
-import { WorkbenchTopic } from "@framework/Workbench";
 import { Dialog } from "@lib/components/Dialog";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { SessionManagementContent } from "./sessionManagementContent";
 import { SnapshotManagementContent } from "./snapshotManagementContent";
+import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 
 export type PersistenceManagementDialogProps = {
     workbench: Workbench;
@@ -21,7 +21,10 @@ export function PersistenceManagementDialog(props: PersistenceManagementDialogPr
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogOpen,
     );
-    const hasActiveSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
+    const hasActiveSession = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
+    );
 
     const [contentMode, setContentMode] = useGuiState(
         props.workbench.getGuiMessageBroker(),

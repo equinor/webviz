@@ -9,7 +9,7 @@ import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnse
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { TopBar } from "@framework/internal/components/TopBar/topBar";
-import { Workbench, WorkbenchTopic } from "@framework/Workbench";
+import { Workbench } from "@framework/Workbench";
 import "../../../../modules/registerAllModules";
 import "../../../../templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -23,6 +23,7 @@ import { RightNavBar } from "../RightNavBar";
 import { SaveSessionDialog } from "../SaveSessionDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
+import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -32,7 +33,10 @@ export function WorkbenchWrapper() {
     const [workbench] = React.useState(new Workbench(queryClient));
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
     const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
-    const hasActiveSession = usePublishSubscribeTopicValue(workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
+    const hasActiveSession = usePublishSubscribeTopicValue(
+        workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
+    );
 
     React.useEffect(
         function initApp() {
@@ -72,11 +76,11 @@ export function WorkbenchWrapper() {
                 <SaveSessionDialog workbench={workbench} />
                 <CreateSnapshotDialog workbench={workbench} />
                 <ActiveSessionRecoveryDialog workbench={workbench} />
+                {content}
             </ActiveSessionBoundary>
             <TemplatesDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
-            {content}
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
         </>
     );

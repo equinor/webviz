@@ -2,7 +2,7 @@ import React from "react";
 
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
-import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
+import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -11,6 +11,7 @@ import { Label } from "@lib/components/Label";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 
 export type EditSessionMetadataDialogProps = {
     workbench: Workbench;
@@ -27,7 +28,10 @@ type EditSessionDialogInputFeedback = {
 };
 
 export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps) {
-    const hasActiveSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
+    const hasActiveSession = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
+    );
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 
     const [title, setTitle] = React.useState<string>(props.title);

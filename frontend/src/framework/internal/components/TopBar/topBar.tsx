@@ -10,7 +10,7 @@ import FmuLogo from "@assets/fmu.svg";
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
-import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
+import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -23,6 +23,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useActiveSession } from "../ActiveSessionBoundary";
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
+import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 
 export type TopBarProps = {
     workbench: Workbench;
@@ -31,7 +32,10 @@ export type TopBarProps = {
 Icon.add({ category });
 
 export function TopBar(props: TopBarProps): React.ReactNode {
-    const hasActiveSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
+    const hasActiveSession = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
+    );
 
     return (
         <>
@@ -48,7 +52,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                 <div className="flex gap-2 items-center grow">
                     {hasActiveSession ? (
                         <>
-                            <SessionTitle workbench={props.workbench} />
+                            <Title workbench={props.workbench} />
                             <TopBarButtons workbench={props.workbench} />
                         </>
                     ) : (
@@ -159,25 +163,70 @@ function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
     );
 }
 
+type TitleProps = {
+    workbench: Workbench;
+};
+
+function Title(props: TitleProps): React.ReactNode {
+    const activeSession = props.workbench.getSessionManager().getActiveSession();
+    const isSnapshot = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
+
+    let content = <SessionTitle workbench={props.workbench} />;
+
+    if (isSnapshot) {
+        content = <SnapshotTitle workbench={props.workbench} />;
+    }
+
+    return <div className="grow flex gap-2 overflow-hidden items-center">{content}</div>;
+}
+
+type SnapshotTitleProps = {
+    workbench: Workbench;
+};
+
+function SnapshotTitle(props: SnapshotTitleProps): React.ReactNode {
+    const activeSnapshot = props.workbench.getSessionManager().getActiveSession();
+    const metadata = usePublishSubscribeTopicValue(activeSnapshot, PrivateWorkbenchSessionTopic.METADATA);
+
+    return (
+        <>
+            <Link fontSize="inherit" className="mr-1" />
+            <Tooltip
+                title={
+                    <>
+                        <h6>{metadata.title}</h6>
+                        <p>
+                            <Typography variant="body_short">
+                                {new Date(metadata.createdAt).toLocaleString()}
+                            </Typography>
+                        </p>
+                        <p>{metadata.description ?? "No description provided."}</p>
+                    </>
+                }
+                placement="bottom"
+            >
+                <Typography variant="h5" className="overflow-ellipsis min-w-0 whitespace-nowrap">
+                    {metadata.title}
+                </Typography>
+            </Tooltip>
+            <Typography variant="body_short" className="overflow-ellipsis min-w-0 whitespace-nowrap font-light">
+                (snapshot)
+            </Typography>
+            <Tooltip title="This session is a snapshot and cannot be edited.">
+                <Lock fontSize="inherit" />
+            </Tooltip>
+        </>
+    );
+}
+
 type SessionTitleProps = {
     workbench: Workbench;
 };
 
 function SessionTitle(props: SessionTitleProps): React.ReactNode {
-    const metadata = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.METADATA,
-    );
-
-    const isPersisted = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.IS_PERSISTED,
-    );
-
-    const isSnapshot = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
-    );
+    const activeSession = props.workbench.getSessionManager().getActiveSession();
+    const metadata = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.METADATA);
+    const isPersisted = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.IS_PERSISTED);
 
     const persistenceInfo = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getPersistenceOrchestrator()!,
@@ -186,61 +235,22 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
 
     const hasChanges = (persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null) || !isPersisted;
 
-    function makeContent() {
-        let content: React.ReactNode = null;
-        if (isSnapshot) {
-            content = (
-                <>
-                    <Link fontSize="inherit" className="mr-1" />
-                    <Tooltip
-                        title={
-                            <>
-                                <h6>{metadata.title}</h6>
-                                <p>
-                                    <Typography variant="body_short">
-                                        {new Date(metadata.createdAt).toLocaleString()}
-                                    </Typography>
-                                </p>
-                                <p>{metadata.description ?? "No description provided."}</p>
-                            </>
-                        }
-                        placement="bottom"
-                    >
-                        <Typography variant="h5" className="overflow-ellipsis min-w-0 whitespace-nowrap">
-                            {metadata.title}
-                        </Typography>
-                    </Tooltip>
-                    <Typography variant="body_short" className="overflow-ellipsis min-w-0 whitespace-nowrap font-light">
-                        (snapshot)
-                    </Typography>
-                    <Tooltip title="This session is a snapshot and cannot be edited.">
-                        <Lock fontSize="inherit" />
-                    </Tooltip>
-                </>
-            );
-        } else {
-            content = (
-                <>
-                    <Category fontSize="inherit" className="mr-1" />
-                    <Typography
-                        variant="h5"
-                        className={resolveClassNames("overflow-ellipsis min-w-0 whitespace-nowrap", {
-                            italic: !isPersisted,
-                        })}
-                    >
-                        {metadata.title}
-                        <Tooltip title="You have unsaved changes">
-                            <span className="text-amber-600 ml-2 text-2xl">{hasChanges ? "*" : " "}</span>
-                        </Tooltip>
-                    </Typography>
-                </>
-            );
-        }
-
-        return <>{content}</>;
-    }
-
-    return <div className="grow flex gap-2 overflow-hidden items-center">{makeContent()}</div>;
+    return (
+        <>
+            <Category fontSize="inherit" className="mr-1" />
+            <Typography
+                variant="h5"
+                className={resolveClassNames("overflow-ellipsis min-w-0 whitespace-nowrap", {
+                    italic: !isPersisted,
+                })}
+            >
+                {metadata.title}
+                <Tooltip title="You have unsaved changes">
+                    <span className="text-amber-600 ml-2 text-2xl">{hasChanges ? "*" : " "}</span>
+                </Tooltip>
+            </Typography>
+        </>
+    );
 }
 
 type SessionFromSnapshotButtonProps = {

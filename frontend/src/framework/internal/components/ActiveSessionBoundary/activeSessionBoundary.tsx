@@ -1,8 +1,9 @@
 import React from "react";
 
 import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
-import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
+import { type Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 
 export const ActiveSessionContext = React.createContext<PrivateWorkbenchSession | null>(null);
 
@@ -12,7 +13,10 @@ export type ActiveSessionBoundaryProps = {
 };
 
 export function ActiveSessionBoundary(props: ActiveSessionBoundaryProps): React.ReactNode {
-    const activeSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.ACTIVE_SESSION);
+    const activeSession = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.ACTIVE_SESSION,
+    );
 
     if (!activeSession) {
         return null;

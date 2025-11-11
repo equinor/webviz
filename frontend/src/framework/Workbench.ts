@@ -1,31 +1,15 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
-
 import { ConfirmationService } from "./ConfirmationService";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { Dashboard } from "./internal/Dashboard";
 import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
-import type { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import { loadAllWorkbenchSessionsFromLocalStorage } from "./internal/WorkbenchSession/utils/loaders";
 import { readSessionIdFromUrl, readSnapshotIdFromUrl } from "./internal/WorkbenchSession/utils/url";
-import {
-    WorkbenchSessionManager,
-    WorkbenchSessionManagerTopic,
-} from "./internal/WorkbenchSession/WorkbenchSessionManager";
+import { WorkbenchSessionManager } from "./internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Template } from "./TemplateRegistry";
 import type { WorkbenchServices } from "./WorkbenchServices";
-
-export enum WorkbenchTopic {
-    ACTIVE_SESSION = "activeSession",
-    HAS_ACTIVE_SESSION = "hasActiveSession",
-}
-
-export type WorkbenchTopicPayloads = {
-    [WorkbenchTopic.ACTIVE_SESSION]: PrivateWorkbenchSession | null;
-    [WorkbenchTopic.HAS_ACTIVE_SESSION]: boolean;
-};
 
 /**
  * Main workbench coordinator.
@@ -36,9 +20,7 @@ export type WorkbenchTopicPayloads = {
  * - Services -> PrivateWorkbenchServices
  * - GUI state -> GuiMessageBroker
  */
-export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchTopicPayloads>();
-
+export class Workbench {
     private _workbenchServices: PrivateWorkbenchServices;
     private _guiMessageBroker: GuiMessageBroker;
     private _queryClient: QueryClient;
@@ -56,37 +38,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._navigationObserver = new NavigationObserver();
         this._navigationObserver.setOnBeforeUnload(() => this.handleBeforeUnload());
         this._navigationObserver.setOnNavigate(async () => this.handleNavigation());
-
-        // Subscribe to session manager events to forward to workbench subscribers
-        this._sessionManager
-            .getPublishSubscribeDelegate()
-            .makeSubscriberFunction(WorkbenchSessionManagerTopic.ACTIVE_SESSION)(() => {
-            this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.ACTIVE_SESSION);
-        });
-
-        this._sessionManager
-            .getPublishSubscribeDelegate()
-            .makeSubscriberFunction(WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION)(() => {
-            this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
-        });
-    }
-
-    // ========== PublishSubscribe Implementation ==========
-
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<WorkbenchTopicPayloads> {
-        return this._publishSubscribeDelegate;
-    }
-
-    makeSnapshotGetter<T extends WorkbenchTopic>(topic: T): () => WorkbenchTopicPayloads[T] {
-        return (): WorkbenchTopicPayloads[T] => {
-            if (topic === WorkbenchTopic.ACTIVE_SESSION) {
-                return this._sessionManager.getActiveSessionOrNull() as WorkbenchTopicPayloads[T];
-            }
-            if (topic === WorkbenchTopic.HAS_ACTIVE_SESSION) {
-                return this._sessionManager.hasActiveSession() as WorkbenchTopicPayloads[T];
-            }
-            throw new Error(`No snapshot getter implemented for topic ${topic}`);
-        };
     }
 
     // ========== Getters ==========
