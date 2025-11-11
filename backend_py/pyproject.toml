@@ -54,7 +54,6 @@ disable = [
 ]
 extension-pkg-whitelist = "pydantic"
 ignored-modules = ["pyarrow.compute"]
-good-names = ["i", "x", "df", "xy", "tg"]
 min-public-methods = 0
 max-args = 9
 max-locals = 19
