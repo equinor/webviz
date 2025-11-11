@@ -9,6 +9,7 @@ import logging
 from typing import Type, get_args, get_origin, Optional
 
 from pydantic import BaseModel
+from pydantic.fields import ComputedFieldInfo
 
 from primary.persistence.cosmosdb.query_collation_options import Filter, FilterOperator
 
@@ -83,8 +84,8 @@ class FilterFactory:
             if field_type is None:
                 # Access model_computed_fields property correctly
                 model_computed_fields_prop = getattr(current_model, "model_computed_fields", None)
-                if model_computed_fields_prop and isinstance(model_computed_fields_prop, property):
-                    computed_fields = model_computed_fields_prop.fget(current_model)
+                if model_computed_fields_prop:
+                    computed_fields = model_computed_fields_prop
                 else:
                     computed_fields = {}
 
