@@ -35,6 +35,24 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
     const { onChange, ensembles, value, allowDeltaEnsembles, multiple, ensembleRealizationFilterFunction, ...rest } =
         props;
 
+    const selectedArray = React.useMemo<string[]>(() => {
+        return value.map((ident) => ident.toString());
+    }, [value]);
+
+    const optionsArray = React.useMemo<SelectOption[]>(() => {
+        return ensembles.map((ens) => ({
+            value: ens.getIdent().toString(),
+            label: ens.getDisplayName(),
+            adornment: (
+                <EnsembleColorTile
+                    ensemble={ens}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    wrapperClassName="w-6 h-6"
+                />
+            ),
+        }));
+    }, [ensembles, ensembleRealizationFilterFunction]);
+
     const handleSelectionChange = React.useCallback(
         function handleSelectionChanged(selectedEnsembleIdentStringArray: string[]) {
             const identArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
@@ -62,35 +80,13 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
         [allowDeltaEnsembles, ensembles, onChange],
     );
 
-    const optionsArray: SelectOption[] = [];
-    for (const ens of ensembles) {
-        optionsArray.push({
-            value: ens.getIdent().toString(),
-            label: ens.getDisplayName(),
-            adornment: (
-                <EnsembleColorTile
-                    ensemble={ens}
-                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                    wrapperClassName="w-6 h-6"
-                />
-            ),
-        });
-    }
-
-    const selectedArray: string[] = [];
-    for (const ident of value) {
-        selectedArray.push(ident.toString());
-    }
-
-    const isMultiple = multiple ?? true;
-
     return (
         <Select
             options={optionsArray}
             value={selectedArray}
             optionHeight={30}
             onChange={handleSelectionChange}
-            multiple={isMultiple}
+            multiple={multiple ?? true}
             {...rest}
         />
     );

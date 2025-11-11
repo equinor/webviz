@@ -2,94 +2,13 @@
 
 import type { Options } from "@hey-api/client-axios";
 import { queryOptions, type UseMutationOptions, type DefaultError } from "@tanstack/react-query";
-import type { AxiosError } from "axios";
-
-import {
-    getFields,
-    getCases,
-    getEnsembleDetails,
-    postGetTimestampsForEnsembles,
-    getVectorList,
-    getDeltaEnsembleVectorList,
-    getRealizationsVectorData,
-    getDeltaEnsembleRealizationsVectorData,
-    getTimestampsList,
-    getHistoricalVectorData,
-    getStatisticalVectorData,
-    getDeltaEnsembleStatisticalVectorData,
-    getStatisticalVectorDataPerSensitivity,
-    getRealizationVectorAtTimestamp,
-    getTableDefinitions,
-    postGetAggregatedPerRealizationTableData,
-    postGetAggregatedStatisticalTableData,
-    getRealizationSurfacesMetadata,
-    getObservedSurfacesMetadata,
-    getSurfaceData,
-    getStatisticalSurfaceDataHybrid,
-    postGetSurfaceIntersection,
-    postGetSampleSurfaceInPoints,
-    getDeltaSurfaceData,
-    getMisfitSurfaceData,
-    deprecatedGetStratigraphicUnits,
-    getStratigraphicUnitsForStratColumn,
-    getParameterNamesAndDescription,
-    getParameter,
-    getParameters,
-    getIsSensitivityRun,
-    getSensitivities,
-    getGridModelsInfo,
-    getGridSurface,
-    getGridParameter,
-    postGetPolylineIntersection,
-    getKillService,
-    getStartService,
-    getStatusOfUserService,
-    getRealizationFlowNetwork,
-    getTableData,
-    getWellCompletionsData,
-    getDrilledWellboreHeaders,
-    getWellTrajectories,
-    getWellborePickIdentifiers,
-    getWellborePicksForPickIdentifier,
-    deprecatedGetWellborePicksForWellbore,
-    getWellborePicksInStratColumn,
-    getWellboreStratigraphicColumns,
-    getWellboreCompletions,
-    getWellboreCasings,
-    getWellborePerforations,
-    getWellboreLogCurveHeaders,
-    getLogCurveData,
-    getSeismicCubeMetaList,
-    getInlineSlice,
-    getCrosslineSlice,
-    getDepthSlice,
-    getSeismicSlices,
-    postGetSeismicFence,
-    getPolygonsDirectory,
-    getPolygonsData,
-    getUserInfo,
-    getUserPhoto,
-    getObservations,
-    getTableDefinition,
-    getRealizationData,
-    getVfpTableNames,
-    getVfpTable,
-    loginRoute,
-    authorizedCallbackRoute,
-    getAlive,
-    getAliveProtected,
-    postLogout,
-    getLoggedInUser,
-    root,
-    client,
-} from "../sdk.gen";
 import type {
     GetFieldsData_api,
     GetCasesData_api,
     GetEnsembleDetailsData_api,
-    PostGetTimestampsForEnsemblesData_api,
-    PostGetTimestampsForEnsemblesError_api,
-    PostGetTimestampsForEnsemblesResponse_api,
+    PostRefreshFingerprintsForEnsemblesData_api,
+    PostRefreshFingerprintsForEnsemblesError_api,
+    PostRefreshFingerprintsForEnsemblesResponse_api,
     GetVectorListData_api,
     GetDeltaEnsembleVectorListData_api,
     GetRealizationsVectorDataData_api,
@@ -132,9 +51,9 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
+    GetStatusOfUserServiceData_api,
     GetKillServiceData_api,
     GetStartServiceData_api,
-    GetStatusOfUserServiceData_api,
     GetRealizationFlowNetworkData_api,
     GetTableDataData_api,
     GetWellCompletionsDataData_api,
@@ -176,6 +95,86 @@ import type {
     GetLoggedInUserData_api,
     RootData_api,
 } from "../types.gen";
+import {
+    getFields,
+    getCases,
+    getEnsembleDetails,
+    postRefreshFingerprintsForEnsembles,
+    getVectorList,
+    getDeltaEnsembleVectorList,
+    getRealizationsVectorData,
+    getDeltaEnsembleRealizationsVectorData,
+    getTimestampsList,
+    getHistoricalVectorData,
+    getStatisticalVectorData,
+    getDeltaEnsembleStatisticalVectorData,
+    getStatisticalVectorDataPerSensitivity,
+    getRealizationVectorAtTimestamp,
+    getTableDefinitions,
+    postGetAggregatedPerRealizationTableData,
+    postGetAggregatedStatisticalTableData,
+    getRealizationSurfacesMetadata,
+    getObservedSurfacesMetadata,
+    getSurfaceData,
+    getStatisticalSurfaceDataHybrid,
+    postGetSurfaceIntersection,
+    postGetSampleSurfaceInPoints,
+    getDeltaSurfaceData,
+    getMisfitSurfaceData,
+    deprecatedGetStratigraphicUnits,
+    getStratigraphicUnitsForStratColumn,
+    getParameterNamesAndDescription,
+    getParameter,
+    getParameters,
+    getIsSensitivityRun,
+    getSensitivities,
+    getGridModelsInfo,
+    getGridSurface,
+    getGridParameter,
+    postGetPolylineIntersection,
+    getStatusOfUserService,
+    getKillService,
+    getStartService,
+    getRealizationFlowNetwork,
+    getTableData,
+    getWellCompletionsData,
+    getDrilledWellboreHeaders,
+    getWellTrajectories,
+    getWellborePickIdentifiers,
+    getWellborePicksForPickIdentifier,
+    deprecatedGetWellborePicksForWellbore,
+    getWellborePicksInStratColumn,
+    getWellboreStratigraphicColumns,
+    getWellboreCompletions,
+    getWellboreCasings,
+    getWellborePerforations,
+    getWellboreLogCurveHeaders,
+    getLogCurveData,
+    getSeismicCubeMetaList,
+    getInlineSlice,
+    getCrosslineSlice,
+    getDepthSlice,
+    getSeismicSlices,
+    postGetSeismicFence,
+    getPolygonsDirectory,
+    getPolygonsData,
+    getUserInfo,
+    getUserPhoto,
+    getObservations,
+    getTableDefinition,
+    getRealizationData,
+    getVfpTableNames,
+    getVfpTable,
+    loginRoute,
+    authorizedCallbackRoute,
+    getAlive,
+    getAliveProtected,
+    postLogout,
+    getLoggedInUser,
+    root,
+    client,
+} from "../sdk.gen";
+import type { AxiosError } from "axios";
 
 type QueryKey<TOptions extends Options> = [
     Pick<TOptions, "baseURL" | "body" | "headers" | "path" | "query"> & {
@@ -264,14 +263,16 @@ export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsDat
     });
 };
 
-export const postGetTimestampsForEnsemblesQueryKey = (options: Options<PostGetTimestampsForEnsemblesData_api>) => [
-    createQueryKey("postGetTimestampsForEnsembles", options),
-];
+export const postRefreshFingerprintsForEnsemblesQueryKey = (
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api>,
+) => [createQueryKey("postRefreshFingerprintsForEnsembles", options)];
 
-export const postGetTimestampsForEnsemblesOptions = (options: Options<PostGetTimestampsForEnsemblesData_api>) => {
+export const postRefreshFingerprintsForEnsemblesOptions = (
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api>,
+) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGetTimestampsForEnsembles({
+            const { data } = await postRefreshFingerprintsForEnsembles({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -279,20 +280,20 @@ export const postGetTimestampsForEnsemblesOptions = (options: Options<PostGetTim
             });
             return data;
         },
-        queryKey: postGetTimestampsForEnsemblesQueryKey(options),
+        queryKey: postRefreshFingerprintsForEnsemblesQueryKey(options),
     });
 };
 
-export const postGetTimestampsForEnsemblesMutation = (
-    options?: Partial<Options<PostGetTimestampsForEnsemblesData_api>>,
+export const postRefreshFingerprintsForEnsemblesMutation = (
+    options?: Partial<Options<PostRefreshFingerprintsForEnsemblesData_api>>,
 ) => {
     const mutationOptions: UseMutationOptions<
-        PostGetTimestampsForEnsemblesResponse_api,
-        AxiosError<PostGetTimestampsForEnsemblesError_api>,
-        Options<PostGetTimestampsForEnsemblesData_api>
+        PostRefreshFingerprintsForEnsemblesResponse_api,
+        AxiosError<PostRefreshFingerprintsForEnsemblesError_api>,
+        Options<PostRefreshFingerprintsForEnsemblesData_api>
     > = {
         mutationFn: async (localOptions) => {
-            const { data } = await postGetTimestampsForEnsembles({
+            const { data } = await postRefreshFingerprintsForEnsembles({
                 ...options,
                 ...localOptions,
                 throwOnError: true,
@@ -1015,6 +1016,25 @@ export const postGetPolylineIntersectionMutation = (options?: Partial<Options<Po
     return mutationOptions;
 };
 
+export const getStatusOfUserServiceQueryKey = (options: Options<GetStatusOfUserServiceData_api>) => [
+    createQueryKey("getStatusOfUserService", options),
+];
+
+export const getStatusOfUserServiceOptions = (options: Options<GetStatusOfUserServiceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getStatusOfUserService({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getStatusOfUserServiceQueryKey(options),
+    });
+};
+
 export const getKillServiceQueryKey = (options: Options<GetKillServiceData_api>) => [
     createQueryKey("getKillService", options),
 ];
@@ -1050,25 +1070,6 @@ export const getStartServiceOptions = (options: Options<GetStartServiceData_api>
             return data;
         },
         queryKey: getStartServiceQueryKey(options),
-    });
-};
-
-export const getStatusOfUserServiceQueryKey = (options: Options<GetStatusOfUserServiceData_api>) => [
-    createQueryKey("getStatusOfUserService", options),
-];
-
-export const getStatusOfUserServiceOptions = (options: Options<GetStatusOfUserServiceData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getStatusOfUserService({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getStatusOfUserServiceQueryKey(options),
     });
 };
 

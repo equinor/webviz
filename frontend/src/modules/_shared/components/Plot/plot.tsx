@@ -12,16 +12,37 @@ export type PlotProps = {
 } & PlotParams;
 
 const DEFAULT_CONFIG: Partial<Plotly.Config> = {
-    modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "resetScale2d"],
+    modeBarButtonsToRemove: [
+        "toImage",
+        "sendDataToCloud",
+        "autoScale2d",
+        "zoomIn2d",
+        "zoomOut2d",
+        "lasso2d",
+        "select2d",
+    ],
     displaylogo: false,
     responsive: true,
     displayModeBar: "hover",
+    scrollZoom: true,
 };
 
 const DEFAULT_LAYOUT: Partial<Plotly.Layout> = {
     // By default, we try to keep the ui changes stable
     uirevision: "revision_stable",
     modebar: { orientation: "v" },
+    dragmode: "pan",
+    legend: {
+        x: 0.98,
+        y: 0,
+        xanchor: "right",
+        yanchor: "top",
+        bgcolor: "rgba(255, 255, 255, 0.8)",
+        bordercolor: "#ccc",
+        borderwidth: 1,
+        orientation: "h",
+        font: { size: 10 },
+    },
 };
 
 /**
@@ -68,8 +89,8 @@ export function Plot(props: PlotProps): React.ReactNode {
     }
 
     return React.useMemo(() => {
-        const layoutWithDefaults = _.defaults({}, stableLayout, DEFAULT_LAYOUT);
-        const configWithDefaults = _.defaults({}, stableConfig, DEFAULT_CONFIG);
+        const layoutWithDefaults = _.merge({}, DEFAULT_LAYOUT, stableLayout);
+        const configWithDefaults = _.merge({}, DEFAULT_CONFIG, stableConfig);
 
         return (
             <BasePlot data={stableData} layout={layoutWithDefaults} config={configWithDefaults} {...stableOtherProps} />

@@ -21,6 +21,8 @@ export type DialogProps = {
     onClose?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
     width?: string | number;
     height?: string | number;
+    maxWidth?: string | number;
+    maxHeight?: string | number;
     minWidth?: string | number;
     minHeight?: string | number;
     actions?: React.ReactNode;
@@ -65,6 +67,8 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     width: props.width,
                     minWidth: props.minWidth,
                     minHeight: props.minHeight,
+                    maxWidth: props.maxWidth,
+                    maxHeight: props.maxHeight,
                 }}
             >
                 {/* Header */}
@@ -73,7 +77,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     {props.showCloseCross && (
                         <div
                             className="hover:text-slate-500 cursor-pointer ml-4"
-                            onPointerDown={handleClose}
+                            onClick={handleClose}
                             title="Close dialog"
                         >
                             <Close width={24} />
