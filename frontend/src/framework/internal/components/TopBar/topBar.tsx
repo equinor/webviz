@@ -21,7 +21,6 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useActiveSession } from "../ActiveSessionBoundary";
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
 
@@ -124,19 +123,15 @@ type EditSessionButtonProps = {
 };
 
 function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
+    const activeWorkbenchSession = props.workbench.getSessionManager().getActiveSession();
     const [editSessionDialogOpen, setEditSessionDialogOpen] = React.useState<boolean>(false);
 
-    const activeWorkbenchSession = useActiveSession();
-
     const isPersisted = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
+        activeWorkbenchSession,
         PrivateWorkbenchSessionTopic.IS_PERSISTED,
     );
 
-    const isSnapshot = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
-    );
+    const isSnapshot = usePublishSubscribeTopicValue(activeWorkbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     function handleEditTitleClick() {
         setEditSessionDialogOpen(true);

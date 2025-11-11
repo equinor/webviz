@@ -1,3 +1,14 @@
+import { SESSION_ID_LENGTH } from "@framework/internal/persistence/constants";
+
+const SESSION_ID_REGEX = new RegExp(`^[a-zA-Z0-9_-]{${SESSION_ID_LENGTH}}$`);
+
+export class UrlError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "UrlError";
+    }
+}
+
 export function buildSessionUrl(sessionId: string): string {
     const url = new URL(window.location.href);
 
@@ -8,14 +19,7 @@ export function buildSessionUrl(sessionId: string): string {
 }
 
 export function readSessionIdFromUrl(): string | null {
-    const url = new URL(window.location.href);
-    const pathParts = url.pathname.split("/");
-    const sessionId = pathParts.includes("session") ? pathParts[pathParts.indexOf("session") + 1] : null;
-
-    if (sessionId && /^[a-zA-Z0-9_-]{8}$/.test(sessionId)) {
-        return sessionId;
-    }
-    return null;
+    return readIdFromUrl("session");
 }
 
 export function removeSessionIdFromUrl(): void {
@@ -43,14 +47,7 @@ export function buildSnapshotUrl(snapshotId: string): string {
 }
 
 export function readSnapshotIdFromUrl(): string | null {
-    const url = new URL(window.location.href);
-    const pathParts = url.pathname.split("/");
-    const snapshotId = pathParts.includes("snapshot") ? pathParts[pathParts.indexOf("snapshot") + 1] : null;
-
-    if (snapshotId && /^[a-zA-Z0-9_-]{8}$/.test(snapshotId)) {
-        return snapshotId;
-    }
-    return null;
+    return readIdFromUrl("snapshot");
 }
 
 export function removeSnapshotIdFromUrl(): void {
@@ -66,4 +63,20 @@ export function removeSnapshotIdFromUrl(): void {
     url.search = ""; // Clear any existing query parameters
     url.hash = ""; // Clear any existing hash
     window.history.pushState({}, "", url.toString());
+}
+
+function readIdFromUrl(type: "session" | "snapshot"): string | null {
+    const url = new URL(window.location.href);
+    const pathParts = url.pathname.split("/");
+    const id = pathParts.includes(type) ? pathParts[pathParts.indexOf(type) + 1] : null;
+
+    if (!id) {
+        return null;
+    }
+
+    if (!SESSION_ID_REGEX.test(id)) {
+        throw new UrlError(`Invalid ${type} ID in URL: ${id}`);
+    }
+
+    return id;
 }

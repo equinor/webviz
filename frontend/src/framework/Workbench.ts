@@ -6,10 +6,11 @@ import { Dashboard } from "./internal/Dashboard";
 import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { loadAllWorkbenchSessionsFromLocalStorage } from "./internal/WorkbenchSession/utils/loaders";
-import { readSessionIdFromUrl, readSnapshotIdFromUrl } from "./internal/WorkbenchSession/utils/url";
+import { readSessionIdFromUrl, readSnapshotIdFromUrl, UrlError } from "./internal/WorkbenchSession/utils/url";
 import { WorkbenchSessionManager } from "./internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Template } from "./TemplateRegistry";
 import type { WorkbenchServices } from "./WorkbenchServices";
+import { toast } from "react-toastify";
 
 /**
  * Main workbench coordinator.
@@ -89,16 +90,39 @@ export class Workbench {
 
         this._isInitialized = true;
 
-        // Check if a snapshot/session id is in the URL
-        const snapshotId = readSnapshotIdFromUrl();
-        const sessionId = readSessionIdFromUrl();
+        let snapshotId: string | null = null;
 
-        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
+        // Check if a snapshot/session id is in the URL
+        try {
+            snapshotId = readSnapshotIdFromUrl();
+        } catch (error) {
+            if (error instanceof UrlError) {
+                console.warn("Invalid ID in URL, ignoring URL parameters.", error);
+                toast.error("Invalid snapshot ID in URL, ignoring URL parameters.");
+                return;
+            }
+        }
 
         if (snapshotId) {
             this._sessionManager.openSnapshot(snapshotId);
             return;
-        } else if (sessionId) {
+        }
+
+        let sessionId: string | null = null;
+
+        try {
+            sessionId = readSessionIdFromUrl();
+        } catch (error) {
+            if (error instanceof UrlError) {
+                console.warn("Invalid ID in URL, ignoring URL parameters.", error);
+                toast.error("Invalid session ID in URL, ignoring URL parameters.");
+                return;
+            }
+        }
+
+        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
+
+        if (sessionId) {
             this._sessionManager.openSession(sessionId);
             if (storedSessions.find((el) => el.id === sessionId)) {
                 this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);

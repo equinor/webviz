@@ -52,19 +52,7 @@ export function WorkbenchWrapper() {
         content = <LoadingOverlay text="Initializing application..." />;
     } else if (isSessionLoading) {
         content = <LoadingOverlay text="Loading session..." />;
-    } else if (hasActiveSession) {
-        content = (
-            <>
-                <div className="grow min-h-0">
-                    <div className="w-full h-full flex flex-row">
-                        <LeftNavBar workbench={workbench} />
-                        <SettingsContentPanels workbench={workbench} />
-                        <RightNavBar workbench={workbench} />
-                    </div>
-                </div>
-            </>
-        );
-    } else {
+    } else if (!hasActiveSession) {
         content = <StartPage workbench={workbench} />;
     }
 
@@ -76,8 +64,15 @@ export function WorkbenchWrapper() {
                 <SaveSessionDialog workbench={workbench} />
                 <CreateSnapshotDialog workbench={workbench} />
                 <ActiveSessionRecoveryDialog workbench={workbench} />
-                {content}
+                <div className="grow min-h-0">
+                    <div className="w-full h-full flex flex-row">
+                        <LeftNavBar workbench={workbench} />
+                        <SettingsContentPanels workbench={workbench} />
+                        <RightNavBar workbench={workbench} />
+                    </div>
+                </div>
             </ActiveSessionBoundary>
+            {content}
             <TemplatesDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
