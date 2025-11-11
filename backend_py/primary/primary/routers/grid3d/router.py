@@ -55,6 +55,7 @@ async def get_grid_models_info(
 # pylint: disable=too-many-arguments
 async def get_grid_surface(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str, Query(description="Component instance string")],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     grid_name: Annotated[str, Query(description="Grid name")],
@@ -70,7 +71,7 @@ async def get_grid_surface(
 
     perf_metrics = PerfMetrics()
 
-    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid, instance_str)
     perf_metrics.record_lap("create-service")
 
     ijk_index_filter = IJKIndexFilter(min_i=i_min, max_i=i_max, min_j=j_min, max_j=j_max, min_k=k_min, max_k=k_max)
@@ -106,6 +107,7 @@ async def get_grid_surface(
 # pylint: disable=too-many-arguments
 async def get_grid_parameter(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str, Query(description="Component instance string")],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     grid_name: Annotated[str, Query(description="Grid name")],
@@ -127,7 +129,7 @@ async def get_grid_parameter(
 
     ijk_index_filter = IJKIndexFilter(min_i=i_min, max_i=i_max, min_j=j_min, max_j=j_max, min_k=k_min, max_k=k_max)
 
-    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid, instance_str)
     perf_metrics.record_lap("create-service")
 
     mapped_grid_properties = await grid_service.get_mapped_grid_properties_async(
@@ -158,6 +160,7 @@ async def get_grid_parameter(
 @router.post("/get_polyline_intersection")
 async def post_get_polyline_intersection(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str, Query(description="Component instance string")],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     grid_name: Annotated[str, Query(description="Grid name")],
@@ -170,7 +173,7 @@ async def post_get_polyline_intersection(
 ) -> PolylineIntersection:
     perf_metrics = PerfMetrics()
 
-    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid, instance_str)
     perf_metrics.record_lap("create-service")
 
     polyline_intersection = await grid_service.get_polyline_intersection_async(
@@ -186,6 +189,71 @@ async def post_get_polyline_intersection(
     LOGGER.debug(f"------------------ GRID3D - get_polyline_intersection took: {perf_metrics.to_string_s()}")
 
     return polyline_intersection
+
+
+import asyncio
+from fastapi import HTTPException, status
+from webviz_services.user_session_manager.user_session_manager import (
+    UserComponent,
+    UserSessionManager,
+    SessionRunState,
+)
+from primary.middleware.add_browser_cache import no_cache
+
+
+@router.get("/status_of_user_service")
+@no_cache
+async def get_status_of_user_service(
+    # fmt:off
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str | None, Query(description="Component instance string")],
+    # fmt:on
+) -> str:
+    instance_str = instance_str or "DEFAULT"
+    session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
+    session_run_state = await session_manager.get_session_status_async(UserComponent.GRID3D_RI, instance_str)
+
+    # Sleep for a while to simulate a long-running operation
+    await asyncio.sleep(2)
+
+    if session_run_state is None:
+        return "NOT_RUNNING"
+
+    return session_run_state.value
+
+
+@router.get("/kill_service")
+@no_cache
+async def get_kill_service(
+    # fmt:off
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str | None, Query(description="Component instance string")],
+    # fmt:on
+) -> str:
+
+    LOGGER.debug(f"Entering kill_service endpoint")
+
+    instance_str = instance_str or "DEFAULT"
+    session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
+    kill_ok = await session_manager.delete_session_async(UserComponent.GRID3D_RI, instance_str)
+
+    return "KILLED" if kill_ok else "NOT_KILLED"
+
+
+@router.get("/start_service")
+@no_cache
+async def get_start_service(
+    # fmt:off
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str | None, Query(description="Component instance string")],
+    # fmt:on
+) -> str:
+
+    LOGGER.debug(f"Entering start_service endpoint")
+
+    session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
+
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not implemented")
 
 
 def _hack_ensure_b64_property_array_is_float(
