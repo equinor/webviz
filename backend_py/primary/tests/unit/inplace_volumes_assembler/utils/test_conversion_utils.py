@@ -3,9 +3,9 @@ import pytest
 import re
 import polars as pl
 
-from primary.services.sumo_access.inplace_volumes_table_types import CalculatedVolume, InplaceVolumes, Property
+from webviz_services.sumo_access.inplace_volumes_table_types import CalculatedVolume, InplaceVolumes, Property
 
-from primary.services.inplace_volumes_table_assembler._utils.conversion_utils import (
+from webviz_services.inplace_volumes_table_assembler._utils.conversion_utils import (
     create_inplace_volumes_table_data_from_fluid_results_df,
     create_repeated_table_column_data_from_polars_column,
     get_available_calculated_volumes_from_volume_names,

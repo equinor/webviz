@@ -1,7 +1,7 @@
 from typing import List
 
-from primary.services.smda_access.types import StratigraphicSurface
-from primary.services.sumo_access.polygons_types import PolygonsMeta as SumoPolygonsMeta, PolygonData
+from webviz_services.smda_access.types import StratigraphicSurface
+from webviz_services.sumo_access.polygons_types import PolygonsMeta as SumoPolygonsMeta, PolygonData
 
 from . import schemas
 

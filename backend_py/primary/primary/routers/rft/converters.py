@@ -1,4 +1,4 @@
-from primary.services.sumo_access.rft_types import RftTableDefinition
+from webviz_services.sumo_access.rft_types import RftTableDefinition
 
 from . import schemas
 

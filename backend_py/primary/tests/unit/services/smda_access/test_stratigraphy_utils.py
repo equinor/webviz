@@ -1,12 +1,12 @@
 from typing import List
 import pytest
 
-from primary.services.smda_access.stratigraphy_utils import (
+from webviz_services.smda_access.stratigraphy_utils import (
     sort_stratigraphic_names_by_hierarchy,
     sort_stratigraphic_units_by_hierarchy,
 )
-from primary.services.smda_access.types import StratigraphicUnit, StratigraphicSurface, StratigraphicFeature
-from primary.services.smda_access.drogon._drogon_strat_units import get_drogon_strat_units
+from webviz_services.smda_access.types import StratigraphicUnit, StratigraphicSurface, StratigraphicFeature
+from webviz_services.smda_access.drogon._drogon_strat_units import get_drogon_strat_units
 
 DROGON_STRAT_UNITS = get_drogon_strat_units()
 

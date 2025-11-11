@@ -1,5 +1,5 @@
 import polars as pl
-from primary.services.inplace_volumes_table_assembler._utils.polars_column_utils import is_invalid_column
+from webviz_services.inplace_volumes_table_assembler._utils.polars_column_utils import is_invalid_column
 
 
 def test_is_invalid_column_with_all_null() -> None:
