@@ -11,6 +11,11 @@ from starsessions import SessionMiddleware
 from starsessions.stores.redis import RedisStore
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
+from webviz_services.services_config import ServicesConfig, init_services_config
+from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
+from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
+from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
+
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
@@ -34,9 +39,6 @@ from primary.routers.timeseries.router import router as timeseries_router
 from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
-from primary.services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
-from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
-from primary.services.utils.task_meta_tracker import TaskMetaTrackerFactory
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
@@ -49,11 +51,11 @@ setup_normal_log_levels()
 
 # temporarily set some loggers to DEBUG
 # logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger("primary.services.sumo_access").setLevel(logging.DEBUG)
-logging.getLogger("primary.services.smda_access").setLevel(logging.DEBUG)
-logging.getLogger("primary.services.ssdl_access").setLevel(logging.DEBUG)
-logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
-logging.getLogger("primary.services.surface_query_service").setLevel(logging.DEBUG)
+logging.getLogger("webviz_services.sumo_access").setLevel(logging.DEBUG)
+logging.getLogger("webviz_services.smda_access").setLevel(logging.DEBUG)
+logging.getLogger("webviz_services.ssdl_access").setLevel(logging.DEBUG)
+logging.getLogger("webviz_services.user_grid3d_service").setLevel(logging.DEBUG)
+logging.getLogger("webviz_services.surface_query_service").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
@@ -62,6 +64,17 @@ logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
+
+
+services_config = ServicesConfig(
+    sumo_env=config.SUMO_ENV,
+    smda_subscription_key=config.SMDA_SUBSCRIPTION_KEY,
+    enterprise_subscription_key=config.ENTERPRISE_SUBSCRIPTION_KEY,
+    surface_query_url=config.SURFACE_QUERY_URL,
+    vds_host_address=config.VDS_HOST_ADDRESS,
+    redis_user_session_url=config.REDIS_USER_SESSION_URL,
+)
+init_services_config(services_config)
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:

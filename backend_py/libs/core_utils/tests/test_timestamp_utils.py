@@ -1,5 +1,5 @@
-from webviz_pkg.core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str, timestamp_utc_ms_to_compact_iso_str
-from webviz_pkg.core_utils.timestamp_utils import iso_str_to_timestamp_utc_ms
+from webviz_core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str, timestamp_utc_ms_to_compact_iso_str
+from webviz_core_utils.timestamp_utils import iso_str_to_timestamp_utc_ms
 
 
 def test_convert_timestamp_to_iso_str() -> None:

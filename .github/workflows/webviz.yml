@@ -96,22 +96,35 @@ jobs:
           cache: pip
 
       - name: 📦 Install poetry and dependencies
-        working-directory: ./backend_py/primary
+        working-directory: ./backend_py
         run: |
+          set -x
           pip install --upgrade pip
           pip install poetry==2.1.4
           poetry config virtualenvs.create false
-          poetry check --lock  # Check lock file is consistent with pyproject.toml
-          poetry install --with dev
+
+          # Check that lock files are consistent with pyproject.toml
+          poetry check --lock
+          poetry check --lock --directory=./libs/core_utils
+          poetry check --lock --directory=./libs/server_schemas
+          poetry check --lock --directory=./libs/services
+          poetry check --lock --directory=./primary
+
+          # Install our repo tooling (mypy, pylint, etc.)
+          poetry install
+
+          # Then the dependencies for primary
+          cd primary
+          poetry install
 
       - name: 🕵️ Check code style & linting
-        working-directory: ./backend_py/primary
+        working-directory: ./backend_py
         run: |
           set -x
-          black --check primary/ tests/
-          pylint primary/ tests/
-          bandit --recursive primary/
-          mypy primary/
+          black --check .
+          scripts/pylint-all.sh
+          scripts/mypy-all.sh
+          bandit --recursive primary/ libs/ --exclude tests
 
       - name: 🤖 Run tests
         working-directory: ./backend_py/primary

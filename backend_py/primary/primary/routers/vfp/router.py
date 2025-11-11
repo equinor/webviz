@@ -2,11 +2,12 @@ import logging
 
 from fastapi import APIRouter, Depends, Query, Response, HTTPException
 
+from webviz_services.sumo_access.vfp_access import VfpAccess
+from webviz_services.sumo_access.vfp_types import VfpProdTable, VfpInjTable
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
-from primary.services.sumo_access.vfp_access import VfpAccess
-from primary.services.sumo_access.vfp_types import VfpProdTable, VfpInjTable
-from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
 from . import converters

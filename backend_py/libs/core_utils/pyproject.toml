@@ -1,40 +1,17 @@
 [project]
-name = "core-utils"
-version = "0.1.0"
-authors = [{ name = "R&T Equinor" }, { name = "Ceetron Solutions AS" }]
-description = "Package with general Webviz utilities"
+name = "webviz-core-utils"
+version = "0.0.1"
 requires-python = "^3.11"
 dynamic = ["dependencies"]
 
 [tool.poetry]
 requires-poetry = ">=2.1"
-packages = [{ include = "webviz_pkg" }]
+packages = [{ include = "webviz_core_utils", from = "src" }]
 
 [tool.poetry.dependencies]
 numpy = "^2.2.3"
-pydantic = "^2.3.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.2"
-pylint = "^3.3.8"
-mypy = "1.15.0"
-
+pydantic = "^2.11.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.black]
-line-length = 120
-
-[tool.pylint]
-disable = [
-    "missing-docstring",
-    "line-too-long",
-    "logging-fstring-interpolation",
-    "duplicate-code",
-]
-
-[tool.mypy]
-ignore_missing_imports = true
-disallow_untyped_defs = true

@@ -15,85 +15,23 @@ uvicorn = "^0.35.0"
 msal = "^1.32.0"
 starsessions = "^2.2.1"
 redis = "^5.3.1"
-pyarrow = "^21.0.0"
 python-dotenv = "^1.1.0"
 pyjwt = "^2.6.0"
 pydantic = "^2.3.0"
-numpy = "^2.2.0"
 orjson = "^3.8.10"
-pandas = { version = "^2.0.1", extras = ["performance"] }
 httpx = "^0.28.1"
-fmu-sumo = "^2.6.2"
-sumo-wrapper-python = "^1.1.2"
 azure-monitor-opentelemetry = "^1.6.13"
 opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-redis = "*"
-requests-toolbelt = "^1.0.0"
-pottery = "^3.0.0"
-xtgeo = "^4.11.0"
-core_utils = { path = "../libs/core_utils", develop = true }
-server_schemas = { path = "../libs/server_schemas", develop = true }
-
-
-# Special cases
-### Polars does breaking changes in minor versions
-polars = "~1.33.0"
-
-### Might change model fields in minor updates, so pinned for stability 
-fmu-datamodels = "0.14.0"
-
-
-[tool.poetry.group.overrides.dependencies]
-# The `numba` dependency in `pandas` is a bit too loose, so it ends up pulling a release-candidate branch if we don't pin it
-numba = "0.61.2"
-
-
-[tool.poetry.group.dev.dependencies]
-black = "^25.1.0"
-pylint = "^3.3.8"
-pytest = "^8.3.2"
-mypy = "^1.15.0"
-bandit = "^1.7.5"
-types-requests = "^2.31.0.1"
-types-redis = "^4.6.0"
-pytest-timeout = "^2.3.1"
-pytest-asyncio = "^1.1.0"
-astroid = "^3.3.11"
-pyarrow-stubs = "^20.0.0.20250825"
+webviz-core-utils = { path = "../libs/core_utils", develop = true }
+webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
+webviz-services = { path = "../libs/services", develop = true }
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
-line-length = 120
-
-[tool.pylint]
-disable = [
-    "missing-docstring",
-    "line-too-long",
-    "logging-fstring-interpolation",
-    "duplicate-code",
-    "too-many-positional-arguments",
-]
-extension-pkg-whitelist = "pydantic"
-init-hook = 'import sys; sys.path.append("./pylint/plugins")'
-load-plugins = "async_suffix_checker"
-ignored-modules = ["pyarrow.compute"]
-good-names = ["i", "x", "df", "xy", "tg"]
-min-public-methods = 0
-max-args = 9
-max-locals = 19
-max-branches = 14
-
-# Reverts fixme to previous behavior (allowing TODO)
-notes = ["FIXME", "XXX"]
-
-
-[tool.mypy]
-ignore_missing_imports = true
-disallow_untyped_defs = true
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

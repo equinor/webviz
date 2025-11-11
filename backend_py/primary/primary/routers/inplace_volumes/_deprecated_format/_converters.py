@@ -1,4 +1,4 @@
-from primary.services.sumo_access.deprecated_inplace_volumetrics_types import (
+from webviz_services.sumo_access.deprecated_inplace_volumetrics_types import (
     FluidZone,
     InplaceVolumetricsIdentifier,
     InplaceVolumetricsIdentifierWithValues,
