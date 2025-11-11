@@ -31,8 +31,8 @@ const template: Template = {
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
-                relX: 0.5,
-                relY: 0,
+                relX: 0,
+                relY: 0.5,
             },
             syncedSettings: [SyncSettingKey.PARAMETER],
 
