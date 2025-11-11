@@ -7,8 +7,9 @@ import starsessions
 from fastapi import APIRouter, HTTPException, Request, status, Query
 from pydantic import BaseModel
 
+from webviz_services.graph_access.graph_access import GraphApiAccess
+
 from primary.auth.auth_helper import AuthHelper
-from primary.services.graph_access.graph_access import GraphApiAccess
 from primary.middleware.add_browser_cache import no_cache
 
 LOGGER = logging.getLogger(__name__)

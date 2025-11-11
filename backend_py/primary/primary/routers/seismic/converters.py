@@ -1,9 +1,9 @@
 import numpy as np
 from numpy.typing import NDArray
-from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
+from webviz_core_utils.b64 import b64_encode_float_array_as_float32
 
-from primary.services.vds_access.response_types import VdsSliceMetadata
-from primary.services.sumo_access.seismic_types import SeismicCubeMeta
+from webviz_services.vds_access.response_types import VdsSliceMetadata
+from webviz_services.sumo_access.seismic_types import SeismicCubeMeta
 from . import schemas
 
 

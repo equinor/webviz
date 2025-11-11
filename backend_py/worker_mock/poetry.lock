@@ -139,14 +139,14 @@ psutil = ">=5.9,<8"
 
 [[package]]
 name = "azure-servicebus"
-version = "7.14.2"
+version = "7.14.3"
 description = "Microsoft Azure Service Bus Client Library for Python"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "azure_servicebus-7.14.2-py3-none-any.whl", hash = "sha256:154bdde487ae3bd581fd49d207da4892091d9b61ab95f4cd4deab6dd4bb4649a"},
-    {file = "azure_servicebus-7.14.2.tar.gz", hash = "sha256:4014b7ac882e0d9ff876a3302818607e1a640b93e9d482073d639f5b04266e5c"},
+    {file = "azure_servicebus-7.14.3-py3-none-any.whl", hash = "sha256:386f8d32dae8881661ec8d791c38978eca2bbf7ea9f489d6cff8ad9cc6990234"},
+    {file = "azure_servicebus-7.14.3.tar.gz", hash = "sha256:70a63384557aec0bee727740e7b25ded29e9e701b77611764577fd7402389402"},
 ]
 
 [package.dependencies]
@@ -1284,4 +1284,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "dd569f61f44c9a98c0a80a2cbed7b23952817d86e91078709642735cddc6603f"
+content-hash = "398acd7f5d3667fbdf119d43095a9c5a116a7155ad7e01a10a8d77127d05d576"

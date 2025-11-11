@@ -9,9 +9,9 @@ import aiofiles.os
 import httpx
 from azure.storage.blob.aio import BlobClient
 
-from webviz_pkg.core_utils.background_tasks import run_in_background_task
-from webviz_pkg.core_utils.perf_timer import PerfTimer
-from webviz_pkg.core_utils.time_countdown import TimeCountdown
+from webviz_core_utils.background_tasks import run_in_background_task
+from webviz_core_utils.perf_timer import PerfTimer
+from webviz_core_utils.time_countdown import TimeCountdown
 
 LOGGER = logging.getLogger(__name__)
 

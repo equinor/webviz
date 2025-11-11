@@ -11,7 +11,7 @@ from opentelemetry import trace
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY, HTTP_500_INTERNAL_SERVER_ERROR
 
-from primary.services.service_exceptions import ServiceLayerException
+from webviz_services.service_exceptions import ServiceLayerException
 
 ROOT_LOGGER = logging.getLogger()
 

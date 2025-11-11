@@ -24,6 +24,7 @@ services:
     environment:
       - UVICORN_PORT=5000
       - UVICORN_RELOAD=true
+      - UVICORN_RELOAD_DIRS=/home/appuser/backend_py
       - WEBVIZ_CLIENT_SECRET
       - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY

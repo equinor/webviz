@@ -3,9 +3,10 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from webviz_services.sumo_access.table_access import TableAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+
 from primary.auth.auth_helper import AuthHelper
-from primary.services.sumo_access.table_access import TableAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from .converters import pvt_dataframe_to_api_data
 from .schemas import PvtData

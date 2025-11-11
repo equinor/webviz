@@ -12,7 +12,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
-azure-servicebus = "^7.14.2"
+azure-servicebus = "^7.14.3"
 python-dotenv = "^1.1.0"
 azure-monitor-opentelemetry = "^1.8.1"
 watchfiles = "^1.1.0"

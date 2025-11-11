@@ -3,11 +3,11 @@ import logging
 import httpx
 from fastapi import APIRouter, Depends, Query, Path
 
-from primary.auth.auth_helper import AuthHelper
-from primary.services.utils.authenticated_user import AuthenticatedUser
-from primary.services.graph_access.graph_access import GraphApiAccess
-from primary.services.service_exceptions import Service, AuthorizationError, ServiceRequestError
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.graph_access.graph_access import GraphApiAccess
+from webviz_services.service_exceptions import Service, AuthorizationError, ServiceRequestError
 
+from primary.auth.auth_helper import AuthHelper
 
 from . import schemas
 

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from primary.services.sumo_access.well_completions_types import WellCompletionsAttributeType
+from webviz_services.sumo_access.well_completions_types import WellCompletionsAttributeType
 
 
 class Completions(BaseModel):

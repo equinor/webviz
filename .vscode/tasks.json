@@ -7,6 +7,27 @@
             "path": "frontend",
             "problemMatcher": [],
             "label": "Generate frontend code from OpenAPI"
+        },
+        {
+            "type": "shell",
+            "command": "${workspaceFolder}/backend_py/scripts/mypy-all.sh",
+            "options": {
+                "env": {
+                    "PATH": "${command:python.interpreterPath}:${env:PATH}"
+                }
+            },
+            "label": "Run all webviz mypy type checks",
+            "problemMatcher": []
+        },
+        {
+            "type": "shell",
+            "command": "${workspaceFolder}/backend_py/scripts/pylint-all.sh",
+            "options": {
+                "env": {
+                    "PATH": "${command:python.interpreterPath}:${env:PATH}"
+                }
+            },
+            "label": "Run all webviz pylint checks"
         }
     ]
 }

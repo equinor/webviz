@@ -3,15 +3,15 @@ from typing import List
 import pytest
 import polars as pl
 
-from primary.services.inplace_volumes_table_assembler.inplace_volumes_table_assembler import (
+from webviz_services.inplace_volumes_table_assembler.inplace_volumes_table_assembler import (
     InplaceVolumesTableAssembler,
 )
-from primary.services.sumo_access.inplace_volumes_table_types import (
+from webviz_services.sumo_access.inplace_volumes_table_types import (
     InplaceVolumes,
     InplaceVolumesIndexWithValues,
 )
-from primary.services.sumo_access.deprecated_inplace_volumetrics_access import IGNORED_IDENTIFIER_COLUMN_VALUES
-from primary.services.service_exceptions import InvalidDataError, InvalidParameterError, NoDataError
+from webviz_services.sumo_access.deprecated_inplace_volumetrics_access import IGNORED_IDENTIFIER_COLUMN_VALUES
+from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, NoDataError
 
 
 @pytest.fixture

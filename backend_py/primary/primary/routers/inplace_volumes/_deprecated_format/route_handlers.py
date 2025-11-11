@@ -1,7 +1,7 @@
-from primary.services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 
-from primary.services.sumo_access.deprecated_inplace_volumetrics_access import DEPRECATED_InplaceVolumetricsAccess
-from primary.services.deprecated_inplace_volumetrics_assembler.deprecated_inplace_volumetrics_assembler import (
+from webviz_services.sumo_access.deprecated_inplace_volumetrics_access import DEPRECATED_InplaceVolumetricsAccess
+from webviz_services.deprecated_inplace_volumetrics_assembler.deprecated_inplace_volumetrics_assembler import (
     DEPRECATED_InplaceVolumetricsAssembler,
 )
 
