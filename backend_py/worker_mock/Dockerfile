@@ -19,7 +19,7 @@ COPY --chown=appuser ./backend_py/worker_mock/pyproject.toml  /home/appuser/back
 COPY --chown=appuser ./backend_py/worker_mock/poetry.lock     /home/appuser/backend_py/worker_mock
 RUN poetry install --only main --no-root --no-directory
 
-COPY --chown=appuser ./backend_py/worker_mock/worker_mock /home/appuser/backend_py/worker_mock/worker_mock
+COPY --chown=appuser ./backend_py/worker_mock/src /home/appuser/backend_py/worker_mock/src
 RUN poetry install --only main
 
 CMD ["python", "-m", "worker_mock.worker_main"]

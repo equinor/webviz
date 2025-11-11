@@ -1,11 +1,12 @@
 [project]
 name = "worker-mock"
+version = "0.0.1"
 requires-python = "^3.13"
 dynamic = ["dependencies"]
 
 [tool.poetry]
 requires-poetry = ">=2.1"
-package-mode = false
+packages = [{ include = "worker_mock", from = "src" }]
 
 [build-system]
 requires = ["poetry-core"]

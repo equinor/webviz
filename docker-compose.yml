@@ -110,8 +110,8 @@ services:
       - OTEL_LOG_LEVEL=debug
       - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
     volumes:
-      - ./backend_py/worker_mock/worker_mock:/home/appuser/backend_py/worker_mock/worker_mock
-    command: ["watchfiles", "python -m worker_mock.worker_main", "/home/appuser/backend_py/worker_mock/worker_mock"]
+      - ./backend_py/worker_mock/src:/home/appuser/backend_py/worker_mock/src
+    command: ["watchfiles", "python -m worker_mock.worker_main", "/home/appuser/backend_py/worker_mock/src"]
     #command: ["python", "-m", "worker_mock.worker_main"]
     #restart: on-failure
     restart: always
