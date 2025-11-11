@@ -10,6 +10,7 @@ import FmuLogo from "@assets/fmu.svg";
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";
@@ -23,7 +24,6 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useActiveSession } from "../ActiveSessionBoundary";
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
-import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 
 export type TopBarProps = {
     workbench: Workbench;

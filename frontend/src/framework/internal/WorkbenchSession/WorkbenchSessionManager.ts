@@ -10,6 +10,7 @@ import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
+import { EnsembleUpdateMonitor } from "../EnsembleUpdateMonitor";
 import { PersistenceOrchestrator } from "../persistence/core/PersistenceOrchestrator";
 import type { PersistenceNotifier } from "../persistence/ui/PersistenceNotifier";
 import { ToastNotifier } from "../persistence/ui/ToastNotifier";
@@ -31,7 +32,6 @@ import {
     readSessionIdFromUrl,
     readSnapshotIdFromUrl,
 } from "./utils/url";
-import { EnsembleUpdateMonitor } from "../EnsembleUpdateMonitor";
 
 export enum WorkbenchSessionManagerTopic {
     ACTIVE_SESSION = "activeSession",

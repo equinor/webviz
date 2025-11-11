@@ -9,6 +9,7 @@ import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnse
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { TopBar } from "@framework/internal/components/TopBar/topBar";
+import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { Workbench } from "@framework/Workbench";
 import "../../../../modules/registerAllModules";
 import "../../../../templates/registerAllTemplates";
@@ -23,7 +24,6 @@ import { RightNavBar } from "../RightNavBar";
 import { SaveSessionDialog } from "../SaveSessionDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
-import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.

@@ -1,6 +1,7 @@
 import type React from "react";
 
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Workbench } from "@framework/Workbench";
 import { Dialog } from "@lib/components/Dialog";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -8,7 +9,6 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { SessionManagementContent } from "./sessionManagementContent";
 import { SnapshotManagementContent } from "./snapshotManagementContent";
-import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 
 export type PersistenceManagementDialogProps = {
     workbench: Workbench;
