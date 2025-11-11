@@ -1,4 +1,4 @@
-from webviz_services.sumo_access.vfp_types import VfpProdTable, VfpInjTable, VfpType
+from webviz_services.sumo_access.vfp_types import VfpProdTable, VfpInjTable
 
 from . import schemas
 
