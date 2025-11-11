@@ -15,6 +15,7 @@ import type { InternalRegularEnsembleSetting } from "../types";
 import { CaseExplorer, type CaseSelection } from "./CaseExplorer/CaseExplorer";
 
 export type EnsembleExplorerProps = {
+    enableQueries: boolean;
     nextEnsembleColor: string;
     selectedEnsembles: UserEnsembleSetting[];
     selectButtonLabel?: string;
@@ -81,7 +82,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
 
     return (
         <div className="flex flex-col h-full gap-4 p-4 bg-slate-100">
-            <CaseExplorer onCaseSelectionChange={handleCaseSelectedChange} />
+            <CaseExplorer enableQueries={props.enableQueries} onCaseSelectionChange={handleCaseSelectedChange} />
             <Label text="Ensemble">
                 <Select
                     options={ensembleOptions}

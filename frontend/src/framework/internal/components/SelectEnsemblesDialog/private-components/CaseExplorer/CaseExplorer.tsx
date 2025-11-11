@@ -1,6 +1,5 @@
 import React from "react";
 
-import { CircularProgress } from "@equinor/eds-core-react";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
@@ -9,7 +8,7 @@ import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
@@ -26,7 +25,7 @@ import {
     storeStateInLocalStorage,
 } from "./_utils";
 
-const STALE_TIME = tanstackDebugTimeOverride(0);
+const STALE_TIME = tanstackDebugTimeOverride(5 * 60);
 const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
 export type CaseSelection = {
@@ -36,6 +35,7 @@ export type CaseSelection = {
 };
 
 export type CaseExplorerProps = {
+    enableQueries: boolean;
     onCaseSelectionChange: (caseSelection: CaseSelection) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
@@ -63,7 +63,12 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const [prevCaseSelection, setPrevCaseSelection] = React.useState<CaseSelection | null>(null);
 
     // --- Queries ---
-    const fieldsQuery = useQuery({ ...getFieldsOptions() });
+    const fieldsQuery = useQuery({
+        ...getFieldsOptions(),
+        enabled: props.enableQueries,
+        gcTime: CACHE_TIME,
+        staleTime: STALE_TIME,
+    });
     const fieldOptions = fieldsQuery.data?.map((f) => ({ value: f.fieldIdentifier, label: f.fieldIdentifier })) ?? [];
 
     const [selectedField, setSelectedField] = useValidState<string>({
@@ -74,7 +79,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
     const casesQuery = useQuery({
         ...getCasesOptions({ query: { field_identifier: selectedField ?? "" } }),
-        enabled: selectedField !== null,
+        enabled: selectedField !== null && props.enableQueries,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
@@ -216,10 +221,9 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         <div className="flex flex-col h-full gap-4 min-h-0">
             <div className="flex flex-row gap-4">
                 <Label text="Field" position="left">
-                    <QueryStateWrapper
-                        queryResult={fieldsQuery}
-                        errorComponent={<div className="text-red-500">Error loading fields</div>}
-                        loadingComponent={<CircularProgress />}
+                    <PendingWrapper
+                        isPending={fieldsQuery.isFetching}
+                        errorMessage={fieldsQuery.error ? "Error loading fields" : undefined}
                     >
                         <Dropdown
                             options={fieldOptions}
@@ -227,7 +231,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             onChange={handleFieldChanged}
                             disabled={fieldOptions.length === 0}
                         />
-                    </QueryStateWrapper>
+                    </PendingWrapper>
                 </Label>
                 <div className="grow flex flex-row gap-4 items-center">
                     <Label position="left" text="Only my cases">
@@ -240,11 +244,10 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
                         </Tooltip>
                     </Label>
-                    <QueryStateWrapper
-                        queryResult={casesQuery}
+                    <PendingWrapper
+                        isPending={casesQuery.isFetching}
+                        errorMessage={casesQuery.error ? "Error loading cases" : undefined}
                         className="h-full flex-1 min-h-0 min-w-56"
-                        errorComponent={<div className="text-red-500">Error loading cases</div>}
-                        loadingComponent={<CircularProgress />}
                     >
                         <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
                             <TagPicker
@@ -255,7 +258,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                                 onChange={(value) => setSelectedStandardResults([...value])}
                             />
                         </Tooltip>
-                    </QueryStateWrapper>
+                    </PendingWrapper>
                 </div>
             </div>
             <StatusWrapper
