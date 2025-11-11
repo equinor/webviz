@@ -56,7 +56,7 @@ extension-pkg-whitelist = "pydantic"
 ignored-modules = ["pyarrow.compute"]
 min-public-methods = 0
 max-args = 9
-max-locals = 19
+max-locals = 20
 max-branches = 14
 
 # Reverts fixme to previous behavior (allowing TODO)

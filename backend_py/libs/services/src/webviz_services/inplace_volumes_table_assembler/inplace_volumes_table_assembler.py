@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import pyarrow as pa
 import polars as pl
@@ -14,13 +15,14 @@ from webviz_services.sumo_access.inplace_volumes_table_types import (
     InplaceVolumesIndexWithValues,
     InplaceVolumesTableDefinition,
     InplaceVolumesStatisticalTableData,
-    InplaceVolumesTableDefinition,
     InplaceVolumesTableData,
     InplaceVolumesTableDataPerFluidSelection,
     InplaceVolumesStatisticalTableDataPerFluidSelection,
     VolumeColumnsAndIndexUniqueValues,
 )
 from webviz_services.service_exceptions import Service, InvalidDataError, InvalidParameterError, NoDataError
+from webviz_core_utils.perf_timer import PerfTimer
+
 
 from ._utils.conversion_utils import (
     create_inplace_volumes_table_data_from_fluid_results_df,
@@ -39,9 +41,6 @@ from ._utils.inplace_volumes_df_utils import (
     validate_inplace_volumes_df_selector_columns,
 )
 
-
-import logging
-from webviz_core_utils.perf_timer import PerfTimer
 
 LOGGER = logging.getLogger(__name__)
 
