@@ -163,8 +163,11 @@ type TitleProps = {
 };
 
 function Title(props: TitleProps): React.ReactNode {
-    const activeSession = props.workbench.getSessionManager().getActiveSession();
-    const isSnapshot = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
+    const activeSession = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.ACTIVE_SESSION,
+    );
+    const isSnapshot = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     let content = <SessionTitle workbench={props.workbench} />;
 
@@ -180,25 +183,29 @@ type SnapshotTitleProps = {
 };
 
 function SnapshotTitle(props: SnapshotTitleProps): React.ReactNode {
-    const activeSnapshot = props.workbench.getSessionManager().getActiveSession();
-    const metadata = usePublishSubscribeTopicValue(activeSnapshot, PrivateWorkbenchSessionTopic.METADATA);
+    const activeSnapshot = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.ACTIVE_SESSION,
+    );
+    const metadata = usePublishSubscribeTopicValue(activeSnapshot!, PrivateWorkbenchSessionTopic.METADATA);
 
     return (
         <>
             <Link fontSize="inherit" className="mr-1" />
             <Tooltip
                 title={
-                    <>
-                        <h6>{metadata.title}</h6>
-                        <p>
-                            <Typography variant="body_short">
-                                {new Date(metadata.createdAt).toLocaleString()}
-                            </Typography>
-                        </p>
-                        <p>{metadata.description ?? "No description provided."}</p>
-                    </>
+                    <div className="whitespace-normal text-base">
+                        <h3 className="text-lg">{metadata.title}</h3>
+                        {metadata.description && (
+                            <>
+                                <hr className="h-px mb-2 bg-white/25" />
+                                <p className="text-sm whitespace-pre-wrap">{metadata.description}</p>
+                            </>
+                        )}
+                    </div>
                 }
                 placement="bottom"
+                enterDelay="medium"
             >
                 <Typography variant="h5" className="min-w-0 truncate">
                     {metadata.title}
@@ -219,9 +226,12 @@ type SessionTitleProps = {
 };
 
 function SessionTitle(props: SessionTitleProps): React.ReactNode {
-    const activeSession = props.workbench.getSessionManager().getActiveSession();
-    const metadata = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.METADATA);
-    const isPersisted = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.IS_PERSISTED);
+    const activeSession = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.ACTIVE_SESSION,
+    );
+    const metadata = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.METADATA);
+    const isPersisted = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.IS_PERSISTED);
 
     const persistenceInfo = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getPersistenceOrchestrator()!,
@@ -239,7 +249,23 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                     italic: !isPersisted,
                 })}
             >
-                <span className="truncate">{metadata.title}</span>
+                <Tooltip
+                    title={
+                        <div className="whitespace-normal text-base">
+                            <h3 className="text-lg">{metadata.title}</h3>
+                            {metadata.description && (
+                                <>
+                                    <hr className="h-px mb-2 bg-white/25" />
+                                    <p className="text-sm whitespace-pre-wrap">{metadata.description}</p>
+                                </>
+                            )}
+                        </div>
+                    }
+                    placement="bottom"
+                    enterDelay="medium"
+                >
+                    <span className="truncate">{metadata.title}</span>
+                </Tooltip>
                 <Tooltip title="You have unsaved changes">
                     <span className="text-amber-600 ml-2 text-2xl">{hasChanges ? "*" : " "}</span>
                 </Tooltip>
@@ -291,6 +317,11 @@ type SessionSaveButtonProps = {
 };
 
 function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
+    const activeSession = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.ACTIVE_SESSION,
+    );
+
     const [, setSaveSessionDialogOpen] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SaveSessionDialogOpen,
@@ -301,10 +332,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
         PersistenceOrchestratorTopic.PERSISTENCE_INFO,
     );
 
-    const isPersisted = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.IS_PERSISTED,
-    );
+    const isPersisted = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.IS_PERSISTED);
 
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 

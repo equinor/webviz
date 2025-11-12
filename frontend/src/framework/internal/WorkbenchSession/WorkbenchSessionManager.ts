@@ -69,6 +69,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     private _activeSession: PrivateWorkbenchSession | null = null;
     private _persistenceOrchestrator: PersistenceOrchestrator | null = null;
+    private _activeToasts: Map<string, string | number> = new Map(); // Map of operation name -> toast ID
 
     constructor(
         workbench: Workbench,
@@ -139,6 +140,44 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this._persistenceOrchestrator?.stop();
         this._ensembleUpdateMonitor.stopPolling();
         this.unloadSession();
+        this.dismissAllToasts();
+    }
+
+    // ========== Toast Management ==========
+
+    /**
+     * Dismiss any existing toast for an operation and create a new loading toast.
+     * Returns the new toast ID.
+     */
+    private createLoadingToast(operation: string, message: string): string | number {
+        // Dismiss any existing toast for this operation
+        this.dismissToast(operation);
+
+        // Create new loading toast
+        const toastId = toast.loading(message, { autoClose: false });
+        this._activeToasts.set(operation, toastId);
+        return toastId;
+    }
+
+    /**
+     * Dismiss and remove a tracked toast for an operation.
+     */
+    private dismissToast(operation: string): void {
+        const toastId = this._activeToasts.get(operation);
+        if (toastId !== undefined) {
+            toast.dismiss(toastId);
+            this._activeToasts.delete(operation);
+        }
+    }
+
+    /**
+     * Dismiss all tracked toasts.
+     */
+    private dismissAllToasts(): void {
+        for (const toastId of this._activeToasts.values()) {
+            toast.dismiss(toastId);
+        }
+        this._activeToasts.clear();
     }
 
     // ========== Session Lifecycle ==========
@@ -541,12 +580,53 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
     }
 
-    showSaveAsDialog(): void {
+    async saveAsNewSession(title: string, description?: string): Promise<void> {
         if (!this._activeSession) {
             throw new Error("No active workbench session to save.");
         }
 
-        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
+        if (!this._persistenceOrchestrator) {
+            throw new Error("Cannot persist a snapshot.");
+        }
+
+        this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
+        this.createLoadingToast("saveAsNewSession", "Saving session as new...");
+
+        try {
+            // Create a copy of the current session
+            const newSession = await PrivateWorkbenchSession.createCopy(this._queryClient, this._activeSession);
+
+            // Update metadata with new title and description BEFORE setting as active
+            // This prevents the session from being marked dirty
+            newSession.updateMetadata({ title, description }, false);
+
+            // Close current session
+            this.unloadSession();
+
+            // Set new session as active
+            await this.setActiveSession(newSession);
+
+            // Persist the new session
+            await this._persistenceOrchestrator.persistNow();
+
+            // Update URL with new session ID
+            const id = newSession.getId();
+            if (id) {
+                const url = buildSessionUrl(id);
+                this._workbench.getNavigationManager().pushState(url);
+            }
+
+            this.dismissToast("saveAsNewSession");
+            toast.success(`Session saved as "${title}"`);
+            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
+        } catch (error) {
+            console.error("Failed to save session as new:", error);
+            this.dismissToast("saveAsNewSession");
+            toast.error("Failed to save session as new");
+            throw error;
+        } finally {
+            this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
+        }
     }
 
     async createSnapshot(title: string, description: string): Promise<string | null> {
@@ -771,7 +851,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         if (result !== "delete") return false;
 
         let success = false;
-        const toastId = toast.loading("Deleting session...", { autoClose: false });
+        this.createLoadingToast("deleteSession", "Deleting session...");
 
         try {
             await this._queryClient
@@ -779,7 +859,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 .build(this._queryClient, {
                     ...deleteSessionMutation(),
                     onSuccess: () => {
-                        toast.dismiss(toastId);
+                        this.dismissToast("deleteSession");
                         toast.success("Session successfully deleted.");
                         success = true;
                         removeSessionQueryData(this._queryClient, sessionId);
@@ -787,7 +867,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 })
                 .execute({ path: { session_id: sessionId } });
         } catch (error) {
-            toast.dismiss(toastId);
+            this.dismissToast("deleteSession");
             toast.error("An error occurred while deleting the session.");
             console.error("Failed to delete session:", error);
         }
@@ -808,8 +888,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         if (result !== "delete") return false;
 
         let success = false;
-
-        const toastId = toast.loading("Deleting snapshot...", { autoClose: false });
+        this.createLoadingToast("deleteSnapshot", "Deleting snapshot...");
 
         try {
             await this._queryClient
@@ -817,7 +896,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 .build(this._queryClient, {
                     ...deleteSnapshotMutation(),
                     onSuccess: () => {
-                        toast.dismiss(toastId);
+                        this.dismissToast("deleteSnapshot");
                         toast.success("Snapshot successfully deleted.");
                         success = true;
                         removeSnapshotQueryData(this._queryClient);
@@ -825,7 +904,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 })
                 .execute({ path: { snapshot_id: snapshotId } });
         } catch (error) {
-            toast.dismiss(toastId);
+            this.dismissToast("deleteSnapshot");
             toast.error("An error occurred while deleting the snapshot.");
             console.error("Failed to delete snapshot:", error);
         }

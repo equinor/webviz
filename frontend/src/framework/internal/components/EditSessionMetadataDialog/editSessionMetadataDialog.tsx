@@ -8,7 +8,6 @@ import { Button } from "@lib/components/Button";
 import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import { Label } from "@lib/components/Label";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { truncateString } from "@lib/utils/strings";
 
@@ -154,38 +153,30 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
             <div className="flex gap-4 items-center">
                 <DashboardPreview height={100} width={100} layout={layout} />
                 <div className="flex flex-col gap-2 grow min-w-0">
-                    <Label text="Title">
-                        <>
-                            <CharLimitedInput
-                                onControlledValueChange={(value) => setTitle(value)}
-                                maxLength={MAX_TITLE_LENGTH}
-                                inputRef={inputRef}
-                                placeholder="Enter session title"
-                                type="text"
-                                value={title}
-                                error={!!inputFeedback.title}
-                                autoFocus
-                            />
-                            {inputFeedback.title && (
-                                <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>
-                            )}
-                        </>
-                    </Label>
-                    <Label text="Description (optional)">
-                        <>
-                            <CharLimitedInput
-                                maxLength={MAX_DESCRIPTION_LENGTH}
-                                onControlledValueChange={(value) => setDescription(value)}
-                                placeholder="Enter session description"
-                                value={description}
-                                multiline
-                                error={!!inputFeedback.description}
-                            />
-                            {inputFeedback.description && (
-                                <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
-                            )}
-                        </>
-                    </Label>
+                    <CharLimitedInput
+                        label="Title"
+                        onControlledValueChange={(value) => setTitle(value)}
+                        maxLength={MAX_TITLE_LENGTH}
+                        inputRef={inputRef}
+                        placeholder="Enter session title"
+                        type="text"
+                        value={title}
+                        error={!!inputFeedback.title}
+                        autoFocus
+                    />
+                    {inputFeedback.title && <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>}
+                    <CharLimitedInput
+                        label="Description (optional)"
+                        maxLength={MAX_DESCRIPTION_LENGTH}
+                        onControlledValueChange={(value) => setDescription(value)}
+                        placeholder="Enter session description"
+                        value={description}
+                        multiline
+                        error={!!inputFeedback.description}
+                    />
+                    {inputFeedback.description && (
+                        <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
+                    )}
                 </div>
             </div>
         </Dialog>

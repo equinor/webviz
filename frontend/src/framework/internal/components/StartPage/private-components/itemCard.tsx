@@ -59,12 +59,12 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                 href={props.href}
                 onClick={handleClick}
             >
-                <div className="w-24 overflow-hidden truncate grow">
+                <div className="w-60 overflow-hidden truncate grow">
                     <span>{props.title}</span>
                 </div>
                 {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="w-24 ml-auto text-gray-500 whitespace-nowrap text-xs">
-                    ~ <TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} />
+                <span className="w-20 ml-auto text-gray-500 whitespace-nowrap text-xs">
+                    ~ <TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
                 </span>
             </a>
         </Tooltip>
@@ -106,7 +106,7 @@ function TooltipContent(
         <div className="w-2xs whitespace-normal text-base">
             <h3 className="text-lg">{props.title}</h3>
             <hr className="h-px mb-2 bg-white/25" />
-            {props.description && <p className="text-sm">{props.description}</p>}
+            {props.description && <p className="text-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
                 <ul className="mt-6 text-sm truncate">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (

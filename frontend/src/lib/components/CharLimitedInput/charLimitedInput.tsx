@@ -3,6 +3,7 @@ import React from "react";
 import { Input, type InputProps } from "../Input/input";
 
 export type CharLimitedInputProps = InputProps & {
+    label: string;
     maxLength: number;
     value: string;
     onControlledValueChange: (newValue: string) => void;
@@ -39,16 +40,14 @@ export function CharLimitedInput(props: CharLimitedInputProps): React.ReactNode 
     );
 
     return (
-        <Input
-            {...rest}
-            value={controlledValue}
-            uirevision={uirevision}
-            onChange={handleChange}
-            endAdornment={
-                <span>
+        <div className="flex flex-col gap-0.5">
+            <div className="flex items-center">
+                <label className="text-sm text-gray-500 leading-tight grow">{props.label}</label>
+                <span className="ml-auto text-sm text-gray-500">
                     {controlledValue.length}/{maxLength}
                 </span>
-            }
-        />
+            </div>
+            <Input {...rest} value={controlledValue} uirevision={uirevision} onChange={handleChange} />
+        </div>
     );
 }

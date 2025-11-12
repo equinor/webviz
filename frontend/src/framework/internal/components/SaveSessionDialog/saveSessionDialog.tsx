@@ -7,7 +7,6 @@ import { Button } from "@lib/components/Button";
 import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import { Label } from "@lib/components/Label";
 import { truncateString } from "@lib/utils/strings";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
@@ -27,6 +26,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
 
     const originalTitle = activeSession.getMetadata().title;
     const originalDescription = activeSession.getMetadata().description ?? "";
+    const isPersisted = activeSession.getIsPersisted();
 
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
@@ -56,16 +56,30 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
-        props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
-        props.workbench
-            .getSessionManager()
-            .saveActiveSession(true)
-            .then(() => {
-                setInputFeedback({});
-            })
-            .catch((error) => {
-                console.error("Failed to save session:", error);
-            });
+        if (isPersisted) {
+            // Save as new session (dialog opened via "Save As" button)
+            props.workbench
+                .getSessionManager()
+                .saveAsNewSession(title, description)
+                .then(() => {
+                    setInputFeedback({});
+                })
+                .catch((error) => {
+                    console.error("Failed to save session as new:", error);
+                });
+        } else {
+            // Regular save (first time saving)
+            props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
+            props.workbench
+                .getSessionManager()
+                .saveActiveSession(true)
+                .then(() => {
+                    setInputFeedback({});
+                })
+                .catch((error) => {
+                    console.error("Failed to save session:", error);
+                });
+        }
     }
 
     function handleCancel() {
@@ -107,38 +121,30 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             <div className="flex gap-4 items-center">
                 <DashboardPreview height={100} width={100} layout={layout} />
                 <div className="flex flex-col gap-2 grow min-w-0">
-                    <Label text="Title">
-                        <>
-                            <CharLimitedInput
-                                inputRef={inputRef}
-                                placeholder="Enter session title"
-                                type="text"
-                                value={title}
-                                onControlledValueChange={(value) => setTitle(value)}
-                                maxLength={MAX_TITLE_LENGTH}
-                                error={!!inputFeedback.title}
-                                autoFocus
-                            />
-                            {inputFeedback.title && (
-                                <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>
-                            )}
-                        </>
-                    </Label>
-                    <Label text="Description (optional)">
-                        <>
-                            <CharLimitedInput
-                                maxLength={MAX_DESCRIPTION_LENGTH}
-                                onControlledValueChange={(value) => setDescription(value)}
-                                placeholder="Enter session description"
-                                value={description}
-                                multiline
-                                error={!!inputFeedback.description}
-                            />
-                            {inputFeedback.description && (
-                                <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
-                            )}
-                        </>
-                    </Label>
+                    <CharLimitedInput
+                        label="Title"
+                        inputRef={inputRef}
+                        placeholder="Enter session title"
+                        type="text"
+                        value={title}
+                        onControlledValueChange={(value) => setTitle(value)}
+                        maxLength={MAX_TITLE_LENGTH}
+                        error={!!inputFeedback.title}
+                        autoFocus
+                    />
+                    {inputFeedback.title && <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>}
+                    <CharLimitedInput
+                        label="Description (optional)"
+                        maxLength={MAX_DESCRIPTION_LENGTH}
+                        onControlledValueChange={(value) => setDescription(value)}
+                        placeholder="Enter session description"
+                        value={description}
+                        multiline
+                        error={!!inputFeedback.description}
+                    />
+                    {inputFeedback.description && (
+                        <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
+                    )}
                 </div>
             </div>
         </Dialog>

@@ -11,7 +11,7 @@ import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedIn
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
-import { Label } from "@lib/components/Label";
+import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { truncateString } from "@lib/utils/strings";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
@@ -37,6 +37,9 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
 
     const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
     const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
+
+    const timeoutFunction = useTimeoutFunction();
+    const [showCopySuccess, setShowCopySuccess] = React.useState<boolean>(false);
 
     if (originalTitle !== prevOriginalTitle) {
         setPrevOriginalTitle(originalTitle);
@@ -88,6 +91,15 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
         setSnapshotUrl(null);
     }
 
+    function copyToClipboard() {
+        if (snapshotUrl) {
+            navigator.clipboard.writeText(snapshotUrl);
+        }
+
+        setShowCopySuccess(true);
+        timeoutFunction(() => setShowCopySuccess(false), 2000);
+    }
+
     const layout = props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() || [];
 
     let content: React.ReactNode = null;
@@ -107,38 +119,30 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
             <div className="flex gap-4 items-center">
                 <DashboardPreview height={100} width={100} layout={layout} />
                 <div className="flex flex-col gap-2 grow min-w-0">
-                    <Label text="Title">
-                        <>
-                            <CharLimitedInput
-                                onControlledValueChange={(value) => setTitle(value)}
-                                maxLength={MAX_TITLE_LENGTH}
-                                inputRef={inputRef}
-                                placeholder="Enter snapshot title"
-                                type="text"
-                                value={title}
-                                error={!!inputFeedback.title}
-                                autoFocus
-                            />
-                            {inputFeedback.title && (
-                                <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>
-                            )}
-                        </>
-                    </Label>
-                    <Label text="Description">
-                        <>
-                            <CharLimitedInput
-                                maxLength={MAX_DESCRIPTION_LENGTH}
-                                onControlledValueChange={(value) => setDescription(value)}
-                                placeholder="Enter snapshot description"
-                                value={description}
-                                multiline
-                                error={!!inputFeedback.description}
-                            />
-                            {inputFeedback.description && (
-                                <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
-                            )}
-                        </>
-                    </Label>
+                    <CharLimitedInput
+                        label="Title"
+                        onControlledValueChange={(value) => setTitle(value)}
+                        maxLength={MAX_TITLE_LENGTH}
+                        inputRef={inputRef}
+                        placeholder="Enter snapshot title"
+                        type="text"
+                        value={title}
+                        error={!!inputFeedback.title}
+                        autoFocus
+                    />
+                    {inputFeedback.title && <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>}
+                    <CharLimitedInput
+                        label="Description (optional)"
+                        maxLength={MAX_DESCRIPTION_LENGTH}
+                        onControlledValueChange={(value) => setDescription(value)}
+                        placeholder="Enter snapshot description"
+                        value={description}
+                        multiline
+                        error={!!inputFeedback.description}
+                    />
+                    {inputFeedback.description && (
+                        <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
+                    )}
                 </div>
             </div>
         );
@@ -168,9 +172,13 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                     readOnly
                     className="w-full"
                     endAdornment={
-                        <Button variant="text" onClick={() => navigator.clipboard.writeText(snapshotUrl || "")}>
-                            Copy
-                        </Button>
+                        showCopySuccess ? (
+                            <span className="text-green-600 font-semibold h-9 flex items-center">Copied!</span>
+                        ) : (
+                            <Button variant="text" onClick={copyToClipboard}>
+                                Copy
+                            </Button>
+                        )
                     }
                 />
             </div>

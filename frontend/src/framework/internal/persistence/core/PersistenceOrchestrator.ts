@@ -78,6 +78,12 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         await this._tracker.initialize(this._session.getIsLoadedFromLocalStorage());
         this.notifyPersistenceInfoChanged();
 
+        // For new unpersisted sessions, do an initial save to localStorage
+        // This ensures the session can be recovered if the user refreshes immediately
+        if (!this._session.getIsPersisted() && !this._session.getIsLoadedFromLocalStorage()) {
+            this._localBackup.persist();
+        }
+
         this.startBackendPolling();
 
         // Allow time for React components to mount and settle after session becomes active

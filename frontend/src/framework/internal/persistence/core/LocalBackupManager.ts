@@ -3,8 +3,6 @@ import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSessi
 import { makeWorkbenchSessionLocalStorageString } from "../../WorkbenchSession/utils/deserialization";
 import { localStorageKeyForSessionId } from "../../WorkbenchSession/utils/localStorageHelpers";
 
-
-
 /**
  * Handles saving and restoring workbench session backups to localStorage.
  * Provides simple crash recovery and offline persistence.
@@ -22,7 +20,6 @@ export class LocalBackupManager {
      */
     persist(): void {
         const sessionId = this._session.getId();
-        if (!sessionId) return;
         if (this._session.isSnapshot()) return;
 
         try {

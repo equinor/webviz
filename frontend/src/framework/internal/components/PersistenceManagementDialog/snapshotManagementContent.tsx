@@ -115,6 +115,17 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
             const [copied, setCopied] = React.useState(false);
             const url = buildSnapshotUrl(snapshotId);
 
+            const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+            React.useEffect(function onMountEffect() {
+                const timeoutRefCurrent = timeoutRef.current;
+                return () => {
+                    if (timeoutRefCurrent) {
+                        clearTimeout(timeoutRefCurrent);
+                    }
+                };
+            }, []);
+
             function handleCopyClick(event: React.MouseEvent) {
                 event.stopPropagation();
 
@@ -124,7 +135,7 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
 
                 navigator.clipboard.writeText(`${url}`);
                 setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
+                timeoutRef.current = setTimeout(() => setCopied(false), 2000);
             }
 
             function handleMouseLeave() {
@@ -261,6 +272,8 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         { columnId: "lastVisitedAt", direction: TableSortDirection.DESC },
     ]);
 
+    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const querySortParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
         if (!tableSortState?.length) return undefined;
 
@@ -301,11 +314,27 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         });
     }
 
-    function handleTitleFilterValueChange(newValue: string) {
+    function handleTitleFilterValueChange(e: React.ChangeEvent<HTMLInputElement>) {
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+            const newValue = e.target.value;
+            setTableFilter((prev) => {
+                return {
+                    ...prev,
+                    title: newValue ?? undefined,
+                };
+            });
+        }, 300);
+    }
+
+    function handleClearTitleFilter() {
         setTableFilter((prev) => {
             return {
                 ...prev,
-                title: newValue || undefined,
+                title: undefined,
             };
         });
     }
@@ -375,6 +404,14 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         return tableData.find((snapshot) => snapshot.snapshotId === selectedSnapshotId) || null;
     }, [tableData, selectedSnapshotId]);
 
+    React.useEffect(function onMountEffect() {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
     React.useEffect(
         function maybeRefetchNextPageEffect() {
             if (!visibleRowRange || visibleRowRange.end === -1) return;
@@ -396,13 +433,13 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     <Input
                         startAdornment={<Search fontSize="small" />}
                         endAdornment={
-                            <DenseIconButton onClick={() => handleTitleFilterValueChange("")} title="Clear filter">
+                            <DenseIconButton onClick={handleClearTitleFilter} title="Clear filter">
                                 <Close fontSize="inherit" />
                             </DenseIconButton>
                         }
                         value={tableFilter.title ?? ""}
                         placeholder="Search title"
-                        onValueChange={handleTitleFilterValueChange}
+                        onChange={handleTitleFilterValueChange}
                         className="h-6"
                     />
                 </Label>

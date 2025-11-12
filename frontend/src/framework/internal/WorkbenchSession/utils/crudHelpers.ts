@@ -70,6 +70,9 @@ export async function createSnapshotWithCacheUpdate(
     queryClient.invalidateQueries({
         queryKey: getSnapshotsMetadataQueryKey(),
     });
+    queryClient.invalidateQueries({
+        queryKey: getSnapshotsMetadataInfiniteQueryKey(),
+    });
 
     return response.data;
 }

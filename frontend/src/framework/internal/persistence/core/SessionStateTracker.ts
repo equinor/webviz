@@ -61,7 +61,9 @@ export class SessionStateTracker {
         // Use the backend's hash if available, otherwise use the calculated hash
         const backendHash = this._session.getMetadata().hash;
 
-        if (!isLoadedFromLocalStorage && backendHash) {
+        // If session is persisted and has a backend hash, use it as the source of truth
+        // This applies even if loaded from localStorage (persisted sessions recovered from localStorage)
+        if (this._session.getIsPersisted() && backendHash) {
             // Use the hash provided by the backend as the source of truth for BOTH current and persisted
             // This prevents false positives from deserialization artifacts
             this._state.currentHash = backendHash;
@@ -79,16 +81,16 @@ export class SessionStateTracker {
             this._state.currentHash = hash;
 
             // Only set lastPersistedHash/Metadata if the session has been persisted to backend
-            // New sessions and localStorage sessions should have null to indicate they need saving
-            if (this._session.getIsPersisted() && !isLoadedFromLocalStorage) {
-                // Fallback case: loaded from backend but no hash provided
+            // New unpersisted sessions should have null to indicate they need saving
+            if (this._session.getIsPersisted()) {
+                // Fallback case: persisted session but no hash provided
                 this._state.lastPersistedHash = hash;
                 this._state.lastPersistedMetadata = {
                     title: this._session.getMetadata().title,
                     description: this._session.getMetadata().description,
                 };
             } else {
-                // New sessions or localStorage sessions don't have a trusted backend hash
+                // New unpersisted sessions don't have a trusted backend hash
                 this._state.lastPersistedHash = null;
                 this._state.lastPersistedMetadata = null;
             }

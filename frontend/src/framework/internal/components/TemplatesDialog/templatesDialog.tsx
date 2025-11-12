@@ -61,9 +61,8 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
             showCloseCross={true}
             onClose={handleClose}
             title="Templates"
-            height="80%"
-            width="80%"
-            minWidth={800}
+            height="800px"
+            width="800px"
         >
             <div className="h-full flex flex-col">
                 <div className="flex gap-2 grow min-h-0">
@@ -223,12 +222,11 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
         <>
             <div
                 className={resolveClassNames(
-                    "box-border text-sm text-gray-700 w-full select-none flex cursor-pointer hover:bg-blue-100 p-2",
+                    "box-border text-sm text-gray-700 w-full select-none flex items-center cursor-pointer hover:bg-blue-100 p-2",
                     {
                         "bg-blue-200": props.selected,
                     },
                 )}
-                title="Click to apply this template"
                 onClick={props.onClick}
             >
                 <div style={{ width: 64, height: 64 }}>

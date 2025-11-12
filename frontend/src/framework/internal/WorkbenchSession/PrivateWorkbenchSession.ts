@@ -451,6 +451,40 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return session;
     }
 
+    /**
+     * Creates a new unpersisted session as a copy of an existing session.
+     * The new session will have no ID, will not be persisted, and will not be a snapshot.
+     * Only title and description are copied from the source metadata.
+     * Use setMetadata() to update title/description after creation.
+     */
+    static async createCopy(
+        queryClient: QueryClient,
+        sourceSession: PrivateWorkbenchSession,
+    ): Promise<PrivateWorkbenchSession> {
+        const newSession = new PrivateWorkbenchSession(queryClient, false);
+
+        // Copy only title and description, create new timestamps
+        const now = Date.now();
+        const sourceMetadata = sourceSession.getMetadata();
+        newSession.setMetadata({
+            title: sourceMetadata.title,
+            description: sourceMetadata.description,
+            createdAt: now,
+            updatedAt: now,
+            lastModifiedMs: now,
+        });
+
+        // Deserialize content state from source (this properly clones all internal structures)
+        await newSession.deserializeContentState(sourceSession.serializeContentState());
+
+        // Ensure the new session is not persisted and has no ID
+        newSession._id = null;
+        newSession._isPersisted = false;
+        newSession._isSnapshot = false;
+
+        return newSession;
+    }
+
     private assertIsNotSnapshot(): asserts this is this & { _isSnapshot: false } {
         if (this._isSnapshot) {
             throw new Error("Operation not allowed on snapshot sessions");

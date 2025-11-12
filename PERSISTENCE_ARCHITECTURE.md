@@ -713,16 +713,19 @@ private _backendLastUpdatedMs: number | null = null;
 ### Code Quality Issues
 
 #### 7. Magic Numbers Without Constants
+**Status:** ✅ **Resolved**
+
 **Location:** Multiple files
 
-**Issue:** Several magic numbers appear without named constants:
-- 200ms debounce in `schedulePullFullSessionState()`
-- 10000ms (10 seconds) polling interval
-- 8 character nanoid length
-- 30 character title limit
-- 250 character description limit
+**Issue:** Several magic numbers appeared without named constants.
 
-**Recommendation:** Define these as named constants at the top of files or in a shared config.
+**Resolution:** All values now defined in `frontend/src/framework/internal/persistence/constants.ts`:
+- `AUTO_SAVE_DEBOUNCE_MS = 200`
+- `BACKEND_POLLING_INTERVAL_MS = 10000`
+- `MAX_TITLE_LENGTH = 50`
+- `MAX_DESCRIPTION_LENGTH = 250`
+- `MAX_CONTENT_SIZE_BYTES = 1.5MB`
+- Session/Snapshot ID length: 12 characters
 
 #### 8. Incomplete Type Annotations
 **Location:** [crudHelpers.ts](frontend/src/framework/internal/WorkbenchSession/utils/crudHelpers.ts)
@@ -749,11 +752,15 @@ const snapshotGetter = (): any => {
 **Recommendation:** Implement centralized error handling/reporting service.
 
 #### 10. Missing Validation for Content Size
-**Location:** Backend session/snapshot stores
+**Status:** ✅ **Resolved**
+
+**Location:** Backend session/snapshot stores, Frontend PersistenceOrchestrator
 
 **Issue:** No validation on content size. Large sessions could cause issues with CosmosDB document size limits (2MB for non-partitioned, 4MB for partitioned).
 
-**Recommendation:** Add content size validation before persisting.
+**Resolution:** Content size validation implemented in both frontend and backend with 1.5MB limit:
+- Frontend: `PersistenceOrchestrator` checks size before save attempt and shows user-friendly error
+- Backend: `SessionStore` and `SnapshotStore` validate content size and reject with clear error messages
 
 ### Flow/UX Issues
 
@@ -778,17 +785,17 @@ if (storedSessions.find((el) => el.id === sessionId)) {
 **Recommendation:** Implement optimistic updates in React Query mutations.
 
 #### 13. Polling Every 10 Seconds Always Active
-**Location:** [WorkbenchSessionPersistenceService.ts:98-100](frontend/src/framework/internal/WorkbenchSessionPersistenceService.ts#L98-L100)
+**Status:** ✅ **Resolved**
 
-**Issue:** Backend polling continues even when user is not actively using the app or when the window is not focused.
+**Location:** `PersistenceOrchestrator.ts`
 
-```typescript
-this._fetchingInterval = setInterval(() => {
-    this.repeatedlyFetchSessionFromBackend();
-}, BACKEND_SESSION_FETCH_INTERVAL_MS);
-```
+**Issue:** Backend polling continued even when user was not actively using the app or when the window was not focused.
 
-**Recommendation:** Pause polling when window loses focus using Page Visibility API.
+**Resolution:** Integrated with `WindowActivityObserver` to intelligently manage polling:
+- Polling skipped when `windowActivityObserver.isVisible()` returns false
+- Immediate fetch triggered when window becomes active again
+- Subscribes to window activity state changes for responsive behavior
+- Significant reduction in unnecessary network requests
 
 #### 14. No Visual Feedback for Auto-Save Status
 **Location:** UI Components
@@ -800,17 +807,19 @@ this._fetchingInterval = setInterval(() => {
 ### Security/Privacy Issues
 
 #### 15. Snapshot IDs Are Guessable
-**Location:** [snapshot_store.py:66](backend_py/primary/primary/persistence/snapshot_store/snapshot_store.py#L66)
+**Status:** ✅ **Resolved**
+
+**Location:** `snapshot_store.py` and `session_store.py`
 
 **Issue:** Using 8-character nanoid (~16 million combinations) for publicly accessible snapshots could be vulnerable to enumeration attacks.
 
+**Resolution:** Increased ID length from 8 to 12 characters:
 ```python
-snapshot_id = generate(size=8)
+snapshot_id = generate(size=12)  # ~3.2 trillion combinations
+session_id = str(generate(size=12))  # ~3.2 trillion combinations
 ```
 
-**Impact:** Medium - Someone could potentially enumerate and discover snapshots they shouldn't see.
-
-**Recommendation:** Increase to at least 12-16 characters, or implement rate limiting on snapshot access.
+**Impact:** Significantly reduced risk of enumeration attacks while maintaining reasonable URL length.
 
 #### 16. No Rate Limiting on Visit Logging
 **Location:** [snapshot_access_log_store.py:184-221](backend_py/primary/primary/persistence/snapshot_store/snapshot_access_log_store.py#L184-L221)

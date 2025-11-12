@@ -202,6 +202,8 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         { columnId: "updatedAt", direction: TableSortDirection.DESC },
     ]);
 
+    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const querySortParams = React.useMemo<Options<GetSessionsMetadataData_api>["query"]>(() => {
         if (!tableSortState?.length) return undefined;
 
@@ -234,6 +236,14 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         return tableData.find((session) => session.id === selectedSessionId) || null;
     }, [tableData, selectedSessionId]);
 
+    React.useEffect(function onMountEffect() {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
     React.useEffect(
         function maybeRefetchNextPageEffect() {
             if (!visibleRowRange || visibleRowRange.end === -1) return;
@@ -255,11 +265,27 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         });
     }
 
-    function handleTitleFilterValueChange(newValue: string) {
+    function handleTitleFilterValueChange(e: React.ChangeEvent<HTMLInputElement>) {
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+            const newValue = e.target.value;
+            setTableFilter((prev) => {
+                return {
+                    ...prev,
+                    title: newValue || undefined,
+                };
+            });
+        }, 300);
+    }
+
+    function handleClearTitleFilter() {
         setTableFilter((prev) => {
             return {
                 ...prev,
-                title: newValue || undefined,
+                title: undefined,
             };
         });
     }
@@ -302,13 +328,13 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                     <Input
                         startAdornment={<Search fontSize="small" />}
                         endAdornment={
-                            <DenseIconButton onClick={() => handleTitleFilterValueChange("")} title="Clear filter">
+                            <DenseIconButton onClick={handleClearTitleFilter} title="Clear filter">
                                 <Close fontSize="inherit" />
                             </DenseIconButton>
                         }
                         value={tableFilter.title ?? ""}
                         placeholder="Search title"
-                        onValueChange={handleTitleFilterValueChange}
+                        onChange={handleTitleFilterValueChange}
                         className="h-6"
                     />
                 </Label>
