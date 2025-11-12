@@ -126,35 +126,35 @@ type TemplateDetailsProps = {
 };
 
 function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
+    if (!props.template) {
+        return (
+            <div className="flex h-full text-gray-500 text-sm justify-center items-center">
+                Select a template to see its details
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col gap-4 p-4">
-            {!props.template ? (
-                <div className="flex h-full text-gray-500 text-sm justify-center items-center">
-                    Select a template to see its details
-                </div>
-            ) : (
-                <>
-                    <div className="font-bold text-lg">{props.template.name}</div>
-                    <div className="mt-4">{drawTemplatePreview(props.template, 180, 150)}</div>
-                    <div className="text-sm text-gray-600">{props.template.description}</div>
-                    <div>
-                        <strong>Modules:</strong>
-                        <ul className="list-disc pl-4 text-sm">
-                            {props.template.moduleInstances.map((instance, idx) => {
-                                const module = ModuleRegistry.getModule(instance.moduleName);
-                                if (!module) {
-                                    return null;
-                                }
-                                return <li key={`${instance.moduleName}-${idx}`}>{module.getDefaultTitle()}</li>;
-                            })}
-                        </ul>
-                    </div>
-                    <div>
-                        <strong>Data tags:</strong>
-                        <div className="text-sm">{makeDataTags(extractModuleDataTagIds(props.template))}</div>
-                    </div>
-                </>
-            )}
+            <div className="font-bold text-lg">{props.template.name}</div>
+            <div className="mt-4">{drawTemplatePreview(props.template, 180, 150)}</div>
+            <div className="text-sm text-gray-600">{props.template.description}</div>
+            <div>
+                <strong>Modules:</strong>
+                <ul className="list-disc pl-4 text-sm">
+                    {props.template.moduleInstances.map((instance, idx) => {
+                        const module = ModuleRegistry.getModule(instance.moduleName);
+                        if (!module) {
+                            return null;
+                        }
+                        return <li key={`${instance.moduleName}-${idx}`}>{module.getDefaultTitle()}</li>;
+                    })}
+                </ul>
+            </div>
+            <div>
+                <strong>Data tags:</strong>
+                <div className="text-sm">{makeDataTags(extractModuleDataTagIds(props.template))}</div>
+            </div>
         </div>
     );
 }
