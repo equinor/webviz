@@ -1,4 +1,4 @@
-from primary.services.pdm_access.types import (
+from webviz_services.pdm_access.types import (
     WellProductionData as PdmWellProductionData,
     WellInjectionData as PdmWellInjectionData,
 )

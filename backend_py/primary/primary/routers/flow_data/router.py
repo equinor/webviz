@@ -2,8 +2,8 @@ import logging
 
 from fastapi import APIRouter, Depends, Query
 
-from primary.services.pdm_access.pdm_access import PDMAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.pdm_access.pdm_access import PDMAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 
 from . import schemas
@@ -25,7 +25,7 @@ async def get_production_data(
 ) -> list[schemas.WellProductionData]:
     """Get allocated production per well in the time interval"""
     pdm_access = PDMAccess(authenticated_user.get_pdm_access_token())
-    prod_data = await pdm_access.get_per_well_production_in_time_interval_async(
+    prod_data = await pdm_access.get_per_well_total_production_in_time_interval_async(
         field_identifier=field_identifier, start_date=start_date, end_date=end_date
     )
     return converters.per_well_production_data_to_api(prod_data)
@@ -43,7 +43,7 @@ async def get_injection_data(
 ) -> list[schemas.WellInjectionData]:
     """Get allocated injection per well in the time interval"""
     pdm_access = PDMAccess(authenticated_user.get_pdm_access_token())
-    data = await pdm_access.get_per_well_injection_in_time_interval_async(
+    data = await pdm_access.get_per_well_total_injection_in_time_interval_async(
         field_identifier=field_identifier, start_date=start_date, end_date=end_date
     )
     return converters.per_well_injection_data_to_api(data)

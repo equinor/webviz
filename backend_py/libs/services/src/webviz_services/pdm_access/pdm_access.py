@@ -22,7 +22,7 @@ class PDMAccess:
     async def _pdm_get_request_async(self, endpoint: str, params: dict) -> list[dict]:
         return await pdm_get_request_async(access_token=self._pdm_token, endpoint=endpoint, params=params)
 
-    async def get_per_well_production_in_time_interval_async(
+    async def get_per_well_total_production_in_time_interval_async(
         self,
         field_identifier: str,
         start_date: str,
@@ -41,7 +41,7 @@ class PDMAccess:
 
         return calculate_total_production_from_daily(results, start_date=start_date, end_date=end_date)
 
-    async def get_per_well_injection_in_time_interval_async(
+    async def get_per_well_total_injection_in_time_interval_async(
         self,
         field_identifier: str,
         start_date: str,

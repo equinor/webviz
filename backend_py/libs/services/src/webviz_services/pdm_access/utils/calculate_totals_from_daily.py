@@ -12,6 +12,7 @@ from ..types import (
 def calculate_total_production_from_daily(
     api_results: list[dict], start_date: str, end_date: str
 ) -> list[WellProductionData]:
+    """Calculate total production per well from daily production data."""
     polars_df = pl.DataFrame(
         api_results,
         schema_overrides={
@@ -61,6 +62,7 @@ def calculate_total_production_from_daily(
 def calculate_total_injection_from_daily(
     api_results: list[dict], start_date: str, end_date: str
 ) -> list[WellInjectionData]:
+    """Calculate total injection per well from daily injection data."""
     polars_df = pl.DataFrame(api_results, schema_overrides={INJCOLUMNS.WB_INJ_VOL: pl.Float32})
 
     # Group per well and sum injection volumes by type
