@@ -1,12 +1,9 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { ConfirmationService } from "./ConfirmationService";
 import { GuiMessageBroker } from "./GuiMessageBroker";
-import { Dashboard } from "./internal/Dashboard";
 import { NavigationManager } from "./internal/NavigationManager";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { WorkbenchSessionManager } from "./internal/WorkbenchSession/WorkbenchSessionManager";
-import type { Template } from "./TemplateRegistry";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
 /**
@@ -85,38 +82,6 @@ export class Workbench {
         }
 
         await this._sessionManager.maybeOpenFromUrl();
-    }
-
-    async applyTemplate(template: Template): Promise<boolean> {
-        if (!this._sessionManager.hasActiveSession()) {
-            await this._sessionManager.startNewSession();
-        } else {
-            const activeSession = this._sessionManager.getActiveSession();
-            const confirmationRequired =
-                activeSession.getDashboards().length > 0 &&
-                activeSession.getActiveDashboard().getModuleInstances().length > 0;
-
-            if (confirmationRequired) {
-                const result = await ConfirmationService.confirm({
-                    title: "Replace current dashboard with template?",
-                    message:
-                        "By applying this template, your current dashboard will be replaced and loose its state. Do you want to proceed?",
-                    actions: [
-                        { id: "cancel", label: "No, cancel" },
-                        { id: "delete", label: "Yes, proceed", color: "danger" },
-                    ],
-                });
-
-                if (result === "cancel") {
-                    return false;
-                }
-            }
-        }
-
-        const activeSession = this._sessionManager.getActiveSession();
-        const dashboard = await Dashboard.fromTemplate(template, activeSession.getAtomStoreMaster());
-        activeSession.setDashboards([dashboard]);
-        return true;
     }
 
     beforeDestroy(): void {

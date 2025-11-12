@@ -6,11 +6,13 @@ import { deleteSessionMutation, deleteSnapshotMutation, updateSessionMutation, t
 import { ConfirmationService } from "@framework/ConfirmationService";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
+import type { Template } from "@framework/TemplateRegistry";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { truncateString } from "@lib/utils/strings";
 
+import { Dashboard } from "../Dashboard";
 import { EnsembleUpdateMonitor } from "../EnsembleUpdateMonitor";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../persistence/constants";
 import { PersistenceOrchestrator } from "../persistence/core/PersistenceOrchestrator";
@@ -485,7 +487,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             console.error("Failed to set active workbench session:", error);
             throw new Error("Could not load workbench session from data container.");
         } finally {
-            this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
             this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
         }
     }
@@ -533,12 +534,10 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
             this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
-            this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
             return;
         }
 
         // Session is not persisted - show save dialog
-        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
     }
 
@@ -547,7 +546,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             throw new Error("No active workbench session to save.");
         }
 
-        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
     }
 
@@ -602,6 +600,40 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         removeSnapshotIdFromUrl();
     }
 
+    // ========== Template Operations ==========
+
+    async applyTemplate(template: Template): Promise<boolean> {
+        if (!this.hasActiveSession()) {
+            await this.startNewSession();
+        } else {
+            const activeSession = this.getActiveSession();
+            const confirmationRequired =
+                activeSession.getDashboards().length > 0 &&
+                activeSession.getActiveDashboard().getModuleInstances().length > 0;
+
+            if (confirmationRequired) {
+                const result = await ConfirmationService.confirm({
+                    title: "Replace current dashboard with template?",
+                    message:
+                        "By applying this template, your current dashboard will be replaced and loose its state. Do you want to proceed?",
+                    actions: [
+                        { id: "cancel", label: "No, cancel" },
+                        { id: "delete", label: "Yes, proceed", color: "danger" },
+                    ],
+                });
+
+                if (result === "cancel") {
+                    return false;
+                }
+            }
+        }
+
+        const activeSession = this.getActiveSession();
+        const dashboard = await Dashboard.fromTemplate(template, activeSession.getAtomStoreMaster());
+        activeSession.setDashboards([dashboard]);
+        return true;
+    }
+
     // ========== Recovery Operations ==========
 
     async updateFromLocalStorage(): Promise<void> {
@@ -642,7 +674,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             return;
         }
 
-        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
 
         if (this._persistenceOrchestrator) {

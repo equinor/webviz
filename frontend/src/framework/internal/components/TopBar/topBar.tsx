@@ -291,6 +291,11 @@ type SessionSaveButtonProps = {
 };
 
 function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
+    const [, setSaveSessionDialogOpen] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.SaveSessionDialogOpen,
+    );
+
     const persistenceInfo = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getPersistenceOrchestrator()!,
         PersistenceOrchestratorTopic.PERSISTENCE_INFO,
@@ -308,7 +313,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     };
 
     const handleSaveAsClick = () => {
-        props.workbench.getSessionManager().showSaveAsDialog();
+        setSaveSessionDialogOpen(true);
     };
 
     const saveEnabled = persistenceInfo.hasChanges && isPersisted;

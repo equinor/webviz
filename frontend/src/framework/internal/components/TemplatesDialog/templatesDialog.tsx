@@ -43,12 +43,15 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
     }
 
     function applyTemplate(selectedTemplate: Template) {
-        props.workbench.applyTemplate(selectedTemplate).then((result) => {
-            if (!result) {
-                return;
-            }
-            setIsOpen(false);
-        });
+        props.workbench
+            .getSessionManager()
+            .applyTemplate(selectedTemplate)
+            .then((result) => {
+                if (!result) {
+                    return;
+                }
+                setIsOpen(false);
+            });
     }
 
     return (
