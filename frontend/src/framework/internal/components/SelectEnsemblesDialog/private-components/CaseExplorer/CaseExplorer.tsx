@@ -1,11 +1,14 @@
 import React from "react";
 
+import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import { getCasesOptions, getFieldsOptions, type EnsembleInfo_api } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -28,6 +31,8 @@ import {
 const STALE_TIME = tanstackDebugTimeOverride(5 * 60);
 const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
+const REFETCH_INTERVAL_MS = 10 * 1000; // 1 minute
+
 export type CaseSelection = {
     caseName: string;
     caseUuid: string;
@@ -45,6 +50,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         return userInfo?.username.replace("@equinor.com", "").toLowerCase() ?? "";
     }, [userInfo]);
 
+    const refetchTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
     // --- State ---
     const [numberOfCases, setNumberOfCases] = React.useState<number>(0);
     const [currentStatusOptions, setCurrentStatusOptions] = React.useState<string[]>([]);
@@ -58,6 +65,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         ...(showOnlyMyCases && { author: userName }),
         ...(showOnlyOfficialCases && { status: ["official"] }),
     });
+    const [isManualRefetch, setIsManualRefetch] = React.useState<boolean>(false);
+    const [isRefreshAnimationPlaying, setIsRefreshAnimationPlaying] = React.useState<boolean>(false);
 
     // Keep the prevCaseSelection state that was already defined
     const [prevCaseSelection, setPrevCaseSelection] = React.useState<CaseSelection | null>(null);
@@ -90,7 +99,76 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         keepStateWhenInvalid: true,
     });
 
+    // --- Refetch cases handlers ---
+    const startRefetchTimer = React.useCallback(
+        function startRefetchTimer() {
+            if (refetchTimerRef.current) {
+                clearInterval(refetchTimerRef.current);
+            }
+            refetchTimerRef.current = setInterval(() => {
+                casesQuery.refetch();
+            }, REFETCH_INTERVAL_MS);
+        },
+        [casesQuery],
+    );
+
+    const handleManualRefetch = React.useCallback(
+        function handleManualRefetch() {
+            if (casesQuery.isFetching) return;
+
+            setIsManualRefetch(true);
+            setIsRefreshAnimationPlaying(true);
+
+            casesQuery.refetch();
+            if (props.enableQueries && selectedField !== null) {
+                startRefetchTimer();
+            }
+        },
+        [casesQuery, props.enableQueries, selectedField, startRefetchTimer],
+    );
+
+    // Handle manual refresh animation
+    React.useEffect(
+        function handleManualRefreshAnimation() {
+            if (isManualRefetch && !casesQuery.isRefetching) {
+                setIsManualRefetch(false);
+                setTimeout(function stopRefreshAnimation() {
+                    setIsRefreshAnimationPlaying(false);
+                }, 900);
+            }
+        },
+        [isManualRefetch, casesQuery.isRefetching],
+    );
+
+    // Handle auto refresh timer
+    React.useEffect(
+        function setupAutoRefetch() {
+            if (!props.enableQueries || selectedField === null) {
+                if (refetchTimerRef.current) {
+                    clearInterval(refetchTimerRef.current);
+                    refetchTimerRef.current = null;
+                }
+                return;
+            }
+
+            startRefetchTimer();
+
+            // Cleanup on unmount
+            return () => {
+                if (refetchTimerRef.current) {
+                    clearInterval(refetchTimerRef.current);
+                }
+            };
+        },
+        [props.enableQueries, selectedField, startRefetchTimer],
+    );
+
     // --- Derived data ---
+
+    const lastUpdated = React.useMemo(() => {
+        return casesQuery.data && casesQuery.dataUpdatedAt ? new Date(casesQuery.dataUpdatedAt) : null;
+    }, [casesQuery.data, casesQuery.dataUpdatedAt]);
+
     const caseTableColumns = React.useMemo(() => {
         const disabledFilterComponents = {
             disableAuthorComponent: showOnlyMyCases,
@@ -245,7 +323,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         </Tooltip>
                     </Label>
                     <PendingWrapper
-                        isPending={casesQuery.isFetching}
+                        isPending={casesQuery.isFetching && !casesQuery.isRefetching}
                         errorMessage={casesQuery.error ? "Error loading cases" : undefined}
                         className="h-full flex-1 min-h-0 min-w-56"
                     >
@@ -266,8 +344,28 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
             >
                 <div className="flex flex-col h-full">
-                    <div className="flex justify-end gap-4 items-center">
-                        <span className="grow text-sm text-slate-500">Select from {numberOfCases} cases</span>
+                    <div className="flex justify-end gap-4 items-center mb-1">
+                        <div className="grow flex flex-col">
+                            <span className="text-sm text-slate-500">Select from {numberOfCases} cases</span>
+                            <span className="text-xs text-slate-400">
+                                Last updated: {lastUpdated?.toLocaleTimeString() ?? ""}
+                            </span>
+                        </div>
+                        <div className="flex flex-row items-center">
+                            <span className="text-sm text-slate-500">Refresh cases</span>
+                            <Tooltip title="Refresh cases list" enterDelay="medium">
+                                <DenseIconButton
+                                    onClick={handleManualRefetch}
+                                    disabled={!props.enableQueries || selectedField === null}
+                                >
+                                    {isRefreshAnimationPlaying ? (
+                                        <CircularProgress size="medium-small" color="fill-indigo-800" />
+                                    ) : (
+                                        <Refresh fontSize="small" className="text-indigo-800" />
+                                    )}
+                                </DenseIconButton>
+                            </Tooltip>
+                        </div>
                     </div>
                     <div className="grow min-h-0">
                         <Table
