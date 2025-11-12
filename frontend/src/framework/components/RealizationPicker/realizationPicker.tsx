@@ -12,8 +12,8 @@ import type { RealizationNumberLimits } from "./_utils";
 import { realizationSelectionToText, sanitizeRangeInput, textToRealizationSelection } from "./_utils";
 import { RealizationRangeTag } from "./RealizationRangeTag";
 
-function getRangeOfTag(selection: string): [start: number, end: number] {
-    const [start, possibleEnd] = selection.split("-");
+function getRangeOfTag(rangeTag: string): [start: number, end: number] {
+    const [start, possibleEnd] = rangeTag.split("-");
 
     return [parseFloat(start), parseFloat(possibleEnd ?? start)];
 }
