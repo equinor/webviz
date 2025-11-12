@@ -1,8 +1,8 @@
 import polars as pl
 import pytest
 
-from primary.services.service_exceptions import InvalidDataError
-from primary.services.inplace_volumes_table_assembler._utils.inplace_results_df_utils import (
+from webviz_services.service_exceptions import InvalidDataError
+from webviz_services.inplace_volumes_table_assembler._utils.inplace_results_df_utils import (
     create_per_fluid_results_df,
     create_statistical_result_table_data_from_df,
     _convert_statistical_results_df_to_statistical_results_table_data,
@@ -11,7 +11,7 @@ from primary.services.inplace_volumes_table_assembler._utils.inplace_results_df_
     _get_statistical_function_expression,
     _validate_length_of_statistics_data_lists,
 )
-from primary.services.sumo_access.inplace_volumes_table_types import (
+from webviz_services.sumo_access.inplace_volumes_table_types import (
     CategorizedResultNames,
     RepeatedTableColumnData,
     Statistic,

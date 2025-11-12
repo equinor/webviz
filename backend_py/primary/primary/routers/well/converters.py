@@ -1,5 +1,4 @@
-from primary.utils.arrays import safe_index_get
-from primary.services.smda_access.types import (
+from webviz_services.smda_access.types import (
     WellboreHeader,
     WellboreTrajectory,
     WellborePick,
@@ -10,13 +9,15 @@ from primary.services.smda_access.types import (
     WellboreSurveyHeader,
     WellboreSurveySample,
 )
-from primary.services.ssdl_access.types import (
+from webviz_services.ssdl_access.types import (
     WellboreCasing,
     WellboreCompletion,
     WellboreLogCurveHeader,
     WellborePerforation,
     WellboreLogCurveData,
 )
+
+from primary.utils.arrays import safe_index_get
 
 from . import schemas
 from . import utils

@@ -1,5 +1,5 @@
 import polars as pl
-from primary.services.deprecated_inplace_volumetrics_assembler._utils import (
+from webviz_services.deprecated_inplace_volumetrics_assembler._utils import (
     create_calculated_volume_column_expressions,
     _create_named_expression_with_nan_for_inf,
     FluidZone,

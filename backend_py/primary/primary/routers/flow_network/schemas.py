@@ -1,7 +1,7 @@
 from enum import Enum, StrEnum
 
 from pydantic import BaseModel, ConfigDict
-from primary.services.flow_network_assembler.flow_network_types import DatedFlowNetwork, FlowNetworkMetadata
+from webviz_services.flow_network_assembler.flow_network_types import DatedFlowNetwork, FlowNetworkMetadata
 
 
 class Frequency(str, Enum):
