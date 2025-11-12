@@ -28,9 +28,9 @@ export function RecentSessions(props: RecentSessionsProps) {
         setShowOverviewDialog(true);
     }
 
-    function handleSessionClick(sessionId: string, evt: React.MouseEvent) {
+    async function handleSessionClick(sessionId: string, evt: React.MouseEvent) {
         evt.preventDefault();
-        props.workbench.getSessionManager().openSession(sessionId);
+        await props.workbench.getSessionManager().openSession(sessionId);
     }
 
     return (

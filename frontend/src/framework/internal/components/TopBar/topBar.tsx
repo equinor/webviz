@@ -381,11 +381,11 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
         PersistenceOrchestratorTopic.PERSISTENCE_INFO,
     );
 
-    function handleRefreshClick() {
+    async function handleRefreshClick() {
         // Reload the session from the server
         const sessionId = props.workbench.getSessionManager().getActiveSession().getId();
         if (sessionId) {
-            props.workbench.getSessionManager().openSession(sessionId);
+            await props.workbench.getSessionManager().openSession(sessionId);
         }
     }
 

@@ -43,6 +43,7 @@ export function GlobalConfirmationDialog(): React.ReactNode {
                     ))}
                 </>
             }
+            zIndex={101}
         >
             {options.message}
         </Dialog>

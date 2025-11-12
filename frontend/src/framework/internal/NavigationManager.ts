@@ -1,14 +1,16 @@
 /**
- * Observes browser navigation events and delegates to registered callbacks.
+ * Manages browser navigation - both observing and controlling URL changes.
  *
- * Monitors:
- * - Browser back/forward navigation (popstate event)
- * - Page unload/refresh (beforeunload event)
+ * Responsibilities:
+ * - Observes browser back/forward navigation (popstate event)
+ * - Observes page unload/refresh (beforeunload event)
+ * - Provides programmatic navigation (pushState/replaceState)
+ * - Tracks current URL to enable navigation cancellation
  *
  * Unlike WindowActivityObserver, this is NOT a singleton because each Workbench
  * instance needs its own navigation handling (important for testing and isolation).
  */
-export class NavigationObserver {
+export class NavigationManager {
     private _currentUrl: string;
     private _boundHandleBeforeUnload: (event: BeforeUnloadEvent) => void;
     private _boundHandlePopState: () => void;
@@ -74,7 +76,7 @@ export class NavigationObserver {
         const result = await this._onNavigateCallback();
 
         if (!result) {
-            // Navigation was cancelled - restore previous URL
+            // Navigation was cancelled - restore previous URL without creating new history entry
             window.history.pushState(null, "", previousUrl);
         } else {
             // Navigation succeeded - update current URL
@@ -87,6 +89,26 @@ export class NavigationObserver {
      */
     getCurrentUrl(): string {
         return this._currentUrl;
+    }
+
+    /**
+     * Programmatically navigate to a new URL using pushState.
+     * This updates both the browser URL and the tracked current URL.
+     * Use this instead of calling window.history.pushState() directly.
+     */
+    pushState(url: string): void {
+        window.history.pushState(null, "", url);
+        this._currentUrl = url;
+    }
+
+    /**
+     * Programmatically update the current URL using replaceState.
+     * This updates both the browser URL and the tracked current URL.
+     * Use this instead of calling window.history.replaceState() directly.
+     */
+    replaceState(url: string): void {
+        window.history.replaceState(null, "", url);
+        this._currentUrl = url;
     }
 
     /**

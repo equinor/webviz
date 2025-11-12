@@ -30,8 +30,7 @@ export function deserializeFromLocalStorage(key: string): WorkbenchSessionDataCo
     }
     const parsed = JSON.parse(json);
     if (!validateFull(parsed)) {
-        console.warn(`Local storage session validation failed ${validateFull.errors}`);
-        return null;
+        throw new SessionValidationError(`Local storage session validation failed ${validateFull.errors}`);
     }
 
     const session: WorkbenchSessionDataContainer = {

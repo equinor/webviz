@@ -285,10 +285,10 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         setEditSessionDialogOpen(true);
     }
 
-    function handleOpenSessionClick() {
+    async function handleOpenSessionClick() {
         if (!selectedSessionId) return;
 
-        props.workbench.getSessionManager().openSession(selectedSessionId);
+        await props.workbench.getSessionManager().openSession(selectedSessionId);
     }
 
     function handleNewSessionClick() {

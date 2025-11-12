@@ -36,6 +36,7 @@ import {
     readSnapshotIdFromUrl,
     UrlError,
 } from "./utils/url";
+import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
 
 export enum WorkbenchSessionManagerTopic {
     ACTIVE_SESSION = "activeSession",
@@ -150,7 +151,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         return session;
     }
 
-    async openSession(sessionId: string): Promise<PrivateWorkbenchSession> {
+    async openSession(sessionId: string): Promise<boolean> {
         if (this._activeSession) {
             throw new Error("A workbench session is already active. Please close it before opening a new one.");
         }
@@ -159,17 +160,23 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
 
             const url = buildSessionUrl(sessionId);
-            window.history.pushState({}, "", url);
+            this._workbench.getNavigationManager().pushState(url);
 
             const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
             const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
             await this.setActiveSession(session);
-            return session;
+            return true;
         } catch (error) {
             console.error("Failed to load session from backend:", error);
+
             let errorExplanation = "The session might not exist or you might not have access to it.";
             if (error instanceof SessionValidationError) {
                 errorExplanation = "The session data is invalid, corrupted or outdated.";
+            }
+
+            if (isAxiosError(error)) {
+                console.error("Axios error details:", error.response?.data);
+                errorExplanation = `Server responded with message ${error.response?.data.message}.`;
             }
 
             const result = await ConfirmationService.confirm({
@@ -187,18 +194,18 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             if (result === "cancel") {
                 removeSessionIdFromUrl();
             }
-            throw error;
+            return false;
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
         }
     }
 
-    async openSnapshot(snapshotId: string): Promise<PrivateWorkbenchSession> {
+    async openSnapshot(snapshotId: string): Promise<boolean> {
         try {
             this._guiMessageBroker.setState(GuiState.IsLoadingSnapshot, true);
 
             const url = buildSnapshotUrl(snapshotId);
-            window.history.pushState({}, "", url);
+            this._workbench.getNavigationManager().pushState(url);
 
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
             const snapshot = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, snapshotData);
@@ -216,19 +223,23 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 0);
             }
 
-            return snapshot;
+            return true;
         } catch (error: any) {
             console.error("Failed to load snapshot from backend:", error);
 
-            if (isAxiosError(error)) {
-                console.error("Axios error details:", error.response?.data);
+            let errorExplanation = "The session might not exist or you might not have access to it.";
+            if (error instanceof SessionValidationError) {
+                errorExplanation = "The session data is invalid, corrupted or outdated.";
             }
 
-            const apiError = ApiErrorHelper.fromError(error);
+            if (isAxiosError(error)) {
+                console.error("Axios error details:", error.response?.data);
+                errorExplanation = `Server responded with message ${error.response?.data.message}.`;
+            }
 
             const result = await ConfirmationService.confirm({
                 title: "Could not load snapshot",
-                message: apiError?.getMessage() ?? "Could not open snapshot",
+                message: `Could not load snapshot with ID '${snapshotId}'. ${errorExplanation}`,
                 actions: [
                     { id: "cancel", label: "Cancel" },
                     { id: "retry", label: "Retry" },
@@ -238,10 +249,82 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             if (result === "retry") {
                 return await this.openSnapshot(snapshotId);
             }
-
-            throw error;
+            return false;
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSnapshot, false);
+        }
+    }
+
+    async openFromLocalStorage(sessionId: string | null, forceOpen = false): Promise<boolean> {
+        if (this._activeSession && !forceOpen) {
+            throw new Error("A workbench session is already active. Please close it before opening a new one.");
+        }
+
+        try {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+
+            const sessionData = await loadWorkbenchSessionFromLocalStorage(sessionId);
+            if (!sessionData) {
+                throw new Error("No workbench session found in local storage.");
+            }
+
+            const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
+            await this.setActiveSession(session);
+
+            if (session.getIsPersisted() && sessionId) {
+                const url = buildSessionUrl(sessionId);
+                this._workbench.getNavigationManager().pushState(url);
+            }
+
+            this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
+            this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
+
+            return true;
+        } catch (error) {
+            console.error("Failed to load workbench session from local storage:", error);
+
+            let errorExplanation = "";
+            if (error instanceof SessionValidationError) {
+                errorExplanation = "The session data is invalid, corrupted or outdated.";
+            }
+
+            // We can have different cases here:
+            // 1) The user opened a session that has not been persisted yet - we can offer to discard it and start fresh
+            // 2) The user opened a session that has been persisted but and has a local storage version - we can offer to discard local storage version and load from backend
+
+            let additionalMessage = "and start fresh?";
+            if (sessionId) {
+                additionalMessage = "and load the persisted session from the server?";
+            }
+
+            const result = await ConfirmationService.confirm({
+                title: "Could not load session from local storage",
+                message: `Could not load session from local storage. ${errorExplanation} Do you want to discard the possibly corrupted local storage session ${additionalMessage}`,
+                actions: [
+                    { id: "retry", label: "Retry" },
+                    { id: "cancel", label: "No, cancel" },
+                    { id: "discard", label: "Yes, discard", color: "danger" },
+                ],
+            });
+
+            if (result === "discard") {
+                this.discardLocalStorageSession(sessionId, false);
+                if (!sessionId) {
+                    await this.startNewSession();
+                } else {
+                    await this.openSession(sessionId);
+                }
+                this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
+                this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
+            }
+            if (result === "retry") {
+                return await this.openFromLocalStorage(sessionId, forceOpen);
+            }
+
+            // We do not have to handle "cancel" explicitly here
+            return false;
+        } finally {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
         }
     }
 
@@ -261,11 +344,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 toast.error("Invalid snapshot ID in URL, ignoring URL parameters.");
                 return false;
             }
+            throw error;
         }
 
         if (snapshotId) {
-            await this.openSnapshot(snapshotId);
-            return true;
+            return await this.openSnapshot(snapshotId);
         }
 
         let sessionId: string | null = null;
@@ -278,60 +361,32 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 toast.error("Invalid session ID in URL, ignoring URL parameters.");
                 return false;
             }
+            throw error;
         }
 
-        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
+        let storedSessions: WorkbenchSessionDataContainer[] = [];
+
+        // Local storage session loading/validating can fail silently for the user
+        try {
+            storedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
+        } catch (error) {
+            console.error("Failed to load sessions from local storage:", error);
+        }
 
         if (sessionId) {
-            await this.openSession(sessionId);
+            const result = await this.openSession(sessionId);
             if (storedSessions.find((el) => el.id === sessionId)) {
                 this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);
             }
-            return true;
+            return result;
         }
 
+        // No session/snapshot id in URL - check for localStorage sessions for recovery
         if (storedSessions.length > 0) {
             this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, true);
         }
 
         return false;
-    }
-
-    async openFromLocalStorage(sessionId: string | null, forceOpen = false): Promise<PrivateWorkbenchSession> {
-        if (this._activeSession && !forceOpen) {
-            throw new Error("A workbench session is already active. Please close it before opening a new one.");
-        }
-
-        try {
-            this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
-
-            const sessionData = await loadWorkbenchSessionFromLocalStorage(sessionId);
-            if (!sessionData) {
-                throw new Error("No workbench session found in local storage.");
-            }
-
-            const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
-            await this.setActiveSession(session);
-
-            if (session.getIsPersisted() && sessionId) {
-                const url = buildSessionUrl(sessionId);
-                window.history.pushState({}, "", url);
-            }
-
-            this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
-            this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
-
-            return session;
-        } catch (error) {
-            console.error("Failed to load workbench session from local storage:", error);
-            if (confirm("Could not load workbench session from local storage. Discard corrupted session?")) {
-                this.discardLocalStorageSession(sessionId, false);
-                return await this.startNewSession();
-            }
-            throw error;
-        } finally {
-            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
-        }
     }
 
     closeSession(): void {
@@ -473,7 +528,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             const id = this._activeSession.getId();
             if (!wasPersisted && id) {
                 const url = buildSessionUrl(id);
-                window.history.pushState({}, "", url);
+                this._workbench.getNavigationManager().pushState(url);
             }
 
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
@@ -604,7 +659,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     /**
      * Handle browser navigation (back/forward buttons).
-     * Called by NavigationObserver when user navigates with browser controls.
+     * Called by NavigationManager when user navigates with browser controls.
      * Returns true if navigation should proceed, false to cancel.
      */
     async handleNavigation(): Promise<boolean> {
@@ -612,77 +667,24 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         const snapshotId = readSnapshotIdFromUrl();
         const sessionId = readSessionIdFromUrl();
 
-        if (!snapshotId && !sessionId) {
-            // No snapshot/session id in URL - close active session if present
-            if (this.hasActiveSession()) {
-                const shouldClose = await this.maybeCloseCurrentSession();
-                return shouldClose; // Proceed with navigation if user confirmed
-            }
-            return true;
-        }
-
-        const activeSession = this.getActiveSessionOrNull();
-
-        if (activeSession) {
-            if (activeSession.isSnapshot()) {
-                // Snapshots don't have unsaved changes - just load the new entity
-                if (snapshotId) {
-                    await this.openSnapshot(snapshotId);
-                } else if (sessionId) {
-                    if (activeSession.getId() === sessionId) {
-                        return true; // Same session, no need to reload
-                    }
-                    await this.openSession(sessionId);
-                }
-                return true;
-            }
-
-            // Active session is not a snapshot - check for unsaved changes
-            if (this.hasDirtyChanges()) {
-                const result = await ConfirmationService.confirm({
-                    title: "Unsaved Changes",
-                    message: "You have unsaved changes in your current session. Do you want to save or discard them?",
-                    actions: [
-                        { id: "save", label: "Save Changes", color: "success" },
-                        { id: "discard", label: "Discard Changes", color: "danger" },
-                        { id: "cancel", label: "Cancel" },
-                    ],
-                });
-
-                if (result === "cancel") {
-                    return false;
-                }
-
-                if (result === "save") {
-                    await this.saveActiveSession(true);
-                    if (snapshotId) {
-                        await this.openSnapshot(snapshotId);
-                    } else if (sessionId) {
-                        await this.openSession(sessionId);
-                    }
-                    return true;
-                }
-
-                if (result === "discard") {
-                    this.closeSession();
-                    if (snapshotId) {
-                        await this.openSnapshot(snapshotId);
-                    } else if (sessionId) {
-                        await this.openSession(sessionId);
-                    }
-                    return true;
-                }
-
-                throw new Error(`Unexpected confirmation result: ${result}`);
-            }
+        const result = await this.maybeCloseCurrentSession();
+        if (!result) {
+            return false; // User cancelled navigation
         }
 
         // No active session or no unsaved changes - load the requested entity
         if (snapshotId) {
-            await this.openSnapshot(snapshotId);
+            const result = await this.openSnapshot(snapshotId);
+            if (!result) {
+                removeSnapshotIdFromUrl();
+            }
         } else if (sessionId) {
-            await this.openSession(sessionId);
+            const result = await this.openSession(sessionId);
+            if (!result) {
+                removeSessionIdFromUrl();
+            }
         }
+
         return true;
     }
 

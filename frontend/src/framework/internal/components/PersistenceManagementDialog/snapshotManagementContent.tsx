@@ -348,10 +348,10 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         setSelectedSnapshotId(null);
     }
 
-    function handleOpenSnapshotClick() {
+    async function handleOpenSnapshotClick() {
         if (!selectedSnapshotId) return;
 
-        props.workbench.getSessionManager().openSnapshot(selectedSnapshotId);
+        await props.workbench.getSessionManager().openSnapshot(selectedSnapshotId);
     }
 
     function handleRefreshClick() {

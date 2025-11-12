@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ConfirmationService } from "./ConfirmationService";
 import { GuiMessageBroker } from "./GuiMessageBroker";
 import { Dashboard } from "./internal/Dashboard";
-import { NavigationObserver } from "./internal/NavigationObserver";
+import { NavigationManager } from "./internal/NavigationManager";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { WorkbenchSessionManager } from "./internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Template } from "./TemplateRegistry";
@@ -14,6 +14,7 @@ import type { WorkbenchServices } from "./WorkbenchServices";
  *
  * Delegates responsibilities:
  * - Session management -> WorkbenchSessionManager
+ * - Navigation -> NavigationManager
  * - Persistence -> PersistenceOrchestrator (via SessionManager)
  * - Services -> PrivateWorkbenchServices
  * - GUI state -> GuiMessageBroker
@@ -23,7 +24,7 @@ export class Workbench {
     private readonly _guiMessageBroker: GuiMessageBroker;
     private readonly _queryClient: QueryClient;
     private readonly _sessionManager: WorkbenchSessionManager;
-    private readonly _navigationObserver: NavigationObserver;
+    private readonly _navigationManager: NavigationManager;
     private _isInitialized: boolean = false;
 
     constructor(queryClient: QueryClient) {
@@ -32,10 +33,10 @@ export class Workbench {
         this._guiMessageBroker = new GuiMessageBroker();
         this._sessionManager = new WorkbenchSessionManager(this, queryClient, this._guiMessageBroker);
 
-        // Create NavigationObserver instance and register callbacks
-        this._navigationObserver = new NavigationObserver();
-        this._navigationObserver.setOnBeforeUnload(() => this.handleBeforeUnload());
-        this._navigationObserver.setOnNavigate(async () => this.handleNavigation());
+        // Create NavigationManager instance and register callbacks
+        this._navigationManager = new NavigationManager();
+        this._navigationManager.setOnBeforeUnload(() => this.handleBeforeUnload());
+        this._navigationManager.setOnNavigate(async () => await this.handleNavigation());
     }
 
     getQueryClient(): QueryClient {
@@ -54,6 +55,10 @@ export class Workbench {
         return this._guiMessageBroker;
     }
 
+    getNavigationManager(): NavigationManager {
+        return this._navigationManager;
+    }
+
     /**
      * Handle beforeunload event - check if there are unsaved changes.
      * Returns true if navigation should be blocked (show warning dialog).
@@ -68,7 +73,7 @@ export class Workbench {
      * Returns true if navigation should proceed, false to cancel.
      */
     private async handleNavigation(): Promise<boolean> {
-        return this._sessionManager.handleNavigation();
+        return await this._sessionManager.handleNavigation();
     }
 
     async initialize() {
@@ -115,7 +120,7 @@ export class Workbench {
     }
 
     beforeDestroy(): void {
-        this._navigationObserver.beforeDestroy();
+        this._navigationManager.beforeDestroy();
         this._sessionManager.beforeDestroy();
     }
 }

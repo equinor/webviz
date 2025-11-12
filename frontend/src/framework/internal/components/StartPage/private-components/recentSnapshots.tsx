@@ -33,8 +33,8 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
     }
 
     async function handleSnapshotClick(id: string, e: React.MouseEvent<HTMLAnchorElement>) {
-        props.workbench.getSessionManager().openSnapshot(id);
         e.preventDefault();
+        await props.workbench.getSessionManager().openSnapshot(id);
     }
 
     return (

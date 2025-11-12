@@ -11,10 +11,10 @@ export enum DenseIconButtonColorScheme {
 }
 
 const COLOR_SCHEMES: Record<DenseIconButtonColorScheme, string> = {
-    [DenseIconButtonColorScheme.DEFAULT]: "hover:bg-blue-200 focus:outline-blue-600",
-    [DenseIconButtonColorScheme.WARNING]: "hover:bg-yellow-200 focus:outline-yellow-600",
-    [DenseIconButtonColorScheme.SUCCESS]: "hover:bg-green-200 focus:outline-green-600",
-    [DenseIconButtonColorScheme.DANGER]: "hover:bg-red-200 focus:outline-red-600",
+    [DenseIconButtonColorScheme.DEFAULT]: "hover:bg-blue-200 focus-visible:outline-blue-600",
+    [DenseIconButtonColorScheme.WARNING]: "hover:bg-yellow-200 focus-visible:outline-yellow-600",
+    [DenseIconButtonColorScheme.SUCCESS]: "hover:bg-green-200 focus-visible:outline-green-600",
+    [DenseIconButtonColorScheme.DANGER]: "hover:bg-red-200 focus-visible:outline-red-600",
 };
 
 export type DenseIconButtonProps = {
@@ -47,7 +47,7 @@ export const DenseIconButton = React.forwardRef(function DenseIconButton(
                 ref={ref}
                 id={props.id}
                 className={resolveClassNames(props.className, "p-1 text-sm rounded-sm flex gap-1 items-center", {
-                    [colorScheme + "text-gray-600 focus:outline hover:text-gray-900"]: !props.disabled,
+                    [colorScheme + "text-gray-600 focus-visible:outline-1 hover:text-gray-900"]: !props.disabled,
                     "text-gray-300": props.disabled,
                 })}
                 disabled={props.disabled}
