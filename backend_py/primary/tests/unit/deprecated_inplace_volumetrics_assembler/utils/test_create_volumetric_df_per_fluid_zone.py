@@ -1,8 +1,8 @@
 import pytest
 import polars as pl
 
-from primary.services.deprecated_inplace_volumetrics_assembler._utils import create_volumetric_df_per_fluid_zone
-from primary.services.sumo_access.deprecated_inplace_volumetrics_types import FluidZone
+from webviz_services.deprecated_inplace_volumetrics_assembler._utils import create_volumetric_df_per_fluid_zone
+from webviz_services.sumo_access.deprecated_inplace_volumetrics_types import FluidZone
 
 
 @pytest.fixture

@@ -2,11 +2,11 @@ import logging
 import time
 from hashlib import sha256
 
-from primary.services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
-from primary.services.sumo_access.surface_access import ExpectedError, InProgress, SurfaceAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
-from primary.services.utils.statistic_function import StatisticFunction
-from primary.services.utils.task_meta_tracker import TaskMeta, TaskMetaTracker
+from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
+from webviz_services.sumo_access.surface_access import ExpectedError, InProgress, SurfaceAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.utils.statistic_function import StatisticFunction
+from webviz_services.utils.task_meta_tracker import TaskMeta, TaskMetaTracker
 
 from .._shared.long_running_operations import LroErrorInfo, LroFailureResp, LroInProgressResp
 from .surface_address import StatisticalSurfaceAddress
