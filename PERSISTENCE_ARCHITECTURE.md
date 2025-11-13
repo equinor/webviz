@@ -12,8 +12,7 @@ The Webviz persistence feature enables users to save, restore, and share their w
 - [Frontend Components](#frontend-components)
 - [Backend Services](#backend-services)
 - [Persistence Flow Diagrams](#persistence-flow-diagrams)
-- [Identified Issues](#identified-issues)
-- [Recommendations](#recommendations)
+- [Module State Persistence](#module-state-persistence-for-developers)
 
 ---
 
@@ -34,10 +33,13 @@ The Webviz persistence feature enables users to save, restore, and share their w
 
 - **Auto-save to Local Storage**: Changes are automatically persisted to browser's local storage with debouncing (200ms)
 - **Manual Backend Persistence**: Users explicitly save sessions to backend
+- **Save As**: Create a new session from an existing one with a different title
 - **Crash Recovery**: On application start, users can recover unsaved sessions from local storage
 - **Change Tracking**: Hash-based change detection using SHA-256
 - **Conflict Detection**: Periodic backend polling (every 10 seconds) to detect external changes
 - **Snapshot Sharing**: Immutable snapshots with visit tracking and access logs
+- **Smart Polling**: Backend polling pauses when window is hidden, resumes when active
+- **Content Size Validation**: Both frontend and backend enforce 1.5MB limit
 
 ---
 
@@ -48,21 +50,35 @@ The Webviz persistence feature enables users to save, restore, and share their w
 │                          Frontend Layer                             │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  ┌──────────────────┐      ┌──────────────────────────────────┐   │
-│  │   Workbench      │      │  WorkbenchSessionPersistence     │   │
-│  │                  │◄─────┤  Service                         │   │
-│  │  - Session Mgmt  │      │  - Change Detection (Hash)       │   │
-│  │  - Navigation    │      │  - Local Storage                 │   │
-│  │  - Dialogs       │      │  - Backend Polling (10s)         │   │
-│  └──────────────────┘      └──────────────────────────────────┘   │
-│           │                              │                         │
-│           │                              │                         │
-│  ┌────────▼──────────────────────────────▼─────────────────────┐  │
-│  │          PrivateWorkbenchSession                            │  │
-│  │  - Serialization/Deserialization                            │  │
-│  │  - State Management (AtomStoreMaster)                       │  │
-│  │  - Dashboard/Module Management                              │  │
-│  └─────────────────────────────────────────────────────────────┘  │
+│  ┌──────────────────┐      ┌──────────────────────────────────┐     │
+│  │   Workbench      │      │  WorkbenchSessionManager         │     │
+│  │                  │◄─────┤  - Session lifecycle & CRUD      │     │
+│  │  - Initialization│      │  - Navigation handling           │     │
+│  │  - Module Mgmt   │      │  - Recovery from localStorage    │     │
+│  │  - Settings      │      │  - Toast management              │     │
+│  └──────────────────┘      └──────────────────────────────────┘     │
+│           │                              │                          │
+│           │                              │                          │
+│  ┌────────▼──────────────────────────────▼─────────────────────┐    │
+│  │          PrivateWorkbenchSession                            │    │
+│  │  - Serialization/Deserialization                            │    │
+│  │  - State Management (AtomStoreMaster)                       │    │
+│  │  - Dashboard/Module Management                              │    │
+│  │  - Session copying (Save As)                                │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│           │                              │                          │
+│  ┌────────▼──────────────────────────────▼─────────────────────┐    │
+│  │          PersistenceOrchestrator                            │    │
+│  │  - Auto-save coordination (200ms debounce)                  │    │
+│  │  - Backend polling (10s, window-aware)                      │    │
+│  │  - Result Type Pattern (no exceptions)                      │    │
+│  └─────────────────────┬─────────────────┬─────────────────────┘    │
+│           │            │                 │            │             │
+│     ┌─────▼────┐  ┌────▼────────┐  ┌────▼──────┐  ┌─▼──────────┐    │
+│     │ Session  │  │ Backend     │  │ Local     │  │ Window     │    │
+│     │ State    │  │ Sync        │  │ Backup    │  │ Activity   │    │
+│     │ Tracker  │  │ Manager     │  │ Manager   │  │ Observer   │    │
+│     └──────────┘  └─────────────┘  └───────────┘  └────────────┘    │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
                                  │
@@ -72,26 +88,26 @@ The Webviz persistence feature enables users to save, restore, and share their w
 │                          Backend Layer                              │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │              FastAPI Router Layer                            │  │
-│  │  /persistence/sessions     - CRUD operations                 │  │
-│  │  /persistence/snapshots    - Create/Read/Delete              │  │
-│  │  /persistence/snapshot_access_logs - Visit tracking          │  │
-│  └──────────────────────┬───────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              FastAPI Router Layer                            │   │
+│  │  /persistence/sessions     - CRUD operations                 │   │
+│  │  /persistence/snapshots    - Create/Read/Delete              │   │
+│  │  /persistence/snapshot_access_logs - Visit tracking          │   │
+│  └──────────────────────┬───────────────────────────────────────┘   │
 │                         │                                           │
-│  ┌──────────────────────▼───────────────────────────────────────┐  │
-│  │              Store Layer                                     │  │
-│  │  SessionStore          - Session CRUD + Validation           │  │
-│  │  SnapshotStore         - Snapshot CRUD + Validation          │  │
-│  │  SnapshotAccessLogStore - Visit tracking + Logging           │  │
-│  └──────────────────────┬───────────────────────────────────────┘  │
+│  ┌──────────────────────▼───────────────────────────────────────┐   │
+│  │              Store Layer                                     │   │
+│  │  SessionStore          - Session CRUD + Validation           │   │
+│  │  SnapshotStore         - Snapshot CRUD + Validation          │   │
+│  │  SnapshotAccessLogStore - Visit tracking + Logging           │   │
+│  └──────────────────────┬───────────────────────────────────────┘   │
 │                         │                                           │
-│  ┌──────────────────────▼───────────────────────────────────────┐  │
-│  │              CosmosDB Container Layer                        │  │
-│  │  - Query/Insert/Update/Delete/Patch                          │  │
-│  │  - Error Handling & Mapping                                  │  │
-│  │  - Pagination Support                                        │  │
-│  └──────────────────────┬───────────────────────────────────────┘  │
+│  ┌──────────────────────▼───────────────────────────────────────┐   │
+│  │              CosmosDB Container Layer                        │   │
+│  │  - Query/Insert/Update/Delete/Patch                          │   │
+│  │  - Error Handling & Mapping                                  │   │
+│  │  - Pagination Support                                        │   │
+│  └──────────────────────┬───────────────────────────────────────┘   │
 │                         │                                           │
 └─────────────────────────┼───────────────────────────────────────────┘
                           │
@@ -99,12 +115,12 @@ The Webviz persistence feature enables users to save, restore, and share their w
 ┌─────────────────────────▼───────────────────────────────────────────┐
 │                    Azure CosmosDB                                   │
 │                                                                     │
-│  ┌────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │
-│  │   sessions     │  │   snapshots      │  │ snapshot_access  │   │
-│  │   container    │  │   container      │  │ _logs container  │   │
-│  │                │  │                  │  │                  │   │
-│  │ PK: owner_id   │  │ PK: id           │  │ PK: visitor_id   │   │
-│  └────────────────┘  └──────────────────┘  └──────────────────┘   │
+│  ┌────────────────┐  ┌──────────────────┐  ┌──────────────────┐     │
+│  │   sessions     │  │   snapshots      │  │ snapshot_access  │     │
+│  │   container    │  │   container      │  │ _logs container  │     │
+│  │                │  │                  │  │                  │     │
+│  │ PK: owner_id   │  │ PK: id           │  │ PK: visitor_id   │     │
+│  └────────────────┘  └──────────────────┘  └──────────────────┘     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -121,12 +137,12 @@ User creates workbench content
 Local changes trigger SERIALIZED_STATE event
          │
          ▼
-WorkbenchSessionPersistenceService debounces (200ms)
+PersistenceOrchestrator schedules refresh (200ms debounce)
          │
          ▼
-pullFullSessionState() - Serialize & Hash
+SessionStateTracker.refresh() - Serialize & Hash
          │
-         ├─► localStorage.setItem() - Save to local storage
+         ├─► LocalBackupManager.persist() - Save to localStorage
          └─► hasChanges = (currentHash !== lastPersistedHash)
 ```
 
@@ -136,36 +152,69 @@ pullFullSessionState() - Serialize & Hash
 User clicks "Save Session"
          │
          ▼
-SaveSessionDialog (Get title/description)
+SaveSessionDialog (Get title/description if needed)
          │
          ▼
-workbench.saveCurrentSession()
+WorkbenchSessionManager.saveActiveSession()
          │
-         ├─► WorkbenchSessionPersistenceService.persistSessionState()
+         ├─► PersistenceOrchestrator.persistNow()
+         │    │
+         │    ├─► Validate content size (<1.5MB)
          │    │
          │    ├─► NEW Session:
-         │    │    └─► POST /persistence/sessions
-         │    │         └─► SessionStore.create_async()
-         │    │              ├─► Generate nanoid (8 chars)
-         │    │              ├─► Hash content (SHA-256)
-         │    │              └─► CosmosContainer.insert_item_async()
+         │    │    └─► BackendSyncManager.createSession()
+         │    │         └─► POST /persistence/sessions
+         │    │              └─► SessionStore.create_async()
+         │    │                   ├─► Generate nanoid (12 chars)
+         │    │                   ├─► Hash content (SHA-256)
+         │    │                   └─► CosmosContainer.insert_item_async()
          │    │
          │    └─► EXISTING Session:
-         │         └─► PUT /persistence/sessions/{session_id}
-         │              └─► SessionStore.update_async()
-         │                   ├─► Verify ownership
-         │                   ├─► Increment version
-         │                   ├─► Update timestamp
-         │                   ├─► Hash content (SHA-256)
-         │                   └─► CosmosContainer.update_item_async()
+         │         └─► BackendSyncManager.updateSession()
+         │              └─► PUT /persistence/sessions/{session_id}
+         │                   └─► SessionStore.update_async()
+         │                        ├─► Verify ownership
+         │                        ├─► Increment version
+         │                        ├─► Update timestamp
+         │                        ├─► Hash content (SHA-256)
+         │                        └─► CosmosContainer.update_item_async()
          │
-         └─► On success:
-              ├─► Remove from local storage
-              ├─► Update lastPersistedHash
-              └─► Invalidate React Query cache
+         └─► Return PersistResult { success: true/false, reason?, message? }
+              │
+              └─► WorkbenchSessionManager shows appropriate toast
+                   ├─► Success: "Session saved successfully"
+                   ├─► No changes: "No changes to save"
+                   ├─► Too large: "Session too large: X MB (max 1.5 MB)"
+                   └─► Error: "Failed to save session"
 ```
 
-### 3. Creating a Snapshot
+### 3. Save As (Creating Copy)
+
+```
+User clicks "Save As" in dropdown
+         │
+         ▼
+SaveSessionDialog opens (with title pre-filled)
+         │
+         ▼
+WorkbenchSessionManager.saveAsNewSession(title, description)
+         │
+         ├─► PrivateWorkbenchSession.createCopy()
+         │    ├─► Deep copy via serialize/deserialize
+         │    ├─► Reset ID to null
+         │    └─► Mark as unpersisted
+         │
+         ├─► Update metadata (BEFORE setting active to avoid dirty state)
+         │
+         ├─► Close current session
+         │
+         ├─► Set new session as active
+         │
+         └─► PersistenceOrchestrator.persistNow()
+              └─► Save to backend as new session
+```
+
+### 4. Creating a Snapshot
 
 ```
 User clicks "Create Snapshot"
@@ -174,25 +223,30 @@ User clicks "Create Snapshot"
 CreateSnapshotDialog (Get title/description)
          │
          ▼
-workbench.makeSnapshot()
+WorkbenchSessionManager.createSnapshot()
          │
          ▼
-WorkbenchSessionPersistenceService.makeSnapshot()
+PersistenceOrchestrator.createSnapshot()
          │
          ├─► Serialize current session content
-         ├─► POST /persistence/snapshots
-         │    └─► SnapshotStore.create_async()
-         │         ├─► Generate nanoid (8 chars)
-         │         ├─► Hash content (SHA-256)
-         │         └─► CosmosContainer.insert_item_async()
+         ├─► BackendSyncManager.createSnapshot()
+         │    └─► POST /persistence/snapshots
+         │         ├─► SnapshotStore.create_async()
+         │         │    ├─► Generate nanoid (12 chars)
+         │         │    ├─► Hash content (SHA-256)
+         │         │    └─► CosmosContainer.insert_item_async()
+         │         │
+         │         └─► SnapshotAccessLogStore.log_snapshot_visit_async()
+         │              ├─► Create initial access log (implicit visit)
+         │              ├─► Set visit count = 1
+         │              └─► Record first_visited_at & last_visited_at
          │
-         └─► SnapshotAccessLogStore.log_snapshot_visit_async()
-              ├─► Create initial access log (implicit visit)
-              ├─► Set visit count = 1
-              └─► Record first_visited_at & last_visited_at
+         └─► Return CreateSnapshotResult { success: true/false, message? }
+              │
+              └─► WorkbenchSessionManager shows toast and refetches queries
 ```
 
-### 4. Loading a Session from Backend
+### 5. Loading a Session from Backend
 
 ```
 URL contains ?session={sessionId}
@@ -201,7 +255,7 @@ URL contains ?session={sessionId}
 Workbench.initialize() or handleNavigation()
          │
          ▼
-openSession(sessionId)
+WorkbenchSessionManager.openSession(sessionId)
          │
          ├─► GET /persistence/sessions/{session_id}
          │    └─► SessionStore.get_async()
@@ -215,11 +269,16 @@ openSession(sessionId)
          │    ├─► Restore module state
          │    └─► Restore settings
          │
+         ├─► PersistenceOrchestrator.start()
+         │    ├─► Initialize SessionStateTracker with backend hash
+         │    ├─► Start backend polling (10s interval, window-aware)
+         │    └─► Subscribe to session changes
+         │
          └─► Check for local storage recovery
               └─► Show ActiveSessionRecoveryDialog if found
 ```
 
-### 5. Loading a Snapshot
+### 6. Loading a Snapshot
 
 ```
 URL contains ?snapshot={snapshotId}
@@ -228,7 +287,7 @@ URL contains ?snapshot={snapshotId}
 Workbench.initialize() or handleNavigation()
          │
          ▼
-openSnapshot(snapshotId)
+WorkbenchSessionManager.openSnapshot(snapshotId)
          │
          ├─► GET /persistence/snapshots/{snapshot_id}
          │    ├─► SnapshotStore.get_async() - No ownership check!
@@ -245,7 +304,7 @@ openSnapshot(snapshotId)
               └─► Mark as isSnapshot = true (read-only)
 ```
 
-### 6. Session Recovery Flow
+### 7. Session Recovery Flow
 
 ```
 Application starts (Workbench.initialize())
@@ -274,50 +333,55 @@ Check URL for session/snapshot ID
                    └─► User can discard individual sessions
 ```
 
-### 7. Change Detection & Auto-Save
+### 8. Change Detection & Auto-Save
 
 ```
 User makes changes to dashboard/modules/settings
          │
          ▼
-Module/Dashboard/Settings fires SERIALIZED_STATE event
+Module/Dashboard/Settings notifies via PublishSubscribe
          │
          ▼
-WorkbenchSessionPersistenceService.schedulePullFullSessionState()
+PersistenceOrchestrator.scheduleRefresh()
          │
-         ├─► Clear existing timeout
+         ├─► Clear existing timeout (if any)
          └─► Set new timeout (200ms debounce)
          │
          ▼
-pullFullSessionState()
+SessionStateTracker.refresh()
          │
-         ├─► makeWorkbenchSessionStateString() - Serialize
-         ├─► hashSessionContentString() - SHA-256
-         ├─► Compare newHash with oldHash
+         ├─► Serialize session content
+         ├─► Calculate SHA-256 hash
+         ├─► Compare with last persisted hash
          │
          └─► IF different:
               ├─► Update currentHash & currentStateString
               ├─► Update lastModifiedMs
-              ├─► Save to localStorage
+              ├─► LocalBackupManager.persist() to localStorage
               └─► Notify subscribers (hasChanges = true)
 ```
 
-### 8. Backend Conflict Detection
+### 9. Backend Conflict Detection
 
 ```
-Every 10 seconds (BACKEND_SESSION_FETCH_INTERVAL_MS)
+Every 10 seconds (when window is visible)
          │
          ▼
-repeatedlyFetchSessionFromBackend()
+PersistenceOrchestrator polling
          │
-         ├─► GET /persistence/sessions/metadata/{session_id}
-         ├─► Extract updatedAt timestamp
-         └─► Store in backendLastUpdatedMs
+         ├─► Check WindowActivityObserver.isVisible()
+         │    └─► Skip if hidden
+         │
+         ├─► BackendSyncManager.fetchUpdatedAt(sessionId)
+         │    └─► GET /persistence/sessions/metadata/{session_id}
+         │
+         ├─► SessionStateTracker.updateBackendTimestamp()
+         └─► Notify subscribers
          │
          ▼
 UI components subscribe to PERSISTENCE_INFO
          │
-         └─► Can display warning if:
+         └─► Display warning if:
               backendLastUpdatedMs > lastPersistedMs
               (Indicates external changes)
 ```
@@ -328,22 +392,111 @@ UI components subscribe to PERSISTENCE_INFO
 
 ### Core Services
 
-#### WorkbenchSessionPersistenceService
-[frontend/src/framework/internal/WorkbenchSessionPersistenceService.ts](frontend/src/framework/internal/WorkbenchSessionPersistenceService.ts)
+#### WorkbenchSessionManager
+[frontend/src/framework/internal/WorkbenchSession/WorkbenchSessionManager.ts](frontend/src/framework/internal/WorkbenchSession/WorkbenchSessionManager.ts)
 
 **Responsibilities:**
-- Change detection via SHA-256 hashing
-- Auto-save to local storage (200ms debounce)
-- Backend session persistence (create/update)
-- Snapshot creation
-- Conflict detection via backend polling (10s interval)
-- Publish persistence info (hasChanges, lastModifiedMs, etc.)
+- Session lifecycle (create, open, close, delete)
+- Save operations (save, save as new)
+- Snapshot operations (create, delete)
+- Navigation handling with dirty state protection
+- Recovery from localStorage
+- Toast management (prevents stacking)
+- Result-based error handling (no exceptions thrown)
 
 **Key Methods:**
-- `pullFullSessionState()` - Serialize, hash, and save to local storage
-- `persistSessionState()` - Save session to backend
-- `makeSnapshot()` - Create immutable snapshot
-- `repeatedlyFetchSessionFromBackend()` - Check for external updates
+- `startNewSession()` - Create empty session
+- `openSession(id)` - Load from backend
+- `openSnapshot(id)` - Load snapshot
+- `saveActiveSession(forceSave)` - Save to backend
+- `saveAsNewSession(title, description)` - Create copy and save
+- `createSnapshot(title, description)` - Create immutable snapshot
+- `deleteSession(id)` / `deleteSnapshot(id)` - Delete operations
+- `openFromLocalStorage(id)` - Recovery from crash
+- `handleNavigation()` - Browser navigation with dirty check
+
+**Toast Management:**
+- `createLoadingToast(operation, message)` - Create tracked toast
+- `dismissToast(operation)` - Dismiss specific toast
+- `dismissAllToasts()` - Cleanup on destroy
+
+#### PersistenceOrchestrator
+[frontend/src/framework/internal/persistence/core/PersistenceOrchestrator.ts](frontend/src/framework/internal/persistence/core/PersistenceOrchestrator.ts)
+
+**Responsibilities:**
+- Coordinates auto-save to localStorage (200ms debounce)
+- Smart backend polling (10s interval, window-aware)
+- Change detection using SessionStateTracker
+- Publishes PersistenceInfo updates
+- Content size validation (1.5MB frontend check)
+- Result Type Pattern (returns success/failure objects)
+
+**Key Methods:**
+- `start()` - Initialize tracking and polling
+- `stop()` - Cleanup subscriptions and timers
+- `persistNow()` - Returns `PersistResult`
+- `createSnapshot(title, description)` - Returns `CreateSnapshotResult`
+- `hasChanges()` - Check if unsaved changes exist
+
+**Result Types:**
+```typescript
+type PersistResult =
+  | { success: true; sessionId: string }
+  | { success: false; reason: PersistFailureReason; message?: string };
+
+type CreateSnapshotResult =
+  | { success: true; snapshotId: string }
+  | { success: false; message?: string };
+
+enum PersistFailureReason {
+  SAVE_IN_PROGRESS,
+  NO_CHANGES,
+  CONTENT_TOO_LARGE,
+  ERROR,
+}
+```
+
+#### SessionStateTracker
+[frontend/src/framework/internal/persistence/core/SessionStateTracker.ts](frontend/src/framework/internal/persistence/core/SessionStateTracker.ts)
+
+**Responsibilities:**
+- SHA-256 hash-based state comparison
+- Deterministic JSON serialization
+- Separate metadata and content tracking
+- Backend hash as source of truth for persisted sessions
+
+**Key Methods:**
+- `initialize()` - Set up initial state with backend hash if available
+- `refresh()` - Check for changes, returns boolean
+- `hasChanges()` - Compare current vs persisted state
+- `markPersisted()` - Update after successful save
+- `updateBackendTimestamp(timestamp)` - Track external changes
+
+#### BackendSyncManager
+[frontend/src/framework/internal/persistence/core/BackendSyncManager.ts](frontend/src/framework/internal/persistence/core/BackendSyncManager.ts)
+
+**Responsibilities:**
+- All backend API communication
+- Cache invalidation after CRUD operations
+- Polling for session metadata updates
+
+**Key Methods:**
+- `createSession(session, content)` - POST new session
+- `updateSession(session, content)` - PUT existing session
+- `persist(session, content)` - Auto-detect create vs update
+- `createSnapshot(opts)` - POST new snapshot
+- `fetchUpdatedAt(sessionId)` - Poll for changes
+
+#### LocalBackupManager
+[frontend/src/framework/internal/persistence/core/LocalBackupManager.ts](frontend/src/framework/internal/persistence/core/LocalBackupManager.ts)
+
+**Responsibilities:**
+- Auto-save to localStorage
+- Recovery data management
+
+**Key Methods:**
+- `persist()` - Save session to localStorage
+- `remove()` - Clear localStorage backup
 
 #### PrivateWorkbenchSession
 [frontend/src/framework/internal/WorkbenchSession/PrivateWorkbenchSession.ts](frontend/src/framework/internal/WorkbenchSession/PrivateWorkbenchSession.ts)
@@ -354,12 +507,14 @@ UI components subscribe to PERSISTENCE_INFO
 - AtomStoreMaster integration for reactive state
 - Metadata management (title, description, timestamps)
 - Read-only snapshot mode enforcement
+- Session copying for "Save As" functionality
 
 **Key Methods:**
 - `serializeContentState()` - Convert state to JSON-serializable object
 - `deserializeContentState()` - Restore state from serialized data
 - `fromDataContainer()` - Factory method for creating sessions
-- `loadAndSetupEnsembleSet()` - Load ensemble metadata from backend
+- `createCopy()` - Static method for deep copying sessions
+- `updateMetadata(metadata, notify?)` - Update with optional notification control
 
 ### Dialogs
 
@@ -371,7 +526,22 @@ Creates immutable snapshots with title and description. Displays shareable URL o
 #### SaveSessionDialog
 [frontend/src/framework/internal/components/SaveSessionDialog/saveSessionDialog.tsx](frontend/src/framework/internal/components/SaveSessionDialog/saveSessionDialog.tsx)
 
-Prompts for title/description when saving a session for the first time.
+Prompts for title/description when:
+- Saving a session for the first time (not yet persisted)
+- Saving an existing session as a new session (Save As)
+
+**Key Logic:**
+```typescript
+const isPersisted = activeSession.getIsPersisted();
+
+if (isPersisted) {
+  // Save as new session
+  workbench.getSessionManager().saveAsNewSession(title, description);
+} else {
+  // Regular first-time save
+  workbench.getSessionManager().saveActiveSession(true);
+}
+```
 
 #### ActiveSessionRecoveryDialog
 [frontend/src/framework/internal/components/ActiveSessionRecoveryDialog/activeSessionRecoveryDialog.tsx](frontend/src/framework/internal/components/ActiveSessionRecoveryDialog/activeSessionRecoveryDialog.tsx)
@@ -401,11 +571,14 @@ Tabbed dialog for managing sessions and snapshots. Provides CRUD operations and 
 #### CRUD Helpers
 [frontend/src/framework/internal/WorkbenchSession/utils/crudHelpers.ts](frontend/src/framework/internal/WorkbenchSession/utils/crudHelpers.ts)
 
-- `createSessionWithCacheUpdate()` - Create session & invalidate React Query cache
-- `updateSessionAndCache()` - Update session & invalidate cache
-- `createSnapshotWithCacheUpdate()` - Create snapshot & invalidate cache
+- `createSessionWithCacheUpdate()` - Create session & refetch React Query cache
+- `updateSessionAndCache()` - Update session & refetch cache
+- `createSnapshotWithCacheUpdate()` - Create snapshot & refetch cache (includes access logs)
 - `removeSessionQueryData()` - Remove deleted session from cache
 - `removeSnapshotQueryData()` - Remove deleted snapshot from cache
+- `replaceSessionQueryData()` - Update session in cache
+
+**Note:** Uses `refetchQueries()` instead of `invalidateQueries()` for immediate UI updates after creation.
 
 #### Deserialization
 [frontend/src/framework/internal/WorkbenchSession/utils/deserialization.ts](frontend/src/framework/internal/WorkbenchSession/utils/deserialization.ts)
@@ -450,6 +623,7 @@ FastAPI endpoints with comprehensive OpenAPI documentation:
 - Ownership verification
 - Automatic metadata management (version, timestamps, hash)
 - Query support (pagination, sorting, filtering)
+- Content size validation (1.5MB limit)
 
 **Security:**
 - Partition key: `owner_id` (ensures data isolation)
@@ -462,6 +636,7 @@ FastAPI endpoints with comprehensive OpenAPI documentation:
 - Snapshot creation and deletion
 - Public read access (no ownership check on GET)
 - Query support for owned snapshots
+- Content size validation (1.5MB limit)
 
 **Security:**
 - Partition key: `id` (snapshot_id) - allows cross-user access
@@ -501,6 +676,7 @@ SQL query builder with:
 - Case-insensitive sorting
 - Pagination support
 - Parameter binding for SQL injection prevention
+- Support for Pydantic `@computed_field` properties
 
 ### Background Tasks
 
@@ -544,13 +720,13 @@ Asynchronously marks all access logs as deleted when a snapshot is deleted.
          │                         │
          └─────────────────────────┘
          │
-         │ User clicks "Update"
+         │ User clicks "Update" or "Save As"
          │
          ▼
 ┌─────────────────┐
 │ Backend Session │
-│  (Updated)      │
-│  version++      │
+│  (Updated or    │
+│   New Copy)     │
 └─────────────────┘
 ```
 
@@ -612,383 +788,299 @@ Check localStorage
 
 ---
 
-## Identified Issues
+## Module State Persistence for Developers
 
-### Critical Issues
+This system enables individual modules to persist their state as part of session/snapshot serialization. Module developers can opt-in to persistence by following these patterns.
 
-#### 1. Race Condition in Session Update Flow
-**Location:** [WorkbenchSessionPersistenceService.ts:334-336](frontend/src/framework/internal/WorkbenchSessionPersistenceService.ts#L334-L336)
+### Overview
 
-**Issue:** There's a potential race condition between `pullFullSessionState()` and the actual save operation. If the user makes changes during the save operation, those changes might be lost.
+Each module can persist two separate state objects:
+- **Settings State**: State from the settings component
+- **View State**: State from the view component
 
-```typescript
-// Make sure we pull the latest session before we save
-this.maybeClearPullDebounceTimeout();
-await this.pullFullSessionState();
-```
+Both use the same pattern: define a serialized state type, create a JTD schema, implement serialize/deserialize functions, and register with the module.
 
-**Impact:** Medium - Users might lose recent changes if they continue editing while save is in progress.
+### Step-by-Step Implementation
 
-**Recommendation:** Add a lock/semaphore to prevent changes during save, or queue the save operation.
+#### 1. Define Persistable Atoms
 
-#### 2. Inconsistent Error Handling in Snapshot Deletion
-**Location:** [router.py:414-419](backend_py/primary/primary/routers/persistence/router.py#L414-L419)
+Use `persistableFixableAtom` for atoms that need validation when deserializing. This ensures data integrity when loading sessions created with different data or module versions.
 
-**Issue:** The background task for marking logs as deleted has no error recovery mechanism. If the task fails completely (not individual patches), access logs will remain in inconsistent state.
-
-```python
-# This is the fastest solution for the moment. As we are expecting <= 150 logs per snapshot
-# and consistency is not critical, we can afford to do this in the background and without
-# a safety net. We can later consider adding this to a queue for better reliability.
-background_tasks.add_task(mark_logs_deleted_task, snapshot_id=snapshot_id)
-```
-
-**Impact:** Low-Medium - Access logs might show deleted snapshots indefinitely.
-
-**Recommendation:** Add retry logic or use a proper task queue (Celery, Azure Functions, etc.).
-
-#### 3. No Pagination Limit Enforcement
-**Location:** Multiple backend stores
-
-**Issue:** While there's a page_size parameter with validation (`ge=1, le=100`), the query itself doesn't enforce a maximum limit when page_size is None.
-
-**Impact:** Medium - Large queries could cause performance issues or DoS.
-
-**Recommendation:** Set a default and maximum page size in the store layer.
-
-### Architectural Issues
-
-#### 4. Tight Coupling Between Workbench and Persistence Service
-**Location:** [Workbench.ts](frontend/src/framework/Workbench.ts), [WorkbenchSessionPersistenceService.ts](frontend/src/framework/internal/WorkbenchSessionPersistenceService.ts)
-
-**Issue:** The `WorkbenchSessionPersistenceService` holds a reference to the entire `Workbench` instance, creating bidirectional dependency.
+**Example** ([2DViewer/settings/atoms/persistableAtoms.ts](frontend/src/modules/2DViewer/settings/atoms/persistableAtoms.ts)):
 
 ```typescript
-constructor(workbench: Workbench) {
-    this._workbench = workbench;
-}
+import { persistableFixableAtom } from "@framework/utils/PersistableFixableAtom";
+
+export const fieldIdentifierAtom = persistableFixableAtom<string | null>({
+    initialValue: null,
+
+    // Validate deserialized value against current application state
+    isValidFunction: ({ get, value }) => {
+        const ensembleSet = get(EnsembleSetAtom);
+        return (
+            value !== null &&
+            ensembleSet.getRegularEnsembleArray().some((ens) =>
+                ens.getFieldIdentifier() === value
+            )
+        );
+    },
+
+    // Provide fallback value if validation fails
+    fixupFunction: ({ get }) => {
+        const ensembleSet = get(EnsembleSetAtom);
+        return ensembleSet.getRegularEnsembleArray().at(0)?.getFieldIdentifier() ?? null;
+    },
+});
 ```
 
-**Impact:** Low-Medium - Makes testing harder, increases coupling.
+**Key Concepts:**
+- `initialValue`: Default value for new instances
+- `isValidFunction`: Validates deserialized values against current app state (e.g., ensemble still exists)
+- `fixupFunction`: Provides sensible fallback when validation fails (e.g., select first available ensemble)
 
-**Recommendation:** Use dependency injection or pass only required methods (e.g., `getQueryClient()`).
+#### 2. Define Serialized State Type
 
-#### 5. Implicit Visit Logging on Snapshot Creation
-**Location:** [router.py:384-387](backend_py/primary/primary/routers/persistence/router.py#L384-L387)
+Create a type representing the serialized state structure. Keep it simple - only primitives, arrays, and plain objects.
 
-**Issue:** Creating a snapshot automatically logs a visit. This is a side effect that's not obvious from the API endpoint name.
+**Example** ([2DViewer/settings/persistence.ts](frontend/src/modules/2DViewer/settings/persistence.ts)):
 
-```python
-# We count snapshot creation as implicit visit. This also makes it so we can get recently created ones alongside other shared screenshots
-await log_store.log_snapshot_visit_async(
-    snapshot_id=snapshot_id, snapshot_owner_id=authenticated_user.get_user_id()
-)
-```
-
-**Impact:** Low - Could be confusing for API consumers.
-
-**Recommendation:** Document this behavior prominently in OpenAPI docs, or make it explicit with a separate endpoint call.
-
-#### 6. Duplicate State in WorkbenchSessionPersistenceService
-**Location:** [WorkbenchSessionPersistenceService.ts:52-65](frontend/src/framework/internal/WorkbenchSessionPersistenceService.ts#L52-L65)
-
-**Issue:** Several fields are duplicated:
 ```typescript
-private _persistenceInfo: WorkbenchSessionPersistenceInfo = {
-    lastModifiedMs: 0,
-    hasChanges: false,
-    lastPersistedMs: null,
-    backendLastUpdatedMs: null,
+export type SerializedSettings = {
+    dataProviderData: string;
+    fieldIdentifier: string | null;
+    preferredViewLayout: PreferredViewLayout;
+    mapExtent: {
+        x: number[];
+        y: number[];
+    } | null;
 };
-// ...
-private _lastPersistedMs: number | null = null;
-private _lastModifiedMs: number = 0;
-private _backendLastUpdatedMs: number | null = null;
 ```
 
-**Impact:** Low - Maintenance burden, potential for inconsistency.
+#### 3. Create JTD Schema
 
-**Recommendation:** Use only `_persistenceInfo` and remove duplicate fields.
+Use `SchemaBuilder` to create a JSON Type Definition schema. This provides runtime validation and type safety.
 
-### Code Quality Issues
-
-#### 7. Magic Numbers Without Constants
-**Status:** ✅ **Resolved**
-
-**Location:** Multiple files
-
-**Issue:** Several magic numbers appeared without named constants.
-
-**Resolution:** All values now defined in `frontend/src/framework/internal/persistence/constants.ts`:
-- `AUTO_SAVE_DEBOUNCE_MS = 200`
-- `BACKEND_POLLING_INTERVAL_MS = 10000`
-- `MAX_TITLE_LENGTH = 50`
-- `MAX_DESCRIPTION_LENGTH = 250`
-- `MAX_CONTENT_SIZE_BYTES = 1.5MB`
-- Session/Snapshot ID length: 12 characters
-
-#### 8. Incomplete Type Annotations
-**Location:** [crudHelpers.ts](frontend/src/framework/internal/WorkbenchSession/utils/crudHelpers.ts)
-
-**Issue:** Some functions use `any` type or have incomplete error handling types.
+**Example** ([2DViewer/settings/persistence.ts](frontend/src/modules/2DViewer/settings/persistence.ts)):
 
 ```typescript
-const snapshotGetter = (): any => {
+import { SchemaBuilder } from "@framework/SchemaBuilder";
+
+const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
+    properties: {
+        dataProviderData: { type: "string" },
+        fieldIdentifier: { type: "string", nullable: true },
+        preferredViewLayout: {
+            enum: [PreferredViewLayout.VERTICAL, PreferredViewLayout.HORIZONTAL],
+        },
+        mapExtent: {
+            properties: {
+                x: { elements: { type: "float64" } },
+                y: { elements: { type: "float64" } },
+            },
+            nullable: true,
+        },
+    },
+}));
+
+export const SERIALIZED_SETTINGS = schemaBuilder.build();
 ```
 
-**Recommendation:** Use proper TypeScript types throughout.
+**Supported JTD Types:**
+- Primitives: `string`, `float64`, `int32`, `boolean`, `timestamp`
+- Arrays: `{ elements: { type: "..." } }`
+- Objects: `{ properties: { ... } }`
+- Enums: `{ enum: [...] }`
+- Nullable: `{ type: "...", nullable: true }`
 
-#### 9. Console.error Instead of Proper Error Handling
-**Location:** Multiple frontend components
+#### 4. Implement Serialize Function
 
-**Issue:** Many places use `console.error()` without proper error reporting or user notification.
+Extract state from atoms using the provided `get` function.
+
+**Example** ([2DViewer/settings/persistence.ts](frontend/src/modules/2DViewer/settings/persistence.ts)):
 
 ```typescript
-} catch (error) {
-    console.error("Failed to save session:", error);
+import type { SerializeStateFunction } from "@framework/Module";
+
+export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
+    const dataProviderData = get(dataProviderStateAtom);
+    const fieldIdentifier = get(fieldIdentifierAtom);
+    const preferredViewLayout = get(preferredViewLayoutAtom);
+    const mapExtent = get(mapExtentAtom);
+
+    return {
+        dataProviderData,
+        fieldIdentifier: fieldIdentifier.value, // Extract value from persistableFixableAtom
+        preferredViewLayout,
+        mapExtent,
+    };
+};
+```
+
+**Important:** For `persistableFixableAtom`, access `.value` to get the underlying value.
+
+#### 5. Implement Deserialize Function
+
+Restore state to atoms using the provided `set` function. Use `setIfDefined` helper to skip undefined values.
+
+**Example** ([2DViewer/settings/persistence.ts](frontend/src/modules/2DViewer/settings/persistence.ts)):
+
+```typescript
+import type { DeserializeStateFunction } from "@framework/Module";
+import { setIfDefined } from "@framework/utils/SerializationUtils";
+
+export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
+    setIfDefined(set, dataProviderStateAtom, raw.dataProviderData);
+    setIfDefined(set, fieldIdentifierAtom, raw.fieldIdentifier);
+    setIfDefined(set, preferredViewLayoutAtom, raw.preferredViewLayout);
+    setIfDefined(set, mapExtentAtom, raw.mapExtent);
+};
+```
+
+**Important:** When deserializing to `persistableFixableAtom`, the validation and fixup functions run automatically.
+
+#### 6. Combine Settings and View State
+
+Create a combined state definition in [persistence.ts](frontend/src/modules/2DViewer/persistence.ts):
+
+```typescript
+import {
+    SERIALIZED_SETTINGS,
+    serializeSettings,
+    deserializeSettings,
+    type SerializedSettings
+} from "./settings/persistence";
+import {
+    SERIALIZED_VIEW,
+    serializeView,
+    deserializeView,
+    type SerializedView
+} from "./view/persistence";
+
+export type SerializedState = {
+    settings: SerializedSettings;
+    view: SerializedView;
+};
+
+export const SERIALIZED_STATE = {
+    settings: SERIALIZED_SETTINGS,
+    view: SERIALIZED_VIEW,
+};
+```
+
+#### 7. Register with Module
+
+Register the schema and serialization functions when registering the module.
+
+**Example** ([2DViewer/registerModule.ts](frontend/src/modules/2DViewer/registerModule.ts)):
+
+```typescript
+import { ModuleRegistry } from "@framework/ModuleRegistry";
+import { SERIALIZED_STATE, type SerializedState } from "./persistence";
+
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
+    moduleName: MODULE_NAME,
+    category: ModuleCategory.MAIN,
+    devState: ModuleDevState.PROD,
+    defaultTitle: "2D Viewer",
+    serializedStateSchema: SERIALIZED_STATE,
+    // ... other options
+});
+```
+
+#### 8. Register Serialization Functions in loadModule
+
+In your module's `loadModule.tsx`, register the serialize/deserialize functions:
+
+```typescript
+import { ModuleRegistry } from "@framework/ModuleRegistry";
+import { serializeSettings, deserializeSettings } from "./settings/persistence";
+import { serializeView, deserializeView } from "./view/persistence";
+
+const module = ModuleRegistry.initModule<Interfaces, SerializedState>(MODULE_NAME, {
+    settingsFC,
+    viewFC,
+});
+
+module.setSerializationFunctions({
+    serializeStateFunctions: {
+        settings: serializeSettings,
+        view: serializeView,
+    },
+    deserializeStateFunctions: {
+        settings: deserializeSettings,
+        view: deserializeView,
+    },
+});
+```
+
+### Complete File Structure
+
+```
+src/modules/YourModule/
+├── registerModule.ts          # Register schema
+├── loadModule.tsx             # Register serialize/deserialize functions
+├── persistence.ts             # Combine settings + view state
+├── settings/
+│   ├── atoms/
+│   │   └── persistableAtoms.ts  # Define persistableFixableAtom instances
+│   └── persistence.ts         # Settings serialization
+└── view/
+    └── persistence.ts         # View serialization
+```
+
+### Best Practices
+
+1. **Keep Serialized State Simple**: Only primitives, arrays, and plain objects. No class instances or functions.
+
+2. **Always Use Validation**: Use `persistableFixableAtom` for any data that depends on external state (ensembles, fields, realizations, etc.). This prevents crashes when loading sessions with missing/changed data.
+
+3. **Provide Sensible Defaults**: The `fixupFunction` should always provide a reasonable fallback value. Users should never see a broken state after loading a session.
+
+4. **Use `setIfDefined`**: This helper skips setting atoms when the serialized value is `undefined`, preserving the atom's default value.
+
+5. **Test Across Versions**: Verify that sessions created with older module versions can still be loaded. The validation/fixup pattern handles most cases automatically.
+
+6. **Minimize State Size**: Only persist essential state. Derived values should be recomputed on load. Remember the 1.5MB content size limit.
+
+7. **Document Breaking Changes**: If you change the serialized state structure, document migration requirements in your module's changelog.
+
+### How It Works
+
+When a session is saved:
+1. Framework calls `serializeSettings()` and `serializeView()` for each module instance
+2. Results are validated against the JTD schema
+3. Stringified JSON is stored in the session object
+4. Total content size is checked against 1.5MB limit
+
+When a session is loaded:
+1. Framework deserializes the JSON for each module instance
+2. Validates against the JTD schema
+3. Calls `deserializeSettings()` and `deserializeView()` with the data
+4. For `persistableFixableAtom`, runs validation → fixup if needed → sets value
+
+### Module State in Serialized Sessions
+
+The complete session state structure includes module instances:
+
+```typescript
+{
+  sessionId: "abc123",
+  metadata: { title: "My Session", ... },
+  content: {
+    dashboardState: { ... },
+    moduleInstances: [
+      {
+        id: "module-1",
+        name: "2DViewer",
+        serializedState: {
+          settings: "{\"fieldIdentifier\":\"DROGON\",\"preferredViewLayout\":\"vertical\",...}",
+          view: "{\"viewMode\":\"map\",\"colorScale\":{...}}"
+        }
+      },
+      // ... more module instances
+    ]
+  }
 }
 ```
 
-**Recommendation:** Implement centralized error handling/reporting service.
-
-#### 10. Missing Validation for Content Size
-**Status:** ✅ **Resolved**
-
-**Location:** Backend session/snapshot stores, Frontend PersistenceOrchestrator
-
-**Issue:** No validation on content size. Large sessions could cause issues with CosmosDB document size limits (2MB for non-partitioned, 4MB for partitioned).
-
-**Resolution:** Content size validation implemented in both frontend and backend with 1.5MB limit:
-- Frontend: `PersistenceOrchestrator` checks size before save attempt and shows user-friendly error
-- Backend: `SessionStore` and `SnapshotStore` validate content size and reject with clear error messages
-
-### Flow/UX Issues
-
-#### 11. Confusing Recovery Dialog Behavior
-**Location:** [Workbench.ts:219-223](frontend/src/framework/Workbench.ts#L219-L223)
-
-**Issue:** When opening a session from URL that has a local storage backup, both the backend session AND the recovery dialog are shown simultaneously. This could be confusing.
-
-```typescript
-if (storedSessions.find((el) => el.id === sessionId)) {
-    this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);
-}
-```
-
-**Recommendation:** Show recovery dialog BEFORE loading from backend, or provide clearer UI state.
-
-#### 12. No Optimistic Updates
-**Location:** Session/Snapshot CRUD operations
-
-**Issue:** All operations wait for backend response before updating UI, causing perceived slowness.
-
-**Recommendation:** Implement optimistic updates in React Query mutations.
-
-#### 13. Polling Every 10 Seconds Always Active
-**Status:** ✅ **Resolved**
-
-**Location:** `PersistenceOrchestrator.ts`
-
-**Issue:** Backend polling continued even when user was not actively using the app or when the window was not focused.
-
-**Resolution:** Integrated with `WindowActivityObserver` to intelligently manage polling:
-- Polling skipped when `windowActivityObserver.isVisible()` returns false
-- Immediate fetch triggered when window becomes active again
-- Subscribes to window activity state changes for responsive behavior
-- Significant reduction in unnecessary network requests
-
-#### 14. No Visual Feedback for Auto-Save Status
-**Location:** UI Components
-
-**Issue:** Users have no way to see when auto-save to localStorage happens. Only backend persistence shows a toast.
-
-**Recommendation:** Add subtle UI indicator (e.g., "Saved to local storage" or icon).
-
-### Security/Privacy Issues
-
-#### 15. Snapshot IDs Are Guessable
-**Status:** ✅ **Resolved**
-
-**Location:** `snapshot_store.py` and `session_store.py`
-
-**Issue:** Using 8-character nanoid (~16 million combinations) for publicly accessible snapshots could be vulnerable to enumeration attacks.
-
-**Resolution:** Increased ID length from 8 to 12 characters:
-```python
-snapshot_id = generate(size=12)  # ~3.2 trillion combinations
-session_id = str(generate(size=12))  # ~3.2 trillion combinations
-```
-
-**Impact:** Significantly reduced risk of enumeration attacks while maintaining reasonable URL length.
-
-#### 16. No Rate Limiting on Visit Logging
-**Location:** [snapshot_access_log_store.py:184-221](backend_py/primary/primary/persistence/snapshot_store/snapshot_access_log_store.py#L184-L221)
-
-**Issue:** No rate limiting on visit logging. A malicious user could spam visit logs.
-
-**Recommendation:** Implement rate limiting or deduplicate visits within a time window.
-
-#### 17. Sensitive Data in Local Storage
-**Location:** Local storage persistence
-
-**Issue:** Complete session state is stored in localStorage without encryption. This includes all user data, module state, etc.
-
-**Recommendation:** Consider encrypting localStorage data or warning users about browser privacy.
-
-### Performance Issues
-
-#### 18. Hash Computation on Every Change
-**Location:** [WorkbenchSessionPersistenceService.ts:296](frontend/src/framework/internal/WorkbenchSessionPersistenceService.ts#L296)
-
-**Issue:** SHA-256 hash is computed on every change, even for large sessions. This is CPU-intensive.
-
-```typescript
-const newHash = await hashSessionContentString(newStateString);
-```
-
-**Recommendation:** Consider cheaper change detection (e.g., deep equality check, version counter) or hash only parts of the state.
-
-#### 19. Full Session Serialization on Every Change
-**Location:** [WorkbenchSessionPersistenceService.ts:295](frontend/src/framework/internal/WorkbenchSessionPersistenceService.ts#L295)
-
-**Issue:** The entire session is serialized to JSON on every change, which could be expensive for large dashboards.
-
-```typescript
-const newStateString = makeWorkbenchSessionStateString(this._workbenchSession);
-```
-
-**Recommendation:** Implement partial serialization or dirty tracking.
-
-#### 20. No Lazy Loading for Session Lists
-**Location:** [PersistenceManagementDialog](frontend/src/framework/internal/components/PersistenceManagementDialog/persistenceManagementDialog.tsx)
-
-**Issue:** Session/snapshot lists might load all data at once instead of using infinite scroll/virtual scrolling for large lists.
-
-**Recommendation:** Implement virtual scrolling for large lists using react-window or similar.
-
-### Testing Gaps
-
-#### 21. No Unit Tests Visible
-**Location:** Repository-wide
-
-**Issue:** No visible test files for the persistence feature.
-
-**Recommendation:** Add comprehensive unit and integration tests for:
-- Serialization/deserialization
-- Hash computation
-- CRUD operations
-- Recovery flows
-- Error scenarios
-
----
-
-## Recommendations
-
-### High Priority
-
-1. **Fix Race Condition in Save Flow**
-   - Add proper locking mechanism
-   - Queue save operations
-   - Prevent user edits during save
-
-2. **Increase Snapshot ID Length**
-   - Change from 8 to 12-16 characters
-   - Add rate limiting on snapshot access
-   - Consider adding access tokens for sensitive snapshots
-
-3. **Add Content Size Validation**
-   - Implement max content size check (1.5MB recommended)
-   - Provide user feedback before save fails
-   - Consider compression for large sessions
-
-4. **Implement Proper Error Handling**
-   - Create centralized error service
-   - Add error boundaries in React components
-   - Log errors to monitoring service (Sentry, etc.)
-
-### Medium Priority
-
-5. **Improve Recovery Flow UX**
-   - Show recovery dialog before loading from backend
-   - Provide visual diff between localStorage and backend versions
-   - Add "merge" option for advanced users
-
-6. **Optimize Performance**
-   - Implement partial serialization
-   - Use cheaper change detection method
-   - Add virtual scrolling for lists
-   - Pause polling when window is inactive
-
-7. **Reduce Coupling**
-   - Refactor WorkbenchSessionPersistenceService to reduce dependencies
-   - Use dependency injection
-   - Create clear interfaces
-
-8. **Add Visual Feedback**
-   - Show auto-save indicator
-   - Display sync status in UI
-   - Add progress indicators for long operations
-
-### Low Priority
-
-9. **Improve Code Quality**
-   - Replace magic numbers with constants
-   - Add comprehensive TypeScript types
-   - Remove duplicate state
-   - Add JSDoc comments
-
-10. **Add Tests**
-    - Unit tests for serialization
-    - Integration tests for API endpoints
-    - E2E tests for recovery flows
-    - Performance tests for large sessions
-
-11. **Documentation**
-    - Add inline code comments
-    - Create API documentation
-    - Add architecture decision records (ADRs)
-    - Create user guide
-
-12. **Security Enhancements**
-    - Encrypt localStorage data
-    - Add rate limiting
-    - Implement audit logging
-    - Add RBAC for shared sessions (future feature)
-
----
-
-## Additional Observations
-
-### Strengths
-
-1. **Well-Structured Layering**: Clear separation between UI, services, and data access layers.
-2. **Schema Validation**: Using AJV for runtime validation prevents corrupted data.
-3. **Flexible Querying**: FilterFactory and QueryCollationOptions provide powerful query capabilities.
-4. **User Experience**: Recovery dialogs provide excellent crash recovery UX.
-5. **Immutable Snapshots**: Clear distinction between mutable sessions and immutable snapshots.
-6. **Visit Tracking**: Access logs provide valuable insights for shared content.
-
-### Potential Future Enhancements
-
-1. **Real-time Collaboration**: Extend to multi-user editing with operational transformation or CRDTs.
-2. **Version History**: Track and allow reverting to previous session versions.
-3. **Partial Updates**: Support updating specific parts of a session without sending entire content.
-4. **Export/Import**: Allow users to export sessions as files for backup/sharing.
-5. **Session Templates**: Create reusable session templates.
-6. **Snapshot Permissions**: Add optional access control for snapshots.
-7. **Offline Support**: Implement proper offline-first architecture with sync.
-8. **Compression**: Compress large session content before storage.
-
----
-
-## Conclusion
-
-The persistence feature is well-architected with clear separation of concerns and comprehensive functionality. The main areas for improvement are:
-
-1. Race condition handling in concurrent operations
-2. Security hardening (ID length, rate limiting)
-3. Performance optimization (hashing, serialization)
-4. Error handling and user feedback
-5. Code quality (constants, types, tests)
-
-With the recommended improvements, this feature would be production-ready for enterprise use.
+Each module instance's serialized state is stored as stringified JSON and validated independently.
