@@ -82,8 +82,11 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                 props.workbench
                     .getSessionManager()
                     .saveActiveSession()
-                    .then(() => {
+                    .then((result) => {
                         setInputFeedback({});
+                        if (result) {
+                            props.onClose?.();
+                        }
                     })
                     .catch((error) => {
                         console.error("Failed to save session:", error);

@@ -265,7 +265,7 @@ async def get_snapshot_access_logs(
         if filter_owner_id:
             filters.append(filter_factory.create("snapshot_owner_id", filter_owner_id, "EQUAL"))
         if filter_snapshot_deleted is not None:
-            filters.append(filter_factory.create("snapshot_deleted", str(filter_snapshot_deleted).lower(), "EQUAL"))
+            filters.append(filter_factory.create("snapshot_deleted", filter_snapshot_deleted, "EQUAL"))
 
         (items, cont_token) = await log_store.get_many_for_user_async(
             page_token=cursor,

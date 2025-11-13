@@ -415,11 +415,7 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
     );
 
     async function handleRefreshClick() {
-        // Reload the session from the server
-        const sessionId = props.workbench.getSessionManager().getActiveSession().getId();
-        if (sessionId) {
-            await props.workbench.getSessionManager().openSession(sessionId);
-        }
+        await props.workbench.getSessionManager().refreshActiveSessionFromBackend();
     }
 
     if (

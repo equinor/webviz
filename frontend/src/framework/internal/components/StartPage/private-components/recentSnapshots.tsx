@@ -38,7 +38,7 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
     }
 
     return (
-        <div className="min-w-64 w-96">
+        <div className="min-w-64 w-96 h-56">
             <RecentList
                 title="Recent snapshots"
                 useQueryOptions={{

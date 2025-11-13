@@ -48,6 +48,11 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
         loadSessions();
     }
 
+    function handleDiscardAll() {
+        props.workbench.getSessionManager().discardAllLocalStorageSessions();
+        handleCancel();
+    }
+
     function handleOpen(sessionId: string | null) {
         props.workbench.getSessionManager().openFromLocalStorage(sessionId);
     }
@@ -62,6 +67,9 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                 <>
                     <Button onClick={handleCancel} variant="text">
                         Cancel
+                    </Button>
+                    <Button onClick={handleDiscardAll} variant="text" color="danger">
+                        Discard all and close
                     </Button>
                 </>
             }

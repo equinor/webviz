@@ -16,7 +16,7 @@ import {
     DataProviderManagerTopic,
 } from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
-import { dataProviderManagerAtom, dataProviderStateAtom, preferredViewLayoutAtom } from "./atoms/baseAtoms";
+import { dataProviderManagerAtom, dataProviderStateAtom } from "./atoms/baseAtoms";
 import { fieldIdentifierAtom } from "./atoms/persistableAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
@@ -24,13 +24,12 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const queryClient = useQueryClient();
 
+    const serializedStateRef = React.useRef<string | null>(null);
+
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
     const [dataProviderState, setDataProviderState] = useAtom(dataProviderStateAtom);
 
-    const dataProviderStateRef = React.useRef(dataProviderState);
-
     const [fieldIdentifier, setFieldIdentifier] = useAtom(fieldIdentifierAtom);
-    const [, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
 
     const persistState = React.useCallback(
         function persistLayerManagerState() {
@@ -38,40 +37,35 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 return;
             }
 
-            const serializedState = {
-                dataProviderManager: dataProviderManager.serializeState(),
-            };
+            const serializedState = JSON.stringify(dataProviderManager.serializeState());
+            serializedStateRef.current = serializedState;
 
-            setDataProviderState(JSON.stringify(serializedState));
+            setDataProviderState(serializedState);
         },
         [dataProviderManager, setDataProviderState],
     );
 
-    const applyPersistedState = React.useCallback(
-        function applyPersistedState(dataProviderManager: DataProviderManager) {
-            const serializedState = dataProviderStateRef.current;
-
-            if (!serializedState) {
+    React.useEffect(
+        function persistedDataChangeEffect() {
+            if (!dataProviderManager || !dataProviderState) {
                 return;
             }
 
-            const parsedState = JSON.parse(serializedState);
-            if (parsedState.preferredViewLayout) {
-                setPreferredViewLayout(parsedState.preferredViewLayout);
+            if (dataProviderState === serializedStateRef.current) {
+                return;
             }
 
-            if (parsedState.dataProviderManager) {
-                if (!dataProviderManager) {
-                    return;
-                }
-                dataProviderManager.deserializeState(parsedState.dataProviderManager);
-            }
+            dataProviderManager!.deserializeState(JSON.parse(dataProviderState));
         },
-        [setPreferredViewLayout],
+        [dataProviderState, dataProviderManager],
     );
 
     React.useEffect(
         function onMountEffect() {
+            if (dataProviderManager) {
+                return;
+            }
+
             const newLayerManager = new DataProviderManager(
                 props.workbenchSession,
                 props.workbenchSettings,
@@ -79,13 +73,11 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             );
             setDataProviderManager(newLayerManager);
 
-            applyPersistedState(newLayerManager);
-
             return function onUnmountEffect() {
                 newLayerManager.beforeDestroy();
             };
         },
-        [setDataProviderManager, props.workbenchSession, props.workbenchSettings, queryClient, applyPersistedState],
+        [setDataProviderManager, dataProviderManager, props.workbenchSession, props.workbenchSettings, queryClient],
     );
 
     React.useEffect(

@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/utils/loaders";
+import { loadWorkbenchSessionFromLocalStorage } from "@framework/internal/WorkbenchSession/utils/loaders";
 import {
     extractLayout,
     type WorkbenchSessionDataContainer,
@@ -32,10 +32,12 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
 
     const loadSession = React.useCallback(
         async function loadSession() {
-            const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
-
-            const storedSession = loadedSessions.find((s) => s.id === activeSession.getId());
-            setSessionData(storedSession || null);
+            try {
+                const storedSession = loadWorkbenchSessionFromLocalStorage(activeSession.getId());
+                setSessionData(storedSession);
+            } catch {
+                setSessionData(null);
+            }
         },
         [activeSession],
     );

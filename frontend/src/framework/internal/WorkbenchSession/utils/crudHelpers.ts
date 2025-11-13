@@ -27,8 +27,8 @@ export async function createSessionWithCacheUpdate(
         body: sessionData,
     });
 
-    // Invalidate the cache for the session to ensure the new session is fetched
-    queryClient.invalidateQueries({
+    // Refetch to immediately update the sessions list
+    await queryClient.refetchQueries({
         queryKey: getSessionsMetadataQueryKey(),
     });
 
@@ -66,13 +66,22 @@ export async function createSnapshotWithCacheUpdate(
         body: snapshotData,
     });
 
-    // Invalidate the cache for the session to ensure the new session is fetched
-    queryClient.invalidateQueries({
-        queryKey: getSnapshotsMetadataQueryKey(),
-    });
-    queryClient.invalidateQueries({
-        queryKey: getSnapshotsMetadataInfiniteQueryKey(),
-    });
+    // Refetch (not just invalidate) to immediately fetch the new snapshot
+    // This ensures the UI updates instantly with the newly created snapshot
+    await Promise.all([
+        queryClient.refetchQueries({
+            queryKey: getSnapshotsMetadataQueryKey(),
+        }),
+        queryClient.refetchQueries({
+            queryKey: getSnapshotsMetadataInfiniteQueryKey(),
+        }),
+        queryClient.refetchQueries({
+            queryKey: getSnapshotAccessLogsQueryKey(),
+        }),
+        queryClient.refetchQueries({
+            queryKey: getSnapshotAccessLogsInfiniteQueryKey(),
+        }),
+    ]);
 
     return response.data;
 }

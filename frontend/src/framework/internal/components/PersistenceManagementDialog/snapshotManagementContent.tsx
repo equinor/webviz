@@ -284,8 +284,8 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
             sort_by: sortBy,
             sort_direction: SortDirection,
             filter_title: tableFilter.title,
-            filter_updated_from: tableFilter.visitedAt?.from,
-            filter_updated_to: tableFilter.visitedAt?.to,
+            filter_last_visited_from: tableFilter.visitedAt?.from,
+            filter_last_visited_to: tableFilter.visitedAt?.to,
             filter_owner_id: tableFilter.ownerId,
             filter_snapshot_deleted: tableFilter.snapshotDeleted,
         };
@@ -395,7 +395,10 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         });
     }, [snapshotsQuery.data]);
 
-    const onTableScrollIndexChange = React.useCallback((start: number, end: number) => {
+    const handleTableScrollIndexChange = React.useCallback(function handleTableScrollIndexChange(
+        start: number,
+        end: number,
+    ) {
         setVisibleRowRange({ start, end });
     }, []);
 
@@ -424,8 +427,6 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         [snapshotsQuery, tableData.length, visibleRowRange],
     );
 
-    const isSnapshotDeleted = selectedSnapshot?.snapshotDeleted ?? false;
-
     return (
         <>
             <div className="mb-4 flex gap-4">
@@ -450,17 +451,15 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     />
                 </Label>
             </div>
-            <div className="flex gap-2 mb-2 items-center">
-                <Switch checked={tableFilter.ownerId === userId} onChange={handleShowMySnapshotsOnlyChange} />
-                <span className="text-sm mr-4">Show my snapshots only</span>
-                <Switch checked={tableFilter.snapshotDeleted} onChange={handleHideDeletedSnapshotsChange} />
-                <span className="text-sm">Hide deleted snapshots</span>
+            <div className="flex gap-4 mb-2 items-center">
+                <Label text="Show my snapshots only" wrapperClassName="flex items-center" position="right">
+                    <Switch checked={tableFilter.ownerId === userId} onChange={handleShowMySnapshotsOnlyChange} />
+                </Label>
+                <Label text="Hide deleted snapshots" wrapperClassName="flex items-center" position="right">
+                    <Switch checked={tableFilter.snapshotDeleted} onChange={handleHideDeletedSnapshotsChange} />
+                </Label>
                 <span className="grow" />
-                <Tooltip
-                    title={isSnapshotDeleted ? "Selected snapshot has been deleted" : "Open selected snapshot"}
-                    placement="top"
-                    enterDelay="medium"
-                >
+                <Tooltip title={"Open selected snapshot"} placement="top" enterDelay="medium">
                     <Button
                         color="primary"
                         disabled={!selectedSnapshotId || selectedSnapshot?.snapshotDeleted}
@@ -470,11 +469,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         <FileOpen fontSize="inherit" /> Open
                     </Button>
                 </Tooltip>
-                <Tooltip
-                    title={isSnapshotDeleted ? "Selected snapshot has been deleted" : "Delete selected snapshot"}
-                    placement="top"
-                    enterDelay="medium"
-                >
+                <Tooltip title={"Delete selected snapshot"} placement="top" enterDelay="medium">
                     <Button
                         color="danger"
                         disabled={!selectedSnapshotId || deletePending || selectedSnapshot?.snapshotDeleted}
@@ -504,7 +499,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 onSortingChange={setTableSortState}
                 selectable
                 controlledCollation
-                onVisibleRowRangeChange={onTableScrollIndexChange}
+                onVisibleRowRangeChange={handleTableScrollIndexChange}
                 onSelectedRowsChange={(selection) => setSelectedSnapshotId(selection[0])}
             />
         </>

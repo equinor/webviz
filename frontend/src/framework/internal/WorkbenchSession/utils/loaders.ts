@@ -36,19 +36,33 @@ export async function loadSnapshotFromBackend(
     return deserializeSnapshotFromBackend(snapshotData);
 }
 
-export async function loadWorkbenchSessionFromLocalStorage(
-    sessionId: string | null,
-): Promise<WorkbenchSessionDataContainer | null> {
+export function loadWorkbenchSessionFromLocalStorage(sessionId: string | null): WorkbenchSessionDataContainer | null {
     const key = localStorageKeyForSessionId(sessionId);
     return deserializeFromLocalStorage(key);
 }
 
-export async function loadAllWorkbenchSessionsFromLocalStorage(): Promise<WorkbenchSessionDataContainer[]> {
-    const keys = Object.keys(localStorage).filter(
+export function getAllWorkbenchSessionLocalStorageKeys(): string[] {
+    return Object.keys(localStorage).filter(
         (key) =>
             key.startsWith(WORKBENCH_SESSION_LOCAL_STORAGE_KEY_PREFIX) ||
             key === WORKBENCH_SESSION_LOCAL_STORAGE_KEY_TEMP,
     );
-    const sessions = await Promise.all(keys.map((key) => deserializeFromLocalStorage(key)));
-    return sessions.filter((session: unknown): session is WorkbenchSessionDataContainer => session !== null);
+}
+
+export function loadAllWorkbenchSessionsFromLocalStorage(): WorkbenchSessionDataContainer[] {
+    const keys = getAllWorkbenchSessionLocalStorageKeys();
+    const sessions: WorkbenchSessionDataContainer[] = [];
+
+    for (const key of keys) {
+        try {
+            const session = deserializeFromLocalStorage(key);
+            if (session) {
+                sessions.push(session);
+            }
+        } catch {
+            // Ignore deserialization errors
+        }
+    }
+
+    return sessions;
 }

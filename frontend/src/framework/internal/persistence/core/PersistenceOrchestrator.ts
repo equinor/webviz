@@ -7,7 +7,6 @@ import { WindowActivityObserver, WindowActivityObserverTopic, WindowActivityStat
 import type { PrivateWorkbenchSession } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import { PrivateWorkbenchSessionTopic } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import { AUTO_SAVE_DEBOUNCE_MS, BACKEND_POLLING_INTERVAL_MS, MAX_CONTENT_SIZE_BYTES } from "../constants";
-import type { PersistenceNotifier } from "../ui/PersistenceNotifier";
 
 import { BackendSyncManager } from "./BackendSyncManager";
 import { LocalBackupManager } from "./LocalBackupManager";
@@ -21,9 +20,36 @@ export type PersistenceOrchestratorTopicPayloads = {
     [PersistenceOrchestratorTopic.PERSISTENCE_INFO]: WorkbenchSessionPersistenceInfo;
 };
 
+export enum PersistFailureReason {
+    SAVE_IN_PROGRESS = "SAVE_IN_PROGRESS", // A save is already in progress
+    NO_CHANGES = "NO_CHANGES", // There are no changes to persist
+    CONTENT_TOO_LARGE = "CONTENT_TOO_LARGE", // The session content exceeds the maximum allowed size
+    ERROR = "ERROR", // An error occurred
+}
+
+export type PersistResult =
+    | {
+          success: true;
+          sessionId: string;
+      }
+    | {
+          success: false;
+          reason: PersistFailureReason;
+          message?: string;
+      };
+
+export type CreateSnapshotResult =
+    | {
+          success: true;
+          snapshotId: string;
+      }
+    | {
+          success: false;
+          message?: string;
+      };
+
 export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrchestratorTopicPayloads> {
     private readonly _tracker: SessionStateTracker;
-    private readonly _notifier: PersistenceNotifier;
     private readonly _backendSync: BackendSyncManager;
     private readonly _localBackup: LocalBackupManager;
 
@@ -38,9 +64,8 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
     private _destroyed: boolean = false;
     private _isInitializing: boolean = false;
 
-    constructor(workbench: Workbench, session: PrivateWorkbenchSession, notifier: PersistenceNotifier) {
+    constructor(workbench: Workbench, session: PrivateWorkbenchSession) {
         this._session = session;
-        this._notifier = notifier;
 
         this._tracker = new SessionStateTracker(session);
         this._backendSync = new BackendSyncManager(workbench);
@@ -75,7 +100,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         // Subscribe to changes BEFORE initializing to catch any changes during hash calculation
         this.subscribeToSessionChanges();
 
-        await this._tracker.initialize(this._session.getIsLoadedFromLocalStorage());
+        await this._tracker.initialize();
         this.notifyPersistenceInfoChanged();
 
         // For new unpersisted sessions, do an initial save to localStorage
@@ -108,27 +133,28 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         this._destroyed = true;
     }
 
-    async persistNow(): Promise<void> {
+    async persistNow(): Promise<PersistResult> {
         if (this._destroyed) {
-            this._notifier.info("Persistence service has been stopped.");
-            return;
+            throw new Error("Persistence service has been stopped.");
         }
 
         if (this._saveInProgress) {
-            this._notifier.info("Save already in progress. Please wait...");
-            return;
+            return {
+                success: false,
+                reason: PersistFailureReason.SAVE_IN_PROGRESS,
+            };
         }
 
         this._saveInProgress = true;
-        const toastId = this._notifier.loading("Persisting session...");
 
         try {
             await this._tracker.refresh();
 
             if (!this._tracker.hasChanges()) {
-                this._notifier.dismiss(toastId);
-                this._notifier.info("No changes to persist.");
-                return;
+                return {
+                    success: false,
+                    reason: PersistFailureReason.NO_CHANGES,
+                };
             }
 
             const contentToSave = objectToJsonString(this._session.serializeContentState());
@@ -136,11 +162,11 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
             const size = new Blob([contentToSave]).size;
 
             if (size > MAX_CONTENT_SIZE_BYTES) {
-                this._notifier.dismiss(toastId);
-                this._notifier.error(
-                    `Session too large: ${(size / 1_048_576).toFixed(2)} MB (max ${(MAX_CONTENT_SIZE_BYTES / 1_048_576).toFixed(1)} MB).`,
-                );
-                return;
+                return {
+                    success: false,
+                    reason: PersistFailureReason.CONTENT_TOO_LARGE,
+                    message: `Session too large: ${(size / 1_048_576).toFixed(2)} MB (max ${(MAX_CONTENT_SIZE_BYTES / 1_048_576).toFixed(1)} MB).`,
+                };
             }
 
             const newId = await this._backendSync.persist(this._session, contentToSave);
@@ -156,12 +182,16 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
             this._tracker.markPersisted();
             this.notifyPersistenceInfoChanged();
 
-            this._notifier.dismiss(toastId);
-            this._notifier.success("Session saved successfully.");
+            return {
+                success: true,
+                sessionId: this._session.getId()!,
+            };
         } catch (err) {
             console.error("Failed to persist session:", err);
-            this._notifier.dismiss(toastId);
-            this._notifier.error("Failed to persist session. Please try again later.");
+            return {
+                success: false,
+                reason: PersistFailureReason.ERROR,
+            };
         } finally {
             if (!this._destroyed) {
                 this._saveInProgress = false;
@@ -169,13 +199,11 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         }
     }
 
-    async createSnapshot(title: string, description: string): Promise<string | null> {
+    async createSnapshot(title: string, description: string): Promise<CreateSnapshotResult> {
         if (this._destroyed) {
-            this._notifier.info("Persistence service has been stopped.");
-            return null;
+            throw new Error("Persistence service has been stopped.");
         }
 
-        const toastId = this._notifier.loading("Creating snapshot...");
         try {
             await this._tracker.refresh();
 
@@ -185,14 +213,16 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
                 content: objectToJsonString(this._session.serializeContentState()),
             });
 
-            this._notifier.dismiss(toastId);
-            this._notifier.success("Snapshot created successfully.");
-            return snapshotId;
+            return {
+                success: true,
+                snapshotId,
+            };
         } catch (err) {
             console.error("Failed to create snapshot:", err);
-            this._notifier.dismiss(toastId);
-            this._notifier.error("Snapshot creation failed.");
-            return null;
+            return {
+                success: false,
+                message: err instanceof Error ? err.message : "Unknown error occurred",
+            };
         }
     }
 

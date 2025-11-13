@@ -2,7 +2,7 @@ import React from "react";
 
 import { DateRangePicker } from "@equinor/eds-core-react";
 import type { Options } from "@hey-api/client-axios";
-import { Add, Close, Delete, Edit, FileOpen, Search } from "@mui/icons-material";
+import { Add, Close, Delete, Edit, FileOpen, Refresh, Search } from "@mui/icons-material";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { InfiniteData } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
@@ -321,6 +321,10 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         props.workbench.getSessionManager().startNewSession();
     }
 
+    function handleRefreshClick() {
+        sessionsQuery.refetch();
+    }
+
     return (
         <>
             <div className="mb-4 flex gap-4">
@@ -375,6 +379,12 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         size="medium"
                     >
                         {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Refresh list" placement="top" enterDelay="medium">
+                    <Button color="primary" onClick={handleRefreshClick} size="medium">
+                        {sessionsQuery.isFetching ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />}{" "}
+                        Refresh
                     </Button>
                 </Tooltip>
             </div>

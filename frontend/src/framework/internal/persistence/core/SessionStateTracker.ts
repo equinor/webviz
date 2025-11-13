@@ -51,7 +51,7 @@ export class SessionStateTracker {
         this._session = session;
     }
 
-    async initialize(isLoadedFromLocalStorage: boolean): Promise<void> {
+    async initialize(): Promise<void> {
         const stateString = makeWorkbenchSessionStateString(this._session);
 
         this._state.currentStateString = stateString;
@@ -68,6 +68,7 @@ export class SessionStateTracker {
             // This prevents false positives from deserialization artifacts
             this._state.currentHash = backendHash;
             this._state.lastPersistedHash = backendHash;
+
             // Store the current metadata as last persisted since we just loaded from backend
             this._state.lastPersistedMetadata = {
                 title: this._session.getMetadata().title,
