@@ -3,6 +3,7 @@ import React from "react";
 import type { Layer } from "@deck.gl/core";
 import type { BoundingBox2D } from "@webviz/subsurface-viewer";
 
+import { type HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -11,6 +12,7 @@ import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/
 import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
 import { RealizationGridProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
 import { makeDrilledWellborePicksLayer2D } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellborePicksLayer2D";
+import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makeDrilledWellTrajectoriesLayer2D } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 import { makeObservedSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeObservedSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
@@ -42,16 +44,23 @@ import {
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
+import { HoverVisualizationWrapper } from "./HoverVisualizationWrapper";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "./SubsurfaceViewerWrapper";
-import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 
 export type LayersWrapperProps = {
     layerManager: DataProviderManager;
+    hoverService: HoverService;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
 };
+
+function bboxToBound2d(box: bbox.BBox | null): BoundingBox2D | undefined {
+    if (!box) return undefined;
+
+    return [box.min.x, box.min.y, box.max.x, box.max.y];
+}
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
@@ -113,6 +122,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: makeDrilledWellTrajectoriesLayer2D,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
     },
 );
 
@@ -123,23 +133,23 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const assemblerProduct = useVisualizationAssemblerProduct(props.layerManager, VISUALIZATION_ASSEMBLER);
 
-    const globalAnnotations = assemblerProduct.annotations.filter((el) => "colorScale" in el);
-
     const viewports: ViewportTypeExtended[] = [];
     const deckGlLayers: Layer<any>[] = [];
-    const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
     const globalLayerIds: string[] = ["placeholder"];
 
     for (const item of assemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
             const colorScales = item.annotations.filter((el) => "colorScale" in el);
-            const layerIds: string[] = [];
+            const layerIds: string[] = ["placeholder"];
 
             for (const child of item.children) {
                 if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
                     const layer = child.visualization;
                     layerIds.push(layer.id);
-                    deckGlLayers.push(layer);
+                    if (!globalLayerIds.includes(layer.id)) {
+                        deckGlLayers.push(layer);
+                        globalLayerIds.push(layer.id);
+                    }
                 }
             }
 
@@ -151,9 +161,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 layerIds,
                 colorScales,
             });
-        } else if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-            deckGlLayers.push(item.visualization);
-            globalLayerIds.push(item.visualization.id);
         }
     }
 
@@ -163,8 +170,8 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         viewports: viewports.map((viewport) => ({
             ...viewport,
             // Apply global layers/annotations
-            layerIds: [...globalLayerIds, ...viewport.layerIds!],
-            colorScales: [...globalColorScales, ...viewport.colorScales!],
+            layerIds: [...viewport.layerIds!],
+            colorScales: [...viewport.colorScales!],
         })),
     };
 
@@ -193,23 +200,25 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     }
 
     const numLoadingLayers = assemblerProduct.numLoadingDataProviders;
+
     statusWriter.setLoading(assemblerProduct.numLoadingDataProviders > 0);
 
     for (const message of assemblerProduct.aggregatedErrorMessages) {
         statusWriter.addError(message);
     }
 
-    let bounds: BoundingBox2D | undefined = undefined;
-    if (prevBoundingBox) {
-        bounds = [prevBoundingBox.min.x, prevBoundingBox.min.y, prevBoundingBox.max.x, prevBoundingBox.max.y];
-    }
-
     deckGlLayers.push(new PlaceholderLayer({ id: "placeholder" }));
     deckGlLayers.reverse();
-
     return (
         <PendingWrapper className="w-full h-full flex flex-col" isPending={numLoadingLayers > 0}>
-            <SubsurfaceViewerWrapper views={views} layers={deckGlLayers} bounds={bounds} />
+            <HoverVisualizationWrapper
+                assemblerProduct={assemblerProduct}
+                instanceId={props.viewContext.getInstanceIdString()}
+                hoverService={props.hoverService}
+                views={views}
+                layers={deckGlLayers}
+                bounds={bboxToBound2d(prevBoundingBox)}
+            />
         </PendingWrapper>
     );
 }

@@ -23,10 +23,10 @@ import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dat
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import { ContextBoundary } from "@modules/_shared/DataProviderFramework/framework/ContextBoundary/ContextBoundary";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
-import { SettingsGroup } from "@modules/_shared/DataProviderFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
@@ -69,8 +69,8 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                 }
                 return;
             }
-            case "settings-group":
-                groupDelegate.prependChild(new SettingsGroup("Settings group", props.dataProviderManager));
+            case "context-boundary":
+                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));
                 return;
             case "color-scale":
                 groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
@@ -143,7 +143,7 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
     }
 
     function checkIfItemMoveIsAllowed(_: Item, destinationItem: ItemGroup): boolean {
-        if (destinationItem instanceof SettingsGroup || destinationItem instanceof Group) {
+        if (destinationItem instanceof ContextBoundary || destinationItem instanceof Group) {
             return true;
         }
 
@@ -161,7 +161,7 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
         }
 
         if (
-            group instanceof SettingsGroup ||
+            group instanceof ContextBoundary ||
             (group instanceof Group && group.getGroupType() === GroupType.INTERSECTION_VIEW)
         ) {
             return ACTIONS;
@@ -238,9 +238,9 @@ const ACTIONS: ActionGroup[] = [
         label: "Groups",
         children: [
             {
-                identifier: "settings-group",
+                identifier: "context-boundary",
                 icon: <SettingsApplications fontSize="small" />,
-                label: "Settings group",
+                label: "Context Boundary",
             },
         ],
     },
