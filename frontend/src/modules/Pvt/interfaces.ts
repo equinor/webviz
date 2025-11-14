@@ -2,9 +2,9 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { selectedColorByAtom, selectedDependentVariablesAtom, selectedPhaseAtom } from "./settings/atoms/baseAtoms";
-import { selectedEnsembleIdentsAtom, selectedPvtNumsAtom } from "./settings/atoms/derivedAtoms";
-import { pvtDataQueriesAtom } from "./settings/atoms/queryAtoms";
-import type { ColorBy, CombinedPvtDataResult, PhaseType, PressureDependentVariable } from "./typesAndEnums";
+import { pvtDataAccessorWithStatusAtom } from "./settings/atoms/derivedAtoms";
+import { selectedEnsembleIdentsAtom, selectedPvtNumsAtom } from "./settings/atoms/persistableFixableAtoms";
+import type { ColorBy, PhaseType, PressureDependentVariable, PvtDataAccessorWithStatus } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     selectedPhase: PhaseType;
@@ -12,7 +12,7 @@ type SettingsToViewInterface = {
     selectedDependentVariables: PressureDependentVariable[];
     selectedEnsembleIdents: RegularEnsembleIdent[];
     selectedPvtNums: number[];
-    pvtDataQueries: CombinedPvtDataResult;
+    pvtDataAccessorWithStatus: PvtDataAccessorWithStatus;
 };
 
 export type Interfaces = {
@@ -30,12 +30,12 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return get(selectedDependentVariablesAtom);
     },
     selectedEnsembleIdents: (get) => {
-        return get(selectedEnsembleIdentsAtom);
+        return get(selectedEnsembleIdentsAtom).value;
     },
     selectedPvtNums: (get) => {
-        return get(selectedPvtNumsAtom);
+        return get(selectedPvtNumsAtom).value;
     },
-    pvtDataQueries: (get) => {
-        return get(pvtDataQueriesAtom);
+    pvtDataAccessorWithStatus: (get) => {
+        return get(pvtDataAccessorWithStatusAtom);
     },
 };
