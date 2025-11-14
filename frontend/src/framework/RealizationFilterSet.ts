@@ -1,6 +1,7 @@
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import type { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilter } from "./RealizationFilter";
+import type { SerializedRealizationFilterSetState } from "./RealizationFilterSet.schema";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
 export class RealizationFilterSet {
@@ -36,7 +37,31 @@ export class RealizationFilterSet {
             const ensembleIdentString = ensemble.getIdent().toString();
             const isEnsembleInMap = this._ensembleIdentStringRealizationFilterMap.has(ensembleIdentString);
             if (!isEnsembleInMap) {
-                this._ensembleIdentStringRealizationFilterMap.set(ensembleIdentString, new RealizationFilter(ensemble));
+                const filter = new RealizationFilter(ensemble);
+                this._ensembleIdentStringRealizationFilterMap.set(ensembleIdentString, filter);
+            }
+        }
+    }
+
+    serializeState(): SerializedRealizationFilterSetState {
+        const serialized: SerializedRealizationFilterSetState = [];
+        for (const [ensembleIdentString, realizationFilter] of this._ensembleIdentStringRealizationFilterMap) {
+            serialized.push({
+                ensembleIdentString,
+                realizationFilter: realizationFilter.serializeState(),
+            });
+        }
+        return serialized;
+    }
+
+    deserializeState(input: SerializedRealizationFilterSetState): void {
+        for (const filter of this._ensembleIdentStringRealizationFilterMap.values()) {
+            const serializedFilter = input.find(
+                (item) => item.ensembleIdentString === filter.getAssignedEnsembleIdent().toString(),
+            )?.realizationFilter;
+
+            if (serializedFilter) {
+                filter.deserializeState(serializedFilter);
             }
         }
     }

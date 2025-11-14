@@ -20,6 +20,7 @@ type TableBodyProps<T extends Record<string, any>> = {
     onRowClick?: (id: string, entry: LoadedDataWithKey<T>) => void;
     onRowHover?: (id: string | null, entry: LoadedDataWithKey<T> | null) => void;
     onVisibleRowRangeChange?: (startIndex: number, endIndex: number) => void;
+    noDataMessage?: React.ReactNode;
 };
 export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T>): React.ReactNode {
     const { onSelectedRowsChange, onRowClick, onRowHover } = props;
@@ -110,10 +111,10 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
                 // This one doesn't need to follow the custom height prop
                 <tr style={{ height: ROW_HEIGHT_PX * 2.5 }}>
                     <td
-                        className="text-lg italic text-slate-600 text-center align-middle"
+                        className="italic text-slate-600 text-center align-middle"
                         colSpan={props.dataCellDefinitions.length}
                     >
-                        No data found
+                        {props.noDataMessage ?? "No data found."}
                     </td>
                 </tr>
             )}

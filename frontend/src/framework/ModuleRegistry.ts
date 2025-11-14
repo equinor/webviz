@@ -4,7 +4,11 @@ import type {
     ModuleCategory,
     ModuleDevState,
     ModuleInterfaceTypes,
+    ModuleComponentsStateBase,
+    NoModuleStateSchema,
     OnInstanceUnloadFunc,
+    ModuleStateSchema,
+    ModuleComponentSerializationFunctions,
 } from "./Module";
 import { Module } from "./Module";
 import type { ModuleDataTagId } from "./ModuleDataTags";
@@ -13,7 +17,7 @@ import type { SyncSettingKey } from "./SyncSettings";
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataChannnel";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 
-export type RegisterModuleOptions = {
+export type RegisterModuleOptions<TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema> = {
     moduleName: string;
     category: ModuleCategory;
     devState: ModuleDevState;
@@ -25,7 +29,25 @@ export type RegisterModuleOptions = {
     preview?: DrawPreviewFunc;
     description?: string;
     onInstanceUnload?: OnInstanceUnloadFunc;
-};
+} & (TSerializedStateDef extends NoModuleStateSchema
+    ? { serializedStateSchema?: never }
+    : {
+          serializedStateSchema: ModuleStateSchema<TSerializedStateDef>;
+      });
+
+export type InitModuleOptions<
+    TInterfaceTypes extends ModuleInterfaceTypes,
+    TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema,
+> = {
+    settingsToViewInterfaceInitialization?: TInterfaceTypes["settingsToView"] extends undefined
+        ? undefined
+        : InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
+    viewToSettingsInterfaceInitialization?: TInterfaceTypes["viewToSettings"] extends undefined
+        ? undefined
+        : InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
+    viewToSettingsInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
+    settingsToViewInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
+} & ModuleComponentSerializationFunctions<TSerializedStateDef>;
 
 export class ModuleNotFoundError extends Error {
     readonly moduleName: string;
@@ -38,15 +60,20 @@ export class ModuleNotFoundError extends Error {
 }
 
 export class ModuleRegistry {
-    private static _registeredModules: Record<string, Module<any>> = {};
-    private static _moduleNotFoundPlaceholders: Record<string, Module<any>> = {};
+    private static _registeredModules: Record<string, Module<any, any>> = {};
+    private static _moduleNotFoundPlaceholders: Record<string, Module<any, any>> = {};
 
     private constructor() {}
 
-    static registerModule<TInterfaceTypes extends ModuleInterfaceTypes>(
-        options: RegisterModuleOptions,
-    ): Module<TInterfaceTypes> {
-        const module = new Module<TInterfaceTypes>({
+    static registerModule<
+        TInterfaceTypes extends ModuleInterfaceTypes,
+        TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema,
+    >(options: RegisterModuleOptions<TSerializedStateDef>): Module<TInterfaceTypes, TSerializedStateDef> {
+        if (this._registeredModules[options.moduleName]) {
+            throw new Error(`Module with name '${options.moduleName}' is already registered.`);
+        }
+
+        const module = new Module<TInterfaceTypes, TSerializedStateDef>({
             name: options.moduleName,
             defaultTitle: options.defaultTitle,
             category: options.category,
@@ -58,24 +85,21 @@ export class ModuleRegistry {
             drawPreviewFunc: options.preview,
             onInstanceUnloadFunc: options.onInstanceUnload,
             description: options.description,
+            serializedStateSchema: options.serializedStateSchema as unknown as
+                | ModuleStateSchema<TSerializedStateDef>
+                | undefined,
         });
         this._registeredModules[options.moduleName] = module;
         return module;
     }
 
-    static initModule<TInterfaceTypes extends ModuleInterfaceTypes>(
+    static initModule<
+        TInterfaceTypes extends ModuleInterfaceTypes,
+        TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema,
+    >(
         moduleName: string,
-        options: {
-            settingsToViewInterfaceInitialization?: TInterfaceTypes["settingsToView"] extends undefined
-                ? undefined
-                : InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
-            viewToSettingsInterfaceInitialization?: TInterfaceTypes["viewToSettings"] extends undefined
-                ? undefined
-                : InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
-            viewToSettingsInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
-            settingsToViewInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
-        },
-    ): Module<TInterfaceTypes> {
+        options: InitModuleOptions<TInterfaceTypes, TSerializedStateDef>,
+    ): Module<TInterfaceTypes, TSerializedStateDef> {
         const module = this._registeredModules[moduleName];
         if (module) {
             if (options.settingsToViewInterfaceInitialization) {
@@ -90,25 +114,31 @@ export class ModuleRegistry {
             if (options.settingsToViewInterfaceEffects) {
                 module.setSettingsToViewInterfaceEffects(options.settingsToViewInterfaceEffects);
             }
-            return module as Module<TInterfaceTypes>;
+            if (options.serializeStateFunctions && options.deserializeStateFunctions) {
+                module.setSerializationFunctions({
+                    serializeStateFunctions: options.serializeStateFunctions,
+                    deserializeStateFunctions: options.deserializeStateFunctions,
+                });
+            }
+            return module as Module<TInterfaceTypes, TSerializedStateDef>;
         }
         throw new ModuleNotFoundError(moduleName);
     }
 
-    static getModule(moduleName: string): Module<any> {
+    static getModule(moduleName: string): Module<any, any> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            return module as Module<any>;
+            return module as Module<any, any>;
         }
         const placeholder = this._moduleNotFoundPlaceholders[moduleName];
         if (placeholder) {
-            return placeholder as Module<any>;
+            return placeholder as Module<any, any>;
         }
         this._moduleNotFoundPlaceholders[moduleName] = new ModuleNotFoundPlaceholder(moduleName);
-        return this._moduleNotFoundPlaceholders[moduleName] as Module<any>;
+        return this._moduleNotFoundPlaceholders[moduleName] as Module<any, any>;
     }
 
-    static getRegisteredModules(): Record<string, Module<any>> {
+    static getRegisteredModules(): Record<string, Module<any, any>> {
         return this._registeredModules;
     }
 }
