@@ -2,7 +2,7 @@ import { atom } from "jotai";
 
 import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
 
-import { userSelectedActiveTimestampUtcMsAtom, vectorSpecificationsAtom } from "./baseAtoms";
+import { vectorSpecificationsAtom } from "./baseAtoms";
 import {
     regularEnsembleHistoricalVectorDataQueriesAtom,
     vectorDataQueriesAtom,
@@ -72,22 +72,4 @@ export const loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom = at
 
     // Historical data queries is combined result, where data array only contains fetched data
     return regularEnsembleHistoricalVectorDataQueries.vectorsWithHistoricalData;
-});
-
-export const activeTimestampUtcMsAtom = atom<number | null>((get) => {
-    const loadedVectorSpecificationsAndRealizationData = get(loadedVectorSpecificationsAndRealizationDataAtom);
-    const isQueryFetching = get(queryIsFetchingAtom);
-    const userSelectedActiveTimestampUtcMs = get(userSelectedActiveTimestampUtcMsAtom);
-
-    if (
-        !isQueryFetching &&
-        userSelectedActiveTimestampUtcMs === null &&
-        loadedVectorSpecificationsAndRealizationData.length > 0
-    ) {
-        const lastTimeStamp =
-            loadedVectorSpecificationsAndRealizationData.at(0)?.data.at(0)?.timestampsUtcMs.at(-1) ?? null;
-        return lastTimeStamp;
-    }
-
-    return userSelectedActiveTimestampUtcMs;
 });
