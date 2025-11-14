@@ -71,16 +71,32 @@ class FilterFactory:
 
         # Navigate the model structure
         current_model = self.document_model
+        result = True
 
         for part in parts:
             if not hasattr(current_model, "__annotations__"):
-                self._field_cache[field_path] = False
-                return False
+                result = False
+                break
 
             field_type = current_model.__annotations__.get(part)
+
+            # If not in annotations, check if it's a computed field
             if field_type is None:
-                self._field_cache[field_path] = False
-                return False
+                # Access model_computed_fields - in Pydantic v2 it can be either a dict or a property
+                model_computed_fields_attr = getattr(current_model, "model_computed_fields", None)
+                if isinstance(model_computed_fields_attr, dict):
+                    # If it's already a dict, use it directly
+                    computed_fields = model_computed_fields_attr
+                else:
+                    computed_fields = {}
+
+                if part in computed_fields:
+                    # If this is the last part and it's a computed field, we found it
+                    # Computed fields can't have nested fields
+                    result = part == parts[-1]
+                else:
+                    result = False
+                break
 
             # Handle Optional types
             origin = get_origin(field_type)
@@ -91,18 +107,18 @@ class FilterFactory:
 
             # If this is the last part, we found the field
             if part == parts[-1]:
-                self._field_cache[field_path] = True
-                return True
+                result = True
+                break
 
             # Continue navigation if this is a nested model
             if not isinstance(field_type, type) or not issubclass(field_type, BaseModel):
-                self._field_cache[field_path] = False
-                return False
+                result = False
+                break
 
             current_model = field_type
 
-        self._field_cache[field_path] = True
-        return True
+        self._field_cache[field_path] = result
+        return result
 
     def _get_field_type(self, field_path: str) -> Optional[Type]:
         """
@@ -116,14 +132,33 @@ class FilterFactory:
         """
         parts = field_path.split(".")
         current_model = self.document_model
+        result = None
 
         for part in parts:
             if not hasattr(current_model, "__annotations__"):
-                return None
+                break
 
             field_type = current_model.__annotations__.get(part)
+
+            # If not in annotations, check if it's a computed field
             if field_type is None:
-                return None
+                # Access model_computed_fields - in Pydantic v2 it can be either a dict or a property
+                model_computed_fields_attr = getattr(current_model, "model_computed_fields", None)
+                if isinstance(model_computed_fields_attr, dict):
+                    # If it's already a dict, use it directly
+                    computed_fields = model_computed_fields_attr
+                else:
+                    computed_fields = {}
+
+                if part in computed_fields:
+                    # If this is the last part and it's a computed field, return its type
+                    # Computed fields can't have nested fields
+                    if part == parts[-1]:
+                        computed_field_info = computed_fields[part]
+                        result = (
+                            computed_field_info.return_type if hasattr(computed_field_info, "return_type") else None
+                        )
+                break
 
             # Handle Optional types
             origin = get_origin(field_type)
@@ -134,15 +169,16 @@ class FilterFactory:
 
             # If this is the last part, return the type
             if part == parts[-1]:
-                return field_type
+                result = field_type
+                break
 
             # Continue navigation
             if not isinstance(field_type, type) or not issubclass(field_type, BaseModel):
-                return None
+                break
 
             current_model = field_type
 
-        return None
+        return result
 
     def create(
         self,
