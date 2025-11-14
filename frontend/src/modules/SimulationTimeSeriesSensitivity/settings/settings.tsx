@@ -7,6 +7,7 @@ import { Frequency_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -18,6 +19,7 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
+import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { FrequencyEnumToStringMapping } from "../typesAndEnums";
@@ -29,35 +31,30 @@ import {
     showStatisticsAtom,
     syncedRegularEnsembleIdentsAtom,
     syncedVectorNameAtom,
-    userSelectedRegularEnsembleIdentAtom,
-    userSelectedSensitivityNamesAtom,
-    userSelectedVectorNameAndTagAtom,
 } from "./atoms/baseAtoms";
+import { availableSensitivityNamesAtom, vectorSelectorDataAtom } from "./atoms/derivedAtoms";
 import {
-    availableSensitivityNamesAtom,
     selectedRegularEnsembleIdentAtom,
     selectedSensitivityNamesAtom,
-    selectedVectorTagAtom,
-    vectorSelectorDataAtom,
-} from "./atoms/derivedAtoms";
+    selectedVectorNameAndTagAtom,
+} from "./atoms/persistableFixableAtoms";
 import { vectorListQueryAtom } from "./atoms/queryAtoms";
-
-//-----------------------------------------------------------------------------------------------------------
 
 export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
+    const statusWriter = useSettingsStatusWriter(settingsContext);
+
     const setSyncedRegularEnsembleIdents = useSetAtom(syncedRegularEnsembleIdentsAtom);
     const setSyncedVectorName = useSetAtom(syncedVectorNameAtom);
-    const setUserSelectedRegularEnsembleIdent = useSetAtom(userSelectedRegularEnsembleIdentAtom);
-    const setUserSelectedVectorNameAndTag = useSetAtom(userSelectedVectorNameAndTagAtom);
-    const setUserSelectedSensitivityNamesAtom = useSetAtom(userSelectedSensitivityNamesAtom);
-    const selectedRegularEnsembleIdent = useAtomValue(selectedRegularEnsembleIdentAtom);
+
+    const [selectedRegularEnsembleIdent, setSelectedRegularEnsembleIdent] = useAtom(selectedRegularEnsembleIdentAtom);
+    const [selectedSensitivityNames, setSelectedSensitivityNamesAtom] = useAtom(selectedSensitivityNamesAtom);
+    const [selectedVectorNameAndTag, setSelectedVectorNameAndTag] = useAtom(selectedVectorNameAndTagAtom);
+
     const vectorsListQuery = useAtomValue(vectorListQueryAtom);
     const availableSensitivityNames = useAtomValue(availableSensitivityNamesAtom);
-    const selectedSensitivityNames = useAtomValue(selectedSensitivityNamesAtom);
     const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
-    const selectedVectorTag = useAtomValue(selectedVectorTagAtom);
 
     const [resampleFrequency, setResamplingFrequency] = useAtom(resamplingFrequencyAtom);
     const [showStatistics, setShowStatistics] = useAtom(showStatisticsAtom);
@@ -70,6 +67,8 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
     const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<RegularEnsembleIdent[] | null>(null);
     const [prevSyncedSummaryVector, setPrevSyncedSummaryVector] = React.useState<{ vectorName: string } | null>(null);
+
+    const errorMessage = usePropagateQueryErrorToStatusWriter(vectorsListQuery, statusWriter);
 
     if (!isEqual(syncedValueEnsembles, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedValueEnsembles);
@@ -85,7 +84,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     }
 
     function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
-        setUserSelectedRegularEnsembleIdent(newEnsembleIdent);
+        setSelectedRegularEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
         }
@@ -101,14 +100,14 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
         const userSelectedVectorName = selection.selectedNodes[0] ?? null;
         const userSelectedVectorTag = selection.selectedTags[0]?.text ?? null;
-        setUserSelectedVectorNameAndTag({ name: userSelectedVectorName, tag: userSelectedVectorTag });
+        setSelectedVectorNameAndTag({ name: userSelectedVectorName, tag: userSelectedVectorTag });
     }
     function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
         setShowHistorical(event.target.checked);
     }
 
     function handleSensitivityNamesSelectionChange(newSensitivities: string[]) {
-        setUserSelectedSensitivityNamesAtom(newSensitivities);
+        setSelectedSensitivityNamesAtom(newSensitivities);
     }
 
     return (
@@ -116,7 +115,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             <CollapsibleGroup expanded={true} title="Ensemble">
                 <EnsembleDropdown
                     ensembles={ensembleSet.getRegularEnsembleArray()}
-                    value={selectedRegularEnsembleIdent}
+                    value={selectedRegularEnsembleIdent.value}
                     ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
                     onChange={handleEnsembleSelectionChange}
                 />
@@ -124,13 +123,17 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             <QueryStateWrapper
                 queryResult={vectorsListQuery}
                 loadingComponent={<CircularProgress />}
-                errorComponent={"Could not load the vectors for selected ensembles"}
+                errorComponent={
+                    errorMessage ?? "Could not load the vectors for selected ensembles. See details in log."
+                }
             >
                 <CollapsibleGroup expanded={true} title="Time Series">
                     <Label text="Vector">
                         <VectorSelector
                             data={vectorSelectorData}
-                            selectedTags={selectedVectorTag ? [selectedVectorTag] : []}
+                            selectedTags={
+                                selectedVectorNameAndTag.value.tag ? [selectedVectorNameAndTag.value.tag] : []
+                            }
                             placeholder="Add new vector..."
                             maxNumSelectedNodes={1}
                             numSecondsUntilSuggestionsAreShown={0.5}
@@ -174,7 +177,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                         value: name,
                         label: name,
                     }))}
-                    value={selectedSensitivityNames ?? []}
+                    value={selectedSensitivityNames.value ?? []}
                     onChange={handleSensitivityNamesSelectionChange}
                     filter={true}
                     size={10}
