@@ -139,7 +139,12 @@ class CosmosContainer(Generic[T]):
         query_iterable = self._container.query_items(query=query, parameters=parameters, max_item_count=page_size)
 
         pager = query_by_page(query_iterable, page_token)
-        page = await anext(pager)
+
+        try:
+            page = await anext(pager)
+        except StopAsyncIteration:
+            # No items found - return empty list and no continuation token
+            return ([], None)
 
         token = pager.continuation_token
 
@@ -232,5 +237,7 @@ class CosmosContainer(Generic[T]):
     async def close_async(self) -> None:
         """Close the container."""
         if self._database:
-            logger.debug("[CosmosContainer] Closing container '%s/%s'", self._database_name, self._container_name)
+            logger.debug(
+                "[CosmosContainer] Closing container '%s' in database '%s'", self._container_name, self._database_name
+            )
             await self._database.close_async()

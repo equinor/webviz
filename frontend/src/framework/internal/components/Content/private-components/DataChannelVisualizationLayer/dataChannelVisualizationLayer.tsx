@@ -27,7 +27,7 @@ type DataChannelPath = {
 
 export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationProps> = (props) => {
     const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
     const ref = React.useRef<SVGSVGElement>(null);

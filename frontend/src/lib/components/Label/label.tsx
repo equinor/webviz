@@ -23,7 +23,7 @@ export const Label: React.FC<LabelProps> = (props) => {
     return (
         <div
             className={resolveClassNames(props.wrapperClassName ?? "", {
-                "flex flex-col": props.position === "above" && props.position === undefined,
+                "flex flex-col gap-1": props.position === "above" || props.position === undefined,
                 "flex flex-row items-center gap-4": props.position === "left",
                 "flex items-center flex-row-reverse gap-4": props.position === "right",
             })}
@@ -34,7 +34,6 @@ export const Label: React.FC<LabelProps> = (props) => {
                     "flex",
                     "items-center",
                     "text-sm",
-                    "mb-1",
                     "text-gray-500",
                     "leading-tight",
                     "gap-1",
