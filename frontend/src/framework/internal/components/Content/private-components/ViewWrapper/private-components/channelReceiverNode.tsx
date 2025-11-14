@@ -30,7 +30,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
     const { onChannelConnect, onChannelConnectionDisconnect } = props;
 
     const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
 

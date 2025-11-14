@@ -1,5 +1,3 @@
-import type { JTDSchemaType } from "ajv/dist/core";
-
 import {
     defaultColorPalettes,
     defaultContinuousDivergingColorPalettes,
@@ -10,12 +8,13 @@ import {
     ColorScaleDiscreteSteps,
     WorkbenchSettingsTopic,
     type WorkbenchSettings,
-    type WorkbenchSettingsTopicPayloads,
 } from "@framework/WorkbenchSettings";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType, type ColorScaleOptions } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+
+import type { SerializedWorkbenchSettingsState } from "./PrivateWorkbenchSettings.schema";
 
 export type UseDiscreteColorScaleOptions = {
     gradientType: ColorScaleGradientType;
@@ -25,28 +24,15 @@ export type UseContinuousColorScaleOptions = {
     gradientType: ColorScaleGradientType;
 };
 
-export type SerializedWorkbenchSettings = {
-    selectedColorPalettes: Record<ColorPaletteType, string>;
-    discreteColorScaleSteps: Record<ColorScaleDiscreteSteps, number>;
-};
+export enum PrivateWorkbenchSettingsTopic {
+    SERIALIZED_STATE = "SerializedState",
+}
 
-export const WORKBENCH_SETTINGS_JTD_SCHEMA: JTDSchemaType<SerializedWorkbenchSettings> = {
-    properties: {
-        selectedColorPalettes: {
-            properties: {
-                [ColorPaletteType.Categorical]: { type: "string" },
-                [ColorPaletteType.ContinuousDiverging]: { type: "string" },
-                [ColorPaletteType.ContinuousSequential]: { type: "string" },
-            },
-        },
-        discreteColorScaleSteps: {
-            properties: {
-                [ColorScaleDiscreteSteps.Sequential]: { type: "int32" },
-                [ColorScaleDiscreteSteps.Diverging]: { type: "int32" },
-            },
-        },
-    },
-} as const;
+export type WorkbenchSettingsTopicPayloads = {
+    [WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS]: Record<ColorPaletteType, string>;
+    [WorkbenchSettingsTopic.SELECTED_STEPS]: Record<ColorScaleDiscreteSteps, number>;
+    [PrivateWorkbenchSettingsTopic.SERIALIZED_STATE]: void;
+};
 
 export class PrivateWorkbenchSettings implements WorkbenchSettings {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchSettingsTopicPayloads>();
@@ -76,14 +62,14 @@ export class PrivateWorkbenchSettings implements WorkbenchSettings {
         this.loadStepsFromLocalStorage();
     }
 
-    serializeState(): SerializedWorkbenchSettings {
+    serializeState(): SerializedWorkbenchSettingsState {
         return {
             selectedColorPalettes: this._selectedColorPalettes,
             discreteColorScaleSteps: this._steps,
         };
     }
 
-    deserializeState(serializedState: SerializedWorkbenchSettings): void {
+    deserializeState(serializedState: SerializedWorkbenchSettingsState): void {
         this._selectedColorPalettes = serializedState.selectedColorPalettes;
         this._steps = serializedState.discreteColorScaleSteps;
     }
@@ -92,19 +78,28 @@ export class PrivateWorkbenchSettings implements WorkbenchSettings {
         return this._publishSubscribeDelegate;
     }
 
-    makeSnapshotGetter<T extends WorkbenchSettingsTopic>(topic: T): () => WorkbenchSettingsTopicPayloads[T] {
-        const snapshotGetter = (): WorkbenchSettingsTopicPayloads[T] => {
+    makeSnapshotGetter<T extends keyof WorkbenchSettingsTopicPayloads>(
+        topic: T,
+    ): () => WorkbenchSettingsTopicPayloads[T] {
+        const snapshotGetter = (): any => {
             if (topic === WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS) {
                 return this._selectedColorPalettes as WorkbenchSettingsTopicPayloads[T];
             }
             if (topic === WorkbenchSettingsTopic.SELECTED_STEPS) {
                 return this._steps as WorkbenchSettingsTopicPayloads[T];
             }
+            if (topic === PrivateWorkbenchSettingsTopic.SERIALIZED_STATE) {
+                return void 0;
+            }
 
-            throw new Error(`No snapshot getter for topic ${topic}`);
+            throw new Error(`No snapshot getter for topic ${String(topic)}`);
         };
 
         return snapshotGetter;
+    }
+
+    private handleStateChange(): void {
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSettingsTopic.SERIALIZED_STATE);
     }
 
     private loadSelectedColorPaletteIdsFromLocalStorage(): void {
@@ -139,7 +134,7 @@ export class PrivateWorkbenchSettings implements WorkbenchSettings {
 
         this._steps = steps;
 
-        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSettingsTopic.SELECTED_STEPS);
     }
 
     private storeSelectedColorPaletteIdsToLocalStorage(): void {
@@ -173,6 +168,7 @@ export class PrivateWorkbenchSettings implements WorkbenchSettings {
         };
         this.storeSelectedColorPaletteIdsToLocalStorage();
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS);
+        this.handleStateChange();
     }
 
     getSteps(): Record<ColorScaleDiscreteSteps, number> {
@@ -183,6 +179,7 @@ export class PrivateWorkbenchSettings implements WorkbenchSettings {
         this._steps = steps;
         this.storeStepsToLocalStorage();
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSettingsTopic.SELECTED_STEPS);
+        this.handleStateChange();
     }
 
     getStepsForType(type: ColorScaleDiscreteSteps.Diverging | ColorScaleDiscreteSteps.Sequential): number {
@@ -196,6 +193,7 @@ export class PrivateWorkbenchSettings implements WorkbenchSettings {
         };
         this.storeStepsToLocalStorage();
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSettingsTopic.SELECTED_STEPS);
+        this.handleStateChange();
     }
 
     makeColorSet(): ColorSet {
