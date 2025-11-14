@@ -13,10 +13,6 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "3DViewerNew": {
-    settings?: never,
-    view?: never,
-  },
   "DbgWorkbenchSpy": {
     settings?: never,
     view?: never,
@@ -29,23 +25,11 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "Grid3D": {
-    settings?: never,
-    view?: never,
-  },
-  "Grid3DIntersection": {
-    settings?: never,
-    view?: never,
-  },
   "InplaceVolumesPlot": {
     settings?: never,
     view?: never,
   },
   "InplaceVolumesTable": {
-    settings?: never,
-    view?: never,
-  },
-  "InplaceVolumetrics": {
     settings?: never,
     view?: never,
   },
@@ -93,21 +77,6 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "SeismicIntersection": {
-    settings?: never,
-    view?: never,
-  },
-<<<<<<< persistence/frontend-implementation
-=======
-  "SeismicMap": {
-    settings?: never,
-    view?: never,
-  },
-  "Sensitivity": {
-    settings?: never,
-    view?: never,
-  },
->>>>>>> Implement VFP module persistence
   "SensitivityPlot": {
     settings?: never,
     view?: never,
@@ -116,15 +85,7 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "SimulationTimeSeriesMatrix": {
-    settings?: never,
-    view?: never,
-  },
   "SimulationTimeSeriesSensitivity": {
-    settings?: never,
-    view?: never,
-  },
-  "StructuralUncertaintyIntersection": {
     settings?: never,
     view?: never,
   },
@@ -132,17 +93,10 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "TimeSeriesParameterDistribution": {
-    settings?: never,
-    view?: never,
-  },
-<<<<<<< persistence/frontend-implementation
-=======
   "TopographicMap": {
     settings?: never,
     view?: never,
   },
->>>>>>> Implement VFP module persistence
   "Vfp": {
     settings?: never,
     view?: never,
