@@ -17,7 +17,7 @@ const richDrilledWellTrajectoriesSettings = [
     Setting.DEPTH_FILTER,
     // Setting.TIME_OR_INTERVAL,
 ] as const;
-type RichDrilledWellTrajectoriesSettings = typeof richDrilledWellTrajectoriesSettings;
+export type RichDrilledWellTrajectoriesSettings = typeof richDrilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RichDrilledWellTrajectoriesSettings>;
 export type DrilledWellboreTrajectoriesStoredData = {
     wellboreHeaders: EnhancedWellboreHeader_api[];

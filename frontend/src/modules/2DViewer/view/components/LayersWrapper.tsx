@@ -33,6 +33,7 @@ import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataPro
 import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePolygonsLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
 import { makeRealizationSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationSurfaceLayer";
+import { makeRichWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRichWellTrajectoriesLayer";
 import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import {
@@ -119,7 +120,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.RICH_DRILLED_WELL_TRAJECTORIES,
     DrilledWellTrajectoriesProvider,
     {
-        transformToVisualization: makeDrilledWellTrajectoriesLayer2D,
+        transformToVisualization: makeRichWellTrajectoriesLayer,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
     },
 );
