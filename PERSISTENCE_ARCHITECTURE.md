@@ -55,8 +55,8 @@ The Webviz persistence feature enables users to save, restore, and share their w
 │  │  - Delegates to SessionManager, NavigationManager, Services   │  │
 │  │  - Manages initialization and lifecycle                       │  │
 │  │  - Provides clean API surface via getters                     │  │
-│  └────────┬──────────────────────┬────────────────────────────────┘  │
-│           │                      │                                   │
+│  └────────┬──────────────────────┬───────────────────────────────┘  │
+│           │                      │                                  │
 │  ┌────────▼──────────┐  ┌────────▼──────────────────────────────┐   │
 │  │ NavigationManager │  │  WorkbenchSessionManager              │   │
 │  │                   │  │  - Session lifecycle & CRUD           │   │
@@ -85,7 +85,7 @@ The Webviz persistence feature enables users to save, restore, and share their w
                                  │
                                  │ HTTPS/REST API
                                  │
-┌─────────────────────────────────▼───────────────────────────────────┐
+┌────────────────────────────────▼────────────────────────────────────┐
 │                          Backend Layer                              │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
@@ -402,27 +402,6 @@ UI components subscribe to PERSISTENCE_INFO
 - Manages initialization and lifecycle
 - Coordinates between SessionManager, NavigationManager, and Services
 
-**Key Methods:**
-- `initialize()` - Initialize workbench and check for session recovery
-- `beforeDestroy()` - Cleanup navigation and session managers
-- `getSessionManager()` - Access session operations
-- `getNavigationManager()` - Access navigation state
-- `getGuiMessageBroker()` - Access GUI state
-- `getWorkbenchServices()` - Access workbench services
-- `getQueryClient()` - Access React Query client
-
-**Delegation Pattern:**
-```typescript
-// Workbench delegates navigation callbacks
-private handleBeforeUnload(): boolean {
-    return this._sessionManager.hasDirtyChanges();
-}
-
-private async handleNavigation(): Promise<boolean> {
-    return await this._sessionManager.handleNavigation();
-}
-```
-
 **Architecture Philosophy:**
 - Workbench is a thin coordination layer
 - All business logic delegated to specialized managers
@@ -438,36 +417,8 @@ private async handleNavigation(): Promise<boolean> {
 - Instance-based pattern (NOT singleton) for proper isolation
 - Manages event listener lifecycle
 
-**Key Features:**
-- **beforeunload event**: Warn user about unsaved changes before leaving page
-- **popstate event**: Handle browser back/forward navigation
-- **Callback-based**: Direct boolean/Promise responses for decision-making
-- **Instance pattern**: Each Workbench gets its own NavigationManager
-
 **Why Instance-Based (Not Singleton):**
-- Multiple Workbench instances need isolation (important for testing)
-- No cross-contamination between workbench instances
-- Proper cleanup per instance
-
-**Key Methods:**
-- `setOnBeforeUnload(callback: () => boolean)` - Register beforeunload handler
-- `setOnNavigate(callback: () => Promise<boolean>)` - Register navigation handler
-- `getCurrentUrl()` - Get current URL
-- `beforeDestroy()` - Cleanup event listeners
-
-**Usage Pattern:**
-```typescript
-// In Workbench constructor
-this._navigationManager = new NavigationManager();
-this._navigationManager.setOnBeforeUnload(() => this.handleBeforeUnload());
-this._navigationManager.setOnNavigate(async () => await this.handleNavigation());
-
-// In Workbench beforeDestroy
-beforeDestroy(): void {
-    this._navigationManager.beforeDestroy();
-    // ...
-}
-```
+- No pub/sub possible due to requirement for direct response
 
 #### WorkbenchSessionManager
 [frontend/src/framework/internal/WorkbenchSession/WorkbenchSessionManager.ts](frontend/src/framework/internal/WorkbenchSession/WorkbenchSessionManager.ts)
@@ -479,46 +430,6 @@ beforeDestroy(): void {
 - Session/snapshot CRUD operations (update metadata, delete)
 - Navigation handling with dirty state protection
 - Recovery from localStorage
-- Toast management (prevents stacking)
-- Result-based error handling (no exceptions thrown)
-
-**Key Methods:**
-
-*Session Lifecycle:*
-- `startNewSession()` - Create empty session
-- `openSession(id)` - Load from backend
-- `openSnapshot(id)` - Load snapshot
-- `closeSession()` - Close active session
-- `maybeOpenFromUrl()` - Check URL and open session/snapshot if present
-
-*Persistence Operations:*
-- `saveActiveSession(forceSave?)` - Save to backend
-- `saveAsNewSession(title, description)` - Create copy and save
-- `createSnapshot(title, description)` - Create immutable snapshot
-
-*CRUD Operations:*
-- `updateSession(id, update)` - Update session metadata (title/description)
-- `deleteSession(id)` - Delete session with confirmation
-- `deleteSnapshot(id)` - Delete snapshot with confirmation
-
-*Navigation & Recovery:*
-- `handleNavigation()` - Browser navigation with dirty check
-- `maybeCloseCurrentSession()` - Handle closing with unsaved changes
-- `openFromLocalStorage(id)` - Recovery from crash
-- `discardLocalStorageSession(id)` - Remove from localStorage
-- `updateFromLocalStorage(id)` - Update from localStorage backup
-
-*State Queries:*
-- `getActiveSession()` - Get active session (throws if none)
-- `getActiveSessionOrNull()` - Get active session (returns null if none)
-- `hasActiveSession()` - Check if session is active
-- `hasDirtyChanges()` - Check for unsaved changes
-
-**Toast Management:**
-- `createLoadingToast(operation, message)` - Create tracked toast
-- `dismissToast(operation)` - Dismiss specific toast
-- `dismissAllToasts()` - Cleanup on destroy
-- Prevents toast stacking for same operation
 
 #### PersistenceOrchestrator
 [frontend/src/framework/internal/persistence/core/PersistenceOrchestrator.ts](frontend/src/framework/internal/persistence/core/PersistenceOrchestrator.ts)
@@ -528,33 +439,6 @@ beforeDestroy(): void {
 - Smart backend polling (10s interval, window-aware)
 - Change detection using SessionStateTracker
 - Publishes PersistenceInfo updates
-- Content size validation (1.5MB frontend check)
-- Result Type Pattern (returns success/failure objects)
-
-**Key Methods:**
-- `start()` - Initialize tracking and polling
-- `stop()` - Cleanup subscriptions and timers
-- `persistNow()` - Returns `PersistResult`
-- `createSnapshot(title, description)` - Returns `CreateSnapshotResult`
-- `hasChanges()` - Check if unsaved changes exist
-
-**Result Types:**
-```typescript
-type PersistResult =
-  | { success: true; sessionId: string }
-  | { success: false; reason: PersistFailureReason; message?: string };
-
-type CreateSnapshotResult =
-  | { success: true; snapshotId: string }
-  | { success: false; message?: string };
-
-enum PersistFailureReason {
-  SAVE_IN_PROGRESS,
-  NO_CHANGES,
-  CONTENT_TOO_LARGE,
-  ERROR,
-}
-```
 
 #### SessionStateTracker
 [frontend/src/framework/internal/persistence/core/SessionStateTracker.ts](frontend/src/framework/internal/persistence/core/SessionStateTracker.ts)
@@ -565,13 +449,6 @@ enum PersistFailureReason {
 - Separate metadata and content tracking
 - Backend hash as source of truth for persisted sessions
 
-**Key Methods:**
-- `initialize()` - Set up initial state with backend hash if available
-- `refresh()` - Check for changes, returns boolean
-- `hasChanges()` - Compare current vs persisted state
-- `markPersisted()` - Update after successful save
-- `updateBackendTimestamp(timestamp)` - Track external changes
-
 #### BackendSyncManager
 [frontend/src/framework/internal/persistence/core/BackendSyncManager.ts](frontend/src/framework/internal/persistence/core/BackendSyncManager.ts)
 
@@ -580,23 +457,12 @@ enum PersistFailureReason {
 - Cache invalidation after CRUD operations
 - Polling for session metadata updates
 
-**Key Methods:**
-- `createSession(session, content)` - POST new session
-- `updateSession(session, content)` - PUT existing session
-- `persist(session, content)` - Auto-detect create vs update
-- `createSnapshot(opts)` - POST new snapshot
-- `fetchUpdatedAt(sessionId)` - Poll for changes
-
 #### LocalBackupManager
 [frontend/src/framework/internal/persistence/core/LocalBackupManager.ts](frontend/src/framework/internal/persistence/core/LocalBackupManager.ts)
 
 **Responsibilities:**
 - Auto-save to localStorage
 - Recovery data management
-
-**Key Methods:**
-- `persist()` - Save session to localStorage
-- `remove()` - Clear localStorage backup
 
 #### PrivateWorkbenchSession
 [frontend/src/framework/internal/WorkbenchSession/PrivateWorkbenchSession.ts](frontend/src/framework/internal/WorkbenchSession/PrivateWorkbenchSession.ts)
@@ -608,13 +474,6 @@ enum PersistFailureReason {
 - Metadata management (title, description, timestamps)
 - Read-only snapshot mode enforcement
 - Session copying for "Save As" functionality
-
-**Key Methods:**
-- `serializeContentState()` - Convert state to JSON-serializable object
-- `deserializeContentState()` - Restore state from serialized data
-- `fromDataContainer()` - Factory method for creating sessions
-- `createCopy()` - Static method for deep copying sessions
-- `updateMetadata(metadata, notify?)` - Update with optional notification control
 
 ### Dialogs
 
@@ -629,19 +488,6 @@ Creates immutable snapshots with title and description. Displays shareable URL o
 Prompts for title/description when:
 - Saving a session for the first time (not yet persisted)
 - Saving an existing session as a new session (Save As)
-
-**Key Logic:**
-```typescript
-const isPersisted = activeSession.getIsPersisted();
-
-if (isPersisted) {
-  // Save as new session
-  workbench.getSessionManager().saveAsNewSession(title, description);
-} else {
-  // Regular first-time save
-  workbench.getSessionManager().saveActiveSession(true);
-}
-```
 
 #### ActiveSessionRecoveryDialog
 [frontend/src/framework/internal/components/ActiveSessionRecoveryDialog/activeSessionRecoveryDialog.tsx](frontend/src/framework/internal/components/ActiveSessionRecoveryDialog/activeSessionRecoveryDialog.tsx)
@@ -1123,9 +969,11 @@ src/modules/YourModule/
 ├── settings/
 │   ├── atoms/
 │   │   └── persistableAtoms.ts  # Define persistableFixableAtom instances
-│   └── persistence.ts         # Settings serialization
+│   └── persistence.ts           # Settings serialization
 └── view/
-    └── persistence.ts         # View serialization
+│   ├── atoms/
+│   │   └── persistableAtoms.ts  # Define persistableFixableAtom instances
+|   └── persistence.ts           # View serialization
 ```
 
 ### Best Practices

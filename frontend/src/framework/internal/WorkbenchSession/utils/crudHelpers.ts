@@ -137,12 +137,13 @@ export function removeSessionQueryData(queryClient: QueryClient, deletedSessionI
 }
 
 export function removeSnapshotQueryData(queryClient: QueryClient) {
-    // Invalidate all snapshot-related queries to force immediate refetch and re-render
-    // This is more reliable than manually filtering data for ensuring UI updates
-    queryClient.invalidateQueries(makeTanstackQueryFilters([getSnapshotsMetadataQueryKey()]));
-    queryClient.invalidateQueries(makeTanstackQueryFilters([getSnapshotsMetadataInfiniteQueryKey()]));
-    queryClient.invalidateQueries(makeTanstackQueryFilters([getSnapshotAccessLogsQueryKey()]));
-    queryClient.invalidateQueries(makeTanstackQueryFilters([getSnapshotAccessLogsInfiniteQueryKey()]));
+    // Refetch (not just invalidate) all snapshot-related queries to force immediate refetch and re-render
+    // This ensures the UI updates instantly when a snapshot is deleted
+    // Using refetchQueries instead of invalidateQueries ensures that active queries are refetched immediately
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSnapshotsMetadataQueryKey()]));
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSnapshotsMetadataInfiniteQueryKey()]));
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSnapshotAccessLogsQueryKey()]));
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSnapshotAccessLogsInfiniteQueryKey()]));
 }
 
 export function replaceSessionQueryData(queryClient: QueryClient, newSession: Session_api) {

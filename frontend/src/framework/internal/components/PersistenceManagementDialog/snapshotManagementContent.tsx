@@ -357,7 +357,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         setTableFilter((prev) => {
             return {
                 ...prev,
-                snapshotDeleted: checked ? true : undefined,
+                snapshotDeleted: checked ? false : undefined,
             };
         });
     }
@@ -456,7 +456,10 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     <Switch checked={tableFilter.ownerId === userId} onChange={handleShowMySnapshotsOnlyChange} />
                 </Label>
                 <Label text="Hide deleted snapshots" wrapperClassName="flex items-center" position="right">
-                    <Switch checked={tableFilter.snapshotDeleted} onChange={handleHideDeletedSnapshotsChange} />
+                    <Switch
+                        checked={tableFilter.snapshotDeleted === false}
+                        onChange={handleHideDeletedSnapshotsChange}
+                    />
                 </Label>
                 <span className="grow" />
                 <Tooltip title={"Open selected snapshot"} placement="top" enterDelay="medium">
