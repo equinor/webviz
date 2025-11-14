@@ -4,9 +4,11 @@ import { FilterAlt, Fullscreen, FullscreenExit, GridView, History, WebAsset } fr
 
 import { GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type RightNavBarProps = {
@@ -14,6 +16,7 @@ type RightNavBarProps = {
 };
 
 export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
+    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
@@ -21,6 +24,11 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
+    );
+    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
+    const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.TemplatesDialogOpen,
     );
     const numberOfUnsavedRealizationFilters = useGuiValue(guiMessageBroker, GuiState.NumberOfUnsavedRealizationFilters);
     const numberOfEffectiveRealizationFilters = useGuiValue(
@@ -54,7 +62,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     }
 
     function handleTemplatesListClick() {
-        togglePanelContent(RightDrawerContent.TemplatesList);
+        setIsTemplatesDialogOpen(true);
     }
 
     function handleRealizationFilterClick() {
@@ -75,12 +83,16 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     tooltip="Show modules list"
                     icon={<WebAsset fontSize="small" className="size-5" />}
                     onClick={handleModulesListClick}
+                    disabled={isSnapshot}
+                    disabledTooltip="Modules cannot be changed in snapshot mode"
                 />
                 <NavBarButton
-                    active={drawerContent === RightDrawerContent.TemplatesList}
-                    tooltip="Show templates list"
+                    active={isTemplatesDialogOpen}
+                    tooltip="Show templates dialog"
                     icon={<GridView fontSize="small" className="size-5" />}
                     onClick={handleTemplatesListClick}
+                    disabled={isSnapshot}
+                    disabledTooltip="Templates cannot be applied in snapshot mode"
                 />
                 <NavBarDivider />
                 <NavBarButton
@@ -94,12 +106,13 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                         numberOfEffectiveRealizationFilters,
                     )}
                     onClick={handleRealizationFilterClick}
+                    disabled={isSnapshot}
+                    disabledTooltip="Realization filters cannot be changed in snapshot mode"
                 />
-
                 <NavBarButton
                     icon={<History fontSize="small" className="size-5 mr-2" />}
                     active={drawerContent === RightDrawerContent.ModuleInstanceLog}
-                    tooltip="Open module history"
+                    tooltip="Open module log"
                     onClick={handleModuleInstanceLogClick}
                 />
                 <NavBarDivider />

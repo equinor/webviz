@@ -22,40 +22,39 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
 import type { ColorSet } from "@lib/utils/ColorSet";
+import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
 
 import type { Interfaces } from "../interfaces";
 import {
-    RealizationSelection,
-    RealizationSelectionEnumToStringMapping,
-    TimeAggregationSelection,
-    TimeAggregationSelectionEnumToStringMapping,
+    RealizationMode,
+    RealizationModeEnumToStringMapping,
+    TimeAggregationMode,
+    TimeAggregationModeEnumToStringMapping,
 } from "../typesAndEnums";
 
 import {
     selectedStratigraphyColorSetAtom,
     syncedEnsembleIdentsAtom,
-    userExcludeWellTextAtom,
-    userSearchWellTextAtom,
-    userSelectedCompletionDateIndexAtom,
-    userSelectedCompletionDateIndexRangeAtom,
-    userSelectedEnsembleIdentAtom,
-    userSelectedHideZeroCompletionsAtom,
-    userSelectedRealizationNumberAtom,
-    userSelectedRealizationSelectionAtom,
-    userSelectedSortWellsByAtom,
-    userSelectedSortWellsDirectionAtom,
-    userSelectedTimeAggregationAtom,
+    wellExclusionTextAtom,
+    wellSearchTextAtom,
+    isZeroCompletionsHiddenAtom,
+    realizationModeAtom,
+    sortWellsByAtom,
+    wellSortDirectionAtom,
+    timeAggregationModeAtom,
 } from "./atoms/baseAtoms";
 import {
     isQueryErrorAtom,
     isQueryFetchingAtom,
+    sortedCompletionDatesAtom,
+    availableRealizationsAtom,
+} from "./atoms/derivedAtoms";
+import {
     selectedCompletionDateIndexAtom,
     selectedCompletionDateIndexRangeAtom,
     selectedEnsembleIdentAtom,
-    selectedRealizationNumberAtom,
-    sortedCompletionDatesAtom,
-    validRealizationNumbersAtom,
-} from "./atoms/derivedAtoms";
+    selectedRealizationAtom,
+} from "./atoms/persistableFixableAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
 export const Settings = ({
@@ -70,32 +69,26 @@ export const Settings = ({
 
     const setSyncedEnsembleIdents = useSetAtom(syncedEnsembleIdentsAtom);
     const setSelectedStratigraphyColorSet = useSetAtom(selectedStratigraphyColorSetAtom);
-    const setUserExcludeWellText = useSetAtom(userExcludeWellTextAtom);
-    const setUserSearchWellText = useSetAtom(userSearchWellTextAtom);
-    const setUserSelectedCompletionDateIndex = useSetAtom(userSelectedCompletionDateIndexAtom);
-    const setUserSelectedCompletionDateIndexRange = useSetAtom(userSelectedCompletionDateIndexRangeAtom);
-    const setUserSelectedEnsembleIdent = useSetAtom(userSelectedEnsembleIdentAtom);
-    const setUserSelectedRealizationNumber = useSetAtom(userSelectedRealizationNumberAtom);
-    const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
-    const selectedRealizationNumber = useAtomValue(selectedRealizationNumberAtom);
-    const validRealizationNumbers = useAtomValue(validRealizationNumbersAtom);
+
+    const availableRealizations = useAtomValue(availableRealizationsAtom);
     const sortedCompletionDates = useAtomValue(sortedCompletionDatesAtom);
-    const selectedCompletionDateIndex = useAtomValue(selectedCompletionDateIndexAtom);
-    const selectedCompletionDateIndexRange = useAtomValue(selectedCompletionDateIndexRangeAtom);
     const isQueryFetching = useAtomValue(isQueryFetchingAtom);
     const isQueryError = useAtomValue(isQueryErrorAtom);
 
-    const [userSelectedTimeAggregation, setUserSelectedTimeAggregation] = useAtom(userSelectedTimeAggregationAtom);
-    const [userSelectedHideZeroCompletions, setUserSelectedHideZeroCompletions] = useAtom(
-        userSelectedHideZeroCompletionsAtom,
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
+    const [realizationMode, setRealizationMode] = useAtom(realizationModeAtom);
+    const [selectedRealization, setSelectedRealization] = useAtom(selectedRealizationAtom);
+
+    const [timeAggregationMode, setTimeAggregationMode] = useAtom(timeAggregationModeAtom);
+    const [selectedCompletionDateIndex, setSelectedCompletionDateIndex] = useAtom(selectedCompletionDateIndexAtom);
+    const [selectedCompletionDateIndexRange, setSelectedCompletionDateIndexRange] = useAtom(
+        selectedCompletionDateIndexRangeAtom,
     );
-    const [userSelectedRealizationSelection, setUserSelectedRealizationSelection] = useAtom(
-        userSelectedRealizationSelectionAtom,
-    );
-    const [userSelectedSortWellsBy, setUserSelectedSortWellsBy] = useAtom(userSelectedSortWellsByAtom);
-    const [userSelectedSortWellsDirection, setUserSelectedSortWellsDirection] = useAtom(
-        userSelectedSortWellsDirectionAtom,
-    );
+    const [isZeroCompletionsHidden, setIsZeroCompletionsHidden] = useAtom(isZeroCompletionsHiddenAtom);
+    const [wellExclusionText, setWellExclusionText] = useAtom(wellExclusionTextAtom);
+    const [wellSearchText, setWellSearchText] = useAtom(wellSearchTextAtom);
+    const [sortWellsBy, setSortWellsBy] = useAtom(sortWellsByAtom);
+    const [wellSortDirection, setWellSortDirection] = useAtom(wellSortDirectionAtom);
 
     const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<RegularEnsembleIdent[] | null>(null);
     const [prevStratigraphyColorSet, setPrevStratigraphyColorSet] = React.useState<ColorSet | null>(null);
@@ -120,22 +113,22 @@ export const Settings = ({
     useMakeSettingsStatusWriterMessages(statusWriter);
 
     function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
-        setUserSelectedEnsembleIdent(newEnsembleIdent);
+        setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
         }
     }
 
     function handleSelectedRealizationNumberChange(realizationNumber: string) {
-        setUserSelectedRealizationNumber(parseInt(realizationNumber));
+        setSelectedRealization(parseInt(realizationNumber));
     }
 
     function handleSelectedCompletionDateIndexSelectionChange(newIndex: number | number[]) {
         if (typeof newIndex === "number") {
-            setUserSelectedCompletionDateIndex(newIndex);
+            setSelectedCompletionDateIndex(newIndex);
             return;
         } else if (Array.isArray(newIndex) && newIndex.length >= 2) {
-            setUserSelectedCompletionDateIndexRange([newIndex[0], newIndex[1]]);
+            setSelectedCompletionDateIndexRange([newIndex[0], newIndex[1]]);
             return;
         }
         throw new Error(
@@ -143,27 +136,27 @@ export const Settings = ({
         );
     }
 
-    function handleExcludeWellChange(e: React.ChangeEvent<HTMLInputElement>) {
+    function handleWellExclusionChange(e: React.ChangeEvent<HTMLInputElement>) {
         const value = e.target.value;
-        setUserExcludeWellText(value);
+        setWellExclusionText(value);
     }
 
-    function handleSearchWellChange(e: React.ChangeEvent<HTMLInputElement>) {
+    function handleWellSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
         const value = e.target.value;
-        setUserSearchWellText(value);
+        setWellSearchText(value);
     }
 
     function handleHideZeroCompletionsChange(e: React.ChangeEvent<HTMLInputElement>) {
         const checked = e.target.checked;
-        setUserSelectedHideZeroCompletions(checked);
+        setIsZeroCompletionsHidden(checked);
     }
 
     function handleSetAscendingSortDirection() {
-        setUserSelectedSortWellsDirection(SortDirection.ASCENDING);
+        setWellSortDirection(SortDirection.ASCENDING);
     }
 
     function handleSetDescendingSortDirection() {
-        setUserSelectedSortWellsDirection(SortDirection.DESCENDING);
+        setWellSortDirection(SortDirection.DESCENDING);
     }
 
     const createValueLabelFormat = React.useCallback(
@@ -188,40 +181,44 @@ export const Settings = ({
         return "Failed to load well completions data";
     }
 
-    const isSingleRealizationSelection = userSelectedRealizationSelection === RealizationSelection.SINGLE;
+    const isSingleRealizationMode = realizationMode === RealizationMode.SINGLE;
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Ensemble">
-                <EnsembleDropdown
-                    ensembles={ensembleSet.getRegularEnsembleArray()}
-                    value={selectedEnsembleIdent}
-                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
-                    onChange={handleEnsembleSelectionChange}
-                />
+                <PersistableAtomWarningWrapper atom={selectedEnsembleIdentAtom}>
+                    <EnsembleDropdown
+                        ensembles={ensembleSet.getRegularEnsembleArray()}
+                        value={selectedEnsembleIdent.value}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                        onChange={handleEnsembleSelectionChange}
+                    />
+                </PersistableAtomWarningWrapper>
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Realization selection">
+            <CollapsibleGroup expanded={true} title="Realization mode">
                 <div className="flex flex-col gap-2 overflow-y-auto">
                     <RadioGroup
-                        options={Object.values(RealizationSelection).map((elm: RealizationSelection) => {
-                            return { value: elm, label: RealizationSelectionEnumToStringMapping[elm] };
+                        options={Object.values(RealizationMode).map((elm: RealizationMode) => {
+                            return { value: elm, label: RealizationModeEnumToStringMapping[elm] };
                         })}
-                        value={userSelectedRealizationSelection}
-                        onChange={(_, value) => setUserSelectedRealizationSelection(value)}
+                        value={realizationMode}
+                        onChange={(_, value) => setRealizationMode(value)}
                     />
-                    <div className={isSingleRealizationSelection ? "" : "pointer-events-none"}>
-                        <Label text={isSingleRealizationSelection ? "Realization" : "Realization (disabled)"}>
-                            <Dropdown
-                                disabled={!isSingleRealizationSelection}
-                                options={validRealizationNumbers.map((realization: number) => {
-                                    return {
-                                        label: realization.toString(),
-                                        value: realization.toString(),
-                                    };
-                                })}
-                                value={selectedRealizationNumber?.toString() ?? undefined}
-                                onChange={handleSelectedRealizationNumberChange}
-                            />
+                    <div className={isSingleRealizationMode ? "" : "pointer-events-none"}>
+                        <Label text={isSingleRealizationMode ? "Realization" : "Realization (disabled)"}>
+                            <PersistableAtomWarningWrapper atom={selectedRealizationAtom}>
+                                <Dropdown
+                                    disabled={!isSingleRealizationMode}
+                                    options={availableRealizations.map((realization: number) => {
+                                        return {
+                                            label: realization.toString(),
+                                            value: realization.toString(),
+                                        };
+                                    })}
+                                    value={selectedRealization.value?.toString() ?? undefined}
+                                    onChange={handleSelectedRealizationNumberChange}
+                                />
+                            </PersistableAtomWarningWrapper>
                         </Label>
                     </div>
                 </div>
@@ -231,71 +228,70 @@ export const Settings = ({
                     <div className="flex flex-col gap-2 overflow-y-auto">
                         <Label text="Time Aggregation">
                             <RadioGroup
-                                options={Object.values(TimeAggregationSelection).map(
-                                    (elm: TimeAggregationSelection) => {
-                                        return { value: elm, label: TimeAggregationSelectionEnumToStringMapping[elm] };
-                                    },
-                                )}
+                                options={Object.values(TimeAggregationMode).map((elm: TimeAggregationMode) => {
+                                    return { value: elm, label: TimeAggregationModeEnumToStringMapping[elm] };
+                                })}
                                 direction={"horizontal"}
-                                value={userSelectedTimeAggregation}
-                                onChange={(_, value) => setUserSelectedTimeAggregation(value)}
+                                value={timeAggregationMode}
+                                onChange={(_, value) => setTimeAggregationMode(value)}
                             />
                         </Label>
-                        {userSelectedTimeAggregation === TimeAggregationSelection.NONE && (
-                            <Label
-                                text={
-                                    selectedCompletionDateIndex === null || !sortedCompletionDates
-                                        ? "Time Step"
-                                        : `Time Step: (${sortedCompletionDates[selectedCompletionDateIndex]})`
-                                }
-                            >
-                                <DiscreteSlider
-                                    valueLabelDisplay="auto"
-                                    value={selectedCompletionDateIndex ?? undefined}
-                                    values={
-                                        sortedCompletionDates?.map((_, index) => {
-                                            return index;
-                                        }) ?? []
+                        {timeAggregationMode === TimeAggregationMode.NONE && (
+                            <PersistableAtomWarningWrapper atom={selectedCompletionDateIndexAtom}>
+                                <Label
+                                    text={
+                                        selectedCompletionDateIndex.value === null || !sortedCompletionDates
+                                            ? "Time Step"
+                                            : `Time Step: (${sortedCompletionDates[selectedCompletionDateIndex.value]})`
                                     }
-                                    valueLabelFormat={createValueLabelFormat}
-                                    onChange={(_, value) => handleSelectedCompletionDateIndexSelectionChange(value)}
-                                />
-                            </Label>
+                                >
+                                    <DiscreteSlider
+                                        valueLabelDisplay="auto"
+                                        value={selectedCompletionDateIndex.value ?? undefined}
+                                        values={
+                                            sortedCompletionDates?.map((_, index) => {
+                                                return index;
+                                            }) ?? []
+                                        }
+                                        valueLabelFormat={createValueLabelFormat}
+                                        onChange={(_, value) => handleSelectedCompletionDateIndexSelectionChange(value)}
+                                    />
+                                </Label>
+                            </PersistableAtomWarningWrapper>
                         )}
-                        {userSelectedTimeAggregation !== TimeAggregationSelection.NONE && (
-                            <Label
-                                text={
-                                    selectedCompletionDateIndexRange === null || !sortedCompletionDates
-                                        ? "Time Steps"
-                                        : `Time Steps: (${
-                                              sortedCompletionDates[selectedCompletionDateIndexRange[0]]
-                                          }, ${sortedCompletionDates[selectedCompletionDateIndexRange[1]]})`
-                                }
-                            >
-                                <DiscreteSlider
-                                    valueLabelDisplay="auto"
-                                    value={selectedCompletionDateIndexRange ?? undefined}
-                                    values={
-                                        sortedCompletionDates?.map((_, index) => {
-                                            return index;
-                                        }) ?? []
+                        {timeAggregationMode !== TimeAggregationMode.NONE && (
+                            <PersistableAtomWarningWrapper atom={selectedCompletionDateIndexRangeAtom}>
+                                <Label
+                                    text={
+                                        selectedCompletionDateIndexRange.value === null || !sortedCompletionDates
+                                            ? "Time Steps"
+                                            : `Time Steps: (${
+                                                  sortedCompletionDates[selectedCompletionDateIndexRange.value[0]]
+                                              }, ${sortedCompletionDates[selectedCompletionDateIndexRange.value[1]]})`
                                     }
-                                    valueLabelFormat={createValueLabelFormat}
-                                    onChange={(_, value) => handleSelectedCompletionDateIndexSelectionChange(value)}
-                                />
-                            </Label>
+                                >
+                                    <DiscreteSlider
+                                        valueLabelDisplay="auto"
+                                        value={selectedCompletionDateIndexRange.value ?? undefined}
+                                        values={
+                                            sortedCompletionDates?.map((_, index) => {
+                                                return index;
+                                            }) ?? []
+                                        }
+                                        valueLabelFormat={createValueLabelFormat}
+                                        onChange={(_, value) => handleSelectedCompletionDateIndexSelectionChange(value)}
+                                    />
+                                </Label>
+                            </PersistableAtomWarningWrapper>
                         )}
                         <Label text="Filter by completions">
-                            <Switch
-                                checked={userSelectedHideZeroCompletions}
-                                onChange={handleHideZeroCompletionsChange}
-                            />
+                            <Switch checked={isZeroCompletionsHidden} onChange={handleHideZeroCompletionsChange} />
                         </Label>
                         <Label text="Exclude well names">
-                            <Input onChange={handleExcludeWellChange} placeholder={"..."} />
+                            <Input value={wellExclusionText} onChange={handleWellExclusionChange} placeholder={"..."} />
                         </Label>
                         <Label text="Search well names">
-                            <Input onChange={handleSearchWellChange} placeholder={"..."} />
+                            <Input value={wellSearchText} onChange={handleWellSearchChange} placeholder={"..."} />
                         </Label>
                         <Label text="Sort wells by">
                             <div className="flex items-center gap-2">
@@ -304,8 +300,8 @@ export const Settings = ({
                                         options={Object.values(SortWellsBy).map((elm: SortWellsBy) => {
                                             return { value: elm, label: SortWellsByEnumToStringMapping[elm] };
                                         })}
-                                        value={userSelectedSortWellsBy}
-                                        onChange={setUserSelectedSortWellsBy}
+                                        value={sortWellsBy}
+                                        onChange={setSortWellsBy}
                                     />
                                 </div>
                                 <div className="flex items-center">
@@ -314,9 +310,7 @@ export const Settings = ({
                                         title="Sort ascending"
                                         startIcon={<ArrowUpwardSharp />}
                                         variant={
-                                            userSelectedSortWellsDirection === SortDirection.ASCENDING
-                                                ? "contained"
-                                                : undefined
+                                            wellSortDirection === SortDirection.ASCENDING ? "contained" : undefined
                                         }
                                         size="medium"
                                     />
@@ -325,9 +319,7 @@ export const Settings = ({
                                         title="Sort descending"
                                         startIcon={<ArrowDownwardSharp />}
                                         variant={
-                                            userSelectedSortWellsDirection === SortDirection.DESCENDING
-                                                ? "contained"
-                                                : undefined
+                                            wellSortDirection === SortDirection.DESCENDING ? "contained" : undefined
                                         }
                                         size="medium"
                                         name="test"
