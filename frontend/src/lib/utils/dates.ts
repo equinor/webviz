@@ -1,4 +1,26 @@
-export function timeAgo(msDiff: number): string {
+import { pluralize } from "./strings";
+
+const LONG_NAMES = {
+    seconds: " second",
+    minutes: " minute",
+    hours: " hour",
+    days: " day",
+    weeks: " week",
+    months: " month",
+    years: " year",
+} as const;
+
+const SHORT_NAMES = {
+    seconds: "sec",
+    minutes: "min",
+    hours: "hr",
+    days: "day",
+    weeks: "wk",
+    months: "mth",
+    years: "yr",
+} as const;
+
+export function timeAgo(msDiff: number, shorten: boolean = false): string {
     const seconds = Math.floor(msDiff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -7,14 +29,16 @@ export function timeAgo(msDiff: number): string {
     const months = Math.floor(days / 30);
     const years = Math.floor(days / 365);
 
+    const names = shorten ? SHORT_NAMES : LONG_NAMES;
+
     if (seconds < 5) return "just now";
-    if (seconds < 60) return `${seconds} seconds ago`;
-    if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
-    if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
-    if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
-    if (weeks < 5) return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
-    if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
-    return `${years} year${years === 1 ? "" : "s"} ago`;
+    if (seconds < 60) return `${pluralize(names.seconds, seconds)} ago`;
+    if (minutes < 60) return `${pluralize(names.minutes, minutes)} ago`;
+    if (hours < 24) return `${pluralize(names.hours, hours)} ago`;
+    if (days < 7) return `${pluralize(names.days, days)} ago`;
+    if (weeks < 5) return `${pluralize(names.weeks, weeks)} ago`;
+    if (months < 12) return `${pluralize(names.months, months)} ago`;
+    return `${pluralize(names.years, years)} ago`;
 }
 
 /**

@@ -1,24 +1,30 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
+import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
-import { Dashboard, type SerializedDashboard } from "@framework/internal/Dashboard";
+import { Dashboard, DashboardTopic } from "@framework/internal/Dashboard";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { UserCreatedItems, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
+import { UserCreatedItems, UserCreatedItemsEvent } from "@framework/UserCreatedItems";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import {
     loadMetadataFromBackendAndCreateEnsembleSet,
     type UserEnsembleSetting,
     type UserDeltaEnsembleSetting,
 } from "../EnsembleSetLoader";
-import { PrivateWorkbenchSettings, type SerializedWorkbenchSettings } from "../PrivateWorkbenchSettings";
+import { PrivateWorkbenchSettings, PrivateWorkbenchSettingsTopic } from "../PrivateWorkbenchSettings";
 
-import { type WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
+import type { SerializedWorkbenchSessionContentState } from "./PrivateWorkbenchSession.schema";
+import {
+    isPersisted,
+    WorkbenchSessionSource,
+    type WorkbenchSessionDataContainer,
+} from "./utils/WorkbenchSessionDataContainer";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -38,18 +44,23 @@ export type SerializedEnsembleSet = {
     deltaEnsembles: SerializedDeltaEnsemble[];
 };
 
-export type WorkbenchSessionContent = {
-    activeDashboardId: string | null;
-    dashboards: SerializedDashboard[];
-    ensembleSet: SerializedEnsembleSet;
-    settings: SerializedWorkbenchSettings;
-    userCreatedItems: SerializedUserCreatedItems;
+export type WorkbenchSessionMetadata = {
+    title: string;
+    description?: string;
+    updatedAt: number; // Timestamp of the last modification
+    createdAt: number; // Timestamp of creation
+    hash?: string; // Optional hash for content integrity
+    lastModifiedMs: number; // Last modified timestamp for internal use
 };
 
 export enum PrivateWorkbenchSessionTopic {
     IS_ENSEMBLE_SET_LOADING = "EnsembleSetLoadingState",
     ACTIVE_DASHBOARD = "ActiveDashboard",
     DASHBOARDS = "Dashboards",
+    METADATA = "Metadata",
+    IS_PERSISTED = "IsPersisted",
+    IS_SNAPSHOT = "IsSnapshot",
+    SERIALIZED_STATE = "SerializedState",
 }
 
 export type WorkbenchSessionTopicPayloads = {
@@ -58,11 +69,19 @@ export type WorkbenchSessionTopicPayloads = {
     [PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING]: boolean;
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
+    [PrivateWorkbenchSessionTopic.METADATA]: WorkbenchSessionMetadata;
+    [PrivateWorkbenchSessionTopic.IS_PERSISTED]: boolean;
+    [PrivateWorkbenchSessionTopic.IS_SNAPSHOT]: boolean;
+    [PrivateWorkbenchSessionTopic.SERIALIZED_STATE]: void;
 };
 
 export class PrivateWorkbenchSession implements WorkbenchSession {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchSessionTopicPayloads>();
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
 
+    private _id: string | null = null;
+    private _isPersisted: boolean = false;
+    protected _isSnapshot: boolean;
     private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
     private _dashboards: Dashboard[] = [];
@@ -73,21 +92,107 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         filterSet: this._realizationFilterSet,
     };
     private _userCreatedItems: UserCreatedItems;
+    private _metadata: WorkbenchSessionMetadata = {
+        title: "New Session",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        lastModifiedMs: Date.now(),
+    };
     private _isEnsembleSetLoading: boolean = false;
+    private _loadedFromLocalStorage: boolean = false;
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
 
-    private constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient) {
-        this._atomStoreMaster = atomStoreMaster;
+    private constructor(queryClient: QueryClient, isSnapshot = false) {
+        this._atomStoreMaster = new AtomStoreMaster();
         this._queryClient = queryClient;
-        this._userCreatedItems = new UserCreatedItems(atomStoreMaster);
+        this._userCreatedItems = new UserCreatedItems(this._atomStoreMaster);
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
+        this._isSnapshot = isSnapshot;
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "settings",
+            this._settings
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PrivateWorkbenchSettingsTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "userCreatedItems",
+            this._userCreatedItems.subscribe(UserCreatedItemsEvent.SERIALIZED_STATE, this.handleStateChange.bind(this)),
+        );
+    }
+
+    getIsLoadedFromLocalStorage(): boolean {
+        return this._loadedFromLocalStorage;
+    }
+
+    setLoadedFromLocalStorage(loaded: boolean): void {
+        this._loadedFromLocalStorage = loaded;
+    }
+
+    getAtomStoreMaster(): AtomStoreMaster {
+        return this._atomStoreMaster;
+    }
+
+    getId(): string | null {
+        return this._id;
+    }
+
+    resetId(): void {
+        this._id = null;
+        this.setIsPersisted(false);
+    }
+
+    setId(id: string): void {
+        if (this._id) throw new Error("Session ID already set");
+        this._id = id;
     }
 
     getWorkbenchSettings(): PrivateWorkbenchSettings {
         return this._settings;
     }
 
-    getContent(): WorkbenchSessionContent {
+    isSnapshot(): boolean {
+        return this._isSnapshot;
+    }
+
+    setIsSnapshot(isSnapshot: boolean): void {
+        this._isSnapshot = isSnapshot;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
+    }
+
+    getIsPersisted(): boolean {
+        return this._isPersisted;
+    }
+
+    setIsPersisted(val: boolean): void {
+        this._isPersisted = val;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_PERSISTED);
+    }
+
+    getMetadata(): WorkbenchSessionMetadata {
+        return this._metadata;
+    }
+
+    setMetadata(metadata: WorkbenchSessionMetadata): void {
+        this._metadata = metadata;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
+        this.handleStateChange();
+    }
+
+    updateMetadata(update: Partial<Omit<WorkbenchSessionMetadata, "createdAt">>, notify = true): void {
+        this._metadata = { ...this._metadata, ...update };
+
+        if (!notify) {
+            return;
+        }
+
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
+        this.handleStateChange();
+    }
+
+    serializeContentState(): SerializedWorkbenchSessionContentState {
         return {
             activeDashboardId: this._activeDashboardId,
             settings: this._settings.serializeState(),
@@ -110,40 +215,51 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                     }),
                 ),
             },
+            ensembleRealizationFilterSet: this._realizationFilterSet.serializeState(),
         };
     }
 
-    async loadContent(content: WorkbenchSessionContent): Promise<void> {
-        this._activeDashboardId = content.activeDashboardId;
-        this._dashboards = content.dashboards.map((s) => {
-            const d = new Dashboard(this._atomStoreMaster);
-            d.deserializeState(s);
-            return d;
-        });
+    async deserializeContentState(contentState: SerializedWorkbenchSessionContentState): Promise<void> {
+        this._isPersisted = this._id !== null;
+        this._activeDashboardId = contentState.activeDashboardId;
 
-        this._settings.deserializeState(content.settings);
-        this._userCreatedItems.deserializeState(content.userCreatedItems);
+        this.clearDashboards();
 
-        const userEnsembleSettings: UserEnsembleSetting[] = content.ensembleSet.regularEnsembles.map((e) => ({
+        for (const dashboard of contentState.dashboards) {
+            const newDashboard = new Dashboard(this._atomStoreMaster);
+            this.registerDashboard(newDashboard);
+            newDashboard.deserializeState(dashboard);
+        }
+
+        this._settings.deserializeState(contentState.settings);
+        this._userCreatedItems.deserializeState(contentState.userCreatedItems);
+
+        const userEnsembleSettings: UserEnsembleSetting[] = contentState.ensembleSet.regularEnsembles.map((e) => ({
             ensembleIdent: RegularEnsembleIdent.fromString(e.ensembleIdent),
             customName: e.name,
             color: e.color,
         }));
 
-        const userDeltaEnsembleSettings: UserDeltaEnsembleSetting[] = content.ensembleSet.deltaEnsembles.map((e) => ({
-            comparisonEnsembleIdent: RegularEnsembleIdent.fromString(e.comparisonEnsembleIdent),
-            referenceEnsembleIdent: RegularEnsembleIdent.fromString(e.referenceEnsembleIdent),
-            customName: e.name,
-            color: e.color,
-        }));
+        const userDeltaEnsembleSettings: UserDeltaEnsembleSetting[] = contentState.ensembleSet.deltaEnsembles.map(
+            (e) => ({
+                comparisonEnsembleIdent: RegularEnsembleIdent.fromString(e.comparisonEnsembleIdent),
+                referenceEnsembleIdent: RegularEnsembleIdent.fromString(e.referenceEnsembleIdent),
+                customName: e.name,
+                color: e.color,
+            }),
+        );
 
         await this.loadAndSetupEnsembleSet(userEnsembleSettings, userDeltaEnsembleSettings);
+
+        // This has to be done after loading the ensemble set
+        // in order to guarantee that all realization filters for the ensembles exist
+        this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
     }
 
     async loadAndSetupEnsembleSet(
         regularEnsembleSettings: UserEnsembleSetting[],
         deltaEnsembleSettings: UserDeltaEnsembleSetting[],
-    ): Promise<void> {
+    ): Promise<EnsembleSet> {
         this.setEnsembleSetLoading(true);
         const newSet = await loadMetadataFromBackendAndCreateEnsembleSet(
             this._queryClient,
@@ -152,6 +268,8 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         );
         await this.setEnsembleSet(newSet);
         this.setEnsembleSetLoading(false);
+
+        return newSet;
     }
 
     private setEnsembleSetLoading(isLoading: boolean) {
@@ -166,6 +284,11 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.ENSEMBLE_SET);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
+        this.handleStateChange();
+    }
+
+    private handleStateChange(): void {
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.SERIALIZED_STATE);
     }
 
     getPublishSubscribeDelegate() {
@@ -187,6 +310,14 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                     return this.getActiveDashboard();
                 case PrivateWorkbenchSessionTopic.DASHBOARDS:
                     return this._dashboards;
+                case PrivateWorkbenchSessionTopic.METADATA:
+                    return this._metadata;
+                case PrivateWorkbenchSessionTopic.IS_PERSISTED:
+                    return this._isPersisted;
+                case PrivateWorkbenchSessionTopic.IS_SNAPSHOT:
+                    return this._isSnapshot;
+                case PrivateWorkbenchSessionTopic.SERIALIZED_STATE:
+                    return void 0;
                 default:
                     throw new Error(`No snapshot getter implemented for topic ${topic}`);
             }
@@ -207,6 +338,51 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return this._dashboards;
     }
 
+    private registerDashboard(dashboard: Dashboard): void {
+        this._dashboards.push(dashboard);
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            `dashboard-${dashboard.getId()}`,
+            dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+
+        this.handleStateChange();
+    }
+
+    private unregisterDashboard(dashboard: Dashboard): void {
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
+        dashboard.beforeUnload();
+        this._dashboards = this._dashboards.filter((d) => d.getId() !== dashboard.getId());
+    }
+
+    private clearDashboards() {
+        for (const dashboard of this._dashboards) {
+            this.unregisterDashboard(dashboard);
+        }
+
+        this.handleStateChange();
+    }
+
+    setDashboards(dashboards: Dashboard[]): void {
+        this.assertIsNotSnapshot();
+        this.clearDashboards();
+        for (const dashboard of dashboards) {
+            this.registerDashboard(dashboard);
+        }
+
+        if (dashboards.length > 0) {
+            this._activeDashboardId = dashboards[0].getId();
+        } else {
+            this._activeDashboardId = null;
+        }
+
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
+    }
+
     getEnsembleSet(): EnsembleSet {
         return this._ensembleSet;
     }
@@ -220,6 +396,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     notifyAboutEnsembleRealizationFilterChange(): void {
+        console.debug("Notifying about ensemble realization filter change");
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, {
             filterSet: this._realizationFilterSet,
         });
@@ -227,11 +404,12 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             filterSet: this._realizationFilterSet,
         };
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
+        this.handleStateChange();
     }
 
-    makeDefaultDashboard(): void {
+    private makeDefaultDashboard(): void {
         const d = new Dashboard(this._atomStoreMaster);
-        this._dashboards.push(d);
+        this.registerDashboard(d);
         this._activeDashboardId = d.getId();
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
     }
@@ -245,23 +423,71 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     beforeDestroy(): void {
         this.clear();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
 
     static async fromDataContainer(
-        atomStoreMaster: AtomStoreMaster,
         queryClient: QueryClient,
         dataContainer: WorkbenchSessionDataContainer,
     ): Promise<PrivateWorkbenchSession> {
-        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient);
+        const session = new PrivateWorkbenchSession(queryClient);
 
-        await session.loadContent(dataContainer.content);
+        if (isPersisted(dataContainer)) {
+            session.setId(dataContainer.id);
+            session.setIsPersisted(true);
+            session.setIsSnapshot(dataContainer.isSnapshot);
+        }
+
+        session.setLoadedFromLocalStorage(dataContainer.source === WorkbenchSessionSource.LOCAL_STORAGE);
+        session.setMetadata(dataContainer.metadata);
+        await session.deserializeContentState(dataContainer.content);
 
         return session;
     }
 
-    static createEmpty(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient): PrivateWorkbenchSession {
-        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient);
+    static createEmpty(queryClient: QueryClient): PrivateWorkbenchSession {
+        const session = new PrivateWorkbenchSession(queryClient);
         session.makeDefaultDashboard();
         return session;
+    }
+
+    /**
+     * Creates a new unpersisted session as a copy of an existing session.
+     * The new session will have no ID, will not be persisted, and will not be a snapshot.
+     * Only title and description are copied from the source metadata.
+     * Use setMetadata() to update title/description after creation.
+     */
+    static async createCopy(
+        queryClient: QueryClient,
+        sourceSession: PrivateWorkbenchSession,
+    ): Promise<PrivateWorkbenchSession> {
+        const newSession = new PrivateWorkbenchSession(queryClient, false);
+
+        // Copy only title and description, create new timestamps
+        const now = Date.now();
+        const sourceMetadata = sourceSession.getMetadata();
+        newSession.setMetadata({
+            title: sourceMetadata.title,
+            description: sourceMetadata.description,
+            createdAt: now,
+            updatedAt: now,
+            lastModifiedMs: now,
+        });
+
+        // Deserialize content state from source (this properly clones all internal structures)
+        await newSession.deserializeContentState(sourceSession.serializeContentState());
+
+        // Ensure the new session is not persisted and has no ID
+        newSession._id = null;
+        newSession._isPersisted = false;
+        newSession._isSnapshot = false;
+
+        return newSession;
+    }
+
+    private assertIsNotSnapshot(): asserts this is this & { _isSnapshot: false } {
+        if (this._isSnapshot) {
+            throw new Error("Operation not allowed on snapshot sessions");
+        }
     }
 }

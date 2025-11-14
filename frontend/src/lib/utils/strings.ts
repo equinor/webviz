@@ -8,3 +8,16 @@
 export function pluralize(noun: string, count: number, prefix = "s") {
     return `${count} ${noun}${count !== 1 ? prefix : ""}`;
 }
+
+/**
+ * Truncates a string to a maximum length, adding "..." if the string is truncated.
+ * @param str The string to truncate
+ * @param maxLength The maximum length of the string
+ * @returns The truncated string
+ */
+export function truncateString(str: string, maxLength: number): string {
+    if (str.length <= maxLength) {
+        return str;
+    }
+    return str.slice(0, maxLength - 3) + "...";
+}
