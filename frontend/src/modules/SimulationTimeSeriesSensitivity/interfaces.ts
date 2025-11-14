@@ -7,7 +7,8 @@ import {
     showRealizationsAtom,
     showStatisticsAtom,
 } from "./settings/atoms/baseAtoms";
-import { selectedSensitivityNamesAtom, vectorSpecificationAtom } from "./settings/atoms/derivedAtoms";
+import { vectorSpecificationAtom } from "./settings/atoms/derivedAtoms";
+import { selectedSensitivityNamesAtom } from "./settings/atoms/persistableFixableAtoms";
 import type { VectorSpec } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
@@ -31,7 +32,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return get(resamplingFrequencyAtom);
     },
     selectedSensitivityNames: (get) => {
-        return get(selectedSensitivityNamesAtom);
+        return get(selectedSensitivityNamesAtom).value ?? [];
     },
     showStatistics: (get) => {
         return get(showStatisticsAtom);

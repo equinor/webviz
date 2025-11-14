@@ -4302,6 +4302,14 @@ export type GetSnapshotAccessLogsData_api = {
          * Filter results by date of last visit
          */
         filter_last_visited_to?: string | null;
+        /**
+         * Filter results by snapshot owner ID
+         */
+        filter_owner_id?: string | null;
+        /**
+         * Filter results by deletion status of the snapshot
+         */
+        filter_snapshot_deleted?: boolean | null;
         zCacheBust?: string;
     };
     url: "/persistence/snapshot_access_logs";
