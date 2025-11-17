@@ -105,18 +105,19 @@ export class SessionStateTracker {
         const newContentString = objectToJsonString(this._session.serializeContentState());
         const newHash = await hashSessionContentString(newContentString);
 
+        if (newHash === this._state.currentHash) {
+            return false;
+        }
+
         // For state change detection, include metadata (title/description) as well
         const newStateString = makeWorkbenchSessionStateString(this._session);
 
-        if (newHash !== this._state.currentHash) {
-            this._state.currentStateString = newStateString;
-            this._state.currentHash = newHash;
-            this._state.lastModifiedMs = Date.now();
-            this._session.updateMetadata({ lastModifiedMs: this._state.lastModifiedMs }, false);
-            this.updateSnapshot();
-            return true;
-        }
-        return false;
+        this._state.currentStateString = newStateString;
+        this._state.currentHash = newHash;
+        this._state.lastModifiedMs = Date.now();
+        this._session.updateMetadata({ lastModifiedMs: this._state.lastModifiedMs }, false);
+        this.updateSnapshot();
+        return true;
     }
 
     markPersisted() {
@@ -133,6 +134,10 @@ export class SessionStateTracker {
         // Check if content hash changed
         const hashChanged = this._state.currentHash !== this._state.lastPersistedHash;
 
+        if (hashChanged) {
+            return true;
+        }
+
         // Check if metadata (title/description) changed
         const currentMetadata = this._session.getMetadata();
         const metadataChanged =
@@ -140,7 +145,7 @@ export class SessionStateTracker {
             (currentMetadata.title !== this._state.lastPersistedMetadata.title ||
                 currentMetadata.description !== this._state.lastPersistedMetadata.description);
 
-        return hashChanged || metadataChanged;
+        return metadataChanged;
     }
 
     getPersistenceInfo(): WorkbenchSessionPersistenceInfo {

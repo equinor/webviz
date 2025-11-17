@@ -140,7 +140,7 @@ class SnapshotStore:
 
         Args:
             page_token: Token for pagination (if using page-based pagination)
-            page_size: Number of items per page (for page-based pagination)
+            page_size: Number of items per page (defaults to 20, max 100)
             sort_by: Field name to sort by
             sort_direction: Direction to sort (ASC or DESC)
             sort_lowercase: Whether to use case-insensitive sorting
@@ -158,7 +158,7 @@ class SnapshotStore:
         elif page_size > _MAX_PAGE_SIZE:
             page_size = _MAX_PAGE_SIZE
         elif page_size < 1:
-            page_size = _DEFAULT_PAGE_SIZE
+            page_size = 1
 
         try:
             # Always filter by owner_id

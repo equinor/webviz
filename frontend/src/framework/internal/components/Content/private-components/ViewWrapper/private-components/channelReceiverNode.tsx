@@ -5,15 +5,15 @@ import { Edit, Remove } from "@mui/icons-material";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { KeyKind } from "@framework/types/dataChannnel";
 import type { Workbench } from "@framework/Workbench";
 import { IconButton } from "@lib/components/IconButton";
 import { rectContainsPoint } from "@lib/utils/geometry";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { vec2FromPointerEvent } from "@lib/utils/vec2";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
 
 export type ChannelReceiverNodeProps = {
     idString: string;
@@ -29,10 +29,10 @@ export type ChannelReceiverNodeProps = {
 export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) => {
     const { onChannelConnect, onChannelConnectionDisconnect } = props;
 
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const workbenchSession = useActiveSession();
+    const isSnapshot = workbenchSession.isSnapshot();
+
+    const dashboard = useActiveDashboard();
 
     const ref = React.useRef<HTMLDivElement>(null);
     const removeButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -249,7 +249,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
                 className={resolveClassNames(
                     "flex gap-2 bg-slate-200 w-full rounded-b items-center justify-center p-1",
                     {
-                        hidden: !editDataChannelConnections,
+                        hidden: !editDataChannelConnections || isSnapshot,
                     },
                 )}
             >

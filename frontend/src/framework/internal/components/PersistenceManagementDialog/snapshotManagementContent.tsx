@@ -2,7 +2,7 @@ import React from "react";
 
 import { DateRangePicker } from "@equinor/eds-core-react";
 import type { Options } from "@hey-api/client-axios";
-import { Close, ContentCopy, Delete, FileOpen, Refresh, Search } from "@mui/icons-material";
+import { Close, Delete, FileOpen, Refresh, Search } from "@mui/icons-material";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { omit } from "lodash";
 
@@ -22,7 +22,6 @@ import type { TableColumns, TableSorting, TContext } from "@lib/components/Table
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
 import { formatDate } from "@lib/utils/dates";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { UserAvatar } from "../UserAvatar";
 
@@ -35,6 +34,8 @@ import {
     TABLE_HEIGHT,
     USE_ALTERNATING_COLUMN_COLORS,
 } from "./constants";
+import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
+import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -112,64 +113,20 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         filter: false,
         sizeInPercent: 12,
         renderData: function SnapshotUrlCell(snapshotId, context) {
-            const [copied, setCopied] = React.useState(false);
             const url = buildSnapshotUrl(snapshotId);
 
-            const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-            React.useEffect(function onMountEffect() {
-                const timeoutRefCurrent = timeoutRef.current;
-                return () => {
-                    if (timeoutRefCurrent) {
-                        clearTimeout(timeoutRefCurrent);
-                    }
-                };
-            }, []);
-
-            function handleCopyClick(event: React.MouseEvent) {
-                event.stopPropagation();
-
-                if (copied) {
-                    return;
-                }
-
-                navigator.clipboard.writeText(`${url}`);
-                setCopied(true);
-                timeoutRef.current = setTimeout(() => setCopied(false), 2000);
-            }
-
-            function handleMouseLeave() {
-                setCopied(false);
+            function handleCopyRequested() {
+                return url;
             }
 
             const style = makeRowStyle(context);
-            return (
-                <div
-                    className="group relative flex items-center min-w-0"
-                    style={style}
-                    title={url}
-                    onMouseLeave={handleMouseLeave}
-                >
-                    {/* Text */}
-                    <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
 
-                    {/* Copy (or Done) button, hidden until hover */}
-                    <button
-                        className={resolveClassNames(
-                            `absolute right-1 p-1 px-2 h-6 rounded-full
-                                    transition-opacity duration-200`,
-                            {
-                                "hover:text-slate-600 group-hover:bg-slate-100 active:bg-slate-400 text-slate-400 opacity-0 group-hover:opacity-100":
-                                    !copied,
-                            },
-                            { "bg-green-800 text-white": copied },
-                        )}
-                        title={copied ? "Copied!" : "Copy url to clipboard"}
-                        onClick={handleCopyClick}
-                    >
-                        {!copied ? <ContentCopy fontSize="inherit" /> : "Copied!"}
-                    </button>
-                </div>
+            return (
+                <CopyCellValue onCopyRequested={handleCopyRequested}>
+                    <div className="h-full group relative flex items-center min-w-0" style={style} title={url}>
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
+                    </div>
+                </CopyCellValue>
             );
         },
     },
@@ -305,6 +262,8 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         enabled: props.active,
     });
 
+    const { isRefreshing, refresh } = useRefreshQuery(snapshotsQuery);
+
     function handleFilterRangeChange(newRange: null | EdsFilterRange) {
         setTableFilter((prev) => {
             return {
@@ -381,10 +340,6 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         if (!selectedSnapshotId) return;
 
         await props.workbench.getSessionManager().openSnapshot(selectedSnapshotId);
-    }
-
-    function handleRefreshClick() {
-        snapshotsQuery.refetch();
     }
 
     const tableData = React.useMemo(() => {
@@ -483,9 +438,8 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     </Button>
                 </Tooltip>
                 <Tooltip title="Refresh list" placement="top" enterDelay="medium">
-                    <Button color="primary" onClick={handleRefreshClick} size="medium">
-                        {snapshotsQuery.isFetching ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />}{" "}
-                        Refresh
+                    <Button color="primary" onClick={refresh} size="medium">
+                        {isRefreshing ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />} Refresh
                     </Button>
                 </Tooltip>
             </div>

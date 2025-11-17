@@ -39,6 +39,7 @@ import {
     TABLE_HEIGHT,
     HEADER_HEIGHT,
 } from "./constants";
+import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 
 type TableFilter = {
     title?: string;
@@ -180,6 +181,8 @@ function useInfiniteSessionMetadataQuery(
                 },
             });
 
+            await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate network latency for better UX when testing
+
             return data;
         },
         enabled,
@@ -220,6 +223,8 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
     }, [tableFilter, tableSortState]);
 
     const sessionsQuery = useInfiniteSessionMetadataQuery(querySortParams, props.active);
+
+    const { isRefreshing, refresh } = useRefreshQuery(sessionsQuery);
 
     const tableData = React.useMemo(() => {
         if (!sessionsQuery.data) return [];
@@ -321,10 +326,6 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         props.workbench.getSessionManager().startNewSession();
     }
 
-    function handleRefreshClick() {
-        sessionsQuery.refetch();
-    }
-
     return (
         <>
             <div className="mb-4 flex gap-4">
@@ -382,9 +383,8 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                     </Button>
                 </Tooltip>
                 <Tooltip title="Refresh list" placement="top" enterDelay="medium">
-                    <Button color="primary" onClick={handleRefreshClick} size="medium">
-                        {sessionsQuery.isFetching ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />}{" "}
-                        Refresh
+                    <Button color="primary" onClick={refresh} size="medium">
+                        {isRefreshing ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />} Refresh
                     </Button>
                 </Tooltip>
             </div>

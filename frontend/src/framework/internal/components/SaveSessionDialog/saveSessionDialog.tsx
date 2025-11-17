@@ -18,7 +18,6 @@ export type SaveSessionDialogProps = {
 
 type SaveSessionDialogInputFeedback = {
     title?: string;
-    description?: string;
 };
 
 export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
@@ -45,15 +44,12 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
 
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.SaveSessionDialogOpen);
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
-    const [inputFeedback, setInputFeedback] = React.useState<SaveSessionDialogInputFeedback>({});
     const inputRef = React.useRef<HTMLInputElement>(null);
 
     function handleSave() {
         if (title.trim() === "") {
-            setInputFeedback((prev) => ({ ...prev, title: "Title is required." }));
+            inputRef.current?.focus();
             return;
-        } else {
-            setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
         if (isPersisted) {
@@ -61,9 +57,6 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             props.workbench
                 .getSessionManager()
                 .saveAsNewSession(title, description)
-                .then(() => {
-                    setInputFeedback({});
-                })
                 .catch((error) => {
                     console.error("Failed to save session as new:", error);
                 });
@@ -73,9 +66,6 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             props.workbench
                 .getSessionManager()
                 .saveActiveSession(true)
-                .then(() => {
-                    setInputFeedback({});
-                })
                 .catch((error) => {
                     console.error("Failed to save session:", error);
                 });
@@ -86,8 +76,15 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         setIsOpen(false);
         setPrevOriginalTitle("");
         setPrevOriginalDescription("");
-        setInputFeedback({});
     }
+
+    const inputFeedback: SaveSessionDialogInputFeedback = React.useMemo(() => {
+        const feedback: SaveSessionDialogInputFeedback = {};
+        if (title.trim() === "") {
+            feedback.title = "Title is required.";
+        }
+        return feedback;
+    }, [title]);
 
     React.useEffect(
         function focusInput() {
@@ -132,7 +129,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                         error={!!inputFeedback.title}
                         autoFocus
                     />
-                    {inputFeedback.title && <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>}
+                    <div className="text-red-600 text-sm mb-1 h-4">{inputFeedback.title}</div>
                     <CharLimitedInput
                         label="Description (optional)"
                         maxLength={MAX_DESCRIPTION_LENGTH}
@@ -140,11 +137,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                         placeholder="Enter session description"
                         value={description}
                         multiline
-                        error={!!inputFeedback.description}
                     />
-                    {inputFeedback.description && (
-                        <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
-                    )}
                 </div>
             </div>
         </Dialog>

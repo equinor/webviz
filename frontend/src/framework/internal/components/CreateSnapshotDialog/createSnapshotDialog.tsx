@@ -3,69 +3,35 @@ import React from "react";
 import { AddLink } from "@mui/icons-material";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
-import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import { Input } from "@lib/components/Input";
-import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
-import { truncateString } from "@lib/utils/strings";
 
-import { useActiveSession } from "../ActiveSessionBoundary";
-import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { Form } from "./_private-components/form";
+import { Confirmation } from "./_private-components/confirmation";
 
 export type MakeSnapshotDialogProps = {
     workbench: Workbench;
 };
 
-type MakeSnapshotDialogInputFeedback = {
-    title?: string;
-    description?: string;
-};
-
 export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactNode {
-    const activeSession = useActiveSession();
-
-    const originalTitle = activeSession.getMetadata().title;
-    const originalDescription = activeSession.getMetadata().description ?? "";
-
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
-
-    const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
-    const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
-
-    const timeoutFunction = useTimeoutFunction();
-    const [showCopySuccess, setShowCopySuccess] = React.useState<boolean>(false);
-
-    if (originalTitle !== prevOriginalTitle) {
-        setPrevOriginalTitle(originalTitle);
-        setTitle(`Snapshot: ${truncateString(originalTitle, MAX_TITLE_LENGTH)}`);
-    }
-    if (originalDescription !== prevOriginalDescription) {
-        setPrevOriginalDescription(originalDescription);
-        setDescription(originalDescription);
-    }
 
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.MakeSnapshotDialogOpen);
 
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsMakingSnapshot);
 
     const [snapshotUrl, setSnapshotUrl] = React.useState<string | null>(null);
-    const [inputFeedback, setInputFeedback] = React.useState<MakeSnapshotDialogInputFeedback>({});
 
     const inputRef = React.useRef<HTMLInputElement>(null);
 
     function handleCreateSnapshot() {
         if (title.trim() === "") {
-            setInputFeedback((prev) => ({ ...prev, title: "Title is required." }));
             inputRef.current?.focus();
             return;
-        } else {
-            setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
         props.workbench
@@ -75,7 +41,6 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 if (!snapshotId) {
                     return;
                 }
-                setInputFeedback({});
                 setSnapshotUrl(buildSnapshotUrl(snapshotId));
             })
             .catch((error) => {
@@ -85,66 +50,22 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
 
     function handleCancel() {
         setIsOpen(false);
-        setPrevOriginalTitle("");
-        setPrevOriginalDescription("");
-        setInputFeedback({});
         setSnapshotUrl(null);
     }
-
-    function copyToClipboard() {
-        if (snapshotUrl) {
-            navigator.clipboard.writeText(snapshotUrl);
-        }
-
-        setShowCopySuccess(true);
-        timeoutFunction(() => setShowCopySuccess(false), 2000);
-    }
-
-    const layout = props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() || [];
 
     let content: React.ReactNode = null;
     let actions: React.ReactNode = null;
 
-    React.useEffect(
-        function focusInput() {
-            if (isOpen && inputRef.current && !snapshotUrl) {
-                inputRef.current.focus();
-            }
-        },
-        [isOpen, snapshotUrl],
-    );
-
     if (!snapshotUrl) {
         content = (
-            <div className="flex gap-4 items-center">
-                <DashboardPreview height={100} width={100} layout={layout} />
-                <div className="flex flex-col gap-2 grow min-w-0">
-                    <CharLimitedInput
-                        label="Title"
-                        onControlledValueChange={(value) => setTitle(value)}
-                        maxLength={MAX_TITLE_LENGTH}
-                        inputRef={inputRef}
-                        placeholder="Enter snapshot title"
-                        type="text"
-                        value={title}
-                        error={!!inputFeedback.title}
-                        autoFocus
-                    />
-                    {inputFeedback.title && <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>}
-                    <CharLimitedInput
-                        label="Description (optional)"
-                        maxLength={MAX_DESCRIPTION_LENGTH}
-                        onControlledValueChange={(value) => setDescription(value)}
-                        placeholder="Enter snapshot description"
-                        value={description}
-                        multiline
-                        error={!!inputFeedback.description}
-                    />
-                    {inputFeedback.description && (
-                        <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
-                    )}
-                </div>
-            </div>
+            <Form
+                titleInputRef={inputRef}
+                workbench={props.workbench}
+                title={title}
+                description={description}
+                setTitle={setTitle}
+                setDescription={setDescription}
+            />
         );
 
         actions = (
@@ -159,30 +80,7 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
             </>
         );
     } else {
-        content = (
-            <div className="flex flex-col gap-4">
-                <div className="text-green-600 text-lg font-bold">Snapshot created successfully!</div>
-                <div className="text-sm">
-                    By sharing the following link you can give others access to your snapshot. <br />
-                    You can find all your created and visited snapshots in the snapshots dialog.
-                </div>
-                <Input
-                    type="text"
-                    value={snapshotUrl}
-                    readOnly
-                    className="w-full"
-                    endAdornment={
-                        showCopySuccess ? (
-                            <span className="text-green-600 font-semibold h-9 flex items-center">Copied!</span>
-                        ) : (
-                            <Button variant="text" onClick={copyToClipboard}>
-                                Copy
-                            </Button>
-                        )
-                    }
-                />
-            </div>
-        );
+        content = <Confirmation snapshotUrl={snapshotUrl} />;
 
         actions = (
             <>

@@ -9,6 +9,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
+import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 
 Icon.add({ folder_open });
 
@@ -25,14 +26,14 @@ export type RecentListProps<TItemType, TQueryData = unknown, TError = Error> = {
 export function RecentList<TItemType, TQueryData = unknown>(
     props: RecentListProps<TItemType, TQueryData>,
 ): React.ReactNode {
-    const [isManualRefetch, setIsManualRefetch] = React.useState<boolean>(false);
-    const [isRefreshAnimationPlaying, setIsRefreshAnimationPlaying] = React.useState<boolean>(false);
     const [lastUpdatedMs, setLastUpdatedMs] = React.useState<number | null>(null);
 
     const itemsQuery = useQuery<TQueryData>({
         ...props.useQueryOptions,
         refetchInterval: props.refetchIntervalMs ?? 60000,
     });
+
+    const { isRefreshing, refresh } = useRefreshQuery(itemsQuery);
 
     const isFirstTimeFetching = itemsQuery.status === "pending" || lastUpdatedMs === null;
 
@@ -45,28 +46,6 @@ export function RecentList<TItemType, TQueryData = unknown>(
         },
         [itemsQuery.isSuccess, itemsQuery.dataUpdatedAt, lastUpdatedMs],
     );
-
-    // Handle manual refresh animation
-    React.useEffect(
-        function handleRefreshAnimation() {
-            if (isManualRefetch && !itemsQuery.isFetching) {
-                setIsManualRefetch(false);
-                setTimeout(function stopRefreshAnimation() {
-                    setIsRefreshAnimationPlaying(false);
-                }, 900);
-            }
-        },
-        [isManualRefetch, itemsQuery.isFetching],
-    );
-
-    function handleRefreshClick() {
-        if (itemsQuery.isFetching) {
-            return;
-        }
-        setIsManualRefetch(true);
-        setIsRefreshAnimationPlaying(true);
-        itemsQuery.refetch();
-    }
 
     function makeContent() {
         if (isFirstTimeFetching) {
@@ -108,8 +87,8 @@ export function RecentList<TItemType, TQueryData = unknown>(
                     {props.title}
                 </Typography>
                 <Tooltip title="Refresh" placement="bottom" enterDelay="medium">
-                    <DenseIconButton onClick={handleRefreshClick}>
-                        {isRefreshAnimationPlaying ? (
+                    <DenseIconButton onClick={refresh}>
+                        {isRefreshing ? (
                             <CircularProgress size="medium-small" color="fill-indigo-800" />
                         ) : (
                             <Refresh fontSize="small" className="text-indigo-800" />

@@ -60,7 +60,8 @@ export function loadAllWorkbenchSessionsFromLocalStorage(): WorkbenchSessionData
                 sessions.push(session);
             }
         } catch {
-            // Ignore deserialization errors
+            // Ignore deserialization errors for individual sessions
+            // to avoid breaking loading of other sessions
         }
     }
 

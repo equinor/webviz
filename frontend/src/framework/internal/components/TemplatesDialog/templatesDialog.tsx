@@ -61,7 +61,8 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
             showCloseCross={true}
             onClose={handleClose}
             title="Templates"
-            height="800px"
+            minHeight={640}
+            height="80vh"
             width="800px"
         >
             <div className="h-full flex flex-col">

@@ -158,7 +158,7 @@ class SessionStore:
         elif page_size > _MAX_PAGE_SIZE:
             page_size = _MAX_PAGE_SIZE
         elif page_size < 1:
-            page_size = _DEFAULT_PAGE_SIZE
+            page_size = 1
 
         try:
             # Always filter by owner_id

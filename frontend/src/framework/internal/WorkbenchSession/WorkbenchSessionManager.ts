@@ -99,7 +99,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     getActiveSession(): PrivateWorkbenchSession {
         if (!this._activeSession) {
-            throw new Error("No active workbench session.");
+            throw new Error("No active workbench session. This method should be called only when a session is active.");
         }
         return this._activeSession;
     }
@@ -176,7 +176,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async startNewSession(): Promise<PrivateWorkbenchSession> {
         if (this._activeSession) {
-            throw new Error("A workbench session is already active. Please close it before starting a new one.");
+            throw new Error(
+                "A workbench session is already active. This should not happen and indicates a logic error.",
+            );
         }
 
         const session = PrivateWorkbenchSession.createEmpty(this._queryClient);
@@ -186,7 +188,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async openSession(sessionId: string): Promise<boolean> {
         if (this._activeSession) {
-            throw new Error("A workbench session is already active. Please close it before opening a new one.");
+            throw new Error(
+                "A workbench session is already active. This should not happen and indicates a logic error.",
+            );
         }
 
         try {
@@ -290,7 +294,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async openFromLocalStorage(sessionId: string | null, forceOpen = false): Promise<boolean> {
         if (this._activeSession && !forceOpen) {
-            throw new Error("A workbench session is already active. Please close it before opening a new one.");
+            throw new Error(
+                "A workbench session is already active. This should not happen and indicates a logic error.",
+            );
         }
 
         try {
@@ -298,7 +304,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             const localStorageSessionData = loadWorkbenchSessionFromLocalStorage(sessionId);
             if (!localStorageSessionData) {
-                throw new Error("No workbench session found in local storage.");
+                throw new Error(
+                    "No workbench session found in local storage. This should not happen and indicates a logic error.",
+                );
             }
 
             // If the session has been persisted before, we want to first load from backend to get the latest version
@@ -309,7 +317,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 await this.setActiveSession(session);
 
                 if (!this._activeSession) {
-                    throw new Error("Failed to set active session from backend data.");
+                    throw new Error(
+                        "Failed to set active session from backend data. This should not happen and indicates a logic error.",
+                    );
                 }
 
                 // Apply local storage changes on top
@@ -441,12 +451,16 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async refreshActiveSessionFromBackend(): Promise<boolean> {
         if (!this._activeSession) {
-            throw new Error("No active workbench session to refresh.");
+            throw new Error(
+                "No active workbench session to refresh. This should not happen and indicates a logic error.",
+            );
         }
 
         const sessionId = this._activeSession.getId();
         if (!sessionId) {
-            throw new Error("Active workbench session is not persisted, cannot refresh from backend.");
+            throw new Error(
+                "Active workbench session is not persisted, cannot refresh from backend. This should not happen and indicates a logic error.",
+            );
         }
 
         this.unloadSession();
@@ -547,7 +561,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionManagerTopic.ACTIVE_SESSION);
         } catch (error) {
             console.error("Failed to set active workbench session:", error);
-            throw new Error("Could not load workbench session from data container.");
+            throw new Error(
+                "Could not load workbench session from data container. This should not happen and indicates a logic error.",
+            );
         } finally {
             this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
         }
@@ -575,11 +591,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async saveActiveSession(forceSave = false): Promise<boolean> {
         if (!this._activeSession) {
-            throw new Error("No active workbench session to save.");
+            throw new Error("No active workbench session to save. This should not happen and indicates a logic error.");
         }
 
         if (!this._persistenceOrchestrator) {
-            throw new Error("Cannot persist a snapshot.");
+            throw new Error("Cannot persist a snapshot. This should not happen and indicates a logic error.");
         }
 
         if (this._activeSession.getIsPersisted() || forceSave) {
@@ -624,11 +640,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async saveAsNewSession(title: string, description?: string): Promise<void> {
         if (!this._activeSession) {
-            throw new Error("No active workbench session to save.");
+            throw new Error("No active workbench session to save. This should not happen and indicates a logic error.");
         }
 
         if (!this._persistenceOrchestrator) {
-            throw new Error("Cannot persist a snapshot.");
+            throw new Error("Cannot persist a snapshot. This should not happen and indicates a logic error.");
         }
 
         this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
@@ -687,11 +703,15 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async createSnapshot(title: string, description: string): Promise<string | null> {
         if (!this._activeSession) {
-            throw new Error("No active workbench session to create snapshot from.");
+            throw new Error(
+                "No active workbench session to create snapshot from. This should not happen and indicates a logic error.",
+            );
         }
 
         if (!this._persistenceOrchestrator) {
-            throw new Error("Cannot create snapshot from a snapshot.");
+            throw new Error(
+                "Cannot create snapshot from a snapshot. This should not happen and indicates a logic error.",
+            );
         }
 
         this.createLoadingToast("createSnapshot", "Creating snapshot...");
@@ -715,11 +735,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     convertSnapshotToSession(): void {
         if (!this._activeSession) {
-            throw new Error("No active workbench session.");
+            throw new Error("No active workbench session. This should not happen and indicates a logic error.");
         }
 
         if (!this._activeSession.isSnapshot()) {
-            throw new Error("Active session is not a snapshot.");
+            throw new Error("Active session is not a snapshot. This should not happen and indicates a logic error.");
         }
 
         // Update session metadata
@@ -780,7 +800,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async updateFromLocalStorage(): Promise<void> {
         if (!this._activeSession) {
-            throw new Error("No active session to update from local storage.");
+            throw new Error(
+                "No active session to update from local storage. This should not happen and indicates a logic error.",
+            );
         }
 
         const sessionId = this._activeSession.getId() ?? null;
@@ -790,7 +812,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             const sessionData = loadWorkbenchSessionFromLocalStorage(sessionId);
             if (!sessionData) {
-                throw new Error("No workbench session found in local storage.");
+                throw new Error(
+                    "No workbench session found in local storage. This should not happen and indicates a logic error.",
+                );
             }
 
             this._activeSession.setMetadata(sessionData.metadata);

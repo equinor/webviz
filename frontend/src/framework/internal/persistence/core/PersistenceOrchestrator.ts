@@ -58,7 +58,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
 
     private readonly _session: PrivateWorkbenchSession;
 
-    private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+    private _refreshStateDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _pollingInterval: ReturnType<typeof setInterval> | null = null;
     private _saveInProgress: boolean = false;
     private _destroyed: boolean = false;
@@ -123,9 +123,9 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         this.stopBackendPolling();
 
-        if (this._debounceTimeout) {
-            clearTimeout(this._debounceTimeout);
-            this._debounceTimeout = null;
+        if (this._refreshStateDebounceTimeout) {
+            clearTimeout(this._refreshStateDebounceTimeout);
+            this._refreshStateDebounceTimeout = null;
         }
 
         this._tracker.reset();
@@ -249,12 +249,12 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         // Don't schedule refreshes during initialization
         if (this._isInitializing) return;
 
-        if (this._debounceTimeout) clearTimeout(this._debounceTimeout);
+        if (this._refreshStateDebounceTimeout) clearTimeout(this._refreshStateDebounceTimeout);
 
-        this._debounceTimeout = setTimeout(async () => {
+        this._refreshStateDebounceTimeout = setTimeout(async () => {
             if (this._destroyed) return;
 
-            this._debounceTimeout = null;
+            this._refreshStateDebounceTimeout = null;
             const changed = await this._tracker.refresh();
 
             if (changed) {

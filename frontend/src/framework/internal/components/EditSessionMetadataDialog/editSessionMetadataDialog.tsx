@@ -24,7 +24,6 @@ export type EditSessionMetadataDialogProps = {
 
 type EditSessionDialogInputFeedback = {
     title?: string;
-    description?: string;
 };
 
 export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps) {
@@ -49,8 +48,6 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         setPrevOriginalDescription(props.description ?? "");
         setDescription(`${truncateString(props.description ?? "", MAX_DESCRIPTION_LENGTH)}`);
     }
-
-    const [inputFeedback, setInputFeedback] = React.useState<EditSessionDialogInputFeedback>({});
     const inputRef = React.useRef<HTMLInputElement>(null);
 
     const [prevTitle, setPrevTitle] = React.useState<string>(props.title);
@@ -68,11 +65,8 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
 
     function handleSave() {
         if (title.trim() === "") {
-            setInputFeedback((prev) => ({ ...prev, title: "Title is required." }));
             inputRef.current?.focus();
             return;
-        } else {
-            setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
         if (hasActiveSession) {
@@ -83,7 +77,6 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                     .getSessionManager()
                     .saveActiveSession()
                     .then((result) => {
-                        setInputFeedback({});
                         if (result) {
                             props.onClose?.();
                         }
@@ -104,7 +97,6 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
             .getSessionManager()
             .updateSession(props.id, { title, description })
             .then((result) => {
-                setInputFeedback({});
                 if (result) {
                     props.onClose?.();
                 }
@@ -115,11 +107,18 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     }
 
     function handleCancel() {
-        setInputFeedback({});
         setPrevOriginalTitle("");
         setPrevOriginalDescription("");
         props.onClose?.();
     }
+
+    const inputFeedback: EditSessionDialogInputFeedback = React.useMemo(() => {
+        const feedback: EditSessionDialogInputFeedback = {};
+        if (title.trim() === "") {
+            feedback.title = "Title is required.";
+        }
+        return feedback;
+    }, [title]);
 
     const layout = hasActiveSession
         ? (props.workbench.getSessionManager().getActiveSession().getActiveDashboard().getLayout() ?? [])
@@ -167,7 +166,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                         error={!!inputFeedback.title}
                         autoFocus
                     />
-                    {inputFeedback.title && <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>}
+                    <div className="text-red-600 text-sm mb-1 h-4">{inputFeedback.title}</div>
                     <CharLimitedInput
                         label="Description (optional)"
                         maxLength={MAX_DESCRIPTION_LENGTH}
@@ -175,11 +174,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                         placeholder="Enter session description"
                         value={description}
                         multiline
-                        error={!!inputFeedback.description}
                     />
-                    {inputFeedback.description && (
-                        <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
-                    )}
                 </div>
             </div>
         </Dialog>

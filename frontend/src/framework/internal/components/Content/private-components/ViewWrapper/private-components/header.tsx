@@ -233,10 +233,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
             )}
             {showDataChannelButtons && hasDataReceiver && (
                 <DenseIconButton
-                    title={isSnapshot ? "Cannot edit input data channels in snapshot mode" : "Edit input data channels"}
+                    title={isSnapshot ? "Show input data channels" : "Edit input data channels"}
                     onPointerUp={handleReceiversPointerUp}
                     onPointerDown={handleReceiverPointerDown}
-                    disabled={isSnapshot}
                 >
                     <Input fontSize="inherit" />
                 </DenseIconButton>

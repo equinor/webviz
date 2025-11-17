@@ -20,7 +20,7 @@ from .exceptions import (
 )
 
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -55,7 +55,7 @@ class CosmosContainer(Generic[T]):
         """Create a CosmosContainer instance."""
         database = CosmosDatabase.create_instance(database_name)
         container = database.get_container(container_name)
-        logger.debug("[CosmosContainer] Created for container '%s' in database '%s'", container_name, database_name)
+        LOGGER.debug("[CosmosContainer] Created for container '%s' in database '%s'", container_name, database_name)
         return cls(database_name, container_name, database, container, validation_model)
 
     async def __aenter__(self) -> "CosmosContainer[T]":
@@ -85,7 +85,7 @@ class CosmosContainer(Generic[T]):
         )
 
         # Log with stack trace
-        logger.exception(
+        LOGGER.exception(
             "[CosmosContainer] %s",
             msg,
             extra={
@@ -124,7 +124,7 @@ class CosmosContainer(Generic[T]):
             items = [item async for item in items_iterable]
             return [self._validation_model.model_validate(item) for item in items]
         except ValidationError as validation_error:
-            logger.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
+            LOGGER.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("query_items_async", error)
@@ -157,7 +157,7 @@ class CosmosContainer(Generic[T]):
             item = await self._container.read_item(item=item_id, partition_key=partition_key)
             return self._validation_model.model_validate(item)
         except ValidationError as validation_error:
-            logger.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
+            LOGGER.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("get_item_async", error) from error
@@ -168,7 +168,7 @@ class CosmosContainer(Generic[T]):
             result = await self._container.create_item(body)
             return result["id"]
         except ValidationError as validation_error:
-            logger.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
+            LOGGER.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("insert_item_async", error) from error
@@ -176,7 +176,7 @@ class CosmosContainer(Generic[T]):
     async def delete_item_async(self, item_id: str, partition_key: str) -> None:
         try:
             await self._container.delete_item(item=item_id, partition_key=partition_key)
-            logger.debug("[CosmosContainer] Deleted item '%s' from '%s'", item_id, self._container_name)
+            LOGGER.debug("[CosmosContainer] Deleted item '%s' from '%s'", item_id, self._container_name)
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("delete_item_async", error) from error
 
@@ -189,9 +189,9 @@ class CosmosContainer(Generic[T]):
 
             await self._container.replace_item(item=item_id, body=validated)
 
-            logger.debug("[CosmosContainer] Updated item '%s' in '%s'", item_id, self._container_name)
+            LOGGER.debug("[CosmosContainer] Updated item '%s' in '%s'", item_id, self._container_name)
         except ValidationError as validation_error:
-            logger.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
+            LOGGER.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("update_item_async", error) from error
@@ -212,7 +212,7 @@ class CosmosContainer(Generic[T]):
                 filter_predicate=filter_predicate,
                 no_response=True,
             )
-            logger.debug("[CosmosContainer] Patched item '%s' in '%s'", item_id, self._container_name)
+            LOGGER.debug("[CosmosContainer] Patched item '%s' in '%s'", item_id, self._container_name)
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("patch_item_async", error) from error
 
@@ -237,7 +237,7 @@ class CosmosContainer(Generic[T]):
     async def close_async(self) -> None:
         """Close the container."""
         if self._database:
-            logger.debug(
+            LOGGER.debug(
                 "[CosmosContainer] Closing container '%s' in database '%s'", self._container_name, self._database_name
             )
             await self._database.close_async()

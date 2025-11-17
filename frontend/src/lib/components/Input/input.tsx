@@ -158,9 +158,10 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                 "py-1.5",
                 "outline-hidden",
                 "cursor-text",
+                "border border-gray-300",
                 {
-                    "border border-gray-300": !props.error,
-                    "border-2 border-red-300": props.error,
+                    "outline-hidden": !props.error,
+                    "outline-2 outline-red-300": props.error,
                     "rounded-l": props.rounded === "left",
                     "rounded-r": props.rounded === "right",
                     rounded: props.rounded === "all" || !props.rounded,

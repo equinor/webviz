@@ -3,7 +3,19 @@ import React from "react";
 import { Icon, Typography } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
 import { Dropdown, MenuButton } from "@mui/base";
-import { AddLink, ArrowDropDown, Category, Close, Edit, Link, Lock, Refresh, Save, SaveAs } from "@mui/icons-material";
+import {
+    AddLink,
+    ArrowDropDown,
+    Category,
+    Circle,
+    Close,
+    Edit,
+    Link,
+    Lock,
+    Refresh,
+    Save,
+    SaveAs,
+} from "@mui/icons-material";
 
 import FmuLogo from "@assets/fmu.svg";
 
@@ -245,7 +257,7 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
             <Category fontSize="inherit" className="mr-1" />
             <Typography
                 variant="h5"
-                className={resolveClassNames("overflow-ellipsis min-w-0 whitespace-nowrap", {
+                className={resolveClassNames("overflow-ellipsis min-w-0 whitespace-nowrap flex items-center gap-4", {
                     italic: !isPersisted,
                 })}
             >
@@ -266,9 +278,11 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                 >
                     <span className="truncate">{metadata.title}</span>
                 </Tooltip>
-                <Tooltip title="You have unsaved changes">
-                    <span className="text-amber-600 ml-2 text-2xl">{hasChanges ? "*" : " "}</span>
-                </Tooltip>
+                {hasChanges && (
+                    <Tooltip title="You have unsaved changes">
+                        <Circle fontSize="small" color="warning" />
+                    </Tooltip>
+                )}
             </Typography>
         </>
     );

@@ -8,7 +8,7 @@ from primary.config import COSMOS_DB_PROD_CONNECTION_STRING, COSMOS_DB_EMULATOR_
 from primary.services.service_exceptions import Service, ServiceRequestError
 
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class CosmosDatabase:
@@ -63,9 +63,9 @@ class CosmosDatabase:
     async def close_async(self) -> None:
         if self._client:
             try:
-                logger.debug("[CosmosDatabase] Closing database client for '%s'", self._database_name)
+                LOGGER.debug("[CosmosDatabase] Closing database client for '%s'", self._database_name)
                 await self._client.close()
-                logger.debug("[CosmosDatabase] Successfully closed database client for '%s'", self._database_name)
+                LOGGER.debug("[CosmosDatabase] Successfully closed database client for '%s'", self._database_name)
             except Exception as e:
-                logger.error("[CosmosDatabase] Error closing database client for '%s': %s", self._database_name, e)
+                LOGGER.error("[CosmosDatabase] Error closing database client for '%s': %s", self._database_name, e)
                 raise

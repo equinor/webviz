@@ -95,7 +95,6 @@ function useUserGraphInfo(ownerId: string | undefined): GraphUser_api | null {
     return userInfoQuery.data ?? null;
 }
 
-// TODO: Show preview image here?
 function TooltipContent(
     props: { owner: GraphUser_api | null; tooltipInfo?: Record<string, string> } & ItemCardProps,
 ): React.ReactNode {
