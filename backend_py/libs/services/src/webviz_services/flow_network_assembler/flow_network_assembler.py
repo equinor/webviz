@@ -171,7 +171,7 @@ class FlowNetworkAssembler:
             raise InvalidDataError(
                 f"Expected columns: {GroupTreeDataframeModel.expected_columns()} not found in the grouptree dataframe. "
                 f"Columns found: {group_tree_table_df.columns}",
-                service=Service.GENERAL,
+                Service.GENERAL,
             )
 
         self._group_tree_df_model = GroupTreeDataframeModel(group_tree_table_df, self._tree_type)
@@ -679,6 +679,7 @@ def _create_leaf_node_classification_map(
     summary_columns = summary_vectors_table.column_names
 
     leaf_node_classifications: dict[str, NodeClassification] = {}
+
     for i, node in enumerate(leaf_nodes):
         well_node_classification = well_node_classifications.get(node)
         if leaf_node_keywords[i] == "WELSPECS" and well_node_classification is not None:
@@ -916,7 +917,7 @@ def _create_flat_network_nodes_map(
 
         node_static_working_data = node_static_working_data_dict.get(node_name)
         if node_static_working_data is None:
-            raise ValueError(f"No summary vector info found for node {node_name}")
+            raise NoDataError(f"No summary vector info found for node {node_name}", Service.GENERAL)
 
         if not _utils.is_valid_node_type(node_static_working_data.node_classification, selected_node_types):
             continue
