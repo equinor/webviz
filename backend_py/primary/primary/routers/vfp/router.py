@@ -53,12 +53,10 @@ async def get_vfp_table(
 
     vfp_access = VfpAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-access")
-    try:
-        vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfp_table_from_tagname_async(
-            tagname=vfp_table_name, realization=realization
-        )
-    except NotImplementedError as ex:
-        raise HTTPException(status_code=404, detail=ex)
+
+    vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfp_table_from_tagname_async(
+        tagname=vfp_table_name, realization=realization
+    )
 
     perf_metrics.record_lap("get-vfp-table")
     LOGGER.info(f"VFP table loaded in: {perf_metrics.to_string()}")
