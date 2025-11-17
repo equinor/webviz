@@ -40,7 +40,7 @@ export type CaseSelection = {
 };
 
 export type CaseExplorerProps = {
-    enableQueries: boolean;
+    disableQueries: boolean;
     onCaseSelectionChange: (caseSelection: CaseSelection) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
@@ -74,7 +74,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     // --- Queries ---
     const fieldsQuery = useQuery({
         ...getFieldsOptions(),
-        enabled: props.enableQueries,
+        enabled: !props.disableQueries,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
@@ -88,7 +88,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
     const casesQuery = useQuery({
         ...getCasesOptions({ query: { field_identifier: selectedField ?? "" } }),
-        enabled: selectedField !== null && props.enableQueries,
+        enabled: selectedField !== null && !props.disableQueries,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
@@ -120,11 +120,11 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
             setIsRefreshAnimationPlaying(true);
 
             casesQuery.refetch();
-            if (props.enableQueries && selectedField !== null) {
+            if (!props.disableQueries && selectedField !== null) {
                 startRefetchTimer();
             }
         },
-        [casesQuery, props.enableQueries, selectedField, startRefetchTimer],
+        [casesQuery, props.disableQueries, selectedField, startRefetchTimer],
     );
 
     // Handle manual refresh animation
@@ -143,7 +143,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     // Handle auto refresh timer
     React.useEffect(
         function setupAutoRefetch() {
-            if (!props.enableQueries || selectedField === null) {
+            // Clear timer if queries are disabled or no field is selected
+            if (props.disableQueries || selectedField === null) {
                 if (refetchTimerRef.current) {
                     clearInterval(refetchTimerRef.current);
                     refetchTimerRef.current = null;
@@ -160,7 +161,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                 }
             };
         },
-        [props.enableQueries, selectedField, startRefetchTimer],
+        [props.disableQueries, selectedField, startRefetchTimer],
     );
 
     // --- Derived data ---
@@ -356,7 +357,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             <Tooltip title="Refresh cases list" enterDelay="medium">
                                 <DenseIconButton
                                     onClick={handleManualRefetch}
-                                    disabled={!props.enableQueries || selectedField === null}
+                                    disabled={props.disableQueries || selectedField === null}
                                 >
                                     {isRefreshAnimationPlaying ? (
                                         <CircularProgress size="medium-small" color="fill-indigo-800" />

@@ -400,7 +400,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     width: "85%",
                     content: (
                         <EnsembleExplorer
-                            enableQueries={showEnsembleExplorer}
+                            disableQueries={!showEnsembleExplorer}
                             nextEnsembleColor={nextEnsembleColor}
                             selectedEnsembles={
                                 ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
