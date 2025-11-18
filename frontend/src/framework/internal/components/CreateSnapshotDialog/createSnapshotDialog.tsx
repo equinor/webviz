@@ -9,8 +9,8 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 
-import { Form } from "./_private-components/form";
 import { Confirmation } from "./_private-components/confirmation";
+import { Form } from "./_private-components/form";
 
 export type MakeSnapshotDialogProps = {
     workbench: Workbench;

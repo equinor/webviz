@@ -1,13 +1,15 @@
-import type { Workbench } from "@framework/Workbench";
-import { useActiveSession } from "../../ActiveSessionBoundary";
 import React from "react";
-import { truncateString } from "@lib/utils/strings";
+
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
-import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
-import { DashboardPreview } from "../../DashboardPreview/dashboardPreview";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import type { Workbench } from "@framework/Workbench";
+import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { truncateString } from "@lib/utils/strings";
+
+import { useActiveSession } from "../../ActiveSessionBoundary";
+import { DashboardPreview } from "../../DashboardPreview/dashboardPreview";
 
 export type FormProps = {
     workbench: Workbench;
@@ -23,6 +25,8 @@ type MakeSnapshotDialogInputFeedback = {
 };
 
 export function Form(props: FormProps): React.ReactNode {
+    const { setTitle, setDescription } = props;
+
     const activeSession = useActiveSession();
 
     const isPersisted = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.IS_PERSISTED);
@@ -37,17 +41,19 @@ export function Form(props: FormProps): React.ReactNode {
     const originalTitle = activeSession.getMetadata().title;
     const originalDescription = activeSession.getMetadata().description ?? "";
 
-    const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
-    const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
+    React.useEffect(
+        function propagateTitleChange() {
+            setTitle(`Snapshot: ${truncateString(originalTitle, MAX_TITLE_LENGTH)}`);
+        },
+        [originalTitle, setTitle],
+    );
 
-    if (originalTitle !== prevOriginalTitle) {
-        setPrevOriginalTitle(originalTitle);
-        props.setTitle(`Snapshot: ${truncateString(originalTitle, MAX_TITLE_LENGTH)}`);
-    }
-    if (originalDescription !== prevOriginalDescription) {
-        setPrevOriginalDescription(originalDescription);
-        props.setDescription(originalDescription);
-    }
+    React.useEffect(
+        function propagateDescriptionChange() {
+            setDescription(originalDescription);
+        },
+        [originalDescription, setDescription],
+    );
 
     const inputRef = React.useRef<HTMLInputElement>(null);
 
