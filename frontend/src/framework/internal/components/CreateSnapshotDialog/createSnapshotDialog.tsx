@@ -9,6 +9,8 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 
+import { useActiveSession } from "../ActiveSessionBoundary";
+
 import { Confirmation } from "./_private-components/confirmation";
 import { Form } from "./_private-components/form";
 
@@ -17,6 +19,8 @@ export type MakeSnapshotDialogProps = {
 };
 
 export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactNode {
+    const activeSession = useActiveSession();
+
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
 
@@ -51,6 +55,10 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
     function handleCancel() {
         setIsOpen(false);
         setSnapshotUrl(null);
+    }
+
+    if (activeSession.isSnapshot()) {
+        return null;
     }
 
     let content: React.ReactNode = null;
