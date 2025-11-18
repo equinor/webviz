@@ -54,7 +54,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     }
 
     render() {
-        const freshStartUrl = new URL(window.location.href);
+        const freshStartUrl = new URL(window.location.protocol + "//" + window.location.host);
         freshStartUrl.searchParams.set("cleanStart", "true");
 
         function reportIssue(errorMessage: string, errorStack: string) {

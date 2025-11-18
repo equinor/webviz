@@ -1,14 +1,12 @@
-import { ParameterIdent } from "@framework/EnsembleParameters";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
-import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { ChannelIds as InplaceChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 import { ChannelIds as TimeSeriesChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
-import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
+    name: "Correlation matrix between input parameters and multiple responses",
     description:
         "Example template for a correlation matrix between input parameters and various responses. " +
         "Either a full matrix or a parameter vs. response matrix can be shown. ",
@@ -22,11 +20,12 @@ const template: Template = {
                 relX: 0,
                 relY: 0,
             },
-
+            /*
             initialSettings: {
                 selectedVectorTags: ["FOPT", "FGPT", "FOPR", "FGPR"],
                 visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
             },
+            */
         },
         {
             instanceRef: "MainInplaceVolumesPlotInstance",
@@ -38,9 +37,11 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
+            /*
             initialSettings: {
                 selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
             },
+            */
         },
         {
             instanceRef: "MyParameterResponseCorrelationMatrixPlotInstance",
@@ -64,6 +65,7 @@ const template: Template = {
                     channelIdString: InplaceChannelIds.RESPONSE_PER_REAL,
                 },
             },
+            /*
             initialSettings: {
                 parameterIdents: [
                     new ParameterIdent("KVKH_CHANNEL", "GLOBVAR"),
@@ -87,8 +89,9 @@ const template: Template = {
                     threshold: 0.1,
                 },
             },
+            */
         },
     ],
 };
 
-TemplateRegistry.registerTemplate("Correlation matrix between input parameters and multiple responses", template);
+TemplateRegistry.registerTemplate(template);

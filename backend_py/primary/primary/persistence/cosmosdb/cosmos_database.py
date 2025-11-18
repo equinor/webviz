@@ -1,3 +1,4 @@
+import logging
 from types import TracebackType
 from typing import Optional, Type
 from azure.cosmos.aio import CosmosClient, ContainerProxy
@@ -5,6 +6,9 @@ from azure.cosmos import exceptions
 
 from primary.config import COSMOS_DB_PROD_CONNECTION_STRING, COSMOS_DB_EMULATOR_URI, COSMOS_DB_EMULATOR_KEY
 from primary.services.service_exceptions import Service, ServiceRequestError
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class CosmosDatabase:
@@ -58,4 +62,10 @@ class CosmosDatabase:
 
     async def close_async(self) -> None:
         if self._client:
-            await self._client.close()
+            try:
+                LOGGER.debug("[CosmosDatabase] Closing database client for '%s'", self._database_name)
+                await self._client.close()
+                LOGGER.debug("[CosmosDatabase] Successfully closed database client for '%s'", self._database_name)
+            except Exception as e:
+                LOGGER.error("[CosmosDatabase] Error closing database client for '%s': %s", self._database_name, e)
+                raise

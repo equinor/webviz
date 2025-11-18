@@ -15,6 +15,14 @@ from .documents import SessionDocument, SessionMetadata
 _CONTAINER_NAME = "sessions"
 _DATABASE_NAME = "persistence"
 
+# CosmosDB has a 2MB document size limit
+# We use 1.5MB to leave room for metadata and safety margin
+_MAX_CONTENT_SIZE_BYTES = 1.5 * 1024 * 1024  # 1.5MB
+
+# Pagination limits
+_MAX_PAGE_SIZE = 100
+_DEFAULT_PAGE_SIZE = 20
+
 
 class SessionStore:
     """
@@ -55,11 +63,22 @@ class SessionStore:
             The ID of the created session
 
         Raises:
+            ServiceRequestError: If content size exceeds maximum allowed size
             DatabaseAccessError: If the database operation fails
         """
+        # Validate content size
+        content_size = len(content.encode("utf-8"))
+        if content_size > _MAX_CONTENT_SIZE_BYTES:
+            raise ServiceRequestError(
+                f"Session content size ({content_size / (1024*1024):.2f}MB) exceeds maximum allowed size of {_MAX_CONTENT_SIZE_BYTES / (1024*1024):.1f}MB",
+                Service.DATABASE,
+            )
+
         try:
             now = datetime.now(timezone.utc)
-            session_id = str(generate(size=8))
+            # Use 12 characters for security (~3.2 x 10^21 combinations)
+            # This provides strong protection against enumeration attacks
+            session_id = str(generate(size=12))
 
             session = SessionDocument(
                 id=session_id,
@@ -121,7 +140,7 @@ class SessionStore:
 
         Args:
             page_token: Token for pagination (if using page-based pagination)
-            page_size: Number of items per page (for page-based pagination)
+            page_size: Number of items per page (defaults to 20, max 100)
             sort_by: Field name to sort by
             sort_direction: Direction to sort (ASC or DESC)
             sort_lowercase: Whether to use case-insensitive sorting
@@ -133,6 +152,14 @@ class SessionStore:
         Raises:
             DatabaseAccessError: If the database operation fails
         """
+        # Enforce pagination limits
+        if page_size is None:
+            page_size = _DEFAULT_PAGE_SIZE
+        elif page_size > _MAX_PAGE_SIZE:
+            page_size = _MAX_PAGE_SIZE
+        elif page_size < 1:
+            page_size = 1
+
         try:
             # Always filter by owner_id
             filter_list = filters or []
@@ -184,10 +211,19 @@ class SessionStore:
             The updated session document
 
         Raises:
-            ServiceRequestError: If the user doesn't own the session
+            ServiceRequestError: If the user doesn't own the session or content size exceeds limit
             DatabaseAccessError: If the database operation fails
             ValidationError: If updates contain invalid field names or values
         """
+        # Validate content size if content is being updated
+        if content is not None:
+            content_size = len(content.encode("utf-8"))
+            if content_size > _MAX_CONTENT_SIZE_BYTES:
+                raise ServiceRequestError(
+                    f"Session content size ({content_size / (1024*1024):.2f}MB) exceeds maximum allowed size of {_MAX_CONTENT_SIZE_BYTES / (1024*1024):.1f}MB",
+                    Service.DATABASE,
+                )
+
         try:
             # Verify ownership and get existing document
             existing = await self.get_async(session_id)

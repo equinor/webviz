@@ -26,10 +26,10 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const drawerContent = useGuiValue(guiMessageBroker, GuiState.RightDrawerContent);
     const rightSettingsPanelWidth = useGuiValue(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const ensembleSet = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         WorkbenchSessionTopic.ENSEMBLE_SET,
     );
-    const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
+    const realizationFilterSet = props.workbench.getSessionManager().getActiveSession().getRealizationFilterSet();
     const [, setNumberOfUnsavedRealizationFilters] = useGuiState(
         guiMessageBroker,
         GuiState.NumberOfUnsavedRealizationFilters,
@@ -153,7 +153,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
 
             // Notify subscribers of change.
-            props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
+            props.workbench.getSessionManager().getActiveSession().notifyAboutEnsembleRealizationFilterChange();
         },
         [
             ensembleIdentStringToRealizationFilterSelectionsMap,
@@ -253,7 +253,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
 
         // Notify subscribers of change.
-        props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
+        props.workbench.getSessionManager().getActiveSession().notifyAboutEnsembleRealizationFilterChange();
     }
 
     function handleDiscardClick(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) {
