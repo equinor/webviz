@@ -31,8 +31,6 @@ import {
 const STALE_TIME = tanstackDebugTimeOverride(5 * 60);
 const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
-const REFETCH_INTERVAL_MS = 10 * 1000; // 1 minute
-
 export type CaseSelection = {
     caseName: string;
     caseUuid: string;
@@ -49,8 +47,6 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const userName = React.useMemo(() => {
         return userInfo?.username.replace("@equinor.com", "").toLowerCase() ?? "";
     }, [userInfo]);
-
-    const refetchTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
     // --- State ---
     const [numberOfCases, setNumberOfCases] = React.useState<number>(0);
@@ -99,73 +95,28 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         keepStateWhenInvalid: true,
     });
 
-    // --- Refetch cases handlers ---
-    const startRefetchTimer = React.useCallback(
-        function startRefetchTimer() {
-            if (refetchTimerRef.current) {
-                clearInterval(refetchTimerRef.current);
-            }
-            refetchTimerRef.current = setInterval(() => {
-                casesQuery.refetch();
-            }, REFETCH_INTERVAL_MS);
-        },
-        [casesQuery],
-    );
-
-    const handleManualRefetch = React.useCallback(
-        function handleManualRefetch() {
-            if (casesQuery.isFetching) return;
-
-            setIsManualRefetch(true);
-            setIsRefreshAnimationPlaying(true);
-
-            casesQuery.refetch();
-            if (!props.disableQueries && selectedField !== null) {
-                startRefetchTimer();
-            }
-        },
-        [casesQuery, props.disableQueries, selectedField, startRefetchTimer],
-    );
-
     // Handle manual refresh animation
     React.useEffect(
         function handleManualRefreshAnimation() {
+            // Reset states when queries are disabled
+            if (props.disableQueries) {
+                setIsManualRefetch(false);
+                setIsRefreshAnimationPlaying(false);
+                return;
+            }
+
+            // Delayed stop of animation when refetch is done
             if (isManualRefetch && !casesQuery.isRefetching) {
                 setIsManualRefetch(false);
                 setTimeout(function stopRefreshAnimation() {
                     setIsRefreshAnimationPlaying(false);
-                }, 900);
+                }, 500);
             }
         },
-        [isManualRefetch, casesQuery.isRefetching],
-    );
-
-    // Handle auto refresh timer
-    React.useEffect(
-        function setupAutoRefetch() {
-            // Clear timer if queries are disabled or no field is selected
-            if (props.disableQueries || selectedField === null) {
-                if (refetchTimerRef.current) {
-                    clearInterval(refetchTimerRef.current);
-                    refetchTimerRef.current = null;
-                }
-                return;
-            }
-
-            startRefetchTimer();
-
-            // Cleanup on unmount
-            return () => {
-                if (refetchTimerRef.current) {
-                    clearInterval(refetchTimerRef.current);
-                }
-            };
-        },
-        [props.disableQueries, selectedField, startRefetchTimer],
+        [isManualRefetch, casesQuery.isRefetching, props.disableQueries],
     );
 
     // --- Derived data ---
-
     const lastUpdated = React.useMemo(() => {
         return casesQuery.data && casesQuery.dataUpdatedAt ? new Date(casesQuery.dataUpdatedAt) : null;
     }, [casesQuery.data, casesQuery.dataUpdatedAt]);
@@ -294,6 +245,19 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
             }));
         },
         [userName],
+    );
+
+    const handleManualRefetch = React.useCallback(
+        function handleManualRefetch() {
+            // isFetching covers both fetching and re-fetching state
+            if (casesQuery.isFetching || props.disableQueries) return;
+
+            setIsManualRefetch(true);
+            setIsRefreshAnimationPlaying(true);
+
+            casesQuery.refetch();
+        },
+        [casesQuery, props.disableQueries],
     );
 
     return (
