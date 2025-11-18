@@ -62,22 +62,19 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     React.useEffect(
         function onMountEffect() {
-            if (dataProviderManager) {
-                return;
-            }
-
             const newLayerManager = new DataProviderManager(
                 props.workbenchSession,
                 props.workbenchSettings,
                 queryClient,
             );
+
             setDataProviderManager(newLayerManager);
 
             return function onUnmountEffect() {
                 newLayerManager.beforeDestroy();
             };
         },
-        [setDataProviderManager, dataProviderManager, props.workbenchSession, props.workbenchSettings, queryClient],
+        [setDataProviderManager, props.workbenchSession, props.workbenchSettings, queryClient],
     );
 
     React.useEffect(

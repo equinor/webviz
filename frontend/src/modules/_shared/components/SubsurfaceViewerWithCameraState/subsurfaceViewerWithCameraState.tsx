@@ -1,8 +1,10 @@
 import React from "react";
 
-import type { SubsurfaceViewerProps, ViewStateType } from "@webviz/subsurface-viewer";
+import type { BoundingBox2D, SubsurfaceViewerProps, ViewStateType } from "@webviz/subsurface-viewer";
 import SubsurfaceViewer from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { isEqual } from "lodash";
+
+import * as bbox from "@lib/utils/bbox";
 
 export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {
     initialCameraPosition?: ViewStateType;
@@ -14,15 +16,28 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
     const { getCameraPosition, onCameraPositionApplied } = props;
 
     const [prevTriggerHome, setPrevTriggerHome] = React.useState<number | undefined>(0);
-    const [prevBounds, setPrevBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
+    const [prevBounds, setPrevBounds] = React.useState<BoundingBox2D | undefined>(undefined);
     const [prevCameraPosition, setPrevCameraPosition] = React.useState<ViewStateType | undefined>(
         props.initialCameraPosition,
     );
     const [cameraPosition, setCameraPosition] = React.useState<ViewStateType | undefined>(props.initialCameraPosition);
 
-    if (!isEqual(props.bounds, prevBounds)) {
-        setPrevBounds(props.bounds);
-        // setCameraPosition(undefined);
+    // We only want to reset camera position when bounds change significantly (non-overlapping - this happens on a field change for instance)
+    // or when triggered explicitly (e.g., home button).
+    // We also want to update camera position when props.cameraPosition changes.
+    let propsBounds = props.bounds;
+    if (typeof propsBounds === "function") {
+        propsBounds = propsBounds();
+    }
+    if (!isEqual(propsBounds, prevBounds)) {
+        setPrevBounds(propsBounds);
+        if (propsBounds && prevBounds) {
+            const prevBbox = bbox.fromNumArray([prevBounds[0], prevBounds[1], 0, prevBounds[2], prevBounds[3], 0]);
+            const newBbox = bbox.fromNumArray([propsBounds[0], propsBounds[1], 0, propsBounds[2], propsBounds[3], 0]);
+            if (!bbox.intersects(prevBbox, newBbox)) {
+                setCameraPosition(undefined);
+            }
+        }
     }
 
     if (props.triggerHome !== prevTriggerHome) {
