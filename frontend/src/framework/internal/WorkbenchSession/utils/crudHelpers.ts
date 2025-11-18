@@ -5,6 +5,7 @@ import {
     createSnapshot,
     getSessionMetadataQueryKey,
     getSessionQueryKey,
+    getSessionsMetadataInfiniteQueryKey,
     getSessionsMetadataQueryKey,
     getSnapshotAccessLogsInfiniteQueryKey,
     getSnapshotAccessLogsQueryKey,
@@ -28,9 +29,8 @@ export async function createSessionWithCacheUpdate(
     });
 
     // Refetch to immediately update the sessions list
-    await queryClient.refetchQueries({
-        queryKey: getSessionsMetadataQueryKey(),
-    });
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSessionsMetadataQueryKey()]));
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSessionsMetadataInfiniteQueryKey()]));
 
     return response.data;
 }
@@ -48,13 +48,9 @@ export async function updateSessionAndCache(
         body: sessionUpdate,
     });
 
-    // Invalidate the cache for the session to ensure the updated session is fetched
-    queryClient.invalidateQueries({
-        queryKey: getSessionQueryKey({ path: { session_id: sessionId } }),
-    });
-    queryClient.invalidateQueries({
-        queryKey: getSessionsMetadataQueryKey(),
-    });
+    // Refetch to immediately update the session and sessions list
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSessionsMetadataQueryKey()]));
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSessionsMetadataInfiniteQueryKey()]));
 }
 
 export async function createSnapshotWithCacheUpdate(
@@ -68,20 +64,10 @@ export async function createSnapshotWithCacheUpdate(
 
     // Refetch (not just invalidate) to immediately fetch the new snapshot
     // This ensures the UI updates instantly with the newly created snapshot
-    await Promise.all([
-        queryClient.refetchQueries({
-            queryKey: getSnapshotsMetadataQueryKey(),
-        }),
-        queryClient.refetchQueries({
-            queryKey: getSnapshotsMetadataInfiniteQueryKey(),
-        }),
-        queryClient.refetchQueries({
-            queryKey: getSnapshotAccessLogsQueryKey(),
-        }),
-        queryClient.refetchQueries({
-            queryKey: getSnapshotAccessLogsInfiniteQueryKey(),
-        }),
-    ]);
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSnapshotsMetadataQueryKey()]));
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSnapshotsMetadataInfiniteQueryKey()]));
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSnapshotAccessLogsQueryKey()]));
+    queryClient.refetchQueries(makeTanstackQueryFilters([getSnapshotAccessLogsInfiniteQueryKey()]));
 
     return response.data;
 }
