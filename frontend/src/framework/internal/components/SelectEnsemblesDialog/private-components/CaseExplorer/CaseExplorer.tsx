@@ -7,8 +7,8 @@ import { isEqual } from "lodash";
 import { getCasesOptions, getFieldsOptions, type EnsembleInfo_api } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -312,23 +312,20 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     <div className="flex justify-end gap-4 items-center mb-1">
                         <div className="grow flex flex-col">
                             <span className="text-sm text-slate-500">Select from {numberOfCases} cases</span>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-slate-400 italic">
                                 Last updated: {lastUpdated?.toLocaleTimeString() ?? ""}
                             </span>
                         </div>
-                        <div className="flex flex-row items-center">
-                            <span className="text-sm text-slate-500">Refresh cases</span>
+                        <div className="flex flex-col items-center">
                             <Tooltip title="Refresh cases list" enterDelay="medium">
-                                <DenseIconButton
-                                    onClick={handleManualRefetch}
-                                    disabled={props.disableQueries || selectedField === null}
-                                >
+                                <Button color="primary" onClick={handleManualRefetch} size="small">
                                     {isRefreshAnimationPlaying ? (
-                                        <CircularProgress size="medium-small" color="fill-indigo-800" />
+                                        <CircularProgress size="medium-small" />
                                     ) : (
-                                        <Refresh fontSize="small" className="text-indigo-800" />
+                                        <Refresh fontSize="small" />
                                     )}
-                                </DenseIconButton>
+                                    Refresh
+                                </Button>
                             </Tooltip>
                         </div>
                     </div>
