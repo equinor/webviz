@@ -11,7 +11,7 @@ export function useRefreshQuery(query: QueryObserverBaseResult<any, any>): UseRe
     const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
 
     const refresh = React.useCallback(
-        function handleRefreshClick() {
+        function refresh() {
             setIsRefreshing(true);
             query.refetch().finally(() => {
                 setIsRefreshing(false);
