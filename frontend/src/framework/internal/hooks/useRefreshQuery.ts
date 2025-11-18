@@ -8,17 +8,17 @@ export type UseRefreshQueryResult = {
 };
 
 export function useRefreshQuery(query: QueryObserverBaseResult<any, any>): UseRefreshQueryResult {
-    const [isManuallyRefreshing, setIsManuallyRefreshing] = React.useState<boolean>(false);
+    const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
 
-    const handleRefreshClick = React.useCallback(
+    const refresh = React.useCallback(
         function handleRefreshClick() {
-            setIsManuallyRefreshing(true);
+            setIsRefreshing(true);
             query.refetch().finally(() => {
-                setIsManuallyRefreshing(false);
+                setIsRefreshing(false);
             });
         },
         [query],
     );
 
-    return { isRefreshing: isManuallyRefreshing, refresh: handleRefreshClick };
+    return { isRefreshing, refresh };
 }
