@@ -275,7 +275,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                     title: newValue || undefined,
                 };
             });
-        }, 300);
+        }, 800);
     }
 
     function handleClearTitleFilter() {

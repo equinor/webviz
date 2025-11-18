@@ -23,6 +23,7 @@ import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellV
 import type { TableColumns, TableSorting, TContext } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
+import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { formatDate } from "@lib/utils/dates";
 
 import { UserAvatar } from "../UserAvatar";
@@ -229,7 +230,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         { columnId: "lastVisitedAt", direction: TableSortDirection.DESC },
     ]);
 
-    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const timeoutFunction = useTimeoutFunction();
 
     const querySortParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
         if (!tableSortState?.length) return undefined;
@@ -274,11 +275,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
     }
 
     function handleTitleFilterValueChange(e: React.ChangeEvent<HTMLInputElement>) {
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
-
-        debounceTimerRef.current = setTimeout(() => {
+        timeoutFunction(() => {
             const newValue = e.target.value;
             setTableFilter((prev) => {
                 return {
@@ -286,7 +283,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     title: newValue ?? undefined,
                 };
             });
-        }, 300);
+        }, 800);
     }
 
     function handleClearTitleFilter() {
@@ -361,14 +358,6 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         if (!selectedSnapshotId) return null;
         return tableData.find((snapshot) => snapshot.snapshotId === selectedSnapshotId) || null;
     }, [tableData, selectedSnapshotId]);
-
-    React.useEffect(function onMountEffect() {
-        return () => {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
-        };
-    }, []);
 
     React.useEffect(
         function maybeRefetchNextPageEffect() {
