@@ -1,10 +1,13 @@
 import React from "react";
-import { Input } from "../Input";
-import { Button } from "../Button";
-import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
+
 import { AssignmentTurnedIn, ContentPaste } from "@mui/icons-material";
-import { Tooltip } from "../Tooltip";
+
+import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
+
+import { Button } from "../Button";
 import type { ButtonProps } from "../Button/button";
+import { Input } from "../Input";
+import { Tooltip } from "../Tooltip";
 
 export type CopyInputFieldProps = {
     value: string;

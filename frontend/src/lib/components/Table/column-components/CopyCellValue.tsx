@@ -1,10 +1,12 @@
+import React from "react";
+
+import { AssignmentTurnedIn, ContentPaste, ContentPasteOff } from "@mui/icons-material";
+
 import { IconButton } from "@lib/components/IconButton";
 import type { IconButtonProps } from "@lib/components/IconButton/iconButton";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { AssignmentTurnedIn, ContentPaste, ContentPasteOff } from "@mui/icons-material";
-import React from "react";
 
 export type CopyCellValueProps = {
     onCopyRequested: () => string;

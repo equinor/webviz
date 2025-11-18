@@ -1,5 +1,6 @@
-import type { Vec3 } from "@lib/utils/vec3";
 import type { JTDSchemaType } from "ajv/dist/core";
+
+import type { Vec3 } from "@lib/utils/vec3";
 
 export const VEC3_SCHEMA: JTDSchemaType<Vec3> = {
     properties: {

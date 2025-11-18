@@ -4,6 +4,8 @@ import { Edit, Remove } from "@mui/icons-material";
 
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
 import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { KeyKind } from "@framework/types/dataChannnel";
 import type { Workbench } from "@framework/Workbench";
@@ -12,8 +14,6 @@ import { rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { vec2FromPointerEvent } from "@lib/utils/vec2";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
-import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
 
 export type ChannelReceiverNodeProps = {
     idString: string;

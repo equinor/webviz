@@ -5,11 +5,11 @@ import { folder_open } from "@equinor/eds-icons";
 import { Refresh } from "@mui/icons-material";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 
+import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
-import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 
 Icon.add({ folder_open });
 

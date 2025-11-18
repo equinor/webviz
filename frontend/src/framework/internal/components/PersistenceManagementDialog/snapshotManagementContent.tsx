@@ -8,6 +8,7 @@ import { omit } from "lodash";
 
 import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
+import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
@@ -18,6 +19,7 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
+import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
 import type { TableColumns, TableSorting, TContext } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -34,8 +36,6 @@ import {
     TABLE_HEIGHT,
     USE_ALTERNATING_COLUMN_COLORS,
 } from "./constants";
-import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
-import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {

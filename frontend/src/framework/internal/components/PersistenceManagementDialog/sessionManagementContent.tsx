@@ -15,6 +15,7 @@ import type {
     SortDirection_api,
 } from "@api";
 import { getSessionsMetadata, SessionSortBy_api } from "@api";
+import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -25,6 +26,7 @@ import { Table } from "@lib/components/Table";
 import type { TableColumns, TableSorting } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
+import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { formatDate } from "@lib/utils/dates";
 
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
@@ -39,7 +41,6 @@ import {
     TABLE_HEIGHT,
     HEADER_HEIGHT,
 } from "./constants";
-import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 
 type TableFilter = {
     title?: string;
@@ -204,8 +205,9 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
     const [tableSortState, setTableSortState] = React.useState<TableSorting>([
         { columnId: "updatedAt", direction: TableSortDirection.DESC },
     ]);
+    const [titleInputValue, setTitleInputValue] = React.useState<string>("");
 
-    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const timeoutFunction = useTimeoutFunction();
 
     const querySortParams = React.useMemo<Options<GetSessionsMetadataData_api>["query"]>(() => {
         if (!tableSortState?.length) return undefined;
@@ -241,14 +243,6 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         return tableData.find((session) => session.id === selectedSessionId) || null;
     }, [tableData, selectedSessionId]);
 
-    React.useEffect(function onMountEffect() {
-        return () => {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
-        };
-    }, []);
-
     React.useEffect(
         function maybeRefetchNextPageEffect() {
             if (!visibleRowRange || visibleRowRange.end === -1) return;
@@ -271,12 +265,10 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
     }
 
     function handleTitleFilterValueChange(e: React.ChangeEvent<HTMLInputElement>) {
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
+        const newValue = e.target.value;
+        setTitleInputValue(newValue);
 
-        debounceTimerRef.current = setTimeout(() => {
-            const newValue = e.target.value;
+        timeoutFunction(() => {
             setTableFilter((prev) => {
                 return {
                     ...prev,
@@ -287,6 +279,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
     }
 
     function handleClearTitleFilter() {
+        setTitleInputValue("");
         setTableFilter((prev) => {
             return {
                 ...prev,
@@ -337,7 +330,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                                 <Close fontSize="inherit" />
                             </DenseIconButton>
                         }
-                        value={tableFilter.title ?? ""}
+                        value={titleInputValue}
                         placeholder="Search title"
                         onChange={handleTitleFilterValueChange}
                         className="h-6"

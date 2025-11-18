@@ -1,5 +1,6 @@
-import type { QueryObserverBaseResult } from "@tanstack/query-core";
 import React from "react";
+
+import type { QueryObserverBaseResult } from "@tanstack/query-core";
 
 export type UseRefreshQueryResult = {
     isRefreshing: boolean;

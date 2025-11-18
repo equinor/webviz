@@ -1,7 +1,7 @@
-import React from "react";
+import type React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type CaseNameAndIdCellProps = {
     caseName: string;
