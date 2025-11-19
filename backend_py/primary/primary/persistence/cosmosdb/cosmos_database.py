@@ -3,9 +3,9 @@ from types import TracebackType
 from typing import Optional, Type
 from azure.cosmos.aio import CosmosClient, ContainerProxy
 from azure.cosmos import exceptions
+from webviz_services.service_exceptions import Service, ServiceRequestError
 
 from primary.config import COSMOS_DB_PROD_CONNECTION_STRING, COSMOS_DB_EMULATOR_URI, COSMOS_DB_EMULATOR_KEY
-from webviz_services.service_exceptions import Service, ServiceRequestError
 
 
 LOGGER = logging.getLogger(__name__)
