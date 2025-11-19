@@ -6,6 +6,8 @@ import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/pe
 import type { SerializedSettings as FlowNetworkSettings } from "@modules/FlowNetwork/settings/persistence";
 import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
+import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
+import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
 import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
 
 export type ModuleSerializedStateMap = {
@@ -86,8 +88,8 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "SimulationTimeSeries": {
-    settings?: never,
-    view?: never,
+    settings?: Partial<SimulationTimeSeriesSettings>,
+    view?: Partial<SimulationTimeSeriesView>,
   },
   "SimulationTimeSeriesSensitivity": {
     settings?: never,
