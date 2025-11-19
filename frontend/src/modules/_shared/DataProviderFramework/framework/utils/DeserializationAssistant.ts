@@ -5,12 +5,12 @@ import type {
     SerializedDataProvider,
     SerializedGroup,
     SerializedItem,
-    SerializedSettingsGroup,
+    SerializedContextBoundary,
     SerializedSharedSetting,
 } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
+import { ContextBoundary } from "../ContextBoundary/ContextBoundary";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
-import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
 export class DeserializationAssistant {
@@ -23,7 +23,7 @@ export class DeserializationAssistant {
     makeItem(serialized: SerializedItem): Item {
         if (serialized.type === SerializedType.DATA_PROVIDER_MANAGER) {
             throw new Error(
-                "Cannot deserialize a DataProviderManager in DeserializationFactory. A DataProviderManager can never be a descendant of a DataProviderManager."
+                "Cannot deserialize a DataProviderManager in DeserializationFactory. A DataProviderManager can never be a descendant of a DataProviderManager.",
             );
         }
 
@@ -32,7 +32,7 @@ export class DeserializationAssistant {
             const provider = DataProviderRegistry.makeDataProvider(
                 serializedDataProvider.dataProviderType,
                 this._dataProviderManager,
-                serializedDataProvider.name
+                serializedDataProvider.name,
             );
             provider.deserializeState(serializedDataProvider);
             provider.getItemDelegate().setId(serializedDataProvider.id);
@@ -47,11 +47,11 @@ export class DeserializationAssistant {
             return group;
         }
 
-        if (serialized.type === SerializedType.SETTINGS_GROUP) {
-            const serializedSettingsGroup = serialized as SerializedSettingsGroup;
-            const settingsGroup = new SettingsGroup(serializedSettingsGroup.name, this._dataProviderManager);
-            settingsGroup.deserializeState(serializedSettingsGroup);
-            return settingsGroup;
+        if (serialized.type === SerializedType.CONTEXT_BOUNDARY) {
+            const serializedContextBoundary = serialized as SerializedContextBoundary;
+            const contextBoundary = new ContextBoundary(serializedContextBoundary.name, this._dataProviderManager);
+            contextBoundary.deserializeState(serializedContextBoundary);
+            return contextBoundary;
         }
 
         if (serialized.type === SerializedType.SHARED_SETTING) {
@@ -59,7 +59,7 @@ export class DeserializationAssistant {
             const setting = new SharedSetting(
                 serializedSharedSetting.wrappedSettingType,
                 serializedSharedSetting.value,
-                this._dataProviderManager
+                this._dataProviderManager,
             );
             setting.deserializeState(serializedSharedSetting);
             return setting;

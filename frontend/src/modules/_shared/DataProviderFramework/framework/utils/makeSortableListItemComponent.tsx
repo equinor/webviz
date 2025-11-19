@@ -1,13 +1,13 @@
 import type { ActionGroup } from "../../Actions";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
+import { isContextBoundary } from "../ContextBoundary/ContextBoundary";
+import { ContextBoundaryComponent } from "../ContextBoundary/ContextBoundaryComponent";
 import { isDataProvider } from "../DataProvider/DataProvider";
 import { DataProviderComponent } from "../DataProvider/DataProviderComponent";
 import { DeltaSurface } from "../DeltaSurface/DeltaSurface";
 import { DeltaSurfaceComponent } from "../DeltaSurface/DeltaSurfaceComponent";
 import { isGroup } from "../Group/Group";
 import { GroupComponent } from "../Group/GroupComponent";
-import { isSettingsGroup } from "../SettingsGroup/SettingsGroup";
-import { SettingsGroupComponent } from "../SettingsGroup/SettingsGroupComponent";
 import { isSharedSetting } from "../SharedSetting/SharedSetting";
 import { SharedSettingComponent } from "../SharedSetting/SharedSettingComponent";
 
@@ -19,9 +19,9 @@ export function makeSortableListItemComponent(
     if (isDataProvider(item)) {
         return <DataProviderComponent key={item.getItemDelegate().getId()} dataProvider={item} />;
     }
-    if (isSettingsGroup(item)) {
+    if (isContextBoundary(item)) {
         return (
-            <SettingsGroupComponent
+            <ContextBoundaryComponent
                 key={item.getItemDelegate().getId()}
                 group={item}
                 makeActionsForGroup={makeActionsForGroup}
