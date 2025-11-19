@@ -13,6 +13,7 @@ type PlainAnnotationStrings = {
     errorAnnotation?: string;
     warningAnnotation?: string;
     infoAnnotation?: string;
+    annotations?: never;
 };
 
 export type Help = {
@@ -20,6 +21,12 @@ export type Help = {
     content: React.ReactNode;
 };
 
+/**
+ * Props for the SettingWrapper component.
+ *
+ * Note: Annotations can be provided either as an array of SettingAnnotation objects OR as individual
+ * plain string properties (errorAnnotation, warningAnnotation, infoAnnotation), but not both.
+ */
 export type SettingWrapperProps = {
     children: React.ReactElement;
     errorOverlay?: string;
@@ -31,14 +38,25 @@ export type SettingWrapperProps = {
 } & (
     | {
           annotations?: SettingAnnotation[];
+          errorAnnotation?: never;
+          warningAnnotation?: never;
+          infoAnnotation?: never;
       }
     | PlainAnnotationStrings
 );
 
 function isNotAnnotationList(props: SettingWrapperProps): props is SettingWrapperProps & PlainAnnotationStrings {
-    return !Array.isArray((props as any).annotations);
+    return props.annotations === undefined;
 }
 
+/**
+ * A wrapper component for module settings that provides consistent styling for labels, help text,
+ * annotations, and overlay states.
+ *
+ * Supports two ways to display annotations: either through an array of SettingAnnotation objects
+ * or via individual string properties (errorAnnotation, warningAnnotation, infoAnnotation).
+ * These two approaches are mutually exclusive and cannot be combined.
+ */
 export function SettingWrapper(props: SettingWrapperProps) {
     const id = React.useId();
 
