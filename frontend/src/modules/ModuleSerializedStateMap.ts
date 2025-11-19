@@ -3,6 +3,7 @@
 
 import type { SerializedSettings as M_2DViewerSettings } from "@modules/2DViewer/settings/persistence";
 import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/persistence";
+import type { SerializedSettings as FlowNetworkSettings } from "@modules/FlowNetwork/settings/persistence";
 import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
@@ -25,7 +26,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "FlowNetwork": {
-    settings?: never,
+    settings?: Partial<FlowNetworkSettings>,
     view?: never,
   },
   "InplaceVolumesPlot": {
