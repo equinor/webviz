@@ -30,13 +30,20 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         WorkbenchSessionTopic.ENSEMBLE_SET,
     );
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
-    const [, setNumberOfUnsavedRealizationFilters] = useGuiState(
+    const [numberOfUnsavedRealizationFiltersGuiState, setNumberOfUnsavedRealizationFiltersGuiState] = useGuiState(
         guiMessageBroker,
         GuiState.NumberOfUnsavedRealizationFilters,
     );
-    const [, setNumberOfEffectiveRealizationFilters] = useGuiState(
+    const [numberOfEffectiveRealizationFiltersGuiState, setNumberOfEffectiveRealizationFiltersGuiState] = useGuiState(
         guiMessageBroker,
         GuiState.NumberOfEffectiveRealizationFilters,
+    );
+
+    const [numberOfUnsavedRealizationFilters, setNumberOfUnsavedRealizationFilters] = React.useState(
+        numberOfUnsavedRealizationFiltersGuiState,
+    );
+    const [numberOfEffectiveRealizationFilters, setNumberOfEffectiveRealizationFilters] = React.useState(
+        numberOfEffectiveRealizationFiltersGuiState,
     );
 
     const [activeFilterEnsembleIdent, setActiveFilterEnsembleIdent] = React.useState<
@@ -53,6 +60,32 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     ] = React.useState<{
         [ensembleIdentString: string]: EnsembleRealizationFilterSelections;
     }>({});
+
+    React.useEffect(
+        function propagateNumberOfUnsavedRealizationFiltersGuiState() {
+            if (numberOfUnsavedRealizationFilters !== numberOfUnsavedRealizationFiltersGuiState) {
+                setNumberOfUnsavedRealizationFiltersGuiState(numberOfUnsavedRealizationFilters);
+            }
+        },
+        [
+            numberOfUnsavedRealizationFilters,
+            numberOfUnsavedRealizationFiltersGuiState,
+            setNumberOfUnsavedRealizationFiltersGuiState,
+        ],
+    );
+
+    React.useEffect(
+        function propagateNumberOfEffectiveRealizationFiltersGuiState() {
+            if (numberOfEffectiveRealizationFilters !== numberOfEffectiveRealizationFiltersGuiState) {
+                setNumberOfEffectiveRealizationFiltersGuiState(numberOfEffectiveRealizationFilters);
+            }
+        },
+        [
+            numberOfEffectiveRealizationFilters,
+            numberOfEffectiveRealizationFiltersGuiState,
+            setNumberOfEffectiveRealizationFiltersGuiState,
+        ],
+    );
 
     // Set no active filter if the settings panel is closed
     if (rightSettingsPanelWidth < 5 && activeFilterEnsembleIdent !== null) {
