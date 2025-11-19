@@ -5,7 +5,7 @@ from azure.cosmos.aio import CosmosClient, ContainerProxy
 from azure.cosmos import exceptions
 
 from primary.config import COSMOS_DB_PROD_CONNECTION_STRING, COSMOS_DB_EMULATOR_URI, COSMOS_DB_EMULATOR_KEY
-from primary.services.service_exceptions import Service, ServiceRequestError
+from webviz_services.service_exceptions import Service, ServiceRequestError
 
 
 LOGGER = logging.getLogger(__name__)
