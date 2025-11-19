@@ -8,6 +8,8 @@ import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
+import type { SerializedSettings as SimulationTimeSeriesSensitivitySettings } from "@modules/SimulationTimeSeriesSensitivity/settings/persistence";
+import type { SerializedView as SimulationTimeSeriesSensitivityView } from "@modules/SimulationTimeSeriesSensitivity/view/persistence";
 import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
 
 export type ModuleSerializedStateMap = {
@@ -92,10 +94,14 @@ export type ModuleSerializedStateMap = {
     view?: Partial<SimulationTimeSeriesView>,
   },
   "SimulationTimeSeriesSensitivity": {
+    settings?: Partial<SimulationTimeSeriesSensitivitySettings>,
+    view?: Partial<SimulationTimeSeriesSensitivityView>,
+  },
+  "SubsurfaceMap": {
     settings?: never,
     view?: never,
   },
-  "SubsurfaceMap": {
+  "TopographicMap": {
     settings?: never,
     view?: never,
   },
