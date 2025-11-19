@@ -96,8 +96,8 @@ export const selectedSelectorColumnAtom = persistableFixableAtom<string | null, 
         return value !== null && precomputedValue.includes(value);
     },
     fixupFunction: ({ value, get, precomputedValue }) => {
-        const plotTypeAtom = get(selectedPlotTypeAtom);
-        if (plotTypeAtom !== PlotType.BAR) {
+        const plotType = get(selectedPlotTypeAtom);
+        if (plotType !== PlotType.BAR) {
             return null;
         }
         const fixedSelection = fixupUserSelection([value], precomputedValue) ?? [];
