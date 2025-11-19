@@ -4,22 +4,24 @@ from typing import Annotated, List, Optional, Literal
 
 import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from webviz_pkg.core_utils.type_utils import expect_type
 
-from primary.services.sumo_access.case_inspector import CaseInspector
-from primary.services.sumo_access.surface_access import SurfaceAccess
-from primary.services.sumo_access.surface_access import ExpectedError, InProgress
-from primary.services.smda_access import SmdaAccess, StratigraphicUnit
-from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from primary.services.smda_access.drogon import DrogonSmdaAccess
-from primary.services.utils.statistic_function import StatisticFunction
-from primary.services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
-from primary.services.utils.authenticated_user import AuthenticatedUser
-from primary.services.utils.task_meta_tracker import get_task_meta_tracker_for_user
+from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.type_utils import expect_type
+from webviz_services.sumo_access.case_inspector import CaseInspector
+from webviz_services.sumo_access.surface_access import SurfaceAccess
+from webviz_services.sumo_access.surface_access import ExpectedError, InProgress
+from webviz_services.smda_access import SmdaAccess, StratigraphicUnit
+from webviz_services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
+from webviz_services.smda_access.drogon import DrogonSmdaAccess
+from webviz_services.utils.statistic_function import StatisticFunction
+from webviz_services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
+from webviz_services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
+from webviz_services.surface_query_service.surface_query_service import RealizationSampleResult
+from webviz_services.service_exceptions import ServiceLayerException
+
 from primary.auth.auth_helper import AuthHelper
-from primary.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
-from primary.services.surface_query_service.surface_query_service import RealizationSampleResult
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
 
@@ -76,18 +78,24 @@ async def get_realization_surfaces_metadata(
     """
     perf_metrics = ResponsePerfMetrics(response)
 
-    async with asyncio.TaskGroup() as tg:
-        access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-        case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    try:
+        async with asyncio.TaskGroup() as tg:
+            access = SurfaceAccess.from_ensemble_name(
+                authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+            )
+            case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
 
-        surf_meta_task = tg.create_task(access.get_realization_surfaces_metadata_async())
-        surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
+            surf_meta_task = tg.create_task(access.get_realization_surfaces_metadata_async())
+            surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
 
-        strat_column_ident = await case_inspector.get_stratigraphic_column_identifier_async()
-        strat_units_task = tg.create_task(
-            _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_ident)
-        )
-        strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
+            strat_column_ident = await case_inspector.get_stratigraphic_column_identifier_async()
+            strat_units_task = tg.create_task(
+                _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_ident)
+            )
+            strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
+    except* ServiceLayerException as exc_group:
+        for exc in exc_group.exceptions:
+            raise exc from exc_group  # Reraise the first exception
 
     perf_metrics.reset_lap_timer()
     sumo_surf_meta_set = surf_meta_task.result()
@@ -113,18 +121,22 @@ async def get_observed_surfaces_metadata(
     """
     perf_metrics = ResponsePerfMetrics(response)
 
-    async with asyncio.TaskGroup() as tg:
-        access = SurfaceAccess.from_case_uuid_no_ensemble(authenticated_user.get_sumo_access_token(), case_uuid)
-        case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    try:
+        async with asyncio.TaskGroup() as tg:
+            access = SurfaceAccess.from_case_uuid_no_ensemble(authenticated_user.get_sumo_access_token(), case_uuid)
+            case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
 
-        surf_meta_task = tg.create_task(access.get_observed_surfaces_metadata_async())
-        surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
+            surf_meta_task = tg.create_task(access.get_observed_surfaces_metadata_async())
+            surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
 
-        strat_column_ident = await case_inspector.get_stratigraphic_column_identifier_async()
-        strat_units_task = tg.create_task(
-            _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_ident)
-        )
-        strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
+            strat_column_ident = await case_inspector.get_stratigraphic_column_identifier_async()
+            strat_units_task = tg.create_task(
+                _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_ident)
+            )
+            strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
+    except* ServiceLayerException as exc_group:
+        for exc in exc_group.exceptions:
+            raise exc from exc_group  # Reraise the first exception
 
     perf_metrics.reset_lap_timer()
     sumo_surf_meta_set = surf_meta_task.result()
@@ -442,7 +454,7 @@ def _resample_and_convert_to_surface_data_response(
     xtgeo_surf: xtgeo.RegularSurface,
     resample_to: schemas.SurfaceDef | None,
     data_format: Literal["float", "png"],
-    perf_metrics: PerfMetrics,
+    perf_metrics: ResponsePerfMetrics,
 ) -> schemas.SurfaceDataFloat | schemas.SurfaceDataPng:
     """
     Helper to do both resampling (if any) and conversion to API response format.

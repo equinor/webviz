@@ -1,7 +1,7 @@
-import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { PlotType } from "@modules/DistributionPlot/typesAndEnums";
 import { ChannelIds } from "@modules/SimulationTimeSeriesSensitivity/channelDefs";
 

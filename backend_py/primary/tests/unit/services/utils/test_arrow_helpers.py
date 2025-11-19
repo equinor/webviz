@@ -2,12 +2,12 @@ import pytest
 import pyarrow as pa
 import numpy as np
 
-from primary.services.service_exceptions import InvalidDataError, Service
+from webviz_services.service_exceptions import InvalidDataError, Service
 
-from primary.services.utils.arrow_helpers import is_date_column_monotonically_increasing
-from primary.services.utils.arrow_helpers import find_first_non_increasing_date_pair
-from primary.services.utils.arrow_helpers import detect_missing_realizations
-from primary.services.utils.arrow_helpers import validate_summary_vector_table_pa
+from webviz_services.utils.arrow_helpers import is_date_column_monotonically_increasing
+from webviz_services.utils.arrow_helpers import find_first_non_increasing_date_pair
+from webviz_services.utils.arrow_helpers import detect_missing_realizations
+from webviz_services.utils.arrow_helpers import validate_summary_vector_table_pa
 
 
 def test_monotonically_increasing_date_util_functions() -> None:

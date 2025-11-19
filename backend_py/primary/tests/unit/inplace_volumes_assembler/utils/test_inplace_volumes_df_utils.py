@@ -1,9 +1,9 @@
 import pytest
 import polars as pl
-from primary.services.service_exceptions import InvalidDataError
-from primary.services.sumo_access.inplace_volumes_table_types import InplaceVolumes
+from webviz_services.service_exceptions import InvalidDataError
+from webviz_services.sumo_access.inplace_volumes_table_types import InplaceVolumes
 
-from primary.services.inplace_volumes_table_assembler._utils.inplace_volumes_df_utils import (
+from webviz_services.inplace_volumes_table_assembler._utils.inplace_volumes_df_utils import (
     create_inplace_volumes_df_per_unique_fluid_value,
     remove_invalid_optional_index_columns,
     sum_inplace_volumes_grouped_by_indices_and_real_df,

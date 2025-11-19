@@ -1,24 +1,24 @@
 from typing import List
-import xtgeo
 
-from primary.services.smda_access.types import StratigraphicSurface
-from primary.services.sumo_access.polygons_types import PolygonsMeta as SumoPolygonsMeta
+from webviz_services.smda_access.types import StratigraphicSurface
+from webviz_services.sumo_access.polygons_types import PolygonsMeta as SumoPolygonsMeta, PolygonData
 
 from . import schemas
 
 
-def to_api_polygons_data(xtgeo_poly: xtgeo.Polygons) -> List[schemas.PolygonData]:
+def to_api_polygons_data(poly_data: list[PolygonData]) -> List[schemas.PolygonData]:
     """
-    Create API PolygonsData from xtgeo polygons
+    Create a list of API PolygonData objects from a list of PolygonData.
     """
     polydata: List[schemas.PolygonData] = []
-    for poly_id, polygon in xtgeo_poly.dataframe.groupby("POLY_ID"):
+    for polygon in poly_data:
         polydata.append(
             schemas.PolygonData(
-                x_arr=list(polygon.X_UTME),
-                y_arr=list(polygon.Y_UTMN),
-                z_arr=list(polygon.Z_TVDSS),
-                poly_id=poly_id,
+                x_arr=polygon.x_arr,
+                y_arr=polygon.y_arr,
+                z_arr=polygon.z_arr,
+                poly_id=polygon.poly_id,
+                name=polygon.name,
             )
         )
     return polydata
