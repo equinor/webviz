@@ -10,7 +10,7 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { SettingWrapper } from "@lib/components/SettingWrapper/settingWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
-import { useMakePersistableAtomWarningMessage } from "@modules/_shared/hooks/useMakePersistableAtomErrorMessage";
+import { useMakePersistableAtomErrorMessage } from "@modules/_shared/hooks/useMakePersistableAtomErrorMessage";
 
 import {
     DataProviderManager,
@@ -121,7 +121,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         dataProviderManager.updateGlobalSetting("fieldId", fieldId);
     }
 
-    const fieldIdentifierWarningAnnotations = useMakePersistableAtomWarningMessage(fieldIdentifierAtom);
+    const fieldIdentifierWarningAnnotations = useMakePersistableAtomErrorMessage(fieldIdentifierAtom);
 
     return (
         <div className="h-full flex flex-col gap-1">
