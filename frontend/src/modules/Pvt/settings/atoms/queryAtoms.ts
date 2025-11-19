@@ -6,12 +6,11 @@ import { atomWithQueries } from "@framework/utils/atomUtils";
 
 import type { CombinedPvtDataResult } from "../../typesAndEnums";
 
-import { selectedEnsembleIdentsAtom, selectedRealizationsAtom } from "./derivedAtoms";
-
+import { selectedEnsembleIdentsAtom, selectedRealizationNumbersAtom } from "./persistableFixableAtoms";
 
 export const pvtDataQueriesAtom = atomWithQueries((get) => {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
-    const selectedRealizations = get(selectedRealizationsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const selectedRealizations = get(selectedRealizationNumbersAtom).value;
 
     const ensembleIdentsAndRealizations: { ensembleIdent: RegularEnsembleIdent; realization: number }[] = [];
     for (const ensembleIdent of selectedEnsembleIdents) {
@@ -46,7 +45,6 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
             }),
             errors: results.map((result) => result.error).filter((err) => err !== null) as Error[],
             isFetching: results.some((result) => result.isFetching),
-            someQueriesFailed: results.some((result) => result.isError),
             allQueriesFailed: results.every((result) => result.isError),
         };
     }
