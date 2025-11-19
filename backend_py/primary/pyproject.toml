@@ -28,6 +28,7 @@ webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
 webviz-services = { path = "../libs/services", develop = true }
 azure-cosmos = "^4.9.0"
 nanoid = "^2.0.0"
+aiohttp = "^3.11.18"
 
 [tool.poetry.group.dev.dependencies]
 types-nanoid = "^2.0.0"
