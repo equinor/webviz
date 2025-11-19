@@ -7,9 +7,10 @@ import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { SettingWrapper } from "@lib/components/SettingWrapper/settingWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import { useMakePersistableAtomErrorMessage } from "@modules/_shared/hooks/useMakePersistableAtomErrorMessage";
 
 import {
     DataProviderManager,
@@ -120,16 +121,18 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         dataProviderManager.updateGlobalSetting("fieldId", fieldId);
     }
 
+    const fieldIdentifierWarningAnnotations = useMakePersistableAtomErrorMessage(fieldIdentifierAtom);
+
     return (
         <div className="h-full flex flex-col gap-1">
             <CollapsibleGroup title="Field" expanded>
-                <PersistableAtomWarningWrapper atom={fieldIdentifierAtom}>
+                <SettingWrapper annotations={fieldIdentifierWarningAnnotations}>
                     <FieldDropdown
                         ensembleSet={ensembleSet}
                         onChange={handleFieldChange}
                         value={fieldIdentifier.value}
                     />
-                </PersistableAtomWarningWrapper>
+                </SettingWrapper>
             </CollapsibleGroup>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
