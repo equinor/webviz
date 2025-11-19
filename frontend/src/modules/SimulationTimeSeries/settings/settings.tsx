@@ -24,11 +24,12 @@ import { Label } from "@lib/components/Label";
 import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -252,6 +253,11 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const selectedVectorNamesHasHistorical =
         !isVectorListQueriesFetching && ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
 
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedParameterIdentStringAnnotations = useMakePersistableFixableAtomAnnotations(
+        selectedParameterIdentStringAtom,
+    );
+
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Plot settings">
@@ -298,7 +304,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                 />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Ensembles">
-                <PersistableAtomWarningWrapper atom={selectedEnsembleIdentsAtom}>
+                <SettingWrapper annotations={selectedEnsembleIdentsAnnotations}>
                     <EnsemblePicker
                         ensembles={ensembleSet.getEnsembleArray()}
                         value={selectedEnsembleIdents.value}
@@ -306,7 +312,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                         ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
                         onChange={handleEnsembleSelectChange}
                     />
-                </PersistableAtomWarningWrapper>
+                </SettingWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Vectors">
                 <Checkbox
@@ -402,7 +408,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                                     </Label>
                                 </div>
                                 <div className={`${showParameterListFilter ? "pt-3" : "pt-1"}`}>
-                                    <PersistableAtomWarningWrapper atom={selectedParameterIdentStringAtom}>
+                                    <SettingWrapper annotations={selectedParameterIdentStringAnnotations}>
                                         <Select
                                             options={filteredParameterIdentList.map((elm) => ({
                                                 value: elm.toString(),
@@ -416,7 +422,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                                             }
                                             onChange={handleColorByParameterChange}
                                         />
-                                    </PersistableAtomWarningWrapper>
+                                    </SettingWrapper>
                                 </div>
                             </div>
                         </div>
