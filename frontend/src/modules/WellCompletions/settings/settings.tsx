@@ -43,12 +43,7 @@ import {
     wellSortDirectionAtom,
     timeAggregationModeAtom,
 } from "./atoms/baseAtoms";
-import {
-    isQueryErrorAtom,
-    isQueryFetchingAtom,
-    sortedCompletionDatesAtom,
-    availableRealizationsAtom,
-} from "./atoms/derivedAtoms";
+import { sortedCompletionDatesAtom, availableRealizationsAtom } from "./atoms/derivedAtoms";
 import {
     selectedCompletionDateIndexAtom,
     selectedCompletionDateIndexRangeAtom,
@@ -72,8 +67,6 @@ export const Settings = ({
 
     const availableRealizations = useAtomValue(availableRealizationsAtom);
     const sortedCompletionDates = useAtomValue(sortedCompletionDatesAtom);
-    const isQueryFetching = useAtomValue(isQueryFetchingAtom);
-    const isQueryError = useAtomValue(isQueryErrorAtom);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
     const [realizationMode, setRealizationMode] = useAtom(realizationModeAtom);
@@ -183,17 +176,6 @@ export const Settings = ({
         [sortedCompletionDates],
     );
 
-    const createErrorMessage = React.useCallback(
-        function createErrorMessage(): string | undefined {
-            if (!isQueryError) {
-                return undefined;
-            }
-
-            return "Failed to load well completions data";
-        },
-        [isQueryError],
-    );
-
     const isSingleRealizationMode = realizationMode === RealizationMode.SINGLE;
 
     const selectedEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
@@ -265,9 +247,11 @@ export const Settings = ({
                                     ? "Time Step"
                                     : `Time Step: (${sortedCompletionDates[selectedCompletionDateIndex.value]})`
                             }
-                            annotations={!isQueryFetching ? selectedCompletionDateIndexAnnotations : undefined}
-                            loadingOverlay={isQueryFetching}
-                            errorOverlay={createErrorMessage()}
+                            annotations={selectedCompletionDateIndexAnnotations}
+                            loadingOverlay={selectedCompletionDateIndex.isLoading}
+                            errorOverlay={
+                                selectedCompletionDateIndex.depsHaveError ? "Error loading time steps" : undefined
+                            }
                         >
                             <DiscreteSlider
                                 valueLabelDisplay="auto"
@@ -291,9 +275,11 @@ export const Settings = ({
                                           sortedCompletionDates[selectedCompletionDateIndexRange.value[0]]
                                       }, ${sortedCompletionDates[selectedCompletionDateIndexRange.value[1]]})`
                             }
-                            annotations={!isQueryFetching ? selectedCompletionDateIndexRangeAnnotations : undefined}
-                            loadingOverlay={isQueryFetching}
-                            errorOverlay={createErrorMessage()}
+                            annotations={selectedCompletionDateIndexRangeAnnotations}
+                            loadingOverlay={selectedCompletionDateIndexRange.isLoading}
+                            errorOverlay={
+                                selectedCompletionDateIndexRange.depsHaveError ? "Error loading time steps" : undefined
+                            }
                         >
                             <DiscreteSlider
                                 valueLabelDisplay="auto"

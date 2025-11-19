@@ -3,7 +3,8 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 
 import { syncedEnsembleIdentsAtom } from "./baseAtoms";
-import { availableRealizationsAtom, sortedCompletionDatesAtom } from "./derivedAtoms";
+import { availableRealizationsAtom, sortedCompletionDatesAtom, wellCompletionsDataAccessorAtom } from "./derivedAtoms";
+import { wellCompletionsQueryAtom } from "./queryAtoms";
 
 export const selectedEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleIdent | null>({
     initialValue: null,
@@ -46,6 +47,17 @@ export const selectedRealizationAtom = persistableFixableAtom<number | null>({
 
 export const selectedCompletionDateIndexAtom = persistableFixableAtom<number | null>({
     initialValue: null,
+    computeDependenciesState: ({ get }) => {
+        const wellCompletionsQuery = get(wellCompletionsQueryAtom);
+        const wellCompletionsDataAccessor = get(wellCompletionsDataAccessorAtom);
+        if (wellCompletionsQuery.isError) {
+            return "error";
+        }
+        if (wellCompletionsQuery.isFetching) {
+            return "loading";
+        }
+        return !wellCompletionsDataAccessor ? "error" : "loaded";
+    },
     isValidFunction: ({ get, value }) => {
         const sortedCompletionDates = get(sortedCompletionDatesAtom);
 
@@ -71,6 +83,17 @@ export const selectedCompletionDateIndexAtom = persistableFixableAtom<number | n
 
 export const selectedCompletionDateIndexRangeAtom = persistableFixableAtom<[number, number] | null>({
     initialValue: null,
+    computeDependenciesState: ({ get }) => {
+        const wellCompletionsQuery = get(wellCompletionsQueryAtom);
+        const wellCompletionsDataAccessor = get(wellCompletionsDataAccessorAtom);
+        if (wellCompletionsQuery.isError) {
+            return "error";
+        }
+        if (wellCompletionsQuery.isFetching) {
+            return "loading";
+        }
+        return !wellCompletionsDataAccessor ? "error" : "loaded";
+    },
     isValidFunction: ({ get, value }) => {
         const sortedCompletionDates = get(sortedCompletionDatesAtom);
 

@@ -31,25 +31,12 @@ export const availableRealizationsAtom = atom<number[]>((get) => {
     return validRealizationNumbers;
 });
 
-export const isQueryFetchingAtom = atom<boolean>((get) => {
-    const wellCompletionsQuery = get(wellCompletionsQueryAtom);
-
-    return wellCompletionsQuery.isFetching;
-});
-
-export const isQueryErrorAtom = atom<boolean>((get) => {
-    const wellCompletionsQuery = get(wellCompletionsQueryAtom);
-
-    return wellCompletionsQuery.isError;
-});
-
 export const dataLoadingStatusAtom = atom<DataLoadingStatus>((get) => {
-    const isQueryFetching = get(isQueryFetchingAtom);
-    const isQueryError = get(isQueryErrorAtom);
+    const wellCompletionsQuery = get(wellCompletionsQueryAtom);
 
-    if (isQueryFetching) {
+    if (wellCompletionsQuery.isFetching) {
         return DataLoadingStatus.LOADING;
-    } else if (isQueryError) {
+    } else if (wellCompletionsQuery.isError) {
         return DataLoadingStatus.ERROR;
     }
     return DataLoadingStatus.IDLE;
