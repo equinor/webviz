@@ -8,6 +8,7 @@ import {
     availableDateTimesAtom,
     availableRealizationsAtom,
     edgeMetadataListAtom,
+    flowNetworkQueryResultAtom,
     nodeMetadataListAtom,
 } from "./derivedAtoms";
 
@@ -48,6 +49,7 @@ export const selectedRealizationAtom = persistableFixableAtom<number | null>({
 
 export const selectedDateTimeAtom = persistableFixableAtom<string | null>({
     initialValue: null,
+    computeDependenciesState: computeFlowNetworkQueryResultDependenciesState,
     isValidFunction: ({ get, value }) => {
         const availableDateTimes = get(availableDateTimesAtom);
 
@@ -64,6 +66,7 @@ export const selectedDateTimeAtom = persistableFixableAtom<string | null>({
 
 export const selectedEdgeKeyAtom = persistableFixableAtom<string | null>({
     initialValue: null,
+    computeDependenciesState: computeFlowNetworkQueryResultDependenciesState,
     isValidFunction: ({ get, value }) => {
         const availableEdgesMetadataList = get(edgeMetadataListAtom);
         const availableEdgeKeys = availableEdgesMetadataList.map((item) => item.key);
@@ -82,6 +85,7 @@ export const selectedEdgeKeyAtom = persistableFixableAtom<string | null>({
 
 export const selectedNodeKeyAtom = persistableFixableAtom<string | null>({
     initialValue: null,
+    computeDependenciesState: computeFlowNetworkQueryResultDependenciesState,
     isValidFunction: ({ get, value }) => {
         const availableNodesMetadataList = get(nodeMetadataListAtom);
         const availableNodeKeys = availableNodesMetadataList.map((item) => item.key);
@@ -97,3 +101,19 @@ export const selectedNodeKeyAtom = persistableFixableAtom<string | null>({
         return availableNodeKeys[0] ?? null;
     },
 });
+
+// Utility function to compute dependencies state from flowNetworkQueryResultAtom
+function computeFlowNetworkQueryResultDependenciesState({
+    get,
+}: {
+    get: (atom: any) => any;
+}): "error" | "loading" | "loaded" {
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
+    if (flowNetworkQueryResult.isError) {
+        return "error";
+    }
+    if (flowNetworkQueryResult.isFetching) {
+        return "loading";
+    }
+    return !flowNetworkQueryResult.data ? "error" : "loaded";
+}

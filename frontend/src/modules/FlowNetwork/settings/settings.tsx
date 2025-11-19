@@ -8,14 +8,13 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { DiscreteSlider } from "@lib/components/DiscreteSlider";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
-import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
@@ -120,16 +119,22 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const selectedDateTimeIndex = selectedDateTime.value ? availableDateTimes.indexOf(selectedDateTime.value) : -1;
 
+    const selectedEnsembleIdentAnnotation = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
+    const selectedRealizationAnnotation = useMakePersistableFixableAtomAnnotations(selectedRealizationAtom);
+    const selectedEdgeKeyAnnotation = useMakePersistableFixableAtomAnnotations(selectedEdgeKeyAtom);
+    const selectedNodeKeyAnnotation = useMakePersistableFixableAtomAnnotations(selectedNodeKeyAtom);
+    const selectedDateTimeAnnotation = useMakePersistableFixableAtomAnnotations(selectedDateTimeAtom);
+
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Ensemble">
-                <PersistableAtomWarningWrapper atom={selectedEnsembleIdentAtom}>
+                <SettingWrapper annotations={selectedEnsembleIdentAnnotation}>
                     <EnsembleDropdown
                         ensembles={ensembleSet.getRegularEnsembleArray()}
                         value={selectedEnsembleIdent.value}
                         onChange={handleEnsembleSelectionChange}
                     />
-                </PersistableAtomWarningWrapper>
+                </SettingWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Frequency">
                 <Dropdown
@@ -143,7 +148,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             <CollapsibleGroup expanded={true} title="Data Fetching Options">
                 <div className="flex flex-col gap-2">
                     <Label text="Realization Number">
-                        <PersistableAtomWarningWrapper atom={selectedRealizationAtom}>
+                        <SettingWrapper annotations={selectedRealizationAnnotation}>
                             <Dropdown
                                 options={
                                     availableRealizations?.map((real) => {
@@ -153,7 +158,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 value={selectedRealization.value?.toString() ?? undefined}
                                 onChange={handleRealizationNumberChange}
                             />
-                        </PersistableAtomWarningWrapper>
+                        </SettingWrapper>
                     </Label>
                     <Label text="Node Types">
                         <Select
@@ -168,50 +173,61 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     </Label>
                 </div>
             </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Edge, node and date selections">
-                <QueryStateWrapper
-                    queryResult={FlowNetworkQueryResult}
-                    loadingComponent={<CircularProgress />}
-                    errorComponent={"Could not load flow network data"}
-                >
-                    <div className="flex flex-col gap-2">
-                        <Label text="Edge options">
-                            <PersistableAtomWarningWrapper atom={selectedEdgeKeyAtom}>
-                                <Dropdown
-                                    placeholder={!edgeMetadataList.length ? "No edge data available" : ""}
-                                    disabled={!edgeMetadataList.length}
-                                    options={edgeMetadataList.map((item) => {
-                                        return { label: item.label, value: item.key };
-                                    })}
-                                    value={selectedEdgeKey.value ?? ""}
-                                    onChange={handleSelectedEdgeKeyChange}
-                                />
-                            </PersistableAtomWarningWrapper>
-                        </Label>
-                        <Label text="Node options">
-                            <PersistableAtomWarningWrapper atom={selectedNodeKeyAtom}>
-                                <Dropdown
-                                    options={nodeMetadataList.map((item) => {
-                                        return { label: item.label, value: item.key };
-                                    })}
-                                    value={selectedNodeKey.value ?? ""}
-                                    onChange={handleSelectedNodeKeyChange}
-                                />
-                            </PersistableAtomWarningWrapper>
-                        </Label>
-                        <Label text={"Time Steps"}>
-                            <DiscreteSlider
-                                valueLabelDisplay="auto"
-                                value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : undefined}
-                                values={availableDateTimes.map((_, index) => {
-                                    return index;
-                                })}
-                                valueLabelFormat={createValueLabelFormat}
-                                onChange={(_, value) => handleSelectedTimeStepIndexChange(value)}
-                            />
-                        </Label>
-                    </div>
-                </QueryStateWrapper>
+            <CollapsibleGroup
+                expanded={true}
+                title="Edge, node and date selections"
+                hasError={
+                    selectedDateTime.depsHaveError || selectedEdgeKey.depsHaveError || selectedNodeKey.depsHaveError
+                }
+            >
+                <div className="flex flex-col gap-2">
+                    <SettingWrapper
+                        label="Edge options"
+                        annotations={selectedEdgeKeyAnnotation}
+                        loadingOverlay={selectedEdgeKey.isLoading}
+                        errorOverlay={selectedEdgeKey.depsHaveError ? "Could not load edges." : undefined}
+                    >
+                        <Dropdown
+                            placeholder={!edgeMetadataList.length ? "No edge data available" : ""}
+                            disabled={!edgeMetadataList.length}
+                            options={edgeMetadataList.map((item) => {
+                                return { label: item.label, value: item.key };
+                            })}
+                            value={selectedEdgeKey.value ?? ""}
+                            onChange={handleSelectedEdgeKeyChange}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="Node options"
+                        annotations={selectedNodeKeyAnnotation}
+                        loadingOverlay={selectedNodeKey.isLoading}
+                        errorOverlay={selectedNodeKey.depsHaveError ? "Could not load nodes." : undefined}
+                    >
+                        <Dropdown
+                            options={nodeMetadataList.map((item) => {
+                                return { label: item.label, value: item.key };
+                            })}
+                            value={selectedNodeKey.value ?? ""}
+                            onChange={handleSelectedNodeKeyChange}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="Time steps"
+                        loadingOverlay={selectedDateTime.isLoading}
+                        annotations={selectedDateTimeAnnotation}
+                        errorOverlay={selectedDateTime.depsHaveError ? "Could not load time steps." : undefined}
+                    >
+                        <DiscreteSlider
+                            valueLabelDisplay="auto"
+                            value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : undefined}
+                            values={availableDateTimes.map((_, index) => {
+                                return index;
+                            })}
+                            valueLabelFormat={createValueLabelFormat}
+                            onChange={(_, value) => handleSelectedTimeStepIndexChange(value)}
+                        />
+                    </SettingWrapper>
+                </div>
             </CollapsibleGroup>
         </div>
     );
