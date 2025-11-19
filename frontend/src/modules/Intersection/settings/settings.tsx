@@ -8,6 +8,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import {
     DataProviderManager,
@@ -16,6 +17,7 @@ import {
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import type { Interfaces } from "../interfaces";
 
@@ -140,14 +142,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         setSelectedFieldIdentifier(fieldIdentifier);
     }
 
+    const selectedFieldIdentifierAnnotations = useMakePersistableFixableAtomAnnotations(selectedFieldIdentifierAtom);
+
     return (
         <div className="h-full flex flex-col gap-1">
             <CollapsibleGroup title="Field" expanded>
-                <FieldDropdown
-                    ensembleSet={ensembleSet}
-                    value={selectedFieldIdentifier.value}
-                    onChange={handleFieldIdentifierChange}
-                />
+                <SettingWrapper annotations={selectedFieldIdentifierAnnotations}>
+                    <FieldDropdown
+                        ensembleSet={ensembleSet}
+                        value={selectedFieldIdentifier.value}
+                        onChange={handleFieldIdentifierChange}
+                    />
+                </SettingWrapper>
             </CollapsibleGroup>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
