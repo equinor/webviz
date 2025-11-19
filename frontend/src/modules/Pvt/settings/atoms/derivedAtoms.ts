@@ -1,68 +1,30 @@
 import { atom } from "jotai";
 
-import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
-
+import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import type { PvtDataAccessorWithStatus } from "@modules/Pvt/typesAndEnums";
 
 import { PvtDataAccessor } from "../../utils/PvtDataAccessor";
 import { computeRealizationsIntersection } from "../../utils/realizationsIntersection";
 
-import { userSelectedEnsembleIdentsAtom, userSelectedPvtNumsAtom, userSelectedRealizationsAtom } from "./baseAtoms";
+import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
 import { pvtDataQueriesAtom } from "./queryAtoms";
 
-
-export const selectedEnsembleIdentsAtom = atom((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
-
-    let computedEnsembleIdents = userSelectedEnsembleIdents.filter((el) => ensembleSet.hasEnsemble(el));
-    if (computedEnsembleIdents.length === 0 && ensembleSet.getRegularEnsembleArray().length > 0) {
-        computedEnsembleIdents = [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
-    }
-
-    return computedEnsembleIdents;
-});
-
-export const selectedRealizationsAtom = atom((get) => {
-    const userSelectedRealizations = get(userSelectedRealizationsAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
-
+export const availableRealizationNumbersAtom = atom((get) => {
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
-    const realizations = computeRealizationsIntersection(selectedEnsembleIdents, validEnsembleRealizationsFunction);
 
-    let computedRealizations = userSelectedRealizations.filter((el) => realizations.includes(el));
-    if (computedRealizations.length === 0 && realizations.length > 0) {
-        computedRealizations = [realizations[0]];
-    }
-
-    return computedRealizations;
+    return computeRealizationsIntersection(selectedEnsembleIdents, validEnsembleRealizationsFunction);
 });
 
-export const pvtDataAccessorAtom = atom((get) => {
+export const pvtDataAccessorWithStatusAtom = atom<PvtDataAccessorWithStatus>((get) => {
     const pvtDataQueries = get(pvtDataQueriesAtom);
-    if (pvtDataQueries.tableCollections.length === 0) {
-        return new PvtDataAccessor([]);
-    }
 
-    const tableCollections = pvtDataQueries.tableCollections;
+    const pvtDataAccessor =
+        pvtDataQueries.tableCollections.length > 0 ? new PvtDataAccessor(pvtDataQueries.tableCollections) : null;
 
-    return new PvtDataAccessor(tableCollections);
-});
-
-export const selectedPvtNumsAtom = atom<number[]>((get) => {
-    const userSelectedPvtNums = get(userSelectedPvtNumsAtom);
-    const pvtDataAccessor = get(pvtDataAccessorAtom);
-
-    const uniquePvtNums = pvtDataAccessor.getUniquePvtNums();
-
-    let computedPvtNums = userSelectedPvtNums.filter((el) => uniquePvtNums.includes(el));
-
-    if (computedPvtNums.length === 0) {
-        if (uniquePvtNums.length > 0) {
-            computedPvtNums = [uniquePvtNums[0]];
-        } else {
-            computedPvtNums = [];
-        }
-    }
-
-    return computedPvtNums;
+    return {
+        pvtDataAccessor: pvtDataAccessor,
+        isFetching: pvtDataQueries.isFetching,
+        allQueriesFailed: pvtDataQueries.allQueriesFailed,
+    };
 });
