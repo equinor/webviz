@@ -13,7 +13,6 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
@@ -34,6 +33,8 @@ import {
 } from "./atoms/persistableFixableAtoms";
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
@@ -110,6 +111,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         errorMessage = "Failed to fetch PVT data. Make sure the selected ensemble has PVT data.";
     }
 
+    const selectedEnsemblesAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedRealizationsAnnotations = useMakePersistableFixableAtomAnnotations(selectedRealizationNumbersAtom);
+    const selectedPvtNumsAnnotations = useMakePersistableFixableAtomAnnotations(selectedPvtNumsAtom);
+
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Color by" expanded>
@@ -123,7 +128,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
-                <PersistableAtomWarningWrapper atom={selectedEnsembleIdentsAtom}>
+                <SettingWrapper annotations={selectedEnsemblesAnnotations}>
                     <EnsembleSelect
                         ensembles={ensembleSet.getRegularEnsembleArray()}
                         ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
@@ -132,10 +137,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         size={5}
                         multiple={selectedColorBy === ColorBy.ENSEMBLE}
                     />
-                </PersistableAtomWarningWrapper>
+                </SettingWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup title="Realizations" expanded>
-                <PersistableAtomWarningWrapper atom={selectedRealizationNumbersAtom}>
+                <SettingWrapper annotations={selectedRealizationsAnnotations}>
                     <Select
                         options={makeRealizationOptions(availableRealizationNumbers)}
                         value={selectedRealizations.value.map((el) => el.toString())}
@@ -143,11 +148,15 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         size={5}
                         multiple={selectedColorBy === ColorBy.ENSEMBLE}
                     />
-                </PersistableAtomWarningWrapper>
+                </SettingWrapper>
             </CollapsibleGroup>
             <PendingWrapper isPending={pvtDataQueries.isFetching} errorMessage={errorMessage}>
                 <CollapsibleGroup title="PVT Num" expanded>
-                    <PersistableAtomWarningWrapper atom={selectedPvtNumsAtom}>
+                    <SettingWrapper
+                        annotations={selectedPvtNumsAnnotations}
+                        loadingOverlay={selectedPvtNums.isLoading}
+                        errorOverlay={selectedPvtNums.depsHaveError ? "Could not be loaded." : undefined}
+                    >
                         <Select
                             options={makePvtNumOptions(pvtDataAccessor?.getUniquePvtNums() || [])}
                             value={selectedPvtNums.value.map((el) => el.toString())}
@@ -155,7 +164,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             size={5}
                             multiple={selectedColorBy === ColorBy.PVT_NUM}
                         />
-                    </PersistableAtomWarningWrapper>
+                    </SettingWrapper>
                 </CollapsibleGroup>
                 <CollapsibleGroup title="Phase" expanded>
                     <Dropdown options={makePhaseOptions()} value={selectedPhase} onChange={handlePhasesChange} />
