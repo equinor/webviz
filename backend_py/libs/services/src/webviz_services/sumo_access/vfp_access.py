@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-from webviz_services.service_exceptions import NoDataError, Service
+from webviz_services.service_exceptions import InvalidParameterError, NoDataError, Service
 
 from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client
@@ -138,4 +138,4 @@ class VfpAccess:
                 bhp_unit=VFP_UNITS[unit_type][VfpParam.THP][thp_type],
             )
 
-        raise ValueError(f"VfpType {vfp_type} not implemented.")
+        raise InvalidParameterError(f"VfpType {vfp_type} not handled.", Service.GENERAL)

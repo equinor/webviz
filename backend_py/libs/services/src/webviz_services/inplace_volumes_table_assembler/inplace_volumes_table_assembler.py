@@ -382,7 +382,7 @@ class InplaceVolumesTableAssembler:
         )
 
         timer_create_row_filtered_df = timer.lap_ms()
-        print(f"Time creating row filtered DataFrame: {timer_create_row_filtered_df}ms")
+        LOGGER.debug(f"Time creating row filtered DataFrame: {timer_create_row_filtered_df}ms")
 
         return row_filtered_volumes_table_df
 
@@ -490,6 +490,6 @@ class InplaceVolumesTableAssembler:
 
         filtered_df = inplace_volumes_df.filter(mask)
         time_row_filtering = timer.lap_ms()
-        print(f"DATAFRAME row filtering (based on selectors): {time_row_filtering}ms")
+        LOGGER.debug(f"DATAFRAME row filtering (based on selectors): {time_row_filtering}ms")
 
         return filtered_df
