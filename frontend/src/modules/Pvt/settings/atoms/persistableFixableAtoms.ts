@@ -1,9 +1,10 @@
+import { isEqual } from "lodash";
+
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-import { isEqual } from "lodash";
 
 import { availableRealizationNumbersAtom, pvtDataAccessorWithStatusAtom } from "./derivedAtoms";
 
