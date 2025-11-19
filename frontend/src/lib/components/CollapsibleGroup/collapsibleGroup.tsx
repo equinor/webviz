@@ -15,6 +15,7 @@ export type CollapsibleGroupProps = {
     children: React.ReactNode;
     expanded?: boolean;
     onChange?: (expanded: boolean) => void;
+    contentClassName?: string;
 } & BaseComponentProps;
 
 function CollapsibleGroupComponent(props: CollapsibleGroupProps, ref: React.ForwardedRef<HTMLDivElement>) {
@@ -32,7 +33,7 @@ function CollapsibleGroupComponent(props: CollapsibleGroupProps, ref: React.Forw
     };
 
     return (
-        <BaseComponent ref={ref} disabled={props.disabled}>
+        <BaseComponent ref={ref} {...props}>
             <div
                 className={resolveClassNames(
                     "flex flex-row justify-between items-center bg-slate-100 cursor-pointer p-1.5 select-none gap-2 hover:bg-slate-200 shadow-sm",
@@ -48,7 +49,7 @@ function CollapsibleGroupComponent(props: CollapsibleGroupProps, ref: React.Forw
                 </Tooltip>
             </div>
             <div
-                className={resolveClassNames("p-2", {
+                className={resolveClassNames("p-2", props.contentClassName, {
                     hidden: !expanded,
                 })}
             >

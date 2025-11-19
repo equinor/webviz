@@ -7,8 +7,10 @@ import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { SettingWrapper } from "@lib/components/SettingWrapper/settingWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import { useMakePersistableAtomWarningMessage } from "@modules/_shared/hooks/useMakePersistableAtomErrorMessage";
 
 import {
     DataProviderManager,
@@ -18,8 +20,6 @@ import {
 import { dataProviderManagerAtom, dataProviderStateAtom } from "./atoms/baseAtoms";
 import { fieldIdentifierAtom } from "./atoms/persistableAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
-import { useMakePersistableAtomWarningMessage } from "@modules/_shared/utils/persistableAtomWarningMessage";
-import { SettingWrapper } from "@lib/components/SettingWrapper/settingWrapper";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
