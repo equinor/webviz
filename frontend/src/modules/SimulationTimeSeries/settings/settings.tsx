@@ -15,13 +15,12 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
@@ -258,6 +257,10 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         selectedParameterIdentStringAtom,
     );
 
+    const vectorListQueriesErrorMessage = vectorListQueries.every((q) => q.isError)
+        ? "Could not load vectors for selected ensembles"
+        : undefined;
+
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Plot settings">
@@ -327,11 +330,9 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                         "pointer-events-none opacity-80": vectorListQueries.some((query) => query.isLoading),
                     })}
                 >
-                    <QueryStateWrapper
-                        queryResults={vectorListQueries}
-                        loadingComponent={<CircularProgress />}
-                        showErrorWhen={QueriesErrorCriteria.ALL_QUERIES_HAVE_ERROR}
-                        errorComponent={"Could not load vectors for selected ensembles"}
+                    <PendingWrapper
+                        isPending={isVectorListQueriesFetching}
+                        errorMessage={vectorListQueriesErrorMessage}
                     >
                         <VectorSelector
                             data={vectorSelectorData}
@@ -343,7 +344,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                             customVectorDefinitions={customVectorDefinitions ?? undefined}
                             selectedTags={selectedVectorTags}
                         />
-                    </QueryStateWrapper>
+                    </PendingWrapper>
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Visualization">
