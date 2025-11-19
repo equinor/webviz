@@ -8,7 +8,6 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 
 import {
@@ -19,6 +18,8 @@ import {
 import { dataProviderManagerAtom, dataProviderStateAtom } from "./atoms/baseAtoms";
 import { fieldIdentifierAtom } from "./atoms/persistableAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
+import { useMakePersistableAtomWarningMessage } from "@modules/_shared/utils/persistableAtomWarningMessage";
+import { SettingWrapper } from "@lib/components/SettingWrapper/settingWrapper";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
@@ -120,16 +121,18 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         dataProviderManager.updateGlobalSetting("fieldId", fieldId);
     }
 
+    const fieldIdentifierWarningAnnotations = useMakePersistableAtomWarningMessage(fieldIdentifierAtom);
+
     return (
         <div className="h-full flex flex-col gap-1">
             <CollapsibleGroup title="Field" expanded>
-                <PersistableAtomWarningWrapper atom={fieldIdentifierAtom}>
+                <SettingWrapper annotations={fieldIdentifierWarningAnnotations}>
                     <FieldDropdown
                         ensembleSet={ensembleSet}
                         onChange={handleFieldChange}
                         value={fieldIdentifier.value}
                     />
-                </PersistableAtomWarningWrapper>
+                </SettingWrapper>
             </CollapsibleGroup>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
