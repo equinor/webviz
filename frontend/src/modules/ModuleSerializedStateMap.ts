@@ -3,6 +3,7 @@
 
 import type { SerializedSettings as M_2DViewerSettings } from "@modules/2DViewer/settings/persistence";
 import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/persistence";
+import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 
 export type ModuleSerializedStateMap = {
   "2DViewer": {
@@ -10,10 +11,6 @@ export type ModuleSerializedStateMap = {
     view?: Partial<M_2DViewerView>,
   },
   "3DViewer": {
-    settings?: never,
-    view?: never,
-  },
-  "3DViewerNew": {
     settings?: never,
     view?: never,
   },
@@ -29,23 +26,11 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "Grid3D": {
-    settings?: never,
-    view?: never,
-  },
-  "Grid3DIntersection": {
-    settings?: never,
-    view?: never,
-  },
   "InplaceVolumesPlot": {
     settings?: never,
     view?: never,
   },
   "InplaceVolumesTable": {
-    settings?: never,
-    view?: never,
-  },
-  "InplaceVolumetrics": {
     settings?: never,
     view?: never,
   },
@@ -93,19 +78,11 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "SeismicIntersection": {
-    settings?: never,
-    view?: never,
-  },
   "SensitivityPlot": {
-    settings?: never,
+    settings?: Partial<SensitivityPlotSettings>,
     view?: never,
   },
   "SimulationTimeSeries": {
-    settings?: never,
-    view?: never,
-  },
-  "SimulationTimeSeriesMatrix": {
     settings?: never,
     view?: never,
   },
@@ -113,15 +90,11 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "StructuralUncertaintyIntersection": {
-    settings?: never,
-    view?: never,
-  },
   "SubsurfaceMap": {
     settings?: never,
     view?: never,
   },
-  "TimeSeriesParameterDistribution": {
+  "TopographicMap": {
     settings?: never,
     view?: never,
   },

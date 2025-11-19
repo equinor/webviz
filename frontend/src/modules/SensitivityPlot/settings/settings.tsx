@@ -3,7 +3,6 @@ import React from "react";
 import { useAtom, useSetAtom } from "jotai";
 
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -28,11 +27,7 @@ import {
     colorByAtom,
 } from "./atoms/baseAtoms";
 
-export function Settings({
-    initialSettings,
-    settingsContext,
-    workbenchSession,
-}: ModuleSettingsProps<Interfaces>): React.ReactNode {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [displayComponentType, setDisplayComponentType] = useAtom(displayComponentTypeAtom);
     const [hideZeroY, setHideZeroY] = useAtom(hideZeroYAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
@@ -42,7 +37,6 @@ export function Settings({
     const [sensitivityScaling, setSensitivityScaling] = useAtom(sensitivityScalingAtom);
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
     const [colorBy, setColorBy] = useAtom(colorByAtom);
-    useApplyInitialSettingsToState(initialSettings, "displayComponentType", "string", setDisplayComponentType);
 
     const ensembleSet = workbenchSession.getEnsembleSet();
 
