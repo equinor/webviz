@@ -1,10 +1,9 @@
-import { isEqual } from "lodash";
-
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { isEqual } from "lodash";
 
 import { availableRealizationNumbersAtom, pvtDataAccessorWithStatusAtom } from "./derivedAtoms";
 
@@ -13,6 +12,10 @@ export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsemble
     areEqualFunction: areEnsembleIdentListsEqual,
     isValidFunction: ({ get, value }) => {
         const ensembleSet = get(EnsembleSetAtom);
+
+        if (value.length === 0 && ensembleSet.getEnsembleArray().length > 0) {
+            return false;
+        }
 
         return value.every((ident) => ensembleSet.hasEnsemble(ident));
     },
