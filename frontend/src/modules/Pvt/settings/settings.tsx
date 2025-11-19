@@ -12,6 +12,8 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
@@ -32,8 +34,6 @@ import {
 } from "./atoms/persistableFixableAtoms";
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
-import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
