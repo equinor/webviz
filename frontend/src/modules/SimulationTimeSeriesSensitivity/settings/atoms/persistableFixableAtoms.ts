@@ -9,6 +9,7 @@ import { fixupVectorName } from "../utils/fixupVectorName";
 
 import { syncedRegularEnsembleIdentsAtom, syncedVectorNameAtom } from "./baseAtoms";
 import { availableSensitivityNamesAtom, availableVectorNamesAtom } from "./derivedAtoms";
+import { vectorListQueryAtom } from "./queryAtoms";
 
 export const selectedRegularEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleIdent | null>({
     initialValue: null,
@@ -42,6 +43,16 @@ export const selectedRegularEnsembleIdentAtom = persistableFixableAtom<RegularEn
 export const selectedVectorNameAndTagAtom = persistableFixableAtom<{ name: string | null; tag: string | null }>({
     initialValue: { name: null, tag: null },
     areEqualFunction: isEqual,
+    computeDependenciesState: ({ get }) => {
+        const vectorListQuery = get(vectorListQueryAtom);
+        if (vectorListQuery.isError) {
+            return "error";
+        }
+        if (vectorListQuery.isFetching) {
+            return "loading";
+        }
+        return "loaded";
+    },
     isValidFunction: ({ get, value }) => {
         const syncedVectorName = get(syncedVectorNameAtom);
         const availableVectorNames = get(availableVectorNamesAtom);

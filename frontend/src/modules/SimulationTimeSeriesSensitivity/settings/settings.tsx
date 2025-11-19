@@ -11,11 +11,9 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
@@ -54,7 +52,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const [selectedSensitivityNames, setSelectedSensitivityNamesAtom] = useAtom(selectedSensitivityNamesAtom);
     const [selectedVectorNameAndTag, setSelectedVectorNameAndTag] = useAtom(selectedVectorNameAndTagAtom);
 
-    const vectorsListQuery = useAtomValue(vectorListQueryAtom);
+    const vectorListQuery = useAtomValue(vectorListQueryAtom);
     const availableSensitivityNames = useAtomValue(availableSensitivityNamesAtom);
     const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
 
@@ -70,7 +68,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<RegularEnsembleIdent[] | null>(null);
     const [prevSyncedSummaryVector, setPrevSyncedSummaryVector] = React.useState<{ vectorName: string } | null>(null);
 
-    const errorMessage = usePropagateQueryErrorToStatusWriter(vectorsListQuery, statusWriter);
+    usePropagateQueryErrorToStatusWriter(vectorListQuery, statusWriter);
 
     if (!isEqual(syncedValueEnsembles, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedValueEnsembles);
@@ -130,49 +128,44 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                     />
                 </SettingWrapper>
             </CollapsibleGroup>
-            <QueryStateWrapper
-                queryResult={vectorsListQuery}
-                loadingComponent={<CircularProgress />}
-                errorComponent={
-                    errorMessage ?? "Could not load the vectors for selected ensembles. See details in log."
-                }
-            >
-                <CollapsibleGroup expanded={true} title="Time Series">
-                    <SettingWrapper
-                        label="Vector"
-                        loadingOverlay={vectorsListQuery.isFetching}
-                        annotations={vectorsListQuery.isFetching ? [] : selectedVectorNameAndTagAnnotations}
-                    >
-                        <VectorSelector
-                            data={vectorSelectorData}
-                            selectedTags={
-                                selectedVectorNameAndTag.value.tag ? [selectedVectorNameAndTag.value.tag] : []
-                            }
-                            placeholder="Add new vector..."
-                            maxNumSelectedNodes={1}
-                            numSecondsUntilSuggestionsAreShown={0.5}
-                            lineBreakAfterTag={true}
-                            onChange={handleVectorSelectChange}
+            <CollapsibleGroup expanded={true} title="Time Series" hasError={selectedVectorNameAndTag.depsHaveError}>
+                <SettingWrapper
+                    label="Vector"
+                    annotations={selectedVectorNameAndTagAnnotations}
+                    loadingOverlay={selectedVectorNameAndTag.isLoading}
+                    errorOverlay={
+                        selectedVectorNameAndTag.depsHaveError
+                            ? "Error loading available vectors. See details in log."
+                            : undefined
+                    }
+                >
+                    <VectorSelector
+                        data={vectorSelectorData}
+                        selectedTags={selectedVectorNameAndTag.value.tag ? [selectedVectorNameAndTag.value.tag] : []}
+                        placeholder="Add new vector..."
+                        maxNumSelectedNodes={1}
+                        numSecondsUntilSuggestionsAreShown={0.5}
+                        lineBreakAfterTag={true}
+                        onChange={handleVectorSelectChange}
+                    />
+                </SettingWrapper>
+                <Label text="Frequency">
+                    <div className="ml-4">
+                        <Dropdown
+                            width="50%"
+                            options={[
+                                { value: "RAW", label: "None (raw)" },
+                                ...Object.values(Frequency_api).map((val: Frequency_api) => {
+                                    return { value: val, label: FrequencyEnumToStringMapping[val] };
+                                }),
+                            ]}
+                            value={resampleFrequency ?? "RAW"}
+                            onChange={handleFrequencySelectionChange}
                         />
-                    </SettingWrapper>
-                    <Label text="Frequency">
-                        <div className="ml-4">
-                            <Dropdown
-                                width="50%"
-                                options={[
-                                    { value: "RAW", label: "None (raw)" },
-                                    ...Object.values(Frequency_api).map((val: Frequency_api) => {
-                                        return { value: val, label: FrequencyEnumToStringMapping[val] };
-                                    }),
-                                ]}
-                                value={resampleFrequency ?? "RAW"}
-                                onChange={handleFrequencySelectionChange}
-                            />
-                        </div>
-                    </Label>
-                </CollapsibleGroup>
-            </QueryStateWrapper>
-            <CollapsibleGroup expanded={false} title="Visualization">
+                    </div>
+                </Label>
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Visualization">
                 <Checkbox
                     label="Mean over realizations"
                     checked={showStatistics}
