@@ -9,7 +9,6 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
@@ -114,6 +113,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedEnsemblesAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
     const selectedRealizationsAnnotations = useMakePersistableFixableAtomAnnotations(selectedRealizationNumbersAtom);
     const selectedPvtNumsAnnotations = useMakePersistableFixableAtomAnnotations(selectedPvtNumsAtom);
+    if (errorMessage) {
+        selectedPvtNumsAnnotations.push({ type: "error", message: errorMessage });
+    }
 
     return (
         <div className="flex flex-col gap-2">
@@ -150,33 +152,31 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     />
                 </SettingWrapper>
             </CollapsibleGroup>
-            <PendingWrapper isPending={pvtDataQueries.isFetching} errorMessage={errorMessage}>
-                <CollapsibleGroup title="PVT Num" expanded>
-                    <SettingWrapper
-                        annotations={selectedPvtNumsAnnotations}
-                        loadingOverlay={selectedPvtNums.isLoading}
-                        errorOverlay={selectedPvtNums.depsHaveError ? "Could not be loaded." : undefined}
-                    >
-                        <Select
-                            options={makePvtNumOptions(pvtDataAccessor?.getUniquePvtNums() || [])}
-                            value={selectedPvtNums.value.map((el) => el.toString())}
-                            onChange={handlePvtNumChange}
-                            size={5}
-                            multiple={selectedColorBy === ColorBy.PVT_NUM}
-                        />
-                    </SettingWrapper>
-                </CollapsibleGroup>
-                <CollapsibleGroup title="Phase" expanded>
-                    <Dropdown options={makePhaseOptions()} value={selectedPhase} onChange={handlePhasesChange} />
-                </CollapsibleGroup>
-                <CollapsibleGroup title="Show plot for" expanded>
-                    <DependentVariableSelector
-                        dependentVariables={makeDependentVariableOptions(selectedPhase)}
-                        value={selectedDependentVariables}
-                        onChange={handleVisualizePlotsChange}
+            <CollapsibleGroup title="PVT Num" expanded>
+                <SettingWrapper
+                    annotations={selectedPvtNumsAnnotations}
+                    loadingOverlay={selectedPvtNums.isLoading}
+                    errorOverlay={selectedPvtNums.depsHaveError ? "Could not be loaded." : undefined}
+                >
+                    <Select
+                        options={makePvtNumOptions(pvtDataAccessor?.getUniquePvtNums() || [])}
+                        value={selectedPvtNums.value.map((el) => el.toString())}
+                        onChange={handlePvtNumChange}
+                        size={5}
+                        multiple={selectedColorBy === ColorBy.PVT_NUM}
                     />
-                </CollapsibleGroup>
-            </PendingWrapper>
+                </SettingWrapper>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Phase" expanded>
+                <Dropdown options={makePhaseOptions()} value={selectedPhase} onChange={handlePhasesChange} />
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Show plot for" expanded>
+                <DependentVariableSelector
+                    dependentVariables={makeDependentVariableOptions(selectedPhase)}
+                    value={selectedDependentVariables}
+                    onChange={handleVisualizePlotsChange}
+                />
+            </CollapsibleGroup>
         </div>
     );
 }
