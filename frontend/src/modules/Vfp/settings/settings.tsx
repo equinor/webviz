@@ -41,13 +41,14 @@ import {
     selectedVfpTableNameAtom,
     selectedWfrIndicesAtom,
 } from "./atoms/derivedAtoms";
-import { vfpTableQueryAtom } from "./atoms/queryAtoms";
+import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./atoms/queryAtoms";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const vfpTableQuery = useAtomValue(vfpTableQueryAtom);
+    const vfpTableNamesQuery = useAtomValue(vfpTableNamesQueryAtom);
 
     const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
     const setUserSelectedEnsembleIdent = useSetAtom(userSelectedEnsembleIdentAtom);
@@ -84,6 +85,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const setUserSelectedColorBy = useSetAtom(userSelectedColorByAtom);
 
     usePropagateQueryErrorToStatusWriter(vfpTableQuery, statusWriter);
+    usePropagateQueryErrorToStatusWriter(vfpTableNamesQuery, statusWriter);
 
     function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
         setUserSelectedEnsembleIdent(ensembleIdent);
