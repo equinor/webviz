@@ -6,9 +6,9 @@ import type { SettingAnnotation } from "@lib/components/SettingWrapper";
 type PersistableFixableAtom<T> = ReturnType<typeof persistableFixableAtom<T>>;
 
 export function useMakePersistableFixableAtomAnnotations(atom: PersistableFixableAtom<any>): SettingAnnotation[] {
-    const { isValidInContext, _source } = useAtomValue(atom);
+    const { isValidInContext, _source, isLoading, depsHaveError } = useAtomValue(atom);
 
-    if (!isValidInContext && _source) {
+    if (!isValidInContext && _source && !isLoading && !depsHaveError) {
         switch (_source) {
             case Source.PERSISTENCE:
                 return [
