@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import List
 
+from webviz_services.service_exceptions import InvalidParameterError, Service
+
 ######################################################################################################
 #
 # This file contains the request types for the vds-slice service found in the following file:
@@ -77,7 +79,7 @@ class VdsCoordinates:
 
     def __init__(self, x_points: List[float], y_points: List[float]) -> None:
         if len(x_points) != len(y_points):
-            raise ValueError("x_points and y_points must be of equal length")
+            raise InvalidParameterError("x_points and y_points must be of equal length", Service.VDS)
 
         self.x_points = x_points
         self.y_points = y_points
