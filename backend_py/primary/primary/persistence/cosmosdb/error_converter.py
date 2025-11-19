@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, NoReturn, Type
 
-from primary.services.service_exceptions import Service, ServiceRequestError
+from webviz_services.service_exceptions import Service, ServiceRequestError
 
 from primary.persistence.cosmosdb.exceptions import (
     DatabaseAccessError,
