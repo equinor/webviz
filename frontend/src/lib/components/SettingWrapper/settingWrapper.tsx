@@ -203,7 +203,7 @@ function SettingHelp(props: SettingHelp) {
 
     return (
         <>
-            <DenseIconButton title="Show help dialog" ref={anchorRef} onClick={handleOpenClick}>
+            <DenseIconButton title="Show help" ref={anchorRef} onClick={handleOpenClick}>
                 <Help fontSize="inherit" color="info" />
             </DenseIconButton>
             {dialogContent && createPortal(dialogContent)}
