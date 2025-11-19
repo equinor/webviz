@@ -103,14 +103,30 @@ type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
     /**
      * A function to precompute any necessary data based on the current value. This data is then
      * passed to the isValid and fixup functions to help them make decisions.
+     *
+     * The options object contains:
+     * - `value`: The current atom value (may be undefined)
+     * - `get`: Jotai getter to read from other atoms
+     *
+     * Returns the precomputed value to be passed to isValidFunction and fixupFunction.
      */
     precomputeFunction: (options: { value: TValue | undefined; get: Getter }) => TPrecomputedValue;
 
     /**
      * An optional function to compute the dependencies state of the atom. This is used to determine
      * if the atom is waiting for dependent atoms to resolve (e.g., query atoms) before it can
-     * determine its own validity. Returns "loading" while dependencies are being resolved, "error"
-     * if any dependency has an error, or "loaded" when all dependencies are ready.
+     * determine its own validity.
+     *
+     * The options object contains:
+     * - `value`: The current atom value (may be undefined)
+     * - `get`: Jotai getter to read from other atoms
+     * - `precomputedValue`: The precomputed value from precomputeFunction
+     *
+     * Returns:
+     * - "loading": Dependencies are being resolved
+     * - "error": One or more dependencies have an error
+     * - "loaded": All dependencies are ready
+     *
      * If not provided, the dependencies state is assumed to be "loaded".
      */
     computeDependenciesState?: (options: {
@@ -124,6 +140,13 @@ type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
      * Called whenever the atom is read to determine if a persisted value is still valid.
      * This function is also used to decide whether the fixup function should be triggered
      * for user-provided values.
+     *
+     * The options object contains:
+     * - `value`: The current atom value to validate
+     * - `get`: Jotai getter to read from other atoms
+     * - `precomputedValue`: The precomputed value from precomputeFunction
+     *
+     * Returns true if the value is valid in the current context, false otherwise.
      */
     isValidFunction: (options: { value: TValue; get: Getter; precomputedValue: TPrecomputedValue }) => boolean;
 
@@ -131,6 +154,13 @@ type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
      * A function that provides a fallback value when a user-provided value is invalid.
      * This function is only called if the value originates from a user interaction and is invalid.
      * Persisted values are never passed to this function.
+     *
+     * The options object contains:
+     * - `value`: The current invalid value that needs fixing (may be undefined)
+     * - `get`: Jotai getter to read from other atoms
+     * - `precomputedValue`: The precomputed value from precomputeFunction
+     *
+     * Returns a valid fallback value to use instead.
      */
     fixupFunction: (options: { value: TValue | undefined; get: Getter; precomputedValue: TPrecomputedValue }) => TValue;
 };
@@ -151,8 +181,17 @@ type PersistableFixableAtomOptionsWithoutPrecompute<TValue> = {
     /**
      * An optional function to compute the dependencies state of the atom. This is used to determine
      * if the atom is waiting for dependent atoms to resolve (e.g., query atoms) before it can
-     * determine its own validity. Returns "loading" while dependencies are being resolved, "error"
-     * if any dependency has an error, or "loaded" when all dependencies are ready.
+     * determine its own validity.
+     *
+     * The options object contains:
+     * - `value`: The current atom value (may be undefined)
+     * - `get`: Jotai getter to read from other atoms
+     *
+     * Returns:
+     * - "loading": Dependencies are being resolved
+     * - "error": One or more dependencies have an error
+     * - "loaded": All dependencies are ready
+     *
      * If not provided, the dependencies state is assumed to be "loaded".
      */
     computeDependenciesState?: (options: {
@@ -165,6 +204,12 @@ type PersistableFixableAtomOptionsWithoutPrecompute<TValue> = {
      * Called whenever the atom is read to determine if a persisted value is still valid.
      * This function is also used to decide whether the fixup function should be triggered
      * for user-provided values.
+     *
+     * The options object contains:
+     * - `value`: The current atom value to validate
+     * - `get`: Jotai getter to read from other atoms
+     *
+     * Returns true if the value is valid in the current context, false otherwise.
      */
     isValidFunction: (options: { value: TValue; get: Getter }) => boolean;
 
@@ -172,6 +217,12 @@ type PersistableFixableAtomOptionsWithoutPrecompute<TValue> = {
      * A function that provides a fallback value when a user-provided value is invalid.
      * This function is only called if the value originates from a user interaction and is invalid.
      * Persisted values are never passed to this function.
+     *
+     * The options object contains:
+     * - `value`: The current invalid value that needs fixing (may be undefined)
+     * - `get`: Jotai getter to read from other atoms
+     *
+     * Returns a valid fallback value to use instead.
      */
     fixupFunction: (options: { value: TValue | undefined; get: Getter }) => TValue;
 };
