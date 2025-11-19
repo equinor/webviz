@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 
-from webviz_pkg.core_utils import b64
+from webviz_core_utils import b64
 
 
 def test_encode_as_float32() -> None:

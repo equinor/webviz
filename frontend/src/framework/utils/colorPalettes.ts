@@ -103,10 +103,29 @@ export const defaultContinuousSequentialColorPalettes = [
         ],
         id: "turbo",
     }),
+
     new ColorPalette({
-        name: "Blues",
-        colors: ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"],
-        id: "blues",
+        name: "Water",
+        colors: ["#ffffff", "#e6f0ff", "#b3d4ff", "#66aaff", "#3388ff", "#0066cc", "#004d99", "#003366"],
+        id: "water",
+    }),
+
+    new ColorPalette({
+        name: "Oil",
+        colors: ["#ffffff", "#f0fff0", "#d9ffd9", "#b3ffb3", "#80e680", "#4dcc4d", "#339933", "#1a661a"],
+        id: "oil",
+    }),
+
+    new ColorPalette({
+        name: "Gas",
+        colors: ["#ffffff", "#fff5f0", "#ffe6e0", "#ffc9c0", "#ff9999", "#e67373", "#cc4d4d", "#b33030"],
+        id: "gas",
+    }),
+
+    new ColorPalette({
+        name: "Thickness",
+        colors: ["#ffffff", "#e0f0ff", "#80c8e6", "#40b8b8", "#80c080", "#d4d466", "#ffaa66", "#ff7766", "#d93030"],
+        id: "thickness",
     }),
 ];
 

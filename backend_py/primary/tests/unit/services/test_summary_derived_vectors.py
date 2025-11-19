@@ -4,8 +4,8 @@ import pytest
 
 import pyarrow as pa
 
-from primary.services.service_exceptions import InvalidDataError
-from primary.services.summary_derived_vectors import (
+from webviz_services.service_exceptions import InvalidDataError
+from webviz_services.summary_derived_vectors import (
     DerivedRealizationVector,
     DerivedVectorType,
     create_derived_realization_vector_list,

@@ -3,15 +3,15 @@ import base64
 import numpy as np
 import xtgeo
 from numpy.typing import NDArray
-from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
+from webviz_core_utils.b64 import b64_encode_float_array_as_float32
 
-from primary.services.smda_access.types import StratigraphicSurface
-from primary.services.sumo_access.surface_types import SurfaceMetaSet
-from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
-from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
-from primary.services.utils.surface_helpers import surface_to_float32_numpy_array, get_min_max_surface_values
-from primary.services.utils.surface_to_png import surface_to_png_bytes_optimized
-from primary.services.smda_access import StratigraphicUnit
+from webviz_services.smda_access.types import StratigraphicSurface
+from webviz_services.sumo_access.surface_types import SurfaceMetaSet
+from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
+from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
+from webviz_services.utils.surface_helpers import surface_to_float32_numpy_array, get_min_max_surface_values
+from webviz_services.utils.surface_to_png import surface_to_png_bytes_optimized
+from webviz_services.smda_access import StratigraphicUnit
 
 from . import schemas
 

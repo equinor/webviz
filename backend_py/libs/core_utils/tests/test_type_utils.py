@@ -1,6 +1,6 @@
 import pytest
 
-from webviz_pkg.core_utils.type_utils import expect_type
+from webviz_core_utils.type_utils import expect_type
 
 
 def test_expect_type() -> None:
@@ -13,6 +13,7 @@ def test_expect_type() -> None:
 def test_that_class_and_subclass_is_accepted() -> None:
     # pylint: disable=too-few-public-methods, multiple-statements
     class Base: ...
+
     class Sub(Base): ...
 
     base_obj = Base()
