@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -19,8 +19,8 @@ import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTy
 
 import type { Interfaces } from "../interfaces";
 
-import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
-import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
+import { dataProviderManagerAtom, dataProviderSerializedStateAtom } from "./atoms/baseAtoms";
+import { selectedFieldIdentifierAtom } from "./atoms/persistableFixableAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
@@ -29,12 +29,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const colorSet = useColorSet(props.workbenchSettings);
 
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
+    const [selectedFieldIdentifier, setSelectedFieldIdentifier] = useAtom(selectedFieldIdentifierAtom);
 
-    const selectedFieldIdentifier = useAtomValue(selectedFieldIdentifierAtom);
-    const setSelectedFieldIdentifier = useSetAtom(userSelectedFieldIdentifierAtom);
-    const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
+    const [dataProviderSerializedState, setDataProviderSerializedState] = useAtom(dataProviderSerializedStateAtom);
+    const dataProviderSerializedStateRef = React.useRef(dataProviderSerializedState);
 
-    const persistState = React.useCallback(
+    const persistDataProviderManagerState = React.useCallback(
         function persistDataProviderManagerState() {
             if (!dataProviderManager) {
                 return;
@@ -42,22 +42,16 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
 
             const serializedState = {
                 dataProviderManager: dataProviderManager.serializeState(),
-                selectedFieldIdentifier,
-                preferredViewLayout,
             };
-            window.localStorage.setItem(
-                `${props.settingsContext.getInstanceIdString()}-settings`,
-                JSON.stringify(serializedState),
-            );
+            setDataProviderSerializedState(JSON.stringify(serializedState));
         },
-        [dataProviderManager, selectedFieldIdentifier, preferredViewLayout, props.settingsContext],
+        [dataProviderManager, setDataProviderSerializedState],
     );
 
     const applyPersistedState = React.useCallback(
         function applyPersistedState(dataProviderManager: DataProviderManager) {
-            const serializedState = window.localStorage.getItem(
-                `${props.settingsContext.getInstanceIdString()}-settings`,
-            );
+            const serializedState = dataProviderSerializedStateRef.current;
+
             if (!serializedState) {
                 const groupDelegate = dataProviderManager.getGroupDelegate();
 
@@ -79,13 +73,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
             }
 
             const parsedState = JSON.parse(serializedState);
-            if (parsedState.fieldIdentifier) {
-                setSelectedFieldIdentifier(parsedState.fieldIdentifier);
-            }
-            if (parsedState.preferredViewLayout) {
-                setPreferredViewLayout(parsedState.preferredViewLayout);
-            }
-
             if (parsedState.dataProviderManager) {
                 if (!dataProviderManager) {
                     return;
@@ -93,7 +80,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                 dataProviderManager.deserializeState(parsedState.dataProviderManager);
             }
         },
-        [setSelectedFieldIdentifier, setPreferredViewLayout, props.settingsContext, colorSet],
+        [colorSet],
     );
 
     React.useEffect(
@@ -120,23 +107,23 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                 return;
             }
 
-            persistState();
+            persistDataProviderManagerState();
 
             const unsubscribeDataRev = dataProviderManager
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION)(persistState);
+                .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION)(persistDataProviderManagerState);
 
             const unsubscribeExpands = dataProviderManager
                 .getGroupDelegate()
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistState);
+                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistDataProviderManagerState);
 
             return function onUnmountEffect() {
                 unsubscribeDataRev();
                 unsubscribeExpands();
             };
         },
-        [dataProviderManager, props.workbenchSession, props.workbenchSettings, persistState],
+        [dataProviderManager, props.workbenchSession, props.workbenchSettings, persistDataProviderManagerState],
     );
 
     React.useEffect(
@@ -144,7 +131,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
             if (!dataProviderManager) {
                 return;
             }
-            dataProviderManager.updateGlobalSetting("fieldId", selectedFieldIdentifier);
+            dataProviderManager.updateGlobalSetting("fieldId", selectedFieldIdentifier.value);
         },
         [selectedFieldIdentifier, dataProviderManager],
     );
@@ -158,7 +145,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
             <CollapsibleGroup title="Field" expanded>
                 <FieldDropdown
                     ensembleSet={ensembleSet}
-                    value={selectedFieldIdentifier}
+                    value={selectedFieldIdentifier.value}
                     onChange={handleFieldIdentifierChange}
                 />
             </CollapsibleGroup>
