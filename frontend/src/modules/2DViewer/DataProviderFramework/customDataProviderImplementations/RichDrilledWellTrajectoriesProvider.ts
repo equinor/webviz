@@ -1,7 +1,14 @@
 import { isEqual } from "lodash";
 
 import type { EnhancedWellboreHeader_api, WellboreTrajectory_api } from "@api";
-import { getDrilledWellboreHeadersOptions, getObservedSurfacesMetadataOptions, getWellTrajectoriesOptions } from "@api";
+import {
+    getDrilledWellboreHeadersOptions,
+    getObservedSurfacesMetadataOptions,
+    getRealizationSurfacesMetadataOptions,
+    getWellTrajectoriesOptions,
+    SurfaceAttributeType_api,
+} from "@api";
+import { sortStringArray } from "@lib/utils/arrays";
 import { transformToSimplifiedWellboreHeaders } from "@lib/utils/wellboreTypes";
 import type {
     CustomDataProviderImplementation,
@@ -15,7 +22,11 @@ const richDrilledWellTrajectoriesSettings = [
     Setting.ENSEMBLE,
     Setting.SMDA_WELLBORE_HEADERS,
     Setting.DEPTH_FILTER,
-    // Setting.TIME_OR_INTERVAL,
+    Setting.TIME_OR_INTERVAL,
+    Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE,
+    Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME,
+    Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME,
+    Setting.WELL_TRAJ_FILTER_SURFACE_REALIZATION,
 ] as const;
 type RichDrilledWellTrajectoriesSettings = typeof richDrilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RichDrilledWellTrajectoriesSettings>;
@@ -117,14 +128,110 @@ export class RichDrilledWellTrajectoriesProvider
                 }),
             });
         });
-        // availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getHelperDependency }) => {
-        //     const data = getHelperDependency(observedSurfaceMetadataDep);
-        //     if (!data) {
-        //         return [];
-        //     }
+        const realizationSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
-        //     return data.time_intervals_iso_str;
-        // });
+            if (!ensembleIdent) {
+                return null;
+            }
+
+            return await queryClient.fetchQuery({
+                ...getRealizationSurfacesMetadataOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                    },
+                    signal: abortSignal,
+                }),
+            });
+        });
+        availableSettingsUpdater(Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE, ({ getHelperDependency }) => {
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
+            if (!data) {
+                return [];
+            }
+
+            const availableAttributes = [
+                ...Array.from(
+                    new Set(
+                        data.surfaces
+                            .filter((surface) => surface.attribute_type === SurfaceAttributeType_api.DEPTH)
+                            .map((surface) => surface.attribute_name),
+                    ),
+                ),
+            ];
+
+            return availableAttributes;
+        });
+        availableSettingsUpdater(
+            Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME,
+            ({ getHelperDependency, getLocalSetting }) => {
+                const attribute = getLocalSetting(Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE);
+                const data = getHelperDependency(realizationSurfaceMetadataDep);
+
+                if (!attribute || !data) {
+                    return [];
+                }
+
+                const availableSurfaceNames = [
+                    ...Array.from(
+                        new Set(
+                            data.surfaces
+                                .filter((surface) => surface.attribute_name === attribute)
+                                .map((el) => el.name),
+                        ),
+                    ),
+                ];
+                return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
+            },
+        );
+        availableSettingsUpdater(
+            Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME,
+            ({ getHelperDependency, getLocalSetting }) => {
+                const attribute = getLocalSetting(Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE);
+                const data = getHelperDependency(realizationSurfaceMetadataDep);
+
+                if (!attribute || !data) {
+                    return [];
+                }
+
+                const availableSurfaceNames = [
+                    ...Array.from(
+                        new Set(
+                            data.surfaces
+                                .filter((surface) => surface.attribute_name === attribute)
+                                .map((el) => el.name),
+                        ),
+                    ),
+                ];
+                return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
+            },
+        );
+        availableSettingsUpdater(
+            Setting.WELL_TRAJ_FILTER_SURFACE_REALIZATION,
+            ({ getLocalSetting, getGlobalSetting }) => {
+                const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+
+                const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
+
+                if (!ensembleIdent) {
+                    return [];
+                }
+
+                const realizations = realizationFilterFunc(ensembleIdent);
+
+                return [...realizations];
+            },
+        );
+
+        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getHelperDependency }) => {
+            const data = getHelperDependency(observedSurfaceMetadataDep);
+            if (!data) {
+                return [];
+            }
+
+            return data.time_intervals_iso_str;
+        });
 
         storedDataUpdater("selectedWellBoreHeaders", ({ getHelperDependency, getLocalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);

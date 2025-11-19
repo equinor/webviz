@@ -96,3 +96,23 @@ SettingRegistry.registerSetting(Setting.WELLBORE_EXTENSION_LENGTH, "Wellbore Ext
 });
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
 SettingRegistry.registerSetting(Setting.WELLBORE_PERFORATIONS, "Perforations", SelectStringSetting);
+SettingRegistry.registerSetting(
+    Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE,
+    "Well Trajectory Filter Surface Attribute",
+    DropdownStringSetting,
+);
+SettingRegistry.registerSetting(
+    Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME,
+    "Well Trajectory Filter Top Surface Name",
+    DropdownStringSetting,
+);
+SettingRegistry.registerSetting(
+    Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME,
+    "Well Trajectory Filter Bottom Surface Name",
+    DropdownStringSetting,
+);
+SettingRegistry.registerSetting(
+    Setting.WELL_TRAJ_FILTER_SURFACE_REALIZATION,
+    "Well Trajectory Filter Surface Realization",
+    DropdownNumberSetting,
+);

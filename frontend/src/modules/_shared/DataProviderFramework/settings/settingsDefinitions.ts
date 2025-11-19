@@ -70,6 +70,10 @@ export enum Setting {
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
     WELLBORE_PERFORATIONS = "wellborePerforations",
+    WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE = "wellTrajectoryFilterSurfaceAttribute",
+    WELL_TRAJ_FILTER_TOP_SURFACE_NAME = "wellTrajectoryFilterTopSurfaceName",
+    WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME = "wellTrajectoryFilterBottomSurfaceName",
+    WELL_TRAJ_FILTER_SURFACE_REALIZATION = "wellTrajectoryFilterSurfaceRealization",
 }
 
 export const settingCategories = {
@@ -112,6 +116,10 @@ export const settingCategories = {
     [Setting.WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
     [Setting.WELLBORE_PICK_IDENTIFIER]: SettingCategory.SINGLE_SELECT,
     [Setting.WELLBORE_PERFORATIONS]: SettingCategory.MULTI_SELECT,
+    [Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
+    [Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
+    [Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
+    [Setting.WELL_TRAJ_FILTER_SURFACE_REALIZATION]: SettingCategory.SINGLE_SELECT,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
@@ -160,6 +168,10 @@ export type SettingTypes = {
     [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
     [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;
     [Setting.WELLBORE_PERFORATIONS]: string[] | null;
+    [Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE]: string | null;
+    [Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME]: string | null;
+    [Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME]: string | null;
+    [Setting.WELL_TRAJ_FILTER_SURFACE_REALIZATION]: number | null;
 };
 
 export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {
