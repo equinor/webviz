@@ -29,6 +29,8 @@ webviz-services = { path = "../libs/services", develop = true }
 azure-cosmos = "^4.9.0"
 nanoid = "^2.0.0"
 
+[tool.poetry.group.dev.dependencies]
+types-nanoid = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core"]
