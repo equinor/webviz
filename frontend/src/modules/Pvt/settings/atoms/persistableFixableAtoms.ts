@@ -55,6 +55,19 @@ export const selectedPvtNumsAtom = persistableFixableAtom<number[], number[]>({
         const pvtDataAccessor = get(pvtDataAccessorWithStatusAtom).pvtDataAccessor;
         return pvtDataAccessor?.getUniquePvtNums() || [];
     },
+    computeDependenciesState: ({ get }) => {
+        const pvtDataAccessorWithStatus = get(pvtDataAccessorWithStatusAtom);
+
+        if (pvtDataAccessorWithStatus.pvtDataAccessor === null) {
+            return "error";
+        }
+
+        if (pvtDataAccessorWithStatus.isFetching) {
+            return "loading";
+        }
+
+        return "loaded";
+    },
     isValidFunction: ({ value, precomputedValue: uniquePvtNums }) => {
         if (!value || value.length === 0) {
             return uniquePvtNums.length === 0;
