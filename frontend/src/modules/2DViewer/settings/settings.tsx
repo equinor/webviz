@@ -10,7 +10,7 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { SettingWrapper } from "@lib/components/SettingWrapper/settingWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
-import { useMakeSettingWrapperPropsFromPersistableFixableAtom } from "@modules/_shared/hooks/useMakeSettingWrapperPropsFromPersistableFixableAtom";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import {
     DataProviderManager,
@@ -121,12 +121,12 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         dataProviderManager.updateGlobalSetting("fieldId", fieldId);
     }
 
-    const settingWrapperProps = useMakeSettingWrapperPropsFromPersistableFixableAtom(fieldIdentifierAtom);
+    const fieldIdentifierAnnotations = useMakePersistableFixableAtomAnnotations(fieldIdentifierAtom);
 
     return (
         <div className="h-full flex flex-col gap-1">
             <CollapsibleGroup title="Field" expanded>
-                <SettingWrapper {...settingWrapperProps}>
+                <SettingWrapper annotations={fieldIdentifierAnnotations}>
                     <FieldDropdown
                         ensembleSet={ensembleSet}
                         onChange={handleFieldChange}
