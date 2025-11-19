@@ -3359,6 +3359,18 @@ files = [
 types-setuptools = "*"
 
 [[package]]
+name = "types-nanoid"
+version = "2.0.0.20240601"
+description = "Typing stubs for nanoid"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "types-nanoid-2.0.0.20240601.tar.gz", hash = "sha256:7246ee685ed55a367fc160d87cde75a550296ecca26e0602619552dae72efda0"},
+    {file = "types_nanoid-2.0.0.20240601-py3-none-any.whl", hash = "sha256:5219f721b80748d82b14edd5429cc888d32eb816966d2a4719730ef3f2e3a417"},
+]
+
+[[package]]
 name = "types-pyopenssl"
 version = "24.1.0.20240722"
 description = "Typing stubs for pyOpenSSL"
@@ -3736,4 +3748,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "651ae2c590119667a97a4792396387ad2466d042870f749909d9cef47abda9bf"
+content-hash = "39e0de95203d3cfba8c02d66cae65df6b54f335feb3849d0116c2a5a146dc187"
