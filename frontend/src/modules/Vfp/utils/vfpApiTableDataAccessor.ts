@@ -5,8 +5,7 @@ import { VfpParam, VfpType } from "../types";
 
 import { isInjTable, isProdTable } from "./vfpTableClassifier";
 
-
-export class VfpDataAccessor {
+export class VfpApiTableDataAccessor {
     private _vfpTable: VfpProdTable_api | VfpInjTable_api;
 
     constructor(vfpTable: VfpProdTable_api | VfpInjTable_api) {

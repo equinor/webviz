@@ -3,17 +3,14 @@ import type { Layout, PlotData, PlotMarker } from "plotly.js";
 import type { ColorScale } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
 
-
-import { PressureOption, VfpParam } from "../types";
-
-import type { VfpDataAccessor } from "./vfpDataAccessor";
-
+import { PressureOption, VfpParam } from "../../types";
+import type { VfpApiTableDataAccessor } from "../../utils/vfpApiTableDataAccessor";
 
 export class VfpPlotBuilder {
-    private _vfpDataAccessor: VfpDataAccessor;
+    private _vfpDataAccessor: VfpApiTableDataAccessor;
     private _colorScale: ColorScale;
 
-    constructor(vfpDataAccessor: VfpDataAccessor, colorScale: ColorScale) {
+    constructor(vfpDataAccessor: VfpApiTableDataAccessor, colorScale: ColorScale) {
         this._vfpDataAccessor = vfpDataAccessor;
         this._colorScale = colorScale;
     }
@@ -39,10 +36,10 @@ export class VfpPlotBuilder {
         const data: Partial<PlotData>[] = [];
 
         if (
-            selectedThpIndices == null ||
-            selectedWfrIndices == null ||
-            selectedGfrIndices == null ||
-            selectedAlqIndices == null
+            !isValidArrayAndNonEmpty(selectedThpIndices) ||
+            !isValidArrayAndNonEmpty(selectedWfrIndices) ||
+            !isValidArrayAndNonEmpty(selectedGfrIndices) ||
+            !isValidArrayAndNonEmpty(selectedAlqIndices)
         ) {
             return [];
         }
@@ -116,7 +113,8 @@ export class VfpPlotBuilder {
     makeVfpInjTraces(selectedThpIndices: number[] | null, pressureOption: PressureOption): Partial<PlotData>[] {
         const data: Partial<PlotData>[] = [];
 
-        if (selectedThpIndices == null) {
+        // Invalid or empty selection
+        if (!isValidArrayAndNonEmpty(selectedThpIndices)) {
             return [];
         }
 
@@ -216,4 +214,8 @@ export class VfpPlotBuilder {
 
         return trace;
     }
+}
+
+function isValidArrayAndNonEmpty(variable: unknown): variable is unknown[] {
+    return variable !== null && variable !== undefined && Array.isArray(variable) && variable.length > 0;
 }
