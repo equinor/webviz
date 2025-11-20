@@ -1,0 +1,46 @@
+[project]
+name = "webviz-services"
+version = "0.0.1"
+requires-python = "^3.13"
+dynamic = ["dependencies"]
+
+[tool.poetry]
+requires-poetry = ">=2.1"
+packages = [{ include = "webviz_services", from = "src" }]
+
+[tool.poetry.dependencies]
+redis = "^5.3.1"
+pyarrow = "^21.0.0"
+pydantic = "^2.11.0"
+numpy = "^2.2.0"
+pandas = { version = "^2.0.1", extras = ["performance"] }
+httpx = "^0.28.1"
+fmu-sumo = "^2.6.1"
+sumo-wrapper-python = "^1.1.2"
+pottery = "^3.0.0"
+requests-toolbelt = "^1.0.0"
+xtgeo = "^4.11.0"
+webviz-core-utils = { path = "../core_utils", develop = true }
+webviz-server-schemas = { path = "../server_schemas", develop = true }
+
+# These are really dev dependencies, but since dev dependencies are not transitively installed,
+# and they are needed for type checking, we put them here instead.
+types-redis = "^4.6.0"
+pyarrow-stubs = "^20.0.0.20250825"
+
+
+# Special cases
+### Polars does breaking changes in minor versions
+polars = "~1.33.0"
+
+### Might change model fields in minor updates, so pinned for stability 
+fmu-datamodels = "0.14.0"
+
+[tool.poetry.group.overrides.dependencies]
+# The `numba` dependency in `pandas` is a bit too loose, so it ends up pulling a release-candidate branch if we don't pin it
+numba = "0.61.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

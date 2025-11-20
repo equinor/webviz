@@ -1,12 +1,12 @@
 import numpy as np
 import polars as pl
-from primary.services.inplace_volumes_table_assembler._utils.polars_expression_utils import (
+from webviz_services.inplace_volumes_table_assembler._utils.polars_expression_utils import (
     create_calculated_volume_column_expressions,
     create_property_column_expressions,
     create_named_expression_with_nan_for_inf,
 )
 
-from primary.services.sumo_access.inplace_volumes_table_types import InplaceVolumes
+from webviz_services.sumo_access.inplace_volumes_table_types import InplaceVolumes
 
 
 def test_create_named_expression_with_nan_for_inf_regular_value() -> None:

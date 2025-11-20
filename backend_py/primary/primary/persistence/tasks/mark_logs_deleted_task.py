@@ -1,11 +1,12 @@
 import asyncio
 from datetime import datetime, timezone
 import logging
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List
+
+from webviz_services.service_exceptions import ServiceRequestError
 
 from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
 from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument
-from primary.services.service_exceptions import ServiceRequestError
 
 LOGGER = logging.getLogger(__name__)
 

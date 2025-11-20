@@ -1,4 +1,4 @@
-from webviz_pkg.core_utils.exponential_backoff_timer import ExponentialBackoffTimer
+from webviz_core_utils.exponential_backoff_timer import ExponentialBackoffTimer
 
 
 def test_without_jitter() -> None:

@@ -1,9 +1,9 @@
 from typing import List, Optional, Tuple
 from datetime import datetime, timezone
 from nanoid import generate
+from webviz_services.service_exceptions import Service, ServiceRequestError
 
 from primary.persistence._utils import hash_session_content_string
-from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
 from primary.persistence.cosmosdb.query_collation_options import Filter, QueryCollationOptions, SortDirection
 from primary.persistence.session_store.types import SessionSortBy

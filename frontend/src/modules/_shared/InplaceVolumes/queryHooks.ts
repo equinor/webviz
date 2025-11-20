@@ -21,7 +21,6 @@ export type EnsembleIdentWithRealizations = {
 export type AggregatedTableDataResults = {
     tablesData: InplaceVolumesTableData[];
     isFetching: boolean;
-    someQueriesFailed: boolean;
     allQueriesFailed: boolean;
     errors: Error[];
 };
@@ -29,7 +28,6 @@ export type AggregatedTableDataResults = {
 export type AggregatedStatisticalTableDataResults = {
     tablesData: InplaceVolumesStatisticalTableData[];
     isFetching: boolean;
-    someQueriesFailed: boolean;
     allQueriesFailed: boolean;
     errors: Error[];
 };
@@ -103,7 +101,6 @@ export function useGetAggregatedStatisticalTableDataQueries(
         return {
             tablesData: tablesData,
             isFetching: results.some((result) => result.isFetching),
-            someQueriesFailed: results.some((result) => result.isError),
             allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
             errors: errors,
         };
@@ -184,7 +181,6 @@ export function useGetAggregatedPerRealizationTableDataQueries(
         return {
             tablesData: tablesData,
             isFetching: results.some((result) => result.isFetching),
-            someQueriesFailed: results.some((result) => result.isError),
             allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
             errors: errors,
         };

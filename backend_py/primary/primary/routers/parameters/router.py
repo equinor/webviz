@@ -4,9 +4,9 @@ from typing import List, Optional, Literal
 from fastapi import APIRouter, Depends, Query
 
 from primary.auth.auth_helper import AuthHelper
-from primary.services.sumo_access.parameter_access import ParameterAccess
-from primary.services.sumo_access.parameter_types import EnsembleParameter, EnsembleSensitivity
-from primary.services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.sumo_access.parameter_access import ParameterAccess
+from webviz_services.sumo_access.parameter_types import EnsembleParameter, EnsembleSensitivity
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
 

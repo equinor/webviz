@@ -1,10 +1,10 @@
 from typing import Sequence
 
-from primary.services.summary_vector_statistics import VectorStatistics
-from primary.services.sumo_access.summary_access import RealizationVector
-from primary.services.utils.statistic_function import StatisticFunction
-from primary.services.summary_delta_vectors import RealizationDeltaVector
-from primary.services.summary_derived_vectors import DerivedVectorType, DerivedRealizationVector
+from webviz_services.summary_vector_statistics import VectorStatistics
+from webviz_services.sumo_access.summary_access import RealizationVector
+from webviz_services.utils.statistic_function import StatisticFunction
+from webviz_services.summary_delta_vectors import RealizationDeltaVector
+from webviz_services.summary_derived_vectors import DerivedVectorType, DerivedRealizationVector
 from . import schemas
 
 
