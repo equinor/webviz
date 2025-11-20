@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/production-data/")
+@router.get("/production_data/")
 async def get_production_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -32,7 +32,7 @@ async def get_production_data(
 
 
 # Injection Endpoint
-@router.get("/injection-data/")
+@router.get("/injection_data/")
 async def get_injection_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
