@@ -29,6 +29,7 @@ import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
+import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -102,6 +103,8 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
+
+    usePropagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
 
     // Receive global parameter string and update local state if different
     React.useEffect(() => {
@@ -257,9 +260,10 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         selectedParameterIdentStringAtom,
     );
 
-    const vectorListQueriesErrorMessage = vectorListQueries.every((q) => q.isError)
-        ? "Could not load vectors for selected ensembles"
-        : undefined;
+    const vectorListQueriesErrorMessage =
+        vectorListQueries.length > 0 && vectorListQueries.every((q) => q.isError)
+            ? "Could not load vectors for selected ensembles"
+            : undefined;
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
