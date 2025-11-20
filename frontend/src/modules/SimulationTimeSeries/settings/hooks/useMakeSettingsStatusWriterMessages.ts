@@ -8,14 +8,15 @@ import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/us
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
 import { selectedVectorNamesAtom } from "../atoms/baseAtoms";
-import { ensembleVectorListsHelperAtom, selectedEnsembleIdentsAtom } from "../atoms/derivedAtoms";
+import { ensembleVectorListsHelperAtom } from "../atoms/derivedAtoms";
+import { selectedEnsembleIdentsAtom } from "../atoms/persistableFixableAtoms";
 import { vectorListQueriesAtom } from "../atoms/queryAtoms";
 
 export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatusWriter, selectedVectorTags: string[]) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value;
     const selectedVectorNames = useAtomValue(selectedVectorNamesAtom);
 
     usePropagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
