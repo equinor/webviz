@@ -4,10 +4,10 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import type { Interfaces } from "./interfaces";
+import { SERIALIZED_STATE, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 
 import "./DataProviderFramework/registerAllDataProviders";
-import { SERIALIZED_STATE, type SerializedState } from "./persistence";
 
 export const MODULE_NAME = "3DViewer";
 
