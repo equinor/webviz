@@ -4,10 +4,9 @@ import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { EnsembleMode } from "@modules/ParameterDistributions/typesAndEnums";
 
-import { showConstantParametersAtom, showLogParametersAtom } from "./baseAtoms";
+import { selectedEnsembleModeAtom, showConstantParametersAtom, showLogParametersAtom } from "./baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
-    selectedEnsembleModeAtom,
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
 } from "./persistableFixableAtoms";
@@ -17,7 +16,7 @@ export const intersectedParameterIdentsAtom = atom((get) => {
     let selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
     const priorEnsembleIdent = get(selectedPriorEnsembleIdentAtom).value;
     const posteriorEnsembleIdent = get(selectedPosteriorEnsembleIdentAtom).value;
-    const ensembleMode = get(selectedEnsembleModeAtom).value;
+    const ensembleMode = get(selectedEnsembleModeAtom);
     const showConstantParameters = get(showConstantParametersAtom);
     const showLogParameters = get(showLogParametersAtom);
 

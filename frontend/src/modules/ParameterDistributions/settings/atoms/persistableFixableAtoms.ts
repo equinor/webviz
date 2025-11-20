@@ -3,8 +3,6 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-import { EnsembleMode } from "@modules/ParameterDistributions/typesAndEnums";
-import { ParameterSortMethod } from "@modules/ParameterDistributions/view/utils/parameterSorting";
 
 import { intersectedParameterIdentsAtom } from "./derivedAtoms";
 
@@ -77,19 +75,6 @@ export const selectedPosteriorEnsembleIdentAtom = persistableFixableAtom<Regular
     },
 });
 
-export const selectedEnsembleModeAtom = persistableFixableAtom<EnsembleMode>({
-    initialValue: EnsembleMode.INDEPENDENT,
-    isValidFunction: ({ value }) => {
-        return Object.values(EnsembleMode).includes(value);
-    },
-    fixupFunction: ({ value }) => {
-        if (value && Object.values(EnsembleMode).includes(value)) {
-            return value;
-        }
-        return EnsembleMode.INDEPENDENT;
-    },
-});
-
 export const selectedParameterIdentsAtom = persistableFixableAtom<ParameterIdent[] | null>({
     initialValue: null,
     isValidFunction: ({ get, value }) => {
@@ -100,7 +85,7 @@ export const selectedParameterIdentsAtom = persistableFixableAtom<ParameterIdent
         if (value.length === 0) {
             return true;
         }
-        return value.every((ident) => intersectedParameterIdents.includes(ident));
+        return value.every((ident) => intersectedParameterIdents.some((elm) => elm.equals(ident)));
     },
     fixupFunction: ({ value, get }) => {
         const intersectedParameterIdents = get(intersectedParameterIdentsAtom);
@@ -111,24 +96,6 @@ export const selectedParameterIdentsAtom = persistableFixableAtom<ParameterIdent
             return [];
         }
 
-        return value.filter((ident) => intersectedParameterIdents.some((ipi) => ipi.equals(ident)));
-    },
-});
-
-export const selectedParameterSortingMethodAtom = persistableFixableAtom<ParameterSortMethod>({
-    initialValue: ParameterSortMethod.ALPHABETICAL,
-    isValidFunction: ({ value, get }) => {
-        const ensembleMode = get(selectedEnsembleModeAtom).value;
-        if (ensembleMode === EnsembleMode.INDEPENDENT) {
-            return value === ParameterSortMethod.ALPHABETICAL;
-        }
-        return Object.values(ParameterSortMethod).includes(value);
-    },
-    fixupFunction: ({ value, get }) => {
-        const ensembleMode = get(selectedEnsembleModeAtom).value;
-        if (ensembleMode === EnsembleMode.INDEPENDENT || !value) {
-            return ParameterSortMethod.ALPHABETICAL;
-        }
-        return value;
+        return value.filter((ident) => intersectedParameterIdents.some((elm) => elm.equals(ident)));
     },
 });

@@ -3,6 +3,8 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
+    selectedEnsembleModeAtom,
+    selectedParameterSortingMethodAtom,
     histogramModeAtom,
     selectedVisualizationTypeAtom,
     showIndividualRealizationValuesAtom,
@@ -10,8 +12,6 @@ import {
 } from "./settings/atoms/baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
-    selectedEnsembleModeAtom,
-    selectedParameterSortingMethodAtom,
     selectedParameterIdentsAtom,
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
@@ -62,9 +62,9 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return get(selectedPosteriorEnsembleIdentAtom).value;
     },
     ensembleMode: (get) => {
-        return get(selectedEnsembleModeAtom).value;
+        return get(selectedEnsembleModeAtom);
     },
     parameterSortingMethod: (get) => {
-        return get(selectedParameterSortingMethodAtom).value;
+        return get(selectedParameterSortingMethodAtom);
     },
 };

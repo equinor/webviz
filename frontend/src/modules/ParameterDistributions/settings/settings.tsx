@@ -4,7 +4,6 @@ import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
-import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
@@ -34,13 +33,13 @@ import {
     showIndividualRealizationValuesAtom,
     showLogParametersAtom,
     showPercentilesAndMeanLinesAtom,
+    selectedParameterSortingMethodAtom,
+    selectedEnsembleModeAtom,
 } from "./atoms/baseAtoms";
 import { intersectedParameterIdentsAtom } from "./atoms/derivedAtoms";
 import {
     selectedEnsembleIdentsAtom,
-    selectedEnsembleModeAtom,
     selectedParameterIdentsAtom,
-    selectedParameterSortingMethodAtom,
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
 } from "./atoms/persistableFixableAtoms";
@@ -74,9 +73,14 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
         setSelectedEnsembleIdents(ensembleIdents);
     }
 
-    function handleParameterIdentsChange(parameterIdents: ParameterIdent[]) {
-        setSelectedParameterIdents(parameterIdents);
+    function handleEnsembleModeChange(mode: EnsembleMode) {
+        setSelectedEnsembleMode(mode);
+
+        if (mode === EnsembleMode.INDEPENDENT) {
+            setSelectedParameterSortingMethod(ParameterSortMethod.ALPHABETICAL);
+        }
     }
+
     function handleShowConstantParametersChange() {
         setShowConstantParameters((prev) => !prev);
     }
@@ -93,10 +97,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
 
     const hasMultipleRegularEnsembles = ensembleSet.getRegularEnsembleArray().length > 1;
 
-    const selectedEnsembleModeAnnotation = useMakePersistableFixableAtomAnnotations(selectedEnsembleModeAtom);
-    const selectedParameterSortingMethodAnnotation = useMakePersistableFixableAtomAnnotations(
-        selectedParameterSortingMethodAtom,
-    );
     const selectedEnsembleIdentsAnnotation = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
     const selectedPriorEnsembleIdentAnnotation =
         useMakePersistableFixableAtomAnnotations(selectedPriorEnsembleIdentAtom);
@@ -109,7 +109,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Ensembles" expanded>
                 <div className="flex flex-col gap-2">
-                    <SettingWrapper label="Analysis mode" annotations={selectedEnsembleModeAnnotation}>
+                    <SettingWrapper label="Analysis mode">
                         <Dropdown
                             options={Object.values(EnsembleMode).map((type: EnsembleMode) => {
                                 return {
@@ -118,13 +118,12 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     disabled: !hasMultipleRegularEnsembles && type === EnsembleMode.PRIOR_POSTERIOR,
                                 };
                             })}
-                            value={selectedEnsembleMode.value}
-                            onChange={setSelectedEnsembleMode}
+                            value={selectedEnsembleMode}
+                            onChange={handleEnsembleModeChange}
                         />
                     </SettingWrapper>
                     <SettingWrapper
                         label="Parameter sort method"
-                        annotations={selectedParameterSortingMethodAnnotation}
                         help={{
                             title: "Parameter Sorting Methods",
                             content: <ParameterSortingInfoContent />,
@@ -136,15 +135,15 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     value: type,
                                     label: ParameterDistributionSortingMethodEnumToStringMapping[type],
                                     disabled:
-                                        selectedEnsembleMode.value === EnsembleMode.INDEPENDENT &&
+                                        selectedEnsembleMode === EnsembleMode.INDEPENDENT &&
                                         type !== ParameterSortMethod.ALPHABETICAL,
                                 };
                             })}
-                            value={selectedParameterSortingMethod.value}
+                            value={selectedParameterSortingMethod}
                             onChange={setSelectedParameterSortingMethod}
                         />
                     </SettingWrapper>
-                    {selectedEnsembleMode.value === EnsembleMode.INDEPENDENT && (
+                    {selectedEnsembleMode === EnsembleMode.INDEPENDENT && (
                         <SettingWrapper label="Selected ensembles" annotations={selectedEnsembleIdentsAnnotation}>
                             <EnsembleSelect
                                 ensembles={ensembleSet.getRegularEnsembleArray()}
@@ -156,7 +155,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             />
                         </SettingWrapper>
                     )}
-                    {selectedEnsembleMode.value === EnsembleMode.PRIOR_POSTERIOR && (
+                    {selectedEnsembleMode === EnsembleMode.PRIOR_POSTERIOR && (
                         <>
                             <SettingWrapper
                                 label="Select prior ensemble"
@@ -246,7 +245,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                         <ParametersSelector
                             allParameterIdents={intersectedParameterIdents}
                             selectedParameterIdents={selectedParameterIdents.value ?? []}
-                            onChange={handleParameterIdentsChange}
+                            onChange={setSelectedParameterIdents}
                         />
                     </SettingWrapper>
                 </div>

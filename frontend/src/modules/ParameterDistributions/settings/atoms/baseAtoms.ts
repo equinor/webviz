@@ -1,7 +1,14 @@
 import { atom } from "jotai";
 
-import { HistogramMode, ParameterDistributionPlotType } from "@modules/ParameterDistributions/typesAndEnums";
+import {
+    HistogramMode,
+    ParameterDistributionPlotType,
+    EnsembleMode,
+} from "@modules/ParameterDistributions/typesAndEnums";
+import { ParameterSortMethod } from "@modules/ParameterDistributions/view/utils/parameterSorting";
 
+export const selectedEnsembleModeAtom = atom<EnsembleMode>(EnsembleMode.INDEPENDENT);
+export const selectedParameterSortingMethodAtom = atom<ParameterSortMethod>(ParameterSortMethod.ALPHABETICAL);
 export const selectedVisualizationTypeAtom = atom<ParameterDistributionPlotType>(
     ParameterDistributionPlotType.HISTOGRAM,
 );
