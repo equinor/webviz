@@ -3,7 +3,7 @@ from typing import Callable, List, Optional
 import pandas as pd
 
 from webviz_services.sumo_access.group_tree_types import TreeType
-from webviz_services.service_exceptions import Service, NoDataError
+from webviz_services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
 
 
 class GroupTreeDataframeModel:
@@ -56,7 +56,9 @@ class GroupTreeDataframeModel:
 
         # Note: Only support single realization for now
         if "REAL" in grouptree_dataframe.columns:
-            raise ValueError("Only single realization is supported for group tree now.")
+            raise MultipleDataMatchesError(
+                "Only single realization is supported for group tree now.", service=Service.GENERAL
+            )
 
         self._grouptree_df = grouptree_dataframe
 
