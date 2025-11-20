@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -9,13 +9,8 @@ import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { SettingWrapper } from "@lib/components/SettingWrapper/settingWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-
-import {
-    DataProviderManager,
-    DataProviderManagerTopic,
-} from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
 import { dataProviderManagerAtom, dataProviderStateAtom } from "./atoms/baseAtoms";
 import { fieldIdentifierAtom } from "./atoms/persistableAtoms";
@@ -25,83 +20,20 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const queryClient = useQueryClient();
 
-    const serializedStateRef = React.useRef<string | null>(null);
-
-    const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
+    const [dataProviderManager] = useAtom(dataProviderManagerAtom);
+    const setDataProviderManager = useSetAtom(dataProviderManagerAtom);
     const [dataProviderState, setDataProviderState] = useAtom(dataProviderStateAtom);
 
     const [fieldIdentifier, setFieldIdentifier] = useAtom(fieldIdentifierAtom);
 
-    const persistState = React.useCallback(
-        function persistLayerManagerState() {
-            if (!dataProviderManager) {
-                return;
-            }
-
-            const serializedState = JSON.stringify(dataProviderManager.serializeState());
-            serializedStateRef.current = serializedState;
-
-            setDataProviderState(serializedState);
-        },
-        [dataProviderManager, setDataProviderState],
-    );
-
-    React.useEffect(
-        function persistedDataChangeEffect() {
-            if (!dataProviderManager || !dataProviderState) {
-                return;
-            }
-
-            if (dataProviderState === serializedStateRef.current) {
-                return;
-            }
-
-            dataProviderManager!.deserializeState(JSON.parse(dataProviderState));
-        },
-        [dataProviderState, dataProviderManager],
-    );
-
-    React.useEffect(
-        function onMountEffect() {
-            const newLayerManager = new DataProviderManager(
-                props.workbenchSession,
-                props.workbenchSettings,
-                queryClient,
-            );
-
-            setDataProviderManager(newLayerManager);
-
-            return function onUnmountEffect() {
-                newLayerManager.beforeDestroy();
-            };
-        },
-        [setDataProviderManager, props.workbenchSession, props.workbenchSettings, queryClient],
-    );
-
-    React.useEffect(
-        function onLayerManagerChangeEffect() {
-            if (!dataProviderManager) {
-                return;
-            }
-
-            persistState();
-
-            const unsubscribeDataRev = dataProviderManager
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION)(persistState);
-
-            const unsubscribeExpands = dataProviderManager
-                .getGroupDelegate()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistState);
-
-            return function onUnmountEffect() {
-                unsubscribeDataRev();
-                unsubscribeExpands();
-            };
-        },
-        [dataProviderManager, props.workbenchSession, props.workbenchSettings, persistState],
-    );
+    usePersistedDataProviderManager({
+        setDataProviderManager,
+        serializedState: dataProviderState,
+        setSerializedState: setDataProviderState,
+        workbenchSession: props.workbenchSession,
+        workbenchSettings: props.workbenchSettings,
+        queryClient,
+    });
 
     React.useEffect(
         function onFieldIdentifierChangedEffect() {

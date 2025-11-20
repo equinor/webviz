@@ -214,6 +214,8 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
             throw new Error("Owner not set");
         }
 
+        this.clearChildren();
+
         this._deserializing = true;
         const factory = new DeserializationAssistant(this._owner.getItemDelegate().getDataProviderManager());
         for (const child of children) {
