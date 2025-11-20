@@ -1,7 +1,6 @@
-import type { Layout, PlotData, PlotMarker } from "plotly.js";
-
 import type { ColorScale } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
+import type { Layout, PlotData, PlotMarker } from "plotly.js";
 
 import { PressureOption, VfpParam } from "../../types";
 import type { VfpApiTableDataAccessor } from "../../utils/vfpApiTableDataAccessor";
@@ -36,14 +35,10 @@ export class VfpPlotBuilder {
         const data: Partial<PlotData>[] = [];
 
         if (
-            !selectedThpIndices ||
-            selectedThpIndices.length === 0 ||
-            !selectedWfrIndices ||
-            selectedWfrIndices.length === 0 ||
-            !selectedGfrIndices ||
-            selectedGfrIndices.length === 0 ||
-            !selectedAlqIndices ||
-            selectedAlqIndices.length === 0
+            !isValidArrayAndNonEmpty(selectedThpIndices) ||
+            !isValidArrayAndNonEmpty(selectedWfrIndices) ||
+            !isValidArrayAndNonEmpty(selectedGfrIndices) ||
+            !isValidArrayAndNonEmpty(selectedAlqIndices)
         ) {
             return [];
         }
@@ -218,4 +213,8 @@ export class VfpPlotBuilder {
 
         return trace;
     }
+}
+
+function isValidArrayAndNonEmpty(variable: unknown): variable is unknown[] {
+    return variable !== null && variable !== undefined && Array.isArray(variable) && variable.length > 0;
 }
