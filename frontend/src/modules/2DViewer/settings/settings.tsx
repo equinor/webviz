@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -20,8 +20,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const queryClient = useQueryClient();
 
-    const [dataProviderManager] = useAtom(dataProviderManagerAtom);
-    const setDataProviderManager = useSetAtom(dataProviderManagerAtom);
+    const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
     const [dataProviderState, setDataProviderState] = useAtom(dataProviderStateAtom);
 
     const [fieldIdentifier, setFieldIdentifier] = useAtom(fieldIdentifierAtom);
@@ -47,10 +46,6 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     function handleFieldChange(fieldId: string | null) {
         setFieldIdentifier(fieldId);
-        if (!dataProviderManager) {
-            return;
-        }
-        dataProviderManager.updateGlobalSetting("fieldId", fieldId);
     }
 
     const fieldIdentifierAnnotations = useMakePersistableFixableAtomAnnotations(fieldIdentifierAtom);

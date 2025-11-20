@@ -1,8 +1,9 @@
 import React from "react";
 
+import type { QueryClient } from "@tanstack/query-core";
+
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import type { QueryClient } from "@tanstack/query-core";
 
 import { GroupDelegateTopic } from "../delegates/GroupDelegate";
 import { DataProviderManager, DataProviderManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
