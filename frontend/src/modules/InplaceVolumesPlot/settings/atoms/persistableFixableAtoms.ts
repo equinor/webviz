@@ -7,11 +7,9 @@ import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelectio
 import { fixupUserSelectedIndexValues } from "@modules/_shared/InplaceVolumes/fixupUserSelectedIndexValues";
 import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
-import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
 import { makeColorByOptions, makeSubplotByOptions } from "../utils/plotDimensionUtils";
 
-import { selectedPlotTypeAtom } from "./baseAtoms";
 import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
@@ -66,18 +64,10 @@ export const selectedSecondResultNameAtom = persistableFixableAtom<string | null
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getResultNamesIntersection();
     },
-    isValidFunction: ({ value, get, precomputedValue }) => {
-        const plotType = get(selectedPlotTypeAtom);
-        if (plotType !== PlotType.SCATTER) {
-            return value === null;
-        }
+    isValidFunction: ({ value, precomputedValue }) => {
         return value !== null && precomputedValue.includes(value);
     },
-    fixupFunction: ({ value, get, precomputedValue }) => {
-        const plotTypeAtom = get(selectedPlotTypeAtom);
-        if (plotTypeAtom !== PlotType.SCATTER) {
-            return null;
-        }
+    fixupFunction: ({ value, precomputedValue }) => {
         const fixedSelection = fixupUserSelection([value], precomputedValue) ?? [];
         return fixedSelection[0] ?? null;
     },
@@ -88,18 +78,10 @@ export const selectedSelectorColumnAtom = persistableFixableAtom<string | null, 
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getCommonSelectorColumns();
     },
-    isValidFunction: ({ value, get, precomputedValue }) => {
-        const plotType = get(selectedPlotTypeAtom);
-        if (plotType !== PlotType.BAR) {
-            return value === null;
-        }
+    isValidFunction: ({ value, precomputedValue }) => {
         return value !== null && precomputedValue.includes(value);
     },
-    fixupFunction: ({ value, get, precomputedValue }) => {
-        const plotType = get(selectedPlotTypeAtom);
-        if (plotType !== PlotType.BAR) {
-            return null;
-        }
+    fixupFunction: ({ value, precomputedValue }) => {
         const fixedSelection = fixupUserSelection([value], precomputedValue) ?? [];
         return fixedSelection[0] ?? null;
     },

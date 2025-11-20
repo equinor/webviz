@@ -112,12 +112,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     />
                 </Label>
                 {selectedPlotType !== PlotType.BAR ? (
-                    <Label text="Second Result">
+                    <Label
+                        text={`Second Result ${selectedPlotType !== PlotType.SCATTER ? "(only for scatter plot)" : ""}`}
+                    >
                         <Dropdown
                             value={selectedSecondResultName.value}
                             options={resultNameOptions}
                             onChange={setSelectedSecondResultName}
-                            placeholder="Only for cross plot"
                             disabled={selectedPlotType !== PlotType.SCATTER}
                         />
                     </Label>
