@@ -18,9 +18,7 @@ from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
 
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
-from primary.middleware.add_process_time_to_server_timing_middleware import (
-    AddProcessTimeToServerTimingMiddleware,
-)
+from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
 
 from primary.middleware.add_browser_cache import AddBrowserCacheMiddleware
 from primary.routers.dev.router import router as dev_router
@@ -29,10 +27,10 @@ from primary.routers.general import router as general_router
 from primary.routers.graph.router import router as graph_router
 from primary.routers.grid3d.router import router as grid3d_router
 from primary.routers.flow_network.router import router as flow_network_router
+from primary.routers.flow_data.router import router as flow_data_router
 from primary.routers.inplace_volumes.router import router as inplace_volumes_router
 from primary.routers.observations.router import router as observations_router
 from primary.routers.parameters.router import router as parameters_router
-from primary.routers.flow_data.router import router as flow_data_router
 from primary.routers.polygons.router import router as polygons_router
 from primary.routers.pvt.router import router as pvt_router
 from primary.routers.rft.router import router as rft_router
@@ -45,10 +43,7 @@ from primary.routers.well_completions.router import router as well_completions_r
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
-from primary.utils.logging_setup import (
-    ensure_console_log_handler_is_configured,
-    setup_normal_log_levels,
-)
+from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
 
 from . import config
 
@@ -124,12 +119,12 @@ app.include_router(surface_router, prefix="/surface", tags=["surface"])
 app.include_router(parameters_router, prefix="/parameters", tags=["parameters"])
 app.include_router(grid3d_router, prefix="/grid3d", tags=["grid3d"])
 app.include_router(flow_network_router, prefix="/flow_network", tags=["flow_network"])
+app.include_router(flow_data_router, prefix="/flow_data", tags=["flow_data"])
 app.include_router(pvt_router, prefix="/pvt", tags=["pvt"])
 app.include_router(well_completions_router, prefix="/well_completions", tags=["well_completions"])
 app.include_router(well_router, prefix="/well", tags=["well"])
 app.include_router(seismic_router, prefix="/seismic", tags=["seismic"])
 app.include_router(polygons_router, prefix="/polygons", tags=["polygons"])
-app.include_router(flow_data_router, prefix="/flow_data", tags=["flow_data"])
 app.include_router(graph_router, prefix="/graph", tags=["graph"])
 app.include_router(observations_router, prefix="/observations", tags=["observations"])
 app.include_router(rft_router, prefix="/rft", tags=["rft"])
