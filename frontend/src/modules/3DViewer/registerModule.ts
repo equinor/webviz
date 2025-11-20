@@ -7,12 +7,13 @@ import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
 import "./DataProviderFramework/registerAllDataProviders";
+import { SERIALIZED_STATE, type SerializedState } from "./persistence";
 
 export const MODULE_NAME = "3DViewer";
 
 const description = "Generic 3D viewer for reservoir grids, surfaces, seismic and wells.";
 
-ModuleRegistry.registerModule<Interfaces>({
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "3D Viewer",
     category: ModuleCategory.MAIN,
@@ -30,4 +31,5 @@ ModuleRegistry.registerModule<Interfaces>({
     onInstanceUnload: (instanceId) => {
         window.localStorage.removeItem(`${instanceId}-settings`);
     },
+    serializedStateSchema: SERIALIZED_STATE,
 });
