@@ -1,6 +1,7 @@
+import type { Layout, PlotData, PlotMarker } from "plotly.js";
+
 import type { ColorScale } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
-import type { Layout, PlotData, PlotMarker } from "plotly.js";
 
 import { PressureOption, VfpParam } from "../../types";
 import type { VfpApiTableDataAccessor } from "../../utils/vfpApiTableDataAccessor";
@@ -113,7 +114,7 @@ export class VfpPlotBuilder {
         const data: Partial<PlotData>[] = [];
 
         // Invalid or empty selection
-        if (!selectedThpIndices || selectedThpIndices.length === 0) {
+        if (!isValidArrayAndNonEmpty(selectedThpIndices)) {
             return [];
         }
 

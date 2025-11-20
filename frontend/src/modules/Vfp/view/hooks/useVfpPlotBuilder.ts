@@ -1,12 +1,13 @@
 import React from "react";
 
+import type { Layout, PlotData } from "plotly.js";
+
 import type { ViewContext } from "@framework/ModuleContext";
 import { useContinuousColorScale, type WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Interfaces } from "@modules/Vfp/interfaces";
 import { VfpType } from "@modules/Vfp/types";
-import type { Layout, PlotData } from "plotly.js";
 
 import { VfpPlotBuilder } from "../utils/vfpPlotBuilder";
 
