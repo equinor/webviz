@@ -3,6 +3,7 @@ import React from "react";
 import { cloneDeep, isEqual } from "lodash";
 
 import { Button } from "@lib/components/Button";
+import { Checkbox } from "@lib/components/Checkbox";
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -39,6 +40,24 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                 [[number, number], [number, number], [number, number]] | null
             >(cloneDeep(props.value));
             const [prevValue, setPrevValue] = React.useState<ValueType>(cloneDeep(props.value));
+
+            const [prevAvailableValues, setPrevAvailableValues] = React.useState(availableValues);
+            const [resetOnModelChange, setResetOnModelChange] = React.useState<boolean>(true);
+
+            if (!isEqual(availableValues, prevAvailableValues)) {
+                setPrevAvailableValues(availableValues);
+
+                if (resetOnModelChange) {
+                    const resetValue: [[number, number], [number, number], [number, number]] = [
+                        [availableValues[0][0], availableValues[0][1]],
+                        [availableValues[1][0], availableValues[1][1]],
+                        [availableValues[2][0], availableValues[2][1]],
+                    ];
+
+                    setInternalValue(resetValue);
+                    props.onValueChange(resetValue);
+                }
+            }
 
             if (!isEqual(props.value, prevValue)) {
                 setInternalValue(cloneDeep(props.value));
@@ -131,6 +150,15 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                                 </div>
                             </div>
                         ))}
+                    </div>
+                    <div>
+                        <Checkbox
+                            label="Reset ranges on model change"
+                            checked={resetOnModelChange}
+                            onChange={(e) => {
+                                setResetOnModelChange(e.target.checked);
+                            }}
+                        />
                     </div>
                     <div className="flex justify-end mt-2">
                         <Button variant="contained" onClick={handleApplyChanges} disabled={!hasChanges}>
