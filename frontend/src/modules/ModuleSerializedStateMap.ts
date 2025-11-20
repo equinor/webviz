@@ -12,6 +12,7 @@ import type { SerializedView as SimulationTimeSeriesView } from "@modules/Simula
 import type { SerializedSettings as SimulationTimeSeriesSensitivitySettings } from "@modules/SimulationTimeSeriesSensitivity/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesSensitivityView } from "@modules/SimulationTimeSeriesSensitivity/view/persistence";
 import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
+import type { SerializedSettings as WellLogViewerSettings } from "@modules/WellLogViewer/settings/persistence";
 
 export type ModuleSerializedStateMap = {
   "2DViewer": {
@@ -102,10 +103,6 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "TopographicMap": {
-    settings?: never,
-    view?: never,
-  },
   "Vfp": {
     settings?: never,
     view?: never,
@@ -115,7 +112,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "WellLogViewer": {
-    settings?: never,
+    settings?: Partial<WellLogViewerSettings>,
     view?: never,
   },
 };

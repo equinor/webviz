@@ -20,7 +20,6 @@ import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "../constants";
 
 import { COLOR_TABLES } from "./logViewerColors";
 
-
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 
 // As per the well log json curve header definition
@@ -38,7 +37,7 @@ export function createWellLogSets(
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
     nonUniqueCurveNames?: Set<string>,
-    padDataWithEmptyRows = false,
+    limitDomainToData = false,
 ): WellLogSet[] {
     // The well-log viewer always picks the axis from the first log set in the collection.
     // Adding a dedicated set for only the axes, so we always have a full set to show from.
@@ -72,7 +71,7 @@ export function createWellLogSets(
                 curveSet,
                 wellboreTrajectory,
                 referenceSystem,
-                padDataWithEmptyRows,
+                limitDomainToData,
             );
 
             const header = createLogHeader(logName, data, wellboreTrajectory);
@@ -106,7 +105,7 @@ function createLogCurvesAndData(
     curveData: WellboreLogCurveData_api[],
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
-    padDataWithEmptyRows?: boolean,
+    limitDomainToData?: boolean,
 ): LogCurveAndDataResult {
     const curves: WellLogSet["curves"] = [...DATA_ROW_HEAD];
     const metadataDiscrete: WellLogSet["metadata_discrete"] = {};
@@ -155,7 +154,7 @@ function createLogCurvesAndData(
         });
     });
 
-    if (padDataWithEmptyRows) {
+    if (limitDomainToData) {
         wellboreTrajectory.mdArr.forEach((mdValue) => {
             if (mdValue <= maxCurveMd && mdValue >= minCurveMd) return;
 

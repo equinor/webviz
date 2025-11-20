@@ -11,22 +11,18 @@ import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
-import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
-import {
-    DataProviderManager,
-    DataProviderManagerTopic,
-} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { Group, isGroup } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { TrackIcon } from "@modules/WellLogViewer/_shared/components/icons";
 import { CustomDataProviderType } from "@modules/WellLogViewer/DataProviderFramework/dataProviderTypes";
 
-import { providerManagerAtom } from "../atoms/baseAtoms";
-import { serializedManagerStateAtom } from "../atoms/persistedAtoms";
+import { dataProviderStateAtom, dataProviderManagerAtom } from "../atoms/baseAtoms";
 
 import "../../DataProviderFramework/registerFrameworkExtensions";
 
@@ -42,74 +38,6 @@ enum PlotActionIdents {
     STACKED = "stacked",
     DIFF_GROUP = "diffGroup",
     DIFF_CURVE = "diffCurve",
-}
-
-function usePersistedProviderManager(
-    workbenchSession: WorkbenchSession,
-    workbenchSettings: WorkbenchSettings,
-): DataProviderManager | null {
-    const queryClient = useQueryClient();
-
-    const hasAppliedPersistedState = React.useRef<boolean>(false);
-    const [providerManager, setProviderManager] = useAtom(providerManagerAtom);
-    const [serializedManagerState, setSerializedManagerState] = useAtom(serializedManagerStateAtom);
-
-    const persistManagerState = React.useCallback(
-        function persistManagerState() {
-            if (!providerManager) return;
-
-            setSerializedManagerState(providerManager.serializeState());
-        },
-        [providerManager, setSerializedManagerState],
-    );
-
-    React.useEffect(
-        function initializeProviderManagerEffect() {
-            const newProviderManager = new DataProviderManager(workbenchSession, workbenchSettings, queryClient);
-            setProviderManager(newProviderManager);
-            hasAppliedPersistedState.current = false;
-
-            return () => newProviderManager.beforeDestroy();
-        },
-        [queryClient, setProviderManager, workbenchSession, workbenchSettings],
-    );
-
-    React.useEffect(
-        function applyManagerState() {
-            if (!providerManager || !serializedManagerState) return;
-            if (hasAppliedPersistedState.current) return;
-
-            providerManager.deserializeState(serializedManagerState);
-
-            hasAppliedPersistedState.current = true;
-        },
-        [serializedManagerState, providerManager],
-    );
-
-    React.useEffect(
-        function setupManagerListenersEffect() {
-            if (!providerManager) return;
-
-            persistManagerState();
-
-            const unsubscribeDataRev = providerManager
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION)(persistManagerState);
-
-            const unsubscribeExpands = providerManager
-                .getGroupDelegate()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistManagerState);
-
-            return function onUnmountEffect() {
-                unsubscribeDataRev();
-                unsubscribeExpands();
-            };
-        },
-        [providerManager, persistManagerState],
-    );
-
-    return providerManager;
 }
 
 function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
@@ -240,37 +168,52 @@ export type ProviderManagerComponentWrapperProps = {
 };
 
 export function ProviderManagerComponentWrapper(props: ProviderManagerComponentWrapperProps): React.ReactNode {
-    const providerManager = usePersistedProviderManager(props.workbenchSession, props.workbenchSettings);
+    const { workbenchSession, workbenchSettings } = props;
+    const queryClient = useQueryClient();
+    const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
+    const [serializedState, setSerializedState] = useAtom(dataProviderStateAtom);
+
+    usePersistedDataProviderManager({
+        workbenchSession,
+        workbenchSettings,
+        queryClient,
+        serializedState,
+        setDataProviderManager,
+        setSerializedState,
+    });
 
     const groupActionCallback = React.useCallback(
         function groupActionCallback(identifier: string, groupDelegate: GroupDelegate) {
-            if (!providerManager) return;
+            if (!dataProviderManager) return;
 
             switch (identifier) {
                 case RootActionIdents.WELL_PICKS:
                     return groupDelegate.appendChild(
-                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.WELLBORE_PICKS, providerManager),
+                        DataProviderRegistry.makeDataProvider(
+                            CustomDataProviderType.WELLBORE_PICKS,
+                            dataProviderManager,
+                        ),
                     );
 
                 case RootActionIdents.CONTINUOUS_TRACK:
                     return groupDelegate.appendChild(
-                        GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_CONT, providerManager),
+                        GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_CONT, dataProviderManager),
                     );
 
                 case RootActionIdents.DISCRETE_TRACK:
                     return groupDelegate.appendChild(
-                        GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_DISC, providerManager),
+                        GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_DISC, dataProviderManager),
                     );
 
                 case PlotActionIdents.DIFF_GROUP: {
-                    const diffGroup = GroupRegistry.makeGroup(GroupType.WELL_LOG_DIFF_GROUP, providerManager);
+                    const diffGroup = GroupRegistry.makeGroup(GroupType.WELL_LOG_DIFF_GROUP, dataProviderManager);
 
                     diffGroup
                         .getGroupDelegate()
                         .appendChild(
                             DataProviderRegistry.makeDataProvider(
                                 CustomDataProviderType.DIFF_PLOT,
-                                providerManager,
+                                dataProviderManager,
                                 "Primary curve",
                             ),
                         );
@@ -279,7 +222,7 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
                         .appendChild(
                             DataProviderRegistry.makeDataProvider(
                                 CustomDataProviderType.DIFF_PLOT,
-                                providerManager,
+                                dataProviderManager,
                                 "Secondary curve",
                             ),
                         );
@@ -289,36 +232,36 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
 
                 case PlotActionIdents.DIFF_CURVE:
                     return groupDelegate.appendChild(
-                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.DIFF_PLOT, providerManager),
+                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.DIFF_PLOT, dataProviderManager),
                     );
 
                 case PlotActionIdents.LINE:
                     return groupDelegate.appendChild(
-                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.LINEAR_PLOT, providerManager),
+                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.LINEAR_PLOT, dataProviderManager),
                     );
                 case PlotActionIdents.AREA:
                     return groupDelegate.appendChild(
-                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.AREA_PLOT, providerManager),
+                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.AREA_PLOT, dataProviderManager),
                     );
 
                 case PlotActionIdents.STACKED:
                     return groupDelegate.appendChild(
-                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.STACKED_PLOT, providerManager),
+                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.STACKED_PLOT, dataProviderManager),
                     );
 
                 default:
                     break;
             }
         },
-        [providerManager],
+        [dataProviderManager],
     );
 
-    if (!providerManager) return <div />;
+    if (!dataProviderManager) return <div />;
 
     return (
         <DataProviderManagerComponent
             title="Log config"
-            dataProviderManager={providerManager}
+            dataProviderManager={dataProviderManager}
             additionalHeaderComponents={null}
             groupActions={makeOptionsForGroup}
             onAction={groupActionCallback}
