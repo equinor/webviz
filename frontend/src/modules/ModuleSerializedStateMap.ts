@@ -3,6 +3,7 @@
 
 import type { SerializedSettings as M_2DViewerSettings } from "@modules/2DViewer/settings/persistence";
 import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/persistence";
+import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 
 export type ModuleSerializedStateMap = {
   "2DViewer": {
@@ -78,7 +79,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "SensitivityPlot": {
-    settings?: never,
+    settings?: Partial<SensitivityPlotSettings>,
     view?: never,
   },
   "SimulationTimeSeries": {
