@@ -1,7 +1,10 @@
 import { useAtomValue } from "jotai";
 
 import type { ViewStatusWriter } from "@framework/StatusWriter";
-
+import {
+    usePropagateApiErrorToStatusWriter,
+    usePropagateQueryErrorToStatusWriter,
+} from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { showHistoricalAtom, showStatisticsAtom } from "../atoms/baseAtoms";
 import {
@@ -23,13 +26,13 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) 
         historicalVectorDataQuery.isFetching;
     statusWriter.setLoading(isAnyQueryFetching);
 
-    if (vectorDataQuery.isError) {
-        statusWriter.addError("Realization data query has error state.");
-    }
-    if (showStatistics && statisticalVectorSensitivityDataQuery.isError) {
-        statusWriter.addError("Statistics data per sensitivity query has error state.");
-    }
-    if (showHistorical && historicalVectorDataQuery.isError) {
-        statusWriter.addWarning("Historical data query has error state.");
-    }
+    usePropagateQueryErrorToStatusWriter(vectorDataQuery, statusWriter);
+
+    // Conditional propagation of statistical query error
+    const statisticalQueryError = showStatistics ? statisticalVectorSensitivityDataQuery.error : null;
+    usePropagateApiErrorToStatusWriter(statisticalQueryError, statusWriter);
+
+    // Conditional propagation of historical query error
+    const historicalQueryError = showHistorical ? historicalVectorDataQuery.error : null;
+    usePropagateApiErrorToStatusWriter(historicalQueryError, statusWriter);
 }

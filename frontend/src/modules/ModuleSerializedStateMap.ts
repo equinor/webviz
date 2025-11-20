@@ -4,10 +4,13 @@
 import type { SerializedSettings as M_2DViewerSettings } from "@modules/2DViewer/settings/persistence";
 import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/persistence";
 import type { SerializedSettings as FlowNetworkSettings } from "@modules/FlowNetwork/settings/persistence";
+import type { SerializedSettings as InplaceVolumesPlotSettings } from "@modules/InplaceVolumesPlot/settings/persistence";
 import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
+import type { SerializedSettings as SimulationTimeSeriesSensitivitySettings } from "@modules/SimulationTimeSeriesSensitivity/settings/persistence";
+import type { SerializedView as SimulationTimeSeriesSensitivityView } from "@modules/SimulationTimeSeriesSensitivity/view/persistence";
 import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
 
 export type ModuleSerializedStateMap = {
@@ -32,7 +35,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "InplaceVolumesPlot": {
-    settings?: never,
+    settings?: Partial<InplaceVolumesPlotSettings>,
     view?: never,
   },
   "InplaceVolumesTable": {
@@ -92,10 +95,14 @@ export type ModuleSerializedStateMap = {
     view?: Partial<SimulationTimeSeriesView>,
   },
   "SimulationTimeSeriesSensitivity": {
+    settings?: Partial<SimulationTimeSeriesSensitivitySettings>,
+    view?: Partial<SimulationTimeSeriesSensitivityView>,
+  },
+  "SubsurfaceMap": {
     settings?: never,
     view?: never,
   },
-  "SubsurfaceMap": {
+  "TopographicMap": {
     settings?: never,
     view?: never,
   },
