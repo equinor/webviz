@@ -98,7 +98,7 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
         return tableDefinitionsAccessor.getCommonIndicesWithValues();
     },
     isValidFunction: ({ value, precomputedValue }) => {
-        return value.length > 0 && value.every((index) => precomputedValue.includes(index));
+        return value.length > 0 && isSelectionValidSubset(value, precomputedValue);
     },
     fixupFunction: ({ value, precomputedValue }) => {
         return fixupUserSelectedIndexValues(value ?? [], precomputedValue, FixupSelection.SELECT_ALL);
@@ -119,4 +119,26 @@ function computeTableDefinitionsQueryDependenciesState({
         return "error";
     }
     return "loaded";
+}
+
+// Utility function to check if a selection is a valid subset of available options
+function isSelectionValidSubset(
+    selection: InplaceVolumesIndexWithValues_api[],
+    available: InplaceVolumesIndexWithValues_api[],
+): boolean {
+    // Selection cannot contain more indexColumns than available options
+    if (selection.length > available.length) return false;
+
+    for (const sel of selection) {
+        // Find corresponding available item
+        const avail = available.find((a) => a.indexColumn === sel.indexColumn);
+        if (!avail) return false; // invalid indexColumn
+
+        // All selected values must be allowed
+        for (const v of sel.values) {
+            if (!avail.values.includes(v)) return false;
+        }
+    }
+
+    return true;
 }
