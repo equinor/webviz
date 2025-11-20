@@ -17,7 +17,7 @@ import {
 } from "./atoms/persistableFixableAtoms";
 
 export type SerializedSettings = {
-    selectedEnsembleIdents: string[];
+    selectedEnsembleIdentStrings: string[];
     selectedTableNames: string[];
     selectedIndicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
     selectedResultNames: string[];
@@ -29,7 +29,7 @@ export type SerializedSettings = {
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
     properties: {
-        selectedEnsembleIdents: {
+        selectedEnsembleIdentStrings: {
             elements: {
                 type: "string",
             },
@@ -82,7 +82,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     }));
 
     return {
-        selectedEnsembleIdents: selectedEnsembleIdents.value.map((ident) => ident.toString()),
+        selectedEnsembleIdentStrings: selectedEnsembleIdents.value.map((ident) => ident.toString()),
         selectedTableNames: selectedTableNames.value,
         selectedIndicesWithValues: indicesWithStringifiedValues,
         selectedResultNames: selectedResultNames.value,
@@ -94,11 +94,10 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 };
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
-    setIfDefined(
-        set,
-        selectedEnsembleIdentsAtom,
-        raw.selectedEnsembleIdents?.map((ident) => RegularEnsembleIdent.fromString(ident)) ?? [],
-    );
+    const ensembleIdents =
+        raw.selectedEnsembleIdentStrings?.map((ident) => RegularEnsembleIdent.fromString(ident)) ?? [];
+
+    setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, selectedTableNamesAtom, raw.selectedTableNames);
     setIfDefined(set, selectedIndicesWithValuesAtom, raw.selectedIndicesWithValues);
     setIfDefined(set, selectedResultNamesAtom, raw.selectedResultNames);

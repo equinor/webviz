@@ -11,7 +11,9 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
@@ -98,22 +100,29 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         plotTypeOptions.push({ label, value: type as PlotType });
     }
 
+    const selectedFirstResultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedFirstResultNameAtom);
+    const selectedSecondResultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedSecondResultNameAtom);
+    const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
+    const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
+    const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
+
     const plotSettings = (
         <CollapsibleGroup title="Plot settings" expanded>
             <div className="flex flex-col gap-2">
                 <Label text="Plot type">
                     <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
                 </Label>
-                <Label text="First Result">
+                <SettingWrapper label="First Result" annotations={selectedFirstResultNameAnnotations}>
                     <Dropdown
                         value={selectedFirstResultName.value}
                         options={resultNameOptions}
                         onChange={setSelectedFirstResultName}
                     />
-                </Label>
+                </SettingWrapper>
                 {selectedPlotType !== PlotType.BAR ? (
-                    <Label
-                        text={`Second Result ${selectedPlotType !== PlotType.SCATTER ? "(only for scatter plot)" : ""}`}
+                    <SettingWrapper
+                        label={`Second Result ${selectedPlotType !== PlotType.SCATTER ? "(only for scatter plot)" : ""}`}
+                        annotations={selectedSecondResultNameAnnotations}
                     >
                         <Dropdown
                             value={selectedSecondResultName.value}
@@ -121,27 +130,27 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             onChange={setSelectedSecondResultName}
                             disabled={selectedPlotType !== PlotType.SCATTER}
                         />
-                    </Label>
+                    </SettingWrapper>
                 ) : (
-                    <Label text="Selector">
+                    <SettingWrapper label="Selector" annotations={selectedSelectorColumnAnnotations}>
                         <Dropdown
                             value={selectedSelectorColumn.value}
                             options={selectorOptions}
                             onChange={setSelectedSelectorColumn}
                             disabled={selectedPlotType !== PlotType.BAR}
                         />
-                    </Label>
+                    </SettingWrapper>
                 )}
-                <Label text="Subplot by">
+                <SettingWrapper label="Subplot by" annotations={selectedSubplotByAnnotations}>
                     <Dropdown
                         value={selectedSubplotBy.value}
                         options={subplotOptions}
                         onChange={setSelectedSubplotBy}
                     />
-                </Label>
-                <Label text="Color by">
+                </SettingWrapper>
+                <SettingWrapper label="Color by" annotations={selectedColorByAnnotations}>
                     <Dropdown value={selectedColorBy.value} options={colorByOptions} onChange={setSelectedColorBy} />
-                </Label>
+                </SettingWrapper>
             </div>
         </CollapsibleGroup>
     );

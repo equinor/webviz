@@ -20,7 +20,7 @@ import {
 } from "./atoms/persistableFixableAtoms";
 
 export type SerializedSettings = {
-    ensembleIdents: string[];
+    ensembleIdentStrings: string[];
     tableNames: string[];
     indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
     firstResultName: string | null;
@@ -35,7 +35,7 @@ export type SerializedSettings = {
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
     properties: {
-        ensembleIdents: {
+        ensembleIdentStrings: {
             elements: { type: "string" },
         },
         tableNames: {
@@ -62,13 +62,13 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
-    const selectedEnsembleIdentsString = get(selectedEnsembleIdentsAtom).value.map((ident) => ident.toString());
+    const selectedEnsembleIdentStrings = get(selectedEnsembleIdentsAtom).value.map((ident) => ident.toString());
     const indicesWithStringifiedValues = get(selectedIndicesWithValuesAtom).value.map((index) => ({
         indexColumn: index.indexColumn,
         values: index.values.map((value) => value.toString()),
     }));
     return {
-        ensembleIdents: selectedEnsembleIdentsString,
+        ensembleIdentStrings: selectedEnsembleIdentStrings,
         tableNames: get(selectedTableNamesAtom).value,
         indicesWithValues: indicesWithStringifiedValues,
         firstResultName: get(selectedFirstResultNameAtom).value,
@@ -82,8 +82,8 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 };
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
-    const ensembleIdents = raw.ensembleIdents
-        ? raw.ensembleIdents.map((id) => RegularEnsembleIdent.fromString(id))
+    const ensembleIdents = raw.ensembleIdentStrings
+        ? raw.ensembleIdentStrings.map((id) => RegularEnsembleIdent.fromString(id))
         : [];
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, selectedFirstResultNameAtom, raw.firstResultName);

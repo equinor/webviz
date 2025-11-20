@@ -4,7 +4,10 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
-import { fixupUserSelectedIndexValues } from "@modules/_shared/InplaceVolumes/fixupUserSelectedIndexValues";
+import {
+    fixupUserSelectedIndexValues,
+    isSelectedIndicesWithValuesValidSubset,
+} from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
@@ -39,7 +42,7 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
         return value.length > 0 && value.every((name) => uniqueTableNames.includes(name));
     },
     fixupFunction: ({ precomputedValue: uniqueTableNames }) => {
-        return uniqueTableNames.length > 0 ? [uniqueTableNames[0]] : [];
+        return uniqueTableNames;
     },
 });
 
@@ -97,11 +100,11 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getCommonIndicesWithValues();
     },
-    isValidFunction: ({ value, precomputedValue }) => {
-        return value.length > 0 && isSelectionValidSubset(value, precomputedValue);
+    isValidFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
+        return value.length > 0 && isSelectedIndicesWithValuesValidSubset(value, availableIndicesWithValues);
     },
-    fixupFunction: ({ value, precomputedValue }) => {
-        return fixupUserSelectedIndexValues(value ?? [], precomputedValue, FixupSelection.SELECT_ALL);
+    fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
+        return fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL);
     },
 });
 
@@ -119,26 +122,4 @@ function computeTableDefinitionsQueryDependenciesState({
         return "error";
     }
     return "loaded";
-}
-
-// Utility function to check if a selection is a valid subset of available options
-function isSelectionValidSubset(
-    selection: InplaceVolumesIndexWithValues_api[],
-    available: InplaceVolumesIndexWithValues_api[],
-): boolean {
-    // Selection cannot contain more indexColumns than available options
-    if (selection.length > available.length) return false;
-
-    for (const sel of selection) {
-        // Find corresponding available item
-        const avail = available.find((a) => a.indexColumn === sel.indexColumn);
-        if (!avail) return false; // invalid indexColumn
-
-        // All selected values must be allowed
-        for (const v of sel.values) {
-            if (!avail.values.includes(v)) return false;
-        }
-    }
-
-    return true;
 }

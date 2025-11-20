@@ -4,7 +4,10 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
-import { fixupUserSelectedIndexValues } from "@modules/_shared/InplaceVolumes/fixupUserSelectedIndexValues";
+import {
+    fixupUserSelectedIndexValues,
+    isSelectedIndicesWithValuesValidSubset,
+} from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
@@ -31,6 +34,7 @@ export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsemble
 
 export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>({
     initialValue: [],
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
         const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
@@ -47,6 +51,7 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
 
 export const selectedFirstResultNameAtom = persistableFixableAtom<string | null>({
     initialValue: null,
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     isValidFunction: ({ get, value }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return value !== null && tableDefinitionsAccessor.hasResultName(value);
@@ -60,6 +65,7 @@ export const selectedFirstResultNameAtom = persistableFixableAtom<string | null>
 });
 export const selectedSecondResultNameAtom = persistableFixableAtom<string | null, string[]>({
     initialValue: null,
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getResultNamesIntersection();
@@ -74,6 +80,7 @@ export const selectedSecondResultNameAtom = persistableFixableAtom<string | null
 });
 export const selectedSelectorColumnAtom = persistableFixableAtom<string | null, string[]>({
     initialValue: null,
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getCommonSelectorColumns();
@@ -91,19 +98,21 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
     InplaceVolumesIndexWithValues_api[]
 >({
     initialValue: [],
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getCommonIndicesWithValues();
     },
-    isValidFunction: ({ value, precomputedValue }) => {
-        return value.length > 0 && value.every((index) => precomputedValue.includes(index));
+    isValidFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
+        return value.length > 0 && isSelectedIndicesWithValuesValidSubset(value, availableIndicesWithValues);
     },
-    fixupFunction: ({ value, precomputedValue }) => {
-        return fixupUserSelectedIndexValues(value ?? [], precomputedValue, FixupSelection.SELECT_ALL);
+    fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
+        return fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL);
     },
 });
 export const selectedSubplotByAtom = persistableFixableAtom<string, string[]>({
     initialValue: TableOriginKey.ENSEMBLE,
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         const selectedTableNames = get(selectedTableNamesAtom);
@@ -119,6 +128,7 @@ export const selectedSubplotByAtom = persistableFixableAtom<string, string[]>({
 });
 export const selectedColorByAtom = persistableFixableAtom<string, string[]>({
     initialValue: TableOriginKey.TABLE_NAME,
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => {
         const selectedSubplotBy = get(selectedSubplotByAtom);
         const selectedTableNames = get(selectedTableNamesAtom);
@@ -136,3 +146,19 @@ export const selectedColorByAtom = persistableFixableAtom<string, string[]>({
         return fixedSelection[0] || TableOriginKey.TABLE_NAME;
     },
 });
+
+// Utility function to compute dependencies state from tableDefinitionsQueryAtom
+function computeTableDefinitionsQueryDependenciesState({
+    get,
+}: {
+    get: (atom: any) => any;
+}): "error" | "loading" | "loaded" {
+    const tableDefinitions = get(tableDefinitionsQueryAtom);
+    if (tableDefinitions.isLoading) {
+        return "loading";
+    }
+    if (tableDefinitions.errors.length > 0) {
+        return "error";
+    }
+    return "loaded";
+}
