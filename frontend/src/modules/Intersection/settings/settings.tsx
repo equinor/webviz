@@ -34,7 +34,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const [selectedFieldIdentifier, setSelectedFieldIdentifier] = useAtom(selectedFieldIdentifierAtom);
 
     const [dataProviderSerializedState, setDataProviderSerializedState] = useAtom(dataProviderSerializedStateAtom);
-    const dataProviderSerializedStateRef = React.useRef(dataProviderSerializedState);
+    const dataProviderSerializedStateRef = React.useRef<string | null>(null);
+
+    const firstColorStable = React.useRef(colorSet.getNextColor());
 
     const persistDataProviderManagerState = React.useCallback(
         function persistDataProviderManagerState() {
@@ -42,47 +44,25 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                 return;
             }
 
-            const serializedState = {
-                dataProviderManager: dataProviderManager.serializeState(),
-            };
+            const serializedState = dataProviderManager.serializeState();
             setDataProviderSerializedState(JSON.stringify(serializedState));
         },
         [dataProviderManager, setDataProviderSerializedState],
     );
 
-    const applyPersistedState = React.useCallback(
-        function applyPersistedState(dataProviderManager: DataProviderManager) {
-            const serializedState = dataProviderSerializedStateRef.current;
-
-            if (!serializedState) {
-                const groupDelegate = dataProviderManager.getGroupDelegate();
-
-                const doAddDefaultIntersectionView =
-                    groupDelegate.getDescendantItems(
-                        (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
-                    ).length === 0;
-                if (doAddDefaultIntersectionView) {
-                    groupDelegate.appendChild(
-                        GroupRegistry.makeGroup(
-                            GroupType.INTERSECTION_VIEW,
-                            dataProviderManager,
-                            colorSet.getNextColor(),
-                        ),
-                    );
-                }
-
+    React.useEffect(
+        function persistedDataChangeEffect() {
+            if (!dataProviderManager || !dataProviderSerializedState) {
                 return;
             }
 
-            const parsedState = JSON.parse(serializedState);
-            if (parsedState.dataProviderManager) {
-                if (!dataProviderManager) {
-                    return;
-                }
-                dataProviderManager.deserializeState(parsedState.dataProviderManager);
+            if (dataProviderSerializedState === dataProviderSerializedStateRef.current) {
+                return;
             }
+
+            dataProviderManager.deserializeState(JSON.parse(dataProviderSerializedState));
         },
-        [colorSet],
+        [dataProviderSerializedState, dataProviderManager],
     );
 
     React.useEffect(
@@ -92,15 +72,32 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                 props.workbenchSettings,
                 queryClient,
             );
-            setDataProviderManager(newDataProviderManager);
 
-            applyPersistedState(newDataProviderManager);
+            dataProviderSerializedStateRef.current = null;
+
+            const groupDelegate = newDataProviderManager.getGroupDelegate();
+
+            const doAddDefaultIntersectionView =
+                groupDelegate.getDescendantItems(
+                    (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
+                ).length === 0;
+            if (doAddDefaultIntersectionView) {
+                groupDelegate.appendChild(
+                    GroupRegistry.makeGroup(
+                        GroupType.INTERSECTION_VIEW,
+                        newDataProviderManager,
+                        firstColorStable.current,
+                    ),
+                );
+            }
+
+            setDataProviderManager(newDataProviderManager);
 
             return function onUnmountEffect() {
                 newDataProviderManager.beforeDestroy();
             };
         },
-        [setDataProviderManager, props.workbenchSession, props.workbenchSettings, queryClient, applyPersistedState],
+        [setDataProviderManager, props.workbenchSession, props.workbenchSettings, queryClient],
     );
 
     React.useEffect(
