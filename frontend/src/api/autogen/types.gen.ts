@@ -2830,6 +2830,84 @@ export type GetRealizationFlowNetworkResponses_api = {
 export type GetRealizationFlowNetworkResponse_api =
     GetRealizationFlowNetworkResponses_api[keyof GetRealizationFlowNetworkResponses_api];
 
+export type GetProductionDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Start date in YYYY-MM-DD
+         */
+        start_date: string;
+        /**
+         * End date in YYYY-MM-DD
+         */
+        end_date: string;
+        zCacheBust?: string;
+    };
+    url: "/flow_data/production_data/";
+};
+
+export type GetProductionDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetProductionDataError_api = GetProductionDataErrors_api[keyof GetProductionDataErrors_api];
+
+export type GetProductionDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellProductionData_api>;
+};
+
+export type GetProductionDataResponse_api = GetProductionDataResponses_api[keyof GetProductionDataResponses_api];
+
+export type GetInjectionDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Start date in YYYY-MM-DD
+         */
+        start_date: string;
+        /**
+         * End date in YYYY-MM-DD
+         */
+        end_date: string;
+        zCacheBust?: string;
+    };
+    url: "/flow_data/injection_data/";
+};
+
+export type GetInjectionDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetInjectionDataError_api = GetInjectionDataErrors_api[keyof GetInjectionDataErrors_api];
+
+export type GetInjectionDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellInjectionData_api>;
+};
+
+export type GetInjectionDataResponse_api = GetInjectionDataResponses_api[keyof GetInjectionDataResponses_api];
+
 export type GetTableDataData_api = {
     body?: never;
     path?: never;
@@ -3714,84 +3792,6 @@ export type GetPolygonsDataResponses_api = {
 };
 
 export type GetPolygonsDataResponse_api = GetPolygonsDataResponses_api[keyof GetPolygonsDataResponses_api];
-
-export type GetProductionDataData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Official field identifier
-         */
-        field_identifier: string;
-        /**
-         * Start date in YYYY-MM-DD
-         */
-        start_date: string;
-        /**
-         * End date in YYYY-MM-DD
-         */
-        end_date: string;
-        zCacheBust?: string;
-    };
-    url: "/flow_data/production-data/";
-};
-
-export type GetProductionDataErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetProductionDataError_api = GetProductionDataErrors_api[keyof GetProductionDataErrors_api];
-
-export type GetProductionDataResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<WellProductionData_api>;
-};
-
-export type GetProductionDataResponse_api = GetProductionDataResponses_api[keyof GetProductionDataResponses_api];
-
-export type GetInjectionDataData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Official field identifier
-         */
-        field_identifier: string;
-        /**
-         * Start date in YYYY-MM-DD
-         */
-        start_date: string;
-        /**
-         * End date in YYYY-MM-DD
-         */
-        end_date: string;
-        zCacheBust?: string;
-    };
-    url: "/flow_data/injection-data/";
-};
-
-export type GetInjectionDataErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetInjectionDataError_api = GetInjectionDataErrors_api[keyof GetInjectionDataErrors_api];
-
-export type GetInjectionDataResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<WellInjectionData_api>;
-};
-
-export type GetInjectionDataResponse_api = GetInjectionDataResponses_api[keyof GetInjectionDataResponses_api];
 
 export type GetUserInfoData_api = {
     body?: never;
