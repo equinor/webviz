@@ -3,6 +3,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
+    histogramModeAtom,
     selectedVisualizationTypeAtom,
     showIndividualRealizationValuesAtom,
     showPercentilesAndMeanLinesAtom,
@@ -10,18 +11,19 @@ import {
 import {
     selectedEnsembleIdentsAtom,
     selectedEnsembleModeAtom,
-    selectedParameterDistributionSortingMethodAtom,
+    selectedParameterSortingMethodAtom,
     selectedParameterIdentsAtom,
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
-} from "./settings/atoms/derivedAtoms";
-import type { EnsembleMode, ParameterDistributionPlotType } from "./typesAndEnums";
+} from "./settings/atoms/persistableFixableAtoms";
+import type { EnsembleMode, HistogramMode, ParameterDistributionPlotType } from "./typesAndEnums";
 import type { ParameterSortMethod } from "./view/utils/parameterSorting";
 
 type SettingsToViewInterface = {
     selectedVisualizationType: ParameterDistributionPlotType;
     showIndividualRealizationValues: boolean;
     showPercentilesAndMeanLines: boolean;
+    histogramMode: HistogramMode;
     selectedEnsembleIdents: RegularEnsembleIdent[];
     selectedParameterIdents: ParameterIdent[];
     ensembleMode: EnsembleMode;
@@ -44,22 +46,25 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     showPercentilesAndMeanLines: (get) => {
         return get(showPercentilesAndMeanLinesAtom);
     },
+    histogramMode: (get) => {
+        return get(histogramModeAtom);
+    },
     selectedEnsembleIdents: (get) => {
-        return get(selectedEnsembleIdentsAtom);
+        return get(selectedEnsembleIdentsAtom).value;
     },
     selectedParameterIdents: (get) => {
-        return get(selectedParameterIdentsAtom);
+        return get(selectedParameterIdentsAtom).value ?? [];
     },
     priorEnsembleIdent: (get) => {
-        return get(selectedPriorEnsembleIdentAtom);
+        return get(selectedPriorEnsembleIdentAtom).value;
     },
     posteriorEnsembleIdent: (get) => {
-        return get(selectedPosteriorEnsembleIdentAtom);
+        return get(selectedPosteriorEnsembleIdentAtom).value;
     },
     ensembleMode: (get) => {
-        return get(selectedEnsembleModeAtom);
+        return get(selectedEnsembleModeAtom).value;
     },
     parameterSortingMethod: (get) => {
-        return get(selectedParameterDistributionSortingMethodAtom);
+        return get(selectedParameterSortingMethodAtom).value;
     },
 };

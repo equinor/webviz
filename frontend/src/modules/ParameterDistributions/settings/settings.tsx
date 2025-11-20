@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Help } from "@mui/icons-material";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
@@ -20,34 +20,31 @@ import type { Interfaces } from "../interfaces";
 import {
     EnsembleMode,
     EnsembleModeEnumToStringMapping,
+    HistogramModeEnumToStringMapping,
     ParameterDistributionPlotType,
     ParameterDistributionPlotTypeEnumToStringMapping,
     ParameterDistributionSortingMethodEnumToStringMapping,
+    HistogramMode,
 } from "../typesAndEnums";
 import { ParameterSortMethod } from "../view/utils/parameterSorting";
 
 import {
-    userSelectedEnsembleModeAtom,
+    histogramModeAtom,
     selectedVisualizationTypeAtom,
     showConstantParametersAtom,
     showIndividualRealizationValuesAtom,
-    showPercentilesAndMeanLinesAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedParameterIdentsAtom,
-    userSelectedPosteriorEnsembleIdentAtom,
-    userSelectedPriorEnsembleIdentAtom,
-    userSelectedParameterSortingMethodAtom,
     showLogParametersAtom,
+    showPercentilesAndMeanLinesAtom,
 } from "./atoms/baseAtoms";
+import { intersectedParameterIdentsAtom } from "./atoms/derivedAtoms";
 import {
-    intersectedParameterIdentsAtom,
     selectedEnsembleIdentsAtom,
+    selectedEnsembleModeAtom,
     selectedParameterIdentsAtom,
+    selectedParameterSortingMethodAtom,
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
-    selectedEnsembleModeAtom,
-    selectedParameterDistributionSortingMethodAtom,
-} from "./atoms/derivedAtoms";
+} from "./atoms/persistableFixableAtoms";
 import { ParameterSortingInfoDialog } from "./components/ParameterSortingInfoDialog";
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
@@ -60,27 +57,27 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const handleInfoButtonClick = React.useCallback(() => {
         setIsInfoDialogOpen(true);
     }, []);
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-    const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
-    const intersectedParameterIdents = useAtomValue(intersectedParameterIdentsAtom);
-    const setSelectedParameterIdents = useSetAtom(userSelectedParameterIdentsAtom);
-    const selectedParameterIdents = useAtomValue(selectedParameterIdentsAtom);
+    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
+
+    const [selectedParameterIdents, setSelectedParameterIdents] = useAtom(selectedParameterIdentsAtom);
     const [showConstantParameters, setShowConstantParameters] = useAtom(showConstantParametersAtom);
     const [showLogParameters, setShowLogParameters] = useAtom(showLogParametersAtom);
     const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
-    const setSelectedEnsembleMode = useSetAtom(userSelectedEnsembleModeAtom);
-    const selectedEnsembleMode = useAtomValue(selectedEnsembleModeAtom);
+    const [selectedEnsembleMode, setSelectedEnsembleMode] = useAtom(selectedEnsembleModeAtom);
     const [showIndividualRealizationValues, setShowIndividualRealizationValues] = useAtom(
         showIndividualRealizationValuesAtom,
     );
-    const selectedParameterDistributionSortingMethod = useAtomValue(selectedParameterDistributionSortingMethodAtom);
-    const setSelectedParameterDistributionSortingMethod = useSetAtom(userSelectedParameterSortingMethodAtom);
-    const [showPercentilesAndMeanLines, setShowPercentilesAndMeanLines] = useAtom(showPercentilesAndMeanLinesAtom);
-    const setSelectedPriorEnsembleIdent = useSetAtom(userSelectedPriorEnsembleIdentAtom);
-    const selectedPriorEnsembleIdent = useAtomValue(selectedPriorEnsembleIdentAtom);
-    const setSelectedPosteriorEnsembleIdent = useSetAtom(userSelectedPosteriorEnsembleIdentAtom);
-    const selectedPosteriorEnsembleIdent = useAtomValue(selectedPosteriorEnsembleIdentAtom);
+    const [selectedParameterSortingMethod, setSelectedParameterSortingMethod] = useAtom(
+        selectedParameterSortingMethodAtom,
+    );
 
+    const [showPercentilesAndMeanLines, setShowPercentilesAndMeanLines] = useAtom(showPercentilesAndMeanLinesAtom);
+    const [histogramMode, setHistogramMode] = useAtom(histogramModeAtom);
+    const [selectedPriorEnsembleIdent, setSelectedPriorEnsembleIdent] = useAtom(selectedPriorEnsembleIdentAtom);
+    const [selectedPosteriorEnsembleIdent, setSelectedPosteriorEnsembleIdent] = useAtom(
+        selectedPosteriorEnsembleIdentAtom,
+    );
+    const intersectedParameterIdents = useAtomValue(intersectedParameterIdentsAtom);
     function handleEnsembleSelectionChange(ensembleIdents: RegularEnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
     }
@@ -117,7 +114,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     disabled: !hasMultipleRegularEnsembles && type === EnsembleMode.PRIOR_POSTERIOR,
                                 };
                             })}
-                            value={selectedEnsembleMode}
+                            value={selectedEnsembleMode.value}
                             onChange={setSelectedEnsembleMode}
                         />
                     </Label>
@@ -143,35 +140,35 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                             value: type,
                                             label: ParameterDistributionSortingMethodEnumToStringMapping[type],
                                             disabled:
-                                                selectedEnsembleMode === EnsembleMode.INDEPENDENT &&
+                                                selectedEnsembleMode.value === EnsembleMode.INDEPENDENT &&
                                                 type !== ParameterSortMethod.ALPHABETICAL,
                                         };
                                     })}
-                                    value={selectedParameterDistributionSortingMethod}
-                                    onChange={setSelectedParameterDistributionSortingMethod}
+                                    value={selectedParameterSortingMethod.value}
+                                    onChange={setSelectedParameterSortingMethod}
                                 />
                             </div>
                         </div>
                     </Label>
-                    {selectedEnsembleMode === EnsembleMode.INDEPENDENT && (
+                    {selectedEnsembleMode.value === EnsembleMode.INDEPENDENT && (
                         <Label wrapperClassName="mt-2" text="Select ensembles:">
                             <EnsembleSelect
                                 ensembles={ensembleSet.getRegularEnsembleArray()}
                                 ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
-                                value={selectedEnsembleIdents}
+                                value={selectedEnsembleIdents.value}
                                 size={5}
                                 multiple={true}
                                 onChange={handleEnsembleSelectionChange}
                             />
                         </Label>
                     )}
-                    {selectedEnsembleMode === EnsembleMode.PRIOR_POSTERIOR && (
+                    {selectedEnsembleMode.value === EnsembleMode.PRIOR_POSTERIOR && (
                         <>
                             <Label wrapperClassName="mt-2" text="Select prior ensemble:">
                                 <EnsembleDropdown
                                     ensembles={ensembleSet.getRegularEnsembleArray()}
                                     ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
-                                    value={selectedPriorEnsembleIdent}
+                                    value={selectedPriorEnsembleIdent.value}
                                     placeholder="Select prior ensemble"
                                     onChange={setSelectedPriorEnsembleIdent}
                                 />
@@ -180,7 +177,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 <EnsembleDropdown
                                     ensembles={ensembleSet.getRegularEnsembleArray()}
                                     ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
-                                    value={selectedPosteriorEnsembleIdent}
+                                    value={selectedPosteriorEnsembleIdent.value}
                                     placeholder="Select posterior ensemble"
                                     onChange={setSelectedPosteriorEnsembleIdent}
                                 />
@@ -203,6 +200,19 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             )}
                             value={selectedVisualizationType}
                             onChange={setSelectedVisualizationType}
+                        />
+                    </Label>
+                    <Label text="Histogram mode:">
+                        <Dropdown
+                            options={Object.values(HistogramMode).map((mode: HistogramMode) => {
+                                return {
+                                    value: mode,
+                                    label: HistogramModeEnumToStringMapping[mode],
+                                };
+                            })}
+                            value={histogramMode}
+                            onChange={setHistogramMode}
+                            disabled={selectedVisualizationType !== ParameterDistributionPlotType.HISTOGRAM}
                         />
                     </Label>
                     <div className="mt-2">
@@ -233,7 +243,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                 />
                 <ParametersSelector
                     allParameterIdents={intersectedParameterIdents}
-                    selectedParameterIdents={selectedParameterIdents}
+                    selectedParameterIdents={selectedParameterIdents.value ?? []}
                     onChange={handleParameterIdentsChange}
                 />
             </CollapsibleGroup>

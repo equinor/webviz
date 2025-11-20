@@ -2,69 +2,22 @@ import { atom } from "jotai";
 
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { EnsembleMode } from "@modules/ParameterDistributions/typesAndEnums";
-import { ParameterSortMethod } from "@modules/ParameterDistributions/view/utils/parameterSorting";
 
+import { showConstantParametersAtom, showLogParametersAtom } from "./baseAtoms";
 import {
-    showConstantParametersAtom,
-    showLogParametersAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedEnsembleModeAtom,
-    userSelectedParameterIdentsAtom,
-    userSelectedParameterSortingMethodAtom,
-    userSelectedPosteriorEnsembleIdentAtom,
-    userSelectedPriorEnsembleIdentAtom,
-} from "./baseAtoms";
+    selectedEnsembleIdentsAtom,
+    selectedEnsembleModeAtom,
+    selectedPosteriorEnsembleIdentAtom,
+    selectedPriorEnsembleIdentAtom,
+} from "./persistableFixableAtoms";
 
-export const selectedEnsembleIdentsAtom = atom((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
-
-    let computedEnsembleIdents = userSelectedEnsembleIdents.filter((el) => ensembleSet.hasEnsemble(el));
-    if (computedEnsembleIdents.length === 0 && ensembleSet.getRegularEnsembleArray().length > 0) {
-        computedEnsembleIdents = [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
-    }
-
-    return computedEnsembleIdents;
-});
-export const selectedPriorEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdent = get(userSelectedPriorEnsembleIdentAtom);
-
-    const validEnsembleIdent = fixupRegularEnsembleIdent(userSelectedEnsembleIdent, ensembleSet);
-    return validEnsembleIdent;
-});
-
-export const selectedPosteriorEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdent = get(userSelectedPosteriorEnsembleIdentAtom);
-
-    if (!ensembleSet?.hasAnyRegularEnsembles()) {
-        return null;
-    }
-
-    if (userSelectedEnsembleIdent && ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
-        return userSelectedEnsembleIdent;
-    }
-
-    return ensembleSet.getRegularEnsembleArray().at(-1)?.getIdent() || null;
-});
-export const selectedEnsembleModeAtom = atom((get) => {
-    const userSelectedEnsembleMode = get(userSelectedEnsembleModeAtom);
-    const ensembleSet = get(EnsembleSetAtom);
-    if (ensembleSet.getRegularEnsembleArray().length <= 1) {
-        return EnsembleMode.INDEPENDENT;
-    }
-    return userSelectedEnsembleMode;
-});
 export const intersectedParameterIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    let selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
-    const priorEnsembleIdent = get(selectedPriorEnsembleIdentAtom);
-    const posteriorEnsembleIdent = get(selectedPosteriorEnsembleIdentAtom);
-    const ensembleMode = get(selectedEnsembleModeAtom);
+    let selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const priorEnsembleIdent = get(selectedPriorEnsembleIdentAtom).value;
+    const posteriorEnsembleIdent = get(selectedPosteriorEnsembleIdentAtom).value;
+    const ensembleMode = get(selectedEnsembleModeAtom).value;
     const showConstantParameters = get(showConstantParametersAtom);
     const showLogParameters = get(showLogParametersAtom);
 
@@ -108,26 +61,4 @@ export const intersectedParameterIdentsAtom = atom((get) => {
     }, ensembleParameterSets[0] || new Set());
 
     return Array.from(intersectedParameterIdents).sort((a, b) => a.toString().localeCompare(b.toString()));
-});
-
-export const selectedParameterIdentsAtom = atom((get) => {
-    const intersectedParameterIdents = get(intersectedParameterIdentsAtom);
-    const userSelectedParameterIdents = get(userSelectedParameterIdentsAtom);
-    // If unset (initial) use all parameters
-    if (!userSelectedParameterIdents) return intersectedParameterIdents;
-    // If empty (e.g. user has switched group or unselected all, keep empty)
-    if (userSelectedParameterIdents.length === 0) return [];
-
-    return userSelectedParameterIdents.filter((ident) =>
-        intersectedParameterIdents.some((intersectIdent) => intersectIdent.equals(ident)),
-    );
-});
-
-export const selectedParameterDistributionSortingMethodAtom = atom((get) => {
-    const userSelectedParameterSortingMethod = get(userSelectedParameterSortingMethodAtom);
-    const ensembleMode = get(selectedEnsembleModeAtom);
-    if (ensembleMode === EnsembleMode.INDEPENDENT) {
-        return ParameterSortMethod.ALPHABETICAL;
-    }
-    return userSelectedParameterSortingMethod;
 });
