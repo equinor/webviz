@@ -3,6 +3,7 @@
 
 import type { SerializedSettings as M_2DViewerSettings } from "@modules/2DViewer/settings/persistence";
 import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/persistence";
+import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 
 export type ModuleSerializedStateMap = {
@@ -31,7 +32,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "InplaceVolumesTable": {
-    settings?: never,
+    settings?: Partial<InplaceVolumesTableSettings>,
     view?: never,
   },
   "Intersection": {
