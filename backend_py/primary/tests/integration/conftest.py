@@ -3,7 +3,22 @@ from dataclasses import dataclass
 
 import pytest
 
-from primary.services.utils.authenticated_user import AuthenticatedUser, AccessTokens
+from webviz_services.services_config import ServicesConfig, init_services_config
+from webviz_services.utils.authenticated_user import AuthenticatedUser, AccessTokens
+
+
+def pytest_sessionstart(session):
+    print("Global test initialization...")
+
+    services_config = ServicesConfig(
+        sumo_env="prod",
+        smda_subscription_key="DUMMY_KEY",
+        enterprise_subscription_key="DUMMY_KEY",
+        surface_query_url="DUMMY_URL",
+        vds_host_address="DUMMY_URL",
+        redis_user_session_url="DUMMY_URL",
+    )
+    init_services_config(services_config)
 
 
 @dataclass

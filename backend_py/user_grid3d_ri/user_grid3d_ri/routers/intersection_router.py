@@ -6,12 +6,12 @@ from fastapi import APIRouter, HTTPException
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 from rips.instance import *
 
-from webviz_pkg.core_utils.b64 import B64FloatArray, B64IntArray
-from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
-from webviz_pkg.core_utils.b64 import b64_encode_uint_array_as_uint32, b64_encode_uint_array_as_uint8
-from webviz_pkg.core_utils.b64 import b64_encode_uint_array_as_smallest_size, b64_encode_int_array_as_smallest_size
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas
+from webviz_core_utils.b64 import B64FloatArray, B64IntArray
+from webviz_core_utils.b64 import b64_encode_float_array_as_float32
+from webviz_core_utils.b64 import b64_encode_uint_array_as_uint32, b64_encode_uint_array_as_uint8
+from webviz_core_utils.b64 import b64_encode_uint_array_as_smallest_size, b64_encode_int_array_as_smallest_size
+from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_server_schemas.user_grid3d_ri import api_schemas
 
 from user_grid3d_ri.logic.grid_properties import GridPropertiesExtractor
 from user_grid3d_ri.logic.local_blob_cache import LocalBlobCache

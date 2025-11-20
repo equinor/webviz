@@ -6,18 +6,18 @@ from typing import Annotated, Literal
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response
 
-from webviz_pkg.core_utils.background_tasks import run_in_background_task
+from webviz_core_utils.background_tasks import run_in_background_task
+from webviz_services.user_session_manager.user_session_manager import UserSessionManager
+from webviz_services.user_session_manager.user_session_manager import UserComponent
+from webviz_services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
+from webviz_services.user_session_manager._radix_helpers import RadixResourceRequests, RadixJobApi
+from webviz_services.user_session_manager._user_session_directory import UserSessionDirectory
+from webviz_services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
+from webviz_services.service_exceptions import Service, ServiceUnavailableError, ServiceRequestError
+from webviz_services.utils.otel_span_tracing import start_otel_span_async
+from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 
 from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
-from primary.services.user_session_manager.user_session_manager import UserSessionManager
-from primary.services.user_session_manager.user_session_manager import UserComponent
-from primary.services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
-from primary.services.user_session_manager._radix_helpers import RadixResourceRequests, RadixJobApi
-from primary.services.user_session_manager._user_session_directory import UserSessionDirectory
-from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
-from primary.services.service_exceptions import Service, ServiceUnavailableError, ServiceRequestError
-from primary.services.utils.otel_span_tracing import start_otel_span_async
-from primary.services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 LOGGER = logging.getLogger(__name__)

@@ -2,11 +2,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from primary.auth.auth_helper import AuthHelper
-from primary.services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.sumo_access.well_completions_access import WellCompletionsAccess
+from webviz_services.well_completions_assembler.well_completions_assembler import WellCompletionsAssembler
 
-from primary.services.sumo_access.well_completions_access import WellCompletionsAccess
-from primary.services.well_completions_assembler.well_completions_assembler import WellCompletionsAssembler
+from primary.auth.auth_helper import AuthHelper
 from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import converters
