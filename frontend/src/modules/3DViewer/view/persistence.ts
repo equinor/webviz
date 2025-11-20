@@ -1,7 +1,8 @@
+import type { ViewStateType } from "@webviz/subsurface-viewer";
+
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import type { Vec3 } from "@lib/utils/vec3";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
-import type { ViewStateType } from "@webviz/subsurface-viewer";
 
 import { viewStateAtom } from "./atoms/baseAtoms";
 
