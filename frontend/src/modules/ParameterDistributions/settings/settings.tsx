@@ -1,6 +1,5 @@
-import React from "react";
+import type React from "react";
 
-import { Help } from "@mui/icons-material";
 import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -12,9 +11,9 @@ import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/Wor
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
-import { IconButton } from "@lib/components/IconButton";
-import { Label } from "@lib/components/Label";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -45,20 +44,13 @@ import {
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
 } from "./atoms/persistableFixableAtoms";
-import { ParameterSortingInfoDialog } from "./components/ParameterSortingInfoDialog";
+import { ParameterSortingInfoContent } from "./components/ParameterSortingInfoContent";
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 
-    const [isInfoDialogOpen, setIsInfoDialogOpen] = React.useState(false);
-    const infoButtonRef = React.useRef<HTMLButtonElement>(null);
-
-    const handleInfoButtonClick = React.useCallback(() => {
-        setIsInfoDialogOpen(true);
-    }, []);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
-
     const [selectedParameterIdents, setSelectedParameterIdents] = useAtom(selectedParameterIdentsAtom);
     const [showConstantParameters, setShowConstantParameters] = useAtom(showConstantParametersAtom);
     const [showLogParameters, setShowLogParameters] = useAtom(showLogParametersAtom);
@@ -101,11 +93,23 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
 
     const hasMultipleRegularEnsembles = ensembleSet.getRegularEnsembleArray().length > 1;
 
+    const selectedEnsembleModeAnnotation = useMakePersistableFixableAtomAnnotations(selectedEnsembleModeAtom);
+    const selectedParameterSortingMethodAnnotation = useMakePersistableFixableAtomAnnotations(
+        selectedParameterSortingMethodAtom,
+    );
+    const selectedEnsembleIdentsAnnotation = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedPriorEnsembleIdentAnnotation =
+        useMakePersistableFixableAtomAnnotations(selectedPriorEnsembleIdentAtom);
+    const selectedPosteriorEnsembleIdentAnnotation = useMakePersistableFixableAtomAnnotations(
+        selectedPosteriorEnsembleIdentAtom,
+    );
+    const selectedParameterIdentsAnnotation = useMakePersistableFixableAtomAnnotations(selectedParameterIdentsAtom);
+
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Ensembles" expanded>
-                <>
-                    <Label text="Analysis mode:">
+                <div className="flex flex-col gap-2">
+                    <SettingWrapper label="Analysis mode" annotations={selectedEnsembleModeAnnotation}>
                         <Dropdown
                             options={Object.values(EnsembleMode).map((type: EnsembleMode) => {
                                 return {
@@ -117,41 +121,31 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             value={selectedEnsembleMode.value}
                             onChange={setSelectedEnsembleMode}
                         />
-                    </Label>
-                    <Label
-                        wrapperClassName="mt-2"
-                        text="Parameter sort method:"
-                        endAdornment={
-                            <IconButton
-                                ref={infoButtonRef}
-                                color="primary"
-                                size="small"
-                                onClick={handleInfoButtonClick}
-                            >
-                                <Help fontSize="inherit" />
-                            </IconButton>
-                        }
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="Parameter sort method"
+                        annotations={selectedParameterSortingMethodAnnotation}
+                        help={{
+                            title: "Parameter Sorting Methods",
+                            content: <ParameterSortingInfoContent />,
+                        }}
                     >
-                        <div className="flex items-center gap-3">
-                            <div className="flex-1 min-w-0">
-                                <Dropdown
-                                    options={Object.values(ParameterSortMethod).map((type: ParameterSortMethod) => {
-                                        return {
-                                            value: type,
-                                            label: ParameterDistributionSortingMethodEnumToStringMapping[type],
-                                            disabled:
-                                                selectedEnsembleMode.value === EnsembleMode.INDEPENDENT &&
-                                                type !== ParameterSortMethod.ALPHABETICAL,
-                                        };
-                                    })}
-                                    value={selectedParameterSortingMethod.value}
-                                    onChange={setSelectedParameterSortingMethod}
-                                />
-                            </div>
-                        </div>
-                    </Label>
+                        <Dropdown
+                            options={Object.values(ParameterSortMethod).map((type: ParameterSortMethod) => {
+                                return {
+                                    value: type,
+                                    label: ParameterDistributionSortingMethodEnumToStringMapping[type],
+                                    disabled:
+                                        selectedEnsembleMode.value === EnsembleMode.INDEPENDENT &&
+                                        type !== ParameterSortMethod.ALPHABETICAL,
+                                };
+                            })}
+                            value={selectedParameterSortingMethod.value}
+                            onChange={setSelectedParameterSortingMethod}
+                        />
+                    </SettingWrapper>
                     {selectedEnsembleMode.value === EnsembleMode.INDEPENDENT && (
-                        <Label wrapperClassName="mt-2" text="Select ensembles:">
+                        <SettingWrapper label="Selected ensembles" annotations={selectedEnsembleIdentsAnnotation}>
                             <EnsembleSelect
                                 ensembles={ensembleSet.getRegularEnsembleArray()}
                                 ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
@@ -160,11 +154,14 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 multiple={true}
                                 onChange={handleEnsembleSelectionChange}
                             />
-                        </Label>
+                        </SettingWrapper>
                     )}
                     {selectedEnsembleMode.value === EnsembleMode.PRIOR_POSTERIOR && (
                         <>
-                            <Label wrapperClassName="mt-2" text="Select prior ensemble:">
+                            <SettingWrapper
+                                label="Select prior ensemble"
+                                annotations={selectedPriorEnsembleIdentAnnotation}
+                            >
                                 <EnsembleDropdown
                                     ensembles={ensembleSet.getRegularEnsembleArray()}
                                     ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
@@ -172,8 +169,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     placeholder="Select prior ensemble"
                                     onChange={setSelectedPriorEnsembleIdent}
                                 />
-                            </Label>
-                            <Label wrapperClassName="mt-2" text="Select posterior ensemble:">
+                            </SettingWrapper>
+                            <SettingWrapper
+                                label="Select posterior ensemble"
+                                annotations={selectedPosteriorEnsembleIdentAnnotation}
+                            >
                                 <EnsembleDropdown
                                     ensembles={ensembleSet.getRegularEnsembleArray()}
                                     ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
@@ -181,14 +181,14 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     placeholder="Select posterior ensemble"
                                     onChange={setSelectedPosteriorEnsembleIdent}
                                 />
-                            </Label>
+                            </SettingWrapper>
                         </>
                     )}
-                </>
+                </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Visualization" expanded>
-                <>
-                    <Label text="Plot type:">
+                <div className="flex flex-col gap-2">
+                    <SettingWrapper label="Plot type">
                         <Dropdown
                             options={Object.values(ParameterDistributionPlotType).map(
                                 (type: ParameterDistributionPlotType) => {
@@ -201,8 +201,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             value={selectedVisualizationType}
                             onChange={setSelectedVisualizationType}
                         />
-                    </Label>
-                    <Label text="Histogram mode:">
+                    </SettingWrapper>
+                    <SettingWrapper label="Histogram mode:">
                         <Dropdown
                             options={Object.values(HistogramMode).map((mode: HistogramMode) => {
                                 return {
@@ -214,7 +214,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             onChange={setHistogramMode}
                             disabled={selectedVisualizationType !== ParameterDistributionPlotType.HISTOGRAM}
                         />
-                    </Label>
+                    </SettingWrapper>
                     <div className="mt-2">
                         <Checkbox
                             label="Show individual realization values"
@@ -228,30 +228,29 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             onChange={handleShowPercentilesAndMeanLinesChange}
                         />
                     </div>
-                </>
+                </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Parameter selection" expanded>
-                <Checkbox
-                    label="Show nonvarying parameters"
-                    checked={showConstantParameters}
-                    onChange={handleShowConstantParametersChange}
-                />
-                <Checkbox
-                    label="Show LOG parameters"
-                    checked={showLogParameters}
-                    onChange={handleShowLogParametersChange}
-                />
-                <ParametersSelector
-                    allParameterIdents={intersectedParameterIdents}
-                    selectedParameterIdents={selectedParameterIdents.value ?? []}
-                    onChange={handleParameterIdentsChange}
-                />
+                <div className="flex flex-col gap-2">
+                    <Checkbox
+                        label="Show nonvarying parameters"
+                        checked={showConstantParameters}
+                        onChange={handleShowConstantParametersChange}
+                    />
+                    <Checkbox
+                        label="Show LOG parameters"
+                        checked={showLogParameters}
+                        onChange={handleShowLogParametersChange}
+                    />
+                    <SettingWrapper annotations={selectedParameterIdentsAnnotation}>
+                        <ParametersSelector
+                            allParameterIdents={intersectedParameterIdents}
+                            selectedParameterIdents={selectedParameterIdents.value ?? []}
+                            onChange={handleParameterIdentsChange}
+                        />
+                    </SettingWrapper>
+                </div>
             </CollapsibleGroup>
-            <ParameterSortingInfoDialog
-                isOpen={isInfoDialogOpen}
-                onClose={() => setIsInfoDialogOpen(false)}
-                anchorElement={infoButtonRef.current}
-            />
         </div>
     );
 }
