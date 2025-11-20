@@ -2,7 +2,6 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import type { RealizationPickerSelection } from "@framework/components/RealizationPicker";
 import { RealizationPicker } from "@framework/components/RealizationPicker";
 import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 import { IncludeExcludeFilter } from "@framework/types/realizationFilterTypes";
@@ -89,11 +88,11 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
     );
 
     const handleRealizationPickChange = React.useCallback(
-        function handleRealizationPickChange(newSelection: RealizationPickerSelection) {
+        function handleRealizationPickChange(newRangeTags: string[]) {
             const newRealizationNumberSelections =
-                newSelection.selectedRangeTags.length === 0
+                newRangeTags.length === 0
                     ? null
-                    : makeRealizationNumberSelectionsFromRealizationPickerTags(newSelection.selectedRangeTags);
+                    : makeRealizationNumberSelectionsFromRealizationPickerTags(newRangeTags);
 
             onFilterChange({
                 realizationNumberSelections: newRealizationNumberSelections,
