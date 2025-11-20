@@ -4,6 +4,15 @@
 import type { SerializedSettings as M_2DViewerSettings } from "@modules/2DViewer/settings/persistence";
 import type { SerializedSettings as IntersectionSettings } from "@modules/Intersection/settings/persistence";
 import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/persistence";
+import type { SerializedSettings as FlowNetworkSettings } from "@modules/FlowNetwork/settings/persistence";
+import type { SerializedSettings as InplaceVolumesPlotSettings } from "@modules/InplaceVolumesPlot/settings/persistence";
+import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
+import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
+import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
+import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
+import type { SerializedSettings as SimulationTimeSeriesSensitivitySettings } from "@modules/SimulationTimeSeriesSensitivity/settings/persistence";
+import type { SerializedView as SimulationTimeSeriesSensitivityView } from "@modules/SimulationTimeSeriesSensitivity/view/persistence";
+import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
 
 export type ModuleSerializedStateMap = {
   "2DViewer": {
@@ -11,10 +20,6 @@ export type ModuleSerializedStateMap = {
     view?: Partial<M_2DViewerView>,
   },
   "3DViewer": {
-    settings?: never,
-    view?: never,
-  },
-  "3DViewerNew": {
     settings?: never,
     view?: never,
   },
@@ -27,27 +32,15 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "FlowNetwork": {
-    settings?: never,
-    view?: never,
-  },
-  "Grid3D": {
-    settings?: never,
-    view?: never,
-  },
-  "Grid3DIntersection": {
-    settings?: never,
+    settings?: Partial<FlowNetworkSettings>,
     view?: never,
   },
   "InplaceVolumesPlot": {
-    settings?: never,
+    settings?: Partial<InplaceVolumesPlotSettings>,
     view?: never,
   },
   "InplaceVolumesTable": {
-    settings?: never,
-    view?: never,
-  },
-  "InplaceVolumetrics": {
-    settings?: never,
+    settings?: Partial<InplaceVolumesTableSettings>,
     view?: never,
   },
   "Intersection": {
@@ -94,35 +87,23 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "SeismicIntersection": {
-    settings?: never,
-    view?: never,
-  },
   "SensitivityPlot": {
-    settings?: never,
+    settings?: Partial<SensitivityPlotSettings>,
     view?: never,
   },
   "SimulationTimeSeries": {
-    settings?: never,
-    view?: never,
-  },
-  "SimulationTimeSeriesMatrix": {
-    settings?: never,
-    view?: never,
+    settings?: Partial<SimulationTimeSeriesSettings>,
+    view?: Partial<SimulationTimeSeriesView>,
   },
   "SimulationTimeSeriesSensitivity": {
-    settings?: never,
-    view?: never,
-  },
-  "StructuralUncertaintyIntersection": {
-    settings?: never,
-    view?: never,
+    settings?: Partial<SimulationTimeSeriesSensitivitySettings>,
+    view?: Partial<SimulationTimeSeriesSensitivityView>,
   },
   "SubsurfaceMap": {
     settings?: never,
     view?: never,
   },
-  "TimeSeriesParameterDistribution": {
+  "TopographicMap": {
     settings?: never,
     view?: never,
   },
@@ -131,7 +112,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "WellCompletions": {
-    settings?: never,
+    settings?: Partial<WellCompletionsSettings>,
     view?: never,
   },
   "WellLogViewer": {
