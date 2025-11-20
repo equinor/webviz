@@ -13,9 +13,11 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import type { TagOption } from "@lib/components/TagPicker";
 import { TagPicker } from "@lib/components/TagPicker";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import {
@@ -104,6 +106,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         });
     }, []);
 
+    const selectedResultNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNamesAtom);
+    const selectedGroupByIndicesAnnotations = useMakePersistableFixableAtomAnnotations(selectedGroupByIndicesAtom);
+
+    const selectedIndicesWithValuesAnnotations =
+        useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
+
     const tableSettings = (
         <CollapsibleGroup title="Result and grouping" expanded>
             <div className="flex flex-col gap-2">
@@ -125,7 +133,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         />
                     </Label>
                 )}
-                <Label text="Results">
+                <SettingWrapper label="Results" annotations={selectedResultNamesAnnotations}>
                     <Select
                         value={selectedResultNames.value}
                         options={resultNameOptions}
@@ -134,38 +142,40 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         size={5}
                         debounceTimeMs={1500}
                     />
-                </Label>
-                <Label text="Grouping">
+                </SettingWrapper>
+                <SettingWrapper label="Grouping" annotations={selectedGroupByIndicesAnnotations}>
                     <TagPicker
                         selection={selectedGroupByIndices.value}
                         tagOptions={groupByIndicesOptions}
                         onChange={handleGroupByIndicesChange}
                         debounceTimeMs={1500}
                     />
-                </Label>
+                </SettingWrapper>
             </div>
         </CollapsibleGroup>
     );
 
     return (
-        <InplaceVolumesFilterComponent
-            ensembleSet={ensembleSet}
-            settingsContext={props.settingsContext}
-            workbenchSession={props.workbenchSession}
-            workbenchServices={props.workbenchServices}
-            isPending={tableDefinitionsQueryResult.isLoading}
-            availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
-            availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
-            selectedEnsembleIdents={selectedEnsembleIdents.value}
-            selectedIndicesWithValues={selectedIndicesWithValues.value}
-            selectedTableNames={selectedTableNames.value}
-            selectedAllowIndicesValuesIntersection={
-                selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
-            }
-            onChange={handleFilterChange}
-            additionalSettings={tableSettings}
-            areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
-            debounceMs={1500}
-        />
+        <SettingWrapper annotations={selectedIndicesWithValuesAnnotations}>
+            <InplaceVolumesFilterComponent
+                ensembleSet={ensembleSet}
+                settingsContext={props.settingsContext}
+                workbenchSession={props.workbenchSession}
+                workbenchServices={props.workbenchServices}
+                isPending={false}
+                availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
+                availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
+                selectedEnsembleIdents={selectedEnsembleIdents.value}
+                selectedIndicesWithValues={selectedIndicesWithValues.value}
+                selectedTableNames={selectedTableNames.value}
+                selectedAllowIndicesValuesIntersection={
+                    selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
+                }
+                onChange={handleFilterChange}
+                additionalSettings={tableSettings}
+                areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
+                debounceMs={1500}
+            />
+        </SettingWrapper>
     );
 }

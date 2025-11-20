@@ -28,6 +28,7 @@ export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsemble
 
 export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>({
     initialValue: [],
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
         const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
@@ -44,9 +45,17 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
 
 export const selectedResultNamesAtom = persistableFixableAtom<string[]>({
     initialValue: [],
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     isValidFunction: ({ value, get }) => {
+        const tableDefinitions = get(tableDefinitionsQueryAtom);
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         const validResultNames = tableDefinitionsAccessor.getResultNamesIntersection();
+
+        // Do not perform fixup during loading of new table definitions
+        if (tableDefinitions.isLoading) {
+            return true;
+        }
+
         if (value.length === 0) {
             if (validResultNames.length > 0) {
                 return false;
@@ -59,12 +68,13 @@ export const selectedResultNamesAtom = persistableFixableAtom<string[]>({
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
         const fixedSelection = fixupUserSelection(value ?? [], tableDefinitionsAccessor.getResultNamesIntersection());
-        return fixedSelection.length > 0 ? fixedSelection : [fixedSelection[0]];
+        return fixedSelection.length > 0 ? fixedSelection : [];
     },
 });
 
 export const selectedGroupByIndicesAtom = persistableFixableAtom<string[], string[]>({
     initialValue: [],
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getCommonIndicesWithValues().map((el) => el.indexColumn);
@@ -82,6 +92,7 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
     InplaceVolumesIndexWithValues_api[]
 >({
     initialValue: [],
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getCommonIndicesWithValues();
@@ -93,3 +104,19 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
         return fixupUserSelectedIndexValues(value ?? [], precomputedValue, FixupSelection.SELECT_ALL);
     },
 });
+
+// Utility function to compute dependencies state from tableDefinitionsQueryAtom
+function computeTableDefinitionsQueryDependenciesState({
+    get,
+}: {
+    get: (atom: any) => any;
+}): "error" | "loading" | "loaded" {
+    const tableDefinitions = get(tableDefinitionsQueryAtom);
+    if (tableDefinitions.isLoading) {
+        return "loading";
+    }
+    if (tableDefinitions.errors.length > 0) {
+        return "error";
+    }
+    return "loaded";
+}
