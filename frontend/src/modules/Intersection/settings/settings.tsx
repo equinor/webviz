@@ -9,14 +9,11 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
-import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
-import {
-    DataProviderManager,
-    DataProviderManagerTopic,
-} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import type { Interfaces } from "../interfaces";
@@ -34,48 +31,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const [selectedFieldIdentifier, setSelectedFieldIdentifier] = useAtom(selectedFieldIdentifierAtom);
 
     const [dataProviderSerializedState, setDataProviderSerializedState] = useAtom(dataProviderSerializedStateAtom);
-    const dataProviderSerializedStateRef = React.useRef<string | null>(null);
 
-    const firstColorStable = React.useRef(colorSet.getNextColor());
+    const firstColorRef = React.useRef(colorSet.getFirstColor());
 
-    const persistDataProviderManagerState = React.useCallback(
-        function persistDataProviderManagerState() {
-            if (!dataProviderManager) {
-                return;
-            }
-
-            const serializedState = dataProviderManager.serializeState();
-            setDataProviderSerializedState(JSON.stringify(serializedState));
-        },
-        [dataProviderManager, setDataProviderSerializedState],
-    );
-
-    React.useEffect(
-        function persistedDataChangeEffect() {
-            if (!dataProviderManager || !dataProviderSerializedState) {
-                return;
-            }
-
-            if (dataProviderSerializedState === dataProviderSerializedStateRef.current) {
-                return;
-            }
-
-            dataProviderManager.deserializeState(JSON.parse(dataProviderSerializedState));
-        },
-        [dataProviderSerializedState, dataProviderManager],
-    );
-
-    React.useEffect(
-        function onMountEffect() {
-            const newDataProviderManager = new DataProviderManager(
-                props.workbenchSession,
-                props.workbenchSettings,
-                queryClient,
-            );
-
-            dataProviderSerializedStateRef.current = null;
-
-            const groupDelegate = newDataProviderManager.getGroupDelegate();
+    const setDataProviderManagerAndAddFirstView = React.useCallback(
+        function setDataProviderManagerAndAddFirstView(manager: DataProviderManager) {
+            const groupDelegate = manager.getGroupDelegate();
 
             const doAddDefaultIntersectionView =
                 groupDelegate.getDescendantItems(
@@ -83,47 +44,23 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                 ).length === 0;
             if (doAddDefaultIntersectionView) {
                 groupDelegate.appendChild(
-                    GroupRegistry.makeGroup(
-                        GroupType.INTERSECTION_VIEW,
-                        newDataProviderManager,
-                        firstColorStable.current,
-                    ),
+                    GroupRegistry.makeGroup(GroupType.INTERSECTION_VIEW, manager, firstColorRef.current),
                 );
             }
 
-            setDataProviderManager(newDataProviderManager);
-
-            return function onUnmountEffect() {
-                newDataProviderManager.beforeDestroy();
-            };
+            setDataProviderManager(manager);
         },
-        [setDataProviderManager, props.workbenchSession, props.workbenchSettings, queryClient],
+        [setDataProviderManager],
     );
 
-    React.useEffect(
-        function onDataProviderManagerChangeEffect() {
-            if (!dataProviderManager) {
-                return;
-            }
-
-            persistDataProviderManagerState();
-
-            const unsubscribeDataRev = dataProviderManager
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION)(persistDataProviderManagerState);
-
-            const unsubscribeExpands = dataProviderManager
-                .getGroupDelegate()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistDataProviderManagerState);
-
-            return function onUnmountEffect() {
-                unsubscribeDataRev();
-                unsubscribeExpands();
-            };
-        },
-        [dataProviderManager, props.workbenchSession, props.workbenchSettings, persistDataProviderManagerState],
-    );
+    usePersistedDataProviderManager({
+        workbenchSession: props.workbenchSession,
+        workbenchSettings: props.workbenchSettings,
+        queryClient,
+        serializedState: dataProviderSerializedState,
+        setSerializedState: setDataProviderSerializedState,
+        setDataProviderManager: setDataProviderManagerAndAddFirstView,
+    });
 
     React.useEffect(
         function onFieldIdentifierChangedEffect() {
