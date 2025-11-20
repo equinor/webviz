@@ -51,22 +51,15 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
             },
         },
         selectedTableType: {
-            enum: [TableType.STATISTICAL, TableType.PER_REALIZATION],
+            enum: Object.values(TableType),
         },
         selectedStatisticOptions: {
             elements: {
-                enum: [
-                    InplaceVolumesStatistic_api.MAX,
-                    InplaceVolumesStatistic_api.MIN,
-                    InplaceVolumesStatistic_api.MEAN,
-                    InplaceVolumesStatistic_api.STDDEV,
-                    InplaceVolumesStatistic_api.P10,
-                    InplaceVolumesStatistic_api.P90,
-                ],
+                enum: Object.values(InplaceVolumesStatistic_api),
             },
         },
         selectedIndexValueCriteria: {
-            enum: [IndexValueCriteria.REQUIRE_EQUALITY, IndexValueCriteria.ALLOW_INTERSECTION],
+            enum: Object.values(IndexValueCriteria),
         },
     },
 }));
