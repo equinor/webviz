@@ -44,7 +44,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
-    const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
+    const tableDefinitionsQuery = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
 
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
@@ -60,7 +60,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedStatisticOptions, setSelectedStatisticOptions] = useAtom(selectedStatisticOptionsAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
+    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
 
     useApplyInitialSettingsToState(
         props.initialSettings,
@@ -162,7 +162,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 settingsContext={props.settingsContext}
                 workbenchSession={props.workbenchSession}
                 workbenchServices={props.workbenchServices}
-                isPending={false}
+                isPending={tableDefinitionsQuery.isLoading}
                 availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
                 availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
                 selectedEnsembleIdents={selectedEnsembleIdents.value}
