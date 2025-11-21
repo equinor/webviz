@@ -2,7 +2,13 @@ import type { QueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { toast } from "react-toastify";
 
-import { deleteSessionMutation, deleteSnapshotMutation, updateSessionMutation, type SessionUpdate_api } from "@api";
+import {
+    deleteSessionMutation,
+    deleteSnapshotAccessLogMutation,
+    deleteSnapshotMutation,
+    updateSessionMutation,
+    type SessionUpdate_api,
+} from "@api";
 import { ConfirmationService } from "@framework/ConfirmationService";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
@@ -213,7 +219,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             if (isAxiosError(error)) {
                 console.error("Axios error details:", error.response?.data);
-                errorExplanation = `Server responded with message ${error.response?.data.message}.`;
+                errorExplanation = `Server responded with message: ${error.response?.data.error.message}.`;
             }
 
             const result = await ConfirmationService.confirm({
@@ -271,7 +277,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             if (isAxiosError(error)) {
                 console.error("Axios error details:", error.response?.data);
-                errorExplanation = `Server responded with message ${error.response?.data.message}.`;
+                errorExplanation = `Server responded with message: ${error.response?.data.error.message}.`;
             }
 
             const result = await ConfirmationService.confirm({
@@ -936,7 +942,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             message:
                 "This session will be deleted. This action can not be reversed. Note that any snapshots made from this session will still be available",
             actions: [
-                { id: "cancel", label: "No, Cancel" },
+                { id: "cancel", label: "No, cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
             ],
         });
@@ -971,9 +977,10 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     async deleteSnapshot(snapshotId: string): Promise<boolean> {
         const result = await ConfirmationService.confirm({
             title: "Are you sure?",
-            message: "This snapshot will be deleted. This action can not be reversed.",
+            message:
+                "This snapshot will be deleted and will no longer be available to any user. This action cannot be reversed.",
             actions: [
-                { id: "cancel", label: "No, Cancel" },
+                { id: "cancel", label: "No, cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
             ],
         });
@@ -1000,6 +1007,44 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this.dismissToast("deleteSnapshot");
             toast.error("An error occurred while deleting the snapshot.");
             console.error("Failed to delete snapshot:", error);
+        }
+
+        return success;
+    }
+
+    async deleteSnapshotAccessLog(snapshotId: string): Promise<boolean> {
+        const result = await ConfirmationService.confirm({
+            title: "Are you sure?",
+            message:
+                "The snapshot will be removed from your list of visited snapshots. If it hasn't been deleted, you can open the snapshot again using its ID.",
+            actions: [
+                { id: "cancel", label: "No, cancel" },
+                { id: "delete", label: "Yes, remove", color: "danger" },
+            ],
+        });
+
+        if (result !== "delete") return false;
+
+        let success = false;
+        this.createLoadingToast("deleteSnapshotAccessLog", "Deleting snapshot access log...");
+
+        try {
+            await this._queryClient
+                .getMutationCache()
+                .build(this._queryClient, {
+                    ...deleteSnapshotAccessLogMutation(),
+                    onSuccess: () => {
+                        this.dismissToast("deleteSnapshotAccessLog");
+                        toast.success("Snapshot successfully removed from list.");
+                        success = true;
+                        removeSnapshotQueryData(this._queryClient);
+                    },
+                })
+                .execute({ path: { snapshot_id: snapshotId } });
+        } catch (error) {
+            this.dismissToast("deleteSnapshotAccessLog");
+            toast.error("An error occurred while removing the snapshot from the list.");
+            console.error("Failed to delete snapshot access log:", error);
         }
 
         return success;

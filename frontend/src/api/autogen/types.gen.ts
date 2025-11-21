@@ -4475,6 +4475,33 @@ export type GetSnapshotResponses_api = {
 
 export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshotResponses_api];
 
+export type DeleteSnapshotAccessLogData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshot_access_logs/{snapshot_id}";
+};
+
+export type DeleteSnapshotAccessLogErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSnapshotAccessLogError_api = DeleteSnapshotAccessLogErrors_api[keyof DeleteSnapshotAccessLogErrors_api];
+
+export type DeleteSnapshotAccessLogResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
 export type LoginRouteData_api = {
     body?: never;
     path?: never;
