@@ -6,11 +6,11 @@ import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
-import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
+import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
 
 export const vectorListQueriesAtom = atomWithQueries((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         // Regular Ensemble

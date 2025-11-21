@@ -289,12 +289,17 @@ export class VisualizationAssembler<
         options?: {
             injectedData?: TInjectedData;
             initialAccumulatedData?: TAccumulatedData;
+            /**
+             * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
+             */
+            disableCache?: boolean;
         },
     ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
         return this.makeRecursively(
             dataProviderManager.getGroupDelegate(),
             options?.initialAccumulatedData ?? ({} as TAccumulatedData),
             options?.injectedData,
+            options?.disableCache,
         );
     }
 
@@ -302,6 +307,10 @@ export class VisualizationAssembler<
         groupDelegate: GroupDelegate,
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
+        /**
+         * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
+         */
+        disableCache?: boolean,
     ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
         const children: (
             | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
@@ -332,7 +341,12 @@ export class VisualizationAssembler<
             }
 
             if (instanceofItemGroup(child)) {
-                const product = this.makeRecursively(child.getGroupDelegate(), accumulatedData, injectedData);
+                const product = this.makeRecursively(
+                    child.getGroupDelegate(),
+                    accumulatedData,
+                    injectedData,
+                    disableCache,
+                );
 
                 accumulatedData = product.accumulatedData;
                 aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
@@ -379,7 +393,12 @@ export class VisualizationAssembler<
                     continue;
                 }
 
-                const dataProviderObjects = this.makeDataProviderObjects(child, accumulatedData, injectedData);
+                const dataProviderObjects = this.makeDataProviderObjects(
+                    child,
+                    accumulatedData,
+                    injectedData,
+                    disableCache,
+                );
 
                 if (!dataProviderObjects.visualization) {
                     continue;
@@ -418,8 +437,14 @@ export class VisualizationAssembler<
         dataProvider: DataProvider<any, any, any>,
         initialAccumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
+        /**
+         * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
+         */
+        disableCache?: boolean,
     ): DataProviderObjects<TTarget, TAccumulatedData> {
-        if (this._cachedDataProviderVisualizationsMap.has(dataProvider.getItemDelegate().getId())) {
+        // ! Cache logic returns the wrong accumulated data for WellLogViewer in some cases. As a hot-fix, we'll allow
+        // ! the cache to be disabled here, but this should be reverted once the issue has been resolved. See #1272
+        if (!disableCache && this._cachedDataProviderVisualizationsMap.has(dataProvider.getItemDelegate().getId())) {
             const cached = this._cachedDataProviderVisualizationsMap.get(dataProvider.getItemDelegate().getId());
             if (cached && cached.revisionNumber === dataProvider.getRevisionNumber()) {
                 return cached.objects;

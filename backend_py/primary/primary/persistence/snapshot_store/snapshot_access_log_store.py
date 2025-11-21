@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
 from typing import List, Optional, Tuple
+from webviz_services.service_exceptions import Service, ServiceRequestError
 
 
 from primary.persistence.snapshot_store.types import SnapshotAccessLogSortBy
 from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
 from primary.persistence.cosmosdb.exceptions import DatabaseAccessError, DatabaseAccessNotFoundError
-from primary.services.service_exceptions import Service, ServiceRequestError
 
 from primary.persistence.cosmosdb.query_collation_options import Filter, QueryCollationOptions, SortDirection
 from .documents import SnapshotAccessLogDocument

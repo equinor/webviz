@@ -3,6 +3,20 @@
 
 import type { SerializedSettings as M_2DViewerSettings } from "@modules/2DViewer/settings/persistence";
 import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/persistence";
+import type { SerializedSettings as DistributionPlotSettings } from "@modules/DistributionPlot/settings/persistence";
+import type { SerializedSettings as FlowNetworkSettings } from "@modules/FlowNetwork/settings/persistence";
+import type { SerializedSettings as InplaceVolumesPlotSettings } from "@modules/InplaceVolumesPlot/settings/persistence";
+import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
+import type { SerializedSettings as IntersectionSettings } from "@modules/Intersection/settings/persistence";
+import type { SerializedSettings as ParameterDistributionsSettings } from "@modules/ParameterDistributions/settings/persistence";
+import type { SerializedSettings as ParameterResponseCorrelationBarPlotSettings } from "@modules/ParameterResponseCorrelationBarPlot/settings/persistence";
+import type { SerializedSettings as ParameterResponseCrossPlotSettings } from "@modules/ParameterResponseCrossPlot/settings/persistence";
+import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
+import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
+import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
+import type { SerializedSettings as SimulationTimeSeriesSensitivitySettings } from "@modules/SimulationTimeSeriesSensitivity/settings/persistence";
+import type { SerializedView as SimulationTimeSeriesSensitivityView } from "@modules/SimulationTimeSeriesSensitivity/view/persistence";
+import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
 
 export type ModuleSerializedStateMap = {
   "2DViewer": {
@@ -18,23 +32,23 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "DistributionPlot": {
-    settings?: never,
+    settings?: Partial<DistributionPlotSettings>,
     view?: never,
   },
   "FlowNetwork": {
-    settings?: never,
+    settings?: Partial<FlowNetworkSettings>,
     view?: never,
   },
   "InplaceVolumesPlot": {
-    settings?: never,
+    settings?: Partial<InplaceVolumesPlotSettings>,
     view?: never,
   },
   "InplaceVolumesTable": {
-    settings?: never,
+    settings?: Partial<InplaceVolumesTableSettings>,
     view?: never,
   },
   "Intersection": {
-    settings?: never,
+    settings?: Partial<IntersectionSettings>,
     view?: never,
   },
   "Map": {
@@ -50,11 +64,11 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "ParameterDistributions": {
-    settings?: never,
+    settings?: Partial<ParameterDistributionsSettings>,
     view?: never,
   },
   "ParameterResponseCorrelationBarPlot": {
-    settings?: never,
+    settings?: Partial<ParameterResponseCorrelationBarPlotSettings>,
     view?: never,
   },
   "ParameterResponseCorrelationMatrixPlot": {
@@ -66,7 +80,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "ParameterResponseCrossPlot": {
-    settings?: never,
+    settings?: Partial<ParameterResponseCrossPlotSettings>,
     view?: never,
   },
   "Pvt": {
@@ -78,16 +92,16 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "SensitivityPlot": {
-    settings?: never,
+    settings?: Partial<SensitivityPlotSettings>,
     view?: never,
   },
   "SimulationTimeSeries": {
-    settings?: never,
-    view?: never,
+    settings?: Partial<SimulationTimeSeriesSettings>,
+    view?: Partial<SimulationTimeSeriesView>,
   },
   "SimulationTimeSeriesSensitivity": {
-    settings?: never,
-    view?: never,
+    settings?: Partial<SimulationTimeSeriesSensitivitySettings>,
+    view?: Partial<SimulationTimeSeriesSensitivityView>,
   },
   "SubsurfaceMap": {
     settings?: never,
@@ -98,7 +112,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "WellCompletions": {
-    settings?: never,
+    settings?: Partial<WellCompletionsSettings>,
     view?: never,
   },
   "WellLogViewer": {
