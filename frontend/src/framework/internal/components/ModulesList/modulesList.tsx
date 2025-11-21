@@ -3,6 +3,8 @@ import React from "react";
 import {
     Attribution,
     Close,
+    CloudDone,
+    CloudOff,
     ExpandLess,
     ExpandMore,
     Help,
@@ -53,6 +55,7 @@ type ModulesListItemProps = {
     devState: ModuleDevState;
     displayName: string;
     description: string | null;
+    isSerializable: boolean;
     drawPreviewFunc: DrawPreviewFunc | null;
     guiMessageBroker: GuiMessageBroker;
     onShowDetails: (moduleName: string, yPos: number) => void;
@@ -67,94 +70,97 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const [dragPosition, setDragPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [dragSize, setDragSize] = React.useState<Size2D>({ width: 0, height: 0 });
 
-    React.useEffect(() => {
-        const refCurrent = ref.current;
-        let pointerDownPoint: Vec2 | null = null;
-        let dragging = false;
-        let pointerDownElementPosition: Vec2 | null = null;
-        let pointerToElementDiff: Vec2 = { x: 0, y: 0 };
+    React.useEffect(
+        function pointerEventsEffect() {
+            const refCurrent = ref.current;
+            let pointerDownPoint: Vec2 | null = null;
+            let dragging = false;
+            let pointerDownElementPosition: Vec2 | null = null;
+            let pointerToElementDiff: Vec2 = { x: 0, y: 0 };
 
-        const handlePointerDown = (e: PointerEvent) => {
-            if (ref.current) {
-                document.body.classList.add("touch-none");
-                const point = vec2FromPointerEvent(e);
-                const rect = ref.current.getBoundingClientRect();
-                pointerDownElementPosition = subtractVec2(point, pointRelativeToDomRect(point, rect));
-                props.guiMessageBroker.publishEvent(GuiEvent.NewModulePointerDown, {
-                    moduleName: props.name,
-                    elementPosition: subtractVec2(point, pointRelativeToDomRect(point, rect)),
-                    elementSize: { width: rect.width, height: rect.height },
-                    pointerPosition: point,
-                });
-                pointerDownPoint = point;
-                addDraggingEventListeners();
-            }
-        };
-
-        const handlePointerUp = () => {
-            if (!pointerDownPoint) {
-                return;
-            }
-            pointerDownPoint = null;
-            dragging = false;
-            setIsDragged(false);
-            document.body.classList.remove("touch-none");
-            pointerDownElementPosition = null;
-
-            removeDraggingEventListeners();
-        };
-
-        const handlePointerMove = (e: PointerEvent) => {
-            if (!pointerDownPoint) {
-                return;
-            }
-
-            if (
-                !dragging &&
-                point2Distance(vec2FromPointerEvent(e), pointerDownPoint) > MANHATTAN_LENGTH &&
-                pointerDownElementPosition
-            ) {
-                dragging = true;
-                setIsDragged(true);
-                onDraggingStart();
+            const handlePointerDown = (e: PointerEvent) => {
                 if (ref.current) {
+                    document.body.classList.add("touch-none");
+                    const point = vec2FromPointerEvent(e);
                     const rect = ref.current.getBoundingClientRect();
-                    setDragSize({ width: rect.width, height: rect.height });
+                    pointerDownElementPosition = subtractVec2(point, pointRelativeToDomRect(point, rect));
+                    props.guiMessageBroker.publishEvent(GuiEvent.NewModulePointerDown, {
+                        moduleName: props.name,
+                        elementPosition: subtractVec2(point, pointRelativeToDomRect(point, rect)),
+                        elementSize: { width: rect.width, height: rect.height },
+                        pointerPosition: point,
+                    });
+                    pointerDownPoint = point;
+                    addDraggingEventListeners();
                 }
-                pointerToElementDiff = subtractVec2(pointerDownPoint, pointerDownElementPosition);
-                return;
+            };
+
+            const handlePointerUp = () => {
+                if (!pointerDownPoint) {
+                    return;
+                }
+                pointerDownPoint = null;
+                dragging = false;
+                setIsDragged(false);
+                document.body.classList.remove("touch-none");
+                pointerDownElementPosition = null;
+
+                removeDraggingEventListeners();
+            };
+
+            const handlePointerMove = (e: PointerEvent) => {
+                if (!pointerDownPoint) {
+                    return;
+                }
+
+                if (
+                    !dragging &&
+                    point2Distance(vec2FromPointerEvent(e), pointerDownPoint) > MANHATTAN_LENGTH &&
+                    pointerDownElementPosition
+                ) {
+                    dragging = true;
+                    setIsDragged(true);
+                    onDraggingStart();
+                    if (ref.current) {
+                        const rect = ref.current.getBoundingClientRect();
+                        setDragSize({ width: rect.width, height: rect.height });
+                    }
+                    pointerToElementDiff = subtractVec2(pointerDownPoint, pointerDownElementPosition);
+                    return;
+                }
+
+                if (dragging) {
+                    setDragPosition(subtractVec2(vec2FromPointerEvent(e), pointerToElementDiff));
+                }
+            };
+
+            function addDraggingEventListeners() {
+                document.addEventListener("pointerup", handlePointerUp);
+                document.addEventListener("pointermove", handlePointerMove);
+                document.addEventListener("pointercancel", handlePointerUp);
+                document.addEventListener("blur-sm", handlePointerUp);
             }
 
-            if (dragging) {
-                setDragPosition(subtractVec2(vec2FromPointerEvent(e), pointerToElementDiff));
+            function removeDraggingEventListeners() {
+                document.removeEventListener("pointerup", handlePointerUp);
+                document.removeEventListener("pointermove", handlePointerMove);
+                document.removeEventListener("pointercancel", handlePointerUp);
+                document.removeEventListener("blur-sm", handlePointerUp);
             }
-        };
 
-        function addDraggingEventListeners() {
-            document.addEventListener("pointerup", handlePointerUp);
-            document.addEventListener("pointermove", handlePointerMove);
-            document.addEventListener("pointercancel", handlePointerUp);
-            document.addEventListener("blur-sm", handlePointerUp);
-        }
-
-        function removeDraggingEventListeners() {
-            document.removeEventListener("pointerup", handlePointerUp);
-            document.removeEventListener("pointermove", handlePointerMove);
-            document.removeEventListener("pointercancel", handlePointerUp);
-            document.removeEventListener("blur-sm", handlePointerUp);
-        }
-
-        if (ref.current) {
-            ref.current.addEventListener("pointerdown", handlePointerDown);
-        }
-
-        return () => {
-            if (refCurrent) {
-                refCurrent.removeEventListener("pointerdown", handlePointerDown);
+            if (ref.current) {
+                ref.current.addEventListener("pointerdown", handlePointerDown);
             }
-            removeDraggingEventListeners();
-        };
-    }, [props.guiMessageBroker, props.name, onDraggingStart]);
+
+            return () => {
+                if (refCurrent) {
+                    refCurrent.removeEventListener("pointerdown", handlePointerDown);
+                }
+                removeDraggingEventListeners();
+            };
+        },
+        [props.guiMessageBroker, props.name, onDraggingStart],
+    );
 
     function handleShowDetails(e: React.MouseEvent<HTMLDivElement>) {
         e.stopPropagation();
@@ -203,6 +209,14 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 <div className="px-2 flex items-center h-full text-sm gap-2" title={props.displayName}>
                     <div className="h-12 w-12 min-w-12 overflow-hidden p-1 shrink-0">{makePreviewImage()}</div>
                     <span className="grow text-ellipsis whitespace-nowrap overflow-hidden">{props.displayName}</span>
+                    <span
+                        className={resolveClassNames("text-gray-400", {
+                            "opacity-30": !props.isSerializable,
+                        })}
+                        title={props.isSerializable ? "This module is persistable" : "This module is not persistable"}
+                    >
+                        {props.isSerializable ? <CloudDone fontSize="inherit" /> : <CloudOff fontSize="inherit" />}
+                    </span>
                     <span
                         className={resolveClassNames({
                             "text-green-600": props.devState === ModuleDevState.PROD,
@@ -505,6 +519,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                                         name={mod.getName()}
                                         devState={mod.getDevState()}
                                         displayName={mod.getDefaultTitle()}
+                                        isSerializable={mod.canBeSerialized()}
                                         description={mod.getDescription()}
                                         drawPreviewFunc={mod.getDrawPreviewFunc()}
                                         guiMessageBroker={props.workbench.getGuiMessageBroker()}
