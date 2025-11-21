@@ -5,6 +5,7 @@ import type { Vec3 } from "@lib/utils/vec3";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
 import { viewStateAtom } from "./atoms/baseAtoms";
+import { setIfDefined } from "@framework/utils/atomUtils";
 
 type PersistableViewState = {
     rotationOrbit: number;
@@ -55,13 +56,8 @@ export const serializeView: SerializeStateFunction<SerializedView> = (get) => {
     };
 };
 
-export const deserializeView: DeserializeStateFunction<SerializedView> = () => {
-    /*
-    We are not applying the view state yet, as this is setting an incorrect camera position. 
-    We have to investigate further if the view state is properly implemented in wsc
-    and how to best restore it on module load.
-    */
-    // setIfDefined(set, viewStateAtom, raw.viewState ? convertFromPersistableViewState(raw.viewState) : null);
+export const deserializeView: DeserializeStateFunction<SerializedView> = (raw, set) => {
+    setIfDefined(set, viewStateAtom, raw.viewState ? convertFromPersistableViewState(raw.viewState) : null);
 };
 
 function convertToPersistableViewState(viewState: ExtendedViewStateType): PersistableViewState {
@@ -88,7 +84,7 @@ export function convertFromPersistableViewState(persistableViewState: Persistabl
         rotationOrbit: persistableViewState.rotationOrbit,
         rotationX: persistableViewState.rotationX,
         target: persistableViewState.target
-            ? [persistableViewState.target.x, persistableViewState.target.y]
+            ? [persistableViewState.target.x, persistableViewState.target.y, persistableViewState.target.z]
             : undefined,
         zoom: persistableViewState.zoom,
         minZoom: persistableViewState.minZoom,
