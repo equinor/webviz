@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class WellProductionData:
     wellbore_uuid: str
