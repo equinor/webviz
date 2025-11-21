@@ -419,7 +419,13 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 <Tooltip title={"Delete selected snapshot"} placement="top" enterDelay="medium">
                     <Button
                         color="danger"
-                        disabled={!selectedSnapshotId || deletePending || selectedSnapshot?.snapshotDeleted}
+                        disabled={
+                            !selectedSnapshotId ||
+                            deletePending ||
+                            selectedSnapshot?.snapshotDeleted ||
+                            !userId ||
+                            selectedSnapshot?.["snapshotMetadata.ownerId"] !== userId
+                        }
                         onClick={handleDeleteClick}
                         size="medium"
                     >

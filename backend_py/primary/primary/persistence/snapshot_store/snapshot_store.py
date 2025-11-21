@@ -203,8 +203,13 @@ class SnapshotStore:
             DatabaseAccessError: If the database operation fails
         """
         try:
-            # Verify ownership before deletion
-            await self.get_async(snapshot_id)
+            snapshot = await self.get_async(snapshot_id)
+
+            if snapshot.owner_id != self._user_id:
+                raise ServiceRequestError(
+                    f"User does not have permission to delete snapshot with id '{snapshot_id}'",
+                    Service.DATABASE,
+                )
 
             await self._snapshot_container.delete_item_async(snapshot_id, partition_key=snapshot_id)
         except DatabaseAccessError as e:
