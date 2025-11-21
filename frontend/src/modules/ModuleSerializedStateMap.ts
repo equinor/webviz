@@ -13,6 +13,7 @@ import type { SerializedSettings as IntersectionSettings } from "@modules/Inters
 import type { SerializedSettings as ParameterDistributionsSettings } from "@modules/ParameterDistributions/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationBarPlotSettings } from "@modules/ParameterResponseCorrelationBarPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationMatrixPlotSettings } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/persistence";
+import type { SerializedSettings as ParameterResponseCorrelationParallelCoordsPlotSettings } from "@modules/ParameterResponseCorrelationParallelCoordsPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCrossPlotSettings } from "@modules/ParameterResponseCrossPlot/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
@@ -80,7 +81,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "ParameterResponseCorrelationParallelCoordsPlot": {
-    settings?: never,
+    settings?: Partial<ParameterResponseCorrelationParallelCoordsPlotSettings>,
     view?: never,
   },
   "ParameterResponseCrossPlot": {
