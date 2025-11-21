@@ -13,7 +13,7 @@ import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsC
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 
-import { viewStateAtom } from "../atoms/persistableAtoms";
+import { viewStateAtom } from "../atoms/baseAtoms";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";

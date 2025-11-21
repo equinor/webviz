@@ -13,7 +13,7 @@ import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFr
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import { dataProviderManagerAtom, dataProviderStateAtom } from "./atoms/baseAtoms";
-import { fieldIdentifierAtom } from "./atoms/persistableAtoms";
+import { fieldIdentifierAtom } from "./atoms/persistableFixableAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
