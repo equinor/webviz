@@ -219,7 +219,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             if (isAxiosError(error)) {
                 console.error("Axios error details:", error.response?.data);
-                errorExplanation = `Server responded with message ${error.response?.data.error.message}.`;
+                errorExplanation = `Server responded with message: \n${error.response?.data.error.message}.`;
             }
 
             const result = await ConfirmationService.confirm({
@@ -277,7 +277,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             if (isAxiosError(error)) {
                 console.error("Axios error details:", error.response?.data);
-                errorExplanation = `Server responded with message ${error.response?.data.error.message}.`;
+                errorExplanation = `Server responded with message: \n${error.response?.data.error.message}.`;
             }
 
             const result = await ConfirmationService.confirm({
@@ -942,7 +942,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             message:
                 "This session will be deleted. This action can not be reversed. Note that any snapshots made from this session will still be available",
             actions: [
-                { id: "cancel", label: "No, Cancel" },
+                { id: "cancel", label: "No, cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
             ],
         });
@@ -980,7 +980,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             message:
                 "This snapshot will be deleted and will no longer be available to any user. This action cannot be reversed.",
             actions: [
-                { id: "cancel", label: "No, Cancel" },
+                { id: "cancel", label: "No, cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
             ],
         });
@@ -1016,9 +1016,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         const result = await ConfirmationService.confirm({
             title: "Are you sure?",
             message:
-                "The snapshot will be removed from your list of visited snapshots. You can open the snapshot again using its ID.",
+                "The snapshot will be removed from your list of visited snapshots. If it hasn't been deleted, you can open the snapshot again using its ID.",
             actions: [
-                { id: "cancel", label: "No, Cancel" },
+                { id: "cancel", label: "No, cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
             ],
         });
