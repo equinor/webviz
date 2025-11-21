@@ -18,6 +18,7 @@ import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@fram
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { useActiveSession } from "../../ActiveSessionBoundary";
 
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
@@ -29,7 +30,12 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         props.workbench.getSessionManager().getActiveSession(),
         WorkbenchSessionTopic.ENSEMBLE_SET,
     );
-    const realizationFilterSet = props.workbench.getSessionManager().getActiveSession().getRealizationFilterSet();
+
+    // Actually, this should subscribe to active workbench session change as well or use the `useActiveSession` hook,
+    // but for now we assume that
+    const session = useActiveSession();
+    const realizationFilterSet = session.getRealizationFilterSet();
+
     const [numberOfUnsavedRealizationFiltersGuiState, setNumberOfUnsavedRealizationFiltersGuiState] = useGuiState(
         guiMessageBroker,
         GuiState.NumberOfUnsavedRealizationFilters,
