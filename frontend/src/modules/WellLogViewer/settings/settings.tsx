@@ -5,7 +5,6 @@ import { isEqual } from "lodash";
 
 import type { WellboreHeader_api } from "@api";
 import type { ModuleSettingsProps } from "@framework/Module";
-// import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { Intersection } from "@framework/types/intersection";
@@ -13,7 +12,6 @@ import { IntersectionType } from "@framework/types/intersection";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
@@ -104,29 +102,32 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
 
     return (
         <div className="flex flex-col h-full gap-1">
-            <CollapsibleGroup title="Wellbore" expanded>
-                <Label text="Field">
-                    <SettingWrapper annotations={fieldSettingAnnotations} errorOverlay={availableFieldsErrorMessage}>
-                        <Dropdown
-                            value={selectedField.value}
-                            options={fieldOptions}
-                            disabled={fieldOptions.length === 0}
-                            onChange={setSelectedField}
-                        />
-                    </SettingWrapper>
-                </Label>
-
-                <Label text="Wellbore" wrapperClassName="mt-4">
-                    <SettingWrapper annotations={wellboreSettingAnnotations} errorOverlay={wellboreHeadersErrorMessage}>
-                        <Select
-                            options={makeWellHeaderOptions(wellboreHeadersQuery.data ?? [])}
-                            value={selectedWellboreHeader ? [selectedWellboreHeader.wellboreUuid] : []}
-                            onChange={handleWellboreSelectionChange}
-                            filter
-                            size={5}
-                        />
-                    </SettingWrapper>
-                </Label>
+            <CollapsibleGroup title="Wellbore" expanded contentClassName="flex flex-col gap-3">
+                <SettingWrapper
+                    label="Field"
+                    annotations={fieldSettingAnnotations}
+                    errorOverlay={availableFieldsErrorMessage}
+                >
+                    <Dropdown
+                        value={selectedField.value}
+                        options={fieldOptions}
+                        disabled={fieldOptions.length === 0}
+                        onChange={setSelectedField}
+                    />
+                </SettingWrapper>
+                <SettingWrapper
+                    label="Wellbore"
+                    annotations={wellboreSettingAnnotations}
+                    errorOverlay={wellboreHeadersErrorMessage}
+                >
+                    <Select
+                        options={makeWellHeaderOptions(wellboreHeadersQuery.data ?? [])}
+                        value={selectedWellboreHeader ? [selectedWellboreHeader.wellboreUuid] : []}
+                        onChange={handleWellboreSelectionChange}
+                        filter
+                        size={5}
+                    />
+                </SettingWrapper>
             </CollapsibleGroup>
 
             <CollapsibleGroup title="Log viewer settings" expanded>
