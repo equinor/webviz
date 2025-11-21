@@ -380,9 +380,13 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
     );
 
     let deleteButtonText = "Delete";
+    let deleteButtonTooltip = "";
     if (selectedSnapshotId) {
         const isOwner = selectedSnapshot?.["snapshotMetadata.ownerId"] === userId;
-        deleteButtonText = isOwner ? "Delete snapshot" : "Delete log";
+        deleteButtonText = isOwner ? "Delete snapshot" : "Remove from list";
+        deleteButtonTooltip = isOwner
+            ? "Delete selected snapshot"
+            : "Remove snapshot from list (you are not the owner, snapshot will remain accessible to other users)";
     }
     return (
         <>
@@ -429,10 +433,10 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         <FileOpen fontSize="inherit" /> Open
                     </Button>
                 </Tooltip>
-                <Tooltip title={"Delete selected snapshot"} placement="top" enterDelay="medium">
+                <Tooltip title={deleteButtonTooltip} placement="top" enterDelay="medium">
                     <Button
                         color="danger"
-                        disabled={!selectedSnapshotId || deletePending || selectedSnapshot?.snapshotDeleted || !userId}
+                        disabled={!selectedSnapshotId || deletePending || !userId}
                         onClick={handleDeleteClick}
                         size="medium"
                     >
