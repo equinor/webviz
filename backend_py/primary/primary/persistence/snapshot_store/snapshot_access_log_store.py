@@ -232,6 +232,22 @@ class SnapshotAccessLogStore:
         except DatabaseAccessError as err:
             raise ServiceRequestError(f"Failed to log snapshot visit: {str(err)}", Service.DATABASE) from err
 
+    async def delete_user_log_for_snapshot_async(self, snapshot_id: str) -> None:
+        """
+        Delete the access log for the current user and specified snapshot.
+
+        Args:
+            snapshot_id: The ID of the snapshot
+
+        Raises:
+            ServiceRequestError: If the database operation fails
+        """
+        item_id = _make_access_log_item_id(snapshot_id, self._user_id)
+        try:
+            await self._access_log_container.delete_item_async(item_id, partition_key=self._user_id)
+        except DatabaseAccessError as err:
+            raise ServiceRequestError(f"Failed to delete access log: {str(err)}", Service.DATABASE) from err
+
 
 def _make_access_log_item_id(snapshot_id: str, visitor_id: str) -> str:
     return f"{snapshot_id}__{visitor_id}"

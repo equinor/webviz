@@ -114,6 +114,8 @@ import type {
     DeleteSnapshotData_api,
     DeleteSnapshotError_api,
     GetSnapshotData_api,
+    DeleteSnapshotAccessLogData_api,
+    DeleteSnapshotAccessLogError_api,
     LoginRouteData_api,
     AuthorizedCallbackRouteData_api,
     GetAliveData_api,
@@ -201,6 +203,7 @@ import {
     createSnapshot,
     deleteSnapshot,
     getSnapshot,
+    deleteSnapshotAccessLog,
     loginRoute,
     authorizedCallbackRoute,
     getAlive,
@@ -2014,6 +2017,24 @@ export const getSnapshotOptions = (options: Options<GetSnapshotData_api>) => {
         },
         queryKey: getSnapshotQueryKey(options),
     });
+};
+
+export const deleteSnapshotAccessLogMutation = (options?: Partial<Options<DeleteSnapshotAccessLogData_api>>) => {
+    const mutationOptions: UseMutationOptions<
+        unknown,
+        AxiosError<DeleteSnapshotAccessLogError_api>,
+        Options<DeleteSnapshotAccessLogData_api>
+    > = {
+        mutationFn: async (localOptions) => {
+            const { data } = await deleteSnapshotAccessLog({
+                ...options,
+                ...localOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
 };
 
 export const loginRouteQueryKey = (options?: Options<LoginRouteData_api>) => [createQueryKey("loginRoute", options)];

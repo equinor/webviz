@@ -418,10 +418,34 @@ async def delete_snapshot(
     Only the snapshot owner can delete their snapshots.
     """
     snapshot_store = SnapshotStore.create_instance(authenticated_user.get_user_id())
-    async with snapshot_store:
+    log_store = SnapshotAccessLogStore.create_instance(authenticated_user.get_user_id())
+
+    async with snapshot_store, log_store:
         await snapshot_store.delete_async(snapshot_id)
+        await log_store.delete_user_log_for_snapshot_async(snapshot_id)
 
     # This is the fastest solution for the moment. As we are expecting <= 150 logs per snapshot
     # and consistency is not critical, we can afford to do this in the background and without
     # a safety net. We can later consider adding this to a queue for better reliability.
     background_tasks.add_task(mark_logs_deleted_task, snapshot_id=snapshot_id)
+
+
+@router.delete("/snapshot_access_logs/{snapshot_id}")
+async def delete_snapshot_access_log(
+    snapshot_id: str,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> None:
+    """
+    Delete your access log for a specific snapshot.
+
+    This operation:
+    - Removes your access log entry for the given snapshot
+    - Does NOT affect the snapshot itself or other users' logs
+
+    Use this endpoint to clear your visit history for a snapshot
+    without deleting the snapshot or impacting other users.
+    """
+    log_store = SnapshotAccessLogStore.create_instance(authenticated_user.get_user_id())
+
+    async with log_store:
+        await log_store.delete_user_log_for_snapshot_async(snapshot_id)

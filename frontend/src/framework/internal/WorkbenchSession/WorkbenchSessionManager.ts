@@ -2,7 +2,13 @@ import type { QueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { toast } from "react-toastify";
 
-import { deleteSessionMutation, deleteSnapshotMutation, updateSessionMutation, type SessionUpdate_api } from "@api";
+import {
+    deleteSessionMutation,
+    deleteSnapshotAccessLogMutation,
+    deleteSnapshotMutation,
+    updateSessionMutation,
+    type SessionUpdate_api,
+} from "@api";
 import { ConfirmationService } from "@framework/ConfirmationService";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
@@ -971,7 +977,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     async deleteSnapshot(snapshotId: string): Promise<boolean> {
         const result = await ConfirmationService.confirm({
             title: "Are you sure?",
-            message: "This snapshot will be deleted. This action can not be reversed.",
+            message: "This snapshot will be deleted. This action cannot be reversed.",
             actions: [
                 { id: "cancel", label: "No, Cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
@@ -1000,6 +1006,43 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this.dismissToast("deleteSnapshot");
             toast.error("An error occurred while deleting the snapshot.");
             console.error("Failed to delete snapshot:", error);
+        }
+
+        return success;
+    }
+
+    async deleteSnapshotAccessLog(snapshotId: string): Promise<boolean> {
+        const result = await ConfirmationService.confirm({
+            title: "Are you sure?",
+            message: "Your access log for this snapshot will be deleted. This action cannot be reversed.",
+            actions: [
+                { id: "cancel", label: "No, Cancel" },
+                { id: "delete", label: "Yes, delete", color: "danger" },
+            ],
+        });
+
+        if (result !== "delete") return false;
+
+        let success = false;
+        this.createLoadingToast("deleteSnapshotAccessLog", "Deleting snapshot access log...");
+
+        try {
+            await this._queryClient
+                .getMutationCache()
+                .build(this._queryClient, {
+                    ...deleteSnapshotAccessLogMutation(),
+                    onSuccess: () => {
+                        this.dismissToast("deleteSnapshotAccessLog");
+                        toast.success("Snapshot access log successfully deleted.");
+                        success = true;
+                        removeSnapshotQueryData(this._queryClient);
+                    },
+                })
+                .execute({ path: { snapshot_id: snapshotId } });
+        } catch (error) {
+            this.dismissToast("deleteSnapshotAccessLog");
+            toast.error("An error occurred while deleting the snapshot access log.");
+            console.error("Failed to delete snapshot access log:", error);
         }
 
         return success;

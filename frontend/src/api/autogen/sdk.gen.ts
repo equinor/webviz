@@ -230,6 +230,8 @@ import type {
     GetSnapshotData_api,
     GetSnapshotResponse_api,
     GetSnapshotError_api,
+    DeleteSnapshotAccessLogData_api,
+    DeleteSnapshotAccessLogError_api,
     LoginRouteData_api,
     LoginRouteError_api,
     AuthorizedCallbackRouteData_api,
@@ -1553,6 +1555,26 @@ export const getSnapshot = <ThrowOnError extends boolean = false>(options: Optio
     return (options?.client ?? client).get<GetSnapshotResponse_api, GetSnapshotError_api, ThrowOnError>({
         ...options,
         url: "/persistence/snapshots/{snapshot_id}",
+    });
+};
+
+/**
+ * Delete Snapshot Access Log
+ * Delete your access log for a specific snapshot.
+ *
+ * This operation:
+ * - Removes your access log entry for the given snapshot
+ * - Does NOT affect the snapshot itself or other users' logs
+ *
+ * Use this endpoint to clear your visit history for a snapshot
+ * without deleting the snapshot or impacting other users.
+ */
+export const deleteSnapshotAccessLog = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSnapshotAccessLogData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).delete<unknown, DeleteSnapshotAccessLogError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/snapshot_access_logs/{snapshot_id}",
     });
 };
 

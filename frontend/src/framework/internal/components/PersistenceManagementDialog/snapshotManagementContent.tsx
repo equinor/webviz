@@ -265,6 +265,19 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
 
     const { isRefreshing, refresh } = useRefreshQuery(snapshotsQuery);
 
+    const tableData = React.useMemo(() => {
+        if (!snapshotsQuery.data) return [];
+
+        return snapshotsQuery.data?.pages?.flatMap(({ items }) => {
+            return items.map(flattenSnapshotAccessLogEntry);
+        });
+    }, [snapshotsQuery.data]);
+
+    const selectedSnapshot = React.useMemo(() => {
+        if (!selectedSnapshotId) return null;
+        return tableData.find((snapshot) => snapshot.snapshotId === selectedSnapshotId) || null;
+    }, [tableData, selectedSnapshotId]);
+
     function handleFilterRangeChange(newRange: null | EdsFilterRange) {
         setTableFilter((prev) => {
             return {
@@ -319,11 +332,19 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
     }
 
     async function handleDeleteClick() {
-        if (!selectedSnapshotId) return;
+        if (!selectedSnapshot || !userId) return;
+
+        const snapshotOwnerId = selectedSnapshot["snapshotMetadata.ownerId"];
 
         setDeletePending(true);
 
-        const success = await props.workbench.getSessionManager().deleteSnapshot(selectedSnapshotId);
+        let success: boolean;
+        if (userId === snapshotOwnerId) {
+            success = await props.workbench.getSessionManager().deleteSnapshot(selectedSnapshotId!);
+        } else {
+            success = await props.workbench.getSessionManager().deleteSnapshotAccessLog(selectedSnapshotId!);
+        }
+
         setDeletePending(false);
 
         if (!success) {
@@ -339,25 +360,12 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         await props.workbench.getSessionManager().openSnapshot(selectedSnapshotId);
     }
 
-    const tableData = React.useMemo(() => {
-        if (!snapshotsQuery.data) return [];
-
-        return snapshotsQuery.data?.pages?.flatMap(({ items }) => {
-            return items.map(flattenSnapshotAccessLogEntry);
-        });
-    }, [snapshotsQuery.data]);
-
     const handleTableScrollIndexChange = React.useCallback(function handleTableScrollIndexChange(
         start: number,
         end: number,
     ) {
         setVisibleRowRange({ start, end });
     }, []);
-
-    const selectedSnapshot = React.useMemo(() => {
-        if (!selectedSnapshotId) return null;
-        return tableData.find((snapshot) => snapshot.snapshotId === selectedSnapshotId) || null;
-    }, [tableData, selectedSnapshotId]);
 
     React.useEffect(
         function maybeRefetchNextPageEffect() {
@@ -371,6 +379,11 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         [snapshotsQuery, tableData.length, visibleRowRange],
     );
 
+    let deleteButtonText = "Delete";
+    if (selectedSnapshotId) {
+        const isOwner = selectedSnapshot?.["snapshotMetadata.ownerId"] === userId;
+        deleteButtonText = isOwner ? "Delete snapshot" : "Delete log";
+    }
     return (
         <>
             <div className="mb-4 flex gap-4">
@@ -419,17 +432,12 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 <Tooltip title={"Delete selected snapshot"} placement="top" enterDelay="medium">
                     <Button
                         color="danger"
-                        disabled={
-                            !selectedSnapshotId ||
-                            deletePending ||
-                            selectedSnapshot?.snapshotDeleted ||
-                            !userId ||
-                            selectedSnapshot?.["snapshotMetadata.ownerId"] !== userId
-                        }
+                        disabled={!selectedSnapshotId || deletePending || selectedSnapshot?.snapshotDeleted || !userId}
                         onClick={handleDeleteClick}
                         size="medium"
                     >
-                        {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
+                        {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />}{" "}
+                        {deleteButtonText}
                     </Button>
                 </Tooltip>
                 <Tooltip title="Refresh list" placement="top" enterDelay="medium">
