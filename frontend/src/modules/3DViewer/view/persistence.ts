@@ -1,11 +1,11 @@
 import type { ViewStateType } from "@webviz/subsurface-viewer";
 
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
+import { setIfDefined } from "@framework/utils/atomUtils";
 import type { Vec3 } from "@lib/utils/vec3";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
 import { viewStateAtom } from "./atoms/baseAtoms";
-import { setIfDefined } from "@framework/utils/atomUtils";
 
 type PersistableViewState = {
     rotationOrbit: number;
