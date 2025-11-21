@@ -4,6 +4,7 @@ import {
     Attribution,
     Close,
     CloudDone,
+    CloudOff,
     ExpandLess,
     ExpandMore,
     Help,
@@ -214,7 +215,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                         })}
                         title={props.isSerializable ? "This module is persistable" : "This module is not persistable"}
                     >
-                        <CloudDone fontSize="inherit" />
+                        {props.isSerializable ? <CloudDone fontSize="inherit" /> : <CloudOff fontSize="inherit" />}
                     </span>
                     <span
                         className={resolveClassNames({
