@@ -11,7 +11,6 @@ import type {
 
 import { ijkFromCellIndex } from "@framework/utils/cellIndexUtils";
 
-
 import type { ReadoutItem as GenericReadoutItem, InfoItem } from "../../ReadoutBox";
 import type { AdditionalInformationItem, ReadoutItem } from "../types/types";
 import { AdditionalInformationType } from "../types/types";
@@ -84,7 +83,7 @@ type ArrayElement<T extends unknown[]> = T extends readonly (infer U)[] ? U : T;
 
 export function makeSchematicInfo<T extends keyof Omit<SchematicData, "symbols">>(
     type: T,
-    item: ArrayElement<SchematicData[T]>
+    item: ArrayElement<SchematicData[T]>,
 ): { label: string; value: string | number }[] {
     const arr: { label: string; value: string | number }[] = [];
 
@@ -153,7 +152,7 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
                 value: ijkFromCellIndex(
                     cellIndex,
                     layer.data.gridDimensions.cellCountI,
-                    layer.data.gridDimensions.cellCountJ
+                    layer.data.gridDimensions.cellCountJ,
                 ),
             });
 
@@ -390,8 +389,8 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
             unit: "m",
         });
         items.push({
-            label: "Y",
-            type: AdditionalInformationType.Y,
+            label: "Z",
+            type: AdditionalInformationType.Z,
             value: readoutItem.point[1],
             unit: "m",
         });
@@ -464,7 +463,7 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
 export function esvReadoutToGenericReadout(
     readout: ReadoutItem,
     index: number,
-    layerIdToNameMap: Record<string, string>
+    layerIdToNameMap: Record<string, string>,
 ): GenericReadoutItem {
     return {
         label: makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout),

@@ -1,44 +1,28 @@
 import type { PlotData } from "@webviz/well-completions-plot";
 import { atom } from "jotai";
 
-import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { DataLoadingStatus, TimeAggregationSelection } from "@modules/WellCompletions/typesAndEnums";
+import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import { DataLoadingStatus, TimeAggregationMode } from "@modules/WellCompletions/typesAndEnums";
 import { WellCompletionsDataAccessor } from "@modules/WellCompletions/utils/wellCompletionsDataAccessor";
-
 
 import {
     selectedStratigraphyColorSetAtom,
-    syncedEnsembleIdentsAtom,
-    userExcludeWellTextAtom,
-    userSearchWellTextAtom,
-    userSelectedCompletionDateIndexAtom,
-    userSelectedCompletionDateIndexRangeAtom,
-    userSelectedEnsembleIdentAtom,
-    userSelectedHideZeroCompletionsAtom,
-    userSelectedRealizationNumberAtom,
-    userSelectedSortWellsByAtom,
-    userSelectedSortWellsDirectionAtom,
-    userSelectedTimeAggregationAtom,
+    wellExclusionTextAtom,
+    wellSearchTextAtom,
+    isZeroCompletionsHiddenAtom,
+    sortWellsByAtom,
+    wellSortDirectionAtom,
+    timeAggregationModeAtom,
 } from "./baseAtoms";
+import {
+    selectedCompletionDateIndexAtom,
+    selectedCompletionDateIndexRangeAtom,
+    selectedEnsembleIdentAtom,
+} from "./persistableFixableAtoms";
 import { wellCompletionsQueryAtom } from "./queryAtoms";
 
-export const selectedEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
-    const syncedEnsembleIdents = get(syncedEnsembleIdentsAtom);
-    const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
-    const ensembleSet = get(EnsembleSetAtom);
-
-    if (syncedEnsembleIdents && syncedEnsembleIdents.length > 0) {
-        return syncedEnsembleIdents[0];
-    }
-    if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
-        return ensembleSet.getRegularEnsembleArray()[0]?.getIdent() || null;
-    }
-    return userSelectedEnsembleIdent;
-});
-
-export const validRealizationNumbersAtom = atom<number[]>((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
+export const availableRealizationsAtom = atom<number[]>((get) => {
+    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
     const validRealizationNumbers = selectedEnsembleIdent
@@ -47,40 +31,12 @@ export const validRealizationNumbersAtom = atom<number[]>((get) => {
     return validRealizationNumbers;
 });
 
-export const selectedRealizationNumberAtom = atom<number | null>((get) => {
-    const userSelectedRealizationNumber = get(userSelectedRealizationNumberAtom);
-    const validRealizationNumbers = get(validRealizationNumbersAtom);
-
-    if (validRealizationNumbers.length === 0) {
-        return null;
-    }
-
-    if (userSelectedRealizationNumber === null || !validRealizationNumbers.includes(userSelectedRealizationNumber)) {
-        return validRealizationNumbers[0];
-    }
-
-    return userSelectedRealizationNumber;
-});
-
-export const isQueryFetchingAtom = atom<boolean>((get) => {
-    const wellCompletionsQuery = get(wellCompletionsQueryAtom);
-
-    return wellCompletionsQuery.isFetching;
-});
-
-export const isQueryErrorAtom = atom<boolean>((get) => {
-    const wellCompletionsQuery = get(wellCompletionsQueryAtom);
-
-    return wellCompletionsQuery.isError;
-});
-
 export const dataLoadingStatusAtom = atom<DataLoadingStatus>((get) => {
-    const isQueryFetching = get(isQueryFetchingAtom);
-    const isQueryError = get(isQueryErrorAtom);
+    const wellCompletionsQuery = get(wellCompletionsQueryAtom);
 
-    if (isQueryFetching) {
+    if (wellCompletionsQuery.isFetching) {
         return DataLoadingStatus.LOADING;
-    } else if (isQueryError) {
+    } else if (wellCompletionsQuery.isError) {
         return DataLoadingStatus.ERROR;
     }
     return DataLoadingStatus.IDLE;
@@ -105,83 +61,36 @@ export const sortedCompletionDatesAtom = atom<string[] | null>((get) => {
     return wellCompletionsDataAccessor.getSortedCompletionDates();
 });
 
-export const selectedCompletionDateIndexAtom = atom<number | null>((get) => {
-    const userSelectedCompletionDateIndex = get(userSelectedCompletionDateIndexAtom);
-    const userSelectedCompletionDateIndexRange = get(userSelectedCompletionDateIndexRangeAtom);
-    const userSelectedTimeAggregation = get(userSelectedTimeAggregationAtom);
-    const sortedCompletionDates = get(sortedCompletionDatesAtom);
-
-    if (!sortedCompletionDates) {
-        return null;
-    }
-
-    if (userSelectedTimeAggregation === TimeAggregationSelection.NONE) {
-        if (userSelectedCompletionDateIndex >= sortedCompletionDates.length) {
-            return sortedCompletionDates.length - 1;
-        }
-        return userSelectedCompletionDateIndex;
-    }
-
-    // Update index to match first index in range
-    const firstRangeIndex = userSelectedCompletionDateIndexRange[0];
-    const newTimeStepIndex = firstRangeIndex < sortedCompletionDates.length ? firstRangeIndex : 0;
-    return newTimeStepIndex;
-});
-
-export const selectedCompletionDateIndexRangeAtom = atom<[number, number] | null>((get) => {
-    const userSelectedCompletionDateIndexRange = get(userSelectedCompletionDateIndexRangeAtom);
-    const userSelectedTimeAggregation = get(userSelectedTimeAggregationAtom);
-    const sortedCompletionDates = get(sortedCompletionDatesAtom);
-
-    if (!sortedCompletionDates) {
-        return null;
-    }
-
-    if (userSelectedTimeAggregation === TimeAggregationSelection.NONE) {
-        return [0, sortedCompletionDates.length - 1];
-    }
-
-    let startIndex = userSelectedCompletionDateIndexRange[0];
-    let endIndex = userSelectedCompletionDateIndexRange[1];
-    if (startIndex >= sortedCompletionDates.length) {
-        startIndex = sortedCompletionDates.length - 1;
-    }
-    if (endIndex >= sortedCompletionDates.length) {
-        endIndex = sortedCompletionDates.length - 1;
-    }
-    return [startIndex, endIndex];
-});
-
 export const plotDataAtom = atom<PlotData | null>((get) => {
     const wellCompletionsDataAccessor = get(wellCompletionsDataAccessorAtom);
 
-    const userExcludeWellText = get(userExcludeWellTextAtom);
-    const userSearchWellText = get(userSearchWellTextAtom);
-    const userSelectedHideZeroCompletions = get(userSelectedHideZeroCompletionsAtom);
-    const userSelectedTimeAggregation = get(userSelectedTimeAggregationAtom);
-    const userSelectedSortWellsBy = get(userSelectedSortWellsByAtom);
-    const userSelectedSortWellsDirection = get(userSelectedSortWellsDirectionAtom);
+    const wellExclusionText = get(wellExclusionTextAtom);
+    const wellSearchText = get(wellSearchTextAtom);
+    const isZeroCompletionsHidden = get(isZeroCompletionsHiddenAtom);
+    const timeAggregationMode = get(timeAggregationModeAtom);
+    const sortWellsBy = get(sortWellsByAtom);
+    const wellSortDirection = get(wellSortDirectionAtom);
 
-    const selectedCompletionDateIndex = get(selectedCompletionDateIndexAtom);
-    const selectedCompletionDateIndexRange = get(selectedCompletionDateIndexRangeAtom);
+    const selectedCompletionDateIndex = get(selectedCompletionDateIndexAtom).value;
+    const selectedCompletionDateIndexRange = get(selectedCompletionDateIndexRangeAtom).value;
 
     if (!wellCompletionsDataAccessor) {
         return null;
     }
 
     const completionDateIndexSelection =
-        userSelectedTimeAggregation === TimeAggregationSelection.NONE
+        timeAggregationMode === TimeAggregationMode.NONE
             ? selectedCompletionDateIndex
             : selectedCompletionDateIndexRange;
     if (completionDateIndexSelection === null) {
         return null;
     }
 
-    wellCompletionsDataAccessor.setExcludeWellText(userExcludeWellText);
-    wellCompletionsDataAccessor.setSearchWellText(userSearchWellText);
-    wellCompletionsDataAccessor.setHideZeroCompletions(userSelectedHideZeroCompletions);
-    wellCompletionsDataAccessor.setSortWellsBy(userSelectedSortWellsBy);
-    wellCompletionsDataAccessor.setSortDirection(userSelectedSortWellsDirection);
+    wellCompletionsDataAccessor.setWellExclusionText(wellExclusionText);
+    wellCompletionsDataAccessor.setWellSearchText(wellSearchText);
+    wellCompletionsDataAccessor.setHideZeroCompletions(isZeroCompletionsHidden);
+    wellCompletionsDataAccessor.setSortWellsBy(sortWellsBy);
+    wellCompletionsDataAccessor.setSortDirection(wellSortDirection);
 
-    return wellCompletionsDataAccessor.createPlotData(completionDateIndexSelection, userSelectedTimeAggregation);
+    return wellCompletionsDataAccessor.createPlotData(completionDateIndexSelection, timeAggregationMode);
 });

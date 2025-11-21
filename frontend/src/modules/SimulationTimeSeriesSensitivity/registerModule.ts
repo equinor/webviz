@@ -5,13 +5,14 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { channelDefs } from "./channelDefs";
 import type { Interfaces } from "./interfaces";
+import { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 
 export const MODULE_NAME = "SimulationTimeSeriesSensitivity";
 
 const description = "Plotting of simulation time series data for ensembles with design matrices.";
 
-ModuleRegistry.registerModule<Interfaces>({
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "Simulation time series per sensitivity",
     category: ModuleCategory.MAIN,
@@ -21,4 +22,5 @@ ModuleRegistry.registerModule<Interfaces>({
     channelDefinitions: channelDefs,
     description,
     preview,
+    serializedStateSchema: SERIALIZED_STATE_SCHEMA,
 });

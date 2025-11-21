@@ -1,10 +1,10 @@
 import pytest
 import polars as pl
 
-from primary.services.deprecated_inplace_volumetrics_assembler._utils import (
+from webviz_services.deprecated_inplace_volumetrics_assembler._utils import (
     _convert_statistical_df_to_statistical_result_table_data,
 )
-from primary.services.sumo_access.deprecated_inplace_volumetrics_types import Statistic
+from webviz_services.sumo_access.deprecated_inplace_volumetrics_types import Statistic
 
 
 def test_convert_statistical_df_to_statistical_result_table_data() -> None:

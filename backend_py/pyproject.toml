@@ -1,0 +1,63 @@
+[project]
+name = "repo-tools"
+requires-python = "^3.13"
+version = "0.0.0"
+description = "Shared config/tooling for the webviz monorepo"
+
+[tool.poetry]
+requires-poetry = ">=2.1"
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+bandit = "^1.8.6"
+black = "^25.9.0"
+mypy = "^1.18.2"
+pylint = "^4.0.2"
+pytest = "^8.4.2"
+pytest-timeout = "^2.4.0"
+pytest-asyncio = "^1.2.0"
+astroid = "^4.0.1"
+
+
+[tool.black]
+line-length = 120
+
+
+[tool.mypy]
+python_version = "3.13"
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["fmu.sumo.*", "sumo.wrapper.*", "pandas", "requests_toolbelt.*", "msal"]
+follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = ["xtgeo.*"]
+ignore_missing_imports = true
+
+
+[tool.pylint]
+init-hook = 'import sys; sys.path.append("./pylint/plugins")'
+load-plugins = "async_suffix_checker"
+
+disable = [
+    "missing-docstring",
+    "line-too-long",
+    "logging-fstring-interpolation",
+    "duplicate-code",
+    "too-many-positional-arguments",
+]
+extension-pkg-whitelist = "pydantic"
+ignored-modules = ["pyarrow.compute"]
+min-public-methods = 0
+max-args = 9
+max-locals = 20
+max-branches = 14
+
+# Reverts fixme to previous behavior (allowing TODO)
+notes = ["FIXME", "XXX"]

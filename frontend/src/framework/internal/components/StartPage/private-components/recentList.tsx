@@ -102,7 +102,8 @@ export function RecentList<TItemType, TQueryData = unknown>(
                 </Tooltip>
             </div>
             <span className="text-gray-500 text-xs">
-                Last updated: <TimeAgo datetimeMs={lastUpdatedMs ?? Date.now()} updateIntervalMs={10000} />
+                Last updated:{" "}
+                {lastUpdatedMs ? <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} /> : "Never"}
             </span>
             <div className="flex flex-col gap-2 mt-2 min-h-16">{makeContent()}</div>
         </section>

@@ -64,7 +64,8 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     const providerManager = useAtomValue(providerManagerAtom);
 
     // Field selection
-    const availableFields = useAtomValue(availableFieldsQueryAtom)?.data ?? [];
+    const availableFieldsQuery = useAtomValue(availableFieldsQueryAtom);
+    const availableFields = availableFieldsQuery?.data ?? [];
     const selectedField = useAtomValue(selectedFieldIdentifierAtom);
     const setSelectedField = useSetAtom(userSelectedFieldIdentAtom);
 
@@ -86,7 +87,8 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
 
     // Error messages
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-    const wellboreHeadersErrorStatus = usePropagateQueryErrorToStatusWriter(wellboreHeaders, statusWriter) ?? "";
+    const availableFieldsErrorMessage = usePropagateQueryErrorToStatusWriter(availableFieldsQuery, statusWriter) ?? "";
+    const wellboreHeadersErrorMessage = usePropagateQueryErrorToStatusWriter(wellboreHeaders, statusWriter) ?? "";
 
     React.useEffect(() => {
         providerManager?.updateGlobalSetting("fieldId", selectedField);
@@ -100,16 +102,21 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
         <div className="flex flex-col h-full gap-1">
             <CollapsibleGroup title="Wellbore" expanded>
                 <Label text="Field">
-                    <Dropdown
-                        value={selectedField}
-                        options={fieldOptions}
-                        disabled={fieldOptions.length === 0}
-                        onChange={setSelectedField}
-                    />
+                    <PendingWrapper
+                        isPending={availableFieldsQuery.isFetching}
+                        errorMessage={availableFieldsErrorMessage}
+                    >
+                        <Dropdown
+                            value={selectedField}
+                            options={fieldOptions}
+                            disabled={fieldOptions.length === 0}
+                            onChange={setSelectedField}
+                        />
+                    </PendingWrapper>
                 </Label>
 
                 <Label text="Wellbore" wrapperClassName="mt-4">
-                    <PendingWrapper isPending={wellboreHeaders.isFetching} errorMessage={wellboreHeadersErrorStatus}>
+                    <PendingWrapper isPending={wellboreHeaders.isFetching} errorMessage={wellboreHeadersErrorMessage}>
                         {/* 3DViewer has a WellboreSelector, should that one be made shared, and used here? */}
                         <Select
                             options={makeWellHeaderOptions(wellboreHeaders.data ?? [])}
