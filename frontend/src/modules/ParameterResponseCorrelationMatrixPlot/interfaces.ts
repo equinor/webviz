@@ -6,16 +6,22 @@ import {
     showLabelsAtom,
     useFixedColorRangeAtom,
     plotTypeAtom,
-    correlationSettingsAtom,
+    correlationThresholdAtom,
+    hideIndividualCellsAtom,
+    filterColumnsAtom,
+    filterRowsAtom,
 } from "./settings/atoms/baseAtoms";
-import type { PlotType, CorrelationSettings } from "./typesAndEnums";
+import type { PlotType } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     parameterIdents: ParameterIdent[];
     plotType: PlotType;
     showLabels: boolean;
     useFixedColorRange: boolean;
-    correlationSettings: CorrelationSettings;
+    correlationThreshold: number;
+    hideIndividualCells: boolean;
+    filterColumns: boolean;
+    filterRows: boolean;
 };
 
 export type Interfaces = {
@@ -27,5 +33,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     showLabels: (get) => get(showLabelsAtom),
     useFixedColorRange: (get) => get(useFixedColorRangeAtom),
     plotType: (get) => get(plotTypeAtom),
-    correlationSettings: (get) => get(correlationSettingsAtom),
+    correlationThreshold: (get) => get(correlationThresholdAtom),
+    hideIndividualCells: (get) => get(hideIndividualCellsAtom),
+    filterColumns: (get) => get(filterColumnsAtom),
+    filterRows: (get) => get(filterRowsAtom),
 };
