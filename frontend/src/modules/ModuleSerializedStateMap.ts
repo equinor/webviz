@@ -3,9 +3,13 @@
 
 import type { SerializedSettings as M_2DViewerSettings } from "@modules/2DViewer/settings/persistence";
 import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/persistence";
+import type { SerializedSettings as DistributionPlotSettings } from "@modules/DistributionPlot/settings/persistence";
 import type { SerializedSettings as FlowNetworkSettings } from "@modules/FlowNetwork/settings/persistence";
 import type { SerializedSettings as InplaceVolumesPlotSettings } from "@modules/InplaceVolumesPlot/settings/persistence";
 import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
+import type { SerializedSettings as IntersectionSettings } from "@modules/Intersection/settings/persistence";
+import type { SerializedSettings as ParameterDistributionsSettings } from "@modules/ParameterDistributions/settings/persistence";
+import type { SerializedSettings as ParameterResponseCorrelationBarPlotSettings } from "@modules/ParameterResponseCorrelationBarPlot/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
@@ -28,7 +32,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "DistributionPlot": {
-    settings?: never,
+    settings?: Partial<DistributionPlotSettings>,
     view?: never,
   },
   "FlowNetwork": {
@@ -44,7 +48,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "Intersection": {
-    settings?: never,
+    settings?: Partial<IntersectionSettings>,
     view?: never,
   },
   "Map": {
@@ -60,11 +64,11 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "ParameterDistributions": {
-    settings?: never,
+    settings?: Partial<ParameterDistributionsSettings>,
     view?: never,
   },
   "ParameterResponseCorrelationBarPlot": {
-    settings?: never,
+    settings?: Partial<ParameterResponseCorrelationBarPlotSettings>,
     view?: never,
   },
   "ParameterResponseCorrelationMatrixPlot": {
@@ -100,6 +104,10 @@ export type ModuleSerializedStateMap = {
     view?: Partial<SimulationTimeSeriesSensitivityView>,
   },
   "SubsurfaceMap": {
+    settings?: never,
+    view?: never,
+  },
+  "TopographicMap": {
     settings?: never,
     view?: never,
   },

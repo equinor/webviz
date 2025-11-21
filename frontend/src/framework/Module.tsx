@@ -253,6 +253,10 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         return this._description;
     }
 
+    canBeSerialized(): boolean {
+        return this._serializedStateSchema !== null;
+    }
+
     setSettingsToViewInterfaceInitialization(
         interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>,
     ): void {

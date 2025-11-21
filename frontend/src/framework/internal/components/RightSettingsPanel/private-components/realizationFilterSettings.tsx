@@ -19,6 +19,8 @@ import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { useActiveSession } from "../../ActiveSessionBoundary";
+
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
@@ -29,14 +31,26 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         props.workbench.getSessionManager().getActiveSession(),
         WorkbenchSessionTopic.ENSEMBLE_SET,
     );
-    const realizationFilterSet = props.workbench.getSessionManager().getActiveSession().getRealizationFilterSet();
-    const [, setNumberOfUnsavedRealizationFilters] = useGuiState(
+
+    // Actually, this should subscribe to active workbench session change as well or use the `useActiveSession` hook,
+    // but for now we assume that
+    const session = useActiveSession();
+    const realizationFilterSet = session.getRealizationFilterSet();
+
+    const [numberOfUnsavedRealizationFiltersGuiState, setNumberOfUnsavedRealizationFiltersGuiState] = useGuiState(
         guiMessageBroker,
         GuiState.NumberOfUnsavedRealizationFilters,
     );
-    const [, setNumberOfEffectiveRealizationFilters] = useGuiState(
+    const [numberOfEffectiveRealizationFiltersGuiState, setNumberOfEffectiveRealizationFiltersGuiState] = useGuiState(
         guiMessageBroker,
         GuiState.NumberOfEffectiveRealizationFilters,
+    );
+
+    const [numberOfUnsavedRealizationFilters, setNumberOfUnsavedRealizationFilters] = React.useState(
+        numberOfUnsavedRealizationFiltersGuiState,
+    );
+    const [numberOfEffectiveRealizationFilters, setNumberOfEffectiveRealizationFilters] = React.useState(
+        numberOfEffectiveRealizationFiltersGuiState,
     );
 
     const [activeFilterEnsembleIdent, setActiveFilterEnsembleIdent] = React.useState<
@@ -53,6 +67,32 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     ] = React.useState<{
         [ensembleIdentString: string]: EnsembleRealizationFilterSelections;
     }>({});
+
+    React.useEffect(
+        function propagateNumberOfUnsavedRealizationFiltersGuiState() {
+            if (numberOfUnsavedRealizationFilters !== numberOfUnsavedRealizationFiltersGuiState) {
+                setNumberOfUnsavedRealizationFiltersGuiState(numberOfUnsavedRealizationFilters);
+            }
+        },
+        [
+            numberOfUnsavedRealizationFilters,
+            numberOfUnsavedRealizationFiltersGuiState,
+            setNumberOfUnsavedRealizationFiltersGuiState,
+        ],
+    );
+
+    React.useEffect(
+        function propagateNumberOfEffectiveRealizationFiltersGuiState() {
+            if (numberOfEffectiveRealizationFilters !== numberOfEffectiveRealizationFiltersGuiState) {
+                setNumberOfEffectiveRealizationFiltersGuiState(numberOfEffectiveRealizationFilters);
+            }
+        },
+        [
+            numberOfEffectiveRealizationFilters,
+            numberOfEffectiveRealizationFiltersGuiState,
+            setNumberOfEffectiveRealizationFiltersGuiState,
+        ],
+    );
 
     // Set no active filter if the settings panel is closed
     if (rightSettingsPanelWidth < 5 && activeFilterEnsembleIdent !== null) {

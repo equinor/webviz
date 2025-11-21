@@ -47,6 +47,8 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS,
     );
 
+    const isSerializable = props.moduleInstance.getModule().canBeSerialized();
+
     const atomStore = workbenchSession!
         .getAtomStoreMaster()
         .getAtomStoreForModuleInstance(props.moduleInstance.getId());
@@ -104,29 +106,36 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         }
 
         return (
-            <DebugProfiler
-                id={`${props.moduleInstance.getId()}-settings`}
-                source={StatusSource.Settings}
-                statusController={props.moduleInstance.getStatusController()}
-                guiMessageBroker={props.workbench.getGuiMessageBroker()}
-            >
-                <Provider store={atomStore}>
-                    <HydrateQueryClientAtom>
-                        <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
-                            <Settings
-                                settingsContext={props.moduleInstance.getContext()}
-                                workbenchSession={props.workbench.getSessionManager().getActiveSession()}
-                                workbenchServices={props.workbench.getWorkbenchServices()}
-                                workbenchSettings={props.workbench
-                                    .getSessionManager()
-                                    .getActiveSession()
-                                    .getWorkbenchSettings()}
-                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                            />
-                        </ApplyInterfaceEffectsToSettings>
-                    </HydrateQueryClientAtom>
-                </Provider>
-            </DebugProfiler>
+            <>
+                {!isSerializable && (
+                    <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
+                        <strong>Note:</strong> This module cannot be persisted yet. State changes will not be saved.
+                    </div>
+                )}
+                <DebugProfiler
+                    id={`${props.moduleInstance.getId()}-settings`}
+                    source={StatusSource.Settings}
+                    statusController={props.moduleInstance.getStatusController()}
+                    guiMessageBroker={props.workbench.getGuiMessageBroker()}
+                >
+                    <Provider store={atomStore}>
+                        <HydrateQueryClientAtom>
+                            <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
+                                <Settings
+                                    settingsContext={props.moduleInstance.getContext()}
+                                    workbenchSession={props.workbench.getSessionManager().getActiveSession()}
+                                    workbenchServices={props.workbench.getWorkbenchServices()}
+                                    workbenchSettings={props.workbench
+                                        .getSessionManager()
+                                        .getActiveSession()
+                                        .getWorkbenchSettings()}
+                                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                />
+                            </ApplyInterfaceEffectsToSettings>
+                        </HydrateQueryClientAtom>
+                    </Provider>
+                </DebugProfiler>
+            </>
         );
     }
 
