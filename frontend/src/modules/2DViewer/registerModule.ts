@@ -22,8 +22,5 @@ ModuleRegistry.registerModule<Interfaces, SerializedState>({
         ModuleDataTagId.GRID3D,
         ModuleDataTagId.POLYGONS,
     ],
-    onInstanceUnload: (instanceId) => {
-        window.localStorage.removeItem(`${instanceId}-settings`);
-    },
     serializedStateSchema: SERIALIZED_STATE,
 });

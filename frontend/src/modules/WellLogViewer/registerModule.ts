@@ -22,15 +22,8 @@ ModuleRegistry.registerModule<InterfaceTypes, SerializedState>({
     defaultTitle: MODULE_TITLE,
     description: MODULE_DESCRIPTION,
     preview,
-
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.PROD,
-
     syncableSettingKeys: [SyncSettingKey.INTERSECTION, SyncSettingKey.VERTICAL_SCALE],
-
     serializedStateSchema: STATE_SCHEMA,
-
-    onInstanceUnload(instanceId) {
-        window.localStorage.removeItem(`${instanceId}-settings`);
-    },
 });
