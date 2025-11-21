@@ -52,6 +52,8 @@ import type {
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
     GetRealizationFlowNetworkData_api,
+    GetProductionDataData_api,
+    GetInjectionDataData_api,
     GetTableDataData_api,
     GetWellCompletionsDataData_api,
     GetDrilledWellboreHeadersData_api,
@@ -130,6 +132,8 @@ import {
     getGridParameter,
     postGetPolylineIntersection,
     getRealizationFlowNetwork,
+    getProductionData,
+    getInjectionData,
     getTableData,
     getWellCompletionsData,
     getDrilledWellboreHeaders,
@@ -1026,6 +1030,44 @@ export const getRealizationFlowNetworkOptions = (options: Options<GetRealization
             return data;
         },
         queryKey: getRealizationFlowNetworkQueryKey(options),
+    });
+};
+
+export const getProductionDataQueryKey = (options: Options<GetProductionDataData_api>) => [
+    createQueryKey("getProductionData", options),
+];
+
+export const getProductionDataOptions = (options: Options<GetProductionDataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getProductionData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getProductionDataQueryKey(options),
+    });
+};
+
+export const getInjectionDataQueryKey = (options: Options<GetInjectionDataData_api>) => [
+    createQueryKey("getInjectionData", options),
+];
+
+export const getInjectionDataOptions = (options: Options<GetInjectionDataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInjectionData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInjectionDataQueryKey(options),
     });
 };
 
