@@ -1,12 +1,11 @@
 import polars as pl
 
-from ..types import (
+from .types import (
     WellProductionData,
     WellInjectionData,
-    PRODCOLUMNS,
-    INJCOLUMNS,
-    INJECTIONTYPE,
 )
+
+from ._internal_types import _PRODCOLUMNS, _INJCOLUMNS, _INJECTIONTYPE
 
 
 def calculate_total_production_from_daily(
@@ -16,24 +15,24 @@ def calculate_total_production_from_daily(
     polars_df = pl.DataFrame(
         api_results,
         schema_overrides={
-            PRODCOLUMNS.WB_OIL_VOL_SM3: pl.Float32,
-            PRODCOLUMNS.WB_GAS_VOL_SM3: pl.Float32,
-            PRODCOLUMNS.WB_WATER_VOL_M3: pl.Float32,
+            _PRODCOLUMNS.WB_OIL_VOL_SM3: pl.Float32,
+            _PRODCOLUMNS.WB_GAS_VOL_SM3: pl.Float32,
+            _PRODCOLUMNS.WB_WATER_VOL_M3: pl.Float32,
         },
     )
 
     # Group per well and sum oil,gas,water volumes
     grouped_df = (
-        polars_df.group_by([PRODCOLUMNS.WELL_UUID, PRODCOLUMNS.WB_UUID])
+        polars_df.group_by([_PRODCOLUMNS.WELL_UUID, _PRODCOLUMNS.WB_UUID])
         .agg(
             [
-                pl.col(PRODCOLUMNS.WB_OIL_VOL_SM3).sum().fill_null(0.0),
-                pl.col(PRODCOLUMNS.WB_GAS_VOL_SM3).sum().fill_null(0.0),
-                pl.col(PRODCOLUMNS.WB_WATER_VOL_M3).sum().fill_null(0.0),
-                pl.col(PRODCOLUMNS.WB_UWBI).first(),
+                pl.col(_PRODCOLUMNS.WB_OIL_VOL_SM3).sum().fill_null(0.0),
+                pl.col(_PRODCOLUMNS.WB_GAS_VOL_SM3).sum().fill_null(0.0),
+                pl.col(_PRODCOLUMNS.WB_WATER_VOL_M3).sum().fill_null(0.0),
+                pl.col(_PRODCOLUMNS.WB_UWBI).first(),
             ]
         )
-        .sort(by=PRODCOLUMNS.WB_UWBI)
+        .sort(by=_PRODCOLUMNS.WB_UWBI)
     )
 
     # Convert to list of WellProductionData
@@ -49,11 +48,11 @@ def calculate_total_production_from_daily(
         )
         for row in grouped_df.select(
             [
-                PRODCOLUMNS.WB_UUID,
-                PRODCOLUMNS.WB_OIL_VOL_SM3,
-                PRODCOLUMNS.WB_GAS_VOL_SM3,
-                PRODCOLUMNS.WB_WATER_VOL_M3,
-                PRODCOLUMNS.WB_UWBI,
+                _PRODCOLUMNS.WB_UUID,
+                _PRODCOLUMNS.WB_OIL_VOL_SM3,
+                _PRODCOLUMNS.WB_GAS_VOL_SM3,
+                _PRODCOLUMNS.WB_WATER_VOL_M3,
+                _PRODCOLUMNS.WB_UWBI,
             ]
         ).rows()
     ]
@@ -63,26 +62,26 @@ def calculate_total_injection_from_daily(
     api_results: list[dict], start_date: str, end_date: str
 ) -> list[WellInjectionData]:
     """Calculate total injection per well from daily injection data."""
-    polars_df = pl.DataFrame(api_results, schema_overrides={INJCOLUMNS.WB_INJ_VOL: pl.Float32})
+    polars_df = pl.DataFrame(api_results, schema_overrides={_INJCOLUMNS.WB_INJ_VOL: pl.Float32})
 
     # Group per well and sum injection volumes by type
     grouped_df = (
-        polars_df.group_by([INJCOLUMNS.WB_UUID])
+        polars_df.group_by([_INJCOLUMNS.WB_UUID])
         .agg(
             [
-                pl.col(INJCOLUMNS.WB_INJ_VOL)
-                .filter(pl.col(INJCOLUMNS.INJ_TYPE) == INJECTIONTYPE.WATER)
+                pl.col(_INJCOLUMNS.WB_INJ_VOL)
+                .filter(pl.col(_INJCOLUMNS.INJ_TYPE) == _INJECTIONTYPE.WATER)
                 .sum()
                 .fill_null(0.0)
                 .alias("water_injection"),
-                pl.col(INJCOLUMNS.WB_INJ_VOL)
-                .filter(pl.col(INJCOLUMNS.INJ_TYPE) == INJECTIONTYPE.GAS)
+                pl.col(_INJCOLUMNS.WB_INJ_VOL)
+                .filter(pl.col(_INJCOLUMNS.INJ_TYPE) == _INJECTIONTYPE.GAS)
                 .sum()
                 .fill_null(0.0)
                 .alias("gas_injection"),
             ]
         )
-        .sort(by=INJCOLUMNS.WB_UWBI)
+        .sort(by=_INJCOLUMNS.WB_UWBI)
     )
 
     # Convert to list of WellInjectionData
