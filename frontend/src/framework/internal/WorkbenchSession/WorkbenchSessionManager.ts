@@ -219,7 +219,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             if (isAxiosError(error)) {
                 console.error("Axios error details:", error.response?.data);
-                errorExplanation = `Server responded with message ${error.response?.data.message}.`;
+                errorExplanation = `Server responded with message ${error.response?.data.error.message}.`;
             }
 
             const result = await ConfirmationService.confirm({
@@ -277,7 +277,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             if (isAxiosError(error)) {
                 console.error("Axios error details:", error.response?.data);
-                errorExplanation = `Server responded with message ${error.response?.data.message}.`;
+                errorExplanation = `Server responded with message ${error.response?.data.error.message}.`;
             }
 
             const result = await ConfirmationService.confirm({
@@ -977,7 +977,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     async deleteSnapshot(snapshotId: string): Promise<boolean> {
         const result = await ConfirmationService.confirm({
             title: "Are you sure?",
-            message: "This snapshot will be deleted. This action cannot be reversed.",
+            message:
+                "This snapshot will be deleted and will no longer be available to any user. This action cannot be reversed.",
             actions: [
                 { id: "cancel", label: "No, Cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
@@ -1014,7 +1015,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     async deleteSnapshotAccessLog(snapshotId: string): Promise<boolean> {
         const result = await ConfirmationService.confirm({
             title: "Are you sure?",
-            message: "Your access log for this snapshot will be deleted. This action cannot be reversed.",
+            message:
+                "The snapshot will be removed from your list of visited snapshots. You can open the snapshot again using its ID.",
             actions: [
                 { id: "cancel", label: "No, Cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },

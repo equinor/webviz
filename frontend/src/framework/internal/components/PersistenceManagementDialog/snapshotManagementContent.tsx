@@ -385,7 +385,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         const isOwner = selectedSnapshot?.["snapshotMetadata.ownerId"] === userId;
         deleteButtonText = isOwner ? "Delete snapshot" : "Remove from list";
         deleteButtonTooltip = isOwner
-            ? "Delete selected snapshot"
+            ? "Delete selected snapshot (permanently removes it for all users)"
             : "Remove snapshot from list (you are not the owner, snapshot will remain accessible to other users)";
     }
     return (
