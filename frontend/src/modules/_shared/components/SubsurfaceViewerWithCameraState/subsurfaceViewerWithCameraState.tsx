@@ -1,23 +1,43 @@
 import React from "react";
 
-import type { SubsurfaceViewerProps, ViewStateType } from "@webviz/subsurface-viewer";
+import type { BoundingBox2D, SubsurfaceViewerProps, ViewStateType } from "@webviz/subsurface-viewer";
 import SubsurfaceViewer from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { isEqual } from "lodash";
 
+import * as bbox from "@lib/utils/bbox";
+
 export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {
+    initialCameraPosition?: ViewStateType;
     userCameraInteractionActive?: boolean;
     onCameraPositionApplied?: () => void;
 };
 
 export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCameraStateProps): React.ReactNode {
-    const [prevTriggerHome, setPrevTriggerHome] = React.useState<number | undefined>(0);
-    const [prevBounds, setPrevBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
-    const [prevCameraPosition, setPrevCameraPosition] = React.useState<ViewStateType | undefined>(undefined);
-    const [cameraPosition, setCameraPosition] = React.useState<ViewStateType | undefined>(undefined);
+    const { getCameraPosition, onCameraPositionApplied } = props;
 
-    if (!isEqual(props.bounds, prevBounds)) {
-        setPrevBounds(props.bounds);
-        setCameraPosition(undefined);
+    const [prevTriggerHome, setPrevTriggerHome] = React.useState<number | undefined>(0);
+    const [prevBounds, setPrevBounds] = React.useState<BoundingBox2D | undefined>(undefined);
+    const [prevCameraPosition, setPrevCameraPosition] = React.useState<ViewStateType | undefined>(
+        props.initialCameraPosition,
+    );
+    const [cameraPosition, setCameraPosition] = React.useState<ViewStateType | undefined>(props.initialCameraPosition);
+
+    // We only want to reset camera position when bounds change significantly (non-overlapping - this happens on a field change for instance)
+    // or when triggered explicitly (e.g., home button).
+    // We also want to update camera position when props.cameraPosition changes.
+    let propsBounds = props.bounds;
+    if (typeof propsBounds === "function") {
+        propsBounds = propsBounds();
+    }
+    if (!isEqual(propsBounds, prevBounds)) {
+        setPrevBounds(propsBounds);
+        if (propsBounds && prevBounds) {
+            const prevBbox = bbox.fromNumArray([prevBounds[0], prevBounds[1], 0, prevBounds[2], prevBounds[3], 0]);
+            const newBbox = bbox.fromNumArray([propsBounds[0], propsBounds[1], 0, propsBounds[2], propsBounds[3], 0]);
+            if (!bbox.intersects(prevBbox, newBbox)) {
+                setCameraPosition(undefined);
+            }
+        }
     }
 
     if (props.triggerHome !== prevTriggerHome) {
@@ -31,7 +51,6 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
         setPrevCameraPosition(props.cameraPosition);
         if (props.cameraPosition) {
             setCameraPosition(props.cameraPosition);
-            props.onCameraPositionApplied?.();
         }
     }
 
@@ -40,8 +59,18 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
             if (props.userCameraInteractionActive || props.userCameraInteractionActive === undefined) {
                 setCameraPosition(viewport);
             }
+            getCameraPosition?.(viewport);
         },
-        [props.userCameraInteractionActive],
+        [props.userCameraInteractionActive, getCameraPosition],
+    );
+
+    React.useEffect(
+        function propagateCameraPositionChange(): void {
+            if (cameraPosition && !isEqual(cameraPosition, props.cameraPosition)) {
+                onCameraPositionApplied?.();
+            }
+        },
+        [cameraPosition, props.cameraPosition, onCameraPositionApplied],
     );
 
     return <SubsurfaceViewer {...props} cameraPosition={cameraPosition} getCameraPosition={handleCameraChange} />;

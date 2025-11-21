@@ -1,14 +1,24 @@
+import type { ModuleInstance } from "@framework/ModuleInstance";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
+
 import type { ChannelDefinition } from "./Channel";
 import { Channel } from "./Channel";
+import type {
+    SerializedDataChannelManagerState,
+    SerializedDataChannelReceiverSubscription,
+} from "./ChannelManager.schema";
 import type { ChannelReceiverDefinition } from "./ChannelReceiver";
-import { ChannelReceiver } from "./ChannelReceiver";
+import { ChannelReceiver, ChannelReceiverNotificationTopic } from "./ChannelReceiver";
 
 export enum ChannelManagerNotificationTopic {
     CHANNELS_CHANGE = "channels-change",
     RECEIVERS_CHANGE = "receivers-change",
+    STATE = "state",
 }
 
 export class ChannelManager {
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
+
     private readonly _moduleInstanceId: string;
     private _channels: Channel[] = [];
     private _receivers: ChannelReceiver[] = [];
@@ -40,8 +50,8 @@ export class ChannelManager {
 
     registerChannels(channelDefinitions: ChannelDefinition[]): void {
         for (const channelDefinition of channelDefinitions) {
-            const newChannel = new Channel(this, channelDefinition);
-            this._channels.push(newChannel);
+            const channel = new Channel(this, channelDefinition);
+            this._channels.push(channel);
         }
 
         this.notifySubscribers(ChannelManagerNotificationTopic.CHANNELS_CHANGE);
@@ -51,6 +61,11 @@ export class ChannelManager {
         for (const receiverDefinition of receiverDefinitions) {
             const receiver = new ChannelReceiver(this, receiverDefinition);
             this._receivers.push(receiver);
+
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                receiver.getIdString(),
+                receiver.subscribe(ChannelReceiverNotificationTopic.CHANNEL_CHANGE, this.handleStateChange.bind(this)),
+            );
         }
 
         this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
@@ -70,6 +85,7 @@ export class ChannelManager {
             receiver.unsubscribeFromCurrentChannel();
         }
         this._receivers = [];
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
 
         this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
     }
@@ -84,6 +100,67 @@ export class ChannelManager {
         return () => {
             topicSubscribers.delete(callback);
         };
+    }
+
+    serializeState(): SerializedDataChannelManagerState {
+        const subscriptions: SerializedDataChannelReceiverSubscription[] = [];
+
+        for (const receiver of this._receivers) {
+            const channel = receiver.getChannel();
+            if (!channel) {
+                continue; // Skip receivers that are not associated with a channel
+            }
+
+            const subscription: SerializedDataChannelReceiverSubscription = {
+                idString: receiver.getIdString(),
+                listensToModuleInstanceId: channel.getManager().getModuleInstanceId(),
+                channelIdString: channel.getIdString(),
+                contentIdStrings: receiver.getContentIdStrings(),
+            };
+            subscriptions.push(subscription);
+        }
+
+        return {
+            subscriptions,
+        };
+    }
+
+    deserializeState(
+        serializedState: SerializedDataChannelManagerState,
+        moduleInstances: ModuleInstance<any, any>[],
+    ): void {
+        for (const subscription of serializedState.subscriptions) {
+            const listensToModuleInstance = moduleInstances.find(
+                (instance) => instance.getId() === subscription.listensToModuleInstanceId,
+            );
+            if (!listensToModuleInstance) {
+                console.warn(
+                    `ChannelManager.deserialize: Module instance with ID ${subscription.listensToModuleInstanceId} not found. Skipping subscription.`,
+                );
+                continue;
+            }
+            const channel = listensToModuleInstance.getChannelManager().getChannel(subscription.channelIdString);
+            if (!channel) {
+                console.warn(
+                    `ChannelManager.deserialize: Channel with ID ${subscription.channelIdString} not found. Skipping subscription.`,
+                );
+                continue;
+            }
+            const receiver = this.getReceiver(subscription.idString);
+            if (!receiver) {
+                console.warn(
+                    `ChannelManager.deserialize: Receiver with ID ${subscription.idString} not found. Skipping subscription.`,
+                );
+                continue;
+            }
+            receiver.subscribeToChannel(channel, subscription.contentIdStrings);
+        }
+
+        this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
+    }
+
+    private handleStateChange(): void {
+        this.notifySubscribers(ChannelManagerNotificationTopic.STATE);
     }
 
     private notifySubscribers(topic: ChannelManagerNotificationTopic): void {

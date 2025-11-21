@@ -4,6 +4,11 @@ import type { DeltaEnsemble } from "./DeltaEnsemble";
 import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import type { ContinuousParameter, DiscreteParameter, EnsembleParameters, Parameter } from "./EnsembleParameters";
 import { ParameterIdent, ParameterType } from "./EnsembleParameters";
+import type {
+    SerializedParameterValueSelection,
+    SerializedRealizationFilterState,
+    SerializedRealizationNumberSelection,
+} from "./RealizationFilter.schema";
 import type { RegularEnsemble } from "./RegularEnsemble";
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type {
@@ -58,6 +63,96 @@ export class RealizationFilter {
 
         this._realizationNumberSelections = null;
         this._parameterIdentStringToValueSelectionMap = null;
+    }
+
+    serializeState(): SerializedRealizationFilterState {
+        const serializedRealizationNumberSelections: SerializedRealizationNumberSelection[] = [];
+        if (this._realizationNumberSelections !== null) {
+            for (const selection of this._realizationNumberSelections) {
+                if (typeof selection === "number") {
+                    serializedRealizationNumberSelections.push({ type: "single", value: selection });
+                } else {
+                    serializedRealizationNumberSelections.push({ type: "range", range: selection });
+                }
+            }
+        }
+
+        const serializedParameterIdentStringToValueSelectionMap: SerializedParameterValueSelection[] = [];
+        if (this._parameterIdentStringToValueSelectionMap !== null) {
+            for (const [parameterIdentString, valueSelection] of this._parameterIdentStringToValueSelectionMap) {
+                if (isValueSelectionAnArrayOfString(valueSelection)) {
+                    serializedParameterIdentStringToValueSelectionMap.push({
+                        type: "discrete",
+                        parameterIdentString,
+                        values: { type: "string", value: valueSelection },
+                    });
+                } else if (isValueSelectionAnArrayOfNumber(valueSelection)) {
+                    serializedParameterIdentStringToValueSelectionMap.push({
+                        type: "discrete",
+                        parameterIdentString,
+                        values: { type: "number", value: valueSelection },
+                    });
+                } else {
+                    serializedParameterIdentStringToValueSelectionMap.push({
+                        type: "continuous",
+                        parameterIdentString,
+                        range: valueSelection,
+                    });
+                }
+            }
+        }
+
+        return {
+            assignedEnsembleIdentString: this._assignedEnsemble.getIdent().toString(),
+            includeExcludeFilter: this._includeExcludeFilter,
+            filterType: this._filterType,
+            realizationNumberSelections: serializedRealizationNumberSelections,
+            parameterIdentStringToValueSelectionMap: serializedParameterIdentStringToValueSelectionMap,
+        };
+    }
+
+    deserializeState(serialized: SerializedRealizationFilterState): void {
+        this._includeExcludeFilter = serialized.includeExcludeFilter;
+        this._filterType = serialized.filterType;
+
+        const deserializedRealizationNumberSelections: RealizationNumberSelection[] = [];
+        for (const serializedSelection of serialized.realizationNumberSelections) {
+            if (serializedSelection.type === "single") {
+                deserializedRealizationNumberSelections.push(serializedSelection.value);
+            } else {
+                deserializedRealizationNumberSelections.push(serializedSelection.range);
+            }
+        }
+        this._realizationNumberSelections = deserializedRealizationNumberSelections;
+
+        if (serialized.realizationNumberSelections.length === 0) {
+            this._realizationNumberSelections = null;
+        }
+
+        const deserializedParameterIdentStringToValueSelectionMap: Map<string, ParameterValueSelection> = new Map();
+        for (const serializedSelection of serialized.parameterIdentStringToValueSelectionMap) {
+            if (serializedSelection.type === "continuous") {
+                deserializedParameterIdentStringToValueSelectionMap.set(
+                    serializedSelection.parameterIdentString,
+                    serializedSelection.range,
+                );
+            } else {
+                if (serializedSelection.values.type === "string") {
+                    deserializedParameterIdentStringToValueSelectionMap.set(
+                        serializedSelection.parameterIdentString,
+                        serializedSelection.values.value,
+                    );
+                } else {
+                    deserializedParameterIdentStringToValueSelectionMap.set(
+                        serializedSelection.parameterIdentString,
+                        serializedSelection.values.value,
+                    );
+                }
+            }
+        }
+        this._parameterIdentStringToValueSelectionMap = deserializedParameterIdentStringToValueSelectionMap;
+
+        this.runFiltering();
     }
 
     getAssignedEnsembleIdent(): RegularEnsembleIdent | DeltaEnsembleIdent {

@@ -5,12 +5,12 @@ import { useAtom } from "jotai";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Label } from "@lib/components/Label";
 
-import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "../atoms/persistedAtoms";
+import { horizontalLayoutAtom, limitDomainToDataAtom } from "../atoms/baseAtoms";
 
 export function ViewerSettings(): React.ReactNode {
     // Well log selection
-    const [horizontal, setHorizontal] = useAtom(viewerHorizontalAtom);
-    const [padWithEmptyRows, setPadWithEmptyRows] = useAtom(padDataWithEmptyRowsAtom);
+    const [horizontal, setHorizontal] = useAtom(horizontalLayoutAtom);
+    const [padWithEmptyRows, setPadWithEmptyRows] = useAtom(limitDomainToDataAtom);
 
     return (
         <div className="space-y-2">

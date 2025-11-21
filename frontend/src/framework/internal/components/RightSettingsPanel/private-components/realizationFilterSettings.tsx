@@ -19,6 +19,8 @@ import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { useActiveSession } from "../../ActiveSessionBoundary";
+
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
@@ -26,10 +28,15 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const drawerContent = useGuiValue(guiMessageBroker, GuiState.RightDrawerContent);
     const rightSettingsPanelWidth = useGuiValue(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const ensembleSet = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         WorkbenchSessionTopic.ENSEMBLE_SET,
     );
-    const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
+
+    // Actually, this should subscribe to active workbench session change as well or use the `useActiveSession` hook,
+    // but for now we assume that
+    const session = useActiveSession();
+    const realizationFilterSet = session.getRealizationFilterSet();
+
     const [numberOfUnsavedRealizationFiltersGuiState, setNumberOfUnsavedRealizationFiltersGuiState] = useGuiState(
         guiMessageBroker,
         GuiState.NumberOfUnsavedRealizationFilters,
@@ -186,7 +193,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
 
             // Notify subscribers of change.
-            props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
+            props.workbench.getSessionManager().getActiveSession().notifyAboutEnsembleRealizationFilterChange();
         },
         [
             ensembleIdentStringToRealizationFilterSelectionsMap,
@@ -286,7 +293,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
 
         // Notify subscribers of change.
-        props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
+        props.workbench.getSessionManager().getActiveSession().notifyAboutEnsembleRealizationFilterChange();
     }
 
     function handleDiscardClick(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) {

@@ -28,7 +28,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
     );
     const showPercentilesAndMeanLines =
         props.viewContext.useSettingsToViewInterfaceValue("showPercentilesAndMeanLines");
-
+    const histogramMode = props.viewContext.useSettingsToViewInterfaceValue("histogramMode");
     const ensembleSet = props.workbenchSession.getEnsembleSet();
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
     let selectedEnsembleIdents: RegularEnsembleIdent[] = [];
@@ -55,6 +55,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
                 plotType={visualizationType}
                 showIndividualRealizationValues={showIndividualRealizationValues}
                 showPercentilesAndMeanLines={showPercentilesAndMeanLines}
+                histogramMode={histogramMode}
                 width={wrapperDivSize.width}
                 height={wrapperDivSize.height}
             ></VirtualizedParameterDistributionPlot>

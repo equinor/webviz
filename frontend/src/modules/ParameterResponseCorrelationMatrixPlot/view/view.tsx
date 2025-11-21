@@ -27,7 +27,7 @@ import {
 } from "@modules/_shared/utils/math/correlationMatrix";
 
 import type { Interfaces } from "../interfaces";
-import { PlotType, type CorrelationSettings } from "../typesAndEnums";
+import { PlotType } from "../typesAndEnums";
 
 import { ParameterCorrelationMatrixFigure } from "./utils/parameterCorrelationMatrixFigure";
 import { createResponseParameterCorrelationMatrix } from "./utils/parameterCorrelationMatrixUtils";
@@ -54,18 +54,19 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const [prevUseFixedColorRange, setPrevUseFixedColorRange] = React.useState<boolean>(true);
     const [prevColorScaleWithGradient, setPrevColorScaleWithGradient] = React.useState<[number, string][]>([]);
     const [prevPlotType, setPrevPlotType] = React.useState<PlotType>(PlotType.ParameterResponseMatrix);
-    const [prevCorrelationSettings, setPrevCorrelationSettings] = React.useState<CorrelationSettings>({
-        threshold: null as number | null,
-        hideIndividualCells: true,
-        filterColumns: true,
-        filterRows: true,
-    });
+    const [prevCorrelationThreshold, setPrevCorrelationThreshold] = React.useState<number | null>(null);
+    const [prevHideIndividualCells, setPrevHideIndividualCells] = React.useState<boolean>(true);
+    const [prevFilterColumns, setPrevFilterColumns] = React.useState<boolean>(true);
+    const [prevFilterRows, setPrevFilterRows] = React.useState<boolean>(true);
 
     const parameterIdents = viewContext.useSettingsToViewInterfaceValue("parameterIdents");
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
     const useFixedColorRange = viewContext.useSettingsToViewInterfaceValue("useFixedColorRange");
-    const correlationSettings = viewContext.useSettingsToViewInterfaceValue("correlationSettings");
+    const correlationThreshold = viewContext.useSettingsToViewInterfaceValue("correlationThreshold");
+    const hideIndividualCells = viewContext.useSettingsToViewInterfaceValue("hideIndividualCells");
+    const filterColumns = viewContext.useSettingsToViewInterfaceValue("filterColumns");
+    const filterRows = viewContext.useSettingsToViewInterfaceValue("filterRows");
     const ensembleSet = workbenchSession.getEnsembleSet();
 
     const statusWriter = useViewStatusWriter(viewContext);
@@ -104,7 +105,10 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         useFixedColorRange !== prevUseFixedColorRange ||
         !isEqual(colorScaleWithGradient, prevColorScaleWithGradient) ||
         plotType !== prevPlotType ||
-        !isEqual(correlationSettings, prevCorrelationSettings)
+        correlationThreshold !== prevCorrelationThreshold ||
+        hideIndividualCells !== prevHideIndividualCells ||
+        filterColumns !== prevFilterColumns ||
+        filterRows !== prevFilterRows
     ) {
         setRevNumberResponses(receiverResponseRevisionNumbers);
 
@@ -114,7 +118,10 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         setPrevUseFixedColorRange(useFixedColorRange);
         setPrevColorScaleWithGradient(colorScaleWithGradient);
         setPrevPlotType(plotType);
-        setPrevCorrelationSettings(correlationSettings);
+        setPrevCorrelationThreshold(correlationThreshold);
+        setPrevHideIndividualCells(hideIndividualCells);
+        setPrevFilterColumns(filterColumns);
+        setPrevFilterRows(filterRows);
 
         startTransition(function makeContent() {
             // Content when no data channels are defined
@@ -210,7 +217,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 ensembleSet,
                 receiveResponsesPerEnsembleIdent,
                 plotType,
-                correlationSettings,
+                { threshold: correlationThreshold, hideIndividualCells, filterColumns, filterRows },
             );
             setContent(
                 <>
@@ -227,6 +234,12 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         </div>
     );
 }
+type CorrelationSettings = {
+    threshold: number | null;
+    hideIndividualCells: boolean;
+    filterColumns: boolean;
+    filterRows: boolean;
+};
 
 function fillParameterCorrelationMatrixFigure(
     figure: ParameterCorrelationMatrixFigure,

@@ -4,7 +4,6 @@ import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -14,7 +13,6 @@ import { Plot } from "@modules/_shared/components/Plot";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import type { Interfaces } from "./interfaces";
-import { PvtDataAccessor } from "./utils/PvtDataAccessor";
 import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
 export function View({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<Interfaces>) {
@@ -27,44 +25,29 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
     const selectedPhase = viewContext.useSettingsToViewInterfaceValue("selectedPhase");
     const selectedColorBy = viewContext.useSettingsToViewInterfaceValue("selectedColorBy");
     const selectedPlots = viewContext.useSettingsToViewInterfaceValue("selectedDependentVariables");
-    const pvtDataQueries = viewContext.useSettingsToViewInterfaceValue("pvtDataQueries");
+    const { pvtDataAccessor, isFetching, allQueriesFailed } =
+        viewContext.useSettingsToViewInterfaceValue("pvtDataAccessorWithStatus");
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    statusWriter.setLoading(pvtDataQueries.isFetching);
-
-    if (pvtDataQueries.allQueriesFailed) {
-        for (const error of pvtDataQueries.errors) {
-            const helper = ApiErrorHelper.fromError(error);
-            if (helper?.hasError()) {
-                statusWriter.addError(helper.makeStatusMessage());
-            }
-        }
-    } else if (pvtDataQueries.someQueriesFailed) {
-        statusWriter.addWarning("Could not load PVT data for some realizations.");
-        for (const error of pvtDataQueries.errors) {
-            const helper = ApiErrorHelper.fromError(error);
-            if (helper?.hasError()) {
-                statusWriter.addError(helper.makeFullErrorMessage());
-            }
-        }
-    }
+    statusWriter.setLoading(isFetching);
 
     function makeContent() {
-        if (pvtDataQueries.isFetching) {
+        if (isFetching) {
             return (
                 <ContentMessage type={ContentMessageType.INFO}>
                     <CircularProgress />
                 </ContentMessage>
             );
         }
-        if (pvtDataQueries.tableCollections.length === 0) {
-            return <ContentMessage type={ContentMessageType.INFO}>No data loaded yet.</ContentMessage>;
+
+        if (allQueriesFailed) {
+            return <ContentMessage type={ContentMessageType.ERROR}>Failed to load data.</ContentMessage>;
         }
 
-        if (pvtDataQueries.allQueriesFailed) {
-            return <ContentMessage type={ContentMessageType.ERROR}>Failed to load data.</ContentMessage>;
+        if (!pvtDataAccessor) {
+            return <ContentMessage type={ContentMessageType.INFO}>No data loaded yet.</ContentMessage>;
         }
 
         if (selectedPlots.length === 0) {
@@ -83,10 +66,7 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
             return makeDistinguishableEnsembleDisplayName(ensembleIdent, selectedEnsembles);
         }
 
-        const pvtPlotBuilder = new PvtPlotBuilder(
-            new PvtDataAccessor(pvtDataQueries.tableCollections),
-            makeEnsembleDisplayName,
-        );
+        const pvtPlotBuilder = new PvtPlotBuilder(pvtDataAccessor, makeEnsembleDisplayName);
         pvtPlotBuilder.makeLayout(selectedPhase, selectedPlots, wrapperDivSize);
         pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedColorBy, colorSet);
 

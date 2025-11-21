@@ -4,11 +4,12 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import type { Interfaces } from "./interfaces";
+import { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 
 export const MODULE_NAME = "Intersection";
 
-ModuleRegistry.registerModule<Interfaces>({
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "Intersection",
     category: ModuleCategory.MAIN,
@@ -28,4 +29,5 @@ ModuleRegistry.registerModule<Interfaces>({
         SyncSettingKey.CAMERA_POSITION_INTERSECTION,
         SyncSettingKey.VERTICAL_SCALE,
     ],
+    serializedStateSchema: SERIALIZED_STATE_SCHEMA,
 });

@@ -3,7 +3,7 @@ import type { InterfaceInitialization } from "@framework/UniDirectionalModuleCom
 import type { DataProviderManager } from "../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
 import { dataProviderManagerAtom, preferredViewLayoutAtom } from "./settings/atoms/baseAtoms";
-import { selectedFieldIdentifierAtom } from "./settings/atoms/derivedAtoms";
+import { fieldIdentifierAtom } from "./settings/atoms/persistableFixableAtoms";
 import type { PreferredViewLayout } from "./types";
 
 export type SettingsToViewInterface = {
@@ -18,7 +18,7 @@ export type Interfaces = {
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     fieldId: (get) => {
-        return get(selectedFieldIdentifierAtom);
+        return get(fieldIdentifierAtom).value;
     },
     layerManager: (get) => {
         return get(dataProviderManagerAtom);

@@ -8,12 +8,12 @@ import type { VectorHexColorMap } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
 import {
-    activeTimestampUtcMsAtom,
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     loadedVectorSpecificationsAndObservationDataAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
+import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
 import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { PlotBuilder } from "../utils/PlotBuilder";
 import type { SubplotOwner } from "../utils/PlotBuilder";
@@ -46,7 +46,7 @@ export function usePlotBuilder(
         loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
+    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
