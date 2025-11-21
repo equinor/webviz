@@ -3,6 +3,8 @@
 
 import type { SerializedSettings as M_2DViewerSettings } from "@modules/2DViewer/settings/persistence";
 import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/persistence";
+import type { SerializedSettings as M_3DViewerSettings } from "@modules/3DViewer/settings/persistence";
+import type { SerializedView as M_3DViewerView } from "@modules/3DViewer/view/persistence";
 import type { SerializedSettings as DistributionPlotSettings } from "@modules/DistributionPlot/settings/persistence";
 import type { SerializedSettings as FlowNetworkSettings } from "@modules/FlowNetwork/settings/persistence";
 import type { SerializedSettings as InplaceVolumesPlotSettings } from "@modules/InplaceVolumesPlot/settings/persistence";
@@ -10,6 +12,7 @@ import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules
 import type { SerializedSettings as IntersectionSettings } from "@modules/Intersection/settings/persistence";
 import type { SerializedSettings as ParameterDistributionsSettings } from "@modules/ParameterDistributions/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationBarPlotSettings } from "@modules/ParameterResponseCorrelationBarPlot/settings/persistence";
+import type { SerializedSettings as ParameterResponseCorrelationMatrixPlotSettings } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
@@ -24,8 +27,8 @@ export type ModuleSerializedStateMap = {
     view?: Partial<M_2DViewerView>,
   },
   "3DViewer": {
-    settings?: never,
-    view?: never,
+    settings?: Partial<M_3DViewerSettings>,
+    view?: Partial<M_3DViewerView>,
   },
   "DbgWorkbenchSpy": {
     settings?: never,
@@ -72,7 +75,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "ParameterResponseCorrelationMatrixPlot": {
-    settings?: never,
+    settings?: Partial<ParameterResponseCorrelationMatrixPlotSettings>,
     view?: never,
   },
   "ParameterResponseCorrelationParallelCoordsPlot": {
