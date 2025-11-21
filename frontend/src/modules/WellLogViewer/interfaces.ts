@@ -2,9 +2,9 @@ import type { WellboreHeader_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
-import { providerManagerAtom } from "./settings/atoms/baseAtoms";
-import { selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./settings/atoms/derivedAtoms";
-import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "./settings/atoms/persistedAtoms";
+import { horizontalLayoutAtom, limitDomainToDataAtom, dataProviderManagerAtom } from "./settings/atoms/baseAtoms";
+import { selectedWellboreHeaderAtom } from "./settings/atoms/derivedAtoms";
+import { selectedFieldIdentAtom } from "./settings/atoms/persistableFixableAtoms";
 
 export type InterfaceTypes = {
     settingsToView: SettingsToViewInterface;
@@ -15,14 +15,14 @@ export type SettingsToViewInterface = {
 
     selectedField: string | null;
     wellboreHeader: WellboreHeader_api | null;
-    viewerHorizontal: boolean;
-    padDataWithEmptyRows: boolean;
+    horizontalLayout: boolean;
+    limitDomainToData: boolean;
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    providerManager: (get) => get(providerManagerAtom),
-    selectedField: (get) => get(selectedFieldIdentifierAtom),
+    providerManager: (get) => get(dataProviderManagerAtom),
+    selectedField: (get) => get(selectedFieldIdentAtom).value,
     wellboreHeader: (get) => get(selectedWellboreHeaderAtom),
-    viewerHorizontal: (get) => get(viewerHorizontalAtom),
-    padDataWithEmptyRows: (get) => get(padDataWithEmptyRowsAtom),
+    horizontalLayout: (get) => get(horizontalLayoutAtom),
+    limitDomainToData: (get) => get(limitDomainToDataAtom),
 };
