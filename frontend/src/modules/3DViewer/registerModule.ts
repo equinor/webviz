@@ -28,8 +28,5 @@ ModuleRegistry.registerModule<Interfaces, SerializedState>({
         ModuleDataTagId.POLYGONS,
     ],
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.INTERSECTION, SyncSettingKey.VERTICAL_SCALE],
-    onInstanceUnload: (instanceId) => {
-        window.localStorage.removeItem(`${instanceId}-settings`);
-    },
     serializedStateSchema: SERIALIZED_STATE,
 });
