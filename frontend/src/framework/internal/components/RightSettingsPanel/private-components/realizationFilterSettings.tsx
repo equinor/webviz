@@ -18,6 +18,7 @@ import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@fram
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { useActiveSession } from "../../ActiveSessionBoundary";
 
 import { useActiveSession } from "../../ActiveSessionBoundary";
 
