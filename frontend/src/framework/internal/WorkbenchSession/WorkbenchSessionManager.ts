@@ -219,7 +219,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             if (isAxiosError(error)) {
                 console.error("Axios error details:", error.response?.data);
-                errorExplanation = `Server responded with message: \n${error.response?.data.error.message}.`;
+                errorExplanation = `Server responded with message: ${error.response?.data.error.message}.`;
             }
 
             const result = await ConfirmationService.confirm({
@@ -277,7 +277,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             if (isAxiosError(error)) {
                 console.error("Axios error details:", error.response?.data);
-                errorExplanation = `Server responded with message: \n${error.response?.data.error.message}.`;
+                errorExplanation = `Server responded with message: ${error.response?.data.error.message}.`;
             }
 
             const result = await ConfirmationService.confirm({
@@ -1019,7 +1019,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 "The snapshot will be removed from your list of visited snapshots. If it hasn't been deleted, you can open the snapshot again using its ID.",
             actions: [
                 { id: "cancel", label: "No, cancel" },
-                { id: "delete", label: "Yes, delete", color: "danger" },
+                { id: "delete", label: "Yes, remove", color: "danger" },
             ],
         });
 
@@ -1035,7 +1035,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                     ...deleteSnapshotAccessLogMutation(),
                     onSuccess: () => {
                         this.dismissToast("deleteSnapshotAccessLog");
-                        toast.success("Snapshot access log successfully deleted.");
+                        toast.success("Snapshot successfully removed from list.");
                         success = true;
                         removeSnapshotQueryData(this._queryClient);
                     },
@@ -1043,7 +1043,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 .execute({ path: { snapshot_id: snapshotId } });
         } catch (error) {
             this.dismissToast("deleteSnapshotAccessLog");
-            toast.error("An error occurred while deleting the snapshot access log.");
+            toast.error("An error occurred while removing the snapshot from the list.");
             console.error("Failed to delete snapshot access log:", error);
         }
 
