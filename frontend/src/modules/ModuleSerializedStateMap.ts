@@ -12,7 +12,9 @@ import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules
 import type { SerializedSettings as IntersectionSettings } from "@modules/Intersection/settings/persistence";
 import type { SerializedSettings as ParameterDistributionsSettings } from "@modules/ParameterDistributions/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationBarPlotSettings } from "@modules/ParameterResponseCorrelationBarPlot/settings/persistence";
+import type { SerializedSettings as ParameterResponseCorrelationMatrixPlotSettings } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationParallelCoordsPlotSettings } from "@modules/ParameterResponseCorrelationParallelCoordsPlot/settings/persistence";
+import type { SerializedSettings as ParameterResponseCrossPlotSettings } from "@modules/ParameterResponseCrossPlot/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
@@ -75,7 +77,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "ParameterResponseCorrelationMatrixPlot": {
-    settings?: never,
+    settings?: Partial<ParameterResponseCorrelationMatrixPlotSettings>,
     view?: never,
   },
   "ParameterResponseCorrelationParallelCoordsPlot": {
@@ -83,7 +85,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "ParameterResponseCrossPlot": {
-    settings?: never,
+    settings?: Partial<ParameterResponseCrossPlotSettings>,
     view?: never,
   },
   "Pvt": {
