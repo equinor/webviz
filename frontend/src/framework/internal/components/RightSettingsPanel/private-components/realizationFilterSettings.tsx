@@ -20,8 +20,6 @@ import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { useActiveSession } from "../../ActiveSessionBoundary";
 
-import { useActiveSession } from "../../ActiveSessionBoundary";
-
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {

@@ -107,9 +107,11 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
 
         return (
             <>
-                <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
-                    <strong>Note:</strong> This module cannot be persisted yet. State changes will not be saved.
-                </div>
+                {!isSerializable && (
+                    <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
+                        <strong>Note:</strong> This module cannot be persisted yet. State changes will not be saved.
+                    </div>
+                )}
                 <DebugProfiler
                     id={`${props.moduleInstance.getId()}-settings`}
                     source={StatusSource.Settings}
