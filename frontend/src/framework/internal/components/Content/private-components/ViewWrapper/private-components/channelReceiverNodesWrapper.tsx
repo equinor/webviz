@@ -18,13 +18,13 @@ import { ChannelReceiverNode } from "./channelReceiverNode";
 
 export type ChannelReceiverNodesWrapperProps = {
     forwardedRef: React.RefObject<HTMLDivElement>;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
 };
 
 export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperProps> = (props) => {
     const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
 

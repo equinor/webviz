@@ -15,7 +15,6 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
-import { StatusWrapper } from "@lib/components/StatusWrapper";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -30,7 +29,6 @@ export type InplaceVolumesFilterComponentProps = {
     selectedAllowIndicesValuesIntersection: boolean;
     onChange: (filter: InplaceVolumesFilterSettings) => void;
     isPending?: boolean;
-    errorMessage?: string;
     additionalSettings?: React.ReactNode;
     areCurrentlySelectedTablesComparable?: boolean;
     debounceMs?: number;
@@ -240,70 +238,72 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     onChange={handleEnsembleIdentsChange}
                 />
             </CollapsibleGroup>
-            <PendingWrapper isPending={props.isPending ?? false} errorMessage={props.errorMessage}>
-                <div className="flex flex-col gap-2">{props.additionalSettings}</div>
-                <div className="flex flex-col gap-2">
-                    <CollapsibleGroup title="Inplace volumes table names" expanded>
-                        <StatusWrapper
+            <div className="flex flex-col gap-2">{props.additionalSettings}</div>
+            <div className="flex flex-col gap-2">
+                <CollapsibleGroup title="Inplace volumes table names" expanded>
+                    <PendingWrapper
+                        isPending={props.isPending ?? false}
+                        errorMessage={
+                            !props.isPending && tableSourceOptions.length === 0
+                                ? "No table names. See logs for details."
+                                : undefined
+                        }
+                    >
+                        <Select
+                            options={tableSourceOptions}
+                            value={tableNames}
+                            onChange={handleTableNamesChange}
+                            multiple
+                            size={3}
+                        />
+                    </PendingWrapper>
+                </CollapsibleGroup>
+                <CollapsibleGroup title="Index filters" expanded>
+                    <div className="flex flex-col gap-2">
+                        <div className="flex flex-row items-center gap-2">
+                            <div className="grow">Allow intersection of values</div>
+                            <Checkbox
+                                checked={props.selectedAllowIndicesValuesIntersection}
+                                onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
+                            />
+                        </div>
+                        <PendingWrapper
+                            isPending={props.isPending ?? false}
                             errorMessage={
-                                !props.isPending && tableSourceOptions.length === 0 ? "No table names" : undefined
+                                !props.areCurrentlySelectedTablesComparable
+                                    ? "Selected tables are not comparable due to mismatching index columns"
+                                    : undefined
                             }
                         >
-                            <Select
-                                options={tableSourceOptions}
-                                value={tableNames}
-                                onChange={handleTableNamesChange}
-                                multiple
-                                size={3}
-                            />
-                        </StatusWrapper>
-                    </CollapsibleGroup>
-                    <CollapsibleGroup title="Index filters" expanded>
-                        <div className="flex flex-col gap-2">
-                            <div className="flex flex-row items-center gap-2">
-                                <div className="grow">Allow intersection of values</div>
-                                <Checkbox
-                                    checked={props.selectedAllowIndicesValuesIntersection}
-                                    onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
-                                />
-                            </div>
-                            <StatusWrapper
-                                errorMessage={
-                                    !props.areCurrentlySelectedTablesComparable
-                                        ? "Selected tables are not comparable due to mismatching index columns"
-                                        : undefined
-                                }
-                            >
-                                {props.availableIndicesWithValues.map((indexWithValues) => (
-                                    <CollapsibleGroup
-                                        key={indexWithValues.indexColumn}
-                                        title={indexWithValues.indexColumn}
-                                        expanded
-                                    >
-                                        <Select
-                                            options={indexWithValues.values.map((value) => ({
-                                                value: value,
-                                                label: value.toString(),
-                                            }))}
-                                            value={
-                                                indicesWithValues.find(
-                                                    (el) => el.indexColumn === indexWithValues.indexColumn,
-                                                )?.values ?? []
-                                            }
-                                            onChange={(value) =>
-                                                handleIndexValuesChange(indexWithValues.indexColumn, value)
-                                            }
-                                            multiple
-                                            size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
-                                            showQuickSelectButtons={true}
-                                        />
-                                    </CollapsibleGroup>
-                                ))}
-                            </StatusWrapper>
-                        </div>
-                    </CollapsibleGroup>
-                </div>
-            </PendingWrapper>
+                            {props.availableIndicesWithValues.map((indexWithValues) => (
+                                <CollapsibleGroup
+                                    key={indexWithValues.indexColumn}
+                                    title={indexWithValues.indexColumn}
+                                    expanded
+                                >
+                                    <Select
+                                        options={indexWithValues.values.map((value) => ({
+                                            value: value,
+                                            label: value.toString(),
+                                        }))}
+                                        value={
+                                            indicesWithValues.find(
+                                                (el) => el.indexColumn === indexWithValues.indexColumn,
+                                            )?.values ?? []
+                                        }
+                                        onChange={(value) =>
+                                            handleIndexValuesChange(indexWithValues.indexColumn, value)
+                                        }
+                                        multiple
+                                        size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
+                                        showQuickSelectButtons={true}
+                                    />
+                                </CollapsibleGroup>
+                            ))}
+                        </PendingWrapper>
+                    </div>
+                </CollapsibleGroup>
+            </div>
         </>
     );
 }

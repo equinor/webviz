@@ -6,9 +6,8 @@ import type { LayoutBox } from "@framework/components/LayoutBox";
 import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
 import { GuiEvent, type GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { DashboardTopic, type LayoutElement } from "@framework/internal/Dashboard";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
+import { type Workbench } from "@framework/Workbench";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
@@ -22,6 +21,8 @@ import {
     subtractVec2,
     vec2FromPointerEvent,
 } from "@lib/utils/vec2";
+
+import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
@@ -40,8 +41,7 @@ function convertLayoutRectToRealRect(element: LayoutElement, size: Size2D): Rect
 }
 
 export const Layout: React.FC<LayoutProps> = (props) => {
-    const activeSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.ACTIVE_SESSION);
-    const dashboard = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+    const dashboard = useActiveDashboard();
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
     const [position, setPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [pointer, setPointer] = React.useState<Vec2>({ x: -1, y: -1 });
@@ -50,12 +50,12 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
     const layoutDivSize = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
-    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
+    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     // We use a temporary layout while dragging elements around
     const [tempLayout, setTempLayout] = React.useState<LayoutElement[] | null>(null);
-    const trueLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
+    const trueLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);
     const layout = tempLayout ?? trueLayout;
 
     React.useEffect(() => {
@@ -121,7 +121,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 if (isNewModule && moduleName) {
                     const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
                     if (layoutElement) {
-                        const instance = dashboard.makeAndAddModuleInstance(moduleName, layoutElement);
+                        const instance = dashboard.makeAndAddModuleInstance(moduleName);
+                        dashboard.setLayout(currentLayout);
                         layoutElement.moduleInstanceId = instance.getId();
                         layoutElement.moduleName = instance.getName();
                     }
@@ -373,7 +374,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         rows = Math.ceil(minimizedLayouts.length / elementsPerRow);
     }
 
-    function computeModuleLayoutProps(moduleInstance: ModuleInstance<any>) {
+    function computeModuleLayoutProps(moduleInstance: ModuleInstance<any, any>) {
         const moduleId = moduleInstance.getId();
         const layoutElement = layout.find((element) => element.moduleInstanceId === moduleId);
 

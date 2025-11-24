@@ -6,11 +6,14 @@ import type { DeckGLRef } from "@deck.gl/react";
 import type { BoundingBox2D, MapMouseEvent, ViewStateType, ViewportType, ViewsType } from "@webviz/subsurface-viewer";
 import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";
 import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
+import { useAtom } from "jotai";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
+
+import { viewStateAtom } from "../atoms/baseAtoms";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
@@ -36,6 +39,8 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
     const deckGlRef = React.useRef<DeckGLRef | null>(null);
+
+    const [viewState, setViewState] = useAtom(viewStateAtom);
 
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
@@ -125,6 +130,8 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 triggerHome={triggerHomeCounter}
                 pickingRadius={5}
                 onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
+                initialCameraPosition={viewState ?? undefined}
+                getCameraPosition={setViewState}
                 onMouseEvent={handleMouseEvent}
             >
                 {props.views.viewports.map((viewport) => (

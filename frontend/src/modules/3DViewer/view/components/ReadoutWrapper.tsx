@@ -9,6 +9,7 @@ import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMul
 import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { Feature } from "geojson";
+import { useAtom } from "jotai";
 import { isEqual } from "lodash";
 
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
@@ -29,6 +30,7 @@ import type {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 
+import { viewStateAtom } from "../atoms/baseAtoms";
 import { DeckGlInstanceManagerTopic, type DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
@@ -42,6 +44,7 @@ export type ReadoutWrapperProps = {
     deckGlManager: DeckGlInstanceManager;
     verticalScale: number;
     triggerHome: number;
+
     deckGlRef: React.RefObject<DeckGLRef | null>;
     children?: React.ReactNode;
     assemblerProduct: AssemblerProduct<VisualizationTarget.DECK_GL, any, any>;
@@ -52,6 +55,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
     const [storedDeckGlViews, setStoredDeckGlViews] =
         React.useState<SubsurfaceViewerWithCameraStateProps["views"]>(undefined);
+
+    const [viewState, setViewState] = useAtom(viewStateAtom);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
@@ -168,7 +173,12 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            <SubsurfaceViewerWithCameraState {...deckGlProps} views={storedDeckGlViews}>
+            <SubsurfaceViewerWithCameraState
+                {...deckGlProps}
+                views={storedDeckGlViews}
+                getCameraPosition={setViewState}
+                initialCameraPosition={viewState ?? undefined}
+            >
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
                     <DeckGlView key={viewport.id} id={viewport.id}>

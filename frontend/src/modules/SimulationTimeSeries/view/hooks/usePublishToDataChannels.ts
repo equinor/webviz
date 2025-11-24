@@ -8,11 +8,8 @@ import { makeVectorGroupDataGenerator } from "@modules/SimulationTimeSeries/data
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 import type { VectorHexColorMap, VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
 
-import {
-    activeTimestampUtcMsAtom,
-    loadedVectorSpecificationsAndRealizationDataAtom,
-    queryIsFetchingAtom,
-} from "../atoms/derivedAtoms";
+import { loadedVectorSpecificationsAndRealizationDataAtom, queryIsFetchingAtom } from "../atoms/derivedAtoms";
+import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
 import type { SubplotOwner } from "../utils/PlotBuilder";
 import { getHexColorFromOwner } from "../utils/plotColoring";
 
@@ -24,7 +21,7 @@ export function usePublishToDataChannels(
     vectorHexColorMap: VectorHexColorMap,
 ): void {
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
+    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);

@@ -57,7 +57,7 @@ export function useBuildPlotAndTable(
     if (plotType === PlotType.BAR && selectorColumn) {
         resultNameOrSelectorName = selectorColumn.toString();
     }
-    if (plotType !== PlotType.BAR && secondResultName) {
+    if (plotType === PlotType.SCATTER && secondResultName) {
         resultNameOrSelectorName = secondResultName.toString();
     }
     const plotbuilder = new PlotBuilder(
