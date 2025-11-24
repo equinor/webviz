@@ -91,7 +91,7 @@ export function useLogViewerVisualizationProduct(
 
     if (previousRevision !== latestRevision) {
         setPreviousRevision(latestRevision);
-        setPreviousProduct(VISUALIZATION_FACTORY.make(dataProviderManager));
+        setPreviousProduct(VISUALIZATION_FACTORY.make(dataProviderManager, { disableCache: true }));
     }
 
     return previousProduct;

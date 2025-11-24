@@ -47,6 +47,5 @@ async def ssdl_get_request_async(access_token: str, endpoint: str, params: Optio
     else:
         raise InvalidParameterError(f"Can not fetch data from endpoint {endpoint}", Service.SSDL)
 
-    print(f"TIME SSDL fetch {endpoint} took {timer.lap_s():.2f} seconds")
     LOGGER.debug(f"TIME SSDL fetch {endpoint} took {timer.lap_s():.2f} seconds")
     return results

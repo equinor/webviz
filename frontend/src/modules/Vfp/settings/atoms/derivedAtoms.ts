@@ -5,7 +5,6 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { isProdTable } from "@modules/Vfp/utils/vfpTableClassifier";
 
-
 import { PressureOption, VfpParam } from "../../types";
 
 import {
@@ -21,7 +20,6 @@ import {
     validRealizationNumbersAtom,
 } from "./baseAtoms";
 import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
-
 
 export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);

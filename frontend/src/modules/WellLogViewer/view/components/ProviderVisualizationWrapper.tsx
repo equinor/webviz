@@ -161,7 +161,7 @@ export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapper
         [factoryProduct, trajectoryData, padDataWithEmptyRows],
     );
 
-    if (!factoryProduct) {
+    if (!factoryProduct || factoryProduct.numLoadingDataProviders > 0) {
         return (
             <div className="absolute w-full h-full z-10 bg-white opacity-50 flex items-center justify-center">
                 <CircularProgress />

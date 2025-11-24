@@ -12,6 +12,7 @@ from webviz_services.service_exceptions import (
     MultipleDataMatchesError,
     NoDataError,
     Service,
+    ServiceLayerException,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -139,12 +140,20 @@ class ArrowTableLoader:
             )
 
         # Fetch the aggregated table for each column
-        async with asyncio.TaskGroup() as tg:
-            column_name_and_task_pairs = [
-                (column_name, tg.create_task(self.get_aggregated_single_column_async(column_name)))
-                for column_name in column_names
+        try:
+            async with asyncio.TaskGroup() as tg:
+                column_name_and_task_pairs = [
+                    (column_name, tg.create_task(self.get_aggregated_single_column_async(column_name)))
+                    for column_name in column_names
+                ]
+
+            column_name_and_aggregated_table_pairs = [
+                (name, task.result()) for name, task in column_name_and_task_pairs
             ]
-        column_name_and_aggregated_table_pairs = [(name, task.result()) for name, task in column_name_and_task_pairs]
+
+        except* ServiceLayerException as exc_group:
+            for exc in exc_group.exceptions:
+                raise exc from exc_group  # Reraise the first exception
 
         # If we only have one table, we can just return it directly
         if len(column_name_and_aggregated_table_pairs) == 1:
