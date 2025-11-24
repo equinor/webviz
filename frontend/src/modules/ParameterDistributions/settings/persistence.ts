@@ -15,11 +15,11 @@ import {
     showLogParametersAtom,
     showPercentilesAndMeanLinesAtom,
     selectedEnsembleModeAtom,
-    selectedParameterSortingMethodAtom,
 } from "./atoms/baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedParameterIdentsAtom,
+    selectedParameterSortingMethodAtom,
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
 } from "./atoms/persistableFixableAtoms";
@@ -82,7 +82,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         selectedPriorEnsembleIdentString: selectedPriorEnsembleIdent,
         selectedPosteriorEnsembleIdentString: selectedPosteriorEnsembleIdent,
         selectedEnsembleMode: get(selectedEnsembleModeAtom),
-        selectedParameterSortingMethod: get(selectedParameterSortingMethodAtom),
+        selectedParameterSortingMethod: get(selectedParameterSortingMethodAtom).value,
         selectedParameterIdents,
     };
 };

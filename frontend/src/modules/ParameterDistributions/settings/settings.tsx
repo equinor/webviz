@@ -33,13 +33,13 @@ import {
     showIndividualRealizationValuesAtom,
     showLogParametersAtom,
     showPercentilesAndMeanLinesAtom,
-    selectedParameterSortingMethodAtom,
     selectedEnsembleModeAtom,
 } from "./atoms/baseAtoms";
 import { intersectedParameterIdentsAtom } from "./atoms/derivedAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedParameterIdentsAtom,
+    selectedParameterSortingMethodAtom,
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
 } from "./atoms/persistableFixableAtoms";
@@ -73,14 +73,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
         setSelectedEnsembleIdents(ensembleIdents);
     }
 
-    function handleEnsembleModeChange(mode: EnsembleMode) {
-        setSelectedEnsembleMode(mode);
-
-        if (mode === EnsembleMode.INDEPENDENT) {
-            setSelectedParameterSortingMethod(ParameterSortMethod.ALPHABETICAL);
-        }
-    }
-
     function handleShowConstantParametersChange() {
         setShowConstantParameters((prev) => !prev);
     }
@@ -97,6 +89,9 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
 
     const hasMultipleRegularEnsembles = ensembleSet.getRegularEnsembleArray().length > 1;
 
+    const selectedParameterSortingMethodAnnotation = useMakePersistableFixableAtomAnnotations(
+        selectedParameterSortingMethodAtom,
+    );
     const selectedEnsembleIdentsAnnotation = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
     const selectedPriorEnsembleIdentAnnotation =
         useMakePersistableFixableAtomAnnotations(selectedPriorEnsembleIdentAtom);
@@ -119,11 +114,12 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 };
                             })}
                             value={selectedEnsembleMode}
-                            onChange={handleEnsembleModeChange}
+                            onChange={setSelectedEnsembleMode}
                         />
                     </SettingWrapper>
                     <SettingWrapper
                         label="Parameter sort method"
+                        annotations={selectedParameterSortingMethodAnnotation}
                         help={{
                             title: "Parameter Sorting Methods",
                             content: <ParameterSortingInfoContent />,
@@ -139,7 +135,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                         type !== ParameterSortMethod.ALPHABETICAL,
                                 };
                             })}
-                            value={selectedParameterSortingMethod}
+                            value={selectedParameterSortingMethod.value}
                             onChange={setSelectedParameterSortingMethod}
                         />
                     </SettingWrapper>
