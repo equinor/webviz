@@ -436,7 +436,13 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         onRequestOtherReferenceEnsemble={handleOnRequestOtherReferenceEnsemble}
                     />
                 </div>
-                {isEnsembleSetLoading && <LoadingOverlay text="Loading ensembles..." />}
+                {isEnsembleSetLoading && (
+                    <LoadingOverlay
+                        text="Loading ensembles..."
+                        note="Note that the first time an ensemble is loaded in Webviz,
+                        it could take a while to collect all parameter values..."
+                    />
+                )}
             </Dialog>
             <Dialog
                 open={confirmCancel}
