@@ -3,6 +3,7 @@ import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
+import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
     name: "Correlations between input parameters and simulation timeseries",
@@ -16,14 +17,13 @@ const template: Template = {
                 relX: 0,
                 relY: 0,
             },
-
-            /*
             initialState: {
-                selectedVectorTags: ["FOPT"],
-                visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
-                colorRealizationsByParameter: true,
+                settings: {
+                    selectedVectorTags: ["FOPT"],
+                    visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                    colorRealizationsByParameter: true,
+                },
             },
-            */
             syncedSettings: [SyncSettingKey.PARAMETER],
         }),
         createTemplateModuleInstance("ParameterResponseCrossPlot", {
@@ -35,7 +35,6 @@ const template: Template = {
                 relY: 0.5,
             },
             syncedSettings: [SyncSettingKey.PARAMETER],
-
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
                     listensToInstanceRef: "MainSimulationTimeSeriesInstance",
@@ -43,13 +42,11 @@ const template: Template = {
                     channelIdString: ChannelIds.TIME_SERIES,
                 },
             },
-            /*
             initialState: {
-                crossPlottingType: KeyKind.REALIZATION,
-                showLabels: true,
-                numParams: 20,
+                settings: {
+                    parameterIdentString: "FWL_CENTRAL~@@~GLOBVAR",
+                },
             },
-            */
         }),
         createTemplateModuleInstance("ParameterResponseCorrelationBarPlot", {
             instanceRef: "MyParameterCorrelationPlotInstance",
@@ -60,7 +57,6 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.PARAMETER],
-
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
                     listensToInstanceRef: "MainSimulationTimeSeriesInstance",
@@ -68,13 +64,12 @@ const template: Template = {
                     channelIdString: ChannelIds.TIME_SERIES,
                 },
             },
-            /*
             initialState: {
-                crossPlottingType: KeyKind.REALIZATION,
-                showLabels: true,
-                numParams: 20,
+                settings: {
+                    showLabels: true,
+                    numParams: 20,
+                },
             },
-            */
         }),
     ],
 };

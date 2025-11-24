@@ -71,6 +71,7 @@ import {
 import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "./atoms/persistableFixableAtoms";
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
+import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -107,11 +108,13 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     usePropagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
 
     // Receive global parameter string and update local state if different
-    React.useEffect(() => {
-        if (globalSyncedParameter !== null && globalSyncedParameter !== selectedParameterIdentStr.value) {
-            setSelectedParameterIdentStr(globalSyncedParameter);
-        }
-    }, [globalSyncedParameter, setSelectedParameterIdentStr, selectedParameterIdentStr]);
+    useSyncSetting({
+        syncSettingsHelper: syncHelper,
+        syncSettingKey: SyncSettingKey.PARAMETER,
+        topic: "global.syncValue.parameter",
+        value: selectedParameterIdentStr.value,
+        setValue: setSelectedParameterIdentStr,
+    });
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
@@ -314,7 +317,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                 <SettingWrapper annotations={selectedEnsembleIdentsAnnotations}>
                     <EnsemblePicker
                         ensembles={ensembleSet.getEnsembleArray()}
-                        value={selectedEnsembleIdents.value}
+                        value={selectedEnsembleIdents.value ?? []}
                         allowDeltaEnsembles={true}
                         ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
                         onChange={handleEnsembleSelectChange}
@@ -421,8 +424,8 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                                             }))}
                                             size={6}
                                             value={
-                                                selectedParameterIdentStr
-                                                    ? [selectedParameterIdentStr.toString()]
+                                                selectedParameterIdentStr.value
+                                                    ? [selectedParameterIdentStr.value]
                                                     : undefined
                                             }
                                             onChange={handleColorByParameterChange}

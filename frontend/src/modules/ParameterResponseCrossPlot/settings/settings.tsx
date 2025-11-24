@@ -17,6 +17,7 @@ import { PlotType } from "../typesAndEnums";
 import { plotTypeAtom, receivedChannelAtom, showTrendlineAtom } from "./atoms/baseAtoms";
 import { availableParameterIdentsAtom } from "./atoms/derivedAtoms";
 import { parameterIdentStringAtom } from "./atoms/persistedAtoms";
+import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 const plotTypes = [{ value: PlotType.ParameterResponseCrossPlot, label: "Parameter correlation" }];
 
 //-----------------------------------------------------------------------------------------------------------
@@ -29,6 +30,7 @@ export function Settings({ settingsContext, workbenchServices }: ModuleSettingsP
     const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
+    const [prevGlobalSyncedParameter, setPrevGlobalSyncedParameter] = React.useState<string | null>(null);
 
     // Need to get the ensemble idents from the channel to get relevant parameters
     const receiverResponse = settingsContext.useChannelReceiver({
@@ -46,14 +48,13 @@ export function Settings({ settingsContext, workbenchServices }: ModuleSettingsP
     // Check if the parameterIdentString/globalSyncedParameter is valid
     // If not, set it to the first valid parameterIdent
 
-    React.useEffect(
-        function updateParameterIdentString() {
-            if (globalSyncedParameter !== null && globalSyncedParameter !== parameterIdentString.value) {
-                setParameterIdentString(globalSyncedParameter);
-            }
-        },
-        [globalSyncedParameter, parameterIdentString, setParameterIdentString],
-    );
+    useSyncSetting({
+        syncSettingsHelper: syncHelper,
+        syncSettingKey: SyncSettingKey.PARAMETER,
+        topic: "global.syncValue.parameter",
+        value: parameterIdentString.value,
+        setValue: setParameterIdentString,
+    });
 
     function handlePlotTypeChanged(value: string) {
         setPlotType(value as PlotType);

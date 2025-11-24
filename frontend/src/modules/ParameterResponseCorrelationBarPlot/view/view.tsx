@@ -20,6 +20,7 @@ import { createRankedParameterCorrelations } from "@modules/_shared/rankParamete
 import type { Interfaces } from "../interfaces";
 
 import { ParameterCorrelationFigure } from "./utils/parameterCorrelationFigure";
+import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -51,15 +52,13 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
     );
     const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
 
-    // Receive global string and update local state if different
-    React.useEffect(
-        function updateLocalParameterStringFromGlobal() {
-            if (globalSyncedParameter !== null && globalSyncedParameter !== localParameterString) {
-                setLocalParameterString(globalSyncedParameter);
-            }
-        },
-        [globalSyncedParameter, localParameterString],
-    );
+    useSyncSetting({
+        syncSettingsHelper: syncHelper,
+        syncSettingKey: SyncSettingKey.PARAMETER,
+        topic: "global.syncValue.parameter",
+        value: localParameterString,
+        setValue: setLocalParameterString,
+    });
 
     const handleClickInChart = React.useCallback(
         function handleClickInChart(e: PlotMouseEvent) {
@@ -68,7 +67,6 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                 return;
             }
             const newParameterString = clickedPoint.customdata as string;
-            syncHelper.publishValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter", newParameterString);
             setLocalParameterString(newParameterString);
         },
         [syncHelper],

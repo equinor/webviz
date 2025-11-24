@@ -2,7 +2,9 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
+import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
+import { DisplayComponentType } from "@modules/SensitivityPlot/typesAndEnums";
 
 const template: Template = {
     name: "Sensitivity analysis of inplace volumes",
@@ -17,11 +19,11 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER, SyncSettingKey.INPLACE_VOLUMES_RESULT_NAME],
-            /*
             initialState: {
-                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
+                settings: {
+                    indexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+                },
             },
-            */
         }),
         createTemplateModuleInstance("InplaceVolumesTable", {
             instanceRef: "MainInplaceVolumesTableInstance2",
@@ -32,14 +34,14 @@ const template: Template = {
                 relY: 0.5,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER, SyncSettingKey.INPLACE_VOLUMES_RESULT_NAME],
-            /*
             initialState: {
-                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
+                settings: {
+                    selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+                },
             },
-            */
         }),
-        createTemplateModuleInstance("ParameterResponseCrossPlot", {
-            instanceRef: "MyParameterResponseCrossPlotInstance",
+        createTemplateModuleInstance("SensitivityPlot", {
+            instanceRef: "SensitivityPlotInstance",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -48,20 +50,20 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                channelResponse: {
+                response: {
                     listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            /*
             initialState: {
-                displayComponentType: DisplayComponentType.TornadoChart,
+                settings: {
+                    displayComponentType: DisplayComponentType.SENSITIVITY_CHART,
+                },
             },
-            */
         }),
-        createTemplateModuleInstance("ParameterResponseCrossPlot", {
-            instanceRef: "MyParameterResponseCrossPlotInstance2",
+        createTemplateModuleInstance("SensitivityPlot", {
+            instanceRef: "SensitivityPlotInstance2",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -70,17 +72,17 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                channelResponse: {
+                response: {
                     listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            /*
             initialState: {
-                displayComponentType: DisplayComponentType.Table,
+                settings: {
+                    displayComponentType: DisplayComponentType.SENSITIVITY_TABLE,
+                },
             },
-            */
         }),
     ],
 };

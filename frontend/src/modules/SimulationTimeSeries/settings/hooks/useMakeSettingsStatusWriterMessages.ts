@@ -16,7 +16,7 @@ export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatus
     const ensembleSet = useAtomValue(EnsembleSetAtom);
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value;
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value ?? [];
     const selectedVectorNames = useAtomValue(selectedVectorNamesAtom);
 
     usePropagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
