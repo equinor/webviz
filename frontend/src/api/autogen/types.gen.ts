@@ -968,18 +968,45 @@ export type NetworkNode_api = {
     children: Array<NetworkNode_api>;
 };
 
+/**
+ * NewSession
+ */
 export type NewSession_api = {
+    /**
+     * Title
+     */
     title: string;
+    /**
+     * Description
+     */
     description: string | null;
+    /**
+     * Content
+     */
     content: string;
 };
 
+/**
+ * NewSnapshot
+ */
 export type NewSnapshot_api = {
+    /**
+     * Title
+     */
     title: string;
+    /**
+     * Description
+     */
     description: string | null;
+    /**
+     * Content
+     */
     content: string;
 };
 
+/**
+ * NodeType
+ */
 export enum NodeType_api {
     PROD = "prod",
     INJ = "inj",
@@ -1002,22 +1029,55 @@ export type Observations_api = {
     rft?: Array<RftObservations_api>;
 };
 
+/**
+ * Page[SessionMetadata]
+ */
 export type PageSessionMetadata_api = {
+    /**
+     * Items
+     */
     items: Array<SessionMetadata_api>;
+    /**
+     * Pagetoken
+     */
     pageToken?: string | null;
 };
 
+/**
+ * Page[SnapshotAccessLog]
+ */
 export type PageSnapshotAccessLog_api = {
+    /**
+     * Items
+     */
     items: Array<SnapshotAccessLog_api>;
+    /**
+     * Pagetoken
+     */
     pageToken?: string | null;
 };
 
+/**
+ * Page[SnapshotMetadata]
+ */
 export type PageSnapshotMetadata_api = {
+    /**
+     * Items
+     */
     items: Array<SnapshotMetadata_api>;
+    /**
+     * Pagetoken
+     */
     pageToken?: string | null;
 };
 
-export type PointSetXy_api = {
+/**
+ * PointSetXY
+ */
+export type PointSetXY_api = {
+    /**
+     * X Points
+     */
     x_points: Array<number>;
     /**
      * Y Points
@@ -1589,49 +1649,127 @@ export enum SensitivityType_api {
     SCENARIO = "scenario",
 }
 
+/**
+ * Session
+ */
 export type Session_api = {
     metadata: SessionMetadata_api;
+    /**
+     * Content
+     */
     content: string;
 };
 
+/**
+ * SessionMetadata
+ */
 export type SessionMetadata_api = {
+    /**
+     * Id
+     */
     id: string;
+    /**
+     * Ownerid
+     */
     ownerId: string;
+    /**
+     * Title
+     */
     title: string;
+    /**
+     * Description
+     */
     description: string | null;
+    /**
+     * Createdat
+     */
     createdAt: string;
+    /**
+     * Updatedat
+     */
     updatedAt: string;
+    /**
+     * Version
+     */
     version: number;
+    /**
+     * Contenthash
+     */
     contentHash: string;
 };
 
+/**
+ * SessionSortBy
+ */
 export enum SessionSortBy_api {
     METADATA_CREATED_AT = "metadata.created_at",
     METADATA_UPDATED_AT = "metadata.updated_at",
     METADATA_TITLE = "metadata.title",
 }
 
+/**
+ * SessionUpdate
+ */
 export type SessionUpdate_api = {
+    /**
+     * Title
+     */
     title?: string | null;
+    /**
+     * Description
+     */
     description?: string | null;
+    /**
+     * Content
+     */
     content?: string | null;
 };
 
+/**
+ * Snapshot
+ */
 export type Snapshot_api = {
     metadata: SnapshotMetadata_api;
+    /**
+     * Content
+     */
     content: string;
 };
 
+/**
+ * SnapshotAccessLog
+ */
 export type SnapshotAccessLog_api = {
+    /**
+     * Visitorid
+     */
     visitorId: string;
+    /**
+     * Snapshotid
+     */
     snapshotId: string;
+    /**
+     * Visits
+     */
     visits: number;
+    /**
+     * Firstvisitedat
+     */
     firstVisitedAt: string | null;
+    /**
+     * Lastvisitedat
+     */
     lastVisitedAt: string | null;
+    /**
+     * Snapshotdeleted
+     */
     snapshotDeleted: boolean;
     snapshotMetadata: SnapshotMetadata_api;
 };
 
+/**
+ * SnapshotAccessLogSortBy
+ */
 export enum SnapshotAccessLogSortBy_api {
     VISITS = "visits",
     LAST_VISITED_AT = "last_visited_at",
@@ -1640,15 +1778,39 @@ export enum SnapshotAccessLogSortBy_api {
     SNAPSHOT_METADATA_CREATED_AT = "snapshot_metadata.created_at",
 }
 
+/**
+ * SnapshotMetadata
+ */
 export type SnapshotMetadata_api = {
+    /**
+     * Id
+     */
     id: string;
+    /**
+     * Ownerid
+     */
     ownerId: string;
+    /**
+     * Title
+     */
     title: string;
+    /**
+     * Description
+     */
     description: string | null;
+    /**
+     * Createdat
+     */
     createdAt: string;
+    /**
+     * Contenthash
+     */
     contentHash: string;
 };
 
+/**
+ * SnapshotSortBy
+ */
 export enum SnapshotSortBy_api {
     CREATED_AT = "created_at",
     UPDATED_AT = "updated_at",
@@ -1656,11 +1818,17 @@ export enum SnapshotSortBy_api {
     TITLE_LOWER = "title_lower",
 }
 
+/**
+ * SortDirection
+ */
 export enum SortDirection_api {
     ASC = "asc",
     DESC = "desc",
 }
 
+/**
+ * StatisticFunction
+ */
 export enum StatisticFunction_api {
     MEAN = "MEAN",
     MIN = "MIN",
@@ -6214,34 +6382,50 @@ export type GetSessionsMetadataData_api = {
     path?: never;
     query?: {
         /**
+         * Cursor
+         *
          * Continuation token for pagination
          */
         cursor?: string | null;
         /**
+         * Sort By
+         *
          * Field to sort by (e.g., 'metadata.title')
          */
         sort_by?: SessionSortBy_api | null;
         /**
+         * Sort Direction
+         *
          * Sort direction: 'asc' or 'desc'
          */
         sort_direction?: SortDirection_api | null;
         /**
+         * Sort Lowercase
+         *
          * Use case-insensitive sorting
          */
         sort_lowercase?: boolean;
         /**
+         * Page Size
+         *
          * Limit the number of results
          */
         page_size?: number;
         /**
+         * Filter Title
+         *
          * Filter results by title (case insensitive)
          */
         filter_title?: string | null;
         /**
+         * Filter Updated From
+         *
          * Filter results by date
          */
         filter_updated_from?: string | null;
         /**
+         * Filter Updated To
+         *
          * Filter results by date
          */
         filter_updated_to?: string | null;
@@ -6254,7 +6438,7 @@ export type GetSessionsMetadataErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type GetSessionsMetadataError_api = GetSessionsMetadataErrors_api[keyof GetSessionsMetadataErrors_api];
@@ -6281,13 +6465,15 @@ export type CreateSessionErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type CreateSessionError_api = CreateSessionErrors_api[keyof CreateSessionErrors_api];
 
 export type CreateSessionResponses_api = {
     /**
+     * Response Create Session
+     *
      * Successful Response
      */
     200: string;
@@ -6298,6 +6484,9 @@ export type CreateSessionResponse_api = CreateSessionResponses_api[keyof CreateS
 export type DeleteSessionData_api = {
     body?: never;
     path: {
+        /**
+         * Session Id
+         */
         session_id: string;
     };
     query?: {
@@ -6310,7 +6499,7 @@ export type DeleteSessionErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type DeleteSessionError_api = DeleteSessionErrors_api[keyof DeleteSessionErrors_api];
@@ -6325,6 +6514,9 @@ export type DeleteSessionResponses_api = {
 export type GetSessionData_api = {
     body?: never;
     path: {
+        /**
+         * Session Id
+         */
         session_id: string;
     };
     query?: {
@@ -6337,7 +6529,7 @@ export type GetSessionErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type GetSessionError_api = GetSessionErrors_api[keyof GetSessionErrors_api];
@@ -6354,6 +6546,9 @@ export type GetSessionResponse_api = GetSessionResponses_api[keyof GetSessionRes
 export type UpdateSessionData_api = {
     body: SessionUpdate_api;
     path: {
+        /**
+         * Session Id
+         */
         session_id: string;
     };
     query?: {
@@ -6366,7 +6561,7 @@ export type UpdateSessionErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type UpdateSessionError_api = UpdateSessionErrors_api[keyof UpdateSessionErrors_api];
@@ -6383,6 +6578,9 @@ export type UpdateSessionResponse_api = UpdateSessionResponses_api[keyof UpdateS
 export type GetSessionMetadataData_api = {
     body?: never;
     path: {
+        /**
+         * Session Id
+         */
         session_id: string;
     };
     query?: {
@@ -6395,7 +6593,7 @@ export type GetSessionMetadataErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type GetSessionMetadataError_api = GetSessionMetadataErrors_api[keyof GetSessionMetadataErrors_api];
@@ -6414,50 +6612,74 @@ export type GetSnapshotAccessLogsData_api = {
     path?: never;
     query?: {
         /**
+         * Cursor
+         *
          * Continuation token for pagination
          */
         cursor?: string | null;
         /**
+         * Page Size
+         *
          * Limit the number of results
          */
         page_size?: number | null;
         /**
+         * Sort By
+         *
          * Sort the result by
          */
         sort_by?: SnapshotAccessLogSortBy_api | null;
         /**
+         * Sort Direction
+         *
          * Sort direction: 'asc' or 'desc'
          */
         sort_direction?: SortDirection_api | null;
         /**
+         * Sort Lowercase
+         *
          * Use case-insensitive sorting
          */
         sort_lowercase?: boolean;
         /**
+         * Filter Title
+         *
          * Filter results by title (case insensitive)
          */
         filter_title?: string | null;
         /**
+         * Filter Created From
+         *
          * Filter results by date
          */
         filter_created_from?: string | null;
         /**
+         * Filter Created To
+         *
          * Filter results by date
          */
         filter_created_to?: string | null;
         /**
+         * Filter Last Visited From
+         *
          * Filter results by date of last visit
          */
         filter_last_visited_from?: string | null;
         /**
+         * Filter Last Visited To
+         *
          * Filter results by date of last visit
          */
         filter_last_visited_to?: string | null;
         /**
+         * Filter Owner Id
+         *
          * Filter results by snapshot owner ID
          */
         filter_owner_id?: string | null;
         /**
+         * Filter Snapshot Deleted
+         *
          * Filter results by deletion status of the snapshot
          */
         filter_snapshot_deleted?: boolean | null;
@@ -6470,7 +6692,7 @@ export type GetSnapshotAccessLogsErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type GetSnapshotAccessLogsError_api = GetSnapshotAccessLogsErrors_api[keyof GetSnapshotAccessLogsErrors_api];
@@ -6482,41 +6704,58 @@ export type GetSnapshotAccessLogsResponses_api = {
     200: PageSnapshotAccessLog_api;
 };
 
-export type GetSnapshotAccessLogsResponse_api = GetSnapshotAccessLogsResponses_api[keyof GetSnapshotAccessLogsResponses_api];
+export type GetSnapshotAccessLogsResponse_api =
+    GetSnapshotAccessLogsResponses_api[keyof GetSnapshotAccessLogsResponses_api];
 
 export type GetSnapshotsMetadataData_api = {
     body?: never;
     path?: never;
     query?: {
         /**
+         * Cursor
+         *
          * Continuation token for pagination
          */
         cursor?: string | null;
         /**
+         * Page Size
+         *
          * Limit the number of results
          */
         page_size?: number | null;
         /**
+         * Sort By
+         *
          * Sort the result by
          */
         sort_by?: SnapshotSortBy_api | null;
         /**
+         * Sort Direction
+         *
          * Sort direction: 'asc' or 'desc'
          */
         sort_direction?: SortDirection_api | null;
         /**
+         * Sort Lowercase
+         *
          * Use case-insensitive sorting
          */
         sort_lowercase?: boolean;
         /**
+         * Filter Title
+         *
          * Filter results by title (case insensitive)
          */
         filter_title?: string | null;
         /**
+         * Filter Created From
+         *
          * Filter results by date
          */
         filter_created_from?: string | null;
         /**
+         * Filter Created To
+         *
          * Filter results by date
          */
         filter_created_to?: string | null;
@@ -6529,7 +6768,7 @@ export type GetSnapshotsMetadataErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type GetSnapshotsMetadataError_api = GetSnapshotsMetadataErrors_api[keyof GetSnapshotsMetadataErrors_api];
@@ -6541,7 +6780,8 @@ export type GetSnapshotsMetadataResponses_api = {
     200: PageSnapshotMetadata_api;
 };
 
-export type GetSnapshotsMetadataResponse_api = GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
+export type GetSnapshotsMetadataResponse_api =
+    GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
 
 export type CreateSnapshotData_api = {
     body: NewSnapshot_api;
@@ -6556,13 +6796,15 @@ export type CreateSnapshotErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type CreateSnapshotError_api = CreateSnapshotErrors_api[keyof CreateSnapshotErrors_api];
 
 export type CreateSnapshotResponses_api = {
     /**
+     * Response Create Snapshot
+     *
      * Successful Response
      */
     200: string;
@@ -6573,6 +6815,9 @@ export type CreateSnapshotResponse_api = CreateSnapshotResponses_api[keyof Creat
 export type DeleteSnapshotData_api = {
     body?: never;
     path: {
+        /**
+         * Snapshot Id
+         */
         snapshot_id: string;
     };
     query?: {
@@ -6585,7 +6830,7 @@ export type DeleteSnapshotErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type DeleteSnapshotError_api = DeleteSnapshotErrors_api[keyof DeleteSnapshotErrors_api];
@@ -6600,6 +6845,9 @@ export type DeleteSnapshotResponses_api = {
 export type GetSnapshotData_api = {
     body?: never;
     path: {
+        /**
+         * Snapshot Id
+         */
         snapshot_id: string;
     };
     query?: {
@@ -6612,7 +6860,7 @@ export type GetSnapshotErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type GetSnapshotError_api = GetSnapshotErrors_api[keyof GetSnapshotErrors_api];
@@ -6629,6 +6877,9 @@ export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshot
 export type DeleteSnapshotAccessLogData_api = {
     body?: never;
     path: {
+        /**
+         * Snapshot Id
+         */
         snapshot_id: string;
     };
     query?: {
@@ -6641,10 +6892,11 @@ export type DeleteSnapshotAccessLogErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
-export type DeleteSnapshotAccessLogError_api = DeleteSnapshotAccessLogErrors_api[keyof DeleteSnapshotAccessLogErrors_api];
+export type DeleteSnapshotAccessLogError_api =
+    DeleteSnapshotAccessLogErrors_api[keyof DeleteSnapshotAccessLogErrors_api];
 
 export type DeleteSnapshotAccessLogResponses_api = {
     /**

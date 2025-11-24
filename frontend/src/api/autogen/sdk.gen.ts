@@ -5,6 +5,21 @@ import { client } from "./client.gen";
 import type {
     AuthorizedCallbackRouteData_api,
     AuthorizedCallbackRouteResponses_api,
+    CreateSessionData_api,
+    CreateSessionErrors_api,
+    CreateSessionResponses_api,
+    CreateSnapshotData_api,
+    CreateSnapshotErrors_api,
+    CreateSnapshotResponses_api,
+    DeleteSessionData_api,
+    DeleteSessionErrors_api,
+    DeleteSessionResponses_api,
+    DeleteSnapshotAccessLogData_api,
+    DeleteSnapshotAccessLogErrors_api,
+    DeleteSnapshotAccessLogResponses_api,
+    DeleteSnapshotData_api,
+    DeleteSnapshotErrors_api,
+    DeleteSnapshotResponses_api,
     DeprecatedGetStratigraphicUnitsData_api,
     DeprecatedGetStratigraphicUnitsErrors_api,
     DeprecatedGetStratigraphicUnitsResponses_api,
@@ -116,6 +131,24 @@ import type {
     GetSensitivitiesData_api,
     GetSensitivitiesErrors_api,
     GetSensitivitiesResponses_api,
+    GetSessionData_api,
+    GetSessionErrors_api,
+    GetSessionMetadataData_api,
+    GetSessionMetadataErrors_api,
+    GetSessionMetadataResponses_api,
+    GetSessionResponses_api,
+    GetSessionsMetadataData_api,
+    GetSessionsMetadataErrors_api,
+    GetSessionsMetadataResponses_api,
+    GetSnapshotAccessLogsData_api,
+    GetSnapshotAccessLogsErrors_api,
+    GetSnapshotAccessLogsResponses_api,
+    GetSnapshotData_api,
+    GetSnapshotErrors_api,
+    GetSnapshotResponses_api,
+    GetSnapshotsMetadataData_api,
+    GetSnapshotsMetadataErrors_api,
+    GetSnapshotsMetadataResponses_api,
     GetStatisticalSurfaceDataHybridData_api,
     GetStatisticalSurfaceDataHybridErrors_api,
     GetStatisticalSurfaceDataHybridResponses_api,
@@ -204,75 +237,11 @@ import type {
     PostGetSampleSurfaceInPointsErrors_api,
     PostGetSampleSurfaceInPointsResponses_api,
     PostGetSeismicFenceData_api,
-    PostGetSeismicFenceResponse_api,
-    PostGetSeismicFenceError_api,
-    GetPolygonsDirectoryData_api,
-    GetPolygonsDirectoryResponse_api,
-    GetPolygonsDirectoryError_api,
-    GetPolygonsDataData_api,
-    GetPolygonsDataResponse_api,
-    GetPolygonsDataError_api,
-    GetUserInfoData_api,
-    GetUserInfoResponse_api,
-    GetUserInfoError_api,
-    GetUserPhotoData_api,
-    GetUserPhotoResponse_api,
-    GetUserPhotoError_api,
-    GetObservationsData_api,
-    GetObservationsResponse_api,
-    GetObservationsError_api,
-    GetTableDefinitionData_api,
-    GetTableDefinitionResponse_api,
-    GetTableDefinitionError_api,
-    GetRealizationDataData_api,
-    GetRealizationDataResponse_api,
-    GetRealizationDataError_api,
-    GetVfpTableNamesData_api,
-    GetVfpTableNamesResponse_api,
-    GetVfpTableNamesError_api,
-    GetVfpTableData_api,
-    GetVfpTableResponse_api,
-    GetVfpTableError_api,
-    GetSessionsMetadataData_api,
-    GetSessionsMetadataResponse_api,
-    GetSessionsMetadataError_api,
-    CreateSessionData_api,
-    CreateSessionResponse_api,
-    CreateSessionError_api,
-    DeleteSessionData_api,
-    DeleteSessionError_api,
-    GetSessionData_api,
-    GetSessionResponse_api,
-    GetSessionError_api,
-    UpdateSessionData_api,
-    UpdateSessionResponse_api,
-    UpdateSessionError_api,
-    GetSessionMetadataData_api,
-    GetSessionMetadataResponse_api,
-    GetSessionMetadataError_api,
-    GetSnapshotAccessLogsData_api,
-    GetSnapshotAccessLogsResponse_api,
-    GetSnapshotAccessLogsError_api,
-    GetSnapshotsMetadataData_api,
-    GetSnapshotsMetadataResponse_api,
-    GetSnapshotsMetadataError_api,
-    CreateSnapshotData_api,
-    CreateSnapshotResponse_api,
-    CreateSnapshotError_api,
-    DeleteSnapshotData_api,
-    DeleteSnapshotError_api,
-    GetSnapshotData_api,
-    GetSnapshotResponse_api,
-    GetSnapshotError_api,
-    DeleteSnapshotAccessLogData_api,
-    DeleteSnapshotAccessLogError_api,
-    LoginRouteData_api,
-    LoginRouteError_api,
-    AuthorizedCallbackRouteData_api,
-    GetAliveData_api,
-    GetAliveResponse_api,
-    GetAliveProtectedData_api,
-    GetAliveProtectedResponse_api,
+    PostGetSeismicFenceErrors_api,
+    PostGetSeismicFenceResponses_api,
+    PostGetSurfaceIntersectionData_api,
+    PostGetSurfaceIntersectionErrors_api,
+    PostGetSurfaceIntersectionResponses_api,
     PostLogoutData_api,
     PostLogoutResponses_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -280,6 +249,9 @@ import type {
     PostRefreshFingerprintsForEnsemblesResponses_api,
     RootData_api,
     RootResponses_api,
+    UpdateSessionData_api,
+    UpdateSessionErrors_api,
+    UpdateSessionResponses_api,
 } from "./types.gen";
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<
@@ -1495,6 +1467,7 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Sessions Metadata
+ *
  * Get a paginated list of session metadata for the authenticated user.
  *
  * This endpoint returns session metadata (without content) with support for:
@@ -1508,14 +1481,20 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(
 export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
     options?: Options<GetSessionsMetadataData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetSessionsMetadataResponse_api, GetSessionsMetadataError_api, ThrowOnError>({
-        ...options,
+    return (options?.client ?? client).get<
+        GetSessionsMetadataResponses_api,
+        GetSessionsMetadataErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
         url: "/persistence/sessions",
+        ...options,
     });
 };
 
 /**
  * Create Session
+ *
  * Create a new session for the authenticated user.
  *
  * Provide:
@@ -1534,18 +1513,20 @@ export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
 export const createSession = <ThrowOnError extends boolean = false>(
     options: Options<CreateSessionData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).post<CreateSessionResponse_api, CreateSessionError_api, ThrowOnError>({
+    return (options.client ?? client).post<CreateSessionResponses_api, CreateSessionErrors_api, ThrowOnError>({
+        responseType: "json",
+        url: "/persistence/sessions",
         ...options,
         headers: {
             "Content-Type": "application/json",
-            ...options?.headers,
+            ...options.headers,
         },
-        url: "/persistence/sessions",
     });
 };
 
 /**
  * Delete Session
+ *
  * Permanently delete a session.
  *
  * This operation:
@@ -1558,14 +1539,16 @@ export const createSession = <ThrowOnError extends boolean = false>(
 export const deleteSession = <ThrowOnError extends boolean = false>(
     options: Options<DeleteSessionData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).delete<unknown, DeleteSessionError_api, ThrowOnError>({
-        ...options,
+    return (options.client ?? client).delete<DeleteSessionResponses_api, DeleteSessionErrors_api, ThrowOnError>({
+        responseType: "json",
         url: "/persistence/sessions/{session_id}",
+        ...options,
     });
 };
 
 /**
  * Get Session
+ *
  * Retrieve a complete session by its ID.
  *
  * Returns the full session document including:
@@ -1574,15 +1557,19 @@ export const deleteSession = <ThrowOnError extends boolean = false>(
  *
  * Only the session owner can access this endpoint.
  */
-export const getSession = <ThrowOnError extends boolean = false>(options: Options<GetSessionData_api, ThrowOnError>) => {
-    return (options?.client ?? client).get<GetSessionResponse_api, GetSessionError_api, ThrowOnError>({
-        ...options,
+export const getSession = <ThrowOnError extends boolean = false>(
+    options: Options<GetSessionData_api, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetSessionResponses_api, GetSessionErrors_api, ThrowOnError>({
+        responseType: "json",
         url: "/persistence/sessions/{session_id}",
+        ...options,
     });
 };
 
 /**
  * Update Session
+ *
  * Update an existing session with partial or complete changes.
  *
  * You can update any combination of:
@@ -1605,18 +1592,20 @@ export const getSession = <ThrowOnError extends boolean = false>(options: Option
 export const updateSession = <ThrowOnError extends boolean = false>(
     options: Options<UpdateSessionData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).put<UpdateSessionResponse_api, UpdateSessionError_api, ThrowOnError>({
+    return (options.client ?? client).put<UpdateSessionResponses_api, UpdateSessionErrors_api, ThrowOnError>({
+        responseType: "json",
+        url: "/persistence/sessions/{session_id}",
         ...options,
         headers: {
             "Content-Type": "application/json",
-            ...options?.headers,
+            ...options.headers,
         },
-        url: "/persistence/sessions/{session_id}",
     });
 };
 
 /**
  * Get Session Metadata
+ *
  * Retrieve only the metadata for a specific session.
  *
  * Returns session metadata without the content, useful for:
@@ -1629,14 +1618,16 @@ export const updateSession = <ThrowOnError extends boolean = false>(
 export const getSessionMetadata = <ThrowOnError extends boolean = false>(
     options: Options<GetSessionMetadataData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetSessionMetadataResponse_api, GetSessionMetadataError_api, ThrowOnError>({
-        ...options,
+    return (options.client ?? client).get<GetSessionMetadataResponses_api, GetSessionMetadataErrors_api, ThrowOnError>({
+        responseType: "json",
         url: "/persistence/sessions/metadata/{session_id}",
+        ...options,
     });
 };
 
 /**
  * Get Snapshot Access Logs
+ *
  * Get a list of all snapshots you have visited.
  *
  * This endpoint tracks your interaction history with snapshots, including:
@@ -1659,14 +1650,20 @@ export const getSessionMetadata = <ThrowOnError extends boolean = false>(
 export const getSnapshotAccessLogs = <ThrowOnError extends boolean = false>(
     options?: Options<GetSnapshotAccessLogsData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetSnapshotAccessLogsResponse_api, GetSnapshotAccessLogsError_api, ThrowOnError>({
-        ...options,
+    return (options?.client ?? client).get<
+        GetSnapshotAccessLogsResponses_api,
+        GetSnapshotAccessLogsErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
         url: "/persistence/snapshot_access_logs",
+        ...options,
     });
 };
 
 /**
  * Get Snapshots Metadata
+ *
  * Get a paginated list of your snapshot metadata.
  *
  * Returns metadata for snapshots you own (without content) with support for:
@@ -1682,14 +1679,20 @@ export const getSnapshotAccessLogs = <ThrowOnError extends boolean = false>(
 export const getSnapshotsMetadata = <ThrowOnError extends boolean = false>(
     options?: Options<GetSnapshotsMetadataData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetSnapshotsMetadataResponse_api, GetSnapshotsMetadataError_api, ThrowOnError>({
-        ...options,
+    return (options?.client ?? client).get<
+        GetSnapshotsMetadataResponses_api,
+        GetSnapshotsMetadataErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
         url: "/persistence/snapshots",
+        ...options,
     });
 };
 
 /**
  * Create Snapshot
+ *
  * Create a new snapshot for point-in-time capture.
  *
  * Provide:
@@ -1710,18 +1713,20 @@ export const getSnapshotsMetadata = <ThrowOnError extends boolean = false>(
 export const createSnapshot = <ThrowOnError extends boolean = false>(
     options: Options<CreateSnapshotData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).post<CreateSnapshotResponse_api, CreateSnapshotError_api, ThrowOnError>({
+    return (options.client ?? client).post<CreateSnapshotResponses_api, CreateSnapshotErrors_api, ThrowOnError>({
+        responseType: "json",
+        url: "/persistence/snapshots",
         ...options,
         headers: {
             "Content-Type": "application/json",
-            ...options?.headers,
+            ...options.headers,
         },
-        url: "/persistence/snapshots",
     });
 };
 
 /**
  * Delete Snapshot
+ *
  * Permanently delete a snapshot.
  *
  * This operation:
@@ -1739,14 +1744,16 @@ export const createSnapshot = <ThrowOnError extends boolean = false>(
 export const deleteSnapshot = <ThrowOnError extends boolean = false>(
     options: Options<DeleteSnapshotData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).delete<unknown, DeleteSnapshotError_api, ThrowOnError>({
-        ...options,
+    return (options.client ?? client).delete<DeleteSnapshotResponses_api, DeleteSnapshotErrors_api, ThrowOnError>({
+        responseType: "json",
         url: "/persistence/snapshots/{snapshot_id}",
+        ...options,
     });
 };
 
 /**
  * Get Snapshot
+ *
  * Retrieve a complete snapshot by its ID.
  *
  * Returns the full snapshot document including:
@@ -1762,15 +1769,19 @@ export const deleteSnapshot = <ThrowOnError extends boolean = false>(
  *
  * Any user with the snapshot ID can access snapshots (they are shareable).
  */
-export const getSnapshot = <ThrowOnError extends boolean = false>(options: Options<GetSnapshotData_api, ThrowOnError>) => {
-    return (options?.client ?? client).get<GetSnapshotResponse_api, GetSnapshotError_api, ThrowOnError>({
-        ...options,
+export const getSnapshot = <ThrowOnError extends boolean = false>(
+    options: Options<GetSnapshotData_api, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetSnapshotResponses_api, GetSnapshotErrors_api, ThrowOnError>({
+        responseType: "json",
         url: "/persistence/snapshots/{snapshot_id}",
+        ...options,
     });
 };
 
 /**
  * Delete Snapshot Access Log
+ *
  * Delete your access log for a specific snapshot.
  *
  * This operation:
@@ -1783,9 +1794,14 @@ export const getSnapshot = <ThrowOnError extends boolean = false>(options: Optio
 export const deleteSnapshotAccessLog = <ThrowOnError extends boolean = false>(
     options: Options<DeleteSnapshotAccessLogData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).delete<unknown, DeleteSnapshotAccessLogError_api, ThrowOnError>({
-        ...options,
+    return (options.client ?? client).delete<
+        DeleteSnapshotAccessLogResponses_api,
+        DeleteSnapshotAccessLogErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
         url: "/persistence/snapshot_access_logs/{snapshot_id}",
+        ...options,
     });
 };
 
