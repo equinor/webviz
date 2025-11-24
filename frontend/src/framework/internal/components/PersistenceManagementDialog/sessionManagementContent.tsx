@@ -16,6 +16,11 @@ import type {
 } from "@api";
 import { getSessionsMetadata, SessionSortBy_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
+import {
+    edsDateRangeChoiceToFilterIsoStringRange,
+    type EdsDateRange,
+    type FilterIsoStringRange,
+} from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -31,8 +36,6 @@ import { formatDate } from "@lib/utils/dates";
 
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 
-import { edsRangeChoiceToFilterRange } from "./_utils";
-import type { EdsFilterRange, FilterRange } from "./_utils";
 import {
     QUERY_PAGE_SIZE,
     NEXT_PAGE_THRESHOLD,
@@ -44,7 +47,7 @@ import {
 
 type TableFilter = {
     title?: string;
-    updatedAt?: FilterRange;
+    updatedAt?: FilterIsoStringRange;
 };
 
 const TABLE_COLUMNS: TableColumns<SessionMetadata_api> = [
@@ -255,11 +258,11 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         [sessionsQuery, tableData.length, visibleRowRange],
     );
 
-    function handleDateFilterRangeChange(newRange: null | EdsFilterRange) {
+    function handleDateFilterRangeChange(newRange: null | EdsDateRange) {
         setTableFilter((prev) => {
             return {
                 ...prev,
-                updatedAt: edsRangeChoiceToFilterRange(newRange),
+                updatedAt: edsDateRangeChoiceToFilterIsoStringRange(newRange),
             };
         });
     }

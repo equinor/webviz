@@ -11,6 +11,11 @@ import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAcces
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
+import {
+    edsDateRangeChoiceToFilterIsoStringRange,
+    type EdsDateRange,
+    type FilterIsoStringRange,
+} from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -28,7 +33,6 @@ import { formatDate } from "@lib/utils/dates";
 
 import { UserAvatar } from "../UserAvatar";
 
-import { edsRangeChoiceToFilterRange, type EdsFilterRange, type FilterRange } from "./_utils";
 import {
     HEADER_HEIGHT,
     NEXT_PAGE_THRESHOLD,
@@ -45,7 +49,7 @@ type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetad
 
 type TableFilter = {
     title?: string;
-    visitedAt?: FilterRange;
+    visitedAt?: FilterIsoStringRange;
     ownerId?: string;
     snapshotDeleted?: boolean;
 };
@@ -278,11 +282,11 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         return tableData.find((snapshot) => snapshot.snapshotId === selectedSnapshotId) || null;
     }, [tableData, selectedSnapshotId]);
 
-    function handleFilterRangeChange(newRange: null | EdsFilterRange) {
+    function handleDateFilterRangeChange(newRange: null | EdsDateRange) {
         setTableFilter((prev) => {
             return {
                 ...prev,
-                visitedAt: edsRangeChoiceToFilterRange(newRange),
+                visitedAt: edsDateRangeChoiceToFilterIsoStringRange(newRange),
             };
         });
     }
@@ -407,7 +411,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 </Label>
                 <Label text="Last visited at" wrapperClassName="min-w-2xs">
                     <DateRangePicker
-                        onChange={handleFilterRangeChange}
+                        onChange={handleDateFilterRangeChange}
                         className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300 h-10"
                     />
                 </Label>
