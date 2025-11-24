@@ -10,6 +10,7 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
+import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
@@ -17,7 +18,6 @@ import { PlotType } from "../typesAndEnums";
 import { plotTypeAtom, receivedChannelAtom, showTrendlineAtom } from "./atoms/baseAtoms";
 import { availableParameterIdentsAtom } from "./atoms/derivedAtoms";
 import { parameterIdentStringAtom } from "./atoms/persistedAtoms";
-import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 const plotTypes = [{ value: PlotType.ParameterResponseCrossPlot, label: "Parameter correlation" }];
 
 //-----------------------------------------------------------------------------------------------------------

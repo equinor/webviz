@@ -30,6 +30,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -71,7 +72,6 @@ import {
 import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "./atoms/persistableFixableAtoms";
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
-import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);

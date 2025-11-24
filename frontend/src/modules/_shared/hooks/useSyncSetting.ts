@@ -1,6 +1,7 @@
+import React from "react";
+
 import type { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, TopicDefinitionsType } from "@framework/WorkbenchServices";
-import React from "react";
 
 export type UseSyncSettingOptions<K extends keyof GlobalTopicDefinitions> = {
     syncSettingsHelper: SyncSettingsHelper;
