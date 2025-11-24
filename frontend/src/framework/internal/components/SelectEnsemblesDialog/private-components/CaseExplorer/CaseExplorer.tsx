@@ -17,6 +17,7 @@ import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
 import type { TableFilters } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
+import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
@@ -28,7 +29,7 @@ import {
     storeStateInLocalStorage,
 } from "./_utils";
 
-const STALE_TIME = tanstackDebugTimeOverride(5 * 60);
+const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
 export type CaseSelection = {
@@ -73,6 +74,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         enabled: !props.disableQueries,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
+        refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
     });
     const fieldOptions = fieldsQuery.data?.map((f) => ({ value: f.fieldIdentifier, label: f.fieldIdentifier })) ?? [];
 
@@ -87,6 +89,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         enabled: selectedField !== null && !props.disableQueries,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
+        refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
     });
 
     const [selectedCaseUuid, setSelectedCaseId] = useValidState<string>({
@@ -117,8 +120,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     // --- Derived data ---
-    const lastUpdated = React.useMemo(() => {
-        return casesQuery.data && casesQuery.dataUpdatedAt ? new Date(casesQuery.dataUpdatedAt) : null;
+    const lastUpdatedMs = React.useMemo(() => {
+        return casesQuery.data && casesQuery.dataUpdatedAt ? casesQuery.dataUpdatedAt : null;
     }, [casesQuery.data, casesQuery.dataUpdatedAt]);
 
     const caseTableColumns = React.useMemo(() => {
@@ -250,14 +253,15 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const handleManualRefetch = React.useCallback(
         function handleManualRefetch() {
             // isFetching covers both fetching and re-fetching state
-            if (casesQuery.isFetching || props.disableQueries) return;
+            if (props.disableQueries || (casesQuery.isFetching && fieldsQuery.isFetching)) return;
 
             setIsManualRefetch(true);
             setIsRefreshAnimationPlaying(true);
 
-            casesQuery.refetch();
+            if (!fieldsQuery.isFetching) fieldsQuery.refetch();
+            if (!casesQuery.isFetching) casesQuery.refetch();
         },
-        [casesQuery, props.disableQueries],
+        [casesQuery, fieldsQuery, props.disableQueries],
     );
 
     return (
@@ -265,7 +269,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
             <div className="flex flex-row gap-4">
                 <Label text="Field" position="left">
                     <PendingWrapper
-                        isPending={fieldsQuery.isFetching}
+                        isPending={fieldsQuery.isFetching && !fieldsQuery.isRefetching}
                         errorMessage={fieldsQuery.error ? "Error loading fields" : undefined}
                     >
                         <Dropdown
@@ -313,16 +317,23 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         <div className="grow flex flex-col">
                             <span className="text-sm text-slate-500">Select from {numberOfCases} cases</span>
                             <span className="text-xs text-slate-400 italic">
-                                Last updated: {lastUpdated?.toLocaleTimeString() ?? ""}
+                                Last updated:{" "}
+                                {lastUpdatedMs ? (
+                                    <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} />
+                                ) : casesQuery.isFetching ? (
+                                    "Loading..."
+                                ) : (
+                                    "Never"
+                                )}
                             </span>
                         </div>
                         <div className="flex flex-col items-center">
-                            <Tooltip title="Refresh cases list" enterDelay="medium">
-                                <Button color="primary" onClick={handleManualRefetch} size="small">
+                            <Tooltip title="Refresh fields and cases lists" enterDelay="medium">
+                                <Button color="primary" onClick={handleManualRefetch} size="medium">
                                     {isRefreshAnimationPlaying ? (
-                                        <CircularProgress size="medium-small" />
+                                        <CircularProgress size="small" />
                                     ) : (
-                                        <Refresh fontSize="small" />
+                                        <Refresh fontSize="inherit" />
                                     )}
                                     Refresh
                                 </Button>

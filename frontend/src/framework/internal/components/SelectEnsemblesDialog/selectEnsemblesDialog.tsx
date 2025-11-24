@@ -48,6 +48,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     const [showEnsembleExplorer, setShowEnsembleExplorer] = React.useState<boolean>(false);
     const [ensembleExplorerMode, setEnsembleExplorerMode] = React.useState<EnsembleExplorerMode | null>(null);
+    const [hasExplorerBeenOpened, setHasExplorerBeenOpened] = React.useState<boolean>(false);
 
     const [deltaEnsembleUuidToEdit, setDeltaEnsembleUuidToEdit] = React.useState<string>("");
     const [selectedRegularEnsembles, setSelectedRegularEnsembles] = React.useState<InternalRegularEnsembleSetting[]>(
@@ -67,6 +68,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
     );
+
+    // Set has opened flag when opening the ensemble explorer for the first time after dialog open
+    if (isOpen && showEnsembleExplorer && !hasExplorerBeenOpened) {
+        setHasExplorerBeenOpened(true);
+    }
 
     const dialogSizePercent = useResponsiveDialogSizePercent();
     const colorSet = useColorSet(props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings());
@@ -115,8 +121,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             setConfirmCancel(false);
             setIsOpen(false);
             setShowEnsembleExplorer(false);
+            setHasExplorerBeenOpened(false);
         },
-        [setEnsembleStatesFromEnsembleSet, setConfirmCancel, setIsOpen, setShowEnsembleExplorer],
+        [
+            setEnsembleStatesFromEnsembleSet,
+            setConfirmCancel,
+            setIsOpen,
+            setShowEnsembleExplorer,
+            setHasExplorerBeenOpened,
+        ],
     );
 
     function handleCancel() {
@@ -137,6 +150,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
         workbenchSession.loadAndSetupEnsembleSet(regularEnsembleSettings, deltaEnsembleSettings).then(() => {
             setIsOpen(false);
+            setHasExplorerBeenOpened(false);
         });
     }
 
@@ -359,7 +373,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }, [showEnsembleExplorer, ensembleExplorerMode]);
 
     const hasAnyChanges = hash !== currentHash;
-
     return (
         <>
             <Dialog
@@ -398,7 +411,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     open: showEnsembleExplorer,
                     onClose: handleCloseEnsembleExplorer,
                     width: "85%",
-                    content: (
+                    content: hasExplorerBeenOpened ? (
                         <EnsembleExplorer
                             disableQueries={!showEnsembleExplorer}
                             nextEnsembleColor={nextEnsembleColor}
@@ -415,7 +428,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             }
                             onRequestClose={handleCloseEnsembleExplorer}
                         />
-                    ),
+                    ) : undefined,
                 }}
             >
                 <div className="relative flex flex-col w-full h-full">
