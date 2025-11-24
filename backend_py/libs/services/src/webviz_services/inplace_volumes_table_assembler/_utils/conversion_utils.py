@@ -1,3 +1,7 @@
+"""
+This file contains helper functions for conversion between different data types used in the Inplace Volumes Table Assembler.
+"""
+
 from typing import Iterable
 
 import polars as pl
@@ -11,10 +15,6 @@ from webviz_services.sumo_access.inplace_volumes_table_types import (
     Property,
     TableColumnData,
 )
-
-"""
-This file contains helper functions for conversion between different data types used in the Inplace Volumes Table Assembler.
-"""
 
 
 def get_valid_result_names_from_list(result_names: list[str]) -> list[str]:
@@ -84,31 +84,31 @@ def get_required_volume_names_from_properties(properties: Iterable[str]) -> list
     """
 
     volume_names = set()
-    for property in properties:
-        volume_names.update(get_required_volume_names_from_property(property))
+    for prop in properties:
+        volume_names.update(get_required_volume_names_from_property(prop))
 
     return list(volume_names)
 
 
-def get_required_volume_names_from_property(property: str) -> list[str]:
+def get_required_volume_names_from_property(prop: str) -> list[str]:
     """
     Function to convert property to list of required volume names
     """
 
-    if property == Property.NTG:
+    if prop == Property.NTG:
         return [InplaceVolumes.VolumetricColumns.BULK.value, InplaceVolumes.VolumetricColumns.NET.value]
-    if property == Property.PORO:
+    if prop == Property.PORO:
         return [InplaceVolumes.VolumetricColumns.BULK.value, InplaceVolumes.VolumetricColumns.PORV.value]
-    if property == Property.PORO_NET:
+    if prop == Property.PORO_NET:
         return [InplaceVolumes.VolumetricColumns.PORV.value, InplaceVolumes.VolumetricColumns.NET.value]
-    if property == Property.SW:
+    if prop == Property.SW:
         return [InplaceVolumes.VolumetricColumns.HCPV.value, InplaceVolumes.VolumetricColumns.PORV.value]
-    if property == Property.BO:
+    if prop == Property.BO:
         return [InplaceVolumes.VolumetricColumns.HCPV.value, InplaceVolumes.VolumetricColumns.STOIIP.value]
-    if property == Property.BG:
+    if prop == Property.BG:
         return [InplaceVolumes.VolumetricColumns.HCPV.value, InplaceVolumes.VolumetricColumns.GIIP.value]
-    else:
-        raise ValueError(f"Unhandled property: {property}")
+
+    raise ValueError(f"Unhandled property: {prop}")
 
 
 def get_available_properties_from_volume_names(volume_names: Iterable[str]) -> list[str]:
