@@ -26,7 +26,7 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(result._source).toBe(Source.PERSISTENCE);
 
         // Wait for effect to run (effects run in next microtask)
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
 
         // After effect runs, source should transition to USER
         result = store.get(myAtom);
@@ -54,7 +54,7 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(result._source).toBe(Source.PERSISTENCE);
 
         // Wait for effect to run
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
 
         // After effect runs, source should STILL be PERSISTENCE (not transitioned)
         result = store.get(myAtom);
@@ -83,7 +83,7 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(result._source).toBe(Source.TEMPLATE);
 
         // Wait for effect to run
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
 
         // After effect runs, source should transition to USER
         result = store.get(myAtom);
@@ -108,7 +108,7 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(result._source).toBe(Source.USER);
 
         // Wait for effect to run
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
 
         // Should still be USER
         result = store.get(myAtom);
@@ -134,7 +134,7 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(result._source).toBe(Source.PERSISTENCE);
 
         // Wait for effect to run
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
 
         // Should NOT transition because isLoading is true
         result = store.get(myAtom);
@@ -160,7 +160,7 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(result._source).toBe(Source.PERSISTENCE);
 
         // Wait for effect to run
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
 
         // Should NOT transition because depsHaveError is true
         result = store.get(myAtom);
@@ -206,7 +206,7 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(resultB.isValidInContext).toBe(true);
 
         // Wait for effects to run - both should transition to USER
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
 
         resultA = store.get(atomA);
         resultB = store.get(atomB);
@@ -242,7 +242,7 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(result._source).toBe(Source.PERSISTENCE);
 
         // Wait for effect
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
 
         // Should still be invalid (no transition because it's not valid)
         result = store.get(atomA);
@@ -273,7 +273,7 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(result._source).toBe(Source.PERSISTENCE);
 
         // Wait for effect
-        await new Promise((resolve) => queueMicrotask(resolve));
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
 
         // Should transition to USER
         result = store.get(myAtom);
