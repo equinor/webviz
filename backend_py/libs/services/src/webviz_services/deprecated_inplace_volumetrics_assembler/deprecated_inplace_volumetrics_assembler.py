@@ -412,7 +412,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
             return {}
 
         timer_create_raw_df = timer.lap_ms()
-        print(f"Time creating raw DataFrame: {timer_create_raw_df}ms")
+        LOGGER.debug(f"Time creating raw DataFrame: {timer_create_raw_df}ms")
 
         # Build a new table with one merged column per result and additional fluid zone column is created.
         # I.e. where result column has values per fluid zone appended after each other. Num rows is then original num rows * num fluid zones
@@ -512,7 +512,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
 
         filtered_df = inplace_volumetrics_df.filter(mask)
         time_row_filtering = timer.lap_ms()
-        print(f"DATAFRAME row filtering (based on selectors): {time_row_filtering}ms")
+        LOGGER.debug(f"DATAFRAME row filtering (based on selectors): {time_row_filtering}ms")
 
         return filtered_df
 
