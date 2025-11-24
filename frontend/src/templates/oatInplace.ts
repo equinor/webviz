@@ -1,17 +1,15 @@
-import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
-import { TemplateRegistry } from "@framework/TemplateRegistry";
-import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
-import { DisplayComponentType } from "@modules/SensitivityPlot/typesAndEnums";
 
 const template: Template = {
+    name: "Sensitivity analysis of inplace volumes",
     description: "Inplace volumes analysis for design matrix ensembles.",
     moduleInstances: [
-        {
+        createTemplateModuleInstance("InplaceVolumesPlot", {
             instanceRef: "MainInplaceVolumesPlotInstance",
-            moduleName: "InplaceVolumesPlot",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -19,13 +17,14 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER, SyncSettingKey.INPLACE_VOLUMES_RESULT_NAME],
-            initialSettings: {
-                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+            /*
+            initialState: {
+                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
             },
-        },
-        {
+            */
+        }),
+        createTemplateModuleInstance("InplaceVolumesTable", {
             instanceRef: "MainInplaceVolumesTableInstance2",
-            moduleName: "InplaceVolumesTable",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -33,13 +32,14 @@ const template: Template = {
                 relY: 0.5,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER, SyncSettingKey.INPLACE_VOLUMES_RESULT_NAME],
-            initialSettings: {
-                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+            /*
+            initialState: {
+                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
             },
-        },
-        {
-            instanceRef: "SensitivityPlotInstance",
-            moduleName: "SensitivityPlot",
+            */
+        }),
+        createTemplateModuleInstance("ParameterResponseCrossPlot", {
+            instanceRef: "MyParameterResponseCrossPlotInstance",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -48,19 +48,20 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                response: {
+                channelResponse: {
                     listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
-                displayComponentType: DisplayComponentType.SENSITIVITY_CHART,
+            /*
+            initialState: {
+                displayComponentType: DisplayComponentType.TornadoChart,
             },
-        },
-        {
-            instanceRef: "SensitivityPlotInstance2",
-            moduleName: "SensitivityPlot",
+            */
+        }),
+        createTemplateModuleInstance("ParameterResponseCrossPlot", {
+            instanceRef: "MyParameterResponseCrossPlotInstance2",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -69,17 +70,19 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                response: {
+                channelResponse: {
                     listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
-                displayComponentType: DisplayComponentType.SENSITIVITY_TABLE,
+            /*
+            initialState: {
+                displayComponentType: DisplayComponentType.Table,
             },
-        },
+            */
+        }),
     ],
 };
 
-TemplateRegistry.registerTemplate("Sensitivity analysis of inplace volumes", template);
+TemplateRegistry.registerTemplate(template);

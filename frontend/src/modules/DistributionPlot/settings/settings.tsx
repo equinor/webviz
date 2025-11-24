@@ -4,6 +4,7 @@ import { useAtom } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -11,9 +12,16 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
 import type { Interfaces } from "../interfaces";
-import { PlotType } from "../typesAndEnums";
+import { BarSortBy, PlotType } from "../typesAndEnums";
 
-import { numBinsAtom, orientationAtom, plotTypeAtom } from "./atoms/baseAtoms";
+import {
+    barSortByAtom,
+    numBinsAtom,
+    orientationAtom,
+    plotTypeAtom,
+    sharedXAxesAtom,
+    sharedYAxesAtom,
+} from "./atoms/baseAtoms";
 
 const plotTypes = [
     {
@@ -39,6 +47,9 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [numBins, setNumBins] = useAtom(numBinsAtom);
     const [orientation, setOrientation] = useAtom(orientationAtom);
+    const [sharedXAxes, setSharedXAxes] = useAtom(sharedXAxesAtom);
+    const [sharedYAxes, setSharedYAxes] = useAtom(sharedYAxesAtom);
+    const [barSortBy, setBarSortBy] = useAtom(barSortByAtom);
 
     useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
@@ -64,11 +75,28 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
             return null;
         }
         const content: React.ReactNode[] = [];
-
+        const axisContent: React.ReactNode = (
+            <>
+                <div className="mb-2 text-gray-500">
+                    <Checkbox
+                        label="Shared X Axes"
+                        checked={sharedXAxes}
+                        onChange={(_, checked) => setSharedXAxes(checked)}
+                    />
+                </div>
+                <div className="mb-2">
+                    <Checkbox
+                        label="Shared Y Axes"
+                        checked={sharedYAxes}
+                        onChange={(_, checked) => setSharedYAxes(checked)}
+                    />
+                </div>
+            </>
+        );
         if (plotType === PlotType.Histogram) {
             content.push(
-                <CollapsibleGroup title="Plot settings" expanded>
-                    <Label text="Number of bins" key="number-of-bins">
+                <CollapsibleGroup title="Plot settings" expanded key="number-of-bins">
+                    <Label text="Number of bins">
                         <Slider
                             value={numBins}
                             onChange={handleNumBinsChange}
@@ -77,14 +105,21 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                             valueLabelDisplay="auto"
                         />
                     </Label>
+                    {axisContent}
                 </CollapsibleGroup>,
             );
         }
-
+        if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
+            content.push(
+                <CollapsibleGroup title="Plot settings" expanded key="scatter-2d-axes">
+                    {axisContent}
+                </CollapsibleGroup>,
+            );
+        }
         if (plotType === PlotType.BarChart) {
             content.push(
-                <CollapsibleGroup title="Plot settings" expanded>
-                    <Label text="Orientation" key="orientation">
+                <CollapsibleGroup title="Plot settings" expanded key="orientation">
+                    <Label text="Orientation">
                         <RadioGroup
                             options={[
                                 {
@@ -98,6 +133,22 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                             ]}
                             onChange={handleOrientationChange}
                             value={orientation}
+                        />
+                    </Label>
+                    <Label text="Sort bars by">
+                        <RadioGroup
+                            options={[
+                                {
+                                    label: "Value",
+                                    value: BarSortBy.Value,
+                                },
+                                {
+                                    label: "Key",
+                                    value: BarSortBy.Key,
+                                },
+                            ]}
+                            onChange={(_, value) => setBarSortBy(value as typeof barSortBy)}
+                            value={barSortBy}
                         />
                     </Label>
                 </CollapsibleGroup>,

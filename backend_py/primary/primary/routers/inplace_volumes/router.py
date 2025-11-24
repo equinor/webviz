@@ -4,11 +4,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Body, Response
 
 
-from primary.services.inplace_volumes_table_assembler.inplace_volumes_table_assembler import (
+from webviz_services.inplace_volumes_table_assembler.inplace_volumes_table_assembler import (
     InplaceVolumesTableAssembler,
 )
-from primary.services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str

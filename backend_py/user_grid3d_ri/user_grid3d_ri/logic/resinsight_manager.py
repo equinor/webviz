@@ -7,7 +7,7 @@ import asyncio
 import grpc
 import psutil
 
-from webviz_pkg.core_utils.background_tasks import run_in_background_task
+from webviz_core_utils.background_tasks import run_in_background_task
 
 from rips.generated import App_pb2_grpc, Definitions_pb2
 

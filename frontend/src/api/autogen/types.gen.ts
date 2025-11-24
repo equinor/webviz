@@ -968,9 +968,18 @@ export type NetworkNode_api = {
     children: Array<NetworkNode_api>;
 };
 
-/**
- * NodeType
- */
+export type NewSession_api = {
+    title: string;
+    description: string | null;
+    content: string;
+};
+
+export type NewSnapshot_api = {
+    title: string;
+    description: string | null;
+    content: string;
+};
+
 export enum NodeType_api {
     PROD = "prod",
     INJ = "inj",
@@ -993,13 +1002,22 @@ export type Observations_api = {
     rft?: Array<RftObservations_api>;
 };
 
-/**
- * PointSetXY
- */
-export type PointSetXY_api = {
-    /**
-     * X Points
-     */
+export type PageSessionMetadata_api = {
+    items: Array<SessionMetadata_api>;
+    pageToken?: string | null;
+};
+
+export type PageSnapshotAccessLog_api = {
+    items: Array<SnapshotAccessLog_api>;
+    pageToken?: string | null;
+};
+
+export type PageSnapshotMetadata_api = {
+    items: Array<SnapshotMetadata_api>;
+    pageToken?: string | null;
+};
+
+export type PointSetXy_api = {
     x_points: Array<number>;
     /**
      * Y Points
@@ -1571,9 +1589,78 @@ export enum SensitivityType_api {
     SCENARIO = "scenario",
 }
 
-/**
- * StatisticFunction
- */
+export type Session_api = {
+    metadata: SessionMetadata_api;
+    content: string;
+};
+
+export type SessionMetadata_api = {
+    id: string;
+    ownerId: string;
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+    contentHash: string;
+};
+
+export enum SessionSortBy_api {
+    METADATA_CREATED_AT = "metadata.created_at",
+    METADATA_UPDATED_AT = "metadata.updated_at",
+    METADATA_TITLE = "metadata.title",
+}
+
+export type SessionUpdate_api = {
+    title?: string | null;
+    description?: string | null;
+    content?: string | null;
+};
+
+export type Snapshot_api = {
+    metadata: SnapshotMetadata_api;
+    content: string;
+};
+
+export type SnapshotAccessLog_api = {
+    visitorId: string;
+    snapshotId: string;
+    visits: number;
+    firstVisitedAt: string | null;
+    lastVisitedAt: string | null;
+    snapshotDeleted: boolean;
+    snapshotMetadata: SnapshotMetadata_api;
+};
+
+export enum SnapshotAccessLogSortBy_api {
+    VISITS = "visits",
+    LAST_VISITED_AT = "last_visited_at",
+    SNAPSHOT_METADATA_TITLE = "snapshot_metadata.title",
+    SNAPSHOT_METADATA_TITLE_LOWER = "snapshot_metadata.title__lower",
+    SNAPSHOT_METADATA_CREATED_AT = "snapshot_metadata.created_at",
+}
+
+export type SnapshotMetadata_api = {
+    id: string;
+    ownerId: string;
+    title: string;
+    description: string | null;
+    createdAt: string;
+    contentHash: string;
+};
+
+export enum SnapshotSortBy_api {
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
+    TITLE = "title",
+    TITLE_LOWER = "title_lower",
+}
+
+export enum SortDirection_api {
+    ASC = "asc",
+    DESC = "desc",
+}
+
 export enum StatisticFunction_api {
     MEAN = "MEAN",
     MIN = "MIN",
@@ -6121,6 +6208,450 @@ export type GetVfpTableResponses_api = {
 };
 
 export type GetVfpTableResponse_api = GetVfpTableResponses_api[keyof GetVfpTableResponses_api];
+
+export type GetSessionsMetadataData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Continuation token for pagination
+         */
+        cursor?: string | null;
+        /**
+         * Field to sort by (e.g., 'metadata.title')
+         */
+        sort_by?: SessionSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Use case-insensitive sorting
+         */
+        sort_lowercase?: boolean;
+        /**
+         * Limit the number of results
+         */
+        page_size?: number;
+        /**
+         * Filter results by title (case insensitive)
+         */
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_updated_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_updated_to?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions";
+};
+
+export type GetSessionsMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionsMetadataError_api = GetSessionsMetadataErrors_api[keyof GetSessionsMetadataErrors_api];
+
+export type GetSessionsMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: PageSessionMetadata_api;
+};
+
+export type GetSessionsMetadataResponse_api = GetSessionsMetadataResponses_api[keyof GetSessionsMetadataResponses_api];
+
+export type CreateSessionData_api = {
+    body: NewSession_api;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions";
+};
+
+export type CreateSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type CreateSessionError_api = CreateSessionErrors_api[keyof CreateSessionErrors_api];
+
+export type CreateSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type CreateSessionResponse_api = CreateSessionResponses_api[keyof CreateSessionResponses_api];
+
+export type DeleteSessionData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions/{session_id}";
+};
+
+export type DeleteSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSessionError_api = DeleteSessionErrors_api[keyof DeleteSessionErrors_api];
+
+export type DeleteSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSessionData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions/{session_id}";
+};
+
+export type GetSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionError_api = GetSessionErrors_api[keyof GetSessionErrors_api];
+
+export type GetSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Session_api;
+};
+
+export type GetSessionResponse_api = GetSessionResponses_api[keyof GetSessionResponses_api];
+
+export type UpdateSessionData_api = {
+    body: SessionUpdate_api;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions/{session_id}";
+};
+
+export type UpdateSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type UpdateSessionError_api = UpdateSessionErrors_api[keyof UpdateSessionErrors_api];
+
+export type UpdateSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Session_api;
+};
+
+export type UpdateSessionResponse_api = UpdateSessionResponses_api[keyof UpdateSessionResponses_api];
+
+export type GetSessionMetadataData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions/metadata/{session_id}";
+};
+
+export type GetSessionMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionMetadataError_api = GetSessionMetadataErrors_api[keyof GetSessionMetadataErrors_api];
+
+export type GetSessionMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SessionMetadata_api;
+};
+
+export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
+
+export type GetSnapshotAccessLogsData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Continuation token for pagination
+         */
+        cursor?: string | null;
+        /**
+         * Limit the number of results
+         */
+        page_size?: number | null;
+        /**
+         * Sort the result by
+         */
+        sort_by?: SnapshotAccessLogSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Use case-insensitive sorting
+         */
+        sort_lowercase?: boolean;
+        /**
+         * Filter results by title (case insensitive)
+         */
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_to?: string | null;
+        /**
+         * Filter results by date of last visit
+         */
+        filter_last_visited_from?: string | null;
+        /**
+         * Filter results by date of last visit
+         */
+        filter_last_visited_to?: string | null;
+        /**
+         * Filter results by snapshot owner ID
+         */
+        filter_owner_id?: string | null;
+        /**
+         * Filter results by deletion status of the snapshot
+         */
+        filter_snapshot_deleted?: boolean | null;
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshot_access_logs";
+};
+
+export type GetSnapshotAccessLogsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotAccessLogsError_api = GetSnapshotAccessLogsErrors_api[keyof GetSnapshotAccessLogsErrors_api];
+
+export type GetSnapshotAccessLogsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: PageSnapshotAccessLog_api;
+};
+
+export type GetSnapshotAccessLogsResponse_api = GetSnapshotAccessLogsResponses_api[keyof GetSnapshotAccessLogsResponses_api];
+
+export type GetSnapshotsMetadataData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Continuation token for pagination
+         */
+        cursor?: string | null;
+        /**
+         * Limit the number of results
+         */
+        page_size?: number | null;
+        /**
+         * Sort the result by
+         */
+        sort_by?: SnapshotSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Use case-insensitive sorting
+         */
+        sort_lowercase?: boolean;
+        /**
+         * Filter results by title (case insensitive)
+         */
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_to?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshots";
+};
+
+export type GetSnapshotsMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotsMetadataError_api = GetSnapshotsMetadataErrors_api[keyof GetSnapshotsMetadataErrors_api];
+
+export type GetSnapshotsMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: PageSnapshotMetadata_api;
+};
+
+export type GetSnapshotsMetadataResponse_api = GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
+
+export type CreateSnapshotData_api = {
+    body: NewSnapshot_api;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshots";
+};
+
+export type CreateSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type CreateSnapshotError_api = CreateSnapshotErrors_api[keyof CreateSnapshotErrors_api];
+
+export type CreateSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type CreateSnapshotResponse_api = CreateSnapshotResponses_api[keyof CreateSnapshotResponses_api];
+
+export type DeleteSnapshotData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshots/{snapshot_id}";
+};
+
+export type DeleteSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSnapshotError_api = DeleteSnapshotErrors_api[keyof DeleteSnapshotErrors_api];
+
+export type DeleteSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSnapshotData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshots/{snapshot_id}";
+};
+
+export type GetSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotError_api = GetSnapshotErrors_api[keyof GetSnapshotErrors_api];
+
+export type GetSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Snapshot_api;
+};
+
+export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshotResponses_api];
+
+export type DeleteSnapshotAccessLogData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshot_access_logs/{snapshot_id}";
+};
+
+export type DeleteSnapshotAccessLogErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSnapshotAccessLogError_api = DeleteSnapshotAccessLogErrors_api[keyof DeleteSnapshotAccessLogErrors_api];
+
+export type DeleteSnapshotAccessLogResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type LoginRouteData_api = {
     body?: never;

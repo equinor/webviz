@@ -1,25 +1,17 @@
 import { useAtom } from "jotai";
 
-import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
-import type { ModuleSettingsProps } from "@framework/Module";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { Slider } from "@lib/components/Slider";
 
-import type { Interfaces } from "../interfaces";
-
 import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./atoms/baseAtoms";
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
+export function Settings() {
     const [numParams, setNumParams] = useAtom(numParamsAtom);
     const [corrCutOff, setCorrCutOff] = useAtom(corrCutOffAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
-
-    useApplyInitialSettingsToState(initialSettings, "numParams", "number", setNumParams);
-    useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
-    useApplyInitialSettingsToState(initialSettings, "corrCutOff", "number", setCorrCutOff);
 
     function handleNumParamsChange(_: Event, value: number | number[]) {
         if (Array.isArray(value)) {

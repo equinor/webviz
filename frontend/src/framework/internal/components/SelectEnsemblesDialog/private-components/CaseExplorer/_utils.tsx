@@ -68,7 +68,7 @@ export function makeCaseTableColumns(
             },
             renderData: (value, context) => (
                 <div className="flex justify-center gap-1">
-                    <UserAvatar key={context.entry.caseId} userIdent={`${value}@equinor.com`} />
+                    <UserAvatar key={context.entry.caseId} userIdOrEmail={`${value}@equinor.com`} />
                     <span
                         className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block"
                         title={value}

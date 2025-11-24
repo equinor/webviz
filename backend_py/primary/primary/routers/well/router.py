@@ -3,20 +3,18 @@ from typing import List, Union
 
 from fastapi import APIRouter, Depends, Query
 
-from primary.services.smda_access.drogon import DrogonSmdaAccess
-from primary.services.smda_access import SmdaAccess
-from primary.services.smda_access import GeologyAccess as SmdaGeologyAccess
-from primary.services.service_exceptions import NoDataError
+from webviz_services.smda_access.drogon import DrogonSmdaAccess
+from webviz_services.smda_access import SmdaAccess
+from webviz_services.smda_access import GeologyAccess as SmdaGeologyAccess
+from webviz_services.service_exceptions import NoDataError
+from webviz_services.ssdl_access.well_access import WellAccess as SsdlWellAccess
+from webviz_services.ssdl_access.drogon import DrogonWellAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 
-from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.drogon import is_drogon_identifier
-
-from primary.services.ssdl_access.well_access import WellAccess as SsdlWellAccess
-from primary.services.ssdl_access.drogon import DrogonWellAccess
-
-
 from primary.middleware.add_browser_cache import add_custom_cache_time
+
 from . import schemas
 from . import converters
 

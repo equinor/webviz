@@ -1,0 +1,161 @@
+from typing import Any, Dict, Tuple, Optional
+
+from sumo.wrapper import SumoClient
+from fmu.sumo.explorer import TimeFilter, TimeType
+
+from webviz_services.service_exceptions import (
+    InvalidDataError,
+    MultipleDataMatchesError,
+    Service,
+)
+
+
+def get_time_filter(time_or_interval_str: Optional[str]) -> TimeFilter:
+    if time_or_interval_str is None:
+        time_filter = TimeFilter(TimeType.NONE)
+
+    else:
+        timestamp_arr = time_or_interval_str.split("/", 1)
+        if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
+            raise ValueError("time_or_interval_str must contain a single timestamp or interval")
+        if len(timestamp_arr) == 1:
+            time_filter = TimeFilter(
+                TimeType.TIMESTAMP,
+                start=timestamp_arr[0],
+                end=timestamp_arr[0],
+                exact=True,
+            )
+        else:
+            time_filter = TimeFilter(
+                TimeType.INTERVAL,
+                start=timestamp_arr[0],
+                end=timestamp_arr[1],
+                exact=True,
+            )
+    return time_filter
+
+
+async def get_grid_geometry_blob_id_async(
+    sumo_client: SumoClient,
+    case_uuid: str,
+    ensemble_name: str,
+    realization: int,
+    grid_name: str,
+) -> str:
+    """Get the blob id for a given grid geometry in a case, ensemble and realization"""
+    payload = {
+        "query": {
+            "bool": {
+                "must": [
+                    {"match": {"_sumo.parent_object.keyword": case_uuid}},
+                    {"match": {"class": "cpgrid"}},
+                    {"match": {"fmu.ensemble.name": ensemble_name}},
+                    {"match": {"fmu.realization.id": realization}},
+                    {"match": {"data.name.keyword": grid_name}},
+                ]
+            }
+        },
+        "size": 1,
+    }
+    response = await sumo_client.post_async("/search", json=payload)
+
+    result = response.json()
+    hits = result["hits"]["hits"]
+    if len(hits) != 1:
+        raise MultipleDataMatchesError(f"Expected 1 hit, got {len(hits)}", Service.SUMO)
+    return [hit["_id"] for hit in hits][0]
+
+
+async def get_grid_geometry_and_property_blob_ids_async(
+    sumo_client: SumoClient,
+    case_uuid: str,
+    ensemble_name: str,
+    realization: int,
+    grid_name: str,
+    parameter_name: str,
+    parameter_time_or_interval_str: Optional[str] = None,
+) -> Tuple[str, str]:
+    """Get the blob ids for both grid geometry and grid property in a case, ensemble, and realization"""
+    query: Dict[str, Any] = {
+        "bool": {
+            "should": [
+                {
+                    "bool": {
+                        "must": [
+                            {"term": {"_sumo.parent_object.keyword": case_uuid}},
+                            {"term": {"class.keyword": "cpgrid"}},
+                            {"term": {"fmu.ensemble.name.keyword": ensemble_name}},
+                            {"term": {"fmu.realization.id": realization}},
+                            {"term": {"data.name.keyword": grid_name}},
+                        ]
+                    }
+                },
+                {
+                    "bool": {
+                        "must": [
+                            {"term": {"_sumo.parent_object.keyword": case_uuid}},
+                            {"term": {"class.keyword": "cpgrid_property"}},
+                            {"term": {"fmu.ensemble.name.keyword": ensemble_name}},
+                            {"term": {"fmu.realization.id": realization}},
+                            {"term": {"data.name.keyword": parameter_name}},
+                            {
+                                "bool": {
+                                    "should": [
+                                        {"term": {"data.geometry.name.keyword": grid_name}},
+                                        {
+                                            "term": {"data.tagname.keyword": grid_name}
+                                        },  # Old metadata has reference to geometry in tagname. Allow for now.
+                                    ],
+                                    "minimum_should_match": 1,
+                                }
+                            },
+                        ]
+                    }
+                },
+            ],
+            "minimum_should_match": 1,
+        }
+    }
+    time_filter = get_time_filter(parameter_time_or_interval_str)
+
+    grid_property_must_clause = query["bool"]["should"][1]["bool"]["must"]
+
+    if time_filter.time_type == TimeType.NONE:
+        grid_property_must_clause.append({"bool": {"must_not": {"exists": {"field": "data.time"}}}})
+
+    elif time_filter.time_type == TimeType.TIMESTAMP:
+        # For a single timestamp, t0 must match AND t1 must NOT exist.
+        grid_property_must_clause.append({"term": {"data.time.t0.value": time_filter.start}})
+        grid_property_must_clause.append({"bool": {"must_not": {"exists": {"field": "data.time.t1"}}}})
+
+    elif time_filter.time_type == TimeType.INTERVAL:
+        # For an interval, both t0 and t1 must match exactly.
+        grid_property_must_clause.append({"term": {"data.time.t0.value": time_filter.start}})
+        grid_property_must_clause.append({"term": {"data.time.t1.value": time_filter.end}})
+
+    payload = {
+        "query": query,
+        "size": 2,
+    }
+    response = await sumo_client.post_async("/search", json=payload)
+
+    result = response.json()
+    hits = result["hits"]["hits"]
+    if len(hits) != 2:
+        raise InvalidDataError(f"Expected 2 hits, got {len(hits)}", service=Service.SUMO)
+
+    grid_geometry_id = None
+    grid_property_id = None
+    for hit in hits:
+        if hit["_source"]["class"] == "cpgrid":
+            grid_geometry_id = hit["_id"]
+        elif hit["_source"]["class"] == "cpgrid_property":
+            grid_property_id = hit["_id"]
+
+    if not grid_geometry_id or not grid_property_id:
+        raise InvalidDataError(
+            f"Did not find expected document types: {parameter_name=} {parameter_time_or_interval_str=} {grid_name=} {grid_geometry_id=} {grid_property_id=}",
+            service=Service.SUMO,
+        )
+
+    return grid_geometry_id, grid_property_id

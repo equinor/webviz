@@ -1,11 +1,11 @@
 import re as regex
-from primary.services.smda_access.types import (
+from webviz_services.smda_access.types import (
     WellboreGeoHeader,
     WellboreGeoData,
     StratigraphicColumn,
     WellboreStratigraphicUnit,
 )
-from primary.services.ssdl_access.types import WellboreLogCurveHeader, WellboreLogCurveData
+from webviz_services.ssdl_access.types import WellboreLogCurveHeader, WellboreLogCurveData
 
 from . import schemas
 

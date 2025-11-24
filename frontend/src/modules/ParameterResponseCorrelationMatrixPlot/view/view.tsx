@@ -3,20 +3,20 @@ import React from "react";
 import { Input, Warning } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
-import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
-import { KeyKind } from "@framework/DataChannelTypes";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { KeyKind } from "@framework/types/dataChannnel";
+import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
 import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
-import { ContentInfo } from "@modules/_shared/components/ContentMessage";
-import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
@@ -27,7 +27,7 @@ import {
 } from "@modules/_shared/utils/math/correlationMatrix";
 
 import type { Interfaces } from "../interfaces";
-import { PlotType, type CorrelationSettings } from "../typesAndEnums";
+import { PlotType } from "../typesAndEnums";
 
 import { ParameterCorrelationMatrixFigure } from "./utils/parameterCorrelationMatrixFigure";
 import { createResponseParameterCorrelationMatrix } from "./utils/parameterCorrelationMatrixUtils";
@@ -54,18 +54,19 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const [prevUseFixedColorRange, setPrevUseFixedColorRange] = React.useState<boolean>(true);
     const [prevColorScaleWithGradient, setPrevColorScaleWithGradient] = React.useState<[number, string][]>([]);
     const [prevPlotType, setPrevPlotType] = React.useState<PlotType>(PlotType.ParameterResponseMatrix);
-    const [prevCorrelationSettings, setPrevCorrelationSettings] = React.useState<CorrelationSettings>({
-        threshold: null as number | null,
-        hideIndividualCells: true,
-        filterColumns: true,
-        filterRows: true,
-    });
+    const [prevCorrelationThreshold, setPrevCorrelationThreshold] = React.useState<number | null>(null);
+    const [prevHideIndividualCells, setPrevHideIndividualCells] = React.useState<boolean>(true);
+    const [prevFilterColumns, setPrevFilterColumns] = React.useState<boolean>(true);
+    const [prevFilterRows, setPrevFilterRows] = React.useState<boolean>(true);
 
     const parameterIdents = viewContext.useSettingsToViewInterfaceValue("parameterIdents");
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
     const useFixedColorRange = viewContext.useSettingsToViewInterfaceValue("useFixedColorRange");
-    const correlationSettings = viewContext.useSettingsToViewInterfaceValue("correlationSettings");
+    const correlationThreshold = viewContext.useSettingsToViewInterfaceValue("correlationThreshold");
+    const hideIndividualCells = viewContext.useSettingsToViewInterfaceValue("hideIndividualCells");
+    const filterColumns = viewContext.useSettingsToViewInterfaceValue("filterColumns");
+    const filterRows = viewContext.useSettingsToViewInterfaceValue("filterRows");
     const ensembleSet = workbenchSession.getEnsembleSet();
 
     const statusWriter = useViewStatusWriter(viewContext);
@@ -104,7 +105,10 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         useFixedColorRange !== prevUseFixedColorRange ||
         !isEqual(colorScaleWithGradient, prevColorScaleWithGradient) ||
         plotType !== prevPlotType ||
-        !isEqual(correlationSettings, prevCorrelationSettings)
+        correlationThreshold !== prevCorrelationThreshold ||
+        hideIndividualCells !== prevHideIndividualCells ||
+        filterColumns !== prevFilterColumns ||
+        filterRows !== prevFilterRows
     ) {
         setRevNumberResponses(receiverResponseRevisionNumbers);
 
@@ -114,13 +118,16 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         setPrevUseFixedColorRange(useFixedColorRange);
         setPrevColorScaleWithGradient(colorScaleWithGradient);
         setPrevPlotType(plotType);
-        setPrevCorrelationSettings(correlationSettings);
+        setPrevCorrelationThreshold(correlationThreshold);
+        setPrevHideIndividualCells(hideIndividualCells);
+        setPrevFilterColumns(filterColumns);
+        setPrevFilterRows(filterRows);
 
         startTransition(function makeContent() {
             // Content when no data channels are defined
             if (receiverResponses.every((response) => !response.channel)) {
                 setContent(
-                    <ContentInfo>
+                    <ContentWarning>
                         <span>
                             Data channel required for use. Add a main module to the workbench and use the data channels
                             <Input fontSize="small" />
@@ -131,7 +138,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                             <Tag label="Response" />
                             <Tag label="Response" />
                         </span>
-                    </ContentInfo>,
+                    </ContentWarning>,
                 );
                 return;
             }
@@ -142,11 +149,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             );
             // Content when no data is received on any of the channels
             if (usedChannels.length === usedChannelsWithoutData.length) {
-                setContent(
-                    <ContentInfo>
-                        <span>No data received on any of the channels. Check relevant modules for issues.</span>
-                    </ContentInfo>,
-                );
+                setContent(<ContentWarning>No data received on any of the channels.</ContentWarning>);
                 return;
             }
             // Add a warning when some channels have no data
@@ -193,6 +196,19 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 showLabels,
                 useFixedColorRange,
             });
+            for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
+                const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+                if (!ensemble || ensemble instanceof DeltaEnsemble) {
+                    const ensembleType = !ensemble ? "Invalid" : "Delta";
+                    setContent(
+                        <ContentWarning>
+                            <p>{ensembleType} ensemble detected in the data channel.</p>
+                            <p>Unable to compute parameter correlations.</p>
+                        </ContentWarning>,
+                    );
+                    return;
+                }
+            }
             fillParameterCorrelationMatrixFigure(
                 figure,
                 parameterIdents,
@@ -201,7 +217,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 ensembleSet,
                 receiveResponsesPerEnsembleIdent,
                 plotType,
-                correlationSettings,
+                { threshold: correlationThreshold, hideIndividualCells, filterColumns, filterRows },
             );
             setContent(
                 <>
@@ -218,6 +234,12 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         </div>
     );
 }
+type CorrelationSettings = {
+    threshold: number | null;
+    hideIndividualCells: boolean;
+    filterColumns: boolean;
+    filterRows: boolean;
+};
 
 function fillParameterCorrelationMatrixFigure(
     figure: ParameterCorrelationMatrixFigure,
