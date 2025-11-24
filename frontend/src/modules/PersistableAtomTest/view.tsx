@@ -1,10 +1,5 @@
-import React from "react";
-
 import { useAtomValue } from "jotai";
 
-import type { ModuleViewProps } from "@framework/Module";
-
-import type { Interfaces } from "./interfaces";
 import {
     downstreamAtom,
     precomputedAtom,
@@ -12,7 +7,7 @@ import {
     upstreamAtom,
 } from "./settings/atoms/persistableFixableAtoms";
 
-export function View({ }: ModuleViewProps<Interfaces>) {
+export function View() {
     const simpleNumber = useAtomValue(simpleNumberAtom);
     const upstream = useAtomValue(upstreamAtom);
     const downstream = useAtomValue(downstreamAtom);
@@ -24,7 +19,7 @@ export function View({ }: ModuleViewProps<Interfaces>) {
 
             <div className="text-sm text-gray-600">
                 This view shows the real-time state of all persistable atoms. Watch how the source changes from
-                "persistence" to "user" automatically when atoms become valid.
+                `&quot;persistence`&quot; to `&quot;user`&quot; automatically when atoms become valid.
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -73,10 +68,19 @@ export function View({ }: ModuleViewProps<Interfaces>) {
             <div className="mt-8 p-4 bg-blue-50 rounded border border-blue-200">
                 <h3 className="font-bold mb-2">Expected Behavior:</h3>
                 <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li>When you load a snapshot with valid values, atoms start with source "persistence"</li>
-                    <li>After a brief moment (microtask), valid atoms automatically transition to source "user"</li>
-                    <li>Once transitioned to "user", atoms will auto-fix if they become invalid due to dependency changes</li>
-                    <li>Invalid persisted atoms remain with source "persistence" and show warnings until manually fixed</li>
+                    <li>When you load a snapshot with valid values, atoms start with source &quot;persistence&quot;</li>
+                    <li>
+                        After a brief moment (microtask), valid atoms automatically transition to source
+                        &quot;user&quot;
+                    </li>
+                    <li>
+                        Once transitioned to &quot;user&quot;, atoms will auto-fix if they become invalid due to
+                        dependency changes
+                    </li>
+                    <li>
+                        Invalid persisted atoms remain with source &quot;persistence&quot; and show warnings until
+                        manually fixed
+                    </li>
                 </ul>
             </div>
         </div>
@@ -104,7 +108,11 @@ function AtomCard({
 }) {
     const statusColor = isValid ? "bg-green-100 border-green-300" : "bg-red-100 border-red-300";
     const sourceColor =
-        source === "user" ? "bg-blue-100 text-blue-800" : source === "persistence" ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-800";
+        source === "user"
+            ? "bg-blue-100 text-blue-800"
+            : source === "persistence"
+              ? "bg-amber-100 text-amber-800"
+              : "bg-gray-100 text-gray-800";
 
     return (
         <div className={`p-4 rounded-lg border-2 ${statusColor}`}>

@@ -1,7 +1,7 @@
 import { useAtom } from "jotai";
 
-import type { ModuleSettingsProps } from "@framework/Module";
-import { PersistableAtomState, Source } from "@framework/utils/atomUtils";
+import type { PersistableAtomState} from "@framework/utils/atomUtils";
+import { Source } from "@framework/utils/atomUtils";
 import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
@@ -9,16 +9,9 @@ import { Label } from "@lib/components/Label";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
-import type { Interfaces } from "../interfaces";
+import { downstreamAtom, precomputedAtom, simpleNumberAtom, upstreamAtom } from "./atoms/persistableFixableAtoms";
 
-import {
-    downstreamAtom,
-    precomputedAtom,
-    simpleNumberAtom,
-    upstreamAtom,
-} from "./atoms/persistableFixableAtoms";
-
-export function Settings({}: ModuleSettingsProps<Interfaces>) {
+export function Settings() {
     const [simpleNumber, setSimpleNumber] = useAtom(simpleNumberAtom);
     const [upstream, setUpstream] = useAtom(upstreamAtom);
     const [downstream, setDownstream] = useAtom(downstreamAtom);
@@ -30,10 +23,7 @@ export function Settings({}: ModuleSettingsProps<Interfaces>) {
     const precomputedAnnotations = useMakePersistableFixableAtomAnnotations(precomputedAtom);
 
     // Helper to set invalid values as PERSISTENCE source to bypass auto-fix
-    const setAsInvalidPersisted = (
-        setter: (value: number | PersistableAtomState<number>) => void,
-        value: number
-    ) => {
+    const setAsInvalidPersisted = (setter: (value: number | PersistableAtomState<number>) => void, value: number) => {
         setter({ value, _source: Source.PERSISTENCE } as PersistableAtomState<number>);
     };
 
@@ -73,7 +63,7 @@ export function Settings({}: ModuleSettingsProps<Interfaces>) {
                 <div className="flex flex-col gap-4">
                     <div className="text-sm text-gray-600">
                         Upstream and Downstream atoms demonstrate cascading dependencies. When Upstream changes,
-                        Downstream may become invalid. If Downstream's source is USER, it auto-fixes.
+                        Downstream may become invalid. If Downstream&apos;s source is USER, it auto-fixes.
                     </div>
 
                     <SettingWrapper annotations={upstreamAnnotations}>
@@ -160,41 +150,41 @@ export function Settings({}: ModuleSettingsProps<Interfaces>) {
                     </p>
                     <ol className="list-decimal list-inside space-y-1">
                         <li>
-                            Click <strong>"Set Valid as USER"</strong> buttons to set all atoms to valid values with USER
-                            source
+                            Click <strong>&quot;Set Valid as USER&quot;</strong> buttons to set all atoms to valid
+                            values with USER source
                         </li>
                         <li>Observe that atoms can be freely edited without warnings</li>
                         <li>
-                            Click <strong>"Set Invalid as PERSISTENCE"</strong> button on any atom
+                            Click <strong>&quot;Set Invalid as PERSISTENCE&quot;</strong> button on any atom
                         </li>
                         <li>
                             Observe the <strong>warning annotation</strong> appears (yellow/red indicator)
                         </li>
                         <li>The atom will NOT auto-fix because source is PERSISTENCE</li>
-                        <li>Change the value manually or click "Set Valid as USER" to fix it</li>
+                        <li>Change the value manually or click &quot;Set Valid as USER&quot; to fix it</li>
                     </ol>
                     <p className="mt-4">
                         <strong>To test auto-transition with snapshots:</strong>
                     </p>
                     <ol className="list-decimal list-inside space-y-1">
-                        <li>Set all atoms to valid values using "Set Valid as USER" buttons</li>
+                        <li>Set all atoms to valid values using &quot;Set Valid as USER&quot; buttons</li>
                         <li>Create a snapshot</li>
-                        <li>Load the snapshot - observe atoms have source: "persistence"</li>
-                        <li>After a brief moment, sources auto-transition to "user"</li>
+                        <li>Load the snapshot - observe atoms have source: &quot;persistence&quot;</li>
+                        <li>After a brief moment, sources auto-transition to &quot;user&quot;</li>
                         <li>Now change Upstream to a large value (e.g., 50)</li>
                         <li>
-                            Downstream auto-fixes to Upstream+1 (no warning!) because its source is "user"
+                            Downstream auto-fixes to Upstream+1 (no warning!) because its source is &quot;user&quot;
                         </li>
                     </ol>
                     <p className="mt-4">
                         <strong>To test invalid persisted state (from snapshot):</strong>
                     </p>
                     <ol className="list-decimal list-inside space-y-1">
-                        <li>Click "Set Invalid as PERSISTENCE" on one or more atoms</li>
+                        <li>Click &quot;Set Invalid as PERSISTENCE&quot; on one or more atoms</li>
                         <li>Create a snapshot</li>
                         <li>Load the snapshot</li>
-                        <li>Invalid atoms show warnings and keep source: "persistence"</li>
-                        <li>They will NOT auto-transition to "user" until manually fixed</li>
+                        <li>Invalid atoms show warnings and keep source: &quot;persistence&quot;</li>
+                        <li>They will NOT auto-transition to &quot;user&quot; until manually fixed</li>
                     </ol>
                 </div>
             </CollapsibleGroup>

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { createStore } from "jotai";
+import { describe, expect, it } from "vitest";
 
 import { persistableFixableAtom, Source } from "../../src/framework/utils/atomUtils";
 

@@ -3,9 +3,9 @@ import type { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@ta
 import type { Atom, Getter, Setter, WritableAtom } from "jotai";
 import { atom } from "jotai";
 import { atomWithReducer } from "jotai/utils";
+import { atomEffect } from "jotai-effect";
 import type { AtomWithQueryOptions } from "jotai-tanstack-query";
 import { atomWithQuery } from "jotai-tanstack-query";
-import { atomEffect } from "jotai-effect";
 
 export function atomWithCompare<Value>(initialValue: Value, areEqualFunc: (prev: Value, next: Value) => boolean) {
     return atomWithReducer(initialValue, (prev: Value, next: Value) => {
