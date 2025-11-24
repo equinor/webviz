@@ -3,7 +3,10 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { EnsembleMode } from "@modules/ParameterDistributions/typesAndEnums";
+import { ParameterSortMethod } from "@modules/ParameterDistributions/view/utils/parameterSorting";
 
+import { selectedEnsembleModeAtom } from "./baseAtoms";
 import { intersectedParameterIdentsAtom } from "./derivedAtoms";
 
 export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
@@ -97,5 +100,23 @@ export const selectedParameterIdentsAtom = persistableFixableAtom<ParameterIdent
         }
 
         return value.filter((ident) => intersectedParameterIdents.some((elm) => elm.equals(ident)));
+    },
+});
+
+export const selectedParameterSortingMethodAtom = persistableFixableAtom<ParameterSortMethod>({
+    initialValue: ParameterSortMethod.ALPHABETICAL,
+    isValidFunction: ({ value, get }) => {
+        const ensembleMode = get(selectedEnsembleModeAtom);
+        if (ensembleMode === EnsembleMode.INDEPENDENT) {
+            return value === ParameterSortMethod.ALPHABETICAL;
+        }
+        return Object.values(ParameterSortMethod).includes(value);
+    },
+    fixupFunction: ({ value, get }) => {
+        const ensembleMode = get(selectedEnsembleModeAtom);
+        if (ensembleMode === EnsembleMode.INDEPENDENT || !value) {
+            return ParameterSortMethod.ALPHABETICAL;
+        }
+        return value;
     },
 });

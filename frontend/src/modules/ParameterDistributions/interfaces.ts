@@ -4,7 +4,6 @@ import type { InterfaceInitialization } from "@framework/UniDirectionalModuleCom
 
 import {
     selectedEnsembleModeAtom,
-    selectedParameterSortingMethodAtom,
     histogramModeAtom,
     selectedVisualizationTypeAtom,
     showIndividualRealizationValuesAtom,
@@ -13,6 +12,7 @@ import {
 import {
     selectedEnsembleIdentsAtom,
     selectedParameterIdentsAtom,
+    selectedParameterSortingMethodAtom,
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
 } from "./settings/atoms/persistableFixableAtoms";
@@ -65,6 +65,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return get(selectedEnsembleModeAtom);
     },
     parameterSortingMethod: (get) => {
-        return get(selectedParameterSortingMethodAtom);
+        return get(selectedParameterSortingMethodAtom).value;
     },
 };
