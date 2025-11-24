@@ -223,6 +223,62 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(resultB._source).toBe(Source.USER);
     });
 
+    it("should handle invalid first atom cascade dependency scenario", async () => {
+        // Atom A - upstream dependency
+        const atomA = persistableFixableAtom({
+            initialValue: 10,
+            isValidFunction: ({ value }) => value > 0,
+            fixupFunction: () => 1,
+        });
+
+        // Atom B - depends on atom A
+        const atomB = persistableFixableAtom({
+            initialValue: 20,
+            isValidFunction: ({ value, get }) => {
+                const valueA = get(atomA).value;
+                // B is valid only if its value is greater than A's value
+                return value > valueA;
+            },
+            fixupFunction: ({ get }) => {
+                const valueA = get(atomA).value;
+                return valueA + 1;
+            },
+        });
+
+        const store = createStore();
+
+        // Subscribe to both atoms to mount them and activate effects
+        store.sub(atomA, () => {});
+        store.sub(atomB, () => {});
+
+        // Set both as persisted and valid
+        store.set(atomA, { value: 10, _source: Source.PERSISTENCE });
+        store.set(atomB, { value: 20, _source: Source.PERSISTENCE });
+
+        // Both should be valid
+        let resultA = store.get(atomA);
+        let resultB = store.get(atomB);
+        expect(resultA.isValidInContext).toBe(true);
+        expect(resultB.isValidInContext).toBe(true);
+
+        // Wait for effects to run - both should transition to USER
+        await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+        resultA = store.get(atomA);
+        resultB = store.get(atomB);
+        expect(resultA._source).toBe(Source.USER);
+        expect(resultB._source).toBe(Source.USER);
+
+        // User changes atom A to an invalid value
+        store.set(atomA, -5);
+
+        // Now atom B should remain unchanged because atom A is invalid
+        resultB = store.get(atomB);
+        expect(resultB.isValidInContext).toBe(true); // Still true because because invalid upstream atom A stops propagation
+        expect(resultB.value).toBe(20); // Unchanged downstream atom
+        expect(resultB._source).toBe(Source.USER);
+    });
+
     it("should show warning for initially invalid persisted state", async () => {
         const atomA = persistableFixableAtom({
             initialValue: 10,
