@@ -3,6 +3,7 @@ import type { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@ta
 import type { Atom, Getter, Setter, WritableAtom } from "jotai";
 import { atom } from "jotai";
 import { atomWithReducer } from "jotai/utils";
+import { atomEffect } from "jotai-effect";
 import type { AtomWithQueryOptions } from "jotai-tanstack-query";
 import { atomWithQuery } from "jotai-tanstack-query";
 
@@ -371,12 +372,46 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
         },
     );
 
-    Object.defineProperty(fixableAtom, PERSISTABLE_ATOM, {
+    // Create an effect that auto-transitions PERSISTENCE/TEMPLATE → USER when valid
+    const transitionEffect = atomEffect((get, set) => {
+        const currentRead = get(fixableAtom);
+        const internalState = get(internalStateAtom);
+
+        // Only transition if:
+        // 1. Source is PERSISTENCE or TEMPLATE
+        // 2. Atom is valid in context
+        // 3. Not loading
+        // 4. Dependencies don't have errors
+        if (
+            (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) &&
+            currentRead.isValidInContext &&
+            !currentRead.isLoading &&
+            !currentRead.depsHaveError
+        ) {
+            set(internalStateAtom, {
+                value: internalState.value,
+                _source: Source.USER,
+            });
+        }
+    });
+
+    // Wrap the atom to automatically mount the effect
+    const atomWithEffect = atom(
+        (get) => {
+            get(transitionEffect); // Subscribe to effect
+            return get(fixableAtom);
+        },
+        (_get, set, update: TValue | PersistableAtomState<TValue>) => {
+            set(fixableAtom, update);
+        },
+    );
+
+    Object.defineProperty(atomWithEffect, PERSISTABLE_ATOM, {
         value: true,
         enumerable: false,
     });
 
-    return fixableAtom;
+    return atomWithEffect;
 }
 
 type PersistableFlagged = { [PERSISTABLE_ATOM]: true };

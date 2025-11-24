@@ -746,6 +746,146 @@ Each module can persist two separate state objects:
 
 Both use the same pattern: define a serialized state type, create a JTD schema, implement serialize/deserialize functions, and register with the module.
 
+### Understanding persistableFixableAtom
+
+The `persistableFixableAtom` utility provides state management for values that need validation and automatic correction when loaded from persistence or when dependencies change. It's essential for robust module state persistence.
+
+#### Core Features
+
+**1. Source Tracking**
+
+Every value has a source that determines how invalid values are handled:
+- `Source.USER`: Value set by direct user interaction → auto-fixes when invalid
+- `Source.PERSISTENCE`: Value loaded from saved session → shows warnings when invalid
+- `Source.TEMPLATE`: Value loaded from template → same behavior as PERSISTENCE
+
+**2. Validation & Fixup**
+
+```typescript
+persistableFixableAtom({
+    initialValue: defaultValue,
+
+    // Check if value is valid in current context
+    isValidFunction: ({ value, get }) => {
+        // Return true if value is valid, false otherwise
+        // Can read other atoms via get()
+    },
+
+    // Provide fallback when USER-source value is invalid
+    fixupFunction: ({ value, get }) => {
+        // Return a valid replacement value
+        // Only called for USER source, never for PERSISTENCE
+    },
+})
+```
+
+**3. Auto-Transition Behavior**
+
+When a value with `Source.PERSISTENCE` or `Source.TEMPLATE` becomes valid, it automatically transitions to `Source.USER`:
+
+- Transition happens in next microtask after validation passes
+- Powered by `atomEffect` from `jotai-effect`
+- Enables cascading dependency auto-fixes
+
+**Example Timeline:**
+```
+Load session → Source: PERSISTENCE, Valid: true
+    ↓ (microtask)
+Source: USER, Valid: true
+    ↓ (user changes dependency)
+Source: USER, Valid: false → Auto-fixes immediately
+```
+
+**4. Dependency Awareness**
+
+```typescript
+persistableFixableAtom({
+    initialValue: value,
+
+    // Optional: Track loading/error state of dependencies
+    computeDependenciesState: ({ get }) => {
+        const queryAtom = get(someQueryAtom);
+        if (queryAtom.isPending) return "loading";
+        if (queryAtom.isError) return "error";
+        return "loaded";
+    },
+
+    isValidFunction: ({ value, get }) => { /* ... */ },
+    fixupFunction: ({ get }) => { /* ... */ },
+})
+```
+
+Auto-transition only happens when:
+- `isValidInContext === true`
+- `isLoading === false`
+- `depsHaveError === false`
+
+**5. Precomputation (Optional)**
+
+For expensive computations needed by both validation and fixup:
+
+```typescript
+persistableFixableAtom({
+    // Compute once, use in both functions
+    precomputeFunction: ({ value, get }) => {
+        const expensiveData = computeExpensiveData(value, get);
+        return { expensiveData };
+    },
+
+    isValidFunction: ({ value, get, precomputedValue }) => {
+        // Use precomputedValue.expensiveData
+        return checkValidity(value, precomputedValue.expensiveData);
+    },
+
+    fixupFunction: ({ value, get, precomputedValue }) => {
+        // Reuse same precomputed data
+        return createFallback(precomputedValue.expensiveData);
+    },
+})
+```
+
+**6. Reading Atom State**
+
+The atom returns a rich state object:
+
+```typescript
+const atomState = useAtomValue(myAtom);
+
+atomState.value            // Current value (auto-fixed if source is USER)
+atomState.isValidInContext // false if PERSISTENCE source + invalid
+atomState.isLoading        // true if dependencies loading
+atomState.depsHaveError    // true if dependencies errored
+atomState._source          // "user" | "persistence" | "template"
+```
+
+#### Why Auto-Transition Matters
+
+**Problem Without Auto-Transition:**
+
+Consider two atoms where B depends on A:
+1. Load session: A=10, B=20 (both valid, both PERSISTENCE source)
+2. User changes A to 50
+3. B becomes invalid (20 is not > 50)
+4. ❌ B shows warning even though user caused the invalidity
+5. ❌ User must manually fix B even though it could auto-fix
+
+**Solution With Auto-Transition:**
+
+1. Load session: A=10, B=20 (both valid, both PERSISTENCE source)
+2. Auto-transition: A and B both become USER source (after validation)
+3. User changes A to 50
+4. B becomes invalid (20 is not > 50)
+5. ✅ B auto-fixes to 51 immediately (no warning!)
+
+**When Warnings Are Shown:**
+
+Warnings only appear for genuinely problematic persisted state:
+- Session was saved with invalid data
+- Data that existed when session was saved no longer exists
+- Session is from incompatible module version
+
+These require user attention and shouldn't be silently fixed.
+
 ### Step-by-Step Implementation
 
 #### 1. Define Persistable Atoms
