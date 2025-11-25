@@ -26,26 +26,32 @@ export type EnsembleExplorerProps = {
 export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode {
     const [selectedCaseName, setSelectedCaseName] = React.useState<string>("");
     const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string>("");
-    const [selectedCaseEnsembles, setSelectedCaseEnsembles] = React.useState<EnsembleInfo_api[] | null>(null);
+    const [selectedCaseSortedEnsembles, setSelectedCaseSortedEnsembles] = React.useState<EnsembleInfo_api[] | null>(
+        null,
+    );
 
     // --- Derived data ---
     const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>({
         initialState: "",
-        validStates: selectedCaseEnsembles?.map((ens) => ens.name) ?? [],
-        keepStateWhenInvalid: true,
+        validStates: selectedCaseSortedEnsembles?.map((ens) => ens.name) ?? [],
+        keepStateWhenInvalid: false,
     });
 
     const selectedEnsemble = React.useMemo(() => {
-        return selectedCaseEnsembles?.find((ens) => ens.name === selectedEnsembleName) ?? null;
-    }, [selectedCaseEnsembles, selectedEnsembleName]);
+        return selectedCaseSortedEnsembles?.find((ens) => ens.name === selectedEnsembleName) ?? null;
+    }, [selectedCaseSortedEnsembles, selectedEnsembleName]);
 
-    const ensembleOptions: SelectOption<string>[] =
-        selectedCaseEnsembles
-            ?.sort((a, b) => a.name.localeCompare(b.name))
-            .map((e) => ({
-                label: `${e.name}  (${e.realizationCount} reals)`,
-                value: e.name,
-            })) ?? [];
+    const ensembleOptions = React.useMemo<SelectOption<string>[]>(
+        function createEnsembleOptions() {
+            return (
+                selectedCaseSortedEnsembles?.map((e) => ({
+                    label: `${e.name}  (${e.realizationCount} reals)`,
+                    value: e.name,
+                })) ?? []
+            );
+        },
+        [selectedCaseSortedEnsembles],
+    );
 
     let selectedEnsembleIdent: RegularEnsembleIdent | null = null;
     try {
@@ -75,9 +81,14 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     }
 
     function handleCaseSelectedChange(caseSelection: CaseSelection) {
+        const selectedCaseSortedEnsembles = caseSelection.filteredEnsembles
+            ? [...caseSelection.filteredEnsembles].sort((a, b) => a.name.localeCompare(b.name))
+            : null;
+
         setSelectedCaseName(caseSelection.caseName);
         setSelectedCaseUuid(caseSelection.caseUuid);
-        setSelectedCaseEnsembles(caseSelection.filteredEnsembles ? [...caseSelection.filteredEnsembles] : []);
+        setSelectedCaseSortedEnsembles(selectedCaseSortedEnsembles);
+        setSelectedEnsembleName(selectedCaseSortedEnsembles ? (selectedCaseSortedEnsembles[0]?.name ?? "") : "");
     }
 
     return (
@@ -88,7 +99,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                     options={ensembleOptions}
                     value={[selectedEnsembleName]}
                     onChange={handleRegularEnsembleChanged}
-                    disabled={selectedCaseEnsembles === null}
+                    disabled={selectedCaseSortedEnsembles === null}
                     size={5}
                     width="100%"
                 />

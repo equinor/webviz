@@ -91,11 +91,15 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
     });
 
-    const [selectedCaseUuid, setSelectedCaseId] = useValidState<string>({
-        initialState: "",
-        validStates: casesQuery.data?.map((item) => item.uuid) ?? [],
-        keepStateWhenInvalid: true,
-    });
+    const sortedCasesQueryData = React.useMemo(
+        function sortCaseQueryDataByDate() {
+            if (!casesQuery.data) {
+                return undefined;
+            }
+            return [...casesQuery.data].sort((a, b) => b.updatedAtUtcMs - a.updatedAtUtcMs);
+        },
+        [casesQuery.data],
+    );
 
     // Refresh query handlers
     const { isRefreshing: isFieldsQueryRefreshing, refresh: refreshFields } = useRefreshQuery(fieldsQuery);
@@ -103,8 +107,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
     // --- Derived data ---
     const lastUpdatedMs = React.useMemo(() => {
-        return casesQuery.data && casesQuery.dataUpdatedAt ? casesQuery.dataUpdatedAt : null;
-    }, [casesQuery.data, casesQuery.dataUpdatedAt]);
+        return sortedCasesQueryData && casesQuery.dataUpdatedAt ? casesQuery.dataUpdatedAt : null;
+    }, [sortedCasesQueryData, casesQuery.dataUpdatedAt]);
 
     const caseTableColumns = React.useMemo(() => {
         const disabledFilterComponents = {
@@ -129,8 +133,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     }
 
     // Extract unique status options and standard results from cases data when it's available
-    if (casesQuery.data) {
-        const uniqueStatuses = [...new Set(casesQuery.data.map((c) => c.status))];
+    if (sortedCasesQueryData) {
+        const uniqueStatuses = [...new Set(sortedCasesQueryData.map((c) => c.status))];
         if (!isEqual(uniqueStatuses, currentStatusOptions)) {
             setCurrentStatusOptions(uniqueStatuses);
         }
@@ -138,12 +142,12 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
     // // Extract unique standard results from cases data when it's available
     const casesStandardResults = React.useMemo(() => {
-        if (!casesQuery.data) {
+        if (!sortedCasesQueryData) {
             return [];
         }
 
         const standardResults = new Set<string>();
-        for (const c of casesQuery.data) {
+        for (const c of sortedCasesQueryData) {
             c.ensembles.forEach((ens) => {
                 ens.standardResults.forEach((res) => {
                     standardResults.add(res);
@@ -152,20 +156,26 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         }
 
         return Array.from(standardResults).sort();
-    }, [casesQuery.data]);
+    }, [sortedCasesQueryData]);
 
     const [selectedStandardResults, setSelectedStandardResults] = useValidArrayState<string>({
         initialState: [],
         validStateArray: casesStandardResults,
-        keepStateWhenInvalid: !casesQuery.data, // Requires valid state when data is available, allows invalid while data is fetching
+        keepStateWhenInvalid: !sortedCasesQueryData, // Requires valid state when data is available, allows invalid while data is fetching
+    });
+
+    const [selectedCaseUuid, setSelectedCaseId] = useValidState<string>({
+        initialState: "",
+        validStates: sortedCasesQueryData?.map((item) => item.uuid) ?? [],
+        keepStateWhenInvalid: false,
     });
 
     const caseRowData = React.useMemo(() => {
-        if (!casesQuery.data) {
+        if (!sortedCasesQueryData) {
             return [];
         }
 
-        let cases = casesQuery.data;
+        let cases = sortedCasesQueryData;
         if (selectedStandardResults.length > 0) {
             cases = cases.filter((c) =>
                 c.ensembles.some((ens) => ens.standardResults.some((res) => selectedStandardResults.includes(res))),
@@ -173,10 +183,10 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         }
 
         return makeCaseRowData(cases);
-    }, [casesQuery.data, selectedStandardResults]);
+    }, [sortedCasesQueryData, selectedStandardResults]);
 
     const currentCaseSelection: CaseSelection = React.useMemo(() => {
-        const selectedCase = casesQuery.data?.find((c) => c.uuid === selectedCaseUuid);
+        const selectedCase = sortedCasesQueryData?.find((c) => c.uuid === selectedCaseUuid);
         let selectedCaseFilteredEnsembles = null;
         if (selectedCase) {
             selectedCaseFilteredEnsembles =
@@ -191,7 +201,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
             caseUuid: selectedCaseUuid,
             filteredEnsembles: selectedCaseFilteredEnsembles,
         };
-    }, [casesQuery.data, selectedCaseUuid, selectedStandardResults]);
+    }, [sortedCasesQueryData, selectedCaseUuid, selectedStandardResults]);
 
     // Add useEffect that compares with previous selection before calling the callback
     React.useEffect(() => {
@@ -324,7 +334,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             rowIdentifier="caseId"
                             height={"100%"}
                             rowHeight={38}
-                            numPendingRows={!casesQuery.data ? "fill" : undefined}
+                            numPendingRows={!sortedCasesQueryData ? "fill" : undefined}
                             columns={caseTableColumns}
                             rows={caseRowData}
                             selectedRows={[selectedCaseUuid]}

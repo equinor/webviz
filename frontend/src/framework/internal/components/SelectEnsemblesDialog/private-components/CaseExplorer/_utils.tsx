@@ -118,17 +118,15 @@ export function makeCaseTableColumns(
 }
 
 export function makeCaseRowData(apiData: CaseInfo_api[]): CaseRowData[] {
-    // Sort after mapping to prevent mutating the original apiData-array
-    return apiData
-        .map((item) => ({
-            caseId: item.uuid,
-            caseName: item.name,
-            description: item.description,
-            author: item.user,
-            status: item.status,
-            dateUtcMs: item.updatedAtUtcMs,
-        }))
-        .sort((a, b) => b.dateUtcMs - a.dateUtcMs); // Newest first
+    // Sorting have to be done outside of this function
+    return apiData.map((item) => ({
+        caseId: item.uuid,
+        caseName: item.name,
+        description: item.description,
+        author: item.user,
+        status: item.status,
+        dateUtcMs: item.updatedAtUtcMs,
+    }));
 }
 
 function predicateCaseNameAndIdFilter(filterValue: string, dataValue: string, caseId: string): boolean {
