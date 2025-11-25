@@ -55,8 +55,8 @@ spec:
                 envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
               - name: WEBVIZ-DB-CONN-STRING
                 envVar: WEBVIZ_DB_CONNECTION_STRING
-              - name: WEBVIZ-SERVICEBUS-NAMESPACE-SENDLISTEN-CONN-STRING
-                envVar: SERVICEBUS_CONNECTION_STRING
+              # - name: WEBVIZ-SERVICEBUS-NAMESPACE-SENDLISTEN-CONN-STRING
+              #   envVar: SERVICEBUS_CONNECTION_STRING
       variables:
         UVICORN_PORT: 5000
       environmentConfig:
@@ -183,8 +183,8 @@ spec:
         azureKeyVaults:
           - name: webviz
             items:
-              - name: WEBVIZ-SERVICEBUS-NAMESPACE-SENDLISTEN-CONN-STRING
-                envVar: SERVICEBUS_CONNECTION_STRING
+              # - name: WEBVIZ-SERVICEBUS-NAMESPACE-SENDLISTEN-CONN-STRING
+              #   envVar: SERVICEBUS_CONNECTION_STRING
               - name: WEBVIZ-SERVICEBUS-NAMESPACE-MANAGE-CONN-STRING
                 envVar: SERVICEBUS_MANAGE_CONNECTION_STRING
       resources:

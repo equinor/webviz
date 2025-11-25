@@ -43,15 +43,10 @@ from opentelemetry.propagate import extract
 from opentelemetry.propagate import inject
 from opentelemetry import trace
 
+from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus.aio import ServiceBusClient, ServiceBusReceiver
 from azure.servicebus import ServiceBusReceivedMessage
 
-
-
-
-# Defaults are for servicebus emulator
-EMULATOR_CONNECTION_STRING = "Endpoint=sb://sb-emulator:5672/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true"
-TEST_QUEUE_NAME = "test-queue"
 
 
 
@@ -75,28 +70,34 @@ async def main_async() -> int:
     LOGGER.info("Starting worker...")
     LOGGER.info("========================================")
 
-    if os.getenv("SERVICEBUS_CONNECTION_STRING"):
+    sb_conn_string = os.getenv("SERVICEBUS_CONNECTION_STRING")
+    LOGGER.info(f"{sb_conn_string=}")
+
+    if sb_conn_string:
         LOGGER.info("Using SERVICEBUS_CONNECTION_STRING from environment")
-        connection_string = os.environ["SERVICEBUS_CONNECTION_STRING"]
+        client = ServiceBusClient.from_connection_string(conn_str=sb_conn_string, retry_total=10)
     else:
-        LOGGER.warning("SERVICEBUS_CONNECTION_STRING not set in environment, using default for local emulator")
-        LOGGER.warning(f"{EMULATOR_CONNECTION_STRING=}")
-        connection_string = EMULATOR_CONNECTION_STRING
+        LOGGER.info("Using DefaultAzureCredential for authentication")
+        # Relies on AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET being set in environment
+        credential = DefaultAzureCredential()
+        LOGGER.info(f"{type(credential)=}")
 
-    queue_name = TEST_QUEUE_NAME
+        fully_qualified_sb_namespace = "webviz-test.servicebus.windows.net"
+        client = ServiceBusClient(fully_qualified_namespace=fully_qualified_sb_namespace, credential=credential)
 
-    #LOGGER.info(f"{connection_string=}")
-    #LOGGER.info(f"{queue_name=}")
+    queue_name = "test-queue"
+    LOGGER.info(f"{queue_name=}")
 
-
-    async with ServiceBusClient.from_connection_string(conn_str=connection_string, retry_total=10) as client:
+    async with client:
         receiver: ServiceBusReceiver = client.get_queue_receiver(
             queue_name=queue_name,
             max_wait_time=None  # seconds to wait for messages before returning
         )
 
         async with receiver:
+            LOGGER.info("---------------")
             LOGGER.info("Waiting for messages...")
+            LOGGER.info("---------------")
 
             msg: ServiceBusReceivedMessage
             async for msg in receiver:
