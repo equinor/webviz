@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import { getCasesOptions, getFieldsOptions, type EnsembleInfo_api } from "@api";
+import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
 import { Button } from "@lib/components/Button";
@@ -62,8 +63,6 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         ...(showOnlyMyCases && { author: userName }),
         ...(showOnlyOfficialCases && { status: ["official"] }),
     });
-    const [isManualRefetch, setIsManualRefetch] = React.useState<boolean>(false);
-    const [isRefreshAnimationPlaying, setIsRefreshAnimationPlaying] = React.useState<boolean>(false);
 
     // Keep the prevCaseSelection state that was already defined
     const [prevCaseSelection, setPrevCaseSelection] = React.useState<CaseSelection | null>(null);
@@ -98,26 +97,9 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         keepStateWhenInvalid: true,
     });
 
-    // Handle manual refresh animation
-    React.useEffect(
-        function handleManualRefreshAnimation() {
-            // Reset states when queries are disabled
-            if (props.disableQueries) {
-                setIsManualRefetch(false);
-                setIsRefreshAnimationPlaying(false);
-                return;
-            }
-
-            // Delayed stop of animation when refetch is done
-            if (isManualRefetch && !casesQuery.isRefetching) {
-                setIsManualRefetch(false);
-                setTimeout(function stopRefreshAnimation() {
-                    setIsRefreshAnimationPlaying(false);
-                }, 500);
-            }
-        },
-        [isManualRefetch, casesQuery.isRefetching, props.disableQueries],
-    );
+    // Refresh query handlers
+    const { isRefreshing: isFieldsQueryRefreshing, refresh: refreshFields } = useRefreshQuery(fieldsQuery);
+    const { isRefreshing: isCasesQueryRefreshing, refresh: refreshCases } = useRefreshQuery(casesQuery);
 
     // --- Derived data ---
     const lastUpdatedMs = React.useMemo(() => {
@@ -253,15 +235,12 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const handleManualRefetch = React.useCallback(
         function handleManualRefetch() {
             // isFetching covers both fetching and re-fetching state
-            if (props.disableQueries || (casesQuery.isFetching && fieldsQuery.isFetching)) return;
+            if (props.disableQueries) return;
 
-            setIsManualRefetch(true);
-            setIsRefreshAnimationPlaying(true);
-
-            if (!fieldsQuery.isFetching) fieldsQuery.refetch();
-            if (!casesQuery.isFetching) casesQuery.refetch();
+            refreshFields();
+            refreshCases();
         },
-        [casesQuery, fieldsQuery, props.disableQueries],
+        [refreshCases, refreshFields, props.disableQueries],
     );
 
     return (
@@ -330,7 +309,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         <div className="flex flex-col items-center">
                             <Tooltip title="Refresh fields and cases lists" enterDelay="medium">
                                 <Button color="primary" onClick={handleManualRefetch} size="medium">
-                                    {isRefreshAnimationPlaying ? (
+                                    {isFieldsQueryRefreshing || isCasesQueryRefreshing ? (
                                         <CircularProgress size="small" />
                                     ) : (
                                         <Refresh fontSize="inherit" />
