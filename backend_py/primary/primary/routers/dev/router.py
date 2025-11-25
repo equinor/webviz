@@ -317,6 +317,7 @@ async def get_ri_isect(
 
 
 import os
+from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus import ServiceBusMessage
 from primary.middleware.add_browser_cache import no_cache
@@ -335,13 +336,20 @@ async def get_send_sb_msg(
 
     perf_metrics = ResponsePerfMetrics(response)
 
-    LOGGER.info(f"About to send message on service bus {msg_text=}")
-
-    connection_string = os.environ["SERVICEBUS_CONNECTION_STRING"]
     queue_name = "test-queue"
-    # LOGGER.debug(f"{connection_string=}")
 
-    async with ServiceBusClient.from_connection_string(conn_str=connection_string) as client:
+    LOGGER.info(f"About to send message on service bus {queue_name=} {msg_text=}")
+
+    # connection_string = os.environ["SERVICEBUS_CONNECTION_STRING"]
+    # LOGGER.debug(f"{connection_string=}")
+    # client = ServiceBusClient.from_connection_string(conn_str=connection_string)
+
+    fully_qualified_namespace = "webviz-test.servicebus.windows.net"
+    credential = DefaultAzureCredential()
+    LOGGER.info(f"{type(credential)=}")
+    client = ServiceBusClient(fully_qualified_namespace=fully_qualified_namespace, credential=credential)
+
+    async with client:
         perf_metrics.record_lap("create-client")
 
         sender = client.get_queue_sender(queue_name=queue_name)
