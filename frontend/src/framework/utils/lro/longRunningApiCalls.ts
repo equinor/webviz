@@ -7,8 +7,8 @@ import { AxiosError } from "axios";
 
 import { client } from "@api";
 import type { LroFailureResp_api, LroInProgressResp_api, HTTPValidationError_api } from "@api";
+import type { RequestResult } from "@api/client";
 import { lroProgressBus } from "@framework/LroProgressBus";
-import type { RequestResult } from "src/api/autogen/client";
 
 import type { BackoffStrategy } from "./backoffStrategies/BackoffStrategy";
 import { FixedBackoffStrategy } from "./backoffStrategies/FixedBackoffStrategy";

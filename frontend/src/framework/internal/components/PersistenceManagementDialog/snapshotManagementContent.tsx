@@ -1,12 +1,17 @@
 import React from "react";
 
 import { DateRangePicker } from "@equinor/eds-core-react";
-import type { Options } from "@hey-api/client-axios";
 import { Close, Delete, FileOpen, Refresh, Search } from "@mui/icons-material";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { omit } from "lodash";
 
-import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
+import type {
+    GetSnapshotAccessLogsData_api,
+    GraphUser_api,
+    SnapshotAccessLog_api,
+    SortDirection_api,
+    Options,
+} from "@api";
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";

@@ -1,7 +1,6 @@
 import React from "react";
 
 import { DateRangePicker } from "@equinor/eds-core-react";
-import type { Options } from "@hey-api/client-axios";
 import { Add, Close, Delete, Edit, FileOpen, Refresh, Search } from "@mui/icons-material";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { InfiniteData } from "@tanstack/react-query";
@@ -11,6 +10,7 @@ import type {
     GetSessionsMetadataData_api,
     GetSessionsMetadataError_api,
     GetSessionsMetadataResponse_api,
+    Options,
     SessionMetadata_api,
     SortDirection_api,
 } from "@api";

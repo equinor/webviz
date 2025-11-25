@@ -3,13 +3,13 @@ import type React from "react";
 import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close } from "@mui/icons-material";
 
+import type { CaseInfo_api } from "@api";
 import { UserAvatar } from "@framework/internal/components/UserAvatar";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import type { ColumnFilterImplementationProps, TableColumns } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
 import { formatDate } from "@lib/utils/dates";
-import type { CaseInfo_api } from "src/api/autogen/types.gen";
 
 import { CaseNameAndIdCell } from "./_components";
 import type { CaseRowData } from "./_types";
