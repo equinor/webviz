@@ -12,7 +12,7 @@ import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -73,9 +73,9 @@ import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "./
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
-    const ensembleSet = useEnsembleSet(workbenchSession);
-    const statusWriter = useSettingsStatusWriter(settingsContext);
+export function Settings(props: ModuleSettingsProps<Interfaces>) {
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
     const [showParameterListFilter, setShowParameterListFilter] = React.useState(false);
 
@@ -101,15 +101,12 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useAtom(selectedParameterIdentStringAtom);
 
-    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-    const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
-
     usePropagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
 
     // Receive global parameter string and update local state if different
     useSyncSetting({
-        syncSettingsHelper: syncHelper,
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
         syncSettingKey: SyncSettingKey.PARAMETER,
         topic: "global.syncValue.parameter",
         value: selectedParameterIdentStr.value,
@@ -319,7 +316,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                         ensembles={ensembleSet.getEnsembleArray()}
                         value={selectedEnsembleIdents.value ?? []}
                         allowDeltaEnsembles={true}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                         onChange={handleEnsembleSelectChange}
                     />
                 </SettingWrapper>

@@ -6,7 +6,7 @@ import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey } from "@framework/SyncSettings";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -34,7 +34,7 @@ function MaxNumberPlotsExceededMessage() {
     );
 }
 
-export function View({ viewContext, workbenchSession, workbenchServices }: ModuleViewProps<Interfaces>) {
+export function View(props: ModuleViewProps<Interfaces>) {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);
@@ -45,44 +45,35 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
     const [localParameterString, setLocalParameterString] = React.useState<string | null>(null);
     const [prevParameterIdentString, setPrevParameterIdentString] = React.useState<string | null>(null);
 
-    const syncedSettingKeys = viewContext.useSyncedSettingKeys();
-    const syncHelper = React.useMemo(
-        () => new SyncSettingsHelper(syncedSettingKeys, workbenchServices),
-        [syncedSettingKeys, workbenchServices],
-    );
-    const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
-
     useSyncSetting({
-        syncSettingsHelper: syncHelper,
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.viewContext,
         syncSettingKey: SyncSettingKey.PARAMETER,
         topic: "global.syncValue.parameter",
         value: localParameterString,
         setValue: setLocalParameterString,
     });
 
-    const handleClickInChart = React.useCallback(
-        function handleClickInChart(e: PlotMouseEvent) {
-            const clickedPoint: PlotDatum = e.points[0];
-            if (!clickedPoint) {
-                return;
-            }
-            const newParameterString = clickedPoint.customdata as string;
-            setLocalParameterString(newParameterString);
-        },
-        [syncHelper],
-    );
+    const handleClickInChart = React.useCallback(function handleClickInChart(e: PlotMouseEvent) {
+        const clickedPoint: PlotDatum = e.points[0];
+        if (!clickedPoint) {
+            return;
+        }
+        const newParameterString = clickedPoint.customdata as string;
+        setLocalParameterString(newParameterString);
+    }, []);
 
-    const numParams = viewContext.useSettingsToViewInterfaceValue("numParams");
-    const corrCutOff = viewContext.useSettingsToViewInterfaceValue("corrCutOff");
-    const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
-    const ensembleSet = workbenchSession.getEnsembleSet();
+    const numParams = props.viewContext.useSettingsToViewInterfaceValue("numParams");
+    const corrCutOff = props.viewContext.useSettingsToViewInterfaceValue("corrCutOff");
+    const showLabels = props.viewContext.useSettingsToViewInterfaceValue("showLabels");
+    const ensembleSet = props.workbenchSession.getEnsembleSet();
 
-    const statusWriter = useViewStatusWriter(viewContext);
+    const statusWriter = useViewStatusWriter(props.viewContext);
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const receiverResponse = viewContext.useChannelReceiver({
+    const receiverResponse = props.viewContext.useChannelReceiver({
         receiverIdString: "channelResponse",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });

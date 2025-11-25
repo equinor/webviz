@@ -3,7 +3,7 @@ import React from "react";
 import { useAtom, useSetAtom } from "jotai";
 
 import type { ModuleSettingsProps } from "@framework/Module";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -21,19 +21,20 @@ import { parameterIdentStringAtom } from "./atoms/persistedAtoms";
 const plotTypes = [{ value: PlotType.ParameterResponseCrossPlot, label: "Parameter correlation" }];
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ settingsContext, workbenchServices }: ModuleSettingsProps<Interfaces>) {
+export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [parameterIdentString, setParameterIdentString] = useAtom(parameterIdentStringAtom);
     const [showTrendline, setShowTrendline] = useAtom(showTrendlineAtom);
     const setReceivedChannel = useSetAtom(receivedChannelAtom);
     const [availableParameterIdents] = useAtom(availableParameterIdentsAtom);
-    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
+    });
     const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
-    const [prevGlobalSyncedParameter, setPrevGlobalSyncedParameter] = React.useState<string | null>(null);
 
     // Need to get the ensemble idents from the channel to get relevant parameters
-    const receiverResponse = settingsContext.useChannelReceiver({
+    const receiverResponse = props.settingsContext.useChannelReceiver({
         receiverIdString: "channelResponse",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
@@ -49,7 +50,8 @@ export function Settings({ settingsContext, workbenchServices }: ModuleSettingsP
     // If not, set it to the first valid parameterIdent
 
     useSyncSetting({
-        syncSettingsHelper: syncHelper,
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
         syncSettingKey: SyncSettingKey.PARAMETER,
         topic: "global.syncValue.parameter",
         value: parameterIdentString.value,
