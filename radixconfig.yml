@@ -176,6 +176,9 @@ spec:
 
     - name: worker-mock
       dockerFileName: ./backend_py/worker_mock/Dockerfile
+      identity:
+        azure:
+          clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
       secretRefs:
         azureKeyVaults:
           - name: webviz
