@@ -111,6 +111,7 @@ services:
       - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
     volumes:
       - ./backend_py/worker_mock/src:/home/appuser/backend_py/worker_mock/src
+      - ./backend_py/libs:/home/appuser/backend_py/libs
     command: ["watchfiles", "python -m worker_mock.worker_main", "/home/appuser/backend_py/worker_mock/src"]
     #command: ["python", "-m", "worker_mock.worker_main"]
     #restart: on-failure
