@@ -2,6 +2,7 @@ import os
 import sys
 import asyncio
 import logging
+from dotenv import load_dotenv
 
 
 logging.basicConfig(format="%(asctime)s %(levelname)-7s [%(name)s]: %(message)s", datefmt="%H:%M:%S")
@@ -9,6 +10,9 @@ logging.getLogger().setLevel(logging.INFO)
 
 LOGGER = logging.getLogger(__name__)
 
+LOGGER.info("Loading environment variables from .env file if present...")
+something_was_loaded = load_dotenv()
+LOGGER.info(f"Loading environment variables from .env file if present... {something_was_loaded}")
 
 # Import and configure telemetry first
 if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
