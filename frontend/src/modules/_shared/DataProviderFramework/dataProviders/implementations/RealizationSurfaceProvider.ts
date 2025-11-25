@@ -2,10 +2,10 @@ import { isEqual } from "lodash";
 
 import type { SurfaceDataPng_api } from "@api";
 import {
-    SurfaceAttributeType_api,
-    SurfaceTimeType_api,
     getRealizationSurfacesMetadataOptions,
     getSurfaceDataOptions,
+    SurfaceAttributeType_api,
+    SurfaceTimeType_api,
 } from "@api";
 import { sortStringArray } from "@lib/utils/arrays";
 import type {

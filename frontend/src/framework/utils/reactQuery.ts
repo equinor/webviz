@@ -1,6 +1,7 @@
-import type { Options } from "@hey-api/client-axios";
 import type { QueryFilters, QueryKey } from "@tanstack/query-core";
 import { isEqual } from "lodash";
+
+import type { Options } from "@api";
 
 // ! copy of hey-api's internal generated key type
 type HeyApiQueryKey<TOptions extends Options> = [

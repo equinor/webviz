@@ -1,8 +1,7 @@
-import type { Options } from "@hey-api/client-axios";
 import { hashKey } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
-import type { SurfaceDataPng_api, GetStatisticalSurfaceDataHybridData_api } from "@api";
+import type { SurfaceDataPng_api, GetStatisticalSurfaceDataHybridData_api, Options } from "@api";
 import {
     SurfaceStatisticFunction_api,
     SurfaceTimeType_api,
@@ -28,6 +27,8 @@ import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataT
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
+import { SurfaceDataFormat } from "./RealizationSurfaceProvider";
+
 const statisticalSurfaceSettings = [
     Setting.ENSEMBLE,
     Setting.STATISTIC_FUNCTION,
@@ -40,11 +41,6 @@ const statisticalSurfaceSettings = [
 ] as const;
 export type StatisticalSurfaceSettings = typeof statisticalSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<StatisticalSurfaceSettings>;
-
-export enum SurfaceDataFormat {
-    FLOAT = "float",
-    PNG = "png",
-}
 
 export type StatisticalSurfaceData =
     | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }

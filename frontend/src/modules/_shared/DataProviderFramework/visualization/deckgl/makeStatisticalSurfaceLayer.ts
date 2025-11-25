@@ -4,11 +4,11 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
+import { SurfaceDataFormat } from "../../dataProviders/implementations/RealizationSurfaceProvider";
 import {
     type StatisticalSurfaceData,
     type StatisticalSurfaceSettings,
     type StatisticalSurfaceStoredData,
-    SurfaceDataFormat,
 } from "../../dataProviders/implementations/StatisticalSurfaceProvider";
 
 export function makeStatisticalSurfaceLayer({
