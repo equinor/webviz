@@ -9,7 +9,7 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
@@ -52,15 +52,10 @@ import {
 } from "./atoms/persistableFixableAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-export const Settings = ({
-    settingsContext,
-    workbenchSession,
-    workbenchServices,
-    workbenchSettings,
-}: ModuleSettingsProps<Interfaces>) => {
-    const ensembleSet = useEnsembleSet(workbenchSession);
-    const statusWriter = useSettingsStatusWriter(settingsContext);
-    const stratigraphyColorSet = useColorSet(workbenchSettings);
+export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const statusWriter = useSettingsStatusWriter(props.settingsContext);
+    const stratigraphyColorSet = useColorSet(props.workbenchSettings);
 
     const setSyncedEnsembleIdents = useSetAtom(syncedEnsembleIdentsAtom);
     const setSelectedStratigraphyColorSet = useSetAtom(selectedStratigraphyColorSetAtom);
@@ -86,8 +81,10 @@ export const Settings = ({
     const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<RegularEnsembleIdent[] | null>(null);
     const [prevStratigraphyColorSet, setPrevStratigraphyColorSet] = React.useState<ColorSet | null>(null);
 
-    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
+    });
     const syncedEnsembleIdents = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
 
     if (!isEqual(stratigraphyColorSet, prevStratigraphyColorSet)) {
@@ -194,7 +191,7 @@ export const Settings = ({
                     <EnsembleDropdown
                         ensembles={ensembleSet.getRegularEnsembleArray()}
                         value={selectedEnsembleIdent.value}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                         onChange={handleEnsembleSelectionChange}
                     />
                 </SettingWrapper>

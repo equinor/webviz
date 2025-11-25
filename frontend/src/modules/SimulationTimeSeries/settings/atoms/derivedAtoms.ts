@@ -35,7 +35,7 @@ export const statisticsTypeAtom = atom<StatisticsType>((get) => {
 export const selectedRegularEnsemblesAtom = atom<RegularEnsemble[]>((get) => {
     // NOTE: Used for view and color by parameter, i.e. not for delta ensembles yet!
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
 
     const selectedRegularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, RegularEnsembleIdent);
 
@@ -52,7 +52,7 @@ export const selectedRegularEnsemblesAtom = atom<RegularEnsemble[]>((get) => {
 
 export const selectedDeltaEnsemblesAtom = atom<DeltaEnsemble[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
 
     const selectedDeltaEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, DeltaEnsembleIdent);
 
@@ -68,7 +68,7 @@ export const selectedDeltaEnsemblesAtom = atom<DeltaEnsemble[]>((get) => {
 
 export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
 
     // Does not support parameters for delta ensembles yet
     const hasAnyDeltaEnsembles = filterEnsembleIdentsByType(selectedEnsembleIdents, DeltaEnsembleIdent).length > 0;
@@ -112,7 +112,7 @@ export const isVectorListQueriesFetchingAtom = atom<boolean>((get) => {
 
 export const ensembleVectorListsHelperAtom = atom<EnsembleVectorListsHelper>((get) => {
     const vectorListQueries = get(vectorListQueriesAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
 
     return new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
 });
@@ -169,7 +169,7 @@ export const customVectorDefinitionsAtom = atom<VectorDefinitionsType | null>((g
 export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const ensembleVectorListsHelper = get(ensembleVectorListsHelperAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
     const selectedVectorNames = get(selectedVectorNamesAtom);
 
     const vectorSpecifications: VectorSpec[] = [];

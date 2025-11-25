@@ -1,5 +1,6 @@
 import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
+import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
     name: "Field production",
@@ -13,13 +14,12 @@ const template: Template = {
                 relX: 0,
                 relY: 0,
             },
-
-            /*
             initialState: {
-                selectedVectorTags: ["FOPT", "FGPT", "FOPR", "FGPR"],
-                visualizationMode: VisualizationMode.STATISTICAL_FANCHART,
+                settings: {
+                    selectedVectorTags: ["FOPT", "FGPT", "FOPR", "FGPR"],
+                    visualizationMode: VisualizationMode.STATISTICAL_FANCHART,
+                },
             },
-            */
         }),
     ],
 };
