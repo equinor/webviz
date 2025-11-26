@@ -8,7 +8,7 @@ import type { PreferredViewLayout } from "./types";
 
 export type SettingsToViewInterface = {
     fieldId: string | null;
-    layerManager: DataProviderManager | null;
+    dataProviderManager: DataProviderManager | null;
     preferredViewLayout: PreferredViewLayout;
 };
 
@@ -20,7 +20,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     fieldId: (get) => {
         return get(fieldIdentifierAtom).value;
     },
-    layerManager: (get) => {
+    dataProviderManager: (get) => {
         return get(dataProviderManagerAtom);
     },
     preferredViewLayout: (get) => {

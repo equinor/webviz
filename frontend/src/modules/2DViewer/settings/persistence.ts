@@ -1,8 +1,7 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { setIfDefined } from "@framework/utils/atomUtils";
+import { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewerComponents/typesAndEnums";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
-
-import { PreferredViewLayout } from "../types";
 
 import { dataProviderStateAtom, preferredViewLayoutAtom } from "./atoms/baseAtoms";
 import { fieldIdentifierAtom } from "./atoms/persistableFixableAtoms";

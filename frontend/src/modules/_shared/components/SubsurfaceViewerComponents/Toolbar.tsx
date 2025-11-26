@@ -1,5 +1,15 @@
 import React from "react";
 
+import { Button } from "@lib/components/Button";
+import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
+import { Input } from "@lib/components/Input";
+import { ToggleButton } from "@lib/components/ToggleButton";
+import { AddPathPointIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
+import { type PolylinesPlugin, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
+import { PolylineEditingMode } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import {
     Add,
     Check,
@@ -10,18 +20,6 @@ import {
     Polyline,
     Remove,
 } from "@mui/icons-material";
-
-import { Button } from "@lib/components/Button";
-import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
-import { Input } from "@lib/components/Input";
-import { ToggleButton } from "@lib/components/ToggleButton";
-import { AddPathPointIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
-import { PolylineEditingMode } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
-
-import { type PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
 
 export type ToolbarProps = {
     verticalScale: number;

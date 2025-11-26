@@ -1,14 +1,15 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewerComponents/typesAndEnums";
 
 import type { DataProviderManager } from "../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
 import { dataProviderManagerAtom, preferredViewLayoutAtom } from "./settings/atoms/baseAtoms";
-import type { PreferredViewLayout } from "./types";
-
+import { fieldIdentifierAtom } from "./settings/atoms/persistableFixableAtoms";
 
 export type SettingsToViewInterface = {
-    layerManager: DataProviderManager | null;
+    dataProviderManager: DataProviderManager | null;
     preferredViewLayout: PreferredViewLayout;
+    fieldId: string | null;
 };
 
 export type Interfaces = {
@@ -16,10 +17,13 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    layerManager: (get) => {
+    dataProviderManager: (get) => {
         return get(dataProviderManagerAtom);
     },
     preferredViewLayout: (get) => {
         return get(preferredViewLayoutAtom);
+    },
+    fieldId: (get) => {
+        return get(fieldIdentifierAtom).value;
     },
 };

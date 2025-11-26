@@ -8,10 +8,10 @@ import { DataProvidersWrapper } from "./components/DataProvidersWrapper";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
-    const layerManager = props.viewContext.useSettingsToViewInterfaceValue("layerManager");
+    const dataProviderManager = props.viewContext.useSettingsToViewInterfaceValue("dataProviderManager");
     const fieldId = props.viewContext.useSettingsToViewInterfaceValue("fieldId");
 
-    if (!layerManager) {
+    if (!dataProviderManager) {
         return null;
     }
 
@@ -22,7 +22,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     return (
         <DataProvidersWrapper
             fieldId={fieldId}
-            layerManager={layerManager}
+            layerManager={dataProviderManager}
             preferredViewLayout={preferredViewLayout}
             viewContext={props.viewContext}
             workbenchSession={props.workbenchSession}
