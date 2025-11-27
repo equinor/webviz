@@ -31,6 +31,7 @@ export enum GuiState {
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
     NumberOfEffectiveRealizationFilters = "numberOfEffectiveRealizationFilters",
     SaveSessionDialogOpen = "saveSessionDialogOpen",
+    IsLoadingEnsembleSet = "isLoadingEnsembleSet",
     IsSavingSession = "isSavingSession",
     IsLoadingSession = "isLoadingSession",
     IsLoadingSnapshot = "isLoadingSnapshot",
@@ -107,6 +108,7 @@ type GuiStateValueTypes = {
     [GuiState.AppInitialized]: boolean;
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
     [GuiState.NumberOfEffectiveRealizationFilters]: number;
+    [GuiState.IsLoadingEnsembleSet]: boolean;
     [GuiState.IsLoadingSession]: boolean;
     [GuiState.IsLoadingSnapshot]: boolean;
     [GuiState.IsSavingSession]: boolean;
@@ -131,6 +133,7 @@ defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);
 defaultStates.set(GuiState.AppInitialized, false);
 defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
 defaultStates.set(GuiState.NumberOfEffectiveRealizationFilters, 0);
+defaultStates.set(GuiState.IsLoadingEnsembleSet, false);
 defaultStates.set(GuiState.IsLoadingSession, false);
 defaultStates.set(GuiState.IsLoadingSnapshot, false);
 defaultStates.set(GuiState.IsSavingSession, false);

@@ -16,6 +16,7 @@ import {
     loadMetadataFromBackendAndCreateEnsembleSet,
     type UserEnsembleSetting,
     type UserDeltaEnsembleSetting,
+    type EnsembleLoadingErrorInfoMap,
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, PrivateWorkbenchSettingsTopic } from "../PrivateWorkbenchSettings";
 
@@ -29,12 +30,15 @@ import {
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
     name: string | null;
+    caseName: string;
     color: string;
 };
 
 export type SerializedDeltaEnsemble = {
     comparisonEnsembleIdent: string;
     referenceEnsembleIdent: string;
+    comparisonEnsembleCaseName: string;
+    referenceEnsembleCaseName: string;
     name: string | null;
     color: string;
 };
@@ -54,7 +58,6 @@ export type WorkbenchSessionMetadata = {
 };
 
 export enum PrivateWorkbenchSessionTopic {
-    IS_ENSEMBLE_SET_LOADING = "EnsembleSetLoadingState",
     ACTIVE_DASHBOARD = "ActiveDashboard",
     DASHBOARDS = "Dashboards",
     METADATA = "Metadata",
@@ -66,7 +69,6 @@ export enum PrivateWorkbenchSessionTopic {
 export type WorkbenchSessionTopicPayloads = {
     [WorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
     [WorkbenchSessionTopic.REALIZATION_FILTER_SET]: { filterSet: RealizationFilterSet };
-    [PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING]: boolean;
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
     [PrivateWorkbenchSessionTopic.METADATA]: WorkbenchSessionMetadata;
@@ -98,9 +100,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         updatedAt: Date.now(),
         lastModifiedMs: Date.now(),
     };
-    private _isEnsembleSetLoading: boolean = false;
     private _loadedFromLocalStorage: boolean = false;
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
+
+    private _ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap = {};
 
     private constructor(queryClient: QueryClient, isSnapshot = false) {
         this._atomStoreMaster = new AtomStoreMaster();
@@ -203,13 +206,16 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                     (e): SerializedRegularEnsemble => ({
                         ensembleIdent: e.getIdent().toString(),
                         name: e.getCustomName(),
+                        caseName: e.getCaseName(),
                         color: e.getColor(),
                     }),
                 ),
                 deltaEnsembles: this._ensembleSet.getDeltaEnsembleArray().map(
                     (e): SerializedDeltaEnsemble => ({
                         comparisonEnsembleIdent: e.getComparisonEnsembleIdent().toString(),
+                        comparisonEnsembleCaseName: e.getComparisonEnsembleCaseName(),
                         referenceEnsembleIdent: e.getReferenceEnsembleIdent().toString(),
+                        referenceEnsembleCaseName: e.getReferenceEnsembleCaseName(),
                         name: e.getCustomName(),
                         color: e.getColor(),
                     }),
@@ -237,6 +243,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         const userEnsembleSettings: UserEnsembleSetting[] = contentState.ensembleSet.regularEnsembles.map((e) => ({
             ensembleIdent: RegularEnsembleIdent.fromString(e.ensembleIdent),
             customName: e.name,
+            caseName: e.caseName,
             color: e.color,
         }));
 
@@ -244,40 +251,28 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             (e) => ({
                 comparisonEnsembleIdent: RegularEnsembleIdent.fromString(e.comparisonEnsembleIdent),
                 referenceEnsembleIdent: RegularEnsembleIdent.fromString(e.referenceEnsembleIdent),
+                comparisonEnsembleCaseName: e.comparisonEnsembleCaseName,
+                referenceEnsembleCaseName: e.referenceEnsembleCaseName,
                 customName: e.name,
                 color: e.color,
             }),
         );
 
-        await this.loadAndSetupEnsembleSet(userEnsembleSettings, userDeltaEnsembleSettings);
+        const { ensembleSet: newSet, ensembleLoadingErrorInfoMap: ensembleLoadingErrorInfoMap } =
+            await loadMetadataFromBackendAndCreateEnsembleSet(
+                this._queryClient,
+                userEnsembleSettings,
+                userDeltaEnsembleSettings,
+            );
+        this.setEnsembleSet(newSet);
+        this._ensembleLoadingErrorInfoMap = ensembleLoadingErrorInfoMap;
 
         // This has to be done after loading the ensemble set
         // in order to guarantee that all realization filters for the ensembles exist
         this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
     }
 
-    async loadAndSetupEnsembleSet(
-        regularEnsembleSettings: UserEnsembleSetting[],
-        deltaEnsembleSettings: UserDeltaEnsembleSetting[],
-    ): Promise<EnsembleSet> {
-        this.setEnsembleSetLoading(true);
-        const newSet = await loadMetadataFromBackendAndCreateEnsembleSet(
-            this._queryClient,
-            regularEnsembleSettings,
-            deltaEnsembleSettings,
-        );
-        await this.setEnsembleSet(newSet);
-        this.setEnsembleSetLoading(false);
-
-        return newSet;
-    }
-
-    private setEnsembleSetLoading(isLoading: boolean) {
-        this._isEnsembleSetLoading = isLoading;
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING);
-    }
-
-    private async setEnsembleSet(set: EnsembleSet) {
+    setEnsembleSet(set: EnsembleSet) {
         this._realizationFilterSet.synchronizeWithEnsembleSet(set);
         this._ensembleSet = set;
         // Await the update of the EnsembleTimestampsStore with the latest timestamps before notifying any subscribers
@@ -300,8 +295,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     ): () => WorkbenchSessionTopicPayloads[T] {
         const snapshotGetter = (): any => {
             switch (topic) {
-                case PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING:
-                    return this._isEnsembleSetLoading;
                 case WorkbenchSessionTopic.ENSEMBLE_SET:
                     return this._ensembleSet;
                 case WorkbenchSessionTopic.REALIZATION_FILTER_SET:
@@ -381,6 +374,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
         this.handleStateChange();
+    }
+
+    getEnsembleLoadingErrorInfoMap(): EnsembleLoadingErrorInfoMap {
+        return this._ensembleLoadingErrorInfoMap;
     }
 
     getEnsembleSet(): EnsembleSet {

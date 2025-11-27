@@ -96,6 +96,8 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
             color: props.nextEnsembleColor,
             comparisonEnsembleIdent: null,
             referenceEnsembleIdent: null,
+            comparisonEnsembleCaseName: null,
+            referenceEnsembleCaseName: null,
             customName: null,
         });
     }

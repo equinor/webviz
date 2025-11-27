@@ -1,11 +1,15 @@
 import React from "react";
 
 import { Check, ChevronRight } from "@mui/icons-material";
+import { useQueryClient } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import {
+    loadMetadataFromBackendAndCreateEnsembleSet,
+    type EnsembleLoadingErrorInfoMap,
+} from "@framework/internal/EnsembleSetLoader";
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
@@ -14,17 +18,18 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
-import { LoadingOverlay } from "../LoadingOverlay";
+import { EnsemblesLoadingErrorInfoDialog } from "../EnsemblesLoadingErrorInfoDialog/EnsemblesLoadingErrorInfoDialog";
 
 import { useResponsiveDialogSizePercent } from "./_hooks";
 import {
     makeDeltaEnsembleSettingsFromEnsembleSet,
-    makeHashFromDeltaEnsemble,
+    makeHashFromDeltaEnsembleDefinition,
     makeHashFromSelectedEnsembles,
     makeSelectableEnsemblesForDeltaFromEnsembleSet,
     makeRegularEnsembleSettingsFromEnsembleSet,
     makeUserEnsembleSettingsFromInternal,
     makeValidUserDeltaEnsembleSettingsFromInternal,
+    createUpdatedDeltaEnsemble,
 } from "./_utils";
 import { EnsembleExplorer } from "./private-components/EnsembleExplorer";
 import { EnsembleTables } from "./private-components/EnsembleTables/EnsembleTables";
@@ -41,10 +46,21 @@ export type SelectEnsemblesDialogProps = {
 };
 
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
-    const [prevEnsembleSet, setPrevEnsembleSet] = React.useState<EnsembleSet | null>(null);
-    const [hash, setHash] = React.useState<string>("");
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
+    const [isEnsembleSetLoading, setIsEnsembleSetLoading] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.IsLoadingEnsembleSet,
+    );
+
+    const [hash, setHash] = React.useState<string>("");
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
+    const [confirmLoadingErrors, setConfirmLoadingErrors] = React.useState<boolean>(false);
+
+    const [prevEnsembleSet, setPrevEnsembleSet] = React.useState<EnsembleSet | null>(null);
+    const [newEnsembleSetToApply, setNewEnsembleSetToApply] = React.useState<EnsembleSet | null>(null);
+    const [ensembleLoadingErrorInfoMap, setEnsembleLoadingErrorInfoMap] = React.useState<EnsembleLoadingErrorInfoMap>(
+        {},
+    );
 
     const [showEnsembleExplorer, setShowEnsembleExplorer] = React.useState<boolean>(false);
     const [ensembleExplorerMode, setEnsembleExplorerMode] = React.useState<EnsembleExplorerMode | null>(null);
@@ -61,18 +77,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         [],
     );
 
+    const queryClient = useQueryClient();
     const workbenchSession = props.workbench.getSessionManager().getActiveSession();
-
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
-    const isEnsembleSetLoading = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
-    );
 
     // Set has opened flag when opening the ensemble explorer for the first time after dialog open
-    if (isOpen && showEnsembleExplorer && !hasExplorerBeenOpened) {
-        setHasExplorerBeenOpened(true);
-    }
+    React.useEffect(() => {
+        if (isOpen && showEnsembleExplorer && !hasExplorerBeenOpened) {
+            setHasExplorerBeenOpened(true);
+        }
+    }, [isOpen, showEnsembleExplorer, hasExplorerBeenOpened]);
 
     const dialogSizePercent = useResponsiveDialogSizePercent();
     const colorSet = useColorSet(props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings());
@@ -93,11 +107,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setHash(makeHashFromSelectedEnsembles(regularEnsembles, deltaEnsembles));
     }, [ensembleSet]);
 
-    // Initialize states from ensemble set
-    if (!isEqual(prevEnsembleSet, ensembleSet)) {
-        setPrevEnsembleSet(ensembleSet);
-        setEnsembleStatesFromEnsembleSet();
-    }
+    React.useEffect(() => {
+        if (!isEqual(prevEnsembleSet, ensembleSet)) {
+            setPrevEnsembleSet(ensembleSet);
+            setEnsembleStatesFromEnsembleSet();
+        }
+    }, [ensembleSet, prevEnsembleSet, setEnsembleStatesFromEnsembleSet]);
 
     const nextEnsembleColor = React.useMemo(() => {
         const usedColors = [...selectedRegularEnsembles, ...selectedDeltaEnsembles].map((ens) => ens.color);
@@ -119,9 +134,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             // Reset states when discard/close
             setEnsembleStatesFromEnsembleSet();
             setConfirmCancel(false);
+            setConfirmLoadingErrors(false);
             setIsOpen(false);
             setShowEnsembleExplorer(false);
             setHasExplorerBeenOpened(false);
+            setNewEnsembleSetToApply(null);
         },
         [
             setEnsembleStatesFromEnsembleSet,
@@ -129,7 +146,20 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             setIsOpen,
             setShowEnsembleExplorer,
             setHasExplorerBeenOpened,
+            setNewEnsembleSetToApply,
         ],
+    );
+
+    const handleContinueWithLoadingErrors = React.useCallback(
+        function handleContinueWithLoadingErrors() {
+            if (!newEnsembleSetToApply) {
+                return;
+            }
+
+            workbenchSession.setEnsembleSet(newEnsembleSetToApply);
+            handleClose();
+        },
+        [newEnsembleSetToApply, handleClose, workbenchSession],
     );
 
     function handleCancel() {
@@ -148,14 +178,37 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         const regularEnsembleSettings = makeUserEnsembleSettingsFromInternal(selectedRegularEnsembles);
         const deltaEnsembleSettings = makeValidUserDeltaEnsembleSettingsFromInternal(selectedDeltaEnsembles);
 
-        workbenchSession.loadAndSetupEnsembleSet(regularEnsembleSettings, deltaEnsembleSettings).then(() => {
-            setIsOpen(false);
-            setHasExplorerBeenOpened(false);
-        });
+        // Set loading state
+        setIsEnsembleSetLoading(true);
+
+        loadMetadataFromBackendAndCreateEnsembleSet(queryClient, regularEnsembleSettings, deltaEnsembleSettings).then(
+            (value: { ensembleSet: EnsembleSet; ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap }) => {
+                // Reset loading state
+                setIsEnsembleSetLoading(false);
+
+                // Handle confirm of error messages if any
+                if (value.ensembleLoadingErrorInfoMap && Object.keys(value.ensembleLoadingErrorInfoMap).length > 0) {
+                    setEnsembleLoadingErrorInfoMap(value.ensembleLoadingErrorInfoMap);
+                    setConfirmLoadingErrors(true);
+                    setNewEnsembleSetToApply(value.ensembleSet);
+                    return;
+                }
+
+                // If no errors, set ensemble set and close dialog
+                workbenchSession.setEnsembleSet(value.ensembleSet);
+                handleClose();
+            },
+        );
     }
 
     function areAnyDeltaEnsemblesInvalid(): boolean {
-        return selectedDeltaEnsembles.some((el) => !el.comparisonEnsembleIdent || !el.referenceEnsembleIdent);
+        return selectedDeltaEnsembles.some(
+            (el) =>
+                !el.comparisonEnsembleIdent ||
+                !el.referenceEnsembleIdent ||
+                !el.comparisonEnsembleCaseName ||
+                !el.referenceEnsembleCaseName,
+        );
     }
 
     function hasDuplicateDeltaEnsembles(): boolean {
@@ -164,7 +217,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             if (!el.comparisonEnsembleIdent || !el.referenceEnsembleIdent) {
                 continue;
             }
-            const key = makeHashFromDeltaEnsemble(el);
+            const key = makeHashFromDeltaEnsembleDefinition(el);
             if (uniqueDeltaEnsembles.has(key)) {
                 return true;
             }
@@ -183,6 +236,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             addSelectedRegularEnsemble(newItem);
             return;
         }
+
+        // Handle selection for editing delta ensemble
+        // - New comparison or reference ensemble selected
 
         const deltaEnsembleToEdit = selectedDeltaEnsembles.find((el) => el.uuid === deltaEnsembleUuidToEdit);
         if (!deltaEnsembleToEdit) {
@@ -203,18 +259,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             ]);
         }
 
-        const selectComparison = ensembleExplorerMode === EnsembleExplorerMode.SELECT_OTHER_COMPARISON_ENSEMBLE;
-        const selectReference = ensembleExplorerMode === EnsembleExplorerMode.SELECT_OTHER_REFERENCE_ENSEMBLE;
-
-        const editedDeltaEnsemble = {
-            ...deltaEnsembleToEdit,
-            comparisonEnsembleIdent: selectComparison
-                ? newItem.ensembleIdent
-                : (deltaEnsembleToEdit.comparisonEnsembleIdent ?? null),
-            referenceEnsembleIdent: selectReference
-                ? newItem.ensembleIdent
-                : (deltaEnsembleToEdit.referenceEnsembleIdent ?? null),
-        };
+        const targetEnsemble =
+            ensembleExplorerMode === EnsembleExplorerMode.SELECT_OTHER_COMPARISON_ENSEMBLE
+                ? "comparisonEnsemble"
+                : "referenceEnsemble";
+        const editedDeltaEnsemble = createUpdatedDeltaEnsemble(deltaEnsembleToEdit, newItem, targetEnsemble);
 
         setSelectedDeltaEnsembles((prev) => {
             return prev.map((ens) => (ens.uuid === editedDeltaEnsemble.uuid ? editedDeltaEnsemble : ens));
@@ -449,13 +498,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         onRequestOtherReferenceEnsemble={handleOnRequestOtherReferenceEnsemble}
                     />
                 </div>
-                {isEnsembleSetLoading && (
-                    <LoadingOverlay
-                        text="Loading ensembles..."
-                        note="Note that the first time an ensemble is loaded in Webviz,
-                        it could take a while to collect all parameter values..."
-                    />
-                )}
             </Dialog>
             <Dialog
                 open={confirmCancel}
@@ -473,6 +515,27 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             >
                 You have unsaved changes which will be lost. Are you sure you want to cancel?
             </Dialog>
+            <EnsemblesLoadingErrorInfoDialog
+                open={confirmLoadingErrors}
+                onClose={() => setConfirmLoadingErrors(false)}
+                description={
+                    <div>
+                        Some ensembles encountered errors during loading and setup and have been excluded. Do you want
+                        to continue without them?
+                    </div>
+                }
+                ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
+                actions={
+                    <div className="flex gap-4">
+                        <Button onClick={() => setConfirmLoadingErrors(false)} color="danger">
+                            No, don&apos;t continue
+                        </Button>
+                        <Button onClick={handleContinueWithLoadingErrors} color="primary">
+                            Yes, continue
+                        </Button>
+                    </div>
+                }
+            />
         </>
     );
 };

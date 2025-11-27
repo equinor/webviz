@@ -34,6 +34,7 @@ export function WorkbenchWrapper() {
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
     const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
     const isSnapshotLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSnapshot);
+    const isEnsembleSetLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingEnsembleSet);
     const hasActiveSession = usePublishSubscribeTopicValue(
         workbench.getSessionManager(),
         WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
@@ -51,7 +52,9 @@ export function WorkbenchWrapper() {
     let content: React.ReactNode;
     const loadingOverlayNote = `Note that the first time an ensemble is loaded in Webviz,
                 it could take a while to collect all parameter values...`;
-    if (!isInitialized) {
+    if (isEnsembleSetLoading) {
+        content = <LoadingOverlay text="Loading ensemble set..." note={loadingOverlayNote} />;
+    } else if (!isInitialized) {
         content = <LoadingOverlay text="Initializing application..." note={loadingOverlayNote} />;
     } else if (isSessionLoading) {
         content = <LoadingOverlay text="Loading session..." note={loadingOverlayNote} />;

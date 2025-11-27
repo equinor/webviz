@@ -207,6 +207,10 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
             const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
+            // this._guiMessageBroker.setState(
+            //     GuiState.EnsembleIdentLoadingErrorMessagesMap,
+            //     session.getEnsembleIdentLoadingErrorMessagesMap(),
+            // );
             await this.setActiveSession(session);
             return true;
         } catch (error) {
@@ -252,6 +256,10 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
             const snapshot = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, snapshotData);
+            // this._guiMessageBroker.setState(
+            //     GuiState.EnsembleIdentLoadingErrorMessagesMap,
+            //     snapshot.getEnsembleIdentLoadingErrorMessagesMap(),
+            // );
             await this.setActiveSession(snapshot);
 
             // Update GUI state for snapshots
@@ -328,6 +336,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                     );
                 }
 
+                // this._guiMessageBroker.setState(
+                //     GuiState.EnsembleIdentLoadingErrorMessagesMap,
+                //     this._activeSession.getEnsembleIdentLoadingErrorMessagesMap(),
+                // );
+
                 // Apply local storage changes on top
                 this._activeSession.setMetadata(localStorageSessionData.metadata);
                 await this._activeSession.deserializeContentState(localStorageSessionData.content);
@@ -339,6 +352,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                     this._queryClient,
                     localStorageSessionData,
                 );
+
+                // this._guiMessageBroker.setState(
+                //     GuiState.EnsembleIdentLoadingErrorMessagesMap,
+                //     session.getEnsembleIdentLoadingErrorMessagesMap(),
+                // );
+
                 await this.setActiveSession(session);
             }
 
@@ -659,6 +678,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             // Create a copy of the current session
             const newSession = await PrivateWorkbenchSession.createCopy(this._queryClient, this._activeSession);
 
+            // this._guiMessageBroker.setState(
+            //     GuiState.EnsembleIdentLoadingErrorMessagesMap,
+            //     newSession.getEnsembleIdentLoadingErrorMessagesMap(),
+            // );
+
             // Update metadata with new title and description BEFORE setting as active
             // This prevents the session from being marked dirty
             newSession.updateMetadata({ title, description }, false);
@@ -825,6 +849,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             this._activeSession.setMetadata(sessionData.metadata);
             await this._activeSession.deserializeContentState(sessionData.content);
+
+            // this._guiMessageBroker.setState(
+            //     GuiState.EnsembleIdentLoadingErrorMessagesMap,
+            //     this._activeSession.getEnsembleIdentLoadingErrorMessagesMap(),
+            // );
 
             this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
         } catch (error) {
