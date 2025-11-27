@@ -2,6 +2,9 @@ import React from "react";
 
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { converter, formatHex } from "culori";
+
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
@@ -12,12 +15,11 @@ import {
     PolylinesPluginTopic,
     type Polyline,
 } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
-import { converter, formatHex } from "culori";
+
+import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
 import { ContextMenu } from "./ContextMenu";
 import { ControlsInfoBox } from "./ControlsInfoBox";
-import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 import { HoverVisualizationWrapper } from "./HoverVisualizationWrapper";
 import type { ReadoutWrapperProps } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";

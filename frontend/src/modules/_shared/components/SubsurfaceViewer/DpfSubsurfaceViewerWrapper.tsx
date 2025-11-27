@@ -1,6 +1,9 @@
 import React from "react";
 
 import { OrbitView, OrthographicView, type Layer } from "@deck.gl/core";
+import type { BoundingBox2D, BoundingBox3D, ViewStateType } from "@webviz/subsurface-viewer";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
@@ -10,8 +13,6 @@ import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTy
 import type { AssemblerProduct } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
-import type { BoundingBox2D, BoundingBox3D, ViewStateType } from "@webviz/subsurface-viewer";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { PlaceholderLayer } from "../../customDeckGlLayers/PlaceholderLayer";
 

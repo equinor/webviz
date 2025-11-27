@@ -3,17 +3,6 @@ import React from "react";
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
-
-import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
-import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
-import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
-import {
-    DeckGlInstanceManagerTopic,
-    type DeckGlInstanceManager,
-} from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
 import type { LayerPickInfo, LightsType, MapMouseEvent } from "@webviz/subsurface-viewer";
 import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";
 import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
@@ -22,9 +11,21 @@ import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/
 import type { Feature } from "geojson";
 import { isEqual } from "lodash";
 
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
+import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
+import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
+import {
+    DeckGlInstanceManagerTopic,
+    type DeckGlInstanceManager,
+} from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
+
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
-import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
+
 import { PositionReadout } from "./PositionReadout";
+import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import {
     SubsurfaceViewerWithCameraState,
     type SubsurfaceViewerWithCameraStateProps,

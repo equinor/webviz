@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
@@ -17,6 +17,10 @@ import { makeIntersectionRealizationGridLayer } from "@modules/3DViewer/DataProv
 import { makeRealizationSurfaceLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
 import { makeSeismicIntersectionMeshLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicIntersectionMeshLayer";
 import { makeSeismicSlicesLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicSlicesLayer";
+import {
+    DpfSubsurfaceViewerWrapper,
+    type DpfSubsurfaceViewerWrapperProps,
+} from "@modules/_shared/components/SubsurfaceViewer/DpfSubsurfaceViewerWrapper";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
@@ -40,10 +44,6 @@ import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramew
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import {
-    DpfSubsurfaceViewerWrapper,
-    type DpfSubsurfaceViewerWrapperProps,
-} from "@modules/_shared/components/SubsurfaceViewer/DpfSubsurfaceViewerWrapper";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,

@@ -1,7 +1,9 @@
 import React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Info, Mouse } from "@mui/icons-material";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
 export function ControlsInfoBox() {

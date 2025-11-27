@@ -1,10 +1,12 @@
 import type React from "react";
 
-import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
-import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { cloneDeep } from "lodash";
 
+import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
+import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
+
 import { ReadoutWrapper, type ReadoutWrapperProps } from "./ReadoutWrapper";
 
 export type HoverVisualizationWrapperProps = ReadoutWrapperProps;

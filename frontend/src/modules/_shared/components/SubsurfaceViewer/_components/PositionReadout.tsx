@@ -1,5 +1,6 @@
+import type React from "react";
+
 import type { ViewportPickInfo } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking/MultiViewPickingInfoAssembler";
-import React from "react";
 
 export type PositionReadoutProps = {
     viewportPickInfo?: ViewportPickInfo;
