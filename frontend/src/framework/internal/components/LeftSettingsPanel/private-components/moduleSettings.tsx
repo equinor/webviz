@@ -49,10 +49,6 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
 
     const isSerializable = props.moduleInstance.getModule().canBeSerialized();
 
-    const atomStore = workbenchSession!
-        .getAtomStoreMaster()
-        .getAtomStoreForModuleInstance(props.moduleInstance.getId());
-
     if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;
     }
@@ -103,6 +99,14 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                     </Button>
                 </div>
             );
+        }
+
+        const atomStore = workbenchSession
+            .getAtomStoreMaster()
+            .getAtomStoreForModuleInstance(props.moduleInstance.getId());
+
+        if (!atomStore) {
+            return null;
         }
 
         return (
