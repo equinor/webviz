@@ -73,6 +73,182 @@ export enum Setting {
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
 }
 
+export type SettingTypeDefinitions = {
+    // Boolean settings (BOOLEAN category) - no available values
+    [Setting.SHOW_LABELS]: {
+        value: boolean;
+        availableValues: null;
+    };
+    [Setting.SHOW_LINES]: {
+        value: boolean;
+        availableValues: null;
+    };
+    [Setting.SHOW_GRID_LINES]: {
+        value: boolean;
+        availableValues: null;
+    };
+
+    // Number settings (NUMBER category) - available values are [min, max]
+    [Setting.TRACK_WIDTH]: {
+        value: number | null;
+        availableValues: [number, number];
+    };
+    [Setting.GRID_LAYER_K]: {
+        value: number | null;
+        availableValues: [number, number];
+    };
+    [Setting.SAMPLE_RESOLUTION_IN_METERS]: {
+        value: number | null;
+        availableValues: [number, number];
+    };
+    [Setting.WELLBORE_EXTENSION_LENGTH]: {
+        value: number | null;
+        availableValues: [number, number];
+    };
+
+    // Number with step settings (NUMBER_WITH_STEP category) - available values are [min, max, step]
+    [Setting.LABEL_ROTATION]: {
+        value: number | null;
+        availableValues: [number, number, number];
+    };
+    [Setting.OPACITY_PERCENT]: {
+        value: number | null;
+        availableValues: [number, number, number];
+    };
+
+    // Single select string settings (SINGLE_SELECT category)
+    [Setting.SCALE]: {
+        value: "linear" | "log" | null;
+        availableValues: ("linear" | "log")[];
+    };
+    [Setting.ATTRIBUTE]: {
+        value: string | null;
+        availableValues: string[];
+    };
+    [Setting.GRID_NAME]: {
+        value: string | null;
+        availableValues: string[];
+    };
+    [Setting.POLYGONS_ATTRIBUTE]: {
+        value: string | null;
+        availableValues: string[];
+    };
+    [Setting.POLYGONS_NAME]: {
+        value: string | null;
+        availableValues: string[];
+    };
+    [Setting.SMDA_INTERPRETER]: {
+        value: string | null;
+        availableValues: string[];
+    };
+    [Setting.STRAT_COLUMN]: {
+        value: string | null;
+        availableValues: string[];
+    };
+    [Setting.SURFACE_NAME]: {
+        value: string | null;
+        availableValues: string[];
+    };
+    [Setting.TIME_OR_INTERVAL]: {
+        value: string | null;
+        availableValues: string[];
+    };
+    [Setting.WELLBORE_PICK_IDENTIFIER]: {
+        value: string | null;
+        availableValues: string[];
+    };
+
+    // Single select complex object settings (SINGLE_SELECT category)
+    [Setting.PLOT_VARIANT]: {
+        value: TemplatePlotType | null;
+        availableValues: TemplatePlotType[];
+    };
+    [Setting.LOG_CURVE]: {
+        value: WellboreLogCurveHeader_api | null;
+        availableValues: WellboreLogCurveHeader_api[];
+    };
+    [Setting.ENSEMBLE]: {
+        value: RegularEnsembleIdent | null;
+        availableValues: RegularEnsembleIdent[];
+    };
+    [Setting.INTERSECTION]: {
+        value: IntersectionSettingValue | null;
+        availableValues: IntersectionSettingValue[];
+    };
+    [Setting.SENSITIVITY]: {
+        value: SensitivityNameCasePair | null;
+        availableValues: SensitivityNameCasePair[];
+    };
+    [Setting.STATISTIC_FUNCTION]: {
+        value: SurfaceStatisticFunction_api;
+        availableValues: SurfaceStatisticFunction_api[];
+    };
+
+    // Single select number settings (SINGLE_SELECT category)
+    [Setting.REALIZATION]: {
+        value: number | null;
+        availableValues: number[];
+    };
+
+    // Multi select settings (MULTI_SELECT category)
+    [Setting.REALIZATIONS]: {
+        value: number[] | null;
+        availableValues: number[];
+    };
+    [Setting.SMDA_WELLBORE_HEADERS]: {
+        value: string[] | null;
+        availableValues: WellboreHeader_api[];
+    };
+    [Setting.SURFACE_NAMES]: {
+        value: string[] | null;
+        availableValues: string[];
+    };
+    [Setting.WELLBORE_PICKS]: {
+        value: string[] | null;
+        availableValues: WellborePick_api[];
+    };
+
+    // Static settings (STATIC category) - no available values
+    [Setting.COLOR]: {
+        value: string | null;
+        availableValues: null;
+    };
+    [Setting.COLOR_SCALE]: {
+        value: ColorScaleSpecification | null;
+        availableValues: null;
+    };
+    [Setting.COLOR_SET]: {
+        value: ColorSet | null;
+        availableValues: null;
+    };
+    [Setting.POLYGON_VISUALIZATION]: {
+        value: PolygonVisualizationSpec | null;
+        availableValues: null;
+    };
+
+    // Boolean + Number settings (BOOLEAN_NUMBER category)
+    [Setting.CONTOURS]: {
+        value: { enabled: boolean; value: number } | null;
+        availableValues: [number, number];
+    };
+
+    // XYZ range settings (XYZ_RANGE category)
+    [Setting.GRID_LAYER_RANGE]: {
+        value: [[number, number], [number, number], [number, number]] | null;
+        availableValues: [[number, number], [number, number], [number, number]];
+    };
+
+    // XYZ values with visibility (XYZ_VALUES_WITH_VISIBILITY category)
+    [Setting.SEISMIC_SLICES]: {
+        value: {
+            value: [number, number, number];
+            visible: [boolean, boolean, boolean];
+            applied: boolean;
+        } | null;
+        availableValues: [[number, number], [number, number], [number, number]];
+    };
+};
+
 export const settingCategories = {
     [Setting.SHOW_LABELS]: SettingCategory.BOOLEAN,
     [Setting.LABEL_ROTATION]: SettingCategory.NUMBER_WITH_STEP,
