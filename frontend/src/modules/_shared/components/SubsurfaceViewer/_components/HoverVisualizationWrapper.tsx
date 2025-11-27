@@ -1,18 +1,19 @@
 import type React from "react";
 
-import { cloneDeep } from "lodash";
-
 import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { cloneDeep } from "lodash";
 
+import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 import { ReadoutWrapper, type ReadoutWrapperProps } from "./ReadoutWrapper";
 
 export type HoverVisualizationWrapperProps = ReadoutWrapperProps;
 
 export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps): React.ReactNode {
+    const context = useDpfSubsurfaceViewerContext();
     const hoverVisualizations = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
-        props.assemblerProduct,
-        props.workbenchServices,
+        context.visualizationAssemblerProduct,
+        context.workbenchServices,
     );
 
     const adjustedLayersWithHoverVisualizations = [...(props.layers ?? [])];

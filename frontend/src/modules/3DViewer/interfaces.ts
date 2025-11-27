@@ -4,7 +4,7 @@ import type { DataProviderManager } from "../_shared/DataProviderFramework/frame
 
 import { dataProviderManagerAtom, preferredViewLayoutAtom } from "./settings/atoms/baseAtoms";
 import { fieldIdentifierAtom } from "./settings/atoms/persistableFixableAtoms";
-import type { PreferredViewLayout } from "./types";
+import type { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewer/typesAndEnums";
 
 export type SettingsToViewInterface = {
     fieldId: string | null;

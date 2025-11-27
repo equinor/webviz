@@ -6,10 +6,7 @@ import type { DeckGLRef } from "@deck.gl/react";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
-import {
-    SubsurfaceViewerWithCameraState,
-    type SubsurfaceViewerWithCameraStateProps,
-} from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
+
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
@@ -17,7 +14,7 @@ import {
     DeckGlInstanceManagerTopic,
     type DeckGlInstanceManager,
 } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
-import type { LayerPickInfo, MapMouseEvent } from "@webviz/subsurface-viewer";
+import type { LayerPickInfo, LightsType, MapMouseEvent } from "@webviz/subsurface-viewer";
 import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";
 import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
 import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
@@ -25,8 +22,13 @@ import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/
 import type { Feature } from "geojson";
 import { isEqual } from "lodash";
 
-import { useDpfSubsurfaceViewerContext } from "./DataProvidersWrapper";
+import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
+import { PositionReadout } from "./PositionReadout";
+import {
+    SubsurfaceViewerWithCameraState,
+    type SubsurfaceViewerWithCameraStateProps,
+} from "./SubsurfaceViewerWithCameraState";
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
@@ -113,17 +115,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             layout: props.views?.layout ?? [1, 1],
         },
         lights: {
-            pointLights: [
-                {
-                    position: [0, 0, 1],
-                    intensity: 0.0,
-                },
-            ],
-            headLight: {
-                intensity: 1.0,
-                color: [255, 255, 255],
-            },
-            ambientLight: { intensity: 1.5, color: [255, 255, 255] },
+            ...(context.visualizationMode === "2D" ? LIGHTS_2D : LIGHTS_3D),
         },
         verticalScale: props.verticalScale,
         scale: {
@@ -162,6 +154,11 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
+            <PositionReadout
+                viewportPickInfo={pickingInfoPerView[activeViewportId]}
+                verticalScale={props.verticalScale}
+                visible={!hideReadout}
+            />
             <SubsurfaceViewerWithCameraState
                 {...deckGlProps}
                 views={storedDeckGlViews}
@@ -195,3 +192,31 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         </div>
     );
 }
+
+const LIGHTS_2D: LightsType = {
+    pointLights: [
+        {
+            position: [0, 0, 1],
+            intensity: 0.0,
+        },
+    ],
+    headLight: {
+        intensity: 0.0,
+        color: [255, 255, 255],
+    },
+    ambientLight: { intensity: 2.9, color: [255, 255, 255] },
+} as const;
+
+const LIGHTS_3D: LightsType = {
+    pointLights: [
+        {
+            position: [0, 0, 1],
+            intensity: 0.0,
+        },
+    ],
+    headLight: {
+        intensity: 1.0,
+        color: [255, 255, 255],
+    },
+    ambientLight: { intensity: 1.5, color: [255, 255, 255] },
+} as const;

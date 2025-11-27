@@ -107,6 +107,7 @@ export class RealizationSurfaceProvider
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        settingAttributesUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationSurfaceSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
@@ -149,6 +150,12 @@ export class RealizationSurfaceProvider
                     signal: abortSignal,
                 }),
             });
+        });
+
+        settingAttributesUpdater(Setting.REALIZATION, () => {
+            return {
+                visible: false,
+            };
         });
 
         availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {

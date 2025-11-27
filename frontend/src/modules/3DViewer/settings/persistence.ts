@@ -2,10 +2,9 @@ import type { DeserializeStateFunction, SerializeStateFunction } from "@framewor
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { PreferredViewLayout } from "../types";
-
 import { dataProviderStateAtom, preferredViewLayoutAtom } from "./atoms/baseAtoms";
 import { fieldIdentifierAtom } from "./atoms/persistableFixableAtoms";
+import { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewer/typesAndEnums";
 
 export type SerializedSettings = {
     dataProviderData: string;

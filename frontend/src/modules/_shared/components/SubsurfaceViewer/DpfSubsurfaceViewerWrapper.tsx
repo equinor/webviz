@@ -13,12 +13,13 @@ import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/t
 import type { BoundingBox2D, BoundingBox3D, ViewStateType } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
+import { PlaceholderLayer } from "../../customDeckGlLayers/PlaceholderLayer";
 
-import { InteractionWrapper } from "./InteractionWrapper";
+import { InteractionWrapper } from "./_components/InteractionWrapper";
 import { PreferredViewLayout } from "./typesAndEnums";
 
 export type DpfSubsurfaceViewerContextType = {
+    visualizationMode: "2D" | "3D";
     viewState?: ViewStateType;
     onViewStateChange?: (viewState: ViewStateType) => void;
     visualizationAssemblerProduct: AssemblerProduct<any>;
@@ -39,12 +40,12 @@ export function useDpfSubsurfaceViewerContext() {
     return context;
 }
 
-export type DataProvidersWrapperProps = {
+export type DpfSubsurfaceViewerWrapperProps = {
     visualizationMode: "2D" | "3D";
     viewState?: ViewStateType;
     onViewStateChange?: (viewState: ViewStateType) => void;
     fieldId: string;
-    visualizationAssemblerProduct: AssemblerProduct<any>;
+    visualizationAssemblerProduct: AssemblerProduct<any, any, any>;
     viewContext: ViewContext<any>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
@@ -52,7 +53,7 @@ export type DataProvidersWrapperProps = {
     preferredViewLayout: PreferredViewLayout;
 };
 
-export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.ReactNode {
+export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProps): React.ReactNode {
     const [changingFields, setChangingFields] = React.useState<boolean>(false);
     const [prevFieldId, setPrevFieldId] = React.useState<string | null>(null);
     const statusWriter = useViewStatusWriter(props.viewContext);

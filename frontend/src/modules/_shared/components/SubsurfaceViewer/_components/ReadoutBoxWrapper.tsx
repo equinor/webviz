@@ -3,30 +3,16 @@ import React from "react";
 import type { PickingInfoPerView } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
 import { isEqual } from "lodash";
 
-import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
-import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
+import { ReadoutBox, type ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
-const READOUT_EDGE_DISTANCE_REM = { left: 6, right: 2 };
+const READOUT_EDGE_DISTANCE_REM = { left: 6, right: 0 };
 
-function makePositionReadout(coordinates: number[]): ReadoutItem | null {
-    if (coordinates === undefined || coordinates.length < 2) {
-        return null;
-    }
-    return {
-        label: "Position",
-        info: [
-            { name: "x", value: coordinates[0], unit: "m" },
-            { name: "y", value: coordinates[1], unit: "m" },
-        ],
-    };
-}
-
-// Infering the record type from PickingInfoPerView since it's not exported anywhere
 export type ViewportPickingInfo = PickingInfoPerView extends Record<any, infer V> ? V : never;
 
 export type ReadoutBoxWrapperProps = {
     viewportPickInfo: ViewportPickingInfo;
+    verticalScale?: number;
     maxNumItems?: number;
     visible?: boolean;
     compact?: boolean;
@@ -34,29 +20,30 @@ export type ReadoutBoxWrapperProps = {
 
 export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNode {
     const [infoData, setInfoData] = React.useState<ReadoutItem[]>([]);
-    const [prevViewportPickInfo, setPrevViewportPickInfo] = React.useState<ViewportPickingInfo | null>(null);
+    const [prevLayerPickInfo, setPrevLayerPickInfo] = React.useState<ViewportPickingInfo | null>(null);
 
     if (!props.visible) {
         return null;
     }
 
-    if (!isEqual(props.viewportPickInfo, prevViewportPickInfo)) {
-        setPrevViewportPickInfo(props.viewportPickInfo);
+    if (!isEqual(props.viewportPickInfo, prevLayerPickInfo)) {
+        setPrevLayerPickInfo(props.viewportPickInfo);
         const newReadoutItems: ReadoutItem[] = [];
 
         const coordinates = props.viewportPickInfo.coordinates;
-        const layerInfoPicks = props.viewportPickInfo.layerPickingInfo;
+        const layerPickInfoArray = props.viewportPickInfo.layerPickingInfo;
 
         if (!coordinates || coordinates.length < 2) {
             setInfoData([]);
             return;
         }
 
-        for (const layerPickInfo of layerInfoPicks) {
-            const layerName = layerPickInfo.layerName ?? "Unknown layer";
+        for (const layerPickInfo of layerPickInfoArray) {
+            const layerName = layerPickInfo.layerName;
             const layerProps = layerPickInfo.properties;
 
             let layerReadout = newReadoutItems.find((item) => item.label === layerName);
+
             if (!layerReadout) {
                 layerReadout = { label: layerName, info: [] };
                 newReadoutItems.push(layerReadout);
@@ -69,6 +56,10 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
         }
 
         setInfoData(newReadoutItems);
+    }
+
+    if (!props.visible) {
+        return null;
     }
 
     return (

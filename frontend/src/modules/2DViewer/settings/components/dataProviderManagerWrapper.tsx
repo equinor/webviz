@@ -22,7 +22,7 @@ import { MenuItem } from "@lib/components/MenuItem";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
-import { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewerComponents/typesAndEnums";
+import { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewer/typesAndEnums";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";

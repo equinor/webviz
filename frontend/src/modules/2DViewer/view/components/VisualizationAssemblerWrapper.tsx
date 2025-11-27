@@ -2,9 +2,9 @@ import type React from "react";
 
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
-    DataProvidersWrapper,
-    type DataProvidersWrapperProps,
-} from "@modules/_shared/components/SubsurfaceViewerComponents/DataProvidersWrapper";
+    DpfSubsurfaceViewerWrapper,
+    type DpfSubsurfaceViewerWrapperProps,
+} from "@modules/_shared/components/SubsurfaceViewer/DpfSubsurfaceViewerWrapper";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
@@ -103,7 +103,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 );
 
 export type VisualizationAssemblerWrapperProps = Omit<
-    DataProvidersWrapperProps,
+    DpfSubsurfaceViewerWrapperProps,
     "visualizationAssemblerProduct" | "visualizationMode"
 > & {
     dataProviderManager: DataProviderManager;
@@ -115,15 +115,10 @@ export function VisualizationAssemblerWrapper(props: VisualizationAssemblerWrapp
     const visualizationAssemblerProduct = VISUALIZATION_ASSEMBLER.make(props.dataProviderManager);
 
     return (
-        <DataProvidersWrapper
+        <DpfSubsurfaceViewerWrapper
+            {...props}
             visualizationMode="2D"
-            viewContext={props.viewContext}
-            fieldId={props.fieldId}
-            preferredViewLayout={props.preferredViewLayout}
             visualizationAssemblerProduct={visualizationAssemblerProduct}
-            workbenchSession={props.workbenchSession}
-            workbenchSettings={props.workbenchSettings}
-            workbenchServices={props.workbenchServices}
         />
     );
 }
