@@ -1,3 +1,4 @@
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { EnsembleLoadingErrorInfoMap } from "@framework/internal/EnsembleSetLoader";
 import { Dialog } from "@lib/components/Dialog";
 
@@ -22,9 +23,13 @@ export function EnsemblesLoadingErrorInfoDialog(props: EnsemblesLoadingErrorInfo
                 {props.description}
                 <div className="max-h-96 overflow-y-auto">
                     {Object.entries(props.ensembleLoadingErrorInfoMap).map(([ensembleIdentString, errorInfo]) => {
+                        const isDeltaEnsemble = DeltaEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString);
+                        const descriptionPrefix = isDeltaEnsemble ? "Delta Ensemble" : "Ensemble";
                         return (
                             <div key={ensembleIdentString} className="mb-4">
-                                <div className="font-medium">Ensemble: {errorInfo.displayName}</div>
+                                <div className="font-medium">
+                                    {descriptionPrefix}: {errorInfo.displayName}
+                                </div>
                                 <ul className="list-disc list-inside">
                                     <li>{errorInfo.errorMessage}</li>
                                 </ul>
