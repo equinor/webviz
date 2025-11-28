@@ -28,3 +28,6 @@ def setup_normal_log_levels() -> None:
     logging.getLogger("xtgeo").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("azure").setLevel(logging.WARNING)
+
+    # TEMPORARY!!
+    logging.getLogger("azure.identity").setLevel(logging.DEBUG)

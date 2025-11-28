@@ -22,6 +22,9 @@ services:
       - 5000:5000
       - 5678:5678
     environment:
+      - AZURE_TENANT_ID
+      - AZURE_CLIENT_ID
+      - AZURE_CLIENT_SECRET
       - UVICORN_PORT=5000
       - UVICORN_RELOAD=true
       - UVICORN_RELOAD_DIRS=/home/appuser/backend_py
@@ -103,6 +106,9 @@ services:
       context: .
       dockerfile: ./backend_py/worker_mock/Dockerfile
     environment:
+      - AZURE_TENANT_ID
+      - AZURE_CLIENT_ID
+      - AZURE_CLIENT_SECRET
       - SERVICEBUS_CONNECTION_STRING
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - OTEL_RESOURCE_ATTRIBUTES=service.name=worker-mock, service.namespace=local
@@ -116,26 +122,26 @@ services:
     #command: ["python", "-m", "worker_mock.worker_main"]
     #restart: on-failure
     restart: always
-    depends_on:
-      - sb-emulator
+    # depends_on:
+    #   - sb-emulator
 
-  sb-emulator:
-    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
-    environment:
-      ACCEPT_EULA: Y
-      SQL_SERVER: sqledge
-      MSSQL_SA_PASSWORD: MySecretPassw0rd
-    volumes:
-      - ./SbEmulatorConfig.json:/ServiceBus_Emulator/ConfigFiles/Config.json
-    ports:
-      - "5672:5672"      # AMQP TCP
-    depends_on:
-      - sqledge
+  # sb-emulator:
+  #   image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+  #   environment:
+  #     ACCEPT_EULA: Y
+  #     SQL_SERVER: sqledge
+  #     MSSQL_SA_PASSWORD: MySecretPassw0rd
+  #   volumes:
+  #     - ./SbEmulatorConfig.json:/ServiceBus_Emulator/ConfigFiles/Config.json
+  #   ports:
+  #     - "5672:5672"      # AMQP TCP
+  #   depends_on:
+  #     - sqledge
 
-  sqledge:
-    image: mcr.microsoft.com/azure-sql-edge:latest
-    environment:
-      ACCEPT_EULA: Y
-      MSSQL_SA_PASSWORD: MySecretPassw0rd
+  # sqledge:
+  #   image: mcr.microsoft.com/azure-sql-edge:latest
+  #   environment:
+  #     ACCEPT_EULA: Y
+  #     MSSQL_SA_PASSWORD: MySecretPassw0rd
 
 

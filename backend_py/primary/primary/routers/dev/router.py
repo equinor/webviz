@@ -356,11 +356,17 @@ async def get_send_sb_msg(
         fully_qualified_sb_namespace = "webviz-test.servicebus.windows.net"
 
         LOGGER.info("Using DefaultAzureCredential for authentication")
+        LOGGER.info(f"AZURE_TENANT_ID: {os.getenv('AZURE_TENANT_ID')}")
+        LOGGER.info(f"AZURE_CLIENT_ID: {os.getenv('AZURE_CLIENT_ID')}")
 
         # Relies on AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET being set in environment
         credential = DefaultAzureCredential()
+        LOGGER.info(f"{type(credential)=}")
+
+        # for cred in credential.credentials:
+        #     LOGGER.info(f"{type(cred)=}, {cred=}")
+
         async with credential:
-            LOGGER.info(f"{type(credential)=}")
             client = ServiceBusClient(fully_qualified_namespace=fully_qualified_sb_namespace, credential=credential)
             async with client:
                 perf_metrics.record_lap("create-client")
