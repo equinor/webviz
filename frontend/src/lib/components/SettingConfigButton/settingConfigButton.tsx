@@ -9,6 +9,8 @@ import { Dialog } from "../Dialog";
 export type SettingConfigButtonProps = {
     formTitle: string;
     formContent: React.ReactNode;
+    modalWidth?: string;
+    modalHeight?: string;
     onOpen?: () => void;
     onClose?: () => void;
     onApply?: () => void;
@@ -63,7 +65,14 @@ function SettingConfigButtonComponent(
                 {props.children}
             </Button>
 
-            <Dialog open={modalOpen} title={formTitle} modal actions={actions}>
+            <Dialog
+                modal
+                open={modalOpen}
+                title={formTitle}
+                actions={actions}
+                width={props.modalWidth}
+                height={props.modalHeight}
+            >
                 {formContent}
             </Dialog>
         </>

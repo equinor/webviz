@@ -5,21 +5,18 @@ import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 
-export interface DepthFilterSettings {
-    // TVD Filter settings
-    tvdCutoffAbove?: number;
-    tvdCutoffBelow?: number;
-}
+import type { DepthFilterConfig } from "./depthFilterForm";
+import { DepthFilterForm } from "./depthFilterForm";
 
 export interface DepthFilterDialogProps {
     open: boolean;
-    settings: DepthFilterSettings;
-    onSettingsChange: (settings: DepthFilterSettings) => void;
+    settings: DepthFilterConfig;
+    onSettingsChange: (settings: DepthFilterConfig) => void;
     onClose: () => void;
 }
 
 export function DepthFilterDialog(props: DepthFilterDialogProps): React.ReactNode {
-    const [localSettings, setLocalSettings] = React.useState<DepthFilterSettings>(props.settings);
+    const [localSettings, setLocalSettings] = React.useState<DepthFilterConfig>(props.settings);
 
     // Reset local settings when dialog opens with new settings
     React.useEffect(() => {
@@ -73,10 +70,14 @@ export function DepthFilterDialog(props: DepthFilterDialogProps): React.ReactNod
             width="500px"
             height="600px"
             showCloseCross
+            modal
             actions={dialogActions}
         >
             <div className="flex flex-col gap-6 p-6 max-h-full overflow-y-auto">
+                <DepthFilterForm value={localSettings} onValueChange={setLocalSettings} onFormSubmit={handleApply} />
+
                 {/* TVD Cutoff Settings */}
+
                 <div className="space-y-4">
                     <h3>True Vertical Depth (TVD) Cutoffs</h3>
 

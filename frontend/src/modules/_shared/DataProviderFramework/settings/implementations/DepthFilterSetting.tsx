@@ -1,14 +1,16 @@
 import React from "react";
 
-import { Button } from "../../../../../lib/components/Button";
-import { DepthFilterDialog, type DepthFilterSettings } from "../../../components/DepthFilterDialog";
+import { SettingConfigButton } from "@lib/components/SettingConfigButton";
+
+import type { DepthFilterConfig } from "../../../components/DepthFilterDialog";
+import { DepthFilterForm } from "../../../components/DepthFilterDialog";
 import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingCategory } from "../settingsDefinitions";
 
-type ValueType = DepthFilterSettings | null;
+type ValueType = DepthFilterConfig | null;
 
 export class DepthFilterSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
     defaultValue: ValueType = {};
@@ -44,19 +46,20 @@ export class DepthFilterSetting implements CustomSettingImplementation<ValueType
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.STATIC>) => React.ReactNode {
         return function DepthFilter(props: SettingComponentProps<ValueType, SettingCategory.STATIC>) {
-            const [dialogOpen, setDialogOpen] = React.useState(false);
+            const [localFormValue, setLocalFormValue] = React.useState<DepthFilterConfig>({});
+
             const currentSettings = props.value ?? {};
 
-            function handleSettingsChange(settings: DepthFilterSettings) {
-                props.onValueChange(settings);
+            function handleConfigOpen() {
+                setLocalFormValue(currentSettings);
             }
 
-            function handleDialogClose() {
-                setDialogOpen(false);
+            function handleApplyConfig() {
+                props.onValueChange(localFormValue);
             }
 
-            function handleOpenDialog() {
-                setDialogOpen(true);
+            function handleDiscardConfig() {
+                setLocalFormValue({});
             }
 
             // Create a summary of active settings
@@ -64,10 +67,10 @@ export class DepthFilterSetting implements CustomSettingImplementation<ValueType
                 const activeSetting = [];
 
                 if (currentSettings.tvdCutoffAbove !== undefined) {
-                    activeSetting.push(`Below: ${currentSettings.tvdCutoffAbove}m`);
+                    activeSetting.push(`Above: ${currentSettings.tvdCutoffAbove}m`);
                 }
                 if (currentSettings.tvdCutoffBelow !== undefined) {
-                    activeSetting.push(`Above: ${currentSettings.tvdCutoffBelow}m`);
+                    activeSetting.push(`Below: ${currentSettings.tvdCutoffBelow}m`);
                 }
 
                 if (activeSetting.length === 0) {
@@ -79,21 +82,23 @@ export class DepthFilterSetting implements CustomSettingImplementation<ValueType
 
             return (
                 <div className="flex flex-col gap-1 mt-1">
-                    <Button
-                        variant="outlined"
-                        onClick={handleOpenDialog}
-                        disabled={props.isOverridden}
-                        style={{ width: "100%" }}
+                    <SettingConfigButton
+                        className="w-full"
+                        size="medium"
+                        formTitle="Depth Filter Settings"
+                        formContent={
+                            <DepthFilterForm
+                                value={localFormValue}
+                                onValueChange={setLocalFormValue}
+                                onFormSubmit={handleApplyConfig}
+                            />
+                        }
+                        onOpen={handleConfigOpen}
+                        onDiscard={handleDiscardConfig}
+                        onApply={handleApplyConfig}
                     >
                         {getSettingsSummary()}
-                    </Button>
-
-                    <DepthFilterDialog
-                        open={dialogOpen}
-                        settings={currentSettings}
-                        onSettingsChange={handleSettingsChange}
-                        onClose={handleDialogClose}
-                    />
+                    </SettingConfigButton>
                 </div>
             );
         };
