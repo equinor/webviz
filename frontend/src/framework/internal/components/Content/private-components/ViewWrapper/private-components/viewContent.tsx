@@ -38,8 +38,6 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW,
     );
 
-    const atomStore = workbenchSession.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
-
     const handleModuleInstanceReload = React.useCallback(
         function handleModuleInstanceReload() {
             props.moduleInstance.reset();
@@ -125,6 +123,11 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                 />
             );
         }
+    }
+
+    const atomStore = workbenchSession.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
+    if (!atomStore) {
+        return null;
     }
 
     const View = props.moduleInstance.getViewFC();
