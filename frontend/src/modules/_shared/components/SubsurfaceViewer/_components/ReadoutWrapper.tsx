@@ -3,60 +3,51 @@ import React from "react";
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import type { LayerPickInfo, MapMouseEvent } from "@webviz/subsurface-viewer";
+import type { LayerPickInfo, LightsType, MapMouseEvent } from "@webviz/subsurface-viewer";
 import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";
 import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
 import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { Feature } from "geojson";
-import { useAtom } from "jotai";
 import { isEqual } from "lodash";
 
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
-import type { WorkbenchSession } from "@framework/WorkbenchSession";
-import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { PolylinesLayer } from "@modules/3DViewer/customDeckGlLayers/PolylinesLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
+import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
+import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
+import {
+    DeckGlInstanceManagerTopic,
+    type DeckGlInstanceManager,
+} from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
+
+import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
+
+import { PositionReadout } from "./PositionReadout";
+import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import {
     SubsurfaceViewerWithCameraState,
     type SubsurfaceViewerWithCameraStateProps,
-} from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
-import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
-import type {
-    AssemblerProduct,
-    VisualizationTarget,
-} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
-
-import { viewStateAtom } from "../atoms/baseAtoms";
-import { DeckGlInstanceManagerTopic, type DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
-
-import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
+} from "./SubsurfaceViewerWithCameraState";
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
     layers: DeckGlLayer[];
-    workbenchSession: WorkbenchSession;
-    workbenchSettings: WorkbenchSettings;
-    workbenchServices: WorkbenchServices;
     deckGlManager: DeckGlInstanceManager;
     verticalScale: number;
     triggerHome: number;
 
     deckGlRef: React.RefObject<DeckGLRef | null>;
     children?: React.ReactNode;
-    assemblerProduct: AssemblerProduct<VisualizationTarget.DECK_GL, any, any>;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
+    const context = useDpfSubsurfaceViewerContext();
     const id = React.useId();
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
     const [storedDeckGlViews, setStoredDeckGlViews] =
         React.useState<SubsurfaceViewerWithCameraStateProps["views"]>(undefined);
-
-    const [viewState, setViewState] = useAtom(viewStateAtom);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
@@ -118,23 +109,14 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const deckGlProps = props.deckGlManager.makeDeckGlComponentProps({
         deckGlRef,
         id: `subsurface-viewer-${id}`,
+        bounds: context.bounds,
         views: {
             ...props.views,
             viewports: adjustedViewports,
             layout: props.views?.layout ?? [1, 1],
         },
         lights: {
-            pointLights: [
-                {
-                    position: [0, 0, 1],
-                    intensity: 0.0,
-                },
-            ],
-            headLight: {
-                intensity: 1.0,
-                color: [255, 255, 255],
-            },
-            ambientLight: { intensity: 1.5, color: [255, 255, 255] },
+            ...(context.visualizationMode === "2D" ? LIGHTS_2D : LIGHTS_3D),
         },
         verticalScale: props.verticalScale,
         scale: {
@@ -173,11 +155,16 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
+            <PositionReadout
+                viewportPickInfo={pickingInfoPerView[activeViewportId]}
+                verticalScale={props.verticalScale}
+                visible={!hideReadout}
+            />
             <SubsurfaceViewerWithCameraState
                 {...deckGlProps}
                 views={storedDeckGlViews}
-                getCameraPosition={setViewState}
-                initialCameraPosition={viewState ?? undefined}
+                getCameraPosition={context.onViewStateChange}
+                initialCameraPosition={context.viewState ?? undefined}
             >
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
@@ -206,3 +193,31 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         </div>
     );
 }
+
+const LIGHTS_2D: LightsType = {
+    pointLights: [
+        {
+            position: [0, 0, 1],
+            intensity: 0.0,
+        },
+    ],
+    headLight: {
+        intensity: 0.0,
+        color: [255, 255, 255],
+    },
+    ambientLight: { intensity: 2.9, color: [255, 255, 255] },
+} as const;
+
+const LIGHTS_3D: LightsType = {
+    pointLights: [
+        {
+            position: [0, 0, 1],
+            intensity: 0.0,
+        },
+    ],
+    headLight: {
+        intensity: 1.0,
+        color: [255, 255, 255],
+    },
+    ambientLight: { intensity: 1.5, color: [255, 255, 255] },
+} as const;

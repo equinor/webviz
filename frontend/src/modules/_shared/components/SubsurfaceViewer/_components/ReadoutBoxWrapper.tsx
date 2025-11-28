@@ -6,38 +6,7 @@ import { isEqual } from "lodash";
 import { ReadoutBox, type ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
-const READOUT_EDGE_DISTANCE_REM = { left: 6 };
-
-function makePositionReadout(coordinates: number[], verticalScale: number = 1): ReadoutItem | null {
-    if (coordinates === undefined || coordinates.length < 2) {
-        return null;
-    }
-
-    const readout = {
-        label: "Position",
-        info: [
-            {
-                name: "x",
-                value: coordinates[0],
-                unit: "m",
-            },
-            {
-                name: "y",
-                value: coordinates[1],
-                unit: "m",
-            },
-        ],
-    };
-    if (coordinates.length > 2) {
-        readout.info.push({
-            name: "z",
-            value: coordinates[2] / verticalScale,
-            unit: "m",
-        });
-    }
-
-    return readout;
-}
+const READOUT_EDGE_DISTANCE_REM = { left: 6, right: 0 };
 
 export type ViewportPickingInfo = PickingInfoPerView extends Record<any, infer V> ? V : never;
 
@@ -68,12 +37,6 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
             setInfoData([]);
             return;
         }
-
-        const positionReadout = makePositionReadout(coordinates, props.verticalScale);
-        if (!positionReadout) {
-            return;
-        }
-        newReadoutItems.push(positionReadout);
 
         for (const layerPickInfo of layerPickInfoArray) {
             const layerName = layerPickInfo.layerName;

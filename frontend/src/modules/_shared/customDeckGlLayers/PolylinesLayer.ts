@@ -9,7 +9,7 @@ import {
 import { PathLayer, TextLayer } from "@deck.gl/layers";
 import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 
-import type { Polyline } from "@modules/3DViewer/view/utils/PolylinesPlugin";
+import type { Polyline } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 
 export type PolylinesLayerProps = ExtendedLayerProps & {
     id: string;

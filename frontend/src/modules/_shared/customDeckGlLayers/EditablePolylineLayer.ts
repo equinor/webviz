@@ -8,7 +8,7 @@ import {
 } from "@deck.gl/core";
 import { LineLayer, PathLayer, ScatterplotLayer } from "@deck.gl/layers";
 
-import type { Polyline } from "@modules/3DViewer/view/utils/PolylinesPlugin";
+import type { Polyline } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 
 import { AnimatedPathLayer } from "./AnimatedPathLayer";
 
