@@ -1,9 +1,12 @@
+import { ParameterIdent } from "@framework/EnsembleParameters";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
+import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { ChannelIds as InplaceChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 import { ChannelIds as TimeSeriesChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
+import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
     name: "Correlation matrix between input parameters and multiple responses",
@@ -20,12 +23,12 @@ const template: Template = {
                 relX: 0,
                 relY: 0,
             },
-            /*
-            initialSettings: {
-                selectedVectorTags: ["FOPT", "FGPT", "FOPR", "FGPR"],
-                visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
+            initialState: {
+                settings: {
+                    selectedVectorTags: ["FOPT", "FGPT", "FOPR", "FGPR"],
+                    visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                },
             },
-            */
         },
         {
             instanceRef: "MainInplaceVolumesPlotInstance",
@@ -37,11 +40,11 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
-            /*
-            initialSettings: {
-                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+            initialState: {
+                settings: {
+                    indexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+                },
             },
-            */
         },
         {
             instanceRef: "MyParameterResponseCorrelationMatrixPlotInstance",
@@ -65,31 +68,29 @@ const template: Template = {
                     channelIdString: InplaceChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            /*
-            initialSettings: {
-                parameterIdents: [
-                    new ParameterIdent("KVKH_CHANNEL", "GLOBVAR"),
-                    new ParameterIdent("KVKH_CREVASSE", "GLOBVAR"),
-                    new ParameterIdent("KVKH_US", "GLOBVAR"),
-                    new ParameterIdent("KVKH_LS", "GLOBVAR"),
-                    new ParameterIdent("FWL_CENTRAL", "GLOBVAR"),
-                    new ParameterIdent("FWL_NORTH_HORST", "GLOBVAR"),
-                    new ParameterIdent("GOC_NORTH_HORST", "GLOBVAR"),
-                    new ParameterIdent("RELPERM_INT_WO", "GLOBVAR"),
-                    new ParameterIdent("RELPERM_INT_GO", "GLOBVAR"),
-                    new ParameterIdent("ISOTREND_ALT1W_VALYSAR", "GLOBVAR"),
-                    new ParameterIdent("ISOTREND_ALT1W_THERYS", "GLOBVAR"),
-                    new ParameterIdent("ISOTREND_ALT1W_VOLON", "GLOBVAR"),
-                ],
-                showLabels: true,
-                correlationSettings: {
+            initialState: {
+                settings: {
+                    showLabels: true,
+                    correlationThreshold: 0.1,
                     hideIndividualCells: true,
-                    filterColumns: true,
                     filterRows: true,
-                    threshold: 0.1,
+                    filterColumns: true,
+                    parameterIdentStrings: [
+                        new ParameterIdent("KVKH_CHANNEL", "GLOBVAR").toString(),
+                        new ParameterIdent("KVKH_CREVASSE", "GLOBVAR").toString(),
+                        new ParameterIdent("KVKH_US", "GLOBVAR").toString(),
+                        new ParameterIdent("KVKH_LS", "GLOBVAR").toString(),
+                        new ParameterIdent("FWL_CENTRAL", "GLOBVAR").toString(),
+                        new ParameterIdent("FWL_NORTH_HORST", "GLOBVAR").toString(),
+                        new ParameterIdent("GOC_NORTH_HORST", "GLOBVAR").toString(),
+                        new ParameterIdent("RELPERM_INT_WO", "GLOBVAR").toString(),
+                        new ParameterIdent("RELPERM_INT_GO", "GLOBVAR").toString(),
+                        new ParameterIdent("ISOTREND_ALT1W_VALYSAR", "GLOBVAR").toString(),
+                        new ParameterIdent("ISOTREND_ALT1W_THERYS", "GLOBVAR").toString(),
+                        new ParameterIdent("ISOTREND_ALT1W_VOLON", "GLOBVAR").toString(),
+                    ],
                 },
             },
-            */
         },
     ],
 };

@@ -3,13 +3,14 @@ import React from "react";
 import { useAtom, useSetAtom } from "jotai";
 
 import type { ModuleSettingsProps } from "@framework/Module";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
+import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
@@ -20,18 +21,20 @@ import { parameterIdentStringAtom } from "./atoms/persistedAtoms";
 const plotTypes = [{ value: PlotType.ParameterResponseCrossPlot, label: "Parameter correlation" }];
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ settingsContext, workbenchServices }: ModuleSettingsProps<Interfaces>) {
+export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [parameterIdentString, setParameterIdentString] = useAtom(parameterIdentStringAtom);
     const [showTrendline, setShowTrendline] = useAtom(showTrendlineAtom);
     const setReceivedChannel = useSetAtom(receivedChannelAtom);
     const [availableParameterIdents] = useAtom(availableParameterIdentsAtom);
-    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
+    });
     const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
 
     // Need to get the ensemble idents from the channel to get relevant parameters
-    const receiverResponse = settingsContext.useChannelReceiver({
+    const receiverResponse = props.settingsContext.useChannelReceiver({
         receiverIdString: "channelResponse",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
@@ -46,14 +49,14 @@ export function Settings({ settingsContext, workbenchServices }: ModuleSettingsP
     // Check if the parameterIdentString/globalSyncedParameter is valid
     // If not, set it to the first valid parameterIdent
 
-    React.useEffect(
-        function updateParameterIdentString() {
-            if (globalSyncedParameter !== null && globalSyncedParameter !== parameterIdentString.value) {
-                setParameterIdentString(globalSyncedParameter);
-            }
-        },
-        [globalSyncedParameter, parameterIdentString, setParameterIdentString],
-    );
+    useSyncSetting({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
+        syncSettingKey: SyncSettingKey.PARAMETER,
+        topic: "global.syncValue.parameter",
+        value: parameterIdentString.value,
+        setValue: setParameterIdentString,
+    });
 
     function handlePlotTypeChanged(value: string) {
         setPlotType(value as PlotType);

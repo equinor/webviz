@@ -10,7 +10,7 @@ import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
 
 export const vectorListQueriesAtom = atomWithQueries((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         // Regular Ensemble

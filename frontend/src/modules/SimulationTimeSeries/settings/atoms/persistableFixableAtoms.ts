@@ -7,12 +7,12 @@ import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 
 import { filteredParameterIdentListAtom } from "./baseAtoms";
 
-export const selectedEnsembleIdentsAtom = persistableFixableAtom<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>({
-    initialValue: [],
+export const selectedEnsembleIdentsAtom = persistableFixableAtom<(RegularEnsembleIdent | DeltaEnsembleIdent)[] | null>({
+    initialValue: null,
     areEqualFunction: areEnsembleIdentListsEqual,
     isValidFunction: ({ get, value }) => {
         const ensembleSet = get(EnsembleSetAtom);
-        return value.every((ident) => ensembleSet.hasEnsemble(ident));
+        return value !== null && value.every((ident) => ensembleSet.hasEnsemble(ident));
     },
     fixupFunction: ({ get, value }) => {
         const ensembleSet = get(EnsembleSetAtom);

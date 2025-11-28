@@ -7,7 +7,7 @@ import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
@@ -81,8 +81,10 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         setPrevIndicesWithValues(props.selectedIndicesWithValues);
     }
 
-    const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
+    });
 
     const syncedFilter = syncHelper.useValue(
         SyncSettingKey.INPLACE_VOLUMES_FILTER,

@@ -1,5 +1,6 @@
 import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
+import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
     name: "Single Well Production",
@@ -13,12 +14,12 @@ const template: Template = {
                 relX: 0,
                 relY: 0,
             },
-            /*
             initialState: {
-                selectedVectorTags: ["WWCT:A1", "WGOR:A1", "WBHP:A1", "WOPT:A1"],
-                visualizationMode: VisualizationMode.STATISTICAL_FANCHART,
+                settings: {
+                    selectedVectorTags: ["WWCT:A1", "WGOR:A1", "WBHP:A1", "WOPT:A1"],
+                    visualizationMode: VisualizationMode.STATISTICAL_FANCHART,
+                },
             },
-            */
         }),
     ],
 };

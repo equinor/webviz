@@ -6,7 +6,8 @@ import { isEqual } from "lodash";
 import type { WellboreHeader_api } from "@api";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import type { SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -59,8 +60,10 @@ function useSyncedWellboreSetting(
 
 export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Utilities
-    const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
+    });
     const providerManager = useAtomValue(dataProviderManagerAtom);
 
     // Field selection

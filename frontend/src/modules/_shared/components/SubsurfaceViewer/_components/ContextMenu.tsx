@@ -3,12 +3,11 @@ import React from "react";
 import { isEqual } from "lodash";
 
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-
 import {
     type ContextMenu as ContextMenuType,
     type DeckGlInstanceManager,
     DeckGlInstanceManagerTopic,
-} from "../utils/DeckGlInstanceManager";
+} from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
 
 export type ContextMenuProps = {
     deckGlManager: DeckGlInstanceManager;

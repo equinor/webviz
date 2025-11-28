@@ -84,7 +84,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     const ensembleIdents = raw.ensembleIdentStrings
         ? raw.ensembleIdentStrings.map((id) => RegularEnsembleIdent.fromString(id))
-        : [];
+        : undefined;
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, selectedFirstResultNameAtom, raw.firstResultName);
     setIfDefined(set, selectedSecondResultNameAtom, raw.secondResultName);

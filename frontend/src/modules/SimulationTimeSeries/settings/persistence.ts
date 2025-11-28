@@ -25,7 +25,7 @@ export type SerializedSettings = {
     subplotMaxDirectionElements: number;
     groupBy: GroupBy;
     resampleFrequency: Frequency_api | null;
-    ensembleIdentStrings: string[];
+    ensembleIdentStrings: string[] | null;
     showHistorical: boolean;
     showObservations: boolean;
     selectedVectorTags: string[];
@@ -42,7 +42,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         subplotMaxDirectionElements: { type: "int16" },
         groupBy: { enum: Object.values(GroupBy) },
         resampleFrequency: { enum: Object.values(Frequency_api), nullable: true },
-        ensembleIdentStrings: { elements: { type: "string" } },
+        ensembleIdentStrings: { elements: { type: "string" }, nullable: true },
         showHistorical: { type: "boolean" },
         showObservations: { type: "boolean" },
         selectedVectorTags: { elements: { type: "string" } },
@@ -57,7 +57,8 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
-    const selectedEnsembleIdentStrings = get(selectedEnsembleIdentsAtom).value.map((ident) => ident.toString());
+    const selectedEnsembleIdentStrings =
+        get(selectedEnsembleIdentsAtom).value?.map((ident) => ident.toString()) ?? null;
 
     return {
         subplotLimitDirection: get(subplotLimitDirectionAtom),
@@ -77,10 +78,12 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 };
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
-    const ensembleIdents = raw.ensembleIdentStrings ? getEnsembleIdentsFromStrings(raw.ensembleIdentStrings) : [];
+    const ensembleIdents = raw.ensembleIdentStrings
+        ? getEnsembleIdentsFromStrings(raw.ensembleIdentStrings)
+        : undefined;
     const statisticsSelection = {
-        IndividualStatisticsSelection: raw.individualStatisticsSelection ?? [],
-        FanchartStatisticsSelection: raw.fanchartStatisticsSelection ?? [],
+        IndividualStatisticsSelection: raw.individualStatisticsSelection ?? Object.values(StatisticFunction_api),
+        FanchartStatisticsSelection: raw.fanchartStatisticsSelection ?? Object.values(FanchartStatisticOption),
     };
 
     setIfDefined(set, subplotLimitDirectionAtom, raw.subplotLimitDirection);
