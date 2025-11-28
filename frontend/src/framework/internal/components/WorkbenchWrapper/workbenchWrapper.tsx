@@ -17,6 +17,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
+import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
 import { LeftNavBar } from "../LeftNavBar";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
@@ -69,6 +70,7 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <SelectEnsemblesDialog workbench={workbench} />
+                <InitialEnsemblesLoadingErrorInfoDialog workbench={workbench} />
                 <SaveSessionDialog workbench={workbench} />
                 <CreateSnapshotDialog workbench={workbench} />
                 <ActiveSessionRecoveryDialog workbench={workbench} />

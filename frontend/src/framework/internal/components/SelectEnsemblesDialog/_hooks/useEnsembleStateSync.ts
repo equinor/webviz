@@ -23,7 +23,8 @@ export type UseEnsembleStateSyncResult = {
 };
 
 /**
- * Hook to sync ensemble state with the active EnsembleSet
+ * Hook to sync ensemble state with the active EnsembleSet.
+ *
  * Manages selected regular/delta ensembles and selectable ensembles for delta
  */
 export function useEnsembleStateSync(ensembleSet: EnsembleSet | null) {

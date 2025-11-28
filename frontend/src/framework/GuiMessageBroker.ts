@@ -4,6 +4,7 @@ import { isDevMode } from "@lib/utils/devMode";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 
+import type { EnsembleLoadingErrorInfoMap } from "./internal/EnsembleSetLoader";
 import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
 export enum LeftDrawerContent {
@@ -43,6 +44,8 @@ export enum GuiState {
     TemplatesDialogOpen = "templatesDialogOpen",
     SessionSnapshotOverviewDialogOpen = "sessionSnapshotOverviewDialogOpen",
     SessionSnapshotOverviewDialogMode = "sessionSnapshotOverviewDialogMode",
+    EnsemblesLoadingErrorInfoMap = "ensemblesLoadingErrorInfoMap",
+    EnsembleLoadingErrorInfoDialogOpen = "ensembleLoadingErrorInfoDialogOpen",
 }
 
 export enum GuiEvent {
@@ -121,6 +124,8 @@ type GuiStateValueTypes = {
     [GuiState.TemplatesDialogOpen]: boolean;
     [GuiState.SessionSnapshotOverviewDialogOpen]: boolean;
     [GuiState.SessionSnapshotOverviewDialogMode]: "sessions" | "snapshots";
+    [GuiState.EnsemblesLoadingErrorInfoMap]: EnsembleLoadingErrorInfoMap;
+    [GuiState.EnsembleLoadingErrorInfoDialogOpen]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -146,6 +151,8 @@ defaultStates.set(GuiState.IsMakingSnapshot, false);
 defaultStates.set(GuiState.TemplatesDialogOpen, false);
 defaultStates.set(GuiState.SessionSnapshotOverviewDialogOpen, false);
 defaultStates.set(GuiState.SessionSnapshotOverviewDialogMode, "sessions");
+defaultStates.set(GuiState.EnsemblesLoadingErrorInfoMap, {});
+defaultStates.set(GuiState.EnsembleLoadingErrorInfoDialogOpen, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,

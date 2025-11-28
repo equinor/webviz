@@ -226,10 +226,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             <EnsemblesLoadingErrorInfoDialog
                 open={dialogFlowControl.loadingErrorsDialogControl.isOpen}
                 onClose={() => dialogFlowControl.loadingErrorsDialogControl.setIsOpen(false)}
+                title={"Errors loading some ensembles — continue without them?"}
                 description={
                     <div>
-                        Some ensembles encountered errors during loading and setup and have been excluded. Do you want
-                        to continue without them?
+                        Some ensembles encountered errors during loading and setup and will be excluded. Do you want to
+                        continue without them?
                     </div>
                 }
                 ensembleLoadingErrorInfoMap={dialogFlowControl.ensembleLoadingErrorInfoMap}
@@ -237,7 +238,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     <div className="flex gap-4">
                         <Button
                             onClick={() => dialogFlowControl.loadingErrorsDialogControl.setIsOpen(false)}
-                            color="danger"
+                            color="secondary"
                         >
                             No, don&apos;t continue
                         </Button>
