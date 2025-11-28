@@ -25,8 +25,7 @@ import { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewe
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
-import { RealizationSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
-import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/StatisticalSurfaceProvider";
+import { DepthSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
@@ -73,15 +72,17 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "color-scale":
                 groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
                 return;
-            case "realization-surface":
+            case "depth-surface":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.REALIZATION_SURFACE_3D,
-                        props.dataProviderManager,
-                    ),
+                    DataProviderRegistry.makeDataProvider(DataProviderType.DEPTH_SURFACE, props.dataProviderManager),
                 );
                 return;
-            case "realization-polygons":
+            case "fault-polygons":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(DataProviderType.FAULT_POLYGONS, props.dataProviderManager),
+                );
+                return;
+            case "unsorted-polygons":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
                         DataProviderType.REALIZATION_POLYGONS,
@@ -105,7 +106,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     ),
                 );
                 return;
-            case "realization-grid":
+            case "grid-3d":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
                         CustomDataProviderType.REALIZATION_GRID_3D,
@@ -144,7 +145,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     DataProviderRegistry.makeDataProvider(
                         DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
                         props.dataProviderManager,
-                        "Intersection Grid",
+                        "Grid Model Fence",
                     ),
                 );
                 return;
@@ -168,10 +169,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
 
     function checkIfItemMoveAllowed(movedItem: Item, destinationItem: ItemGroup): boolean {
         if (destinationItem instanceof DeltaSurface) {
-            if (
-                movedItem instanceof DataProvider &&
-                !(movedItem instanceof RealizationSurfaceProvider || movedItem instanceof StatisticalSurfaceProvider)
-            ) {
+            if (movedItem instanceof DataProvider && !(movedItem instanceof DepthSurfaceProvider)) {
                 return false;
             }
 
@@ -300,12 +298,17 @@ const ACTIONS: ActionGroup[] = [
         label: "Layers",
         children: [
             {
-                label: "Reservoir grid",
+                label: "Grid Model",
                 children: [
                     {
-                        identifier: "realization-grid",
+                        identifier: "grid-3d",
                         icon: <Icon data={grid_layer} fontSize="small" />,
-                        label: "Realization Grid",
+                        label: "Grid Model 3D",
+                    },
+                    {
+                        identifier: "intersection-realization-grid",
+                        icon: <Icon data={grid_layer} fontSize="small" />,
+                        label: "Grid Model Fence",
                     },
                 ],
             },
@@ -313,35 +316,50 @@ const ACTIONS: ActionGroup[] = [
                 label: "Surfaces",
                 children: [
                     {
-                        identifier: "realization-surface",
+                        identifier: "depth-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Realization Surface",
+                        label: "Depth Surface",
                     },
                 ],
             },
-
+            {
+                label: "Polygons",
+                children: [
+                    {
+                        identifier: "fault-polygons",
+                        icon: <Icon data={fault} fontSize="small" />,
+                        label: "Fault Polygons",
+                    },
+                    {
+                        identifier: "unsorted-polygons",
+                        icon: <Icon data={fault} fontSize="small" />,
+                        label: "Unsorted Polygons",
+                    },
+                ],
+            },
             {
                 label: "Wells",
                 children: [
                     {
                         identifier: "drilled-wellbore-trajectories",
                         icon: <Icon data={wellbore} fontSize="small" />,
-                        label: "Drilled Wellbore Trajectories",
+                        label: "Trajectories (Official)",
                     },
                     {
                         identifier: "drilled-wellbore-picks",
                         icon: <Icon data={wellbore} fontSize="small" />,
-                        label: "Drilled Wellbore Picks",
+                        label: "Picks (Official)",
                     },
                 ],
             },
+
             {
-                label: "Intersection",
+                label: "Seismic",
                 children: [
                     {
-                        identifier: "intersection-realization-grid",
-                        icon: <Icon data={grid_layer} fontSize="small" />,
-                        label: "Intersection Realization Grid",
+                        identifier: "realization-seismic-slices",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Seismic IJK Slices (Simulated)",
                     },
                     {
                         identifier: "simulated-seismic-fence",
@@ -352,26 +370,6 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "observed-seismic-fence",
                         icon: <Icon data={timeline} fontSize="small" />,
                         label: "Seismic Fence (Observed)",
-                    },
-                ],
-            },
-            {
-                label: "Polygons",
-                children: [
-                    {
-                        identifier: "realization-polygons",
-                        icon: <Icon data={fault} fontSize="small" />,
-                        label: "Realization Polygons",
-                    },
-                ],
-            },
-            {
-                label: "Seismic",
-                children: [
-                    {
-                        identifier: "realization-seismic-slices",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Realization Seismic Slices",
                     },
                 ],
             },

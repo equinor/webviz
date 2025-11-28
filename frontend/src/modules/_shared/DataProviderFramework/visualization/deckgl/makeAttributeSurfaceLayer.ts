@@ -4,18 +4,15 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import {
-    type RealizationSurfaceData,
-    type RealizationSurfaceSettings,
-    SurfaceDataFormat,
-} from "../../dataProviders/implementations/RealizationSurfaceProvider";
+import { type AttributeSurfaceSettings } from "../../dataProviders/implementations/surfaceProviders/AttributeSurfaceProvider";
+import { SurfaceDataFormat, type SurfaceData } from "../../dataProviders/implementations/surfaceProviders/types";
 
-export function makeRealizationSurfaceLayer({
+export function makeAttributeSurfaceLayer({
     id,
     name,
     getData,
     getSetting,
-}: TransformerArgs<RealizationSurfaceSettings, RealizationSurfaceData>): MapLayer | null {
+}: TransformerArgs<AttributeSurfaceSettings, SurfaceData>): MapLayer | null {
     const data = getData();
     const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
 
