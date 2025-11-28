@@ -109,6 +109,15 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionResponse_api,
     PostGetPolylineIntersectionError_api,
+    GetStatusOfUserServiceData_api,
+    GetStatusOfUserServiceResponse_api,
+    GetStatusOfUserServiceError_api,
+    GetKillServiceData_api,
+    GetKillServiceResponse_api,
+    GetKillServiceError_api,
+    GetStartServiceData_api,
+    GetStartServiceResponse_api,
+    GetStartServiceError_api,
     GetRealizationFlowNetworkData_api,
     GetRealizationFlowNetworkResponse_api,
     GetRealizationFlowNetworkError_api,
@@ -852,6 +861,42 @@ export const postGetPolylineIntersection = <ThrowOnError extends boolean = false
             ...options?.headers,
         },
         url: "/grid3d/get_polyline_intersection",
+    });
+};
+
+/**
+ * Get Status Of User Service
+ */
+export const getStatusOfUserService = <ThrowOnError extends boolean = false>(
+    options: Options<GetStatusOfUserServiceData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetStatusOfUserServiceResponse_api, GetStatusOfUserServiceError_api, ThrowOnError>({
+        ...options,
+        url: "/grid3d/status_of_user_service",
+    });
+};
+
+/**
+ * Get Kill Service
+ */
+export const getKillService = <ThrowOnError extends boolean = false>(
+    options: Options<GetKillServiceData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetKillServiceResponse_api, GetKillServiceError_api, ThrowOnError>({
+        ...options,
+        url: "/grid3d/kill_service",
+    });
+};
+
+/**
+ * Get Start Service
+ */
+export const getStartService = <ThrowOnError extends boolean = false>(
+    options: Options<GetStartServiceData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetStartServiceResponse_api, GetStartServiceError_api, ThrowOnError>({
+        ...options,
+        url: "/grid3d/start_service",
     });
 };
 

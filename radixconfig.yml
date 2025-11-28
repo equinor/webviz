@@ -136,7 +136,7 @@ spec:
             limits:
               memory: 4Gi
           horizontalScaling:
-            minReplicas: 1
+            minReplicas: 2
             maxReplicas: 3
             resources:
               memory:

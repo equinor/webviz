@@ -28,3 +28,4 @@ def setup_normal_log_levels() -> None:
     logging.getLogger("xtgeo").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("azure").setLevel(logging.WARNING)
+    logging.getLogger("pottery").setLevel(logging.WARNING)

@@ -17,7 +17,7 @@ pandas = { version = "^2.0.1", extras = ["performance"] }
 httpx = "^0.28.1"
 fmu-sumo = "^2.6.1"
 sumo-wrapper-python = "^1.1.2"
-pottery = "^3.0.0"
+pottery = "^3.0.1"
 requests-toolbelt = "^1.0.0"
 xtgeo = "^4.11.0"
 webviz-core-utils = { path = "../core_utils", develop = true }

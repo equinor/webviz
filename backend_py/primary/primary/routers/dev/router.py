@@ -18,6 +18,7 @@ from webviz_services.utils.otel_span_tracing import start_otel_span_async
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 
 from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
+from primary.middleware.add_browser_cache import no_cache
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 LOGGER = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ ErrorTypes = Literal[
 
 
 @router.get("/provoke_error/{error_type}")
+@no_cache
 async def get_provoke_error(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -78,6 +80,7 @@ def _always_throws_error() -> None:
 
 
 @router.get("/tasks/purge")
+@no_cache
 async def get_tasks_purge(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -94,6 +97,7 @@ async def get_tasks_purge(
 
 
 @router.get("/usersession/{user_component}/call")
+@no_cache
 async def get_usersession_call(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     user_component: Annotated[UserComponent, Path(description="User session component")],
@@ -131,6 +135,7 @@ async def get_usersession_call(
 
 
 @router.get("/usersession/{user_component}/radixlist")
+@no_cache
 async def get_usersession_radixlist(user_component: UserComponent) -> list:
     LOGGER.debug(f"usersession_radixlist() {user_component=}")
 
@@ -147,6 +152,7 @@ async def get_usersession_radixlist(user_component: UserComponent) -> list:
 
 
 @router.get("/usersession/{user_component}/radixcreate")
+@no_cache
 async def get_usersession_radixcreate(user_component: UserComponent) -> str:
     LOGGER.debug(f"usersession_radixcreate() {user_component=}")
 
@@ -172,6 +178,7 @@ async def get_usersession_radixcreate(user_component: UserComponent) -> str:
 
 
 @router.get("/usersession/{user_component}/radixdelete")
+@no_cache
 async def get_usersession_radixdelete(user_component: UserComponent) -> str:
     LOGGER.debug(f"usersession_radixdelete() {user_component=}")
 
@@ -184,6 +191,7 @@ async def get_usersession_radixdelete(user_component: UserComponent) -> str:
 
 
 @router.get("/usersession/dirlist")
+@no_cache
 async def get_usersession_dirlist(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     user_component: UserComponent | None = None,
@@ -195,7 +203,7 @@ async def get_usersession_dirlist(
         job_component_name = _USER_SESSION_DEFS[user_component].job_component_name
 
     session_dir = UserSessionDirectory(authenticated_user.get_user_id())
-    session_info_arr = session_dir.get_session_info_arr(job_component_name)
+    session_info_arr = await session_dir.get_session_info_arr_async(job_component_name)
 
     LOGGER.debug("======================")
     for session_info in session_info_arr:
@@ -206,6 +214,7 @@ async def get_usersession_dirlist(
 
 
 @router.get("/usersession/dirdel")
+@no_cache
 async def get_usersession_dirdel(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     user_component: UserComponent | None = None,
@@ -217,9 +226,9 @@ async def get_usersession_dirdel(
         job_component_name = _USER_SESSION_DEFS[user_component].job_component_name
 
     session_dir = UserSessionDirectory(authenticated_user.get_user_id())
-    session_dir.delete_session_info(job_component_name)
+    await session_dir.delete_session_info_async(job_component_name)
 
-    session_info_arr = session_dir.get_session_info_arr(None)
+    session_info_arr = await session_dir.get_session_info_arr_async(None)
     LOGGER.debug("======================")
     for session_info in session_info_arr:
         LOGGER.debug(f"{session_info=}")
@@ -229,6 +238,7 @@ async def get_usersession_dirdel(
 
 
 @router.get("/bgtask")
+@no_cache
 async def get_bgtask() -> str:
     LOGGER.debug(f"bgtask() - start")
 
@@ -247,6 +257,7 @@ async def get_bgtask() -> str:
 
 
 @router.get("/longtask/{duration_s}")
+@no_cache
 async def get_longtask(duration_s: int) -> str:
     LOGGER.debug(f"get_longtask() {duration_s=} - start")
 
@@ -257,6 +268,7 @@ async def get_longtask(duration_s: int) -> str:
 
 
 @router.get("/ri_surf")
+@no_cache
 async def get_ri_surf(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
 ) -> str:
@@ -272,7 +284,7 @@ async def get_ri_surf(
 
     ijk_index_filter = IJKIndexFilter(min_i=0, max_i=0, min_j=0, max_j=0, min_k=0, max_k=0)
 
-    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid, None)
     await grid_service.get_grid_geometry_async(ensemble_name, realization, grid_name, ijk_index_filter)
     await grid_service.get_mapped_grid_properties_async(
         ensemble_name, realization, grid_name, property_name, None, ijk_index_filter
@@ -282,6 +294,7 @@ async def get_ri_surf(
 
 
 @router.get("/ri_isect")
+@no_cache
 async def get_ri_isect(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
 ) -> str:
@@ -308,7 +321,7 @@ async def get_ri_isect(
     ]
     # fmt:on
 
-    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid, None)
     await grid_service.get_polyline_intersection_async(
         ensemble_name, realization, grid_name, property_name, None, xy_arr
     )

@@ -57,6 +57,9 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
+    GetStatusOfUserServiceData_api,
+    GetKillServiceData_api,
+    GetStartServiceData_api,
     GetRealizationFlowNetworkData_api,
     GetTableDataData_api,
     GetWellCompletionsDataData_api,
@@ -162,6 +165,9 @@ import {
     getGridSurface,
     getGridParameter,
     postGetPolylineIntersection,
+    getStatusOfUserService,
+    getKillService,
+    getStartService,
     getRealizationFlowNetwork,
     getTableData,
     getWellCompletionsData,
@@ -1053,6 +1059,63 @@ export const postGetPolylineIntersectionMutation = (options?: Partial<Options<Po
         },
     };
     return mutationOptions;
+};
+
+export const getStatusOfUserServiceQueryKey = (options: Options<GetStatusOfUserServiceData_api>) => [
+    createQueryKey("getStatusOfUserService", options),
+];
+
+export const getStatusOfUserServiceOptions = (options: Options<GetStatusOfUserServiceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getStatusOfUserService({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getStatusOfUserServiceQueryKey(options),
+    });
+};
+
+export const getKillServiceQueryKey = (options: Options<GetKillServiceData_api>) => [
+    createQueryKey("getKillService", options),
+];
+
+export const getKillServiceOptions = (options: Options<GetKillServiceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getKillService({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getKillServiceQueryKey(options),
+    });
+};
+
+export const getStartServiceQueryKey = (options: Options<GetStartServiceData_api>) => [
+    createQueryKey("getStartService", options),
+];
+
+export const getStartServiceOptions = (options: Options<GetStartServiceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getStartService({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getStartServiceQueryKey(options),
+    });
 };
 
 export const getRealizationFlowNetworkQueryKey = (options: Options<GetRealizationFlowNetworkData_api>) => [

@@ -2673,6 +2673,10 @@ export type GetGridSurfaceData_api = {
     path?: never;
     query: {
         /**
+         * Component instance string
+         */
+        instance_str: string;
+        /**
          * Sumo case uuid
          */
         case_uuid: string;
@@ -2739,6 +2743,10 @@ export type GetGridParameterData_api = {
     body?: never;
     path?: never;
     query: {
+        /**
+         * Component instance string
+         */
+        instance_str: string;
         /**
          * Sumo case uuid
          */
@@ -2815,6 +2823,10 @@ export type PostGetPolylineIntersectionData_api = {
     path?: never;
     query: {
         /**
+         * Component instance string
+         */
+        instance_str: string;
+        /**
          * Sumo case uuid
          */
         case_uuid: string;
@@ -2862,6 +2874,99 @@ export type PostGetPolylineIntersectionResponses_api = {
 
 export type PostGetPolylineIntersectionResponse_api =
     PostGetPolylineIntersectionResponses_api[keyof PostGetPolylineIntersectionResponses_api];
+
+export type GetStatusOfUserServiceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Component instance string
+         */
+        instance_str: string | null;
+        zCacheBust?: string;
+    };
+    url: "/grid3d/status_of_user_service";
+};
+
+export type GetStatusOfUserServiceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStatusOfUserServiceError_api = GetStatusOfUserServiceErrors_api[keyof GetStatusOfUserServiceErrors_api];
+
+export type GetStatusOfUserServiceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type GetStatusOfUserServiceResponse_api = GetStatusOfUserServiceResponses_api[keyof GetStatusOfUserServiceResponses_api];
+
+export type GetKillServiceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Component instance string
+         */
+        instance_str: string | null;
+        zCacheBust?: string;
+    };
+    url: "/grid3d/kill_service";
+};
+
+export type GetKillServiceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetKillServiceError_api = GetKillServiceErrors_api[keyof GetKillServiceErrors_api];
+
+export type GetKillServiceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type GetKillServiceResponse_api = GetKillServiceResponses_api[keyof GetKillServiceResponses_api];
+
+export type GetStartServiceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Component instance string
+         */
+        instance_str: string | null;
+        zCacheBust?: string;
+    };
+    url: "/grid3d/start_service";
+};
+
+export type GetStartServiceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStartServiceError_api = GetStartServiceErrors_api[keyof GetStartServiceErrors_api];
+
+export type GetStartServiceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type GetStartServiceResponse_api = GetStartServiceResponses_api[keyof GetStartServiceResponses_api];
 
 export type GetRealizationFlowNetworkData_api = {
     body?: never;

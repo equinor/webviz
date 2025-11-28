@@ -17,6 +17,16 @@ import {
     type GridSurface_trans,
 } from "@modules/_shared/utils/queryDataTransforms";
 
+
+import type { Options } from "@hey-api/client-axios";
+import { lroProgressBus } from "@framework/LroProgressBus";
+import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
+import { hashKey } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
+
+import { getStatusOfUserService, getStatusOfUserServiceOptions } from "@api";
+
+
 const realizationGridSettings = [
     Setting.ENSEMBLE,
     Setting.REALIZATION,
@@ -78,7 +88,7 @@ export class RealizationGridProvider
         return [data.gridParameterData.min_grid_prop_value, data.gridParameterData.max_grid_prop_value];
     }
 
-    fetchData({ getSetting, fetchQuery }: FetchDataParams<RealizationGridSettings, RealizationGridData>): Promise<{
+    fetchData({ getSetting, fetchQuery, setProgressMessage, onFetchCancelOrFinish }: FetchDataParams<RealizationGridSettings, RealizationGridData>): Promise<{
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
     }> {
@@ -96,8 +106,11 @@ export class RealizationGridProvider
             throw new Error("Grid ranges are not set");
         }
 
+        const instanceStr = "Sig3DViewer"
+
         const gridParameterOptions = getGridParameterOptions({
             query: {
+                instance_str: instanceStr,
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
                 grid_name: gridName ?? "",
@@ -115,6 +128,7 @@ export class RealizationGridProvider
 
         const gridSurfaceOptions = getGridSurfaceOptions({
             query: {
+                instance_str: instanceStr,
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
                 grid_name: gridName ?? "",
@@ -132,10 +146,78 @@ export class RealizationGridProvider
 
         const gridSurfacePromise = fetchQuery(gridSurfaceOptions).then(transformGridSurface);
 
-        return Promise.all([gridSurfacePromise, gridParameterPromise]).then(([gridSurfaceData, gridParameterData]) => ({
-            gridSurfaceData,
-            gridParameterData,
-        }));
+
+
+        const controller = new AbortController();
+
+        const serviceStatusOptions = getStatusOfUserServiceOptions({
+            query: {
+                instance_str: instanceStr,
+            },
+            // Should this work???? Doesn't seem to have any effect...
+            signal: controller.signal
+        }); 
+
+        async function monitorLoop(signal: AbortSignal): Promise<void> {
+            console.log("entering monitor loop...");
+            while (!signal.aborted) {
+                try {
+                    // Can we pass abort signal to fetchQuery???
+                    const res = await fetchQuery({...serviceStatusOptions, gcTime:0, staleTime:0});
+
+                    console.log("monitor res:", res);
+                    setProgressMessage(`Service: ${res}`);
+                } 
+                catch (err: any) {
+                    if (signal.aborted || err?.name === "AbortError") {
+                        console.log("stopping quietly on abort during fetch");
+                        break;
+                    }
+                    console.warn("monitor fetch failed:", err);
+                }
+
+                try {
+                    await abortableSleep(10, signal);
+                } 
+                catch {
+                    // aborted during sleep
+                    console.log("stopping quietly on abort during sleep");
+                    break;
+                }
+            }
+            console.log("leaving monitor loop");
+        }
+
+        const monitorPromise = monitorLoop(controller.signal);
+
+        onFetchCancelOrFinish(() => {
+            console.log("fetch was cancelled or finished, sending abort to monitor");
+            controller.abort();
+        });
+
+        return Promise.all([gridSurfacePromise, gridParameterPromise])
+            .then(([gridSurfaceData, gridParameterData]) => {
+                return {gridSurfaceData,gridParameterData};
+            })
+            .finally(() => {
+                console.log("fetch done, stopping monitor");
+                controller.abort();
+
+                // swallow AbortErrors from monitor
+                monitorPromise.catch(() => {
+                    // nothing
+                    console.log("swallow monitor aborted");
+                }); 
+            });
+
+
+
+
+
+        // return Promise.all([gridSurfacePromise, gridParameterPromise]).then(([gridSurfaceData, gridParameterData]) => ({
+        //     gridSurfaceData,
+        //     gridParameterData,
+        // }));
     }
 
     areCurrentSettingsValid({
@@ -274,4 +356,24 @@ export class RealizationGridProvider
             return availableTimeOrIntervals;
         });
     }
+}
+
+
+function abortableSleep(ms: number, signal: AbortSignal): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        const t = window.setTimeout(resolve, ms);
+
+        if (signal.aborted) {
+            clearTimeout(t);
+            reject(new DOMException("Aborted", "AbortError"));
+            return;
+        }
+
+        const onAbort = () => {
+            clearTimeout(t);
+            reject(new DOMException("Aborted", "AbortError"));
+        };
+
+        signal.addEventListener("abort", onAbort, { once: true });
+    });
 }
