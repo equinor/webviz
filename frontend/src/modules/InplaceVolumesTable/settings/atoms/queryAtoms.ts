@@ -4,6 +4,7 @@ import type { InplaceVolumesTableDefinition_api } from "@api";
 import { getTableDefinitionsOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
 
@@ -25,6 +26,7 @@ export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
                 query: {
                     case_uuid: ensembleIdent.getCaseUuid(),
                     ensemble_name: ensembleIdent.getEnsembleName(),
+                    ...makeCacheBustingQueryParam(ensembleIdent),
                 },
             }),
         });

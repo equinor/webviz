@@ -13,6 +13,7 @@ import {
 import type { GetStatisticalSurfaceDataHybridData_api } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import type {
     CustomDataProviderImplementation,
@@ -135,6 +136,7 @@ export class DepthSurfaceProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
@@ -231,6 +233,7 @@ export class DepthSurfaceProvider
                         surf_addr_str: surfAddrStr ?? "",
                         data_format: this._dataFormat,
                         resample_to_def_str: null,
+                        ...makeCacheBustingQueryParam(surfaceAddress ? ensembleIdent : null),
                     },
                 });
 

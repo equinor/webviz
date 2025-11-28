@@ -1,6 +1,7 @@
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { getWellCompletionsDataOptions } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { RealizationMode } from "@modules/WellCompletions/typesAndEnums";
 
@@ -36,6 +37,7 @@ export const wellCompletionsQueryAtom = atomWithQuery((get) => {
                 case_uuid: caseUuid ?? "",
                 ensemble_name: ensembleName ?? "",
                 realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(selectedEnsembleIdent),
             },
         }),
         enabled: Boolean(caseUuid && ensembleName && hasValidRealizations),
