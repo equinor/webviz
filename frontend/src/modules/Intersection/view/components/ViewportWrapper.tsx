@@ -4,7 +4,7 @@ import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { cloneDeep, isEqual } from "lodash";
 
 import type { ViewContext } from "@framework/ModuleContext";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -55,8 +55,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     const [showGrid, setShowGrid] = React.useState<boolean>(true);
 
-    const syncedSettingKeys = props.viewContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices, props.viewContext);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.viewContext,
+    });
 
     const syncedCameraPosition = syncHelper.useValue(
         SyncSettingKey.CAMERA_POSITION_INTERSECTION,

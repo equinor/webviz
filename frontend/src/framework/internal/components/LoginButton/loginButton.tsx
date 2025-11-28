@@ -60,7 +60,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
                 const initials = makeInitials(userInfo.display_name);
                 if (initials) {
                     return (
-                        <div className="w-5 h-5 rounded-full bg-slate-300 text-[0.6em] flex items-center justify-center mr-1">
+                        <div className="w-5 h-5 rounded-full bg-slate-300 text-[0.5em] flex items-center justify-center mr-1">
                             {initials}
                         </div>
                     );
