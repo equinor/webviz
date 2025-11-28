@@ -3,6 +3,7 @@ import { EnsembleParameters } from "./EnsembleParameters";
 import type { Sensitivity } from "./EnsembleSensitivities";
 import { EnsembleSensitivities } from "./EnsembleSensitivities";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+import { createRegularEnsembleDisplayName } from "./utils/ensembleUiHelpers";
 
 export class RegularEnsemble {
     private _ensembleIdent: RegularEnsembleIdent;
@@ -55,10 +56,7 @@ export class RegularEnsemble {
     }
 
     getDisplayName(): string {
-        if (this._customName) {
-            return this._customName;
-        }
-        return `${this._ensembleIdent.getEnsembleName()} (${this._caseName})`;
+        return createRegularEnsembleDisplayName(this._ensembleIdent, this._caseName, this._customName ?? undefined);
     }
 
     getCaseUuid(): string {
