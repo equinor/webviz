@@ -54,7 +54,7 @@ export class RealizationGridProvider
     }
 
     getDefaultName() {
-        return "Realization Grid";
+        return "Grid Model Layer";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

@@ -101,7 +101,7 @@ export class IntersectionRealizationSeismicProvider
 
     getDefaultName(): string {
         const dataSourceString = SeismicDataSourceEnumToStringMapping[this._dataSource];
-        return `Intersection Realization ${dataSourceString} Seismic`;
+        return `Seismic fence (${dataSourceString}`;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

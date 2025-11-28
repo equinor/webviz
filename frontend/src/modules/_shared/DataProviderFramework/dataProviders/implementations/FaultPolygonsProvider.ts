@@ -2,7 +2,6 @@ import { isEqual } from "lodash";
 
 import type { PolygonData_api } from "@api";
 import { getPolygonsDataOptions, getPolygonsDirectoryOptions, PolygonsAttributeType_api } from "@api";
-import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     CustomDataProviderImplementation,
     FetchDataParams,
@@ -15,21 +14,21 @@ const realizationPolygonsSettings = [
     Setting.ENSEMBLE,
     Setting.REALIZATION,
     Setting.POLYGONS_ATTRIBUTE,
-    Setting.POLYGONS_NAME,
+    Setting.SURFACE_NAME,
     Setting.POLYGON_VISUALIZATION,
 ] as const;
-const DISALLOWED_SURFACE_TYPES_FROM_API = [PolygonsAttributeType_api.FAULT_LINES];
-export type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
-type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;
+const ALLOWED_SURFACE_TYPES_FROM_API = [PolygonsAttributeType_api.FAULT_LINES];
+export type FaultPolygonsSettings = typeof realizationPolygonsSettings;
+type SettingsWithTypes = MakeSettingTypesMap<FaultPolygonsSettings>;
 
-export type RealizationPolygonsData = PolygonData_api[];
-export class RealizationPolygonsProvider
-    implements CustomDataProviderImplementation<RealizationPolygonsSettings, RealizationPolygonsData>
+export type FaultPolygonsData = PolygonData_api[];
+export class FaultPolygonsProvider
+    implements CustomDataProviderImplementation<FaultPolygonsSettings, FaultPolygonsData>
 {
     settings = realizationPolygonsSettings;
 
     getDefaultName(): string {
-        return "Polygons";
+        return "Fault Polygons";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -40,7 +39,7 @@ export class RealizationPolygonsProvider
         helperDependency,
         availableSettingsUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationPolygonsSettings>) {
+    }: DefineDependenciesArgs<FaultPolygonsSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -77,7 +76,6 @@ export class RealizationPolygonsProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
-                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
@@ -90,8 +88,8 @@ export class RealizationPolygonsProvider
             if (!data) {
                 return [];
             }
-            const filteredPolygonsMeta = data.filter(
-                (polygonsMeta) => !DISALLOWED_SURFACE_TYPES_FROM_API.includes(polygonsMeta.attribute_type),
+            const filteredPolygonsMeta = data.filter((polygonsMeta) =>
+                ALLOWED_SURFACE_TYPES_FROM_API.includes(polygonsMeta.attribute_type),
             );
 
             const availableAttributes = [
@@ -100,7 +98,7 @@ export class RealizationPolygonsProvider
             return availableAttributes;
         });
 
-        availableSettingsUpdater(Setting.POLYGONS_NAME, ({ getHelperDependency, getLocalSetting }) => {
+        availableSettingsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(Setting.POLYGONS_ATTRIBUTE);
             const data = getHelperDependency(realizationPolygonsMetadataDep);
 
@@ -123,10 +121,10 @@ export class RealizationPolygonsProvider
     fetchData({
         getSetting,
         fetchQuery,
-    }: FetchDataParams<RealizationPolygonsSettings, RealizationPolygonsData>): Promise<PolygonData_api[]> {
+    }: FetchDataParams<FaultPolygonsSettings, FaultPolygonsData>): Promise<PolygonData_api[]> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
-        const polygonsName = getSetting(Setting.POLYGONS_NAME);
+        const surfaceName = getSetting(Setting.SURFACE_NAME);
         const polygonsAttribute = getSetting(Setting.POLYGONS_ATTRIBUTE);
 
         const queryOptions = getPolygonsDataOptions({
@@ -134,9 +132,8 @@ export class RealizationPolygonsProvider
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
                 realization_num: realizationNum ?? 0,
-                name: polygonsName ?? "",
+                name: surfaceName ?? "",
                 attribute: polygonsAttribute ?? "",
-                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 

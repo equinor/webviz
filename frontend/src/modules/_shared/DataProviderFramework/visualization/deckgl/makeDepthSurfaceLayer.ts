@@ -4,20 +4,26 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import {
-    type ObservedSurfaceData,
-    type ObservedSurfaceSettings,
-    SurfaceDataFormat,
-} from "../customDataProviderImplementations/ObservedSurfaceProvider";
+import { type DepthSurfaceSettings } from "../../dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
+import { SurfaceDataFormat, type SurfaceData } from "../../dataProviders/implementations/surfaceProviders/types";
 
-export function makeObservedSurfaceLayer({
+export function makeDepthSurfaceLayer({
     id,
     name,
     getData,
     getSetting,
-}: TransformerArgs<ObservedSurfaceSettings, ObservedSurfaceData>): MapLayer | null {
+}: TransformerArgs<DepthSurfaceSettings, SurfaceData>): MapLayer | null {
     const data = getData();
-    const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
+    const colorScaleSpec = getSetting(Setting.DEPTH_COLOR_SCALE);
+
+    let contours: [number, number] = [-1, -1];
+    const { enabled: contourEnabled, value: contourValue } = getSetting(Setting.CONTOURS) ?? {
+        enabled: false,
+        value: 0,
+    };
+    if (contourEnabled && contourValue !== null) {
+        contours = [0, contourValue];
+    }
 
     if (!data) {
         return null;
@@ -43,6 +49,8 @@ export function makeObservedSurfaceLayer({
             valueMax: data.surfaceData.value_max,
             denormalize: true,
         }),
+        contours: contours,
+        isContoursDepth: true,
         gridLines: false,
     });
 }

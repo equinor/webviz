@@ -45,7 +45,7 @@ export class RealizationGridProvider
     }
 
     getDefaultName() {
-        return "Realization Grid";
+        return "Grid Model 3D";
     }
 
     doSettingsChangesRequireDataRefetch(

@@ -77,7 +77,7 @@ export class IntersectionRealizationGridProvider
     }
 
     getDefaultName(): string {
-        return "Intersection Realization Grid";
+        return "Grid Model Fence";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
