@@ -121,7 +121,7 @@ export class DepthSurfaceProvider
         });
         availableSettingsUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
         availableSettingsUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
-        availableSettingsUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession, Setting.ENSEMBLE));
+        availableSettingsUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
 
         const surfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
@@ -140,7 +140,7 @@ export class DepthSurfaceProvider
                 }),
             });
         });
-        availableSettingsUpdater(Setting.REALIZATION, createRealizationUpdater(Setting.ENSEMBLE));
+        availableSettingsUpdater(Setting.REALIZATION, createRealizationUpdater());
         availableSettingsUpdater(Setting.DEPTH_ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(surfaceMetadataDep);
 

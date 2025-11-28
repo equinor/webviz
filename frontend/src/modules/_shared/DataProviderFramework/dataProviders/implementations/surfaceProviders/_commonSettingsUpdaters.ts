@@ -1,9 +1,10 @@
 import { SurfaceStatisticFunction_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { Sensitivity, SensitivityCase } from "@framework/EnsembleSensitivities";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { SensitivityNameCasePair } from "@modules/_shared/DataProviderFramework/settings/implementations/SensitivitySetting";
-import type { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 /**
  * Creates an availableSettingsUpdater for Setting.ENSEMBLE that filters ensembles by the current field.
@@ -25,9 +26,9 @@ export function createEnsembleUpdater() {
  * Creates an availableSettingsUpdater for Setting.SENSITIVITY that returns sensitivity name/case pairs
  * for the selected ensemble.
  */
-export function createSensitivityUpdater(workbenchSession: WorkbenchSession, ensembleSetting: typeof Setting.ENSEMBLE) {
+export function createSensitivityUpdater(workbenchSession: WorkbenchSession) {
     return ({ getLocalSetting }: any) => {
-        const ensembleIdent = getLocalSetting(ensembleSetting) as RegularEnsembleIdent | DeltaEnsembleIdent | null;
+        const ensembleIdent = getLocalSetting(Setting.ENSEMBLE) as RegularEnsembleIdent | DeltaEnsembleIdent | null;
 
         if (!ensembleIdent) {
             return [];
@@ -40,8 +41,8 @@ export function createSensitivityUpdater(workbenchSession: WorkbenchSession, ens
             return [];
         }
         const availableSensitivityPairs: SensitivityNameCasePair[] = [];
-        sensitivities.map((sensitivity: any) =>
-            sensitivity.cases.map((sensitivityCase: any) => {
+        sensitivities.map((sensitivity: Sensitivity) =>
+            sensitivity.cases.map((sensitivityCase: SensitivityCase) => {
                 availableSensitivityPairs.push({
                     sensitivityName: sensitivity.name,
                     sensitivityCase: sensitivityCase.name,
@@ -56,9 +57,9 @@ export function createSensitivityUpdater(workbenchSession: WorkbenchSession, ens
  * Creates an availableSettingsUpdater for Setting.REALIZATION that returns filtered realizations
  * for the selected ensemble.
  */
-export function createRealizationUpdater(ensembleSetting: typeof Setting.ENSEMBLE) {
+export function createRealizationUpdater() {
     return ({ getLocalSetting, getGlobalSetting }: any) => {
-        const ensembleIdent = getLocalSetting(ensembleSetting) as RegularEnsembleIdent | DeltaEnsembleIdent | null;
+        const ensembleIdent = getLocalSetting(Setting.ENSEMBLE) as RegularEnsembleIdent | DeltaEnsembleIdent | null;
         const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
         if (!ensembleIdent) {
