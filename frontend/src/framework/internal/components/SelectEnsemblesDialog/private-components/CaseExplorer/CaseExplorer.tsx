@@ -19,7 +19,6 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
 
-
 import {
     makeCaseRowData,
     makeCaseTableColumns,
