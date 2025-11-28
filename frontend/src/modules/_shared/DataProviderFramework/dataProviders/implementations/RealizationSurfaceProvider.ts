@@ -7,8 +7,8 @@ import {
     getRealizationSurfacesMetadataOptions,
     getSurfaceDataOptions,
 } from "@api";
-import { sortStringArray } from "@lib/utils/arrays";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import { sortStringArray } from "@lib/utils/arrays";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,

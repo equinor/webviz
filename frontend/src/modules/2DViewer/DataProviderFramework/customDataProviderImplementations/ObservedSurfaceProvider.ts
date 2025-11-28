@@ -2,8 +2,8 @@ import { isEqual } from "lodash";
 
 import type { SurfaceDataPng_api } from "@api";
 import { SurfaceTimeType_api, getObservedSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
-import { sortStringArray } from "@lib/utils/arrays";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import { sortStringArray } from "@lib/utils/arrays";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,

@@ -7,8 +7,8 @@ import {
     postGetSampleSurfaceInPointsOptions,
 } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
-import { sortStringArray } from "@lib/utils/arrays";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import {
     createIntersectionPolylineWithSectionLengthsForField,

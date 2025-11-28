@@ -12,8 +12,8 @@ import {
 } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
-import { sortStringArray } from "@lib/utils/arrays";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import { sortStringArray } from "@lib/utils/arrays";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
