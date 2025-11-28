@@ -1,22 +1,24 @@
 import { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import {
-    type RealizationSurfaceData,
-    type RealizationSurfaceSettings,
-    SurfaceDataFormat,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-export function makeRealizationSurfaceLayer({
+import {
+    type SurfaceData,
+    type AttributeSurfaceSettings,
+    SurfaceDataFormat,
+} from "../../dataProviders/implementations/surfaceProviders/AttributeSurfaceProvider";
+
+export function makeAttributeSurfaceLayer({
     id,
     name,
     getData,
     getSetting,
-}: TransformerArgs<RealizationSurfaceSettings, RealizationSurfaceData>): MapLayer | null {
+}: TransformerArgs<AttributeSurfaceSettings, SurfaceData>): MapLayer | null {
     const data = getData();
     const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
+
     let contours: [number, number] = [-1, -1];
     const { enabled: contourEnabled, value: contourValue } = getSetting(Setting.CONTOURS) ?? {
         enabled: false,
@@ -25,6 +27,7 @@ export function makeRealizationSurfaceLayer({
     if (contourEnabled && contourValue !== null) {
         contours = [0, contourValue];
     }
+
     if (!data) {
         return null;
     }

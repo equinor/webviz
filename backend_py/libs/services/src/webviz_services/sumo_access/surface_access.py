@@ -605,12 +605,12 @@ def _build_surface_meta_arr(
 
         content_enum = SumoContent.UNKNOWN
         if not content_str:
-            content_enum = SumoContent.DEPTH
+            content_enum = SumoContent.UNKNOWN
             LOGGER.warning(f"Surface {info.name} (tagname={info.tagname}) has empty content, defaulting to DEPTH")
         elif content_str == "unset":
             # Remove this once Sumo enforces content (content-unset), https://github.com/equinor/webviz/issues/433
-            content_enum = SumoContent.DEPTH
-            LOGGER.warning(f"Surface {info.name} (tagname={info.tagname}) has unset content, defaulting to DEPTH")
+            content_enum = SumoContent.UNKNOWN
+            LOGGER.warning(f"Surface {info.name} (tagname={info.tagname}) has unset content, defaulting to UNKNOWN")
         else:
             try:
                 content_enum = SumoContent(content_str)

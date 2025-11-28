@@ -14,7 +14,6 @@ import { CustomDataProviderType } from "@modules/3DViewer/DataProviderFramework/
 import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
 import { makeIntersectionRealizationGridLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeIntersectionRealizationGridLayer";
-import { makeRealizationSurfaceLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
 import { makeSeismicIntersectionMeshLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicIntersectionMeshLayer";
 import { makeSeismicSlicesLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicSlicesLayer";
 import {
@@ -24,23 +23,29 @@ import {
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
+import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/FaultPolygonsProvider";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
-import { RealizationSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
-import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/StatisticalSurfaceProvider";
+import {
+    DepthSurfaceProvider,
+    type DepthSurfaceSettings,
+    type SurfaceData,
+    type SurfaceStoredData,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
+import { makeDepthColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeDepthColorScaleAnnotation";
 import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makePolygonDataBoundingBox";
 import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeRealizationGridBoundingBox";
 import { makeSurfaceLayerBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeSurfaceLayerBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeDepthSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDepthSurfaceLayer";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePolygonsLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
-import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
@@ -52,24 +57,19 @@ const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     AccumulatedData
 >();
 
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.REALIZATION_SURFACE_3D,
-    RealizationSurfaceProvider,
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>(
+    DataProviderType.DEPTH_SURFACE,
+    DepthSurfaceProvider,
     {
-        transformToVisualization: makeRealizationSurfaceLayer,
+        transformToVisualization: makeDepthSurfaceLayer,
         transformToBoundingBox: makeSurfaceLayerBoundingBox,
-        transformToAnnotations: makeColorScaleAnnotation,
+        transformToAnnotations: makeDepthColorScaleAnnotation,
     },
 );
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.STATISTICAL_SURFACE,
-    StatisticalSurfaceProvider,
-    {
-        transformToVisualization: makeStatisticalSurfaceLayer,
-        transformToBoundingBox: makeSurfaceLayerBoundingBox,
-        transformToAnnotations: makeColorScaleAnnotation,
-    },
-);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(DataProviderType.FAULT_POLYGONS, FaultPolygonsProvider, {
+    transformToVisualization: makePolygonsLayer,
+    transformToBoundingBox: makePolygonDataBoundingBox,
+});
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.REALIZATION_POLYGONS,
     RealizationPolygonsProvider,

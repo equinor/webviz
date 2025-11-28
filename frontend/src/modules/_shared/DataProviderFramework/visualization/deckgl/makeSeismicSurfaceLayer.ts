@@ -5,19 +5,19 @@ import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProvide
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import {
-    type RealizationSurfaceData,
-    type RealizationSurfaceSettings,
+    type SurfaceData,
+    type SeismicSurfaceSettings,
     SurfaceDataFormat,
-} from "../../dataProviders/implementations/RealizationSurfaceProvider";
+} from "../../dataProviders/implementations/surfaceProviders/SeismicSurfaceProvider";
 
-export function makeRealizationSurfaceLayer({
+export function makeSeismicSurfaceLayer({
     id,
     name,
     getData,
     getSetting,
-}: TransformerArgs<RealizationSurfaceSettings, RealizationSurfaceData>): MapLayer | null {
+}: TransformerArgs<SeismicSurfaceSettings, SurfaceData>): MapLayer | null {
     const data = getData();
-    const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
+    const colorScaleSpec = getSetting(Setting.SEISMIC_COLOR_SCALE);
 
     let contours: [number, number] = [-1, -1];
     const { enabled: contourEnabled, value: contourValue } = getSetting(Setting.CONTOURS) ?? {
