@@ -107,7 +107,6 @@ export class RealizationSurfaceProvider
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
-        settingAttributesUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationSurfaceSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
