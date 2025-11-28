@@ -2,14 +2,14 @@ import React from "react";
 
 import { useAtom, useSetAtom } from "jotai";
 
-import { KeyKind } from "@framework/DataChannelTypes";
-import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 
 import { SensitivitySortBy } from "../../_shared/SensitivityProcessing/types";
 import type { Interfaces } from "../interfaces";
@@ -27,11 +27,7 @@ import {
     colorByAtom,
 } from "./atoms/baseAtoms";
 
-export function Settings({
-    initialSettings,
-    settingsContext,
-    workbenchSession,
-}: ModuleSettingsProps<Interfaces>): React.ReactNode {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [displayComponentType, setDisplayComponentType] = useAtom(displayComponentTypeAtom);
     const [hideZeroY, setHideZeroY] = useAtom(hideZeroYAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
@@ -41,7 +37,6 @@ export function Settings({
     const [sensitivityScaling, setSensitivityScaling] = useAtom(sensitivityScalingAtom);
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
     const [colorBy, setColorBy] = useAtom(colorByAtom);
-    useApplyInitialSettingsToState(initialSettings, "displayComponentType", "string", setDisplayComponentType);
 
     const ensembleSet = workbenchSession.getEnsembleSet();
 
@@ -64,22 +59,24 @@ export function Settings({
             responseReceiver.channel.contents[0].metaData.ensembleIdentString
         ) {
             const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdentString;
-            if (typeof ensembleIdentString === "string") {
-                try {
-                    const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
-                    const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-                    if (ensemble) {
-                        sensitivityNames.push(
-                            ...(ensemble
-                                .getSensitivities()
-                                ?.getSensitivityArr()
-                                .map((el) => el.name) ?? []),
-                        );
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
+
+            const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+            if (!ensemble || ensemble instanceof DeltaEnsemble) {
+                const ensembleType = !ensemble ? "Invalid" : "Delta";
+                return (
+                    <ContentWarning>
+                        <p>{ensembleType} ensemble detected in the data channel.</p>
+                        <p>Unable to compute parameter correlations.</p>
+                    </ContentWarning>
+                );
             }
+
+            sensitivityNames.push(
+                ...(ensemble
+                    .getSensitivities()
+                    ?.getSensitivityArr()
+                    .map((el) => el.name) ?? []),
+            );
         }
     }
 

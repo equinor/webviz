@@ -1,10 +1,11 @@
 import React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 import { InplaceVolumesStatistic_api } from "@api";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -12,9 +13,12 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import type { TagOption } from "@lib/components/TagPicker";
 import { TagPicker } from "@lib/components/TagPicker";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
+import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import {
     InplaceVolumesStatisticEnumToStringMapping,
@@ -25,49 +29,39 @@ import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volume
 
 import type { Interfaces } from "../interfaces";
 
+import { selectedIndexValueCriteriaAtom, selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./atoms/baseAtoms";
+import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
-    selectedIndexValueCriteriaAtom,
-    selectedStatisticOptionsAtom,
-    selectedTableTypeAtom,
-    userSelectedGroupByIndicesAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedIndicesWithValuesAtom,
-    userSelectedResultNamesAtom,
-    userSelectedTableNamesAtom,
-} from "./atoms/baseAtoms";
-import {
-    selectedGroupByIndicesAtom,
     selectedEnsembleIdentsAtom,
+    selectedGroupByIndicesAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
     selectedTableNamesAtom,
-    tableDefinitionsAccessorAtom,
-} from "./atoms/derivedAtoms";
+} from "./atoms/persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
-    const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
+    const statusWriter = useSettingsStatusWriter(props.settingsContext);
+
+    const tableDefinitionsQuery = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
 
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-    const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
+    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
 
-    const selectedTableNames = useAtomValue(selectedTableNamesAtom);
-    const setSelectedTableNames = useSetAtom(userSelectedTableNamesAtom);
+    const [selectedTableNames, setSelectedTableNames] = useAtom(selectedTableNamesAtom);
 
-    const selectedIndicesWithValues = useAtomValue(selectedIndicesWithValuesAtom);
-    const setSelectedIndicesWithValues = useSetAtom(userSelectedIndicesWithValuesAtom);
+    const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
 
-    const selectedResultNames = useAtomValue(selectedResultNamesAtom);
-    const setSelectedResultNames = useSetAtom(userSelectedResultNamesAtom);
-
-    const selectedGroupByIndices = useAtomValue(selectedGroupByIndicesAtom);
-    const setSelectedGroupByIndices = useSetAtom(userSelectedGroupByIndicesAtom);
+    const [selectedResultNames, setSelectedResultNames] = useAtom(selectedResultNamesAtom);
+    const [selectedGroupByIndices, setSelectedGroupByIndices] = useAtom(selectedGroupByIndicesAtom);
 
     const [selectedTableType, setSelectedTableType] = useAtom(selectedTableTypeAtom);
     const [selectedStatisticOptions, setSelectedStatisticOptions] = useAtom(selectedStatisticOptionsAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
+
+    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
+
     useApplyInitialSettingsToState(
         props.initialSettings,
         "selectedIndexValueCriteria",
@@ -112,6 +106,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         });
     }, []);
 
+    const selectedResultNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNamesAtom);
+    const selectedGroupByIndicesAnnotations = useMakePersistableFixableAtomAnnotations(selectedGroupByIndicesAtom);
+
+    const selectedIndicesWithValuesAnnotations =
+        useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
+
     const tableSettings = (
         <CollapsibleGroup title="Result and grouping" expanded>
             <div className="flex flex-col gap-2">
@@ -133,46 +133,49 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         />
                     </Label>
                 )}
-                <Label text="Results">
+                <SettingWrapper label="Results" annotations={selectedResultNamesAnnotations}>
                     <Select
-                        value={selectedResultNames}
+                        value={selectedResultNames.value}
                         options={resultNameOptions}
                         onChange={setSelectedResultNames}
                         multiple
                         size={5}
                         debounceTimeMs={1500}
                     />
-                </Label>
-                <Label text="Grouping">
+                </SettingWrapper>
+                <SettingWrapper label="Grouping" annotations={selectedGroupByIndicesAnnotations}>
                     <TagPicker
-                        selection={selectedGroupByIndices}
+                        selection={selectedGroupByIndices.value}
                         tagOptions={groupByIndicesOptions}
                         onChange={handleGroupByIndicesChange}
                         debounceTimeMs={1500}
                     />
-                </Label>
+                </SettingWrapper>
             </div>
         </CollapsibleGroup>
     );
 
     return (
-        <InplaceVolumesFilterComponent
-            ensembleSet={ensembleSet}
-            settingsContext={props.settingsContext}
-            workbenchServices={props.workbenchServices}
-            isPending={tableDefinitionsQueryResult.isLoading}
-            availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
-            availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
-            selectedEnsembleIdents={selectedEnsembleIdents}
-            selectedIndicesWithValues={selectedIndicesWithValues}
-            selectedTableNames={selectedTableNames}
-            selectedAllowIndicesValuesIntersection={
-                selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
-            }
-            onChange={handleFilterChange}
-            additionalSettings={tableSettings}
-            areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
-            debounceMs={1500}
-        />
+        <SettingWrapper annotations={selectedIndicesWithValuesAnnotations}>
+            <InplaceVolumesFilterComponent
+                ensembleSet={ensembleSet}
+                settingsContext={props.settingsContext}
+                workbenchSession={props.workbenchSession}
+                workbenchServices={props.workbenchServices}
+                isPending={tableDefinitionsQuery.isLoading}
+                availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
+                availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
+                selectedEnsembleIdents={selectedEnsembleIdents.value}
+                selectedIndicesWithValues={selectedIndicesWithValues.value}
+                selectedTableNames={selectedTableNames.value}
+                selectedAllowIndicesValuesIntersection={
+                    selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
+                }
+                onChange={handleFilterChange}
+                additionalSettings={tableSettings}
+                areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
+                debounceMs={1500}
+            />
+        </SettingWrapper>
     );
 }

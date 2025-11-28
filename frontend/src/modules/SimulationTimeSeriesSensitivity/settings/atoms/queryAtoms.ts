@@ -3,10 +3,10 @@ import { atomWithQuery } from "jotai-tanstack-query";
 import { getVectorListOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
-import { selectedRegularEnsembleIdentAtom } from "./derivedAtoms";
+import { selectedRegularEnsembleIdentAtom } from "./persistableFixableAtoms";
 
 export const vectorListQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedRegularEnsembleIdentAtom);
+    const selectedEnsembleIdent = get(selectedRegularEnsembleIdentAtom).value;
 
     const query = {
         ...getVectorListOptions({

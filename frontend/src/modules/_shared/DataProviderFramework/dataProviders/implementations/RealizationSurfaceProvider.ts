@@ -7,6 +7,7 @@ import {
     getRealizationSurfacesMetadataOptions,
     getSurfaceDataOptions,
 } from "@api";
+import { sortStringArray } from "@lib/utils/arrays";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     CustomDataProviderImplementation,
@@ -191,8 +192,7 @@ export class RealizationSurfaceProvider
                     ),
                 ),
             ];
-
-            return availableSurfaceNames;
+            return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
         });
 
         availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {

@@ -7,18 +7,19 @@ import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { ErrorWrapper } from "@lib/components/ErrorWrapper";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
     settingsContext: SettingsContext<any>;
+    workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     availableTableNames: string[];
     availableIndicesWithValues: InplaceVolumesIndexWithValues_api[];
@@ -28,7 +29,6 @@ export type InplaceVolumesFilterComponentProps = {
     selectedAllowIndicesValuesIntersection: boolean;
     onChange: (filter: InplaceVolumesFilterSettings) => void;
     isPending?: boolean;
-    errorMessage?: string;
     additionalSettings?: React.ReactNode;
     areCurrentlySelectedTablesComparable?: boolean;
     debounceMs?: number;
@@ -81,8 +81,10 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         setPrevIndicesWithValues(props.selectedIndicesWithValues);
     }
 
-    const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
+    });
 
     const syncedFilter = syncHelper.useValue(
         SyncSettingKey.INPLACE_VOLUMES_FILTER,
@@ -233,70 +235,77 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 <EnsembleSelect
                     ensembles={props.ensembleSet.getRegularEnsembleArray()}
                     value={ensembleIdents}
-                    onChange={handleEnsembleIdentsChange}
                     size={5}
+                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                    onChange={handleEnsembleIdentsChange}
                 />
             </CollapsibleGroup>
-            <PendingWrapper isPending={props.isPending ?? false} errorMessage={props.errorMessage}>
-                <div className="flex flex-col gap-2">{props.additionalSettings}</div>
-                <div className="flex flex-col gap-2">
-                    <CollapsibleGroup title="Inplace volumes table names" expanded>
-                        <ErrorWrapper
-                            isError={tableSourceOptions.length === 0 && !props.isPending}
-                            message={"No table names"}
-                        >
-                            <Select
-                                options={tableSourceOptions}
-                                value={tableNames}
-                                onChange={handleTableNamesChange}
-                                multiple
-                                size={3}
+            <div className="flex flex-col gap-2">{props.additionalSettings}</div>
+            <div className="flex flex-col gap-2">
+                <CollapsibleGroup title="Inplace volumes table names" expanded>
+                    <PendingWrapper
+                        isPending={props.isPending ?? false}
+                        errorMessage={
+                            !props.isPending && tableSourceOptions.length === 0
+                                ? "No table names. See logs for details."
+                                : undefined
+                        }
+                    >
+                        <Select
+                            options={tableSourceOptions}
+                            value={tableNames}
+                            onChange={handleTableNamesChange}
+                            multiple
+                            size={3}
+                        />
+                    </PendingWrapper>
+                </CollapsibleGroup>
+                <CollapsibleGroup title="Index filters" expanded>
+                    <div className="flex flex-col gap-2">
+                        <div className="flex flex-row items-center gap-2">
+                            <div className="grow">Allow intersection of values</div>
+                            <Checkbox
+                                checked={props.selectedAllowIndicesValuesIntersection}
+                                onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
                             />
-                        </ErrorWrapper>
-                    </CollapsibleGroup>
-                    <CollapsibleGroup title="Index filters" expanded>
-                        <div className="flex flex-col gap-2">
-                            <div className="flex flex-row items-center gap-2">
-                                <div className="grow">Allow intersection of values</div>
-                                <Checkbox
-                                    checked={props.selectedAllowIndicesValuesIntersection}
-                                    onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
-                                />
-                            </div>
-                            <ErrorWrapper
-                                isError={!props.areCurrentlySelectedTablesComparable}
-                                message={"Selected tables are not comparable due to mismatching index columns"}
-                            >
-                                {props.availableIndicesWithValues.map((indexWithValues) => (
-                                    <CollapsibleGroup
-                                        key={indexWithValues.indexColumn}
-                                        title={indexWithValues.indexColumn}
-                                        expanded
-                                    >
-                                        <Select
-                                            options={indexWithValues.values.map((value) => ({
-                                                value: value,
-                                                label: value.toString(),
-                                            }))}
-                                            value={
-                                                indicesWithValues.find(
-                                                    (el) => el.indexColumn === indexWithValues.indexColumn,
-                                                )?.values ?? []
-                                            }
-                                            onChange={(value) =>
-                                                handleIndexValuesChange(indexWithValues.indexColumn, value)
-                                            }
-                                            multiple
-                                            size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
-                                            showQuickSelectButtons={true}
-                                        />
-                                    </CollapsibleGroup>
-                                ))}
-                            </ErrorWrapper>
                         </div>
-                    </CollapsibleGroup>
-                </div>
-            </PendingWrapper>
+                        <PendingWrapper
+                            isPending={props.isPending ?? false}
+                            errorMessage={
+                                !props.areCurrentlySelectedTablesComparable
+                                    ? "Selected tables are not comparable due to mismatching index columns"
+                                    : undefined
+                            }
+                        >
+                            {props.availableIndicesWithValues.map((indexWithValues) => (
+                                <CollapsibleGroup
+                                    key={indexWithValues.indexColumn}
+                                    title={indexWithValues.indexColumn}
+                                    expanded
+                                >
+                                    <Select
+                                        options={indexWithValues.values.map((value) => ({
+                                            value: value,
+                                            label: value.toString(),
+                                        }))}
+                                        value={
+                                            indicesWithValues.find(
+                                                (el) => el.indexColumn === indexWithValues.indexColumn,
+                                            )?.values ?? []
+                                        }
+                                        onChange={(value) =>
+                                            handleIndexValuesChange(indexWithValues.indexColumn, value)
+                                        }
+                                        multiple
+                                        size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
+                                        showQuickSelectButtons={true}
+                                    />
+                                </CollapsibleGroup>
+                            ))}
+                        </PendingWrapper>
+                    </div>
+                </CollapsibleGroup>
+            </div>
         </>
     );
 }

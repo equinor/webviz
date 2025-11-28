@@ -3,17 +3,17 @@ import React from "react";
 import { Input, Warning } from "@mui/icons-material";
 import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 
-import { KeyKind } from "@framework/DataChannelTypes";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleViewProps } from "@framework/Module";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey } from "@framework/SyncSettings";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
-import { ContentInfo } from "@modules/_shared/components/ContentMessage";
-import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
+import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createRankedParameterCorrelations } from "@modules/_shared/rankParameter";
@@ -34,7 +34,7 @@ function MaxNumberPlotsExceededMessage() {
     );
 }
 
-export function View({ viewContext, workbenchSession, workbenchServices }: ModuleViewProps<Interfaces>) {
+export function View(props: ModuleViewProps<Interfaces>) {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);
@@ -45,47 +45,35 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
     const [localParameterString, setLocalParameterString] = React.useState<string | null>(null);
     const [prevParameterIdentString, setPrevParameterIdentString] = React.useState<string | null>(null);
 
-    const syncedSettingKeys = viewContext.useSyncedSettingKeys();
-    const syncHelper = React.useMemo(
-        () => new SyncSettingsHelper(syncedSettingKeys, workbenchServices),
-        [syncedSettingKeys, workbenchServices],
-    );
-    const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
+    useSyncSetting({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.viewContext,
+        syncSettingKey: SyncSettingKey.PARAMETER,
+        topic: "global.syncValue.parameter",
+        value: localParameterString,
+        setValue: setLocalParameterString,
+    });
 
-    // Receive global string and update local state if different
-    React.useEffect(
-        function updateLocalParameterStringFromGlobal() {
-            if (globalSyncedParameter !== null && globalSyncedParameter !== localParameterString) {
-                setLocalParameterString(globalSyncedParameter);
-            }
-        },
-        [globalSyncedParameter, localParameterString],
-    );
+    const handleClickInChart = React.useCallback(function handleClickInChart(e: PlotMouseEvent) {
+        const clickedPoint: PlotDatum = e.points[0];
+        if (!clickedPoint) {
+            return;
+        }
+        const newParameterString = clickedPoint.customdata as string;
+        setLocalParameterString(newParameterString);
+    }, []);
 
-    const handleClickInChart = React.useCallback(
-        function handleClickInChart(e: PlotMouseEvent) {
-            const clickedPoint: PlotDatum = e.points[0];
-            if (!clickedPoint) {
-                return;
-            }
-            const newParameterString = clickedPoint.customdata as string;
-            syncHelper.publishValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter", newParameterString);
-            setLocalParameterString(newParameterString);
-        },
-        [syncHelper],
-    );
+    const numParams = props.viewContext.useSettingsToViewInterfaceValue("numParams");
+    const corrCutOff = props.viewContext.useSettingsToViewInterfaceValue("corrCutOff");
+    const showLabels = props.viewContext.useSettingsToViewInterfaceValue("showLabels");
+    const ensembleSet = props.workbenchSession.getEnsembleSet();
 
-    const numParams = viewContext.useSettingsToViewInterfaceValue("numParams");
-    const corrCutOff = viewContext.useSettingsToViewInterfaceValue("corrCutOff");
-    const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
-    const ensembleSet = workbenchSession.getEnsembleSet();
-
-    const statusWriter = useViewStatusWriter(viewContext);
+    const statusWriter = useViewStatusWriter(props.viewContext);
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const receiverResponse = viewContext.useChannelReceiver({
+    const receiverResponse = props.viewContext.useChannelReceiver({
         receiverIdString: "channelResponse",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
@@ -112,22 +100,22 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
         startTransition(function makeContent() {
             if (!receiverResponse.channel) {
                 setContent(
-                    <ContentInfo>
+                    <ContentWarning>
                         <span>
                             Data channel required for use. Add a main module to the workbench and use the data channels
                             icon <Input fontSize="small" />
                         </span>
                         <Tag label="Response" />
-                    </ContentInfo>,
+                    </ContentWarning>,
                 );
                 return;
             }
 
             if (receiverResponse.channel.contents.length === 0) {
                 setContent(
-                    <ContentInfo>
+                    <ContentWarning>
                         No data on <Tag label={receiverResponse.displayName} />
-                    </ContentInfo>,
+                    </ContentWarning>,
                 );
                 return;
             }
@@ -150,8 +138,15 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     const responseChannelData = receiverResponse.channel.contents[cellIndex];
                     const ensembleIdentString = responseChannelData.metaData.ensembleIdentString;
                     const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-                    if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
-                        continue;
+                    if (!ensemble || ensemble instanceof DeltaEnsemble) {
+                        const ensembleType = !ensemble ? "Invalid" : "Delta";
+                        setContent(
+                            <ContentWarning>
+                                <p>{ensembleType} ensemble detected in the data channel.</p>
+                                <p>Unable to compute parameter correlations.</p>
+                            </ContentWarning>,
+                        );
+                        return;
                     }
                     const continuousParameters = getVaryingContinuousParameters(ensemble);
                     if (!continuousParameters) {

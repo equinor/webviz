@@ -1,34 +1,33 @@
-import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
-import { TemplateRegistry } from "@framework/TemplateRegistry";
+import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
+import { KeyKind } from "@framework/types/dataChannnel";
 import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
+    name: "Correlations between input parameters and simulation timeseries",
     description: "Correlate one or more simulation vectors (e.g. Field oil production) against input parameters.",
     moduleInstances: [
-        {
+        createTemplateModuleInstance("SimulationTimeSeries", {
             instanceRef: "MainSimulationTimeSeriesInstance",
-            moduleName: "SimulationTimeSeries",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
                 relX: 0,
                 relY: 0,
             },
-
-            initialSettings: {
-                selectedVectorTags: ["FOPT"],
-                visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
-                colorRealizationsByParameter: true,
+            initialState: {
+                settings: {
+                    selectedVectorTags: ["FOPT"],
+                    visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                    colorRealizationsByParameter: true,
+                },
             },
             syncedSettings: [SyncSettingKey.PARAMETER],
-        },
-
-        {
+        }),
+        createTemplateModuleInstance("ParameterResponseCrossPlot", {
             instanceRef: "MyParameterResponseCrossPlotInstance",
-            moduleName: "ParameterResponseCrossPlot",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -36,7 +35,6 @@ const template: Template = {
                 relY: 0.5,
             },
             syncedSettings: [SyncSettingKey.PARAMETER],
-
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
                     listensToInstanceRef: "MainSimulationTimeSeriesInstance",
@@ -44,14 +42,14 @@ const template: Template = {
                     channelIdString: ChannelIds.TIME_SERIES,
                 },
             },
-            initialSettings: {
-                crossPlottingType: KeyKind.REALIZATION,
-                parameterIdentString: "FWL_CENTRAL~@@~GLOBVAR",
+            initialState: {
+                settings: {
+                    parameterIdentString: "FWL_CENTRAL~@@~GLOBVAR",
+                },
             },
-        },
-        {
-            instanceRef: "MyParameterResponseCorrelationBarPlotInstance",
-            moduleName: "ParameterResponseCorrelationBarPlot",
+        }),
+        createTemplateModuleInstance("ParameterResponseCorrelationBarPlot", {
+            instanceRef: "MyParameterCorrelationPlotInstance",
             layout: {
                 relHeight: 1,
                 relWidth: 0.5,
@@ -59,7 +57,6 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.PARAMETER],
-
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
                     listensToInstanceRef: "MainSimulationTimeSeriesInstance",
@@ -67,13 +64,14 @@ const template: Template = {
                     channelIdString: ChannelIds.TIME_SERIES,
                 },
             },
-            initialSettings: {
-                crossPlottingType: KeyKind.REALIZATION,
-                showLabels: true,
-                numParams: 20,
+            initialState: {
+                settings: {
+                    showLabels: true,
+                    numParams: 20,
+                },
             },
-        },
+        }),
     ],
 };
 
-TemplateRegistry.registerTemplate("Correlations between input parameters and simulation timeseries", template);
+TemplateRegistry.registerTemplate(template);

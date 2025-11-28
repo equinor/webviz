@@ -18,10 +18,12 @@ type LeftNavBarProps = {
 };
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
-    const workbenchSession = props.workbench.getWorkbenchSession();
+    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
-    const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
+    const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);
+    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
+
     const [ensembleDialogOpen, setEnsembleDialogOpen] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.EnsembleDialogOpen,
@@ -77,7 +79,9 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             <div className="flex flex-col gap-2 grow">
                 <NavBarButton
                     active={ensembleDialogOpen}
-                    title={"Open ensemble selection dialog"}
+                    tooltip={"Open ensemble selection dialog"}
+                    disabledTooltip="Ensembles cannot be changed in snapshot mode"
+                    disabled={isSnapshot}
                     icon={
                         <Badge
                             invisible={ensembleSet.getEnsembleArray().length === 0 && !loadingEnsembleSet}
@@ -98,22 +102,25 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <NavBarDivider />
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.ModuleSettings}
-                    title="Show module settings"
+                    tooltip="Show module settings"
                     icon={<Tune fontSize="small" className="size-5" />}
                     onClick={handleModuleSettingsClick}
                     disabled={layoutEmpty}
                 />
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.SyncSettings}
-                    title="Show sync settings"
+                    tooltip="Show sync settings"
+                    disabledTooltip={
+                        layoutEmpty ? "Please add modules first" : "Sync settings cannot be changed in snapshot mode"
+                    }
                     icon={<Link fontSize="small" className="size-5" />}
                     onClick={handleSyncSettingsClick}
-                    disabled={layoutEmpty}
+                    disabled={layoutEmpty || isSnapshot}
                 />
                 <NavBarDivider />
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.ColorPaletteSettings}
-                    title="Show color settings"
+                    tooltip="Show color settings"
                     icon={<Palette fontSize="small" className="size-5" />}
                     onClick={handleColorPaletteSettingsClick}
                 />

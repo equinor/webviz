@@ -4,12 +4,13 @@ from typing import List, Coroutine, Any
 
 from fastapi import APIRouter, Depends, Path, Query, Body, Response
 
+from webviz_services.sumo_access.case_inspector import CaseInspector
+from webviz_services.sumo_access.sumo_inspector import SumoInspector
+from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+
 from primary.auth.auth_helper import AuthHelper
 from primary.middleware.add_browser_cache import no_cache
-from primary.services.sumo_access.case_inspector import CaseInspector
-from primary.services.sumo_access.sumo_inspector import SumoInspector
-from primary.services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
-from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 from . import schemas
@@ -123,11 +124,11 @@ async def post_refresh_fingerprints_for_ensembles(
     perf_metrics.record_lap("calc-and-write-fingerprints")
 
     ret_fingerprints: list[str | None] = []
-    for res in raw_results:
-        if isinstance(res, str):
-            ret_fingerprints.append(res)
+    for i, raw_res in enumerate(raw_results):
+        if isinstance(raw_res, str):
+            ret_fingerprints.append(raw_res)
         else:
-            LOGGER.warning(f"Unable to calculate fingerprint for ensemble {ident}: {res}")
+            LOGGER.warning(f"Unable to calculate fingerprint for ensemble {ensemble_idents[i]}: {raw_res}")
             ret_fingerprints.append(None)
 
     LOGGER.debug(f"Calculated and refreshed {len(ret_fingerprints)} fingerprints in: {perf_metrics.to_string()}")

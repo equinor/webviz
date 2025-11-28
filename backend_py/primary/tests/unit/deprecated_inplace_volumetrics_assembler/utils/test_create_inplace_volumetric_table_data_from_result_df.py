@@ -1,6 +1,6 @@
 import polars as pl
 
-from primary.services.deprecated_inplace_volumetrics_assembler._utils import (
+from webviz_services.deprecated_inplace_volumetrics_assembler._utils import (
     create_inplace_volumetric_table_data_from_result_df,
 )
 

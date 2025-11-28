@@ -1,7 +1,7 @@
 import pyarrow as pa
 
 
-from primary.services.summary_delta_vectors import (
+from webviz_services.summary_delta_vectors import (
     create_delta_vector_table,
     create_realization_delta_vector_list,
     RealizationDeltaVector,

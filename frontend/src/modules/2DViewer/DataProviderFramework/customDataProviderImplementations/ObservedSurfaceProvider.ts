@@ -2,6 +2,7 @@ import { isEqual } from "lodash";
 
 import type { SurfaceDataPng_api } from "@api";
 import { SurfaceTimeType_api, getObservedSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
+import { sortStringArray } from "@lib/utils/arrays";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     CustomDataProviderImplementation,
@@ -130,8 +131,7 @@ export class ObservedSurfaceProvider
                     ),
                 ),
             ];
-
-            return availableSurfaceNames;
+            return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
         });
 
         availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {

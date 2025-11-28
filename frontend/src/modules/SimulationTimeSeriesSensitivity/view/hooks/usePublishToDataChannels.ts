@@ -5,17 +5,16 @@ import type { ViewContext } from "@framework/ModuleContext";
 import { makeVectorDataGenerator } from "@modules/SimulationTimeSeriesSensitivity/dataGenerators";
 import type { Interfaces } from "@modules/SimulationTimeSeriesSensitivity/interfaces";
 
-
 import { ChannelIds } from "../../channelDefs";
 import { vectorSpecificationAtom } from "../atoms/baseAtoms";
-import { activeTimestampUtcMsAtom } from "../atoms/derivedAtoms";
+import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
 import { vectorDataQueryAtom } from "../atoms/queryAtoms";
 
 export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
     const vectorSpecification = useAtomValue(vectorSpecificationAtom);
     const vectorDataQuery = useAtomValue(vectorDataQueryAtom);
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
+    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
 
     const ensemble = vectorSpecification ? ensembleSet.findEnsemble(vectorSpecification.ensembleIdent) : null;
 

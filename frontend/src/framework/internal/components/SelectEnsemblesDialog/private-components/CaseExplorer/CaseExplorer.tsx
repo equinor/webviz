@@ -9,8 +9,8 @@ import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
 import type { TableFilters } from "@lib/components/Table/types";
@@ -40,6 +40,7 @@ export type CaseExplorerProps = {
     onCaseSelectionChange: (caseSelection: CaseSelection) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
+    const { onCaseSelectionChange } = props;
     const { userInfo } = useAuthProvider();
     const userName = React.useMemo(() => {
         return userInfo?.username.replace("@equinor.com", "").toLowerCase() ?? "";
@@ -59,6 +60,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         ...(showOnlyOfficialCases && { status: ["official"] }),
     });
 
+    // Keep the prevCaseSelection state that was already defined
     const [prevCaseSelection, setPrevCaseSelection] = React.useState<CaseSelection | null>(null);
 
     // --- Queries ---
@@ -172,10 +174,13 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         };
     }, [casesQuery.data, selectedCaseUuid, selectedStandardResults]);
 
-    if (!isEqual(currentCaseSelection, prevCaseSelection)) {
-        props.onCaseSelectionChange(currentCaseSelection);
-        setPrevCaseSelection(currentCaseSelection);
-    }
+    // Add useEffect that compares with previous selection before calling the callback
+    React.useEffect(() => {
+        if (!isEqual(currentCaseSelection, prevCaseSelection)) {
+            setPrevCaseSelection(currentCaseSelection);
+            onCaseSelectionChange(currentCaseSelection);
+        }
+    }, [currentCaseSelection, onCaseSelectionChange, prevCaseSelection]);
 
     // --- Handlers ---
     function handleFieldChanged(fieldIdentifier: string) {
@@ -226,35 +231,36 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     </QueryStateWrapper>
                 </Label>
                 <div className="grow flex flex-row gap-4 items-center">
-                    <Label position="left" text="Show my cases only">
-                        <Tooltip title="Show only my cases" enterDelay="medium">
+                    <Label position="left" text="Only my cases">
+                        <Tooltip title="Show only cases authored by me" enterDelay="medium">
                             <Switch checked={showOnlyMyCases} onChange={handleCasesByMeChange} />
                         </Tooltip>
                     </Label>
-                    <Label position="left" text="Show official cases only">
+                    <Label position="left" text="Only official cases">
                         <Tooltip title="Show only cases marked as official" enterDelay="medium">
                             <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
                         </Tooltip>
                     </Label>
                     <QueryStateWrapper
                         queryResult={casesQuery}
-                        className="h-full flex-1 min-h-0"
+                        className="h-full flex-1 min-h-0 min-w-56"
                         errorComponent={<div className="text-red-500">Error loading cases</div>}
                         loadingComponent={<CircularProgress />}
                     >
-                        <TagPicker
-                            className="bg-white"
-                            placeholder="Filter cases by Standard Results..."
-                            selection={selectedStandardResults}
-                            tagOptions={casesStandardResults.map((elm) => ({ label: elm, value: elm }))}
-                            onChange={(value) => setSelectedStandardResults([...value])}
-                        />
+                        <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
+                            <TagPicker
+                                className="bg-white"
+                                placeholder="Filter cases by Standard Results..."
+                                selection={selectedStandardResults}
+                                tagOptions={casesStandardResults.map((elm) => ({ label: elm, value: elm }))}
+                                onChange={(value) => setSelectedStandardResults([...value])}
+                            />
+                        </Tooltip>
                     </QueryStateWrapper>
                 </div>
             </div>
-            <PendingWrapper
+            <StatusWrapper
                 className="grow min-h-0"
-                isPending={false}
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
             >
                 <div className="flex flex-col h-full">
@@ -272,13 +278,13 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             selectedRows={[selectedCaseUuid]}
                             filters={tableFiltersState}
                             selectable
-                            onSelectedRowsChange={(caseIds) => setSelectedCaseId((prev) => caseIds?.[0] ?? prev)}
+                            onSelectedRowsChange={(caseIds) => setSelectedCaseId((prev) => caseIds[0] ?? prev)}
                             onFiltersChange={setTableFiltersState}
                             onDataCollated={(data) => setNumberOfCases(data.length)}
                         />
                     </div>
                 </div>
-            </PendingWrapper>
+            </StatusWrapper>
         </div>
     );
 }

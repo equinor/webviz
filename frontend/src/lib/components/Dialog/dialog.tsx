@@ -21,11 +21,14 @@ export type DialogProps = {
     onClose?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
     width?: string | number;
     height?: string | number;
+    maxWidth?: string | number;
+    maxHeight?: string | number;
     minWidth?: string | number;
     minHeight?: string | number;
     actions?: React.ReactNode;
     showCloseCross?: boolean;
     drawer?: DialogDrawerProps;
+    zIndex?: number;
 };
 
 export const Dialog: React.FC<DialogProps> = (props) => {
@@ -46,11 +49,12 @@ export const Dialog: React.FC<DialogProps> = (props) => {
     return createPortal(
         <div
             ref={wrapperRef}
-            className={resolveClassNames("fixed inset-0 w-full h-full z-50", {
+            className={resolveClassNames("fixed inset-0 w-full h-full", {
                 "pointer-events-none": !props.modal,
                 "bg-slate-600/50": props.modal,
                 hidden: !props.open,
             })}
+            style={{ zIndex: props.zIndex ?? 50 }}
             onClick={handleBackgroundClick}
         >
             {/* Main dialog */}
@@ -65,6 +69,8 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     width: props.width,
                     minWidth: props.minWidth,
                     minHeight: props.minHeight,
+                    maxWidth: props.maxWidth,
+                    maxHeight: props.maxHeight,
                 }}
             >
                 {/* Header */}
@@ -73,7 +79,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     {props.showCloseCross && (
                         <div
                             className="hover:text-slate-500 cursor-pointer ml-4"
-                            onPointerDown={handleClose}
+                            onClick={handleClose}
                             title="Close dialog"
                         >
                             <Close width={24} />

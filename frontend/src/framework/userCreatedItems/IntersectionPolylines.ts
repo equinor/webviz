@@ -1,33 +1,10 @@
-import type { JTDSchemaType } from "ajv/dist/core";
 import { atom } from "jotai";
 import { cloneDeep, isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
 
-export type SerializedIntersectionPolylines = {
-    intersectionPolylines: IntersectionPolyline[];
-};
-
-export const INTERSECTION_POLYLINES_JTD_SCHEMA: JTDSchemaType<SerializedIntersectionPolylines> = {
-    properties: {
-        intersectionPolylines: {
-            elements: {
-                properties: {
-                    id: { type: "string" },
-                    name: { type: "string" },
-                    color: { type: "string" },
-                    path: {
-                        elements: {
-                            elements: { type: "float64" },
-                        },
-                    },
-                    fieldId: { type: "string" },
-                },
-            },
-        },
-    },
-} as const;
+import type { SerializedIntersectionPolylinesState } from "./IntersectionPolylines.schema";
 
 export type IntersectionPolyline = {
     id: string;
@@ -52,13 +29,13 @@ export class IntersectionPolylines {
         this._atomStoreMaster = atomStoreMaster;
     }
 
-    serializeState(): SerializedIntersectionPolylines {
+    serializeState(): SerializedIntersectionPolylinesState {
         return {
             intersectionPolylines: this._polylines,
         };
     }
 
-    deserializeState(data: SerializedIntersectionPolylines): void {
+    deserializeState(data: SerializedIntersectionPolylinesState): void {
         this._polylines = data.intersectionPolylines.map((polyline) => ({
             ...polyline,
         }));

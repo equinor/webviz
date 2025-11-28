@@ -1,27 +1,24 @@
-import type { UseQueryResult } from "@tanstack/react-query";
-
-import type { VfpInjTable_api, VfpProdTable_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
+import { selectedPressureOptionAtom } from "./settings/atoms/baseAtoms";
+import { tableDataAccessorWithStatusFlagsAtom } from "./settings/atoms/derivedAtoms";
 import {
     selectedAlqIndicesAtom,
     selectedColorByAtom,
     selectedGfrIndicesAtom,
-    selectedPressureOptionAtom,
     selectedThpIndicesAtom,
     selectedWfrIndicesAtom,
-} from "./settings/atoms/derivedAtoms";
-import { vfpTableQueryAtom } from "./settings/atoms/queryAtoms";
-import type { PressureOption, VfpParam } from "./types";
+} from "./settings/atoms/persistableFixableAtoms";
+import type { PressureOption, TableDataAccessorWithStatusFlags, VfpParam } from "./types";
 
 type SettingsToViewInterface = {
-    vfpDataQuery: UseQueryResult<VfpProdTable_api | VfpInjTable_api, Error>;
+    tableDataAccessorWithStatusFlags: TableDataAccessorWithStatusFlags;
     selectedThpIndices: number[] | null;
     selectedWfrIndices: number[] | null;
     selectedGfrIndices: number[] | null;
     selectedAlqIndices: number[] | null;
-    selectedPressureOption: PressureOption;
     selectedColorBy: VfpParam;
+    selectedPressureOption: PressureOption;
 };
 
 export type Interfaces = {
@@ -29,25 +26,25 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    vfpDataQuery: (get) => {
-        return get(vfpTableQueryAtom);
+    tableDataAccessorWithStatusFlags: (get) => {
+        return get(tableDataAccessorWithStatusFlagsAtom);
     },
     selectedThpIndices: (get) => {
-        return get(selectedThpIndicesAtom);
+        return get(selectedThpIndicesAtom).value;
     },
     selectedWfrIndices: (get) => {
-        return get(selectedWfrIndicesAtom);
+        return get(selectedWfrIndicesAtom).value;
     },
     selectedGfrIndices: (get) => {
-        return get(selectedGfrIndicesAtom);
+        return get(selectedGfrIndicesAtom).value;
     },
     selectedAlqIndices: (get) => {
-        return get(selectedAlqIndicesAtom);
+        return get(selectedAlqIndicesAtom).value;
+    },
+    selectedColorBy: (get) => {
+        return get(selectedColorByAtom).value;
     },
     selectedPressureOption: (get) => {
         return get(selectedPressureOptionAtom);
-    },
-    selectedColorBy: (get) => {
-        return get(selectedColorByAtom);
     },
 };

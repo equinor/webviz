@@ -19,15 +19,12 @@ import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/C
 import { ColorSet } from "@lib/utils/ColorSet";
 import { usePublishSubscribeTopicValue, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
+import type { WorkbenchSettingsTopicPayloads } from "./internal/PrivateWorkbenchSettings";
+
 export enum WorkbenchSettingsTopic {
     SELECTED_COLOR_PALETTE_IDS = "SelectedColorPaletteIds",
     SELECTED_STEPS = "SelectedSteps",
 }
-
-export type WorkbenchSettingsTopicPayloads = {
-    [WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS]: Record<ColorPaletteType, string>;
-    [WorkbenchSettingsTopic.SELECTED_STEPS]: Record<ColorScaleDiscreteSteps, number>;
-};
 
 export enum ColorPaletteType {
     Categorical = "categorical",

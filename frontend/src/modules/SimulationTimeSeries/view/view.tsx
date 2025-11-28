@@ -17,8 +17,8 @@ import type { Interfaces } from "../interfaces";
 import type { VectorHexColorMap } from "../typesAndEnums";
 import { GroupBy } from "../typesAndEnums";
 
-import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
+import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
@@ -41,7 +41,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
     const anyLoading = useAtomValue(queryIsFetchingAtom);
 
-    const setActiveTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
+    const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
 
     // Color palettes
     const colorSet = useColorSet(workbenchSettings);
@@ -77,7 +77,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         ensemblesWithoutParameter.push(...selectedDeltaEnsembles);
     }
 
-    useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);
+    useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap);
 
     const handleClickInChart = React.useCallback(
@@ -116,7 +116,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     layout={plotBuilder.makePlotLayout()}
                 />
             ) : (
-                <ContentError>One or more queries have an error state.</ContentError>
+                <ContentError>One or more queries have an error state. See the log for details.</ContentError>
             )}
         </div>
     );
