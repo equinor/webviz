@@ -152,12 +152,6 @@ export class RealizationSurfaceProvider
             });
         });
 
-        settingAttributesUpdater(Setting.REALIZATION, () => {
-            return {
-                visible: false,
-            };
-        });
-
         availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationSurfaceMetadataDep);
 
