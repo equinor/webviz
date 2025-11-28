@@ -1,3 +1,9 @@
+import {
+    defaultContinuousDivergingColorPalettes,
+    defaultContinuousSequentialColorPalettes,
+} from "@framework/utils/colorPalettes";
+import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+
 import { BooleanNumberSetting } from "../implementations/BooleanNumberSetting";
 import { BooleanSetting } from "../implementations/BooleanSetting";
 import { ColorScaleSetting } from "../implementations/ColorScaleSetting";
@@ -13,6 +19,7 @@ import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { LogCurveSetting } from "../implementations/LogCurveSetting";
 import { PolygonVisualizationSetting } from "../implementations/PolygonVisualizationSetting";
+import { RepresentationSetting } from "../implementations/RepresentationSetting";
 import { SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
@@ -50,8 +57,40 @@ SettingRegistry.registerSetting(Setting.LABEL_ROTATION, "Label rotation", Static
 SettingRegistry.registerSetting(Setting.SHOW_LINES, "Show lines", BooleanSetting);
 
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.SEISMIC_ATTRIBUTE, "Seismic Attribute", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.DEPTH_ATTRIBUTE, "Depth Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SCALE, "Color Scale", ColorScaleSetting);
+SettingRegistry.registerSetting(Setting.DEPTH_COLOR_SCALE, "Depth Color Scale", ColorScaleSetting, {
+    customConstructorParameters: [
+        {
+            initialColorScale: {
+                areBoundariesUserDefined: false,
+                colorScale: new ColorScale({
+                    colorPalette: defaultContinuousSequentialColorPalettes[0],
+                    gradientType: ColorScaleGradientType.Sequential,
+                    type: ColorScaleType.Continuous,
+                    steps: 10,
+                }),
+            },
+        },
+    ],
+});
+SettingRegistry.registerSetting(Setting.SEISMIC_COLOR_SCALE, "Seismic Color Scale", ColorScaleSetting, {
+    customConstructorParameters: [
+        {
+            initialColorScale: {
+                areBoundariesUserDefined: false,
+                colorScale: new ColorScale({
+                    colorPalette: defaultContinuousDivergingColorPalettes[0],
+                    gradientType: ColorScaleGradientType.Diverging,
+                    type: ColorScaleType.Continuous,
+                    steps: 10,
+                }),
+            },
+        },
+    ],
+});
 SettingRegistry.registerSetting(Setting.COLOR, "Color", SingleColorSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SET, "Color Set", ColorSetSetting);
 SettingRegistry.registerSetting(Setting.CONTOURS, "Contours", BooleanNumberSetting, {
@@ -87,9 +126,14 @@ SettingRegistry.registerSetting(Setting.SMDA_WELLBORE_HEADERS, "SMDA Wellbore He
 SettingRegistry.registerSetting(Setting.STATISTIC_FUNCTION, "Statistic Function", StatisticFunctionSetting);
 SettingRegistry.registerSetting(Setting.STRAT_COLUMN, "Stratigraphic Column", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.SURFACE_NAME, "Surface Name", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.FORMATION_NAME, "Formation Name", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.SURFACE_NAMES, "Surface Names", SelectStringSetting);
 SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", TimeOrIntervalSetting);
+SettingRegistry.registerSetting(Setting.TIME_POINT, "Time Point", TimeOrIntervalSetting);
+SettingRegistry.registerSetting(Setting.TIME_INTERVAL, "Time Interval", TimeOrIntervalSetting);
+
 SettingRegistry.registerSetting(Setting.WELLBORE_EXTENSION_LENGTH, "Wellbore Extension Length", InputNumberSetting, {
     customConstructorParameters: [{ min: 0.0, max: 5000.0 }],
 });
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
+SettingRegistry.registerSetting(Setting.REPRESENTATION, "Representation", RepresentationSetting);

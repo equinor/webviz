@@ -16,6 +16,7 @@ import type { AvailableValuesType } from "../interfacesAndTypes/utils";
 
 import type { IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import type { PolygonVisualizationSpec } from "./implementations/PolygonVisualizationSetting";
+import type { Representation } from "./implementations/RepresentationSetting";
 import type { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
 
 export enum SettingCategory {
@@ -41,10 +42,13 @@ export enum Setting {
 
     LOG_CURVE = "logCurve",
     PLOT_VARIANT = "plotVariant",
-
+    DEPTH_ATTRIBUTE = "depthAttribute",
+    SEISMIC_ATTRIBUTE = "seismicAttribute",
     ATTRIBUTE = "attribute",
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
+    DEPTH_COLOR_SCALE = "depthColorScale",
+    SEISMIC_COLOR_SCALE = "seismicColorScale",
     COLOR_SET = "colorSet",
     COLOR = "color",
     CONTOURS = "contours",
@@ -67,11 +71,15 @@ export enum Setting {
     SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
+    FORMATION_NAME = "formationName",
     SURFACE_NAMES = "surfaceNames",
     TIME_OR_INTERVAL = "timeOrInterval",
+    TIME_POINT = "timePoint",
+    TIME_INTERVAL = "timeInterval",
     WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
+    REPRESENTATION = "representation",
 }
 
 export type SettingTypeDefinitions = {
@@ -268,8 +276,12 @@ export const settingCategories = {
     [Setting.LOG_CURVE]: SettingCategory.SINGLE_SELECT,
     [Setting.PLOT_VARIANT]: SettingCategory.SINGLE_SELECT,
     [Setting.ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
+    [Setting.DEPTH_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
+    [Setting.SEISMIC_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
     [Setting.ENSEMBLE]: SettingCategory.SINGLE_SELECT,
     [Setting.COLOR_SCALE]: SettingCategory.STATIC,
+    [Setting.DEPTH_COLOR_SCALE]: SettingCategory.STATIC,
+    [Setting.SEISMIC_COLOR_SCALE]: SettingCategory.STATIC,
     [Setting.COLOR_SET]: SettingCategory.STATIC,
     [Setting.COLOR]: SettingCategory.STATIC,
     [Setting.CONTOURS]: SettingCategory.BOOLEAN_NUMBER,
@@ -292,11 +304,15 @@ export const settingCategories = {
     [Setting.STATISTIC_FUNCTION]: SettingCategory.SINGLE_SELECT,
     [Setting.STRAT_COLUMN]: SettingCategory.SINGLE_SELECT,
     [Setting.SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
+    [Setting.FORMATION_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.SURFACE_NAMES]: SettingCategory.MULTI_SELECT,
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
+    [Setting.TIME_POINT]: SettingCategory.SINGLE_SELECT,
+    [Setting.TIME_INTERVAL]: SettingCategory.SINGLE_SELECT,
     [Setting.WELLBORE_EXTENSION_LENGTH]: SettingCategory.NUMBER,
     [Setting.WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
     [Setting.WELLBORE_PICK_IDENTIFIER]: SettingCategory.SINGLE_SELECT,
+    [Setting.REPRESENTATION]: SettingCategory.SINGLE_SELECT,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
@@ -310,8 +326,12 @@ export type SettingTypes = {
     [Setting.LOG_CURVE]: WellboreLogCurveHeader_api | null;
     [Setting.PLOT_VARIANT]: TemplatePlotType | null;
     [Setting.ATTRIBUTE]: string | null;
+    [Setting.DEPTH_ATTRIBUTE]: string | null;
+    [Setting.SEISMIC_ATTRIBUTE]: string | null;
     [Setting.ENSEMBLE]: RegularEnsembleIdent | null;
     [Setting.COLOR_SCALE]: ColorScaleSpecification | null;
+    [Setting.DEPTH_COLOR_SCALE]: ColorScaleSpecification | null;
+    [Setting.SEISMIC_COLOR_SCALE]: ColorScaleSpecification | null;
     [Setting.COLOR_SET]: ColorSet | null;
     [Setting.COLOR]: string | null;
     [Setting.CONTOURS]: { enabled: boolean; value: number } | null;
@@ -338,11 +358,15 @@ export type SettingTypes = {
     [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
     [Setting.STRAT_COLUMN]: string | null;
     [Setting.SURFACE_NAME]: string | null;
+    [Setting.FORMATION_NAME]: string | null;
     [Setting.SURFACE_NAMES]: string[] | null;
     [Setting.TIME_OR_INTERVAL]: string | null;
+    [Setting.TIME_POINT]: string | null;
+    [Setting.TIME_INTERVAL]: string | null;
     [Setting.WELLBORE_EXTENSION_LENGTH]: number | null;
     [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
     [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;
+    [Setting.REPRESENTATION]: Representation | null;
 };
 
 export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {

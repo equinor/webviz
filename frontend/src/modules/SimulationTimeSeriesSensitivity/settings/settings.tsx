@@ -8,7 +8,7 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -40,10 +40,10 @@ import {
 } from "./atoms/persistableFixableAtoms";
 import { vectorListQueryAtom } from "./atoms/queryAtoms";
 
-export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
-    const ensembleSet = useEnsembleSet(workbenchSession);
+export function Settings(props: ModuleSettingsProps<Interfaces>) {
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
 
-    const statusWriter = useSettingsStatusWriter(settingsContext);
+    const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
     const setSyncedRegularEnsembleIdents = useSetAtom(syncedRegularEnsembleIdentsAtom);
     const setSyncedVectorName = useSetAtom(syncedVectorNameAtom);
@@ -61,8 +61,10 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const [showRealizations, setShowRealizations] = useAtom(showRealizationsAtom);
     const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
 
-    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
+    });
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
     const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<RegularEnsembleIdent[] | null>(null);
@@ -123,7 +125,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                     <EnsembleDropdown
                         ensembles={ensembleSet.getRegularEnsembleArray()}
                         value={selectedRegularEnsembleIdent.value}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                         onChange={handleEnsembleSelectionChange}
                     />
                 </SettingWrapper>

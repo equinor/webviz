@@ -4,7 +4,12 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { resamplingFrequencyAtom, showHistoricalAtom, showRealizationsAtom, showStatisticsAtom } from "./atoms/baseAtoms";
+import {
+    resamplingFrequencyAtom,
+    showHistoricalAtom,
+    showRealizationsAtom,
+    showStatisticsAtom,
+} from "./atoms/baseAtoms";
 import {
     selectedRegularEnsembleIdentAtom,
     selectedSensitivityNamesAtom,
@@ -54,11 +59,15 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     const selectedEnsembleIdent = raw.selectedEnsembleIdentString
         ? RegularEnsembleIdent.fromString(raw.selectedEnsembleIdentString)
-        : null;
-    const selectedVectorNameAndTag = {
-        name: raw.selectedVectorName ?? null,
-        tag: raw.selectedVectorTag ?? null,
-    };
+        : undefined;
+
+    let selectedVectorNameAndTag: { name: string | null; tag: string | null } | undefined = undefined;
+    if (raw.selectedVectorTag !== null && raw.selectedVectorTag !== undefined) {
+        selectedVectorNameAndTag = {
+            name: raw.selectedVectorName ?? null,
+            tag: raw.selectedVectorTag,
+        };
+    }
 
     setIfDefined(set, selectedRegularEnsembleIdentAtom, selectedEnsembleIdent);
     setIfDefined(set, selectedVectorNameAndTagAtom, selectedVectorNameAndTag);

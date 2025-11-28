@@ -1,22 +1,21 @@
 import { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import {
-    type RealizationSurfaceData,
-    type RealizationSurfaceSettings,
-    SurfaceDataFormat,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-export function makeRealizationSurfaceLayer({
+import { type SeismicSurfaceSettings } from "../../dataProviders/implementations/surfaceProviders/SeismicSurfaceProvider";
+import { SurfaceDataFormat, type SurfaceData } from "../../dataProviders/implementations/surfaceProviders/types";
+
+export function makeSeismicSurfaceLayer({
     id,
     name,
     getData,
     getSetting,
-}: TransformerArgs<RealizationSurfaceSettings, RealizationSurfaceData>): MapLayer | null {
+}: TransformerArgs<SeismicSurfaceSettings, SurfaceData>): MapLayer | null {
     const data = getData();
-    const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
+    const colorScaleSpec = getSetting(Setting.SEISMIC_COLOR_SCALE);
+
     let contours: [number, number] = [-1, -1];
     const { enabled: contourEnabled, value: contourValue } = getSetting(Setting.CONTOURS) ?? {
         enabled: false,
@@ -25,6 +24,7 @@ export function makeRealizationSurfaceLayer({
     if (contourEnabled && contourValue !== null) {
         contours = [0, contourValue];
     }
+
     if (!data) {
         return null;
     }

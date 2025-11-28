@@ -7,7 +7,7 @@ import type { MapMouseEvent } from "@webviz/subsurface-viewer";
 import { v4 } from "uuid";
 
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
-import type { SubsurfaceViewerWithCameraStateProps } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
+import type { SubsurfaceViewerWithCameraStateProps } from "@modules/_shared/components/SubsurfaceViewer/_components/SubsurfaceViewerWithCameraState";
 
 export type ContextMenuItem = {
     icon?: React.ReactElement;

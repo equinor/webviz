@@ -9,20 +9,22 @@ import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import { useColorSet } from "@framework/WorkbenchSettings";
+import { DeckGlInstanceManager } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
+import {
+    PolylinesPlugin,
+    PolylinesPluginTopic,
+    type Polyline,
+} from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 
-import { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
-import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
+import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
 import { ContextMenu } from "./ContextMenu";
 import { ControlsInfoBox } from "./ControlsInfoBox";
 import { HoverVisualizationWrapper } from "./HoverVisualizationWrapper";
-import { type ReadoutWrapperProps } from "./ReadoutWrapper";
+import type { ReadoutWrapperProps } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
 
-export type InteractionWrapperProps = Omit<
-    ReadoutWrapperProps,
-    "deckGlManager" | "triggerHome" | "verticalScale" | "deckGlRef"
-> & {
+export type InteractionWrapperProps = Pick<ReadoutWrapperProps, "views" | "layers"> & {
     fieldId: string;
     usedPolylineIds: string[];
 };
@@ -53,18 +55,19 @@ function convertPolylinesToIntersectionPolylines(polylines: Polyline[], fieldId:
 }
 
 export function InteractionWrapper(props: InteractionWrapperProps): React.ReactNode {
+    const context = useDpfSubsurfaceViewerContext();
     const deckGlRef = React.useRef<DeckGLRef>(null);
-    const intersectionPolylines = useIntersectionPolylines(props.workbenchSession);
+    const intersectionPolylines = useIntersectionPolylines(context.workbenchSession);
 
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
-    const [verticalScale, setVerticalScale] = React.useState<number>(10);
+    const [verticalScale, setVerticalScale] = React.useState<number>(context.visualizationMode === "2D" ? 1 : 10);
     const [activePolylineName, setActivePolylineName] = React.useState<string | undefined>(undefined);
 
     const deckGlManagerRef = React.useRef<DeckGlInstanceManager>(new DeckGlInstanceManager(deckGlRef.current));
     const polylinesPluginRef = React.useRef<PolylinesPlugin>(new PolylinesPlugin(deckGlManagerRef.current));
 
-    const colorSet = useColorSet(props.workbenchSettings);
+    const colorSet = useColorSet(context.workbenchSettings);
 
     const colorArray = React.useMemo((): [number, number, number][] => {
         return colorSet.getColorArray().map((c) => {
@@ -88,7 +91,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     React.useEffect(
         function updateVisiblePolylines() {
             if (polylinesPluginRef.current) {
-                polylinesPluginRef.current.setVisiblePolylineIds(props.usedPolylineIds);
+                polylinesPluginRef.current.setVisiblePolylineIds(props.usedPolylineIds ?? []);
             }
         },
         [props.usedPolylineIds],
@@ -176,7 +179,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
 
     return (
         <HoverVisualizationWrapper
-            {...props}
             deckGlRef={deckGlRef}
             layers={adjustedLayers}
             views={{ ...props.views, viewports: adjustedViewports }}
@@ -185,6 +187,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             triggerHome={triggerHomeCounter}
         >
             <Toolbar
+                hideVerticalScaleControls={context.visualizationMode === "2D"}
                 onFitInView={handleFitInViewClick}
                 onGridVisibilityChange={handleGridVisibilityChange}
                 polylinesPlugin={polylinesPluginRef.current}

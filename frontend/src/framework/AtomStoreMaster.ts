@@ -35,10 +35,11 @@ export class AtomStoreMaster {
         return atomStore;
     }
 
-    getAtomStoreForModuleInstance(moduleInstanceId: string): AtomStore {
+    getAtomStoreForModuleInstance(moduleInstanceId: string): AtomStore | null {
         const atomStore = this._atomStores.get(moduleInstanceId);
         if (!atomStore) {
-            throw new Error(`No atom store found for module instance with id: ${moduleInstanceId}`);
+            console.debug(`No atom store found for module instance with id ${moduleInstanceId}`);
+            return null;
         }
         return atomStore;
     }

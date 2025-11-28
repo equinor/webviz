@@ -12,62 +12,50 @@ import type { RealizationNumberLimits } from "./_utils";
 import { realizationSelectionToText, sanitizeRangeInput, textToRealizationSelection } from "./_utils";
 import { RealizationRangeTag } from "./RealizationRangeTag";
 
-function getRangeOfSelection(selection: string): [start: number, end: number] {
-    const [start, possibleEnd] = selection.split("-");
+function getRangeOfTag(rangeTag: string): [start: number, end: number] {
+    const [start, possibleEnd] = rangeTag.split("-");
 
     return [parseFloat(start), parseFloat(possibleEnd ?? start)];
 }
 
-function calcUniqueSelections(selections: readonly string[], limits: RealizationNumberLimits): number[] {
-    const uniqueSelections = new Set<number>();
+function calcNumberOfUniqueRealizations(selectedRangeTags: readonly string[], limits: RealizationNumberLimits): number {
+    const uniqueRealizations = new Set<number>();
+    for (const rangeTag of selectedRangeTags) {
+        let [start, end] = getRangeOfTag(rangeTag);
 
-    selections.forEach((selection) => {
-        let [start, end] = getRangeOfSelection(selection);
-
-        if (!inRange(start, limits.min, limits.max + 1) && !inRange(end, limits.min, limits.max)) return;
+        if (!inRange(start, limits.min, limits.max + 1) && !inRange(end, limits.min, limits.max)) continue;
 
         // Clamp range computations to only worry about valid numbers
         start = Math.max(start, limits.min);
         end = Math.min(end, limits.max);
 
-        for (const n of range(start, end + 1)) {
-            if (!limits.invalid.has(n)) {
-                uniqueSelections.add(n);
+        for (const realization of range(start, end + 1)) {
+            if (!limits.invalid.has(realization)) {
+                uniqueRealizations.add(realization);
             }
         }
-    });
+    }
 
-    return Array.from(uniqueSelections).sort((a, b) => a - b);
+    return uniqueRealizations.size;
 }
-
-export type RealizationPickerSelection = {
-    selectedRealizations: number[];
-    selectedRangeTags: string[];
-};
 
 export type RealizationPickerProps = {
     selectedRangeTags?: readonly string[];
     initialRangeTags?: readonly string[];
     validRealizations?: readonly number[];
     debounceTimeMs?: number;
-    onChange?: (realizationPickerSelection: RealizationPickerSelection) => void;
+    onChange?: (selectedRangeTags: string[]) => void;
 } & BaseComponentProps;
-
 function RealizationPickerComponent(props: RealizationPickerProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const [selectedRealizations, setSelectedRealizations] = React.useState<number[]>([]);
-    const [currentInputValue, setCurrentInputValue] = React.useState<string>("");
-
-    const [selections, setSelections] = React.useState<string[]>(() => {
-        if (!props.initialRangeTags) return [];
-        return [...props.initialRangeTags];
-    });
-
-    const [prevSelectedRangeTags, setPrevSelectedRangeTags] = React.useState<string[]>(() => {
-        if (!props.selectedRangeTags) return [];
-        return [...props.selectedRangeTags];
-    });
+    const [currentInputValue, setCurrentInputValue] = React.useState("");
+    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>(
+        props.initialRangeTags ? [...props.initialRangeTags] : [],
+    );
+    const [prevSelectedRangeTags, setPrevSelectedRangeTags] = React.useState<string[]>(
+        props.selectedRangeTags ? [...props.selectedRangeTags] : [],
+    );
 
     const realizationNumberLimits = React.useMemo<RealizationNumberLimits>(() => {
         const validRealizations = props.validRealizations ?? [];
@@ -78,48 +66,43 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         };
     }, [props.validRealizations]);
 
+    // Synchronize prop and states
     if (props.selectedRangeTags !== undefined && !isEqual(props.selectedRangeTags, prevSelectedRangeTags)) {
-        setPrevSelectedRangeTags(props.selectedRangeTags ? [...props.selectedRangeTags] : []);
-        setSelections(props.selectedRangeTags ? [...props.selectedRangeTags] : []);
+        setPrevSelectedRangeTags([...props.selectedRangeTags]);
+        setSelectedRangeTags([...props.selectedRangeTags]);
     }
 
-    function handleSelectionsChange(newSelections: string[]) {
+    const numSelectedRealizations = React.useMemo(
+        () => calcNumberOfUniqueRealizations(selectedRangeTags, realizationNumberLimits),
+        [selectedRangeTags, realizationNumberLimits],
+    );
+
+    function emitOnChange(newRangeTags: string[]) {
+        if (!props.onChange) return;
+
         if (debounceTimeout.current) {
             clearTimeout(debounceTimeout.current);
         }
 
-        const newUniqueSelections = calcUniqueSelections(newSelections, realizationNumberLimits);
-
-        setSelectedRealizations(newUniqueSelections);
-
         debounceTimeout.current = setTimeout(() => {
-            if (!props.onChange) return;
-
-            props.onChange({
-                selectedRealizations: newUniqueSelections,
-                selectedRangeTags: newSelections,
-            });
+            props.onChange!(newRangeTags);
         }, props.debounceTimeMs || 0);
     }
 
     function handlePaste(event: React.ClipboardEvent) {
         event.preventDefault();
-
         const pasteText = event.clipboardData.getData("text");
-
         const parsedSelections = textToRealizationSelection(pasteText, realizationNumberLimits);
 
         if (parsedSelections) {
-            const newSelections = [...selections, ...parsedSelections];
-
-            setSelections(newSelections);
-            handleSelectionsChange(newSelections);
+            const newRangeTags = [...selectedRangeTags, ...parsedSelections];
+            setSelectedRangeTags(newRangeTags);
+            emitOnChange(newRangeTags);
         }
     }
 
-    async function handleCopyTags(selectedTags: string[]) {
-        const stringifiedSelections = realizationSelectionToText(selectedTags);
-
+    async function handleCopyTags(selectedRangeTags: string[]) {
+        const stringifiedSelections = realizationSelectionToText(selectedRangeTags);
         if (stringifiedSelections) {
             await navigator.clipboard.writeText(stringifiedSelections);
         }
@@ -127,21 +110,20 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
 
     function handleInputChange(newValue: string) {
         const sanitizedValue = sanitizeRangeInput(newValue);
-
         if (sanitizedValue !== currentInputValue) {
             setCurrentInputValue(sanitizedValue);
         }
     }
 
-    function handleTagsChange(newTags: string[]) {
-        setSelections(newTags);
-        handleSelectionsChange(newTags);
+    function handleTagsChange(newRangeTags: string[]) {
+        setSelectedRangeTags(newRangeTags);
+        emitOnChange(newRangeTags);
     }
 
     return (
         <BaseComponent ref={ref} disabled={props.disabled}>
             <TagInput
-                tags={selections}
+                tags={selectedRangeTags}
                 onTagsChange={handleTagsChange}
                 onCopyTags={handleCopyTags}
                 inputProps={{
@@ -150,13 +132,12 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                     onValueChange: handleInputChange,
                     onPaste: handlePaste,
                 }}
-                renderTag={(tagProps) => {
-                    return <RealizationRangeTag realizationNumberLimits={realizationNumberLimits} {...tagProps} />;
-                }}
+                renderTag={(tagProps) => (
+                    <RealizationRangeTag realizationNumberLimits={realizationNumberLimits} {...tagProps} />
+                )}
             />
-
             <div className="text-sm text-gray-500 text-right mt-2">
-                {pluralize("realization", selectedRealizations.length)} selected
+                {pluralize("realization", numSelectedRealizations)} selected
             </div>
         </BaseComponent>
     );
