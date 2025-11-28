@@ -1,5 +1,4 @@
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
-import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
     AreSettingsValidArgs,
     CustomDataProviderImplementation,
@@ -28,6 +27,16 @@ const realizationGridSettings = [
     Setting.COLOR_SCALE,
     Setting.OPACITY_PERCENT,
 ] as const;
+
+/**
+ * Default grid layer range used as fallback when grid data is not available.
+ * Represents [start, end, step] for each of the three dimensions (i, j, k).
+ */
+const DEFAULT_GRID_LAYER_RANGE: [[number, number, number], [number, number, number], [number, number, number]] = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+];
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
 
@@ -234,12 +243,12 @@ export class RealizationGridProvider
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
-                return NO_UPDATE;
+                return DEFAULT_GRID_LAYER_RANGE;
             }
 
             const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
             if (!gridDimensions) {
-                return NO_UPDATE;
+                return DEFAULT_GRID_LAYER_RANGE;
             }
 
             return [
