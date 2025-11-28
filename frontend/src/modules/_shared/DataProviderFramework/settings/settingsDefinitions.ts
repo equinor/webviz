@@ -2,6 +2,7 @@ import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/W
 import { isEqual } from "lodash";
 
 import type {
+    Grid3dZone_api,
     SurfaceStatisticFunction_api,
     WellboreHeader_api,
     WellboreLogCurveHeader_api,
@@ -234,8 +235,17 @@ export type SettingTypeDefinitions = {
 
     // XYZ range settings (XYZ_RANGE category)
     [Setting.GRID_LAYER_RANGE]: {
-        value: [[number, number], [number, number], [number, number]] | null;
-        availableValues: [[number, number], [number, number], [number, number]];
+        value:
+            | [
+                  [number, number],
+                  [number, number],
+                  { type: "range"; value: [number, number] } | { type: "zone"; value: string },
+              ]
+            | null;
+        availableValues: {
+            range: [[number, number], [number, number], [number, number]];
+            zones: Grid3dZone_api[];
+        };
     };
 
     // XYZ values with visibility (XYZ_VALUES_WITH_VISIBILITY category)
