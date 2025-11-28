@@ -32,6 +32,7 @@ import {
 } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
 import { makeDepthColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeDepthColorScaleAnnotation";
+import { makeSeismicColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeSeismicColorScaleAnnotation";
 import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makePolygonDataBoundingBox";
 import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeRealizationGridBoundingBox";
 import { makeSurfaceLayerBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeSurfaceLayerBoundingBox";
@@ -46,7 +47,6 @@ import {
     VisualizationAssembler,
     type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { makeSeismicColorScaleAnnotation } from "@modules/Intersection/DataProviderFramework/annotations/makeColorScaleAnnotation";
 
 import { CustomDataProviderType } from "../../DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { RealizationGridProvider } from "../../DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
