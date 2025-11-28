@@ -30,9 +30,11 @@ import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramew
 import {
     DepthSurfaceProvider,
     type DepthSurfaceSettings,
-    type SurfaceData,
-    type SurfaceStoredData,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
+import type {
+    SurfaceData,
+    SurfaceStoredData,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
@@ -48,7 +50,6 @@ import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visual
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,

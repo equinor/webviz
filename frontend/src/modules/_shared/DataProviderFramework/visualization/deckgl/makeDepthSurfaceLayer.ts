@@ -4,11 +4,8 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import {
-    type SurfaceData,
-    type DepthSurfaceSettings,
-    SurfaceDataFormat,
-} from "../../dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
+import { type DepthSurfaceSettings } from "../../dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
+import { SurfaceDataFormat, type SurfaceData } from "../../dataProviders/implementations/surfaceProviders/types";
 
 export function makeDepthSurfaceLayer({
     id,
