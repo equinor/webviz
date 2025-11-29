@@ -377,7 +377,7 @@ export class DataProvider<
         return {
             getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
             getAvailableSettingValues: (settingName) =>
-                this._settingsContextDelegate.getSettings()[settingName].getAvailableValues(),
+                this._settingsContextDelegate.getSettings()[settingName].getValueRange(),
             getGlobalSetting: (settingName) => this._dataProviderManager.getGlobalSetting(settingName),
             getStoredData: (key: keyof TStoredData) => this._settingsContextDelegate.getStoredData(key),
             getData: () => this._data,
