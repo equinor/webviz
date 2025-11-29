@@ -11,7 +11,9 @@ import type {
 import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import type { SettingCategory } from "../settingsDefinitions";
 
-type ValueType = WellboreHeader_api[] | null;
+type InternalValueType = WellboreHeader_api[] | null;
+type ExternalValueType 
+type ValueRangeType = WellboreHeader_api[];
 
 export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_SELECT> {
     defaultValue: ValueType = null;
