@@ -6,7 +6,6 @@ import {
     getWellborePickIdentifiersOptions,
     getWellborePicksForPickIdentifierOptions,
 } from "@api";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import type {
@@ -15,6 +14,7 @@ import type {
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
@@ -41,11 +41,7 @@ export class DrilledWellborePicksProvider
         getGlobalSetting,
         fetchQuery,
     }: FetchDataParams<DrilledWellborePicksSettings, DrilledWellborePicksData>): Promise<WellborePick_api[]> {
-        const selectedWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
-        let selectedWellboreUuids: string[] = [];
-        if (selectedWellboreHeaders) {
-            selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
-        }
+        const selectedWellboreUuids = getSetting(Setting.SMDA_WELLBORE_HEADERS) ?? [];
         const selectedPickIdentifier = getSetting(Setting.SURFACE_NAME);
         const fieldIdentifier = getGlobalSetting("fieldId");
 
@@ -77,11 +73,11 @@ export class DrilledWellborePicksProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueRangeUpdater,
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<DrilledWellborePicksSettings>) {
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -140,7 +136,7 @@ export class DrilledWellborePicksProvider
             });
         });
 
-        availableSettingsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+        valueRangeUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
             if (!wellboreHeaders) {
@@ -150,7 +146,7 @@ export class DrilledWellborePicksProvider
             return wellboreHeaders;
         });
 
-        availableSettingsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency }) => {
+        valueRangeUpdater(Setting.SURFACE_NAME, ({ getHelperDependency }) => {
             const pickIdentifiers = getHelperDependency(pickIdentifiersDep);
 
             if (!pickIdentifiers) {

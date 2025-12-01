@@ -3,7 +3,6 @@ import { isEqual } from "lodash";
 import { getGridModelsInfoOptions, postGetPolylineIntersectionOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import { assertNonNull } from "@lib/utils/assertNonNull";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { PolylineIntersection_trans } from "@modules/_shared/Intersection/gridIntersectionTransform";
 import { transformPolylineIntersection } from "@modules/_shared/Intersection/gridIntersectionTransform";
@@ -24,6 +23,7 @@ import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
 } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const intersectionRealizationGridSettings = [
     Setting.INTERSECTION,
@@ -142,7 +142,7 @@ export class IntersectionRealizationGridProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueRangeUpdater,
         settingAttributesUpdater,
         storedDataUpdater,
         queryClient,
@@ -160,13 +160,13 @@ export class IntersectionRealizationGridProvider
             return { enabled: isEnabled, visible: true };
         });
 
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
             return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
         });
 
-        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueRangeUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
@@ -192,7 +192,7 @@ export class IntersectionRealizationGridProvider
             });
         });
 
-        availableSettingsUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
+        valueRangeUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!data) {
@@ -204,7 +204,7 @@ export class IntersectionRealizationGridProvider
             return availableGridNames;
         });
 
-        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
+        valueRangeUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
@@ -227,7 +227,7 @@ export class IntersectionRealizationGridProvider
             return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
-        availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        valueRangeUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -239,7 +239,7 @@ export class IntersectionRealizationGridProvider
             return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
-        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueRangeUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const gridAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const data = getHelperDependency(realizationGridDataDep);

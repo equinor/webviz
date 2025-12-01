@@ -7,12 +7,14 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = string | null;
+type ValueRangeType = string[];
 
-export class DropdownStringSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
+export class DropdownStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _staticOptions: DropdownOptionOrGroup<ValueType>[] | null = null;
+    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<string[]>();
 
     constructor(props?: { options?: ValueType[] | DropdownOptionOrGroup<ValueType>[] }) {
         if (!props?.options) return;
@@ -30,17 +32,25 @@ export class DropdownStringSetting implements CustomSettingImplementation<ValueT
         return this._staticOptions !== null;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+        return isValueValid<string, string>(value, valueRange, (v) => v);
+    }
+
+    fixupValue(value: ValueType, valueRange: ValueRangeType): ValueType {
+        return fixupValue<string, string>(value, valueRange, (v) => v);
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
         const isStatic = this.getIsStatic();
         const staticOptions = this._staticOptions;
 
-        return function DropdownStringSetting(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
+        return function DropdownStringSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
             let options: DropdownOptionOrGroup<ValueType>[];
 
             if (isStatic && staticOptions) {
                 options = staticOptions;
-            } else if (!isStatic && props.availableValues) {
-                options = props.availableValues.map((value) => ({
+            } else if (!isStatic && props.valueRange) {
+                options = props.valueRange.map((value) => ({
                     value: value,
                     label: value === null ? "None" : value,
                 }));

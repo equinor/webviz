@@ -9,14 +9,21 @@ import type {
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = RegularEnsembleIdent | null;
-export class EnsembleSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
-    defaultValue: ValueType = null;
+type ValueRangeType = RegularEnsembleIdent[];
 
-    getLabel(): string {
-        return "Ensemble";
+export class EnsembleSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
+    defaultValue: ValueType = null;
+    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<RegularEnsembleIdent[]>();
+
+    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+        return isValueValid<RegularEnsembleIdent, RegularEnsembleIdent>(value, valueRange, (v) => v);
+    }
+
+    fixupValue(value: ValueType, valueRange: ValueRangeType): ValueType {
+        return fixupValue<RegularEnsembleIdent, RegularEnsembleIdent>(value, valueRange, (v) => v);
     }
 
     serializeValue(value: ValueType): string {
@@ -27,9 +34,9 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, S
         return serializedValue !== "" ? RegularEnsembleIdent.fromString(serializedValue) : null;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
-        return function EnsembleSelect(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
-            const availableValues = props.availableValues ?? [];
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+        return function EnsembleSelect(props: SettingComponentProps<ValueType, ValueRangeType>) {
+            const availableValues = props.valueRange ?? [];
 
             const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
                 availableValues.some((value) => value.equals(ensemble.getIdent())),

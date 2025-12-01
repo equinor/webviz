@@ -4,11 +4,11 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
 import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
-import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
+import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 import type { CustomSettingsHandler } from "./customSettingsHandler";
 import type { NullableStoredData, StoredData } from "./sharedTypes";
-import type { AvailableValuesType, SettingsKeysFromTuple } from "./utils";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "./utils";
 
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
@@ -19,7 +19,6 @@ export type DataProviderInformationAccessors<
     TData,
     TStoredData extends StoredData = Record<string, never>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
 > = {
     /**
      * Access the data that the provider is currently storing.
@@ -37,7 +36,7 @@ export type DataProviderInformationAccessors<
      * const value = getSetting("settingName");
      * ```
      */
-    getSetting: <K extends TSettingKey>(settingName: K) => TSettingTypes[K] | null;
+    getSetting: <K extends TSettingKey>(settingName: K) => SettingTypeDefinitions[K]["externalValue"] | null;
 
     /**
      * Access the available values of a setting.
@@ -49,7 +48,9 @@ export type DataProviderInformationAccessors<
      * const availableValues = getAvailableSettingValues("settingName");
      * ```
      */
-    getAvailableSettingValues: <K extends TSettingKey>(settingName: K) => AvailableValuesType<K> | null;
+    getAvailableSettingValues: <K extends TSettingKey>(
+        settingName: K,
+    ) => SettingTypeDefinitions[K]["valueRange"] | null;
 
     /**
      * Access the global settings of the data provider manager.
@@ -95,8 +96,7 @@ export type AreSettingsValidArgs<
     TData,
     TStoredData extends StoredData = Record<string, never>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-> = DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey, TSettingTypes> & {
+> = DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey> & {
     reportError: (error: string) => void;
 };
 

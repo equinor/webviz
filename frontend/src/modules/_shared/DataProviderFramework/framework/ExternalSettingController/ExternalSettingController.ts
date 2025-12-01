@@ -138,7 +138,7 @@ export class ExternalSettingController<
         }
 
         if (this._controlledSettings.size === 0) {
-            this._setting.setAvailableValues(null);
+            this._setting.setValueRange(null);
             return;
         }
 
@@ -199,11 +199,11 @@ export class ExternalSettingController<
         }
 
         if (!isValid(valueRange as any) || isInvalid) {
-            this._setting.setAvailableValues(null);
+            this._setting.setValueRange(null);
             this._setting.setValue(null as any);
             return;
         }
 
-        this._setting.setAvailableValues(valueRange);
+        this._setting.setValueRange(valueRange);
     }
 }

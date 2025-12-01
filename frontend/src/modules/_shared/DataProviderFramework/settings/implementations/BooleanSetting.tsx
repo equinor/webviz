@@ -7,10 +7,9 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = boolean;
-export class BooleanSetting implements CustomSettingImplementation<ValueType, SettingCategory.BOOLEAN> {
+export class BooleanSetting implements CustomSettingImplementation<ValueType, ValueType> {
     isValueValid(): boolean {
         return true;
     }
@@ -19,8 +18,8 @@ export class BooleanSetting implements CustomSettingImplementation<ValueType, Se
         return true;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.BOOLEAN>) => React.ReactNode {
-        return function BooleanSwitch(props: SettingComponentProps<ValueType, SettingCategory.BOOLEAN>) {
+    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
+        return function BooleanSwitch(props: SettingComponentProps<ValueType>) {
             function handleChange(e: ChangeEvent<HTMLInputElement>) {
                 props.onValueChange(e.target.checked);
             }

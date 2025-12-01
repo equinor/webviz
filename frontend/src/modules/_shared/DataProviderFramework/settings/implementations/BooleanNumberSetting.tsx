@@ -8,7 +8,6 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { ValueRangeIntersectionReducerDefinition } from "../settingsDefinitions";
 
 type ValueType = {
     enabled: boolean;
@@ -22,29 +21,29 @@ type StaticProps = { min?: number; max?: number };
 export class BooleanNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _staticProps: StaticProps | null;
 
-    valueRangeIntersectionReducerDefinition: ValueRangeIntersectionReducerDefinition<ValueRangeType> = {
-        reducer: (accumulator: ValueRangeType, currentAvailableValues: ValueRangeType): ValueRangeType => {
+    valueRangeIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRangeType | null, valueRange: ValueRangeType) => {
             if (accumulator === null) {
-                return currentAvailableValues;
+                return valueRange;
             }
-            if (currentAvailableValues === null) {
+            if (valueRange === null) {
                 return accumulator;
             }
 
-            const min = Math.max(accumulator[0], currentAvailableValues[0]);
-            const max = Math.min(accumulator[1], currentAvailableValues[1]);
+            const min = Math.max(accumulator[0], valueRange[0]);
+            const max = Math.min(accumulator[1], valueRange[1]);
 
             if (min > max) {
                 return null;
             }
-            return [min, max];
+            return [min, max] as ValueRangeType;
         },
         startingValue: null,
-        isValid: (availableValues: ValueRangeType): boolean => {
-            if (availableValues === null) {
+        isValid: (valueRange: ValueRangeType): boolean => {
+            if (valueRange === null) {
                 return true;
             }
-            return availableValues[0] <= availableValues[1];
+            return valueRange[0] <= valueRange[1];
         },
     };
 

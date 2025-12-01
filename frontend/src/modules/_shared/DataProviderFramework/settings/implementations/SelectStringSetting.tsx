@@ -9,20 +9,31 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
 type ValueType = string[] | null;
+type ValueRangeType = string[];
 
-export class SelectStringSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_SELECT> {
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) => React.ReactNode {
-        return function SelectStringSetting(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
+export class SelectStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
+    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+
+    isValueValid(currentValue: ValueType, valueRange: ValueRangeType): boolean {
+        return isValueValid<string, string>(currentValue, valueRange, (v) => v);
+    }
+
+    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+        return fixupValue<string, string>(currentValue, valueRange, (v) => v, "firstAvailable");
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+        return function SelectStringSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
             const options: SelectOption[] = React.useMemo(() => {
-                const availableValues = props.availableValues ?? [];
+                const availableValues = props.valueRange ?? [];
                 return availableValues.map((stringVals) => ({
                     value: stringVals,
                     label: upperFirst(stringVals),
                 }));
-            }, [props.availableValues]);
+            }, [props.valueRange]);
 
             function handleChange(selectedUuids: string[]) {
                 props.onValueChange(selectedUuids);

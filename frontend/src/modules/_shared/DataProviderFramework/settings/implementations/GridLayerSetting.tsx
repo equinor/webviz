@@ -7,8 +7,6 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
-import type { SettingCategory } from "../settingsDefinitions";
 
 export enum Direction {
     I,
@@ -17,9 +15,26 @@ export enum Direction {
 }
 
 type ValueType = number | null;
+type ValueRange = [number, number];
 
-export class GridLayerSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER> {
+export class GridLayerSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRange> {
     defaultValue: ValueType = null;
+    valueRangeIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRange, valueRange: ValueRange) => {
+            if (accumulator === null) {
+                return valueRange;
+            }
+
+            const min = Math.max(accumulator[0], valueRange[0]);
+            const max = Math.min(accumulator[1], valueRange[1]);
+
+            return [min, max] as ValueRange;
+        },
+        startingValue: null,
+        isValid: (valueRange: ValueRange): boolean => {
+            return valueRange[0] <= valueRange[1];
+        },
+    };
 
     private _direction: Direction;
 
@@ -38,20 +53,17 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
         }
     }
 
-    isValueValid(
-        value: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
-    ): boolean {
+    isValueValid(value: ValueType, valueRange: ValueRange): boolean {
         if (value === null) {
             return false;
         }
 
-        if (!availableValues) {
+        if (!valueRange) {
             return false;
         }
 
-        const min = availableValues[0];
-        const max = availableValues[1];
+        const min = valueRange[0];
+        const max = valueRange[1];
 
         if (max === null || min === null) {
             return false;
@@ -60,16 +72,13 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
         return value >= min && value <= max;
     }
 
-    fixupValue(
-        currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
-    ): ValueType {
-        if (!availableValues) {
+    fixupValue(currentValue: ValueType, valueRange: ValueRange): ValueType {
+        if (!valueRange) {
             return null;
         }
 
-        const min = availableValues[0];
-        const max = availableValues[1];
+        const min = valueRange[0];
+        const max = valueRange[1];
 
         if (max === null || min === null) {
             return null;
@@ -90,10 +99,10 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
         return currentValue;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) {
-            const start = props.availableValues?.[0] ?? 0;
-            const end = props.availableValues?.[1] ?? 0;
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRange>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<ValueType, ValueRange>) {
+            const start = props.valueRange?.[0] ?? 0;
+            const end = props.valueRange?.[1] ?? 0;
 
             const rangeSize = end - start;
 

@@ -12,11 +12,9 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type {
-    MakeSettingTypesMap,
-    Settings,
-} from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 
 export const baseSettings = [Setting.LOG_CURVE] as const;
 export type BaseSettingsTypeMap = MakeSettingTypesMap<typeof baseSettings>;
@@ -32,7 +30,7 @@ export const baseDiscreteSettings = [
 ] as const;
 
 export function defineBaseContinuousDependencies<T extends readonly Setting[]>(args: DefineDependenciesArgs<T>) {
-    const { availableSettingsUpdater, helperDependency } = args;
+    const { valueRangeUpdater, helperDependency } = args;
 
     const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal }) => {
         const wellboreId = getGlobalSetting("wellboreUuid");
@@ -50,7 +48,7 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
         });
     });
 
-    availableSettingsUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
+    valueRangeUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
         const wellboreId = getGlobalSetting("wellboreUuid");
         const headerData = getHelperDependency(curveHeaderQueryDep);
 

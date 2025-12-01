@@ -2,7 +2,6 @@ import { isEqual } from "lodash";
 
 import type { WellboreTrajectory_api } from "@api";
 import { getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@api";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import type {
@@ -10,6 +9,7 @@ import type {
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const drilledWellTrajectoriesSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS] as const;
 type DrilledWellTrajectoriesSettings = typeof drilledWellTrajectoriesSettings;
@@ -39,11 +39,7 @@ export class DrilledWellTrajectoriesProvider
         DrilledWellTrajectoriesData
     >): Promise<DrilledWellTrajectoriesData> {
         const fieldIdentifier = getGlobalSetting("fieldId");
-        const selectedWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
-        let selectedWellboreUuids: string[] = [];
-        if (selectedWellboreHeaders) {
-            selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
-        }
+        const selectedWellboreUuids = getSetting(Setting.SMDA_WELLBORE_HEADERS) ?? [];
 
         const queryOptions = getWellTrajectoriesOptions({
             query: { field_identifier: fieldIdentifier ?? "" },
@@ -62,11 +58,11 @@ export class DrilledWellTrajectoriesProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueRangeUpdater,
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<DrilledWellTrajectoriesSettings>) {
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -100,7 +96,7 @@ export class DrilledWellTrajectoriesProvider
                 }),
             });
         });
-        availableSettingsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+        valueRangeUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
             if (!wellboreHeaders) {

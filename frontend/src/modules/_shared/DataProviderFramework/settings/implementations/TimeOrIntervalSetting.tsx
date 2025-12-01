@@ -15,20 +15,27 @@ import type {
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = string | null;
+type ValueRangeType = string[];
 
-export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
+export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     defaultValue: ValueType = null;
 
-    getLabel(): string {
-        return "Date";
+    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+
+    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+        return isValueValid<string, string>(value, valueRange, (v) => v);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
-        return function TimeOrIntervalSetting(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
-            const availableValues = props.availableValues ?? [];
+    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+        return fixupValue<string, string>(currentValue, valueRange, (v) => v);
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+        return function TimeOrIntervalSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
+            const availableValues = props.valueRange ?? [];
 
             const options: DropdownOption[] = availableValues.map((value) => {
                 return {

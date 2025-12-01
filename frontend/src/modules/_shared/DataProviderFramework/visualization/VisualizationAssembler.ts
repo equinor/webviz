@@ -27,7 +27,7 @@ import type {
 import { instanceofItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
-import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
+import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 export enum VisualizationItemType {
     DATA_PROVIDER_VISUALIZATION = "data-provider-visualization",
@@ -113,7 +113,7 @@ export type GroupPropsCollectorArgs<
 > = {
     id: string;
     name: string;
-    getSetting: <TKey extends TSettingKey>(setting: TKey) => SettingTypes[TKey];
+    getSetting: <TKey extends TSettingKey>(setting: TKey) => SettingTypeDefinitions[TKey]["externalValue"];
 };
 
 export interface GroupCustomPropsCollector<

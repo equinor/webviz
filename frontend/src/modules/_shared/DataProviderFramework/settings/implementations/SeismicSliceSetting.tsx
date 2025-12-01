@@ -14,50 +14,75 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
 
-type ValueType = { value: [number, number, number]; visible: [boolean, boolean, boolean]; applied: boolean } | null;
-type Category = SettingCategory.XYZ_VALUES_WITH_VISIBILITY;
-export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, Category> {
-    fixupValue(
-        currentValue: ValueType,
-        availableValues: [[number, number, number], [number, number, number], [number, number, number]],
-    ): ValueType {
+type InternalValueType = { value: [number, number, number]; visible: [boolean, boolean, boolean]; applied: boolean };
+type ExternalValueType = Omit<InternalValueType, "applied">;
+type ValueRangeType = [[number, number, number], [number, number, number], [number, number, number]];
+export class SeismicSliceSetting
+    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
+{
+    valueRangeIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType) => {
+            if (accumulator === null) {
+                return valueRange;
+            }
+
+            const mergedRanges: ValueRangeType = [
+                [0, 0, 1],
+                [0, 0, 1],
+                [0, 0, 1],
+            ];
+
+            for (let i = 0; i < 3; i++) {
+                const min = Math.max(accumulator[i][0], valueRange[i][0]);
+                const max = Math.min(accumulator[i][1], valueRange[i][1]);
+                const step = Math.max(accumulator[i][2], valueRange[i][2]);
+
+                mergedRanges[i] = [min, max, step];
+            }
+
+            return mergedRanges;
+        },
+        startingValue: null,
+        isValid: (valueRange: ValueRangeType): boolean => {
+            const [xRange, yRange, zRange] = valueRange;
+            return xRange[0] <= xRange[1] && yRange[0] <= yRange[1] && zRange[0] <= zRange[1];
+        },
+    };
+
+    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
         if (!currentValue || !Array.isArray(currentValue.value) || currentValue.value.length !== 3) {
             return {
-                value: [availableValues[0][0], availableValues[1][0], availableValues[2][0]],
+                value: [valueRange[0][0], valueRange[1][0], valueRange[2][0]],
                 visible: [true, true, true],
                 applied: true,
             };
         }
 
         const fixedValue: [number, number, number] = currentValue.value.map((val, index) => {
-            const [min, max, step] = availableValues[index];
+            const [min, max, step] = valueRange[index];
             return Math.max(min, Math.min(max, Math.round(val / step) * step));
         }) as [number, number, number];
 
         return { value: fixedValue, visible: [true, true, true], applied: currentValue.applied };
     }
 
-    isValueValid(
-        value: ValueType,
-        availableValues: [[number, number, number], [number, number, number], [number, number, number]],
-    ): boolean {
+    isValueValid(value: InternalValueType, valueRange: ValueRangeType): boolean {
         if (!value || !Array.isArray(value.value) || value.value.length !== 3) {
             return false;
         }
         return value.value.every((val, index) => {
-            const [min, max, step] = availableValues[index];
+            const [min, max, step] = valueRange[index];
             return val >= min && val <= max && (val - min) % step === 0;
         });
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, Category>) => React.ReactNode {
-        return function RangeSlider(props: SettingComponentProps<ValueType, Category>) {
+    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueRangeType>) => React.ReactNode {
+        return function RangeSlider(props: SettingComponentProps<InternalValueType, ValueRangeType>) {
             const divRef = React.useRef<HTMLDivElement>(null);
             const divSize = useElementSize(divRef);
 
-            const availableValues = props.availableValues ?? [
+            const valueRange = props.valueRange ?? [
                 [0, 0, 1],
                 [0, 0, 1],
                 [0, 0, 1],
@@ -85,9 +110,9 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
             }
 
             function handleInputChange(index: number, val: number) {
-                const min = availableValues[index][0];
-                const max = availableValues[index][1];
-                const step = availableValues[index][2];
+                const min = valueRange[index][0];
+                const max = valueRange[index][1];
+                const step = valueRange[index][2];
                 const allowedValues = Array.from(
                     { length: Math.floor((max - min) / step) + 1 },
                     (_, i) => min + i * step,
@@ -143,12 +168,12 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                                 </div>
                                 <div className="flex-4">
                                     <Slider
-                                        min={availableValues[index][0]}
-                                        max={availableValues[index][1]}
+                                        min={valueRange[index][0]}
+                                        max={valueRange[index][1]}
                                         onChange={(_, value) => handleSliderChange(index, value as number)}
-                                        value={props.value?.value[index] ?? availableValues[index][0]}
+                                        value={props.value?.value[index] ?? valueRange[index][0]}
                                         valueLabelDisplay="auto"
-                                        step={availableValues[index][2]}
+                                        step={valueRange[index][2]}
                                         track={false}
                                     />
                                 </div>

@@ -8,62 +8,44 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
-import type { SettingCategory } from "../settingsDefinitions";
+import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
-type ValueType = WellborePick_api[] | null;
+type InternalValueType = string[] | null;
+type ExternalValueType = WellborePick_api[] | null;
+type ValueRangeType = WellborePick_api[];
 
 export class DrilledWellborePicksSetting
-    implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_SELECT>
+    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
 {
-    defaultValue: ValueType = null;
+    defaultValue: InternalValueType = null;
+    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>(
+        (a, b) => a.wellboreUuid === b.wellboreUuid,
+    );
 
     getLabel(): string {
         return "Drilled wellbore picks";
     }
 
-    isValueValid(
-        currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>,
-    ): boolean {
-        if (!currentValue) {
-            return availableValues.length !== 0;
+    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
+        const fixedValue = fixupValue<string, WellborePick_api>(currentValue, valueRange, mappingFunc, "allAvailable");
+
+        if (fixedValue.length === 0) {
+            return valueRange.map(mappingFunc);
         }
 
-        // Check if every element in currentValue is in availableValues
-        const isValid = currentValue.every((value) =>
-            availableValues.some(
-                (availableValue) =>
-                    availableValue.pickIdentifier === value.pickIdentifier &&
-                    availableValue.interpreter === value.interpreter,
-            ),
-        );
-
-        return isValid;
+        return fixedValue;
     }
 
-    fixupValue(
-        currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>,
-    ): ValueType {
-        if (!currentValue) {
-            return availableValues;
+    isValueValid(currentValue: InternalValueType, valueRange: ValueRangeType): boolean {
+        function mappingFunc(value: WellborePick_api): string {
+            return value.pickIdentifier;
         }
-
-        // Filter new/available values with old/previously selected pickIdentifiers
-        const matchingNewValues = availableValues.filter((newValue) =>
-            currentValue.some((oldValue) => oldValue.pickIdentifier === newValue.pickIdentifier),
-        );
-
-        if (matchingNewValues.length === 0) {
-            return availableValues;
-        }
-        return matchingNewValues;
+        return isValueValid<string, WellborePick_api>(currentValue, valueRange, mappingFunc);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) => React.ReactNode {
-        return function DrilledWellborePicks(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
-            const availableValues = props.availableValues ?? [];
+    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueRangeType>) => React.ReactNode {
+        return function DrilledWellborePicks(props: SettingComponentProps<InternalValueType, ValueRangeType>) {
+            const availableValues = props.valueRange ?? [];
 
             // Prevent duplicated pickIdentifiers in the options
             const uniquePickIdentifiers = Array.from(new Set(availableValues.map((ident) => ident.pickIdentifier)));
@@ -73,24 +55,15 @@ export class DrilledWellborePicksSetting
             }));
 
             function handleChange(selectedIdentifiers: string[]) {
-                // Match all WellborePicks with selected pickIdentifiers
-                const selectedWellbores = availableValues.filter((elm) =>
-                    selectedIdentifiers.includes(elm.pickIdentifier),
-                );
-                props.onValueChange(selectedWellbores);
+                props.onValueChange(selectedIdentifiers);
             }
-
-            const selectedValues = React.useMemo(
-                () => props.value?.map((ident) => ident.pickIdentifier) ?? [],
-                [props.value],
-            );
 
             return (
                 <div className="flex flex-col gap-1 mt-1">
                     <Select
                         filter
                         options={options}
-                        value={selectedValues}
+                        value={props.value ?? []}
                         onChange={handleChange}
                         showQuickSelectButtons={true}
                         disabled={props.isOverridden}
@@ -101,4 +74,8 @@ export class DrilledWellborePicksSetting
             );
         };
     }
+}
+
+function mappingFunc(value: WellborePick_api): string {
+    return value.pickIdentifier;
 }

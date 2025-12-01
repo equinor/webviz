@@ -11,13 +11,14 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
-import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = number | null;
+type ValueRangeType = [number, number, number]; // [min, max, step]
 
-export class SliderNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER_WITH_STEP> {
+export class SliderNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _staticOptions: { minMax: { min: number; max: number }; step: number } | null;
+
+    valueRangeIntersectionReducerDefinition: any;
 
     constructor(staticOptions?: { minMax: { min: number; max: number }; step: number }) {
         if (staticOptions) {
@@ -40,18 +41,15 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         return this._staticOptions !== null;
     }
 
-    isValueValid(
-        value: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>,
-    ): boolean {
+    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
         // If static limits are provided, Input- and Slider-component limits the value
         // i.e. no need to run fixupValue()
         if (this._staticOptions) {
             return true;
         }
 
-        const min = availableValues[0];
-        const max = availableValues[1];
+        const min = valueRange[0];
+        const max = valueRange[1];
 
         if (value === null || value > max || value < min) {
             return false;
@@ -60,17 +58,14 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         return true;
     }
 
-    fixupValue(
-        currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>,
-    ): ValueType {
+    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
         // If static options are provided, return value as Input- and Slider-component controls the value
         if (this._staticOptions) {
             return currentValue;
         }
 
-        const min = availableValues[0];
-        const max = availableValues[1];
+        const min = valueRange[0];
+        const max = valueRange[1];
 
         if (currentValue === null || currentValue < min) {
             return min;
@@ -82,11 +77,11 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         return currentValue;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.NUMBER_WITH_STEP>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
         const staticOptions = this._staticOptions;
         const isStatic = staticOptions !== null;
 
-        return function InputNumberSetting(props: SettingComponentProps<ValueType, SettingCategory.NUMBER_WITH_STEP>) {
+        return function InputNumberSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
             const { onValueChange } = props;
 
             const divRef = React.useRef<HTMLDivElement>(null);
@@ -95,9 +90,9 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
             const MIN_DIV_WIDTH = 150;
             const inputVisible = divSize.width >= MIN_DIV_WIDTH;
 
-            const min = isStatic ? (staticOptions.minMax.min ?? 0) : (props.availableValues?.[0] ?? 0);
-            const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.availableValues?.[1] ?? 0);
-            const step = isStatic ? (staticOptions.step ?? 1) : (props.availableValues?.[2] ?? 1);
+            const min = isStatic ? (staticOptions.minMax.min ?? 0) : (props.valueRange?.[0] ?? 0);
+            const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.valueRange?.[1] ?? 0);
+            const step = isStatic ? (staticOptions.step ?? 1) : (props.valueRange?.[2] ?? 1);
 
             const [prevValue, setPrevValue] = React.useState(props.value ?? min);
             const [localValue, setLocalValue] = React.useState(props.value ?? min);

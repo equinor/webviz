@@ -24,12 +24,12 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 
 const surfacesPerRealizationValuesSettings = [
     Setting.INTERSECTION,
@@ -114,7 +114,7 @@ export class SurfacesPerRealizationValuesProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueRangeUpdater,
         settingAttributesUpdater,
         queryClient,
         workbenchSession,
@@ -127,13 +127,13 @@ export class SurfacesPerRealizationValuesProvider
             return { enabled: isEnabled };
         });
 
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
             return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
         });
 
-        availableSettingsUpdater(Setting.REALIZATIONS, ({ getLocalSetting, getGlobalSetting }) => {
+        valueRangeUpdater(Setting.REALIZATIONS, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
@@ -144,7 +144,7 @@ export class SurfacesPerRealizationValuesProvider
             return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
-        availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        valueRangeUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -176,7 +176,7 @@ export class SurfacesPerRealizationValuesProvider
             return surfaceMetadata;
         });
 
-        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
+        valueRangeUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
             if (!surfaceMetadataSet) {
                 return [];
@@ -191,7 +191,7 @@ export class SurfacesPerRealizationValuesProvider
             return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.attribute_name))).sort();
         });
 
-        availableSettingsUpdater(Setting.SURFACE_NAMES, ({ getLocalSetting, getHelperDependency }) => {
+        valueRangeUpdater(Setting.SURFACE_NAMES, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(Setting.ATTRIBUTE);
             const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
 

@@ -7,7 +7,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 export enum Representation {
     OBSERVATION = "Observation",
@@ -15,9 +15,11 @@ export enum Representation {
     ENSEMBLE_STATISTICS = "Ensemble Statistics",
 }
 type ValueType = Representation | null;
+type ValueRangeType = Representation[];
 
-export class RepresentationSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
+export class RepresentationSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _staticOptions: DropdownOptionOrGroup<ValueType>[] | null = null;
+    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
 
     constructor(props?: { options?: ValueType[] | DropdownOptionOrGroup<ValueType>[] }) {
         if (!props?.options) return;
@@ -35,17 +37,25 @@ export class RepresentationSetting implements CustomSettingImplementation<ValueT
         return this._staticOptions !== null;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+        return isValueValid<Representation, Representation>(value, valueRange, (v) => v);
+    }
+
+    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+        return fixupValue<Representation, Representation>(currentValue, valueRange, (v) => v);
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
         const isStatic = this.getIsStatic();
         const staticOptions = this._staticOptions;
 
-        return function RepresentationSetting(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
+        return function RepresentationSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
             let options: DropdownOptionOrGroup<ValueType>[];
 
             if (isStatic && staticOptions) {
                 options = staticOptions;
-            } else if (!isStatic && props.availableValues) {
-                options = props.availableValues.map((value) => ({
+            } else if (!isStatic && props.valueRange) {
+                options = props.valueRange.map((value) => ({
                     value: value,
                     label: value === null ? "None" : value,
                 }));

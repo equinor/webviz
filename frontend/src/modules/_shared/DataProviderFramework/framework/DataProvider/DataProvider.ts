@@ -23,8 +23,8 @@ import type {
 import type { Item } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../../interfacesAndTypes/sharedTypes";
-import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
-import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { Settings } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 import { makeSettings } from "../utils/makeSettings";
 

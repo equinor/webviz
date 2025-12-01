@@ -4,15 +4,30 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
-import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = number | null;
+type ValueRangeType = [number, number];
 
 type StaticProps = { min?: number; max?: number };
 
-export class InputNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER> {
+export class InputNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _staticProps: StaticProps | null;
+    valueRangeIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType) => {
+            if (accumulator === null) {
+                return valueRange;
+            }
+
+            const min = Math.max(accumulator[0], valueRange[0]);
+            const max = Math.min(accumulator[1], valueRange[1]);
+
+            return [min, max] as ValueRangeType;
+        },
+        startingValue: null,
+        isValid: (valueRange: ValueRangeType): boolean => {
+            return valueRange[0] <= valueRange[1];
+        },
+    };
 
     constructor(props: StaticProps) {
         if (props && !!props.min && !!props.max && props.min > props.max) {
@@ -27,18 +42,15 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         return this._staticProps !== null;
     }
 
-    isValueValid(
-        value: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
-    ): boolean {
+    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
         // If static limits are provided, Input component limits the value
         // i.e. no need to run fixupValue()
         if (this._staticProps) {
             return true;
         }
 
-        const min = availableValues[0];
-        const max = availableValues[1];
+        const min = valueRange[0];
+        const max = valueRange[1];
 
         if (value === null || value > max || value < min) {
             return false;
@@ -47,20 +59,14 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         return true;
     }
 
-    fixupValue(
-        currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<
-            ValueType,
-            SettingCategory.NUMBER | SettingCategory.NUMBER_WITH_STEP
-        >,
-    ): ValueType {
+    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
         // If static limits are provided, return value as Input component controls the value
         if (this._staticProps) {
             return currentValue;
         }
 
-        const min = availableValues[0];
-        const max = availableValues[1];
+        const min = valueRange[0];
+        const max = valueRange[1];
 
         if (currentValue === null || currentValue < min) {
             return min;
@@ -72,17 +78,13 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         return currentValue;
     }
 
-    makeComponent(): (
-        props: SettingComponentProps<ValueType, SettingCategory.NUMBER | SettingCategory.NUMBER_WITH_STEP>,
-    ) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
         const isStatic = this.getIsStatic();
         const staticProps = this._staticProps;
 
-        return function InputNumberSetting(
-            props: SettingComponentProps<ValueType, SettingCategory.NUMBER | SettingCategory.NUMBER_WITH_STEP>,
-        ) {
-            const min = isStatic ? staticProps?.min : props.availableValues?.[0];
-            const max = isStatic ? staticProps?.max : props.availableValues?.[1];
+        return function InputNumberSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
+            const min = isStatic ? staticProps?.min : props.valueRange?.[0];
+            const max = isStatic ? staticProps?.max : props.valueRange?.[1];
 
             function handleInputChange(value: string) {
                 props.onValueChange(Number(value));

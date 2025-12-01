@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { chain, sortBy } from "lodash";
+import { chain, isEqual, sortBy } from "lodash";
 
 import type { WellboreLogCurveHeader_api } from "@api";
 import type { DropdownOption, DropdownOptionGroup } from "@lib/components/Dropdown";
@@ -11,27 +11,27 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = WellboreLogCurveHeader_api | null;
+type ValueRangeType = WellboreLogCurveHeader_api[];
 
-export class LogCurveSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
+export class LogCurveSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     defaultValue: ValueType = null;
+    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<WellboreLogCurveHeader_api[]>(
+        (a, b) => isEqual(a, b),
+    );
 
-    getLabel(): string {
-        return "Curve";
-    }
-
-    fixupValue(currentValue: ValueType, availableValues: WellboreLogCurveHeader_api[]): ValueType {
+    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
         if (!currentValue) {
             // Match sorting used in dropdown
-            return sortBy(availableValues, [sortStatLogsToTop, "logName", "curveName"])[0] ?? null;
+            return sortBy(valueRange, [sortStatLogsToTop, "logName", "curveName"])[0] ?? null;
         }
         // We look for any curve that at the least matches on curve name. Optimally, there's an entry that matches both
         // on curve *and* log name, but we'll accept it if at least the name matches
         let bestMatch = null;
 
-        for (const value of availableValues) {
+        for (const value of valueRange) {
             if (value.curveName === currentValue?.curveName) {
                 bestMatch = value;
                 // If the both matches, there well be no better alternatives
@@ -42,10 +42,14 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, S
         return bestMatch;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
-        return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
+    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+        return isValueValid<ValueType, WellboreLogCurveHeader_api>(value, valueRange, (v) => v);
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+        return function DrilledWellbores(props: SettingComponentProps<ValueType, ValueRangeType>) {
             const selectedValue = makeSelectValueForCurveHeader(props.value);
-            const availableValues = props.availableValues ?? [];
+            const availableValues = props.valueRange ?? [];
 
             const curveOptions = chain(availableValues)
                 .groupBy("logName")

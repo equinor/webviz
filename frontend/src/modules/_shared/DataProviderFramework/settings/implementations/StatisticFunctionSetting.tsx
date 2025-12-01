@@ -5,19 +5,18 @@ import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 
 import type {
-    CustomSettingImplementation,
     SettingComponentProps,
+    StaticSettingImplementation,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = SurfaceStatisticFunction_api;
 
-export class StatisticFunctionSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
-    isValueValid(): boolean {
+export class StatisticFunctionSetting implements StaticSettingImplementation<ValueType, ValueType> {
+    getIsStatic(): boolean {
         return true;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
         const itemArr: DropdownOption[] = [
             { value: SurfaceStatisticFunction_api.MEAN, label: "Mean" },
             { value: SurfaceStatisticFunction_api.STD, label: "Std" },
@@ -28,7 +27,7 @@ export class StatisticFunctionSetting implements CustomSettingImplementation<Val
             { value: SurfaceStatisticFunction_api.P50, label: "P50" },
         ];
 
-        return function StatisticFunction(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
+        return function StatisticFunction(props: SettingComponentProps<ValueType>) {
             return (
                 <Dropdown
                     options={itemArr}

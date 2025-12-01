@@ -123,7 +123,10 @@ export class SettingManager<
     }
 
     getValueRangeReducerDefinition() {
-        return this._customSettingImplementation.valueRangeIntersectionReducerDefinition;
+        if ("valueRangeIntersectionReducerDefinition" in this._customSettingImplementation) {
+            return this._customSettingImplementation.valueRangeIntersectionReducerDefinition ?? null;
+        }
+        return null;
     }
 
     registerExternalSettingController(
@@ -208,7 +211,7 @@ export class SettingManager<
         this._value = this._externalController?.getSetting().getValue() ?? this._value;
         this._externalController = null;
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("external-setting-controller");
-        const shouldNotifyValueChanged = this.applyAvailableValues();
+        const shouldNotifyValueChanged = this.applyValueRange();
         if (shouldNotifyValueChanged) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
         }
@@ -479,10 +482,9 @@ export class SettingManager<
 
         const customIsValueValidFunction = this._customSettingImplementation.isValueValid;
 
-        const isPersistedValueValid = customIsValueValidFunction(
-            this._currentValueFromPersistence,
-            this._valueRange as any,
-        );
+        const isPersistedValueValid = customIsValueValidFunction
+            ? customIsValueValidFunction(this._currentValueFromPersistence, this._valueRange as any)
+            : true;
 
         if (isPersistedValueValid) {
             this._value = this._currentValueFromPersistence;
@@ -496,7 +498,7 @@ export class SettingManager<
         return false;
     }
 
-    private applyAvailableValues(): boolean {
+    private applyValueRange(): boolean {
         let valueChanged = false;
         const valueFixedUp = !this.checkIfValueIsValid(this.getValue()) && this.maybeFixupValue();
         const persistedValueReset = this.maybeResetPersistedValue();
@@ -511,7 +513,7 @@ export class SettingManager<
         return shouldNotifyValueChanged;
     }
 
-    setAvailableValues(valueRange: TValueRange | null): void {
+    setValueRange(valueRange: TValueRange | null): void {
         if (this._externalController) {
             this._valueRange = valueRange;
             this.maybeResetPersistedValue();
@@ -528,7 +530,7 @@ export class SettingManager<
 
         this._valueRange = valueRange;
 
-        const shouldNotifyValueChanged = this.applyAvailableValues();
+        const shouldNotifyValueChanged = this.applyValueRange();
         this.initialize();
         if (shouldNotifyValueChanged) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
@@ -553,7 +555,9 @@ export class SettingManager<
             return false;
         }
 
-        const candidate = this._customSettingImplementation.fixupValue(this._value, this._valueRange as any);
+        const customFixupFunction = this._customSettingImplementation.fixupValue;
+
+        const candidate = customFixupFunction ? customFixupFunction(this._value, this._valueRange as any) : this._value;
 
         if (isEqual(candidate, this._value)) {
             return false;
@@ -569,6 +573,13 @@ export class SettingManager<
         if (this._valueRange === null) {
             return false;
         }
-        return this._customSettingImplementation.isValueValid(value, this._valueRange as any);
+
+        const customIsValueValidFunction = this._customSettingImplementation.isValueValid;
+
+        if (!customIsValueValidFunction) {
+            return true;
+        }
+
+        return customIsValueValidFunction(value, this._valueRange as any);
     }
 }

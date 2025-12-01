@@ -13,8 +13,8 @@ import type { DefineBasicDependenciesArgs } from "../../interfacesAndTypes/custo
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 import type { SerializedGroup, SerializedSettingsState } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
-import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
-import type { MakeSettingTypesMap, SettingTypes, Settings } from "../../settings/settingsDefinitions";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { Settings } from "../../settings/settingsDefinitions";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";

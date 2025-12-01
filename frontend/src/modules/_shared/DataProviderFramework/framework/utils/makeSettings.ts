@@ -1,7 +1,7 @@
 
-import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import { SettingRegistry } from "../../settings/SettingRegistry";
-import type { MakeSettingTypesMap, Settings, SettingTypes } from "../../settings/settingsDefinitions";
+import type { Settings } from "../../settings/settingsDefinitions";
 import type { SettingManager } from "../SettingManager/SettingManager";
 
 

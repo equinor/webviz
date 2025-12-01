@@ -12,24 +12,117 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import type { Grid3dZone_api } from "@api";
 
-type ValueType = [[number, number], [number, number], [number, number]] | null;
-type Category = SettingCategory.XYZ_RANGE;
+type InternalValueType =
+    | [
+          [number, number],
+          [number, number],
+          { type: "range"; range: [number, number] } | { type: "zone"; range: [number, number]; name: string },
+      ]
+    | null;
+type ExternalValueType = [[number, number], [number, number], [number, number]] | null;
+type ValueRangeType = {
+    range: [[number, number, number], [number, number, number], [number, number, number]];
+    zones: Grid3dZone_api[];
+};
 
-export class GridLayerRangeSetting implements CustomSettingImplementation<ValueType, Category> {
-    defaultValue: ValueType = null;
+export class GridLayerRangeSetting
+    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
+{
+    defaultValue: InternalValueType = null;
+    valueRangeIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType) => {
+            if (accumulator === null) {
+                return valueRange;
+            }
 
-    getLabel(): string {
-        return "Grid ranges";
+            const mergedRanges: ValueRangeType["range"] = [
+                [0, 0, 1],
+                [0, 0, 1],
+                [0, 0, 1],
+            ];
+
+            for (let i = 0; i < 3; i++) {
+                const min = Math.max(accumulator.range[i][0], valueRange.range[i][0]);
+                const max = Math.min(accumulator.range[i][1], valueRange.range[i][1]);
+                const step = Math.max(accumulator.range[i][2], valueRange.range[i][2]);
+
+                mergedRanges[i] = [min, max, step];
+            }
+
+            const mergedZones = accumulator.zones.filter((zoneA) =>
+                valueRange.zones.some(
+                    (zoneB) =>
+                        zoneA.name === zoneB.name &&
+                        zoneA.start_layer === zoneB.start_layer &&
+                        zoneA.end_layer === zoneB.end_layer,
+                ),
+            );
+
+            return { range: mergedRanges, zones: mergedZones };
+        },
+        startingValue: null,
+        isValid: (valueRange: ValueRangeType): boolean => {
+            const [xRange, yRange, zRange] = valueRange.range;
+            return xRange[0] <= xRange[1] && yRange[0] <= yRange[1] && zRange[0] <= zRange[1];
+        },
+    };
+
+    isValueValid(value: InternalValueType, valueRange: ValueRangeType): boolean {
+        if (value === null) {
+            return false;
+        }
+
+        const [xRange, yRange, zRange] = valueRange.range;
+        const [xmin, xmax] = value[0];
+        const [ymin, ymax] = value[1];
+        const [zmin, zmax] = value[2].range;
+
+        return (
+            xmin >= xRange[0] &&
+            xmin <= xRange[1] &&
+            xmax >= xRange[0] &&
+            xmax <= xRange[1] &&
+            ymin >= yRange[0] &&
+            ymin <= yRange[1] &&
+            ymax >= yRange[0] &&
+            ymax <= yRange[1] &&
+            zmin >= zRange[0] &&
+            zmin <= zRange[1] &&
+            zmax >= zRange[0] &&
+            zmax <= zRange[1]
+        );
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, Category>) => React.ReactNode {
-        return function RangeSlider(props: SettingComponentProps<ValueType, Category>) {
+    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
+        const [xRange, yRange, zRange] = valueRange.range;
+
+        if (currentValue === null) {
+            return [
+                [xRange[0], xRange[1]],
+                [yRange[0], yRange[1]],
+                [zRange[0], zRange[1]],
+            ];
+        }
+
+        const [xmin, xmax] = currentValue[0];
+        const [ymin, ymax] = currentValue[1];
+        const [zmin, zmax] = currentValue[2];
+
+        return [
+            [Math.max(xRange[0], xmin), Math.min(xRange[1], xmax)],
+            [Math.max(yRange[0], ymin), Math.min(yRange[1], ymax)],
+            [Math.max(zRange[0], zmin), Math.min(zRange[1], zmax)],
+        ];
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+        return function RangeSlider(props: SettingComponentProps<ValueType, ValueRangeType>) {
             const divRef = React.useRef<HTMLDivElement>(null);
             const divSize = useElementSize(divRef);
 
-            const availableValues = props.availableValues ?? [
+            const valueRange = props.valueRange ?? [
                 [0, 0, 1],
                 [0, 0, 1],
                 [0, 0, 1],
@@ -58,9 +151,9 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
             }
 
             function handleInputChange(outerIndex: number, innerIndex: number, val: number) {
-                const min = availableValues[outerIndex][0];
-                const max = availableValues[outerIndex][1];
-                const step = availableValues[outerIndex][2];
+                const min = valueRange[outerIndex][0];
+                const max = valueRange[outerIndex][1];
+                const step = valueRange[outerIndex][2];
                 const allowedValues = Array.from(
                     { length: Math.floor((max - min) / step) + 1 },
                     (_, i) => min + i * step,
@@ -109,17 +202,12 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                                 </div>
                                 <div className="grow">
                                     <Slider
-                                        min={availableValues[index][0]}
-                                        max={availableValues[index][1]}
+                                        min={valueRange[index][0]}
+                                        max={valueRange[index][1]}
                                         onChange={(_, value) => handleSliderChange(index, value as [number, number])}
-                                        value={
-                                            internalValue?.[index] ?? [
-                                                availableValues[index][0],
-                                                availableValues[index][1],
-                                            ]
-                                        }
+                                        value={internalValue?.[index] ?? [valueRange[index][0], valueRange[index][1]]}
                                         valueLabelDisplay="auto"
-                                        step={availableValues[index][2]}
+                                        step={valueRange[index][2]}
                                     />
                                 </div>
                                 <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>

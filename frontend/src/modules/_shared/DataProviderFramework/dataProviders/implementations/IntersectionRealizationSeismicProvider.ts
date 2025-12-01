@@ -11,7 +11,6 @@ import type { SeismicFenceData_trans } from "@modules/_shared/Intersection/seism
 import { transformSeismicFenceData } from "@modules/_shared/Intersection/seismicIntersectionTransform";
 import { createSeismicFencePolylineFromPolylineXy } from "@modules/_shared/Intersection/seismicIntersectionUtils";
 
-import type { MakeSettingTypesMap } from "../../../DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "../../../DataProviderFramework/settings/settingsDefinitions";
 import type {
     CustomDataProviderImplementation,
@@ -28,6 +27,7 @@ import {
     getAvailableIntersectionOptions,
     getAvailableRealizationsForEnsembleIdent,
 } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const intersectionRealizationSeismicSettings = [
     Setting.INTERSECTION,
@@ -164,7 +164,7 @@ export class IntersectionRealizationSeismicProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueRangeUpdater,
         settingAttributesUpdater,
         queryClient,
         workbenchSession,
@@ -177,13 +177,13 @@ export class IntersectionRealizationSeismicProvider
             return { enabled: isEnabled };
         });
 
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
             return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
         });
 
-        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueRangeUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
@@ -208,7 +208,7 @@ export class IntersectionRealizationSeismicProvider
             });
         });
 
-        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
+        valueRangeUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const seismicCubeMetaList = getHelperDependency(ensembleSeismicCubeMetaListDep);
 
             if (!seismicCubeMetaList) {
@@ -233,7 +233,7 @@ export class IntersectionRealizationSeismicProvider
             return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
-        availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        valueRangeUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -245,7 +245,7 @@ export class IntersectionRealizationSeismicProvider
             return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
-        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueRangeUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const seismicCubeMetaList = getHelperDependency(ensembleSeismicCubeMetaListDep);
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
 

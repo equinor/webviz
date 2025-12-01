@@ -10,8 +10,8 @@ import type {
 } from "../interfacesAndTypes/customSettingsHandler";
 import type { Item } from "../interfacesAndTypes/entities";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
-import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
-import type { MakeSettingTypesMap, SettingTypes, Settings } from "../settings/settingsDefinitions";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
+import type { Settings } from "../settings/settingsDefinitions";
 
 import { Dependency } from "./_utils/Dependency";
 

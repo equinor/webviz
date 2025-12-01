@@ -9,20 +9,31 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
 type ValueType = number[] | null;
+type ValueRangeType = number[];
 
-export class SelectNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_SELECT> {
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) => React.ReactNode {
-        return function SelectNumberSetting(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
+export class SelectNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
+    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+
+    isValueValid(currentValue: ValueType, valueRange: ValueRangeType): boolean {
+        return isValueValid<number, number>(currentValue, valueRange, (v) => v);
+    }
+
+    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+        return fixupValue<number, number>(currentValue, valueRange, (v) => v, "firstAvailable");
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+        return function SelectNumberSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
             const options: SelectOption<number>[] = React.useMemo(() => {
-                const availableValues = props.availableValues ?? [];
+                const availableValues = props.valueRange ?? [];
                 return availableValues.map((value) => ({
                     value: value,
                     label: upperFirst(value.toString()),
                 }));
-            }, [props.availableValues]);
+            }, [props.valueRange]);
 
             function handleChange(value: number[]) {
                 props.onValueChange(value);
