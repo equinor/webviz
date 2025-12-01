@@ -48,8 +48,6 @@ spec:
                 envVar: WEBVIZ_VDS_HOST_ADDRESS
               - name: WEBVIZ-SSDL-RESOURCE-SCOPE
                 envVar: WEBVIZ_SSDL_RESOURCE_SCOPE
-              - name: WEBVIZ-PDM-RESOURCE-SCOPE
-                envVar: WEBVIZ_PDM_RESOURCE_SCOPE
               - name: WEBVIZ-ENTERPRISE-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
               - name: WEBVIZ-DB-CONN-STRING
