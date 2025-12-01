@@ -28,6 +28,7 @@ def per_well_injection_data_to_api(
     return [
         WellInjectionData(
             wellboreUuid=wi.wellbore_uuid,
+            wellboreUwi=wi.wellbore_uwbi,
             startDate=wi.start_date,
             endDate=wi.end_date,
             waterInjection=wi.water_injection,

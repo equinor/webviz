@@ -89,6 +89,7 @@ def calculate_total_injection_from_daily(
     return [
         WellInjectionData(
             wellbore_uuid=row[0],  # WB_UUID
+            wellbore_uwbi=row[3],  # WB_UWBI
             start_date=start_date,
             end_date=end_date,
             water_injection=row[1],  # Water injection sum

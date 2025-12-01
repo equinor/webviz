@@ -15,6 +15,7 @@ class WellProductionData:
 @dataclass
 class WellInjectionData:
     wellbore_uuid: str
+    wellbore_uwbi: str
     start_date: str
     end_date: str
     water_injection: float

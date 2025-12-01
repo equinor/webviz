@@ -13,6 +13,7 @@ class WellProductionData(BaseModel):
 
 class WellInjectionData(BaseModel):
     wellboreUuid: str
+    wellboreUwi: str
     startDate: str
     endDate: str
     waterInjection: float

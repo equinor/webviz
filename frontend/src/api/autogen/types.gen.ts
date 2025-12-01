@@ -1173,6 +1173,7 @@ export type WellCompletionsZone_api = {
 
 export type WellInjectionData_api = {
     wellboreUuid: string;
+    wellboreUwi: string;
     startDate: string;
     endDate: string;
     waterInjection: number;
