@@ -79,6 +79,7 @@ def calculate_total_injection_from_daily(
                 .sum()
                 .fill_null(0.0)
                 .alias("gas_injection"),
+                pl.col(_INJCOLUMNS.WB_UWBI).first(),
             ]
         )
         .sort(by=_INJCOLUMNS.WB_UWBI)
