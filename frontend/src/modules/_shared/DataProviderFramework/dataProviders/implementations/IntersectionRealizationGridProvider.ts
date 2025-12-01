@@ -2,6 +2,7 @@ import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, postGetPolylineIntersectionOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -186,6 +187,7 @@ export class IntersectionRealizationGridProvider
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
                         realization_num: realization,
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
@@ -332,6 +334,7 @@ export class IntersectionRealizationGridProvider
                 parameter_name: parameterName,
                 parameter_time_or_interval_str: timeOrInterval,
                 realization_num: realizationNum,
+                ...makeCacheBustingQueryParam(ensembleIdent),
             },
             body: { polyline_utm_xy: polylineWithSectionLengths.polylineUtmXy },
         });
