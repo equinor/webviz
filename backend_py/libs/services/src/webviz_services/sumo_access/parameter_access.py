@@ -44,7 +44,7 @@ class ParameterAccess:
             realization=True,
             aggregation=False,
         ).parameters
-        realization_count = await parameter_realization_context.count_async
+        realization_count = await parameter_realization_context.length_async()
         if realization_count == 0:
             raise NoDataError(
                 f"No parameters found for case {self._case_uuid} and ensemble {self._ensemble_name}",
