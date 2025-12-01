@@ -5,7 +5,16 @@ export enum ParameterDistributionPlotType {
     DISTRIBUTION_PLOT = "distribution",
     BOX_PLOT = "box",
 }
-
+export enum HistogramMode {
+    OVERLAY = "overlay",
+    STACKED = "stack",
+    GROUPED = "group",
+}
+export const HistogramModeEnumToStringMapping = {
+    [HistogramMode.OVERLAY]: "Overlayed",
+    [HistogramMode.STACKED]: "Stacked",
+    [HistogramMode.GROUPED]: "Grouped",
+};
 export const ParameterDistributionPlotTypeEnumToStringMapping = {
     [ParameterDistributionPlotType.HISTOGRAM]: "Histogram",
     [ParameterDistributionPlotType.DISTRIBUTION_PLOT]: "Distribution Plot",

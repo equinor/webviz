@@ -1,0 +1,287 @@
+import { Ajv, type ValidateFunction } from "ajv/dist/jtd";
+import { atom, type Atom, type Setter } from "jotai";
+
+import type { AtomStore } from "@framework/AtomStoreMaster";
+import {
+    hasSerialization,
+    type ModuleComponentSerializationFunctions,
+    type ModuleComponentsStateBase,
+    type ModuleStateSchema,
+} from "@framework/Module";
+import type { ModuleInstance, PartialSerializedModuleState } from "@framework/ModuleInstance";
+import { isPersistableAtom, Source } from "@framework/utils/atomUtils";
+
+import { hashSessionContentString, objectToJsonString } from "./WorkbenchSession/utils/hash";
+
+export class ModuleStateSerializationError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "ModuleStateSerializationError";
+    }
+}
+
+type StringifiedSerializedModuleComponentsState = {
+    settings?: string;
+    view?: string;
+};
+
+const ajv = new Ajv();
+
+export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsStateBase> {
+    private _moduleInstance: ModuleInstance<any, TSerializedState>;
+    private _atomStore: AtomStore;
+    private _serializedStateSchema: ModuleStateSchema<TSerializedState> | null;
+    private _serializedState: TSerializedState | null = null;
+    private _serializationFunctions: ModuleComponentSerializationFunctions<TSerializedState>;
+    private _persistenceAtom: Atom<TSerializedState | undefined>;
+    private _lastSerializedHash: string | null = null;
+    private _debouncedNotifyChange: () => void;
+    private _validationFunctions: {
+        settings?: ValidateFunction<TSerializedState["settings"]>;
+        view?: ValidateFunction<TSerializedState["view"]>;
+    };
+
+    constructor(
+        moduleInstance: ModuleInstance<any, TSerializedState>,
+        atomStore: AtomStore,
+        serializedStateSchema: ModuleStateSchema<TSerializedState> | null,
+        serializationFunctions: ModuleComponentSerializationFunctions<TSerializedState>,
+        onStateChange: () => void,
+    ) {
+        this._moduleInstance = moduleInstance;
+        this._atomStore = atomStore;
+        this._serializedStateSchema = serializedStateSchema;
+        this._serializationFunctions = serializationFunctions;
+        this._debouncedNotifyChange = debounce(() => {
+            onStateChange?.();
+        }, 200);
+
+        // Prepare validation functions
+        const validateSettings = this._serializedStateSchema?.settings
+            ? ajv.compile(this._serializedStateSchema.settings)
+            : undefined;
+        const validateView = this._serializedStateSchema?.view
+            ? ajv.compile(this._serializedStateSchema.view)
+            : undefined;
+        this._validationFunctions = {
+            settings: validateSettings,
+            view: validateView,
+        };
+
+        this._persistenceAtom = atom<TSerializedState | undefined>((get) => {
+            if (hasSerialization(this._serializationFunctions)) {
+                const result = {
+                    settings: this._serializationFunctions.serializeStateFunctions.settings?.(get),
+                    view: this._serializationFunctions.serializeStateFunctions.view?.(get),
+                } as TSerializedState;
+
+                return result;
+            }
+            return undefined; // No serialization functions provided
+        });
+
+        this._atomStore
+            .sub(this._persistenceAtom, () => {
+                this.serializeState();
+            })
+            .bind(this);
+    }
+
+    getSerializedState(): TSerializedState | null {
+        return this._serializedState;
+    }
+
+    getStringifiedSerializedState(): StringifiedSerializedModuleComponentsState | null {
+        if (!this._serializedState) {
+            return null; // No serialized state available
+        }
+
+        const stringifiedSettings = this._serializedState.settings
+            ? JSON.stringify(this._serializedState.settings)
+            : undefined;
+
+        const stringifiedView = this._serializedState.view ? JSON.stringify(this._serializedState.view) : undefined;
+
+        return {
+            settings: stringifiedSettings,
+            view: stringifiedView,
+        };
+    }
+
+    async serializeState() {
+        if (!hasSerialization(this._serializationFunctions) || !this._serializedStateSchema) {
+            return this._serializedState || {};
+        }
+
+        const serializedSettings = this._serializationFunctions.serializeStateFunctions.settings?.(
+            this._atomStore.get.bind(this._atomStore),
+        );
+
+        const serializedView = this._serializationFunctions.serializeStateFunctions.view?.(
+            this._atomStore.get.bind(this._atomStore),
+        );
+
+        if (serializedSettings === undefined && serializedView === undefined && this._serializedState === null) {
+            return; // No state to serialize
+        }
+
+        // Validate against schema
+        if (this._serializedStateSchema.settings) {
+            const validateSettings = ajv.compile(this._serializedStateSchema.settings);
+            const isSettingsValid = serializedSettings === undefined || validateSettings(serializedSettings);
+            if (!isSettingsValid) {
+                console.warn(`Validation failed for ${this._moduleInstance.getName()}`, {
+                    settingsErrors: validateSettings.errors,
+                });
+                throw new ModuleStateSerializationError(
+                    `Invalid settings state for module instance ${this._moduleInstance.getName()}`,
+                );
+            }
+        }
+
+        if (this._serializedStateSchema.view) {
+            const validateView = ajv.compile(this._serializedStateSchema.view);
+            const isViewValid = serializedView === undefined || validateView(serializedView);
+
+            if (!isViewValid) {
+                console.warn(`Validation failed for ${this._moduleInstance.getName()}`, {
+                    viewErrors: validateView.errors,
+                });
+                throw new ModuleStateSerializationError(
+                    `Invalid view state for module instance ${this._moduleInstance.getName()}`,
+                );
+            }
+        }
+
+        const newSerializedState = {
+            settings: serializedSettings,
+            view: serializedView,
+        } as TSerializedState;
+
+        const newHash = await hashSessionContentString(objectToJsonString(newSerializedState));
+
+        if (newHash === this._lastSerializedHash) {
+            return; // No changes detected
+        }
+
+        this._serializedState = newSerializedState;
+        this._lastSerializedHash = newHash;
+        this._debouncedNotifyChange?.();
+    }
+
+    deserializeState(raw: StringifiedSerializedModuleComponentsState): {
+        settingsStateApplied: boolean;
+        viewStateApplied: boolean;
+    } | null {
+        if (!this._serializedStateSchema) {
+            console.warn(`No serialized state schema defined for module instance ${this._moduleInstance.getName()}`);
+            return null; // No schema defined, cannot deserialize
+        }
+
+        if (!hasSerialization(this._serializationFunctions)) {
+            console.warn(`No serialization functions defined for module instance ${this._moduleInstance.getName()}`);
+            this._serializedState = null;
+            return null; // No serialization functions, cannot deserialize
+        }
+
+        let isSettingsStateValid: boolean = true;
+        let isViewStateValid: boolean = true;
+
+        let parsedSettings: unknown;
+        let parsedView: unknown;
+        try {
+            parsedSettings = raw.settings ? JSON.parse(raw.settings) : undefined;
+            parsedView = raw.view ? JSON.parse(raw.view) : undefined;
+        } catch (e) {
+            console.warn(`Invalid JSON in module state for instance ${this._moduleInstance.getName()}:`, e);
+        }
+
+        const validateSettings = this._validationFunctions.settings;
+        if (validateSettings) {
+            isSettingsStateValid = parsedSettings === undefined || validateSettings(parsedSettings);
+            if (!isSettingsStateValid) {
+                console.warn(`Validation failed for settings in ${this._moduleInstance.getName()}`, {
+                    settingsErrors: validateSettings.errors,
+                });
+                parsedSettings = undefined;
+            }
+        }
+
+        const validateView = this._validationFunctions.view;
+        if (validateView) {
+            isViewStateValid = parsedView === undefined || validateView(parsedView);
+            if (!isViewStateValid) {
+                console.warn(`Validation failed for view in ${this._moduleInstance.getName()}`, {
+                    viewErrors: validateView.errors,
+                });
+                parsedView = undefined;
+            }
+        }
+
+        this._serializedState = {
+            settings: parsedSettings as TSerializedState["settings"],
+            view: parsedView as TSerializedState["view"],
+        } as TSerializedState;
+
+        this.applyStateToAtoms(this._serializedState);
+
+        return {
+            settingsStateApplied: isSettingsStateValid,
+            viewStateApplied: isViewStateValid,
+        };
+    }
+
+    applyTemplateState(templateState: PartialSerializedModuleState<TSerializedState>): void {
+        this.applyStateToAtoms(
+            {
+                settings: templateState.settings,
+                view: templateState.view,
+            },
+            true,
+        );
+    }
+
+    private applyStateToAtoms(
+        state: PartialSerializedModuleState<TSerializedState>,
+        fromTemplate: boolean = false,
+    ): void {
+        if (!hasSerialization(this._serializationFunctions)) {
+            console.warn(`No serialization functions defined for module instance ${this._moduleInstance.getName()}`);
+            return; // No serialization functions, cannot apply state
+        }
+
+        const atomStore = this._atomStore;
+
+        const persistedSetter: Setter = (atom, ...args) => {
+            const [value] = args;
+            const isPersistable = isPersistableAtom(atom);
+
+            let finalValue = value;
+            if (isPersistable) {
+                if (fromTemplate) {
+                    finalValue = { value, _source: Source.TEMPLATE };
+                } else {
+                    finalValue = { value, _source: Source.PERSISTENCE };
+                }
+            }
+
+            return atomStore.set(atom as any, finalValue);
+        };
+
+        if (state.settings) {
+            this._serializationFunctions.deserializeStateFunctions.settings?.(state.settings, persistedSetter);
+        }
+
+        if (state.view) {
+            this._serializationFunctions.deserializeStateFunctions.view?.(state.view, persistedSetter);
+        }
+    }
+}
+
+function debounce(fn: () => void, delay: number) {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    return () => {
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(fn, delay);
+    };
+}

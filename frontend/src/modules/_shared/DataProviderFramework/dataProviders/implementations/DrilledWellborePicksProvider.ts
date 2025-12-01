@@ -29,7 +29,7 @@ export class DrilledWellborePicksProvider
     settings = drilledWellborePicksSettings;
 
     getDefaultName() {
-        return "Drilled Wellbore Picks";
+        return "Well Picks (Official)";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

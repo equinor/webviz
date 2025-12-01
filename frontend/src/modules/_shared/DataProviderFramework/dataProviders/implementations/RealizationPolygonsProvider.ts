@@ -1,7 +1,8 @@
 import { isEqual } from "lodash";
 
 import type { PolygonData_api } from "@api";
-import { getPolygonsDataOptions, getPolygonsDirectoryOptions } from "@api";
+import { getPolygonsDataOptions, getPolygonsDirectoryOptions, PolygonsAttributeType_api } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     CustomDataProviderImplementation,
     FetchDataParams,
@@ -17,6 +18,7 @@ const realizationPolygonsSettings = [
     Setting.POLYGONS_NAME,
     Setting.POLYGON_VISUALIZATION,
 ] as const;
+const DISALLOWED_SURFACE_TYPES_FROM_API = [PolygonsAttributeType_api.FAULT_LINES];
 export type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;
 
@@ -27,7 +29,7 @@ export class RealizationPolygonsProvider
     settings = realizationPolygonsSettings;
 
     getDefaultName(): string {
-        return "Realization Polygons";
+        return "Polygons";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -75,6 +77,7 @@ export class RealizationPolygonsProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
@@ -87,11 +90,13 @@ export class RealizationPolygonsProvider
             if (!data) {
                 return [];
             }
+            const filteredPolygonsMeta = data.filter(
+                (polygonsMeta) => !DISALLOWED_SURFACE_TYPES_FROM_API.includes(polygonsMeta.attribute_type),
+            );
 
             const availableAttributes = [
-                ...Array.from(new Set(data.map((polygonsMeta) => polygonsMeta.attribute_name))),
+                ...Array.from(new Set(filteredPolygonsMeta.map((polygonsMeta) => polygonsMeta.attribute_name))),
             ];
-
             return availableAttributes;
         });
 
@@ -131,6 +136,7 @@ export class RealizationPolygonsProvider
                 realization_num: realizationNum ?? 0,
                 name: polygonsName ?? "",
                 attribute: polygonsAttribute ?? "",
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 

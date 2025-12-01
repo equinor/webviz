@@ -9,6 +9,7 @@ class Service(str, Enum):
     USER_SESSION = "user_session"
     SSDL = "ssdl"
     PDM = "pdm"
+    DATABASE = "database"
 
 
 class ServiceLayerException(Exception):
