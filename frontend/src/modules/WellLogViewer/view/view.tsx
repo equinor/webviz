@@ -16,8 +16,8 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const providerManager = props.viewContext.useSettingsToViewInterfaceValue("providerManager");
     const selectedWellboreHeader = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
-    const viewerHorizontal = props.viewContext.useSettingsToViewInterfaceValue("viewerHorizontal");
-    const padDataWithEmptyRows = props.viewContext.useSettingsToViewInterfaceValue("padDataWithEmptyRows");
+    const horizontalLayout = props.viewContext.useSettingsToViewInterfaceValue("horizontalLayout");
+    const limitDomainToData = props.viewContext.useSettingsToViewInterfaceValue("limitDomainToData");
 
     const wellboreTrajectoryDataQuery = useAtomValue(wellboreTrajectoryQueryAtom);
 
@@ -51,8 +51,8 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
             providerManager={providerManager}
             wellboreHeader={selectedWellboreHeader}
             trajectoryData={wellboreTrajectoryDataQuery.data}
-            horizontal={viewerHorizontal}
-            padDataWithEmptyRows={padDataWithEmptyRows}
+            horizontal={horizontalLayout}
+            limitDomainToData={limitDomainToData}
             moduleProps={props}
         />
     );

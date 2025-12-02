@@ -191,7 +191,7 @@ async def post_get_surface_well_intersections(
     """Get surface/well intersections (well picks) for the specified surface and well trajectories."""
     perf_metrics = ResponsePerfMetrics(response)
     access_token = authenticated_user.get_sumo_access_token()
-
+# 
     xtgeo_surf = await get_xtgeo_surface_from_sumo_async(
         access_token=access_token, surf_addr_str=surf_addr_str, perf_metrics=perf_metrics
     )

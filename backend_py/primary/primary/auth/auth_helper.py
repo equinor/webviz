@@ -19,7 +19,7 @@ from primary.middleware.add_browser_cache import no_cache
 LOGGER = logging.getLogger(__name__)
 
 # Alias for the literal that lists the resource names we use
-_ResourceName: TypeAlias = Literal["graph", "sumo", "smda", "ssdl"]
+_ResourceName: TypeAlias = Literal["graph", "sumo", "smda", "ssdl", "pdm"]
 
 
 class _TokenEntry(BaseModel):
@@ -39,6 +39,7 @@ class _UserAuthInfo(BaseModel):
         sumo_token_entry = self.access_tokens.get("sumo")
         smda_token_entry = self.access_tokens.get("smda")
         ssdl_token_entry = self.access_tokens.get("ssdl")
+        pdm_token_entry = self.access_tokens.get("pdm")
 
         authenticated_user_obj = AuthenticatedUser(
             user_id=self.user_id,
@@ -48,6 +49,7 @@ class _UserAuthInfo(BaseModel):
                 "sumo_access_token": sumo_token_entry.token if sumo_token_entry else None,
                 "smda_access_token": smda_token_entry.token if smda_token_entry else None,
                 "ssdl_access_token": ssdl_token_entry.token if ssdl_token_entry else None,
+                "pdm_access_token": pdm_token_entry.token if pdm_token_entry else None,
             },
         )
 
@@ -66,8 +68,6 @@ class AuthHelper:
         request.session.clear()
 
         all_scopes_list = config.GRAPH_SCOPES.copy()
-        for value in config.RESOURCE_SCOPES_DICT.values():
-            all_scopes_list.extend(value)
 
         if "CODESPACE_NAME" in os.environ:
             # Developer is using GitHub codespace, so we use the GitHub codespace port forward URL

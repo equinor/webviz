@@ -172,6 +172,16 @@ class SurfaceWellPick(BaseModel):
     md: float | None = None
     direction: PickDirection
 
+class WellFormationSection(BaseModel):
+    segments: list[list[float,float]]
+    unique_wellbore_identifier:str
+
+
+class WellFormationSection(BaseModel):
+    md_in:float
+    md_out:float
+    unique_wellbore_identifier: str
+
 
 class WellTrajectory(BaseModel):
     """

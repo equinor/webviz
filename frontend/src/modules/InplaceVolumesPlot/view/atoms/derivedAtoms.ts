@@ -2,8 +2,9 @@ import { atom } from "jotai";
 
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumes/queryHooks";
+import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
-import { colorByAtom, filterAtom, selectorColumnAtom, subplotByAtom } from "./baseAtoms";
+import { colorByAtom, filterAtom, plotTypeAtom, selectorColumnAtom, subplotByAtom } from "./baseAtoms";
 
 export const tableNamesAtom = atom((get) => {
     const filter = get(filterAtom);
@@ -23,6 +24,7 @@ export const areSelectedTablesComparableAtom = atom((get) => {
 export const groupByIndicesAtom = atom((get) => {
     const subplotBy = get(subplotByAtom);
     const colorBy = get(colorByAtom);
+    const plotType = get(plotTypeAtom);
     const selectorColumn = get(selectorColumnAtom);
     const indicesWithValues = get(indicesWithValuesAtom);
 
@@ -35,7 +37,9 @@ export const groupByIndicesAtom = atom((get) => {
     if (validIndexColumns.includes(colorBy as any)) {
         groupByIndices.push(colorBy);
     }
-    if (selectorColumn !== null && validIndexColumns.includes(selectorColumn)) {
+
+    // Only request selectorColumns when plotting bar plots
+    if (selectorColumn !== null && plotType === PlotType.BAR && validIndexColumns.includes(selectorColumn)) {
         groupByIndices.push(selectorColumn);
     }
     return groupByIndices;

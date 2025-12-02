@@ -1,6 +1,7 @@
 import { DataProviderType } from "../dataProviderTypes";
 import { DrilledWellborePicksProvider } from "../implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "../implementations/DrilledWellTrajectoriesProvider";
+import { FaultPolygonsProvider } from "../implementations/FaultPolygonsProvider";
 import { IntersectionRealizationGridProvider } from "../implementations/IntersectionRealizationGridProvider";
 import {
     IntersectionRealizationSeismicProvider,
@@ -8,11 +9,11 @@ import {
 } from "../implementations/IntersectionRealizationSeismicProvider";
 import { RealizationPolygonsProvider } from "../implementations/RealizationPolygonsProvider";
 import {
-    RealizationSurfaceProvider,
-    SurfaceDataFormat,
-    VisualizationSpace,
-} from "../implementations/RealizationSurfaceProvider";
-import { StatisticalSurfaceProvider } from "../implementations/StatisticalSurfaceProvider";
+    AttributeSurfaceProvider,
+    AttributeSurfaceType,
+} from "../implementations/surfaceProviders/AttributeSurfaceProvider";
+import { DepthSurfaceProvider } from "../implementations/surfaceProviders/DepthSurfaceProvider";
+import { SeismicSurfaceProvider, SeismicSurfaceType } from "../implementations/surfaceProviders/SeismicSurfaceProvider";
 
 import { DataProviderRegistry } from "./_DataProviderRegistry";
 
@@ -33,18 +34,29 @@ DataProviderRegistry.registerDataProvider(
     IntersectionRealizationSeismicProvider,
     [SeismicDataSource.SIMULATED],
 );
-DataProviderRegistry.registerDataProvider(DataProviderType.REALIZATION_SURFACE_3D, RealizationSurfaceProvider, [
-    SurfaceDataFormat.FLOAT,
-    VisualizationSpace.SPACE_3D,
-]);
+DataProviderRegistry.registerDataProvider(DataProviderType.FAULT_POLYGONS, FaultPolygonsProvider);
+
 DataProviderRegistry.registerDataProvider(DataProviderType.REALIZATION_POLYGONS, RealizationPolygonsProvider);
-DataProviderRegistry.registerDataProvider(DataProviderType.REALIZATION_SURFACE, RealizationSurfaceProvider, [
-    SurfaceDataFormat.FLOAT,
-]);
-DataProviderRegistry.registerDataProvider(DataProviderType.STATISTICAL_SURFACE, StatisticalSurfaceProvider, [
-    SurfaceDataFormat.FLOAT,
-]);
+
 DataProviderRegistry.registerDataProvider(
     DataProviderType.INTERSECTION_REALIZATION_GRID,
     IntersectionRealizationGridProvider,
 );
+
+DataProviderRegistry.registerDataProvider(DataProviderType.DEPTH_SURFACE, DepthSurfaceProvider);
+
+DataProviderRegistry.registerDataProvider(DataProviderType.SEISMIC_3D_SURFACE, SeismicSurfaceProvider, [
+    { surfaceType: SeismicSurfaceType.SEISMIC_SURVEY },
+]);
+DataProviderRegistry.registerDataProvider(DataProviderType.SEISMIC_4D_SURFACE, SeismicSurfaceProvider, [
+    { surfaceType: SeismicSurfaceType.SEISMIC_TIME_LAPSE },
+]);
+DataProviderRegistry.registerDataProvider(DataProviderType.ATTRIBUTE_STATIC_SURFACE, AttributeSurfaceProvider, [
+    { surfaceType: AttributeSurfaceType.ATTRIBUTE_STATIC },
+]);
+DataProviderRegistry.registerDataProvider(DataProviderType.ATTRIBUTE_TIME_STEP_SURFACE, AttributeSurfaceProvider, [
+    { surfaceType: AttributeSurfaceType.ATTRIBUTE_TIME_STEP },
+]);
+DataProviderRegistry.registerDataProvider(DataProviderType.ATTRIBUTE_INTERVAL_SURFACE, AttributeSurfaceProvider, [
+    { surfaceType: AttributeSurfaceType.ATTRIBUTE_INTERVAL },
+]);

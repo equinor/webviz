@@ -18,11 +18,11 @@ type ModulesListProps = {
 
 export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
-    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
-    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
 
     const forceRerender = React.useReducer((x) => x + 1, 0)[1];
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);

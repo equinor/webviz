@@ -5,7 +5,7 @@ import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import type { ViewStateType } from "@webviz/subsurface-viewer/dist/components/Map";
 
 import type { ViewContext } from "@framework/ModuleContext";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 
 export type SyncedSubsurfaceViewerProps = {
@@ -15,8 +15,10 @@ export type SyncedSubsurfaceViewerProps = {
 
 export function SyncedSubsurfaceViewer(props: SyncedSubsurfaceViewerProps): JSX.Element {
     const { viewContext, workbenchServices, ...rest } = props;
-    const syncedSettingKeys = viewContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: workbenchServices,
+        moduleContext: viewContext,
+    });
 
     const [cameraPosition, setCameraPosition] = React.useState<ViewStateType | undefined>(undefined);
 

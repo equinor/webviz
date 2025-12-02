@@ -6,19 +6,21 @@ import {
     edgeMetadataListAtom,
     nodeMetadataListAtom,
     queryStatusAtom,
+} from "./settings/atoms/derivedAtoms";
+import {
     selectedDateTimeAtom,
     selectedEdgeKeyAtom,
     selectedNodeKeyAtom,
-} from "./settings/atoms/derivedAtoms";
+} from "./settings/atoms/persistableFixableAtoms";
 import type { QueryStatus } from "./types";
 
 type SettingsToViewInterface = {
     edgeMetadataList: FlowNetworkMetadata_api[];
     nodeMetadataList: FlowNetworkMetadata_api[];
     datedNetworks: DatedFlowNetwork_api[];
-    selectedEdgeKey: string; // | null;
-    selectedNodeKey: string; // | null;
-    selectedDateTime: string; // | null;
+    selectedEdgeKey: string;
+    selectedNodeKey: string;
+    selectedDateTime: string;
     queryStatus: QueryStatus;
 };
 
@@ -37,13 +39,13 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return get(datedNetworksAtom);
     },
     selectedEdgeKey: (get) => {
-        return get(selectedEdgeKeyAtom) ?? "";
+        return get(selectedEdgeKeyAtom).value ?? "";
     },
     selectedNodeKey: (get) => {
-        return get(selectedNodeKeyAtom) ?? "";
+        return get(selectedNodeKeyAtom).value ?? "";
     },
     selectedDateTime: (get) => {
-        return get(selectedDateTimeAtom) ?? "";
+        return get(selectedDateTimeAtom).value ?? "";
     },
     queryStatus: (get) => {
         return get(queryStatusAtom);
