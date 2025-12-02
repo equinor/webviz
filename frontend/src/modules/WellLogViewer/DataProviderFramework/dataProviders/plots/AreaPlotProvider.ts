@@ -25,7 +25,7 @@ export class AreaPlotProvider
     defineDependencies(args: DefineDependenciesArgs<AreaPlotSettingTypes>) {
         defineBaseContinuousDependencies(args);
 
-        args.availableSettingsUpdater(Setting.PLOT_VARIANT, () => {
+        args.valueRangeUpdater(Setting.PLOT_VARIANT, () => {
             return ["area", "gradientfill"];
         });
     }

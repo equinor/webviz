@@ -21,11 +21,12 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
+
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 
@@ -95,7 +96,7 @@ export class DepthSurfaceProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueRangeUpdater,
         settingAttributesUpdater,
         storedDataUpdater,
         workbenchSession,
@@ -117,12 +118,12 @@ export class DepthSurfaceProvider
             return { enabled, visible: enabled };
         });
 
-        availableSettingsUpdater(Setting.REPRESENTATION, () => {
+        valueRangeUpdater(Setting.REPRESENTATION, () => {
             return [Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
         });
-        availableSettingsUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
-        availableSettingsUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
-        availableSettingsUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
+        valueRangeUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
+        valueRangeUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
+        valueRangeUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
 
         const surfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
@@ -142,8 +143,8 @@ export class DepthSurfaceProvider
                 }),
             });
         });
-        availableSettingsUpdater(Setting.REALIZATION, createRealizationUpdater());
-        availableSettingsUpdater(Setting.DEPTH_ATTRIBUTE, ({ getHelperDependency }) => {
+        valueRangeUpdater(Setting.REALIZATION, createRealizationUpdater());
+        valueRangeUpdater(Setting.DEPTH_ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(surfaceMetadataDep);
 
             if (!data) {
@@ -161,7 +162,7 @@ export class DepthSurfaceProvider
 
             return availableAttributes;
         });
-        availableSettingsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
+        valueRangeUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(Setting.DEPTH_ATTRIBUTE);
             const data = getHelperDependency(surfaceMetadataDep);
 

@@ -23,11 +23,12 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
+
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 
@@ -114,7 +115,7 @@ export class SeismicSurfaceProvider
     }
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueRangeUpdater,
         settingAttributesUpdater,
         storedDataUpdater,
         workbenchSession,
@@ -147,7 +148,7 @@ export class SeismicSurfaceProvider
             }
             return { enabled: false, visible: false };
         });
-        availableSettingsUpdater(Setting.REPRESENTATION, () => {
+        valueRangeUpdater(Setting.REPRESENTATION, () => {
             if (
                 this._surfaceType === SeismicSurfaceType.SEISMIC_SURVEY ||
                 this._surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE
@@ -156,9 +157,9 @@ export class SeismicSurfaceProvider
             }
             return [Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
         });
-        availableSettingsUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
-        availableSettingsUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
-        availableSettingsUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
+        valueRangeUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
+        valueRangeUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
+        valueRangeUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
 
         const surfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
@@ -192,8 +193,8 @@ export class SeismicSurfaceProvider
                 }),
             });
         });
-        availableSettingsUpdater(Setting.REALIZATION, createRealizationUpdater());
-        availableSettingsUpdater(Setting.SEISMIC_ATTRIBUTE, ({ getHelperDependency }) => {
+        valueRangeUpdater(Setting.REALIZATION, createRealizationUpdater());
+        valueRangeUpdater(Setting.SEISMIC_ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(surfaceMetadataDep);
 
             if (!data) {
@@ -221,7 +222,7 @@ export class SeismicSurfaceProvider
 
             return availableAttributes;
         });
-        availableSettingsUpdater(Setting.FORMATION_NAME, ({ getHelperDependency, getLocalSetting }) => {
+        valueRangeUpdater(Setting.FORMATION_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(Setting.SEISMIC_ATTRIBUTE);
             const data = getHelperDependency(surfaceMetadataDep);
 
@@ -239,7 +240,7 @@ export class SeismicSurfaceProvider
             return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
         });
 
-        availableSettingsUpdater(Setting.TIME_POINT, ({ getLocalSetting, getHelperDependency }) => {
+        valueRangeUpdater(Setting.TIME_POINT, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(Setting.SEISMIC_ATTRIBUTE);
             const surfaceName = getLocalSetting(Setting.FORMATION_NAME);
             const data = getHelperDependency(surfaceMetadataDep);
@@ -254,7 +255,7 @@ export class SeismicSurfaceProvider
 
             return [SurfaceTimeType_api.NO_TIME];
         });
-        availableSettingsUpdater(Setting.TIME_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueRangeUpdater(Setting.TIME_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(Setting.SEISMIC_ATTRIBUTE);
             const surfaceName = getLocalSetting(Setting.FORMATION_NAME);
             const data = getHelperDependency(surfaceMetadataDep);

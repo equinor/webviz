@@ -8,8 +8,9 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const realizationPolygonsSettings = [
     Setting.ENSEMBLE,
@@ -38,10 +39,10 @@ export class FaultPolygonsProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueRangeUpdater,
         queryClient,
     }: DefineDependenciesArgs<FaultPolygonsSettings>) {
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -52,7 +53,7 @@ export class FaultPolygonsProvider
             return ensembleIdents;
         });
 
-        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueRangeUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
@@ -84,7 +85,7 @@ export class FaultPolygonsProvider
             });
         });
 
-        availableSettingsUpdater(Setting.POLYGONS_ATTRIBUTE, ({ getHelperDependency }) => {
+        valueRangeUpdater(Setting.POLYGONS_ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationPolygonsMetadataDep);
 
             if (!data) {
@@ -100,7 +101,7 @@ export class FaultPolygonsProvider
             return availableAttributes;
         });
 
-        availableSettingsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
+        valueRangeUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(Setting.POLYGONS_ATTRIBUTE);
             const data = getHelperDependency(realizationPolygonsMetadataDep);
 

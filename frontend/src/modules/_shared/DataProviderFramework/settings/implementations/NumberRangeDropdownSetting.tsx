@@ -7,51 +7,49 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
-import type { SettingCategory } from "../settingsDefinitions";
-
-export enum Direction {
-    I,
-    J,
-    K,
-}
+import { isNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
+type ValueRange = [number, number];
 
-export class GridLayerSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER> {
+export class NumberRangeDropdownSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRange> {
     defaultValue: ValueType = null;
+    valueRangeIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRange, valueRange: ValueRange) => {
+            if (accumulator === null) {
+                return valueRange;
+            }
 
-    private _direction: Direction;
+            const min = Math.max(accumulator[0], valueRange[0]);
+            const max = Math.min(accumulator[1], valueRange[1]);
 
-    constructor(direction: Direction) {
-        this._direction = direction;
+            return [min, max] as ValueRange;
+        },
+        startingValue: null,
+        isValid: (valueRange: ValueRange): boolean => {
+            return valueRange[0] <= valueRange[1];
+        },
+    };
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
     }
 
-    getLabel(): string {
-        switch (this._direction) {
-            case Direction.I:
-                return "Grid layer I";
-            case Direction.J:
-                return "Grid layer J";
-            case Direction.K:
-                return "Grid layer K";
-        }
+    isValueValidStructure(value: unknown): value is ValueType {
+        return isNumberOrNull(value);
     }
 
-    isValueValid(
-        value: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
-    ): boolean {
+    isValueValid(value: ValueType, valueRange: ValueRange): boolean {
         if (value === null) {
             return false;
         }
 
-        if (!availableValues) {
+        if (!valueRange) {
             return false;
         }
 
-        const min = availableValues[0];
-        const max = availableValues[1];
+        const min = valueRange[0];
+        const max = valueRange[1];
 
         if (max === null || min === null) {
             return false;
@@ -60,16 +58,13 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
         return value >= min && value <= max;
     }
 
-    fixupValue(
-        currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
-    ): ValueType {
-        if (!availableValues) {
+    fixupValue(currentValue: ValueType, valueRange: ValueRange): ValueType {
+        if (!valueRange) {
             return null;
         }
 
-        const min = availableValues[0];
-        const max = availableValues[1];
+        const min = valueRange[0];
+        const max = valueRange[1];
 
         if (max === null || min === null) {
             return null;
@@ -90,10 +85,10 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
         return currentValue;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) {
-            const start = props.availableValues?.[0] ?? 0;
-            const end = props.availableValues?.[1] ?? 0;
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRange>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<ValueType, ValueRange>) {
+            const start = props.valueRange?.[0] ?? 0;
+            const end = props.valueRange?.[1] ?? 0;
 
             const rangeSize = end - start;
 

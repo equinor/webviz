@@ -3,8 +3,8 @@ import { isCancelledError } from "@tanstack/react-query";
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
 import { SettingTopic, type SettingManager } from "../../framework/SettingManager/SettingManager";
 import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
-import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
-import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { Settings } from "../../settings/settingsDefinitions";
 
 class DependencyLoadingError extends Error {}
 

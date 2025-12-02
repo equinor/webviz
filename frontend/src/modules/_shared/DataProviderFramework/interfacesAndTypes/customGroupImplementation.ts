@@ -1,6 +1,7 @@
-import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
+import type { Settings } from "../settings/settingsDefinitions";
 
 import type { DefineBasicDependenciesArgs } from "./customSettingsHandler";
+import type { MakeSettingTypesMap } from "./utils";
 
 /**
  * This interface is describing what methods and members a custom group must implement.
