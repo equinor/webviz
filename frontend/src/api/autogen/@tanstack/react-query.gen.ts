@@ -35,6 +35,9 @@ import type {
     GetRealizationSurfacesMetadataData_api,
     GetObservedSurfacesMetadataData_api,
     GetSurfaceDataData_api,
+    PostGetWellTrajectoriesFormationSegmentsData_api,
+    PostGetWellTrajectoriesFormationSegmentsError_api,
+    PostGetWellTrajectoriesFormationSegmentsResponse_api,
     GetStatisticalSurfaceDataHybridData_api,
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionError_api,
@@ -146,6 +149,7 @@ import {
     getRealizationSurfacesMetadata,
     getObservedSurfacesMetadata,
     getSurfaceData,
+    postGetWellTrajectoriesFormationSegments,
     getStatisticalSurfaceDataHybrid,
     postGetSurfaceIntersection,
     postGetSampleSurfaceInPoints,
@@ -695,6 +699,47 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
         },
         queryKey: getSurfaceDataQueryKey(options),
     });
+};
+
+export const postGetWellTrajectoriesFormationSegmentsQueryKey = (
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api>,
+) => [createQueryKey("postGetWellTrajectoriesFormationSegments", options)];
+
+export const postGetWellTrajectoriesFormationSegmentsOptions = (
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api>,
+) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postGetWellTrajectoriesFormationSegments({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postGetWellTrajectoriesFormationSegmentsQueryKey(options),
+    });
+};
+
+export const postGetWellTrajectoriesFormationSegmentsMutation = (
+    options?: Partial<Options<PostGetWellTrajectoriesFormationSegmentsData_api>>,
+) => {
+    const mutationOptions: UseMutationOptions<
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        AxiosError<PostGetWellTrajectoriesFormationSegmentsError_api>,
+        Options<PostGetWellTrajectoriesFormationSegmentsData_api>
+    > = {
+        mutationFn: async (localOptions) => {
+            const { data } = await postGetWellTrajectoriesFormationSegments({
+                ...options,
+                ...localOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
 };
 
 export const getStatisticalSurfaceDataHybridQueryKey = (options: Options<GetStatisticalSurfaceDataHybridData_api>) => [
