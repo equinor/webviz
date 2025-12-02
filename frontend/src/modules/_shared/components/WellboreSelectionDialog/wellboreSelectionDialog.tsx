@@ -1,10 +1,9 @@
 import React from "react";
 
-import { Clear, SelectAll, Deselect } from "@mui/icons-material";
-
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import type { SimplifiedWellboreHeader } from "@lib/utils/wellboreTypes";
+import { Clear, SelectAll, Deselect } from "@mui/icons-material";
 
 import { BlockItem } from "./BlockItem";
 import { FilterControls } from "./FilterControls";
@@ -193,11 +192,11 @@ export function WellboreSelectionDialog(props: WellboreSelectionDialogProps): Re
             onClose={props.onClose}
             title="Select Wellbores"
             width="1200px"
-            height="900px"
+            height="80vh"
             showCloseCross
             actions={dialogActions}
         >
-            <div className="flex flex-col h-full" style={{ height: "calc(900px - 140px)" }}>
+            <div className="flex flex-col h-full" style={{ height: "calc(80vh - 140px)" }}>
                 {/* Filter Controls */}
                 <div className="flex-shrink-0 flex flex-col gap-2 mb-4">
                     <FilterControls

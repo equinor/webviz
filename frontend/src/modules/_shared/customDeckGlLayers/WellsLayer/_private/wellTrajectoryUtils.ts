@@ -75,18 +75,32 @@ export function getMd(coord: vec3.Vec3, mdArray: number[], trajectory: vec3.Vec3
     return interpolateDataOnTrajectory(coord, mdArray, trajectory);
 }
 
-export function getCoordinateForMd(md: number, mdArray: number[], trajectory: vec3.Vec3[]): vec3.Vec3 | null {
-    const numPoints = mdArray.length;
-    if (numPoints < 2) {
-        return null;
+/**
+ * Gets the segment index of *the first* point of a segment that contains the given MD
+ */
+export function getSegmentIndexForMd(md: number, mdArray: number[]): number {
+    if (!mdArray.length) return -1;
+    if (md < mdArray[0] || md > mdArray.at(-1)!) {
+        console.warn(`MD value ${md} is outside of MD-array!`);
+        return -1;
     }
 
     let segmentIndex = 0;
-    for (let i = 0; i < numPoints - 1; i++) {
+    for (let i = 0; i < mdArray.length - 1; i++) {
         if (mdArray[i] <= md && md <= mdArray[i + 1]) {
             segmentIndex = i;
             break;
         }
+    }
+
+    return segmentIndex;
+}
+
+export function getCoordinateForMd(md: number, mdArray: number[], trajectory: vec3.Vec3[]): vec3.Vec3 | null {
+    const segmentIndex = getSegmentIndexForMd(md, mdArray);
+
+    if (segmentIndex === -1) {
+        return null;
     }
 
     const md0 = mdArray[segmentIndex];

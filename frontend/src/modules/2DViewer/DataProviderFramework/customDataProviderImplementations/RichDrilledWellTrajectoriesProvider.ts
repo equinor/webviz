@@ -39,7 +39,7 @@ const richDrilledWellTrajectoriesSettings = [
     Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME,
     Setting.WELL_TRAJ_FILTER_SURFACE_REALIZATION,
 ] as const;
-type RichDrilledWellTrajectoriesSettings = typeof richDrilledWellTrajectoriesSettings;
+export type RichDrilledWellTrajectoriesSettings = typeof richDrilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RichDrilledWellTrajectoriesSettings>;
 export type DrilledWellboreTrajectoriesStoredData = {
     selectedWellBoreHeaders: WellboreHeader_api[];
@@ -280,7 +280,7 @@ export class RichDrilledWellTrajectoriesProvider
                 ...postGetWellTrajectoriesFormationSegmentsOptions({
                     query: {
                         top_surf_addr_str: topSurfAddrStr || "",
-                        bottom_surf_addr_str: null,
+                        bottom_surf_addr_str: bottomSurfAddrStr || "",
                     },
                     body: { well_trajectories: wellBoresData },
 

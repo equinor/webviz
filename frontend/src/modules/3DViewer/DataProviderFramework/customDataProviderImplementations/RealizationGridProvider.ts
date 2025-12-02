@@ -236,14 +236,23 @@ export class RealizationGridProvider
         availableSettingsUpdater(Setting.GRID_LAYER_RANGE, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
-
+            console.log("data", data);
+            console.log("gridName", gridName);
             if (!gridName || !data) {
-                return NO_UPDATE;
+                return [
+                    [0, 0, 1],
+                    [0, 0, 1],
+                    [0, 0, 1],
+                ];
             }
 
             const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
             if (!gridDimensions) {
-                return NO_UPDATE;
+                return [
+                    [0, 0, 1],
+                    [0, 0, 1],
+                    [0, 0, 1],
+                ];
             }
 
             return [
