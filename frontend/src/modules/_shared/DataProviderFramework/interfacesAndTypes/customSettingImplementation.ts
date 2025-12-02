@@ -49,6 +49,16 @@ type CustomSettingImplementationBase<TInternalValue> = {
     defaultValue?: TInternalValue;
     serializeValue?: (value: TInternalValue) => string;
     deserializeValue?: (serializedValue: string) => TInternalValue;
+    /**
+     * Type guard to validate that a deserialized value has the correct structure.
+     * This is used to catch malformed persisted values before they cause runtime errors.
+     * Return true if the value has the expected structure, false otherwise.
+     * Note: This should check the structure/type, not the validity of values within the structure.
+     *
+     * Implementation note: You can use the createStructureValidator helper to create
+     * a validator from a JTD schema, or write a custom validation function.
+     */
+    isValueValidStructure: (value: unknown) => value is TInternalValue;
     overriddenValueRepresentation?: (args: OverriddenValueRepresentationArgs<TInternalValue>) => React.ReactNode;
 };
 
@@ -64,7 +74,7 @@ export type StaticSettingImplementation<
     makeComponent(): (props: StaticSettingComponentProps<TInternalValue>) => React.ReactNode;
     fixupValue?: (currentValue: TInternalValue) => TInternalValue;
     isValueValid?: (value: TInternalValue) => boolean;
-    mapInternalToExternalValue?: (internalValue: TInternalValue) => TExternalValue;
+    mapInternalToExternalValue: (internalValue: TInternalValue, valueRange: any) => TExternalValue;
 };
 
 /**
@@ -78,7 +88,7 @@ export type DynamicSettingImplementation<TInternalValue, TExternalValue, TValueR
         makeComponent(): (props: DynamicSettingComponentProps<TInternalValue, TValueRange>) => React.ReactNode;
         fixupValue?: (currentValue: TInternalValue, valueRange: TValueRange) => TInternalValue;
         isValueValid?: (value: TInternalValue, valueRange: TValueRange) => boolean;
-        mapInternalToExternalValue?: (internalValue: TInternalValue, valueRange: TValueRange) => TExternalValue;
+        mapInternalToExternalValue: (internalValue: TInternalValue, valueRange: TValueRange) => TExternalValue;
     };
 
 /**

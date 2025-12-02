@@ -7,35 +7,31 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { SettingComponentProps as SettingComponentPropsInterface } from "../../interfacesAndTypes/customSettingImplementation";
-import type { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";
+import type { Setting, SettingTypeDefinitions } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 
 import { ExternalControllerProviderType, SettingTopic } from "./SettingManager";
 import type { SettingManager } from "./SettingManager";
 
-export type SettingComponentProps<
-    TSetting extends Setting,
-    TValue extends SettingTypes[TSetting],
-    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
-> = {
-    setting: SettingManager<TSetting, TValue, TCategory>;
+export type SettingComponentProps<TSetting extends Setting> = {
+    setting: SettingManager<TSetting>;
     manager: DataProviderManager;
     sharedSetting: boolean;
 };
 
 export function SettingManagerComponent<
     TSetting extends Setting,
-    TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
-    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
->(props: SettingComponentProps<TSetting, TValue, TCategory>): React.ReactNode {
-    const componentRef = React.useRef<(props: SettingComponentPropsInterface<TValue, TCategory>) => React.ReactNode>(
+    TValue extends
+        SettingTypeDefinitions[TSetting]["internalValue"] = SettingTypeDefinitions[TSetting]["internalValue"],
+>(props: SettingComponentProps<TSetting>): React.ReactNode {
+    const componentRef = React.useRef<(props: SettingComponentPropsInterface<any, any>) => React.ReactNode>(
         props.setting.makeComponent(),
     );
-    const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE);
+    const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.INTERNAL_VALUE);
     const attributes = usePublishSubscribeTopicValue(props.setting, SettingTopic.ATTRIBUTES);
     const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_VALID);
     const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED);
-    const availableValues = usePublishSubscribeTopicValue(props.setting, SettingTopic.AVAILABLE_VALUES);
+    const valueRange = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_RANGE);
     const isExternallyControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_EXTERNALLY_CONTROLLED);
     const externalControllerProvider = usePublishSubscribeTopicValue(
         props.setting,
@@ -58,7 +54,7 @@ export function SettingManagerComponent<
         return null;
     }
 
-    if (props.sharedSetting && isInitialized && availableValues === null && !props.setting.isStatic()) {
+    if (props.sharedSetting && isInitialized && valueRange === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
                 <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
@@ -110,7 +106,7 @@ export function SettingManagerComponent<
                                 isValueValid={isValid}
                                 isOverridden={isExternallyControlled}
                                 overriddenValue={value}
-                                availableValues={availableValues}
+                                valueRange={valueRange}
                                 globalSettings={globalSettings}
                                 workbenchSession={props.manager.getWorkbenchSession()}
                                 workbenchSettings={props.manager.getWorkbenchSettings()}

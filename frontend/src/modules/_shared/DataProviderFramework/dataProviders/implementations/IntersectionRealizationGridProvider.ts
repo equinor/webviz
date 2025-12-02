@@ -14,6 +14,7 @@ import type {
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -23,7 +24,6 @@ import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
 } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
-import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const intersectionRealizationGridSettings = [
     Setting.INTERSECTION,

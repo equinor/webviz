@@ -7,6 +7,8 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isStringOrNull } from "../utils/structureValidation";
+
 import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 export enum Representation {
@@ -31,6 +33,14 @@ export class RepresentationSetting implements CustomSettingImplementation<ValueT
             if (typeof opt === "string") return { label: opt, value: opt };
             return opt;
         });
+    }
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        return isStringOrNull(value);
     }
 
     getIsStatic(): boolean {

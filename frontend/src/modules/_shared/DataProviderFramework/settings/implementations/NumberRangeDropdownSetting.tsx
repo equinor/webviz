@@ -7,17 +7,12 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-
-export enum Direction {
-    I,
-    J,
-    K,
-}
+import { isNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
 type ValueRange = [number, number];
 
-export class GridLayerSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRange> {
+export class NumberRangeDropdownSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRange> {
     defaultValue: ValueType = null;
     valueRangeIntersectionReducerDefinition = {
         reducer: (accumulator: ValueRange, valueRange: ValueRange) => {
@@ -36,21 +31,12 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
         },
     };
 
-    private _direction: Direction;
-
-    constructor(direction: Direction) {
-        this._direction = direction;
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
     }
 
-    getLabel(): string {
-        switch (this._direction) {
-            case Direction.I:
-                return "Grid layer I";
-            case Direction.J:
-                return "Grid layer J";
-            case Direction.K:
-                return "Grid layer K";
-        }
+    isValueValidStructure(value: unknown): value is ValueType {
+        return isNumberOrNull(value);
     }
 
     isValueValid(value: ValueType, valueRange: ValueRange): boolean {

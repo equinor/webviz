@@ -271,7 +271,7 @@ export type SettingTypeDefinitions = {
     };
     [Setting.SMDA_WELLBORE_HEADERS]: {
         internalValue: string[] | null;
-        externalValue: string[] | null;
+        externalValue: WellboreHeader_api[] | null;
         valueRange: WellboreHeader_api[];
     };
     [Setting.SURFACE_NAMES]: {
@@ -321,21 +321,21 @@ export type SettingTypeDefinitions = {
     [Setting.CONTOURS]: {
         internalValue: { enabled: boolean; value: number } | null;
         externalValue: { enabled: boolean; value: number } | null;
-        valueRange: [number, number];
+        valueRange: [number, number] | null;
     };
 
     // XYZ range settings (XYZ_RANGE category) - demonstrates all three types being different
     [Setting.GRID_LAYER_RANGE]: {
-        internalValue: [
-            [number, number],
-            [number, number],
-            { type: "range"; value: [number, number] } | { type: "zone"; value: string },
-        ];
+        internalValue: {
+            i: [number, number];
+            j: [number, number];
+            k: { type: "range"; range: [number, number] } | { type: "zone"; range: [number, number]; name: string };
+        } | null;
         externalValue: [[number, number], [number, number], [number, number]] | null;
         valueRange: {
-            range: [[number, number, number], [number, number, number], [number, number, number]];
+            range: { i: [number, number, number]; j: [number, number, number]; k: [number, number, number] };
             zones: Grid3dZone_api[];
-        };
+        } | null;
     };
 
     // XYZ values with visibility (XYZ_VALUES_WITH_VISIBILITY category)

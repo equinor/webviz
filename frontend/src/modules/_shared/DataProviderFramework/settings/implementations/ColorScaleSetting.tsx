@@ -29,12 +29,29 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
         };
     }
 
-    getLabel(): string {
-        return "Coloring";
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
     }
 
     getIsStatic(): boolean {
         return true;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value !== "object" || Array.isArray(value)) {
+            return false;
+        }
+
+        const v = value as Record<string, unknown>;
+        return (
+            typeof v.areBoundariesUserDefined === "boolean" &&
+            typeof v.colorScale === "object" &&
+            v.colorScale !== null
+        );
     }
 
     isValueValid(): boolean {

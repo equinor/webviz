@@ -7,6 +7,8 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isNumberOrNull } from "../utils/structureValidation";
+
 import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = number | null;
@@ -14,6 +16,14 @@ type ValueRangeType = number[];
 
 export class DropdownNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<number[]>();
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        return isNumberOrNull(value);
+    }
 
     isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
         return isValueValid<number, number>(value, valueRange, (v) => v);

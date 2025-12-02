@@ -11,6 +11,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+
 import { isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = WellboreLogCurveHeader_api | null;
@@ -21,6 +22,28 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
     valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<WellboreLogCurveHeader_api[]>(
         (a, b) => isEqual(a, b),
     );
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value !== "object" || Array.isArray(value)) {
+            return false;
+        }
+
+        const v = value as Record<string, unknown>;
+        return (
+            typeof v.logName === "string" &&
+            typeof v.curveName === "string" &&
+            typeof v.curveUnit === "string" &&
+            typeof v.curveDescription === "string"
+        );
+    }
 
     fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
         if (!currentValue) {

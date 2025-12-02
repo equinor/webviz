@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import type { WellborePick_api } from "@api";
 import type { SelectOption } from "@lib/components/Select";
@@ -8,6 +8,8 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isStringArrayOrNull } from "../utils/structureValidation";
+
 import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
 type InternalValueType = string[] | null;
@@ -22,8 +24,12 @@ export class DrilledWellborePicksSetting
         (a, b) => a.wellboreUuid === b.wellboreUuid,
     );
 
-    getLabel(): string {
-        return "Drilled wellbore picks";
+    mapInternalToExternalValue(internalValue: InternalValueType, valueRange: ValueRangeType): ExternalValueType {
+        return valueRange.filter((pick) => internalValue?.includes(pick.pickIdentifier) ?? false);
+    }
+
+    isValueValidStructure(value: unknown): value is InternalValueType {
+        return isStringArrayOrNull(value);
     }
 
     fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {

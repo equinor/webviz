@@ -1,8 +1,8 @@
 import type { CustomGroupImplementationWithSettings } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customGroupImplementation";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { baseSettings } from "./_shared";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 
 const discreteTrackSettings = [...baseSettings] as const;
 export type DiscreteTrackSettings = typeof discreteTrackSettings;

@@ -10,6 +10,14 @@ import type {
 
 type ValueType = boolean;
 export class BooleanSetting implements CustomSettingImplementation<ValueType, ValueType> {
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        return typeof value === "boolean";
+    }
+
     isValueValid(): boolean {
         return true;
     }

@@ -21,8 +21,12 @@ type StaticProps = { min?: number; max?: number };
 export class BooleanNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _staticProps: StaticProps | null;
 
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
     valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType | null, valueRange: ValueRangeType) => {
+        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType) => {
             if (accumulator === null) {
                 return valueRange;
             }
@@ -53,6 +57,19 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
         }
 
         this._staticProps = props ?? null;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value !== "object" || Array.isArray(value)) {
+            return false;
+        }
+
+        const v = value as Record<string, unknown>;
+        return typeof v.enabled === "boolean" && typeof v.value === "number";
     }
 
     isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {

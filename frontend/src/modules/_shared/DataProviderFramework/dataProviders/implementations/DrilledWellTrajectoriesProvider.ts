@@ -39,7 +39,8 @@ export class DrilledWellTrajectoriesProvider
         DrilledWellTrajectoriesData
     >): Promise<DrilledWellTrajectoriesData> {
         const fieldIdentifier = getGlobalSetting("fieldId");
-        const selectedWellboreUuids = getSetting(Setting.SMDA_WELLBORE_HEADERS) ?? [];
+        const selectedWellbores = getSetting(Setting.SMDA_WELLBORE_HEADERS) ?? [];
+        const selectedWellboreUuids = selectedWellbores.map((wb) => wb.wellboreUuid);
 
         const queryOptions = getWellTrajectoriesOptions({
             query: { field_identifier: fieldIdentifier ?? "" },

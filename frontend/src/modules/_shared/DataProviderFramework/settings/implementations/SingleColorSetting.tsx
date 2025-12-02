@@ -9,6 +9,7 @@ import type {
     SettingComponentProps,
     StaticSettingImplementation,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isStringOrNull } from "../utils/structureValidation";
 
 type ValueType = string | null;
 
@@ -32,8 +33,16 @@ export class SingleColorSetting implements StaticSettingImplementation<ValueType
         this.defaultValue = SingleColorSetting._colorGenerator.next().value ?? null;
     }
 
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
     getIsStatic(): boolean {
         return true;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        return isStringOrNull(value);
     }
 
     isValueValid(value: ValueType): boolean {

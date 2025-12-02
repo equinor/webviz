@@ -6,6 +6,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+
 import { fixupValue, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 export type SensitivityNameCasePair = {
@@ -17,6 +18,23 @@ type ValueType = SensitivityNameCasePair | null;
 type ValueRangeType = SensitivityNameCasePair[];
 export class SensitivitySetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value !== "object" || Array.isArray(value)) {
+            return false;
+        }
+
+        const v = value as Record<string, unknown>;
+        return typeof v.sensitivityName === "string" && typeof v.sensitivityCase === "string";
+    }
 
     isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
         if (valueRange.length === 0) {

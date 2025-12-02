@@ -4,6 +4,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
 type ValueRangeType = [number, number];
@@ -35,6 +36,14 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         }
 
         this._staticProps = props ?? null;
+    }
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        return isNumberOrNull(value);
     }
 
     getIsStatic(): boolean {

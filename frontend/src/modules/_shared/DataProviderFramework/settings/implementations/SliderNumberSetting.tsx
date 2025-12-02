@@ -11,6 +11,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
 type ValueRangeType = [number, number, number]; // [min, max, step]
@@ -18,7 +19,23 @@ type ValueRangeType = [number, number, number]; // [min, max, step]
 export class SliderNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _staticOptions: { minMax: { min: number; max: number }; step: number } | null;
 
-    valueRangeIntersectionReducerDefinition: any;
+    valueRangeIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType) => {
+            if (accumulator === null) {
+                return valueRange;
+            }
+
+            const min = Math.max(accumulator[0], valueRange[0]);
+            const max = Math.min(accumulator[1], valueRange[1]);
+            const step = Math.max(accumulator[2], valueRange[2]);
+
+            return [min, max, step] as ValueRangeType;
+        },
+        startingValue: null,
+        isValid: (valueRange: ValueRangeType): boolean => {
+            return valueRange[0] <= valueRange[1] && valueRange[2] > 0;
+        },
+    };
 
     constructor(staticOptions?: { minMax: { min: number; max: number }; step: number }) {
         if (staticOptions) {
@@ -34,6 +51,14 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         }
 
         this._staticOptions = staticOptions ?? null;
+    }
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        return isNumberOrNull(value);
     }
 
     getIsStatic(): boolean {

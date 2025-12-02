@@ -8,6 +8,7 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { RealizationGridData } from "@modules/_shared/DataProviderFramework/visualization/utils/types";
 import {
@@ -16,7 +17,6 @@ import {
     type GridMappedProperty_trans,
     type GridSurface_trans,
 } from "@modules/_shared/utils/queryDataTransforms";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 
 const realizationGridSettings = [
     Setting.ENSEMBLE,

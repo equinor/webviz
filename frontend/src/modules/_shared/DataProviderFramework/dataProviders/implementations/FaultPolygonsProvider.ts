@@ -8,6 +8,7 @@ import type {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const realizationPolygonsSettings = [

@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import type { WellboreHeader_api } from "@api";
 import type { SelectOption } from "@lib/components/Select";
@@ -8,6 +8,8 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isStringArrayOrNull } from "../utils/structureValidation";
+
 import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
 type InternalValueType = string[] | null;
@@ -29,6 +31,10 @@ export class DrilledWellboresSetting
 
         const externalValues = valueRange.filter((wellbore) => internalValue.includes(wellbore.wellboreUuid));
         return externalValues;
+    }
+
+    isValueValidStructure(value: unknown): value is InternalValueType {
+        return isStringArrayOrNull(value);
     }
 
     fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {

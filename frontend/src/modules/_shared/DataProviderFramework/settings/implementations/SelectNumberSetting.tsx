@@ -9,6 +9,8 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isNumberArrayOrNull } from "../utils/structureValidation";
+
 import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
 type ValueType = number[] | null;
@@ -16,6 +18,14 @@ type ValueRangeType = number[];
 
 export class SelectNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        return isNumberArrayOrNull(value);
+    }
 
     isValueValid(currentValue: ValueType, valueRange: ValueRangeType): boolean {
         return isValueValid<number, number>(currentValue, valueRange, (v) => v);

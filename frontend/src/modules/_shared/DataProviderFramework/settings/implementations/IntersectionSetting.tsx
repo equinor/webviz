@@ -9,6 +9,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+
 import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 export type IntersectionSettingValue = {
@@ -16,22 +17,39 @@ export type IntersectionSettingValue = {
     name: string;
     uuid: string;
 };
-type ValueType = Omit<IntersectionSettingValue, "name"> | null;
+type ValueType = IntersectionSettingValue | null;
 type ValueRangeType = IntersectionSettingValue[];
 
 export class IntersectionSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _activeType = IntersectionType.WELLBORE;
     valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
 
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value !== "object" || Array.isArray(value)) {
+            return false;
+        }
+
+        const v = value as Record<string, unknown>;
+        return typeof v.type === "string" && typeof v.name === "string" && typeof v.uuid === "string";
+    }
+
     isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
-        return isValueValid<ValueType, IntersectionSettingValue>(value, valueRange, mappingFunction);
+        return isValueValid<ValueType, IntersectionSettingValue>(value, valueRange, (v) => v);
     }
 
     fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
         return fixupValue<ValueType, IntersectionSettingValue>(
             currentValue,
             valueRange,
-            mappingFunction,
+            (v) => v,
             (a, b) => a?.type === b?.type && a?.uuid === b?.uuid,
         );
     }
@@ -107,11 +125,4 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
             );
         };
     }
-}
-
-function mappingFunction(value: IntersectionSettingValue): ValueType {
-    return {
-        type: value.type,
-        uuid: value.uuid,
-    };
 }

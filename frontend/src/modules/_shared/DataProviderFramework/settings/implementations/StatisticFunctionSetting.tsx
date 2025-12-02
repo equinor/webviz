@@ -16,6 +16,14 @@ export class StatisticFunctionSetting implements StaticSettingImplementation<Val
         return true;
     }
 
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        return typeof value === "string";
+    }
+
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
         const itemArr: DropdownOption[] = [
             { value: SurfaceStatisticFunction_api.MEAN, label: "Mean" },

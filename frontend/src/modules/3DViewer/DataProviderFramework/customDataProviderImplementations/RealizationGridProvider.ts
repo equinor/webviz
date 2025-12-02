@@ -243,11 +243,11 @@ export class RealizationGridProvider
             }
 
             return {
-                range: [
-                    [0, gridDimensions.i_count - 1, 1],
-                    [0, gridDimensions.j_count - 1, 1],
-                    [0, gridDimensions.k_count - 1, 1],
-                ],
+                range: {
+                    i: [0, gridDimensions.i_count - 1, 1],
+                    j: [0, gridDimensions.j_count - 1, 1],
+                    k: [0, gridDimensions.k_count - 1, 1],
+                },
                 zones: gridDimensions.subgrids,
             };
         });

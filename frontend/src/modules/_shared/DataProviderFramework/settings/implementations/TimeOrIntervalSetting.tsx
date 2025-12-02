@@ -15,6 +15,8 @@ import type {
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isStringOrNull } from "../utils/structureValidation";
+
 import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = string | null;
@@ -24,6 +26,14 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
     defaultValue: ValueType = null;
 
     valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        return isStringOrNull(value);
+    }
 
     isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
         return isValueValid<string, string>(value, valueRange, (v) => v);

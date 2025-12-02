@@ -15,10 +15,11 @@ import { Group } from "../Group/Group";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
 export enum SettingTopic {
+    INTERNAL_VALUE = "INTERNAL_VALUE",
     VALUE = "VALUE",
     VALUE_ABOUT_TO_BE_CHANGED = "VALUE_ABOUT_TO_BE_CHANGED",
     IS_VALID = "IS_VALID",
-    AVAILABLE_VALUES = "AVAILABLE_VALUES",
+    VALUE_RANGE = "VALUE_RANGE",
     IS_EXTERNALLY_CONTROLLED = "IS_EXTERNALLY_CONTROLLED",
     EXTERNAL_CONTROLLER_PROVIDER = "EXTERNAL_CONTROLLER_PROVIDER",
     IS_LOADING = "IS_LOADING",
@@ -27,11 +28,12 @@ export enum SettingTopic {
     ATTRIBUTES = "ATTRIBUTES",
 }
 
-export type SettingTopicPayloads<TExternalValue, TValueRange> = {
+export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueRange> = {
     [SettingTopic.VALUE]: TExternalValue;
+    [SettingTopic.INTERNAL_VALUE]: TInternalValue;
     [SettingTopic.VALUE_ABOUT_TO_BE_CHANGED]: void;
     [SettingTopic.IS_VALID]: boolean;
-    [SettingTopic.AVAILABLE_VALUES]: TValueRange | null;
+    [SettingTopic.VALUE_RANGE]: TValueRange | null;
     [SettingTopic.IS_EXTERNALLY_CONTROLLED]: boolean;
     [SettingTopic.EXTERNAL_CONTROLLER_PROVIDER]: ExternalControllerProviderType | undefined;
     [SettingTopic.IS_LOADING]: boolean;
@@ -61,6 +63,8 @@ export enum ExternalControllerProviderType {
     SHARED_SETTING = "SHARED_SETTING",
 }
 
+const NO_CACHE = Symbol("NO_CACHE");
+
 /*
  * The SettingManager class is responsible for managing a setting.
  *
@@ -76,16 +80,16 @@ export class SettingManager<
         | SettingTypeDefinitions[TSetting]["externalValue"]
         | null,
     TValueRange extends SettingTypeDefinitions[TSetting]["valueRange"] = SettingTypeDefinitions[TSetting]["valueRange"],
-> implements PublishSubscribe<SettingTopicPayloads<TExternalValue, TValueRange>>
+> implements PublishSubscribe<SettingTopicPayloads<TInternalValue, TExternalValue, TValueRange>>
 {
     private _id: string;
     private _type: TSetting;
     private _label: string;
     private _customSettingImplementation: CustomSettingImplementation<TInternalValue, TExternalValue, TValueRange>;
-    private _value: TInternalValue;
+    private _internalValue: TInternalValue;
     private _isValueValid: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<
-        SettingTopicPayloads<TExternalValue, TValueRange>
+        SettingTopicPayloads<TInternalValue, TExternalValue, TValueRange>
     >();
     private _valueRange: TValueRange | null = null;
     private _loading: boolean = false;
@@ -104,6 +108,7 @@ export class SettingManager<
     > | null = null;
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
+    private _cachedExternalValue: TExternalValue | null | typeof NO_CACHE = NO_CACHE;
 
     constructor({
         type,
@@ -115,10 +120,10 @@ export class SettingManager<
         this._type = type;
         this._label = label;
         this._customSettingImplementation = customSettingImplementation;
-        this._value = defaultValue;
+        this._internalValue = defaultValue;
         this._isStatic = customSettingImplementation.getIsStatic?.() ?? false;
         if (this._isStatic) {
-            this.setValueValid(this.checkIfValueIsValid(this._value));
+            this.setValueValid(this.checkIfValueIsValid(this._internalValue));
         }
     }
 
@@ -133,13 +138,13 @@ export class SettingManager<
         externalController: ExternalSettingController<TSetting, TInternalValue, TExternalValue, TValueRange>,
     ): void {
         this._externalController = externalController;
-        this._value = externalController.getSetting().getValue();
+        this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(
                 () => {
                     this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
-                    this._value = externalController.getSetting().getValue();
+                    this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
                 },
             ),
         );
@@ -201,14 +206,15 @@ export class SettingManager<
             externalController
                 .getSetting()
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(SettingTopic.AVAILABLE_VALUES)(() => {
-                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES);
+                .makeSubscriberFunction(SettingTopic.VALUE_RANGE)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_RANGE);
             }),
         );
     }
 
     unregisterExternalSettingController(): void {
-        this._value = this._externalController?.getSetting().getValue() ?? this._value;
+        const newInternalValue = this._externalController?.getSetting().getInternalValue() ?? this._internalValue;
+        this.setInternalValueAndInvalidateCache(newInternalValue);
         this._externalController = null;
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("external-setting-controller");
         const shouldNotifyValueChanged = this.applyValueRange();
@@ -250,16 +256,48 @@ export class SettingManager<
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ATTRIBUTES);
     }
 
-    getValue(): TInternalValue {
+    getInternalValue(): TInternalValue {
         if (this._externalController) {
-            return this._externalController.getSetting().getValue();
+            return this._externalController.getSetting().getInternalValue();
         }
 
         if (this._currentValueFromPersistence !== null) {
             return this._currentValueFromPersistence;
         }
 
-        return this._value;
+        return this._internalValue;
+    }
+
+    getValue(): TExternalValue | null {
+        if (this._externalController) {
+            return this._externalController.getSetting().getValue();
+        }
+
+        let value = this._internalValue;
+        if (this._currentValueFromPersistence !== null) {
+            value = this._currentValueFromPersistence;
+        }
+
+        if (!this._isStatic && this._valueRange === null) {
+            return null;
+        }
+
+        // Return cached value if available
+        if (this._cachedExternalValue !== NO_CACHE) {
+            return this._cachedExternalValue;
+        }
+
+        const mappingFunc = this._customSettingImplementation.mapInternalToExternalValue;
+        // Type assertion needed because:
+        // - Static settings accept `any` for valueRange (which can be null)
+        // - Dynamic settings require non-null valueRange, but we've already guarded against null above
+        // - TypeScript can't infer that the guard ensures non-null for dynamic settings at this point
+        const externalValue = mappingFunc(value, this._valueRange as any);
+
+        // Cache the computed external value
+        this._cachedExternalValue = externalValue;
+
+        return externalValue;
     }
 
     isStatic(): boolean {
@@ -268,19 +306,45 @@ export class SettingManager<
 
     serializeValue(): string {
         if (this._customSettingImplementation.serializeValue) {
-            return this._customSettingImplementation.serializeValue(this.getValue());
+            return this._customSettingImplementation.serializeValue(this.getInternalValue());
         }
 
-        return JSON.stringify(this.getValue());
+        return JSON.stringify(this.getInternalValue());
     }
 
     deserializeValue(serializedValue: string): void {
-        if (this._customSettingImplementation.deserializeValue) {
-            this._currentValueFromPersistence = this._customSettingImplementation.deserializeValue(serializedValue);
-            return;
-        }
+        // Invalidate cache since _currentValueFromPersistence affects the value returned by getValue()
+        this._cachedExternalValue = NO_CACHE;
 
-        this._currentValueFromPersistence = JSON.parse(serializedValue);
+        try {
+            let deserializedValue = JSON.parse(serializedValue);
+            if (this._customSettingImplementation.deserializeValue) {
+                deserializedValue = this._customSettingImplementation.deserializeValue(serializedValue);
+            }
+
+            // Validate parsed value has correct structure
+            if (!this.isDeserializedValueValidStructure(deserializedValue)) {
+                console.warn(
+                    `Deserialized value for setting "${this._label}" has invalid structure, resetting to null`,
+                );
+                this._currentValueFromPersistence = null;
+                return;
+            }
+
+            this._currentValueFromPersistence = deserializedValue;
+        } catch (error) {
+            console.error(`Failed to deserialize value for setting "${this._label}":`, error);
+            this._currentValueFromPersistence = null;
+        }
+    }
+
+    /**
+     * Validates that a deserialized value has the correct structure/type.
+     * This is a basic structural validation before the value is used.
+     * Uses the required isValueValidStructure method from the custom implementation.
+     */
+    private isDeserializedValueValidStructure(value: unknown): value is TInternalValue {
+        return this._customSettingImplementation.isValueValidStructure(value);
     }
 
     isExternallyControlled(): boolean {
@@ -309,16 +373,16 @@ export class SettingManager<
      * It should only be called when a user is changing a setting.
      */
     setValue(value: TInternalValue): void {
-        if (isEqual(this._value, value)) {
+        if (isEqual(this._internalValue, value)) {
             return;
         }
         this._currentValueFromPersistence = null;
 
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED);
 
-        this._value = value;
+        this.setInternalValueAndInvalidateCache(value);
 
-        this.setValueValid(this.checkIfValueIsValid(this._value));
+        this.setValueValid(this.checkIfValueIsValid(this._internalValue));
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
     }
 
@@ -402,7 +466,9 @@ export class SettingManager<
         return "Value has no string representation";
     }
 
-    makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TExternalValue, TValueRange>[T] {
+    makeSnapshotGetter<T extends SettingTopic>(
+        topic: T,
+    ): () => SettingTopicPayloads<TInternalValue, TExternalValue, TValueRange>[T] {
         const externalController = this._externalController;
         if (externalController) {
             return (): any => {
@@ -430,11 +496,13 @@ export class SettingManager<
             switch (topic) {
                 case SettingTopic.VALUE:
                     return this.getValue();
+                case SettingTopic.INTERNAL_VALUE:
+                    return this.getInternalValue();
                 case SettingTopic.VALUE_ABOUT_TO_BE_CHANGED:
                     return;
                 case SettingTopic.IS_VALID:
                     return this._isValueValid;
-                case SettingTopic.AVAILABLE_VALUES:
+                case SettingTopic.VALUE_RANGE:
                     return this._valueRange;
                 case SettingTopic.IS_EXTERNALLY_CONTROLLED:
                     return this._externalController !== null;
@@ -470,7 +538,7 @@ export class SettingManager<
     maybeResetPersistedValue(): boolean {
         if (this._isStatic) {
             if (this._currentValueFromPersistence !== null) {
-                this._value = this._currentValueFromPersistence;
+                this.setInternalValueAndInvalidateCache(this._currentValueFromPersistence);
                 this._currentValueFromPersistence = null;
                 this.setValueValid(true);
             }
@@ -487,7 +555,7 @@ export class SettingManager<
             : true;
 
         if (isPersistedValueValid) {
-            this._value = this._currentValueFromPersistence;
+            this.setInternalValueAndInvalidateCache(this._currentValueFromPersistence);
             this._currentValueFromPersistence = null;
             this.setValueValid(true);
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
@@ -500,22 +568,23 @@ export class SettingManager<
 
     private applyValueRange(): boolean {
         let valueChanged = false;
-        const valueFixedUp = !this.checkIfValueIsValid(this.getValue()) && this.maybeFixupValue();
+        const valueFixedUp = !this.checkIfValueIsValid(this.getInternalValue()) && this.maybeFixupValue();
         const persistedValueReset = this.maybeResetPersistedValue();
         if (valueFixedUp || persistedValueReset) {
             valueChanged = true;
         }
         const prevIsValid = this._isValueValid;
-        this.setValueValid(this.checkIfValueIsValid(this.getValue()));
+        this.setValueValid(this.checkIfValueIsValid(this.getInternalValue()));
         this.setLoading(false);
 
-        const shouldNotifyValueChanged = valueChanged || this._isValueValid !== prevIsValid || this._value === null;
+        const shouldNotifyValueChanged =
+            valueChanged || this._isValueValid !== prevIsValid || this._internalValue === null;
         return shouldNotifyValueChanged;
     }
 
     setValueRange(valueRange: TValueRange | null): void {
         if (this._externalController) {
-            this._valueRange = valueRange;
+            this.setValueRangeAndInvalidateCache(valueRange);
             this.maybeResetPersistedValue();
             this._loading = false;
             this.initialize();
@@ -528,14 +597,14 @@ export class SettingManager<
             return;
         }
 
-        this._valueRange = valueRange;
+        this.setValueRangeAndInvalidateCache(valueRange);
 
         const shouldNotifyValueChanged = this.applyValueRange();
         this.initialize();
         if (shouldNotifyValueChanged) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
         }
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_RANGE);
     }
 
     makeComponent() {
@@ -543,7 +612,7 @@ export class SettingManager<
     }
 
     private maybeFixupValue(): boolean {
-        if (this.checkIfValueIsValid(this._value)) {
+        if (this.checkIfValueIsValid(this._internalValue)) {
             return false;
         }
 
@@ -557,12 +626,14 @@ export class SettingManager<
 
         const customFixupFunction = this._customSettingImplementation.fixupValue;
 
-        const candidate = customFixupFunction ? customFixupFunction(this._value, this._valueRange as any) : this._value;
+        const candidate = customFixupFunction
+            ? customFixupFunction(this._internalValue, this._valueRange as any)
+            : this._internalValue;
 
-        if (isEqual(candidate, this._value)) {
+        if (isEqual(candidate, this._internalValue)) {
             return false;
         }
-        this._value = candidate;
+        this.setInternalValueAndInvalidateCache(candidate);
         return true;
     }
 
@@ -581,5 +652,23 @@ export class SettingManager<
         }
 
         return customIsValueValidFunction(value, this._valueRange as any);
+    }
+
+    /**
+     * Sets the internal value and invalidates the external value cache.
+     * Use this instead of directly assigning to this._internalValue.
+     */
+    private setInternalValueAndInvalidateCache(value: TInternalValue): void {
+        this._internalValue = value;
+        this._cachedExternalValue = NO_CACHE;
+    }
+
+    /**
+     * Sets the value range and invalidates the external value cache.
+     * Use this instead of directly assigning to this._valueRange.
+     */
+    private setValueRangeAndInvalidateCache(valueRange: TValueRange | null): void {
+        this._valueRange = valueRange;
+        this._cachedExternalValue = NO_CACHE;
     }
 }

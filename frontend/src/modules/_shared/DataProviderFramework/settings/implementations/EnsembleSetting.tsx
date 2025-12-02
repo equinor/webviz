@@ -9,6 +9,7 @@ import type {
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+
 import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = RegularEnsembleIdent | null;
@@ -17,6 +18,19 @@ type ValueRangeType = RegularEnsembleIdent[];
 export class EnsembleSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     defaultValue: ValueType = null;
     valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<RegularEnsembleIdent[]>();
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        // RegularEnsembleIdent is a class instance, check if it has expected methods
+        return typeof value === "object" && value !== null && "equals" in value && "toString" in value;
+    }
 
     isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
         return isValueValid<RegularEnsembleIdent, RegularEnsembleIdent>(value, valueRange, (v) => v);

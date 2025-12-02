@@ -13,9 +13,9 @@ import type { CustomSettingsHandler, SettingAttributes, UpdateFunc } from "../in
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
+import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 import { Dependency } from "./_utils/Dependency";
-import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 export enum SettingsContextStatus {
     VALID_SETTINGS = "VALID_SETTINGS",
@@ -40,13 +40,6 @@ export interface FetchDataFunction<TSettings extends Settings, TKey extends keyo
 export type SettingsContextDelegateState<TSettings extends Settings, TKey extends keyof TSettings> = {
     values: { [K in TKey]: TSettings[K] };
 };
-
-type SettingManagerType<K extends keyof SettingTypeDefinitions> = SettingManager<
-    K,
-    SettingTypeDefinitions[K]["internalValue"] | null,
-    SettingTypeDefinitions[K]["externalValue"],
-    SettingTypeDefinitions[K]["valueRange"]
->;
 
 /*
  * The SettingsContextDelegate class is responsible for giving the settings of a data provider a common context as
@@ -73,9 +66,9 @@ export class SettingsContextDelegate<
     >;
     private _dataProviderManager: DataProviderManager;
     private _settings: {
-        [K in TSettingKey]: SettingManagerType<K>;
+        [K in TSettingKey]: SettingManager<K>;
     } = {} as {
-        [K in TSettingKey]: SettingManagerType<K>;
+        [K in TSettingKey]: SettingManager<K>;
     };
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegatePayloads>();
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
@@ -389,7 +382,7 @@ export class SettingsContextDelegate<
 
             dependency.subscribe((valueRange) => {
                 if (valueRange === null) {
-                    this.setValueRange(settingKey, [] as unknown as SettingTypeDefinitions[K]["valueRange"]);
+                    this.setValueRange(settingKey, null as SettingTypeDefinitions[K]["valueRange"]);
                     return;
                 }
                 this.setValueRange(settingKey, valueRange);
@@ -476,7 +469,7 @@ export class SettingsContextDelegate<
                 getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
                 getHelperDependency: <TDep>(
                     dep: Dependency<TDep, TSettings, TSettingTypes, TSettingKey>,
-                ) => TDep | null;
+                ) => Awaited<TDep> | null;
                 abortSignal: AbortSignal;
             }) => T,
         ) => {
@@ -522,7 +515,7 @@ export class SettingsContextDelegate<
             this._settings[key].beforeDestroy();
         }
         this._settings = {} as {
-            [K in TSettingKey]: SettingManagerType<K>;
+            [K in TSettingKey]: SettingManager<K>;
         };
     }
 

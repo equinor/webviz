@@ -69,7 +69,7 @@ export interface DefineDependenciesArgs<
             getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
             getHelperDependency: <TDep>(
                 helperDependency: Dependency<TDep, TSettings, TSettingTypes, TKey>,
-            ) => TDep | null;
+            ) => Awaited<TDep> | null;
             abortSignal: AbortSignal;
         }) => T,
     ) => Dependency<T, TSettings, TSettingTypes, TKey>;

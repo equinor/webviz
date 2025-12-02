@@ -2,6 +2,7 @@ import type { WellboreLogCurveData_api, WellboreLogCurveHeader_api } from "@api"
 import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api, getWellboreLogCurveHeadersOptions } from "@api";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
@@ -10,7 +11,6 @@ import {
     fetchLogCurveData,
     verifyBasePlotSettings,
 } from "./_shared";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 
 export const stackedPlotSettings = [...baseDiscreteSettings, Setting.LABEL_ROTATION] as const;
 export type StackedPlotSettingTypes = typeof stackedPlotSettings;

@@ -41,7 +41,8 @@ export class DrilledWellborePicksProvider
         getGlobalSetting,
         fetchQuery,
     }: FetchDataParams<DrilledWellborePicksSettings, DrilledWellborePicksData>): Promise<WellborePick_api[]> {
-        const selectedWellboreUuids = getSetting(Setting.SMDA_WELLBORE_HEADERS) ?? [];
+        const selectedWellbores = getSetting(Setting.SMDA_WELLBORE_HEADERS) ?? [];
+        const selectedWellboreUuids = selectedWellbores.map((wb) => wb.wellboreUuid);
         const selectedPickIdentifier = getSetting(Setting.SURFACE_NAME);
         const fieldIdentifier = getGlobalSetting("fieldId");
 

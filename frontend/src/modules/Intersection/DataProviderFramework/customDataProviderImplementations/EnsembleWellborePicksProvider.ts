@@ -12,8 +12,8 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 const ensembleWellborePicksSettings = [
     Setting.INTERSECTION,

@@ -6,6 +6,7 @@ import type {
     SettingComponentProps,
     StaticSettingImplementation,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
 
@@ -29,8 +30,16 @@ export class StaticRotationSetting implements StaticSettingImplementation<ValueT
         this.loopAround = props?.loopAround ?? true;
     }
 
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
     getIsStatic() {
         return true;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        return isNumberOrNull(value);
     }
 
     fixupValue(v: ValueType) {

@@ -18,7 +18,7 @@ import { Dependency } from "./_utils/Dependency";
 export class SharedSettingsDelegate<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > {
     private _externalSettingControllers: { [K in TSettingKey]: ExternalSettingController<K> } = {} as {
         [K in TSettingKey]: ExternalSettingController<K>;
@@ -38,8 +38,8 @@ export class SharedSettingsDelegate<
         parentItem: Item,
         wrappedSettings: { [K in TSettingKey]: SettingManager<K> },
         customDependenciesDefinition?: (
-            args: DefineBasicDependenciesArgs<TSettings, TSettingTypes, TSettingKey>
-        ) => void
+            args: DefineBasicDependenciesArgs<TSettings, TSettingTypes, TSettingKey>,
+        ) => void,
     ) {
         this._wrappedSettings = wrappedSettings;
         this._parentItem = parentItem;
@@ -59,7 +59,7 @@ export class SharedSettingsDelegate<
         this.createDependencies();
     }
 
-    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null> } {
+    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K> } {
         return this._wrappedSettings;
     }
 
@@ -118,8 +118,8 @@ export class SharedSettingsDelegate<
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._wrappedSettings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(
-                    handleChange
-                )
+                    handleChange,
+                ),
             );
 
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -130,21 +130,21 @@ export class SharedSettingsDelegate<
                     if (!this._wrappedSettings[key].isLoading()) {
                         handleChange();
                     }
-                })
+                }),
             );
 
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._wrappedSettings[key]
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(SettingTopic.IS_PERSISTED)(handleChange)
+                    .makeSubscriberFunction(SettingTopic.IS_PERSISTED)(handleChange),
             );
 
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._wrappedSettings[key]
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(SettingTopic.IS_INITIALIZED)(handleChange)
+                    .makeSubscriberFunction(SettingTopic.IS_INITIALIZED)(handleChange),
             );
 
             return handleChange;
@@ -152,7 +152,7 @@ export class SharedSettingsDelegate<
 
         const makeGlobalSettingGetter = <K extends keyof GlobalSettings>(
             key: K,
-            handler: (value: GlobalSettings[K] | null) => void
+            handler: (value: GlobalSettings[K] | null) => void,
         ) => {
             const handleChange = (): void => {
                 handler(this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key));
@@ -163,7 +163,7 @@ export class SharedSettingsDelegate<
                     .getItemDelegate()
                     .getDataProviderManager()
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(handleChange)
+                    .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(handleChange),
             );
 
             return handleChange.bind(this);
@@ -183,7 +183,7 @@ export class SharedSettingsDelegate<
 
         const settingAttributesUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>
+            updateFunc: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
         ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>(
                 localSettingManagerGetter.bind(this),
@@ -191,7 +191,7 @@ export class SharedSettingsDelegate<
                 updateFunc,
                 makeLocalSettingGetter,
                 loadingStateGetter,
-                makeGlobalSettingGetter
+                makeGlobalSettingGetter,
             );
             this._dependencies.push(dependency);
 

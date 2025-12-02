@@ -15,12 +15,13 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
-type InternalValueType = { value: [number, number, number]; visible: [boolean, boolean, boolean]; applied: boolean };
-type ExternalValueType = Omit<InternalValueType, "applied">;
+type ValueType = {
+    value: [number, number, number];
+    visible: [boolean, boolean, boolean];
+    applied: boolean;
+} | null;
 type ValueRangeType = [[number, number, number], [number, number, number], [number, number, number]];
-export class SeismicSliceSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
-{
+export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     valueRangeIntersectionReducerDefinition = {
         reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType) => {
             if (accumulator === null) {
@@ -50,7 +51,46 @@ export class SeismicSliceSetting
         },
     };
 
-    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value !== "object" || Array.isArray(value)) {
+            return false;
+        }
+
+        const v = value as Record<string, unknown>;
+
+        // Check 'value' property - must be [number, number, number]
+        if (!Array.isArray(v.value) || v.value.length !== 3) {
+            return false;
+        }
+        if (!v.value.every((item) => typeof item === "number")) {
+            return false;
+        }
+
+        // Check 'visible' property - must be [boolean, boolean, boolean]
+        if (!Array.isArray(v.visible) || v.visible.length !== 3) {
+            return false;
+        }
+        if (!v.visible.every((item) => typeof item === "boolean")) {
+            return false;
+        }
+
+        // Check 'applied' property - must be boolean
+        if (typeof v.applied !== "boolean") {
+            return false;
+        }
+
+        return true;
+    }
+
+    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
         if (!currentValue || !Array.isArray(currentValue.value) || currentValue.value.length !== 3) {
             return {
                 value: [valueRange[0][0], valueRange[1][0], valueRange[2][0]],
@@ -67,7 +107,7 @@ export class SeismicSliceSetting
         return { value: fixedValue, visible: [true, true, true], applied: currentValue.applied };
     }
 
-    isValueValid(value: InternalValueType, valueRange: ValueRangeType): boolean {
+    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
         if (!value || !Array.isArray(value.value) || value.value.length !== 3) {
             return false;
         }
@@ -77,8 +117,8 @@ export class SeismicSliceSetting
         });
     }
 
-    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueRangeType>) => React.ReactNode {
-        return function RangeSlider(props: SettingComponentProps<InternalValueType, ValueRangeType>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+        return function RangeSlider(props: SettingComponentProps<ValueType, ValueRangeType>) {
             const divRef = React.useRef<HTMLDivElement>(null);
             const divSize = useElementSize(divRef);
 
