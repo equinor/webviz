@@ -31,7 +31,7 @@ async def get_drilled_wellbore_headers(
     field_identifier: str = Query(description="Official field identifier"),
     include_completions: bool = Query(default=True, description="Include perforation and screen completion data"),
     # fmt:on
-) -> List[schemas.EnhancedWellboreHeader]:
+) -> List[schemas.WellboreHeader]:
     """Get wellbore headers for all wells in the field, optionally including completion data"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
     if is_drogon_identifier(field_identifier=field_identifier):
@@ -45,7 +45,7 @@ async def get_drilled_wellbore_headers(
     if not include_completions:
         # Return basic headers converted to enhanced format (with empty completion arrays)
         return [
-            schemas.EnhancedWellboreHeader(
+            schemas.WellboreHeader(
                 **converters.convert_wellbore_header_to_schema(wellbore_header).model_dump(),
                 perforations=[],
                 screens=[],
@@ -104,7 +104,7 @@ async def get_drilled_wellbore_headers(
         basic_header = converters.convert_wellbore_header_to_schema(wellbore_header)
         wellbore_uuid = basic_header.wellboreUuid
 
-        enhanced_header = schemas.EnhancedWellboreHeader(
+        enhanced_header = schemas.WellboreHeader(
             **basic_header.model_dump(),
             perforations=perforations_by_wellbore.get(wellbore_uuid, []),
             screens=screens_by_wellbore.get(wellbore_uuid, []),

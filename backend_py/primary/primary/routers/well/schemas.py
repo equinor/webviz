@@ -3,7 +3,7 @@ from typing import List, Optional, TypeAlias
 from pydantic import BaseModel
 
 
-class WellboreHeader(BaseModel):
+class BasicWellboreHeader(BaseModel):
     wellboreUuid: str
     uniqueWellboreIdentifier: str
     wellUuid: str
@@ -16,7 +16,7 @@ class WellboreHeader(BaseModel):
     wellboreStatus: str
 
 
-class EnhancedWellboreHeader(BaseModel):
+class WellboreHeader(BaseModel):
     """Enhanced wellbore header that includes completion data (perforations and screens)"""
 
     wellboreUuid: str

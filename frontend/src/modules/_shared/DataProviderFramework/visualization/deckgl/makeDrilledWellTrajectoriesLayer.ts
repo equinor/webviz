@@ -6,12 +6,7 @@ import type {
 } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { Feature } from "geojson";
 
-import type {
-    EnhancedWellboreHeader_api,
-    WellboreCompletionNested_api,
-    WellborePerforationNested_api,
-    WellboreTrajectory_api,
-} from "@api";
+import type { WellboreHeader_api, WellboreTrajectory_api } from "@api";
 import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
 import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
@@ -33,7 +28,7 @@ export function makeDrilledWellTrajectoriesLayer({
     getStoredData,
 }: TransformerArgs<any, WellboreTrajectory_api[], any>): WellsLayer | null {
     const wellboreTrajectories = getData();
-    const selectedWellboreHeaders: EnhancedWellboreHeader_api[] = getStoredData("selectedWellBoreHeaders");
+    const selectedWellboreHeaders: WellboreHeader_api[] = getStoredData("selectedWellBoreHeaders");
     const depthFilter = getSetting(Setting.DEPTH_FILTER);
 
     if (!wellboreTrajectories) {

@@ -1,4 +1,4 @@
-import type { EnhancedWellboreHeader_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 
 /**
  * Simplified wellbore header type that reduces data complexity by summarizing
@@ -24,12 +24,12 @@ export interface SimplifiedWellboreHeader {
 }
 
 /**
- * Transforms an EnhancedWellboreHeader_api to a SimplifiedWellboreHeader by:
+ * Transforms an WellboreHeader_api to a SimplifiedWellboreHeader by:
  * 1. Extracting unique perforation completion modes
  * 2. Adding "Screen" if any screens exist
  * 3. Copying all other properties as-is
  */
-export function transformToSimplifiedWellboreHeader(enhanced: EnhancedWellboreHeader_api): SimplifiedWellboreHeader {
+export function transformToSimplifiedWellboreHeader(enhanced: WellboreHeader_api): SimplifiedWellboreHeader {
     const perforationAndScreens: string[] = [];
 
     // Extract unique perforation completion modes
@@ -59,10 +59,10 @@ export function transformToSimplifiedWellboreHeader(enhanced: EnhancedWellboreHe
 }
 
 /**
- * Transforms an array of EnhancedWellboreHeader_api to SimplifiedWellboreHeader array
+ * Transforms an array of WellboreHeader_api to SimplifiedWellboreHeader array
  */
 export function transformToSimplifiedWellboreHeaders(
-    enhancedHeaders: EnhancedWellboreHeader_api[],
+    enhancedHeaders: WellboreHeader_api[],
 ): SimplifiedWellboreHeader[] {
     return enhancedHeaders.map(transformToSimplifiedWellboreHeader);
 }
@@ -73,7 +73,7 @@ export function transformToSimplifiedWellboreHeaders(
  */
 export function extractWellboreIdentifiers(
     simplified: SimplifiedWellboreHeader[],
-): Pick<EnhancedWellboreHeader_api, "wellboreUuid" | "uniqueWellboreIdentifier">[] {
+): Pick<WellboreHeader_api, "wellboreUuid" | "uniqueWellboreIdentifier">[] {
     return simplified.map((header) => ({
         wellboreUuid: header.wellboreUuid,
         uniqueWellboreIdentifier: header.uniqueWellboreIdentifier,

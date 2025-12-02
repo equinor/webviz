@@ -1,5 +1,5 @@
 import type {
-    EnhancedWellboreHeader_api,
+    WellboreHeader_api,
     WellboreTrajectory_api,
     WellInjectionData_api,
     WellProductionData_api,
@@ -10,7 +10,6 @@ import {
     getDrilledWellboreHeadersOptions,
     getInjectionDataOptions,
     getObservedSurfacesMetadataOptions,
-    getProductionData,
     getProductionDataOptions,
     getRealizationSurfacesMetadataOptions,
     getWellTrajectoriesOptions,
@@ -28,7 +27,6 @@ import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-import { w } from "@tanstack/query-core/build/legacy/hydration-DpBMnFDT";
 import { isEqual } from "lodash";
 
 const richDrilledWellTrajectoriesSettings = [
@@ -44,7 +42,7 @@ const richDrilledWellTrajectoriesSettings = [
 type RichDrilledWellTrajectoriesSettings = typeof richDrilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RichDrilledWellTrajectoriesSettings>;
 export type DrilledWellboreTrajectoriesStoredData = {
-    selectedWellBoreHeaders: EnhancedWellboreHeader_api[];
+    selectedWellBoreHeaders: WellboreHeader_api[];
     wellboreTrajectories: WellboreTrajectory_api[];
     formationSegments: WellTrajectoryFormationSegments_api[];
     productionData: WellProductionData_api[];

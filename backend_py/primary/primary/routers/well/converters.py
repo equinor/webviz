@@ -53,8 +53,8 @@ def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.Well
 
 def convert_wellbore_header_to_schema(
     drilled_wellbore_header: WellboreHeader,
-) -> schemas.WellboreHeader:
-    return schemas.WellboreHeader(
+) -> schemas.BasicWellboreHeader:
+    return schemas.BasicWellboreHeader(
         wellboreUuid=drilled_wellbore_header.wellbore_uuid,
         uniqueWellboreIdentifier=drilled_wellbore_header.unique_wellbore_identifier,
         wellUuid=drilled_wellbore_header.well_uuid,

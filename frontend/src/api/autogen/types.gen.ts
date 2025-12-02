@@ -118,24 +118,6 @@ export type DiscreteValueMetadata_api = {
     rgbColor: [number, number, number];
 };
 
-/**
- * Enhanced wellbore header that includes completion data (perforations and screens)
- */
-export type EnhancedWellboreHeader_api = {
-    wellboreUuid: string;
-    uniqueWellboreIdentifier: string;
-    wellUuid: string;
-    uniqueWellIdentifier: string;
-    wellEasting: number;
-    wellNorthing: number;
-    depthReferencePoint: string;
-    depthReferenceElevation: number;
-    wellborePurpose: string;
-    wellboreStatus: string;
-    perforations?: Array<WellborePerforationNested_api>;
-    screens?: Array<WellboreCompletionNested_api>;
-};
-
 export type EnsembleDetails_api = {
     name: string;
     fieldIdentifier: string;
@@ -1301,6 +1283,24 @@ export type WellboreCompletionNested_api = {
     description: string | null;
     symbolName: string | null;
     comment: string | null;
+};
+
+/**
+ * Enhanced wellbore header that includes completion data (perforations and screens)
+ */
+export type WellboreHeader_api = {
+    wellboreUuid: string;
+    uniqueWellboreIdentifier: string;
+    wellUuid: string;
+    uniqueWellIdentifier: string;
+    wellEasting: number;
+    wellNorthing: number;
+    depthReferencePoint: string;
+    depthReferenceElevation: number;
+    wellborePurpose: string;
+    wellboreStatus: string;
+    perforations?: Array<WellborePerforationNested_api>;
+    screens?: Array<WellboreCompletionNested_api>;
 };
 
 export type WellboreLogCurveData_api = {
@@ -3235,7 +3235,7 @@ export type GetDrilledWellboreHeadersResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<EnhancedWellboreHeader_api>;
+    200: Array<WellboreHeader_api>;
 };
 
 export type GetDrilledWellboreHeadersResponse_api =
