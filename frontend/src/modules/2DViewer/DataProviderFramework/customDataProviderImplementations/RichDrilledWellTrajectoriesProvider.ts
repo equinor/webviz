@@ -1,11 +1,20 @@
-import { isEqual } from "lodash";
-
-import type { EnhancedWellboreHeader_api, WellboreTrajectory_api } from "@api";
+import type {
+    EnhancedWellboreHeader_api,
+    WellboreTrajectory_api,
+    WellInjectionData_api,
+    WellProductionData_api,
+    WellTrajectory_api,
+    WellTrajectoryFormationSegments_api,
+} from "@api";
 import {
     getDrilledWellboreHeadersOptions,
+    getInjectionDataOptions,
     getObservedSurfacesMetadataOptions,
+    getProductionData,
+    getProductionDataOptions,
     getRealizationSurfacesMetadataOptions,
     getWellTrajectoriesOptions,
+    postGetWellTrajectoriesFormationSegmentsOptions,
     SurfaceAttributeType_api,
 } from "@api";
 import { sortStringArray } from "@lib/utils/arrays";
@@ -17,12 +26,16 @@ import type {
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
+import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
+import { w } from "@tanstack/query-core/build/legacy/hydration-DpBMnFDT";
+import { isEqual } from "lodash";
 
 const richDrilledWellTrajectoriesSettings = [
     Setting.ENSEMBLE,
     Setting.SMDA_WELLBORE_HEADERS,
     Setting.DEPTH_FILTER,
-    Setting.TIME_OR_INTERVAL,
+    Setting.TIME_INTERVAL,
     Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE,
     Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME,
     Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME,
@@ -32,6 +45,10 @@ type RichDrilledWellTrajectoriesSettings = typeof richDrilledWellTrajectoriesSet
 type SettingsWithTypes = MakeSettingTypesMap<RichDrilledWellTrajectoriesSettings>;
 export type DrilledWellboreTrajectoriesStoredData = {
     selectedWellBoreHeaders: EnhancedWellboreHeader_api[];
+    wellboreTrajectories: WellboreTrajectory_api[];
+    formationSegments: WellTrajectoryFormationSegments_api[];
+    productionData: WellProductionData_api[];
+    injectionData: WellInjectionData_api[];
 };
 type RichDrilledWellTrajectoriesData = WellboreTrajectory_api[];
 
@@ -55,12 +72,24 @@ export class RichDrilledWellTrajectoriesProvider
 
     fetchData({
         getGlobalSetting,
+        getStoredData,
         fetchQuery,
     }: FetchDataParams<
         RichDrilledWellTrajectoriesSettings,
         RichDrilledWellTrajectoriesData
     >): Promise<RichDrilledWellTrajectoriesData> {
         const fieldIdentifier = getGlobalSetting("fieldId");
+
+        // const wellTrajectories = getStoredData("wellboreTrajectories");
+
+        const formationSegments = getStoredData("formationSegments");
+        const productionData = getStoredData("productionData");
+        const injectionData = getStoredData("injectionData");
+
+        // **************************
+        // TODO: Use the data
+        console.log("Fetched stored data:", { formationSegments, productionData, injectionData });
+        // **************************
 
         const queryOptions = getWellTrajectoriesOptions({
             query: { field_identifier: fieldIdentifier ?? "" },
@@ -81,17 +110,7 @@ export class RichDrilledWellTrajectoriesProvider
         storedDataUpdater,
         queryClient,
     }: DefineDependenciesArgs<RichDrilledWellTrajectoriesSettings, DrilledWellboreTrajectoriesStoredData>) {
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-
-            const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent());
-
-            return ensembleIdents;
-        });
-
+        // Well metadata dependency
         const wellboreHeadersDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
             const fieldIdentifier = getGlobalSetting("fieldId");
             return await queryClient.fetchQuery({
@@ -101,17 +120,23 @@ export class RichDrilledWellTrajectoriesProvider
                 }),
             });
         });
-        availableSettingsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
-            if (!wellboreHeaders) {
-                return [];
-            }
-
-            // Transform enhanced wellbore headers to simplified ones for reduced storage size
-            return transformToSimplifiedWellboreHeaders(wellboreHeaders);
+        // Wellbore trajectories dependency
+        const wellboreTrajectoriesDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            return await queryClient.fetchQuery({
+                ...getWellTrajectoriesOptions({
+                    query: { field_identifier: fieldIdentifier ?? "" },
+                    signal: abortSignal,
+                }),
+            });
+        });
+        storedDataUpdater("wellboreTrajectories", ({ getHelperDependency }) => {
+            const wellboreTrajectories = getHelperDependency(wellboreTrajectoriesDep);
+            return wellboreTrajectories || [];
         });
 
+        // Observed Surface metadata dependency (for time intervals)
         const observedSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
@@ -128,6 +153,8 @@ export class RichDrilledWellTrajectoriesProvider
                 }),
             });
         });
+
+        // Realization Surface metadata dependency (for formation filters)
         const realizationSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
@@ -145,8 +172,154 @@ export class RichDrilledWellTrajectoriesProvider
                 }),
             });
         });
+        // Production data dependency
+        const productionDataDep = helperDependency(async function fetchData({
+            getGlobalSetting,
+            getLocalSetting,
+            abortSignal,
+        }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const timeInterval = getLocalSetting(Setting.TIME_INTERVAL);
+            const startDate = timeInterval ? timeInterval.split("/")[0] : undefined;
+            const endDate = timeInterval ? timeInterval.split("/")[1] : undefined;
+            if (!fieldIdentifier || !startDate || !endDate) {
+                return [];
+            }
+            return await queryClient.fetchQuery({
+                ...getProductionDataOptions({
+                    query: {
+                        field_identifier: fieldIdentifier ?? "",
+                        start_date: startDate ?? "",
+                        end_date: endDate ?? "",
+                    },
+                    signal: abortSignal,
+                }),
+            });
+        });
+        storedDataUpdater("productionData", ({ getHelperDependency }) => {
+            const productionData = getHelperDependency(productionDataDep);
+            return productionData || [];
+        });
+
+        // Injection data dependency
+        const injectionDataDep = helperDependency(async function fetchData({
+            getGlobalSetting,
+            getLocalSetting,
+            abortSignal,
+        }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const timeInterval = getLocalSetting(Setting.TIME_INTERVAL);
+            const startDate = timeInterval ? timeInterval.split("/")[0] : undefined;
+            const endDate = timeInterval ? timeInterval.split("/")[1] : undefined;
+            if (!fieldIdentifier || !startDate || !endDate) {
+                return [];
+            }
+            return await queryClient.fetchQuery({
+                ...getInjectionDataOptions({
+                    query: {
+                        field_identifier: fieldIdentifier ?? "",
+                        start_date: startDate ?? "",
+                        end_date: endDate ?? "",
+                    },
+                    signal: abortSignal,
+                }),
+            });
+        });
+        storedDataUpdater("injectionData", ({ getHelperDependency }) => {
+            const injectionData = getHelperDependency(injectionDataDep);
+            return injectionData || [];
+        });
+
+        // Formation segments dependency
+        const formationSegmentsDep = helperDependency(async function fetchData({
+            getHelperDependency,
+            getLocalSetting,
+            abortSignal,
+        }) {
+            const wellboreTrajectories = getHelperDependency(wellboreTrajectoriesDep);
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+            const surfaceAttribute = getLocalSetting(Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE);
+            const topSurfaceName = getLocalSetting(Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME);
+            const bottomSurfaceName = getLocalSetting(Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME);
+            const realization = getLocalSetting(Setting.WELL_TRAJ_FILTER_SURFACE_REALIZATION);
+            let topSurfaceAddress: FullSurfaceAddress | null = null;
+            // top surface
+            if (ensembleIdent && surfaceAttribute && topSurfaceName) {
+                const addrBuilder = new SurfaceAddressBuilder();
+                addrBuilder.withEnsembleIdent(ensembleIdent);
+                addrBuilder.withName(topSurfaceName);
+                addrBuilder.withAttribute(surfaceAttribute);
+                addrBuilder.withRealization(realization ?? 0);
+                topSurfaceAddress = addrBuilder.buildRealizationAddress();
+            }
+            const topSurfAddrStr = topSurfaceAddress ? encodeSurfAddrStr(topSurfaceAddress) : null;
+            if (!topSurfAddrStr) {
+                return [];
+            }
+            let bottomSurfaceAddress: FullSurfaceAddress | null = null;
+            // bottom surface
+            if (ensembleIdent && surfaceAttribute && bottomSurfaceName) {
+                const addrBuilder = new SurfaceAddressBuilder();
+                addrBuilder.withEnsembleIdent(ensembleIdent);
+                addrBuilder.withName(bottomSurfaceName);
+                addrBuilder.withAttribute(surfaceAttribute);
+                addrBuilder.withRealization(realization ?? 0);
+                bottomSurfaceAddress = addrBuilder.buildRealizationAddress();
+            }
+            const bottomSurfAddrStr = bottomSurfaceAddress ? encodeSurfAddrStr(bottomSurfaceAddress) : null;
+            const wellBoresData: WellTrajectory_api[] =
+                wellboreTrajectories?.map((traj) => {
+                    return {
+                        uwi: traj.uniqueWellboreIdentifier,
+                        x_points: traj.eastingArr,
+                        y_points: traj.northingArr,
+                        md_points: traj.mdArr,
+                        z_points: traj.tvdMslArr,
+                    };
+                }) ?? [];
+            // Fetch formation segments from API
+            return await queryClient.fetchQuery({
+                ...postGetWellTrajectoriesFormationSegmentsOptions({
+                    query: {
+                        top_surf_addr_str: topSurfAddrStr || "",
+                        bottom_surf_addr_str: null,
+                    },
+                    body: { well_trajectories: wellBoresData },
+
+                    signal: abortSignal,
+                }),
+            });
+        });
+        storedDataUpdater("formationSegments", ({ getHelperDependency }) => {
+            const formationSegments = getHelperDependency(formationSegmentsDep);
+            return formationSegments || [];
+        });
+
+        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const ensembles = getGlobalSetting("ensembles");
+
+            const ensembleIdents = ensembles
+                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .map((ensemble) => ensemble.getIdent());
+
+            return ensembleIdents;
+        });
+
+        availableSettingsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
+
+            if (!wellboreHeaders) {
+                return [];
+            }
+
+            // Transform enhanced wellbore headers to simplified ones for reduced storage size
+            return transformToSimplifiedWellboreHeaders(wellboreHeaders);
+        });
+
         availableSettingsUpdater(Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationSurfaceMetadataDep);
+
             if (!data) {
                 return [];
             }
@@ -224,7 +397,7 @@ export class RichDrilledWellTrajectoriesProvider
             },
         );
 
-        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getHelperDependency }) => {
+        availableSettingsUpdater(Setting.TIME_INTERVAL, ({ getHelperDependency }) => {
             const data = getHelperDependency(observedSurfaceMetadataDep);
             if (!data) {
                 return [];
@@ -241,7 +414,6 @@ export class RichDrilledWellTrajectoriesProvider
             if (!wellboreHeaders || !selectedWellbores) {
                 return [];
             }
-
             return wellboreHeaders.filter((wellboreInfo) => selectedWellbores.includes(wellboreInfo.wellboreUuid));
         });
     }

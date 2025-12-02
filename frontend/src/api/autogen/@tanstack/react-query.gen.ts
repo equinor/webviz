@@ -35,9 +35,9 @@ import type {
     GetRealizationSurfacesMetadataData_api,
     GetObservedSurfacesMetadataData_api,
     GetSurfaceDataData_api,
-    PostGetSurfaceWellIntersectionsData_api,
-    PostGetSurfaceWellIntersectionsError_api,
-    PostGetSurfaceWellIntersectionsResponse_api,
+    PostGetWellTrajectoriesFormationSegmentsData_api,
+    PostGetWellTrajectoriesFormationSegmentsError_api,
+    PostGetWellTrajectoriesFormationSegmentsResponse_api,
     GetStatisticalSurfaceDataHybridData_api,
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionError_api,
@@ -153,7 +153,7 @@ import {
     getRealizationSurfacesMetadata,
     getObservedSurfacesMetadata,
     getSurfaceData,
-    postGetSurfaceWellIntersections,
+    postGetWellTrajectoriesFormationSegments,
     getStatisticalSurfaceDataHybrid,
     postGetSurfaceIntersection,
     postGetSampleSurfaceInPoints,
@@ -709,14 +709,16 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
     });
 };
 
-export const postGetSurfaceWellIntersectionsQueryKey = (options: Options<PostGetSurfaceWellIntersectionsData_api>) => [
-    createQueryKey("postGetSurfaceWellIntersections", options),
-];
+export const postGetWellTrajectoriesFormationSegmentsQueryKey = (
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api>,
+) => [createQueryKey("postGetWellTrajectoriesFormationSegments", options)];
 
-export const postGetSurfaceWellIntersectionsOptions = (options: Options<PostGetSurfaceWellIntersectionsData_api>) => {
+export const postGetWellTrajectoriesFormationSegmentsOptions = (
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api>,
+) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGetSurfaceWellIntersections({
+            const { data } = await postGetWellTrajectoriesFormationSegments({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -724,20 +726,20 @@ export const postGetSurfaceWellIntersectionsOptions = (options: Options<PostGetS
             });
             return data;
         },
-        queryKey: postGetSurfaceWellIntersectionsQueryKey(options),
+        queryKey: postGetWellTrajectoriesFormationSegmentsQueryKey(options),
     });
 };
 
-export const postGetSurfaceWellIntersectionsMutation = (
-    options?: Partial<Options<PostGetSurfaceWellIntersectionsData_api>>,
+export const postGetWellTrajectoriesFormationSegmentsMutation = (
+    options?: Partial<Options<PostGetWellTrajectoriesFormationSegmentsData_api>>,
 ) => {
     const mutationOptions: UseMutationOptions<
-        PostGetSurfaceWellIntersectionsResponse_api,
-        AxiosError<PostGetSurfaceWellIntersectionsError_api>,
-        Options<PostGetSurfaceWellIntersectionsData_api>
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        AxiosError<PostGetWellTrajectoriesFormationSegmentsError_api>,
+        Options<PostGetWellTrajectoriesFormationSegmentsData_api>
     > = {
         mutationFn: async (localOptions) => {
-            const { data } = await postGetSurfaceWellIntersections({
+            const { data } = await postGetWellTrajectoriesFormationSegments({
                 ...options,
                 ...localOptions,
                 throwOnError: true,

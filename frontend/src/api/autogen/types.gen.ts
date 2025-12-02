@@ -52,7 +52,7 @@ export type BodyPostGetSurfaceIntersection_api = {
     cumulative_length_polyline: SurfaceIntersectionCumulativeLengthPolyline_api;
 };
 
-export type BodyPostGetSurfaceWellIntersections_api = {
+export type BodyPostGetWellTrajectoriesFormationSegments_api = {
     well_trajectories: Array<WellTrajectory_api>;
 };
 
@@ -241,6 +241,17 @@ export enum FlowRateType_api {
     TM = "TM",
     WAT = "WAT",
 }
+
+/**
+ * Segment of a formation defined by top and bottom surface.
+ *
+ * The formation segment is defined by the md (measured depth) value along the well trajectory,
+ * at enter and exit of the formation.
+ */
+export type FormationSegment_api = {
+    md_enter: number;
+    md_exit: number;
+};
 
 export enum Frequency_api {
     DAILY = "DAILY",
@@ -478,14 +489,6 @@ export type PageSnapshotMetadata_api = {
     items: Array<SnapshotMetadata_api>;
     pageToken?: string | null;
 };
-
-/**
- * Direction of the pick relative to the surface
- */
-export enum PickDirection_api {
-    UPWARD = "UPWARD",
-    DOWNWARD = "DOWNWARD",
-}
 
 export type PointSetXy_api = {
     x_points: Array<number>;
@@ -1022,15 +1025,6 @@ export enum SurfaceTimeType_api {
     INTERVAL = "INTERVAL",
 }
 
-export type SurfaceWellPick_api = {
-    unique_wellbore_identifier: string;
-    x: number;
-    y: number;
-    z: number;
-    md?: number | null;
-    direction: PickDirection_api;
-};
-
 export enum Thp_api {
     THP = "THP",
 }
@@ -1256,6 +1250,19 @@ export type WellTrajectory_api = {
     z_points: Array<number>;
     md_points: Array<number>;
     uwi: string;
+};
+
+/**
+ * Segments of a well trajectory that intersects a formation defined by top and bottom surfaces.
+ *
+ * A wellbore can enter and exit a formation multiple times, resulting in multiple segments.
+ *
+ * unique_wellbore_identifier: str
+ * formation_segments: List[FormationSegment_api]
+ */
+export type WellTrajectoryFormationSegments_api = {
+    unique_wellbore_identifier: string;
+    formation_segments: Array<FormationSegment_api>;
 };
 
 export type WellboreCasing_api = {
@@ -2232,38 +2239,42 @@ export type GetSurfaceDataResponses_api = {
 
 export type GetSurfaceDataResponse_api = GetSurfaceDataResponses_api[keyof GetSurfaceDataResponses_api];
 
-export type PostGetSurfaceWellIntersectionsData_api = {
-    body: BodyPostGetSurfaceWellIntersections_api;
+export type PostGetWellTrajectoriesFormationSegmentsData_api = {
+    body: BodyPostGetWellTrajectoriesFormationSegments_api;
     path?: never;
     query: {
         /**
-         * Surface address string, supported address types are *REAL*, *OBS* and *STAT*
+         * Surface address string for top bounding surface. Supported address types are *REAL*, *OBS* and *STAT*
          */
-        surf_addr_str: string;
+        top_surf_addr_str: string;
+        /**
+         * Optional surface address string for bottom bounding surface. If not provided end of well trajectory is used as lower bound for formation. Supported address types are *REAL*, *OBS* and *STAT*
+         */
+        bottom_surf_addr_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/surface/get_surface_well_intersections";
+    url: "/surface/get_well_trajectories_formation_segments";
 };
 
-export type PostGetSurfaceWellIntersectionsErrors_api = {
+export type PostGetWellTrajectoriesFormationSegmentsErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type PostGetSurfaceWellIntersectionsError_api =
-    PostGetSurfaceWellIntersectionsErrors_api[keyof PostGetSurfaceWellIntersectionsErrors_api];
+export type PostGetWellTrajectoriesFormationSegmentsError_api =
+    PostGetWellTrajectoriesFormationSegmentsErrors_api[keyof PostGetWellTrajectoriesFormationSegmentsErrors_api];
 
-export type PostGetSurfaceWellIntersectionsResponses_api = {
+export type PostGetWellTrajectoriesFormationSegmentsResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<SurfaceWellPick_api>;
+    200: Array<WellTrajectoryFormationSegments_api>;
 };
 
-export type PostGetSurfaceWellIntersectionsResponse_api =
-    PostGetSurfaceWellIntersectionsResponses_api[keyof PostGetSurfaceWellIntersectionsResponses_api];
+export type PostGetWellTrajectoriesFormationSegmentsResponse_api =
+    PostGetWellTrajectoriesFormationSegmentsResponses_api[keyof PostGetWellTrajectoriesFormationSegmentsResponses_api];
 
 export type GetStatisticalSurfaceDataHybridData_api = {
     body?: never;

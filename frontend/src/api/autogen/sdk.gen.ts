@@ -61,9 +61,9 @@ import type {
     GetSurfaceDataData_api,
     GetSurfaceDataResponse_api,
     GetSurfaceDataError_api,
-    PostGetSurfaceWellIntersectionsData_api,
-    PostGetSurfaceWellIntersectionsResponse_api,
-    PostGetSurfaceWellIntersectionsError_api,
+    PostGetWellTrajectoriesFormationSegmentsData_api,
+    PostGetWellTrajectoriesFormationSegmentsResponse_api,
+    PostGetWellTrajectoriesFormationSegmentsError_api,
     GetStatisticalSurfaceDataHybridData_api,
     GetStatisticalSurfaceDataHybridResponse_api,
     GetStatisticalSurfaceDataHybridError_api,
@@ -627,15 +627,26 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Post Get Surface Well Intersections
- * Get surface/well intersections (well picks) for the specified surface and well trajectories.
+ * Post Get Well Trajectories Formation Segments
+ * Get well trajectory formation segments.
+ *
+ * Provide a top bounding surface and an optional bottom bounding surface to define a formation
+ * (area between two surfaces in depth). If bottom surface is not provided, the formation is
+ * considered to extend down to the end of the well trajectory.
+ *
+ * For each well trajectory, the segments where the well is within the formation are calculated and
+ * returned. Each segment contains the measured depth (md) values where the well enters and exits
+ * the formation.
+ *
+ * NOTE: Expecting depth surfaces, no verification is done to ensure that the surfaces are indeed
+ * depth surfaces.
  */
-export const postGetSurfaceWellIntersections = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetSurfaceWellIntersectionsData_api, ThrowOnError>,
+export const postGetWellTrajectoriesFormationSegments = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).post<
-        PostGetSurfaceWellIntersectionsResponse_api,
-        PostGetSurfaceWellIntersectionsError_api,
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        PostGetWellTrajectoriesFormationSegmentsError_api,
         ThrowOnError
     >({
         ...options,
@@ -643,7 +654,7 @@ export const postGetSurfaceWellIntersections = <ThrowOnError extends boolean = f
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/surface/get_surface_well_intersections",
+        url: "/surface/get_well_trajectories_formation_segments",
     });
 };
 

@@ -1,5 +1,4 @@
 from enum import Enum
-import enum
 from typing import List, Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -157,6 +156,16 @@ class SurfaceIntersectionCumulativeLengthPolyline(BaseModel):
     cum_lengths: List[float]
 
 
+class SurfaceRealizationSampleValues(BaseModel):
+    realization: int
+    sampled_values: list[float]
+
+
+class PointSetXY(BaseModel):
+    x_points: list[float]
+    y_points: list[float]
+
+
 class PickDirection(str, Enum):
     """Direction of the pick relative to the surface"""
 
@@ -172,15 +181,31 @@ class SurfaceWellPick(BaseModel):
     md: float | None = None
     direction: PickDirection
 
-class WellFormationSection(BaseModel):
-    segments: list[list[float,float]]
-    unique_wellbore_identifier:str
+
+class FormationSegment(BaseModel):
+    """
+    Segment of a formation defined by top and bottom surface.
+
+    The formation segment is defined by the md (measured depth) value along the well trajectory,
+    at enter and exit of the formation.
+    """
+
+    md_enter: float
+    md_exit: float
 
 
-class WellFormationSection(BaseModel):
-    md_in:float
-    md_out:float
+class WellTrajectoryFormationSegments(BaseModel):
+    """
+    Segments of a well trajectory that intersects a formation defined by top and bottom surfaces.
+
+    A wellbore can enter and exit a formation multiple times, resulting in multiple segments.
+
     unique_wellbore_identifier: str
+    formation_segments: List[FormationSegment]
+    """
+
+    unique_wellbore_identifier: str
+    formation_segments: List[FormationSegment]
 
 
 class WellTrajectory(BaseModel):
@@ -199,16 +224,6 @@ class WellTrajectory(BaseModel):
     z_points: List[float]
     md_points: List[float]
     uwi: str
-
-
-class SurfaceRealizationSampleValues(BaseModel):
-    realization: int
-    sampled_values: list[float]
-
-
-class PointSetXY(BaseModel):
-    x_points: list[float]
-    y_points: list[float]
 
 
 class StratigraphicUnit(BaseModel):
