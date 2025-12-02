@@ -39,11 +39,12 @@ class ParameterAccess:
         """Retrieve parameters for an ensemble"""
         perf_metrics = PerfMetrics()
 
-        #  Check that there are parameters available per realization
+        #  Check for existing per realization parameters before aggregation request
         parameter_realization_context = self._ensemble_context.filter(
             realization=True,
             aggregation=False,
         ).parameters
+
         realization_count = await parameter_realization_context.length_async()
         if realization_count == 0:
             raise NoDataError(
