@@ -16,15 +16,19 @@ import type { SettingCategory } from "../settingsDefinitions";
 type ValueType = ColorScaleSpecification | null;
 
 export class ColorScaleSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
-    defaultValue: ValueType = {
-        areBoundariesUserDefined: false,
-        colorScale: new ColorScale({
-            colorPalette: defaultContinuousSequentialColorPalettes[0],
-            gradientType: ColorScaleGradientType.Sequential,
-            type: ColorScaleType.Continuous,
-            steps: 10,
-        }),
-    };
+    defaultValue: ValueType;
+
+    constructor(props?: { initialColorScale?: ColorScaleSpecification }) {
+        this.defaultValue = props?.initialColorScale ?? {
+            areBoundariesUserDefined: false,
+            colorScale: new ColorScale({
+                colorPalette: defaultContinuousSequentialColorPalettes[0],
+                gradientType: ColorScaleGradientType.Sequential,
+                type: ColorScaleType.Continuous,
+                steps: 10,
+            }),
+        };
+    }
 
     getLabel(): string {
         return "Coloring";

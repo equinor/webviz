@@ -23,7 +23,7 @@ export class DrilledWellTrajectoriesProvider
     settings = drilledWellTrajectoriesSettings;
 
     getDefaultName() {
-        return "Drilled Well Trajectories";
+        return "Well Trajectories (Official)";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

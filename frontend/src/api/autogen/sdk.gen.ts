@@ -112,6 +112,12 @@ import type {
     GetRealizationFlowNetworkData_api,
     GetRealizationFlowNetworkResponse_api,
     GetRealizationFlowNetworkError_api,
+    GetProductionDataData_api,
+    GetProductionDataResponse_api,
+    GetProductionDataError_api,
+    GetInjectionDataData_api,
+    GetInjectionDataResponse_api,
+    GetInjectionDataError_api,
     GetTableDataData_api,
     GetTableDataResponse_api,
     GetTableDataError_api,
@@ -868,6 +874,32 @@ export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
     >({
         ...options,
         url: "/flow_network/realization_flow_network/",
+    });
+};
+
+/**
+ * Get Production Data
+ * Get allocated production per well in the time interval
+ */
+export const getProductionData = <ThrowOnError extends boolean = false>(
+    options: Options<GetProductionDataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetProductionDataResponse_api, GetProductionDataError_api, ThrowOnError>({
+        ...options,
+        url: "/flow_data/production_data/",
+    });
+};
+
+/**
+ * Get Injection Data
+ * Get allocated injection per well in the time interval
+ */
+export const getInjectionData = <ThrowOnError extends boolean = false>(
+    options: Options<GetInjectionDataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetInjectionDataResponse_api, GetInjectionDataError_api, ThrowOnError>({
+        ...options,
+        url: "/flow_data/injection_data/",
     });
 };
 
