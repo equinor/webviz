@@ -14,6 +14,10 @@ class BasicWellboreHeader(BaseModel):
     depthReferenceElevation: float
     wellborePurpose: str
     wellboreStatus: str
+    currentTrack: int
+    kickoffDepthMd: float | None
+    kickoffDepthTvd: float | None
+    parentWellbore: str | None
 
 
 class WellboreHeader(BaseModel):
@@ -29,6 +33,10 @@ class WellboreHeader(BaseModel):
     depthReferenceElevation: float
     wellborePurpose: str
     wellboreStatus: str
+    currentTrack: int
+    kickoffDepthMd: float | None
+    kickoffDepthTvd: float | None
+    parentWellbore: str | None
     # Completion data
     perforations: List["WellborePerforationNested"] = []
     screens: List["WellboreCompletionNested"] = []
