@@ -316,11 +316,9 @@ async def get_ri_isect(
     return "OK"
 
 
-import os
-from azure.identity.aio import DefaultAzureCredential
-from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus import ServiceBusMessage
 from primary.middleware.add_browser_cache import no_cache
+from primary.utils.message_bus import MessageBusSingleton, MessageBus
 
 
 @router.get("/sb/{msg_text}")
@@ -337,56 +335,21 @@ async def get_send_sb_msg(
     perf_metrics = ResponsePerfMetrics(response)
 
     queue_name = "test-queue"
-
     LOGGER.info(f"About to send message on service bus {queue_name=} {msg_text=}")
 
-    # NOTE:
-    # For real usage we should not create credential and client on each request,
-    # but create them once on app startupand reuse them. This is just for testing.
-    
-    sb_conn_string = os.getenv("SERVICEBUS_CONNECTION_STRING")
-    if sb_conn_string:
-        LOGGER.info("Using SERVICEBUS_CONNECTION_STRING from environment")
-        client = ServiceBusClient.from_connection_string(conn_str=sb_conn_string)
-        async with client:
-            perf_metrics.record_lap("create-client")
-            await _send_sb_messages(client, queue_name, msg_text, count, perf_metrics)
+    message_bus: MessageBus = MessageBusSingleton.get_instance()
+    sender = message_bus.get_sender(queue_name=queue_name)
+    perf_metrics.record_lap("get-sender")
 
-    else:
-        fully_qualified_sb_namespace = "webviz-test.servicebus.windows.net"
+    for i in range(count):
+        msg = ServiceBusMessage(msg_text)
+        await sender.send_messages(msg)
+        LOGGER.info(f"Sent message {i} on service bus {msg.message_id=}")
+        if i == 0:
+            perf_metrics.record_lap("send-first-msg")
 
-        LOGGER.info("Using DefaultAzureCredential for authentication")
-        LOGGER.info(f"AZURE_TENANT_ID: {os.getenv('AZURE_TENANT_ID')}")
-        LOGGER.info(f"AZURE_CLIENT_ID: {os.getenv('AZURE_CLIENT_ID')}")
-
-        # Relies on AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET being set in environment
-        credential = DefaultAzureCredential()
-        LOGGER.info(f"{type(credential)=}")
-
-        # for cred in credential.credentials:
-        #     LOGGER.info(f"{type(cred)=}, {cred=}")
-
-        async with credential:
-            client = ServiceBusClient(fully_qualified_namespace=fully_qualified_sb_namespace, credential=credential)
-            async with client:
-                perf_metrics.record_lap("create-client")
-                await _send_sb_messages(client, queue_name, msg_text, count, perf_metrics)
+    if count > 1:
+        perf_metrics.record_lap("send-remaining-msgs")
 
     LOGGER.info(f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}")
     return f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}"
-
-
-async def _send_sb_messages(client: ServiceBusClient, queue_name: str, msg_text: str, count: int, perf_metrics: ResponsePerfMetrics) -> None:
-    sender = client.get_queue_sender(queue_name=queue_name)
-    perf_metrics.record_lap("get-sender")
-
-    async with sender:
-        for i in range(count):
-            msg = ServiceBusMessage(msg_text)
-            await sender.send_messages(msg)
-            LOGGER.info(f"Sent message {i} on service bus {msg.message_id=}")
-            if i == 0:
-                perf_metrics.record_lap("send-first-msg")
-
-        if count > 1:
-            perf_metrics.record_lap("send-remaining-msgs")

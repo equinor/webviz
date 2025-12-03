@@ -8,16 +8,10 @@ from sumo.wrapper.config import APP_REGISTRATION as sumo_app_reg
 # Note that values set in the system environment will override those in the .env file
 load_dotenv()
 
-# Delete these and rely on picking them up from environment vars instead?
-# May want to verify that they are all set upon loading config and/or app startup
+
 TENANT_ID = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
 CLIENT_ID = "900ed417-a860-4970-bd37-73b059ca6f0d"
 CLIENT_SECRET = os.environ["WEBVIZ_CLIENT_SECRET"]
-
-# TENANT_ID = os.environ["AZURE_TENANT_ID"]
-# CLIENT_ID = os.environ["AZURE_CLIENT_ID"]
-# CLIENT_SECRET = os.environ["AZURE_CLIENT_SECRET"]
-
 
 SMDA_SUBSCRIPTION_KEY = os.environ["WEBVIZ_SMDA_SUBSCRIPTION_KEY"]
 SMDA_RESOURCE_SCOPE = os.environ["WEBVIZ_SMDA_RESOURCE_SCOPE"]

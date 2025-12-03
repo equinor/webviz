@@ -43,6 +43,8 @@ from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
+from primary.utils.azure_service_credentials import ClientSecretVars, create_credential_for_azure_services
+from primary.utils.message_bus import MessageBusSingleton
 
 from . import config
 
@@ -86,10 +88,29 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
+    client_secret_vars_for_dev = ClientSecretVars(
+        tenant_id=config.TENANT_ID,
+        client_id=config.CLIENT_ID,
+        client_secret=config.CLIENT_SECRET,
+    )
+    azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
+
+    sb_conn_string = os.getenv("SERVICEBUS_CONNECTION_STRING")
+    if sb_conn_string:
+        LOGGER.info("Using SERVICEBUS_CONNECTION_STRING from environment to initialize MessageBusSingleton")
+        MessageBusSingleton.initialize_with_connection_string(sb_conn_string)
+    else:
+        LOGGER.info("Using credential for azure services to initialize MessageBusSingleton")
+        MessageBusSingleton.initialize_with_credential("webviz-test.servicebus.windows.net", azure_services_credential)
+
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
 
     yield
+
+    await MessageBusSingleton.shutdown_async()
+
+    await azure_services_credential.close()
 
     # This part, after the yield, will be executed after the application has finished.
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()

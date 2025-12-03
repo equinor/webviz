@@ -313,42 +313,6 @@ def _acquire_refreshed_identity_and_tokens(
 
 def _create_msal_confidential_client_app(token_cache: msal.TokenCache) -> msal.ConfidentialClientApplication:
     authority = f"https://login.microsoftonline.com/{config.TENANT_ID}"
-
-    # Testing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Testing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Testing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    LOGGER.info("=============================")
-    client_credential=msal.SystemAssignedManagedIdentity()
-    LOGGER.info(f"{client_credential=}")
-    LOGGER.info("=============================")
-
-    LOGGER.info("################################################")
-    fed_token_file_name = os.getenv("AZURE_FEDERATED_TOKEN_FILE")
-    if fed_token_file_name:
-        LOGGER.info(f"Found environmen var: AZURE_FEDERATED_TOKEN_FILE, {fed_token_file_name=}")
-        with open(fed_token_file_name, "rb") as token_file:
-            fed_token = token_file.read()
-
-        if fed_token:
-            LOGGER.info("Managed top read data into fed token from file")
-
-            # If this works, we could maybe use a callable fo read the file on demand
-            client_credential={
-                "client_assertion": fed_token
-            }
-
-            LOGGER.info("CREATING the MSAL ConfidentialClientApplication with fed token")
-            return msal.ConfidentialClientApplication(
-                client_id=config.CLIENT_ID,
-                client_credential=client_credential,
-                authority=authority,
-                token_cache=token_cache,
-                instance_discovery=False,
-            )
-
-    LOGGER.info("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-
-
     return msal.ConfidentialClientApplication(
         client_id=config.CLIENT_ID,
         client_credential=config.CLIENT_SECRET,
