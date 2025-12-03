@@ -1,8 +1,9 @@
 import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 import type { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@tanstack/react-query";
-import type { Atom, Getter } from "jotai";
+import type { Atom, Getter, Setter, WritableAtom } from "jotai";
 import { atom } from "jotai";
 import { atomWithReducer } from "jotai/utils";
+import { atomEffect } from "jotai-effect";
 import type { AtomWithQueryOptions } from "jotai-tanstack-query";
 import { atomWithQuery } from "jotai-tanstack-query";
 
@@ -61,4 +62,371 @@ export function atomWithQueries<
 
         return results as TCombinedResult;
     });
+}
+
+export enum Source {
+    USER = "user",
+    PERSISTENCE = "persistence",
+    TEMPLATE = "template",
+}
+
+export type PersistableAtomState<T> = {
+    value: T;
+
+    _source: Source;
+};
+
+function isInternalState<T>(value: T | PersistableAtomState<T>): value is PersistableAtomState<T> {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        "_source" in value &&
+        typeof (value as any)._source === "string" &&
+        Object.values(Source).includes((value as any)._source)
+    );
+}
+
+type PersistableAtomDependenciesState = "loading" | "error" | "loaded";
+
+type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
+    /**
+     * The initial value for the atom before any user or persisted value is applied.
+     * This is typically a safe default value used when no persisted state is present.
+     */
+    initialValue?: TValue;
+
+    /**
+     * A function to compare two values for equality.
+     * This is used to optimize updates by preventing unnecessary re-renders.
+     */
+    areEqualFunction?: (a: TValue, b: TValue) => boolean;
+
+    /**
+     * A function to precompute any necessary data based on the current value. This data is then
+     * passed to the isValid and fixup functions to help them make decisions.
+     *
+     * The options object contains:
+     * - `value`: The current atom value (may be undefined)
+     * - `get`: Jotai getter to read from other atoms
+     *
+     * Returns the precomputed value to be passed to isValidFunction and fixupFunction.
+     */
+    precomputeFunction: (options: { value: TValue | undefined; get: Getter }) => TPrecomputedValue;
+
+    /**
+     * An optional function to compute the dependencies state of the atom. This is used to determine
+     * if the atom is waiting for dependent atoms to resolve (e.g., query atoms) before it can
+     * determine its own validity.
+     *
+     * The options object contains:
+     * - `value`: The current atom value (may be undefined)
+     * - `get`: Jotai getter to read from other atoms
+     * - `precomputedValue`: The precomputed value from precomputeFunction
+     *
+     * Returns:
+     * - "loading": Dependencies are being resolved
+     * - "error": One or more dependencies have an error
+     * - "loaded": All dependencies are ready
+     *
+     * If not provided, the dependencies state is assumed to be "loaded".
+     */
+    computeDependenciesState?: (options: {
+        value: TValue | undefined;
+        get: Getter;
+        precomputedValue: TPrecomputedValue;
+    }) => PersistableAtomDependenciesState;
+
+    /**
+     * A function to validate whether the given value is valid in the current application context.
+     * Called whenever the atom is read to determine if a persisted value is still valid.
+     * This function is also used to decide whether the fixup function should be triggered
+     * for user-provided values.
+     *
+     * The options object contains:
+     * - `value`: The current atom value to validate
+     * - `get`: Jotai getter to read from other atoms
+     * - `precomputedValue`: The precomputed value from precomputeFunction
+     *
+     * Returns true if the value is valid in the current context, false otherwise.
+     */
+    isValidFunction: (options: { value: TValue; get: Getter; precomputedValue: TPrecomputedValue }) => boolean;
+
+    /**
+     * A function that provides a fallback value when a user-provided value is invalid.
+     * This function is only called if the value originates from a user interaction and is invalid.
+     * Persisted values are never passed to this function.
+     *
+     * The options object contains:
+     * - `value`: The current invalid value that needs fixing (may be undefined)
+     * - `get`: Jotai getter to read from other atoms
+     * - `precomputedValue`: The precomputed value from precomputeFunction
+     *
+     * Returns a valid fallback value to use instead.
+     */
+    fixupFunction: (options: { value: TValue | undefined; get: Getter; precomputedValue: TPrecomputedValue }) => TValue;
+};
+
+type PersistableFixableAtomOptionsWithoutPrecompute<TValue> = {
+    /**
+     * The initial value for the atom before any user or persisted value is applied.
+     * This is typically a safe default value used when no persisted state is present.
+     */
+    initialValue: TValue;
+
+    /**
+     * A function to compare two values for equality.
+     * This is used to optimize updates by preventing unnecessary re-renders.
+     */
+    areEqualFunction?: (a: TValue, b: TValue) => boolean;
+
+    /**
+     * An optional function to compute the dependencies state of the atom. This is used to determine
+     * if the atom is waiting for dependent atoms to resolve (e.g., query atoms) before it can
+     * determine its own validity.
+     *
+     * The options object contains:
+     * - `value`: The current atom value (may be undefined)
+     * - `get`: Jotai getter to read from other atoms
+     *
+     * Returns:
+     * - "loading": Dependencies are being resolved
+     * - "error": One or more dependencies have an error
+     * - "loaded": All dependencies are ready
+     *
+     * If not provided, the dependencies state is assumed to be "loaded".
+     */
+    computeDependenciesState?: (options: {
+        value: TValue | undefined;
+        get: Getter;
+    }) => PersistableAtomDependenciesState;
+
+    /**
+     * A function to validate whether the given value is valid in the current application context.
+     * Called whenever the atom is read to determine if a persisted value is still valid.
+     * This function is also used to decide whether the fixup function should be triggered
+     * for user-provided values.
+     *
+     * The options object contains:
+     * - `value`: The current atom value to validate
+     * - `get`: Jotai getter to read from other atoms
+     *
+     * Returns true if the value is valid in the current context, false otherwise.
+     */
+    isValidFunction: (options: { value: TValue; get: Getter }) => boolean;
+
+    /**
+     * A function that provides a fallback value when a user-provided value is invalid.
+     * This function is only called if the value originates from a user interaction and is invalid.
+     * Persisted values are never passed to this function.
+     *
+     * The options object contains:
+     * - `value`: The current invalid value that needs fixing (may be undefined)
+     * - `get`: Jotai getter to read from other atoms
+     *
+     * Returns a valid fallback value to use instead.
+     */
+    fixupFunction: (options: { value: TValue | undefined; get: Getter }) => TValue;
+};
+
+export type PersistableFixableAtomOptions<TValue, TPrecomputedValue = unknown> =
+    | PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue>
+    | PersistableFixableAtomOptionsWithoutPrecompute<TValue>;
+
+const PERSISTABLE_ATOM = Symbol("persistableAtom");
+
+export type PersistableFixableRead<TValue> = {
+    value: TValue;
+    isValidInContext: boolean;
+    isLoading: boolean;
+    depsHaveError: boolean;
+    _source: Source;
+};
+
+export function persistableFixableAtom<TValue, TPrecomputedValue>(
+    options: PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue>,
+): WritableAtom<PersistableFixableRead<TValue>, [TValue | PersistableAtomState<TValue>], void>;
+
+export function persistableFixableAtom<TValue>(
+    options: PersistableFixableAtomOptionsWithoutPrecompute<TValue>,
+): WritableAtom<PersistableFixableRead<TValue>, [TValue | PersistableAtomState<TValue>], void>;
+
+export function persistableFixableAtom<TValue, TPrecomputedValue>(
+    options: PersistableFixableAtomOptions<TValue, TPrecomputedValue>,
+): WritableAtom<PersistableFixableRead<TValue>, [TValue | PersistableAtomState<TValue>], void> {
+    const internalStateAtom = atom<PersistableAtomState<TValue | undefined>>({
+        value: options.initialValue,
+        _source: Source.USER,
+    });
+
+    const hasPrecompute = (
+        opts: PersistableFixableAtomOptions<TValue, TPrecomputedValue>,
+    ): opts is PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> =>
+        (opts as PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue>).precomputeFunction !==
+        undefined;
+
+    const fixableAtom = atom<PersistableFixableRead<TValue>, [TValue | PersistableAtomState<TValue>], void>(
+        (get) => {
+            const internalState = get(internalStateAtom);
+
+            if (hasPrecompute(options)) {
+                const precomputed = options.precomputeFunction({ value: internalState.value, get });
+
+                const dependenciesState = options.computeDependenciesState
+                    ? options.computeDependenciesState({
+                          value: internalState.value,
+                          get,
+                          precomputedValue: precomputed,
+                      })
+                    : "loaded";
+
+                const isValid =
+                    internalState.value !== undefined &&
+                    options.isValidFunction({
+                        value: internalState.value,
+                        get,
+                        precomputedValue: precomputed,
+                    });
+
+                if (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) {
+                    if (internalState.value === undefined) {
+                        throw new Error("Persisted or template value cannot be undefined.");
+                    }
+                    return {
+                        value: internalState.value as TValue,
+                        isValidInContext: isValid,
+                        isLoading: dependenciesState === "loading",
+                        depsHaveError: dependenciesState === "error",
+                        _source: internalState._source,
+                    };
+                }
+
+                return {
+                    value: isValid
+                        ? (internalState.value as TValue)
+                        : options.fixupFunction({ value: internalState.value, get, precomputedValue: precomputed }),
+                    isValidInContext: true,
+                    isLoading: dependenciesState === "loading",
+                    depsHaveError: dependenciesState === "error",
+                    _source: internalState._source,
+                };
+            }
+
+            const dependenciesState = options.computeDependenciesState
+                ? options.computeDependenciesState({ value: internalState.value, get })
+                : "loaded";
+
+            const isValid =
+                internalState.value !== undefined && options.isValidFunction({ value: internalState.value, get });
+
+            if (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) {
+                if (internalState.value === undefined) {
+                    throw new Error(
+                        "Persisted or template value cannot be undefined when a precompute function is used and no initial value is provided.",
+                    );
+                }
+                return {
+                    value: internalState.value as TValue,
+                    isValidInContext: isValid,
+                    isLoading: dependenciesState === "loading",
+                    depsHaveError: dependenciesState === "error",
+                    _source: internalState._source,
+                };
+            }
+
+            return {
+                value: isValid
+                    ? (internalState.value as TValue)
+                    : options.fixupFunction({ value: internalState.value, get }),
+                isValidInContext: true,
+                isLoading: dependenciesState === "loading",
+                depsHaveError: dependenciesState === "error",
+                _source: internalState._source,
+            };
+        },
+        (get, set, update: TValue | PersistableAtomState<TValue>) => {
+            const areEqualFunc = options.areEqualFunction;
+            const currentState = get(internalStateAtom);
+
+            if (isInternalState(update)) {
+                if (
+                    currentState.value !== undefined &&
+                    areEqualFunc &&
+                    areEqualFunc(currentState.value, update.value)
+                ) {
+                    // If values are equal, preserve value reference, but update source if different
+                    if (currentState._source !== update._source) {
+                        set(internalStateAtom, { value: currentState.value, _source: update._source });
+                    }
+                    return;
+                }
+                set(internalStateAtom, { ...update });
+                return;
+            }
+
+            // Handle direct value updates (non-internal state)
+            const value =
+                currentState.value !== undefined && areEqualFunc && areEqualFunc(currentState.value, update)
+                    ? currentState.value // Preserve reference when equal
+                    : update;
+            set(internalStateAtom, { value, _source: Source.USER });
+        },
+    );
+
+    // Create an effect that auto-transitions PERSISTENCE/TEMPLATE → USER when valid
+    const transitionEffect = atomEffect((get, set) => {
+        const currentRead = get(fixableAtom);
+        const internalState = get(internalStateAtom);
+
+        // Only transition if:
+        // 1. Source is PERSISTENCE or TEMPLATE
+        // 2. Atom is valid in context
+        // 3. Not loading
+        // 4. Dependencies don't have errors
+        if (
+            (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) &&
+            currentRead.isValidInContext &&
+            !currentRead.isLoading &&
+            !currentRead.depsHaveError
+        ) {
+            set(internalStateAtom, {
+                value: internalState.value,
+                _source: Source.USER,
+            });
+        }
+    });
+
+    // Wrap the atom to automatically mount the effect
+    const atomWithEffect = atom(
+        (get) => {
+            get(transitionEffect); // Subscribe to effect
+            return get(fixableAtom);
+        },
+        (_get, set, update: TValue | PersistableAtomState<TValue>) => {
+            set(fixableAtom, update);
+        },
+    );
+
+    Object.defineProperty(atomWithEffect, PERSISTABLE_ATOM, {
+        value: true,
+        enumerable: false,
+    });
+
+    return atomWithEffect;
+}
+
+type PersistableFlagged = { [PERSISTABLE_ATOM]: true };
+
+export function isPersistableAtom(a: unknown): a is Atom<unknown> & PersistableFlagged {
+    return !!(a && typeof a === "object" && (a as any)[PERSISTABLE_ATOM] === true);
+}
+
+export function setIfDefined<Value, Result>(
+    set: Setter,
+    atom: WritableAtom<any, [Value], Result>,
+    value: Value | undefined,
+): Result | undefined {
+    if (value !== undefined) {
+        return set(atom, value);
+    }
+    return undefined;
 }

@@ -157,7 +157,7 @@ export class ExternalSettingController<
     }
 
     setAvailableValues(settingId: string, availableValues: AvailableValuesType<TSetting> | null): void {
-        if (availableValues) {
+        if (availableValues !== null) {
             this._availableValuesMap.set(settingId, availableValues);
         } else {
             this._availableValuesMap.delete(settingId);

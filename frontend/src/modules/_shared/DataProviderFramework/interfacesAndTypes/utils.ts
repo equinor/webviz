@@ -34,6 +34,6 @@ export type MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory extends Set
 export type TupleIndices<T extends readonly any[]> = Extract<keyof T, `${number}`>;
 export type SettingsKeysFromTuple<TSettings extends Settings> = TSettings[TupleIndices<TSettings>];
 
-// "MakeArrayIfNotArray<T>" yields "unknown[] | any[]" for "T = any"  - we don't want "unknown[]"
+// "MakeArrayIfNotArray<T>" ypields "unknown[] | any[]" for "T = any"  - we don't want "unknown[]"
 type RemoveUnknownFromArray<T> = T extends (infer U)[] ? ([unknown] extends [U] ? any[] : T) : T;
 type MakeArrayIfNotArray<T> = Exclude<T, null> extends Array<infer V> ? Array<V> : Array<Exclude<T, null>>;

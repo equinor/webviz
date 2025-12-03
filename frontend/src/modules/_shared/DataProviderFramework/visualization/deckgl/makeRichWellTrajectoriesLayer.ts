@@ -3,7 +3,7 @@ import type {
     GeoJsonWellProperties as BaseWellProperties,
 } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 
-import type { EnhancedWellboreHeader_api, WellboreTrajectory_api } from "@api";
+import type { WellboreHeader_api, WellboreTrajectory_api } from "@api";
 import type { RichDrilledWellTrajectoriesSettings } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RichDrilledWellTrajectoriesProvider";
 import type { WellboreData } from "@modules/_shared/customDeckGlLayers/RichWellsLayer/RichWellsLayer";
 import { RichWellsLayer } from "@modules/_shared/customDeckGlLayers/RichWellsLayer/RichWellsLayer";
@@ -26,8 +26,13 @@ export function makeRichWellTrajectoriesLayer({
     getStoredData,
 }: TransformerArgs<RichDrilledWellTrajectoriesSettings, WellboreTrajectory_api[], any>): RichWellsLayer | null {
     const wellboreTrajectories = getData();
-    const wellboreHeaders: EnhancedWellboreHeader_api[] = getStoredData("wellboreHeaders") ?? [];
+    const wellboreHeaders: WellboreHeader_api[] = getStoredData("selectedWellBoreHeaders") ?? [];
+
     const depthFilter = getSetting(Setting.DEPTH_FILTER);
+    const formationSegments = getStoredData("formationSegments");
+    const productionData = getStoredData("productionData");
+    const injectionData = getStoredData("injectionData");
+
     const selectedHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
 
     if (!wellboreTrajectories) {

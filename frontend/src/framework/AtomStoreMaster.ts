@@ -17,7 +17,11 @@ export class AtomStoreMaster {
         });
     }
 
-    makeAtomStoreForModuleInstance(moduleInstanceId: string) {
+    makeAtomStoreForModuleInstance(moduleInstanceId: string): AtomStore {
+        if (this._atomStores.has(moduleInstanceId)) {
+            throw new Error(`Atom store for module instance with id ${moduleInstanceId} already exists`);
+        }
+
         const atomStore = createStore();
         // Make the module's own id available within each module's store
         atomStore.set(CurrentModuleInstanceIdAtom, moduleInstanceId);
@@ -27,12 +31,15 @@ export class AtomStoreMaster {
         for (const [atom, value] of atomStates) {
             atomStore.set(atom, value);
         }
+
+        return atomStore;
     }
 
-    getAtomStoreForModuleInstance(moduleInstanceId: string): AtomStore {
+    getAtomStoreForModuleInstance(moduleInstanceId: string): AtomStore | null {
         const atomStore = this._atomStores.get(moduleInstanceId);
         if (!atomStore) {
-            throw new Error(`No atom store found for module instance with id: ${moduleInstanceId}`);
+            console.debug(`No atom store found for module instance with id ${moduleInstanceId}`);
+            return null;
         }
         return atomStore;
     }

@@ -1,6 +1,7 @@
 import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     AreSettingsValidArgs,
     CustomDataProviderImplementation,
@@ -53,7 +54,7 @@ export class RealizationGridProvider
     }
 
     getDefaultName() {
-        return "Realization Grid";
+        return "Grid Model Layer";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -112,6 +113,7 @@ export class RealizationGridProvider
                 j_max: jMax - 1,
                 k_min: kMin,
                 k_max: kMax,
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 
@@ -127,6 +129,7 @@ export class RealizationGridProvider
                 j_max: jMax - 1,
                 k_min: kMin,
                 k_max: kMax,
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 
@@ -196,6 +199,7 @@ export class RealizationGridProvider
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
                         realization_num: realization,
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),

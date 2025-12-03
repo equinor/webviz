@@ -1,3 +1,5 @@
+import type { VfpApiTableDataAccessor } from "./utils/vfpApiTableDataAccessor";
+
 export enum QueryStatus {
     Loading = "Loading",
     Error = "Error",
@@ -20,3 +22,15 @@ export enum VfpType {
     VFPPROD = "VFPPROD",
     VFPINJ = "VFPINJ",
 }
+
+export type TableDataAccessorWithStatusFlags = {
+    tableDataAccessor: VfpApiTableDataAccessor | null;
+    tableDataStatus: {
+        isFetching: boolean;
+        isError: boolean;
+    };
+    tableNamesStatus: {
+        isError: boolean;
+        isFetching: boolean;
+    };
+};

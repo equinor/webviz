@@ -14,34 +14,40 @@ import {
     useModuleInstanceTopicValue,
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import type { Workbench } from "@framework/Workbench";
+import { type Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useActiveSession } from "../../ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
+    const workbenchSession = useActiveSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
 
-    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
 
     const moduleInstanceLifecycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
         ModuleInstanceTopic.LIFECYCLE_STATE,
     );
-    const atomStore = props.workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
+
+    const moduleInstanceSettingsStateInvalid = useModuleInstanceTopicValue(
+        props.moduleInstance,
+        ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS,
+    );
+
+    const isSerializable = props.moduleInstance.getModule().canBeSerialized();
 
     if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;
@@ -79,6 +85,64 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         }
     }
 
+    function makeContent() {
+        if (moduleInstanceSettingsStateInvalid) {
+            return (
+                <div className="flex flex-col gap-4 h-full w-full justify-center items-center">
+                    <div className="text-red-600 m-2 text-center">
+                        The persisted settings for this module&apos;s settings are invalid and could not be applied.
+                        They have most likely been outdated by a module update. You can reset the module to its default
+                        values to continue using it.
+                    </div>
+                    <Button onClick={() => props.moduleInstance.resetInvalidPersistedFlags()} variant="contained">
+                        Reset module
+                    </Button>
+                </div>
+            );
+        }
+
+        const atomStore = workbenchSession
+            .getAtomStoreMaster()
+            .getAtomStoreForModuleInstance(props.moduleInstance.getId());
+
+        if (!atomStore) {
+            return null;
+        }
+
+        return (
+            <>
+                {!isSerializable && (
+                    <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
+                        <strong>Note:</strong> This module cannot be persisted yet. State changes will not be saved.
+                    </div>
+                )}
+                <DebugProfiler
+                    id={`${props.moduleInstance.getId()}-settings`}
+                    source={StatusSource.Settings}
+                    statusController={props.moduleInstance.getStatusController()}
+                    guiMessageBroker={props.workbench.getGuiMessageBroker()}
+                >
+                    <Provider store={atomStore}>
+                        <HydrateQueryClientAtom>
+                            <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
+                                <Settings
+                                    settingsContext={props.moduleInstance.getContext()}
+                                    workbenchSession={props.workbench.getSessionManager().getActiveSession()}
+                                    workbenchServices={props.workbench.getWorkbenchServices()}
+                                    workbenchSettings={props.workbench
+                                        .getSessionManager()
+                                        .getActiveSession()
+                                        .getWorkbenchSettings()}
+                                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                />
+                            </ApplyInterfaceEffectsToSettings>
+                        </HydrateQueryClientAtom>
+                    </Provider>
+                </DebugProfiler>
+            </>
+        );
+    }
+
     const Settings = props.moduleInstance.getSettingsFC();
     return (
         <div
@@ -100,30 +164,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                     </span>
                 </div>
                 <div className="flex flex-col gap-4 overflow-auto grow">
-                    <div className="p-2 grow">
-                        <DebugProfiler
-                            id={`${props.moduleInstance.getId()}-settings`}
-                            source={StatusSource.Settings}
-                            statusController={props.moduleInstance.getStatusController()}
-                            guiMessageBroker={props.workbench.getGuiMessageBroker()}
-                        >
-                            <Provider store={atomStore}>
-                                <HydrateQueryClientAtom>
-                                    <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
-                                        <Settings
-                                            settingsContext={props.moduleInstance.getContext()}
-                                            workbenchSession={props.workbench.getWorkbenchSession()}
-                                            workbenchServices={props.workbench.getWorkbenchServices()}
-                                            workbenchSettings={props.workbench
-                                                .getWorkbenchSession()
-                                                .getWorkbenchSettings()}
-                                            initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                        />
-                                    </ApplyInterfaceEffectsToSettings>
-                                </HydrateQueryClientAtom>
-                            </Provider>
-                        </DebugProfiler>
-                    </div>
+                    <div className="p-2 grow">{makeContent()}</div>
                 </div>
             </ErrorBoundary>
         </div>

@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 
 import type { ViewStatusWriter } from "@framework/StatusWriter";
-import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
+import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { indicesWithValuesAtom } from "../atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";
@@ -10,17 +10,7 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) 
     const queriesResult = useAtomValue(aggregatedTableDataQueriesAtom);
     const indicesWithValues = useAtomValue(indicesWithValuesAtom);
 
-    if (!queriesResult.someQueriesFailed) {
-        return;
-    }
-
-    const errors = queriesResult.errors;
-    for (const error of errors) {
-        const helper = ApiErrorHelper.fromError(error);
-        if (helper) {
-            statusWriter.addError(helper.makeStatusMessage());
-        }
-    }
+    usePropagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
 
     for (const elm of indicesWithValues) {
         if (elm.values.length === 0) {

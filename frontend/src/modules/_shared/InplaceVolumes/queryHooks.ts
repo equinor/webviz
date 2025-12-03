@@ -7,6 +7,7 @@ import type {
 } from "@api";
 import { postGetAggregatedPerRealizationTableDataOptions, postGetAggregatedStatisticalTableDataOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import type {
     InplaceVolumesStatisticalTableData,
@@ -21,7 +22,6 @@ export type EnsembleIdentWithRealizations = {
 export type AggregatedTableDataResults = {
     tablesData: InplaceVolumesTableData[];
     isFetching: boolean;
-    someQueriesFailed: boolean;
     allQueriesFailed: boolean;
     errors: Error[];
 };
@@ -29,7 +29,6 @@ export type AggregatedTableDataResults = {
 export type AggregatedStatisticalTableDataResults = {
     tablesData: InplaceVolumesStatisticalTableData[];
     isFetching: boolean;
-    someQueriesFailed: boolean;
     allQueriesFailed: boolean;
     errors: Error[];
 };
@@ -65,6 +64,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
                     result_names: resultNames,
                     group_by_indices: validGroupByIndices,
                     realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(source.ensembleIdent),
                 },
                 body: {
                     indices_with_values: indicesWithValues,
@@ -103,7 +103,6 @@ export function useGetAggregatedStatisticalTableDataQueries(
         return {
             tablesData: tablesData,
             isFetching: results.some((result) => result.isFetching),
-            someQueriesFailed: results.some((result) => result.isError),
             allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
             errors: errors,
         };
@@ -146,6 +145,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                     result_names: resultNames,
                     group_by_indices: validGroupByIndices,
                     realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(source.ensembleIdent),
                 },
                 body: {
                     indices_with_values: indicesWithValues,
@@ -184,7 +184,6 @@ export function useGetAggregatedPerRealizationTableDataQueries(
         return {
             tablesData: tablesData,
             isFetching: results.some((result) => result.isFetching),
-            someQueriesFailed: results.some((result) => result.isError),
             allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
             errors: errors,
         };

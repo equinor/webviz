@@ -1,9 +1,9 @@
 import type { BBox } from "@lib/utils/bbox";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import type { RealizationSurfaceData } from "../../dataProviders/implementations/RealizationSurfaceProvider";
+import type { SurfaceData } from "../../dataProviders/implementations/surfaceProviders/types";
 
-export function makeSurfaceLayerBoundingBox({ getData }: TransformerArgs<any, RealizationSurfaceData>): BBox | null {
+export function makeSurfaceLayerBoundingBox({ getData }: TransformerArgs<any, SurfaceData>): BBox | null {
     const data = getData();
     if (!data) {
         return null;

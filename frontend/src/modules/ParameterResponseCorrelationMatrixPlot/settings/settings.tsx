@@ -3,7 +3,6 @@ import React from "react";
 import { useAtom } from "jotai";
 
 import type { ParameterIdent } from "@framework/EnsembleParameters";
-import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -19,7 +18,10 @@ import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
 import {
-    correlationSettingsAtom,
+    correlationThresholdAtom,
+    filterColumnsAtom,
+    filterRowsAtom,
+    hideIndividualCellsAtom,
     parameterIdentsAtom,
     plotTypeAtom,
     showLabelsAtom,
@@ -41,16 +43,16 @@ const plotTypesOptions = [
     },
 ];
 
-export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const [parameterIdents, setParameterIdents] = useAtom(parameterIdentsAtom);
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [useFixedColorRange, setUseFixedColorRange] = useAtom(useFixedColorRangeAtom);
-    const [correlationSettings, setCorrelationSettings] = useAtom(correlationSettingsAtom);
 
-    useApplyInitialSettingsToState(initialSettings, "parameterIdents", "array", setParameterIdents);
-    useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
-    useApplyInitialSettingsToState(initialSettings, "correlationSettings", "object", setCorrelationSettings);
+    const [correlationThreshold, setCorrelationThreshold] = useAtom(correlationThresholdAtom);
+    const [hideIndividualCells, setHideIndividualCells] = useAtom(hideIndividualCellsAtom);
+    const [filterColumns, setFilterColumns] = useAtom(filterColumnsAtom);
+    const [filterRows, setFilterRows] = useAtom(filterRowsAtom);
     const receiverResponse = settingsContext.useChannelReceiver({
         receiverIdString: "channelResponse",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
@@ -92,28 +94,16 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
     function handleThresholdChanged(e: React.ChangeEvent<HTMLInputElement>) {
         let threshold = e.target.value ? parseFloat(e.target.value) : 0.0;
         threshold = Math.max(0.0, Math.min(1.0, Math.abs(threshold))); // Ensure threshold is between 0 and 1
-        setCorrelationSettings((prev) => ({
-            ...prev,
-            threshold,
-        }));
+        setCorrelationThreshold(threshold);
     }
     function handleHideIndividualCellsChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setCorrelationSettings((prev) => ({
-            ...prev,
-            hideIndividualCells: e.target.checked,
-        }));
+        setHideIndividualCells(e.target.checked);
     }
     function handleFilterColumnsChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setCorrelationSettings((prev) => ({
-            ...prev,
-            filterColumns: e.target.checked,
-        }));
+        setFilterColumns(e.target.checked);
     }
     function handleFilterRowsChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setCorrelationSettings((prev) => ({
-            ...prev,
-            filterRows: e.target.checked,
-        }));
+        setFilterRows(e.target.checked);
     }
     return (
         <div className="flex flex-col gap-2">
@@ -144,24 +134,24 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
                             step={0.01}
                             min={0}
                             max={1}
-                            value={correlationSettings.threshold ?? ""}
+                            value={correlationThreshold ?? ""}
                             onChange={handleThresholdChanged}
                             className="w-full p-1 border border-gray-300 rounded"
                         />
                     </Label>
                     <Checkbox
                         label="Blank individual cells below cutoff"
-                        checked={correlationSettings.hideIndividualCells}
+                        checked={hideIndividualCells}
                         onChange={handleHideIndividualCellsChanged}
                     />
                     <Checkbox
                         label="Filter columns below cutoff"
-                        checked={correlationSettings.filterColumns}
+                        checked={filterColumns}
                         onChange={handleFilterColumnsChanged}
                     />
                     <Checkbox
                         label="Filter rows below cutoff"
-                        checked={correlationSettings.filterRows}
+                        checked={filterRows}
                         onChange={handleFilterRowsChanged}
                     />
                 </div>

@@ -86,8 +86,8 @@ async def get_logged_in_user(
             if graph_user_info is not None:
                 user_info.display_name = graph_user_info.get("displayName", None)
         except httpx.HTTPError as exc:
-            print("Error while fetching user avatar and info from Microsoft Graph API (HTTP error):\n", exc)
+            LOGGER.error(f"Error while fetching user avatar and info from Microsoft Graph API (HTTP error):\n{exc}")
         except httpx.InvalidURL as exc:
-            print("Error while fetching user avatar and info from Microsoft Graph API (Invalid URL):\n", exc)
+            LOGGER.error(f"Error while fetching user avatar and info from Microsoft Graph API (Invalid URL):\n{exc}")
 
     return user_info

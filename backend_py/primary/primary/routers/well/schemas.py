@@ -3,7 +3,7 @@ from typing import List, Optional, TypeAlias
 from pydantic import BaseModel
 
 
-class WellboreHeader(BaseModel):
+class BasicWellboreHeader(BaseModel):
     wellboreUuid: str
     uniqueWellboreIdentifier: str
     wellUuid: str
@@ -14,9 +14,13 @@ class WellboreHeader(BaseModel):
     depthReferenceElevation: float
     wellborePurpose: str
     wellboreStatus: str
+    currentTrack: int
+    kickoffDepthMd: float | None
+    kickoffDepthTvd: float | None
+    parentWellbore: str | None
 
 
-class EnhancedWellboreHeader(BaseModel):
+class WellboreHeader(BaseModel):
     """Enhanced wellbore header that includes completion data (perforations and screens)"""
 
     wellboreUuid: str
@@ -29,6 +33,10 @@ class EnhancedWellboreHeader(BaseModel):
     depthReferenceElevation: float
     wellborePurpose: str
     wellboreStatus: str
+    currentTrack: int
+    kickoffDepthMd: float | None
+    kickoffDepthTvd: float | None
+    parentWellbore: str | None
     # Completion data
     perforations: List["WellborePerforationNested"] = []
     screens: List["WellboreCompletionNested"] = []

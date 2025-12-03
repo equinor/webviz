@@ -7,8 +7,8 @@ import { LabelOrientation, WellLabelLayer } from "@webviz/subsurface-viewer/dist
 import type { Feature, FeatureCollection, Geometry, LineString } from "geojson";
 import { sortBy, zipWith } from "lodash";
 
-import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, subtractVec2, vec2FromArray } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { simplifyWellTrajectoryRadialDist } from "@modules/_shared/utils/wellbore";
 
 // TODO: These should be in a shared trajectory util

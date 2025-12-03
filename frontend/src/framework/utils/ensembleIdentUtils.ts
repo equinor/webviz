@@ -2,6 +2,28 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 /**
+ * Get an array of ensemble idents from an array of strings.
+ *
+ * Excludes invalid strings, unless throwOnInvalid is true.
+ *
+ * @param ensembleIdentStrings - The array of ensemble ident strings.
+ * @param throwOnInvalid - Whether to throw an error on invalid string conversion.
+ * @returns The array of ensemble idents.
+ */
+export function getEnsembleIdentsFromStrings(
+    ensembleIdentStrings: string[],
+    throwOnInvalid: boolean = false,
+): (RegularEnsembleIdent | DeltaEnsembleIdent)[] {
+    const ensembleIdents = ensembleIdentStrings.map((elm) => getEnsembleIdentFromString(elm));
+    const validEnsembleIdents = ensembleIdents.filter((elm) => elm !== null);
+    if (throwOnInvalid && ensembleIdents.length !== validEnsembleIdents.length) {
+        throw new Error("Invalid ensemble ident strings");
+    }
+
+    return validEnsembleIdents;
+}
+
+/**
  * Get ensemble ident from string
  * @param ensembleIdentString
  * @returns RegularEnsembleIdent | DeltaEnsembleIdent | null

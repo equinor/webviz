@@ -1,27 +1,15 @@
 import { atom } from "jotai";
 
-import type { EnhancedWellboreHeader_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 
-import { userSelectedFieldIdentAtom, userSelectedWellboreUuidAtom } from "./persistedAtoms";
-import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./queryAtoms";
+import { selectedWellboreUuidAtom } from "./persistableFixableAtoms";
+import { drilledWellboreHeadersQueryAtom } from "./queryAtoms";
 
-export const selectedFieldIdentifierAtom = atom((get) => {
-    const availableFields = get(availableFieldsQueryAtom).data ?? [];
-    const selectedFieldId = get(userSelectedFieldIdentAtom);
+export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) => {
+    const availableWellboreHeaders = get(drilledWellboreHeadersQueryAtom)?.data ?? [];
+    const selectedWellboreId = get(selectedWellboreUuidAtom).value;
 
-    // Fixup selected field id
-    if (!availableFields.length) return null;
-    const selectionIsValid = availableFields.some((field) => field.fieldIdentifier === selectedFieldId);
-    return selectionIsValid ? selectedFieldId : availableFields[0].fieldIdentifier;
-});
+    if (!selectedWellboreId) return null;
 
-export const selectedWellboreHeaderAtom = atom<EnhancedWellboreHeader_api | null>((get) => {
-    const availableWellboreHeaders = get(drilledWellboreHeadersQueryAtom)?.data;
-    const selectedWellboreId = get(userSelectedWellboreUuidAtom);
-
-    if (!availableWellboreHeaders?.length) {
-        return null;
-    }
-
-    return availableWellboreHeaders.find((wh) => wh.wellboreUuid === selectedWellboreId) ?? availableWellboreHeaders[0];
+    return availableWellboreHeaders.find((wh) => wh.wellboreUuid === selectedWellboreId) ?? null;
 });

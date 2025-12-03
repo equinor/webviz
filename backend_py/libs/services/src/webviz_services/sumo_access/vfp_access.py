@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-from webviz_services.service_exceptions import NoDataError, Service
+from webviz_services.service_exceptions import InvalidParameterError, NoDataError, Service
 
 from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client
@@ -77,6 +77,9 @@ class VfpAccess:
 
         pa_table = await self.get_vfp_table_from_tagname_as_pyarrow_async(tagname, realization)
 
+        # Validate required metadata fields
+        self._validate_vfp_pa_table_schema_metadata(pa_table)
+
         # Extracting data valid for both VFPPROD and VFPINJ
         vfp_type = VfpType[pa_table.schema.metadata[b"VFP_TYPE"].decode("utf-8")]
         unit_type = UnitType[pa_table.schema.metadata[b"UNIT_TYPE"].decode("utf-8")]
@@ -104,6 +107,9 @@ class VfpAccess:
             )
 
         if vfp_type == VfpType.VFPPROD:
+            # Validate required metadata fields specific to VFPPROD
+            self._validate_vfp_prod_table_specific_metadata(pa_table)
+
             # Extracting additional data valid only for VFPPROD
             alq_type = ALQ.UNDEFINED
             if pa_table.schema.metadata[b"ALQ_TYPE"].decode("utf-8") != "''":
@@ -138,4 +144,47 @@ class VfpAccess:
                 bhp_unit=VFP_UNITS[unit_type][VfpParam.THP][thp_type],
             )
 
-        raise ValueError(f"VfpType {vfp_type} not implemented.")
+        raise InvalidParameterError(f"VfpType {vfp_type} not handled.", Service.GENERAL)
+
+    def _validate_vfp_pa_table_schema_metadata(self, pa_table: pa.Table) -> None:
+        """Validates that the required metadata fields are present in the pyarrow table schema."""
+        required_metadata_fields = [
+            b"VFP_TYPE",
+            b"UNIT_TYPE",
+            b"THP_TYPE",
+            b"RATE_TYPE",
+            b"TABLE_NUMBER",
+            b"DATUM",
+            b"TAB_TYPE",
+            b"THP_VALUES",
+            b"FLOW_VALUES",
+        ]
+
+        missing_fields = []
+        for field in required_metadata_fields:
+            if field not in pa_table.schema.metadata:
+                missing_fields.append(field.decode("utf-8"))
+
+        if missing_fields:
+            raise NoDataError(f"Missing required VFP table metadata fields: {', '.join(missing_fields)}", Service.SUMO)
+
+    def _validate_vfp_prod_table_specific_metadata(self, pa_table: pa.Table) -> None:
+        """Validates that the required metadata fields for VfpProdTable are present in the pyarrow table schema."""
+        required_prod_metadata_fields = [
+            b"WFR_TYPE",
+            b"GFR_TYPE",
+            b"ALQ_TYPE",
+            b"WFR_VALUES",
+            b"GFR_VALUES",
+            b"ALQ_VALUES",
+        ]
+
+        missing_fields = []
+        for field in required_prod_metadata_fields:
+            if field not in pa_table.schema.metadata:
+                missing_fields.append(field.decode("utf-8"))
+
+        if missing_fields:
+            raise NoDataError(
+                f"Missing required VFP Prod table metadata fields: {', '.join(missing_fields)}", Service.SUMO
+            )

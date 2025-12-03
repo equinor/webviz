@@ -1,4 +1,5 @@
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
     AreSettingsValidArgs,
@@ -44,7 +45,7 @@ export class RealizationGridProvider
     }
 
     getDefaultName() {
-        return "Realization Grid";
+        return "Grid Model 3D";
     }
 
     doSettingsChangesRequireDataRefetch(
@@ -110,6 +111,7 @@ export class RealizationGridProvider
                 j_max: range[1][1],
                 k_min: range[2][0],
                 k_max: range[2][1],
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 
@@ -125,6 +127,7 @@ export class RealizationGridProvider
                 j_max: range[1][1],
                 k_min: range[2][0],
                 k_max: range[2][1],
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 
@@ -193,6 +196,7 @@ export class RealizationGridProvider
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
                         realization_num: realization,
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
@@ -232,14 +236,23 @@ export class RealizationGridProvider
         availableSettingsUpdater(Setting.GRID_LAYER_RANGE, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
-
+            console.log("data", data);
+            console.log("gridName", gridName);
             if (!gridName || !data) {
-                return NO_UPDATE;
+                return [
+                    [0, 0, 1],
+                    [0, 0, 1],
+                    [0, 0, 1],
+                ];
             }
 
             const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
             if (!gridDimensions) {
-                return NO_UPDATE;
+                return [
+                    [0, 0, 1],
+                    [0, 0, 1],
+                    [0, 0, 1],
+                ];
             }
 
             return [

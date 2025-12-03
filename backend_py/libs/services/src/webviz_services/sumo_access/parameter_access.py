@@ -7,7 +7,7 @@ from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
 
 from webviz_core_utils.perf_metrics import PerfMetrics
-from webviz_services.service_exceptions import InvalidDataError, ServiceRequestError, Service
+from webviz_services.service_exceptions import NoDataError, InvalidDataError, ServiceRequestError, Service
 
 from .sumo_client_factory import create_sumo_client
 from .parameter_types import (
@@ -39,12 +39,26 @@ class ParameterAccess:
         """Retrieve parameters for an ensemble"""
         perf_metrics = PerfMetrics()
 
+        #  Check for existing per realization parameters before aggregation request
+        parameter_realization_context = self._ensemble_context.filter(
+            realization=True,
+            aggregation=False,
+        ).parameters
+
+        realization_count = await parameter_realization_context.length_async()
+        if realization_count == 0:
+            raise NoDataError(
+                f"No parameters found for case {self._case_uuid} and ensemble {self._ensemble_name}",
+                Service.SUMO,
+            )
+
+        # Aggregate all parameters or use existing aggregation (handled by fmu-sumo)
         parameter_table_context = self._ensemble_context.parameters
         try:
             parameter_agg = await parameter_table_context.aggregation_async(operation="collection")
         except Exception as exp:
             raise ServiceRequestError(
-                f"No parameters found for case {self._case_uuid} and ensemble {self._ensemble_name}",
+                f"Parameter aggregation failed for case {self._case_uuid} and ensemble {self._ensemble_name}",
                 Service.SUMO,
             ) from exp
         perf_metrics.record_lap("aggregate")
@@ -132,34 +146,53 @@ def create_ensemble_sensitivity_cases(
 
 def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[EnsembleParameter]:
     """Convert a parameter table to EnsembleParameters"""
+    _validate_parameter_table(parameter_table)
+    parameter_table = _cast_datetime_columns_to_string(parameter_table)
+
+    parameter_str_arr = [param_str for param_str in parameter_table.column_names if param_str != "REAL"]
+    parameter_group_dict = _parameter_str_arr_to_parameter_group_dict(parameter_str_arr)
     ensemble_parameters: List[EnsembleParameter] = []
+    for group_name, parameter_names in parameter_group_dict.items():
+        if group_name and "LOG10_" in group_name:
+            continue
+        for parameter_name in parameter_names:
+            ensemble_parameters.append(
+                _create_ensemble_parameter(parameter_name, group_name, parameter_group_dict, parameter_table)
+            )
+    return ensemble_parameters
+
+
+def _validate_parameter_table(parameter_table: pa.Table) -> None:
     if "REAL" not in parameter_table.column_names:
         raise InvalidDataError(
             "Parameter table does not contain a 'REAL' column, which is required to identify realizations.",
             Service.SUMO,
         )
-    parameter_str_arr = [param_str for param_str in parameter_table.column_names if param_str != "REAL"]
-    parameter_group_dict = _parameter_str_arr_to_parameter_group_dict(parameter_str_arr)
-    ensemble_parameters = []
-    for group_name, parameter_names in parameter_group_dict.items():
-        if group_name and "LOG10_" in group_name:
-            continue
-        for parameter_name in parameter_names:
-            is_logarithmic = parameter_name in parameter_group_dict.get(f"LOG10_{group_name}", [])
-            table_column_name = _parameter_name_and_group_name_to_parameter_str(parameter_name, group_name)
-            ensemble_parameters.append(
-                EnsembleParameter(
-                    name=parameter_name,
-                    group_name=f"LOG10_{group_name}" if is_logarithmic else group_name,
-                    is_logarithmic=is_logarithmic,
-                    is_discrete=_is_discrete_column(parameter_table.schema.field(table_column_name).type),
-                    is_constant=len(set(parameter_table[table_column_name])) == 1,
-                    descriptive_name=parameter_name,
-                    values=parameter_table[table_column_name].to_numpy().tolist(),
-                    realizations=parameter_table["REAL"].to_numpy().tolist(),
-                )
-            )
-    return ensemble_parameters
+
+
+def _cast_datetime_columns_to_string(parameter_table: pa.Table) -> pa.Table:
+    """Cast datetime columns to string"""
+    for i, field in enumerate(parameter_table.schema):
+        if pa.types.is_timestamp(field.type) or pa.types.is_date(field.type):
+            parameter_table = parameter_table.set_column(i, field.name, parameter_table[field.name].cast(pa.string()))
+    return parameter_table
+
+
+def _create_ensemble_parameter(
+    parameter_name: str, group_name: Optional[str], parameter_group_dict: dict, parameter_table: pa.Table
+) -> EnsembleParameter:
+    is_logarithmic = parameter_name in parameter_group_dict.get(f"LOG10_{group_name}", [])
+    table_column_name = _parameter_name_and_group_name_to_parameter_str(parameter_name, group_name)
+    return EnsembleParameter(
+        name=parameter_name,
+        group_name=f"LOG10_{group_name}" if is_logarithmic else group_name,
+        is_logarithmic=is_logarithmic,
+        is_discrete=_is_discrete_column(parameter_table.schema.field(table_column_name).type),
+        is_constant=len(set(parameter_table[table_column_name])) == 1,
+        descriptive_name=parameter_name,
+        values=parameter_table[table_column_name].to_numpy().tolist(),
+        realizations=parameter_table["REAL"].to_numpy().tolist(),
+    )
 
 
 def _is_discrete_column(column_type: pa.DataType) -> bool:

@@ -462,7 +462,7 @@ export class SettingsContextDelegate<
                 getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
                 getHelperDependency: <TDep>(
                     dep: Dependency<TDep, TSettings, TSettingTypes, TSettingKey>,
-                ) => TDep | null;
+                ) => Awaited<TDep> | null;
                 abortSignal: AbortSignal;
             }) => T,
         ) => {

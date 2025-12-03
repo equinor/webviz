@@ -41,7 +41,9 @@ export class StackedPlotProvider
             WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY,
         ].map((source) =>
             helperDependency(async ({ getGlobalSetting, abortSignal }) => {
-                const wellboreId = getGlobalSetting("wellboreUuid") ?? "";
+                const wellboreId = getGlobalSetting("wellboreUuid");
+
+                if (!wellboreId) return null;
 
                 return await args.queryClient.fetchQuery({
                     ...getWellboreLogCurveHeadersOptions({
