@@ -30,6 +30,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
         onValueChange,
         debounceTimeMs,
         inputRef,
+        allowEmptyNumber,
         ...other
     } = props;
 
@@ -92,7 +93,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                 if (props.max !== undefined) {
                     newValue = Math.min(props.max, newValue);
                 }
-            } else if (value === "" && props.allowEmptyNumber) {
+            } else if (value === "" && allowEmptyNumber) {
                 newValue = value;
             } else {
                 newValue = 0;
@@ -136,7 +137,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                     if (props.max !== undefined) {
                         newValue = Math.min(props.max, newValue);
                     }
-                } else if (event.target.value === "" && props.allowEmptyNumber) {
+                } else if (event.target.value === "" && allowEmptyNumber) {
                     newValue = event.target.value;
                 } else {
                     newValue = 0;

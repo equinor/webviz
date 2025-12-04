@@ -8,6 +8,8 @@ export type DepthFilterConfig = {
     useOpaqueCutoff?: boolean;
     tvdCutoffAbove?: number;
     tvdCutoffBelow?: number;
+    mdCutoffAbove?: number;
+    mdCutoffBelow?: number;
 };
 
 export type DepthFilterFormProps = {
@@ -18,12 +20,22 @@ export type DepthFilterFormProps = {
 
 export function DepthFilterForm(props: DepthFilterFormProps): React.ReactNode {
     const { value, onValueChange, onFormSubmit, ...otherProps } = props;
-    function handleAboveValueChange(newAbove: string) {
+    function handleTvdAboveValueChange(newAbove: string) {
         const newValue = { ...value, tvdCutoffAbove: newAbove === "" ? undefined : parseFloat(newAbove) };
         onValueChange(newValue);
     }
 
-    function handleBelowValueChange(newBelow: string) {
+    function handleTvdBelowValueChange(newBelow: string) {
+        const newValue = { ...value, tvdCutoffBelow: newBelow === "" ? undefined : parseFloat(newBelow) };
+        onValueChange(newValue);
+    }
+
+    function handleMdAboveValueChange(newAbove: string) {
+        const newValue = { ...value, mdCutoffAbove: newAbove === "" ? undefined : parseFloat(newAbove) };
+        onValueChange(newValue);
+    }
+
+    function handleMdBelowValueChange(newBelow: string) {
         const newValue = { ...value, tvdCutoffBelow: newBelow === "" ? undefined : parseFloat(newBelow) };
         onValueChange(newValue);
     }
@@ -52,9 +64,9 @@ export function DepthFilterForm(props: DepthFilterFormProps): React.ReactNode {
                         className="w-full text-sm"
                         value={value.tvdCutoffAbove ?? ""}
                         type="number"
-                        placeholder="e.g. 3000"
+                        placeholder="e.g. 1000"
                         allowEmptyNumber
-                        onChange={(e) => handleAboveValueChange(e.target.value)}
+                        onChange={(e) => handleTvdAboveValueChange(e.target.value)}
                     />
                 </Label>
                 {/* TVD Cutoff Top */}
@@ -63,9 +75,36 @@ export function DepthFilterForm(props: DepthFilterFormProps): React.ReactNode {
                         className="w-full text-sm"
                         value={value.tvdCutoffBelow ?? ""}
                         type="number"
+                        placeholder="e.g. 3000"
+                        allowEmptyNumber
+                        onChange={(e) => handleTvdBelowValueChange(e.target.value)}
+                    />
+                </Label>
+            </div>
+
+            <h3 className="mt-6">Measured Depth (MD) Cutoffs</h3>
+
+            <div className="grid grid-cols-2 gap-4 mb-2">
+                {/* TVD Cutoff Base */}
+                <Label text="Above (meters)">
+                    <Input
+                        className="w-full text-sm"
+                        value={value.mdCutoffAbove ?? ""}
+                        type="number"
                         placeholder="e.g. 1000"
                         allowEmptyNumber
-                        onChange={(e) => handleBelowValueChange(e.target.value)}
+                        onChange={(e) => handleMdAboveValueChange(e.target.value)}
+                    />
+                </Label>
+                {/* TVD Cutoff Top */}
+                <Label text="Below (meters)">
+                    <Input
+                        className="w-full text-sm"
+                        value={value.mdCutoffBelow ?? ""}
+                        type="number"
+                        placeholder="e.g. 3000"
+                        allowEmptyNumber
+                        onChange={(e) => handleMdBelowValueChange(e.target.value)}
                     />
                 </Label>
             </div>

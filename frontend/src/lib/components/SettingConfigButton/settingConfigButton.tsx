@@ -21,7 +21,18 @@ function SettingConfigButtonComponent(
     props: SettingConfigButtonProps,
     ref: React.ForwardedRef<HTMLButtonElement>,
 ): React.ReactNode {
-    const { formTitle, size, className, formContent, onOpen, onApply, onDiscard, ...baseProps } = props;
+    const {
+        formTitle,
+        size,
+        className,
+        formContent,
+        modalWidth,
+        modalHeight,
+        onOpen,
+        onApply,
+        onDiscard,
+        ...baseProps
+    } = props;
 
     const [modalOpen, setModalOpen] = React.useState(false);
 
@@ -65,14 +76,7 @@ function SettingConfigButtonComponent(
                 {props.children}
             </Button>
 
-            <Dialog
-                modal
-                open={modalOpen}
-                title={formTitle}
-                actions={actions}
-                width={props.modalWidth}
-                height={props.modalHeight}
-            >
+            <Dialog modal open={modalOpen} title={formTitle} actions={actions} width={modalWidth} height={modalHeight}>
                 {formContent}
             </Dialog>
         </>
