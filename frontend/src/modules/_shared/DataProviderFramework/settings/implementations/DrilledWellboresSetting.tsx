@@ -32,7 +32,7 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
             availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
         );
         if (matchingValues.length === 0) {
-            return availableValues;
+            return [];
         }
         return matchingValues;
     }

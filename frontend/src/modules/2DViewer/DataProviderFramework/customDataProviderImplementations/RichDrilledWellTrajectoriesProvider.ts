@@ -43,6 +43,7 @@ const richDrilledWellTrajectoriesSettings = [
 export type RichDrilledWellTrajectoriesSettings = typeof richDrilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RichDrilledWellTrajectoriesSettings>;
 export type DrilledWellboreTrajectoriesStoredData = {
+    allWellboreHeaders: WellboreHeader_api[];
     selectedWellBoreHeaders: WellboreHeader_api[];
     wellboreTrajectories: WellboreTrajectory_api[];
     formationSegments: WellTrajectoryFormationSegments_api[];
@@ -90,6 +91,8 @@ export class RichDrilledWellTrajectoriesProvider
         console.log("Fetched stored data:", { formationSegments, productionData, injectionData });
         // **************************
 
+        if (!fieldIdentifier) return Promise.resolve([]);
+
         const queryOptions = getWellTrajectoriesOptions({
             query: { field_identifier: fieldIdentifier ?? "" },
         });
@@ -112,6 +115,9 @@ export class RichDrilledWellTrajectoriesProvider
         // Well metadata dependency
         const wellboreHeadersDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
             const fieldIdentifier = getGlobalSetting("fieldId");
+
+            if (!fieldIdentifier) return [];
+
             return await queryClient.fetchQuery({
                 ...getDrilledWellboreHeadersOptions({
                     query: { field_identifier: fieldIdentifier ?? "" },
@@ -120,9 +126,18 @@ export class RichDrilledWellTrajectoriesProvider
             });
         });
 
+        //
+        storedDataUpdater("allWellboreHeaders", ({ getHelperDependency }) => {
+            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
+            return wellboreHeaders || [];
+        });
+
         // Wellbore trajectories dependency
         const wellboreTrajectoriesDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
             const fieldIdentifier = getGlobalSetting("fieldId");
+
+            if (!fieldIdentifier) return [];
+
             return await queryClient.fetchQuery({
                 ...getWellTrajectoriesOptions({
                     query: { field_identifier: fieldIdentifier ?? "" },
