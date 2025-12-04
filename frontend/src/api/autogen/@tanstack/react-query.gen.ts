@@ -35,9 +35,9 @@ import type {
     GetRealizationSurfacesMetadataData_api,
     GetObservedSurfacesMetadataData_api,
     GetSurfaceDataData_api,
-    PostGetWellTrajectorySurfacesPicksData_api,
-    PostGetWellTrajectorySurfacesPicksError_api,
-    PostGetWellTrajectorySurfacesPicksResponse_api,
+    PostGetWellTrajectoryPicksPerSurfaceData_api,
+    PostGetWellTrajectoryPicksPerSurfaceError_api,
+    PostGetWellTrajectoryPicksPerSurfaceResponse_api,
     PostGetWellTrajectoriesFormationSegmentsData_api,
     PostGetWellTrajectoriesFormationSegmentsError_api,
     PostGetWellTrajectoriesFormationSegmentsResponse_api,
@@ -152,7 +152,7 @@ import {
     getRealizationSurfacesMetadata,
     getObservedSurfacesMetadata,
     getSurfaceData,
-    postGetWellTrajectorySurfacesPicks,
+    postGetWellTrajectoryPicksPerSurface,
     postGetWellTrajectoriesFormationSegments,
     getStatisticalSurfaceDataHybrid,
     postGetSurfaceIntersection,
@@ -705,14 +705,16 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
     });
 };
 
-export const postGetWellTrajectorySurfacesPicksQueryKey = (
-    options: Options<PostGetWellTrajectorySurfacesPicksData_api>,
-) => [createQueryKey("postGetWellTrajectorySurfacesPicks", options)];
+export const postGetWellTrajectoryPicksPerSurfaceQueryKey = (
+    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api>,
+) => [createQueryKey("postGetWellTrajectoryPicksPerSurface", options)];
 
-export const postGetWellTrajectorySurfacesPicksOptions = (options: Options<PostGetWellTrajectorySurfacesPicksData_api>) => {
+export const postGetWellTrajectoryPicksPerSurfaceOptions = (
+    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api>,
+) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGetWellTrajectorySurfacesPicks({
+            const { data } = await postGetWellTrajectoryPicksPerSurface({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -720,20 +722,20 @@ export const postGetWellTrajectorySurfacesPicksOptions = (options: Options<PostG
             });
             return data;
         },
-        queryKey: postGetWellTrajectorySurfacesPicksQueryKey(options),
+        queryKey: postGetWellTrajectoryPicksPerSurfaceQueryKey(options),
     });
 };
 
-export const postGetWellTrajectorySurfacesPicksMutation = (
-    options?: Partial<Options<PostGetWellTrajectorySurfacesPicksData_api>>,
+export const postGetWellTrajectoryPicksPerSurfaceMutation = (
+    options?: Partial<Options<PostGetWellTrajectoryPicksPerSurfaceData_api>>,
 ) => {
     const mutationOptions: UseMutationOptions<
-        PostGetWellTrajectorySurfacesPicksResponse_api,
-        AxiosError<PostGetWellTrajectorySurfacesPicksError_api>,
-        Options<PostGetWellTrajectorySurfacesPicksData_api>
+        PostGetWellTrajectoryPicksPerSurfaceResponse_api,
+        AxiosError<PostGetWellTrajectoryPicksPerSurfaceError_api>,
+        Options<PostGetWellTrajectoryPicksPerSurfaceData_api>
     > = {
         mutationFn: async (localOptions) => {
-            const { data } = await postGetWellTrajectorySurfacesPicks({
+            const { data } = await postGetWellTrajectoryPicksPerSurface({
                 ...options,
                 ...localOptions,
                 throwOnError: true,

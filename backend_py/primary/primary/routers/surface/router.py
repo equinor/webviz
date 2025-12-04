@@ -187,8 +187,8 @@ async def get_surface_data(
     return surf_data_response
 
 
-@router.post("/get_well_trajectory_surfaces_picks")
-async def post_get_well_trajectory_surfaces_picks(
+@router.post("/get_well_trajectory_picks_per_surface")
+async def post_get_well_trajectory_picks_per_surface(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     well_trajectory: Annotated[schemas.WellTrajectory, Body(embed=True)],
@@ -198,12 +198,15 @@ async def post_get_well_trajectory_surfaces_picks(
             description="List of surface address strings for depth surfaces. Supported address types are *REAL*, *OBS* and *STAT*"
         ),
     ],
-) -> list[schemas.SurfaceWellPick]:
+) -> list[schemas.SurfaceWellPicks]:
     """
     Get surface picks along a well trajectory for multiple depth surfaces.
 
     For each provided depth surface address, the intersections (picks) between the surface and the
     well trajectory are calculated and returned.
+
+    Returns a list of surface picks per depth surface, in the same order as the provided list of
+    depth surface address strings.
     """
     if not depth_surface_addr_str_list:
         raise HTTPException(

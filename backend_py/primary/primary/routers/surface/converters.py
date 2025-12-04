@@ -243,17 +243,20 @@ def to_api_well_trajectory_formation_segments(
 
 def to_api_surface_well_picks(
     surface_well_picks: list[SurfaceWellPick],
-) -> list[schemas.SurfaceWellPick]:
+) -> schemas.SurfaceWellPicks:
     """
     Convert list of service layer surface well pick to list of API surface well pick
     """
-    return [
-        schemas.SurfaceWellPick(
-            x=pick.x,
-            y=pick.y,
-            z=pick.z,
-            md=pick.md,
-            direction=schemas.PickDirection(pick.direction.value),
-        )
-        for pick in surface_well_picks
-    ]
+
+    return schemas.SurfaceWellPicks(
+        picks=[
+            schemas.SurfaceWellPick(
+                x=pick.x,
+                y=pick.y,
+                z=pick.z,
+                md=pick.md,
+                direction=schemas.PickDirection(pick.direction.value),
+            )
+            for pick in surface_well_picks
+        ]
+    )

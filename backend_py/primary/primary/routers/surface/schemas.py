@@ -184,6 +184,16 @@ class SurfaceWellPick(BaseModel):
     direction: PickDirection
 
 
+class SurfaceWellPicks(BaseModel):
+    """Surface picks along a well trajectory for a specific surface.
+
+    Each pick contains the measured depth and direction.
+
+    """
+
+    picks: List[SurfaceWellPick]
+
+
 class FormationSegment(BaseModel):
     """
     Segment of a formation defined by top and bottom surface.

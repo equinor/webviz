@@ -56,7 +56,7 @@ export type BodyPostGetWellTrajectoriesFormationSegments_api = {
     well_trajectories: Array<WellTrajectory_api>;
 };
 
-export type BodyPostGetWellTrajectorySurfacesPicks_api = {
+export type BodyPostGetWellTrajectoryPicksPerSurface_api = {
     well_trajectory: WellTrajectory_api;
 };
 
@@ -1028,6 +1028,15 @@ export enum SurfaceTimeType_api {
 export type SurfaceWellPick_api = {
     md: number;
     direction: PickDirection_api;
+};
+
+/**
+ * Surface picks along a well trajectory for a specific surface.
+ *
+ * Each pick contains the measured depth and direction.
+ */
+export type SurfaceWellPicks_api = {
+    picks: Array<SurfaceWellPick_api>;
 };
 
 export enum Thp_api {
@@ -2206,8 +2215,8 @@ export type GetSurfaceDataResponses_api = {
 
 export type GetSurfaceDataResponse_api = GetSurfaceDataResponses_api[keyof GetSurfaceDataResponses_api];
 
-export type PostGetWellTrajectorySurfacesPicksData_api = {
-    body: BodyPostGetWellTrajectorySurfacesPicks_api;
+export type PostGetWellTrajectoryPicksPerSurfaceData_api = {
+    body: BodyPostGetWellTrajectoryPicksPerSurface_api;
     path?: never;
     query: {
         /**
@@ -2216,28 +2225,28 @@ export type PostGetWellTrajectorySurfacesPicksData_api = {
         depth_surface_addr_str_list: Array<string>;
         zCacheBust?: string;
     };
-    url: "/surface/get_well_trajectory_surfaces_picks";
+    url: "/surface/get_well_trajectory_picks_per_surface";
 };
 
-export type PostGetWellTrajectorySurfacesPicksErrors_api = {
+export type PostGetWellTrajectoryPicksPerSurfaceErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type PostGetWellTrajectorySurfacesPicksError_api =
-    PostGetWellTrajectorySurfacesPicksErrors_api[keyof PostGetWellTrajectorySurfacesPicksErrors_api];
+export type PostGetWellTrajectoryPicksPerSurfaceError_api =
+    PostGetWellTrajectoryPicksPerSurfaceErrors_api[keyof PostGetWellTrajectoryPicksPerSurfaceErrors_api];
 
-export type PostGetWellTrajectorySurfacesPicksResponses_api = {
+export type PostGetWellTrajectoryPicksPerSurfaceResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<SurfaceWellPick_api>;
+    200: Array<SurfaceWellPicks_api>;
 };
 
-export type PostGetWellTrajectorySurfacesPicksResponse_api =
-    PostGetWellTrajectorySurfacesPicksResponses_api[keyof PostGetWellTrajectorySurfacesPicksResponses_api];
+export type PostGetWellTrajectoryPicksPerSurfaceResponse_api =
+    PostGetWellTrajectoryPicksPerSurfaceResponses_api[keyof PostGetWellTrajectoryPicksPerSurfaceResponses_api];
 
 export type PostGetWellTrajectoriesFormationSegmentsData_api = {
     body: BodyPostGetWellTrajectoriesFormationSegments_api;

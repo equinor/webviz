@@ -61,9 +61,9 @@ import type {
     GetSurfaceDataData_api,
     GetSurfaceDataResponse_api,
     GetSurfaceDataError_api,
-    PostGetWellTrajectorySurfacesPicksData_api,
-    PostGetWellTrajectorySurfacesPicksResponse_api,
-    PostGetWellTrajectorySurfacesPicksError_api,
+    PostGetWellTrajectoryPicksPerSurfaceData_api,
+    PostGetWellTrajectoryPicksPerSurfaceResponse_api,
+    PostGetWellTrajectoryPicksPerSurfaceError_api,
     PostGetWellTrajectoriesFormationSegmentsData_api,
     PostGetWellTrajectoriesFormationSegmentsResponse_api,
     PostGetWellTrajectoriesFormationSegmentsError_api,
@@ -618,18 +618,21 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Post Get Well Trajectory Surfaces Picks
+ * Post Get Well Trajectory Picks Per Surface
  * Get surface picks along a well trajectory for multiple depth surfaces.
  *
  * For each provided depth surface address, the intersections (picks) between the surface and the
  * well trajectory are calculated and returned.
+ *
+ * Returns a list of surface picks per depth surface, in the same order as the provided list of
+ * depth surface address strings.
  */
-export const postGetWellTrajectorySurfacesPicks = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetWellTrajectorySurfacesPicksData_api, ThrowOnError>,
+export const postGetWellTrajectoryPicksPerSurface = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).post<
-        PostGetWellTrajectorySurfacesPicksResponse_api,
-        PostGetWellTrajectorySurfacesPicksError_api,
+        PostGetWellTrajectoryPicksPerSurfaceResponse_api,
+        PostGetWellTrajectoryPicksPerSurfaceError_api,
         ThrowOnError
     >({
         ...options,
@@ -637,7 +640,7 @@ export const postGetWellTrajectorySurfacesPicks = <ThrowOnError extends boolean 
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/surface/get_well_trajectory_surfaces_picks",
+        url: "/surface/get_well_trajectory_picks_per_surface",
     });
 };
 
