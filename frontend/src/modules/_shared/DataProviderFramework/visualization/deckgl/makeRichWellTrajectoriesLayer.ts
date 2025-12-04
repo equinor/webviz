@@ -64,11 +64,11 @@ export function makeRichWellTrajectoriesLayer({
     // TODO: Use uuid, for consistency
     const formationsByBoreIdent = new Map<string, FormationSegmentData[]>(
         formationSegments?.map((f) => [
-            f.unique_wellbore_identifier,
-            f.formation_segments.map((fs) => ({
+            f.uwi,
+            f.formationSegments.map((fs) => ({
                 segmentIdent: "WITHIN_FILTER", // Placeholder, as the API does not provide segment names atm
-                mdEnter: fs.md_enter,
-                mdExit: fs.md_exit,
+                mdEnter: fs.mdEnter,
+                mdExit: fs.mdExit,
             })),
         ]),
     );

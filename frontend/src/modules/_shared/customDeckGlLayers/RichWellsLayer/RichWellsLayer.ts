@@ -602,8 +602,6 @@ export class RichWellsLayer extends CompositeLayer<RichWellsLayerProps> {
             // ---[ Main path ]--- --- --- --- --- --- --- --- --- --- ---
             new DashedSectionsPathLayer({
                 ...sharedProps,
-                miterLimit: -100,
-                opacity: 0.1,
                 data: this.state.wellboreTrajectories,
                 id: "well-path-layer",
                 getColor: this.getWellboreColor,
@@ -647,7 +645,6 @@ export class RichWellsLayer extends CompositeLayer<RichWellsLayerProps> {
                 ...sharedProps,
                 id: "well-markers-layer",
                 data: this.state.wellboreMarkers,
-                opacity: 0.1,
 
                 getLineColor: this.getWellboreColor,
                 getFillColor: [0, 0, 0, 0],
