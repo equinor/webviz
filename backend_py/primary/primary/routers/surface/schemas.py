@@ -166,22 +166,6 @@ class PointSetXY(BaseModel):
     y_points: list[float]
 
 
-class PickDirection(str, Enum):
-    """Direction of the pick relative to the surface"""
-
-    UPWARD = "UPWARD"
-    DOWNWARD = "DOWNWARD"
-
-
-class SurfaceWellPick(BaseModel):
-    unique_wellbore_identifier: str
-    x: float
-    y: float
-    z: float
-    md: float | None = None
-    direction: PickDirection
-
-
 class FormationSegment(BaseModel):
     """
     Segment of a formation defined by top and bottom surface.
@@ -212,6 +196,7 @@ class WellTrajectory(BaseModel):
     """
     Well trajectory defined by a set of (x, y, z) coordinates and measured depths (md).
 
+    uwi: Unique wellbore identifier.
     x_points: X-coordinates of well trajectory points.
     y_points: Y-coordinates of well trajectory points.
     z_points: Z-coordinates (depth values) of well trajectory points.
