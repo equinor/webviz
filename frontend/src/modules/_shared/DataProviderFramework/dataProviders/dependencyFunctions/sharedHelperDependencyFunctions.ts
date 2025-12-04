@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import type { EnhancedWellboreHeader_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 import { getDrilledWellboreHeadersOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionType } from "@framework/types/intersection";
@@ -22,7 +22,7 @@ export async function fetchWellboreHeaders(
     abortSignal: AbortSignal,
     workbenchSession: WorkbenchSession,
     queryClient: QueryClient,
-): Promise<EnhancedWellboreHeader_api[] | null> {
+): Promise<WellboreHeader_api[] | null> {
     if (!ensembleIdent) {
         return null;
     }

@@ -1,7 +1,7 @@
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { UseQueryResult } from "@tanstack/react-query";
 
-import type { EnhancedWellboreHeader_api, WellboreCasing_api } from "@api";
+import type { WellboreCasing_api, WellboreHeader_api } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
@@ -59,7 +59,7 @@ export function createLayerItemsForIntersectionType(
     intersectionType: IntersectionType,
     intersectionReferenceSystem: IntersectionReferenceSystem,
     layerOrder: number,
-    wellboreHeadersQuery: UseQueryResult<EnhancedWellboreHeader_api[]>,
+    wellboreHeadersQuery: UseQueryResult<WellboreHeader_api[]>,
     wellboreCasingsQuery: UseQueryResult<WellboreCasing_api[]>,
 ): LayerItem[] {
     if (intersectionType === IntersectionType.CUSTOM_POLYLINE) {

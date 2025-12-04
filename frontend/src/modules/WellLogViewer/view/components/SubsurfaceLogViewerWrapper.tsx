@@ -11,7 +11,7 @@ import type {
 import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
 import { isEqual } from "lodash";
 
-import type { EnhancedWellboreHeader_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
@@ -48,7 +48,7 @@ type GlobalHoverMd = GlobalTopicDefinitions["global.hoverMd"];
 
 export type SubsurfaceLogViewerWrapperProps = {
     // Data
-    wellboreHeader: EnhancedWellboreHeader_api | null;
+    wellboreHeader: WellboreHeader_api | null;
     wellLogSets: WellLogSet[];
     wellPicks?: WellPickProps;
 
