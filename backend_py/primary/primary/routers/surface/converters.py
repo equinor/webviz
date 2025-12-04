@@ -12,6 +12,7 @@ from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIn
 from webviz_services.utils.surface_helpers import (
     surface_to_float32_numpy_array,
     get_min_max_surface_values,
+    SurfaceWellPick,
     WellTrajectory,
 )
 from webviz_services.utils.surface_to_png import surface_to_png_bytes_optimized
@@ -216,10 +217,10 @@ def from_api_well_trajectory(
     Convert API well trajectory to service layer well trajectory
     """
     return WellTrajectory(
-        x_points=api_well_trajectory.x_points,
-        y_points=api_well_trajectory.y_points,
-        z_points=api_well_trajectory.z_points,
-        md_points=api_well_trajectory.md_points,
+        x_points=api_well_trajectory.xPoints,
+        y_points=api_well_trajectory.yPoints,
+        z_points=api_well_trajectory.zPoints,
+        md_points=api_well_trajectory.mdPoints,
         unique_wellbore_identifier=api_well_trajectory.uwi,
     )
 
@@ -232,9 +233,27 @@ def to_api_well_trajectory_formation_segments(
     formation segments
     """
     return schemas.WellTrajectoryFormationSegments(
-        unique_wellbore_identifier=well_trajectory_formation_segments.unique_wellbore_identifier,
-        formation_segments=[
-            schemas.FormationSegment(md_enter=fs.md_enter, md_exit=fs.md_exit)
+        uwi=well_trajectory_formation_segments.unique_wellbore_identifier,
+        formationSegments=[
+            schemas.FormationSegment(mdEnter=fs.md_enter, mdExit=fs.md_exit)
             for fs in well_trajectory_formation_segments.formation_segments
         ],
     )
+
+
+def to_api_surface_well_picks(
+    surface_well_picks: list[SurfaceWellPick],
+) -> list[schemas.SurfaceWellPick]:
+    """
+    Convert list of service layer surface well pick to list of API surface well pick
+    """
+    return [
+        schemas.SurfaceWellPick(
+            x=pick.x,
+            y=pick.y,
+            z=pick.z,
+            md=pick.md,
+            direction=schemas.PickDirection(pick.direction.value),
+        )
+        for pick in surface_well_picks
+    ]

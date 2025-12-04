@@ -56,6 +56,10 @@ export type BodyPostGetWellTrajectoriesFormationSegments_api = {
     well_trajectories: Array<WellTrajectory_api>;
 };
 
+export type BodyPostGetWellTrajectorySurfacesPicks_api = {
+    well_trajectory: WellTrajectory_api;
+};
+
 export type BoundingBox2D_api = {
     min_x: number;
     min_y: number;
@@ -231,8 +235,8 @@ export enum FlowRateType_api {
  * at enter and exit of the formation.
  */
 export type FormationSegment_api = {
-    md_enter: number;
-    md_exit: number;
+    mdEnter: number;
+    mdExit: number;
 };
 
 export enum Frequency_api {
@@ -471,6 +475,14 @@ export type PageSnapshotMetadata_api = {
     items: Array<SnapshotMetadata_api>;
     pageToken?: string | null;
 };
+
+/**
+ * Direction of the pick relative to the surface
+ */
+export enum PickDirection_api {
+    UPWARD = "UPWARD",
+    DOWNWARD = "DOWNWARD",
+}
 
 export type PointSetXy_api = {
     x_points: Array<number>;
@@ -1007,6 +1019,17 @@ export enum SurfaceTimeType_api {
     INTERVAL = "INTERVAL",
 }
 
+/**
+ * Surface pick data along a well trajectory
+ *
+ * md: Measured depth value at the pick point.
+ * direction: Direction of the pick relative to the surface.
+ */
+export type SurfaceWellPick_api = {
+    md: number;
+    direction: PickDirection_api;
+};
+
 export enum Thp_api {
     THP = "THP",
 }
@@ -1202,16 +1225,17 @@ export enum WellLogCurveTypeEnum_api {
 /**
  * Well trajectory defined by a set of (x, y, z) coordinates and measured depths (md).
  *
- * x_points: X-coordinates of well trajectory points.
- * y_points: Y-coordinates of well trajectory points.
- * z_points: Z-coordinates (depth values) of well trajectory points.
- * md_points: Measured depth values at each well trajectory point.
+ * uwi: Unique wellbore identifier.
+ * xPoints: X-coordinates of well trajectory points.
+ * yPoints: Y-coordinates of well trajectory points.
+ * zPoints: Z-coordinates (depth values) of well trajectory points.
+ * mdPoints: Measured depth values at each well trajectory point.
  */
 export type WellTrajectory_api = {
-    x_points: Array<number>;
-    y_points: Array<number>;
-    z_points: Array<number>;
-    md_points: Array<number>;
+    xPoints: Array<number>;
+    yPoints: Array<number>;
+    zPoints: Array<number>;
+    mdPoints: Array<number>;
     uwi: string;
 };
 
@@ -1220,12 +1244,12 @@ export type WellTrajectory_api = {
  *
  * A wellbore can enter and exit a formation multiple times, resulting in multiple segments.
  *
- * unique_wellbore_identifier: str
- * formation_segments: List[FormationSegment_api]
+ * uniqueWellboreIdentifier: str
+ * formationSegments: List[FormationSegment_api]
  */
 export type WellTrajectoryFormationSegments_api = {
-    unique_wellbore_identifier: string;
-    formation_segments: Array<FormationSegment_api>;
+    uwi: string;
+    formationSegments: Array<FormationSegment_api>;
 };
 
 export type WellboreCasing_api = {
@@ -2182,18 +2206,51 @@ export type GetSurfaceDataResponses_api = {
 
 export type GetSurfaceDataResponse_api = GetSurfaceDataResponses_api[keyof GetSurfaceDataResponses_api];
 
+export type PostGetWellTrajectorySurfacesPicksData_api = {
+    body: BodyPostGetWellTrajectorySurfacesPicks_api;
+    path?: never;
+    query: {
+        /**
+         * List of surface address strings for depth surfaces. Supported address types are *REAL*, *OBS* and *STAT*
+         */
+        depth_surface_addr_str_list: Array<string>;
+        zCacheBust?: string;
+    };
+    url: "/surface/get_well_trajectory_surfaces_picks";
+};
+
+export type PostGetWellTrajectorySurfacesPicksErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type PostGetWellTrajectorySurfacesPicksError_api =
+    PostGetWellTrajectorySurfacesPicksErrors_api[keyof PostGetWellTrajectorySurfacesPicksErrors_api];
+
+export type PostGetWellTrajectorySurfacesPicksResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<SurfaceWellPick_api>;
+};
+
+export type PostGetWellTrajectorySurfacesPicksResponse_api =
+    PostGetWellTrajectorySurfacesPicksResponses_api[keyof PostGetWellTrajectorySurfacesPicksResponses_api];
+
 export type PostGetWellTrajectoriesFormationSegmentsData_api = {
     body: BodyPostGetWellTrajectoriesFormationSegments_api;
     path?: never;
     query: {
         /**
-         * Surface address string for top bounding surface. Supported address types are *REAL*, *OBS* and *STAT*
+         * Surface address string for top bounding depth surface. Supported address types are *REAL*, *OBS* and *STAT*
          */
-        top_surf_addr_str: string;
+        top_depth_surf_addr_str: string;
         /**
-         * Optional surface address string for bottom bounding surface. If not provided end of well trajectory is used as lower bound for formation. Supported address types are *REAL*, *OBS* and *STAT*
+         * Optional surface address string for bottom bounding depth surface. If not provided end of well trajectory is used as lower bound for formation. Supported address types are *REAL*, *OBS* and *STAT*
          */
-        bottom_surf_addr_str?: string | null;
+        bottom_depth_surf_addr_str?: string | null;
         zCacheBust?: string;
     };
     url: "/surface/get_well_trajectories_formation_segments";

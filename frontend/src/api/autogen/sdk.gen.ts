@@ -61,6 +61,9 @@ import type {
     GetSurfaceDataData_api,
     GetSurfaceDataResponse_api,
     GetSurfaceDataError_api,
+    PostGetWellTrajectorySurfacesPicksData_api,
+    PostGetWellTrajectorySurfacesPicksResponse_api,
+    PostGetWellTrajectorySurfacesPicksError_api,
     PostGetWellTrajectoriesFormationSegmentsData_api,
     PostGetWellTrajectoriesFormationSegmentsResponse_api,
     PostGetWellTrajectoriesFormationSegmentsError_api,
@@ -615,12 +618,37 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Post Get Well Trajectory Surfaces Picks
+ * Get surface picks along a well trajectory for multiple depth surfaces.
+ *
+ * For each provided depth surface address, the intersections (picks) between the surface and the
+ * well trajectory are calculated and returned.
+ */
+export const postGetWellTrajectorySurfacesPicks = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetWellTrajectorySurfacesPicksData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<
+        PostGetWellTrajectorySurfacesPicksResponse_api,
+        PostGetWellTrajectorySurfacesPicksError_api,
+        ThrowOnError
+    >({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/surface/get_well_trajectory_surfaces_picks",
+    });
+};
+
+/**
  * Post Get Well Trajectories Formation Segments
  * Get well trajectory formation segments.
  *
- * Provide a top bounding surface and an optional bottom bounding surface to define a formation
- * (area between two surfaces in depth). If bottom surface is not provided, the formation is
- * considered to extend down to the end of the well trajectory.
+ * Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
+ * formation (area between two surfaces in depth). If bottom surface is not provided, the formation
+ * is considered to extend down to the end of the well trajectory, i.e. end of well trajectory is
+ * used as lower bound for formation.
  *
  * For each well trajectory, the segments where the well is within the formation are calculated and
  * returned. Each segment contains the measured depth (md) values where the well enters and exits

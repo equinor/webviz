@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import List, Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -166,6 +166,24 @@ class PointSetXY(BaseModel):
     y_points: list[float]
 
 
+class PickDirection(StrEnum):
+    """Direction of the pick relative to the surface"""
+
+    UPWARD = "UPWARD"
+    DOWNWARD = "DOWNWARD"
+
+
+class SurfaceWellPick(BaseModel):
+    """Surface pick data along a well trajectory
+
+    md: Measured depth value at the pick point.
+    direction: Direction of the pick relative to the surface.
+    """
+
+    md: float
+    direction: PickDirection
+
+
 class FormationSegment(BaseModel):
     """
     Segment of a formation defined by top and bottom surface.
@@ -174,8 +192,8 @@ class FormationSegment(BaseModel):
     at enter and exit of the formation.
     """
 
-    md_enter: float
-    md_exit: float
+    mdEnter: float
+    mdExit: float
 
 
 class WellTrajectoryFormationSegments(BaseModel):
@@ -184,12 +202,12 @@ class WellTrajectoryFormationSegments(BaseModel):
 
     A wellbore can enter and exit a formation multiple times, resulting in multiple segments.
 
-    unique_wellbore_identifier: str
-    formation_segments: List[FormationSegment]
+    uniqueWellboreIdentifier: str
+    formationSegments: List[FormationSegment]
     """
 
-    unique_wellbore_identifier: str
-    formation_segments: List[FormationSegment]
+    uwi: str
+    formationSegments: List[FormationSegment]
 
 
 class WellTrajectory(BaseModel):
@@ -197,17 +215,17 @@ class WellTrajectory(BaseModel):
     Well trajectory defined by a set of (x, y, z) coordinates and measured depths (md).
 
     uwi: Unique wellbore identifier.
-    x_points: X-coordinates of well trajectory points.
-    y_points: Y-coordinates of well trajectory points.
-    z_points: Z-coordinates (depth values) of well trajectory points.
-    md_points: Measured depth values at each well trajectory point.
+    xPoints: X-coordinates of well trajectory points.
+    yPoints: Y-coordinates of well trajectory points.
+    zPoints: Z-coordinates (depth values) of well trajectory points.
+    mdPoints: Measured depth values at each well trajectory point.
 
     """
 
-    x_points: List[float]
-    y_points: List[float]
-    z_points: List[float]
-    md_points: List[float]
+    xPoints: List[float]
+    yPoints: List[float]
+    zPoints: List[float]
+    mdPoints: List[float]
     uwi: str
 
 
