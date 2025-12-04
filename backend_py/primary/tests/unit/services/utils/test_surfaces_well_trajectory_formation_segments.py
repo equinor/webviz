@@ -1,18 +1,18 @@
 import pytest
-from fastapi import HTTPException
 
-from primary.routers.surface._utils import _create_formation_segments_from_well_trajectory_and_picks
-from primary.routers.surface.schemas import (
-    PickDirection,
-    SurfaceWellPick,
+
+from webviz_services.utils.surfaces_well_trajectory_formation_segments import (
+    _create_formation_segments_from_well_trajectory_and_picks,
     WellTrajectory,
 )
+from webviz_services.utils.surface_helpers import PickDirection, SurfaceWellPick
+from webviz_services.service_exceptions import InvalidDataError, Service
 
 
 def create_well_trajectory(md_points: list[float]) -> WellTrajectory:
     """Helper to create a simple vertical well trajectory for testing."""
     return WellTrajectory(
-        uwi="test-well",
+        unique_wellbore_identifier="test-well",
         x_points=[100.0] * len(md_points),
         y_points=[200.0] * len(md_points),
         z_points=md_points,  # For simplicity, z equals md
@@ -158,7 +158,7 @@ def test_well_with_both_top_and_bottom_surfaces() -> None:
 
 
 def test_well_mixed_top_and_bottom_picks_raises_on_consecutive_entry() -> None:
-    """Test well with consecutive entry picks raises HTTPException."""
+    """Test well with consecutive entry picks raises InvalidDataError."""
     trajectory = create_well_trajectory([0.0, 100.0, 200.0, 300.0, 400.0, 500.0])
     top_picks = [
         create_pick(100.0, PickDirection.DOWNWARD),  # Enter through top at 100
@@ -169,18 +169,20 @@ def test_well_mixed_top_and_bottom_picks_raises_on_consecutive_entry() -> None:
         create_pick(450.0, PickDirection.UPWARD),  # Enter from below at 450 (another consecutive entry!)
     ]
 
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(InvalidDataError) as exc_info:
         _create_formation_segments_from_well_trajectory_and_picks(
             well_trajectory=trajectory, top_surface_picks=top_picks, bottom_surface_picks=bottom_picks
         )
 
-    assert exc_info.value.status_code == 500
-    assert "Unexpected consecutive entry picks" in exc_info.value.detail
-    assert "450.0" in exc_info.value.detail
+    assert (
+        exc_info.value.message
+        == f"Unexpected consecutive entry picks for well {trajectory.unique_wellbore_identifier} at MD 450.0. This may indicate data quality issues with the surface picks."
+    )
+    assert exc_info.value.service == Service.GENERAL
 
 
 def test_well_mixed_top_and_bottom_picks_raises_on_consecutive_exits() -> None:
-    """Test well with mixed picks that creates consecutive exits raises HTTPException."""
+    """Test well with mixed picks that creates consecutive exits raises InvalidDataError."""
     trajectory = create_well_trajectory([0.0, 100.0, 200.0, 300.0, 400.0, 500.0])
     top_picks = [
         create_pick(100.0, PickDirection.DOWNWARD),  # Enter through top at 100
@@ -191,14 +193,16 @@ def test_well_mixed_top_and_bottom_picks_raises_on_consecutive_exits() -> None:
     ]
 
     # Sorted by MD: 100 (enter), 200 (exit), 300 (exit) - two consecutive exits!
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(InvalidDataError) as exc_info:
         _create_formation_segments_from_well_trajectory_and_picks(
             well_trajectory=trajectory, top_surface_picks=top_picks, bottom_surface_picks=bottom_picks
         )
 
-    assert exc_info.value.status_code == 500
-    assert "Unexpected exit pick without entry" in exc_info.value.detail
-    assert "300.0" in exc_info.value.detail
+    assert (
+        exc_info.value.message
+        == f"Unexpected exit pick without entry for well {trajectory.unique_wellbore_identifier} at MD 300.0. This may indicate data quality issues with the surface picks."
+    )
+    assert exc_info.value.service == Service.GENERAL
 
 
 def test_well_mixed_top_and_bottom_picks_valid() -> None:
@@ -270,7 +274,7 @@ def test_well_only_top_downward_no_bottom_surface() -> None:
 
 
 def test_consecutive_entry_picks_raises_exception() -> None:
-    """Test consecutive entry picks raises HTTPException for data quality issue."""
+    """Test consecutive entry picks raises InvalidDataError for data quality issue."""
     trajectory = create_well_trajectory([0.0, 100.0, 200.0, 300.0, 400.0])
     top_picks = [
         create_pick(100.0, PickDirection.DOWNWARD),  # Enter 1
@@ -278,18 +282,20 @@ def test_consecutive_entry_picks_raises_exception() -> None:
         create_pick(300.0, PickDirection.UPWARD),  # Exit
     ]
 
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(InvalidDataError) as exc_info:
         _create_formation_segments_from_well_trajectory_and_picks(
             well_trajectory=trajectory, top_surface_picks=top_picks, bottom_surface_picks=None
         )
 
-    assert exc_info.value.status_code == 500
-    assert "Unexpected consecutive entry picks" in exc_info.value.detail
-    assert "150.0" in exc_info.value.detail
+    assert (
+        exc_info.value.message
+        == f"Unexpected consecutive entry picks for well {trajectory.unique_wellbore_identifier} at MD 150.0. This may indicate data quality issues with the surface picks."
+    )
+    assert exc_info.value.service == Service.GENERAL
 
 
 def test_consecutive_exit_picks_raises_exception() -> None:
-    """Test consecutive exit picks without prior entry raises HTTPException for data quality issue."""
+    """Test consecutive exit picks without prior entry raises InvalidDataError for data quality issue."""
     trajectory = create_well_trajectory([0.0, 100.0, 200.0, 300.0, 400.0])
     top_picks = [
         create_pick(100.0, PickDirection.DOWNWARD),  # Enter
@@ -297,14 +303,16 @@ def test_consecutive_exit_picks_raises_exception() -> None:
         create_pick(250.0, PickDirection.UPWARD),  # Exit 2 (consecutive exit without entry!)
     ]
 
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(InvalidDataError) as exc_info:
         _create_formation_segments_from_well_trajectory_and_picks(
             well_trajectory=trajectory, top_surface_picks=top_picks, bottom_surface_picks=None
         )
 
-    assert exc_info.value.status_code == 500
-    assert "Unexpected exit pick without entry" in exc_info.value.detail
-    assert "250.0" in exc_info.value.detail
+    assert (
+        exc_info.value.message
+        == f"Unexpected exit pick without entry for well {trajectory.unique_wellbore_identifier} at MD 250.0. This may indicate data quality issues with the surface picks."
+    )
+    assert exc_info.value.service == Service.GENERAL
 
 
 def test_well_picks_unsorted_by_md() -> None:
@@ -326,7 +334,7 @@ def test_well_picks_unsorted_by_md() -> None:
 
 
 def test_complex_scenario_raises_on_consecutive_entries() -> None:
-    """Test complex scenario with consecutive entries raises HTTPException."""
+    """Test complex scenario with consecutive entries raises InvalidDataError."""
     trajectory = create_well_trajectory([0.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0])
     top_picks = [
         create_pick(100.0, PickDirection.DOWNWARD),  # Enter through top at 100
@@ -337,14 +345,16 @@ def test_complex_scenario_raises_on_consecutive_entries() -> None:
     ]
 
     # Sorted by MD: 100 (enter), 200 (enter), 250 (exit) - two consecutive entries!
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(InvalidDataError) as exc_info:
         _create_formation_segments_from_well_trajectory_and_picks(
             well_trajectory=trajectory, top_surface_picks=top_picks, bottom_surface_picks=bottom_picks
         )
 
-    assert exc_info.value.status_code == 500
-    assert "Unexpected consecutive entry picks" in exc_info.value.detail
-    assert "200.0" in exc_info.value.detail
+    assert (
+        exc_info.value.message
+        == f"Unexpected consecutive entry picks for well {trajectory.unique_wellbore_identifier} at MD 200.0. This may indicate data quality issues with the surface picks."
+    )
+    assert exc_info.value.service == Service.GENERAL
 
 
 def test_complex_scenario_with_multiple_surfaces_valid() -> None:

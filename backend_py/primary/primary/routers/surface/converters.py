@@ -9,9 +9,14 @@ from webviz_services.smda_access.types import StratigraphicSurface
 from webviz_services.sumo_access.surface_types import SurfaceMetaSet
 from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
 from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
-from webviz_services.utils.surface_helpers import surface_to_float32_numpy_array, get_min_max_surface_values
+from webviz_services.utils.surface_helpers import (
+    surface_to_float32_numpy_array,
+    get_min_max_surface_values,
+    WellTrajectory,
+)
 from webviz_services.utils.surface_to_png import surface_to_png_bytes_optimized
 from webviz_services.smda_access import StratigraphicUnit
+from webviz_services.utils.surfaces_well_trajectory_formation_segments import WellTrajectoryFormationSegments
 
 from . import schemas
 
@@ -201,4 +206,35 @@ def to_api_stratigraphic_unit(
         colorG=stratigraphic_unit.color_g,
         colorB=stratigraphic_unit.color_b,
         lithologyType=stratigraphic_unit.lithology_type,
+    )
+
+
+def from_api_well_trajectory(
+    api_well_trajectory: schemas.WellTrajectory,
+) -> WellTrajectory:
+    """
+    Convert API well trajectory to service layer well trajectory
+    """
+    return WellTrajectory(
+        x_points=api_well_trajectory.x_points,
+        y_points=api_well_trajectory.y_points,
+        z_points=api_well_trajectory.z_points,
+        md_points=api_well_trajectory.md_points,
+        unique_wellbore_identifier=api_well_trajectory.uwi,
+    )
+
+
+def to_api_well_trajectory_formation_segments(
+    well_trajectory_formation_segments: WellTrajectoryFormationSegments,
+) -> schemas.WellTrajectoryFormationSegments:
+    """
+    Convert service layer well trajectory formation segments to API well trajectory
+    formation segments
+    """
+    return schemas.WellTrajectoryFormationSegments(
+        unique_wellbore_identifier=well_trajectory_formation_segments.unique_wellbore_identifier,
+        formation_segments=[
+            schemas.FormationSegment(md_enter=fs.md_enter, md_exit=fs.md_exit)
+            for fs in well_trajectory_formation_segments.formation_segments
+        ],
     )
