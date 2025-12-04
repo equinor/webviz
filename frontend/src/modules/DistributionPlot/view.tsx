@@ -28,7 +28,6 @@ import { calcTextSize } from "./utils/textSize";
 
 const MAX_NUM_PLOTS = 12;
 
-// --- Main View Component ---
 export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
@@ -387,14 +386,22 @@ function renderScatterPlot(options: ScatterPlotOptions): React.ReactElement {
 
             const traceData = buildScatterTraceData(contentX, contentY, dataColor);
             const markerColor = getMarkerColor(contentX, contentY, colorSet);
+            const markerFillColor = `${markerColor}80`;
+            const markerLineColor = `${markerColor}FF`;
 
             const trace: Partial<PlotData> = {
                 x: traceData.xValues,
                 y: traceData.yValues,
                 mode: "markers",
                 marker: {
-                    size: 5,
-                    color: dataColor ? traceData.colorValues : markerColor,
+                    symbol: "circle",
+                    size: 10,
+                    color: dataColor ? traceData.colorValues : markerFillColor,
+                    opacity: 1,
+                    line: {
+                        color: dataColor ? undefined : markerLineColor,
+                        width: 1,
+                    },
                     colorscale: dataColor ? colorScale : undefined,
                     colorbar:
                         dataColor && cellIndex === 1
@@ -408,6 +415,10 @@ function renderScatterPlot(options: ScatterPlotOptions): React.ReactElement {
                         ? makeHoverTextWithColor(contentX, contentY, dataColor, real)
                         : makeHoverText(contentX, contentY, real),
                 ),
+                hoverlabel: {
+                    bgcolor: "white",
+                    font: { size: 12, color: "black" },
+                },
             };
 
             figure.addTrace(trace, rowIndex + 1, colIndex + 1);
