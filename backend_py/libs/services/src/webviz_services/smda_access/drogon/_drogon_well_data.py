@@ -29,6 +29,9 @@ def get_drogon_well_headers() -> List[WellboreHeader]:
             wellbore_purpose="production",
             wellbore_status="active",
             current_track=1,
+            kickoff_depth_md=None,
+            kickoff_depth_tvd=None,
+            parent_wellbore=None,
         ),
         WellboreHeader(
             wellbore_uuid="drogon_horizontal",
@@ -42,6 +45,9 @@ def get_drogon_well_headers() -> List[WellboreHeader]:
             wellbore_purpose="production",
             wellbore_status="active",
             current_track=2,
+            kickoff_depth_md=None,
+            kickoff_depth_tvd=None,
+            parent_wellbore=None,
         ),
     ]
 

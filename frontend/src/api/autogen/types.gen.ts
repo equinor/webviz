@@ -1332,6 +1332,10 @@ export type WellboreHeader_api = {
     depthReferenceElevation: number;
     wellborePurpose: string;
     wellboreStatus: string;
+    currentTrack: number;
+    kickoffDepthMd: number | null;
+    kickoffDepthTvd: number | null;
+    parentWellbore: string | null;
     perforations?: Array<WellborePerforationNested_api>;
     screens?: Array<WellboreCompletionNested_api>;
 };

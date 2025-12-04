@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import type {
     WellboreHeader_api,
     WellboreTrajectory_api,
@@ -27,7 +29,6 @@ import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-import { isEqual } from "lodash";
 
 const richDrilledWellTrajectoriesSettings = [
     Setting.ENSEMBLE,
@@ -269,18 +270,18 @@ export class RichDrilledWellTrajectoriesProvider
                 wellboreTrajectories?.map((traj) => {
                     return {
                         uwi: traj.uniqueWellboreIdentifier,
-                        x_points: traj.eastingArr,
-                        y_points: traj.northingArr,
-                        md_points: traj.mdArr,
-                        z_points: traj.tvdMslArr,
+                        xPoints: traj.eastingArr,
+                        yPoints: traj.northingArr,
+                        mdPoints: traj.mdArr,
+                        zPoints: traj.tvdMslArr,
                     };
                 }) ?? [];
             // Fetch formation segments from API
             return await queryClient.fetchQuery({
                 ...postGetWellTrajectoriesFormationSegmentsOptions({
                     query: {
-                        top_surf_addr_str: topSurfAddrStr || "",
-                        bottom_surf_addr_str: bottomSurfAddrStr || "",
+                        top_depth_surf_addr_str: topSurfAddrStr || "",
+                        bottom_depth_surf_addr_str: bottomSurfAddrStr || "",
                     },
                     body: { well_trajectories: wellBoresData },
 
