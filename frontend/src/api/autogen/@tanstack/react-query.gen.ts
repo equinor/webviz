@@ -35,6 +35,9 @@ import type {
     GetRealizationSurfacesMetadataData_api,
     GetObservedSurfacesMetadataData_api,
     GetSurfaceDataData_api,
+    PostGetWellTrajectoryPicksPerSurfaceData_api,
+    PostGetWellTrajectoryPicksPerSurfaceError_api,
+    PostGetWellTrajectoryPicksPerSurfaceResponse_api,
     PostGetWellTrajectoriesFormationSegmentsData_api,
     PostGetWellTrajectoriesFormationSegmentsError_api,
     PostGetWellTrajectoriesFormationSegmentsResponse_api,
@@ -153,6 +156,7 @@ import {
     getRealizationSurfacesMetadata,
     getObservedSurfacesMetadata,
     getSurfaceData,
+    postGetWellTrajectoryPicksPerSurface,
     postGetWellTrajectoriesFormationSegments,
     getStatisticalSurfaceDataHybrid,
     postGetSurfaceIntersection,
@@ -707,6 +711,47 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
         },
         queryKey: getSurfaceDataQueryKey(options),
     });
+};
+
+export const postGetWellTrajectoryPicksPerSurfaceQueryKey = (
+    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api>,
+) => [createQueryKey("postGetWellTrajectoryPicksPerSurface", options)];
+
+export const postGetWellTrajectoryPicksPerSurfaceOptions = (
+    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api>,
+) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postGetWellTrajectoryPicksPerSurface({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postGetWellTrajectoryPicksPerSurfaceQueryKey(options),
+    });
+};
+
+export const postGetWellTrajectoryPicksPerSurfaceMutation = (
+    options?: Partial<Options<PostGetWellTrajectoryPicksPerSurfaceData_api>>,
+) => {
+    const mutationOptions: UseMutationOptions<
+        PostGetWellTrajectoryPicksPerSurfaceResponse_api,
+        AxiosError<PostGetWellTrajectoryPicksPerSurfaceError_api>,
+        Options<PostGetWellTrajectoryPicksPerSurfaceData_api>
+    > = {
+        mutationFn: async (localOptions) => {
+            const { data } = await postGetWellTrajectoryPicksPerSurface({
+                ...options,
+                ...localOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
 };
 
 export const postGetWellTrajectoriesFormationSegmentsQueryKey = (
