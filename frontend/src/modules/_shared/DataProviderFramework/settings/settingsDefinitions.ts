@@ -6,7 +6,7 @@ import type { ColorScaleSpecification } from "@framework/components/ColorScaleSe
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import type { SimplifiedWellboreHeader } from "@lib/utils/wellboreTypes";
-import type { DepthFilterSettings } from "@modules/_shared/components/DepthFilterDialog";
+import type { DepthFilterConfig } from "@modules/_shared/components/DepthFilterDialog";
 
 import type { AvailableValuesType } from "../interfacesAndTypes/utils";
 
@@ -184,7 +184,7 @@ export type SettingTypes = {
     [Setting.FORMATION_NAME]: string | null;
     [Setting.SURFACE_NAMES]: string[] | null;
     [Setting.TIME_OR_INTERVAL]: string | null;
-    [Setting.DEPTH_FILTER]: DepthFilterSettings | null;
+    [Setting.DEPTH_FILTER]: DepthFilterConfig | null;
     [Setting.WELLBORE_EXTENSION_LENGTH]: number | null;
     [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
     [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;

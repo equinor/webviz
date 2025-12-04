@@ -1,32 +1,46 @@
-import type { Layer, LayersList, UpdateParameters, Position as GlPosition, FilterContext } from "@deck.gl/core";
+import type {
+    Layer,
+    LayersList,
+    UpdateParameters,
+    Position as GlPosition,
+    FilterContext,
+    Position,
+    Color,
+    LayerProps,
+} from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
-import type { GeoJsonLayerProps } from "@deck.gl/layers";
+import { DataFilterExtension } from "@deck.gl/extensions";
 import { GeoJsonLayer } from "@deck.gl/layers";
-import type { Vec2 } from "@lib/utils/vec2";
-import { point2Distance, subtractVec2, vec2FromArray } from "@lib/utils/vec2";
 import { GL } from "@luma.gl/constants";
-import { simplifyWellTrajectoryRadialDist } from "@modules/_shared/utils/wellbore";
+import type { WellFeature } from "@webviz/subsurface-viewer";
 import { LabelOrientation, WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { Feature, FeatureCollection, Geometry, LineString } from "geojson";
-import { sortBy, zipWith } from "lodash";
+import { inRange, sortBy, zip, zipWith } from "lodash";
 
-// TODO: These should be in a shared trajectory util
+import { point2Distance, subtractVec2, vec2FromArray } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
+import { simplifyWellTrajectoryRadialDist } from "@modules/_shared/utils/wellbore";
+
 import { getCoordinateForMd, getSegmentIndexForMd } from "../WellsLayer/_private/wellTrajectoryUtils";
 
-import type { TvdFilterExtensionProps } from "./TvdFilterExtension";
-import { TvdFilterExtension } from "./TvdFilterExtension";
+import { DashedSectionsPathLayer } from "./DashedSectionsPathLayer";
+import type { TrajectoryFilterExtensionProps } from "./TvdFilterExtension";
 import { buildPerforationMarkerGeology, buildScreenMarkerGeology } from "./wellMarkers";
 
-type WellboreTrajectoryProperties = {
+type WellboreProperties = {
     uuid: string;
     identifier: string;
     purpose: string;
     status: string;
     mdArr: number[];
     tvdArr: number[];
+    // filterValueFlags: (0 | 1)[];
+    // TODO: This migth not fit how we want to do segments
+    segmentArr: string[];
 };
 
 type WellboreMarkerProperties = {
+    //
     uuid: string;
     identifier: string;
     purpose: string;
@@ -34,9 +48,10 @@ type WellboreMarkerProperties = {
     type: "perforation" | "screen";
     md: number;
     tvd: number;
+    segment: string;
 };
 
-type WellboreTrajectoryFeature = Feature<LineString, WellboreTrajectoryProperties>;
+type WellboreTrajectoryFeature = Feature<LineString, WellboreProperties>;
 type WellboreMarkerFeature = Feature<Geometry, WellboreMarkerProperties>;
 
 // TODO: Take in more detailed data
@@ -75,6 +90,12 @@ type WellboreTrajectoryPath = {
     dashedPath: GlPosition[];
 };
 
+export type FormationSegmentData = {
+    segmentIdent: string;
+    mdEnter: number;
+    mdExit: number;
+};
+
 export type WellboreData = {
     uniqueIdentifier: string;
     uuid: string;
@@ -83,6 +104,7 @@ export type WellboreData = {
     well: WellData;
     perforations: PerforationData[];
     screens: WellboreScreenData[];
+    formationSegments: FormationSegmentData[];
     trajectory: WellboreDataTrajectory;
 };
 
@@ -94,15 +116,30 @@ type WellboreDataTrajectory = {
 };
 
 const SIMPLIFICATION_RADIAL_DIST = 1.5;
+const REQUIRE_MD_MATCH_THRESHOLD = 0;
 
-function getWellboreProperties(wellboreData: WellboreData): WellboreTrajectoryProperties {
+function buildWellboreProperties(
+    simplifiedTrajectory: WellboreDataTrajectory,
+    wellboreData: WellboreData,
+): WellboreProperties & WellFeature["properties"] {
+    const segmentArr = simplifiedTrajectory.mdArr.map((md) => {
+        return (
+            wellboreData.formationSegments.find((seg) => seg.mdEnter <= md && seg.mdExit > md)?.segmentIdent ??
+            // TODO: Better name for "outside"
+            "OUTSIDE FILTER"
+        );
+    });
+
     return {
+        md: [simplifiedTrajectory.mdArr],
         uuid: wellboreData.uuid,
         identifier: wellboreData.uniqueIdentifier,
+        name: wellboreData.uniqueIdentifier,
         purpose: wellboreData.purpose,
         status: wellboreData.status,
-        mdArr: wellboreData.trajectory.mdArr,
-        tvdArr: wellboreData.trajectory.tvdMslArr,
+        mdArr: simplifiedTrajectory.mdArr,
+        tvdArr: simplifiedTrajectory.tvdMslArr,
+        segmentArr: segmentArr,
     };
 }
 
@@ -113,6 +150,145 @@ function createSimplifiedTrajectory(trajectory: WellboreDataTrajectory) {
 
         return point2Distance(vecPoint1, vecPoint2);
     });
+}
+
+function getMdsForTvds(trajectory: WellboreDataTrajectory, ...tvds: number[]) {
+    if (!tvds.length) return [];
+
+    const { tvdMslArr, mdArr } = trajectory;
+    const sortedTvdsToAdd = tvds.toSorted((a, b) => b - a);
+
+    const requiredMds = [] as number[];
+
+    let tvdToAdd = sortedTvdsToAdd.pop();
+
+    for (let index = 0; index < mdArr.length - 1; index++) {
+        const md = mdArr[index];
+        const tvd = tvdMslArr[index];
+
+        const nextMd = mdArr[index + 1];
+        const nextTvd = tvdMslArr[index + 1];
+
+        if (tvdToAdd === undefined) break;
+        if (!inRange(tvdToAdd, tvd + REQUIRE_MD_MATCH_THRESHOLD, nextTvd - REQUIRE_MD_MATCH_THRESHOLD)) continue;
+
+        const interpolatedT = (tvdToAdd - tvd) / (nextTvd - tvd);
+        const interpolatedMd = md + interpolatedT * (nextMd - md);
+
+        requiredMds.push(interpolatedMd);
+        tvdToAdd = sortedTvdsToAdd.pop();
+    }
+
+    return requiredMds;
+}
+
+function ensureTrajectoryPointAtMds(trajectory: WellboreDataTrajectory, ...mds: number[]): WellboreDataTrajectory {
+    if (!mds.length) return trajectory;
+
+    const { eastingArr, northingArr, tvdMslArr, mdArr } = trajectory;
+
+    const vec3Trajectory = zipWith(eastingArr, northingArr, tvdMslArr, (x, y, z) => ({ x, y, z }));
+
+    const newEastingArr = [...eastingArr];
+    const newNorthingArr = [...northingArr];
+    const newTvdMslArr = [...tvdMslArr];
+    const newMdArr = [...mdArr];
+
+    for (const md of mds) {
+        const segmentIndex = getSegmentIndexForMd(md, newMdArr); // Closest *preceding* point
+        if (segmentIndex === -1) continue; // MD not on trajectory
+
+        const segmentMd = newMdArr[segmentIndex];
+
+        if (!inRange(md, segmentMd - REQUIRE_MD_MATCH_THRESHOLD, segmentMd + REQUIRE_MD_MATCH_THRESHOLD)) {
+            const point = getCoordinateForMd(md, newMdArr, vec3Trajectory);
+
+            if (point) {
+                //Inject the point *after* the point we located
+                vec3Trajectory.splice(segmentIndex + 1, 0, point);
+
+                newEastingArr.splice(segmentIndex + 1, 0, point?.x);
+                newNorthingArr.splice(segmentIndex + 1, 0, point?.y);
+                newTvdMslArr.splice(segmentIndex + 1, 0, point?.z);
+                newMdArr.splice(segmentIndex + 1, 0, md);
+            }
+        }
+    }
+
+    return {
+        ...trajectory,
+        eastingArr: newEastingArr,
+        northingArr: newNorthingArr,
+        tvdMslArr: newTvdMslArr,
+        mdArr: newMdArr,
+    };
+}
+
+function isTvdFiltered(tvd: number, tvdFilterValue: undefined | (number | undefined)[]): boolean {
+    // ! Assumes tvd-range has been sanitized
+    let isFiltered = false;
+
+    if (tvdFilterValue?.length) {
+        if (tvdFilterValue[0] !== undefined) {
+            isFiltered ||= tvd < tvdFilterValue[0];
+        }
+        if (tvdFilterValue[1] !== undefined) {
+            isFiltered ||= tvd > tvdFilterValue[1];
+        }
+    }
+
+    return isFiltered;
+}
+
+function isMdFiltered(md: number, mdFilterValue: undefined | (number | undefined)[]): boolean {
+    let isFiltered = false;
+
+    if (mdFilterValue) {
+        if (mdFilterValue[0] !== undefined) {
+            isFiltered ||= md < mdFilterValue[0];
+        }
+        if (mdFilterValue[1] !== undefined) {
+            isFiltered ||= md > mdFilterValue[1];
+        }
+    }
+
+    return isFiltered;
+}
+
+function isSegmentFiltered(segment: string, segmentFilterValue: undefined | string[]) {
+    if (!segmentFilterValue?.length) return false;
+
+    return !segmentFilterValue.includes(segment);
+}
+
+function getAllRequiredMds(
+    trajectory: WellboreDataTrajectory,
+    screens: WellboreScreenData[],
+    formationSegments: FormationSegmentData[],
+    layerProps: RichWellsLayerProps,
+) {
+    const mds = new Set<number>();
+
+    formationSegments.forEach((fs) => {
+        mds.add(fs.mdEnter);
+        mds.add(fs.mdExit);
+    });
+
+    screens.forEach((screen) => {
+        mds.add(screen.mdTop);
+        mds.add(screen.mdBottom);
+    });
+
+    layerProps.mdFilterValue?.forEach((md) => {
+        if (md !== undefined) mds.add(md);
+    });
+
+    layerProps.tvdFilterValue?.forEach((tvd) => {
+        if (tvd === undefined) return;
+        getMdsForTvds(trajectory, tvd).forEach((md) => mds.add(md));
+    });
+
+    return sortBy([...mds]);
 }
 
 // ? Make this a general util?
@@ -137,45 +313,10 @@ function getNormalAngleAtMd(md: number, trajectory: WellboreDataTrajectory): num
     return angle;
 }
 
-function buildTrajectoryGeoFeature(
-    trajectory: WellboreDataTrajectory,
-    wellboreProperties: WellboreTrajectoryProperties,
-): WellboreTrajectoryFeature {
-    return {
-        type: "Feature",
-        properties: wellboreProperties,
-        geometry: {
-            type: "LineString",
-            // Only XY so it renders in 2D
-            coordinates: zipWith(trajectory.eastingArr, trajectory.northingArr, trajectory.tvdMslArr),
-        },
-    };
-}
-
-// function buildWellboreMarker(
-//     wellboreTrajectory: WellboreDataTrajectory,
-//     wellboreProperties: WellboreTrajectoryProperties,
-//     marker: TrajectoryMarker,
-// ): WellboreMarkerFeature {
-
-//     const markerProp = {
-//         ...wellboreProperties,
-//         tvd:
-//     }
-
-//     switch (marker.type) {
-//         case "perforation":
-//             break;
-
-//         default:
-//             break;
-//     }
-// }
-
 function buildWellborePerforationMarkers(
     perforations: PerforationData[],
     wellboreTrajectory: WellboreDataTrajectory,
-    wellboreProperties: WellboreTrajectoryProperties,
+    wellboreProperties: WellboreProperties,
 ): WellboreMarkerFeature[] {
     const { eastingArr, northingArr, tvdMslArr } = wellboreTrajectory;
 
@@ -185,16 +326,17 @@ function buildWellborePerforationMarkers(
 
     for (const perforation of perforations) {
         // Perforations have a little bit of length (the size of the hole?). Use the point between as the geometry's anchor
-        const perforationAnchorMd = (perforation.mdTop + perforation.mdBottom) / 2;
+        // const perforationAnchorMd = (perforation.mdTop + perforation.mdBottom) / 2;
+        const perforationAnchorMd = perforation.mdTop;
+
         const rotation = getNormalAngleAtMd(perforationAnchorMd, wellboreTrajectory);
 
         if (rotation === null) continue;
 
-        const perforationCoordinate = getCoordinateForMd(perforation.mdTop, wellboreTrajectory.mdArr, vec3Trajectory);
+        const perforationCoordinate = getCoordinateForMd(perforationAnchorMd, wellboreTrajectory.mdArr, vec3Trajectory);
+        const segmentIndex = getSegmentIndexForMd(perforationAnchorMd, wellboreTrajectory.mdArr);
 
         if (perforationCoordinate) {
-            // geometries.push();
-
             features.push({
                 type: "Feature",
                 id: wellboreProperties.uuid,
@@ -204,6 +346,7 @@ function buildWellborePerforationMarkers(
                     type: "screen",
                     md: perforationAnchorMd,
                     tvd: perforationCoordinate.z,
+                    segment: wellboreProperties.segmentArr[segmentIndex],
                 },
             });
         }
@@ -212,14 +355,27 @@ function buildWellborePerforationMarkers(
     return features;
 }
 
+function mergeScreenSegments(screenData: WellboreScreenData[]): WellboreScreenData[] {
+    screenData = sortBy(screenData, (data) => data.mdTop); // TODO: This should be sorted by the backend, preferably?
+
+    return screenData.reduce((acc, screen) => {
+        if (acc.at(-1) && acc.at(-1)!.mdBottom === screen.mdTop) {
+            acc.at(-1)!.mdBottom = screen.mdBottom;
+            return acc;
+        } else {
+            return [...acc, { ...screen }];
+        }
+    }, screenData);
+}
+
 function buildWellboreScreenMarkers(
     screenData: WellboreScreenData[],
     wellboreTrajectory: WellboreDataTrajectory,
-    wellboreProperties: WellboreTrajectoryProperties,
+    wellboreProperties: WellboreProperties,
 ): WellboreMarkerFeature[] {
+    const markerFeatures = [] as WellboreMarkerFeature[];
+
     const { eastingArr, northingArr, tvdMslArr } = wellboreTrajectory;
-    // const geometries = [] as Geometry[];
-    const features = [] as WellboreMarkerFeature[];
 
     const vec3Trajectory = zipWith(eastingArr, northingArr, tvdMslArr, (x, y, z) => ({ x, y, z }));
 
@@ -245,9 +401,12 @@ function buildWellboreScreenMarkers(
         if (rotationStart !== null && rotationEnd !== null) {
             const coordinateStart = getCoordinateForMd(screenMdStart, wellboreTrajectory.mdArr, vec3Trajectory);
             const coordinateEnd = getCoordinateForMd(screenMdEnd, wellboreTrajectory.mdArr, vec3Trajectory);
+            // TODO: Optimize to avoid running over again
+            const segmentIndexStart = getSegmentIndexForMd(screenMdStart, wellboreTrajectory.mdArr);
+            const segmentIndexEnd = getSegmentIndexForMd(screenMdEnd, wellboreTrajectory.mdArr);
 
             if (coordinateStart && coordinateEnd) {
-                features.push({
+                markerFeatures.push({
                     type: "Feature",
                     geometry: buildScreenMarkerGeology(coordinateStart, rotationStart, "start"),
                     properties: {
@@ -255,9 +414,10 @@ function buildWellboreScreenMarkers(
                         type: "screen",
                         tvd: coordinateStart.z,
                         md: screenMdStart,
+                        segment: wellboreProperties.segmentArr[segmentIndexStart],
                     },
                 });
-                features.push({
+                markerFeatures.push({
                     type: "Feature",
                     geometry: buildScreenMarkerGeology(coordinateEnd, rotationEnd, "end"),
                     properties: {
@@ -265,6 +425,7 @@ function buildWellboreScreenMarkers(
                         type: "screen",
                         tvd: coordinateEnd.z,
                         md: screenMdEnd,
+                        segment: wellboreProperties.segmentArr[segmentIndexEnd],
                     },
                 });
             }
@@ -274,48 +435,139 @@ function buildWellboreScreenMarkers(
         screenMdEnd = null;
     }
 
-    return features;
+    return markerFeatures;
 }
 
-export class RichWellsLayer extends CompositeLayer<{
+type WellboreTrajectory = {
+    properties: WellboreProperties;
+    path: Position[];
+    dashedMdIntervals?: [from: number, to: number][];
+};
+
+export type RichWellsLayerProps = {
     data: WellboreData[];
-    tvdRange?: [number | undefined, number | undefined];
+
+    getIsSelected?: (d: WellboreData) => boolean;
+
+    discardFilteredSections?: boolean;
+    segmentFilterValue?: string[];
+    tvdFilterValue?: [min: number | undefined, max: number | undefined];
+    mdFilterValue?: [min: number | undefined, max: number | undefined];
+
     isWellboreSelected?: (uuid: string) => boolean;
-}> {
+};
+
+export class RichWellsLayer extends CompositeLayer<RichWellsLayerProps> {
     static layerName = "RichWellsLayer";
 
     declare state: {
-        wellboreTrajectories: FeatureCollection;
+        // TODO: Heads
+
+        // ? Should these be in a single object?
+        wellboreTrajectories: WellboreTrajectory[];
         wellboreMarkers: FeatureCollection;
+
+        // TODO: Only needed for label layer
+        geoTrajectories: FeatureCollection;
+
+        // TODO: Markers as sublayerdata?
     };
 
+    constructor(props: RichWellsLayerProps & LayerProps) {
+        super(props);
+
+        this.getWellboreColor = this.getWellboreColor.bind(this);
+    }
+
     updateState({ props, changeFlags }: UpdateParameters<this>) {
-        if (!changeFlags.propsOrDataChanged) return;
+        // TODO: Optimize. Less recomputations
+        if (!changeFlags.dataChanged) return;
 
-        const wellboreTrajectories: FeatureCollection = {
-            type: "FeatureCollection",
-            features: [],
-        };
-
+        const wellboreTrajectories: WellboreTrajectory[] = [];
         const wellboreMarkers: FeatureCollection = {
             type: "FeatureCollection",
             features: [],
         };
 
+        const geoTrajectories: FeatureCollection = {
+            type: "FeatureCollection",
+            features: [],
+        };
+
+        // TODO: Only update things based on change-flags?
+
         for (const wellboreData of props.data) {
-            const simplifiedTrajectory = createSimplifiedTrajectory(wellboreData.trajectory);
+            const mergedScreenSegments = mergeScreenSegments(wellboreData.screens);
 
-            const wellboreProperties = getWellboreProperties({ ...wellboreData, trajectory: simplifiedTrajectory });
+            // Simplify trajectory path for 2D (remove stacked points for vertical sections of the well)
+            const __simplifiedTrajectory = createSimplifiedTrajectory(wellboreData.trajectory);
 
-            wellboreTrajectories.features.push(buildTrajectoryGeoFeature(simplifiedTrajectory, wellboreProperties));
-
-            wellboreMarkers.features.push(
-                ...buildWellborePerforationMarkers(wellboreData.perforations, simplifiedTrajectory, wellboreProperties),
-                ...buildWellboreScreenMarkers(wellboreData.screens, simplifiedTrajectory, wellboreProperties),
+            // Filter and dashes need the trajectories vertex to be present
+            // TODO: Consider putting it inside the layer
+            // TODO: The "DataFilter" extension from deck.gl is able to interpolate the values between vertexes (numeric filter only)
+            const requiredMds = getAllRequiredMds(
+                __simplifiedTrajectory,
+                mergedScreenSegments,
+                wellboreData.formationSegments,
+                props,
             );
+
+            const wellboreTrajectory = ensureTrajectoryPointAtMds(__simplifiedTrajectory, ...requiredMds);
+            const wellboreProperties = buildWellboreProperties(wellboreTrajectory, wellboreData);
+
+            // Build assorted markers along the path
+            const perforationMarkers = buildWellborePerforationMarkers(
+                wellboreData.perforations,
+                wellboreTrajectory,
+                wellboreProperties,
+            );
+
+            const screenMarkers = buildWellboreScreenMarkers(
+                mergedScreenSegments,
+                wellboreTrajectory,
+                wellboreProperties,
+            );
+
+            // Stored dashed intervals
+            const dashedSections = [] as [from: number, to: number][];
+            for (let index = 0; index < screenMarkers.length; index += 2) {
+                const startMarker = screenMarkers[index];
+                const endMarker = screenMarkers[index + 1];
+
+                dashedSections.push([startMarker.properties.md, endMarker.properties.md]);
+            }
+
+            // Create positions for the final trajectory path
+            const path = zip(
+                wellboreTrajectory.eastingArr,
+                wellboreTrajectory.northingArr,
+                wellboreTrajectory.tvdMslArr,
+            ) as [number, number, number][];
+
+            wellboreTrajectories.push({
+                properties: wellboreProperties,
+                dashedMdIntervals: dashedSections,
+                path: path,
+            });
+
+            wellboreMarkers.features.push(...perforationMarkers, ...screenMarkers);
+
+            geoTrajectories.features.push({
+                type: "Feature",
+                properties: wellboreProperties,
+                geometry: {
+                    type: "GeometryCollection",
+                    geometries: [
+                        {
+                            type: "LineString",
+                            coordinates: path,
+                        },
+                    ],
+                },
+            });
         }
 
-        this.setState({ wellboreTrajectories, wellboreMarkers });
+        this.setState({ wellboreTrajectories, wellboreMarkers, geoTrajectories });
     }
 
     filterSubLayer(context: FilterContext): boolean {
@@ -326,80 +578,119 @@ export class RichWellsLayer extends CompositeLayer<{
         return true;
     }
 
-    renderLayers(): Layer | null | LayersList {
-        const sharedProps: Partial<GeoJsonLayerProps<any>> & Partial<TvdFilterExtensionProps> = {
-            lineWidthMinPixels: 2,
-            getLineWidth: 2,
-            lineBillboard: true,
-            positionFormat: "XY",
+    private getWellboreColor(d: { properties: WellboreProperties }): Color {
+        if (this.props?.isWellboreSelected?.(d.properties.uuid)) {
+            return [255, 0, 0];
+        }
+        return [130, 130, 130, 50];
+    }
 
-            getLineColor: (d) => {
-                if (this.props?.isWellboreSelected?.(d.properties.uuid)) {
-                    return [255, 0, 0];
-                }
-                return [130, 130, 130];
-            },
+    renderLayers(): Layer | null | LayersList {
+        const sharedProps: Partial<LayerProps & TrajectoryFilterExtensionProps & Record<string, any>> = {
+            lineWidthMinPixels: 2,
+            getLineWidth: 4,
+
+            positionFormat: "XY",
+            trajectoryDiscardFiltered: !!this.props.discardFilteredSections,
             pickable: true,
             autoHighlight: true,
-            highlightColor: [122, 8, 148],
-            tvdRange: this.props.tvdRange,
-
-            // TODO: Default opacity settings stacks overlapping elements
-            // parameters: { blend: true, blendEquation: GL.MAX },
+            highlightColor: [50, 50, 50],
         };
 
-        return [
+        const layers = [
             // --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
             // ---[ Main path ]--- --- --- --- --- --- --- --- --- --- ---
-            new GeoJsonLayer({
+            new DashedSectionsPathLayer({
                 ...sharedProps,
-                id: "well-path-layer",
+                miterLimit: -100,
+                opacity: 0.1,
                 data: this.state.wellboreTrajectories,
-                positionFormat: "XY", // Force  2D rendering, even if we provide a z-value
+                id: "well-path-layer",
+                getColor: this.getWellboreColor,
+                widthMinPixels: sharedProps.lineWidthMinPixels,
+                getWidth: sharedProps.getLineWidth,
+                getPath: (d: WellboreTrajectory) => d.path,
+                dashArray: [3, 3],
+                isSegmentDashed: (d, segmentIndex) => {
+                    if (!d.dashedMdIntervals) return false;
 
-                extensions: [new TvdFilterExtension()],
+                    const segmentMd = d.properties.mdArr[segmentIndex];
+                    const inDashRange = d.dashedMdIntervals?.some(([start, end]) =>
+                        // Offset the range a little, to account for points that are slightly close to the point
+                        inRange(segmentMd, start - REQUIRE_MD_MATCH_THRESHOLD, end - REQUIRE_MD_MATCH_THRESHOLD),
+                    );
 
-                getTvd: (d: any) => d.__source.object.properties.tvdArr,
+                    return inDashRange;
+                },
+
+                extensions: [new DataFilterExtension({ filterSize: 1 })],
+                filterRange: [1, 1],
+                getFilterValue: (d: WellboreTrajectory) =>
+                    d.path.map((_, i) => {
+                        const md = d.properties.mdArr[i];
+                        const tvd = d.properties.tvdArr[i];
+                        const segment = d.properties.segmentArr[i];
+
+                        let segmentIsValid = true;
+
+                        segmentIsValid &&= !isTvdFiltered(tvd, this.props.tvdFilterValue);
+                        segmentIsValid &&= !isMdFiltered(md, this.props.mdFilterValue);
+                        segmentIsValid &&= !isSegmentFiltered(segment, this.props.segmentFilterValue);
+
+                        return Number(segmentIsValid);
+                    }),
             }),
+
             // --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
             // ---[ Well markers ]---- --- --- --- --- --- --- --- --- ---
             new GeoJsonLayer({
                 ...sharedProps,
                 id: "well-markers-layer",
                 data: this.state.wellboreMarkers,
-                positionFormat: "XY",
-                extensions: [new TvdFilterExtension()],
+                opacity: 0.1,
 
+                getLineColor: this.getWellboreColor,
                 getFillColor: [0, 0, 0, 0],
+                getLineWidth: 2,
 
-                getLineWidth: 1,
+                extensions: [new DataFilterExtension({ filterSize: 1 })],
+                filterRange: [1, 1],
+                getFilterValue: (d: WellboreMarkerFeature) => {
+                    const { md, tvd, segment } = d.properties;
 
-                getTvd: (d: any) => d.__source.object.properties.tvd,
+                    let segmentIsValid = true;
+
+                    segmentIsValid &&= !isTvdFiltered(tvd, this.props.tvdFilterValue);
+                    segmentIsValid &&= !isMdFiltered(md, this.props.mdFilterValue);
+                    segmentIsValid &&= !isSegmentFiltered(segment, this.props.segmentFilterValue);
+
+                    return Number(segmentIsValid);
+                },
             }),
 
             // --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
             // ---[ Well labels ]- --- --- --- --- --- --- --- --- --- ---
             new WellLabelLayer({
                 id: "welltrajectory-labels-layer",
-                data: this.state.wellboreTrajectories.features.map((f) => ({
-                    ...f,
-                    geometry: {
-                        type: "GeometryCollection",
-                        geometries: [f.geometry],
-                    },
-                })),
 
+                data: this.state.geoTrajectories.features,
                 mergeLabels: false,
                 autoPosition: false,
                 getPositionAlongPath: 1,
                 getAlignmentBaseline: "top",
                 getTextAnchor: "end",
+                // Performance tanks if there's too many labels
+                orientation:
+                    this.state.geoTrajectories.features.length < 200
+                        ? LabelOrientation.TANGENT
+                        : LabelOrientation.HORIZONTAL,
+
                 positionFormat: "XY",
-                orientation: LabelOrientation.TANGENT,
 
                 // @ts-expect-error --- Subsurface type is a bit too aggressive
                 getText: (d: WellboreTrajectoryFeature) => d.properties.identifier,
-                getBackgroundColor: [255, 255, 255, 255 * 0.7],
+                getBackgroundColor: [255, 255, 255, 255 * 0.1],
+                // getColor: []
                 getBorderWidth: 0,
                 background: true,
 
@@ -407,5 +698,7 @@ export class RichWellsLayer extends CompositeLayer<{
                 parameters: { [GL.DEPTH_TEST]: false },
             }),
         ];
+
+        return layers;
     }
 }

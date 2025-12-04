@@ -15,6 +15,7 @@ export type InputProps = InputUnstyledProps & {
     step?: number;
     rounded?: "all" | "left" | "right" | "none";
     debounceTimeMs?: number;
+    allowEmptyNumber?: boolean;
     onValueChange?: (value: string) => void;
     uirevision?: number;
 };
@@ -29,6 +30,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
         onValueChange,
         debounceTimeMs,
         inputRef,
+        allowEmptyNumber,
         ...other
     } = props;
 
@@ -80,7 +82,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
     function handleInputEditingDone() {
         let adjustedValue: unknown = value;
         if (props.type === "number") {
-            let newValue = 0;
+            let newValue: number | "";
 
             if (!isNaN(parseFloat(value as string))) {
                 newValue = parseFloat((value as string) || "0");
@@ -91,6 +93,10 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                 if (props.max !== undefined) {
                     newValue = Math.min(props.max, newValue);
                 }
+            } else if (value === "" && allowEmptyNumber) {
+                newValue = value;
+            } else {
+                newValue = 0;
             }
 
             adjustedValue = newValue.toString();
@@ -120,7 +126,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
 
         if (props.onChange) {
             if (props.type === "number") {
-                let newValue = 0;
+                let newValue: number | "";
 
                 if (!isNaN(parseFloat(event.target.value as string))) {
                     newValue = parseFloat((event.target.value as string) || "0");
@@ -131,6 +137,10 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                     if (props.max !== undefined) {
                         newValue = Math.min(props.max, newValue);
                     }
+                } else if (event.target.value === "" && allowEmptyNumber) {
+                    newValue = event.target.value;
+                } else {
+                    newValue = 0;
                 }
 
                 event.target.value = newValue.toString();

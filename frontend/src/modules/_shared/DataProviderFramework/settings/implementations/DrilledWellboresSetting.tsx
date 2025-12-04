@@ -1,8 +1,8 @@
 import React from "react";
 
-import { Button } from "@lib/components/Button";
+import { SettingConfigButton } from "@lib/components/SettingConfigButton";
 import type { SimplifiedWellboreHeader } from "@lib/utils/wellboreTypes";
-import { WellboreSelectionDialog } from "@modules/_shared/components/WellboreSelectionDialog";
+import { WellboreSelectionForm } from "@modules/_shared/components/WellboreSelectionForm/wellboreSelectionForm";
 
 import type {
     CustomSettingImplementation,
@@ -25,60 +25,65 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>,
     ): ValueType {
         if (!currentValue) {
-            return availableValues;
+            return [];
         }
 
         const matchingValues = currentValue.filter((value) =>
             availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
         );
         if (matchingValues.length === 0) {
-            return availableValues;
+            return [];
         }
         return matchingValues;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) => React.ReactNode {
         return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
-            const [dialogOpen, setDialogOpen] = React.useState(false);
             // Available values are already simplified wellbore headers from the provider
             const availableValues = props.availableValues ?? [];
-            const selectedValues = props.value ?? [];
+            const currentSelection = props.value ?? [];
 
-            function handleSelectionChange(wellbores: SimplifiedWellboreHeader[]) {
-                props.onValueChange(wellbores);
-            }
-
-            function handleDialogClose() {
-                setDialogOpen(false);
-            }
-
-            function handleOpenDialog() {
-                setDialogOpen(true);
-            }
-
-            const selectedCount = selectedValues.length;
+            const selectedCount = currentSelection.length;
             const totalCount = availableValues.length;
+
+            const [localFormValue, setLocalFormValue] = React.useState<SimplifiedWellboreHeader[]>([]);
+
+            function handleConfigOpen() {
+                setLocalFormValue([...currentSelection]);
+            }
+
+            function handleApplyConfig() {
+                props.onValueChange(localFormValue);
+            }
+
+            function handleDiscardConfig() {
+                setLocalFormValue([]);
+            }
 
             return (
                 <div className="flex flex-col gap-1 mt-1">
-                    <Button
-                        variant="outlined"
-                        onClick={handleOpenDialog}
-                        disabled={props.isOverridden}
-                        style={{ width: "100%" }}
+                    <SettingConfigButton
+                        className="w-full"
+                        size="medium"
+                        formTitle="Select wellbores"
+                        modalWidth="1200px"
+                        modalHeight="80vh"
+                        formContent={
+                            <WellboreSelectionForm
+                                selectedWellbores={localFormValue}
+                                availableWellbores={availableValues}
+                                onSelectionChange={setLocalFormValue}
+                                onFormSubmit={handleApplyConfig}
+                            />
+                        }
+                        onOpen={handleConfigOpen}
+                        onDiscard={handleDiscardConfig}
+                        onApply={handleApplyConfig}
                     >
                         {selectedCount === 0
                             ? "Select wellbores..."
                             : `${selectedCount} of ${totalCount} wellbores selected`}
-                    </Button>
-
-                    <WellboreSelectionDialog
-                        open={dialogOpen}
-                        wellbores={availableValues}
-                        selectedWellbores={selectedValues}
-                        onSelectionChange={handleSelectionChange}
-                        onClose={handleDialogClose}
-                    />
+                    </SettingConfigButton>
                 </div>
             );
         };

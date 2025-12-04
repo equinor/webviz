@@ -42,6 +42,7 @@ import { makeAttributeSurfaceLayer } from "@modules/_shared/DataProviderFramewor
 import { makeDepthSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDepthSurfaceLayer";
 import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePolygonsLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
+import { makeRichWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRichWellTrajectoriesLayer";
 import { makeSeismicSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeSeismicSurfaceLayer";
 import {
     VisualizationAssembler,
@@ -54,7 +55,6 @@ import { makeDrilledWellborePicksLayer2D } from "../../DataProviderFramework/vis
 import { makeDrilledWellTrajectoriesLayer2D } from "../../DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
-import { makeRichWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRichWellTrajectoriesLayer";
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>(
