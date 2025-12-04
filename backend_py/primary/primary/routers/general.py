@@ -7,8 +7,9 @@ import starsessions
 from fastapi import APIRouter, HTTPException, Request, status, Query
 from pydantic import BaseModel
 
+from webviz_services.graph_access.graph_access import GraphApiAccess
+
 from primary.auth.auth_helper import AuthHelper
-from primary.services.graph_access.graph_access import GraphApiAccess
 from primary.middleware.add_browser_cache import no_cache
 
 LOGGER = logging.getLogger(__name__)
@@ -85,8 +86,8 @@ async def get_logged_in_user(
             if graph_user_info is not None:
                 user_info.display_name = graph_user_info.get("displayName", None)
         except httpx.HTTPError as exc:
-            print("Error while fetching user avatar and info from Microsoft Graph API (HTTP error):\n", exc)
+            LOGGER.error(f"Error while fetching user avatar and info from Microsoft Graph API (HTTP error):\n{exc}")
         except httpx.InvalidURL as exc:
-            print("Error while fetching user avatar and info from Microsoft Graph API (Invalid URL):\n", exc)
+            LOGGER.error(f"Error while fetching user avatar and info from Microsoft Graph API (Invalid URL):\n{exc}")
 
     return user_info

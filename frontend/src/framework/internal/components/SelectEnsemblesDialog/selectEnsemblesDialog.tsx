@@ -16,7 +16,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { LoadingOverlay } from "../LoadingOverlay";
 
-import { useResponsiveDialogHeightPercent } from "./_hooks";
+import { useResponsiveDialogSizePercent } from "./_hooks";
 import {
     makeDeltaEnsembleSettingsFromEnsembleSet,
     makeHashFromDeltaEnsemble,
@@ -60,16 +60,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         [],
     );
 
-    const workbenchSession = props.workbench.getWorkbenchSession();
+    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
 
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const isEnsembleSetLoading = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
     );
 
-    const dialogHeightPercent = useResponsiveDialogHeightPercent();
-    const colorSet = useColorSet(props.workbench.getWorkbenchSession().getWorkbenchSettings());
+    const dialogSizePercent = useResponsiveDialogSizePercent();
+    const colorSet = useColorSet(props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings());
     const currentHash = makeHashFromSelectedEnsembles(selectedRegularEnsembles, selectedDeltaEnsembles);
 
     const setEnsembleStatesFromEnsembleSet = React.useCallback(() => {
@@ -359,6 +359,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }, [showEnsembleExplorer, ensembleExplorerMode]);
 
     const hasAnyChanges = hash !== currentHash;
+
     return (
         <>
             <Dialog
@@ -367,9 +368,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 title={dialogTitle}
                 modal
                 showCloseCross
-                width={"75%"}
+                width={`${dialogSizePercent.width}%`}
+                height={`${dialogSizePercent.height}%`}
+                maxWidth={"100%"}
                 minWidth={800}
-                height={`${dialogHeightPercent}%`}
                 minHeight={600}
                 actions={
                     <div className="flex gap-4">

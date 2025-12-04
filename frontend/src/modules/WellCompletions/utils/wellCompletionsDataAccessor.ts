@@ -16,15 +16,15 @@ import type {
 } from "@api";
 import type { ColorSet } from "@lib/utils/ColorSet";
 
-import { TimeAggregationSelection } from "../typesAndEnums";
+import { TimeAggregationMode } from "../typesAndEnums";
 
 /**
  * Util methods for providing data result based on selected time aggregation
  */
 export const TimeAggregationTypeFunction = {
-    [TimeAggregationSelection.NONE]: (arr: number[]): number => arr[arr.length - 1],
-    [TimeAggregationSelection.MAX]: (arr: number[]): number => Math.max(...arr),
-    [TimeAggregationSelection.AVERAGE]: (arr: number[]): number => arr.reduce((a, b) => a + b) / arr.length,
+    [TimeAggregationMode.NONE]: (arr: number[]): number => arr[arr.length - 1],
+    [TimeAggregationMode.MAX]: (arr: number[]): number => Math.max(...arr),
+    [TimeAggregationMode.AVERAGE]: (arr: number[]): number => arr.reduce((a, b) => a + b) / arr.length,
 };
 
 export class WellCompletionsDataAccessor {
@@ -41,8 +41,8 @@ export class WellCompletionsDataAccessor {
     private _subzones: Zone[];
     private _wells: WellCompletionsWell_api[];
     private _sortedCompletionDates: string[];
-    private _excludeWellText: string;
-    private _searchWellText: string;
+    private _wellExclusionText: string;
+    private _wellSearchText: string;
     private _sortWellsBy: SortWellsBy | null;
     private _sortDirection: SortDirection;
     private _hideZeroCompletions: boolean;
@@ -54,8 +54,8 @@ export class WellCompletionsDataAccessor {
         this._data = data;
         this._wells = this._data.wells;
         this._sortedCompletionDates = this._data.sortedCompletionDates;
-        this._excludeWellText = "";
-        this._searchWellText = "";
+        this._wellExclusionText = "";
+        this._wellSearchText = "";
         this._hideZeroCompletions = false;
         this._sortWellsBy = null;
         this._sortDirection = SortDirection.ASCENDING;
@@ -67,12 +67,12 @@ export class WellCompletionsDataAccessor {
         );
     }
 
-    setExcludeWellText(excludeWell: string): void {
-        this._excludeWellText = excludeWell;
+    setWellExclusionText(exclusionText: string): void {
+        this._wellExclusionText = exclusionText;
     }
 
-    setSearchWellText(searchWell: string): void {
-        this._searchWellText = searchWell;
+    setWellSearchText(searchText: string): void {
+        this._wellSearchText = searchText;
     }
 
     setHideZeroCompletions(hideZeroCompletions: boolean): void {
@@ -97,7 +97,7 @@ export class WellCompletionsDataAccessor {
 
     createPlotData(
         completionDateIndexSelection: number | [number, number],
-        timeAggregation: TimeAggregationSelection,
+        timeAggregation: TimeAggregationMode,
     ): PlotData | null {
         if (!this._data) return null;
 
@@ -118,8 +118,8 @@ export class WellCompletionsDataAccessor {
 
         // Exclude wells based on exclude text
         let excludeWellNames: string[] = [];
-        if (this._excludeWellText) {
-            const excludeWellRegex = createWellNameRegexMatcher(this._excludeWellText);
+        if (this._wellExclusionText) {
+            const excludeWellRegex = createWellNameRegexMatcher(this._wellExclusionText);
             excludeWellNames = wellNames.filter((name) => {
                 return excludeWellRegex(name);
             });
@@ -127,8 +127,8 @@ export class WellCompletionsDataAccessor {
 
         // Include wells based on search text
         let includeWellNames: string[] = wellNames;
-        if (this._searchWellText) {
-            const wellNameRegex = createWellNameRegexMatcher(this._searchWellText);
+        if (this._wellSearchText) {
+            const wellNameRegex = createWellNameRegexMatcher(this._wellSearchText);
             includeWellNames = wellNames.filter((name) => {
                 return wellNameRegex(name);
             });
@@ -174,7 +174,7 @@ export class WellCompletionsDataAccessor {
         subzones: Zone[],
         wells: WellCompletionsWell_api[],
         dateIndexRange: [number, number],
-        timeAggregation: TimeAggregationSelection,
+        timeAggregation: TimeAggregationMode,
         sortWellsBy: SortWellsBy | null,
         sortDirection: SortDirection,
         hideZeroCompletions: boolean,

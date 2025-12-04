@@ -1,6 +1,5 @@
-from primary.services.sumo_access.well_completions_types import (
+from webviz_services.sumo_access.well_completions_types import (
     Completions,
-    WellCompletionsData,
     WellCompletionsUnitInfo,
     WellCompletionsUnits,
     WellCompletionsWell,

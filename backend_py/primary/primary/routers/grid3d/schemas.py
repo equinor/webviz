@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from pydantic import BaseModel
-from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray
+from webviz_core_utils.b64 import B64FloatArray, B64UintArray
 
 from .._shared.schemas import BoundingBox3d
 

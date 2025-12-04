@@ -8,14 +8,13 @@ import { withDefaults } from "../_component-utils/components";
 export type CircularProgressProps = {
     size?: SizeName;
     color?: string;
-    variant?: "determinate" | "indeterminate";
     value?: number;
     className?: string;
 };
 
 const defaultProps: OptionalValues<CircularProgressProps> = {
     size: "medium",
-    variant: "indeterminate",
+    color: "fill-blue-600",
 };
 
 export const CircularProgress = withDefaults<CircularProgressProps>()(defaultProps, (props) => {
@@ -25,7 +24,7 @@ export const CircularProgress = withDefaults<CircularProgressProps>()(defaultPro
         <div className={resolveClassNames(sizeClass, "relative", props.className ?? "")}>
             <svg
                 aria-hidden="true"
-                className="text-gray-200 animate-spin fill-blue-600"
+                className={resolveClassNames("text-gray-200 animate-spin", props.color)}
                 viewBox="0 0 100 101"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"

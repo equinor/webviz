@@ -1,3 +1,4 @@
+import { ParameterIdent } from "@framework/EnsembleParameters";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
@@ -8,6 +9,7 @@ import { ChannelIds as TimeSeriesChannelIds } from "@modules/SimulationTimeSerie
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
+    name: "Correlation matrix between input parameters and multiple responses",
     description:
         "Example template for a correlation matrix between input parameters and various responses. " +
         "Either a full matrix or a parameter vs. response matrix can be shown. ",
@@ -21,10 +23,11 @@ const template: Template = {
                 relX: 0,
                 relY: 0,
             },
-
-            initialSettings: {
-                selectedVectorTags: ["FOPT", "FGPT", "FOPR", "FGPR"],
-                visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
+            initialState: {
+                settings: {
+                    selectedVectorTags: ["FOPT", "FGPT", "FOPR", "FGPR"],
+                    visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                },
             },
         },
         {
@@ -37,8 +40,10 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
-            initialSettings: {
-                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+            initialState: {
+                settings: {
+                    indexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+                },
             },
         },
         {
@@ -63,17 +68,31 @@ const template: Template = {
                     channelIdString: InplaceChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
-                showLabels: true,
-                correlationSettings: {
+            initialState: {
+                settings: {
+                    showLabels: true,
+                    correlationThreshold: 0.1,
                     hideIndividualCells: true,
-                    filterColumns: true,
                     filterRows: true,
-                    threshold: 0.1,
+                    filterColumns: true,
+                    parameterIdentStrings: [
+                        new ParameterIdent("KVKH_CHANNEL", "GLOBVAR").toString(),
+                        new ParameterIdent("KVKH_CREVASSE", "GLOBVAR").toString(),
+                        new ParameterIdent("KVKH_US", "GLOBVAR").toString(),
+                        new ParameterIdent("KVKH_LS", "GLOBVAR").toString(),
+                        new ParameterIdent("FWL_CENTRAL", "GLOBVAR").toString(),
+                        new ParameterIdent("FWL_NORTH_HORST", "GLOBVAR").toString(),
+                        new ParameterIdent("GOC_NORTH_HORST", "GLOBVAR").toString(),
+                        new ParameterIdent("RELPERM_INT_WO", "GLOBVAR").toString(),
+                        new ParameterIdent("RELPERM_INT_GO", "GLOBVAR").toString(),
+                        new ParameterIdent("ISOTREND_ALT1W_VALYSAR", "GLOBVAR").toString(),
+                        new ParameterIdent("ISOTREND_ALT1W_THERYS", "GLOBVAR").toString(),
+                        new ParameterIdent("ISOTREND_ALT1W_VOLON", "GLOBVAR").toString(),
+                    ],
                 },
             },
         },
     ],
 };
 
-TemplateRegistry.registerTemplate("Correlation matrix between input parameters and multiple responses", template);
+TemplateRegistry.registerTemplate(template);

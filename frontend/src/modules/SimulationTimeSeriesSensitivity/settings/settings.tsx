@@ -7,17 +7,19 @@ import { Frequency_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
+import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { FrequencyEnumToStringMapping } from "../typesAndEnums";
@@ -29,47 +31,46 @@ import {
     showStatisticsAtom,
     syncedRegularEnsembleIdentsAtom,
     syncedVectorNameAtom,
-    userSelectedRegularEnsembleIdentAtom,
-    userSelectedSensitivityNamesAtom,
-    userSelectedVectorNameAndTagAtom,
 } from "./atoms/baseAtoms";
+import { availableSensitivityNamesAtom, vectorSelectorDataAtom } from "./atoms/derivedAtoms";
 import {
-    availableSensitivityNamesAtom,
     selectedRegularEnsembleIdentAtom,
     selectedSensitivityNamesAtom,
-    selectedVectorTagAtom,
-    vectorSelectorDataAtom,
-} from "./atoms/derivedAtoms";
+    selectedVectorNameAndTagAtom,
+} from "./atoms/persistableFixableAtoms";
 import { vectorListQueryAtom } from "./atoms/queryAtoms";
 
-//-----------------------------------------------------------------------------------------------------------
+export function Settings(props: ModuleSettingsProps<Interfaces>) {
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
 
-export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
-    const ensembleSet = useEnsembleSet(workbenchSession);
+    const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
     const setSyncedRegularEnsembleIdents = useSetAtom(syncedRegularEnsembleIdentsAtom);
     const setSyncedVectorName = useSetAtom(syncedVectorNameAtom);
-    const setUserSelectedRegularEnsembleIdent = useSetAtom(userSelectedRegularEnsembleIdentAtom);
-    const setUserSelectedVectorNameAndTag = useSetAtom(userSelectedVectorNameAndTagAtom);
-    const setUserSelectedSensitivityNamesAtom = useSetAtom(userSelectedSensitivityNamesAtom);
-    const selectedRegularEnsembleIdent = useAtomValue(selectedRegularEnsembleIdentAtom);
-    const vectorsListQuery = useAtomValue(vectorListQueryAtom);
+
+    const [selectedRegularEnsembleIdent, setSelectedRegularEnsembleIdent] = useAtom(selectedRegularEnsembleIdentAtom);
+    const [selectedSensitivityNames, setSelectedSensitivityNamesAtom] = useAtom(selectedSensitivityNamesAtom);
+    const [selectedVectorNameAndTag, setSelectedVectorNameAndTag] = useAtom(selectedVectorNameAndTagAtom);
+
+    const vectorListQuery = useAtomValue(vectorListQueryAtom);
     const availableSensitivityNames = useAtomValue(availableSensitivityNamesAtom);
-    const selectedSensitivityNames = useAtomValue(selectedSensitivityNamesAtom);
     const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
-    const selectedVectorTag = useAtomValue(selectedVectorTagAtom);
 
     const [resampleFrequency, setResamplingFrequency] = useAtom(resamplingFrequencyAtom);
     const [showStatistics, setShowStatistics] = useAtom(showStatisticsAtom);
     const [showRealizations, setShowRealizations] = useAtom(showRealizationsAtom);
     const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
 
-    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
+    });
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
     const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<RegularEnsembleIdent[] | null>(null);
     const [prevSyncedSummaryVector, setPrevSyncedSummaryVector] = React.useState<{ vectorName: string } | null>(null);
+
+    usePropagateQueryErrorToStatusWriter(vectorListQuery, statusWriter);
 
     if (!isEqual(syncedValueEnsembles, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedValueEnsembles);
@@ -85,7 +86,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     }
 
     function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
-        setUserSelectedRegularEnsembleIdent(newEnsembleIdent);
+        setSelectedRegularEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
         }
@@ -101,61 +102,72 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
         const userSelectedVectorName = selection.selectedNodes[0] ?? null;
         const userSelectedVectorTag = selection.selectedTags[0]?.text ?? null;
-        setUserSelectedVectorNameAndTag({ name: userSelectedVectorName, tag: userSelectedVectorTag });
+        setSelectedVectorNameAndTag({ name: userSelectedVectorName, tag: userSelectedVectorTag });
     }
     function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
         setShowHistorical(event.target.checked);
     }
 
     function handleSensitivityNamesSelectionChange(newSensitivities: string[]) {
-        setUserSelectedSensitivityNamesAtom(newSensitivities);
+        setSelectedSensitivityNamesAtom(newSensitivities);
     }
+
+    const selectedRegularEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(
+        selectedRegularEnsembleIdentAtom,
+    );
+    const selectedVectorNameAndTagAnnotations = useMakePersistableFixableAtomAnnotations(selectedVectorNameAndTagAtom);
+    const selectedSensitivityNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedSensitivityNamesAtom);
 
     return (
         <>
             <CollapsibleGroup expanded={true} title="Ensemble">
-                <EnsembleDropdown
-                    ensembles={ensembleSet.getRegularEnsembleArray()}
-                    value={selectedRegularEnsembleIdent}
-                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
-                    onChange={handleEnsembleSelectionChange}
-                />
+                <SettingWrapper annotations={selectedRegularEnsembleIdentAnnotations}>
+                    <EnsembleDropdown
+                        ensembles={ensembleSet.getRegularEnsembleArray()}
+                        value={selectedRegularEnsembleIdent.value}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                        onChange={handleEnsembleSelectionChange}
+                    />
+                </SettingWrapper>
             </CollapsibleGroup>
-            <QueryStateWrapper
-                queryResult={vectorsListQuery}
-                loadingComponent={<CircularProgress />}
-                errorComponent={"Could not load the vectors for selected ensembles"}
-            >
-                <CollapsibleGroup expanded={true} title="Time Series">
-                    <Label text="Vector">
-                        <VectorSelector
-                            data={vectorSelectorData}
-                            selectedTags={selectedVectorTag ? [selectedVectorTag] : []}
-                            placeholder="Add new vector..."
-                            maxNumSelectedNodes={1}
-                            numSecondsUntilSuggestionsAreShown={0.5}
-                            lineBreakAfterTag={true}
-                            onChange={handleVectorSelectChange}
+            <CollapsibleGroup expanded={true} title="Time Series" hasError={selectedVectorNameAndTag.depsHaveError}>
+                <SettingWrapper
+                    label="Vector"
+                    annotations={selectedVectorNameAndTagAnnotations}
+                    loadingOverlay={selectedVectorNameAndTag.isLoading}
+                    errorOverlay={
+                        selectedVectorNameAndTag.depsHaveError
+                            ? "Error loading available vectors. See details in log."
+                            : undefined
+                    }
+                >
+                    <VectorSelector
+                        data={vectorSelectorData}
+                        selectedTags={selectedVectorNameAndTag.value.tag ? [selectedVectorNameAndTag.value.tag] : []}
+                        placeholder="Add new vector..."
+                        maxNumSelectedNodes={1}
+                        numSecondsUntilSuggestionsAreShown={0.5}
+                        lineBreakAfterTag={true}
+                        onChange={handleVectorSelectChange}
+                    />
+                </SettingWrapper>
+                <Label text="Frequency">
+                    <div className="ml-4">
+                        <Dropdown
+                            width="50%"
+                            options={[
+                                { value: "RAW", label: "None (raw)" },
+                                ...Object.values(Frequency_api).map((val: Frequency_api) => {
+                                    return { value: val, label: FrequencyEnumToStringMapping[val] };
+                                }),
+                            ]}
+                            value={resampleFrequency ?? "RAW"}
+                            onChange={handleFrequencySelectionChange}
                         />
-                    </Label>
-                    <Label text="Frequency">
-                        <div className="ml-4">
-                            <Dropdown
-                                width="50%"
-                                options={[
-                                    { value: "RAW", label: "None (raw)" },
-                                    ...Object.values(Frequency_api).map((val: Frequency_api) => {
-                                        return { value: val, label: FrequencyEnumToStringMapping[val] };
-                                    }),
-                                ]}
-                                value={resampleFrequency ?? "RAW"}
-                                onChange={handleFrequencySelectionChange}
-                            />
-                        </div>
-                    </Label>
-                </CollapsibleGroup>
-            </QueryStateWrapper>
-            <CollapsibleGroup expanded={false} title="Visualization">
+                    </div>
+                </Label>
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Visualization">
                 <Checkbox
                     label="Mean over realizations"
                     checked={showStatistics}
@@ -169,17 +181,19 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                 <Checkbox label="Show historical" checked={showHistorical} onChange={handleShowHistorical} />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Sensitivity filter">
-                <Select
-                    options={availableSensitivityNames.map((name) => ({
-                        value: name,
-                        label: name,
-                    }))}
-                    value={selectedSensitivityNames ?? []}
-                    onChange={handleSensitivityNamesSelectionChange}
-                    filter={true}
-                    size={10}
-                    multiple={true}
-                />
+                <SettingWrapper annotations={selectedSensitivityNamesAnnotations}>
+                    <Select
+                        options={availableSensitivityNames.map((name) => ({
+                            value: name,
+                            label: name,
+                        }))}
+                        value={selectedSensitivityNames.value ?? []}
+                        onChange={handleSensitivityNamesSelectionChange}
+                        filter={true}
+                        size={10}
+                        multiple={true}
+                    />
+                </SettingWrapper>
             </CollapsibleGroup>
         </>
     );

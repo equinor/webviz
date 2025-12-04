@@ -63,26 +63,6 @@ export const defaultColorPalettes = [
 
 export const defaultContinuousSequentialColorPalettes = [
     new ColorPalette({
-        name: "Viridis",
-        colors: ["#440154", "#482777", "#3f4a8a", "#31678e", "#26838f", "#1f9d8a", "#6cce5a", "#b6de2b", "#fee825"],
-        id: "viridis",
-    }),
-    new ColorPalette({
-        name: "Plasma",
-        colors: ["#0d0887", "#5302a3", "#8b0aa5", "#b83289", "#db5c68", "#f48849", "#febd2a", "#f0f921"],
-        id: "plasma",
-    }),
-    new ColorPalette({
-        name: "Inferno",
-        colors: ["#000004", "#1b0c41", "#4a0c6b", "#781c6d", "#a52c60", "#cf4446", "#ed6925", "#fb9b06", "#fcfdbf"],
-        id: "inferno",
-    }),
-    new ColorPalette({
-        name: "Cividis",
-        colors: ["#00224e", "#123570", "#3b496c", "#575d6d", "#707173", "#8a8678", "#a59c74", "#c3b369", "#e1cc55"],
-        id: "cividis",
-    }),
-    new ColorPalette({
         name: "Turbo",
         colors: [
             "#30123b",
@@ -104,9 +84,48 @@ export const defaultContinuousSequentialColorPalettes = [
         id: "turbo",
     }),
     new ColorPalette({
-        name: "Blues",
-        colors: ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"],
-        id: "blues",
+        name: "Viridis",
+        colors: ["#440154", "#482777", "#3f4a8a", "#31678e", "#26838f", "#1f9d8a", "#6cce5a", "#b6de2b", "#fee825"],
+        id: "viridis",
+    }),
+    new ColorPalette({
+        name: "Plasma",
+        colors: ["#0d0887", "#5302a3", "#8b0aa5", "#b83289", "#db5c68", "#f48849", "#febd2a", "#f0f921"],
+        id: "plasma",
+    }),
+    new ColorPalette({
+        name: "Inferno",
+        colors: ["#000004", "#1b0c41", "#4a0c6b", "#781c6d", "#a52c60", "#cf4446", "#ed6925", "#fb9b06", "#fcfdbf"],
+        id: "inferno",
+    }),
+    new ColorPalette({
+        name: "Cividis",
+        colors: ["#00224e", "#123570", "#3b496c", "#575d6d", "#707173", "#8a8678", "#a59c74", "#c3b369", "#e1cc55"],
+        id: "cividis",
+    }),
+
+    new ColorPalette({
+        name: "Water",
+        colors: ["#ffffff", "#e6f0ff", "#b3d4ff", "#66aaff", "#3388ff", "#0066cc", "#004d99", "#003366"],
+        id: "water",
+    }),
+
+    new ColorPalette({
+        name: "Oil",
+        colors: ["#ffffff", "#f0fff0", "#d9ffd9", "#b3ffb3", "#80e680", "#4dcc4d", "#339933", "#1a661a"],
+        id: "oil",
+    }),
+
+    new ColorPalette({
+        name: "Gas",
+        colors: ["#ffffff", "#fff5f0", "#ffe6e0", "#ffc9c0", "#ff9999", "#e67373", "#cc4d4d", "#b33030"],
+        id: "gas",
+    }),
+
+    new ColorPalette({
+        name: "Thickness",
+        colors: ["#ffffff", "#e0f0ff", "#80c8e6", "#40b8b8", "#80c080", "#d4d466", "#ffaa66", "#ff7766", "#d93030"],
+        id: "thickness",
     }),
 ];
 

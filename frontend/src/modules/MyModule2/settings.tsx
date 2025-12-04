@@ -5,7 +5,17 @@ import { Check } from "@mui/icons-material";
 import { useAtom } from "jotai";
 import { random, range } from "lodash";
 
+import { EnsemblePicker } from "@framework/components/EnsemblePicker";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { Checkbox } from "@lib/components/Checkbox";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import type { TagProps } from "@lib/components/TagInput";
 import type { TagOption, TagOptionProps } from "@lib/components/TagPicker";
@@ -19,8 +29,11 @@ import {
     amtOfPendingDataAtom,
     fillPendingDataAtom,
 } from "./atoms";
+import type { Interfaces } from "./interfaces";
 
-export function Settings(): React.ReactNode {
+export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>): React.ReactNode {
+    const ensembleSet = useEnsembleSet(workbenchSession);
+
     const [alternateCols, setAlternateCols] = useAtom(alternateColColorsAtom);
     const [allowMultiSelect, setAllowMultiSelect] = useAtom(allowMultiSelectAtom);
     const [fillPendingData, setFillPendingData] = useAtom(fillPendingDataAtom);
@@ -31,6 +44,10 @@ export function Settings(): React.ReactNode {
     const [tagSelection, setTagSelection] = React.useState<string[]>([]);
     const [tagSelection2, setTagSelection2] = React.useState<string[]>([]);
 
+    const [ensembleSelection, setEnsembleSelection] = React.useState<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>([]);
+    const [isPending, setIsPending] = React.useState(false);
+    const [statusMessage, setStatusMessage] = React.useState<string | undefined>(undefined);
+
     const tags = React.useMemo(() => {
         return range(0, 100).map<TagOption>((i) => ({ value: String(i), label: `Tag ${i}` }));
     }, []);
@@ -39,17 +56,36 @@ export function Settings(): React.ReactNode {
         <>
             <div className="mb-4">
                 <div className="mb-2 text-xs">Selected: {tagSelection.join(", ") || "none"}</div>
-                <Label text="X/N selected">
-                    <TagPicker
-                        placeholder="Select tags"
-                        tagOptions={tags}
-                        selection={tagSelection}
-                        showListAsSelectionCount
-                        onChange={setTagSelection}
-                    />
-                </Label>
+
+                <div className="grid grid-cols-[0.7fr_0.3fr] gap-2 ">
+                    <Label text="Standard picker">
+                        <TagPicker
+                            placeholder="Select tags"
+                            tagOptions={tags}
+                            selection={tagSelection}
+                            onChange={setTagSelection}
+                        />
+                    </Label>
+
+                    <Label text="X/N selected">
+                        <TagPicker
+                            placeholder="Select tags"
+                            tagOptions={tags}
+                            selection={tagSelection}
+                            showListAsSelectionCount
+                            onChange={setTagSelection}
+                        />
+                    </Label>
+                </div>
             </div>
 
+            <EnsemblePicker
+                ensembles={ensembleSet.getEnsembleArray()}
+                value={ensembleSelection}
+                allowDeltaEnsembles={true}
+                ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                onChange={setEnsembleSelection}
+            />
             <div className="mb-12">
                 <div className="mb-2 text-xs">Selected: {tagSelection2.join(", ") || "none"}</div>
                 <Label text="Custom tags and options">
@@ -113,6 +149,58 @@ export function Settings(): React.ReactNode {
             <Tooltip title="This is long delay" enterDelay="long">
                 <div className="p-1">This text has a tooltip with long delay</div>
             </Tooltip>
+
+            <CollapsibleGroup
+                title="Status and Pending Wrapper Examples"
+                expanded={true}
+                hasError={statusMessage === "This is an error message"}
+                hasWarning={statusMessage === "This is a warning message"}
+            >
+                <div className="pt-2 flex flex-col gap-2">
+                    <Dropdown
+                        value={statusMessage ?? ""}
+                        onChange={(val) => setStatusMessage(val === "" ? undefined : val)}
+                        options={[
+                            undefined,
+                            "This is an info message",
+                            "This is a warning message",
+                            "This is an error message",
+                        ].map((msg, idx) => ({
+                            label: msg ?? "No message",
+                            value: msg ?? "",
+                            key: idx,
+                        }))}
+                    />
+                    <Label text="StatusWrapper example">
+                        <StatusWrapper
+                            errorMessage={statusMessage === "This is an error message" ? statusMessage : undefined}
+                            warningMessage={statusMessage === "This is a warning message" ? statusMessage : undefined}
+                            infoMessage={statusMessage === "This is an info message" ? statusMessage : undefined}
+                        >
+                            <div className="h-12">This box is wrapped in a StatusWrapper</div>
+                        </StatusWrapper>
+                    </Label>
+                    <Label text="PendingWrapper example">
+                        <>
+                            <Checkbox
+                                label="Pending"
+                                checked={isPending}
+                                onChange={(e) => setIsPending(e.target.checked)}
+                            />
+                            <PendingWrapper
+                                isPending={isPending}
+                                errorMessage={statusMessage === "This is an error message" ? statusMessage : undefined}
+                                warningMessage={
+                                    statusMessage === "This is a warning message" ? statusMessage : undefined
+                                }
+                                infoMessage={statusMessage === "This is an info message" ? statusMessage : undefined}
+                            >
+                                <div className="h-12">This box is wrapped in a PendingWrapper</div>
+                            </PendingWrapper>
+                        </>
+                    </Label>
+                </div>
+            </CollapsibleGroup>
         </>
     );
 }
