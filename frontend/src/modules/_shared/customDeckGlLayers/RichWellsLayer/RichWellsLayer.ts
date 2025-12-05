@@ -697,7 +697,7 @@ export class RichWellsLayer extends CompositeLayer<RichWellsLayerProps> {
                 // getColor: []
                 getBorderWidth: 0,
                 background: true,
-                visible: false,
+                visible: true,
 
                 // @ts-expect-error -- Parameter type doesn't expose these
                 parameters: { [GL.DEPTH_TEST]: false },
