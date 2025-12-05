@@ -57,9 +57,9 @@ function setColorByFlowData(
     }
 
     if (injData) {
-        // Water injection - soft cyan
+        // Water injection - clear blue (distinct from oil green)
         if (injData.waterInjection >= waterInjMin) {
-            return { r: 77, g: 182, b: 172 };
+            return { r: 33, g: 150, b: 243 };
         }
         // Gas injection - muted amber/gold
         if (injData.gasInjection >= gasInjMin) {
