@@ -594,8 +594,8 @@ export class RichWellsLayer extends CompositeLayer<RichWellsLayerProps> {
 
     renderLayers(): Layer | null | LayersList {
         const sharedProps: Partial<LayerProps & TrajectoryFilterExtensionProps & Record<string, any>> = {
-            lineWidthMinPixels: 2,
-            getLineWidth: 4,
+            lineWidthMinPixels: 3,
+            getLineWidth: 6,
 
             positionFormat: "XY",
             trajectoryDiscardFiltered: !!this.props.discardFilteredSections,

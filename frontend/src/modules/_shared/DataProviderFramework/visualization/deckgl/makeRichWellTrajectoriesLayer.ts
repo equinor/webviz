@@ -42,28 +42,28 @@ function setColorByFlowData(
     const injData = injectionData.find((id) => id.wellboreUwi === wellboreUwi);
 
     if (prodData) {
-        // Oil production - green
+        // Oil production - muted green
         if (prodData.oilProductionSm3 >= oilProdMin) {
-            return { r: 0, g: 255, b: 0 };
+            return { r: 76, g: 175, b: 80 };
         }
-        // Gas production - red
+        // Gas production - muted red
         if (prodData.gasProductionSm3 >= gasProdMin) {
-            return { r: 255, g: 0, b: 0 };
+            return { r: 211, g: 47, b: 47 };
         }
-        // Water production - blue
+        // Water production - muted blue
         if (prodData.waterProductionM3 >= waterProdMin) {
-            return { r: 0, g: 0, b: 255 };
+            return { r: 66, g: 133, b: 244 };
         }
     }
 
     if (injData) {
-        // Water injection - light blue
+        // Water injection - soft cyan
         if (injData.waterInjection >= waterInjMin) {
-            return { r: 135, g: 206, b: 235 };
+            return { r: 77, g: 182, b: 172 };
         }
-        // Gas injection - yellow
+        // Gas injection - muted amber/gold
         if (injData.gasInjection >= gasInjMin) {
-            return { r: 255, g: 255, b: 0 };
+            return { r: 255, g: 193, b: 7 };
         }
     }
 
@@ -89,24 +89,6 @@ export function makeRichWellTrajectoriesLayer({
     const productionData = getStoredData("productionData");
     const injectionData = getStoredData("injectionData");
 
-    //     type WellProductionData_api = {
-    //     wellboreUuid: string;
-    //     wellboreUwi: string;
-    //     startDate: string;
-    //     endDate: string;
-    //     oilProductionSm3: number; //green
-    //     gasProductionSm3: number; //red
-    //     waterProductionM3: number; //blue
-    // };
-
-    // type WellInjectionData_api = {
-    //     wellboreUuid: string;
-    //     wellboreUwi: string;
-    //     startDate: string;
-    //     endDate: string;
-    //     waterInjection: number; //blue
-    //     gasInjection: number; //yellow
-    // };
     // **************************
     // TODO: Segment filter settings is currently not optional. Making same top/bottom count as "unfiltered"
     const surfaceFilterTop = getSetting(Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME);
