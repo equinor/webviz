@@ -2,10 +2,10 @@ import { atom } from "jotai";
 import { random, range, sampleSize } from "lodash";
 
 export const alternateColColorsAtom = atom<boolean>(false);
-export const allowMultiSelectAtom = atom<boolean>(false);
-export const fillPendingDataAtom = atom<boolean>(true);
+export const allowMultiSelectAtom = atom<boolean>(true);
+export const fillPendingDataAtom = atom<boolean>(false);
 
-export const amtOfDataAtom = atom<number>(0);
+export const amtOfDataAtom = atom<number>(100);
 export const amtOfPendingDataAtom = atom<number>(0);
 
 export const DATA_TAGS = ["Tag1", "Tag2", "Tag3", "Tag4", "Tag5", "Tag6"] as const;

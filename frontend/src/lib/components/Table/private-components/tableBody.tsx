@@ -92,10 +92,10 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
                 placeholderComponent="tr"
                 items={props.rows}
                 itemSize={props.rowHeight}
-                onScroll={props.onVisibleRowRangeChange}
+                onRangeComputed={props.onVisibleRowRangeChange}
+                makeKey={(row) => row._key}
                 renderItem={(row, rowIndex) => (
                     <TableRow
-                        key={row._key}
                         row={row}
                         selectionEnabled={props.selectable}
                         height={props.rowHeight}
