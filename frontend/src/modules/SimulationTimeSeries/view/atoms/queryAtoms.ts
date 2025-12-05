@@ -1,4 +1,5 @@
 import type { QueryObserverResult } from "@tanstack/react-query";
+import { atom } from "jotai";
 
 import type { Observations_api, VectorHistoricalData_api } from "@api";
 import {
@@ -31,7 +32,6 @@ import {
     vectorSpecificationsAtom,
     visualizationModeAtom,
 } from "./baseAtoms";
-import { atom } from "jotai";
 
 // ----------------------------------------------------
 

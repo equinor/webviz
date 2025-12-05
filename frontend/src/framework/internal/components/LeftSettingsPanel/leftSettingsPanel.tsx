@@ -8,10 +8,11 @@ import type { Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useActiveDashboard } from "../ActiveDashboardBoundary";
+
 import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModuleSettings } from "./private-components/moduleSettings";
 import { SyncSettings } from "./private-components/syncSettings";
-import { useActiveDashboard } from "../ActiveDashboardBoundary";
 
 type LeftSettingsPanelProps = {
     workbench: Workbench;

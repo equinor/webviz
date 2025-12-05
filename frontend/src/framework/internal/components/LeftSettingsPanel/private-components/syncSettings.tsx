@@ -10,6 +10,7 @@ import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
 import { Checkbox } from "@lib/components/Checkbox";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+
 import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 
 type ModulesListProps = {

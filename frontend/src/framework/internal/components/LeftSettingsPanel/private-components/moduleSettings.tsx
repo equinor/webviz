@@ -19,11 +19,11 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 import { useActiveSession } from "../../ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
-import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 
 type ModuleSettingsProps = {
     moduleInstance: ModuleInstance<any, any>;

@@ -2,12 +2,12 @@ import React from "react";
 
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 
 export type DataChannelVisualizationProps = {
     workbench: Workbench;

@@ -15,6 +15,7 @@ import "../../../../modules/registerAllModules";
 import "../../../../templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { LeftNavBar } from "../LeftNavBar";
@@ -24,7 +25,6 @@ import { RightNavBar } from "../RightNavBar";
 import { SaveSessionDialog } from "../SaveSessionDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
-import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.

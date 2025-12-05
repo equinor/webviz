@@ -1,6 +1,7 @@
 import React from "react";
 
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
@@ -15,7 +16,6 @@ import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 
 type ViewWrapperProps = {
     isMaximized?: boolean;

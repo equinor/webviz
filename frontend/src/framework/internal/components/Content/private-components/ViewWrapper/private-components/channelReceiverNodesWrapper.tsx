@@ -2,6 +2,7 @@ import React from "react";
 
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
@@ -13,7 +14,6 @@ import type { Vec2 } from "@lib/utils/vec2";
 import type { SelectableChannel, SelectedContents } from "./channelContentSelector";
 import { ChannelSelector } from "./channelContentSelector";
 import { ChannelReceiverNode } from "./channelReceiverNode";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 
 export type ChannelReceiverNodesWrapperProps = {
     forwardedRef: React.RefObject<HTMLDivElement>;

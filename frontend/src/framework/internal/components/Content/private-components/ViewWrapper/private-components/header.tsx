@@ -11,6 +11,7 @@ import {
     useGuiState,
     useGuiValue,
 } from "@framework/GuiMessageBroker";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -28,7 +29,6 @@ import { MenuText } from "@lib/components/MenuText/menuText";
 import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 
 export type HeaderProps = {
     workbench: Workbench;

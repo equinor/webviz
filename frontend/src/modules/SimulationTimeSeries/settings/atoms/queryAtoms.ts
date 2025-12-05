@@ -1,3 +1,5 @@
+import { atom } from "jotai";
+
 import { getDeltaEnsembleVectorListOptions, getVectorListOptions } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
@@ -7,7 +9,6 @@ import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
-import { atom } from "jotai";
 
 export const vectorListQueriesAtom = atom((get) => {
     const regularQueries = get(regularEnsembleVectorListQueriesAtom);
