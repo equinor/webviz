@@ -644,6 +644,10 @@ export class RichWellsLayer extends CompositeLayer<RichWellsLayerProps> {
 
                         return Number(segmentIsValid);
                     }),
+
+                // @ts-expect-error -- Parameter type doesn't expose these
+                // Disable depth test to render on top of other layers
+                parameters: { [GL.DEPTH_TEST]: false },
             }),
 
             // --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
