@@ -1,6 +1,8 @@
 import type { PvtData_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
+import type { PvtDataAccessor } from "./utils/PvtDataAccessor";
+
 export enum ColorBy {
     ENSEMBLE = "ensemble",
     PVT_NUM = "pvtNum",
@@ -45,8 +47,13 @@ export type PvtTableCollection = {
 
 export type CombinedPvtDataResult = {
     tableCollections: PvtTableCollection[];
-    isFetching: boolean;
     errors: Error[];
-    someQueriesFailed: boolean;
+    isFetching: boolean;
+    allQueriesFailed: boolean;
+};
+
+export type PvtDataAccessorWithStatus = {
+    pvtDataAccessor: PvtDataAccessor | null;
+    isFetching: boolean;
     allQueriesFailed: boolean;
 };

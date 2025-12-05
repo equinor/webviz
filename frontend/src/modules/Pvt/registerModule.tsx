@@ -3,6 +3,7 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import type { Interfaces } from "./interfaces";
+import { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 
 export const MODULE_NAME = "Pvt";
@@ -10,7 +11,7 @@ export const MODULE_NAME = "Pvt";
 const description =
     "Visualizes formation volume factor and viscosity data for oil, gas, and water from Eclipse init and include files.";
 
-ModuleRegistry.registerModule<Interfaces>({
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "PVT",
     category: ModuleCategory.MAIN,
@@ -18,4 +19,5 @@ ModuleRegistry.registerModule<Interfaces>({
     dataTagIds: [ModuleDataTagId.PVT],
     preview,
     description,
+    serializedStateSchema: SERIALIZED_STATE_SCHEMA,
 });

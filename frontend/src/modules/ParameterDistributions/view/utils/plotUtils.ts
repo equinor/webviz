@@ -3,7 +3,7 @@ import type { BoxPlotData, Layout, PlotData } from "plotly.js";
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { computeQuantile } from "@modules/_shared/utils/math/statistics";
 
-import { ParameterDistributionPlotType } from "../../typesAndEnums";
+import { ParameterDistributionPlotType, type HistogramMode } from "../../typesAndEnums";
 
 import type { EnsembleParameterRealizationsAndValues, EnsembleSetParameterArray } from "./ensembleSetParameterArray";
 
@@ -163,12 +163,14 @@ export function generateLayoutForParameter({
     title,
     xAxisIsLogarithmic,
     showZeroLine,
+    barmode,
 }: {
     width: number;
     height: number;
     title: string;
     xAxisIsLogarithmic: boolean;
     showZeroLine: boolean;
+    barmode: HistogramMode;
 }): Partial<Layout> {
     return {
         width: width,
@@ -183,7 +185,7 @@ export function generateLayoutForParameter({
             xanchor: "center",
             yanchor: "top",
         },
-        barmode: "overlay",
+        barmode: barmode as any,
         xaxis: {
             title: title,
             mirror: true,

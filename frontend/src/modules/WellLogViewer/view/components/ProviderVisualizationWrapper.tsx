@@ -104,7 +104,7 @@ function createWellLogTemplateFromProduct(factoryProduct: WellLogFactoryProduct 
 function createWellLogJsonFromProduct(
     factoryProduct: WellLogFactoryProduct | null,
     wellboreTrajectory: WellboreTrajectory_api,
-    padDataWithEmptyRows?: boolean,
+    limitDomainToData?: boolean,
 ): WellLogSet[] {
     if (!factoryProduct) return [];
 
@@ -114,13 +114,7 @@ function createWellLogJsonFromProduct(
 
     const referenceSystem = trajectoryToIntersectionReference(wellboreTrajectory);
 
-    return createWellLogSets(
-        curveData,
-        wellboreTrajectory,
-        referenceSystem,
-        duplicatedCurveNames,
-        padDataWithEmptyRows,
-    );
+    return createWellLogSets(curveData, wellboreTrajectory, referenceSystem, duplicatedCurveNames, limitDomainToData);
 }
 
 function createWellPickPropFromProduct(factoryProduct: WellLogFactoryProduct | null): WellPickProps | undefined {
@@ -144,11 +138,11 @@ function createColorMapDefsFromProduct(factoryProduct: WellLogFactoryProduct | n
 export type ProviderVisualizationWrapperProps = {
     providerManager: DataProviderManager;
     trajectoryData: WellboreTrajectory_api;
-    padDataWithEmptyRows: boolean;
+    limitDomainToData: boolean;
 } & Omit<SubsurfaceLogViewerWrapperProps, "wellLogSets" | "wellPicks" | "viewerTemplate">;
 
 export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapperProps): React.ReactNode {
-    const { trajectoryData, padDataWithEmptyRows, providerManager, ...rest } = props;
+    const { trajectoryData, limitDomainToData, providerManager, ...rest } = props;
 
     const factoryProduct = useLogViewerVisualizationProduct(providerManager);
 
@@ -157,8 +151,8 @@ export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapper
     const template = React.useMemo(() => createWellLogTemplateFromProduct(factoryProduct), [factoryProduct]);
 
     const wellLogSets = React.useMemo(
-        () => createWellLogJsonFromProduct(factoryProduct, trajectoryData, padDataWithEmptyRows),
-        [factoryProduct, trajectoryData, padDataWithEmptyRows],
+        () => createWellLogJsonFromProduct(factoryProduct, trajectoryData, limitDomainToData),
+        [factoryProduct, trajectoryData, limitDomainToData],
     );
 
     if (!factoryProduct || factoryProduct.numLoadingDataProviders > 0) {

@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -11,7 +11,9 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
@@ -19,18 +21,8 @@ import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volume
 import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
 
-import {
-    selectedIndexValueCriteriaAtom,
-    userSelectedColorByAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedIndicesWithValuesAtom,
-    userSelectedPlotTypeAtom,
-    userSelectedSecondResultNameAtom,
-    userSelectedFirstResultNameAtom,
-    userSelectedSelectorColumnAtom,
-    userSelectedSubplotByAtom,
-    userSelectedTableNamesAtom,
-} from "./atoms/baseAtoms";
+import { selectedIndexValueCriteriaAtom, selectedPlotTypeAtom } from "./atoms/baseAtoms";
+import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
@@ -40,8 +32,7 @@ import {
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
-    tableDefinitionsAccessorAtom,
-} from "./atoms/derivedAtoms";
+} from "./atoms/persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
 
@@ -52,31 +43,22 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
 
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-    const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
+    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
 
-    const selectedTableNames = useAtomValue(selectedTableNamesAtom);
-    const setSelectedTableNames = useSetAtom(userSelectedTableNamesAtom);
+    const [selectedTableNames, setSelectedTableNames] = useAtom(selectedTableNamesAtom);
 
-    const selectedSelectorColumn = useAtomValue(selectedSelectorColumnAtom);
-    const setSelectedSelectorColumn = useSetAtom(userSelectedSelectorColumnAtom);
+    const [selectedSelectorColumn, setSelectedSelectorColumn] = useAtom(selectedSelectorColumnAtom);
 
-    const selectedIndicesWithValues = useAtomValue(selectedIndicesWithValuesAtom);
-    const setSelectedIndicesWithValues = useSetAtom(userSelectedIndicesWithValuesAtom);
+    const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
 
-    const selectedFirstResultName = useAtomValue(selectedFirstResultNameAtom);
-    const setSelectedFirstResultName = useSetAtom(userSelectedFirstResultNameAtom);
+    const [selectedFirstResultName, setSelectedFirstResultName] = useAtom(selectedFirstResultNameAtom);
+    const [selectedSecondResultName, setSelectedSecondResultName] = useAtom(selectedSecondResultNameAtom);
 
-    const selectedSecondResultName = useAtomValue(selectedSecondResultNameAtom);
-    const setSelectedSecondResultName = useSetAtom(userSelectedSecondResultNameAtom);
+    const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
 
-    const selectedSubplotBy = useAtomValue(selectedSubplotByAtom);
-    const setSelectedSubplotBy = useSetAtom(userSelectedSubplotByAtom);
+    const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
 
-    const selectedColorBy = useAtomValue(selectedColorByAtom);
-    const setSelectedColorBy = useSetAtom(userSelectedColorByAtom);
-
-    const [selectedPlotType, setSelectedPlotType] = useAtom(userSelectedPlotTypeAtom);
+    const [selectedPlotType, setSelectedPlotType] = useAtom(selectedPlotTypeAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
 
     usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
@@ -107,12 +89,22 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         ...tableDefinitionsAccessor.getCommonSelectorColumns().map((name) => ({ label: name, value: name })),
     ];
 
-    const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames);
-    const colorByOptions = makeColorByOptions(tableDefinitionsAccessor, selectedSubplotBy, selectedTableNames);
+    const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames.value);
+    const colorByOptions = makeColorByOptions(
+        tableDefinitionsAccessor,
+        selectedSubplotBy.value,
+        selectedTableNames.value,
+    );
     const plotTypeOptions: DropdownOption<PlotType>[] = [];
     for (const [type, label] of Object.entries(plotTypeToStringMapping)) {
         plotTypeOptions.push({ label, value: type as PlotType });
     }
+
+    const selectedFirstResultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedFirstResultNameAtom);
+    const selectedSecondResultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedSecondResultNameAtom);
+    const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
+    const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
+    const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
 
     const plotSettings = (
         <CollapsibleGroup title="Plot settings" expanded>
@@ -120,46 +112,45 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 <Label text="Plot type">
                     <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
                 </Label>
-                <Label text="First Result">
+                <SettingWrapper label="First Result" annotations={selectedFirstResultNameAnnotations}>
                     <Dropdown
-                        value={selectedFirstResultName ?? undefined}
+                        value={selectedFirstResultName.value}
                         options={resultNameOptions}
                         onChange={setSelectedFirstResultName}
                     />
-                </Label>
+                </SettingWrapper>
                 {selectedPlotType !== PlotType.BAR ? (
-                    <Label text="Second Result">
+                    <SettingWrapper
+                        label={`Second Result ${selectedPlotType !== PlotType.SCATTER ? "(only for scatter plot)" : ""}`}
+                        annotations={selectedSecondResultNameAnnotations}
+                    >
                         <Dropdown
-                            value={selectedSecondResultName ?? undefined}
+                            value={selectedSecondResultName.value}
                             options={resultNameOptions}
                             onChange={setSelectedSecondResultName}
                             disabled={selectedPlotType !== PlotType.SCATTER}
                         />
-                    </Label>
+                    </SettingWrapper>
                 ) : (
-                    <Label text="Selector">
+                    <SettingWrapper label="Selector" annotations={selectedSelectorColumnAnnotations}>
                         <Dropdown
-                            value={selectedSelectorColumn ?? undefined}
+                            value={selectedSelectorColumn.value}
                             options={selectorOptions}
                             onChange={setSelectedSelectorColumn}
                             disabled={selectedPlotType !== PlotType.BAR}
                         />
-                    </Label>
+                    </SettingWrapper>
                 )}
-                <Label text="Subplot by">
+                <SettingWrapper label="Subplot by" annotations={selectedSubplotByAnnotations}>
                     <Dropdown
-                        value={selectedSubplotBy ?? undefined}
+                        value={selectedSubplotBy.value}
                         options={subplotOptions}
                         onChange={setSelectedSubplotBy}
                     />
-                </Label>
-                <Label text="Color by">
-                    <Dropdown
-                        value={selectedColorBy ?? undefined}
-                        options={colorByOptions}
-                        onChange={setSelectedColorBy}
-                    />
-                </Label>
+                </SettingWrapper>
+                <SettingWrapper label="Color by" annotations={selectedColorByAnnotations}>
+                    <Dropdown value={selectedColorBy.value} options={colorByOptions} onChange={setSelectedColorBy} />
+                </SettingWrapper>
             </div>
         </CollapsibleGroup>
     );
@@ -173,9 +164,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             isPending={tableDefinitionsQueryResult.isLoading}
             availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
             availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
-            selectedEnsembleIdents={selectedEnsembleIdents}
-            selectedIndicesWithValues={selectedIndicesWithValues}
-            selectedTableNames={selectedTableNames}
+            selectedEnsembleIdents={selectedEnsembleIdents.value}
+            selectedIndicesWithValues={selectedIndicesWithValues.value}
+            selectedTableNames={selectedTableNames.value}
             selectedAllowIndicesValuesIntersection={
                 selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
             }

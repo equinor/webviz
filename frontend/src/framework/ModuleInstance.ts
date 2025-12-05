@@ -5,11 +5,25 @@ import type { Atom } from "jotai";
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
+
+import type { AtomStore } from "./AtomStoreMaster";
 import type { InitialSettings } from "./InitialSettings";
-import { ChannelManager } from "./internal/DataChannels/ChannelManager";
+import type { Dashboard } from "./internal/Dashboard";
+import { ChannelManager, ChannelManagerNotificationTopic } from "./internal/DataChannels/ChannelManager";
+import { ModuleInstanceSerializer } from "./internal/ModuleInstanceSerializer";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
-import type { ImportStatus, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
+import type {
+    ImportStatus,
+    Module,
+    ModuleInterfaceTypes,
+    ModuleSettings,
+    ModuleComponentsStateBase,
+    ModuleView,
+    ModuleComponentSerializationFunctions,
+} from "./Module";
 import { ModuleContext } from "./ModuleContext";
+import type { SerializedModuleInstanceState } from "./ModuleInstance.schema";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataChannnel";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
@@ -27,6 +41,9 @@ export enum ModuleInstanceTopic {
     SYNCED_SETTINGS = "synced-settings",
     LIFECYCLE_STATE = "state",
     IMPORT_STATUS = "import-status",
+    SERIALIZED_STATE = "serialized-state",
+    HAS_INVALID_PERSISTED_SETTINGS = "has-invalid-persisted-settings",
+    HAS_INVALID_PERSISTED_VIEW = "has-invalid-persisted-view",
 }
 
 export type ModuleInstanceTopicValueTypes = {
@@ -34,40 +51,48 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
     [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
+    [ModuleInstanceTopic.SERIALIZED_STATE]: void;
+    [ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS]: boolean;
+    [ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW]: boolean;
 };
 
-export interface ModuleInstanceOptions<TInterfaceTypes extends ModuleInterfaceTypes> {
-    module: Module<TInterfaceTypes>;
+export interface ModuleInstanceOptions<
+    TInterfaceTypes extends ModuleInterfaceTypes,
+    TSerializedState extends ModuleComponentsStateBase,
+> {
+    module: Module<TInterfaceTypes, TSerializedState>;
+    atomStore: AtomStore;
     id: string;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
 
-export type ModuleInstanceFullState = {
-    id: string;
-    name: string;
-    dataChannelReceiverSubscriptions: {
-        idString: string;
-        listensToModuleInstanceId: string;
-        channelIdString: string;
-        contentIdStrings: string[];
-    }[];
-    syncedSettingKeys: SyncSettingKey[];
+export type PartialSerializedModuleState<T extends ModuleComponentsStateBase> = {
+    settings?: Partial<T["settings"]>;
+    view?: Partial<T["view"]>;
 };
 
-export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
+export class ModuleInstance<
+    TInterfaceTypes extends ModuleInterfaceTypes,
+    TSerializedStateSchema extends ModuleComponentsStateBase,
+> {
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
+
     private _id: string;
     private _title: string;
     private _initialized: boolean = false;
     private _moduleInstanceState: ModuleInstanceLifeCycleState = ModuleInstanceLifeCycleState.INITIALIZING;
     private _fatalError: { err: Error; errInfo: ErrorInfo } | null = null;
     private _syncedSettingKeys: SyncSettingKey[] = [];
-    private _module: Module<TInterfaceTypes>;
+    private _module: Module<TInterfaceTypes, TSerializedStateSchema>;
     private _context: ModuleContext<TInterfaceTypes> | null = null;
     private _subscribers: Map<keyof ModuleInstanceTopicValueTypes, Set<() => void>> = new Map();
     private _initialSettings: InitialSettings | null = null;
     private _statusController: ModuleInstanceStatusControllerInternal = new ModuleInstanceStatusControllerInternal();
+
+    // ChannelManager should be elevated to Dashboard level and shared among module instances in the dashboard
     private _channelManager: ChannelManager;
+
     private _settingsToViewInterface: UniDirectionalModuleComponentsInterface<
         Exclude<TInterfaceTypes["settingsToView"], undefined>
     > | null = null;
@@ -76,11 +101,21 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     > | null = null;
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
+    private _atomStore: AtomStore;
 
-    constructor(options: ModuleInstanceOptions<TInterfaceTypes>) {
+    private _dashboard: Dashboard | null = null;
+    private _serializer: ModuleInstanceSerializer<TSerializedStateSchema> | null = null;
+    private _storedSerializedState: SerializedModuleInstanceState | null = null;
+    private _storedTemplateState: PartialSerializedModuleState<TSerializedStateSchema> | null = null;
+
+    private _hasInvalidPersistedSettings: boolean = false;
+    private _hasInvalidPersistedView: boolean = false;
+
+    constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateSchema>) {
         this._id = options.id;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
+        this._atomStore = options.atomStore;
 
         this._channelManager = new ChannelManager(this._id);
 
@@ -96,30 +131,85 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         if (options.channelDefinitions) {
             this._channelManager.registerChannels(options.channelDefinitions);
         }
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "channel-manager",
+            this._channelManager.subscribe(ChannelManagerNotificationTopic.STATE, this.handleStateChange.bind(this)),
+        );
     }
 
-    setFullState(fullState: ModuleInstanceFullState): void {
-        this._syncedSettingKeys = fullState.syncedSettingKeys;
-
-        this._id = fullState.id;
-        this._title = fullState.name;
-    }
-
-    getFullState(): ModuleInstanceFullState {
+    serializeState(): SerializedModuleInstanceState {
         return {
             id: this._id,
             name: this._module.getName(),
-            dataChannelReceiverSubscriptions: this._channelManager
-                .getReceivers()
-                .filter((receiver) => receiver.hasActiveSubscription())
-                .map((receiver) => ({
-                    idString: receiver.getIdString(),
-                    listensToModuleInstanceId: receiver.getChannel()?.getManager().getModuleInstanceId() ?? "",
-                    channelIdString: receiver.getChannel()?.getIdString() ?? "",
-                    contentIdStrings: receiver.getContentIdStrings(),
-                })),
+            dataChannelManagerState: this._channelManager.serializeState(),
             syncedSettingKeys: this._syncedSettingKeys,
+            serializedState: this._serializer?.getStringifiedSerializedState() ?? null,
         };
+    }
+
+    initiateDeserialization(raw: SerializedModuleInstanceState, dashboard: Dashboard): void {
+        this._storedSerializedState = raw;
+        this._dashboard = dashboard;
+        this.deserializeState();
+    }
+
+    initiateTemplateStateApplication(initialState: PartialSerializedModuleState<TSerializedStateSchema>): void {
+        this._storedTemplateState = initialState;
+        this.applyTemplateState();
+    }
+
+    private applyTemplateState(): void {
+        if (this._initialized && this._storedTemplateState && this._serializer) {
+            this._serializer.applyTemplateState(this._storedTemplateState);
+            this._storedTemplateState = null;
+        }
+    }
+
+    private deserializeState(): void {
+        if (this._initialized && this._storedSerializedState && this._dashboard) {
+            this._syncedSettingKeys = this._storedSerializedState.syncedSettingKeys;
+
+            this._id = this._storedSerializedState.id;
+
+            if (this._storedSerializedState.serializedState && this._serializer) {
+                const result = this._serializer.deserializeState(this._storedSerializedState.serializedState);
+                if (result) {
+                    this.setInvalidPersistedSettingsFlag(!result.settingsStateApplied);
+                    this.setInvalidPersistedViewFlag(!result.viewStateApplied);
+                }
+            }
+
+            this._channelManager.deserializeState(
+                this._storedSerializedState.dataChannelManagerState,
+                this._dashboard.getModuleInstances(),
+            );
+
+            this._storedSerializedState = null;
+        }
+    }
+
+    hasInvalidPersistedSettings(): boolean {
+        return this._hasInvalidPersistedSettings;
+    }
+
+    hasInvalidPersistedView(): boolean {
+        return this._hasInvalidPersistedView;
+    }
+
+    private setInvalidPersistedSettingsFlag(value: boolean): void {
+        this._hasInvalidPersistedSettings = value;
+        this.notifySubscribers(ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS);
+    }
+
+    private setInvalidPersistedViewFlag(value: boolean): void {
+        this._hasInvalidPersistedView = value;
+        this.notifySubscribers(ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW);
+    }
+
+    resetInvalidPersistedFlags(): void {
+        this.setInvalidPersistedSettingsFlag(false);
+        this.setInvalidPersistedViewFlag(false);
     }
 
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
@@ -148,6 +238,24 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         this._context = new ModuleContext<TInterfaceTypes>(this);
         this._initialized = true;
         this.setModuleInstanceState(ModuleInstanceLifeCycleState.OK);
+        this.deserializeState();
+        this.applyTemplateState();
+    }
+
+    makeSerializer(serializationFunctions: ModuleComponentSerializationFunctions<TSerializedStateSchema> | null): void {
+        if (serializationFunctions) {
+            this._serializer = new ModuleInstanceSerializer<TSerializedStateSchema>(
+                this,
+                this._atomStore,
+                this._module.getSerializedStateSchema(),
+                serializationFunctions,
+                this.handleStateChange.bind(this),
+            );
+        }
+    }
+
+    handleStateChange(): void {
+        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
     }
 
     makeSettingsToViewInterface(
@@ -235,6 +343,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     addSyncedSetting(settingKey: SyncSettingKey): void {
         this._syncedSettingKeys.push(settingKey);
         this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
+        this.handleStateChange();
     }
 
     getSyncedSettingKeys(): SyncSettingKey[] {
@@ -248,6 +357,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     removeSyncedSetting(settingKey: SyncSettingKey): void {
         this._syncedSettingKeys = this._syncedSettingKeys.filter((a) => a !== settingKey);
         this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
+        this.handleStateChange();
     }
 
     isInitialized(): boolean {
@@ -328,12 +438,22 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
             if (topic === ModuleInstanceTopic.IMPORT_STATUS) {
                 return this.getImportState();
             }
+            if (topic === ModuleInstanceTopic.SERIALIZED_STATE) {
+                return;
+            }
+            if (topic === ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS) {
+                return this.hasInvalidPersistedSettings();
+            }
+            if (topic === ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW) {
+                return this.hasInvalidPersistedView();
+            }
+            throw `Unsupported topic '${topic}' in ModuleInstance snapshot getter.`;
         };
 
         return snapshotGetter;
     }
 
-    getModule(): Module<TInterfaceTypes> {
+    getModule(): Module<TInterfaceTypes, TSerializedStateSchema> {
         return this._module;
     }
 
@@ -386,6 +506,8 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
 
     unload() {
         this._module.onInstanceUnload(this._id);
+        this._channelManager.unregisterAllChannels();
+        this._channelManager.unregisterAllReceivers();
     }
 
     beforeDestroy(): void {
@@ -400,13 +522,12 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
 }
 
 export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
-    moduleInstance: ModuleInstance<any>,
+    moduleInstance: ModuleInstance<any, any>,
     topic: T,
 ): ModuleInstanceTopicValueTypes[T] {
     const value = React.useSyncExternalStore<ModuleInstanceTopicValueTypes[T]>(
         moduleInstance.makeSubscriberFunction(topic),
         moduleInstance.makeSnapshotGetter(topic),
     );
-
     return value;
 }

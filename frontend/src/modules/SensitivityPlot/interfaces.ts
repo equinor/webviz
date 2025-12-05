@@ -9,7 +9,6 @@ import {
     hideZeroYAtom,
     referenceSensitivityNameAtom,
     responseChannelNameAtom,
-    sensitivityNamesAtom,
     showLabelsAtom,
     showRealizationPointsAtom,
     sensitivityScalingAtom,
@@ -20,7 +19,6 @@ import type { ColorBy } from "./view/components/sensitivityChartFigure";
 type SettingsToViewInterface = {
     displayComponentType: DisplayComponentType;
     referenceSensitivityName: string | null;
-    sensitivityNames: string[];
     responseChannelName: string | null;
     showLabels: boolean;
     hideZeroY: boolean;
@@ -41,9 +39,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     referenceSensitivityName: (get) => {
         return get(referenceSensitivityNameAtom);
     },
-    sensitivityNames: (get) => {
-        return get(sensitivityNamesAtom);
-    },
+
     responseChannelName: (get) => {
         return get(responseChannelNameAtom);
     },
