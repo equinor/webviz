@@ -2,7 +2,6 @@ import React from "react";
 
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { DashboardTopic } from "@framework/internal/Dashboard";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { pointRelativeToDomRect } from "@lib/utils/geometry";
@@ -16,6 +15,7 @@ import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 
 type ViewWrapperProps = {
     isMaximized?: boolean;
@@ -32,10 +32,7 @@ type ViewWrapperProps = {
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = useActiveDashboard();
     const [prevWidth, setPrevWidth] = React.useState<number>(props.width);
     const [prevHeight, setPrevHeight] = React.useState<number>(props.height);
     const [prevX, setPrevX] = React.useState<number>(props.x);

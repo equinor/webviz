@@ -28,6 +28,7 @@ import { MenuText } from "@lib/components/MenuText/menuText";
 import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 
 export type HeaderProps = {
     workbench: Workbench;
@@ -40,10 +41,7 @@ export type HeaderProps = {
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = useActiveDashboard();
     const isSnapshot = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
@@ -272,10 +270,7 @@ type StatusIndicatorProps = {
 
 function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = useActiveDashboard();
 
     const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
     const hotStatusMessages = useStatusControllerStateValue(

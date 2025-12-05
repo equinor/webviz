@@ -67,7 +67,7 @@ export type WorkbenchSessionTopicPayloads = {
     [WorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
     [WorkbenchSessionTopic.REALIZATION_FILTER_SET]: { filterSet: RealizationFilterSet };
     [PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING]: boolean;
-    [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard;
+    [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard | null;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
     [PrivateWorkbenchSessionTopic.METADATA]: WorkbenchSessionMetadata;
     [PrivateWorkbenchSessionTopic.IS_PERSISTED]: boolean;
@@ -330,13 +330,12 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return snapshotGetter;
     }
 
-    getActiveDashboard(): Dashboard {
+    getActiveDashboard(): Dashboard | null {
         if (!this._activeDashboardId && this._dashboards.length > 0) {
             this._activeDashboardId = this._dashboards[0].getId();
         }
         const found = this._dashboards.find((d) => d.getId() === this._activeDashboardId);
-        if (!found) throw new Error("Active dashboard not found");
-        return found;
+        return found ?? null;
     }
 
     getDashboards(): Dashboard[] {

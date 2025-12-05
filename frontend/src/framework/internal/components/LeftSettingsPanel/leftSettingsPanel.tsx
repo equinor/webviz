@@ -4,7 +4,6 @@ import { Tune } from "@mui/icons-material";
 
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { DashboardTopic } from "@framework/internal/Dashboard";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -12,14 +11,14 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModuleSettings } from "./private-components/moduleSettings";
 import { SyncSettings } from "./private-components/syncSettings";
+import { useActiveDashboard } from "../ActiveDashboardBoundary";
 
 type LeftSettingsPanelProps = {
     workbench: Workbench;
 };
 
 export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
-    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
-    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+    const dashboard = useActiveDashboard();
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
     const mainRef = React.useRef<HTMLDivElement>(null);

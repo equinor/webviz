@@ -121,7 +121,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     }, [title]);
 
     const layout = hasActiveSession
-        ? (props.workbench.getSessionManager().getActiveSession().getActiveDashboard().getLayout() ?? [])
+        ? (props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() ?? [])
         : [];
 
     React.useEffect(

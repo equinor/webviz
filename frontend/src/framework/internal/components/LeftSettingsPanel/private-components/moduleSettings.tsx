@@ -5,7 +5,6 @@ import { Provider } from "jotai";
 
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { DashboardTopic } from "@framework/internal/Dashboard";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { ImportStatus } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import {
@@ -24,6 +23,7 @@ import { useActiveSession } from "../../ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
+import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 
 type ModuleSettingsProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -33,7 +33,7 @@ type ModuleSettingsProps = {
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     const workbenchSession = useActiveSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
-    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+    const dashboard = useActiveDashboard();
 
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
 

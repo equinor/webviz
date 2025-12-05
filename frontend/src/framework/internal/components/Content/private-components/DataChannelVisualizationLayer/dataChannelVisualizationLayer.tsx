@@ -2,13 +2,12 @@ import React from "react";
 
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 
 export type DataChannelVisualizationProps = {
     workbench: Workbench;
@@ -26,10 +25,7 @@ type DataChannelPath = {
 };
 
 export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationProps> = (props) => {
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = useActiveDashboard();
     const ref = React.useRef<SVGSVGElement>(null);
     const [visible, setVisible] = React.useState<boolean>(false);
     const [originPoint, setOriginPoint] = React.useState<Vec2>({ x: 0, y: 0 });
