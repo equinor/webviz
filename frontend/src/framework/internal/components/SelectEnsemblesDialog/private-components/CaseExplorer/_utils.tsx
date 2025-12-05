@@ -4,6 +4,7 @@ import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close } from "@mui/icons-material";
 
 import { UserAvatar } from "@framework/internal/components/UserAvatar";
+import { edsDateRangeChoiceToTimeSinceEpochMs } from "@framework/utils/edsDateUtils";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import type { ColumnFilterImplementationProps, TableColumns } from "@lib/components/Table/types";
@@ -117,17 +118,15 @@ export function makeCaseTableColumns(
 }
 
 export function makeCaseRowData(apiData: CaseInfo_api[]): CaseRowData[] {
-    // Sort after mapping to prevent mutating the original apiData-array
-    return apiData
-        .map((item) => ({
-            caseId: item.uuid,
-            caseName: item.name,
-            description: item.description,
-            author: item.user,
-            status: item.status,
-            dateUtcMs: item.updatedAtUtcMs,
-        }))
-        .sort((a, b) => b.dateUtcMs - a.dateUtcMs); // Newest first
+    // Sorting have to be done outside of this function
+    return apiData.map((item) => ({
+        caseId: item.uuid,
+        caseName: item.name,
+        description: item.description,
+        author: item.user,
+        status: item.status,
+        dateUtcMs: item.updatedAtUtcMs,
+    }));
 }
 
 function predicateCaseNameAndIdFilter(filterValue: string, dataValue: string, caseId: string): boolean {
@@ -146,8 +145,24 @@ function predicateStatusSelection(filterValues: string[], dataValue: string): bo
     return filterValues.some((filterValue) => filterValue.toLowerCase() === dataValue.toLowerCase());
 }
 
-function predicateDateRangePick(dateRange: { from: Date; to: Date }, dataValue: number): boolean {
-    return dataValue >= dateRange.from.getTime() && dataValue <= dateRange.to.getTime();
+function predicateDateRangePick(dateRange: { from: Date | null; to: Date | null }, dataValue: number): boolean {
+    const dateRangeTimeSinceEpochMs = edsDateRangeChoiceToTimeSinceEpochMs(dateRange);
+
+    if (!dateRangeTimeSinceEpochMs) {
+        return true;
+    }
+    if (dateRangeTimeSinceEpochMs.from && dateRangeTimeSinceEpochMs.to) {
+        return dataValue >= dateRangeTimeSinceEpochMs.from && dataValue <= dateRangeTimeSinceEpochMs.to;
+    }
+    if (dateRangeTimeSinceEpochMs.from) {
+        return dataValue >= dateRangeTimeSinceEpochMs.from;
+    }
+    if (dateRangeTimeSinceEpochMs.to) {
+        return dataValue <= dateRangeTimeSinceEpochMs.to;
+    }
+
+    // Not expected to reach this point
+    return false;
 }
 
 /**

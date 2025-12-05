@@ -82,14 +82,21 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
             props.onRequestOtherComparisonEnsemble({
                 ...props.deltaEnsembleSetting,
                 comparisonEnsembleIdent: null,
+                comparisonEnsembleCaseName: null,
             });
             return;
         }
 
-        const ens = getEnsembleIdentFromDropdownValue(value);
+        const ensIdent = getEnsembleIdentFromDropdownValue(value);
+        const ensOptions = props.regularEnsembleOptions.find((option) => option.ensembleIdent.equals(ensIdent));
+        if (!ensOptions) {
+            throw new Error("Selected reference ensemble not found in regular ensemble options");
+        }
+
         props.onUpdate({
             ...props.deltaEnsembleSetting,
-            comparisonEnsembleIdent: ens,
+            comparisonEnsembleIdent: ensIdent,
+            comparisonEnsembleCaseName: ensOptions.caseName,
         });
     }
 
@@ -98,15 +105,21 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
             props.onRequestOtherReferenceEnsemble({
                 ...props.deltaEnsembleSetting,
                 referenceEnsembleIdent: null,
+                referenceEnsembleCaseName: null,
             });
             return;
         }
 
-        const ens = getEnsembleIdentFromDropdownValue(value);
+        const ensIdent = getEnsembleIdentFromDropdownValue(value);
+        const ensOptions = props.regularEnsembleOptions.find((option) => option.ensembleIdent.equals(ensIdent));
+        if (!ensOptions) {
+            throw new Error("Selected reference ensemble not found in regular ensemble options");
+        }
 
         props.onUpdate({
             ...props.deltaEnsembleSetting,
-            referenceEnsembleIdent: ens,
+            referenceEnsembleIdent: ensIdent,
+            referenceEnsembleCaseName: ensOptions.caseName,
         });
     }
 

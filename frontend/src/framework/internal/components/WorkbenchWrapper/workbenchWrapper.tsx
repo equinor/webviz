@@ -17,6 +17,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
+import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
 import { LeftNavBar } from "../LeftNavBar";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
@@ -34,6 +35,7 @@ export function WorkbenchWrapper() {
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
     const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
     const isSnapshotLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSnapshot);
+    const isEnsembleSetLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingEnsembleSet);
     const hasActiveSession = usePublishSubscribeTopicValue(
         workbench.getSessionManager(),
         WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
@@ -49,12 +51,16 @@ export function WorkbenchWrapper() {
     );
 
     let content: React.ReactNode;
-    if (!isInitialized) {
-        content = <LoadingOverlay text="Initializing application..." />;
+    const loadingOverlayNote = `Note that the first time an ensemble is loaded in Webviz,
+                it could take a while to collect all parameter values...`;
+    if (isEnsembleSetLoading) {
+        content = <LoadingOverlay text="Loading ensemble set..." note={loadingOverlayNote} />;
+    } else if (!isInitialized) {
+        content = <LoadingOverlay text="Initializing application..." note={loadingOverlayNote} />;
     } else if (isSessionLoading) {
-        content = <LoadingOverlay text="Loading session..." />;
+        content = <LoadingOverlay text="Loading session..." note={loadingOverlayNote} />;
     } else if (isSnapshotLoading) {
-        content = <LoadingOverlay text="Loading snapshot..." />;
+        content = <LoadingOverlay text="Loading snapshot..." note={loadingOverlayNote} />;
     } else if (!hasActiveSession) {
         content = <StartPage workbench={workbench} />;
     }
@@ -64,6 +70,7 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <SelectEnsemblesDialog workbench={workbench} />
+                <InitialEnsemblesLoadingErrorInfoDialog workbench={workbench} />
                 <SaveSessionDialog workbench={workbench} />
                 <CreateSnapshotDialog workbench={workbench} />
                 <ActiveSessionRecoveryDialog workbench={workbench} />
