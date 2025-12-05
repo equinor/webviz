@@ -21,15 +21,14 @@ export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
-        return () => ({
-            ...getTableDefinitionsOptions({
-                query: {
-                    case_uuid: ensembleIdent.getCaseUuid(),
-                    ensemble_name: ensembleIdent.getEnsembleName(),
-                    ...makeCacheBustingQueryParam(ensembleIdent),
-                },
-            }),
+        const options = getTableDefinitionsOptions({
+            query: {
+                case_uuid: ensembleIdent.getCaseUuid(),
+                ensemble_name: ensembleIdent.getEnsembleName(),
+                ...makeCacheBustingQueryParam(ensembleIdent),
+            },
         });
+        return () => options;
     });
 
     return {

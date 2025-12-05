@@ -22,15 +22,16 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
 
     const queries = ensembleIdentsAndRealizations
         .map((el) => {
+            const options = getTableDataOptions({
+                query: {
+                    case_uuid: el.ensembleIdent.getCaseUuid(),
+                    ensemble_name: el.ensembleIdent.getEnsembleName(),
+                    realization: el.realization,
+                    ...makeCacheBustingQueryParam(el.ensembleIdent),
+                },
+            });
             return () => ({
-                ...getTableDataOptions({
-                    query: {
-                        case_uuid: el.ensembleIdent.getCaseUuid(),
-                        ensemble_name: el.ensembleIdent.getEnsembleName(),
-                        realization: el.realization,
-                        ...makeCacheBustingQueryParam(el.ensembleIdent),
-                    },
-                }),
+                ...options,
                 enabled: Boolean(el.ensembleIdent && el.realization !== null),
             });
         })

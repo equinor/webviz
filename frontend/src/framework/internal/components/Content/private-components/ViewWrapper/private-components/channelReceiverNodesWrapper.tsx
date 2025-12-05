@@ -2,13 +2,12 @@ import React from "react";
 
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 
@@ -23,10 +22,7 @@ export type ChannelReceiverNodesWrapperProps = {
 };
 
 export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperProps> = (props) => {
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = useActiveDashboard();
 
     const [visible, setVisible] = React.useState<boolean>(false);
     const [currentReceiver, setCurrentReceiver] = React.useState<ChannelReceiver | null>(null);

@@ -5,22 +5,20 @@ import { Link, PinDrop, Public } from "@mui/icons-material";
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { DashboardTopic } from "@framework/internal/Dashboard";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { SyncSettingKey } from "@framework/SyncSettings";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
 import { Checkbox } from "@lib/components/Checkbox";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { useActiveDashboard } from "../../ActiveDashboardBoundary";
+
 type ModulesListProps = {
     workbench: Workbench;
 };
 
 export const SyncSettings: React.FC<ModulesListProps> = (props) => {
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = useActiveDashboard();
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
 
