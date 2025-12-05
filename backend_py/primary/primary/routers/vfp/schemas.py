@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from primary.services.sumo_access.vfp_types import THP, WFR, GFR, ALQ, FlowRateType, UnitType, TabType
+from webviz_services.sumo_access.vfp_types import THP, WFR, GFR, ALQ, FlowRateType, UnitType, TabType
 
 
 class VfpType(StrEnum):

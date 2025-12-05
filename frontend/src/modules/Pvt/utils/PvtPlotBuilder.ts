@@ -7,7 +7,6 @@ import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
 
-
 import {
     ColorBy,
     PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME,
@@ -16,7 +15,6 @@ import {
 } from "../typesAndEnums";
 
 import type { PvtDataAccessor } from "./PvtDataAccessor";
-
 
 type TracePointData = {
     ratio: number;
@@ -144,7 +142,6 @@ export class PvtPlotBuilder {
 
         const tableCollections = this._pvtDataAccessor.getTableCollections();
 
-        this.addLegendTitle(colorBy);
         const colors = this.makeColorsArray(colorBy, colorSet, pvtNums.length, tableCollections.length);
 
         let pvtNumIndex = 0;
@@ -206,6 +203,8 @@ export class PvtPlotBuilder {
                         color = colors[pvtNumIndex];
                     }
 
+                    const legendGroupIndex = colorBy === ColorBy.PVT_NUM ? pvtNumIndex : collectionIndex;
+
                     for (const [dependentVariable, dependentVariableMap] of groupedTracesMaps) {
                         const row = Math.floor(i / 2) + 1;
                         const col = (i % 2) + 1;
@@ -224,6 +223,7 @@ export class PvtPlotBuilder {
                                 },
                                 name: "",
                                 showlegend: false,
+                                legendgroup: `group-${legendGroupIndex}`,
                                 hovertemplate: this.makeHoverTemplate(
                                     dependentVariable,
                                     tracePointDataArray.map((el) => el.ratio),
@@ -247,6 +247,7 @@ export class PvtPlotBuilder {
                                 color,
                             },
                             showlegend: false,
+                            legendgroup: `group-${legendGroupIndex}`,
                             hovertemplate: "",
                         };
 
@@ -259,23 +260,23 @@ export class PvtPlotBuilder {
                         ) {
                             let traceLegendName = "";
                             if (colorBy === ColorBy.PVT_NUM) {
-                                traceLegendName = table.pvtnum.toString();
+                                traceLegendName = `PVTNum - ${table.pvtnum.toString()}`;
                             } else {
                                 traceLegendName = `${this._makeEnsembleDisplayNameFunc(
                                     tableCollection.ensembleIdent,
-                                )} - ${tableCollection.realization}`;
+                                )} (real ${tableCollection.realization})`;
                             }
 
                             figure.addTrace({
                                 x: [null],
                                 y: [null],
-                                mode: "lines",
+                                mode: "lines+markers",
                                 name: traceLegendName,
                                 line: {
                                     color,
                                 },
+                                legendgroup: `group-${legendGroupIndex}`,
                                 showlegend: true,
-                                visible: "legendonly",
                             });
                         }
 
@@ -287,9 +288,12 @@ export class PvtPlotBuilder {
         }
     }
 
-    makePlot(): React.ReactNode {
-        const figure = this.getFigureAndAssertValidity();
-        return figure.makePlot();
+    makePlotData() {
+        return this.getFigureAndAssertValidity().makeData();
+    }
+
+    makePlotLayout() {
+        return this.getFigureAndAssertValidity().makeLayout();
     }
 
     private makeHoverTemplate(
@@ -311,24 +315,6 @@ export class PvtPlotBuilder {
                 ratioString = `Rv: <b>${ratio}</b><br>`;
             }
             return `Pressure: <b>%{x}</b><br>${nameY}: <b>%{y}</b><br>${ratioString}PVTNum: <b>${pvtNum}</b><br>Ensemble: <b>${ensembleDisplayName}</b> Realization: <b>${realization}</b>`;
-        });
-    }
-
-    private addLegendTitle(colorBy: ColorBy) {
-        const figure = this.getFigureAndAssertValidity();
-
-        let legendTitle = "Ens - Real";
-        if (colorBy === ColorBy.PVT_NUM) {
-            legendTitle = "PVTNum";
-        }
-
-        figure.updateLayout({
-            legend: {
-                title: {
-                    text: legendTitle,
-                },
-                orientation: "v",
-            },
         });
     }
 

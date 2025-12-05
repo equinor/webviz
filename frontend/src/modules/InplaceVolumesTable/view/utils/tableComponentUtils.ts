@@ -2,7 +2,7 @@ import type { InplaceVolumesStatistic_api } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { TableHeading, TableRow } from "@lib/components/Table/table";
+import type { TableHeading, TableRow } from "@lib/components/TableDeprecated/table";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import { sortResultNameStrings } from "@modules/_shared/InplaceVolumes/sortResultNames";
 import type { Column, Row } from "@modules/_shared/InplaceVolumes/Table";

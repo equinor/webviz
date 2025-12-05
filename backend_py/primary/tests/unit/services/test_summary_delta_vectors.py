@@ -1,14 +1,20 @@
 import pyarrow as pa
 
 
-from primary.services.summary_delta_vectors import (
+from webviz_services.summary_delta_vectors import (
     create_delta_vector_table,
     create_realization_delta_vector_list,
     RealizationDeltaVector,
 )
 
 
-VECTOR_TABLE_SCHEMA = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16()), ("vector", pa.float32())])
+VECTOR_TABLE_FIELDS: list[tuple[str, pa.DataType]] = [
+    ("DATE", pa.timestamp("ms")),
+    ("REAL", pa.int16()),
+    ("vector", pa.float32()),
+]
+
+VECTOR_TABLE_SCHEMA = pa.schema(VECTOR_TABLE_FIELDS)
 
 
 def test_create_delta_vector_table() -> None:

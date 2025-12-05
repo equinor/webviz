@@ -7,6 +7,8 @@ import {
     postGetSurfaceIntersectionOptions,
 } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
@@ -151,7 +153,7 @@ export class RealizationSurfacesProvider
             return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
-        const depthSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+        const surfaceMetadataSetDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
             if (!ensembleIdent) {
@@ -163,20 +165,23 @@ export class RealizationSurfacesProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
             });
 
-            const depthSurfacesMetadata = surfaceMetadata.surfaces.filter(
-                (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
-            );
-            return depthSurfacesMetadata;
+            return surfaceMetadata;
         });
 
         availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
-            const depthSurfacesMetadata = getHelperDependency(depthSurfaceMetadataDep);
-
+            const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
+            if (!surfaceMetadataSet) {
+                return [];
+            }
+            const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
+                (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
+            );
             if (!depthSurfacesMetadata) {
                 return [];
             }
@@ -186,16 +191,19 @@ export class RealizationSurfacesProvider
 
         availableSettingsUpdater(Setting.SURFACE_NAMES, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(Setting.ATTRIBUTE);
-            const depthSurfacesMetadata = getHelperDependency(depthSurfaceMetadataDep);
+            const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
 
-            if (!attribute || !depthSurfacesMetadata) {
+            if (!attribute || !surfaceMetadataSet) {
                 return [];
             }
+            const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
+                (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
+            );
 
-            // Filter depth surfaces metadata by the selected attribute
-            return Array.from(
+            const filteredSurfaceNames = Array.from(
                 new Set(depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name)),
-            ).sort();
+            );
+            return sortStringArray(filteredSurfaceNames, surfaceMetadataSet.surface_names_in_strat_order);
         });
 
         // Create intersection polyline and actual section lengths data asynchronously
@@ -236,8 +244,7 @@ export class RealizationSurfacesProvider
     fetchData({
         getSetting,
         getStoredData,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<
         RealizationSurfacesSettings,
         RealizationSurfacesData,
@@ -281,6 +288,7 @@ export class RealizationSurfacesProvider
                         realization_num: realization,
                         name: surfaceName,
                         attribute: attribute,
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     body: {
                         cumulative_length_polyline: {
@@ -291,9 +299,7 @@ export class RealizationSurfacesProvider
                     },
                 });
 
-                registerQueryKey(queryOptions.queryKey);
-
-                return queryClient.fetchQuery(queryOptions);
+                return fetchQuery(queryOptions);
             }),
         );
 

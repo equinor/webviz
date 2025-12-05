@@ -9,7 +9,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -32,7 +32,6 @@ import {
 } from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
-
 import type { Interfaces } from "../interfaces";
 
 import {
@@ -44,7 +43,6 @@ import {
     viewSettingsAtom,
 } from "./atoms/baseAtoms";
 import { AggregationSelector } from "./components/aggregationSelector";
-
 
 //-----------------------------------------------------------------------------------------------------------
 type LabelledCheckboxProps = {
@@ -114,10 +112,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
     // Mesh surface
-    const meshSurfMetaQuery = useRealizationSurfacesMetadataQuery(
-        computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName(),
-    );
+    const meshSurfMetaQuery = useRealizationSurfacesMetadataQuery(computedEnsembleIdent);
     const meshSurfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: meshSurfMetaQuery.data,
         timeType: SurfaceTimeType.None,
@@ -155,10 +150,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         .map((attr) => ({ value: attr, label: attr }));
 
     // Property surface
-    const propertySurfMetaQuery = useRealizationSurfacesMetadataQuery(
-        computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName(),
-    );
+    const propertySurfMetaQuery = useRealizationSurfacesMetadataQuery(computedEnsembleIdent);
     const propertySurfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: propertySurfMetaQuery.data,
         timeType: timeType,
@@ -212,10 +204,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     }
 
     // Polygon
-    const polygonsDirectoryQuery = usePolygonsDirectoryQuery(
-        computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName(),
-    );
+    const polygonsDirectoryQuery = usePolygonsDirectoryQuery(computedEnsembleIdent);
 
     const polygonsDirectory = new PolygonsDirectory(
         polygonsDirectoryQuery.data
@@ -504,6 +493,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                     <EnsembleDropdown
                         ensembles={ensembleSet.getRegularEnsembleArray()}
                         value={computedEnsembleIdent ? computedEnsembleIdent : null}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
                         onChange={handleEnsembleSelectionChange}
                     />
                 </Label>

@@ -76,6 +76,9 @@ export type CaseInfo_api = {
     name: string;
     status: string;
     user: string;
+    updatedAtUtcMs: number;
+    description: string;
+    ensembles: Array<EnsembleInfo_api>;
 };
 
 export type Completions_api = {
@@ -113,16 +116,23 @@ export type DiscreteValueMetadata_api = {
 
 export type EnsembleDetails_api = {
     name: string;
-    field_identifier: string;
-    case_name: string;
-    case_uuid: string;
+    fieldIdentifier: string;
+    caseName: string;
+    caseUuid: string;
     realizations: Array<number>;
-    stratigraphic_column_identifier: string;
+    stratigraphicColumnIdentifier: string;
+    standardResults: Array<string>;
+};
+
+export type EnsembleIdent_api = {
+    caseUuid: string;
+    ensembleName: string;
 };
 
 export type EnsembleInfo_api = {
     name: string;
-    realization_count: number;
+    realizationCount: number;
+    standardResults: Array<string>;
 };
 
 /**
@@ -186,7 +196,7 @@ export type FenceMeshSection_api = {
 };
 
 export type FieldInfo_api = {
-    field_identifier: string;
+    fieldIdentifier: string;
 };
 
 export type FlowNetworkData_api = {
@@ -224,6 +234,13 @@ export enum Gfr_api {
     OGR = "OGR",
     MMW = "MMW",
 }
+
+export type GraphUser_api = {
+    id: string;
+    principal_name: string;
+    display_name: string;
+    email: string;
+};
 
 export type GraphUserPhoto_api = {
     avatar_b64str?: string | null;
@@ -298,14 +315,10 @@ export type HttpValidationError_api = {
 
 /**
  * Unique values for an index column in an inplace volumes table
- *
- * If a column contain
- *
- * All values should ideally be strings, but it is common to see integers, especially for REGION
  */
 export type InplaceVolumesIndexWithValues_api = {
     indexColumn: string;
-    values: Array<string | number>;
+    values: Array<string>;
 };
 
 /**
@@ -369,6 +382,27 @@ export type InplaceVolumesTableDefinition_api = {
     indicesWithValues: Array<InplaceVolumesIndexWithValues_api>;
 };
 
+export type LroErrorInfo_api = {
+    message: string;
+};
+
+export type LroFailureResp_api = {
+    status: "failure";
+    error: LroErrorInfo_api;
+};
+
+export type LroInProgressResp_api = {
+    status: "in_progress";
+    task_id: string;
+    poll_url?: string | null;
+    progress_message?: string | null;
+};
+
+export type LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api = {
+    status: "success";
+    result: SurfaceDataFloat_api | SurfaceDataPng_api;
+};
+
 export type NetworkNode_api = {
     node_type: "Group" | "Well";
     node_label: string;
@@ -380,6 +414,18 @@ export type NetworkNode_api = {
         [key: string]: Array<number>;
     };
     children: Array<NetworkNode_api>;
+};
+
+export type NewSession_api = {
+    title: string;
+    description: string | null;
+    content: string;
+};
+
+export type NewSnapshot_api = {
+    title: string;
+    description: string | null;
+    content: string;
 };
 
 export enum NodeType_api {
@@ -396,6 +442,21 @@ export type Observations_api = {
     rft?: Array<RftObservations_api>;
 };
 
+export type PageSessionMetadata_api = {
+    items: Array<SessionMetadata_api>;
+    pageToken?: string | null;
+};
+
+export type PageSnapshotAccessLog_api = {
+    items: Array<SnapshotAccessLog_api>;
+    pageToken?: string | null;
+};
+
+export type PageSnapshotMetadata_api = {
+    items: Array<SnapshotMetadata_api>;
+    pageToken?: string | null;
+};
+
 export type PointSetXy_api = {
     x_points: Array<number>;
     y_points: Array<number>;
@@ -406,6 +467,7 @@ export type PolygonData_api = {
     y_arr: Array<number>;
     z_arr: Array<number>;
     poly_id: number | string;
+    name: string;
 };
 
 /**
@@ -667,6 +729,78 @@ export enum SensitivityType_api {
     SCENARIO = "scenario",
 }
 
+export type Session_api = {
+    metadata: SessionMetadata_api;
+    content: string;
+};
+
+export type SessionMetadata_api = {
+    id: string;
+    ownerId: string;
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+    contentHash: string;
+};
+
+export enum SessionSortBy_api {
+    METADATA_CREATED_AT = "metadata.created_at",
+    METADATA_UPDATED_AT = "metadata.updated_at",
+    METADATA_TITLE = "metadata.title",
+}
+
+export type SessionUpdate_api = {
+    title?: string | null;
+    description?: string | null;
+    content?: string | null;
+};
+
+export type Snapshot_api = {
+    metadata: SnapshotMetadata_api;
+    content: string;
+};
+
+export type SnapshotAccessLog_api = {
+    visitorId: string;
+    snapshotId: string;
+    visits: number;
+    firstVisitedAt: string | null;
+    lastVisitedAt: string | null;
+    snapshotDeleted: boolean;
+    snapshotMetadata: SnapshotMetadata_api;
+};
+
+export enum SnapshotAccessLogSortBy_api {
+    VISITS = "visits",
+    LAST_VISITED_AT = "last_visited_at",
+    SNAPSHOT_METADATA_TITLE = "snapshot_metadata.title",
+    SNAPSHOT_METADATA_TITLE_LOWER = "snapshot_metadata.title__lower",
+    SNAPSHOT_METADATA_CREATED_AT = "snapshot_metadata.created_at",
+}
+
+export type SnapshotMetadata_api = {
+    id: string;
+    ownerId: string;
+    title: string;
+    description: string | null;
+    createdAt: string;
+    contentHash: string;
+};
+
+export enum SnapshotSortBy_api {
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
+    TITLE = "title",
+    TITLE_LOWER = "title_lower",
+}
+
+export enum SortDirection_api {
+    ASC = "asc",
+    DESC = "desc",
+}
+
 export enum StatisticFunction_api {
     MEAN = "MEAN",
     MIN = "MIN",
@@ -898,6 +1032,7 @@ export enum UnitType_api {
 }
 
 export type UserInfo_api = {
+    user_id: string;
     username: string;
     display_name?: string | null;
     avatar_b64str?: string | null;
@@ -1036,6 +1171,15 @@ export type WellCompletionsZone_api = {
     subzones?: Array<WellCompletionsZone_api> | null;
 };
 
+export type WellInjectionData_api = {
+    wellboreUuid: string;
+    wellboreUwi: string;
+    startDate: string;
+    endDate: string;
+    waterInjection: number;
+    gasInjection: number;
+};
+
 export enum WellLogCurveSourceEnum_api {
     SSDL_WELL_LOG = "ssdl.well_log",
     SMDA_GEOLOGY = "smda.geology",
@@ -1048,6 +1192,16 @@ export enum WellLogCurveTypeEnum_api {
     DISCRETE = "discrete",
     FLAG = "flag",
 }
+
+export type WellProductionData_api = {
+    wellboreUuid: string;
+    wellboreUwi: string;
+    startDate: string;
+    endDate: string;
+    oilProductionSm3: number;
+    gasProductionSm3: number;
+    waterProductionM3: number;
+};
 
 export type WellboreCasing_api = {
     itemType: string;
@@ -1154,7 +1308,9 @@ export type WellboreTrajectory_api = {
 export type GetFieldsData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        zCacheBust?: string;
+    };
     url: "/fields";
 };
 
@@ -1175,6 +1331,7 @@ export type GetCasesData_api = {
          * Field identifier
          */
         field_identifier: string;
+        zCacheBust?: string;
     };
     url: "/cases";
 };
@@ -1197,36 +1354,6 @@ export type GetCasesResponses_api = {
 
 export type GetCasesResponse_api = GetCasesResponses_api[keyof GetCasesResponses_api];
 
-export type GetEnsemblesData_api = {
-    body?: never;
-    path: {
-        /**
-         * Sumo case uuid
-         */
-        case_uuid: string;
-    };
-    query?: never;
-    url: "/cases/{case_uuid}/ensembles";
-};
-
-export type GetEnsemblesErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetEnsemblesError_api = GetEnsemblesErrors_api[keyof GetEnsemblesErrors_api];
-
-export type GetEnsemblesResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<EnsembleInfo_api>;
-};
-
-export type GetEnsemblesResponse_api = GetEnsemblesResponses_api[keyof GetEnsemblesResponses_api];
-
 export type GetEnsembleDetailsData_api = {
     body?: never;
     path: {
@@ -1239,7 +1366,9 @@ export type GetEnsembleDetailsData_api = {
          */
         ensemble_name: string;
     };
-    query?: never;
+    query?: {
+        zCacheBust?: string;
+    };
     url: "/cases/{case_uuid}/ensembles/{ensemble_name}";
 };
 
@@ -1261,6 +1390,38 @@ export type GetEnsembleDetailsResponses_api = {
 
 export type GetEnsembleDetailsResponse_api = GetEnsembleDetailsResponses_api[keyof GetEnsembleDetailsResponses_api];
 
+export type PostRefreshFingerprintsForEnsemblesData_api = {
+    /**
+     * Ensembles to refresh and get fingerprints for, specified as pairs of caseUuid,ensembleName
+     */
+    body: Array<EnsembleIdent_api>;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/ensembles/refresh_fingerprints";
+};
+
+export type PostRefreshFingerprintsForEnsemblesErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type PostRefreshFingerprintsForEnsemblesError_api =
+    PostRefreshFingerprintsForEnsemblesErrors_api[keyof PostRefreshFingerprintsForEnsemblesErrors_api];
+
+export type PostRefreshFingerprintsForEnsemblesResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<string | null>;
+};
+
+export type PostRefreshFingerprintsForEnsemblesResponse_api =
+    PostRefreshFingerprintsForEnsemblesResponses_api[keyof PostRefreshFingerprintsForEnsemblesResponses_api];
+
 export type GetVectorListData_api = {
     body?: never;
     path?: never;
@@ -1277,6 +1438,7 @@ export type GetVectorListData_api = {
          * Include derived vectors
          */
         include_derived_vectors?: boolean | null;
+        zCacheBust?: string;
     };
     url: "/timeseries/vector_list/";
 };
@@ -1323,6 +1485,7 @@ export type GetDeltaEnsembleVectorListData_api = {
          * Include derived vectors
          */
         include_derived_vectors?: boolean | null;
+        zCacheBust?: string;
     };
     url: "/timeseries/delta_ensemble_vector_list/";
 };
@@ -1370,6 +1533,7 @@ export type GetRealizationsVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/timeseries/realizations_vector_data/";
 };
@@ -1425,6 +1589,7 @@ export type GetDeltaEnsembleRealizationsVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/timeseries/delta_ensemble_realizations_vector_data/";
 };
@@ -1465,6 +1630,7 @@ export type GetTimestampsListData_api = {
          * Resampling frequency
          */
         resampling_frequency?: Frequency_api | null;
+        zCacheBust?: string;
     };
     url: "/timeseries/timestamps_list/";
 };
@@ -1507,6 +1673,7 @@ export type GetHistoricalVectorDataData_api = {
          * Resampling frequency
          */
         resampling_frequency?: Frequency_api | null;
+        zCacheBust?: string;
     };
     url: "/timeseries/historical_vector_data/";
 };
@@ -1557,6 +1724,7 @@ export type GetStatisticalVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/timeseries/statistical_vector_data/";
 };
@@ -1616,6 +1784,7 @@ export type GetDeltaEnsembleStatisticalVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/timeseries/delta_ensemble_statistical_vector_data/";
 };
@@ -1668,6 +1837,7 @@ export type GetStatisticalVectorDataPerSensitivityData_api = {
          * Optional list of realizations to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/timeseries/statistical_vector_data_per_sensitivity/";
 };
@@ -1712,6 +1882,7 @@ export type GetRealizationVectorAtTimestampData_api = {
          * Timestamp in ms UTC to query vectors at
          */
         timestamp_utc_ms: number;
+        zCacheBust?: string;
     };
     url: "/timeseries/realization_vector_at_timestamp/";
 };
@@ -1748,6 +1919,7 @@ export type GetTableDefinitionsData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        zCacheBust?: string;
     };
     url: "/inplace_volumes/table_definitions/";
 };
@@ -1798,6 +1970,7 @@ export type PostGetAggregatedPerRealizationTableDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/inplace_volumes/get_aggregated_per_realization_table_data/";
 };
@@ -1850,6 +2023,7 @@ export type PostGetAggregatedStatisticalTableDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/inplace_volumes/get_aggregated_statistical_table_data/";
 };
@@ -1886,6 +2060,7 @@ export type GetRealizationSurfacesMetadataData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        zCacheBust?: string;
     };
     url: "/surface/realization_surfaces_metadata/";
 };
@@ -1918,6 +2093,7 @@ export type GetObservedSurfacesMetadataData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        zCacheBust?: string;
     };
     url: "/surface/observed_surfaces_metadata/";
 };
@@ -1958,6 +2134,7 @@ export type GetSurfaceDataData_api = {
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
         resample_to_def_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/surface/surface_data";
 };
@@ -1979,6 +2156,47 @@ export type GetSurfaceDataResponses_api = {
 };
 
 export type GetSurfaceDataResponse_api = GetSurfaceDataResponses_api[keyof GetSurfaceDataResponses_api];
+
+export type GetStatisticalSurfaceDataHybridData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Surface address string, supported address type is *STAT*
+         */
+        surf_addr_str: string;
+        /**
+         * Format of binary data in the response
+         */
+        data_format?: "float" | "png";
+        /**
+         * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
+         */
+        resample_to_def_str?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/surface/statistical_surface_data/hybrid";
+};
+
+export type GetStatisticalSurfaceDataHybridErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStatisticalSurfaceDataHybridError_api =
+    GetStatisticalSurfaceDataHybridErrors_api[keyof GetStatisticalSurfaceDataHybridErrors_api];
+
+export type GetStatisticalSurfaceDataHybridResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api | LroInProgressResp_api | LroFailureResp_api;
+};
+
+export type GetStatisticalSurfaceDataHybridResponse_api =
+    GetStatisticalSurfaceDataHybridResponses_api[keyof GetStatisticalSurfaceDataHybridResponses_api];
 
 export type PostGetSurfaceIntersectionData_api = {
     body: BodyPostGetSurfaceIntersection_api;
@@ -2008,6 +2226,7 @@ export type PostGetSurfaceIntersectionData_api = {
          * Time point or time interval string
          */
         time_or_interval_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/surface/get_surface_intersection";
 };
@@ -2055,6 +2274,7 @@ export type PostGetSampleSurfaceInPointsData_api = {
          * Realization numbers
          */
         realization_nums: Array<number>;
+        zCacheBust?: string;
     };
     url: "/surface/get_sample_surface_in_points";
 };
@@ -2099,6 +2319,7 @@ export type GetDeltaSurfaceDataData_api = {
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
         resample_to_def_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/surface/delta_surface_data";
 };
@@ -2149,6 +2370,7 @@ export type GetMisfitSurfaceDataData_api = {
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
         resample_to_def_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/surface/misfit_surface_data";
 };
@@ -2179,6 +2401,7 @@ export type DeprecatedGetStratigraphicUnitsData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        zCacheBust?: string;
     };
     url: "/surface/deprecated_stratigraphic_units";
 };
@@ -2203,6 +2426,39 @@ export type DeprecatedGetStratigraphicUnitsResponses_api = {
 export type DeprecatedGetStratigraphicUnitsResponse_api =
     DeprecatedGetStratigraphicUnitsResponses_api[keyof DeprecatedGetStratigraphicUnitsResponses_api];
 
+export type GetStratigraphicUnitsForStratColumnData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * SMDA stratigraphic column identifier
+         */
+        strat_column: string;
+        zCacheBust?: string;
+    };
+    url: "/surface/stratigraphic_units_for_strat_column";
+};
+
+export type GetStratigraphicUnitsForStratColumnErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStratigraphicUnitsForStratColumnError_api =
+    GetStratigraphicUnitsForStratColumnErrors_api[keyof GetStratigraphicUnitsForStratColumnErrors_api];
+
+export type GetStratigraphicUnitsForStratColumnResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<StratigraphicUnit_api>;
+};
+
+export type GetStratigraphicUnitsForStratColumnResponse_api =
+    GetStratigraphicUnitsForStratColumnResponses_api[keyof GetStratigraphicUnitsForStratColumnResponses_api];
+
 export type GetParameterNamesAndDescriptionData_api = {
     body?: never;
     path?: never;
@@ -2223,6 +2479,7 @@ export type GetParameterNamesAndDescriptionData_api = {
          * Sort order
          */
         sort_order?: "alphabetically" | "standard_deviation";
+        zCacheBust?: string;
     };
     url: "/parameters/parameter_names_and_description/";
 };
@@ -2263,6 +2520,7 @@ export type GetParameterData_api = {
          * Parameter name
          */
         parameter_name: string;
+        zCacheBust?: string;
     };
     url: "/parameters/parameter/";
 };
@@ -2297,6 +2555,7 @@ export type GetParametersData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        zCacheBust?: string;
     };
     url: "/parameters/parameters/";
 };
@@ -2331,6 +2590,7 @@ export type GetIsSensitivityRunData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        zCacheBust?: string;
     };
     url: "/parameters/is_sensitivity_run/";
 };
@@ -2365,6 +2625,7 @@ export type GetSensitivitiesData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        zCacheBust?: string;
     };
     url: "/parameters/sensitivities/";
 };
@@ -2403,6 +2664,7 @@ export type GetGridModelsInfoData_api = {
          * Realization
          */
         realization_num: number;
+        zCacheBust?: string;
     };
     url: "/grid3d/grid_models_info/";
 };
@@ -2469,6 +2731,7 @@ export type GetGridSurfaceData_api = {
          * Max k index
          */
         k_max?: number;
+        zCacheBust?: string;
     };
     url: "/grid3d/grid_surface";
 };
@@ -2543,6 +2806,7 @@ export type GetGridParameterData_api = {
          * Max k index
          */
         k_max?: number;
+        zCacheBust?: string;
     };
     url: "/grid3d/grid_parameter";
 };
@@ -2593,6 +2857,7 @@ export type PostGetPolylineIntersectionData_api = {
          * Time point or time interval string
          */
         parameter_time_or_interval_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/grid3d/get_polyline_intersection";
 };
@@ -2641,6 +2906,7 @@ export type GetRealizationFlowNetworkData_api = {
          * Node types
          */
         node_type_set: Array<NodeType_api>;
+        zCacheBust?: string;
     };
     url: "/flow_network/realization_flow_network/";
 };
@@ -2664,6 +2930,84 @@ export type GetRealizationFlowNetworkResponses_api = {
 export type GetRealizationFlowNetworkResponse_api =
     GetRealizationFlowNetworkResponses_api[keyof GetRealizationFlowNetworkResponses_api];
 
+export type GetProductionDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Start date in YYYY-MM-DD
+         */
+        start_date: string;
+        /**
+         * End date in YYYY-MM-DD
+         */
+        end_date: string;
+        zCacheBust?: string;
+    };
+    url: "/flow_data/production_data/";
+};
+
+export type GetProductionDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetProductionDataError_api = GetProductionDataErrors_api[keyof GetProductionDataErrors_api];
+
+export type GetProductionDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellProductionData_api>;
+};
+
+export type GetProductionDataResponse_api = GetProductionDataResponses_api[keyof GetProductionDataResponses_api];
+
+export type GetInjectionDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Start date in YYYY-MM-DD
+         */
+        start_date: string;
+        /**
+         * End date in YYYY-MM-DD
+         */
+        end_date: string;
+        zCacheBust?: string;
+    };
+    url: "/flow_data/injection_data/";
+};
+
+export type GetInjectionDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetInjectionDataError_api = GetInjectionDataErrors_api[keyof GetInjectionDataErrors_api];
+
+export type GetInjectionDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellInjectionData_api>;
+};
+
+export type GetInjectionDataResponse_api = GetInjectionDataResponses_api[keyof GetInjectionDataResponses_api];
+
 export type GetTableDataData_api = {
     body?: never;
     path?: never;
@@ -2680,6 +3024,7 @@ export type GetTableDataData_api = {
          * Realization number
          */
         realization: number;
+        zCacheBust?: string;
     };
     url: "/pvt/table_data/";
 };
@@ -2715,9 +3060,10 @@ export type GetWellCompletionsDataData_api = {
          */
         ensemble_name: string;
         /**
-         * Optional realizations to include. Provide single realization or list of realizations. If not specified, all realizations will be returned.
+         * Optional realizations to include, list encoded as string. If not specified, all realizations will be returned.
          */
-        realization?: number | Array<number> | null;
+        realizations_encoded_as_uint_list_str?: number | string | null;
+        zCacheBust?: string;
     };
     url: "/well_completions/well_completions_data/";
 };
@@ -2748,6 +3094,7 @@ export type GetDrilledWellboreHeadersData_api = {
          * Official field identifier
          */
         field_identifier: string;
+        zCacheBust?: string;
     };
     url: "/well/drilled_wellbore_headers/";
 };
@@ -2783,6 +3130,7 @@ export type GetWellTrajectoriesData_api = {
          * Optional subset of wellbore uuids
          */
         wellbore_uuids?: Array<string> | null;
+        zCacheBust?: string;
     };
     url: "/well/well_trajectories/";
 };
@@ -2813,6 +3161,7 @@ export type GetWellborePickIdentifiersData_api = {
          * Stratigraphic column identifier
          */
         strat_column_identifier: string;
+        zCacheBust?: string;
     };
     url: "/well/wellbore_pick_identifiers/";
 };
@@ -2848,6 +3197,7 @@ export type GetWellborePicksForPickIdentifierData_api = {
          * Pick identifier
          */
         pick_identifier: string;
+        zCacheBust?: string;
     };
     url: "/well/wellbore_picks_for_pick_identifier/";
 };
@@ -2880,6 +3230,7 @@ export type DeprecatedGetWellborePicksForWellboreData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        zCacheBust?: string;
     };
     url: "/well/deprecated_wellbore_picks_for_wellbore/";
 };
@@ -2916,6 +3267,7 @@ export type GetWellborePicksInStratColumnData_api = {
          * Filter by stratigraphic column
          */
         strat_column_identifier: string;
+        zCacheBust?: string;
     };
     url: "/well/wellbore_picks_in_strat_column";
 };
@@ -2948,6 +3300,7 @@ export type GetWellboreStratigraphicColumnsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        zCacheBust?: string;
     };
     url: "/well/wellbore_stratigraphic_columns/";
 };
@@ -2980,6 +3333,7 @@ export type GetWellboreCompletionsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        zCacheBust?: string;
     };
     url: "/well/wellbore_completions/";
 };
@@ -3010,6 +3364,7 @@ export type GetWellboreCasingsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        zCacheBust?: string;
     };
     url: "/well/wellbore_casings/";
 };
@@ -3040,6 +3395,7 @@ export type GetWellborePerforationsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        zCacheBust?: string;
     };
     url: "/well/wellbore_perforations/";
 };
@@ -3074,6 +3430,7 @@ export type GetWellboreLogCurveHeadersData_api = {
          * Sources to fetch well-logs from.
          */
         sources?: Array<WellLogCurveSourceEnum_api>;
+        zCacheBust?: string;
     };
     url: "/well/wellbore_log_curve_headers/";
 };
@@ -3117,6 +3474,7 @@ export type GetLogCurveDataData_api = {
          * Source to fetch well-logs from.
          */
         source?: WellLogCurveSourceEnum_api;
+        zCacheBust?: string;
     };
     url: "/well/log_curve_data/";
 };
@@ -3151,6 +3509,7 @@ export type GetSeismicCubeMetaListData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        zCacheBust?: string;
     };
     url: "/seismic/seismic_cube_meta_list/";
 };
@@ -3204,7 +3563,8 @@ export type GetInlineSliceData_api = {
         /**
          * Inline number
          */
-        inline_no: number;
+        inline_number: number;
+        zCacheBust?: string;
     };
     url: "/seismic/get_inline_slice/";
 };
@@ -3258,7 +3618,8 @@ export type GetCrosslineSliceData_api = {
         /**
          * Crossline number
          */
-        crossline_no: number;
+        crossline_num: number;
+        zCacheBust?: string;
     };
     url: "/seismic/get_crossline_slice/";
 };
@@ -3310,9 +3671,10 @@ export type GetDepthSliceData_api = {
          */
         observed: boolean;
         /**
-         * Depth slice no
+         * Depth slice number
          */
-        depth_slice_no: number;
+        depth_slice_num: number;
+        zCacheBust?: string;
     };
     url: "/seismic/get_depth_slice/";
 };
@@ -3334,6 +3696,69 @@ export type GetDepthSliceResponses_api = {
 };
 
 export type GetDepthSliceResponse_api = GetDepthSliceResponses_api[keyof GetDepthSliceResponses_api];
+
+export type GetSeismicSlicesData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * Inline number
+         */
+        inline_number: number;
+        /**
+         * Crossline number
+         */
+        crossline_number: number;
+        /**
+         * Depth slice number
+         */
+        depth_slice_number: number;
+        zCacheBust?: string;
+    };
+    url: "/seismic/get_seismic_slices/";
+};
+
+export type GetSeismicSlicesErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSeismicSlicesError_api = GetSeismicSlicesErrors_api[keyof GetSeismicSlicesErrors_api];
+
+export type GetSeismicSlicesResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: [SeismicSliceData_api, SeismicSliceData_api, SeismicSliceData_api];
+};
+
+export type GetSeismicSlicesResponse_api = GetSeismicSlicesResponses_api[keyof GetSeismicSlicesResponses_api];
 
 export type PostGetSeismicFenceData_api = {
     body: BodyPostGetSeismicFence_api;
@@ -3363,6 +3788,7 @@ export type PostGetSeismicFenceData_api = {
          * Observed or simulated
          */
         observed: boolean;
+        zCacheBust?: string;
     };
     url: "/seismic/get_seismic_fence/";
 };
@@ -3397,6 +3823,7 @@ export type GetPolygonsDirectoryData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        zCacheBust?: string;
     };
     url: "/polygons/polygons_directory/";
 };
@@ -3443,6 +3870,7 @@ export type GetPolygonsDataData_api = {
          * Surface attribute
          */
         attribute: string;
+        zCacheBust?: string;
     };
     url: "/polygons/polygons_data/";
 };
@@ -3465,14 +3893,47 @@ export type GetPolygonsDataResponses_api = {
 
 export type GetPolygonsDataResponse_api = GetPolygonsDataResponses_api[keyof GetPolygonsDataResponses_api];
 
+export type GetUserInfoData_api = {
+    body?: never;
+    path: {
+        /**
+         * User email, graph-id or 'me' for the authenticated user
+         */
+        user_id_or_email: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/graph/user_info/{user_id_or_email}";
+};
+
+export type GetUserInfoErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetUserInfoError_api = GetUserInfoErrors_api[keyof GetUserInfoErrors_api];
+
+export type GetUserInfoResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: GraphUser_api | null;
+};
+
+export type GetUserInfoResponse_api = GetUserInfoResponses_api[keyof GetUserInfoResponses_api];
+
 export type GetUserPhotoData_api = {
     body?: never;
     path?: never;
     query: {
         /**
-         * User id
+         * User email, graph-id, or 'me' for the authenticated user
          */
-        user_id: string;
+        user_id_or_email: string;
+        zCacheBust?: string;
     };
     url: "/graph/user_photo/";
 };
@@ -3503,6 +3964,7 @@ export type GetObservationsData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        zCacheBust?: string;
     };
     url: "/observations/observations/";
 };
@@ -3537,6 +3999,7 @@ export type GetTableDefinitionData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        zCacheBust?: string;
     };
     url: "/rft/table_definition";
 };
@@ -3587,6 +4050,7 @@ export type GetRealizationDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
     };
     url: "/rft/realization_data";
 };
@@ -3625,6 +4089,7 @@ export type GetVfpTableNamesData_api = {
          * Realization
          */
         realization: number;
+        zCacheBust?: string;
     };
     url: "/vfp/vfp_table_names/";
 };
@@ -3667,6 +4132,7 @@ export type GetVfpTableData_api = {
          * VFP table name
          */
         vfp_table_name: string;
+        zCacheBust?: string;
     };
     url: "/vfp/vfp_table/";
 };
@@ -3689,11 +4155,456 @@ export type GetVfpTableResponses_api = {
 
 export type GetVfpTableResponse_api = GetVfpTableResponses_api[keyof GetVfpTableResponses_api];
 
+export type GetSessionsMetadataData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Continuation token for pagination
+         */
+        cursor?: string | null;
+        /**
+         * Field to sort by (e.g., 'metadata.title')
+         */
+        sort_by?: SessionSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Use case-insensitive sorting
+         */
+        sort_lowercase?: boolean;
+        /**
+         * Limit the number of results
+         */
+        page_size?: number;
+        /**
+         * Filter results by title (case insensitive)
+         */
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_updated_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_updated_to?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions";
+};
+
+export type GetSessionsMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionsMetadataError_api = GetSessionsMetadataErrors_api[keyof GetSessionsMetadataErrors_api];
+
+export type GetSessionsMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: PageSessionMetadata_api;
+};
+
+export type GetSessionsMetadataResponse_api = GetSessionsMetadataResponses_api[keyof GetSessionsMetadataResponses_api];
+
+export type CreateSessionData_api = {
+    body: NewSession_api;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions";
+};
+
+export type CreateSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type CreateSessionError_api = CreateSessionErrors_api[keyof CreateSessionErrors_api];
+
+export type CreateSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type CreateSessionResponse_api = CreateSessionResponses_api[keyof CreateSessionResponses_api];
+
+export type DeleteSessionData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions/{session_id}";
+};
+
+export type DeleteSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSessionError_api = DeleteSessionErrors_api[keyof DeleteSessionErrors_api];
+
+export type DeleteSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSessionData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions/{session_id}";
+};
+
+export type GetSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionError_api = GetSessionErrors_api[keyof GetSessionErrors_api];
+
+export type GetSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Session_api;
+};
+
+export type GetSessionResponse_api = GetSessionResponses_api[keyof GetSessionResponses_api];
+
+export type UpdateSessionData_api = {
+    body: SessionUpdate_api;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions/{session_id}";
+};
+
+export type UpdateSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type UpdateSessionError_api = UpdateSessionErrors_api[keyof UpdateSessionErrors_api];
+
+export type UpdateSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Session_api;
+};
+
+export type UpdateSessionResponse_api = UpdateSessionResponses_api[keyof UpdateSessionResponses_api];
+
+export type GetSessionMetadataData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/sessions/metadata/{session_id}";
+};
+
+export type GetSessionMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionMetadataError_api = GetSessionMetadataErrors_api[keyof GetSessionMetadataErrors_api];
+
+export type GetSessionMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SessionMetadata_api;
+};
+
+export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
+
+export type GetSnapshotAccessLogsData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Continuation token for pagination
+         */
+        cursor?: string | null;
+        /**
+         * Limit the number of results
+         */
+        page_size?: number | null;
+        /**
+         * Sort the result by
+         */
+        sort_by?: SnapshotAccessLogSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Use case-insensitive sorting
+         */
+        sort_lowercase?: boolean;
+        /**
+         * Filter results by title (case insensitive)
+         */
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_to?: string | null;
+        /**
+         * Filter results by date of last visit
+         */
+        filter_last_visited_from?: string | null;
+        /**
+         * Filter results by date of last visit
+         */
+        filter_last_visited_to?: string | null;
+        /**
+         * Filter results by snapshot owner ID
+         */
+        filter_owner_id?: string | null;
+        /**
+         * Filter results by deletion status of the snapshot
+         */
+        filter_snapshot_deleted?: boolean | null;
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshot_access_logs";
+};
+
+export type GetSnapshotAccessLogsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotAccessLogsError_api = GetSnapshotAccessLogsErrors_api[keyof GetSnapshotAccessLogsErrors_api];
+
+export type GetSnapshotAccessLogsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: PageSnapshotAccessLog_api;
+};
+
+export type GetSnapshotAccessLogsResponse_api = GetSnapshotAccessLogsResponses_api[keyof GetSnapshotAccessLogsResponses_api];
+
+export type GetSnapshotsMetadataData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Continuation token for pagination
+         */
+        cursor?: string | null;
+        /**
+         * Limit the number of results
+         */
+        page_size?: number | null;
+        /**
+         * Sort the result by
+         */
+        sort_by?: SnapshotSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Use case-insensitive sorting
+         */
+        sort_lowercase?: boolean;
+        /**
+         * Filter results by title (case insensitive)
+         */
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_created_to?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshots";
+};
+
+export type GetSnapshotsMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotsMetadataError_api = GetSnapshotsMetadataErrors_api[keyof GetSnapshotsMetadataErrors_api];
+
+export type GetSnapshotsMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: PageSnapshotMetadata_api;
+};
+
+export type GetSnapshotsMetadataResponse_api = GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
+
+export type CreateSnapshotData_api = {
+    body: NewSnapshot_api;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshots";
+};
+
+export type CreateSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type CreateSnapshotError_api = CreateSnapshotErrors_api[keyof CreateSnapshotErrors_api];
+
+export type CreateSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type CreateSnapshotResponse_api = CreateSnapshotResponses_api[keyof CreateSnapshotResponses_api];
+
+export type DeleteSnapshotData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshots/{snapshot_id}";
+};
+
+export type DeleteSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSnapshotError_api = DeleteSnapshotErrors_api[keyof DeleteSnapshotErrors_api];
+
+export type DeleteSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSnapshotData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshots/{snapshot_id}";
+};
+
+export type GetSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotError_api = GetSnapshotErrors_api[keyof GetSnapshotErrors_api];
+
+export type GetSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Snapshot_api;
+};
+
+export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshotResponses_api];
+
+export type DeleteSnapshotAccessLogData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/persistence/snapshot_access_logs/{snapshot_id}";
+};
+
+export type DeleteSnapshotAccessLogErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSnapshotAccessLogError_api = DeleteSnapshotAccessLogErrors_api[keyof DeleteSnapshotAccessLogErrors_api];
+
+export type DeleteSnapshotAccessLogResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
 export type LoginRouteData_api = {
     body?: never;
     path?: never;
     query?: {
         redirect_url_after_login?: string | null;
+        zCacheBust?: string;
     };
     url: "/login";
 };
@@ -3717,7 +4628,9 @@ export type LoginRouteResponses_api = {
 export type AuthorizedCallbackRouteData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        zCacheBust?: string;
+    };
     url: "/auth-callback";
 };
 
@@ -3731,7 +4644,9 @@ export type AuthorizedCallbackRouteResponses_api = {
 export type GetAliveData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        zCacheBust?: string;
+    };
     url: "/alive";
 };
 
@@ -3747,7 +4662,9 @@ export type GetAliveResponse_api = GetAliveResponses_api[keyof GetAliveResponses
 export type GetAliveProtectedData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        zCacheBust?: string;
+    };
     url: "/alive_protected";
 };
 
@@ -3763,7 +4680,9 @@ export type GetAliveProtectedResponse_api = GetAliveProtectedResponses_api[keyof
 export type PostLogoutData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        zCacheBust?: string;
+    };
     url: "/logout";
 };
 
@@ -3784,6 +4703,7 @@ export type GetLoggedInUserData_api = {
          * Set to true to include user avatar and display name from Microsoft Graph API
          */
         includeGraphApiInfo?: boolean;
+        zCacheBust?: string;
     };
     url: "/logged_in_user";
 };
@@ -3809,7 +4729,9 @@ export type GetLoggedInUserResponse_api = GetLoggedInUserResponses_api[keyof Get
 export type RootData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        zCacheBust?: string;
+    };
     url: "/";
 };
 

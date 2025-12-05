@@ -9,17 +9,21 @@ import { BaseComponent } from "../BaseComponent";
 
 export type InputProps = InputUnstyledProps & {
     wrapperStyle?: React.CSSProperties;
+    wrapperClassName?: string;
     min?: number;
     max?: number;
+    step?: number;
     rounded?: "all" | "left" | "right" | "none";
     debounceTimeMs?: number;
     onValueChange?: (value: string) => void;
+    uirevision?: number;
 };
 
 function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const {
         startAdornment,
         endAdornment,
+        wrapperClassName,
         wrapperStyle,
         value: propsValue,
         onValueChange,
@@ -30,10 +34,12 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
 
     const [value, setValue] = React.useState<unknown>(propsValue);
     const [prevValue, setPrevValue] = React.useState<unknown>(propsValue);
+    const [uirevision, setUirevision] = React.useState<number | undefined>(props.uirevision);
 
-    if (propsValue !== prevValue) {
+    if (propsValue !== prevValue || props.uirevision !== uirevision) {
         setValue(propsValue);
         setPrevValue(propsValue);
+        setUirevision(props.uirevision);
     }
 
     const internalRef = React.useRef<HTMLInputElement>(null);
@@ -138,6 +144,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
             disabled={props.disabled}
             ref={ref}
             className={resolveClassNames(
+                wrapperClassName,
                 "flex",
                 "justify-center",
                 "gap-2",
@@ -151,9 +158,10 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                 "py-1.5",
                 "outline-hidden",
                 "cursor-text",
+                "border border-gray-300",
                 {
-                    "border border-gray-300": !props.error,
-                    "border-2 border-red-300": props.error,
+                    "outline-hidden": !props.error,
+                    "outline-2 outline-red-300": props.error,
                     "rounded-l": props.rounded === "left",
                     "rounded-r": props.rounded === "right",
                     rounded: props.rounded === "all" || !props.rounded,
@@ -177,6 +185,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                         className: "grow",
                     },
                     input: {
+                        step: props.step,
                         className: resolveClassNames("h-full block w-full sm:text-sm outline-none truncate"),
                         ref: internalRef,
                     },

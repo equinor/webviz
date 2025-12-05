@@ -4,8 +4,8 @@ import pytest
 
 import pyarrow as pa
 
-from primary.services.service_exceptions import InvalidDataError
-from primary.services.summary_derived_vectors import (
+from webviz_services.service_exceptions import InvalidDataError
+from webviz_services.summary_derived_vectors import (
     DerivedRealizationVector,
     DerivedVectorType,
     create_derived_realization_vector_list,
@@ -59,7 +59,7 @@ YEARLY_TOTAL_VECTOR_TABLE = pa.table(
 )
 
 
-def test_create_per_interval_vector_table_pa_weekly_input():
+def test_create_per_interval_vector_table_pa_weekly_input() -> None:
     # Expected output table
     expected_table = pa.table(
         {
@@ -80,7 +80,7 @@ def test_create_per_interval_vector_table_pa_weekly_input():
     assert result_table.equals(expected_table)
 
 
-def test_create_per_interval_vector_table_pa_monthly_input():
+def test_create_per_interval_vector_table_pa_monthly_input() -> None:
     # Expected output table
     expected_table = pa.table(
         {
@@ -101,7 +101,7 @@ def test_create_per_interval_vector_table_pa_monthly_input():
     assert result_table.equals(expected_table)
 
 
-def test_create_per_interval_vector_table_pa_yearly_input():
+def test_create_per_interval_vector_table_pa_yearly_input() -> None:
     # Expected output table
     expected_table = pa.table(
         {
@@ -122,7 +122,7 @@ def test_create_per_interval_vector_table_pa_yearly_input():
     assert result_table.equals(expected_table)
 
 
-def test_create_per_interval_vector_table_pa_missing_columns():
+def test_create_per_interval_vector_table_pa_missing_columns() -> None:
     # Create a sample input table with missing columnss
     input_table = pa.table({"DATE": pa.array([1, 2, 3, 4]), "REAL": pa.array([1, 1, 1, 1])})
 
@@ -131,7 +131,7 @@ def test_create_per_interval_vector_table_pa_missing_columns():
         create_per_interval_vector_table_pa(input_table)
 
 
-def test_create_per_interval_vector_table_pa_invalid_column_name():
+def test_create_per_interval_vector_table_pa_invalid_column_name() -> None:
     # Create a sample input table with invalid columns
     input_table = pa.table(
         {
@@ -146,7 +146,7 @@ def test_create_per_interval_vector_table_pa_invalid_column_name():
         create_per_interval_vector_table_pa(input_table)
 
 
-def test_create_per_interval_vector_table_pa_invalid_column_type():
+def test_create_per_interval_vector_table_pa_invalid_column_type() -> None:
     # Create a sample input table with invalid column types
     data = {
         "DATE": pa.array([1, 2, 3, 4], type=pa.int32()),
@@ -162,7 +162,7 @@ def test_create_per_interval_vector_table_pa_invalid_column_type():
         create_per_interval_vector_table_pa(input_table)
 
 
-def test_create_per_day_vector_table_pa_weekly_input():
+def test_create_per_day_vector_table_pa_weekly_input() -> None:
     # Expected output table
     expected_table = pa.table(
         {
@@ -184,7 +184,7 @@ def test_create_per_day_vector_table_pa_weekly_input():
     assert result_table.equals(expected_table)
 
 
-def test_create_per_day_vector_table_pa_monthly_input():
+def test_create_per_day_vector_table_pa_monthly_input() -> None:
     # Expected output table
     expected_table = pa.table(
         {
@@ -206,7 +206,7 @@ def test_create_per_day_vector_table_pa_monthly_input():
     assert result_table.equals(expected_table)
 
 
-def test_create_per_day_vector_table_pa_yearly_input():
+def test_create_per_day_vector_table_pa_yearly_input() -> None:
     # Expected output table
     expected_table = pa.table(
         {
@@ -238,7 +238,7 @@ def test_create_per_day_vector_table_pa_yearly_input():
     assert result_table.equals(expected_table)
 
 
-def test_create_per_day_vector_table_pa_missing_columns():
+def test_create_per_day_vector_table_pa_missing_columns() -> None:
     # Create a sample input table with missing columns
     input_table = pa.table({"DATE": pa.array([1, 2, 3, 4]), "REAL": pa.array([1, 1, 1, 1])})
 
@@ -247,7 +247,7 @@ def test_create_per_day_vector_table_pa_missing_columns():
         create_per_day_vector_table_pa(input_table)
 
 
-def test_create_per_day_vector_table_pa_invalid_column_name():
+def test_create_per_day_vector_table_pa_invalid_column_name() -> None:
     # Create a sample input table with invalid columns
     input_table = pa.table(
         {
@@ -262,7 +262,7 @@ def test_create_per_day_vector_table_pa_invalid_column_name():
         create_per_day_vector_table_pa(input_table)
 
 
-def test_create_per_day_vector_table_pa_invalid_column_type():
+def test_create_per_day_vector_table_pa_invalid_column_type() -> None:
     # Create a sample input table with invalid column types
     data = {
         "DATE": pa.array([1, 2, 3, 4], type=pa.int32()),
@@ -278,7 +278,7 @@ def test_create_per_day_vector_table_pa_invalid_column_type():
         create_per_day_vector_table_pa(input_table)
 
 
-def test_create_derived_realization_vector_list():
+def test_create_derived_realization_vector_list() -> None:
     # Create a sample derived vector table
     derived_vector_table = pa.table(
         {
@@ -325,7 +325,7 @@ def test_create_derived_realization_vector_list():
     assert result_list == expected_list
 
 
-def test_create_derived_realization_vector_list_invalid_column_name():
+def test_create_derived_realization_vector_list_invalid_column_name() -> None:
     # Create a sample derived vector table with invalid column name
     derived_vector_table = pa.table(
         {
@@ -345,7 +345,7 @@ def test_create_derived_realization_vector_list_invalid_column_name():
         create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", is_rate, "unit")
 
 
-def test_create_derived_realization_vector_list_invalid_column_type():
+def test_create_derived_realization_vector_list_invalid_column_type() -> None:
     # Create a sample derived vector table with invalid column type
     derived_vector_table = pa.table(
         {
@@ -362,19 +362,19 @@ def test_create_derived_realization_vector_list_invalid_column_type():
         create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", is_rate, "unit")
 
 
-def test_get_total_vector_name_per_day():
+def test_get_total_vector_name_per_day() -> None:
     vector_name = "PER_DAY_TOTAL_VECTOR"
     expected_name = "TOTAL_VECTOR"
     assert get_total_vector_name(vector_name) == expected_name
 
 
-def test_get_total_vector_name_per_interval():
+def test_get_total_vector_name_per_interval() -> None:
     vector_name = "PER_INTVL_TOTAL_VECTOR"
     expected_name = "TOTAL_VECTOR"
     assert get_total_vector_name(vector_name) == expected_name
 
 
-def test_get_total_vector_name_invalid():
+def test_get_total_vector_name_invalid() -> None:
     vector_name = "INVALID_TOTAL_VECTOR"
     with pytest.raises(
         InvalidDataError, match="Expected INVALID_TOTAL_VECTOR to be a derived PER_DAY or PER_INTVL vector!"
@@ -382,7 +382,7 @@ def test_get_total_vector_name_invalid():
         get_total_vector_name(vector_name)
 
 
-def test_is_total_vector_true():
+def test_is_total_vector_true() -> None:
     assert is_total_vector("WOPT") is True
     assert is_total_vector("WOPT:well") is True
     assert is_total_vector("GOPT:group") is True
@@ -391,7 +391,7 @@ def test_is_total_vector_true():
     assert is_total_vector("GOPTH:group") is True  # Historical vector
 
 
-def test_is_total_vector_false():
+def test_is_total_vector_false() -> None:
     assert is_total_vector("WOPR") is False
     assert is_total_vector("WOPR:well") is False
     assert is_total_vector("GOPR:group") is False
@@ -400,7 +400,7 @@ def test_is_total_vector_false():
     assert is_total_vector("GOP:group") is False  # Less than 3 characters after removing leading character
 
 
-def test_is_total_vector_invalid_format():
+def test_is_total_vector_invalid_format() -> None:
     assert is_total_vector("OPT") is False  # Missing first character
     assert is_total_vector(":well") is False  # Empty vector base name
     assert is_total_vector("W:well") is False  # Less than 3 characters after removing leading character
@@ -408,69 +408,69 @@ def test_is_total_vector_invalid_format():
     assert is_total_vector(":") is False  # Only delimiter
 
 
-def test_create_derived_vector_unit_per_day():
+def test_create_derived_vector_unit_per_day() -> None:
     assert create_derived_vector_unit("m3", DerivedVectorType.PER_DAY) == "m3/DAY"
 
 
-def test_create_derived_vector_unit_other():
+def test_create_derived_vector_unit_other() -> None:
     assert create_derived_vector_unit("m3", DerivedVectorType.PER_INTERVAL) == "m3"
 
 
-def test_find_derived_vector_category_per_day():
+def test_find_derived_vector_category_per_day() -> None:
     assert find_derived_vector_type("PER_DAY_VECTOR") == DerivedVectorType.PER_DAY
 
 
-def test_find_derived_vector_category_per_interval():
+def test_find_derived_vector_category_per_interval() -> None:
     assert find_derived_vector_type("PER_INTVL_VECTOR") == DerivedVectorType.PER_INTERVAL
 
 
-def test_find_derived_vector_category_none():
+def test_find_derived_vector_category_none() -> None:
     assert find_derived_vector_type("OTHER_VECTOR") is None
 
 
-def test_get_derived_vector_category_per_day():
+def test_get_derived_vector_category_per_day() -> None:
     assert get_derived_vector_type("PER_DAY_VECTOR") == DerivedVectorType.PER_DAY
 
 
-def test_get_derived_vector_category_per_interval():
+def test_get_derived_vector_category_per_interval() -> None:
     assert get_derived_vector_type("PER_INTVL_VECTOR") == DerivedVectorType.PER_INTERVAL
 
 
-def test_get_derived_vector_category_none():
+def test_get_derived_vector_category_none() -> None:
     with pytest.raises(
         InvalidDataError, match=re.escape("Expected OTHER_VECTOR to be a derived vector. [service=general]")
     ):
         get_derived_vector_type("OTHER_VECTOR")
 
 
-def test_is_derived_vector_true():
+def test_is_derived_vector_true() -> None:
     assert is_derived_vector("PER_DAY_VECTOR") is True
     assert is_derived_vector("PER_INTVL_VECTOR") is True
 
 
-def test_is_derived_vector_false():
+def test_is_derived_vector_false() -> None:
     assert is_derived_vector("OTHER_VECTOR") is False
 
 
-def test_create_per_day_vector_name():
+def test_create_per_day_vector_name() -> None:
     assert create_per_day_vector_name("VECTOR") == "PER_DAY_VECTOR"
 
 
-def test_create_per_interval_vector_name():
+def test_create_per_interval_vector_name() -> None:
     assert create_per_interval_vector_name("VECTOR") == "PER_INTVL_VECTOR"
 
 
-def test_is_per_interval_vector_true():
+def test_is_per_interval_vector_true() -> None:
     assert is_per_interval_vector("PER_INTVL_VECTOR") is True
 
 
-def test_is_per_interval_vector_false():
+def test_is_per_interval_vector_false() -> None:
     assert is_per_interval_vector("PER_DAY_VECTOR") is False
 
 
-def test_is_per_day_vector_true():
+def test_is_per_day_vector_true() -> None:
     assert is_per_day_vector("PER_DAY_VECTOR") is True
 
 
-def test_is_per_day_vector_false():
+def test_is_per_day_vector_false() -> None:
     assert is_per_day_vector("PER_INTVL_VECTOR") is False

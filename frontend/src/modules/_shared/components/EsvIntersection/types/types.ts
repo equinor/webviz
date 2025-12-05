@@ -143,7 +143,7 @@ export enum AdditionalInformationType {
     P50 = "p50",
     SCHEMATIC_INFO = "schematic-info",
     X = "x",
-    Y = "y",
+    Z = "z",
     R = "r",
     G = "g",
     B = "b",

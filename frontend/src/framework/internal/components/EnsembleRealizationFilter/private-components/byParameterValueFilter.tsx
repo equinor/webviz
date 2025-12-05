@@ -1,15 +1,12 @@
 import React from "react";
 
-import { AddCircle, Delete, Report } from "@mui/icons-material";
+import { Add, Delete, Report } from "@mui/icons-material";
 
 import type { EnsembleParameters } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import type {
-    DiscreteParameterValueSelection,
-    NumberRange,
-    ParameterValueSelection,
-} from "@framework/types/realizationFilterTypes";
+import type { DiscreteParameterValueSelection, ParameterValueSelection } from "@framework/types/realizationFilterTypes";
 import { isArrayOfNumbers, isArrayOfStrings } from "@framework/utils/arrayUtils";
+import type { NumberRange } from "@framework/utils/numberUtils";
 import {
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
@@ -23,6 +20,7 @@ import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/S
 import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import type { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
 import { TagPicker } from "@lib/components/TagPicker";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";
@@ -267,9 +265,10 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         if (isArrayOfStrings(valueSelection) && isArrayOfStrings(parameter.values)) {
             const uniqueValues = Array.from(new Set([...parameter.values]));
             return (
-                <TagPicker<string>
-                    value={[...valueSelection]}
-                    tags={uniqueValues.map((elm) => {
+                <TagPicker
+                    showListAsSelectionCount
+                    selection={[...valueSelection]}
+                    tagOptions={uniqueValues.map((elm) => {
                         return { label: elm, value: elm };
                     })}
                     onChange={(value) => handleDiscreteParameterValueSelectionChange(parameterIdentString, value)}
@@ -280,12 +279,15 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         if (isArrayOfNumbers(valueSelection) && isArrayOfNumbers(parameter.values)) {
             const uniqueValues = Array.from(new Set([...parameter.values]));
             return (
-                <TagPicker<number>
-                    value={valueSelection.map((elm) => elm)}
-                    tags={uniqueValues.map((elm) => {
-                        return { label: elm.toString(), value: elm };
+                <TagPicker
+                    showListAsSelectionCount
+                    selection={valueSelection.map((elm) => String(elm))}
+                    tagOptions={uniqueValues.map((elm) => {
+                        return { label: String(elm), value: String(elm) };
                     })}
-                    onChange={(value) => handleDiscreteParameterValueSelectionChange(parameterIdentString, value)}
+                    onChange={(value) =>
+                        handleDiscreteParameterValueSelectionChange(parameterIdentString, value.map(Number))
+                    }
                 />
             );
         }
@@ -302,7 +304,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         const displayParameterName = createSmartNodeSelectorTagTextFromParameterIdentString(parameterIdentString);
 
         return (
-            <div key={parameterIdentString} className="grow border  rounded-md p-2">
+            <div key={parameterIdentString} className="grow border rounded-md p-2">
                 <div className="flex flex-col gap-2 ">
                     <div className="flex flex-row items-center gap-2">
                         <div
@@ -316,7 +318,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                             colorScheme={DenseIconButtonColorScheme.DANGER}
                             onClick={() => handleRemoveButtonClick(parameterIdentString)}
                         >
-                            <Delete fontSize="small" />
+                            <Delete fontSize="inherit" />
                         </DenseIconButton>
                     </div>
                     <div className="flex items-center">
@@ -380,15 +382,17 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                             caseInsensitiveMatching={true}
                         />
                     </div>
-                    <div className="grow-0" title={addButtonText ?? undefined}>
-                        <Button
-                            variant="contained"
-                            disabled={isAddButtonDisabled}
-                            endIcon={<AddCircle />}
-                            onClick={handleAddSelectedParametersClick}
-                        >
-                            Add
-                        </Button>
+                    <div className="grow-0">
+                        <Tooltip title={addButtonText ?? ""}>
+                            <Button
+                                variant="contained"
+                                disabled={isAddButtonDisabled}
+                                onClick={handleAddSelectedParametersClick}
+                                className="h-full"
+                            >
+                                <Add fontSize="small" />
+                            </Button>
+                        </Tooltip>
                     </div>
                 </div>
             </div>

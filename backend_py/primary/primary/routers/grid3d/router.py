@@ -4,19 +4,18 @@ from typing import Annotated, List, Optional
 import numpy as np
 from fastapi import APIRouter, Depends, Query, Body
 
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32, b64_decode_int_array
-from webviz_pkg.core_utils.b64 import B64FloatArray, B64IntArray
-
-from primary.services.utils.authenticated_user import AuthenticatedUser
-from primary.auth.auth_helper import AuthHelper
-
-from primary.services.user_grid3d_service.user_grid3d_service import (
+from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.b64 import b64_encode_float_array_as_float32, b64_decode_int_array
+from webviz_core_utils.b64 import B64FloatArray, B64IntArray
+from webviz_services.sumo_access.grid3d_access import Grid3dAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.user_grid3d_service.user_grid3d_service import (
     UserGrid3dService,
     IJKIndexFilter,
     PolylineIntersection,
 )
-from primary.services.sumo_access.grid3d_access import Grid3dAccess
+
+from primary.auth.auth_helper import AuthHelper
 
 from . import schemas
 
@@ -36,7 +35,7 @@ async def get_grid_models_info(
     Get metadata for all 3D grid models, including bbox, dimensions and properties
     """
     perf_metrics = PerfMetrics()
-    access = Grid3dAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = Grid3dAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-grid-access")
 
     model_infos = await access.get_models_info_arr_async(realization_num)

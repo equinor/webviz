@@ -2,12 +2,12 @@ import pytest
 import pyarrow as pa
 import numpy as np
 
-from primary.services.service_exceptions import InvalidDataError, Service
+from webviz_services.service_exceptions import InvalidDataError, Service
 
-from primary.services.utils.arrow_helpers import is_date_column_monotonically_increasing
-from primary.services.utils.arrow_helpers import find_first_non_increasing_date_pair
-from primary.services.utils.arrow_helpers import detect_missing_realizations
-from primary.services.utils.arrow_helpers import validate_summary_vector_table_pa
+from webviz_services.utils.arrow_helpers import is_date_column_monotonically_increasing
+from webviz_services.utils.arrow_helpers import find_first_non_increasing_date_pair
+from webviz_services.utils.arrow_helpers import detect_missing_realizations
+from webviz_services.utils.arrow_helpers import validate_summary_vector_table_pa
 
 
 def test_monotonically_increasing_date_util_functions() -> None:
@@ -62,8 +62,15 @@ def test_detect_missing_realizations() -> None:
 
 def test_validate_summary_vector_table_pa_valid() -> None:
     vector_name = "VECTOR"
-    data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0]}
-    schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16()), (vector_name, pa.float32())])
+
+    data: dict[str, list] = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0]}
+    fields: list[tuple[str, pa.DataType]] = [
+        ("DATE", pa.timestamp("ms")),
+        ("REAL", pa.int16()),
+        (vector_name, pa.float32()),
+    ]
+
+    schema = pa.schema(fields)
     table = pa.Table.from_pydict(data, schema=schema)
     try:
         validate_summary_vector_table_pa(table, vector_name)
@@ -82,10 +89,20 @@ def test_validate_summary_vector_table_pa_missing_column() -> None:
 
 def test_validate_summary_vector_table_pa_unexpected_column() -> None:
     vector_name = "VECTOR"
-    data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0], "EXTRA": [10.0, 11.0, 12.0]}
-    schema = pa.schema(
-        [("DATE", pa.timestamp("ms")), ("REAL", pa.int16()), (vector_name, pa.float32()), ("EXTRA", pa.float32())]
-    )
+    fields: list[tuple[str, pa.DataType]] = [
+        ("DATE", pa.timestamp("ms")),
+        ("REAL", pa.int16()),
+        (vector_name, pa.float32()),
+        ("EXTRA", pa.float32()),
+    ]
+    data: dict[str, list] = {
+        "DATE": [1, 2, 3],
+        "REAL": [4, 5, 6],
+        vector_name: [7.0, 8.0, 9.0],
+        "EXTRA": [10.0, 11.0, 12.0],
+    }
+
+    schema = pa.schema(fields)
     table = pa.Table.from_pydict(data, schema=schema)
     with pytest.raises(InvalidDataError):
         validate_summary_vector_table_pa(table, vector_name)
@@ -93,8 +110,11 @@ def test_validate_summary_vector_table_pa_unexpected_column() -> None:
 
 def test_validate_summary_vector_table_pa_invalid_date_type() -> None:
     vector_name = "VECTOR"
-    data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0]}
-    schema = pa.schema([("DATE", pa.int32()), ("REAL", pa.int16()), (vector_name, pa.float32())])
+
+    fields: list[tuple[str, pa.DataType]] = [("DATE", pa.int32()), ("REAL", pa.int16()), (vector_name, pa.float32())]
+    data: dict[str, list] = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0]}
+
+    schema = pa.schema(fields)
     table = pa.Table.from_pydict(data, schema=schema)
     with pytest.raises(InvalidDataError):
         validate_summary_vector_table_pa(table, vector_name)
@@ -102,8 +122,15 @@ def test_validate_summary_vector_table_pa_invalid_date_type() -> None:
 
 def test_validate_summary_vector_table_pa_invalid_real_type() -> None:
     vector_name = "VECTOR"
-    data = {"DATE": [1, 2, 3], "REAL": [4.0, 5.0, 6.0], vector_name: [7.0, 8.0, 9.0]}
-    schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.float32()), (vector_name, pa.float32())])
+
+    fields: list[tuple[str, pa.DataType]] = [
+        ("DATE", pa.timestamp("ms")),
+        ("REAL", pa.float32()),
+        (vector_name, pa.float32()),
+    ]
+    data: dict[str, list] = {"DATE": [1, 2, 3], "REAL": [4.0, 5.0, 6.0], vector_name: [7.0, 8.0, 9.0]}
+
+    schema = pa.schema(fields)
     table = pa.Table.from_pydict(data, schema=schema)
     with pytest.raises(InvalidDataError):
         validate_summary_vector_table_pa(table, vector_name)

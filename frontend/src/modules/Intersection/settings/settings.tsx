@@ -1,149 +1,73 @@
 import React from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
-import {
-    DataProviderManager,
-    DataProviderManagerTopic,
-} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import type { Interfaces } from "../interfaces";
 
-import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
-import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
+import { dataProviderManagerAtom, dataProviderSerializedStateAtom } from "./atoms/baseAtoms";
+import { selectedFieldIdentifierAtom } from "./atoms/persistableFixableAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const queryClient = useQueryClient();
-    const colorSet = props.workbenchSettings.useColorSet();
+    const colorSet = useColorSet(props.workbenchSettings);
 
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
+    const [selectedFieldIdentifier, setSelectedFieldIdentifier] = useAtom(selectedFieldIdentifierAtom);
 
-    const selectedFieldIdentifier = useAtomValue(selectedFieldIdentifierAtom);
-    const setSelectedFieldIdentifier = useSetAtom(userSelectedFieldIdentifierAtom);
-    const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
+    const [dataProviderSerializedState, setDataProviderSerializedState] = useAtom(dataProviderSerializedStateAtom);
 
-    const persistState = React.useCallback(
-        function persistDataProviderManagerState() {
-            if (!dataProviderManager) {
-                return;
+    const firstColorRef = React.useRef(colorSet.getFirstColor());
+
+    const setDataProviderManagerAndAddFirstView = React.useCallback(
+        function setDataProviderManagerAndAddFirstView(manager: DataProviderManager) {
+            const groupDelegate = manager.getGroupDelegate();
+
+            const doAddDefaultIntersectionView =
+                groupDelegate.getDescendantItems(
+                    (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
+                ).length === 0;
+            if (doAddDefaultIntersectionView) {
+                groupDelegate.appendChild(
+                    GroupRegistry.makeGroup(GroupType.INTERSECTION_VIEW, manager, firstColorRef.current),
+                );
             }
 
-            const serializedState = {
-                dataProviderManager: dataProviderManager.serializeState(),
-                selectedFieldIdentifier,
-                preferredViewLayout,
-            };
-            window.localStorage.setItem(
-                `${props.settingsContext.getInstanceIdString()}-settings`,
-                JSON.stringify(serializedState),
-            );
+            setDataProviderManager(manager);
         },
-        [dataProviderManager, selectedFieldIdentifier, preferredViewLayout, props.settingsContext],
+        [setDataProviderManager],
     );
 
-    const applyPersistedState = React.useCallback(
-        function applyPersistedState(dataProviderManager: DataProviderManager) {
-            const serializedState = window.localStorage.getItem(
-                `${props.settingsContext.getInstanceIdString()}-settings`,
-            );
-            if (!serializedState) {
-                const groupDelegate = dataProviderManager.getGroupDelegate();
-
-                const doAddDefaultIntersectionView =
-                    groupDelegate.getDescendantItems(
-                        (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
-                    ).length === 0;
-                if (doAddDefaultIntersectionView) {
-                    groupDelegate.appendChild(
-                        GroupRegistry.makeGroup(
-                            GroupType.INTERSECTION_VIEW,
-                            dataProviderManager,
-                            colorSet.getNextColor(),
-                        ),
-                    );
-                }
-
-                return;
-            }
-
-            const parsedState = JSON.parse(serializedState);
-            if (parsedState.fieldIdentifier) {
-                setSelectedFieldIdentifier(parsedState.fieldIdentifier);
-            }
-            if (parsedState.preferredViewLayout) {
-                setPreferredViewLayout(parsedState.preferredViewLayout);
-            }
-
-            if (parsedState.dataProviderManager) {
-                if (!dataProviderManager) {
-                    return;
-                }
-                dataProviderManager.deserializeState(parsedState.dataProviderManager);
-            }
-        },
-        [setSelectedFieldIdentifier, setPreferredViewLayout, props.settingsContext, colorSet],
-    );
-
-    React.useEffect(
-        function onMountEffect() {
-            const newDataProviderManager = new DataProviderManager(
-                props.workbenchSession,
-                props.workbenchSettings,
-                queryClient,
-            );
-            setDataProviderManager(newDataProviderManager);
-
-            applyPersistedState(newDataProviderManager);
-
-            return function onUnmountEffect() {
-                newDataProviderManager.beforeDestroy();
-            };
-        },
-        [setDataProviderManager, props.workbenchSession, props.workbenchSettings, queryClient, applyPersistedState],
-    );
-
-    React.useEffect(
-        function onDataProviderManagerChangeEffect() {
-            if (!dataProviderManager) {
-                return;
-            }
-
-            persistState();
-
-            const unsubscribeDataRev = dataProviderManager
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION)(persistState);
-
-            const unsubscribeExpands = dataProviderManager
-                .getGroupDelegate()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistState);
-
-            return function onUnmountEffect() {
-                unsubscribeDataRev();
-                unsubscribeExpands();
-            };
-        },
-        [dataProviderManager, props.workbenchSession, props.workbenchSettings, persistState],
-    );
+    usePersistedDataProviderManager({
+        workbenchSession: props.workbenchSession,
+        workbenchSettings: props.workbenchSettings,
+        queryClient,
+        serializedState: dataProviderSerializedState,
+        setSerializedState: setDataProviderSerializedState,
+        setDataProviderManager: setDataProviderManagerAndAddFirstView,
+    });
 
     React.useEffect(
         function onFieldIdentifierChangedEffect() {
             if (!dataProviderManager) {
                 return;
             }
-            dataProviderManager.updateGlobalSetting("fieldId", selectedFieldIdentifier);
+            dataProviderManager.updateGlobalSetting("fieldId", selectedFieldIdentifier.value);
         },
         [selectedFieldIdentifier, dataProviderManager],
     );
@@ -152,14 +76,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         setSelectedFieldIdentifier(fieldIdentifier);
     }
 
+    const selectedFieldIdentifierAnnotations = useMakePersistableFixableAtomAnnotations(selectedFieldIdentifierAtom);
+
     return (
         <div className="h-full flex flex-col gap-1">
             <CollapsibleGroup title="Field" expanded>
-                <FieldDropdown
-                    ensembleSet={ensembleSet}
-                    value={selectedFieldIdentifier}
-                    onChange={handleFieldIdentifierChange}
-                />
+                <SettingWrapper annotations={selectedFieldIdentifierAnnotations}>
+                    <FieldDropdown
+                        ensembleSet={ensembleSet}
+                        value={selectedFieldIdentifier.value}
+                        onChange={handleFieldIdentifierChange}
+                    />
+                </SettingWrapper>
             </CollapsibleGroup>
             {dataProviderManager && (
                 <DataProviderManagerWrapper

@@ -1,11 +1,11 @@
 import re as regex
-from primary.services.smda_access.types import (
+from webviz_services.smda_access.types import (
     WellboreGeoHeader,
     WellboreGeoData,
     StratigraphicColumn,
     WellboreStratigraphicUnit,
 )
-from primary.services.ssdl_access.types import WellboreLogCurveHeader, WellboreLogCurveData
+from webviz_services.ssdl_access.types import WellboreLogCurveHeader, WellboreLogCurveData
 
 from . import schemas
 
@@ -19,7 +19,7 @@ def curve_type_from_header(
         return schemas.WellLogCurveTypeEnum.DISCRETE
     if curve_header.curve_name.endswith("FLAG"):
         return schemas.WellLogCurveTypeEnum.FLAG
-    if curve_header.curve_unit == "UNITLESS":
+    if (curve_header.curve_unit or "").upper() == "UNITLESS":
         return schemas.WellLogCurveTypeEnum.DISCRETE
 
     return schemas.WellLogCurveTypeEnum.CONTINUOUS

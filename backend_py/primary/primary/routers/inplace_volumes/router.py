@@ -4,11 +4,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Body, Response
 
 
-from primary.services.inplace_volumes_table_assembler.inplace_volumes_table_assembler import (
+from webviz_services.inplace_volumes_table_assembler.inplace_volumes_table_assembler import (
     InplaceVolumesTableAssembler,
 )
-from primary.services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str
@@ -42,7 +42,7 @@ async def get_table_definitions(
 ) -> list[schemas.InplaceVolumesTableDefinition]:
     """Get the inplace volumes tables definitions for a given ensemble."""
 
-    access = InplaceVolumesTableAccess.from_iteration_name(
+    access = InplaceVolumesTableAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -90,7 +90,7 @@ async def post_get_aggregated_per_realization_table_data(
 
     perf_metrics.record_lap("decode realizations array")
 
-    access = InplaceVolumesTableAccess.from_iteration_name(
+    access = InplaceVolumesTableAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -160,7 +160,7 @@ async def post_get_aggregated_statistical_table_data(
 
     perf_metrics.record_lap("decode realizations array")
 
-    access = InplaceVolumesTableAccess.from_iteration_name(
+    access = InplaceVolumesTableAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -176,6 +176,7 @@ async def post_get_aggregated_statistical_table_data(
             result_names,
             indices_with_values,
             group_by_indices,
+            realizations,
         )
 
     assembler = InplaceVolumesTableAssembler(access)

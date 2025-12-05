@@ -6,12 +6,13 @@ import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import type { Interfaces } from "../interfaces";
 
-import { firstResultNameAtom } from "./atoms/baseAtoms";
+import { colorByAtom, firstResultNameAtom } from "./atoms/baseAtoms";
 import { areSelectedTablesComparableAtom } from "./atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
@@ -21,7 +22,7 @@ import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useViewStatusWriter(props.viewContext);
-    const colorSet = props.workbenchSettings.useColorSet();
+    const colorSet = useColorSet(props.workbenchSettings);
 
     const hoveredRegion = useSubscribedValue("global.hoverRegion", props.workbenchServices);
     const hoveredZone = useSubscribedValue("global.hoverZone", props.workbenchServices);
@@ -36,7 +37,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
     useMakeViewStatusWriterMessages(statusWriter);
-
+    const colorBy = useAtomValue(colorByAtom);
     const plotAndTableData = useBuildPlotAndTable(
         props.viewContext,
         ensembleSet,
@@ -51,7 +52,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const table = plotAndTableData?.table;
     const plots = plotAndTableData?.plots;
 
-    usePublishToDataChannels(props.viewContext, ensembleSet, table, resultName ?? undefined);
+    usePublishToDataChannels(props.viewContext, ensembleSet, colorSet, colorBy, table, resultName ?? undefined);
 
     function createErrorMessage(): string | null {
         if (aggregatedTableDataQueries.allQueriesFailed) {

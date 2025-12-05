@@ -1,8 +1,8 @@
 import { atom } from "jotai";
 
-export const userSelectedFieldIdentifierAtom = atom<string | null>(null);
-export const userSelectedWellboreUuidAtom = atom<string | null>(null);
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
-export const userSelectedWellPickColumnAtom = atom<string | null>(null);
-export const userSelectedWellPickInterpreterAtom = atom<string | null>(null);
-export const userSelectedWellPicksAtom = atom<string[]>([]);
+export const horizontalLayoutAtom = atom(false);
+export const limitDomainToDataAtom = atom(false);
+export const dataProviderManagerAtom = atom<DataProviderManager | null>(null);
+export const dataProviderStateAtom = atom<string>("");

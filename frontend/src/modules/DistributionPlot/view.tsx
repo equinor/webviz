@@ -3,22 +3,24 @@ import React from "react";
 import { Warning } from "@mui/icons-material";
 import type { Layout, PlotData } from "plotly.js";
 
-import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
-import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
+import { KeyKind } from "@framework/types/dataChannnel";
+import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 import { makeSubplots } from "@modules/_shared/Figure";
 import { makeHistogramTrace } from "@modules/_shared/histogram";
-
+import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { Interfaces } from "./interfaces";
-import { PlotType } from "./typesAndEnums";
+import { BarSortBy, PlotType } from "./typesAndEnums";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
@@ -46,15 +48,21 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const [prevNumBins, setPrevNumBins] = React.useState<number | null>(null);
     const [prevOrientation, setPrevOrientation] = React.useState<"v" | "h" | null>(null);
     const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
+    const [prevSharedXAxes, setPrevSharedXAxes] = React.useState<boolean | null>(null);
+    const [prevSharedYAxes, setPrevSharedYAxes] = React.useState<boolean | null>(null);
+    const [prevBarSortBy, setPrevBarSortBy] = React.useState<BarSortBy>(BarSortBy.Value);
 
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
+    const sharedXAxes = viewContext.useSettingsToViewInterfaceValue("sharedXAxes");
+    const sharedYAxes = viewContext.useSettingsToViewInterfaceValue("sharedYAxes");
     const numBins = viewContext.useSettingsToViewInterfaceValue("numBins");
     const orientation = viewContext.useSettingsToViewInterfaceValue("orientation");
+    const barSortBy = viewContext.useSettingsToViewInterfaceValue("barSortBy");
 
     const statusWriter = useViewStatusWriter(viewContext);
 
-    const colorSet = workbenchSettings.useColorSet();
-    const seqColorScale = workbenchSettings.useContinuousColorScale({
+    const colorSet = useColorSet(workbenchSettings);
+    const seqColorScale = useContinuousColorScale(workbenchSettings, {
         gradientType: ColorScaleGradientType.Sequential,
     });
 
@@ -83,7 +91,10 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         plotType !== prevPlotType ||
         numBins !== prevNumBins ||
         orientation !== prevOrientation ||
-        wrapperDivSize !== prevSize
+        wrapperDivSize !== prevSize ||
+        sharedXAxes !== prevSharedXAxes ||
+        sharedYAxes !== prevSharedYAxes ||
+        barSortBy !== prevBarSortBy
     ) {
         setRevNumberX(receiverX.revisionNumber);
         setRevNumberY(receiverY.revisionNumber);
@@ -92,6 +103,9 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         setPrevNumBins(numBins);
         setPrevOrientation(orientation);
         setPrevSize(wrapperDivSize);
+        setPrevSharedXAxes(sharedXAxes);
+        setPrevSharedYAxes(sharedYAxes);
+        setPrevBarSortBy(barSortBy);
 
         startTransition(function makeContent() {
             if (!receiverX.channel) {
@@ -166,10 +180,11 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     numCols,
                     width: wrapperDivSize.width,
                     height: wrapperDivSize.height,
-                    sharedXAxes: false,
-                    sharedYAxes: false,
+                    sharedXAxes: sharedXAxes,
+                    sharedYAxes: sharedYAxes,
                     verticalSpacing: 100 / (wrapperDivSize.height - 50),
                     horizontalSpacing: 0.2 / numCols,
+
                     margin: {
                         t: 0,
                         r: 20,
@@ -197,17 +212,24 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex + 1}`]: {
-                                title: makeTitleFromChannelContent(data),
+                                title: {
+                                    text: makeTitleFromChannelContent(data),
+                                },
+                                tickangle: 0,
+                                tickson: "boundaries",
+                                ticklabeloverflow: "hide past div",
                             },
                             [`yaxis${cellIndex + 1}`]: {
-                                title: "Percent",
+                                title: {
+                                    text: "Percentage (%)",
+                                },
                             },
                         };
                         figure.updateLayout(patch);
                         cellIndex++;
                     }
                 }
-                setContent(figure.makePlot());
+                setContent(<Plot data={figure.makeData()} layout={figure.makeLayout()} />);
                 return;
             }
 
@@ -246,9 +268,12 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         const data = receiverX.channel.contents[cellIndex];
                         const keyData = data.dataArray.map((el: any) => el.key);
                         const valueData = data.dataArray.map((el: any) => el.value);
-
                         const dataTitle = makeTitleFromChannelContent(data);
                         const kindOfKeyTitle = `${receiverX.channel.kindOfKey}`;
+                        const hoverText = data.dataArray.map(
+                            (el) =>
+                                `${kindOfKeyTitle}: <b>${el.key}</b><br>${dataTitle}: <b>${formatNumber(Number(el.value))}</b><extra></extra>`,
+                        );
 
                         const trace: Partial<PlotData> = {
                             x: orientation === "h" ? valueData : keyData,
@@ -260,18 +285,31 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             showlegend: false,
                             type: "bar",
                             orientation,
+                            hovertemplate: hoverText,
+                            hoverlabel: {
+                                bgcolor: "white",
+                                font: { size: 12, color: "black" },
+                            },
                         };
 
-                        const xAxisTitle = orientation === "h" ? dataTitle : kindOfKeyTitle;
-                        const yAxisTitle = orientation === "h" ? kindOfKeyTitle : dataTitle;
+                        const xAxisTitle = orientation === "h" ? dataTitle : `${kindOfKeyTitle} (hover to see values)`;
+                        const yAxisTitle = orientation === "h" ? `${kindOfKeyTitle} (hover to see values)` : dataTitle;
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
+                        const xBinsInDescendingOrder = orientation === "v" && barSortBy === BarSortBy.Value;
+                        const yBinsInDescendingOrder = orientation === "h" && barSortBy === BarSortBy.Value;
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex + 1}`]: {
-                                title: xAxisTitle,
+                                title: { text: xAxisTitle },
+                                type: xBinsInDescendingOrder ? "category" : "linear",
+                                categoryorder: xBinsInDescendingOrder ? "total descending" : "trace",
+                                showticklabels: xBinsInDescendingOrder ? false : true,
                             },
                             [`yaxis${cellIndex + 1}`]: {
-                                title: yAxisTitle,
+                                title: { text: yAxisTitle },
+                                type: yBinsInDescendingOrder ? "category" : "linear",
+                                categoryorder: yBinsInDescendingOrder ? "total descending" : "trace",
+                                showticklabels: yBinsInDescendingOrder ? false : true,
                             },
                         };
                         figure.updateLayout(patch);
@@ -279,7 +317,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     }
                 }
 
-                setContent(figure.makePlot());
+                setContent(<Plot data={figure.makeData()} layout={figure.makeLayout()} />);
                 return;
             }
 
@@ -297,8 +335,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     numCols: receiverY.channel.contents.length,
                     width: wrapperDivSize.width,
                     height: wrapperDivSize.height,
-                    sharedXAxes: true,
-                    sharedYAxes: true,
+                    sharedXAxes: sharedXAxes,
+                    sharedYAxes: sharedYAxes,
                     verticalSpacing: 20 / (wrapperDivSize.height - 80),
                     horizontalSpacing: 20 / (wrapperDivSize.width - 80),
                     margin: {
@@ -327,17 +365,16 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                 let cellIndex = 0;
 
-                receiverX.channel.contents.forEach((contentRow, rowIndex, rowArr) => {
+                receiverX.channel.contents.forEach((contentX, rowIndex) => {
                     if (!receiverY.channel) {
                         return;
                     }
 
-                    const numRows = rowArr.length;
-                    receiverY.channel.contents.forEach((contentCol, colIndex) => {
+                    receiverY.channel.contents.forEach((contentY, colIndex) => {
                         cellIndex++;
 
-                        const dataX = contentCol;
-                        const dataY = contentRow;
+                        const dataX = contentX;
+                        const dataY = contentY;
 
                         const xValues: number[] = [];
                         const yValues: number[] = [];
@@ -345,18 +382,18 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         const realizations: number[] = [];
 
                         let color = colorSet.getFirstColor();
-                        const preferredColorX = contentRow.metaData.preferredColor;
-                        const preferredColorY = contentCol.metaData.preferredColor;
+                        const preferredColorX = contentX.metaData.preferredColor;
+                        const preferredColorY = contentY.metaData.preferredColor;
 
                         if (preferredColorX && preferredColorY) {
                             if (preferredColorX === preferredColorY) {
                                 color = preferredColorX;
                             }
                         }
-
-                        const keysX = dataX.dataArray.map((el: any) => el.key);
-                        const keysY = dataY.dataArray.map((el: any) => el.key);
-                        const keysColor = dataColor?.dataArray.map((el: any) => el.key) ?? [];
+                        // sort the keys
+                        const keysX = dataX.dataArray.map((el: any) => el.key).sort((a, b) => a - b);
+                        const keysY = dataY.dataArray.map((el: any) => el.key).sort((a, b) => a - b);
+                        const keysColor = dataColor?.dataArray.map((el: any) => el.key).sort((a, b) => a - b) ?? [];
                         if (
                             keysX.length === keysY.length &&
                             (dataColor === null || keysColor.length === keysX.length) &&
@@ -396,30 +433,33 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                                         : undefined,
                             },
                             showlegend: false,
-                            type: "scattergl",
+                            type: "scatter",
                             hovertemplate: realizations.map((real) =>
                                 dataColor
-                                    ? makeHoverTextWithColor(contentRow, contentCol, dataColor, real)
-                                    : makeHoverText(contentRow, contentCol, real),
+                                    ? makeHoverTextWithColor(contentX, contentY, dataColor, real)
+                                    : makeHoverText(contentX, contentY, real),
                             ),
                         };
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
 
-                        if (rowIndex === numRows - 1) {
-                            const patch: Partial<Layout> = {
-                                [`xaxis${cellIndex}`]: {
-                                    title: makeTitleFromChannelContent(contentCol),
+                        const patch: Partial<Layout> = {
+                            [`xaxis${cellIndex}`]: {
+                                title: {
+                                    text: makeTitleFromChannelContent(contentY),
                                     font,
                                 },
-                            };
-                            figure.updateLayout(patch);
-                        }
+                            },
+                        };
+                        figure.updateLayout(patch);
+
                         if (colIndex === 0) {
                             const patch: Partial<Layout> = {
                                 [`yaxis${cellIndex}`]: {
-                                    title: makeTitleFromChannelContent(contentRow),
-                                    font,
+                                    title: {
+                                        text: makeTitleFromChannelContent(contentX),
+                                        font,
+                                    },
                                 },
                             };
                             figure.updateLayout(patch);
@@ -435,7 +475,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     autosize: true,
                 };
                 figure.updateLayout(patch);
-                setContent(figure.makePlot());
+                setContent(<Plot data={figure.makeData()} layout={figure.makeLayout()} />);
                 return;
             }
         });

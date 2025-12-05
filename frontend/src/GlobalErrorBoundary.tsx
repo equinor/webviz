@@ -21,12 +21,40 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         copiedToClipboard: false,
     };
 
+    private _boundHandleWindowError: (event: ErrorEvent) => void;
+    private _boundHandleUnhandledRejection: (event: PromiseRejectionEvent) => void;
+
     static getDerivedStateFromError(err: Error): State {
         return { error: err, copiedToClipboard: false };
     }
 
+    constructor(props: Props) {
+        super(props);
+
+        this._boundHandleWindowError = this.handleWindowError.bind(this);
+        this._boundHandleUnhandledRejection = this.handleUnhandledRejection.bind(this);
+    }
+
+    private handleWindowError(event: ErrorEvent) {
+        this.setState({ error: event.error });
+    }
+
+    private handleUnhandledRejection(event: PromiseRejectionEvent) {
+        this.setState({ error: event.reason });
+    }
+
+    componentDidMount() {
+        window.addEventListener("error", this._boundHandleWindowError);
+        window.addEventListener("unhandledrejection", this._boundHandleUnhandledRejection);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener("error", this._boundHandleWindowError);
+        window.removeEventListener("unhandledrejection", this._boundHandleUnhandledRejection);
+    }
+
     render() {
-        const freshStartUrl = new URL(window.location.href);
+        const freshStartUrl = new URL(window.location.protocol + "//" + window.location.host);
         freshStartUrl.searchParams.set("cleanStart", "true");
 
         function reportIssue(errorMessage: string, errorStack: string) {
@@ -59,7 +87,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                         </div>
                         <div className="w-full grow p-4 flex flex-col gap-2">
                             The application was terminated due to the following error:
-                            <div className="bg-slate-200 p-4 my-2 whitespace-nowrap font-mono text-sm">
+                            <div className="bg-slate-200 p-4 my-2 whitespace-nowrap font-mono text-sm overflow-x-scroll">
                                 <strong>{this.state.error.name}</strong>: {this.state.error.message}
                             </div>
                             You can use the following URL to start a clean session:

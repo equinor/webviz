@@ -2,15 +2,12 @@ import React from "react";
 
 import type { AtomStoreMaster } from "./AtomStoreMaster";
 import { IntersectionPolylines, IntersectionPolylinesEvent } from "./userCreatedItems/IntersectionPolylines";
+import type { SerializedUserCreatedItemsState } from "./UserCreatedItems.schema";
 import type { WorkbenchSession } from "./WorkbenchSession";
-
-export interface UserCreatedItemSet {
-    serialize(): string;
-    populateFromData(data: string): void;
-}
 
 export enum UserCreatedItemsEvent {
     INTERSECTION_POLYLINES_CHANGE = "IntersectionPolylinesChange",
+    SERIALIZED_STATE = "SerializedState",
 }
 
 export class UserCreatedItems {
@@ -21,10 +18,21 @@ export class UserCreatedItems {
         this._intersectionPolylines = new IntersectionPolylines(atomStoreMaster);
         this._intersectionPolylines.subscribe(IntersectionPolylinesEvent.CHANGE, () => {
             this.notifySubscribers(UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE);
+            this.notifySubscribers(UserCreatedItemsEvent.SERIALIZED_STATE);
         });
     }
 
-    subscribe(event: UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE, cb: () => void): () => void {
+    serializeState(): SerializedUserCreatedItemsState {
+        return {
+            intersectionPolylines: this._intersectionPolylines.serializeState(),
+        };
+    }
+
+    deserializeState(serializedState: SerializedUserCreatedItemsState): void {
+        this._intersectionPolylines.deserializeState(serializedState.intersectionPolylines);
+    }
+
+    subscribe(event: UserCreatedItemsEvent, cb: () => void): () => void {
         const subscribersSet = this._subscribersMap.get(event) || new Set();
         subscribersSet.add(cb);
         this._subscribersMap.set(event, subscribersSet);
@@ -33,7 +41,7 @@ export class UserCreatedItems {
         };
     }
 
-    private notifySubscribers(event: UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE): void {
+    private notifySubscribers(event: UserCreatedItemsEvent): void {
         const subscribersSet = this._subscribersMap.get(event);
         if (!subscribersSet) return;
 
@@ -47,7 +55,7 @@ export class UserCreatedItems {
     }
 
     isEqual(other: UserCreatedItems): boolean {
-        return this._intersectionPolylines.serialize() === other._intersectionPolylines.serialize();
+        return this._intersectionPolylines.serializeState() === other._intersectionPolylines.serializeState();
     }
 }
 

@@ -1,15 +1,16 @@
-[tool.poetry]
-name = "server-schemas"
+[project]
+name = "webviz-server-schemas"
 version = "0.0.1"
-description = "Package with shared schemas for server messages/requests/responses"
-authors = ["R&T Equinor", "Ceetron Solutions AS"]
-packages = [ { include = "webviz_pkg" } ]
+requires-python = "^3.11"
+dynamic = ["dependencies"]
+
+[tool.poetry]
+requires-poetry = ">=2.1"
+packages = [{ include = "webviz_server_schemas", from = "src" }]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-numpy = "^1.24.1"
-pydantic = "^2.3.0"
-core_utils = {path = "../core_utils", develop = true}
+pydantic = "^2.11.0"
+webviz-core-utils = { path = "../core_utils", develop = true }
 
 [build-system]
 requires = ["poetry-core"]

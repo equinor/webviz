@@ -6,8 +6,10 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 
-import { ModuleInstanceLog } from "./private-components/ModuleInstanceLog/moduleInstanceLog";
-import { RealizationFilterSettings } from "./private-components/RealizationFilterSettings";
+import { ModulesList } from "../ModulesList";
+
+import { ModuleInstanceLog } from "./private-components/moduleInstanceLog";
+import { RealizationFilterSettings } from "./private-components/realizationFilterSettings";
 
 type RightSettingsPanelProps = { workbench: Workbench };
 
@@ -56,7 +58,8 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
     }
 
     return (
-        <div className="bg-white border-r-2 z-50 flex flex-col w-full h-full">
+        <div className="bg-white border-r-2 flex flex-col w-full h-full">
+            <ModulesList workbench={props.workbench} onClose={handleOnClose} />
             <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
             <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
             <Dialog

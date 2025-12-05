@@ -3,6 +3,7 @@ import type { SettingsToViewInterface } from "@modules/SimulationTimeSeries/inte
 
 import {
     resampleFrequencyAtom,
+    showHistoricalAtom,
     showObservationsAtom,
     vectorSpecificationsAtom,
     visualizationModeAtom,
@@ -24,5 +25,9 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     (getInterfaceValue, setAtomValue) => {
         const showObservations = getInterfaceValue("showObservations");
         setAtomValue(showObservationsAtom, showObservations);
+    },
+    (getInterfaceValue, setAtomValue) => {
+        const showHistorical = getInterfaceValue("showHistorical");
+        setAtomValue(showHistoricalAtom, showHistorical);
     },
 ];

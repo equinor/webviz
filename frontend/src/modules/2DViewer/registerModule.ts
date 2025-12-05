@@ -3,17 +3,18 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import type { Interfaces } from "./interfaces";
+import { SERIALIZED_STATE, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 
 export const MODULE_NAME: string = "2DViewer";
 
-ModuleRegistry.registerModule<Interfaces>({
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.DEV,
+    devState: ModuleDevState.PROD,
     defaultTitle: "2D Viewer",
     preview,
-    description: "Generic 2D viewer for co-visualization of spatial data.",
+    description: "Generic 2D viewer for surfaces, reservoir grids and wells.",
     dataTagIds: [
         ModuleDataTagId.SURFACE,
         ModuleDataTagId.DRILLED_WELLS,
@@ -21,7 +22,5 @@ ModuleRegistry.registerModule<Interfaces>({
         ModuleDataTagId.GRID3D,
         ModuleDataTagId.POLYGONS,
     ],
-    onInstanceUnload: (instanceId) => {
-        window.localStorage.removeItem(`${instanceId}-settings`);
-    },
+    serializedStateSchema: SERIALIZED_STATE,
 });

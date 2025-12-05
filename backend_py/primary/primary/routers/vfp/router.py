@@ -2,11 +2,12 @@ import logging
 
 from fastapi import APIRouter, Depends, Query, Response, HTTPException
 
+from webviz_services.sumo_access.vfp_access import VfpAccess
+from webviz_services.sumo_access.vfp_types import VfpProdTable, VfpInjTable
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
-from primary.services.sumo_access.vfp_access import VfpAccess
-from primary.services.sumo_access.vfp_types import VfpProdTable, VfpInjTable
-from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
 from . import converters
@@ -28,7 +29,7 @@ async def get_vfp_table_names(
 ) -> list[str]:
     perf_metrics = ResponsePerfMetrics(response)
 
-    vfp_access = VfpAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    vfp_access = VfpAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-access")
     vfp_table_names = await vfp_access.get_all_vfp_table_names_for_realization_async(realization=realization)
     perf_metrics.record_lap("get-available-vfp-table-names")
@@ -50,14 +51,12 @@ async def get_vfp_table(
 ) -> schemas.VfpProdTable | schemas.VfpInjTable:
     perf_metrics = ResponsePerfMetrics(response)
 
-    vfp_access = VfpAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    vfp_access = VfpAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-access")
-    try:
-        vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfp_table_from_tagname_async(
-            tagname=vfp_table_name, realization=realization
-        )
-    except NotImplementedError as ex:
-        raise HTTPException(status_code=404, detail=ex)
+
+    vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfp_table_from_tagname_async(
+        tagname=vfp_table_name, realization=realization
+    )
 
     perf_metrics.record_lap("get-vfp-table")
     LOGGER.info(f"VFP table loaded in: {perf_metrics.to_string()}")

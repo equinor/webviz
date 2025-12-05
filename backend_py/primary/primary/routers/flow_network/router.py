@@ -1,13 +1,14 @@
 import logging
 from fastapi import APIRouter, Depends, Query
-from webviz_pkg.core_utils.perf_timer import PerfTimer
-from primary.auth.auth_helper import AuthHelper
 
-from primary.services.flow_network_assembler.flow_network_assembler import FlowNetworkAssembler
-from primary.services.flow_network_assembler.flow_network_types import NetworkModeOptions, NodeType
-from primary.services.sumo_access.group_tree_access import GroupTreeAccess
-from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
+from webviz_core_utils.perf_timer import PerfTimer
+from webviz_services.flow_network_assembler.flow_network_assembler import FlowNetworkAssembler
+from webviz_services.flow_network_assembler.flow_network_types import NetworkModeOptions, NodeType
+from webviz_services.sumo_access.group_tree_access import GroupTreeAccess
+from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+
+from primary.auth.auth_helper import AuthHelper
 
 from . import schemas
 
@@ -29,10 +30,10 @@ async def get_realization_flow_network(
 ) -> schemas.FlowNetworkData:
     timer = PerfTimer()
 
-    group_tree_access = GroupTreeAccess.from_iteration_name(
+    group_tree_access = GroupTreeAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    summary_access = SummaryAccess.from_iteration_name(
+    summary_access = SummaryAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     summary_frequency = Frequency.from_string_value(resampling_frequency.value)

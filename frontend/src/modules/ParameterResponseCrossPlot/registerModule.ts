@@ -4,17 +4,23 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import type { Interfaces } from "./interfaces";
+import { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 import { receiverDefs } from "./receiverDefs";
 
-ModuleRegistry.registerModule<Interfaces>({
-    moduleName: "ParameterResponseCrossPlot",
-    defaultTitle: "Parameter/response cross plot",
+export const MODULE_NAME = "ParameterResponseCrossPlot";
+
+const description = "Cross plot input parameters and the responses from a connected module.";
+
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
+    moduleName: MODULE_NAME,
+    defaultTitle: "Parameter/Response - Scatter plot",
     category: ModuleCategory.SUB,
     devState: ModuleDevState.PROD,
     syncableSettingKeys: [SyncSettingKey.PARAMETER],
     dataTagIds: [ModuleDataTagId.PARAMETERS, ModuleDataTagId.SUMMARY, ModuleDataTagId.INPLACE_VOLUMES],
     channelReceiverDefinitions: receiverDefs,
-    description: "Cross plot input parameters and the responses from a connected module.",
+    description,
     preview,
+    serializedStateSchema: SERIALIZED_STATE_SCHEMA,
 });

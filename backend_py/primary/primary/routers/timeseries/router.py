@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Annotated
 
@@ -5,20 +6,17 @@ import pyarrow as pa
 import pyarrow.compute as pc
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from primary.auth.auth_helper import AuthHelper
-from primary.utils.response_perf_metrics import ResponsePerfMetrics
-from primary.services.summary_vector_statistics import compute_vector_statistics, VectorStatistics
-from primary.services.sumo_access.generic_types import EnsembleScalarResponse
-from primary.services.sumo_access.parameter_access import ParameterAccess
-from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
-from primary.services.summary_delta_vectors import (
+from webviz_services.summary_vector_statistics import compute_vector_statistics
+from webviz_services.sumo_access.generic_types import EnsembleScalarResponse
+from webviz_services.sumo_access.parameter_access import ParameterAccess
+from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.summary_delta_vectors import (
     DeltaVectorMetadata,
-    RealizationDeltaVector,
     create_delta_vector_table,
     create_realization_delta_vector_list,
 )
-from primary.services.summary_derived_vectors import (
+from webviz_services.summary_derived_vectors import (
     create_derived_vector_table_for_type,
     create_per_day_vector_name,
     create_per_interval_vector_name,
@@ -29,10 +27,13 @@ from primary.services.summary_derived_vectors import (
     is_derived_vector,
     is_total_vector,
 )
+
+from primary.auth.auth_helper import AuthHelper
+from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import converters, schemas
-import asyncio
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ async def get_vector_list(
 
     perf_metrics = ResponsePerfMetrics(response)
 
-    access = SummaryAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-access")
 
     vector_info_arr = await access.get_available_vectors_async()
@@ -98,10 +99,10 @@ async def get_delta_ensemble_vector_list(
 
     perf_metrics = ResponsePerfMetrics(response)
 
-    comparison_ensemble_access = SummaryAccess.from_iteration_name(
+    comparison_ensemble_access = SummaryAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), comparison_case_uuid, comparison_ensemble_name
     )
-    reference_ensemble_access = SummaryAccess.from_iteration_name(
+    reference_ensemble_access = SummaryAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), reference_case_uuid, reference_ensemble_name
     )
     perf_metrics.record_lap("get-access")
@@ -154,7 +155,7 @@ async def get_realizations_vector_data(
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
-    access = SummaryAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
 
     is_vector_derived = is_derived_vector(vector_name)
@@ -296,7 +297,7 @@ async def get_timestamps_list(
     For other resampling frequencies, the date range will be expanded to cover the entire
     time range of all the requested realizations before computing the resampled dates.
     """
-    access = SummaryAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
     return await access.get_timestamps_async(resampling_frequency=sumo_freq)
 
@@ -310,7 +311,7 @@ async def get_historical_vector_data(
     non_historical_vector_name: Annotated[str, Query(description="Name of the non-historical vector")],
     resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency")] = None,
 ) -> schemas.VectorHistoricalData:
-    access = SummaryAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
     sumo_hist_vec = await access.get_matching_historical_vector_async(
@@ -349,7 +350,7 @@ async def get_statistical_vector_data(
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
-    access = SummaryAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
@@ -502,10 +503,10 @@ async def get_statistical_vector_data_per_sensitivity(
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
-    summmary_access = SummaryAccess.from_iteration_name(
+    summmary_access = SummaryAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    parameter_access = ParameterAccess.from_iteration_name(
+    parameter_access = ParameterAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     sensitivities = (await parameter_access.get_parameters_and_sensitivities_async()).sensitivities
@@ -565,7 +566,7 @@ async def get_realization_vector_at_timestamp(
     timestamp_utc_ms: Annotated[int, Query(description= "Timestamp in ms UTC to query vectors at")],
     # fmt:on
 ) -> EnsembleScalarResponse:
-    summary_access = SummaryAccess.from_iteration_name(
+    summary_access = SummaryAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     ensemble_response = await summary_access.get_vector_values_at_timestamp_async(
@@ -625,10 +626,10 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
     Get vector tables for comparison and reference ensembles and create delta ensemble vector table and metadata
     """
     # Separate summary access to comparison and reference ensemble
-    comparison_ensemble_access = SummaryAccess.from_iteration_name(
+    comparison_ensemble_access = SummaryAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), comparison_case_uuid, comparison_ensemble_name
     )
-    reference_ensemble_access = SummaryAccess.from_iteration_name(
+    reference_ensemble_access = SummaryAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), reference_case_uuid, reference_ensemble_name
     )
 

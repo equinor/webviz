@@ -1,78 +1,45 @@
-[tool.poetry]
-package-mode = false
+[project]
 name = "primary"
-authors = ["R&T Equinor", "Ceetron Solutions AS"]
+authors = [{ name = "R&T Equinor" }, { name = "Ceetron Solutions AS" }]
 readme = "README.md"
+requires-python = "^3.13"
+dynamic = ["dependencies"]
 
+[tool.poetry]
+requires-poetry = ">=2.1"
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.11"
-fastapi = "^0.115.12"
-uvicorn = "^0.34.3"
+fastapi = "^0.116.1"
+uvicorn = "^0.35.0"
 msal = "^1.32.0"
-starsessions = "^2.1.2"
-redis = "^4.6.0"
-pyarrow = "^19.0.0"
+starsessions = "^2.2.1"
+redis = "^5.3.1"
 python-dotenv = "^1.1.0"
 pyjwt = "^2.6.0"
 pydantic = "^2.3.0"
-numpy = "^1.24.1"
 orjson = "^3.8.10"
-pandas = {version = "^2.0.1", extras = ["performance"]}
 httpx = "^0.28.1"
-fmu-sumo = "^2.4.2"
-sumo-wrapper-python = "^1.0.28"
-azure-monitor-opentelemetry = "^1.6.8"
+azure-monitor-opentelemetry = "^1.6.13"
 opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-redis = "*"
-requests-toolbelt = "^1.0.0"
-pottery = "^3.0.0"
-xtgeo = "^3.8.0"
-core_utils = {path = "../libs/core_utils", develop = true}
-server_schemas = {path = "../libs/server_schemas", develop = true}
-polars = "^1.6.0"
-fmu-dataio = "2.13.0"
+webviz-core-utils = { path = "../libs/core_utils", develop = true }
+webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
+webviz-services = { path = "../libs/services", develop = true }
+azure-cosmos = "^4.9.0"
+nanoid = "^2.0.0"
+aiohttp = "^3.11.18"
 
 [tool.poetry.group.dev.dependencies]
-black = "^25.1.0"
-pylint = "^2.15.10"
-pytest = "^8.3.2"
-# Updating to 1.16 causes a typing issue with starlette (sub-dependency of fast-api).
-# See issue: github.com/encode/starlette/issues/2912
-mypy = "1.15.0"
-bandit = "^1.7.5"
-types-requests = "^2.31.0.1"
-types-redis = "^4.6.0"
-pytest-timeout = "^2.3.1"
-pytest-asyncio = "^0.26.0"
-astroid = "^2.0.0"
-
+types-nanoid = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
-line-length = 120
-
-[tool.pylint]
-disable = ["missing-docstring", "line-too-long", "logging-fstring-interpolation", "duplicate-code"]
-extension-pkg-whitelist = "pydantic"
-init-hook='import sys; sys.path.append("./pylint/plugins")'
-load-plugins="async_suffix_checker"
-ignored-modules = ["pyarrow.compute"]
-good-names = ["i", "x", "df", "xy", "tg"]
-min-public-methods = 0
-max-args = 9
-max-locals = 19
-max-branches = 14
-
-[tool.mypy]
-ignore_missing_imports = true
-disallow_untyped_defs = true
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 filterwarnings = "ignore::DeprecationWarning:pkg_resources"
-asyncio_mode="auto"
-asyncio_default_fixture_loop_scope="session"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"

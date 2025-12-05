@@ -4,9 +4,11 @@ import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { ColorTile } from "@lib/components/ColorTile";
+import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
+
+import { EnsembleColorTile } from "../EnsembleColorTile";
 
 export type EnsembleDropdownProps = (
     | {
@@ -21,11 +23,26 @@ export type EnsembleDropdownProps = (
           value: RegularEnsembleIdent | null;
           onChange: (ensembleIdent: RegularEnsembleIdent) => void;
       }
-) &
-    Omit<DropdownProps<string>, "options" | "value" | "onChange">;
+) & {
+    ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction;
+} & Omit<DropdownProps<string>, "options" | "value" | "onChange">;
 
 export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
-    const { onChange, ensembles, allowDeltaEnsembles, value, ...rest } = props;
+    const { onChange, ensembles, allowDeltaEnsembles, value, ensembleRealizationFilterFunction, ...rest } = props;
+
+    const optionsArray = React.useMemo<DropdownOption[]>(() => {
+        return ensembles.map((ens) => ({
+            value: ens.getIdent().toString(),
+            label: ens.getDisplayName(),
+            adornment: (
+                <EnsembleColorTile
+                    ensemble={ens}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    wrapperClassName="w-7 h-7"
+                />
+            ),
+        }));
+    }, [ensembles, ensembleRealizationFilterFunction]);
 
     const handleSelectionChange = React.useCallback(
         function handleSelectionChange(selectedEnsembleIdentStr: string) {
@@ -48,19 +65,6 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
         },
         [allowDeltaEnsembles, ensembles, onChange],
     );
-
-    const optionsArray: DropdownOption[] = [];
-    for (const ens of ensembles) {
-        optionsArray.push({
-            value: ens.getIdent().toString(),
-            label: ens.getDisplayName(),
-            adornment: (
-                <span className="w-5">
-                    <ColorTile color={ens.getColor()} />
-                </span>
-            ),
-        });
-    }
 
     return <Dropdown options={optionsArray} value={value?.toString()} onChange={handleSelectionChange} {...rest} />;
 }

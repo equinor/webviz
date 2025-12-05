@@ -10,7 +10,7 @@ export const computeQuantile = (data: number[], quantile: number): number => {
     if (data.length === 1) {
         return data[0];
     }
-    const sortedValues = data.sort((a, b) => a - b);
+    const sortedValues = [...data].sort((a, b) => a - b);
 
     // Calculate the index, which may be a decimal.
     const rank = (sortedValues.length - 1) * quantile;

@@ -1,0 +1,403 @@
+import { v4 } from "uuid";
+
+import type { Template } from "@framework/TemplateRegistry";
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
+
+import type { AtomStoreMaster } from "../AtomStoreMaster";
+import { ModuleInstanceTopic, type ModuleInstance } from "../ModuleInstance";
+import { ModuleRegistry } from "../ModuleRegistry";
+
+import type { SerializedDashboardState } from "./Dashboard.schema";
+
+export type LayoutElement = {
+    moduleInstanceId?: string;
+    moduleName: string;
+    relX: number;
+    relY: number;
+    relHeight: number;
+    relWidth: number;
+    minimized?: boolean;
+    maximized?: boolean;
+};
+
+export enum DashboardTopic {
+    LAYOUT = "Layout",
+    MODULE_INSTANCES = "ModuleInstances",
+    ACTIVE_MODULE_INSTANCE_ID = "ActiveModuleInstanceId",
+    SERIALIZED_STATE = "SerializedState",
+}
+
+export type DashboardTopicPayloads = {
+    [DashboardTopic.LAYOUT]: LayoutElement[];
+    [DashboardTopic.MODULE_INSTANCES]: ModuleInstance<any, any>[];
+    [DashboardTopic.ACTIVE_MODULE_INSTANCE_ID]: string | null;
+    [DashboardTopic.SERIALIZED_STATE]: void;
+};
+
+export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<DashboardTopicPayloads>();
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
+
+    private _id: string;
+    private _name: string;
+    private _description?: string;
+    private _layout: LayoutElement[] = [];
+    private _moduleInstances: ModuleInstance<any, any>[] = [];
+    private _activeModuleInstanceId: string | null = null;
+    private _atomStoreMaster: AtomStoreMaster;
+
+    constructor(atomStoreMaster: AtomStoreMaster) {
+        this._id = v4();
+        this._name = "New Dashboard";
+        this._atomStoreMaster = atomStoreMaster;
+    }
+
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<DashboardTopicPayloads> {
+        return this._publishSubscribeDelegate;
+    }
+
+    makeSnapshotGetter<T extends DashboardTopic>(topic: T): () => DashboardTopicPayloads[T] {
+        const snapshotGetter = (): any => {
+            if (topic === DashboardTopic.LAYOUT) {
+                return this._layout;
+            }
+            if (topic === DashboardTopic.MODULE_INSTANCES) {
+                return this._moduleInstances;
+            }
+            if (topic === DashboardTopic.ACTIVE_MODULE_INSTANCE_ID) {
+                return this._activeModuleInstanceId;
+            }
+            if (topic === DashboardTopic.SERIALIZED_STATE) {
+                return;
+            }
+
+            throw new Error(`No snapshot getter for topic ${topic}`);
+        };
+
+        return snapshotGetter;
+    }
+
+    getId(): string {
+        return this._id;
+    }
+
+    getName(): string {
+        return this._name;
+    }
+
+    getLayout(): LayoutElement[] {
+        return this._layout;
+    }
+
+    setLayout(layout: LayoutElement[]): void {
+        this._layout = layout;
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);
+        this.handleStateChange();
+    }
+
+    getModuleInstances(): ModuleInstance<any, any>[] {
+        return this._moduleInstances;
+    }
+
+    serializeState(): SerializedDashboardState {
+        const moduleInstances = this._moduleInstances.map((moduleInstance) => {
+            const moduleInstanceState = moduleInstance.serializeState();
+
+            const layoutInfo = this._layout.find((el) => el.moduleInstanceId === moduleInstance.getId());
+
+            if (!layoutInfo) {
+                throw new Error(`Layout info for module instance ${moduleInstance.getId()} not found`);
+            }
+
+            return {
+                moduleInstanceState,
+                layoutState: {
+                    relX: layoutInfo.relX,
+                    relY: layoutInfo.relY,
+                    relHeight: layoutInfo.relHeight,
+                    relWidth: layoutInfo.relWidth,
+                    minimized: layoutInfo.minimized ?? false,
+                    maximized: layoutInfo.maximized ?? false,
+                },
+            };
+        });
+
+        return {
+            id: this._id,
+            name: this._name,
+            description: this._description,
+            activeModuleInstanceId: this._activeModuleInstanceId,
+            moduleInstances,
+        };
+    }
+
+    deserializeState(serializedDashboard: SerializedDashboardState): void {
+        this._id = serializedDashboard.id;
+        this._name = serializedDashboard.name;
+        this._description = serializedDashboard.description;
+
+        this.clearLayout();
+
+        for (const serializedInstance of serializedDashboard.moduleInstances) {
+            const { id, name } = serializedInstance.moduleInstanceState;
+            this.makeAndRegisterModuleInstance(name, id);
+        }
+
+        // Doing this after all module instances have been registered
+        // ensures that the module instances are available for data channel initialization.
+        for (const serializedInstance of serializedDashboard.moduleInstances) {
+            const { moduleInstanceState, layoutState } = serializedInstance;
+            const moduleInstance = this.getModuleInstance(moduleInstanceState.id);
+            if (!moduleInstance) {
+                throw new Error(`Module instance with ID ${moduleInstanceState.id} not found`);
+            }
+
+            moduleInstance.initiateDeserialization(moduleInstanceState, this);
+
+            this._layout.push({
+                moduleInstanceId: moduleInstanceState.id,
+                moduleName: moduleInstanceState.name,
+                relX: layoutState.relX,
+                relY: layoutState.relY,
+                relHeight: layoutState.relHeight,
+                relWidth: layoutState.relWidth,
+                minimized: layoutState.minimized,
+                maximized: layoutState.maximized,
+            });
+        }
+
+        this.setActiveModuleInstanceId(serializedDashboard.activeModuleInstanceId);
+
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);
+    }
+
+    clearLayout(): void {
+        for (const moduleInstance of this._moduleInstances) {
+            this.removeModuleInstance(moduleInstance.getId());
+        }
+        this._moduleInstances = [];
+        this._layout = [];
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);
+        this.handleStateChange();
+    }
+
+    private handleStateChange(): void {
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.SERIALIZED_STATE);
+    }
+
+    private makeAndRegisterModuleInstance(moduleName: string, predefinedId?: string): ModuleInstance<any, any> {
+        const module = ModuleRegistry.getModule(moduleName);
+        if (!module) {
+            throw new Error(`Module ${moduleName} not found`);
+        }
+
+        const id = predefinedId ?? v4();
+
+        const atomStore = this._atomStoreMaster.makeAtomStoreForModuleInstance(id);
+
+        const moduleInstance = module.makeInstance(id, atomStore);
+
+        this._moduleInstances = [...this._moduleInstances, moduleInstance];
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            moduleInstance.getId(),
+            moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+
+        return moduleInstance;
+    }
+
+    private unregisterAndUnloadModuleInstance(moduleInstanceId: string): void {
+        const moduleInstance = this.getModuleInstance(moduleInstanceId);
+
+        if (!moduleInstance) {
+            throw new Error(`Module instance with ID ${moduleInstanceId} not found`);
+        }
+
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe(moduleInstanceId);
+
+        moduleInstance.unload();
+
+        this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
+
+        this._atomStoreMaster.removeAtomStoreForModuleInstance(moduleInstanceId);
+    }
+
+    makeAndAddModuleInstance(moduleName: string): ModuleInstance<any, any> {
+        const moduleInstance = this.makeAndRegisterModuleInstance(moduleName);
+
+        if (this._moduleInstances.length === 1) {
+            this._activeModuleInstanceId = moduleInstance.getId();
+        }
+        this._activeModuleInstanceId = moduleInstance.getId();
+
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.MODULE_INSTANCES);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);
+
+        return moduleInstance;
+    }
+
+    removeModuleInstance(moduleInstanceId: string): void {
+        this.unregisterAndUnloadModuleInstance(moduleInstanceId);
+
+        const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
+        this.setLayout(newLayout);
+        if (this._activeModuleInstanceId === moduleInstanceId) {
+            this._activeModuleInstanceId = null;
+        }
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.MODULE_INSTANCES);
+    }
+
+    getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
+        return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
+    }
+
+    setActiveModuleInstanceId(moduleInstanceId: string | null): void {
+        if (moduleInstanceId !== null && !this.getModuleInstance(moduleInstanceId)) {
+            throw new Error(`Module instance with ID ${moduleInstanceId} not found`);
+        }
+        this._activeModuleInstanceId = moduleInstanceId;
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
+        this.handleStateChange();
+    }
+
+    getActiveModuleInstanceId(): string | null {
+        return this._activeModuleInstanceId;
+    }
+
+    static fromPersistedState(
+        serializedDashboard: SerializedDashboardState,
+        atomStoreMaster: AtomStoreMaster,
+    ): Dashboard {
+        const dashboard = new Dashboard(atomStoreMaster);
+        dashboard._id = serializedDashboard.id;
+        dashboard._name = serializedDashboard.name;
+        dashboard._description = serializedDashboard.description;
+        dashboard._activeModuleInstanceId = serializedDashboard.activeModuleInstanceId;
+
+        const layout: LayoutElement[] = [];
+
+        for (const serializedInstance of serializedDashboard.moduleInstances) {
+            const { id, name } = serializedInstance.moduleInstanceState;
+            dashboard.makeAndRegisterModuleInstance(name, id);
+        }
+
+        // Doing this after all module instances have been registered
+        // ensures that the module instances are available for data channel initialization.
+        for (const serializedInstance of serializedDashboard.moduleInstances) {
+            const {
+                moduleInstanceState: { id, name },
+                layoutState,
+            } = serializedInstance;
+            const moduleInstance = dashboard.getModuleInstance(id);
+            if (!moduleInstance) {
+                throw new Error(`Module instance with ID ${id} not found`);
+            }
+
+            moduleInstance.initiateDeserialization(serializedInstance.moduleInstanceState, dashboard);
+
+            layout.push({
+                moduleInstanceId: id,
+                moduleName: name,
+                relX: layoutState.relX,
+                relY: layoutState.relY,
+                relHeight: layoutState.relHeight,
+                relWidth: layoutState.relWidth,
+                minimized: layoutState.minimized,
+                maximized: layoutState.maximized,
+            });
+        }
+
+        dashboard.setLayout(layout);
+
+        return dashboard;
+    }
+
+    beforeUnload(): void {
+        this.clearLayout();
+    }
+
+    static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster): Dashboard {
+        const dashboard = new Dashboard(atomStoreMaster);
+        dashboard._id = v4();
+        dashboard._description = template.description;
+
+        const layout: LayoutElement[] = [];
+        const moduleInstances: ModuleInstance<any, any>[] = [];
+        const moduleInstanceRefMap: Record<string, ModuleInstance<any, any>> = {};
+
+        for (const module of template.moduleInstances) {
+            const moduleInstance = dashboard.makeAndAddModuleInstance(module.moduleName);
+            layout.push({
+                moduleInstanceId: moduleInstance.getId(),
+                moduleName: module.moduleName,
+                relX: module.layout.relX,
+                relY: module.layout.relY,
+                relHeight: module.layout.relHeight,
+                relWidth: module.layout.relWidth,
+                minimized: module.layout.minimized,
+                maximized: module.layout.maximized,
+            });
+
+            if (module.syncedSettings) {
+                for (const syncedSetting of module.syncedSettings) {
+                    moduleInstance.addSyncedSetting(syncedSetting);
+                }
+            }
+
+            if (module.instanceRef) {
+                moduleInstanceRefMap[module.instanceRef] = moduleInstance;
+            }
+
+            if (module.initialState) {
+                moduleInstance.initiateTemplateStateApplication(module.initialState);
+            }
+
+            moduleInstances.push(moduleInstance);
+        }
+
+        for (const [idx, module] of template.moduleInstances.entries()) {
+            const moduleInstance = moduleInstances[idx];
+            if (!moduleInstance) {
+                throw new Error(`Module instance with reference ${module.instanceRef} not found`);
+            }
+
+            if (module.dataChannelsToInitialSettingsMapping) {
+                for (const [key, dataChannelConfig] of Object.entries(module.dataChannelsToInitialSettingsMapping)) {
+                    const listensToModuleInstance = moduleInstanceRefMap[dataChannelConfig.listensToInstanceRef];
+                    if (!listensToModuleInstance) {
+                        throw new Error(
+                            `Module instance with reference ${dataChannelConfig.listensToInstanceRef} not found`,
+                        );
+                    }
+
+                    const channel = listensToModuleInstance
+                        .getChannelManager()
+                        .getChannel(dataChannelConfig.channelIdString);
+
+                    if (!channel) {
+                        throw new Error(
+                            `Channel with ID ${dataChannelConfig.channelIdString} not found in module instance ${moduleInstance.getId()}`,
+                        );
+                    }
+
+                    const receiver = moduleInstance.getChannelManager().getReceiver(key);
+                    if (!receiver) {
+                        throw new Error(
+                            `Receiver with ID '${key}' not found in module instance '${moduleInstance.getName()} (${moduleInstance.getId()})'`,
+                        );
+                    }
+
+                    receiver.subscribeToChannel(channel, "All");
+                }
+            }
+        }
+
+        dashboard.setLayout(layout);
+
+        return dashboard;
+    }
+}

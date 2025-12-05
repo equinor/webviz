@@ -11,8 +11,10 @@ export type LabelProps = {
     children: React.ReactElement;
     wrapperClassName?: string;
     labelClassName?: string;
+    childrenWrapperClassName?: string;
     synced?: boolean;
     position?: "above" | "left" | "right";
+    endAdornment?: React.ReactNode;
 };
 
 export const Label: React.FC<LabelProps> = (props) => {
@@ -21,7 +23,7 @@ export const Label: React.FC<LabelProps> = (props) => {
     return (
         <div
             className={resolveClassNames(props.wrapperClassName ?? "", {
-                "flex flex-col": props.position === "above" && props.position === undefined,
+                "flex flex-col gap-1": props.position === "above" || props.position === undefined,
                 "flex flex-row items-center gap-4": props.position === "left",
                 "flex items-center flex-row-reverse gap-4": props.position === "right",
             })}
@@ -32,24 +34,29 @@ export const Label: React.FC<LabelProps> = (props) => {
                     "flex",
                     "items-center",
                     "text-sm",
-                    "mb-1",
                     "text-gray-500",
                     "leading-tight",
+                    "gap-1",
                     props.labelClassName ?? "",
                 )}
                 htmlFor={props.children.props.id ?? id.current}
             >
                 {props.synced && (
                     <span
-                        className="bg-indigo-700 w-5 h-5 flex justify-center items-center rounded-sm mr-2"
+                        className="bg-indigo-700 w-5 h-5 flex justify-center items-center rounded-sm mr-1"
                         title={`"${props.text}" is synced on the current page`}
                     >
                         <Link fontSize="small" className="text-white" />
                     </span>
                 )}
                 {props.text}
+                {props.endAdornment}
             </label>
-            <div className={resolveClassNames({ grow: props.position === "left" || props.position === "right" })}>
+            <div
+                className={resolveClassNames(props.childrenWrapperClassName ?? "", {
+                    grow: props.position === "left" || props.position === "right",
+                })}
+            >
                 {props.children.props.id ? props.children : React.cloneElement(props.children, { id: id.current })}
             </div>
         </div>

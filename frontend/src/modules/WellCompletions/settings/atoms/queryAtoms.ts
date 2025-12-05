@@ -1,27 +1,33 @@
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { getWellCompletionsDataOptions } from "@api";
-import { RealizationSelection } from "@modules/WellCompletions/typesAndEnums";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
+import { RealizationMode } from "@modules/WellCompletions/typesAndEnums";
 
-
-import { userSelectedRealizationSelectionAtom } from "./baseAtoms";
-import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom, validRealizationNumbersAtom } from "./derivedAtoms";
+import { realizationModeAtom } from "./baseAtoms";
+import { availableRealizationsAtom } from "./derivedAtoms";
+import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./persistableFixableAtoms";
 
 export const wellCompletionsQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-    const selectedRealizationNumber = get(selectedRealizationNumberAtom);
-    const userSelectedRealizationSelection = get(userSelectedRealizationSelectionAtom);
-    const validRealizationNumbers = get(validRealizationNumbersAtom);
+    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
+    const selectedRealization = get(selectedRealizationAtom).value;
+    const realizationMode = get(realizationModeAtom);
+    const validRealizationNumbers = get(availableRealizationsAtom);
 
     const caseUuid = selectedEnsembleIdent?.getCaseUuid();
     const ensembleName = selectedEnsembleIdent?.getEnsembleName();
 
     // Initialize with multiple realizations request
-    let realizations: number | number[] | null = validRealizationNumbers;
-    let hasValidRealizations = validRealizationNumbers.length !== 0;
-    if (userSelectedRealizationSelection === RealizationSelection.SINGLE) {
-        realizations = selectedRealizationNumber;
-        hasValidRealizations = selectedRealizationNumber !== null;
+    let realizationsEncodedAsUintListStr: string | null = null;
+    let hasValidRealizations = false;
+    if (realizationMode === RealizationMode.SINGLE && selectedRealization !== null) {
+        realizationsEncodedAsUintListStr = encodeAsUintListStr([selectedRealization]);
+        hasValidRealizations = true;
+    }
+    if (realizationMode === RealizationMode.AGGREGATED) {
+        realizationsEncodedAsUintListStr = encodeAsUintListStr(validRealizationNumbers);
+        hasValidRealizations = validRealizationNumbers.length !== 0;
     }
 
     // Disable query if realization number is null for single realization request
@@ -30,7 +36,8 @@ export const wellCompletionsQueryAtom = atomWithQuery((get) => {
             query: {
                 case_uuid: caseUuid ?? "",
                 ensemble_name: ensembleName ?? "",
-                realization: realizations,
+                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(selectedEnsembleIdent),
             },
         }),
         enabled: Boolean(caseUuid && ensembleName && hasValidRealizations),

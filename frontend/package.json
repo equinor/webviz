@@ -4,10 +4,11 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "vite --host",
-        "build": "tsc && NODE_OPTIONS='--max-old-space-size=8192' vite build",
+        "dev": "npm run generate:module-states-map && vite --host",
+        "build": "npm run generate:module-states-map && tsc && NODE_OPTIONS='--max-old-space-size=8192' vite build",
         "preview": "vite preview",
-        "generate-api": "openapi-ts && node scripts/add-api-suffix.cjs --suffix '_api' --dir src/api/autogen --exportTanstackQueryFromIndex",
+        "generate:api": "openapi-ts && node scripts/add-api-suffix.cjs --suffix '_api' --dir src/api/autogen --exportTanstackQueryFromIndex",
+        "generate:module-states-map": "node scripts/generate-module-states-map.js && eslint src/modules/ModuleSerializedStateMap.ts --fix",
         "typecheck": "tsc --noEmit",
         "lint": "eslint 'src/**/*.+(ts|tsx|js|jsx|json)' 'tests/**/*.+(ts|tsx|js|jsx|json)' --max-warnings=0",
         "lint:fix": "eslint 'src/**/*.+(ts|tsx|js|jsx|json)' 'tests/**/*.+(ts|tsx|js|jsx|json)' --fix",
@@ -20,11 +21,12 @@
         "test:ct:ui": "playwright test -c playwright.ct.config.ts --ui"
     },
     "-- Comments --": [
-        "vite-plugin-node-polyfills is only installed as a workaround for an import issue in the map module. See webviz-subsurface-components issue #2540 for details"
+        "vite-plugin-node-polyfills is only installed as a workaround for an import issue in the map module. See webviz-subsurface-components issue #2540 for details",
+        "ts-key-enum v2 and v3 are the same, expect that v3 exports it as const enum. We cannot use v3 since we compile typescript with isolatedModules=true"
     ],
     "dependencies": {
-        "@equinor/eds-core-react": "^0.45.1",
-        "@equinor/esv-intersection": "^3.1.2",
+        "@equinor/eds-core-react": "^0.46.0",
+        "@equinor/esv-intersection": "^3.1.4",
         "@headlessui/react": "^1.7.8",
         "@hey-api/client-axios": "^0.4.0",
         "@mui/base": "^5.0.0-beta.3",
@@ -32,26 +34,28 @@
         "@tanstack/query-core": "^5.62.16",
         "@tanstack/react-query": "^5.63",
         "@tanstack/react-query-devtools": "^5.63",
-        "@webviz/group-tree-plot": "^1.5.3",
-        "@webviz/subsurface-viewer": "^1.11.1",
-        "@webviz/well-completions-plot": "^1.7.3",
-        "@webviz/well-log-viewer": "^2.4.4",
+        "@webviz/group-tree-plot": "^1.6.9",
+        "@webviz/subsurface-viewer": "^1.14.11",
+        "@webviz/well-completions-plot": "^1.8.9",
+        "@webviz/well-log-viewer": "^2.6.10",
         "animate.css": "^4.1.1",
         "axios": "^1.8.3",
+        "comlink": "^4.4.2",
         "culori": "^3.2.0",
         "geojson": "^0.5.0",
         "jotai": "^2.6.2",
         "jotai-effect": "^1.0.0",
-        "jotai-scope": "^0.5.1",
         "jotai-tanstack-query": "^0.9.0",
         "lodash": "^4.17.21",
         "pixi.js": "^7.1.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-plotly.js": "^2.6.0",
+        "react-toastify": "^11.0.5",
         "simplify-js": "^1.2.4",
+        "ts-key-enum": "^2.0.13",
         "uuid": "^9.0.0",
-        "vite-plugin-node-polyfills": "^0.23.0",
+        "vite-plugin-node-polyfills": "^0.24.0",
         "wonka": "^6.3.4"
     },
     "devDependencies": {
@@ -73,18 +77,25 @@
         "eslint": "^9.15.0",
         "eslint-config-prettier": "^10.0.2",
         "eslint-import-resolver-typescript": "^3.8.3",
-        "eslint-plugin-import": "2.31",
+        "eslint-plugin-import": "^2.32.0",
         "eslint-plugin-prettier": "^4.2.1",
         "eslint-plugin-react": "7.35",
         "eslint-plugin-react-hooks": "^5.1.0",
         "glob": "^10.3.3",
         "globals": "^16.0.0",
         "prettier": "^3.5.2",
+        "prettier-plugin-glsl": "^0.2.2",
         "tailwindcss": "^4.0.9",
         "typescript": "^5.3.3",
         "typescript-eslint": "^8.25.0",
         "vite": "^6.3.5",
         "vite-plugin-checker": "^0.9.0",
+        "vite-plugin-glsl": "^1.3.1",
         "vitest": "^3.0.7"
+    },
+    "overrides": {
+        "vite-plugin-node-polyfills": {
+            "pbkdf2": "^3.1.3"
+        }
     }
 }

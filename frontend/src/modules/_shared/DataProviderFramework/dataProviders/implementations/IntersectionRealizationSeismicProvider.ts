@@ -3,6 +3,7 @@ import { isEqual } from "lodash";
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
@@ -89,7 +90,7 @@ export class IntersectionRealizationSeismicProvider
 
         return {
             [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-            [Setting.SAMPLE_RESOLUTION_IN_METERS]: 1.0,
+            [Setting.SAMPLE_RESOLUTION_IN_METERS]: 25.0,
             [Setting.COLOR_SCALE]: {
                 colorScale: defaultColorScale,
                 areBoundariesUserDefined: false,
@@ -100,7 +101,7 @@ export class IntersectionRealizationSeismicProvider
 
     getDefaultName(): string {
         const dataSourceString = SeismicDataSourceEnumToStringMapping[this._dataSource];
-        return `Intersection Realization ${dataSourceString} Seismic`;
+        return `Seismic fence (${dataSourceString}`;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -201,6 +202,7 @@ export class IntersectionRealizationSeismicProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid() ?? "",
                         ensemble_name: ensembleIdent.getEnsembleName() ?? "",
+                        ...makeCacheBustingQueryParam(ensembleIdent ?? null),
                     },
 
                     signal: abortSignal,
@@ -324,8 +326,7 @@ export class IntersectionRealizationSeismicProvider
     fetchData({
         getSetting,
         getStoredData,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<
         IntersectionRealizationSeismicSettings,
         IntersectionRealizationSeismicData,
@@ -353,15 +354,14 @@ export class IntersectionRealizationSeismicProvider
                 seismic_attribute: attribute,
                 time_or_interval_str: timeOrInterval ?? "",
                 observed: this._dataSource === SeismicDataSource.OBSERVED,
+                ...makeCacheBustingQueryParam(ensembleIdent),
             },
             body: {
                 polyline: apiSeismicFencePolyline,
             },
         });
 
-        registerQueryKey(queryOptions.queryKey);
-
-        const seismicFenceDataPromise = queryClient.fetchQuery(queryOptions).then(transformSeismicFenceData);
+        const seismicFenceDataPromise = fetchQuery(queryOptions).then(transformSeismicFenceData);
 
         return seismicFenceDataPromise;
     }

@@ -162,15 +162,22 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                     <SortableList
                         onItemMoved={handleItemMoved}
                         isMoveAllowed={checkIfItemMoveAllowed}
-                        contentWhenEmpty={
-                            <div className="flex -mt-1 justify-center text-sm items-center gap-1 h-40">
-                                Click on <Add fontSize="inherit" /> to add an item.
-                            </div>
-                        }
+                        className="h-full"
                     >
-                        {items.map((item: Item) =>
-                            makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick),
-                        )}
+                        <SortableList.Content>
+                            <SortableList.ScrollContainer>
+                                <div className="grow overflow-auto min-h-0 bg-slate-200 relative h-full">
+                                    {items.length === 0 && (
+                                        <div className="flex -mt-1 justify-center text-sm items-center gap-1 h-40">
+                                            Click on <Add fontSize="inherit" /> to add an item.
+                                        </div>
+                                    )}
+                                    {items.map((item: Item) =>
+                                        makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick),
+                                    )}
+                                </div>
+                            </SortableList.ScrollContainer>
+                        </SortableList.Content>
                     </SortableList>
                 </div>
             </div>

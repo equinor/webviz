@@ -15,8 +15,8 @@ import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
-import { showHistoricalAtom } from "@modules/SimulationTimeSeries/settings/atoms/baseAtoms";
 import type {
     EnsembleVectorObservationDataMap,
     VectorWithHistoricalData,
@@ -25,6 +25,7 @@ import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 import {
     resampleFrequencyAtom,
+    showHistoricalAtom,
     showObservationsAtom,
     vectorSpecificationsAtom,
     visualizationModeAtom,
@@ -45,28 +46,26 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
         if (isEnsembleIdentOfType(item.ensembleIdent, RegularEnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
             const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
-            const vectorSpecification = {
-                ...item,
-                ensembleIdent: item.ensembleIdent,
-            };
+            const [ensembleIdent, vectorName] = [item.ensembleIdent, item.vectorName];
 
             return () => ({
                 queryKey: [
                     "getRealizationsVectorData",
-                    vectorSpecification.ensembleIdent.getCaseUuid(),
-                    vectorSpecification.ensembleIdent.getEnsembleName(),
-                    vectorSpecification.vectorName,
+                    ensembleIdent.getCaseUuid(),
+                    ensembleIdent.getEnsembleName(),
+                    vectorName,
                     resampleFrequency,
                     realizationsEncodedAsUintListStr,
                 ],
                 queryFn: async () => {
                     const { data } = await getRealizationsVectorData({
                         query: {
-                            case_uuid: vectorSpecification.ensembleIdent.getCaseUuid(),
-                            ensemble_name: vectorSpecification.ensembleIdent.getEnsembleName(),
-                            vector_name: vectorSpecification.vectorName,
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
+                            vector_name: vectorName,
                             resampling_frequency: resampleFrequency,
                             realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                            ...makeCacheBustingQueryParam(ensembleIdent),
                         },
                         throwOnError: true,
                     });
@@ -74,10 +73,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                     return data;
                 },
                 enabled: Boolean(
-                    enabled &&
-                        vectorSpecification.vectorName &&
-                        vectorSpecification.ensembleIdent.getCaseUuid() &&
-                        vectorSpecification.ensembleIdent.getEnsembleName(),
+                    enabled && vectorName && ensembleIdent.getCaseUuid() && ensembleIdent.getEnsembleName(),
                 ),
             });
         }
@@ -86,36 +82,31 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
         if (isEnsembleIdentOfType(item.ensembleIdent, DeltaEnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
             const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
-            const vectorSpecification = { ...item, ensembleIdent: item.ensembleIdent };
+            const comparisonEnsembleIdent = item.ensembleIdent.getComparisonEnsembleIdent();
+            const referenceEnsembleIdent = item.ensembleIdent.getReferenceEnsembleIdent();
+            const vectorName = item.vectorName;
             return () => ({
                 queryKey: [
                     "getDeltaEnsembleRealizationsVectorData",
-                    vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid(),
-                    vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName(),
-                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid(),
-                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
-                    vectorSpecification.vectorName,
+                    comparisonEnsembleIdent.getCaseUuid(),
+                    comparisonEnsembleIdent.getEnsembleName(),
+                    referenceEnsembleIdent.getCaseUuid(),
+                    referenceEnsembleIdent.getEnsembleName(),
+                    vectorName,
                     resampleFrequency,
                     realizationsEncodedAsUintListStr,
                 ],
                 queryFn: async () => {
                     const { data } = await getDeltaEnsembleRealizationsVectorData({
                         query: {
-                            comparison_case_uuid: vectorSpecification.ensembleIdent
-                                .getComparisonEnsembleIdent()
-                                .getCaseUuid(),
-                            comparison_ensemble_name: vectorSpecification.ensembleIdent
-                                .getComparisonEnsembleIdent()
-                                .getEnsembleName(),
-                            reference_case_uuid: vectorSpecification.ensembleIdent
-                                .getReferenceEnsembleIdent()
-                                .getCaseUuid(),
-                            reference_ensemble_name: vectorSpecification.ensembleIdent
-                                .getReferenceEnsembleIdent()
-                                .getEnsembleName(),
-                            vector_name: vectorSpecification.vectorName,
+                            comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
+                            comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
+                            reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
+                            reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
+                            vector_name: vectorName,
                             resampling_frequency: resampleFrequency ?? Frequency_api.YEARLY,
                             realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                            ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
                         },
                         throwOnError: true,
                     });
@@ -125,11 +116,11 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                 enabled: Boolean(
                     enabled &&
                         resampleFrequency &&
-                        vectorSpecification.vectorName &&
-                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid() &&
-                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName() &&
-                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid() &&
-                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
+                        vectorName &&
+                        comparisonEnsembleIdent.getCaseUuid() &&
+                        comparisonEnsembleIdent.getEnsembleName() &&
+                        referenceEnsembleIdent.getCaseUuid() &&
+                        referenceEnsembleIdent.getEnsembleName(),
                 ),
             });
         }
@@ -158,27 +149,26 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
         if (isEnsembleIdentOfType(item.ensembleIdent, RegularEnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
             const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
-            const vectorSpecification = {
-                ...item,
-                ensembleIdent: item.ensembleIdent,
-            };
+            const [ensembleIdent, vectorName] = [item.ensembleIdent, item.vectorName];
+
             return () => ({
                 queryKey: [
                     "getStatisticalVectorData",
-                    vectorSpecification.ensembleIdent.getCaseUuid(),
-                    vectorSpecification.ensembleIdent.getEnsembleName(),
-                    vectorSpecification.vectorName,
+                    ensembleIdent.getCaseUuid(),
+                    ensembleIdent.getEnsembleName(),
+                    vectorName,
                     resampleFrequency,
                     realizationsEncodedAsUintListStr,
                 ],
                 queryFn: async () => {
                     const { data } = await getStatisticalVectorData({
                         query: {
-                            case_uuid: vectorSpecification.ensembleIdent.getCaseUuid(),
-                            ensemble_name: vectorSpecification.ensembleIdent.getEnsembleName(),
-                            vector_name: vectorSpecification.vectorName,
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
+                            vector_name: vectorName,
                             resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
                             realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                            ...makeCacheBustingQueryParam(ensembleIdent),
                         },
                         throwOnError: true,
                     });
@@ -186,10 +176,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                     return data;
                 },
                 enabled: Boolean(
-                    enabled &&
-                        vectorSpecification.vectorName &&
-                        vectorSpecification.ensembleIdent.getCaseUuid() &&
-                        vectorSpecification.ensembleIdent.getEnsembleName(),
+                    enabled && vectorName && ensembleIdent.getCaseUuid() && ensembleIdent.getEnsembleName(),
                 ),
             });
         }
@@ -198,36 +185,31 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
         if (isEnsembleIdentOfType(item.ensembleIdent, DeltaEnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
             const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
-            const vectorSpecification = { ...item, ensembleIdent: item.ensembleIdent };
+            const comparisonEnsembleIdent = item.ensembleIdent.getComparisonEnsembleIdent();
+            const referenceEnsembleIdent = item.ensembleIdent.getReferenceEnsembleIdent();
+            const vectorName = item.vectorName;
             return () => ({
                 queryKey: [
                     "getDeltaEnsembleStatisticalVectorData",
-                    vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid(),
-                    vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName(),
-                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid(),
-                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
-                    vectorSpecification.vectorName,
+                    comparisonEnsembleIdent.getCaseUuid(),
+                    comparisonEnsembleIdent.getEnsembleName(),
+                    referenceEnsembleIdent.getCaseUuid(),
+                    referenceEnsembleIdent.getEnsembleName(),
+                    vectorName,
                     resampleFrequency,
                     realizationsEncodedAsUintListStr,
                 ],
                 queryFn: async () => {
                     const { data } = await getDeltaEnsembleStatisticalVectorData({
                         query: {
-                            comparison_case_uuid: vectorSpecification.ensembleIdent
-                                .getComparisonEnsembleIdent()
-                                .getCaseUuid(),
-                            comparison_ensemble_name: vectorSpecification.ensembleIdent
-                                .getComparisonEnsembleIdent()
-                                .getEnsembleName(),
-                            reference_case_uuid: vectorSpecification.ensembleIdent
-                                .getReferenceEnsembleIdent()
-                                .getCaseUuid(),
-                            reference_ensemble_name: vectorSpecification.ensembleIdent
-                                .getReferenceEnsembleIdent()
-                                .getEnsembleName(),
-                            vector_name: vectorSpecification.vectorName,
+                            comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
+                            comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
+                            reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
+                            reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
+                            vector_name: vectorName,
                             resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
                             realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                            ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
                         },
                         throwOnError: true,
                     });
@@ -237,11 +219,11 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                 enabled: Boolean(
                     enabled &&
                         resampleFrequency &&
-                        vectorSpecification.vectorName &&
-                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid() &&
-                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName() &&
-                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid() &&
-                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
+                        vectorName &&
+                        comparisonEnsembleIdent.getCaseUuid() &&
+                        comparisonEnsembleIdent.getEnsembleName() &&
+                        referenceEnsembleIdent.getCaseUuid() &&
+                        referenceEnsembleIdent.getEnsembleName(),
                 ),
             });
         }
@@ -270,26 +252,24 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
     );
 
     const queries = vectorSpecificationsWithHistorical.map((item) => {
-        const vectorSpecification = {
-            ...item,
-            ensembleIdent: item.ensembleIdent as RegularEnsembleIdent,
-        };
+        const [ensembleIdent, vectorName] = [item.ensembleIdent as RegularEnsembleIdent, item.vectorName];
 
         return () => ({
             queryKey: [
                 "getHistoricalVectorData",
-                vectorSpecification.ensembleIdent.getCaseUuid(),
-                vectorSpecification.ensembleIdent.getEnsembleName(),
-                vectorSpecification.vectorName,
+                ensembleIdent.getCaseUuid(),
+                ensembleIdent.getEnsembleName(),
+                vectorName,
                 resampleFrequency,
             ],
             queryFn: async () => {
                 const { data } = await getHistoricalVectorData({
                     query: {
-                        case_uuid: vectorSpecification.ensembleIdent.getCaseUuid(),
-                        ensemble_name: vectorSpecification.ensembleIdent.getEnsembleName(),
-                        non_historical_vector_name: vectorSpecification.vectorName,
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                        non_historical_vector_name: vectorName,
                         resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     throwOnError: true,
                 });
@@ -297,10 +277,7 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
                 return data;
             },
             enabled: Boolean(
-                showHistorical &&
-                    vectorSpecification.vectorName &&
-                    vectorSpecification.ensembleIdent.getCaseUuid() &&
-                    vectorSpecification.ensembleIdent.getEnsembleName(),
+                showHistorical && vectorName && ensembleIdent.getCaseUuid() && ensembleIdent.getEnsembleName(),
             ),
         });
     });
@@ -329,6 +306,7 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
                 isFetching: results.some((result) => result.isFetching),
                 isError: results.some((result) => result.isError),
                 vectorsWithHistoricalData,
+                errors: results.filter((result) => result.isError).map((result) => result.error),
             };
         },
     };
@@ -405,6 +383,7 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
                 isFetching: results.some((result) => result.isFetching),
                 isError: results.some((result) => result.isError),
                 ensembleVectorObservationDataMap: combinedResult,
+                errors: results.filter((result) => result.isError).map((result) => result.error),
             };
         },
     };

@@ -1,6 +1,6 @@
 from starlette.responses import MutableHeaders, Response
 
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_core_utils.perf_timer import PerfTimer
 
 
 class ResponsePerfMetrics:

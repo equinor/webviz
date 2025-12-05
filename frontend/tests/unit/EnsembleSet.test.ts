@@ -6,7 +6,6 @@ import { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-
 const regularEnsembleArray = [
     new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", "sc1", [], [], null, ""),
     new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", "sc2", [], [], null, ""),

@@ -1,36 +1,28 @@
-import type { WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
-import {
-    requiredCurvesAtom,
-    selectedFieldIdentifierAtom,
-    selectedWellboreHeaderAtom,
-    selectedWellborePicksAtom,
-    wellLogTemplateTracksAtom,
-} from "./settings/atoms/derivedAtoms";
-import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "./settings/atoms/persistedAtoms";
-import type { TemplateTrackConfig } from "./types";
+import { horizontalLayoutAtom, limitDomainToDataAtom, dataProviderManagerAtom } from "./settings/atoms/baseAtoms";
+import { selectedWellboreHeaderAtom } from "./settings/atoms/derivedAtoms";
+import { selectedFieldIdentAtom } from "./settings/atoms/persistableFixableAtoms";
 
 export type InterfaceTypes = {
     settingsToView: SettingsToViewInterface;
 };
 
 export type SettingsToViewInterface = {
+    providerManager: DataProviderManager | null;
+
     selectedField: string | null;
     wellboreHeader: WellboreHeader_api | null;
-    templateTracks: TemplateTrackConfig[];
-    viewerHorizontal: boolean;
-    padDataWithEmptyRows: boolean;
-    selectedWellborePicks: WellborePick_api[];
-    requiredCurves: WellboreLogCurveHeader_api[];
+    horizontalLayout: boolean;
+    limitDomainToData: boolean;
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    selectedField: (get) => get(selectedFieldIdentifierAtom),
+    providerManager: (get) => get(dataProviderManagerAtom),
+    selectedField: (get) => get(selectedFieldIdentAtom).value,
     wellboreHeader: (get) => get(selectedWellboreHeaderAtom),
-    templateTracks: (get) => get(wellLogTemplateTracksAtom),
-    viewerHorizontal: (get) => get(viewerHorizontalAtom),
-    padDataWithEmptyRows: (get) => get(padDataWithEmptyRowsAtom),
-    selectedWellborePicks: (get) => get(selectedWellborePicksAtom),
-    requiredCurves: (get) => get(requiredCurvesAtom),
+    horizontalLayout: (get) => get(horizontalLayoutAtom),
+    limitDomainToData: (get) => get(limitDomainToDataAtom),
 };

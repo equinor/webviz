@@ -1,9 +1,10 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
+import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api, } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
+import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
+import { calcFnv1aHash } from "@lib/utils/hashUtils";
 
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
 import { ParameterType } from "../EnsembleParameters";
@@ -14,6 +15,7 @@ import { RegularEnsemble } from "../RegularEnsemble";
 import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 import { tanstackDebugTimeOverride } from "./utils/debug";
+import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;
@@ -24,24 +26,67 @@ type EnsembleIdentStringToEnsembleApiDataMap = {
     [ensembleIdentString: string]: EnsembleApiData;
 };
 
+export type UserEnsembleSetting = {
+    ensembleIdent: RegularEnsembleIdent;
+    customName: string | null;
+    color: string;
+};
+
+export type UserDeltaEnsembleSetting = {
+    comparisonEnsembleIdent: RegularEnsembleIdent;
+    referenceEnsembleIdent: RegularEnsembleIdent;
+    customName: string | null;
+    color: string;
+};
+
 export async function loadMetadataFromBackendAndCreateEnsembleSet(
     queryClient: QueryClient,
     userEnsembleSettings: UserEnsembleSetting[],
     userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
 ): Promise<EnsembleSet> {
     // Get ensemble idents to load
-    const ensembleIdentsToLoad: RegularEnsembleIdent[] = userEnsembleSettings.map((setting) => setting.ensembleIdent);
+    const ensembleFingerprintsMap = new Map<string, string>();
+    const ensembleIdentsToLoad: RegularEnsembleIdent[] = [];
+    const uniqueIdentSet = new Set<string>();
+
+    for (const ensembleSetting of userEnsembleSettings) {
+        ensembleIdentsToLoad.push(ensembleSetting.ensembleIdent);
+        uniqueIdentSet.add(ensembleSetting.ensembleIdent.toString());
+    }
+
     for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
-        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.comparisonEnsembleIdent)) {
+        const comparisonIdentString = deltaEnsembleSetting.comparisonEnsembleIdent.toString();
+        if (!uniqueIdentSet.has(comparisonIdentString)) {
             ensembleIdentsToLoad.push(deltaEnsembleSetting.comparisonEnsembleIdent);
+            uniqueIdentSet.add(comparisonIdentString);
         }
-        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.referenceEnsembleIdent)) {
+        const referenceIdentString = deltaEnsembleSetting.referenceEnsembleIdent.toString();
+        if (!uniqueIdentSet.has(referenceIdentString)) {
             ensembleIdentsToLoad.push(deltaEnsembleSetting.referenceEnsembleIdent);
+            uniqueIdentSet.add(referenceIdentString);
         }
     }
 
+    // Loading fingerprints here in order to make use of caching in the browser
+    const fingerprints = await fetchLatestEnsembleFingerprints(queryClient, ensembleIdentsToLoad);
+    for (const item of fingerprints) {
+        if (!item.fingerprint) {
+            console.warn(
+                "No fingerprint found for ensemble, will not use cache-busting:",
+                item.ensembleIdent.toString(),
+            );
+            continue;
+        }
+        ensembleFingerprintsMap.set(item.ensembleIdent.toString(), item.fingerprint);
+    }
+    EnsembleFingerprintStore.setAll(ensembleFingerprintsMap);
+
     // Fetch from back-end
-    const ensembleApiDataMap = await loadEnsembleApiDataMapFromBackend(queryClient, ensembleIdentsToLoad);
+    const ensembleApiDataMap = await loadEnsembleApiDataMapFromBackend(
+        queryClient,
+        ensembleIdentsToLoad,
+        ensembleFingerprintsMap,
+    );
 
     // Create regular ensembles
     const outEnsembleArray: RegularEnsemble[] = [];
@@ -57,11 +102,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const sensitivityArray = buildSensitivityArrFromApiResponse(ensembleApiData.sensitivities);
         outEnsembleArray.push(
             new RegularEnsemble(
-                ensembleApiData.ensembleDetails.field_identifier,
-                ensembleApiData.ensembleDetails.case_uuid,
-                ensembleApiData.ensembleDetails.case_name,
+                ensembleApiData.ensembleDetails.fieldIdentifier,
+                ensembleApiData.ensembleDetails.caseUuid,
+                ensembleApiData.ensembleDetails.caseName,
                 ensembleApiData.ensembleDetails.name,
-                ensembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                ensembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
                 ensembleApiData.ensembleDetails.realizations,
                 parameterArray,
                 sensitivityArray,
@@ -110,11 +155,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const comparisonEnsemble = existingComparisonEnsemble
             ? existingComparisonEnsemble
             : new RegularEnsemble(
-                  comparisonEnsembleApiData.ensembleDetails.field_identifier,
-                  comparisonEnsembleApiData.ensembleDetails.case_uuid,
-                  comparisonEnsembleApiData.ensembleDetails.case_name,
+                  comparisonEnsembleApiData.ensembleDetails.fieldIdentifier,
+                  comparisonEnsembleApiData.ensembleDetails.caseUuid,
+                  comparisonEnsembleApiData.ensembleDetails.caseName,
                   comparisonEnsembleApiData.ensembleDetails.name,
-                  comparisonEnsembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                  comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
                   comparisonEnsembleApiData.ensembleDetails.realizations,
                   emptyParameterArray,
                   nullSensitivityArray,
@@ -125,11 +170,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const referenceEnsemble = existingReferenceEnsemble
             ? existingReferenceEnsemble
             : new RegularEnsemble(
-                  referenceEnsembleApiData.ensembleDetails.field_identifier,
-                  referenceEnsembleApiData.ensembleDetails.case_uuid,
-                  referenceEnsembleApiData.ensembleDetails.case_name,
+                  referenceEnsembleApiData.ensembleDetails.fieldIdentifier,
+                  referenceEnsembleApiData.ensembleDetails.caseUuid,
+                  referenceEnsembleApiData.ensembleDetails.caseName,
                   referenceEnsembleApiData.ensembleDetails.name,
-                  comparisonEnsembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                  comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
                   referenceEnsembleApiData.ensembleDetails.realizations,
                   emptyParameterArray,
                   nullSensitivityArray,
@@ -153,6 +198,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 async function loadEnsembleApiDataMapFromBackend(
     queryClient: QueryClient,
     ensembleIdents: RegularEnsembleIdent[],
+    ensembleFingerprintsMap: Map<string, string>,
 ): Promise<EnsembleIdentStringToEnsembleApiDataMap> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
     const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
@@ -165,9 +211,13 @@ async function loadEnsembleApiDataMapFromBackend(
     for (const ensembleIdent of ensembleIdents) {
         const caseUuid = ensembleIdent.getCaseUuid();
         const ensembleName = ensembleIdent.getEnsembleName();
+        const fingerprint = ensembleFingerprintsMap.get(ensembleIdent.toString());
+
+        const fingerprintHash = fingerprint ? calcFnv1aHash(fingerprint) : undefined;
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
+                query: { zCacheBust: fingerprintHash },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -183,6 +233,7 @@ async function loadEnsembleApiDataMapFromBackend(
                 query: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
+                    zCacheBust: fingerprintHash,
                 },
             }),
             gcTime: CACHE_TIME,
@@ -195,6 +246,7 @@ async function loadEnsembleApiDataMapFromBackend(
                 query: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
+                    zCacheBust: fingerprintHash,
                 },
             }),
             gcTime: CACHE_TIME,
@@ -219,7 +271,7 @@ async function loadEnsembleApiDataMapFromBackend(
 
         const ensembleDetails: EnsembleDetails_api = ensembleDetailsOutcome.value;
         if (
-            ensembleDetails.case_uuid !== ensembleIdents[i].getCaseUuid() ||
+            ensembleDetails.caseUuid !== ensembleIdents[i].getCaseUuid() ||
             ensembleDetails.name !== ensembleIdents[i].getEnsembleName()
         ) {
             console.error("Got mismatched data from backend, dropping ensemble:", ensembleIdents[i].toString());

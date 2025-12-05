@@ -1,16 +1,17 @@
 import type React from "react";
 
+import type { JTDSchemaType } from "ajv/dist/core";
 import type { Getter, Setter } from "jotai";
 
-import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
+import type { AtomStore } from "./AtomStoreMaster";
 import type { InitialSettings } from "./InitialSettings";
 import type { SettingsContext, ViewContext } from "./ModuleContext";
 import type { ModuleDataTagId } from "./ModuleDataTags";
 import { ModuleInstance, ModuleInstanceTopic } from "./ModuleInstance";
 import type { DrawPreviewFunc } from "./Preview";
 import type { SyncSettingKey } from "./SyncSettings";
+import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataChannnel";
 import type { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
-import type { Workbench } from "./Workbench";
 import type { WorkbenchServices } from "./WorkbenchServices";
 import type { WorkbenchSession } from "./WorkbenchSession";
 import type { WorkbenchSettings } from "./WorkbenchSettings";
@@ -77,6 +78,63 @@ export type InterfaceEffects<TInterfaceType extends InterfaceBaseType> = ((
     getAtomValue: Getter,
 ) => void)[];
 
+export type JTDBaseType = Record<string, unknown>;
+
+export type ModuleComponentsStateBase = {
+    settings?: Record<string, any>;
+    view?: Record<string, any>;
+};
+
+export type SerializedModuleComponentsState<TSerializedStateDef extends ModuleComponentsStateBase> = {
+    settings: TSerializedStateDef["settings"];
+    view: TSerializedStateDef["view"];
+};
+
+export type NoModuleStateSchema = {
+    settings: Record<string, never>;
+    view: Record<string, never>;
+};
+
+export type ModuleStateSchema<TSerializedStateDef extends ModuleComponentsStateBase> = {
+    settings?: JTDSchemaType<TSerializedStateDef["settings"]>;
+    view?: JTDSchemaType<TSerializedStateDef["view"]>;
+};
+
+export interface SerializeStateFunction<T> {
+    (get: Getter): T;
+}
+
+export interface DeserializeStateFunction<T> {
+    (raw: Partial<T>, set: Setter): void;
+}
+
+export type ModuleComponentSerializationFunctions<TSerializedStateDef extends ModuleComponentsStateBase> =
+    TSerializedStateDef extends NoModuleStateSchema
+        ? {
+              serializeStateFunctions?: never;
+              deserializeStateFunctions?: never;
+          }
+        : {
+              serializeStateFunctions: {
+                  settings?: SerializeStateFunction<TSerializedStateDef["settings"]>;
+                  view?: SerializeStateFunction<TSerializedStateDef["view"]>;
+              };
+              deserializeStateFunctions: {
+                  settings?: DeserializeStateFunction<TSerializedStateDef["settings"]>;
+                  view?: DeserializeStateFunction<TSerializedStateDef["view"]>;
+              };
+          };
+
+export function hasSerialization<T extends ModuleComponentsStateBase>(
+    val: ModuleComponentSerializationFunctions<T>,
+): val is Exclude<typeof val, { serializeStateFunctions?: never }> {
+    return !!(val as any).serializeStateFunctions;
+}
+
+export type MakeReadonly<T> = {
+    readonly [P in keyof T]: T[P];
+};
+
 export type ModuleSettings<
     TInterfaceTypes extends ModuleInterfaceTypes = {
         settingsToView: Record<string, never>;
@@ -91,14 +149,14 @@ export type ModuleView<
     },
 > = React.FC<ModuleViewProps<TInterfaceTypes>>;
 
-export enum ImportState {
+export enum ImportStatus {
     NotImported = "NotImported",
     Importing = "Importing",
     Imported = "Imported",
     Failed = "Failed",
 }
 
-export interface ModuleOptions {
+export type ModuleOptions<TSerializedState extends ModuleComponentsStateBase> = {
     name: string;
     defaultTitle: string;
     category: ModuleCategory;
@@ -110,15 +168,16 @@ export interface ModuleOptions {
     channelDefinitions?: ChannelDefinition[];
     channelReceiverDefinitions?: ChannelReceiverDefinition[];
     onInstanceUnloadFunc?: OnInstanceUnloadFunc;
-}
+    serializedStateSchema?: ModuleStateSchema<TSerializedState>;
+};
 
-export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
+export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedState extends ModuleComponentsStateBase> {
     private _name: string;
     private _defaultTitle: string;
     public viewFC: ModuleView<TInterfaceTypes>;
     public settingsFC: ModuleSettings<TInterfaceTypes>;
-    protected _importState: ImportState = ImportState.NotImported;
-    private _moduleInstances: ModuleInstance<TInterfaceTypes>[] = [];
+    protected _importStatus: ImportStatus = ImportStatus.NotImported;
+    private _moduleInstances: ModuleInstance<TInterfaceTypes, TSerializedState>[] = [];
     private _settingsToViewInterfaceInitialization: InterfaceInitialization<
         Exclude<TInterfaceTypes["settingsToView"], undefined>
     > | null = null;
@@ -129,7 +188,6 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         [];
     private _settingsToViewInterfaceEffects: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>> =
         [];
-    private _workbench: Workbench | null = null;
     private _syncableSettingKeys: SyncSettingKey[];
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _onInstanceUnloadFunc: OnInstanceUnloadFunc | null;
@@ -139,8 +197,10 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _category: ModuleCategory;
     private _devState: ModuleDevState;
     private _dataTagIds: ModuleDataTagId[];
+    private _serializedStateSchema: ModuleStateSchema<TSerializedState> | null;
+    private _serializationFunctions: ModuleComponentSerializationFunctions<TSerializedState> | undefined;
 
-    constructor(options: ModuleOptions) {
+    constructor(options: ModuleOptions<TSerializedState>) {
         this._name = options.name;
         this._defaultTitle = options.defaultTitle;
         this._category = options.category;
@@ -154,14 +214,19 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         this._channelDefinitions = options.channelDefinitions ?? null;
         this._channelReceiverDefinitions = options.channelReceiverDefinitions ?? null;
         this._dataTagIds = options.dataTagIds ?? [];
+        this._serializedStateSchema = options.serializedStateSchema ?? null;
+    }
+
+    getSerializedStateSchema(): ModuleStateSchema<TSerializedState> | null {
+        return this._serializedStateSchema;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
         return this._drawPreviewFunc;
     }
 
-    getImportState(): ImportState {
-        return this._importState;
+    getImportState(): ImportStatus {
+        return this._importStatus;
     }
 
     getName(): string {
@@ -188,8 +253,8 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         return this._description;
     }
 
-    setWorkbench(workbench: Workbench): void {
-        this._workbench = workbench;
+    canBeSerialized(): boolean {
+        return this._serializedStateSchema !== null;
     }
 
     setSettingsToViewInterfaceInitialization(
@@ -216,6 +281,14 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         this._settingsToViewInterfaceEffects = atomsInitialization;
     }
 
+    setSerializationFunctions(serializationFunctions: ModuleComponentSerializationFunctions<TSerializedState>): void {
+        this._serializationFunctions = serializationFunctions;
+    }
+
+    getComponentSerializationFunctions(): ModuleComponentSerializationFunctions<TSerializedState> | undefined {
+        return this._serializationFunctions;
+    }
+
     getViewToSettingsInterfaceEffects(): InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>> {
         return this._viewToSettingsInterfaceEffects;
     }
@@ -232,15 +305,11 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(instanceNumber: number): ModuleInstance<TInterfaceTypes> {
-        if (!this._workbench) {
-            throw new Error("Module must be added to a workbench before making an instance");
-        }
-
-        const instance = new ModuleInstance<TInterfaceTypes>({
+    makeInstance(id: string, atomStore: AtomStore): ModuleInstance<TInterfaceTypes, TSerializedState> {
+        const instance = new ModuleInstance<TInterfaceTypes, TSerializedState>({
             module: this,
-            workbench: this._workbench,
-            instanceNumber,
+            atomStore,
+            id,
             channelDefinitions: this._channelDefinitions,
             channelReceiverDefinitions: this._channelReceiverDefinitions,
         });
@@ -253,19 +322,14 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         this._onInstanceUnloadFunc?.(instanceId);
     }
 
-    private setImportState(state: ImportState): void {
-        this._importState = state;
+    private setImportState(status: ImportStatus): void {
+        this._importStatus = status;
         this._moduleInstances.forEach((instance) => {
-            instance.notifySubscribers(ModuleInstanceTopic.IMPORT_STATE);
+            instance.notifySubscribers(ModuleInstanceTopic.IMPORT_STATUS);
         });
-
-        if (this._workbench && state === ImportState.Imported) {
-            this._workbench.maybeMakeFirstModuleInstanceActive();
-        }
     }
 
-    private initializeModuleInstance(instance: ModuleInstance<TInterfaceTypes>): void {
-        instance.initialize();
+    private initializeModuleInstance(instance: ModuleInstance<TInterfaceTypes, TSerializedState>): void {
         if (this._settingsToViewInterfaceInitialization) {
             instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);
         }
@@ -274,11 +338,15 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
             instance.makeViewToSettingsInterface(this._viewToSettingsInterfaceInitialization);
         }
         instance.makeViewToSettingsInterfaceEffectsAtom();
+        if (this._serializationFunctions) {
+            instance.makeSerializer(this._serializationFunctions);
+        }
+        instance.initialize();
     }
 
-    private maybeImportSelf(): void {
-        if (this._importState !== ImportState.NotImported) {
-            if (this._importState === ImportState.Imported) {
+    private async maybeImportSelf(): Promise<void> {
+        if (this._importStatus !== ImportStatus.NotImported) {
+            if (this._importStatus === ImportStatus.Imported) {
                 this._moduleInstances.forEach((instance) => {
                     if (instance.isInitialized()) {
                         return;
@@ -289,27 +357,26 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
             return;
         }
 
-        this.setImportState(ImportState.Importing);
+        this.setImportState(ImportStatus.Importing);
 
         const path = `/src/modules/${this._name}/loadModule.tsx`;
         const importer = moduleImporters[path];
 
         if (!importer) {
             console.error(`Module importer not found for ${path}`);
-            this.setImportState(ImportState.Failed);
+            this.setImportState(ImportStatus.Failed);
             return;
         }
 
-        importer()
-            .then(() => {
-                this.setImportState(ImportState.Imported);
-                this._moduleInstances.forEach((instance) => {
-                    this.initializeModuleInstance(instance);
-                });
-            })
-            .catch((e) => {
-                console.error(`Failed to import module ${this._name}`, e);
-                this.setImportState(ImportState.Failed);
+        try {
+            await importer();
+            this.setImportState(ImportStatus.Imported);
+            this._moduleInstances.forEach((instance) => {
+                this.initializeModuleInstance(instance);
             });
+        } catch (e) {
+            console.error(`Failed to initialize module ${this._name}`, e);
+            this.setImportState(ImportStatus.Failed);
+        }
     }
 }

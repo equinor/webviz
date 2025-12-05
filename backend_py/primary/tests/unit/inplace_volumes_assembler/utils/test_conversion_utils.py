@@ -3,9 +3,9 @@ import pytest
 import re
 import polars as pl
 
-from primary.services.sumo_access.inplace_volumes_table_types import CalculatedVolume, InplaceVolumes, Property
+from webviz_services.sumo_access.inplace_volumes_table_types import CalculatedVolume, InplaceVolumes, Property
 
-from primary.services.inplace_volumes_table_assembler._utils.conversion_utils import (
+from webviz_services.inplace_volumes_table_assembler._utils.conversion_utils import (
     create_inplace_volumes_table_data_from_fluid_results_df,
     create_repeated_table_column_data_from_polars_column,
     get_available_calculated_volumes_from_volume_names,
@@ -214,11 +214,11 @@ def test_get_required_volume_names_from_properties() -> None:
     )
 
     # Test with empty properties
-    empty_properties = []
+    empty_properties: list[str] = []
     assert get_required_volume_names_from_properties(empty_properties) == []
 
 
-def test_get_available_properties_from_volume_names():
+def test_get_available_properties_from_volume_names() -> None:
     """
     Test that the correct properties are identified based on available volume names.
     """
@@ -253,7 +253,7 @@ def test_get_required_volume_names_from_calculated_volumes() -> None:
 
     first_calculated_volumes = [CalculatedVolume.STOIIP_TOTAL.value]
     second_calculated_volumes = [CalculatedVolume.STOIIP_TOTAL.value, CalculatedVolume.GIIP_TOTAL.value]
-    empty_calculated_volumes = []
+    empty_calculated_volumes: list[str] = []
 
     assert get_required_volume_names_from_calculated_volumes(first_calculated_volumes) == [
         InplaceVolumes.VolumetricColumns.STOIIP.value,

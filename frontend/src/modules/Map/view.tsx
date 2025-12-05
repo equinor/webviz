@@ -1,15 +1,22 @@
-import type React from "react";
+import React from "react";
 
+import type { Options } from "@hey-api/client-axios";
+import { useQuery } from "@tanstack/react-query";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
-import type { SurfaceDef_api } from "@api";
+import type { SurfaceDef_api, GetStatisticalSurfaceDataHybridData_api } from "@api";
+import { getStatisticalSurfaceDataHybrid, getStatisticalSurfaceDataHybridQueryKey } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
+import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
+import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
+import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
+import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
 import type { Interfaces } from "./interfaces";
 
@@ -17,24 +24,67 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const surfaceAddress = props.viewContext.useSettingsToViewInterfaceValue("surfaceAddress");
 
     const statusWriter = useViewStatusWriter(props.viewContext);
+    const [hybridProgressText, setHybridProgressText] = React.useState<string | null>(null);
 
-    //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
-    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
+    let activeQueryType: "normal" | "hybrid" | null = null;
+    const enableHybridEndpoint = true;
+    if (surfaceAddress) {
+        if (enableHybridEndpoint && surfaceAddress.addressType === "STAT") {
+            activeQueryType = "hybrid";
+        } else {
+            activeQueryType = "normal";
+        }
+    }
 
-    const isLoading = surfDataQuery.isFetching;
+    const normal_dataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, activeQueryType === "normal");
+
+    const hybrid_apiFunctionArgs: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
+        query: {
+            surf_addr_str: surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : "DUMMY",
+        },
+    };
+    const hybrid_queryKey = getStatisticalSurfaceDataHybridQueryKey(hybrid_apiFunctionArgs);
+    const hybrid_queryOptions = wrapLongRunningQuery({
+        queryFn: getStatisticalSurfaceDataHybrid,
+        queryFnArgs: hybrid_apiFunctionArgs,
+        queryKey: hybrid_queryKey,
+        delayBetweenPollsSecs: 0.5,
+        maxTotalDurationSecs: 120,
+    });
+    const hybrid_dataQuery = useQuery({ ...hybrid_queryOptions, enabled: activeQueryType === "hybrid" });
+
+    function handleProgress(progressMessage: string | null) {
+        if (progressMessage) {
+            console.debug(`HYBRID PROGRESS: ${progressMessage}`);
+            setHybridProgressText(progressMessage);
+        }
+    }
+    useLroProgress(hybrid_queryOptions.queryKey, handleProgress);
+
+    const activeDataQuery = activeQueryType === "hybrid" ? hybrid_dataQuery : normal_dataQuery;
+
+    const isLoading = activeDataQuery.isFetching;
     statusWriter.setLoading(isLoading);
+    if (!isLoading && hybridProgressText) {
+        setHybridProgressText(null);
+    }
 
-    const hasError = surfDataQuery.isError;
-    usePropagateApiErrorToStatusWriter(surfDataQuery, statusWriter);
+    const hasError = activeDataQuery.isError;
+    usePropagateQueryErrorToStatusWriter(activeDataQuery, statusWriter);
 
-    const surfData = surfDataQuery.data;
+    let surfData: SurfaceDataFloat_trans | undefined = undefined;
+    if (normal_dataQuery?.data) {
+        surfData = normal_dataQuery.data;
+    } else if (hybrid_dataQuery?.data) {
+        surfData = transformSurfaceData(hybrid_dataQuery.data) as SurfaceDataFloat_trans;
+    }
 
     return (
         <div className="relative w-full h-full flex flex-col">
             {hasError ? (
                 <ContentError>Error loading surface data</ContentError>
             ) : isLoading ? (
-                <ContentInfo>Loading surface data</ContentInfo>
+                <ContentInfo>Loading surface data... {hybridProgressText ?? ""}</ContentInfo>
             ) : !surfData ? (
                 <ContentInfo>Could not find surface data for the current selection</ContentInfo>
             ) : (
