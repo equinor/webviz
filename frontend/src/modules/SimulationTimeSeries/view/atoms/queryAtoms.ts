@@ -42,13 +42,20 @@ export const vectorDataQueriesAtom = atom((get) => {
     return [...regularQueries, ...deltaQueries];
 });
 
+function isVectorDataQueryEnabled(visualizationMode: VisualizationMode): boolean {
+    return (
+        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
+        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+    );
+}
+
 const regularEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
     const { regularEnsembleVectorSpecifications } = get(categorizedVectorSpecificationsAtom);
     const resampleFrequency = get(resampleFrequencyAtom);
     const visualizationMode = get(visualizationModeAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
-    const enabled = isEnabledForQueryType(visualizationMode, QueryType.VECTOR_DATA);
+    const enabled = isVectorDataQueryEnabled(visualizationMode);
 
     const queries = regularEnsembleVectorSpecifications.map((item) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
@@ -60,7 +67,6 @@ const regularEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
                 case_uuid: ensembleIdent.getCaseUuid(),
                 ensemble_name: ensembleIdent.getEnsembleName(),
                 vector_name: vectorName,
-                // Having no default value but not contributing to enabled flag? Discuss intended logic here.
                 resampling_frequency: resampleFrequency,
                 realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
                 ...makeCacheBustingQueryParam(ensembleIdent),
@@ -69,13 +75,7 @@ const regularEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
 
         return () => ({
             ...options,
-            enabled: Boolean(
-                enabled &&
-                    resampleFrequency &&
-                    vectorName &&
-                    ensembleIdent.getCaseUuid() &&
-                    ensembleIdent.getEnsembleName(),
-            ),
+            enabled: Boolean(enabled && vectorName && ensembleIdent.getCaseUuid() && ensembleIdent.getEnsembleName()),
         });
     });
 
@@ -90,7 +90,7 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
     const visualizationMode = get(visualizationModeAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
-    const enabled = isEnabledForQueryType(visualizationMode, QueryType.VECTOR_DATA);
+    const enabled = isVectorDataQueryEnabled(visualizationMode);
 
     const queries = deltaEnsembleVectorSpecifications.map((item) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
@@ -117,7 +117,6 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
             ...options,
             enabled: Boolean(
                 enabled &&
-                    resampleFrequency &&
                     vectorName &&
                     comparisonEnsembleIdent.getCaseUuid() &&
                     comparisonEnsembleIdent.getEnsembleName() &&
@@ -141,13 +140,21 @@ export const vectorStatisticsQueriesAtom = atom((get) => {
     return [...regularQueries, ...deltaQueries];
 });
 
+function isStatisticsQueryEnabled(visualizationMode: VisualizationMode): boolean {
+    return (
+        visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
+        visualizationMode === VisualizationMode.STATISTICAL_LINES ||
+        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+    );
+}
+
 const regularEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
     const { regularEnsembleVectorSpecifications } = get(categorizedVectorSpecificationsAtom);
     const resampleFrequency = get(resampleFrequencyAtom);
     const visualizationMode = get(visualizationModeAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
-    const enabled = isEnabledForQueryType(visualizationMode, QueryType.VECTOR_STATISTICS);
+    const enabled = isStatisticsQueryEnabled(visualizationMode);
 
     const queries = regularEnsembleVectorSpecifications.map((item) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
@@ -167,13 +174,7 @@ const regularEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
 
         return () => ({
             ...options,
-            enabled: Boolean(
-                enabled &&
-                    resampleFrequency &&
-                    vectorName &&
-                    ensembleIdent.getCaseUuid() &&
-                    ensembleIdent.getEnsembleName(),
-            ),
+            enabled: Boolean(enabled && vectorName && ensembleIdent.getCaseUuid() && ensembleIdent.getEnsembleName()),
         });
     });
 
@@ -188,7 +189,7 @@ const deltaEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
     const visualizationMode = get(visualizationModeAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
-    const enabled = isEnabledForQueryType(visualizationMode, QueryType.VECTOR_STATISTICS);
+    const enabled = isStatisticsQueryEnabled(visualizationMode);
 
     const queries = deltaEnsembleVectorSpecifications.map((item) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
@@ -214,7 +215,6 @@ const deltaEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
             ...options,
             enabled: Boolean(
                 enabled &&
-                    resampleFrequency &&
                     vectorName &&
                     comparisonEnsembleIdent.getCaseUuid() &&
                     comparisonEnsembleIdent.getEnsembleName() &&
@@ -276,12 +276,6 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
         queries,
         combine: (results: QueryObserverResult<VectorHistoricalData_api>[]) => {
             const vectorsWithHistoricalData: VectorWithHistoricalData[] = [];
-            // What's the point of this line? Boolean([]) == true, so this check is useless.
-            /*
-            if (!vectorSpecificationsWithHistorical) {
-                return { isFetching: false, isError: false, vectorsWithHistoricalData };
-            }
-            */
 
             results.forEach((result, index) => {
                 const vectorSpecification = vectorSpecificationsWithHistorical.at(index);
@@ -381,6 +375,8 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
     };
 });
 
+// ----------------------------------------------------
+
 type RegularEnsembleVectorSpec = Omit<VectorSpec, "ensembleIdent"> & { ensembleIdent: RegularEnsembleIdent };
 type DeltaEnsembleVectorSpec = Omit<VectorSpec, "ensembleIdent"> & { ensembleIdent: DeltaEnsembleIdent };
 
@@ -407,32 +403,3 @@ const categorizedVectorSpecificationsAtom = atom((get) => {
         deltaEnsembleVectorSpecifications,
     };
 });
-
-enum QueryType {
-    VECTOR_DATA = "VECTOR_DATA",
-    VECTOR_STATISTICS = "VECTOR_STATISTICS",
-    HISTORICAL_VECTOR_DATA = "HISTORICAL_VECTOR_DATA",
-    VECTOR_OBSERVATIONS = "VECTOR_OBSERVATIONS",
-}
-
-function isEnabledForQueryType(visualizationMode: VisualizationMode, queryType: QueryType): boolean {
-    switch (queryType) {
-        case QueryType.VECTOR_DATA:
-            return (
-                visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
-                visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
-            );
-        case QueryType.VECTOR_STATISTICS:
-            return (
-                visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
-                visualizationMode === VisualizationMode.STATISTICAL_LINES ||
-                visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
-            );
-        case QueryType.HISTORICAL_VECTOR_DATA:
-            return true; // Controlled by showHistoricalAtom
-        case QueryType.VECTOR_OBSERVATIONS:
-            return true; // Controlled by showObservationsAtom
-        default:
-            return false;
-    }
-}
