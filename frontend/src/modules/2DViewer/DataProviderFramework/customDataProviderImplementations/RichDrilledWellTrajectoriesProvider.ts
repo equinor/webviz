@@ -39,6 +39,11 @@ const richDrilledWellTrajectoriesSettings = [
     Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME,
     Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME,
     Setting.WELL_TRAJ_FILTER_SURFACE_REALIZATION,
+    Setting.PDM_OIL_PROD_MIN,
+    Setting.PDM_GAS_PROD_MIN,
+    Setting.PDM_WATER_PROD_MIN,
+    Setting.PDM_WATER_INJ_MIN,
+    Setting.PDM_GAS_INJ_MIN,
 ] as const;
 export type RichDrilledWellTrajectoriesSettings = typeof richDrilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RichDrilledWellTrajectoriesSettings>;
@@ -72,24 +77,12 @@ export class RichDrilledWellTrajectoriesProvider
 
     fetchData({
         getGlobalSetting,
-        getStoredData,
         fetchQuery,
     }: FetchDataParams<
         RichDrilledWellTrajectoriesSettings,
         RichDrilledWellTrajectoriesData
     >): Promise<RichDrilledWellTrajectoriesData> {
         const fieldIdentifier = getGlobalSetting("fieldId");
-
-        // const wellTrajectories = getStoredData("wellboreTrajectories");
-
-        const formationSegments = getStoredData("formationSegments");
-        const productionData = getStoredData("productionData");
-        const injectionData = getStoredData("injectionData");
-
-        // **************************
-        // TODO: Use the data
-        console.log("Fetched stored data:", { formationSegments, productionData, injectionData });
-        // **************************
 
         if (!fieldIdentifier) return Promise.resolve([]);
 
@@ -419,7 +412,66 @@ export class RichDrilledWellTrajectoriesProvider
 
             return data.time_intervals_iso_str;
         });
-
+        availableSettingsUpdater(Setting.PDM_OIL_PROD_MIN, ({ getHelperDependency }) => {
+            const productionData = getHelperDependency(productionDataDep);
+            if (!productionData || productionData.length === 0) {
+                return [0, 0, 1000];
+            }
+            // get max oil production value
+            const maxOilProd = productionData.reduce(
+                (max, data) => (data.oilProductionSm3 > max ? data.oilProductionSm3 : max),
+                0,
+            );
+            return [0, Math.ceil(maxOilProd / 100) * 100, 1000]; // round up to nearest 100
+        });
+        availableSettingsUpdater(Setting.PDM_GAS_PROD_MIN, ({ getHelperDependency }) => {
+            const productionData = getHelperDependency(productionDataDep);
+            if (!productionData || productionData.length === 0) {
+                return [0, 0, 1000];
+            }
+            // get max gas production value
+            const maxGasProd = productionData.reduce(
+                (max, data) => (data.gasProductionSm3 > max ? data.gasProductionSm3 : max),
+                0,
+            );
+            return [0, Math.ceil(maxGasProd / 100) * 100, 1000]; // round up to nearest 100
+        });
+        availableSettingsUpdater(Setting.PDM_WATER_PROD_MIN, ({ getHelperDependency }) => {
+            const productionData = getHelperDependency(productionDataDep);
+            if (!productionData || productionData.length === 0) {
+                return [0, 0, 1000];
+            }
+            // get max water production value
+            const maxWaterProd = productionData.reduce(
+                (max, data) => (data.waterProductionM3 > max ? data.waterProductionM3 : max),
+                0,
+            );
+            return [0, Math.ceil(maxWaterProd / 100) * 100, 1000]; // round up to nearest 100
+        });
+        availableSettingsUpdater(Setting.PDM_WATER_INJ_MIN, ({ getHelperDependency }) => {
+            const injectionData = getHelperDependency(injectionDataDep);
+            if (!injectionData || injectionData.length === 0) {
+                return [0, 0, 1000];
+            }
+            // get max water injection value
+            const maxWaterInj = injectionData.reduce(
+                (max, data) => (data.waterInjection > max ? data.waterInjection : max),
+                0,
+            );
+            return [0, Math.ceil(maxWaterInj / 100) * 100, 1000]; // round up to nearest 100
+        });
+        availableSettingsUpdater(Setting.PDM_GAS_INJ_MIN, ({ getHelperDependency }) => {
+            const injectionData = getHelperDependency(injectionDataDep);
+            if (!injectionData || injectionData.length === 0) {
+                return [0, 0, 1000];
+            }
+            // get max gas injection value
+            const maxGasInj = injectionData.reduce(
+                (max, data) => (data.gasInjection > max ? data.gasInjection : max),
+                0,
+            );
+            return [0, Math.ceil(maxGasInj / 100) * 100, 1000]; // round up to nearest 100
+        });
         storedDataUpdater("selectedWellBoreHeaders", ({ getHelperDependency, getLocalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
             const selectedWellbores = getLocalSetting(Setting.SMDA_WELLBORE_HEADERS)?.map(

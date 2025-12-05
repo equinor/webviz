@@ -17,8 +17,8 @@ import { LabelOrientation, WellLabelLayer } from "@webviz/subsurface-viewer/dist
 import type { Feature, FeatureCollection, Geometry, LineString } from "geojson";
 import { inRange, sortBy, zip, zipWith } from "lodash";
 
-import { point2Distance, subtractVec2, vec2FromArray } from "@lib/utils/vec2";
 import type { Vec2 } from "@lib/utils/vec2";
+import { point2Distance, subtractVec2, vec2FromArray } from "@lib/utils/vec2";
 import { simplifyWellTrajectoryRadialDist } from "@modules/_shared/utils/wellbore";
 
 import { getCoordinateForMd, getSegmentIndexForMd } from "../WellsLayer/_private/wellTrajectoryUtils";
@@ -453,7 +453,7 @@ export type RichWellsLayerProps = {
     segmentFilterValue?: string[];
     tvdFilterValue?: [min: number | undefined, max: number | undefined];
     mdFilterValue?: [min: number | undefined, max: number | undefined];
-
+    getWellColor?: (wellboreUwi: string) => { r: number; g: number; b: number };
     isWellboreSelected?: (uuid: string) => boolean;
 };
 
@@ -582,7 +582,14 @@ export class RichWellsLayer extends CompositeLayer<RichWellsLayerProps> {
         if (this.props?.isWellboreSelected?.(d.properties.uuid)) {
             return [255, 0, 0];
         }
-        return [130, 130, 130, 50];
+
+        // Use the custom color function if provided
+        if (this.props?.getWellColor) {
+            const color = this.props.getWellColor(d.properties.identifier);
+            return [color.r, color.g, color.b];
+        }
+
+        return [130, 130, 130];
     }
 
     renderLayers(): Layer | null | LayersList {
@@ -690,6 +697,7 @@ export class RichWellsLayer extends CompositeLayer<RichWellsLayerProps> {
                 // getColor: []
                 getBorderWidth: 0,
                 background: true,
+                visible: false,
 
                 // @ts-expect-error -- Parameter type doesn't expose these
                 parameters: { [GL.DEPTH_TEST]: false },

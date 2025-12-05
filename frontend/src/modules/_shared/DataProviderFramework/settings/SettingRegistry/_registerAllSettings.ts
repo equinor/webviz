@@ -159,4 +159,9 @@ SettingRegistry.registerSetting(
     "Well Trajectory Filter Surface Realization",
     DropdownNumberSetting,
 );
+SettingRegistry.registerSetting(Setting.PDM_OIL_PROD_MIN, "PDM Oil Production Min", SliderNumberSetting);
+SettingRegistry.registerSetting(Setting.PDM_GAS_PROD_MIN, "PDM Gas Production Min", SliderNumberSetting);
+SettingRegistry.registerSetting(Setting.PDM_WATER_PROD_MIN, "PDM Water Production Min", SliderNumberSetting);
+SettingRegistry.registerSetting(Setting.PDM_WATER_INJ_MIN, "PDM Water Injection Min", SliderNumberSetting);
+SettingRegistry.registerSetting(Setting.PDM_GAS_INJ_MIN, "PDM Gas Injection Min", SliderNumberSetting);
 SettingRegistry.registerSetting(Setting.REPRESENTATION, "Representation", RepresentationSetting);

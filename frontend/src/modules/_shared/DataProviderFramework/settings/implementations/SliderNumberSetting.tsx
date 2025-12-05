@@ -35,15 +35,15 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         this._staticOptions = staticOptions ?? null;
     }
 
-    getIsStatic(): boolean {
+    getIsStatic = (): boolean => {
         // If static options are provided in constructor, the setting is defined as static
         return this._staticOptions !== null;
-    }
+    };
 
-    isValueValid(
+    isValueValid = (
         value: ValueType,
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>,
-    ): boolean {
+    ): boolean => {
         // If static limits are provided, Input- and Slider-component limits the value
         // i.e. no need to run fixupValue()
         if (this._staticOptions) {
@@ -58,12 +58,12 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         }
 
         return true;
-    }
+    };
 
-    fixupValue(
+    fixupValue = (
         currentValue: ValueType,
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>,
-    ): ValueType {
+    ): ValueType => {
         // If static options are provided, return value as Input- and Slider-component controls the value
         if (this._staticOptions) {
             return currentValue;
@@ -80,11 +80,10 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         }
 
         return currentValue;
-    }
+    };
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.NUMBER_WITH_STEP>) => React.ReactNode {
         const staticOptions = this._staticOptions;
-        const isStatic = staticOptions !== null;
 
         return function InputNumberSetting(props: SettingComponentProps<ValueType, SettingCategory.NUMBER_WITH_STEP>) {
             const { onValueChange } = props;
@@ -95,18 +94,16 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
             const MIN_DIV_WIDTH = 150;
             const inputVisible = divSize.width >= MIN_DIV_WIDTH;
 
-            const min = isStatic ? (staticOptions.minMax.min ?? 0) : (props.availableValues?.[0] ?? 0);
-            const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.availableValues?.[1] ?? 0);
-            const step = isStatic ? (staticOptions.step ?? 1) : (props.availableValues?.[2] ?? 1);
+            const min = staticOptions ? (staticOptions.minMax.min ?? 0) : (props.availableValues?.[0] ?? 0);
+            const max = staticOptions ? (staticOptions.minMax.max ?? 0) : (props.availableValues?.[1] ?? 0);
+            const step = staticOptions ? (staticOptions.step ?? 1) : (props.availableValues?.[2] ?? 1);
 
-            const [prevValue, setPrevValue] = React.useState(props.value ?? min);
             const [localValue, setLocalValue] = React.useState(props.value ?? min);
 
-            // Update local value when props value changes
-            if (props.value !== prevValue) {
-                setPrevValue(props.value ?? min);
+            // Sync local value when props value changes externally
+            React.useEffect(() => {
                 setLocalValue(props.value ?? min);
-            }
+            }, [props.value, min]);
 
             // Create debounced update function with useRef to preserve reference
             const debouncedOnValueChange = React.useRef(

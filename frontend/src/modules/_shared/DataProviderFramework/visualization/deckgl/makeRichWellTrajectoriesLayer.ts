@@ -3,7 +3,13 @@ import type {
     GeoJsonWellProperties as BaseWellProperties,
 } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 
-import type { WellboreHeader_api, WellboreTrajectory_api, WellTrajectoryFormationSegments_api } from "@api";
+import type {
+    WellboreHeader_api,
+    WellboreTrajectory_api,
+    WellInjectionData_api,
+    WellProductionData_api,
+    WellTrajectoryFormationSegments_api,
+} from "@api";
 import type { RichDrilledWellTrajectoriesSettings } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RichDrilledWellTrajectoriesProvider";
 import type {
     FormationSegmentData,
@@ -22,7 +28,48 @@ export type GeoWellProperties = BaseWellProperties & {
     wellHeadSize: number;
 };
 export type GeoWellFeature = BaseWellFeature & { properties: GeoWellProperties };
+function setColorByFlowData(
+    oilProdMin: number,
+    gasProdMin: number,
+    waterProdMin: number,
+    waterInjMin: number,
+    gasInjMin: number,
+    wellboreUwi: string,
+    productionData: WellProductionData_api[],
+    injectionData: WellInjectionData_api[],
+): { r: number; g: number; b: number } | null {
+    const prodData = productionData.find((pd) => pd.wellboreUwi === wellboreUwi);
+    const injData = injectionData.find((id) => id.wellboreUwi === wellboreUwi);
 
+    if (prodData) {
+        // Oil production - green
+        if (prodData.oilProductionSm3 >= oilProdMin) {
+            return { r: 0, g: 255, b: 0 };
+        }
+        // Gas production - red
+        if (prodData.gasProductionSm3 >= gasProdMin) {
+            return { r: 255, g: 0, b: 0 };
+        }
+        // Water production - blue
+        if (prodData.waterProductionM3 >= waterProdMin) {
+            return { r: 0, g: 0, b: 255 };
+        }
+    }
+
+    if (injData) {
+        // Water injection - light blue
+        if (injData.waterInjection >= waterInjMin) {
+            return { r: 135, g: 206, b: 235 };
+        }
+        // Gas injection - yellow
+        if (injData.gasInjection >= gasInjMin) {
+            return { r: 255, g: 255, b: 0 };
+        }
+    }
+
+    // Default gray color
+    return null;
+}
 export function makeRichWellTrajectoriesLayer({
     id,
     isLoading,
@@ -42,6 +89,24 @@ export function makeRichWellTrajectoriesLayer({
     const productionData = getStoredData("productionData");
     const injectionData = getStoredData("injectionData");
 
+    //     type WellProductionData_api = {
+    //     wellboreUuid: string;
+    //     wellboreUwi: string;
+    //     startDate: string;
+    //     endDate: string;
+    //     oilProductionSm3: number; //green
+    //     gasProductionSm3: number; //red
+    //     waterProductionM3: number; //blue
+    // };
+
+    // type WellInjectionData_api = {
+    //     wellboreUuid: string;
+    //     wellboreUwi: string;
+    //     startDate: string;
+    //     endDate: string;
+    //     waterInjection: number; //blue
+    //     gasInjection: number; //yellow
+    // };
     // **************************
     // TODO: Segment filter settings is currently not optional. Making same top/bottom count as "unfiltered"
     const surfaceFilterTop = getSetting(Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME);
@@ -107,15 +172,59 @@ export function makeRichWellTrajectoriesLayer({
         };
     });
 
+    // Get settings for flow data filtering
+    const oilProdMin = getSetting(Setting.PDM_OIL_PROD_MIN) ?? 0;
+    const gasProdMin = getSetting(Setting.PDM_GAS_PROD_MIN) ?? 0;
+    const waterProdMin = getSetting(Setting.PDM_WATER_PROD_MIN) ?? 0;
+    const waterInjMin = getSetting(Setting.PDM_WATER_INJ_MIN) ?? 0;
+    const gasInjMin = getSetting(Setting.PDM_GAS_INJ_MIN) ?? 0;
+
+    //TODO Fix Filter wells to only include those with valid flow data
+    const filteredWellboreData =
+        productionData && injectionData
+            ? wellboreData.filter((wb) => {
+                  const color = setColorByFlowData(
+                      oilProdMin,
+                      gasProdMin,
+                      waterProdMin,
+                      waterInjMin,
+                      gasInjMin,
+                      wb.uniqueIdentifier,
+                      productionData,
+                      injectionData,
+                  );
+                  return color !== null;
+              })
+            : wellboreData;
+
     const wellsLayer = new RichWellsLayer({
         id,
-        data: wellboreData,
+        data: filteredWellboreData,
         segmentFilterValue: shouldApplySegmentFilter ? ["WITHIN_FILTER"] : undefined,
         tvdFilterValue: tvdRange,
         mdFilterValue: mdRange,
 
         discardFilteredSections: !depthFilter?.useOpaqueCutoff,
         isWellboreSelected: (uuid) => !!selectedHeaders?.some((header) => header.wellboreUuid === uuid),
+        getWellColor: (wellboreUwi: string) => {
+            if (productionData && injectionData) {
+                const color = setColorByFlowData(
+                    oilProdMin,
+                    gasProdMin,
+                    waterProdMin,
+                    waterInjMin,
+                    gasInjMin,
+                    wellboreUwi,
+                    productionData,
+                    injectionData,
+                );
+                // Return color or default gray (shouldn't happen since we filter)
+                return color ?? { r: 128, g: 128, b: 128 };
+            } else {
+                // Default color (gray) if no data available
+                return { r: 128, g: 128, b: 128 };
+            }
+        },
     });
 
     return wellsLayer;

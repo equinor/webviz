@@ -76,6 +76,11 @@ export enum Setting {
     WELL_TRAJ_FILTER_TOP_SURFACE_NAME = "wellTrajectoryFilterTopSurfaceName",
     WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME = "wellTrajectoryFilterBottomSurfaceName",
     WELL_TRAJ_FILTER_SURFACE_REALIZATION = "wellTrajectoryFilterSurfaceRealization",
+    PDM_OIL_PROD_MIN = "pdmOilProdMin",
+    PDM_GAS_PROD_MIN = "pdmGasProdMin",
+    PDM_WATER_PROD_MIN = "pdmWaterProdMin",
+    PDM_WATER_INJ_MIN = "pdmWaterInjMin",
+    PDM_GAS_INJ_MIN = "pdmGasInjMin",
     TIME_POINT = "timePoint",
     TIME_INTERVAL = "timeInterval",
     WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
@@ -133,6 +138,11 @@ export const settingCategories = {
     [Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.WELL_TRAJ_FILTER_SURFACE_REALIZATION]: SettingCategory.SINGLE_SELECT,
+    [Setting.PDM_OIL_PROD_MIN]: SettingCategory.NUMBER_WITH_STEP,
+    [Setting.PDM_GAS_PROD_MIN]: SettingCategory.NUMBER_WITH_STEP,
+    [Setting.PDM_WATER_PROD_MIN]: SettingCategory.NUMBER_WITH_STEP,
+    [Setting.PDM_WATER_INJ_MIN]: SettingCategory.NUMBER_WITH_STEP,
+    [Setting.PDM_GAS_INJ_MIN]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.TIME_POINT]: SettingCategory.SINGLE_SELECT,
     [Setting.TIME_INTERVAL]: SettingCategory.SINGLE_SELECT,
     [Setting.REPRESENTATION]: SettingCategory.SINGLE_SELECT,
@@ -193,6 +203,11 @@ export type SettingTypes = {
     [Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME]: string | null;
     [Setting.WELL_TRAJ_FILTER_BOTTOM_SURFACE_NAME]: string | null;
     [Setting.WELL_TRAJ_FILTER_SURFACE_REALIZATION]: number | null;
+    [Setting.PDM_OIL_PROD_MIN]: number | null;
+    [Setting.PDM_GAS_PROD_MIN]: number | null;
+    [Setting.PDM_WATER_PROD_MIN]: number | null;
+    [Setting.PDM_WATER_INJ_MIN]: number | null;
+    [Setting.PDM_GAS_INJ_MIN]: number | null;
     [Setting.TIME_POINT]: string | null;
     [Setting.TIME_INTERVAL]: string | null;
     [Setting.REPRESENTATION]: Representation | null;
