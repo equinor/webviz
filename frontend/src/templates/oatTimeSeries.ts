@@ -2,6 +2,7 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
+import { PlotType } from "@modules/DistributionPlot/typesAndEnums";
 import { ChannelIds } from "@modules/SimulationTimeSeriesSensitivity/channelDefs";
 
 const template: Template = {
@@ -18,8 +19,8 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
         }),
-        createTemplateModuleInstance("ParameterResponseCrossPlot", {
-            instanceRef: "MyParameterResponseCrossPlotInstance",
+        createTemplateModuleInstance("SensitivityPlot", {
+            instanceRef: "SensitivityPlotInstance",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -28,7 +29,7 @@ const template: Template = {
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
-                channelResponse: {
+                response: {
                     listensToInstanceRef: "MainTimeSeriesSensitivityInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.REALIZATION_VALUE,
@@ -36,7 +37,7 @@ const template: Template = {
             },
         }),
         createTemplateModuleInstance("DistributionPlot", {
-            instanceRef: "MyDistributionPlotInstance",
+            instanceRef: "DistributionPlotInstance",
             layout: {
                 relHeight: 0.5,
                 relWidth: 1,
@@ -51,14 +52,11 @@ const template: Template = {
                     channelIdString: ChannelIds.REALIZATION_VALUE,
                 },
             },
-            /*
             initialState: {
                 settings: {
                     plotType: PlotType.Histogram,
-                    crossPlottingType: KeyKind.REALIZATION,
-                }
+                },
             },
-            */
         }),
     ],
 };

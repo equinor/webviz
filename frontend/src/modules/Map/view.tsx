@@ -11,7 +11,7 @@ import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/lro/longR
 import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
-import { SurfaceDataFormat } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
+import { SurfaceDataFormat } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
 import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";

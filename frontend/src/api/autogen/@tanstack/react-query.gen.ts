@@ -35,6 +35,7 @@ import {
     getGridParameter,
     getGridSurface,
     getHistoricalVectorData,
+    getInjectionData,
     getInlineSlice,
     getIsSensitivityRun,
     getLogCurveData,
@@ -47,6 +48,7 @@ import {
     getParameters,
     getPolygonsData,
     getPolygonsDirectory,
+    getProductionData,
     getRealizationData,
     getRealizationFlowNetwork,
     getRealizationSurfacesMetadata,
@@ -130,6 +132,7 @@ import type {
     GetGridParameterData_api,
     GetGridSurfaceData_api,
     GetHistoricalVectorDataData_api,
+    GetInjectionDataData_api,
     GetInlineSliceData_api,
     GetIsSensitivityRunData_api,
     GetLogCurveDataData_api,
@@ -142,6 +145,7 @@ import type {
     GetParametersData_api,
     GetPolygonsDataData_api,
     GetPolygonsDirectoryData_api,
+    GetProductionDataData_api,
     GetRealizationDataData_api,
     GetRealizationFlowNetworkData_api,
     GetRealizationSurfacesMetadataData_api,
@@ -1328,6 +1332,52 @@ export const getRealizationFlowNetworkOptions = (options: Options<GetRealization
             return data;
         },
         queryKey: getRealizationFlowNetworkQueryKey(options),
+    });
+};
+
+export const getProductionDataQueryKey = (options: Options<GetProductionDataData_api>) =>
+    createQueryKey("getProductionData", options);
+
+/**
+ * Get Production Data
+ *
+ * Get allocated production per well in the time interval
+ */
+export const getProductionDataOptions = (options: Options<GetProductionDataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getProductionData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getProductionDataQueryKey(options),
+    });
+};
+
+export const getInjectionDataQueryKey = (options: Options<GetInjectionDataData_api>) =>
+    createQueryKey("getInjectionData", options);
+
+/**
+ * Get Injection Data
+ *
+ * Get allocated injection per well in the time interval
+ */
+export const getInjectionDataOptions = (options: Options<GetInjectionDataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInjectionData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInjectionDataQueryKey(options),
     });
 };
 

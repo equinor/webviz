@@ -12,7 +12,7 @@ import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -30,6 +30,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -72,9 +73,9 @@ import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "./
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
-    const ensembleSet = useEnsembleSet(workbenchSession);
-    const statusWriter = useSettingsStatusWriter(settingsContext);
+export function Settings(props: ModuleSettingsProps<Interfaces>) {
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
     const [showParameterListFilter, setShowParameterListFilter] = React.useState(false);
 
@@ -100,18 +101,17 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useAtom(selectedParameterIdentStringAtom);
 
-    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-    const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
-
     usePropagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
 
     // Receive global parameter string and update local state if different
-    React.useEffect(() => {
-        if (globalSyncedParameter !== null && globalSyncedParameter !== selectedParameterIdentStr.value) {
-            setSelectedParameterIdentStr(globalSyncedParameter);
-        }
-    }, [globalSyncedParameter, setSelectedParameterIdentStr, selectedParameterIdentStr]);
+    useSyncSetting({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.settingsContext,
+        syncSettingKey: SyncSettingKey.PARAMETER,
+        topic: "global.syncValue.parameter",
+        value: selectedParameterIdentStr.value,
+        setValue: setSelectedParameterIdentStr,
+    });
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
@@ -314,9 +314,9 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                 <SettingWrapper annotations={selectedEnsembleIdentsAnnotations}>
                     <EnsemblePicker
                         ensembles={ensembleSet.getEnsembleArray()}
-                        value={selectedEnsembleIdents.value}
+                        value={selectedEnsembleIdents.value ?? []}
                         allowDeltaEnsembles={true}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                         onChange={handleEnsembleSelectChange}
                     />
                 </SettingWrapper>
@@ -421,8 +421,8 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                                             }))}
                                             size={6}
                                             value={
-                                                selectedParameterIdentStr
-                                                    ? [selectedParameterIdentStr.toString()]
+                                                selectedParameterIdentStr.value
+                                                    ? [selectedParameterIdentStr.value]
                                                     : undefined
                                             }
                                             onChange={handleColorByParameterChange}

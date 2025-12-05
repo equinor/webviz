@@ -6,14 +6,14 @@ import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAn
 import { type BoundingBox2d_api, type PolygonData_api, type SurfaceDef_api, type WellboreTrajectory_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import type { Wellbore } from "@framework/types/wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { SurfaceDataFormat } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
+import { SurfaceDataFormat } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
@@ -60,13 +60,8 @@ const updateViewPortBounds = (
 };
 
 //-----------------------------------------------------------------------------------------------------------
-export function View({
-    viewContext,
-    workbenchSettings,
-    workbenchServices,
-    workbenchSession,
-}: ModuleViewProps<Interfaces>) {
-    const myInstanceIdStr = viewContext.getInstanceIdString();
+export function View(props: ModuleViewProps<Interfaces>) {
+    const myInstanceIdStr = props.viewContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap view`);
     const viewIds = {
         view2D: `${myInstanceIdStr} -- view2D`,
@@ -75,20 +70,22 @@ export function View({
         annotation3D: `${myInstanceIdStr} -- annotation3D`,
     };
 
-    const ensembleSet = useEnsembleSet(workbenchSession);
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
 
-    const meshSurfAddr = viewContext.useSettingsToViewInterfaceValue("meshSurfaceAddress");
-    const propertySurfAddr = viewContext.useSettingsToViewInterfaceValue("propertySurfaceAddress");
-    const polygonsAddr = viewContext.useSettingsToViewInterfaceValue("polygonsAddress");
-    const selectedWellUuids = viewContext.useSettingsToViewInterfaceValue("selectedWellUuids");
-    const surfaceSettings = viewContext.useSettingsToViewInterfaceValue("surfaceSettings");
-    const viewSettings = viewContext.useSettingsToViewInterfaceValue("viewSettings");
+    const meshSurfAddr = props.viewContext.useSettingsToViewInterfaceValue("meshSurfaceAddress");
+    const propertySurfAddr = props.viewContext.useSettingsToViewInterfaceValue("propertySurfaceAddress");
+    const polygonsAddr = props.viewContext.useSettingsToViewInterfaceValue("polygonsAddress");
+    const selectedWellUuids = props.viewContext.useSettingsToViewInterfaceValue("selectedWellUuids");
+    const surfaceSettings = props.viewContext.useSettingsToViewInterfaceValue("surfaceSettings");
+    const viewSettings = props.viewContext.useSettingsToViewInterfaceValue("viewSettings");
     const [resetBounds, toggleResetBounds] = React.useState<boolean>(false);
     const [axesLayer, setAxesLayer] = React.useState<Record<string, unknown> | null>(null);
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
-    const syncedSettingKeys = viewContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-    const surfaceColorScale = useContinuousColorScale(workbenchSettings, {
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.viewContext,
+    });
+    const surfaceColorScale = useContinuousColorScale(props.workbenchSettings, {
         gradientType: ColorScaleGradientType.Sequential,
     });
     const colorTables = createContinuousColorScaleForMap(surfaceColorScale);
@@ -241,8 +238,8 @@ export function View({
             <div>
                 {show3D ? (
                     <SyncedSubsurfaceViewer
-                        viewContext={viewContext}
-                        workbenchServices={workbenchServices}
+                        viewContext={props.viewContext}
+                        workbenchServices={props.workbenchServices}
                         id={viewIds.view3D}
                         bounds={viewportBounds}
                         layers={newLayers}
@@ -274,8 +271,8 @@ export function View({
                     </SyncedSubsurfaceViewer>
                 ) : (
                     <SyncedSubsurfaceViewer
-                        viewContext={viewContext}
-                        workbenchServices={workbenchServices}
+                        viewContext={props.viewContext}
+                        workbenchServices={props.workbenchServices}
                         id={viewIds.view2D}
                         bounds={viewportBounds}
                         layers={newLayers}

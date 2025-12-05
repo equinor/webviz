@@ -71,6 +71,9 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataErrors_api,
     GetHistoricalVectorDataResponses_api,
+    GetInjectionDataData_api,
+    GetInjectionDataErrors_api,
+    GetInjectionDataResponses_api,
     GetInlineSliceData_api,
     GetInlineSliceErrors_api,
     GetInlineSliceResponses_api,
@@ -107,6 +110,9 @@ import type {
     GetPolygonsDirectoryData_api,
     GetPolygonsDirectoryErrors_api,
     GetPolygonsDirectoryResponses_api,
+    GetProductionDataData_api,
+    GetProductionDataErrors_api,
+    GetProductionDataResponses_api,
     GetRealizationDataData_api,
     GetRealizationDataErrors_api,
     GetRealizationDataResponses_api,
@@ -970,6 +976,36 @@ export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
     >({
         responseType: "json",
         url: "/flow_network/realization_flow_network/",
+        ...options,
+    });
+};
+
+/**
+ * Get Production Data
+ *
+ * Get allocated production per well in the time interval
+ */
+export const getProductionData = <ThrowOnError extends boolean = false>(
+    options: Options<GetProductionDataData_api, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetProductionDataResponses_api, GetProductionDataErrors_api, ThrowOnError>({
+        responseType: "json",
+        url: "/flow_data/production_data/",
+        ...options,
+    });
+};
+
+/**
+ * Get Injection Data
+ *
+ * Get allocated injection per well in the time interval
+ */
+export const getInjectionData = <ThrowOnError extends boolean = false>(
+    options: Options<GetInjectionDataData_api, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetInjectionDataResponses_api, GetInjectionDataErrors_api, ThrowOnError>({
+        responseType: "json",
+        url: "/flow_data/injection_data/",
         ...options,
     });
 };

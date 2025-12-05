@@ -2685,6 +2685,36 @@ export type WellCompletionsZone_api = {
 };
 
 /**
+ * WellInjectionData
+ */
+export type WellInjectionData_api = {
+    /**
+     * Wellboreuuid
+     */
+    wellboreUuid: string;
+    /**
+     * Wellboreuwi
+     */
+    wellboreUwi: string;
+    /**
+     * Startdate
+     */
+    startDate: string;
+    /**
+     * Enddate
+     */
+    endDate: string;
+    /**
+     * Waterinjection
+     */
+    waterInjection: number;
+    /**
+     * Gasinjection
+     */
+    gasInjection: number;
+};
+
+/**
  * WellLogCurveSourceEnum
  */
 export enum WellLogCurveSourceEnum_api {
@@ -2702,6 +2732,40 @@ export enum WellLogCurveTypeEnum_api {
     DISCRETE = "discrete",
     FLAG = "flag",
 }
+
+/**
+ * WellProductionData
+ */
+export type WellProductionData_api = {
+    /**
+     * Wellboreuuid
+     */
+    wellboreUuid: string;
+    /**
+     * Wellboreuwi
+     */
+    wellboreUwi: string;
+    /**
+     * Startdate
+     */
+    startDate: string;
+    /**
+     * Enddate
+     */
+    endDate: string;
+    /**
+     * Oilproductionsm3
+     */
+    oilProductionSm3: number;
+    /**
+     * Gasproductionsm3
+     */
+    gasProductionSm3: number;
+    /**
+     * Waterproductionm3
+     */
+    waterProductionM3: number;
+};
 
 /**
  * WellboreCasing
@@ -5006,6 +5070,100 @@ export type GetRealizationFlowNetworkResponses_api = {
 
 export type GetRealizationFlowNetworkResponse_api =
     GetRealizationFlowNetworkResponses_api[keyof GetRealizationFlowNetworkResponses_api];
+
+export type GetProductionDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Field Identifier
+         *
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Start Date
+         *
+         * Start date in YYYY-MM-DD
+         */
+        start_date: string;
+        /**
+         * End Date
+         *
+         * End date in YYYY-MM-DD
+         */
+        end_date: string;
+        zCacheBust?: string;
+    };
+    url: "/flow_data/production_data/";
+};
+
+export type GetProductionDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetProductionDataError_api = GetProductionDataErrors_api[keyof GetProductionDataErrors_api];
+
+export type GetProductionDataResponses_api = {
+    /**
+     * Response Get Production Data
+     *
+     * Successful Response
+     */
+    200: Array<WellProductionData_api>;
+};
+
+export type GetProductionDataResponse_api = GetProductionDataResponses_api[keyof GetProductionDataResponses_api];
+
+export type GetInjectionDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Field Identifier
+         *
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Start Date
+         *
+         * Start date in YYYY-MM-DD
+         */
+        start_date: string;
+        /**
+         * End Date
+         *
+         * End date in YYYY-MM-DD
+         */
+        end_date: string;
+        zCacheBust?: string;
+    };
+    url: "/flow_data/injection_data/";
+};
+
+export type GetInjectionDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetInjectionDataError_api = GetInjectionDataErrors_api[keyof GetInjectionDataErrors_api];
+
+export type GetInjectionDataResponses_api = {
+    /**
+     * Response Get Injection Data
+     *
+     * Successful Response
+     */
+    200: Array<WellInjectionData_api>;
+};
+
+export type GetInjectionDataResponse_api = GetInjectionDataResponses_api[keyof GetInjectionDataResponses_api];
 
 export type GetTableDataData_api = {
     body?: never;

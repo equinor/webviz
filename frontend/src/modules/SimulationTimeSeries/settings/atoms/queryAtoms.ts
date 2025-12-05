@@ -10,7 +10,7 @@ import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
 
 export const vectorListQueriesAtom = atomWithQueries((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         // Regular Ensemble
@@ -42,10 +42,10 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
             return () => ({
                 queryKey: [
                     "getDeltaEnsembleVectorList",
-                    ensembleIdent.getComparisonEnsembleIdent().getCaseUuid(),
-                    ensembleIdent.getComparisonEnsembleIdent().getEnsembleName(),
-                    ensembleIdent.getReferenceEnsembleIdent().getCaseUuid(),
-                    ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
+                    comparisonEnsembleIdent.getCaseUuid(),
+                    comparisonEnsembleIdent.getEnsembleName(),
+                    referenceEnsembleIdent.getCaseUuid(),
+                    referenceEnsembleIdent.getEnsembleName(),
                 ],
                 queryFn: async () => {
                     const { data } = await getDeltaEnsembleVectorList({
@@ -55,10 +55,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                             reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
                             reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
                             include_derived_vectors: true,
-                            ...makeCacheBustingQueryParam(
-                                ensembleIdent.getComparisonEnsembleIdent(),
-                                ensembleIdent.getReferenceEnsembleIdent(),
-                            ),
+                            ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
                         },
                         throwOnError: true,
                     });

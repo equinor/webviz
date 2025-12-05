@@ -10,6 +10,7 @@ class AccessTokens(TypedDict):
     sumo_access_token: Optional[str]
     smda_access_token: Optional[str]
     ssdl_access_token: Optional[str]
+    pdm_access_token: Optional[str]
 
 
 class AuthenticatedUser:
@@ -28,6 +29,7 @@ class AuthenticatedUser:
         self._sumo_access_token = access_tokens.get("sumo_access_token")
         self._smda_access_token = access_tokens.get("smda_access_token")
         self._ssdl_access_token = access_tokens.get("ssdl_access_token")
+        self._pdm_access_token = access_tokens.get("pdm_access_token")
 
     def __hash__(self) -> int:
         return hash(self._user_id)
@@ -89,6 +91,19 @@ class AuthenticatedUser:
     def has_ssdl_access_token(self) -> bool:
         try:
             self.get_ssdl_access_token()
+            return True
+        except:
+            return False
+
+    def get_pdm_access_token(self) -> str:
+        if isinstance(self._pdm_access_token, str) and len(self._pdm_access_token) > 0:
+            return self._pdm_access_token
+
+        raise AuthorizationError("User has no pdm access token", Service.GENERAL)
+
+    def has_pdm_access_token(self) -> bool:
+        try:
+            self.get_pdm_access_token()
             return True
         except:
             return False
