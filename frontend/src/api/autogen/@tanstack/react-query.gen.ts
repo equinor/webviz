@@ -18,7 +18,6 @@ import {
     deleteSnapshot,
     deleteSnapshotAccessLog,
     deprecatedGetStratigraphicUnits,
-    deprecatedGetWellborePicksForWellbore,
     getAlive,
     getAliveProtected,
     getCases,
@@ -115,7 +114,6 @@ import type {
     DeleteSnapshotData_api,
     DeleteSnapshotError_api,
     DeprecatedGetStratigraphicUnitsData_api,
-    DeprecatedGetWellborePicksForWellboreData_api,
     GetAliveData_api,
     GetAliveProtectedData_api,
     GetCasesData_api,
@@ -1430,7 +1428,7 @@ export const getDrilledWellboreHeadersQueryKey = (options: Options<GetDrilledWel
 /**
  * Get Drilled Wellbore Headers
  *
- * Get wellbore headers for all wells in the field
+ * Get wellbore headers for all wells in a given field
  */
 export const getDrilledWellboreHeadersOptions = (options: Options<GetDrilledWellboreHeadersData_api>) => {
     return queryOptions({
@@ -1453,7 +1451,7 @@ export const getWellTrajectoriesQueryKey = (options: Options<GetWellTrajectories
 /**
  * Get Well Trajectories
  *
- * Get well trajectories for field
+ * Get trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given
  */
 export const getWellTrajectoriesOptions = (options: Options<GetWellTrajectoriesData_api>) => {
     return queryOptions({
@@ -1476,7 +1474,7 @@ export const getWellborePickIdentifiersQueryKey = (options: Options<GetWellboreP
 /**
  * Get Wellbore Pick Identifiers
  *
- * Get wellbore pick identifiers for field and stratigraphic column
+ * Get wellbore pick identifiers for a given stratigraphic column
  */
 export const getWellborePickIdentifiersOptions = (options: Options<GetWellborePickIdentifiersData_api>) => {
     return queryOptions({
@@ -1500,7 +1498,7 @@ export const getWellborePicksForPickIdentifierQueryKey = (
 /**
  * Get Wellbore Picks For Pick Identifier
  *
- * Get picks for wellbores for field and pick identifier
+ * Get wellbore picks for a field and pick identifier
  *
  * This implies picks for multiple wellbores for given field and pick identifier.
  * E.g. picks for all wellbores in a given surface in a field.
@@ -1522,41 +1520,13 @@ export const getWellborePicksForPickIdentifierOptions = (
     });
 };
 
-export const deprecatedGetWellborePicksForWellboreQueryKey = (
-    options: Options<DeprecatedGetWellborePicksForWellboreData_api>,
-) => createQueryKey("deprecatedGetWellborePicksForWellbore", options);
-
-/**
- * Deprecated Get Wellbore Picks For Wellbore
- *
- * Get wellbore picks for field and pick identifier
- *
- * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
- */
-export const deprecatedGetWellborePicksForWellboreOptions = (
-    options: Options<DeprecatedGetWellborePicksForWellboreData_api>,
-) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await deprecatedGetWellborePicksForWellbore({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: deprecatedGetWellborePicksForWellboreQueryKey(options),
-    });
-};
-
 export const getWellborePicksInStratColumnQueryKey = (options: Options<GetWellborePicksInStratColumnData_api>) =>
     createQueryKey("getWellborePicksInStratColumn", options);
 
 /**
  * Get Wellbore Picks In Strat Column
  *
- * Get wellbore picks for a single wellbore with stratigraphic column identifier
+ * Get wellbore picks for a single wellbore within stratigraphic column
  */
 export const getWellborePicksInStratColumnOptions = (options: Options<GetWellborePicksInStratColumnData_api>) => {
     return queryOptions({
@@ -1578,6 +1548,8 @@ export const getWellboreStratigraphicColumnsQueryKey = (options: Options<GetWell
 
 /**
  * Get Wellbore Stratigraphic Columns
+ *
+ * Get stratigraphic columns for a given wellbore
  */
 export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellboreStratigraphicColumnsData_api>) => {
     return queryOptions({
@@ -1600,7 +1572,7 @@ export const getWellboreCompletionsQueryKey = (options: Options<GetWellboreCompl
 /**
  * Get Wellbore Completions
  *
- * Get well bore completions for a single well bore
+ * Get wellbore completions for a given wellbore
  */
 export const getWellboreCompletionsOptions = (options: Options<GetWellboreCompletionsData_api>) => {
     return queryOptions({
@@ -1623,7 +1595,7 @@ export const getWellboreCasingsQueryKey = (options: Options<GetWellboreCasingsDa
 /**
  * Get Wellbore Casings
  *
- * Get well bore casings for a single well bore
+ * Get wellbore casings for a given wellbore
  */
 export const getWellboreCasingsOptions = (options: Options<GetWellboreCasingsData_api>) => {
     return queryOptions({
@@ -1646,7 +1618,7 @@ export const getWellborePerforationsQueryKey = (options: Options<GetWellborePerf
 /**
  * Get Wellbore Perforations
  *
- * Get well bore casing for a single well bore
+ * Get wellbore perforations for a given wellbore
  */
 export const getWellborePerforationsOptions = (options: Options<GetWellborePerforationsData_api>) => {
     return queryOptions({
