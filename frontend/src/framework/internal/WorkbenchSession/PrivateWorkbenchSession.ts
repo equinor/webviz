@@ -225,15 +225,9 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         this.clearDashboards();
 
-        for (const dashboard of contentState.dashboards) {
-            const newDashboard = new Dashboard(this._atomStoreMaster);
-            this.registerDashboard(newDashboard);
-            newDashboard.deserializeState(dashboard);
-        }
-
-        this._settings.deserializeState(contentState.settings);
-        this._userCreatedItems.deserializeState(contentState.userCreatedItems);
-
+        // We first have to load and setup the ensemble set before deserializing dashboards and modules.
+        // This is because modules may depend on ensembles being present in the EnsembleFinterprintStore when
+        // initiating requests to the backend.
         const userEnsembleSettings: UserEnsembleSetting[] = contentState.ensembleSet.regularEnsembles.map((e) => ({
             ensembleIdent: RegularEnsembleIdent.fromString(e.ensembleIdent),
             customName: e.name,
@@ -254,6 +248,17 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         // This has to be done after loading the ensemble set
         // in order to guarantee that all realization filters for the ensembles exist
         this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
+
+        // --- Now that the ensemble set is loaded, we can deserialize dashboards and modules ---
+
+        for (const dashboard of contentState.dashboards) {
+            const newDashboard = new Dashboard(this._atomStoreMaster);
+            this.registerDashboard(newDashboard);
+            newDashboard.deserializeState(dashboard);
+        }
+
+        this._settings.deserializeState(contentState.settings);
+        this._userCreatedItems.deserializeState(contentState.userCreatedItems);
     }
 
     async loadAndSetupEnsembleSet(
