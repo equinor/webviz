@@ -3,6 +3,7 @@
         "baseUrl": ".",
         "paths": {
             "@api": ["./src/api"],
+            "@api/*": ["./src/api/autogen/*"],
             "@assets/*": ["./src/assets/*"],
             "@framework/*": ["./src/framework/*"],
             "@lib/*": ["./src/lib/*"],

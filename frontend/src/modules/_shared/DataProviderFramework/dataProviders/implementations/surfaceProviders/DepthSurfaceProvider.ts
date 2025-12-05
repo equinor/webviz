@@ -1,4 +1,3 @@
-import type { Options } from "@hey-api/client-axios";
 import { hashKey } from "@tanstack/query-core";
 import { isEqual } from "lodash";
 
@@ -10,7 +9,7 @@ import {
     getStatisticalSurfaceDataHybridQueryKey,
     getSurfaceDataOptions,
 } from "@api";
-import type { GetStatisticalSurfaceDataHybridData_api } from "@api";
+import type { GetStatisticalSurfaceDataHybridData_api, Options } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";

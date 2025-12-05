@@ -1,13 +1,13 @@
 import React from "react";
 
-import type { RequestResult } from "@hey-api/client-axios";
 import type { QueryFunctionContext } from "@tanstack/query-core";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import { hashKey } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 
-import type { LroFailureResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
 import { client } from "@api";
+import type { LroFailureResp_api, LroInProgressResp_api, HTTPValidationError_api } from "@api";
+import type { RequestResult } from "@api/client";
 import { lroProgressBus } from "@framework/LroProgressBus";
 
 import type { BackoffStrategy } from "./backoffStrategies/BackoffStrategy";
@@ -73,7 +73,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
 
                 if (data.status === "success") {
                     lroProgressBus.remove(busKey);
-                    if (data.result === undefined) {
+                    if (data?.result === undefined) {
                         throw new LroError("Missing result in successful response", data);
                     }
                     return data.result;
@@ -162,9 +162,17 @@ type LongRunningApiResponse<TData> =
           result: TData;
       };
 
-type QueryFn<TArgs, TData> = (
-    options: TArgs,
-) => RequestResult<LongRunningApiResponse<TData>, LroFailureResp_api | HttpValidationError_api, false>;
+type LongRunningRequestResultByStatus<TData> = { [status: string]: LongRunningApiResponse<TData> };
+type LongRunningRequestErrorByStatus = { [status: string]: LroFailureResp_api | HTTPValidationError_api };
+
+type LongRunningRequestResult<TData> = RequestResult<
+    LongRunningRequestResultByStatus<TData>,
+    LongRunningRequestErrorByStatus,
+    false
+>;
+
+type QueryFn<TArgs, TData> = (options: TArgs) => LongRunningRequestResult<TData>;
+
 interface WrapLongRunningQueryArgs<TArgs, TData> {
     queryFn: QueryFn<TArgs, TData>;
     queryFnArgs: TArgs;
@@ -246,15 +254,13 @@ async function pollUntilDone<T>(options: {
                 throw new DOMException("Aborted", "AbortError");
             }
 
-            let response: Awaited<
-                RequestResult<LongRunningApiResponse<T>, LroFailureResp_api | HttpValidationError_api, false>
-            > | null = null;
+            let response: Awaited<LongRunningRequestResult<T>> | null = null;
 
             if (pollResource.resourceType === "url" && currentPollUrl) {
                 // If pollResource is a URL, use it directly
                 response = await client.get<
-                    LongRunningApiResponse<T>,
-                    LroFailureResp_api | HttpValidationError_api,
+                    LongRunningRequestResultByStatus<T>,
+                    LongRunningRequestErrorByStatus,
                     false
                 >({
                     url: currentPollUrl,

@@ -3,7 +3,7 @@ import React from "react";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import type { BoundingBox2D_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
+import { type BoundingBox2d_api, type PolygonData_api, type SurfaceDef_api, type WellboreTrajectory_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
@@ -13,6 +13,7 @@ import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { SurfaceDataFormat } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
@@ -34,7 +35,7 @@ type Bounds = [number, number, number, number];
 const updateViewPortBounds = (
     existingViewPortBounds: Bounds | undefined,
     resetBounds: boolean,
-    surfaceBB: BoundingBox2D_api,
+    surfaceBB: BoundingBox2d_api,
 ): Bounds => {
     const updatedBounds: Bounds = [surfaceBB.min_x, surfaceBB.min_y, surfaceBB.max_x, surfaceBB.max_y];
 
@@ -90,7 +91,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
     const colorTables = createContinuousColorScaleForMap(surfaceColorScale);
     const show3D: boolean = viewSettings?.show3d ?? true;
 
-    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr, "float", null, true);
+    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr, SurfaceDataFormat.FLOAT, null, true);
 
     let hasMeshSurfData = false;
     let resampleTo: SurfaceDef_api | null = null;
@@ -98,7 +99,12 @@ export function View(props: ModuleViewProps<Interfaces>) {
         hasMeshSurfData = true;
         resampleTo = meshSurfDataQuery.data.surface_def;
     }
-    const propertySurfDataQuery = useSurfaceDataQueryByAddress(propertySurfAddr, "float", resampleTo, hasMeshSurfData);
+    const propertySurfDataQuery = useSurfaceDataQueryByAddress(
+        propertySurfAddr,
+        SurfaceDataFormat.FLOAT,
+        resampleTo,
+        hasMeshSurfData,
+    );
 
     let fieldIdentifier: null | string = null;
     if (meshSurfAddr) {

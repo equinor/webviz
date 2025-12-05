@@ -1,10 +1,9 @@
 import React from "react";
 
-import type { Options } from "@hey-api/client-axios";
 import { useQuery } from "@tanstack/react-query";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
-import type { SurfaceDef_api, GetStatisticalSurfaceDataHybridData_api } from "@api";
+import type { SurfaceDef_api, GetStatisticalSurfaceDataHybridData_api, Options } from "@api";
 import { getStatisticalSurfaceDataHybrid, getStatisticalSurfaceDataHybridQueryKey } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -12,6 +11,7 @@ import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/lro/longR
 import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
+import { SurfaceDataFormat } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
 import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
@@ -36,7 +36,12 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
         }
     }
 
-    const normal_dataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, activeQueryType === "normal");
+    const normal_dataQuery = useSurfaceDataQueryByAddress(
+        surfaceAddress,
+        SurfaceDataFormat.FLOAT,
+        null,
+        activeQueryType === "normal",
+    );
 
     const hybrid_apiFunctionArgs: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
         query: {

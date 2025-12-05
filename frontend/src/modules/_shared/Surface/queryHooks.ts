@@ -7,6 +7,8 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
 
+import type { SurfaceDataFormat } from "../DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
+
 import type { SurfaceDataFloat_trans } from "./queryDataTransforms";
 import { transformSurfaceData } from "./queryDataTransforms";
 import {
@@ -43,12 +45,12 @@ export function useObservedSurfacesMetadataQuery(caseUuid: string | undefined): 
     });
 }
 
-export function useSurfaceDataQuery(surfAddrStr: string | null, format: "float", resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans>; // prettier-ignore
-export function useSurfaceDataQuery(surfAddrStr: string | null, format: "png", resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataPng_api>; // prettier-ignore
-export function useSurfaceDataQuery(surfAddrStr: string | null, format: "float" | "png", resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api>; // prettier-ignore
+export function useSurfaceDataQuery(surfAddrStr: string | null, format: SurfaceDataFormat.FLOAT, resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans>; // prettier-ignore
+export function useSurfaceDataQuery(surfAddrStr: string | null, format:SurfaceDataFormat.PNG, resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataPng_api>; // prettier-ignore
+export function useSurfaceDataQuery(surfAddrStr: string | null, format: SurfaceDataFormat, resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api>; // prettier-ignore
 export function useSurfaceDataQuery(
     surfAddrStr: string | null,
-    format: "float" | "png",
+    format: SurfaceDataFormat,
     resampleTo: SurfaceDef_api | null,
     allowEnable: boolean,
 ): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api> {
@@ -86,11 +88,11 @@ export function useSurfaceDataQuery(
     });
 }
 
-export function useSurfaceDataQueryByAddress(surfAddr: FullSurfaceAddress | null, format: "float", resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans>; // prettier-ignore
-export function useSurfaceDataQueryByAddress(surfAddr: FullSurfaceAddress | null, format: "png", resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataPng_api>; // prettier-ignore
+export function useSurfaceDataQueryByAddress(surfAddr: FullSurfaceAddress | null, format: SurfaceDataFormat.FLOAT, resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans>; // prettier-ignore
+export function useSurfaceDataQueryByAddress(surfAddr: FullSurfaceAddress | null, format: SurfaceDataFormat.PNG, resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataPng_api>; // prettier-ignore
 export function useSurfaceDataQueryByAddress(
     surfAddr: FullSurfaceAddress | null,
-    format: "float" | "png",
+    format: SurfaceDataFormat,
     resampleTo: SurfaceDef_api | null,
     allowEnable: boolean,
 ): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api> {
