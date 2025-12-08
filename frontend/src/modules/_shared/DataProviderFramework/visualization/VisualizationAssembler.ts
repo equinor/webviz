@@ -377,7 +377,7 @@ export class VisualizationAssembler<
             children.push(...product.children);
         }
 
-        for (const child of [...dataProviders, ...inheritedDataProviders]) {
+        for (const child of [...inheritedDataProviders, ...dataProviders]) {
             if (children.some((el) => el.id === child.getItemDelegate().getId())) {
                 continue;
             }
