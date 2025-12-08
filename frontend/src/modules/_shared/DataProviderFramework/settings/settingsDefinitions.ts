@@ -73,6 +73,7 @@ export enum Setting {
     TIME_OR_INTERVAL = "timeOrInterval",
     TIME_POINT = "timePoint",
     TIME_INTERVAL = "timeInterval",
+    WELLBORE_DEPTH_FILTER = "wellboreDepthFilter",
     WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
@@ -351,6 +352,36 @@ export type SettingTypeDefinitions = {
             applied: boolean;
         } | null;
         valueRange: [[number, number, number], [number, number, number], [number, number, number]];
+    };
+
+    [Setting.WELLBORE_DEPTH_FILTER]: {
+        internalValue:
+            | { filterType: "none" }
+            | { filterType: "tvd_range" | "md_range"; range: [number, number] }
+            | {
+                  filterType: "surface";
+                  attributeName: string | null;
+                  realizationNum: number;
+                  topSurfaceName: string | null;
+                  baseSurfaceName: string | null;
+              }
+            | null;
+        externalValue:
+            | { filterType: "none" }
+            | { filterType: "tvd_range" | "md_range"; range: [number, number] }
+            | {
+                  filterType: "surface";
+                  attributeName: string | null;
+                  realizationNum: number;
+                  topSurfaceName: string | null;
+                  baseSurfaceName: string | null;
+              }
+            | null;
+        valueRange: {
+            realizationNums: number[];
+            attributeNames: string[];
+            surfaceNamesInStratOrder: string[];
+        };
     };
 };
 
