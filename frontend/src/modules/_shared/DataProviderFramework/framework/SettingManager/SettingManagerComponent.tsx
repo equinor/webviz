@@ -31,6 +31,7 @@ export function SettingManagerComponent<
     const attributes = usePublishSubscribeTopicValue(props.setting, SettingTopic.ATTRIBUTES);
     const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_VALID);
     const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED);
+    const isValidPersistedValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED_VALUE_VALID);
     const valueRange = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_RANGE);
     const isExternallyControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_EXTERNALLY_CONTROLLED);
     const externalControllerProvider = usePublishSubscribeTopicValue(
@@ -112,7 +113,7 @@ export function SettingManagerComponent<
                                 workbenchSettings={props.manager.getWorkbenchSettings()}
                             />
                         </div>
-                        {isPersisted && !isLoading && isInitialized && !isValid && (
+                        {isPersisted && isValidPersistedValue && !isLoading && isInitialized && !isValid && (
                             <span
                                 className="text-xs flex items-center gap-1 text-orange-600"
                                 title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."
@@ -120,6 +121,17 @@ export function SettingManagerComponent<
                                 <Warning fontSize="inherit" />
                                 <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                                     Persisted value not valid.
+                                </span>
+                            </span>
+                        )}
+                        {isPersisted && !isValidPersistedValue && (
+                            <span
+                                className="text-xs flex items-center gap-1 text-red-600"
+                                title="The persisted value for this setting has an invalid structure and could not be loaded."
+                            >
+                                <Warning fontSize="inherit" />
+                                <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    Persisted value has invalid structure.
                                 </span>
                             </span>
                         )}

@@ -38,6 +38,50 @@ export class GridLayerRangeSetting
     implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
 {
     defaultValue: InternalValueType = null;
+    valueRangeIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType, index: number) => {
+            if (index === 0) {
+                return valueRange;
+            }
+
+            if (valueRange === null || accumulator === null) {
+                return null;
+            }
+
+            const mergedRanges: NonNullable<ValueRangeType>["range"] = {
+                i: [0, 0, 1],
+                j: [0, 0, 1],
+                k: [0, 0, 1],
+            };
+
+            for (const key of ["i", "j", "k"] as const) {
+                const min = Math.max(accumulator.range[key][0], valueRange?.range[key][0]);
+                const max = Math.min(accumulator.range[key][1], valueRange?.range[key][1]);
+                const step = Math.max(accumulator.range[key][2], valueRange?.range[key][2]);
+
+                mergedRanges[key] = [min, max, step];
+            }
+
+            const mergedZones = accumulator.zones.filter((zoneA) =>
+                valueRange.zones.some(
+                    (zoneB) =>
+                        zoneA.name === zoneB.name &&
+                        zoneA.start_layer === zoneB.start_layer &&
+                        zoneA.end_layer === zoneB.end_layer,
+                ),
+            );
+
+            return { range: mergedRanges, zones: mergedZones };
+        },
+        startingValue: null,
+        isValid: (valueRange: ValueRangeType): boolean => {
+            if (valueRange === null) {
+                return false;
+            }
+            const { i: iRange, j: jRange, k: kRange } = valueRange.range;
+            return iRange[0] <= iRange[1] && jRange[0] <= jRange[1] && kRange[0] <= kRange[1];
+        },
+    };
 
     isValueValidStructure(value: unknown): value is InternalValueType {
         // null is always valid
@@ -86,50 +130,6 @@ export class GridLayerRangeSetting
 
         return true;
     }
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType, index: number) => {
-            if (index === 0) {
-                return valueRange;
-            }
-
-            if (valueRange === null || accumulator === null) {
-                return null;
-            }
-
-            const mergedRanges: NonNullable<ValueRangeType>["range"] = {
-                i: [0, 0, 1],
-                j: [0, 0, 1],
-                k: [0, 0, 1],
-            };
-
-            for (const key of ["i", "j", "k"] as const) {
-                const min = Math.max(accumulator.range[key][0], valueRange?.range[key][0]);
-                const max = Math.min(accumulator.range[key][1], valueRange?.range[key][1]);
-                const step = Math.max(accumulator.range[key][2], valueRange?.range[key][2]);
-
-                mergedRanges[key] = [min, max, step];
-            }
-
-            const mergedZones = accumulator.zones.filter((zoneA) =>
-                valueRange.zones.some(
-                    (zoneB) =>
-                        zoneA.name === zoneB.name &&
-                        zoneA.start_layer === zoneB.start_layer &&
-                        zoneA.end_layer === zoneB.end_layer,
-                ),
-            );
-
-            return { range: mergedRanges, zones: mergedZones };
-        },
-        startingValue: null,
-        isValid: (valueRange: ValueRangeType): boolean => {
-            if (valueRange === null) {
-                return false;
-            }
-            const { i: iRange, j: jRange, k: kRange } = valueRange.range;
-            return iRange[0] <= iRange[1] && jRange[0] <= jRange[1] && kRange[0] <= kRange[1];
-        },
-    };
 
     mapInternalToExternalValue(internalValue: InternalValueType): ExternalValueType {
         if (internalValue === null) {
@@ -322,14 +322,19 @@ export class GridLayerRangeSetting
 
             return (
                 <>
-                    <div className={resolveClassNames({ "outline-2 outline-amber-400": hasChanges })} ref={divRef}>
+                    <div
+                        className={resolveClassNames("flex flex-col gap-y-2", {
+                            "outline-2 outline-amber-400": hasChanges,
+                        })}
+                        ref={divRef}
+                    >
                         {labels.map((label) => (
                             <div key={`setting-${label}`} className="flex items-center gap-x-1">
                                 <div className="w-8 flex flex-col items-start pl-1">{label.toUpperCase()}</div>
                                 <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                     <Input
                                         type="number"
-                                        value={internalValue?.[label][0] ?? 0}
+                                        value={internalValue?.[label][0] ?? valueRange.range[label][0]}
                                         onChange={(e) => handleInputChange(label, 0, parseInt(e.target.value))}
                                     />
                                 </div>
@@ -351,7 +356,7 @@ export class GridLayerRangeSetting
                                 <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                     <Input
                                         type="number"
-                                        value={internalValue?.[label][1] ?? 0}
+                                        value={internalValue?.[label][1] ?? valueRange.range[label][1]}
                                         onChange={(e) => handleInputChange(label, 1, parseInt(e.target.value))}
                                     />
                                 </div>
@@ -372,14 +377,14 @@ export class GridLayerRangeSetting
                             </div>
                         </div>
                         <div
-                            className={resolveClassNames("flex items-center gap-x-1 pl-8", {
-                                hidden: internalValue?.["k"].type !== "range",
+                            className={resolveClassNames("flex items-center gap-x-1 pl-8 h-8", {
+                                hidden: internalValue?.["k"].type !== "range" && internalValue !== null,
                             })}
                         >
                             <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                 <Input
                                     type="number"
-                                    value={internalValue?.["k"].range[0] ?? 0}
+                                    value={internalValue?.["k"].range[0] ?? valueRange.range["k"][0]}
                                     onChange={(e) => handleInputChange("k", 0, parseInt(e.target.value))}
                                 />
                             </div>
@@ -401,13 +406,13 @@ export class GridLayerRangeSetting
                             <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                 <Input
                                     type="number"
-                                    value={internalValue?.["k"].range[1] ?? 0}
+                                    value={internalValue?.["k"].range[1] ?? valueRange.range["k"][1]}
                                     onChange={(e) => handleInputChange("k", 1, parseInt(e.target.value))}
                                 />
                             </div>
                         </div>
                         <div
-                            className={resolveClassNames("flex items-center gap-x-1", {
+                            className={resolveClassNames("flex items-center gap-x-1 pl-8 h-8", {
                                 hidden: internalValue?.["k"].type !== "zone",
                             })}
                         >

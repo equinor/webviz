@@ -33,7 +33,12 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
     }
 
     isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
-        return isValueValid<RegularEnsembleIdent, RegularEnsembleIdent>(value, valueRange, (v) => v);
+        return isValueValid<RegularEnsembleIdent, RegularEnsembleIdent>(
+            value,
+            valueRange,
+            (v) => v,
+            (a, b) => a.equals(b),
+        );
     }
 
     fixupValue(value: ValueType, valueRange: ValueRangeType): ValueType {

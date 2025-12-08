@@ -26,6 +26,7 @@ export enum SettingTopic {
     IS_INITIALIZED = "IS_INITIALIZED",
     IS_PERSISTED = "IS_PERSISTED",
     ATTRIBUTES = "ATTRIBUTES",
+    IS_PERSISTED_VALUE_VALID = "IS_PERSISTED_VALUE_VALID",
 }
 
 export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueRange> = {
@@ -40,6 +41,7 @@ export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueRange> = 
     [SettingTopic.IS_INITIALIZED]: boolean;
     [SettingTopic.IS_PERSISTED]: boolean;
     [SettingTopic.ATTRIBUTES]: SettingAttributes;
+    [SettingTopic.IS_PERSISTED_VALUE_VALID]: boolean;
 };
 
 export type SettingManagerParams<
@@ -64,6 +66,7 @@ export enum ExternalControllerProviderType {
 }
 
 const NO_CACHE = Symbol("NO_CACHE");
+type NoCache = typeof NO_CACHE;
 
 /*
  * The SettingManager class is responsible for managing a setting.
@@ -95,6 +98,7 @@ export class SettingManager<
     private _loading: boolean = false;
     private _initialized: boolean = false;
     private _currentValueFromPersistence: TInternalValue | null = null;
+    private _currentValueFromPersistenceIsValid: boolean = true;
     private _isStatic: boolean;
     private _attributes: SettingAttributes = {
         enabled: true,
@@ -108,7 +112,7 @@ export class SettingManager<
     > | null = null;
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
-    private _cachedExternalValue: TExternalValue | null | typeof NO_CACHE = NO_CACHE;
+    private _cachedExternalValue: TExternalValue | null | NoCache = NO_CACHE;
 
     constructor({
         type,
@@ -208,6 +212,15 @@ export class SettingManager<
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingTopic.VALUE_RANGE)(() => {
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_RANGE);
+            }),
+        );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.IS_PERSISTED_VALUE_VALID)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED_VALUE_VALID);
             }),
         );
     }
@@ -317,24 +330,32 @@ export class SettingManager<
         this._cachedExternalValue = NO_CACHE;
 
         try {
-            let deserializedValue = JSON.parse(serializedValue);
+            let deserializedValue;
             if (this._customSettingImplementation.deserializeValue) {
                 deserializedValue = this._customSettingImplementation.deserializeValue(serializedValue);
+            } else {
+                deserializedValue = JSON.parse(serializedValue);
             }
 
             // Validate parsed value has correct structure
             if (!this.isDeserializedValueValidStructure(deserializedValue)) {
-                console.warn(
+                console.error(
                     `Deserialized value for setting "${this._label}" has invalid structure, resetting to null`,
                 );
                 this._currentValueFromPersistence = null;
+                this.setPersistedValueIsValid(false);
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
                 return;
             }
 
             this._currentValueFromPersistence = deserializedValue;
+            this.setPersistedValueIsValid(true);
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
         } catch (error) {
             console.error(`Failed to deserialize value for setting "${this._label}":`, error);
             this._currentValueFromPersistence = null;
+            this.setPersistedValueIsValid(false);
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
         }
     }
 
@@ -365,7 +386,21 @@ export class SettingManager<
         if (this._externalController) {
             return this._externalController.getSetting().isPersistedValue();
         }
+
+        // Persisted value is not valid
+        if (!this._currentValueFromPersistenceIsValid) {
+            return true;
+        }
         return this._currentValueFromPersistence !== null;
+    }
+
+    private setPersistedValueIsValid(isValid: boolean): void {
+        if (this._currentValueFromPersistenceIsValid === isValid) {
+            return;
+        }
+
+        this._currentValueFromPersistenceIsValid = isValid;
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED_VALUE_VALID);
     }
 
     /*
@@ -377,6 +412,7 @@ export class SettingManager<
             return;
         }
         this._currentValueFromPersistence = null;
+        this.setPersistedValueIsValid(true);
 
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED);
 
@@ -512,6 +548,8 @@ export class SettingManager<
                     return this.isLoading();
                 case SettingTopic.IS_PERSISTED:
                     return this.isPersistedValue();
+                case SettingTopic.IS_PERSISTED_VALUE_VALID:
+                    return this._currentValueFromPersistenceIsValid;
                 case SettingTopic.IS_INITIALIZED:
                     return this.isInitialized();
                 case SettingTopic.ATTRIBUTES:
@@ -537,7 +575,7 @@ export class SettingManager<
 
     maybeResetPersistedValue(): boolean {
         if (this._isStatic) {
-            if (this._currentValueFromPersistence !== null) {
+            if (this._currentValueFromPersistence !== null && this._currentValueFromPersistenceIsValid) {
                 this.setInternalValueAndInvalidateCache(this._currentValueFromPersistence);
                 this._currentValueFromPersistence = null;
                 this.setValueValid(true);
@@ -554,7 +592,7 @@ export class SettingManager<
             ? customIsValueValidFunction(this._currentValueFromPersistence, this._valueRange as any)
             : true;
 
-        if (isPersistedValueValid) {
+        if (isPersistedValueValid && this._currentValueFromPersistenceIsValid) {
             this.setInternalValueAndInvalidateCache(this._currentValueFromPersistence);
             this._currentValueFromPersistence = null;
             this.setValueValid(true);

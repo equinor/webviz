@@ -48,9 +48,7 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
 
         const v = value as Record<string, unknown>;
         return (
-            typeof v.areBoundariesUserDefined === "boolean" &&
-            typeof v.colorScale === "object" &&
-            v.colorScale !== null
+            typeof v.areBoundariesUserDefined === "boolean" && typeof v.colorScale === "object" && v.colorScale !== null
         );
     }
 
@@ -67,7 +65,7 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
         return JSON.stringify(serializedValue);
     }
 
-    deserializeValue?(serializedValue: string): ValueType {
+    deserializeValue(serializedValue: string): ValueType {
         const parsedValue = JSON.parse(serializedValue);
 
         return {
