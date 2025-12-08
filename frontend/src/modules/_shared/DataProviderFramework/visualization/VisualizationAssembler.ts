@@ -338,78 +338,11 @@ export class VisualizationAssembler<
             }
 
             if (instanceofItemGroup(child)) {
-                const product = this.makeRecursively(
-                    child.getGroupDelegate(),
-                    inheritedDataProviders,
-                    accumulatedData,
-                    injectedData,
-                    disableCache,
-                );
-
-                accumulatedData = product.accumulatedData;
-                aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
-                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
-                    hoverVisualizationFunctions,
-                    product.hoverVisualizationFunctions,
-                );
-                numLoadingDataProviders += product.numLoadingDataProviders;
-                numDataProviders += product.numDataProviders;
-                maybeApplyBoundingBox(product.combinedBoundingBox);
-
-                if (child instanceof Group) {
-                    const group = this.makeGroup(child, product);
-
-                    children.push(group);
-                    continue;
-                } else {
-                    annotations.push(...product.annotations);
-                }
-
-                children.push(...product.children);
+                itemGroups.push(child);
             }
 
             if (child instanceof DataProvider) {
-                numDataProviders++;
-
-                if (child.getStatus() === DataProviderStatus.LOADING) {
-                    numLoadingDataProviders++;
-                }
-
-                if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
-                    continue;
-                }
-
-                if (child.getStatus() === DataProviderStatus.ERROR) {
-                    const error = child.getError();
-                    if (error) {
-                        aggregatedErrorMessages.push(error);
-                    }
-                    continue;
-                }
-
-                if (child.getData() === null) {
-                    continue;
-                }
-
-                const dataProviderObjects = this.makeDataProviderObjects(
-                    child,
-                    accumulatedData,
-                    injectedData,
-                    disableCache,
-                );
-
-                if (!dataProviderObjects.visualization) {
-                    continue;
-                }
-
-                maybeApplyBoundingBox(dataProviderObjects.boundingBox);
-                children.push(dataProviderObjects.visualization);
-                annotations.push(...dataProviderObjects.annotations);
-                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
-                    hoverVisualizationFunctions,
-                    dataProviderObjects.hoverVisualizationFunctions,
-                );
-                accumulatedData = dataProviderObjects.accumulatedData ?? accumulatedData;
+                dataProviders.push(child);
             }
         }
 
@@ -419,6 +352,7 @@ export class VisualizationAssembler<
                 [...inheritedDataProviders, ...dataProviders],
                 accumulatedData,
                 injectedData,
+                disableCache,
             );
 
             accumulatedData = product.accumulatedData;
@@ -436,9 +370,9 @@ export class VisualizationAssembler<
 
                 children.push(group);
                 continue;
+            } else {
+                annotations.push(...product.annotations);
             }
-
-            annotations.push(...product.annotations);
 
             children.push(...product.children);
         }
