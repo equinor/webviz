@@ -13,6 +13,8 @@ import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useActiveDashboard } from "../ActiveDashboardBoundary";
+
 type LeftNavBarProps = {
     workbench: Workbench;
 };
@@ -20,7 +22,7 @@ type LeftNavBarProps = {
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
-    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+    const dashboard = useActiveDashboard();
     const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);
     const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
