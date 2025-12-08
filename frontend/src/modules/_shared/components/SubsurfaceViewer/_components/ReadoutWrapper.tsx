@@ -220,7 +220,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         >
             {props.children}
             <PositionReadout
-                viewportPickInfo={pickingInfoPerView[activeViewportId ?? -1][0]}
+                viewportPickInfo={pickingInfoPerView[activeViewportId ?? -1]?.[0]}
                 verticalScale={props.verticalScale}
                 visible={!hideReadout}
             />
