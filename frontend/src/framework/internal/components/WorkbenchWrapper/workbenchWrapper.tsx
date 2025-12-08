@@ -15,6 +15,7 @@ import "../../../../modules/registerAllModules";
 import "../../../../templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { LeftNavBar } from "../LeftNavBar";
@@ -63,17 +64,19 @@ export function WorkbenchWrapper() {
         <>
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
-                <SelectEnsemblesDialog workbench={workbench} />
-                <SaveSessionDialog workbench={workbench} />
-                <CreateSnapshotDialog workbench={workbench} />
-                <ActiveSessionRecoveryDialog workbench={workbench} />
-                <div className="grow min-h-0">
-                    <div className="w-full h-full flex flex-row">
-                        <LeftNavBar workbench={workbench} />
-                        <SettingsContentPanels workbench={workbench} />
-                        <RightNavBar workbench={workbench} />
+                <ActiveDashboardBoundary>
+                    <SelectEnsemblesDialog workbench={workbench} />
+                    <SaveSessionDialog workbench={workbench} />
+                    <CreateSnapshotDialog workbench={workbench} />
+                    <ActiveSessionRecoveryDialog workbench={workbench} />
+                    <div className="grow min-h-0">
+                        <div className="w-full h-full flex flex-row">
+                            <LeftNavBar workbench={workbench} />
+                            <SettingsContentPanels workbench={workbench} />
+                            <RightNavBar workbench={workbench} />
+                        </div>
                     </div>
-                </div>
+                </ActiveDashboardBoundary>
             </ActiveSessionBoundary>
             {content}
             <TemplatesDialog workbench={workbench} />
