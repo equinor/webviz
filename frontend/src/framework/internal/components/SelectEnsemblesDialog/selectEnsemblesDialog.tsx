@@ -6,24 +6,22 @@ import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-
-import { EnsemblesLoadingErrorInfoDialog } from "../EnsemblesLoadingErrorInfoDialog";
 
 import {
     EnsembleExplorerMode,
     useApplyEnsembleSelection,
-    useDialogFlowControl,
     useEnsembleSelectionHandlers,
     useEnsembleStateSync,
     useResponsiveDialogSizePercent,
 } from "./_hooks";
+import { makeHashFromSelectedEnsembles } from "./_utils";
 import { DialogActions } from "./private-components/DialogActions";
 import { EnsembleExplorer } from "./private-components/EnsembleExplorer";
 import { EnsembleTables } from "./private-components/EnsembleTables";
 import { ExplorerTitle } from "./private-components/ExplorerTitle";
+import { SelectEnsemblesConfirmationDialogs } from "./private-components/SelectEnsemblesConfirmationDialogs";
 
 export type SelectEnsemblesDialogProps = {
     workbench: Workbench;
@@ -35,6 +33,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [hasExplorerBeenOpened, setHasExplorerBeenOpened] = React.useState<boolean>(false);
     const [deltaEnsembleUuidToEdit, setDeltaEnsembleUuidToEdit] = React.useState<string>("");
 
+    const [showCancelDialog, setShowCancelDialog] = React.useState(false);
+    const [showEnsemblesLoadingErrorDialog, setShowEnsemblesLoadingErrorDialog] = React.useState(false);
+
     // Gui states
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
     const [isEnsembleSetLoading, setIsEnsembleSetLoading] = useGuiState(
@@ -45,6 +46,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const queryClient = useQueryClient();
     const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
+    const colorSet = useColorSet(props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings());
+    const dialogSizePercent = useResponsiveDialogSizePercent();
 
     // Set has opened flag when opening the ensemble explorer for the first time after dialog open
     React.useEffect(() => {
@@ -52,9 +55,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             setHasExplorerBeenOpened(true);
         }
     }, [isOpen, showEnsembleExplorer, hasExplorerBeenOpened]);
-
-    const dialogSizePercent = useResponsiveDialogSizePercent();
-    const colorSet = useColorSet(props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings());
 
     // Custom hook for state management, will reset states when ensemble set changes
     const {
@@ -70,42 +70,62 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [selectedDeltaEnsembles] = selectedDeltaEnsemblesState;
     const [selectableEnsemblesForDelta] = selectableEnsemblesForDeltaState;
 
-    // Custom hook to manage dialog flow/control
-    const dialogFlowControl = useDialogFlowControl({
-        workbenchSession,
-        ensembleSetHash,
-        selectedRegularEnsembles,
-        selectedDeltaEnsembles,
-        resetStatesFromEnsembleSet,
-        setIsOpen,
-        setShowEnsembleExplorer,
-        setHasExplorerBeenOpened,
-    });
+    // Calculate if there are unapplied changes
+    const currentHash = makeHashFromSelectedEnsembles(selectedRegularEnsembles, selectedDeltaEnsembles);
+    const hasUnappliedChanges = currentHash !== ensembleSetHash;
+
+    // Dialog confirmation actions
+    const handleClose = React.useCallback(
+        function handleClose() {
+            resetStatesFromEnsembleSet();
+            setIsOpen(false);
+            setShowEnsembleExplorer(false);
+            setHasExplorerBeenOpened(false);
+            setShowCancelDialog(false);
+            setShowEnsemblesLoadingErrorDialog(false);
+        },
+        [resetStatesFromEnsembleSet, setIsOpen],
+    );
+
+    const handleCancel = React.useCallback(
+        function handleCancel() {
+            if (hasUnappliedChanges) {
+                setShowCancelDialog(true);
+            } else {
+                handleClose();
+            }
+        },
+        [hasUnappliedChanges, handleClose],
+    );
 
     // Handlers for ensemble selection actions
     const selectionHandlers = useEnsembleSelectionHandlers({
         selectedRegularEnsemblesState: selectedRegularEnsemblesState,
         selectedDeltaEnsemblesState: selectedDeltaEnsemblesState,
         selectableEnsemblesForDeltaState: selectableEnsemblesForDeltaState,
-        deltaEnsembleUuidToEdit,
-        ensembleExplorerMode,
+        ensembleExplorerModeState: [ensembleExplorerMode, setEnsembleExplorerMode],
+        deltaEnsembleUuidToEditState: [deltaEnsembleUuidToEdit, setDeltaEnsembleUuidToEdit],
         setShowEnsembleExplorer,
-        setEnsembleExplorerMode,
-        setDeltaEnsembleUuidToEdit,
     });
 
     // Apply selection hook
-    const { applyEnsembleSelection, areAnyDeltaEnsemblesInvalid, hasDuplicateDeltaEnsembles } =
-        useApplyEnsembleSelection({
-            queryClient,
-            workbenchSession,
-            selectedRegularEnsembles,
-            selectedDeltaEnsembles,
-            isEnsembleSetLoading,
-            setIsEnsembleSetLoading,
-            onLoadingErrorsDetected: dialogFlowControl.callbacks.handleLoadingErrorsDetected,
-            onSuccess: dialogFlowControl.callbacks.handleClose,
-        });
+    const {
+        handleApplyEnsembleSelection,
+        handleApplyEnsembleSelectionWithLoadingError,
+        hasInvalidDeltaEnsembles,
+        hasDuplicateDeltaEnsembles,
+        ensembleLoadingErrorInfoMap,
+    } = useApplyEnsembleSelection({
+        queryClient,
+        workbenchSession,
+        selectedRegularEnsembles,
+        selectedDeltaEnsembles,
+        isEnsembleSetLoadingState: [isEnsembleSetLoading, setIsEnsembleSetLoading],
+        onLoadingErrorsDetected: () => {
+            setShowEnsemblesLoadingErrorDialog(true);
+        },
+        onSuccess: handleClose,
+    });
 
     // Determine next ensemble color
     const nextEnsembleColor = React.useMemo(() => {
@@ -123,16 +143,19 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return colorSet.getColor(usedColors.length % colorSet.getColorArray().length);
     }, [selectedDeltaEnsembles, selectedRegularEnsembles, colorSet]);
 
-    function handleCloseEnsembleExplorer() {
-        setShowEnsembleExplorer(false);
-        setEnsembleExplorerMode(null);
-    }
+    const handleCloseEnsembleExplorer = React.useCallback(
+        function handleCloseEnsembleExplorer() {
+            setShowEnsembleExplorer(false);
+            setEnsembleExplorerMode(null);
+        },
+        [setShowEnsembleExplorer, setEnsembleExplorerMode],
+    );
 
     return (
         <>
             <Dialog
                 open={isOpen}
-                onClose={dialogFlowControl.callbacks.handleCancel}
+                onClose={handleCancel}
                 title={
                     <ExplorerTitle
                         showExplorer={showEnsembleExplorer}
@@ -150,16 +173,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 actions={
                     <DialogActions
                         isLoading={isEnsembleSetLoading}
-                        disableDiscard={isEnsembleSetLoading || !dialogFlowControl.hasUnappliedChanges}
+                        disableDiscard={isEnsembleSetLoading || !hasUnappliedChanges}
                         disableApply={
                             isEnsembleSetLoading ||
-                            areAnyDeltaEnsemblesInvalid() ||
+                            hasInvalidDeltaEnsembles() ||
                             hasDuplicateDeltaEnsembles() ||
-                            !dialogFlowControl.hasUnappliedChanges
+                            !hasUnappliedChanges
                         }
                         hasDuplicatedDeltaEnsembles={hasDuplicateDeltaEnsembles()}
-                        onDiscard={dialogFlowControl.callbacks.handleClose}
-                        onApply={applyEnsembleSelection}
+                        onDiscard={handleClose}
+                        onApply={handleApplyEnsembleSelection}
                     />
                 }
                 drawer={{
@@ -205,48 +228,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     />
                 </div>
             </Dialog>
-            <Dialog
-                open={dialogFlowControl.cancelDialogControl.isOpen}
-                onClose={() => dialogFlowControl.cancelDialogControl.setIsOpen(false)}
-                title="Unsaved changes"
-                modal
-                actions={
-                    <div className="flex gap-4">
-                        <Button onClick={() => dialogFlowControl.cancelDialogControl.setIsOpen(false)}>
-                            No, don&apos;t cancel
-                        </Button>
-                        <Button onClick={dialogFlowControl.callbacks.handleClose} color="danger">
-                            Yes, cancel
-                        </Button>
-                    </div>
-                }
-            >
-                You have unsaved changes which will be lost. Are you sure you want to cancel?
-            </Dialog>
-            <EnsemblesLoadingErrorInfoDialog
-                open={dialogFlowControl.loadingErrorsDialogControl.isOpen}
-                onClose={() => dialogFlowControl.loadingErrorsDialogControl.setIsOpen(false)}
-                title={"Errors loading some ensembles — continue without them?"}
-                description={
-                    <div>
-                        Some ensembles encountered errors during loading and setup and will be excluded. Do you want to
-                        continue without them?
-                    </div>
-                }
-                ensembleLoadingErrorInfoMap={dialogFlowControl.ensembleLoadingErrorInfoMap}
-                actions={
-                    <div className="flex gap-4">
-                        <Button
-                            onClick={() => dialogFlowControl.loadingErrorsDialogControl.setIsOpen(false)}
-                            color="secondary"
-                        >
-                            No, don&apos;t continue
-                        </Button>
-                        <Button onClick={dialogFlowControl.callbacks.handleContinueWithLoadingErrors} color="primary">
-                            Yes, continue
-                        </Button>
-                    </div>
-                }
+            <SelectEnsemblesConfirmationDialogs
+                ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
+                showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
+                showLoadingErrorsDialogState={[showEnsemblesLoadingErrorDialog, setShowEnsemblesLoadingErrorDialog]}
+                onConfirmCancel={handleClose}
+                onConfirmContinue={handleApplyEnsembleSelectionWithLoadingError}
             />
         </>
     );

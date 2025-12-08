@@ -4,7 +4,7 @@ import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close } from "@mui/icons-material";
 
 import { UserAvatar } from "@framework/internal/components/UserAvatar";
-import { edsDateRangeChoiceToTimeSinceEpochMs } from "@framework/utils/edsDateUtils";
+import { edsDateRangeToEpochMsRange } from "@framework/utils/edsDateUtils";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import type { ColumnFilterImplementationProps, TableColumns } from "@lib/components/Table/types";
@@ -146,19 +146,19 @@ function predicateStatusSelection(filterValues: string[], dataValue: string): bo
 }
 
 function predicateDateRangePick(dateRange: { from: Date | null; to: Date | null }, dataValue: number): boolean {
-    const dateRangeTimeSinceEpochMs = edsDateRangeChoiceToTimeSinceEpochMs(dateRange);
+    const epochMsRange = edsDateRangeToEpochMsRange(dateRange);
 
-    if (!dateRangeTimeSinceEpochMs) {
+    if (!epochMsRange) {
         return true;
     }
-    if (dateRangeTimeSinceEpochMs.from && dateRangeTimeSinceEpochMs.to) {
-        return dataValue >= dateRangeTimeSinceEpochMs.from && dataValue <= dateRangeTimeSinceEpochMs.to;
+    if (epochMsRange.from && epochMsRange.to) {
+        return dataValue >= epochMsRange.from && dataValue <= epochMsRange.to;
     }
-    if (dateRangeTimeSinceEpochMs.from) {
-        return dataValue >= dateRangeTimeSinceEpochMs.from;
+    if (epochMsRange.from) {
+        return dataValue >= epochMsRange.from;
     }
-    if (dateRangeTimeSinceEpochMs.to) {
-        return dataValue <= dateRangeTimeSinceEpochMs.to;
+    if (epochMsRange.to) {
+        return dataValue <= epochMsRange.to;
     }
 
     // Not expected to reach this point

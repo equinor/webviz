@@ -16,11 +16,7 @@ import type {
 } from "@api";
 import { getSessionsMetadata, SessionSortBy_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
-import {
-    edsDateRangeChoiceToFilterIsoStringRange,
-    type EdsDateRange,
-    type FilterIsoStringRange,
-} from "@framework/utils/edsDateUtils";
+import { edsDateRangeToIsoStringRange, type EdsDateRange, type IsoStringRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -47,7 +43,7 @@ import {
 
 type TableFilter = {
     title?: string;
-    updatedAt?: FilterIsoStringRange;
+    updatedAt?: IsoStringRange;
 };
 
 const TABLE_COLUMNS: TableColumns<SessionMetadata_api> = [
@@ -262,7 +258,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         setTableFilter((prev) => {
             return {
                 ...prev,
-                updatedAt: edsDateRangeChoiceToFilterIsoStringRange(newRange),
+                updatedAt: edsDateRangeToIsoStringRange(newRange),
             };
         });
     }

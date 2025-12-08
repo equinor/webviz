@@ -11,11 +11,7 @@ import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAcces
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
-import {
-    edsDateRangeChoiceToFilterIsoStringRange,
-    type EdsDateRange,
-    type FilterIsoStringRange,
-} from "@framework/utils/edsDateUtils";
+import { edsDateRangeToIsoStringRange, type EdsDateRange, type IsoStringRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -49,7 +45,7 @@ type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetad
 
 type TableFilter = {
     title?: string;
-    visitedAt?: FilterIsoStringRange;
+    visitedAt?: IsoStringRange;
     ownerId?: string;
     snapshotDeleted?: boolean;
 };
@@ -286,7 +282,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         setTableFilter((prev) => {
             return {
                 ...prev,
-                visitedAt: edsDateRangeChoiceToFilterIsoStringRange(newRange),
+                visitedAt: edsDateRangeToIsoStringRange(newRange),
             };
         });
     }

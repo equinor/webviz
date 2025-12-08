@@ -1,12 +1,12 @@
 export type EdsDateRange = { from: Date | null; to: Date | null };
-export type FilterIsoStringRange = { from?: string; to?: string };
-export type FilterTimeSinceEpochMsRange = { from?: number; to?: number };
+export type IsoStringRange = { from?: string; to?: string };
+export type EpochMsRange = { from?: number; to?: number };
 
 // Generic utility to convert EdsDateRange to a range of another type using a converter function.
 // The eds DateRange always use hour 0 for the time, but when converting the "to" date we set the time to 23:59:59,
 // to make the range inclusive for the entire "to" day.
 function convertEdsDateRange<T>(
-    edsDateRangeChoice: null | EdsDateRange,
+    edsDateRangeChoice: EdsDateRange | null,
     converter: (date: Date) => T,
 ): { from?: T; to?: T } | undefined {
     if (edsDateRangeChoice?.from || edsDateRangeChoice?.to) {
@@ -28,15 +28,11 @@ function convertEdsDateRange<T>(
 }
 
 // Utility to convert range of Date objects to range of ISO strings
-export function edsDateRangeChoiceToFilterIsoStringRange(
-    edsDateRangeChoice: null | EdsDateRange,
-): undefined | FilterIsoStringRange {
+export function edsDateRangeToIsoStringRange(edsDateRangeChoice: EdsDateRange | null): IsoStringRange | undefined {
     return convertEdsDateRange(edsDateRangeChoice, (date) => date.toISOString());
 }
 
 // Utility to convert range of Date objects to range of time since epoch in milliseconds
-export function edsDateRangeChoiceToTimeSinceEpochMs(
-    edsDateRangeChoice: null | EdsDateRange,
-): FilterTimeSinceEpochMsRange | undefined {
+export function edsDateRangeToEpochMsRange(edsDateRangeChoice: EdsDateRange | null): EpochMsRange | undefined {
     return convertEdsDateRange(edsDateRangeChoice, (date) => date.getTime());
 }

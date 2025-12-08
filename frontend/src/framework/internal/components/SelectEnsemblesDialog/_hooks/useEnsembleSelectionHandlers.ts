@@ -15,11 +15,9 @@ export type UseEnsembleSelectionHandlersProps = {
     selectedRegularEnsemblesState: StateTuple<InternalRegularEnsembleSetting[]>;
     selectedDeltaEnsemblesState: StateTuple<InternalDeltaEnsembleSetting[]>;
     selectableEnsemblesForDeltaState: StateTuple<EnsembleIdentWithCaseName[]>;
-    ensembleExplorerMode: EnsembleExplorerMode | null;
-    deltaEnsembleUuidToEdit: string;
+    ensembleExplorerModeState: StateTuple<EnsembleExplorerMode | null>;
+    deltaEnsembleUuidToEditState: StateTuple<string>;
     setShowEnsembleExplorer: (show: boolean) => void;
-    setEnsembleExplorerMode: (mode: EnsembleExplorerMode | null) => void;
-    setDeltaEnsembleUuidToEdit: (uuid: string) => void;
 };
 
 export type UseEnsembleSelectionHandlersResult = {
@@ -45,15 +43,15 @@ export function useEnsembleSelectionHandlers({
     selectedRegularEnsemblesState,
     selectedDeltaEnsemblesState,
     selectableEnsemblesForDeltaState,
-    ensembleExplorerMode,
-    deltaEnsembleUuidToEdit,
+    ensembleExplorerModeState,
+    deltaEnsembleUuidToEditState,
     setShowEnsembleExplorer,
-    setEnsembleExplorerMode,
-    setDeltaEnsembleUuidToEdit,
 }: UseEnsembleSelectionHandlersProps): UseEnsembleSelectionHandlersResult {
     const [selectedRegularEnsembles, setSelectedRegularEnsembles] = selectedRegularEnsemblesState;
     const [selectedDeltaEnsembles, setSelectedDeltaEnsembles] = selectedDeltaEnsemblesState;
     const [selectableEnsemblesForDelta, setSelectableEnsemblesForDelta] = selectableEnsemblesForDeltaState;
+    const [ensembleExplorerMode, setEnsembleExplorerMode] = ensembleExplorerModeState;
+    const [deltaEnsembleUuidToEdit, setDeltaEnsembleUuidToEdit] = deltaEnsembleUuidToEditState;
 
     const handleAddRegularEnsemble = React.useCallback(
         function handleAddRegularEnsemble(newItem: InternalRegularEnsembleSetting) {

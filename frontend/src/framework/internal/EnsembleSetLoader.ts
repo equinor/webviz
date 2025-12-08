@@ -323,7 +323,7 @@ async function loadEnsembleApiDataMapFromBackend(
             console.error(errorMessage, ensembleIdentString);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
-                displayName: `${ensembleIdents[i].getEnsembleName()} (${ensembleIdents[i].getCaseUuid()})`,
+                displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
             };
             continue;
         }
@@ -337,7 +337,7 @@ async function loadEnsembleApiDataMapFromBackend(
             console.error(errorMessage, ensembleIdentString);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
-                displayName: `${ensembleIdents[i].getEnsembleName()} (${ensembleIdents[i].getCaseUuid()})`,
+                displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
             };
             continue;
         }
@@ -352,7 +352,7 @@ async function loadEnsembleApiDataMapFromBackend(
             console.error(errorMessage, ensembleIdentString);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
-                displayName: `${ensembleIdents[i].getEnsembleName()} (${ensembleIdents[i].getCaseUuid()})`,
+                displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
             };
             continue;
         }
@@ -363,6 +363,8 @@ async function loadEnsembleApiDataMapFromBackend(
         if (sensitivitiesOutcome.status === "fulfilled") {
             sensitivityArray = sensitivitiesOutcome.value;
         } else {
+            // We do not add the error message to the ensembleLoadingErrorInfoMap.
+            // We only log the error, as we want to continue loading the ensemble even if sensitivities fail
             console.error(
                 "Error fetching ensemble sensitivities, continuing without sensitivities.",
                 ensembleIdentString,
