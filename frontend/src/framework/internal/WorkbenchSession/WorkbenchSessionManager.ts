@@ -573,7 +573,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
 
-            if (session.getActiveDashboard().getLayout().length === 0) {
+            const activeDashboard = session.getActiveDashboard();
+            if (activeDashboard && activeDashboard.getLayout().length === 0) {
                 this._guiMessageBroker.setState(GuiState.RightDrawerContent, RightDrawerContent.ModulesList);
                 if (this._guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) === 0) {
                     this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 20);
@@ -806,9 +807,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             await this.startNewSession();
         } else {
             const activeSession = this.getActiveSession();
-            const confirmationRequired =
-                activeSession.getDashboards().length > 0 &&
-                activeSession.getActiveDashboard().getModuleInstances().length > 0;
+            const activeDashboard = activeSession.getActiveDashboard();
+            const confirmationRequired = activeDashboard && activeDashboard.getModuleInstances().length > 0;
 
             if (confirmationRequired) {
                 const result = await ConfirmationService.confirm({
