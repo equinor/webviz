@@ -4,14 +4,14 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import type { Interfaces } from "./interfaces";
+import { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 import { receiverDefs } from "./receiverDefs";
 
 export const MODULE_NAME = "ParameterResponseCorrelationBarPlot";
-
 const description = "Pearson correlation between input parameters and the responses from a connected module.";
 
-ModuleRegistry.registerModule<Interfaces>({
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "Parameter/Response Correlations - Bar plot",
     category: ModuleCategory.SUB,
@@ -21,4 +21,5 @@ ModuleRegistry.registerModule<Interfaces>({
     channelReceiverDefinitions: receiverDefs,
     preview,
     description,
+    serializedStateSchema: SERIALIZED_STATE_SCHEMA,
 });

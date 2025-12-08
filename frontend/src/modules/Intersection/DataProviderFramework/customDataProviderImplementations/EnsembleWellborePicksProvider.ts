@@ -108,11 +108,7 @@ export class EnsembleWellborePicksProvider
                 return [];
             }
 
-            return wellborePicks
-                .filter((elm) => elm.interpreter === selectedInterpreter)
-                .sort((a, b) => {
-                    return a.pickIdentifier.localeCompare(b.pickIdentifier);
-                });
+            return wellborePicks.filter((elm) => elm.interpreter === selectedInterpreter);
         });
     }
 

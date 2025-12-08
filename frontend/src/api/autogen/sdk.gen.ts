@@ -112,6 +112,12 @@ import type {
     GetRealizationFlowNetworkData_api,
     GetRealizationFlowNetworkResponse_api,
     GetRealizationFlowNetworkError_api,
+    GetProductionDataData_api,
+    GetProductionDataResponse_api,
+    GetProductionDataError_api,
+    GetInjectionDataData_api,
+    GetInjectionDataResponse_api,
+    GetInjectionDataError_api,
     GetTableDataData_api,
     GetTableDataResponse_api,
     GetTableDataError_api,
@@ -130,9 +136,6 @@ import type {
     GetWellborePicksForPickIdentifierData_api,
     GetWellborePicksForPickIdentifierResponse_api,
     GetWellborePicksForPickIdentifierError_api,
-    DeprecatedGetWellborePicksForWellboreData_api,
-    DeprecatedGetWellborePicksForWellboreResponse_api,
-    DeprecatedGetWellborePicksForWellboreError_api,
     GetWellborePicksInStratColumnData_api,
     GetWellborePicksInStratColumnResponse_api,
     GetWellborePicksInStratColumnError_api,
@@ -199,6 +202,39 @@ import type {
     GetVfpTableData_api,
     GetVfpTableResponse_api,
     GetVfpTableError_api,
+    GetSessionsMetadataData_api,
+    GetSessionsMetadataResponse_api,
+    GetSessionsMetadataError_api,
+    CreateSessionData_api,
+    CreateSessionResponse_api,
+    CreateSessionError_api,
+    DeleteSessionData_api,
+    DeleteSessionError_api,
+    GetSessionData_api,
+    GetSessionResponse_api,
+    GetSessionError_api,
+    UpdateSessionData_api,
+    UpdateSessionResponse_api,
+    UpdateSessionError_api,
+    GetSessionMetadataData_api,
+    GetSessionMetadataResponse_api,
+    GetSessionMetadataError_api,
+    GetSnapshotAccessLogsData_api,
+    GetSnapshotAccessLogsResponse_api,
+    GetSnapshotAccessLogsError_api,
+    GetSnapshotsMetadataData_api,
+    GetSnapshotsMetadataResponse_api,
+    GetSnapshotsMetadataError_api,
+    CreateSnapshotData_api,
+    CreateSnapshotResponse_api,
+    CreateSnapshotError_api,
+    DeleteSnapshotData_api,
+    DeleteSnapshotError_api,
+    GetSnapshotData_api,
+    GetSnapshotResponse_api,
+    GetSnapshotError_api,
+    DeleteSnapshotAccessLogData_api,
+    DeleteSnapshotAccessLogError_api,
     LoginRouteData_api,
     LoginRouteError_api,
     AuthorizedCallbackRouteData_api,
@@ -839,6 +875,32 @@ export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get Production Data
+ * Get allocated production per well in the time interval
+ */
+export const getProductionData = <ThrowOnError extends boolean = false>(
+    options: Options<GetProductionDataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetProductionDataResponse_api, GetProductionDataError_api, ThrowOnError>({
+        ...options,
+        url: "/flow_data/production_data/",
+    });
+};
+
+/**
+ * Get Injection Data
+ * Get allocated injection per well in the time interval
+ */
+export const getInjectionData = <ThrowOnError extends boolean = false>(
+    options: Options<GetInjectionDataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetInjectionDataResponse_api, GetInjectionDataError_api, ThrowOnError>({
+        ...options,
+        url: "/flow_data/injection_data/",
+    });
+};
+
+/**
  * Get Table Data
  * Get pvt table data for a given Sumo ensemble and realization
  */
@@ -865,7 +927,7 @@ export const getWellCompletionsData = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Drilled Wellbore Headers
- * Get wellbore headers for all wells in the field
+ * Get wellbore headers for all wells in a given field
  */
 export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
     options: Options<GetDrilledWellboreHeadersData_api, ThrowOnError>,
@@ -882,7 +944,7 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Well Trajectories
- * Get well trajectories for field
+ * Get trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given
  */
 export const getWellTrajectories = <ThrowOnError extends boolean = false>(
     options: Options<GetWellTrajectoriesData_api, ThrowOnError>,
@@ -895,7 +957,7 @@ export const getWellTrajectories = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Wellbore Pick Identifiers
- * Get wellbore pick identifiers for field and stratigraphic column
+ * Get wellbore pick identifiers for a given stratigraphic column
  */
 export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePickIdentifiersData_api, ThrowOnError>,
@@ -912,7 +974,7 @@ export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>
 
 /**
  * Get Wellbore Picks For Pick Identifier
- * Get picks for wellbores for field and pick identifier
+ * Get wellbore picks for a field and pick identifier
  *
  * This implies picks for multiple wellbores for given field and pick identifier.
  * E.g. picks for all wellbores in a given surface in a field.
@@ -931,27 +993,8 @@ export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean =
 };
 
 /**
- * Deprecated Get Wellbore Picks For Wellbore
- * Get wellbore picks for field and pick identifier
- *
- * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
- */
-export const deprecatedGetWellborePicksForWellbore = <ThrowOnError extends boolean = false>(
-    options: Options<DeprecatedGetWellborePicksForWellboreData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<
-        DeprecatedGetWellborePicksForWellboreResponse_api,
-        DeprecatedGetWellborePicksForWellboreError_api,
-        ThrowOnError
-    >({
-        ...options,
-        url: "/well/deprecated_wellbore_picks_for_wellbore/",
-    });
-};
-
-/**
  * Get Wellbore Picks In Strat Column
- * Get wellbore picks for a single wellbore with stratigraphic column identifier
+ * Get wellbore picks for a single wellbore within stratigraphic column
  */
 export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePicksInStratColumnData_api, ThrowOnError>,
@@ -968,6 +1011,7 @@ export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = fal
 
 /**
  * Get Wellbore Stratigraphic Columns
+ * Get stratigraphic columns for a given wellbore
  */
 export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreStratigraphicColumnsData_api, ThrowOnError>,
@@ -984,7 +1028,7 @@ export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = f
 
 /**
  * Get Wellbore Completions
- * Get well bore completions for a single well bore
+ * Get wellbore completions for a given wellbore
  */
 export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreCompletionsData_api, ThrowOnError>,
@@ -997,7 +1041,7 @@ export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Wellbore Casings
- * Get well bore casings for a single well bore
+ * Get wellbore casings for a given wellbore
  */
 export const getWellboreCasings = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreCasingsData_api, ThrowOnError>,
@@ -1010,7 +1054,7 @@ export const getWellboreCasings = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Wellbore Perforations
- * Get well bore casing for a single well bore
+ * Get wellbore perforations for a given wellbore
  */
 export const getWellborePerforations = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePerforationsData_api, ThrowOnError>,
@@ -1246,6 +1290,302 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(options: Optio
     return (options?.client ?? client).get<GetVfpTableResponse_api, GetVfpTableError_api, ThrowOnError>({
         ...options,
         url: "/vfp/vfp_table/",
+    });
+};
+
+/**
+ * Get Sessions Metadata
+ * Get a paginated list of session metadata for the authenticated user.
+ *
+ * This endpoint returns session metadata (without content) with support for:
+ * - **Pagination**: Use the continuation token to fetch subsequent pages
+ * - **Sorting**: Sort by various fields in ascending or descending order
+ * - **Case-insensitive sorting**: Optional lowercase sorting for text fields
+ * - **Filtering**: Filter by title and date ranges
+ *
+ * The response includes a continuation token for fetching the next page of results.
+ */
+export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
+    options?: Options<GetSessionsMetadataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetSessionsMetadataResponse_api, GetSessionsMetadataError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/sessions",
+    });
+};
+
+/**
+ * Create Session
+ * Create a new session for the authenticated user.
+ *
+ * Provide:
+ * - **title**: Session title (required)
+ * - **description**: Optional description
+ * - **content**: Session content (required)
+ *
+ * The system automatically generates:
+ * - Unique session ID
+ * - Creation and update timestamps
+ * - Version number (starts at 1)
+ * - Content hash for integrity checking
+ *
+ * Returns the ID of the newly created session.
+ */
+export const createSession = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSessionData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<CreateSessionResponse_api, CreateSessionError_api, ThrowOnError>({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/persistence/sessions",
+    });
+};
+
+/**
+ * Delete Session
+ * Permanently delete a session.
+ *
+ * This operation:
+ * - Removes the session document from the database
+ * - Cannot be undone
+ * - Requires ownership verification
+ *
+ * Only the session owner can delete their sessions.
+ */
+export const deleteSession = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSessionData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).delete<unknown, DeleteSessionError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/sessions/{session_id}",
+    });
+};
+
+/**
+ * Get Session
+ * Retrieve a complete session by its ID.
+ *
+ * Returns the full session document including:
+ * - Session metadata (title, description, timestamps, version, etc.)
+ * - Complete session content
+ *
+ * Only the session owner can access this endpoint.
+ */
+export const getSession = <ThrowOnError extends boolean = false>(options: Options<GetSessionData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetSessionResponse_api, GetSessionError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/sessions/{session_id}",
+    });
+};
+
+/**
+ * Update Session
+ * Update an existing session with partial or complete changes.
+ *
+ * You can update any combination of:
+ * - **title**: New session title
+ * - **description**: New description
+ * - **content**: New session content
+ *
+ * All fields are optional - only provided fields will be updated.
+ *
+ * The system automatically:
+ * - Updates the `updated_at` timestamp
+ * - Increments the version number
+ * - Recalculates the content hash if content changed
+ * - Preserves ownership and creation metadata
+ *
+ * Returns the complete updated session.
+ *
+ * Only the session owner can update their sessions.
+ */
+export const updateSession = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSessionData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).put<UpdateSessionResponse_api, UpdateSessionError_api, ThrowOnError>({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/persistence/sessions/{session_id}",
+    });
+};
+
+/**
+ * Get Session Metadata
+ * Retrieve only the metadata for a specific session.
+ *
+ * Returns session metadata without the content, useful for:
+ * - Listing sessions with details
+ * - Checking version or timestamps
+ * - Lightweight operations that don't need full content
+ *
+ * Only the session owner can access this endpoint.
+ */
+export const getSessionMetadata = <ThrowOnError extends boolean = false>(
+    options: Options<GetSessionMetadataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetSessionMetadataResponse_api, GetSessionMetadataError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/sessions/metadata/{session_id}",
+    });
+};
+
+/**
+ * Get Snapshot Access Logs
+ * Get a list of all snapshots you have visited.
+ *
+ * This endpoint tracks your interaction history with snapshots, including:
+ * - Snapshots you've created (counted as implicit visits)
+ * - Snapshots you've viewed
+ * - Snapshots shared with you that you've accessed
+ *
+ * Each access log entry includes:
+ * - **Visit count**: Number of times you've viewed the snapshot
+ * - **First visited**: Timestamp of your first visit
+ * - **Last visited**: Timestamp of your most recent visit
+ * - **Snapshot metadata**: Title, description, creation date
+ * - **Deletion status**: Whether the snapshot has been deleted
+ *
+ * Supports pagination, sorting, and filtering by:
+ * - Title (case insensitive)
+ * - Creation date range
+ * - Last visited date range
+ */
+export const getSnapshotAccessLogs = <ThrowOnError extends boolean = false>(
+    options?: Options<GetSnapshotAccessLogsData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetSnapshotAccessLogsResponse_api, GetSnapshotAccessLogsError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/snapshot_access_logs",
+    });
+};
+
+/**
+ * Get Snapshots Metadata
+ * Get a paginated list of your snapshot metadata.
+ *
+ * Returns metadata for snapshots you own (without content) with support for:
+ * - **Pagination**: Use continuation tokens for large result sets
+ * - **Sorting**: Sort by title, creation date, etc.
+ * - **Filtering**: Filter by title and date ranges
+ *
+ * Snapshots are immutable records that can be shared with others.
+ * They are separate from sessions and are intended for point-in-time captures.
+ *
+ * Note: Consider using `/persistence/snapshot_access_logs` to see both your snapshots and ones shared with you.
+ */
+export const getSnapshotsMetadata = <ThrowOnError extends boolean = false>(
+    options?: Options<GetSnapshotsMetadataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetSnapshotsMetadataResponse_api, GetSnapshotsMetadataError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/snapshots",
+    });
+};
+
+/**
+ * Create Snapshot
+ * Create a new snapshot for point-in-time capture.
+ *
+ * Provide:
+ * - **title**: Snapshot title (required)
+ * - **description**: Optional description
+ * - **content**: Snapshot content (required)
+ *
+ * The system automatically:
+ * - Generates a unique snapshot ID
+ * - Records creation timestamp
+ * - Calculates content hash for integrity
+ * - **Logs an implicit visit** (so it appears in your visited snapshots)
+ *
+ * Snapshots are immutable and can be shared with others via their ID.
+ *
+ * Returns the ID of the newly created snapshot.
+ */
+export const createSnapshot = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSnapshotData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<CreateSnapshotResponse_api, CreateSnapshotError_api, ThrowOnError>({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/persistence/snapshots",
+    });
+};
+
+/**
+ * Delete Snapshot
+ * Permanently delete a snapshot.
+ *
+ * This operation:
+ * - Removes the snapshot document from the database
+ * - Marks all access logs as deleted (background task)
+ * - Cannot be undone
+ * - Requires ownership verification
+ *
+ * **Background Processing:**
+ * Access logs are marked as deleted asynchronously to avoid blocking the response.
+ * This typically completes within seconds for snapshots with <150 visitor logs.
+ *
+ * Only the snapshot owner can delete their snapshots.
+ */
+export const deleteSnapshot = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSnapshotData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).delete<unknown, DeleteSnapshotError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/snapshots/{snapshot_id}",
+    });
+};
+
+/**
+ * Get Snapshot
+ * Retrieve a complete snapshot by its ID.
+ *
+ * Returns the full snapshot document including:
+ * - Snapshot metadata (title, description, creation date, etc.)
+ * - Complete snapshot content
+ *
+ * **Important**: This endpoint automatically tracks your visit:
+ * - Increments the visit counter
+ * - Updates the "last visited" timestamp
+ * - Creates an access log entry if this is your first visit
+ *
+ * This allows you to see your viewing history in `/persistence/snapshot_access_logs`.
+ *
+ * Any user with the snapshot ID can access snapshots (they are shareable).
+ */
+export const getSnapshot = <ThrowOnError extends boolean = false>(options: Options<GetSnapshotData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetSnapshotResponse_api, GetSnapshotError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/snapshots/{snapshot_id}",
+    });
+};
+
+/**
+ * Delete Snapshot Access Log
+ * Delete your access log for a specific snapshot.
+ *
+ * This operation:
+ * - Removes your access log entry for the given snapshot
+ * - Does NOT affect the snapshot itself or other users' logs
+ *
+ * Use this endpoint to clear your visit history for a snapshot
+ * without deleting the snapshot or impacting other users.
+ */
+export const deleteSnapshotAccessLog = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSnapshotAccessLogData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).delete<unknown, DeleteSnapshotAccessLogError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/snapshot_access_logs/{snapshot_id}",
     });
 };
 

@@ -91,6 +91,9 @@ export type TableProps<T extends Record<string, any>> = {
     // TODO: Other QoL things to add?
     // * Specify height with row count instead?
     // numVisibleRows?: number;
+
+    /** Rendered when no data is available */
+    noDataMessage?: React.ReactNode;
 };
 
 function validateProps<T extends Record<string, any>>(props: TableProps<T>) {
@@ -313,6 +316,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                         onSelectedRowsChange={setSelectedRows}
                         onRowHover={handleRowHover}
                         onVisibleRowRangeChange={props.onVisibleRowRangeChange}
+                        noDataMessage={props.noDataMessage}
                     />
                 </table>
 

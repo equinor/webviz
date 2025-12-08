@@ -2,6 +2,7 @@ import React from "react";
 
 import { Provider } from "jotai";
 
+import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
@@ -15,23 +16,27 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { type Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
 };
 
 export const ViewContent = React.memo((props: ViewContentProps) => {
+    const workbenchSession = useActiveSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
     const moduleInstanceLifeCycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
         ModuleInstanceTopic.LIFECYCLE_STATE,
     );
-
-    const atomStore = props.workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
+    const moduleInstanceViewStateInvalid = useModuleInstanceTopicValue(
+        props.moduleInstance,
+        ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW,
+    );
 
     const handleModuleInstanceReload = React.useCallback(
         function handleModuleInstanceReload() {
@@ -91,6 +96,21 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         return <div className="h-full w-full flex flex-col justify-center items-center">{stateRelatedContent}</div>;
     }
 
+    if (moduleInstanceViewStateInvalid) {
+        return (
+            <div className="flex flex-col gap-4 p-4 h-full w-full justify-center items-center">
+                <div className="text-red-600 m-2 text-center max-w-96">
+                    The persisted view state for this module&apos;s view is invalid and could not be applied. It has
+                    most likely been outdated by a module update. You can reset the module to its default view to
+                    continue using it.
+                </div>
+                <Button onClick={() => props.moduleInstance.resetInvalidPersistedFlags()} variant="contained">
+                    Reset module
+                </Button>
+            </div>
+        );
+    }
+
     if (moduleInstanceLifeCycleState === ModuleInstanceLifeCycleState.ERROR) {
         const errorObject = props.moduleInstance.getFatalError();
         if (errorObject) {
@@ -103,6 +123,11 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                 />
             );
         }
+    }
+
+    const atomStore = workbenchSession.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
+    if (!atomStore) {
+        return null;
     }
 
     const View = props.moduleInstance.getViewFC();
@@ -120,10 +145,13 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                             <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
                                 <View
                                     viewContext={props.moduleInstance.getContext()}
-                                    workbenchSession={props.workbench.getWorkbenchSession()}
+                                    workbenchSession={props.workbench.getSessionManager().getActiveSession()}
                                     workbenchServices={props.workbench.getWorkbenchServices()}
                                     hoverService={props.workbench.getHoverService()}
-                                    workbenchSettings={props.workbench.getWorkbenchSession().getWorkbenchSettings()}
+                                    workbenchSettings={props.workbench
+                                        .getSessionManager()
+                                        .getActiveSession()
+                                        .getWorkbenchSettings()}
                                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}
                                 />
                             </ApplyInterfaceEffectsToView>

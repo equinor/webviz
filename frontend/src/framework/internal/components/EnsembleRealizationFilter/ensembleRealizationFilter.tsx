@@ -32,7 +32,7 @@ export type EnsembleRealizationFilterSelections = {
 };
 
 export type EnsembleRealizationFilterProps = {
-    filteredRealizationNumbers: readonly number[]; // The current applied/filtered realization numbers
+    filteredRealizationNumbers: readonly number[]; // The current applied/filtered realization numbers (not current selection)
     selections: EnsembleRealizationFilterSelections; // The current selection state, which may be unsaved
     hasUnsavedSelections: boolean;
     ensembleName: string;

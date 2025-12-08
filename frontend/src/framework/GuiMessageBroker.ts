@@ -30,8 +30,18 @@ export enum GuiState {
     AppInitialized = "appInitialized",
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
     NumberOfEffectiveRealizationFilters = "numberOfEffectiveRealizationFilters",
+    SaveSessionDialogOpen = "saveSessionDialogOpen",
+    IsSavingSession = "isSavingSession",
     IsLoadingSession = "isLoadingSession",
+    IsLoadingSnapshot = "isLoadingSnapshot",
+    IsMakingSnapshot = "isMakingSnapshot",
     EnsembleDialogOpen = "ensembleDialogOpen",
+    MultiSessionsRecoveryDialogOpen = "multiSessionsRecoveryDialogOpen",
+    ActiveSessionRecoveryDialogOpen = "activeSessionRecoveryDialogOpen",
+    MakeSnapshotDialogOpen = "makeSnapshotDialogOpen",
+    TemplatesDialogOpen = "templatesDialogOpen",
+    SessionSnapshotOverviewDialogOpen = "sessionSnapshotOverviewDialogOpen",
+    SessionSnapshotOverviewDialogMode = "sessionSnapshotOverviewDialogMode",
 }
 
 export enum GuiEvent {
@@ -98,7 +108,17 @@ type GuiStateValueTypes = {
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
     [GuiState.NumberOfEffectiveRealizationFilters]: number;
     [GuiState.IsLoadingSession]: boolean;
+    [GuiState.IsLoadingSnapshot]: boolean;
+    [GuiState.IsSavingSession]: boolean;
     [GuiState.EnsembleDialogOpen]: boolean;
+    [GuiState.MultiSessionsRecoveryDialogOpen]: boolean;
+    [GuiState.ActiveSessionRecoveryDialogOpen]: boolean;
+    [GuiState.MakeSnapshotDialogOpen]: boolean;
+    [GuiState.IsMakingSnapshot]: boolean;
+    [GuiState.SaveSessionDialogOpen]: boolean;
+    [GuiState.TemplatesDialogOpen]: boolean;
+    [GuiState.SessionSnapshotOverviewDialogOpen]: boolean;
+    [GuiState.SessionSnapshotOverviewDialogMode]: "sessions" | "snapshots";
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -112,8 +132,17 @@ defaultStates.set(GuiState.AppInitialized, false);
 defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
 defaultStates.set(GuiState.NumberOfEffectiveRealizationFilters, 0);
 defaultStates.set(GuiState.IsLoadingSession, false);
+defaultStates.set(GuiState.IsLoadingSnapshot, false);
+defaultStates.set(GuiState.IsSavingSession, false);
 defaultStates.set(GuiState.EditDataChannelConnections, false);
 defaultStates.set(GuiState.EnsembleDialogOpen, false);
+defaultStates.set(GuiState.MultiSessionsRecoveryDialogOpen, false);
+defaultStates.set(GuiState.ActiveSessionRecoveryDialogOpen, false);
+defaultStates.set(GuiState.MakeSnapshotDialogOpen, false);
+defaultStates.set(GuiState.IsMakingSnapshot, false);
+defaultStates.set(GuiState.TemplatesDialogOpen, false);
+defaultStates.set(GuiState.SessionSnapshotOverviewDialogOpen, false);
+defaultStates.set(GuiState.SessionSnapshotOverviewDialogMode, "sessions");
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,

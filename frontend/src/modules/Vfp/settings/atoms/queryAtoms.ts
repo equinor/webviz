@@ -1,14 +1,18 @@
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { getVfpTableNamesOptions, getVfpTableOptions } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
-
-import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom, selectedVfpTableNameAtom } from "./derivedAtoms";
+import {
+    selectedEnsembleIdentAtom,
+    selectedRealizationNumberAtom,
+    selectedVfpTableNameAtom,
+} from "./persistableFixableAtoms";
 
 export const vfpTableQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-    const selectedRealizationNumber = get(selectedRealizationNumberAtom);
-    const selectedVfpTableName = get(selectedVfpTableNameAtom);
+    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
+    const selectedRealizationNumber = get(selectedRealizationNumberAtom).value;
+    const selectedVfpTableName = get(selectedVfpTableNameAtom).value;
 
     const query = {
         ...getVfpTableOptions({
@@ -17,6 +21,7 @@ export const vfpTableQueryAtom = atomWithQuery((get) => {
                 ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
                 realization: selectedRealizationNumber ?? 0,
                 vfp_table_name: selectedVfpTableName ?? "",
+                ...makeCacheBustingQueryParam(selectedEnsembleIdent),
             },
         }),
         enabled: Boolean(
@@ -30,8 +35,8 @@ export const vfpTableQueryAtom = atomWithQuery((get) => {
 });
 
 export const vfpTableNamesQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-    const selectedRealizationNumber = get(selectedRealizationNumberAtom);
+    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
+    const selectedRealizationNumber = get(selectedRealizationNumberAtom).value;
 
     const query = {
         ...getVfpTableNamesOptions({
@@ -39,6 +44,7 @@ export const vfpTableNamesQueryAtom = atomWithQuery((get) => {
                 case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
                 realization: selectedRealizationNumber ?? 0,
+                ...makeCacheBustingQueryParam(selectedEnsembleIdent),
             },
         }),
         enabled: Boolean(

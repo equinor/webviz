@@ -131,6 +131,29 @@ export function peekSurfaceAddressType(surfAddrStr: string): SurfaceAddressType 
     return foundAddrType;
 }
 
+export function peekSurfaceCaseUuid(surfAddrStr: string): string | null {
+    const components = surfAddrStr.split(ADDR_COMP_DELIMITER);
+    if (components.length < 2) {
+        return null;
+    }
+
+    return components[1];
+}
+
+export function peekSurfaceEnsemble(surfAddrStr: string): string | null {
+    const components = surfAddrStr.split(ADDR_COMP_DELIMITER);
+    const addrType = peekSurfaceAddressType(surfAddrStr);
+    if (!addrType || addrType === "OBS" || components.length < 3) {
+        return null;
+    }
+
+    if (addrType === "REAL" || addrType === "STAT" || addrType === "PARTIAL") {
+        return components[2];
+    }
+
+    return null;
+}
+
 function assertThatNoComponentsContainDelimiter(componentArr: Array<string | number>): void {
     for (const comp of componentArr) {
         if (typeof comp === "string" && comp.includes(ADDR_COMP_DELIMITER)) {

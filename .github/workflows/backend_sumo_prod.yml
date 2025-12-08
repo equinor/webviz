@@ -40,13 +40,21 @@ jobs:
           cache: pip
 
       - name: 📦 Install poetry and dependencies
-        working-directory: ./backend_py/primary
+        working-directory: ./backend_py
         run: |
           pip install --upgrade pip
           pip install poetry==2.1.4
           poetry config virtualenvs.create false
-          poetry check --lock  # Check lock file is consistent with pyproject.toml
-          poetry install --with dev
+
+          # Check that lock files are consistent with pyproject.toml
+          poetry check --lock
+          poetry check --lock --directory=./primary
+
+          # Install our repo tooling to get pytest
+          poetry install
+
+          cd primary
+          poetry install
 
       - name: 🤖 Run tests
         working-directory: ./backend_py/primary

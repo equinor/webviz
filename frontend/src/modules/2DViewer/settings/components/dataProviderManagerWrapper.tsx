@@ -21,13 +21,13 @@ import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
-import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
-import { PreferredViewLayout } from "@modules/2DViewer/types";
+import { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewer/typesAndEnums";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
-import { RealizationSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
-import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/StatisticalSurfaceProvider";
+import { AttributeSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/AttributeSurfaceProvider";
+import { DepthSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
+import { SeismicSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/SeismicSurfaceProvider";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { ContextBoundary } from "@modules/_shared/DataProviderFramework/framework/ContextBoundary/ContextBoundary";
@@ -71,34 +71,60 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "context-boundary":
                 groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));
                 return;
-            case "color-scale":
-                groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
+
+            case "depth-surface":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(DataProviderType.DEPTH_SURFACE, props.dataProviderManager),
+                );
                 return;
-            case "observed-surface":
+
+            case "seismic-3d-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.OBSERVED_SURFACE,
+                        DataProviderType.SEISMIC_3D_SURFACE,
                         props.dataProviderManager,
                     ),
                 );
                 return;
-            case "statistical-surface":
+            case "seismic-4d-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        DataProviderType.STATISTICAL_SURFACE,
+                        DataProviderType.SEISMIC_4D_SURFACE,
                         props.dataProviderManager,
                     ),
                 );
                 return;
-            case "realization-surface":
+            case "attribute-static-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        DataProviderType.REALIZATION_SURFACE,
+                        DataProviderType.ATTRIBUTE_STATIC_SURFACE,
                         props.dataProviderManager,
                     ),
                 );
                 return;
-            case "realization-polygons":
+            case "attribute-time-step-surface":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.ATTRIBUTE_TIME_STEP_SURFACE,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
+            case "attribute-interval-surface":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.ATTRIBUTE_INTERVAL_SURFACE,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
+
+            case "fault-polygons":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(DataProviderType.FAULT_POLYGONS, props.dataProviderManager),
+                );
+                return;
+            case "unsorted-polygons":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
                         DataProviderType.REALIZATION_POLYGONS,
@@ -139,11 +165,38 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "surface-name":
                 groupDelegate.appendChild(new SharedSetting(Setting.SURFACE_NAME, null, props.dataProviderManager));
                 return;
+            case "formation-name":
+                groupDelegate.appendChild(new SharedSetting(Setting.FORMATION_NAME, null, props.dataProviderManager));
+                return;
             case "attribute":
                 groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
                 return;
-            case "Date":
-                groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.dataProviderManager));
+            case "seismic-attribute":
+                groupDelegate.appendChild(
+                    new SharedSetting(Setting.SEISMIC_ATTRIBUTE, null, props.dataProviderManager),
+                );
+                return;
+            case "depth-attribute":
+                groupDelegate.appendChild(new SharedSetting(Setting.DEPTH_ATTRIBUTE, null, props.dataProviderManager));
+                return;
+            case "time-point":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT, null, props.dataProviderManager));
+                return;
+            case "time-interval":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_INTERVAL, null, props.dataProviderManager));
+                return;
+            case "color-scale":
+                groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
+                return;
+            case "seismic-color-scale":
+                groupDelegate.prependChild(
+                    new SharedSetting(Setting.SEISMIC_COLOR_SCALE, null, props.dataProviderManager),
+                );
+                return;
+            case "depth-color-scale":
+                groupDelegate.prependChild(
+                    new SharedSetting(Setting.DEPTH_COLOR_SCALE, null, props.dataProviderManager),
+                );
                 return;
         }
     }
@@ -152,11 +205,9 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
         if (destinationItem instanceof DeltaSurface) {
             if (
                 movedItem instanceof DataProvider &&
-                !(
-                    movedItem instanceof RealizationSurfaceProvider ||
-                    movedItem instanceof StatisticalSurfaceProvider ||
-                    movedItem instanceof ObservedSurfaceProvider
-                )
+                !(movedItem instanceof AttributeSurfaceProvider) &&
+                !(movedItem instanceof SeismicSurfaceProvider) &&
+                !(movedItem instanceof DepthSurfaceProvider)
             ) {
                 return false;
             }
@@ -289,19 +340,34 @@ const ACTIONS: ActionGroup[] = [
                 label: "Surfaces",
                 children: [
                     {
-                        identifier: "observed-surface",
+                        identifier: "depth-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Observed Surface",
+                        label: "Depth",
                     },
                     {
-                        identifier: "statistical-surface",
+                        identifier: "seismic-3d-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Statistical Surface",
+                        label: "Seismic 3D",
                     },
                     {
-                        identifier: "realization-surface",
+                        identifier: "seismic-4d-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Realization Surface",
+                        label: "Seismic 4D",
+                    },
+                    {
+                        identifier: "attribute-static-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Uncategorized (Static)",
+                    },
+                    {
+                        identifier: "attribute-time-step-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Uncategorized (Time Step)",
+                    },
+                    {
+                        identifier: "attribute-interval-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Uncategorized (Time Interval)",
                     },
                 ],
             },
@@ -311,12 +377,12 @@ const ACTIONS: ActionGroup[] = [
                     {
                         identifier: "drilled-wellbore-trajectories",
                         icon: <Icon data={wellbore} fontSize="small" />,
-                        label: "Drilled Wellbore Trajectories",
+                        label: "Trajectories (Official)",
                     },
                     {
                         identifier: "drilled-wellbore-picks",
                         icon: <Icon data={wellbore} fontSize="small" />,
-                        label: "Drilled Wellbore Picks",
+                        label: "Picks (Official)",
                     },
                 ],
             },
@@ -324,9 +390,14 @@ const ACTIONS: ActionGroup[] = [
                 label: "Polygons",
                 children: [
                     {
-                        identifier: "realization-polygons",
+                        identifier: "fault-polygons",
                         icon: <Icon data={fault} fontSize="small" />,
-                        label: "Realization Polygons",
+                        label: "Fault Polygons",
+                    },
+                    {
+                        identifier: "unsorted-polygons",
+                        icon: <Icon data={fault} fontSize="small" />,
+                        label: "Unsorted Polygons",
                     },
                 ],
             },
@@ -336,7 +407,7 @@ const ACTIONS: ActionGroup[] = [
                     {
                         identifier: "realization-grid",
                         icon: <Icon data={grid_layer} fontSize="small" />,
-                        label: "Realization Grid",
+                        label: "Grid Model layer",
                     },
                 ],
             },
@@ -361,19 +432,49 @@ const ACTIONS: ActionGroup[] = [
                 label: "Surface Name",
             },
             {
-                identifier: "attribute",
+                identifier: "formation-name",
                 icon: <Icon data={settings} fontSize="small" />,
-                label: "Attribute",
+                label: "Formation Name",
             },
             {
-                identifier: "Date",
+                identifier: "attribute",
                 icon: <Icon data={settings} fontSize="small" />,
-                label: "Date",
+                label: "Unsorted Attribute",
+            },
+            {
+                identifier: "seismic-attribute",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Seismic Attribute",
+            },
+            {
+                identifier: "depth-attribute",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Depth Attribute",
+            },
+            {
+                identifier: "time-point",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time point",
+            },
+            {
+                identifier: "time-interval",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time interval",
             },
             {
                 identifier: "color-scale",
                 icon: <Icon data={color_palette} fontSize="small" />,
-                label: "Color scale",
+                label: "Attribute Color scale",
+            },
+            {
+                identifier: "seismic-color-scale",
+                icon: <Icon data={color_palette} fontSize="small" />,
+                label: "Seismic Color scale",
+            },
+            {
+                identifier: "depth-color-scale",
+                icon: <Icon data={color_palette} fontSize="small" />,
+                label: "Depth Color scale",
             },
         ],
     },

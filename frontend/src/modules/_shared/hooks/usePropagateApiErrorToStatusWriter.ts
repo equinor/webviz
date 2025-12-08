@@ -24,17 +24,19 @@ function propagateApiError(error: Error, statusWriter: ViewStatusWriter | Settin
 }
 
 export function usePropagateApiErrorToStatusWriter(
-    error: Error,
+    error: Error | null,
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string | null {
+    if (!error) return null;
+
     return propagateApiError(error, statusWriter);
 }
 
 export function usePropagateAllApiErrorsToStatusWriter(
     errors: Error[],
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
-): (string | null)[] {
-    return errors.map((err) => propagateApiError(err, statusWriter)).filter((error) => error);
+): string[] {
+    return errors.map((err) => propagateApiError(err, statusWriter)).filter((error) => error) as string[];
 }
 
 function propagateQueryError(
@@ -56,6 +58,6 @@ export function usePropagateQueryErrorToStatusWriter(
 export function usePropagateQueryErrorsToStatusWriter(
     queryResults: UseQueryResult<any, any>[],
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
-): (string | null)[] {
-    return queryResults.map((res) => propagateQueryError(res, statusWriter)).filter((error) => error);
+): string[] {
+    return queryResults.map((res) => propagateQueryError(res, statusWriter)).filter((error) => error) as string[];
 }

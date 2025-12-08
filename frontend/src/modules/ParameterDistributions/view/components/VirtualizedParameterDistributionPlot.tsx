@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 
+import type { HistogramMode } from "../../typesAndEnums";
 import { ParameterDistributionPlotType } from "../../typesAndEnums";
 import type { EnsembleSetParameterArray } from "../utils/ensembleSetParameterArray";
 import { generateLayoutForParameter, generateTracesForParameter } from "../utils/plotUtils";
@@ -14,6 +15,7 @@ type ParameterDistributionPlotProps = {
     plotType: ParameterDistributionPlotType;
     showIndividualRealizationValues: boolean;
     showPercentilesAndMeanLines: boolean;
+    histogramMode: HistogramMode;
     width: number;
     height: number;
 };
@@ -24,6 +26,7 @@ function SingleParameterPlot({
     plotType,
     showIndividualRealizationValues,
     showPercentilesAndMeanLines,
+    histogramMode,
     width,
     height,
 }: {
@@ -31,6 +34,7 @@ function SingleParameterPlot({
     plotType: ParameterDistributionPlotType;
     showIndividualRealizationValues: boolean;
     showPercentilesAndMeanLines: boolean;
+    histogramMode: HistogramMode;
     width: number;
     height: number;
 }): React.ReactElement {
@@ -51,6 +55,7 @@ function SingleParameterPlot({
         title: parameterData.parameterIdent.name,
         xAxisIsLogarithmic: parameterData.isLogarithmic === true,
         showZeroLine: showRugTraces,
+        barmode: histogramMode,
     });
     return (
         <div>
@@ -150,6 +155,7 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
                             plotType={props.plotType}
                             showIndividualRealizationValues={props.showIndividualRealizationValues}
                             showPercentilesAndMeanLines={props.showPercentilesAndMeanLines}
+                            histogramMode={props.histogramMode}
                             width={plotWidth}
                             height={plotHeight - 8}
                         />

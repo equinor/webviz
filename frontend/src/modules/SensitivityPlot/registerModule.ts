@@ -4,15 +4,15 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import type { Interfaces } from "./interfaces";
+import { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 import { receiverDefs } from "./receiverDefs";
-
 export const MODULE_NAME = "SensitivityPlot";
 
 const description = `Ranks sensitivities from a design matrix run with the responses from a connected module.
                      Can be presented as a tornado plot or a table.`;
 
-ModuleRegistry.registerModule<Interfaces>({
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "Sensitivity/Response plot",
     category: ModuleCategory.SUB,
@@ -22,4 +22,5 @@ ModuleRegistry.registerModule<Interfaces>({
     preview,
     channelReceiverDefinitions: receiverDefs,
     description,
+    serializedStateSchema: SERIALIZED_STATE_SCHEMA,
 });

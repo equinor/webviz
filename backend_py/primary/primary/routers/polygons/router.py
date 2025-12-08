@@ -2,15 +2,16 @@ import logging
 from typing import List, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+
+from webviz_core_utils.perf_timer import PerfTimer
+from webviz_services.smda_access.drogon import DrogonSmdaAccess
+from webviz_services.smda_access import SmdaAccess
+from webviz_services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
+from webviz_services.sumo_access.case_inspector import CaseInspector
+from webviz_services.sumo_access.polygons_access import PolygonsAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
-from primary.services.smda_access.drogon import DrogonSmdaAccess
-from primary.services.smda_access import SmdaAccess
-from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from primary.services.sumo_access.case_inspector import CaseInspector
-from primary.services.sumo_access.polygons_access import PolygonsAccess
-from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.utils.drogon import is_drogon_identifier
 
 from . import converters, schemas
