@@ -42,7 +42,7 @@ export type ReadoutWrapperProps = {
     onViewportHover?: (viewport: ViewportType | null) => void;
 };
 
-const PICKING_RADIUS = 20;
+const PICKING_RADIUS = 5;
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const ctx = useDpfSubsurfaceViewerContext();
@@ -63,40 +63,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     const [numRows] = props.views.layout;
 
-    // const viewports = props.views?.viewports ?? [];
-    // const layers = props.layers ?? [];
-
-    // const { pickingInfoPerView, activeViewportId, getPickingInfo } = useMultiViewPicking({
-    //     deckGlRef,
-    //     pickDepth: 3,
-    //     multiPicking: true,
-    // });
-
-    // const { viewports: adjustedViewports, layers: adjustedLayers } = useMultiViewCursorTracking({
-    //     activeViewportId,
-    //     viewports,
-    //     layers,
-    //     worldCoordinates: pickingInfoPerView[activeViewportId]?.coordinates ?? null,
-    //     crosshairProps: {
-    //         // ! We hide the crosshair by opacity since toggling "visible" causes a full asset load/unload
-    //         color: [255, 255, 255, hideReadout ? 0 : 255],
-    //         sizePx: 32,
-    //     },
-    // });context
-
-    // TODO: SHOULD THIS BE HERE?
-    // const [hoveredWorldPos, setHoveredWorldPos] = useHover(
-    //     HoverTopic.WORLD_POS,
-    //     ctx.hoverService,
-    //     ctx.moduleInstanceId,
-    // );
-    // const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, ctx.hoverService, ctx.moduleInstanceId);
-    // const setHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
-
-    // function handleMouseHover(event: MapMouseEvent): void {
-    //     getPickingInfo(event);
-    // }
-
     function handleMouseEvent(event: MapMouseEvent): void {
         if (event.type === "hover") {
             const hoveredViewPort = event.infos[0]?.viewport;
@@ -114,12 +80,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 }
             }
 
-            // if (event.infos.find()) const picks = pickAtWorldPosition(event);
-
             setActiveViewportId(hoveredViewPort?.id ?? null);
             props.onViewerHover?.(event);
             props.onViewportHover?.(hoveredViewPort ?? null);
-            // handleMouseHover(event);
         }
     }
 
@@ -192,13 +155,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 top: 10,
             },
         },
-        coords: {
-            visible: false,
-            multiPicking: true,
-            pickDepth: 2,
-        },
+        showReadout: false,
         triggerHome: props.triggerHome,
-        pickingRadius: 5,
+        pickingRadius: PICKING_RADIUS,
         layers: props.layers,
         onMouseEvent: handleMouseEvent,
         getTooltip: getTooltip,

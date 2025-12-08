@@ -2,7 +2,7 @@ import React from "react";
 
 import type { BoundingBox2D, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
 import { CrosshairLayer } from "@webviz/subsurface-viewer/dist/layers";
-import { cloneDeep, inRange } from "lodash";
+import { inRange } from "lodash";
 
 import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
@@ -19,42 +19,46 @@ export type HoverVisualizationWrapperProps = ReadoutWrapperProps;
 export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps): React.ReactNode {
     const { onViewerHover, onViewportHover } = props;
 
+    const [currentlyHoveredViewport, setCurrentlyHoveredViewport] = React.useState<null | string>(null);
+
     const ctx = useDpfSubsurfaceViewerContext();
-
-    const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
-
     const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS, ctx.hoverService, ctx.moduleInstanceId);
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, ctx.hoverService, ctx.moduleInstanceId);
     const setHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
 
-    const [currentlyHoveredViewport, setCurrentlyHoveredViewport] = React.useState<null | string>(null);
+    const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
 
-    const hoverVisualizations = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
+    const hoverVisualizationGroups = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
         ctx.visualizationAssemblerProduct,
         ctx.hoverService,
         ctx.moduleInstanceId,
     );
 
-    const adjustedLayersWithHoverVisualizations = [...(props.layers ?? [])];
-    const adjustedViewportsWithHoverVisualizations = cloneDeep(props.views?.viewports ?? []);
-    const globalVisualizations = hoverVisualizations.find(({ groupId }) => groupId === "")?.hoverVisualizations ?? [];
+    const adjustedLayers = [...props.layers, crossHairLayer];
+    const adjustedViews = {
+        ...props.views,
+        viewports: props.views.viewports.map((viewport) => {
+            const viewportLayerIds = viewport.layerIds ? [...viewport.layerIds] : [];
 
-    for (const hoverVisualization of hoverVisualizations) {
-        for (const viewport of adjustedViewportsWithHoverVisualizations) {
-            if (hoverVisualization.groupId === viewport.id) {
-                const hoverLayers = [...hoverVisualization.hoverVisualizations, ...globalVisualizations];
-                const hoverLayerIds = hoverLayers.map((layer) => layer.id);
+            for (const hoverVisualizationGroup of hoverVisualizationGroups) {
+                if (hoverVisualizationGroup.groupId !== viewport.id) continue;
 
-                viewport.layerIds = viewport.layerIds?.concat(...hoverLayerIds);
-                adjustedLayersWithHoverVisualizations.push(...hoverLayers);
+                for (const layer of hoverVisualizationGroup.hoverVisualizations) {
+                    if (!adjustedLayers.some(({ id }) => layer.id === id)) adjustedLayers.push(layer);
+                    if (!viewportLayerIds.includes(layer.id)) viewportLayerIds.push(layer.id);
+                }
             }
-            if (viewport.id !== currentlyHoveredViewport && ctx.visualizationMode === "2D") {
-                viewport.layerIds?.push(HOVER_CROSSHAIR_LAYER_ID);
-            }
-        }
-    }
 
-    adjustedLayersWithHoverVisualizations.push(crossHairLayer);
+            if (viewport.id !== currentlyHoveredViewport) {
+                viewportLayerIds.push(HOVER_CROSSHAIR_LAYER_ID);
+            }
+
+            return {
+                ...viewport,
+                layerIds: viewportLayerIds,
+            };
+        }),
+    };
 
     const handleViewerHover = React.useCallback(
         function handleViewerHover(mouseEvent: MapMouseEvent) {
@@ -85,13 +89,10 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     return (
         <ReadoutWrapper
             {...props}
-            views={{
-                ...props.views,
-                viewports: adjustedViewportsWithHoverVisualizations,
-            }}
+            views={adjustedViews}
+            layers={adjustedLayers}
             onViewerHover={handleViewerHover}
             onViewportHover={handleViewportHover}
-            layers={adjustedLayersWithHoverVisualizations}
         />
     );
 }

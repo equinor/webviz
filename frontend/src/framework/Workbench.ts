@@ -19,7 +19,7 @@ import type { WorkbenchServices } from "./WorkbenchServices";
  */
 export class Workbench {
     private readonly _workbenchServices: PrivateWorkbenchServices;
-    private _hoverService: HoverService;
+    private readonly _hoverService: HoverService;
     private readonly _guiMessageBroker: GuiMessageBroker;
     private readonly _queryClient: QueryClient;
     private readonly _sessionManager: WorkbenchSessionManager;

@@ -11,7 +11,10 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import type { AssemblerProduct } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type {
+    AssemblerProduct,
+    VisualizationTarget,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 
@@ -49,7 +52,7 @@ export type DpfSubsurfaceViewerWrapperProps = {
     viewState?: ViewStateType;
     onViewStateChange?: (viewState: ViewStateType) => void;
     fieldId: string;
-    visualizationAssemblerProduct: AssemblerProduct<any, any, any>;
+    visualizationAssemblerProduct: AssemblerProduct<VisualizationTarget.DECK_GL, any, any>;
     viewContext: ViewContext<any>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
@@ -64,23 +67,24 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     const [prevFieldId, setPrevFieldId] = React.useState<string | null>(null);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
+    const usedPolylineIds = props.visualizationAssemblerProduct.accumulatedData.polylineIds;
+
     const viewports: ViewportTypeExtended[] = [];
     const deckGlLayers: Layer<any>[] = [];
-    const globalAnnotations = props.visualizationAssemblerProduct.annotations;
-    const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
     const globalLayerIds: string[] = ["placeholder", "axes"];
-    const usedPolylineIds = props.visualizationAssemblerProduct.accumulatedData.polylineIds;
 
     for (const item of props.visualizationAssemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
             const colorScales = item.annotations.filter((el) => "colorScale" in el);
-            const layerIds: string[] = [];
+            const layerIds: string[] = [...globalLayerIds];
 
             for (const child of item.children) {
                 if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
                     const layer = child.visualization;
+
                     layerIds.push(layer.id);
-                    deckGlLayers.push(layer);
+                    // Shared layers (aka, root group layers) might already have been added
+                    if (!deckGlLayers.some((l) => l.id === layer.id)) deckGlLayers.push(layer);
                 }
             }
             viewports.push({
@@ -92,20 +96,13 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
                 layerIds,
                 colorScales,
             });
-        } else if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-            deckGlLayers.push(item.visualization);
-            globalLayerIds.push(item.visualization.id);
         }
     }
 
     const views: ViewsTypeExtended = {
         layout: [0, 0],
         showLabel: false,
-        viewports: viewports.map((viewport) => ({
-            ...viewport,
-            layerIds: [...globalLayerIds, ...viewport.layerIds!],
-            colorScales: [...globalColorScales, ...viewport.colorScales!],
-        })),
+        viewports: viewports,
     };
 
     const numViews = props.visualizationAssemblerProduct.children.filter(
