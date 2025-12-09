@@ -1,7 +1,9 @@
 import { isEqual } from "lodash";
 
 import type {
+    WellboreCompletions_api,
     WellboreHeader_api,
+    WellborePerforations_api,
     WellboreTrajectory_api,
     WellInjectionData_api,
     WellProductionData_api,
@@ -10,6 +12,8 @@ import type {
 } from "@api";
 import {
     getDrilledWellboreHeadersOptions,
+    getFieldPerforationsOptions,
+    getFieldScreensOptions,
     getInjectionDataOptions,
     getObservedSurfacesMetadataOptions,
     getProductionDataOptions,
@@ -19,7 +23,6 @@ import {
     SurfaceAttributeType_api,
 } from "@api";
 import { sortStringArray } from "@lib/utils/arrays";
-import { transformToSimplifiedWellboreHeaders } from "@lib/utils/wellboreTypes";
 import type {
     CustomDataProviderImplementation,
     FetchDataParams,
@@ -54,6 +57,8 @@ export type DrilledWellboreTrajectoriesStoredData = {
     formationSegments: WellTrajectoryFormationSegments_api[];
     productionData: WellProductionData_api[];
     injectionData: WellInjectionData_api[];
+    perforations: WellborePerforations_api[];
+    screens: WellboreCompletions_api[];
 };
 type RichDrilledWellTrajectoriesData = WellboreTrajectory_api[];
 
@@ -142,7 +147,38 @@ export class RichDrilledWellTrajectoriesProvider
             const wellboreTrajectories = getHelperDependency(wellboreTrajectoriesDep);
             return wellboreTrajectories || [];
         });
+        const perforationsDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
 
+            if (!fieldIdentifier) return [];
+
+            return await queryClient.fetchQuery({
+                ...getFieldPerforationsOptions({
+                    query: { field_identifier: fieldIdentifier ?? "" },
+                    signal: abortSignal,
+                }),
+            });
+        });
+        storedDataUpdater("perforations", ({ getHelperDependency }) => {
+            const perforations = getHelperDependency(perforationsDep);
+            return perforations || [];
+        });
+        const screensDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+
+            if (!fieldIdentifier) return [];
+
+            return await queryClient.fetchQuery({
+                ...getFieldScreensOptions({
+                    query: { field_identifier: fieldIdentifier ?? "" },
+                    signal: abortSignal,
+                }),
+            });
+        });
+        storedDataUpdater("screens", ({ getHelperDependency }) => {
+            const screens = getHelperDependency(screensDep);
+            return screens || [];
+        });
         // Observed Surface metadata dependency (for time intervals)
         const observedSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
@@ -321,7 +357,7 @@ export class RichDrilledWellTrajectoriesProvider
             }
 
             // Transform enhanced wellbore headers to simplified ones for reduced storage size
-            return transformToSimplifiedWellboreHeaders(wellboreHeaders);
+            return wellboreHeaders;
         });
 
         availableSettingsUpdater(Setting.WELL_TRAJ_FILTER_SURFACE_ATTRIBUTE, ({ getHelperDependency }) => {

@@ -1,11 +1,15 @@
 import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import { isEqual } from "lodash";
 
-import type { SurfaceStatisticFunction_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
+import type {
+    SurfaceStatisticFunction_api,
+    WellboreHeader_api,
+    WellboreLogCurveHeader_api,
+    WellborePick_api,
+} from "@api";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
-import type { SimplifiedWellboreHeader } from "@lib/utils/wellboreTypes";
 import type { DepthFilterConfig } from "@modules/_shared/components/DepthFilterDialog";
 
 import type { AvailableValuesType } from "../interfacesAndTypes/utils";
@@ -187,7 +191,7 @@ export type SettingTypes = {
     [Setting.SENSITIVITY]: SensitivityNameCasePair | null;
     [Setting.SHOW_GRID_LINES]: boolean;
     [Setting.SMDA_INTERPRETER]: string | null;
-    [Setting.SMDA_WELLBORE_HEADERS]: SimplifiedWellboreHeader[] | null;
+    [Setting.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
     [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
     [Setting.STRAT_COLUMN]: string | null;
     [Setting.SURFACE_NAME]: string | null;

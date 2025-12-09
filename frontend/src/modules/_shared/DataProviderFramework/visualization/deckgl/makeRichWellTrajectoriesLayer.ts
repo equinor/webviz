@@ -4,7 +4,9 @@ import type {
 } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 
 import type {
+    WellboreCompletions_api,
     WellboreHeader_api,
+    WellborePerforations_api,
     WellboreTrajectory_api,
     WellInjectionData_api,
     WellProductionData_api,
@@ -88,7 +90,8 @@ export function makeRichWellTrajectoriesLayer({
     const formationSegments: WellTrajectoryFormationSegments_api[] = getStoredData("formationSegments");
     const productionData = getStoredData("productionData");
     const injectionData = getStoredData("injectionData");
-
+    const perforations: WellborePerforations_api[] = getStoredData("perforations");
+    const screens: WellboreCompletions_api[] = getStoredData("screens");
     // **************************
     // TODO: Segment filter settings is currently not optional. Making same top/bottom count as "unfiltered"
     const surfaceFilterTop = getSetting(Setting.WELL_TRAJ_FILTER_TOP_SURFACE_NAME);
@@ -108,6 +111,8 @@ export function makeRichWellTrajectoriesLayer({
     }
 
     const headersByUuid = new Map(allWellboreHeaders.map((h) => [h.wellboreUuid, h]));
+    const perforationsByUuid = new Map(perforations.map((p) => [p.wellboreUuid, p.perforations ?? []]));
+    const screensByUuid = new Map(screens.map((s) => [s.wellboreUuid, s.completions ?? []]));
     // TODO: Use uuid, for consistency
     const formationsByBoreIdent = new Map<string, FormationSegmentData[]>(
         formationSegments?.map((f) => [
@@ -139,10 +144,10 @@ export function makeRichWellTrajectoriesLayer({
             uniqueIdentifier: wt.uniqueWellboreIdentifier,
             trajectory: wt,
 
-            perforations: header.perforations ?? [],
+            perforations: perforationsByUuid.get(wt.wellboreUuid) ?? [],
             // TODO: Segments for the entire track, not just selected range?
             formationSegments: formationSegments ?? [],
-            screens: header.screens ?? [],
+            screens: screensByUuid.get(wt.wellboreUuid) ?? [],
             purpose: header.wellborePurpose,
             status: header.wellboreStatus,
             well: {
@@ -187,7 +192,7 @@ export function makeRichWellTrajectoriesLayer({
         mdFilterValue: mdRange,
 
         discardFilteredSections: !depthFilter?.useOpaqueCutoff,
-        isWellboreSelected: (uuid) => !!selectedHeaders?.some((header) => header.wellboreUuid === uuid),
+        // isWellboreSelected: (uuid) => !!selectedHeaders?.some((header) => header.wellboreUuid === uuid),
         getWellColor: (wellboreUwi: string) => {
             if (productionData && injectionData) {
                 const color = setColorByFlowData(

@@ -133,6 +133,12 @@ import type {
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersResponse_api,
     GetDrilledWellboreHeadersError_api,
+    GetFieldPerforationsData_api,
+    GetFieldPerforationsResponse_api,
+    GetFieldPerforationsError_api,
+    GetFieldScreensData_api,
+    GetFieldScreensResponse_api,
+    GetFieldScreensError_api,
     GetWellTrajectoriesData_api,
     GetWellTrajectoriesResponse_api,
     GetWellTrajectoriesError_api,
@@ -151,12 +157,6 @@ import type {
     GetWellboreStratigraphicColumnsData_api,
     GetWellboreStratigraphicColumnsResponse_api,
     GetWellboreStratigraphicColumnsError_api,
-    GetFieldPerforationsData_api,
-    GetFieldPerforationsResponse_api,
-    GetFieldPerforationsError_api,
-    GetFieldScreensData_api,
-    GetFieldScreensResponse_api,
-    GetFieldScreensError_api,
     GetWellboreCompletionsData_api,
     GetWellboreCompletionsResponse_api,
     GetWellboreCompletionsError_api,
@@ -1002,7 +1002,7 @@ export const getWellCompletionsData = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Drilled Wellbore Headers
- * Get wellbore headers for all wells in the field, optionally including completion data
+ * Get wellbore headers for all wells in a given field
  */
 export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
     options: Options<GetDrilledWellboreHeadersData_api, ThrowOnError>,
@@ -1014,6 +1014,30 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
     >({
         ...options,
         url: "/well/drilled_wellbore_headers/",
+    });
+};
+
+/**
+ * Get Field Perforations
+ */
+export const getFieldPerforations = <ThrowOnError extends boolean = false>(
+    options: Options<GetFieldPerforationsData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetFieldPerforationsResponse_api, GetFieldPerforationsError_api, ThrowOnError>({
+        ...options,
+        url: "/well/field_perforations",
+    });
+};
+
+/**
+ * Get Field Screens
+ */
+export const getFieldScreens = <ThrowOnError extends boolean = false>(
+    options: Options<GetFieldScreensData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetFieldScreensResponse_api, GetFieldScreensError_api, ThrowOnError>({
+        ...options,
+        url: "/well/field_screens",
     });
 };
 
@@ -1116,32 +1140,6 @@ export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = f
     >({
         ...options,
         url: "/well/wellbore_stratigraphic_columns/",
-    });
-};
-
-/**
- * Get Field Perforations
- * Get perforations for all well bores in a field
- */
-export const getFieldPerforations = <ThrowOnError extends boolean = false>(
-    options: Options<GetFieldPerforationsData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<GetFieldPerforationsResponse_api, GetFieldPerforationsError_api, ThrowOnError>({
-        ...options,
-        url: "/well/field_perforations/",
-    });
-};
-
-/**
- * Get Field Screens
- * Get screens for all well bores in a field
- */
-export const getFieldScreens = <ThrowOnError extends boolean = false>(
-    options: Options<GetFieldScreensData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<GetFieldScreensResponse_api, GetFieldScreensError_api, ThrowOnError>({
-        ...options,
-        url: "/well/field_screens/",
     });
 };
 

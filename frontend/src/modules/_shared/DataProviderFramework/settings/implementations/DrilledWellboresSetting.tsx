@@ -1,8 +1,8 @@
 import React from "react";
 
-import { SettingConfigButton } from "@lib/components/SettingConfigButton";
-import type { SimplifiedWellboreHeader } from "@lib/utils/wellboreTypes";
-import { WellboreSelectionForm } from "@modules/_shared/components/WellboreSelectionForm/wellboreSelectionForm";
+import type { WellboreHeader_api } from "@api";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 
 import type {
     CustomSettingImplementation,
@@ -11,7 +11,7 @@ import type {
 import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import type { SettingCategory } from "../settingsDefinitions";
 
-type ValueType = SimplifiedWellboreHeader[] | null;
+type ValueType = WellboreHeader_api[] | null;
 
 export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_SELECT> {
     defaultValue: ValueType = null;
@@ -25,65 +25,49 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>,
     ): ValueType {
         if (!currentValue) {
-            return [];
+            return availableValues;
         }
 
         const matchingValues = currentValue.filter((value) =>
             availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
         );
         if (matchingValues.length === 0) {
-            return [];
+            return availableValues;
         }
         return matchingValues;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) => React.ReactNode {
         return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
-            // Available values are already simplified wellbore headers from the provider
             const availableValues = props.availableValues ?? [];
-            const currentSelection = props.value ?? [];
 
-            const selectedCount = currentSelection.length;
-            const totalCount = availableValues.length;
+            const options: SelectOption[] = availableValues?.map((ident) => ({
+                value: ident.wellboreUuid,
+                label: ident.uniqueWellboreIdentifier,
+            }));
 
-            const [localFormValue, setLocalFormValue] = React.useState<SimplifiedWellboreHeader[]>([]);
-
-            function handleConfigOpen() {
-                setLocalFormValue([...currentSelection]);
+            function handleChange(selectedUuids: string[]) {
+                const selectedWellbores = availableValues.filter((ident) => selectedUuids.includes(ident.wellboreUuid));
+                props.onValueChange(selectedWellbores);
             }
 
-            function handleApplyConfig() {
-                props.onValueChange(localFormValue);
-            }
-
-            function handleDiscardConfig() {
-                setLocalFormValue([]);
-            }
+            const selectedValues = React.useMemo(
+                () => props.value?.map((ident) => ident.wellboreUuid) ?? [],
+                [props.value],
+            );
 
             return (
                 <div className="flex flex-col gap-1 mt-1">
-                    <SettingConfigButton
-                        className="w-full"
-                        size="medium"
-                        formTitle="Select wellbores"
-                        modalWidth="1200px"
-                        modalHeight="80vh"
-                        formContent={
-                            <WellboreSelectionForm
-                                selectedWellbores={localFormValue}
-                                availableWellbores={availableValues}
-                                onSelectionChange={setLocalFormValue}
-                                onFormSubmit={handleApplyConfig}
-                            />
-                        }
-                        onOpen={handleConfigOpen}
-                        onDiscard={handleDiscardConfig}
-                        onApply={handleApplyConfig}
-                    >
-                        {selectedCount === 0
-                            ? "Select wellbores..."
-                            : `${selectedCount} of ${totalCount} wellbores selected`}
-                    </SettingConfigButton>
+                    <Select
+                        filter
+                        options={options}
+                        value={selectedValues}
+                        onChange={handleChange}
+                        showQuickSelectButtons={true}
+                        disabled={props.isOverridden}
+                        multiple={true}
+                        size={5}
+                    />
                 </div>
             );
         };

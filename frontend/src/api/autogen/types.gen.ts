@@ -1294,8 +1294,6 @@ export type WellboreCasing_api = {
 };
 
 export type WellboreCompletion_api = {
-    uniqueWellboreIdentifier: string;
-    wellboreUuid: string;
     mdTop: number;
     mdBottom: number;
     tvdTop: number | null;
@@ -1308,19 +1306,11 @@ export type WellboreCompletion_api = {
 /**
  * Simplified completion schema for use in nested structures (without wellbore identifiers)
  */
-export type WellboreCompletionNested_api = {
-    mdTop: number;
-    mdBottom: number;
-    tvdTop: number | null;
-    tvdBottom: number | null;
-    description: string | null;
-    symbolName: string | null;
-    comment: string | null;
+export type WellboreCompletions_api = {
+    wellboreUuid: string;
+    completions: Array<WellboreCompletion_api>;
 };
 
-/**
- * Enhanced wellbore header that includes completion data (perforations and screens)
- */
 export type WellboreHeader_api = {
     wellboreUuid: string;
     uniqueWellboreIdentifier: string;
@@ -1336,8 +1326,6 @@ export type WellboreHeader_api = {
     kickoffDepthMd: number | null;
     kickoffDepthTvd: number | null;
     parentWellbore: string | null;
-    perforations?: Array<WellborePerforationNested_api>;
-    screens?: Array<WellboreCompletionNested_api>;
 };
 
 export type WellboreLogCurveData_api = {
@@ -1367,8 +1355,6 @@ export type WellboreLogCurveHeader_api = {
 };
 
 export type WellborePerforation_api = {
-    uniqueWellboreIdentifier: string;
-    wellboreUuid: string;
     mdTop: number;
     mdBottom: number;
     tvdTop: number;
@@ -1379,18 +1365,9 @@ export type WellborePerforation_api = {
     dateClosed: string | null;
 };
 
-/**
- * Simplified perforation schema for use in nested structures (without wellbore identifiers)
- */
-export type WellborePerforationNested_api = {
-    mdTop: number;
-    mdBottom: number;
-    tvdTop: number;
-    tvdBottom: number;
-    status: string;
-    completionMode: string;
-    dateShot: string | null;
-    dateClosed: string | null;
+export type WellborePerforations_api = {
+    wellboreUuid: string;
+    perforations: Array<WellborePerforation_api>;
 };
 
 /**
@@ -3283,10 +3260,6 @@ export type GetDrilledWellboreHeadersData_api = {
          * Official field identifier
          */
         field_identifier: string;
-        /**
-         * Include perforation and screen completion data
-         */
-        include_completions?: boolean;
         zCacheBust?: string;
     };
     url: "/well/drilled_wellbore_headers/";
@@ -3310,6 +3283,68 @@ export type GetDrilledWellboreHeadersResponses_api = {
 
 export type GetDrilledWellboreHeadersResponse_api =
     GetDrilledWellboreHeadersResponses_api[keyof GetDrilledWellboreHeadersResponses_api];
+
+export type GetFieldPerforationsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        zCacheBust?: string;
+    };
+    url: "/well/field_perforations";
+};
+
+export type GetFieldPerforationsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetFieldPerforationsError_api = GetFieldPerforationsErrors_api[keyof GetFieldPerforationsErrors_api];
+
+export type GetFieldPerforationsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellborePerforations_api>;
+};
+
+export type GetFieldPerforationsResponse_api = GetFieldPerforationsResponses_api[keyof GetFieldPerforationsResponses_api];
+
+export type GetFieldScreensData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        zCacheBust?: string;
+    };
+    url: "/well/field_screens";
+};
+
+export type GetFieldScreensErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetFieldScreensError_api = GetFieldScreensErrors_api[keyof GetFieldScreensErrors_api];
+
+export type GetFieldScreensResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellboreCompletions_api>;
+};
+
+export type GetFieldScreensResponse_api = GetFieldScreensResponses_api[keyof GetFieldScreensResponses_api];
 
 export type GetWellTrajectoriesData_api = {
     body?: never;
@@ -3517,68 +3552,6 @@ export type GetWellboreStratigraphicColumnsResponses_api = {
 
 export type GetWellboreStratigraphicColumnsResponse_api =
     GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
-
-export type GetFieldPerforationsData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Official field identifier
-         */
-        field_identifier: string;
-        zCacheBust?: string;
-    };
-    url: "/well/field_perforations/";
-};
-
-export type GetFieldPerforationsErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetFieldPerforationsError_api = GetFieldPerforationsErrors_api[keyof GetFieldPerforationsErrors_api];
-
-export type GetFieldPerforationsResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<WellborePerforation_api>;
-};
-
-export type GetFieldPerforationsResponse_api = GetFieldPerforationsResponses_api[keyof GetFieldPerforationsResponses_api];
-
-export type GetFieldScreensData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Official field identifier
-         */
-        field_identifier: string;
-        zCacheBust?: string;
-    };
-    url: "/well/field_screens/";
-};
-
-export type GetFieldScreensErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetFieldScreensError_api = GetFieldScreensErrors_api[keyof GetFieldScreensErrors_api];
-
-export type GetFieldScreensResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<WellboreCompletion_api>;
-};
-
-export type GetFieldScreensResponse_api = GetFieldScreensResponses_api[keyof GetFieldScreensResponses_api];
 
 export type GetWellboreCompletionsData_api = {
     body?: never;
