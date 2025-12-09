@@ -29,19 +29,22 @@ export type SelectEnsemblesDialogProps = {
 
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
     const [showEnsembleExplorer, setShowEnsembleExplorer] = React.useState<boolean>(false);
-    const [ensembleExplorerMode, setEnsembleExplorerMode] = React.useState<EnsembleExplorerMode | null>(null);
     const [hasExplorerBeenOpened, setHasExplorerBeenOpened] = React.useState<boolean>(false);
-    const [deltaEnsembleUuidToEdit, setDeltaEnsembleUuidToEdit] = React.useState<string>("");
 
     const [showCancelDialog, setShowCancelDialog] = React.useState(false);
     const [showEnsemblesLoadingErrorDialog, setShowEnsemblesLoadingErrorDialog] = React.useState(false);
 
+    // States for ensemble explorer mode and delta ensemble editing
+    const ensembleExplorerModeState = React.useState<EnsembleExplorerMode | null>(null);
+    const deltaEnsembleUuidToEditState = React.useState<string>("");
+
     // Gui states
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
-    const [isEnsembleSetLoading, setIsEnsembleSetLoading] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.IsLoadingEnsembleSet,
-    );
+    const isEnsembleSetLoadingState = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingEnsembleSet);
+
+    // Destruct for local use
+    const [ensembleExplorerMode, setEnsembleExplorerMode] = ensembleExplorerModeState;
+    const [isEnsembleSetLoading] = isEnsembleSetLoadingState;
 
     const queryClient = useQueryClient();
     const workbenchSession = props.workbench.getSessionManager().getActiveSession();
@@ -103,8 +106,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         selectedRegularEnsemblesState: selectedRegularEnsemblesState,
         selectedDeltaEnsemblesState: selectedDeltaEnsemblesState,
         selectableEnsemblesForDeltaState: selectableEnsemblesForDeltaState,
-        ensembleExplorerModeState: [ensembleExplorerMode, setEnsembleExplorerMode],
-        deltaEnsembleUuidToEditState: [deltaEnsembleUuidToEdit, setDeltaEnsembleUuidToEdit],
+        ensembleExplorerModeState: ensembleExplorerModeState,
+        deltaEnsembleUuidToEditState: deltaEnsembleUuidToEditState,
         setShowEnsembleExplorer,
     });
 
@@ -120,7 +123,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         workbenchSession,
         selectedRegularEnsembles,
         selectedDeltaEnsembles,
-        isEnsembleSetLoadingState: [isEnsembleSetLoading, setIsEnsembleSetLoading],
+        isEnsembleSetLoadingState: isEnsembleSetLoadingState,
         onLoadingErrorsDetected: () => {
             setShowEnsemblesLoadingErrorDialog(true);
         },

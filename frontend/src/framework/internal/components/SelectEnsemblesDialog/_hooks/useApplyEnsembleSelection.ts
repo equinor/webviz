@@ -29,7 +29,6 @@ export type UseApplyEnsembleSelectionProps = {
 };
 
 export type UseApplyEnsembleSelectionResult = {
-    isEnsembleSetLoading: boolean;
     ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap;
     handleApplyEnsembleSelection: () => void;
     handleApplyEnsembleSelectionWithLoadingError: () => void;
@@ -50,7 +49,7 @@ export function useApplyEnsembleSelection({
     onLoadingErrorsDetected,
     onSuccess,
 }: UseApplyEnsembleSelectionProps) {
-    const [isEnsembleSetLoading, setIsEnsembleSetLoading] = isEnsembleSetLoadingState;
+    const [, setIsEnsembleSetLoading] = isEnsembleSetLoadingState;
     const [newEnsembleSetToApply, setNewEnsembleSetToApply] = React.useState<EnsembleSet | null>(null);
     const [ensembleLoadingErrorInfoMap, setEnsembleLoadingErrorInfoMap] = React.useState<EnsembleLoadingErrorInfoMap>(
         {},
@@ -146,7 +145,6 @@ export function useApplyEnsembleSelection({
     );
 
     return {
-        isEnsembleSetLoading,
         ensembleLoadingErrorInfoMap,
         handleApplyEnsembleSelection,
         handleApplyEnsembleSelectionWithLoadingError,
