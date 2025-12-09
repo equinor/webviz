@@ -3305,39 +3305,6 @@ export type GetWellborePicksForPickIdentifierResponses_api = {
 export type GetWellborePicksForPickIdentifierResponse_api =
     GetWellborePicksForPickIdentifierResponses_api[keyof GetWellborePicksForPickIdentifierResponses_api];
 
-export type DeprecatedGetWellborePicksForWellboreData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Wellbore uuid
-         */
-        wellbore_uuid: string;
-        zCacheBust?: string;
-    };
-    url: "/well/deprecated_wellbore_picks_for_wellbore/";
-};
-
-export type DeprecatedGetWellborePicksForWellboreErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type DeprecatedGetWellborePicksForWellboreError_api =
-    DeprecatedGetWellborePicksForWellboreErrors_api[keyof DeprecatedGetWellborePicksForWellboreErrors_api];
-
-export type DeprecatedGetWellborePicksForWellboreResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<WellborePick_api>;
-};
-
-export type DeprecatedGetWellborePicksForWellboreResponse_api =
-    DeprecatedGetWellborePicksForWellboreResponses_api[keyof DeprecatedGetWellborePicksForWellboreResponses_api];
-
 export type GetWellborePicksInStratColumnData_api = {
     body?: never;
     path?: never;

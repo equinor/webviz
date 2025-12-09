@@ -142,9 +142,6 @@ import type {
     GetWellborePicksForPickIdentifierData_api,
     GetWellborePicksForPickIdentifierResponse_api,
     GetWellborePicksForPickIdentifierError_api,
-    DeprecatedGetWellborePicksForWellboreData_api,
-    DeprecatedGetWellborePicksForWellboreResponse_api,
-    DeprecatedGetWellborePicksForWellboreError_api,
     GetWellborePicksInStratColumnData_api,
     GetWellborePicksInStratColumnResponse_api,
     GetWellborePicksInStratColumnError_api,
@@ -953,6 +950,7 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Field Perforations
+ * Get field perforations for all wellbores in a given field.
  */
 export const getFieldPerforations = <ThrowOnError extends boolean = false>(
     options: Options<GetFieldPerforationsData_api, ThrowOnError>,
@@ -965,6 +963,8 @@ export const getFieldPerforations = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Field Screens
+ * Get field screens for all wellbores in a given field.
+ * Screens are the SSDL completions with a filter on "Screen" type.
  */
 export const getFieldScreens = <ThrowOnError extends boolean = false>(
     options: Options<GetFieldScreensData_api, ThrowOnError>,
@@ -1022,25 +1022,6 @@ export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean =
     >({
         ...options,
         url: "/well/wellbore_picks_for_pick_identifier/",
-    });
-};
-
-/**
- * Deprecated Get Wellbore Picks For Wellbore
- * Get wellbore picks for field and pick identifier
- *
- * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
- */
-export const deprecatedGetWellborePicksForWellbore = <ThrowOnError extends boolean = false>(
-    options: Options<DeprecatedGetWellborePicksForWellboreData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<
-        DeprecatedGetWellborePicksForWellboreResponse_api,
-        DeprecatedGetWellborePicksForWellboreError_api,
-        ThrowOnError
-    >({
-        ...options,
-        url: "/well/deprecated_wellbore_picks_for_wellbore/",
     });
 };
 

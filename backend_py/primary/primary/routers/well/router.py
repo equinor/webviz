@@ -167,30 +167,6 @@ async def get_wellbore_picks_for_pick_identifier(
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
 
 
-@router.get("/deprecated_wellbore_picks_for_wellbore/")
-async def deprecated_get_wellbore_picks_for_wellbore(
-    # fmt:off
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    wellbore_uuid: str = Query(description="Wellbore uuid")
-    # fmt:on
-) -> List[schemas.WellborePick]:
-    """Get wellbore picks for field and pick identifier
-
-    NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
-    """
-    well_access: Union[SmdaAccess, DrogonSmdaAccess]
-
-    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
-        # Handle DROGON
-        well_access = DrogonSmdaAccess()
-
-    else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
-
-    wellbore_picks = await well_access.get_wellbore_picks_for_wellbore_async(wellbore_uuid=wellbore_uuid)
-    return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
-
-
 @router.get("/wellbore_picks_in_strat_column")
 async def get_wellbore_picks_in_strat_column(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
