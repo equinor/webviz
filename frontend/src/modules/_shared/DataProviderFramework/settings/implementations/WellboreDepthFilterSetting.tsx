@@ -40,9 +40,11 @@ export class WellboreDepthFilterSetting
         },
     };
 
-    isValueValidStructure(value: unknown): value is InternalValueType {}
+    isValueValidStructure(value: unknown): value is InternalValueType {
+        return true;
+    }
 
-    mapInternalToExternalValue(internalValue: InternalValueType, valueRange: ValueRangeType): ExternalValueType {
+    mapInternalToExternalValue(internalValue: InternalValueType): ExternalValueType {
         return internalValue;
     }
 
@@ -60,7 +62,7 @@ export class WellboreDepthFilterSetting
         }
 
         if (value.filterType === "surface") {
-            if (value.topSurfaceName === null) {
+            if (value.topSurfaceName === null || value.attributeName === null || value.realizationNum === null) {
                 return false;
             }
 
@@ -88,8 +90,7 @@ export class WellboreDepthFilterSetting
             if (!valueRange.attributeNames.includes(value.attributeName)) {
                 return false;
             }
-
-            return true;
         }
+        return true;
     }
 }
