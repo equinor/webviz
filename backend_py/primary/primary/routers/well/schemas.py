@@ -3,7 +3,7 @@ from typing import List, Optional, TypeAlias
 from pydantic import BaseModel
 
 
-class WellboreHeader(BaseModel):
+class SmdaWellboreHeader(BaseModel):
     wellboreUuid: str
     uniqueWellboreIdentifier: str
     wellUuid: str
@@ -14,6 +14,31 @@ class WellboreHeader(BaseModel):
     depthReferenceElevation: float
     wellborePurpose: str
     wellboreStatus: str
+    currentTrack: int
+    kickoffDepthMd: float | None
+    kickoffDepthTvd: float | None
+    parentWellbore: str | None
+
+
+class WellboreHeader(BaseModel):
+    """Enhanced wellbore header that includes completion data (perforations and screens)"""
+
+    wellboreUuid: str
+    uniqueWellboreIdentifier: str
+    wellUuid: str
+    uniqueWellIdentifier: str
+    wellEasting: float
+    wellNorthing: float
+    depthReferencePoint: str
+    depthReferenceElevation: float
+    wellborePurpose: str
+    wellboreStatus: str
+    currentTrack: int
+    kickoffDepthMd: float | None
+    kickoffDepthTvd: float | None
+    parentWellbore: str | None
+    perforations: List["WellborePerforationNested"] = []
+    screens: List["WellboreCompletionNested"] = []
 
 
 class WellboreTrajectory(BaseModel):
@@ -69,6 +94,18 @@ class WellboreCompletion(BaseModel):
     comment: str | None
 
 
+class WellboreCompletionNested(BaseModel):
+    """Simplified completion schema for use in nested structures (without wellbore identifiers)"""
+
+    mdTop: float
+    mdBottom: float
+    tvdTop: float | None
+    tvdBottom: float | None
+    description: str | None
+    symbolName: str | None
+    comment: str | None
+
+
 class WellboreCasing(BaseModel):
     itemType: str  # Casing type
     diameterNumeric: float
@@ -89,6 +126,19 @@ class WellborePerforation(BaseModel):
     tvdBottom: float
     status: str
     completionMode: str
+
+
+class WellborePerforationNested(BaseModel):
+    """Simplified perforation schema for use in nested structures (without wellbore identifiers)"""
+
+    mdTop: float
+    mdBottom: float
+    tvdTop: float
+    tvdBottom: float
+    status: str
+    completionMode: str
+    dateShot: str | None
+    dateClosed: str | None
 
 
 class WellLogCurveSourceEnum(Enum):

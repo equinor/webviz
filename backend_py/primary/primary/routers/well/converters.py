@@ -53,8 +53,8 @@ def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.Well
 
 def convert_wellbore_header_to_schema(
     drilled_wellbore_header: WellboreHeader,
-) -> schemas.WellboreHeader:
-    return schemas.WellboreHeader(
+) -> schemas.SmdaWellboreHeader:
+    return schemas.SmdaWellboreHeader(
         wellboreUuid=drilled_wellbore_header.wellbore_uuid,
         uniqueWellboreIdentifier=drilled_wellbore_header.unique_wellbore_identifier,
         wellUuid=drilled_wellbore_header.well_uuid,
@@ -65,6 +65,10 @@ def convert_wellbore_header_to_schema(
         depthReferenceElevation=drilled_wellbore_header.depth_reference_elevation,
         wellborePurpose=(drilled_wellbore_header.wellbore_purpose if drilled_wellbore_header.wellbore_purpose else ""),
         wellboreStatus=drilled_wellbore_header.wellbore_status if drilled_wellbore_header.wellbore_status else "",
+        currentTrack=drilled_wellbore_header.current_track,
+        kickoffDepthMd=drilled_wellbore_header.kickoff_depth_md,
+        kickoffDepthTvd=drilled_wellbore_header.kickoff_depth_tvd,
+        parentWellbore=drilled_wellbore_header.parent_wellbore,
     )
 
 
