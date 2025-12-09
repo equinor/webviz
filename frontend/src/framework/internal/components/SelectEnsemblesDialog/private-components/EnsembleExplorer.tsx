@@ -8,6 +8,7 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Button } from "@lib/components/Button";
 import { Label } from "@lib/components/Label";
 import { Select, type SelectOption } from "@lib/components/Select";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { useValidState } from "@lib/hooks/useValidState";
 
 import type { InternalRegularEnsembleSetting } from "../types";
@@ -24,85 +25,110 @@ export type EnsembleExplorerProps = {
 };
 
 export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode {
-    const [selectedCaseName, setSelectedCaseName] = React.useState<string>("");
-    const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string>("");
-    const [selectedCaseSortedEnsembles, setSelectedCaseSortedEnsembles] = React.useState<EnsembleInfo_api[] | null>(
-        null,
-    );
+    const [selectedCaseName, setSelectedCaseName] = React.useState<string | null>(null);
+    const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string | null>(null);
+    const [selectedCaseEnsembles, setSelectedCaseEnsembles] = React.useState<EnsembleInfo_api[]>([]);
 
     // --- Derived data ---
-    const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>({
-        initialState: "",
-        validStates: selectedCaseSortedEnsembles?.map((ens) => ens.name) ?? [],
+    const [activeEnsembleName, setActiveEnsembleName] = useValidState<string | null>({
+        initialState: null,
+        validStates: selectedCaseEnsembles?.map((ens) => ens.name) ?? [],
         keepStateWhenInvalid: false,
     });
-
-    const selectedEnsemble = React.useMemo(() => {
-        return selectedCaseSortedEnsembles?.find((ens) => ens.name === selectedEnsembleName) ?? null;
-    }, [selectedCaseSortedEnsembles, selectedEnsembleName]);
 
     const ensembleOptions = React.useMemo<SelectOption<string>[]>(
         function createEnsembleOptions() {
             return (
-                selectedCaseSortedEnsembles?.map((e) => ({
+                selectedCaseEnsembles?.map((e) => ({
                     label: `${e.name}  (${e.realizationCount} reals)`,
                     value: e.name,
                 })) ?? []
             );
         },
-        [selectedCaseSortedEnsembles],
+        [selectedCaseEnsembles],
     );
 
-    let selectedEnsembleIdent: RegularEnsembleIdent | null = null;
-    try {
-        selectedEnsembleIdent = new RegularEnsembleIdent(selectedCaseUuid, selectedEnsembleName);
-    } catch {
-        selectedEnsembleIdent = null;
-    }
-    const ensembleAlreadySelected =
-        selectedCaseUuid &&
-        selectedEnsembleName &&
-        props.selectedEnsembles.some((el) => el.ensembleIdent.equals(selectedEnsembleIdent));
+    const ensembleAlreadySelected = React.useMemo(
+        function checkEnsembleAlreadySelected() {
+            if (!selectedCaseUuid || !activeEnsembleName) {
+                return false;
+            }
+
+            try {
+                // RegularEnsembleIdent throws if invalid case uuid
+                const ident = new RegularEnsembleIdent(selectedCaseUuid, activeEnsembleName);
+                return props.selectedEnsembles.some((el) => el.ensembleIdent.equals(ident));
+            } catch (error) {
+                console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
+                return false;
+            }
+        },
+        [selectedCaseUuid, activeEnsembleName, props.selectedEnsembles],
+    );
 
     function handleRegularEnsembleChanged(ensembleNames: string[]) {
-        setSelectedEnsembleName(ensembleNames[0]);
+        setActiveEnsembleName(ensembleNames[0]);
     }
 
     function handleSelectRegularEnsemble() {
-        if (ensembleAlreadySelected) return;
-        if (!selectedEnsemble) return;
+        if (!selectedCaseUuid || !selectedCaseName || !activeEnsembleName || ensembleAlreadySelected) {
+            return;
+        }
+
+        let ensembleIdent: RegularEnsembleIdent;
+        try {
+            ensembleIdent = new RegularEnsembleIdent(selectedCaseUuid, activeEnsembleName);
+        } catch (error) {
+            console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
+            return;
+        }
 
         props.onSelectEnsemble({
-            ensembleIdent: new RegularEnsembleIdent(selectedCaseUuid, selectedEnsembleName),
+            ensembleIdent: ensembleIdent,
             caseName: selectedCaseName,
             color: props.nextEnsembleColor,
             customName: null,
         });
     }
 
-    function handleCaseSelectedChange(caseSelection: CaseSelection) {
-        const selectedCaseSortedEnsembles = caseSelection.filteredEnsembles
-            ? [...caseSelection.filteredEnsembles].sort((a, b) => a.name.localeCompare(b.name))
-            : null;
+    function handleCaseSelectedChange(caseSelection: CaseSelection | null) {
+        if (!caseSelection) {
+            setSelectedCaseName(null);
+            setSelectedCaseUuid(null);
+            setSelectedCaseEnsembles([]);
+            setActiveEnsembleName(null);
+            return;
+        }
+
+        // Sort alphabetically by name
+        const selectedCaseSortedEnsembles = [...caseSelection.filteredEnsembles].sort((a, b) =>
+            a.name.localeCompare(b.name),
+        );
 
         setSelectedCaseName(caseSelection.caseName);
         setSelectedCaseUuid(caseSelection.caseUuid);
-        setSelectedCaseSortedEnsembles(selectedCaseSortedEnsembles);
-        setSelectedEnsembleName(selectedCaseSortedEnsembles ? (selectedCaseSortedEnsembles[0]?.name ?? "") : "");
+        setSelectedCaseEnsembles(selectedCaseSortedEnsembles);
+        setActiveEnsembleName(selectedCaseSortedEnsembles ? (selectedCaseSortedEnsembles[0]?.name ?? null) : null);
     }
 
     return (
         <div className="flex flex-col h-full gap-4 p-4 bg-slate-100">
             <CaseExplorer disableQueries={props.disableQueries} onCaseSelectionChange={handleCaseSelectedChange} />
             <Label text="Ensemble">
-                <Select
-                    options={ensembleOptions}
-                    value={[selectedEnsembleName]}
-                    onChange={handleRegularEnsembleChanged}
-                    disabled={selectedCaseSortedEnsembles === null}
-                    size={5}
-                    width="100%"
-                />
+                <StatusWrapper
+                    className="text-gray-400"
+                    infoMessage={!selectedCaseUuid ? "No case selected" : undefined}
+                >
+                    <Select
+                        options={ensembleOptions}
+                        value={activeEnsembleName ? [activeEnsembleName] : []}
+                        onChange={handleRegularEnsembleChanged}
+                        disabled={!selectedCaseUuid}
+                        size={5}
+                        width="100%"
+                        placeholder="No ensembles available..."
+                    />
+                </StatusWrapper>
             </Label>
             <div className="flex gap-4 justify-end">
                 <Button onClick={() => props.onRequestClose?.()}>Close</Button>

@@ -36,12 +36,12 @@ const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 export type CaseSelection = {
     caseName: string;
     caseUuid: string;
-    filteredEnsembles: EnsembleInfo_api[] | null;
+    filteredEnsembles: EnsembleInfo_api[];
 };
 
 export type CaseExplorerProps = {
     disableQueries: boolean;
-    onCaseSelectionChange: (caseSelection: CaseSelection) => void;
+    onCaseSelectionChange: (caseSelection: CaseSelection | null) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const { onCaseSelectionChange } = props;
@@ -63,6 +63,9 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         ...(showOnlyMyCases && { author: userName }),
         ...(showOnlyOfficialCases && { status: ["official"] }),
     });
+
+    // Have without fixup to allow resetting to null when table filters out selected case
+    const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string | null>(null);
 
     // Keep the prevCaseSelection state that was already defined
     const [prevCaseSelection, setPrevCaseSelection] = React.useState<CaseSelection | null>(null);
@@ -99,6 +102,16 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
             return [...casesQuery.data].sort((a, b) => b.updatedAtUtcMs - a.updatedAtUtcMs);
         },
         [casesQuery.data],
+    );
+
+    // Ensure valid selected case uuid, use casesQuery data to utilize fetching state
+    React.useEffect(
+        function ensureValidSelectedCaseUuid() {
+            if (selectedCaseUuid && casesQuery.data && !casesQuery.data.some((c) => c.uuid === selectedCaseUuid)) {
+                setSelectedCaseUuid(null);
+            }
+        },
+        [selectedCaseUuid, casesQuery.data],
     );
 
     // Refresh query handlers
@@ -164,12 +177,6 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         keepStateWhenInvalid: !sortedCasesQueryData, // Requires valid state when data is available, allows invalid while data is fetching
     });
 
-    const [selectedCaseUuid, setSelectedCaseId] = useValidState<string>({
-        initialState: "",
-        validStates: sortedCasesQueryData?.map((item) => item.uuid) ?? [],
-        keepStateWhenInvalid: false,
-    });
-
     const caseRowData = React.useMemo(() => {
         if (!sortedCasesQueryData) {
             return [];
@@ -185,19 +192,25 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         return makeCaseRowData(cases);
     }, [sortedCasesQueryData, selectedStandardResults]);
 
-    const currentCaseSelection: CaseSelection = React.useMemo(() => {
-        const selectedCase = sortedCasesQueryData?.find((c) => c.uuid === selectedCaseUuid);
-        let selectedCaseFilteredEnsembles = null;
-        if (selectedCase) {
-            selectedCaseFilteredEnsembles =
-                selectedStandardResults.length === 0
-                    ? selectedCase.ensembles
-                    : selectedCase.ensembles.filter((ens) =>
-                          ens.standardResults.some((res) => selectedStandardResults.includes(res)),
-                      );
+    const currentCaseSelection: CaseSelection | null = React.useMemo(() => {
+        if (!selectedCaseUuid) {
+            return null;
         }
+
+        const selectedCase = sortedCasesQueryData?.find((c) => c.uuid === selectedCaseUuid);
+        if (!selectedCase) {
+            return null;
+        }
+
+        const selectedCaseFilteredEnsembles =
+            selectedStandardResults.length === 0
+                ? selectedCase.ensembles
+                : selectedCase.ensembles.filter((ens) =>
+                      ens.standardResults.some((res) => selectedStandardResults.includes(res)),
+                  );
+
         return {
-            caseName: selectedCase?.name ?? "",
+            caseName: selectedCase.name,
             caseUuid: selectedCaseUuid,
             filteredEnsembles: selectedCaseFilteredEnsembles,
         };
@@ -337,10 +350,10 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             numPendingRows={!sortedCasesQueryData ? "fill" : undefined}
                             columns={caseTableColumns}
                             rows={caseRowData}
-                            selectedRows={[selectedCaseUuid]}
+                            selectedRows={selectedCaseUuid ? [selectedCaseUuid] : undefined}
                             filters={tableFiltersState}
                             selectable
-                            onSelectedRowsChange={(caseIds) => setSelectedCaseId((prev) => caseIds[0] ?? prev)}
+                            onSelectedRowsChange={(caseIds) => setSelectedCaseUuid(caseIds[0] ?? null)}
                             onFiltersChange={setTableFiltersState}
                             onDataCollated={(data) => setNumberOfCases(data.length)}
                         />
