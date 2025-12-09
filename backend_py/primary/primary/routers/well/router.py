@@ -98,6 +98,7 @@ async def get_well_trajectories(
     # fmt:on
 ) -> List[schemas.WellboreTrajectory]:
     """Get trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given"""
+
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
     if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
@@ -123,7 +124,7 @@ async def get_wellbore_pick_identifiers(
     strat_column_identifier: str = Query(description="Stratigraphic column identifier")
     # fmt:on
 ) -> List[str]:
-    """Get wellbore pick identifiers for field and stratigraphic column"""
+    """Get wellbore pick identifiers for a given stratigraphic column"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
     if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         # Handle DROGON
@@ -146,7 +147,7 @@ async def get_wellbore_picks_for_pick_identifier(
     pick_identifier: str = Query(description="Pick identifier")
     # fmt:on
 ) -> List[schemas.WellborePick]:
-    """Get picks for wellbores for field and pick identifier
+    """Get wellbore picks for a field and pick identifier
 
     This implies picks for multiple wellbores for given field and pick identifier.
     E.g. picks for all wellbores in a given surface in a field.
@@ -172,9 +173,8 @@ async def get_wellbore_picks_in_strat_column(
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     strat_column_identifier: str = Query(description="Filter by stratigraphic column"),
 ) -> list[schemas.WellborePick]:
-    """
-    Get wellbore picks for a single wellbore with stratigraphic column identifier
-    """
+    """Get wellbore picks for a single wellbore within stratigraphic column"""
+
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
 
     if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
@@ -195,6 +195,7 @@ async def get_wellbore_stratigraphic_columns(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
 ) -> list[schemas.StratigraphicColumn]:
+    """Get stratigraphic columns for a given wellbore"""
 
     smda_access: SmdaAccess | DrogonSmdaAccess
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
@@ -215,7 +216,7 @@ async def get_wellbore_completions(
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
 ) -> List[schemas.WellboreCompletion]:
-    """Get well bore completions for a single well bore"""
+    """Get wellbore completions for a given wellbore"""
 
     # Handle DROGON
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
@@ -237,7 +238,7 @@ async def get_wellbore_casings(
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
 ) -> List[schemas.WellboreCasing]:
-    """Get well bore casings for a single well bore"""
+    """Get wellbore casings for a given wellbore"""
 
     # Handle DROGON
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
@@ -257,7 +258,7 @@ async def get_wellbore_perforations(
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
 ) -> List[schemas.WellborePerforation]:
-    """Get well bore casing for a single well bore"""
+    """Get wellbore perforations for a given wellbore"""
 
     # Handle DROGON
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
