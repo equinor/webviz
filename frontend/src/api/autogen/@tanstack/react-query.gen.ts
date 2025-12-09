@@ -74,7 +74,6 @@ import type {
     GetWellTrajectoriesData_api,
     GetWellborePickIdentifiersData_api,
     GetWellborePicksForPickIdentifierData_api,
-    DeprecatedGetWellborePicksForWellboreData_api,
     GetWellborePicksInStratColumnData_api,
     GetWellboreStratigraphicColumnsData_api,
     GetWellboreCompletionsData_api,
@@ -185,7 +184,6 @@ import {
     getWellTrajectories,
     getWellborePickIdentifiers,
     getWellborePicksForPickIdentifier,
-    deprecatedGetWellborePicksForWellbore,
     getWellborePicksInStratColumn,
     getWellboreStratigraphicColumns,
     getWellboreCompletions,
@@ -1357,27 +1355,6 @@ export const getWellborePicksForPickIdentifierOptions = (options: Options<GetWel
             return data;
         },
         queryKey: getWellborePicksForPickIdentifierQueryKey(options),
-    });
-};
-
-export const deprecatedGetWellborePicksForWellboreQueryKey = (
-    options: Options<DeprecatedGetWellborePicksForWellboreData_api>,
-) => [createQueryKey("deprecatedGetWellborePicksForWellbore", options)];
-
-export const deprecatedGetWellborePicksForWellboreOptions = (
-    options: Options<DeprecatedGetWellborePicksForWellboreData_api>,
-) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await deprecatedGetWellborePicksForWellbore({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: deprecatedGetWellborePicksForWellboreQueryKey(options),
     });
 };
 

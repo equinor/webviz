@@ -66,6 +66,8 @@ class WellborePick(BaseModel):
 
 
 class WellboreCompletion(BaseModel):
+    """Single completion for a wellbore"""
+
     mdTop: float
     mdBottom: float
     tvdTop: float | None
@@ -76,13 +78,15 @@ class WellboreCompletion(BaseModel):
 
 
 class WellboreCompletions(BaseModel):
-    """Simplified completion schema for use in nested structures (without wellbore identifiers)"""
+    """Completions for a wellbore"""
 
     wellboreUuid: str
     completions: List[WellboreCompletion]
 
 
 class WellboreCasing(BaseModel):
+    """Single casing for a wellbore"""
+
     itemType: str  # Casing type
     diameterNumeric: float
     diameterInner: float
@@ -96,6 +100,8 @@ class WellboreCasing(BaseModel):
 
 
 class WellborePerforation(BaseModel):
+    """Single perforation for a wellbore"""
+
     mdTop: float
     mdBottom: float
     tvdTop: float
@@ -107,6 +113,8 @@ class WellborePerforation(BaseModel):
 
 
 class WellborePerforations(BaseModel):
+    """Perforations for a wellbore"""
+
     wellboreUuid: str
     perforations: List[WellborePerforation]
 
