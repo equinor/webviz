@@ -14,7 +14,7 @@ export enum HoverTopic {
     ZONE = "hover.zone",
     REGION = "hover.region",
     FACIES = "hover.facies",
-    WORLD_POS = "hover.world_pos",
+    WORLD_POS_UTM = "hover.world_pos",
 }
 
 export type HoverData = {
@@ -25,7 +25,7 @@ export type HoverData = {
     [HoverTopic.ZONE]: string | null;
     [HoverTopic.REGION]: string | null;
     [HoverTopic.FACIES]: string | null;
-    [HoverTopic.WORLD_POS]: { x?: number; y?: number; z?: number } | null;
+    [HoverTopic.WORLD_POS_UTM]: { x?: number; y?: number; z?: number } | null;
 };
 
 type ThrottledPublishFunc = _.DebouncedFunc<<T extends keyof HoverData>(topic: T, newValue: HoverData[T]) => void>;
@@ -47,7 +47,7 @@ export class HoverService {
     // Delegate to handle update notifications
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<HoverData>();
 
-    private _getOrCreateTopicThrottleMethod(topic: keyof HoverData): ThrottledPublishFunc {
+    private _getEnsuredThrottledNotifierFunc(topic: keyof HoverData): ThrottledPublishFunc {
         if (!this._topicThrottleMap.has(topic)) {
             const throttledMethod = throttle(this._doThrottledHoverDataUpdate.bind(this), this._dataUpdateThrottleMs, {
                 // These settings make it so notifications are only pushed *after* the throttle timer elapses
@@ -58,7 +58,7 @@ export class HoverService {
             this._topicThrottleMap.set(topic, throttledMethod);
         }
 
-        // If-block above gurantees this is non-null
+        // If-block above guarantees this is non-null
         return this._topicThrottleMap.get(topic)!;
     }
 
@@ -81,7 +81,6 @@ export class HoverService {
      * @returns The latest or throttled value for the given topic
      */
     getTopicValue<T extends HoverTopic>(topic: T, moduleInstanceId: string): HoverData[T] | null {
-        // ? Should  this be an  opt-in functionality?
         // ! The module that is currently hovering will always see the data updated immediately
         if (this._lastHoveredModule && moduleInstanceId === this._lastHoveredModule) {
             return this._hoverData[topic] ?? null;
@@ -106,11 +105,12 @@ export class HoverService {
      * @param newValue The new value for the topic
      */
     updateHoverValue<T extends keyof HoverData>(topic: T, newValue: HoverData[T], moduleInstanceId: string): void {
+        const throttledNotifierFunc = this._getEnsuredThrottledNotifierFunc(topic);
+
         this._lastHoveredModule = moduleInstanceId;
-
         this._hoverData[topic] = newValue;
-        this._getOrCreateTopicThrottleMethod(topic)(topic, newValue);
 
+        throttledNotifierFunc(topic, newValue);
         // Notify changes (do note that only the hovering module will see any changes at this point)
         this.getPublishSubscribeDelegate().notifySubscribers(topic);
     }

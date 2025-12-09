@@ -67,7 +67,7 @@ function getTopicHoverDataFromPicks<TTopic extends keyof HoverData>(
             return wellboreFeature.properties.uuid as HoverData[TTopic];
         }
 
-        case HoverTopic.WORLD_POS: {
+        case HoverTopic.WORLD_POS_UTM: {
             const pickWithCoords =
                 getInfoPickForLayer<ColorMapPickInfo>(pickingInfos, MapLayer) ||
                 getInfoPickForLayer<LayerPickInfo>(pickingInfos, Grid3DLayer);
@@ -102,7 +102,7 @@ export function getHoverDataInPicks<TTopic extends keyof HoverData>(
         const topicInfo = getTopicHoverDataFromPicks(topic, pickingInfoArr);
 
         // TODO: Better typing here? This seems clunky
-        (values[topic] as HoverData[typeof topic]) = topicInfo;
+        values[topic] = topicInfo;
     });
 
     return values;

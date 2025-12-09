@@ -116,7 +116,9 @@ function flattenVisualizationFunctionsRecursively<TTarget extends VisualizationT
         ? (visualizationGroup as VisualizationGroup<TTarget>).id
         : undefined;
 
-    if (visualizationGroup.hoverVisualizationFunctions && groupId !== "") {
+    // `undefined` id will imply that it's the root; but an empty string should not happen
+    if (groupId === "") throw Error("Group id is empty. Expected name or undefined");
+    if (visualizationGroup.hoverVisualizationFunctions) {
         visualizationFunctions.push({
             groupId,
             hoverVisualizationFunctions: visualizationGroup.hoverVisualizationFunctions,
@@ -125,7 +127,7 @@ function flattenVisualizationFunctionsRecursively<TTarget extends VisualizationT
 
     if (visualizationGroup.children) {
         for (const child of visualizationGroup.children) {
-            if (child.itemType === VisualizationItemType.GROUP && child.id !== "") {
+            if (child.itemType === VisualizationItemType.GROUP) {
                 visualizationFunctions.push(...flattenVisualizationFunctionsRecursively<TTarget>(child));
             }
         }

@@ -123,7 +123,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 depth: 6,
             });
 
-            // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates
+            // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates.
+            // See issue #webviz-subsurface-components/2320
             const uniquePicks = uniqBy(picks, (pick) => pick.sourceLayer?.id);
 
             pickInfoDict[viewport.id] = uniquePicks;

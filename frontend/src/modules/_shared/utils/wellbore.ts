@@ -127,6 +127,9 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
 }
 
 export function zipCoords(x_arr: number[], y_arr: number[], z_arr: number[], invertZAxis?: boolean): number[][] {
+    if (x_arr.length !== y_arr.length || y_arr.length !== z_arr.length)
+        throw Error(`Expected each coordinate array to be of equal length.`);
+
     const zSign = invertZAxis ? -1 : 1;
 
     const coords: number[][] = [];
@@ -206,7 +209,7 @@ export function getTrajectoryIndexForMd(md: number, wellboreTrajectory: Wellbore
     if (!mdArr.length) throw Error(`Expected trajectory to be at least one point, got 0 points`);
 
     // Ensure we only deal with valid MD values
-    md = clamp(md, 0, mdArr.at(-1) ?? 0);
+    md = clamp(md, 0, mdArr.at(-1)!);
 
     // The mdArr is sorted, so we do a binary search to find the relevant trajectory indices
     const index = sortedIndex(mdArr, md);
@@ -220,7 +223,7 @@ export function getTrajectoryIndexForMd(md: number, wellboreTrajectory: Wellbore
  * @param md Measured Depth to interpolate the position for.
  * @param wellboreTrajectory The wellbore trajectory to interpolate within.
  * @param preComputedTrajectoryIndex (optional) If provided, this index will be used for interpolation instead of calculating it again.
- * @returns
+ * @returns the interpolated UTM world position as a 3d-point array
  */
 export function getInterpolatedPositionAtMd(
     md: number,

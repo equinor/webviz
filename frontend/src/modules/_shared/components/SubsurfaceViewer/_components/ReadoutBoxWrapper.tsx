@@ -3,7 +3,7 @@ import React from "react";
 import type { PickingInfo } from "@deck.gl/core";
 import type { PropertyDataType } from "@webviz/subsurface-viewer";
 import type { PickingInfoPerView } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
-import _ from "lodash";
+import { sortBy } from "lodash";
 
 import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
@@ -67,7 +67,7 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
             readoutItems.push(position);
         }
 
-        for (const pick of _.sortBy(props.viewportPicks, "index")) {
+        for (const pick of sortBy(props.viewportPicks, "index")) {
             const readout = makeInfoPickReadout(pick);
             if (readout) readoutItems.push(readout);
         }

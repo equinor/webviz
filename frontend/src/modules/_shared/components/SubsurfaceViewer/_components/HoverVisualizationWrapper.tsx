@@ -22,7 +22,7 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     const [currentlyHoveredViewport, setCurrentlyHoveredViewport] = React.useState<null | string>(null);
 
     const ctx = useDpfSubsurfaceViewerContext();
-    const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS, ctx.hoverService, ctx.moduleInstanceId);
+    const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS_UTM, ctx.hoverService, ctx.moduleInstanceId);
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, ctx.hoverService, ctx.moduleInstanceId);
     const setHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
 
@@ -66,10 +66,10 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
                 mouseEvent.infos,
                 HoverTopic.WELLBORE_MD,
                 HoverTopic.WELLBORE,
-                HoverTopic.WORLD_POS,
+                HoverTopic.WORLD_POS_UTM,
             );
 
-            setHoveredWorldPos(hoverData[HoverTopic.WORLD_POS]);
+            setHoveredWorldPos(hoverData[HoverTopic.WORLD_POS_UTM]);
             setHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
             setHoveredMd(hoverData[HoverTopic.WELLBORE_MD]);
 
@@ -104,7 +104,7 @@ function useCrosshairLayer(
     hoverService: HoverService,
     instanceId: string,
 ): CrosshairLayer {
-    const { x, y } = useHoverValue(HoverTopic.WORLD_POS, hoverService, instanceId) ?? {};
+    const { x, y } = useHoverValue(HoverTopic.WORLD_POS_UTM, hoverService, instanceId) ?? {};
     const xInRange = boundingBox && x && inRange(x, boundingBox[0], boundingBox[2]);
     const yInRange = boundingBox && y && inRange(y, boundingBox[1], boundingBox[3]);
 
@@ -112,7 +112,7 @@ function useCrosshairLayer(
         id: HOVER_CROSSHAIR_LAYER_ID,
         worldCoordinates: [x ?? 0, y ?? 0, 0],
         sizePx: 40,
-        // Hide it crosshair with opacity to keep layer mounted
+        // Hide the crosshair with opacity to keep layer mounted
         color: [255, 255, 255, xInRange && yInRange ? 225 : 0],
     });
 }
