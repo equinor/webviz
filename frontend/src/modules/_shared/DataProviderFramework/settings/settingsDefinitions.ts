@@ -16,19 +16,6 @@ import type { PolygonVisualizationSpec } from "./implementations/PolygonVisualiz
 import type { Representation } from "./implementations/RepresentationSetting";
 import type { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
 
-export enum SettingCategory {
-    SINGLE_SELECT = "singleSelect",
-    MULTI_SELECT = "multiSelect",
-    NUMBER = "number",
-    NUMBER_WITH_STEP = "numberWithStep",
-    // XYZ_NUMBER = "xyzNumber",
-    XYZ_RANGE = "xyzRange",
-    BOOLEAN = "boolean",
-    BOOLEAN_NUMBER = "booleanNumber",
-    STATIC = "static",
-    XYZ_VALUES_WITH_VISIBILITY = "rangesWithVisibility",
-}
-
 export enum Setting {
     // Assorted styling visual settings
     SHOW_LABELS = "showLabels",
