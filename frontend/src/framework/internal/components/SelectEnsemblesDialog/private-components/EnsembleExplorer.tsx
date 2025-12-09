@@ -116,7 +116,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
             <CaseExplorer disableQueries={props.disableQueries} onCaseSelectionChange={handleCaseSelectedChange} />
             <Label text="Ensemble">
                 <StatusWrapper
-                    className="text-gray-400"
+                    className={!selectedCaseUuid ? "text-gray-400" : undefined}
                     infoMessage={!selectedCaseUuid ? "No case selected" : undefined}
                 >
                     <Select
