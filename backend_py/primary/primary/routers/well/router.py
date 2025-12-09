@@ -1,6 +1,5 @@
 import logging
 from typing import List, Union
-import asyncio
 
 from fastapi import APIRouter, Depends, Query
 
