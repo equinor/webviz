@@ -97,7 +97,7 @@ async def get_well_trajectories(
     wellbore_uuids: List[str] | None = Query(None, description="Optional subset of wellbore uuids")
     # fmt:on
 ) -> List[schemas.WellboreTrajectory]:
-    """Get well trajectories for field"""
+    """Get trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
     if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
@@ -288,9 +288,6 @@ async def get_wellbore_log_curve_headers(
     Get all log curve headers for a single well bore.
     Logs are available from multiple sources, which can be specificed by the "sources" parameter.
     """
-
-    # pylint: disable=fixme
-    # TODO: Future work -- Add wellbore survey sample endpoint. for last set of curves (for now) SSDL might be best
 
     curve_headers = []
 
