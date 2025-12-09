@@ -44,7 +44,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     // Destruct for local use
     const [ensembleExplorerMode, setEnsembleExplorerMode] = ensembleExplorerModeState;
-    const [isEnsembleSetLoading] = isEnsembleSetLoadingState;
+    const [isEnsembleSetLoading, setIsEnsembleSetLoading] = isEnsembleSetLoadingState;
 
     const queryClient = useQueryClient();
     const workbenchSession = props.workbench.getSessionManager().getActiveSession();
@@ -123,7 +123,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         workbenchSession,
         selectedRegularEnsembles,
         selectedDeltaEnsembles,
-        isEnsembleSetLoadingState: isEnsembleSetLoadingState,
+        setIsEnsembleSetLoading,
         onLoadingErrorsDetected: () => {
             setShowEnsemblesLoadingErrorDialog(true);
         },

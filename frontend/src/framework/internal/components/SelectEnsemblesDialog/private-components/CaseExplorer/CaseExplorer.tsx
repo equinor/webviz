@@ -350,7 +350,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             numPendingRows={!sortedCasesQueryData ? "fill" : undefined}
                             columns={caseTableColumns}
                             rows={caseRowData}
-                            selectedRows={selectedCaseUuid ? [selectedCaseUuid] : undefined}
+                            selectedRows={selectedCaseUuid ? [selectedCaseUuid] : []}
                             filters={tableFiltersState}
                             selectable
                             onSelectedRowsChange={(caseIds) => setSelectedCaseUuid(caseIds[0] ?? null)}

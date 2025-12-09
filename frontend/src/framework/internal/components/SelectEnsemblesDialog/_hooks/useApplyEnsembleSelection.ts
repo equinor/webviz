@@ -16,14 +16,12 @@ import {
 } from "../_utils";
 import type { InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "../types";
 
-import type { StateTuple } from "./_types";
-
 export type UseApplyEnsembleSelectionProps = {
     queryClient: QueryClient;
     workbenchSession: PrivateWorkbenchSession;
     selectedRegularEnsembles: InternalRegularEnsembleSetting[];
     selectedDeltaEnsembles: InternalDeltaEnsembleSetting[];
-    isEnsembleSetLoadingState: StateTuple<boolean>;
+    setIsEnsembleSetLoading: React.Dispatch<React.SetStateAction<boolean>>;
     onLoadingErrorsDetected: () => void;
     onSuccess: () => void;
 };
@@ -45,11 +43,10 @@ export function useApplyEnsembleSelection({
     workbenchSession,
     selectedRegularEnsembles,
     selectedDeltaEnsembles,
-    isEnsembleSetLoadingState,
+    setIsEnsembleSetLoading,
     onLoadingErrorsDetected,
     onSuccess,
 }: UseApplyEnsembleSelectionProps) {
-    const [, setIsEnsembleSetLoading] = isEnsembleSetLoadingState;
     const [newEnsembleSetToApply, setNewEnsembleSetToApply] = React.useState<EnsembleSet | null>(null);
     const [ensembleLoadingErrorInfoMap, setEnsembleLoadingErrorInfoMap] = React.useState<EnsembleLoadingErrorInfoMap>(
         {},
