@@ -65,6 +65,12 @@ def convert_wellbore_header_to_schema(
         depthReferenceElevation=drilled_wellbore_header.depth_reference_elevation,
         wellborePurpose=(drilled_wellbore_header.wellbore_purpose if drilled_wellbore_header.wellbore_purpose else ""),
         wellboreStatus=drilled_wellbore_header.wellbore_status if drilled_wellbore_header.wellbore_status else "",
+        mdMin=drilled_wellbore_header.md_min,
+        mdMax=drilled_wellbore_header.md_max,
+        mdUnit=drilled_wellbore_header.md_unit,
+        tvdMin=drilled_wellbore_header.tvd_min,
+        tvdMax=drilled_wellbore_header.tvd_max,
+        tvdUnit=drilled_wellbore_header.tvd_unit,
     )
 
 

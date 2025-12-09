@@ -28,6 +28,7 @@ export enum Setting {
     PLOT_VARIANT = "plotVariant",
     DEPTH_ATTRIBUTE = "depthAttribute",
     SEISMIC_ATTRIBUTE = "seismicAttribute",
+    WELLBORE_DEPTH_FILTER_ATTRIBUTE = "wellboreDepthFilterAttribute",
     ATTRIBUTE = "attribute",
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
@@ -40,6 +41,7 @@ export enum Setting {
     GRID_LAYER_K = "gridLayerK",
     GRID_NAME = "gridName",
     INTERSECTION = "intersection",
+    MD_RANGE = "mdRange",
     OPACITY_PERCENT = "opacityPercent",
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
@@ -52,7 +54,7 @@ export enum Setting {
     SENSITIVITY = "sensitivity",
     SHOW_GRID_LINES = "showGridLines",
     SMDA_INTERPRETER = "smdaInterpreter",
-    SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
+    WELLBORES = "wellbores",
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
     FORMATION_NAME = "formationName",
@@ -60,7 +62,10 @@ export enum Setting {
     TIME_OR_INTERVAL = "timeOrInterval",
     TIME_POINT = "timePoint",
     TIME_INTERVAL = "timeInterval",
-    WELLBORE_DEPTH_FILTER = "wellboreDepthFilter",
+    TIME_RANGE_WITH_POINTS = "timeRangeWithPoints",
+    TVD_RANGE = "tvdRange",
+    WELLBORE_DEPTH_FORMATION_FILTER = "wellboreDepthFormationFilter",
+    WELLBORE_DEPTH_FILTER_TYPE = "wellboreDepthFilterType",
     WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
@@ -130,6 +135,18 @@ export type SettingTypeDefinitions = {
         valueRange: [number, number, number];
     };
 
+    // Range settings (RANGE category) - valueRange is [min, max, step]
+    [Setting.MD_RANGE]: {
+        internalValue: [number | "min", number | "max"] | null;
+        externalValue: [number, number] | null;
+        valueRange: [number, number, number];
+    };
+    [Setting.TVD_RANGE]: {
+        internalValue: [number | "min", number | "max"] | null;
+        externalValue: [number, number] | null;
+        valueRange: [number, number, number];
+    };
+
     // Single select string settings (SINGLE_SELECT category)
     [Setting.SCALE]: {
         internalValue: "linear" | "log" | null;
@@ -147,6 +164,11 @@ export type SettingTypeDefinitions = {
         valueRange: string[];
     };
     [Setting.SEISMIC_ATTRIBUTE]: {
+        internalValue: string | null;
+        externalValue: string | null;
+        valueRange: string[];
+    };
+    [Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE]: {
         internalValue: string | null;
         externalValue: string | null;
         valueRange: string[];
@@ -200,6 +222,11 @@ export type SettingTypeDefinitions = {
         internalValue: string | null;
         externalValue: string | null;
         valueRange: string[];
+    };
+    [Setting.WELLBORE_DEPTH_FILTER_TYPE]: {
+        internalValue: string | null;
+        externalValue: string | null;
+        valueRange: { value: string; label: string }[] | null;
     };
     [Setting.WELLBORE_PICK_IDENTIFIER]: {
         internalValue: string | null;
@@ -257,7 +284,7 @@ export type SettingTypeDefinitions = {
         externalValue: number[] | null;
         valueRange: number[];
     };
-    [Setting.SMDA_WELLBORE_HEADERS]: {
+    [Setting.WELLBORES]: {
         internalValue: string[] | null;
         externalValue: WellboreHeader_api[] | null;
         valueRange: WellboreHeader_api[];
@@ -271,6 +298,13 @@ export type SettingTypeDefinitions = {
         internalValue: string[] | null;
         externalValue: WellborePick_api[] | null;
         valueRange: WellborePick_api[];
+    };
+
+    // Time range selection settings (TIME_RANGE category) - valueRange is array of available time points
+    [Setting.TIME_RANGE_WITH_POINTS]: {
+        internalValue: { start: number; end: number } | null;
+        externalValue: { start: number; end: number } | null;
+        valueRange: number[];
     };
 
     // Static settings (STATIC category) - no valueRange
@@ -341,34 +375,21 @@ export type SettingTypeDefinitions = {
         valueRange: [[number, number, number], [number, number, number], [number, number, number]];
     };
 
-    [Setting.WELLBORE_DEPTH_FILTER]: {
-        internalValue:
-            | { filterType: "none" }
-            | { filterType: "tvd_range" | "md_range"; range: [number, number] }
-            | {
-                  filterType: "surface";
-                  attributeName: string | null;
-                  realizationNum: number;
-                  topSurfaceName: string | null;
-                  baseSurfaceName: string | null;
-              }
-            | null;
-        externalValue:
-            | { filterType: "none" }
-            | { filterType: "tvd_range" | "md_range"; range: [number, number] }
-            | {
-                  filterType: "surface";
-                  attributeName: string | null;
-                  realizationNum: number;
-                  topSurfaceName: string | null;
-                  baseSurfaceName: string | null;
-              }
-            | null;
+    [Setting.WELLBORE_DEPTH_FORMATION_FILTER]: {
+        internalValue: {
+            realizationNum: number;
+            topSurfaceName: string | null;
+            baseSurfaceName: string | null;
+        } | null;
+        externalValue: {
+            realizationNum: number;
+            topSurfaceName: string | null;
+            baseSurfaceName: string | null;
+        } | null;
         valueRange: {
             realizationNums: number[];
-            attributeNames: string[];
             surfaceNamesInStratOrder: string[];
-        };
+        } | null;
     };
 };
 

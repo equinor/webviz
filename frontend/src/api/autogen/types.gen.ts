@@ -1218,6 +1218,12 @@ export type WellboreHeader_api = {
     depthReferenceElevation: number;
     wellborePurpose: string;
     wellboreStatus: string;
+    mdMin?: number | null;
+    mdMax?: number | null;
+    mdUnit?: string | null;
+    tvdMin?: number | null;
+    tvdMax?: number | null;
+    tvdUnit?: string | null;
 };
 
 export type WellboreLogCurveData_api = {

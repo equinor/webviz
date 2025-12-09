@@ -15,6 +15,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { isNumberTuple } from "../utils/structureValidation";
 
 type InternalValueType = {
     i: [number, number];
@@ -26,13 +27,6 @@ type ValueRangeType = {
     range: { i: [number, number, number]; j: [number, number, number]; k: [number, number, number] };
     zones: Grid3dZone_api[];
 } | null;
-
-/**
- * Helper function to validate that an array is a number tuple of specific length
- */
-function isNumberTuple(value: unknown, length: number): value is number[] {
-    return Array.isArray(value) && value.length === length && value.every((v) => typeof v === "number");
-}
 
 export class GridLayerRangeSetting
     implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>

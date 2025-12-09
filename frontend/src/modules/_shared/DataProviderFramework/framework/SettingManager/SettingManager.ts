@@ -305,7 +305,7 @@ export class SettingManager<
         // - Static settings accept `any` for valueRange (which can be null)
         // - Dynamic settings require non-null valueRange, but we've already guarded against null above
         // - TypeScript can't infer that the guard ensures non-null for dynamic settings at this point
-        const externalValue = mappingFunc(value, this._valueRange as any);
+        const externalValue = mappingFunc.bind(this._customSettingImplementation)(value, this._valueRange as any);
 
         // Cache the computed external value
         this._cachedExternalValue = externalValue;
@@ -319,7 +319,9 @@ export class SettingManager<
 
     serializeValue(): string {
         if (this._customSettingImplementation.serializeValue) {
-            return this._customSettingImplementation.serializeValue(this.getInternalValue());
+            return this._customSettingImplementation.serializeValue.bind(this._customSettingImplementation)(
+                this.getInternalValue(),
+            );
         }
 
         return JSON.stringify(this.getInternalValue());
@@ -332,7 +334,9 @@ export class SettingManager<
         try {
             let deserializedValue;
             if (this._customSettingImplementation.deserializeValue) {
-                deserializedValue = this._customSettingImplementation.deserializeValue(serializedValue);
+                deserializedValue = this._customSettingImplementation.deserializeValue.bind(
+                    this._customSettingImplementation,
+                )(serializedValue);
             } else {
                 deserializedValue = JSON.parse(serializedValue);
             }
@@ -365,7 +369,7 @@ export class SettingManager<
      * Uses the required isValueValidStructure method from the custom implementation.
      */
     private isDeserializedValueValidStructure(value: unknown): value is TInternalValue {
-        return this._customSettingImplementation.isValueValidStructure(value);
+        return this._customSettingImplementation.isValueValidStructure.bind(this._customSettingImplementation)(value);
     }
 
     isExternallyControlled(): boolean {
@@ -420,6 +424,7 @@ export class SettingManager<
 
         this.setValueValid(this.checkIfValueIsValid(this._internalValue));
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
     }
 
     setValueValid(isValueValid: boolean): void {
@@ -480,7 +485,9 @@ export class SettingManager<
         }
 
         if (this._customSettingImplementation.overriddenValueRepresentation) {
-            return this._customSettingImplementation.overriddenValueRepresentation({
+            return this._customSettingImplementation.overriddenValueRepresentation.bind(
+                this._customSettingImplementation,
+            )({
                 value,
                 workbenchSession,
                 workbenchSettings,
@@ -589,7 +596,10 @@ export class SettingManager<
         const customIsValueValidFunction = this._customSettingImplementation.isValueValid;
 
         const isPersistedValueValid = customIsValueValidFunction
-            ? customIsValueValidFunction(this._currentValueFromPersistence, this._valueRange as any)
+            ? customIsValueValidFunction.bind(this._customSettingImplementation)(
+                  this._currentValueFromPersistence,
+                  this._valueRange as any,
+              )
             : true;
 
         if (isPersistedValueValid && this._currentValueFromPersistenceIsValid) {
@@ -665,7 +675,7 @@ export class SettingManager<
         const customFixupFunction = this._customSettingImplementation.fixupValue;
 
         const candidate = customFixupFunction
-            ? customFixupFunction(this._internalValue, this._valueRange as any)
+            ? customFixupFunction.bind(this._customSettingImplementation)(this._internalValue, this._valueRange as any)
             : this._internalValue;
 
         if (isEqual(candidate, this._internalValue)) {
@@ -689,7 +699,7 @@ export class SettingManager<
             return true;
         }
 
-        return customIsValueValidFunction(value, this._valueRange as any);
+        return customIsValueValidFunction.bind(this._customSettingImplementation)(value, this._valueRange as any);
     }
 
     /**

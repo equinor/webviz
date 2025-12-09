@@ -1,9 +1,16 @@
 import { isEqual } from "lodash";
 
 import type { WellboreTrajectory_api } from "@api";
-import { getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@api";
+import {
+    getDrilledWellboreHeadersOptions,
+    getRealizationSurfacesMetadataOptions,
+    getWellTrajectoriesOptions,
+    SurfaceAttributeType_api,
+} from "@api";
+import { sortStringArray } from "@lib/utils/arrays";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
+import { NO_UPDATE } from "../../delegates/_utils/Dependency";
 import type {
     CustomDataProviderImplementation,
     FetchDataParams,
@@ -11,7 +18,15 @@ import type {
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
-const drilledWellTrajectoriesSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS] as const;
+const drilledWellTrajectoriesSettings = [
+    Setting.ENSEMBLE,
+    Setting.WELLBORES,
+    Setting.WELLBORE_DEPTH_FILTER_TYPE,
+    Setting.MD_RANGE,
+    Setting.TVD_RANGE,
+    Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE,
+    Setting.WELLBORE_DEPTH_FORMATION_FILTER,
+] as const;
 type DrilledWellTrajectoriesSettings = typeof drilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellTrajectoriesSettings>;
 
@@ -39,7 +54,7 @@ export class DrilledWellTrajectoriesProvider
         DrilledWellTrajectoriesData
     >): Promise<DrilledWellTrajectoriesData> {
         const fieldIdentifier = getGlobalSetting("fieldId");
-        const selectedWellbores = getSetting(Setting.SMDA_WELLBORE_HEADERS) ?? [];
+        const selectedWellbores = getSetting(Setting.WELLBORES) ?? [];
         const selectedWellboreUuids = selectedWellbores.map((wb) => wb.wellboreUuid);
 
         const queryOptions = getWellTrajectoriesOptions({
@@ -60,6 +75,7 @@ export class DrilledWellTrajectoriesProvider
     defineDependencies({
         helperDependency,
         valueRangeUpdater,
+        settingAttributesUpdater,
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<DrilledWellTrajectoriesSettings>) {
@@ -97,7 +113,8 @@ export class DrilledWellTrajectoriesProvider
                 }),
             });
         });
-        valueRangeUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+
+        valueRangeUpdater(Setting.WELLBORES, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
             if (!wellboreHeaders) {
@@ -106,5 +123,178 @@ export class DrilledWellTrajectoriesProvider
 
             return wellboreHeaders;
         });
+
+        const realizationSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+
+            if (!ensembleIdent) {
+                return null;
+            }
+
+            return await queryClient.fetchQuery({
+                ...getRealizationSurfacesMetadataOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                    },
+                    signal: abortSignal,
+                }),
+            });
+        });
+
+        settingAttributesUpdater(Setting.MD_RANGE, ({ getLocalSetting }) => {
+            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+            return {
+                visible: filterType === "md_range",
+            };
+        });
+
+        valueRangeUpdater(Setting.MD_RANGE, ({ getHelperDependency, getLocalSetting }) => {
+            const data = getHelperDependency(wellboreHeadersDep);
+            const selectedWellboreHeaders = getLocalSetting(Setting.WELLBORES);
+
+            if (!data || !selectedWellboreHeaders) {
+                return NO_UPDATE;
+            }
+
+            const filteredData = data.filter((header) =>
+                selectedWellboreHeaders.some((wb) => wb.wellboreUuid === header.wellboreUuid),
+            );
+
+            if (filteredData.length === 0) {
+                return [0, 0, 1];
+            }
+
+            let globalMin = Number.POSITIVE_INFINITY;
+            let globalMax = Number.NEGATIVE_INFINITY;
+
+            for (const header of filteredData) {
+                if (header.mdMin !== null && header.mdMin !== undefined) {
+                    globalMin = Math.min(globalMin, header.mdMin);
+                }
+                if (header.mdMax !== null && header.mdMax !== undefined) {
+                    globalMax = Math.max(globalMax, header.mdMax);
+                }
+            }
+
+            if (globalMin === Number.POSITIVE_INFINITY || globalMax === Number.NEGATIVE_INFINITY) {
+                return [0, 0, 1];
+            }
+
+            return [globalMin, globalMax, 1];
+        });
+
+        settingAttributesUpdater(Setting.TVD_RANGE, ({ getLocalSetting }) => {
+            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+            return {
+                visible: filterType === "tvd_range",
+            };
+        });
+
+        valueRangeUpdater(Setting.TVD_RANGE, ({ getHelperDependency, getLocalSetting }) => {
+            const data = getHelperDependency(wellboreHeadersDep);
+            const selectedWellboreHeaders = getLocalSetting(Setting.WELLBORES);
+
+            if (!data || !selectedWellboreHeaders) {
+                return NO_UPDATE;
+            }
+
+            const filteredData = data.filter((header) =>
+                selectedWellboreHeaders.some((wb) => wb.wellboreUuid === header.wellboreUuid),
+            );
+
+            if (filteredData.length === 0) {
+                return [0, 0, 1];
+            }
+
+            let globalMin = Number.POSITIVE_INFINITY;
+            let globalMax = Number.NEGATIVE_INFINITY;
+
+            for (const header of filteredData) {
+                if (header.tvdMin !== null && header.tvdMin !== undefined) {
+                    globalMin = Math.min(globalMin, header.tvdMin);
+                }
+                if (header.tvdMax !== null && header.tvdMax !== undefined) {
+                    globalMax = Math.max(globalMax, header.tvdMax);
+                }
+            }
+
+            if (globalMin === Number.POSITIVE_INFINITY || globalMax === Number.NEGATIVE_INFINITY) {
+                return [0, 0, 1];
+            }
+
+            return [globalMin, globalMax, 1];
+        });
+
+        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getLocalSetting }) => {
+            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+            return {
+                visible: filterType === "surface_based",
+            };
+        });
+
+        valueRangeUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getHelperDependency }) => {
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
+
+            if (!data) {
+                return [];
+            }
+
+            const availableAttributes = [
+                ...Array.from(
+                    new Set(
+                        data.surfaces
+                            .filter((surface) => surface.attribute_type === SurfaceAttributeType_api.DEPTH)
+                            .map((surface) => surface.attribute_name),
+                    ),
+                ),
+            ];
+
+            return availableAttributes;
+        });
+
+        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FORMATION_FILTER, ({ getLocalSetting }) => {
+            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+            return {
+                visible: filterType === "surface_based",
+            };
+        });
+
+        valueRangeUpdater(
+            Setting.WELLBORE_DEPTH_FORMATION_FILTER,
+            ({ getLocalSetting, getGlobalSetting, getHelperDependency }) => {
+                const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+                const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
+                const attribute = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE);
+                const data = getHelperDependency(realizationSurfaceMetadataDep);
+
+                const realizationNums: number[] = [];
+                const surfaceNamesInStratOrder: string[] = [];
+
+                if (ensembleIdent) {
+                    realizationNums.push(...realizationFilterFunc(ensembleIdent));
+                }
+
+                if (attribute && data) {
+                    const availableSurfaceNames = [
+                        ...Array.from(
+                            new Set(
+                                data.surfaces
+                                    .filter((surface) => surface.attribute_name === attribute)
+                                    .map((el) => el.name),
+                            ),
+                        ),
+                    ];
+                    surfaceNamesInStratOrder.push(
+                        ...sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order),
+                    );
+                }
+
+                return {
+                    surfaceNamesInStratOrder,
+                    realizationNums,
+                };
+            },
+        );
     }
 }

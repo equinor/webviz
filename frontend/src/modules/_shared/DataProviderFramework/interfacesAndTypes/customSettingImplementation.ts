@@ -11,7 +11,7 @@ export type OverriddenValueRepresentationArgs<TValue> = {
 
 // Base component props shared by both static and dynamic settings
 type SettingComponentPropsBase<TInternalValue> = {
-    onValueChange: (newValue: TInternalValue) => void;
+    onValueChange: (newValue: TInternalValue | ((prevValue: TInternalValue) => TInternalValue)) => void;
     value: TInternalValue;
     isValueValid: boolean;
     overriddenValue: TInternalValue | null;

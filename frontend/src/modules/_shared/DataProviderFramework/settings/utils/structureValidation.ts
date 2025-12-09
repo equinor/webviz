@@ -68,3 +68,18 @@ export function isStringArrayOrNull(value: unknown): value is string[] | null {
 export function isNumberArrayOrNull(value: unknown): value is number[] | null {
     return value === null || (Array.isArray(value) && value.every((v) => typeof v === "number"));
 }
+
+/**
+ * Helper function to validate that an array is a number tuple of specific length
+ */
+export function isNumberTuple(value: unknown, length: number): value is number[] {
+    return Array.isArray(value) && value.length === length && value.every((v) => typeof v === "number");
+}
+
+export function isNumberOrStringTuple(value: unknown, length: number): value is (number | string)[] {
+    return (
+        Array.isArray(value) &&
+        value.length === length &&
+        value.every((v) => typeof v === "number" || typeof v === "string")
+    );
+}

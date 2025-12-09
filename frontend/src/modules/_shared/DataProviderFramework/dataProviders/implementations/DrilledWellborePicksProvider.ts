@@ -16,7 +16,7 @@ import type {
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
-const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS, Setting.SURFACE_NAME] as const;
+const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.WELLBORES, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
 
 export type DrilledWellborePicksData = WellborePick_api[];
@@ -41,7 +41,7 @@ export class DrilledWellborePicksProvider
         getGlobalSetting,
         fetchQuery,
     }: FetchDataParams<DrilledWellborePicksSettings, DrilledWellborePicksData>): Promise<WellborePick_api[]> {
-        const selectedWellbores = getSetting(Setting.SMDA_WELLBORE_HEADERS) ?? [];
+        const selectedWellbores = getSetting(Setting.WELLBORES) ?? [];
         const selectedWellboreUuids = selectedWellbores.map((wb) => wb.wellboreUuid);
         const selectedPickIdentifier = getSetting(Setting.SURFACE_NAME);
         const fieldIdentifier = getGlobalSetting("fieldId");
@@ -63,7 +63,7 @@ export class DrilledWellborePicksProvider
     areCurrentSettingsValid({
         getSetting,
     }: DataProviderInformationAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>): boolean {
-        const smdaWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
+        const smdaWellboreHeaders = getSetting(Setting.WELLBORES);
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             smdaWellboreHeaders !== null &&
@@ -137,7 +137,7 @@ export class DrilledWellborePicksProvider
             });
         });
 
-        valueRangeUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+        valueRangeUpdater(Setting.WELLBORES, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
             if (!wellboreHeaders) {

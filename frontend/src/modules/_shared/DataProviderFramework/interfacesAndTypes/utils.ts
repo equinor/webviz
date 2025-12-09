@@ -11,8 +11,8 @@ export type MakeSettingTypesMap<
         ? any
         : {
               [K in T[number]]: AllowNull extends false
-                  ? SettingTypeDefinitions[K]["internalValue"]
-                  : SettingTypeDefinitions[K]["internalValue"] | null;
+                  ? SettingTypeDefinitions[K]["externalValue"]
+                  : SettingTypeDefinitions[K]["externalValue"] | null;
           };
 
 // From: https://stackoverflow.com/a/50375286/62076
