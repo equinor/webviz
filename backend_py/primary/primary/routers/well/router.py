@@ -125,6 +125,7 @@ async def get_wellbore_pick_identifiers(
     # fmt:on
 ) -> List[str]:
     """Get wellbore pick identifiers for a given stratigraphic column"""
+
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
     if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         # Handle DROGON
