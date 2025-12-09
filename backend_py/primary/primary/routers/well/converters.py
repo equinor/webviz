@@ -87,6 +87,44 @@ def convert_well_trajectory_to_schema(
     )
 
 
+def convert_field_perforations_to_schema(
+    perforations: list[WellborePerforation],
+) -> list[schemas.WellborePerforations]:
+    """Convert a list of perforations to a list of WellborePerforations grouped by wellbore."""
+    perforations_by_wellbore: dict[str, list[schemas.WellborePerforation]] = {}
+    for perf in perforations:
+        if perf.wellbore_uuid not in perforations_by_wellbore:
+            perforations_by_wellbore[perf.wellbore_uuid] = []
+        perforations_by_wellbore[perf.wellbore_uuid].append(convert_wellbore_perforation_to_schema(perf))
+
+    return [
+        schemas.WellborePerforations(
+            wellboreUuid=wellbore_uuid,
+            perforations=perfs,
+        )
+        for wellbore_uuid, perfs in perforations_by_wellbore.items()
+    ]
+
+
+def convert_field_screens_to_schema(
+    screens: list[WellboreCompletion],
+) -> list[schemas.WellboreCompletions]:
+    """Convert a list of screens to a list of WellboreCompletions grouped by wellbore."""
+    screens_by_wellbore: dict[str, list[schemas.WellboreCompletion]] = {}
+    for screen in screens:
+        if screen.wellbore_uuid not in screens_by_wellbore:
+            screens_by_wellbore[screen.wellbore_uuid] = []
+        screens_by_wellbore[screen.wellbore_uuid].append(convert_wellbore_completion_to_schema(screen))
+
+    return [
+        schemas.WellboreCompletions(
+            wellboreUuid=wellbore_uuid,
+            completions=comps,
+        )
+        for wellbore_uuid, comps in screens_by_wellbore.items()
+    ]
+
+
 def convert_wellbore_completion_to_schema(
     wellbore_completion: WellboreCompletion,
 ) -> schemas.WellboreCompletion:

@@ -50,6 +50,7 @@ async def get_field_perforations(
     field_identifier: str = Query(description="Official field identifier"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> list[schemas.WellborePerforations]:
+    """Get field perforations for all wellbores in a given field."""
 
     if is_drogon_identifier(field_identifier=field_identifier):
         return []
@@ -63,20 +64,7 @@ async def get_field_perforations(
         raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
 
     perforations = await well_access_ssdl.get_field_perforations_async(field_uuid=field_uuid)
-    perforations_by_wellbore: dict[str, list[schemas.WellborePerforation]] = {}
-    for perf in perforations:
-        if perf.wellbore_uuid not in perforations_by_wellbore:
-            perforations_by_wellbore[perf.wellbore_uuid] = []
-        perforations_by_wellbore[perf.wellbore_uuid].append(converters.convert_wellbore_perforation_to_schema(perf))
-    result: list[schemas.WellborePerforations] = []
-    for wellbore_uuid, perfs in perforations_by_wellbore.items():
-        result.append(
-            schemas.WellborePerforations(
-                wellboreUuid=wellbore_uuid,
-                perforations=perfs,
-            )
-        )
-    return result
+    return converters.convert_field_perforations_to_schema(perforations)
 
 
 @router.get("/field_screens")
@@ -84,7 +72,8 @@ async def get_field_screens(
     field_identifier: str = Query(description="Official field identifier"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> list[schemas.WellboreCompletions]:
-
+    """Get field screens for all wellbores in a given field.
+    Screens are the SSDL completions with a filter on "Screen" type."""
     if is_drogon_identifier(field_identifier=field_identifier):
         return []
         # Only fetch screens for non-DROGON fields
@@ -97,20 +86,7 @@ async def get_field_screens(
         raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
 
     screens = await well_access_ssdl.get_field_screens_async(field_uuid=field_uuid)
-    screens_by_wellbore: dict[str, list[schemas.WellboreCompletion]] = {}
-    for screen in screens:
-        if screen.wellbore_uuid not in screens_by_wellbore:
-            screens_by_wellbore[screen.wellbore_uuid] = []
-        screens_by_wellbore[screen.wellbore_uuid].append(converters.convert_wellbore_completion_to_schema(screen))
-    result: list[schemas.WellboreCompletions] = []
-    for wellbore_uuid, comps in screens_by_wellbore.items():
-        result.append(
-            schemas.WellboreCompletions(
-                wellboreUuid=wellbore_uuid,
-                completions=comps,
-            )
-        )
-    return result
+    return converters.convert_field_screens_to_schema(screens)
 
 
 @router.get("/well_trajectories/")
