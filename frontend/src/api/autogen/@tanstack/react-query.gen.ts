@@ -63,9 +63,12 @@ import type {
     GetTableDataData_api,
     GetWellCompletionsDataData_api,
     GetDrilledWellboreHeadersData_api,
+    GetFieldPerforationsData_api,
+    GetFieldScreensData_api,
     GetWellTrajectoriesData_api,
     GetWellborePickIdentifiersData_api,
     GetWellborePicksForPickIdentifierData_api,
+    DeprecatedGetWellborePicksForWellboreData_api,
     GetWellborePicksInStratColumnData_api,
     GetWellboreStratigraphicColumnsData_api,
     GetWellboreCompletionsData_api,
@@ -169,9 +172,12 @@ import {
     getTableData,
     getWellCompletionsData,
     getDrilledWellboreHeaders,
+    getFieldPerforations,
+    getFieldScreens,
     getWellTrajectories,
     getWellborePickIdentifiers,
     getWellborePicksForPickIdentifier,
+    deprecatedGetWellborePicksForWellbore,
     getWellborePicksInStratColumn,
     getWellboreStratigraphicColumns,
     getWellboreCompletions,
@@ -1169,6 +1175,44 @@ export const getDrilledWellboreHeadersOptions = (options: Options<GetDrilledWell
     });
 };
 
+export const getFieldPerforationsQueryKey = (options: Options<GetFieldPerforationsData_api>) => [
+    createQueryKey("getFieldPerforations", options),
+];
+
+export const getFieldPerforationsOptions = (options: Options<GetFieldPerforationsData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getFieldPerforations({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getFieldPerforationsQueryKey(options),
+    });
+};
+
+export const getFieldScreensQueryKey = (options: Options<GetFieldScreensData_api>) => [
+    createQueryKey("getFieldScreens", options),
+];
+
+export const getFieldScreensOptions = (options: Options<GetFieldScreensData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getFieldScreens({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getFieldScreensQueryKey(options),
+    });
+};
+
 export const getWellTrajectoriesQueryKey = (options: Options<GetWellTrajectoriesData_api>) => [
     createQueryKey("getWellTrajectories", options),
 ];
@@ -1223,6 +1267,27 @@ export const getWellborePicksForPickIdentifierOptions = (options: Options<GetWel
             return data;
         },
         queryKey: getWellborePicksForPickIdentifierQueryKey(options),
+    });
+};
+
+export const deprecatedGetWellborePicksForWellboreQueryKey = (
+    options: Options<DeprecatedGetWellborePicksForWellboreData_api>,
+) => [createQueryKey("deprecatedGetWellborePicksForWellbore", options)];
+
+export const deprecatedGetWellborePicksForWellboreOptions = (
+    options: Options<DeprecatedGetWellborePicksForWellboreData_api>,
+) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await deprecatedGetWellborePicksForWellbore({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: deprecatedGetWellborePicksForWellboreQueryKey(options),
     });
 };
 

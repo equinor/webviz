@@ -1226,6 +1226,14 @@ export type WellboreCompletion_api = {
     comment: string | null;
 };
 
+/**
+ * Simplified completion schema for use in nested structures (without wellbore identifiers)
+ */
+export type WellboreCompletions_api = {
+    wellboreUuid: string;
+    completions: Array<WellboreCompletion_api>;
+};
+
 export type WellboreHeader_api = {
     wellboreUuid: string;
     uniqueWellboreIdentifier: string;
@@ -1237,6 +1245,12 @@ export type WellboreHeader_api = {
     depthReferenceElevation: number;
     wellborePurpose: string;
     wellboreStatus: string;
+    currentTrack: number;
+    tvdMax: number;
+    mdMax: number;
+    kickoffDepthMd: number | null;
+    kickoffDepthTvd: number | null;
+    parentWellbore: string | null;
 };
 
 export type WellboreLogCurveData_api = {
@@ -1272,6 +1286,13 @@ export type WellborePerforation_api = {
     tvdBottom: number;
     status: string;
     completionMode: string;
+    dateShot: string | null;
+    dateClosed: string | null;
+};
+
+export type WellborePerforations_api = {
+    wellboreUuid: string;
+    perforations: Array<WellborePerforation_api>;
 };
 
 /**
@@ -3118,6 +3139,68 @@ export type GetDrilledWellboreHeadersResponses_api = {
 export type GetDrilledWellboreHeadersResponse_api =
     GetDrilledWellboreHeadersResponses_api[keyof GetDrilledWellboreHeadersResponses_api];
 
+export type GetFieldPerforationsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        zCacheBust?: string;
+    };
+    url: "/well/field_perforations";
+};
+
+export type GetFieldPerforationsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetFieldPerforationsError_api = GetFieldPerforationsErrors_api[keyof GetFieldPerforationsErrors_api];
+
+export type GetFieldPerforationsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellborePerforations_api>;
+};
+
+export type GetFieldPerforationsResponse_api = GetFieldPerforationsResponses_api[keyof GetFieldPerforationsResponses_api];
+
+export type GetFieldScreensData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        zCacheBust?: string;
+    };
+    url: "/well/field_screens";
+};
+
+export type GetFieldScreensErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetFieldScreensError_api = GetFieldScreensErrors_api[keyof GetFieldScreensErrors_api];
+
+export type GetFieldScreensResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellboreCompletions_api>;
+};
+
+export type GetFieldScreensResponse_api = GetFieldScreensResponses_api[keyof GetFieldScreensResponses_api];
+
 export type GetWellTrajectoriesData_api = {
     body?: never;
     path?: never;
@@ -3221,6 +3304,39 @@ export type GetWellborePicksForPickIdentifierResponses_api = {
 
 export type GetWellborePicksForPickIdentifierResponse_api =
     GetWellborePicksForPickIdentifierResponses_api[keyof GetWellborePicksForPickIdentifierResponses_api];
+
+export type DeprecatedGetWellborePicksForWellboreData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Wellbore uuid
+         */
+        wellbore_uuid: string;
+        zCacheBust?: string;
+    };
+    url: "/well/deprecated_wellbore_picks_for_wellbore/";
+};
+
+export type DeprecatedGetWellborePicksForWellboreErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeprecatedGetWellborePicksForWellboreError_api =
+    DeprecatedGetWellborePicksForWellboreErrors_api[keyof DeprecatedGetWellborePicksForWellboreErrors_api];
+
+export type DeprecatedGetWellborePicksForWellboreResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellborePick_api>;
+};
+
+export type DeprecatedGetWellborePicksForWellboreResponse_api =
+    DeprecatedGetWellborePicksForWellboreResponses_api[keyof DeprecatedGetWellborePicksForWellboreResponses_api];
 
 export type GetWellborePicksInStratColumnData_api = {
     body?: never;

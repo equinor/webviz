@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from webviz_services.smda_access.drogon import DrogonSmdaAccess
 from webviz_services.smda_access import SmdaAccess
 from webviz_services.smda_access import GeologyAccess as SmdaGeologyAccess
-from webviz_services.service_exceptions import NoDataError, AuthorizationError, Service
+from webviz_services.service_exceptions import NoDataError, Service
 from webviz_services.ssdl_access.well_access import WellAccess as SsdlWellAccess
 from webviz_services.ssdl_access.drogon import DrogonWellAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser

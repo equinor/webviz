@@ -69,6 +69,8 @@ def convert_wellbore_header_to_schema(
         kickoffDepthMd=drilled_wellbore_header.kickoff_depth_md,
         kickoffDepthTvd=drilled_wellbore_header.kickoff_depth_tvd,
         parentWellbore=drilled_wellbore_header.parent_wellbore,
+        tvdMax=drilled_wellbore_header.tvd_max,
+        mdMax=drilled_wellbore_header.md_max,
     )
 
 
