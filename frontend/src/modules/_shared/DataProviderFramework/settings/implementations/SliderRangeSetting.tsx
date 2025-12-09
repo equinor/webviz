@@ -272,7 +272,6 @@ export class SliderRangeSetting
                             ]}
                             valueLabelDisplay="auto"
                             step={step}
-                            allowLockingToMinMax
                         />
                     </div>
                     <ToggleButton size="small" active={localValue[1] === "max"} onToggle={handleLockMaxToggle}>
