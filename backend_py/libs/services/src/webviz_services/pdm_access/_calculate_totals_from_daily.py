@@ -32,29 +32,26 @@ def calculate_total_production_from_daily(
                 pl.col(_PRODCOLUMNS.WB_UWBI).first(),
             ]
         )
+        .filter(
+            (pl.col(_PRODCOLUMNS.WB_OIL_VOL_SM3) != 0.0)
+            | (pl.col(_PRODCOLUMNS.WB_GAS_VOL_SM3) != 0.0)
+            | (pl.col(_PRODCOLUMNS.WB_WATER_VOL_M3) != 0.0)
+        )
         .sort(by=_PRODCOLUMNS.WB_UWBI)
     )
 
     # Convert to list of WellProductionData
     return [
         WellProductionData(
-            wellbore_uuid=row[0],  # WB_UUID
-            wellbore_uwbi=row[4],  # WB_UWBI
+            wellbore_uuid=row[_PRODCOLUMNS.WB_UUID],
+            wellbore_uwbi=row[_PRODCOLUMNS.WB_UWBI],
             start_date=start_date,
             end_date=end_date,
-            oil_production_sm3=row[1],  # Oil sum
-            gas_production_sm3=row[2],  # Gas sum
-            water_production_m3=row[3],  # Water sum
+            oil_production_sm3=row[_PRODCOLUMNS.WB_OIL_VOL_SM3],
+            gas_production_sm3=row[_PRODCOLUMNS.WB_GAS_VOL_SM3],
+            water_production_m3=row[_PRODCOLUMNS.WB_WATER_VOL_M3],
         )
-        for row in grouped_df.select(
-            [
-                _PRODCOLUMNS.WB_UUID,
-                _PRODCOLUMNS.WB_OIL_VOL_SM3,
-                _PRODCOLUMNS.WB_GAS_VOL_SM3,
-                _PRODCOLUMNS.WB_WATER_VOL_M3,
-                _PRODCOLUMNS.WB_UWBI,
-            ]
-        ).rows()
+        for row in grouped_df.iter_rows(named=True)
     ]
 
 
@@ -62,7 +59,7 @@ def calculate_total_injection_from_daily(
     api_results: list[dict], start_date: str, end_date: str
 ) -> list[WellInjectionData]:
     """Calculate total injection per well from daily injection data."""
-    polars_df = pl.DataFrame(api_results, schema_overrides={_INJCOLUMNS.WB_INJ_VOL: pl.Float32})
+    polars_df = pl.DataFrame(api_results, schema_overrides={_INJCOLUMNS.WB_INJ_VOL: pl.Float64})
 
     # Group per well and sum injection volumes by type
     grouped_df = (
@@ -82,18 +79,19 @@ def calculate_total_injection_from_daily(
                 pl.col(_INJCOLUMNS.WB_UWBI).first(),
             ]
         )
+        .filter((pl.col("water_injection") != 0.0) | (pl.col("gas_injection") != 0.0))
         .sort(by=_INJCOLUMNS.WB_UWBI)
     )
 
     # Convert to list of WellInjectionData
     return [
         WellInjectionData(
-            wellbore_uuid=row[0],  # WB_UUID
-            wellbore_uwbi=row[3],  # WB_UWBI
+            wellbore_uuid=row[_INJCOLUMNS.WB_UUID],
+            wellbore_uwbi=row[_INJCOLUMNS.WB_UWBI],
             start_date=start_date,
             end_date=end_date,
-            water_injection=row[1],  # Water injection sum
-            gas_injection=row[2],  # Gas injection sum
+            water_injection=row["water_injection"],
+            gas_injection=row["gas_injection"],
         )
-        for row in grouped_df.rows()
+        for row in grouped_df.iter_rows(named=True)
     ]
