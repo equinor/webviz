@@ -10,7 +10,6 @@ import {
     LogEntryType,
     useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerInternal";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
@@ -23,16 +22,15 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
+import { useActiveDashboard } from "../../ActiveDashboardBoundary";
+
 export type ModuleInstanceLogProps = {
     workbench: Workbench;
     onClose: () => void;
 };
 
 export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNode {
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getSessionManager().getActiveSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = useActiveDashboard();
     const [details, setDetails] = React.useState<Record<string, unknown> | null>(null);
     const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
     const [pointerOverDetails, setPointerOverDetails] = React.useState<boolean>(false);

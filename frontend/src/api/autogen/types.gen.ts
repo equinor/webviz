@@ -1323,6 +1323,8 @@ export type WellboreHeader_api = {
     wellborePurpose: string;
     wellboreStatus: string;
     currentTrack: number;
+    tvdMax: number;
+    mdMax: number;
     kickoffDepthMd: number | null;
     kickoffDepthTvd: number | null;
     parentWellbore: string | null;

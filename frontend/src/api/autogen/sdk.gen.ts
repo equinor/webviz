@@ -1019,6 +1019,7 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Field Perforations
+ * Get field perforations for all wellbores in a given field.
  */
 export const getFieldPerforations = <ThrowOnError extends boolean = false>(
     options: Options<GetFieldPerforationsData_api, ThrowOnError>,
@@ -1031,6 +1032,8 @@ export const getFieldPerforations = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Field Screens
+ * Get field screens for all wellbores in a given field.
+ * Screens are the SSDL completions with a filter on "Screen" type.
  */
 export const getFieldScreens = <ThrowOnError extends boolean = false>(
     options: Options<GetFieldScreensData_api, ThrowOnError>,

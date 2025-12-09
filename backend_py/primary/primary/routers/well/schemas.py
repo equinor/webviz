@@ -15,6 +15,8 @@ class WellboreHeader(BaseModel):
     wellborePurpose: str
     wellboreStatus: str
     currentTrack: int
+    tvdMax: float
+    mdMax: float
     kickoffDepthMd: float | None
     kickoffDepthTvd: float | None
     parentWellbore: str | None

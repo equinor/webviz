@@ -20,6 +20,9 @@ export function makeCacheBustingQueryParam(...ensembleIdents: (RegularEnsembleId
         }
         const fingerprint = EnsembleFingerprintStore.getFingerprintFromEnsembleIdentString(ident.toString());
         if (!fingerprint) {
+            // Why are we failing hard here? Hitting a cache miss is not a big issue, but hitting cached data that
+            // we actually don't want to hit is a big issue. By throwing an error here, we ensure that we never
+            // serve cached data for an ensemble that has no known fingerprint, which might be wrong data.
             throw new Error(`Missing fingerprint for ensemble ident: ${ident}`);
         }
         ensembleFingerprints.push(fingerprint);

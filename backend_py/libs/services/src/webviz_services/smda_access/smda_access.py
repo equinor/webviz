@@ -175,6 +175,8 @@ class SmdaAccess:
             "well_northing",
             "depth_reference_point",
             "depth_reference_elevation",
+            "tvd_max",
+            "md_max",
         ]
         params = {
             "_projection": ",".join(projection),
