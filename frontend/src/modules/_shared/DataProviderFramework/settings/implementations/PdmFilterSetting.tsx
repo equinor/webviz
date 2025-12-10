@@ -70,6 +70,12 @@ export class PdmFilterSetting
         ) {
             const { onValueChange } = props;
 
+            const divRef = React.useRef<HTMLDivElement>(null);
+            const divSize = useElementSize(divRef);
+
+            const MIN_DIV_WIDTH = 250;
+            const inputVisible = divSize.width >= MIN_DIV_WIDTH;
+
             function handleValueChange(
                 type: "production" | "injection",
                 phase: "oil" | "gas" | "water",
@@ -91,38 +97,61 @@ export class PdmFilterSetting
             }
 
             return (
-                <div className="flex flex-col gap-1">
-                    <div className="font-semibold">Production</div>
+                <div
+                    className="grid gap-y-1 gap-x-2 items-center"
+                    ref={divRef}
+                    style={{ gridTemplateColumns: inputVisible ? "40px 3fr 1fr" : "40px auto" }}
+                >
+                    <div
+                        className={resolveClassNames("font-semibold", {
+                            "col-span-3": inputVisible,
+                            "col-span-2": !inputVisible,
+                        })}
+                    >
+                        Production
+                    </div>
                     <SliderNumberSettingComponent
                         label="Oil"
                         maxValue={props.valueRange ? props.valueRange.production.oil : 0}
                         value={props.value ? props.value.production.oil : 0}
                         onValueChange={(newValue) => handleValueChange("production", "oil", newValue)}
+                        inputVisible={inputVisible}
                     />
                     <SliderNumberSettingComponent
                         label="Gas"
                         maxValue={props.valueRange ? props.valueRange.production.gas : 0}
                         value={props.value ? props.value.production.gas : 0}
                         onValueChange={(newValue) => handleValueChange("production", "gas", newValue)}
+                        inputVisible={inputVisible}
                     />
                     <SliderNumberSettingComponent
                         label="Water"
                         maxValue={props.valueRange ? props.valueRange.production.water : 0}
                         value={props.value ? props.value.production.water : 0}
                         onValueChange={(newValue) => handleValueChange("production", "water", newValue)}
+                        inputVisible={inputVisible}
                     />
-                    <div className="font-semibold mt-2">Injection</div>
+                    <div
+                        className={resolveClassNames("font-semibold mt-2", {
+                            "col-span-3": inputVisible,
+                            "col-span-2": !inputVisible,
+                        })}
+                    >
+                        Injection
+                    </div>
                     <SliderNumberSettingComponent
                         label="Gas"
                         maxValue={props.valueRange ? props.valueRange.injection.gas : 0}
                         value={props.value ? props.value.injection.gas : 0}
                         onValueChange={(newValue) => handleValueChange("injection", "gas", newValue)}
+                        inputVisible={inputVisible}
                     />
                     <SliderNumberSettingComponent
                         label="Water"
                         maxValue={props.valueRange ? props.valueRange.injection.water : 0}
                         value={props.value ? props.value.injection.water : 0}
                         onValueChange={(newValue) => handleValueChange("injection", "water", newValue)}
+                        inputVisible={inputVisible}
                     />
                 </div>
             );
@@ -135,6 +164,7 @@ type SliderNumberSettingProps = {
     maxValue: number;
     value: number;
     onValueChange: (newValue: number) => void;
+    inputVisible: boolean;
 };
 
 function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
@@ -143,12 +173,6 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
     const min = 0;
     const max = props.maxValue;
     const step = 1;
-
-    const divRef = React.useRef<HTMLDivElement>(null);
-    const divSize = useElementSize(divRef);
-
-    const MIN_DIV_WIDTH = 150;
-    const inputVisible = divSize.width >= MIN_DIV_WIDTH;
 
     const [prevValue, setPrevValue] = React.useState(props.value ?? min);
     const [localValue, setLocalValue] = React.useState(props.value ?? min);
@@ -196,21 +220,19 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
     );
 
     return (
-        <div className="flex flex-row gap-2" ref={divRef}>
-            <div className="text-sm flex items-center">{props.label}</div>
-            <div className="flex-4">
-                <Slider
-                    min={min}
-                    max={max}
-                    onChange={handleSliderChange}
-                    value={localValue}
-                    valueLabelDisplay="auto"
-                    step={step}
-                />
-            </div>
-            <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputVisible })}>
+        <>
+            <div className="text-sm">{props.label}</div>
+            <Slider
+                min={min}
+                max={max}
+                onChange={handleSliderChange}
+                value={localValue}
+                valueLabelDisplay="auto"
+                step={step}
+            />
+            {props.inputVisible && (
                 <Input type="number" value={localValue} min={min} max={max} onChange={handleInputChange} />
-            </div>
-        </div>
+            )}
+        </>
     );
 }

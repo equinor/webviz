@@ -3,13 +3,18 @@ import { isEqual } from "lodash";
 import type { WellboreTrajectory_api } from "@api";
 import {
     getDrilledWellboreHeadersOptions,
+    getInjectionDataOptions,
     getObservedSurfacesMetadataOptions,
+    getProductionDataOptions,
     getRealizationSurfacesMetadataOptions,
     getWellTrajectoriesOptions,
     SurfaceAttributeType_api,
 } from "@api";
 import { sortStringArray } from "@lib/utils/arrays";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import {
+    Setting,
+    type SettingTypeDefinitions,
+} from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { NO_UPDATE } from "../../delegates/_utils/Dependency";
 import type {
@@ -50,7 +55,6 @@ export class DrilledWellTrajectoriesProvider
     }
 
     fetchData({
-        getSetting,
         getGlobalSetting,
         fetchQuery,
     }: FetchDataParams<
@@ -58,8 +62,6 @@ export class DrilledWellTrajectoriesProvider
         DrilledWellTrajectoriesData
     >): Promise<DrilledWellTrajectoriesData> {
         const fieldIdentifier = getGlobalSetting("fieldId");
-        const selectedWellbores = getSetting(Setting.WELLBORES) ?? [];
-        const selectedWellboreUuids = selectedWellbores.map((wb) => wb.wellboreUuid);
 
         const queryOptions = getWellTrajectoriesOptions({
             query: { field_identifier: fieldIdentifier ?? "" },
@@ -69,8 +71,6 @@ export class DrilledWellTrajectoriesProvider
             ...queryOptions,
             staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
             gcTime: 1800000,
-        }).then((response: DrilledWellTrajectoriesData) => {
-            return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
         });
 
         return promise;
@@ -389,6 +389,46 @@ export class DrilledWellTrajectoriesProvider
                     signal: abortSignal,
                 }),
             });
+        });
+
+        valueRangeUpdater(Setting.PDM_FILTER, ({ getHelperDependency }) => {
+            const productionData = getHelperDependency(productionDataDep);
+            const injectionData = getHelperDependency(injectionDataDep);
+
+            let maxOilProduction = 0;
+            let maxGasProduction = 0;
+            let maxWaterProduction = 0;
+            let maxGasInjection = 0;
+            let maxWaterInjection = 0;
+
+            if (productionData) {
+                for (const record of productionData) {
+                    maxOilProduction = Math.max(maxOilProduction, record.oilProductionSm3);
+                    maxGasProduction = Math.max(maxGasProduction, record.gasProductionSm3);
+                    maxWaterProduction = Math.max(maxWaterProduction, record.waterProductionM3);
+                }
+            }
+
+            if (injectionData) {
+                for (const record of injectionData) {
+                    maxGasInjection = Math.max(maxGasInjection, record.gasInjection);
+                    maxWaterInjection = Math.max(maxWaterInjection, record.waterInjection);
+                }
+            }
+
+            const valueRange: SettingTypeDefinitions[Setting.PDM_FILTER]["valueRange"] = {
+                production: {
+                    oil: maxOilProduction,
+                    gas: maxGasProduction,
+                    water: maxWaterProduction,
+                },
+                injection: {
+                    gas: maxGasInjection,
+                    water: maxWaterInjection,
+                },
+            };
+
+            return valueRange;
         });
     }
 }

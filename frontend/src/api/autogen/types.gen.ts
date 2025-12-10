@@ -1252,11 +1252,15 @@ export type WellboreHeader_api = {
     wellborePurpose: string;
     wellboreStatus: string;
     currentTrack: number;
-    tvdMax: number;
-    mdMax: number;
     kickoffDepthMd: number | null;
     kickoffDepthTvd: number | null;
     parentWellbore: string | null;
+    mdMin?: number | null;
+    mdMax?: number | null;
+    mdUnit?: string | null;
+    tvdMin?: number | null;
+    tvdMax?: number | null;
+    tvdUnit?: string | null;
 };
 
 export type WellboreLogCurveData_api = {
