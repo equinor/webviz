@@ -236,6 +236,16 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
         });
     }, [props.controlledCollation, rowsWithKey, selectedRows, tableFilterState, colDataDefLookup]);
 
+    React.useEffect(
+        function ensureValidSelectedRowsAfterFiltering() {
+            const validSelectedRows = selectedRows.filter((selKey) => filteredRows.some((row) => row._key === selKey));
+            if (validSelectedRows.length !== selectedRows.length) {
+                setSelectedRows(validSelectedRows);
+            }
+        },
+        [filteredRows, selectedRows, setSelectedRows],
+    );
+
     // After filtering, sort remaining data according to tableSortState
     const sortedRows = React.useMemo(() => {
         if (props.controlledCollation) return filteredRows;

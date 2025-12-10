@@ -1,20 +1,24 @@
 import React from "react";
 
-import { CircularProgress } from "@equinor/eds-core-react";
+import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import { getCasesOptions, getFieldsOptions, type EnsembleInfo_api } from "@api";
+import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
-import type { TableFilters } from "@lib/components/Table/types";
+import { SortDirection, type TableSorting, type TableFilters } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
+import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
@@ -26,17 +30,18 @@ import {
     storeStateInLocalStorage,
 } from "./_utils";
 
-const STALE_TIME = tanstackDebugTimeOverride(0);
+const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
 export type CaseSelection = {
     caseName: string;
     caseUuid: string;
-    filteredEnsembles: EnsembleInfo_api[] | null;
+    filteredEnsembles: EnsembleInfo_api[];
 };
 
 export type CaseExplorerProps = {
-    onCaseSelectionChange: (caseSelection: CaseSelection) => void;
+    disableQueries: boolean;
+    onCaseSelectionChange: (caseSelection: CaseSelection | null) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const { onCaseSelectionChange } = props;
@@ -58,12 +63,24 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         ...(showOnlyMyCases && { author: userName }),
         ...(showOnlyOfficialCases && { status: ["official"] }),
     });
+    const [tableSortingState, setTableSortingState] = React.useState<TableSorting>([
+        { columnId: "dateUtcMs", direction: SortDirection.DESC },
+    ]);
+
+    // Have without fixup to allow resetting to null when table filters out selected case
+    const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string | null>(null);
 
     // Keep the prevCaseSelection state that was already defined
     const [prevCaseSelection, setPrevCaseSelection] = React.useState<CaseSelection | null>(null);
 
     // --- Queries ---
-    const fieldsQuery = useQuery({ ...getFieldsOptions() });
+    const fieldsQuery = useQuery({
+        ...getFieldsOptions(),
+        enabled: !props.disableQueries,
+        gcTime: CACHE_TIME,
+        staleTime: STALE_TIME,
+        refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
+    });
     const fieldOptions = fieldsQuery.data?.map((f) => ({ value: f.fieldIdentifier, label: f.fieldIdentifier })) ?? [];
 
     const [selectedField, setSelectedField] = useValidState<string>({
@@ -74,18 +91,42 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
     const casesQuery = useQuery({
         ...getCasesOptions({ query: { field_identifier: selectedField ?? "" } }),
-        enabled: selectedField !== null,
+        enabled: selectedField !== null && !props.disableQueries,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
+        refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
     });
 
-    const [selectedCaseUuid, setSelectedCaseId] = useValidState<string>({
-        initialState: "",
-        validStates: casesQuery.data?.map((item) => item.uuid) ?? [],
-        keepStateWhenInvalid: true,
-    });
+    // Sort cases by date descending (to prevent random order when no sorting is applied in the table)
+    const sortedCasesQueryData = React.useMemo(
+        function sortCaseQueryDataByDate() {
+            if (!casesQuery.data) {
+                return undefined;
+            }
+            return [...casesQuery.data].sort((a, b) => b.updatedAtUtcMs - a.updatedAtUtcMs);
+        },
+        [casesQuery.data],
+    );
+
+    // Ensure valid selected case uuid, use casesQuery data to utilize fetching state
+    React.useEffect(
+        function ensureValidSelectedCaseUuid() {
+            if (selectedCaseUuid && casesQuery.data && !casesQuery.data.some((c) => c.uuid === selectedCaseUuid)) {
+                setSelectedCaseUuid(null);
+            }
+        },
+        [selectedCaseUuid, casesQuery.data],
+    );
+
+    // Refresh query handlers
+    const { isRefreshing: isFieldsQueryRefreshing, refresh: refreshFields } = useRefreshQuery(fieldsQuery);
+    const { isRefreshing: isCasesQueryRefreshing, refresh: refreshCases } = useRefreshQuery(casesQuery);
 
     // --- Derived data ---
+    const lastUpdatedMs = React.useMemo(() => {
+        return sortedCasesQueryData && casesQuery.dataUpdatedAt ? casesQuery.dataUpdatedAt : null;
+    }, [sortedCasesQueryData, casesQuery.dataUpdatedAt]);
+
     const caseTableColumns = React.useMemo(() => {
         const disabledFilterComponents = {
             disableAuthorComponent: showOnlyMyCases,
@@ -109,8 +150,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     }
 
     // Extract unique status options and standard results from cases data when it's available
-    if (casesQuery.data) {
-        const uniqueStatuses = [...new Set(casesQuery.data.map((c) => c.status))];
+    if (sortedCasesQueryData) {
+        const uniqueStatuses = [...new Set(sortedCasesQueryData.map((c) => c.status))];
         if (!isEqual(uniqueStatuses, currentStatusOptions)) {
             setCurrentStatusOptions(uniqueStatuses);
         }
@@ -118,12 +159,12 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
     // // Extract unique standard results from cases data when it's available
     const casesStandardResults = React.useMemo(() => {
-        if (!casesQuery.data) {
+        if (!sortedCasesQueryData) {
             return [];
         }
 
         const standardResults = new Set<string>();
-        for (const c of casesQuery.data) {
+        for (const c of sortedCasesQueryData) {
             c.ensembles.forEach((ens) => {
                 ens.standardResults.forEach((res) => {
                     standardResults.add(res);
@@ -132,20 +173,20 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         }
 
         return Array.from(standardResults).sort();
-    }, [casesQuery.data]);
+    }, [sortedCasesQueryData]);
 
     const [selectedStandardResults, setSelectedStandardResults] = useValidArrayState<string>({
         initialState: [],
         validStateArray: casesStandardResults,
-        keepStateWhenInvalid: !casesQuery.data, // Requires valid state when data is available, allows invalid while data is fetching
+        keepStateWhenInvalid: !sortedCasesQueryData, // Requires valid state when data is available, allows invalid while data is fetching
     });
 
     const caseRowData = React.useMemo(() => {
-        if (!casesQuery.data) {
+        if (!sortedCasesQueryData) {
             return [];
         }
 
-        let cases = casesQuery.data;
+        let cases = sortedCasesQueryData;
         if (selectedStandardResults.length > 0) {
             cases = cases.filter((c) =>
                 c.ensembles.some((ens) => ens.standardResults.some((res) => selectedStandardResults.includes(res))),
@@ -153,25 +194,31 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         }
 
         return makeCaseRowData(cases);
-    }, [casesQuery.data, selectedStandardResults]);
+    }, [sortedCasesQueryData, selectedStandardResults]);
 
-    const currentCaseSelection: CaseSelection = React.useMemo(() => {
-        const selectedCase = casesQuery.data?.find((c) => c.uuid === selectedCaseUuid);
-        let selectedCaseFilteredEnsembles = null;
-        if (selectedCase) {
-            selectedCaseFilteredEnsembles =
-                selectedStandardResults.length === 0
-                    ? selectedCase.ensembles
-                    : selectedCase.ensembles.filter((ens) =>
-                          ens.standardResults.some((res) => selectedStandardResults.includes(res)),
-                      );
+    const currentCaseSelection: CaseSelection | null = React.useMemo(() => {
+        if (!selectedCaseUuid) {
+            return null;
         }
+
+        const selectedCase = sortedCasesQueryData?.find((c) => c.uuid === selectedCaseUuid);
+        if (!selectedCase) {
+            return null;
+        }
+
+        const selectedCaseFilteredEnsembles =
+            selectedStandardResults.length === 0
+                ? selectedCase.ensembles
+                : selectedCase.ensembles.filter((ens) =>
+                      ens.standardResults.some((res) => selectedStandardResults.includes(res)),
+                  );
+
         return {
-            caseName: selectedCase?.name ?? "",
+            caseName: selectedCase.name,
             caseUuid: selectedCaseUuid,
             filteredEnsembles: selectedCaseFilteredEnsembles,
         };
-    }, [casesQuery.data, selectedCaseUuid, selectedStandardResults]);
+    }, [sortedCasesQueryData, selectedCaseUuid, selectedStandardResults]);
 
     // Add useEffect that compares with previous selection before calling the callback
     React.useEffect(() => {
@@ -212,14 +259,24 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         [userName],
     );
 
+    const handleManualRefetch = React.useCallback(
+        function handleManualRefetch() {
+            // Checking if queries are disabled or already isFetching (covers both fetching and re-fetching state)
+            if (props.disableQueries || (casesQuery.isFetching && fieldsQuery.isFetching)) return;
+
+            refreshFields();
+            refreshCases();
+        },
+        [refreshCases, refreshFields, props.disableQueries, casesQuery.isFetching, fieldsQuery.isFetching],
+    );
+
     return (
         <div className="flex flex-col h-full gap-4 min-h-0">
             <div className="flex flex-row gap-4">
                 <Label text="Field" position="left">
-                    <QueryStateWrapper
-                        queryResult={fieldsQuery}
-                        errorComponent={<div className="text-red-500">Error loading fields</div>}
-                        loadingComponent={<CircularProgress />}
+                    <PendingWrapper
+                        isPending={fieldsQuery.isFetching && !fieldsQuery.isRefetching}
+                        errorMessage={fieldsQuery.error ? "Error loading fields" : undefined}
                     >
                         <Dropdown
                             options={fieldOptions}
@@ -227,7 +284,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             onChange={handleFieldChanged}
                             disabled={fieldOptions.length === 0}
                         />
-                    </QueryStateWrapper>
+                    </PendingWrapper>
                 </Label>
                 <div className="grow flex flex-row gap-4 items-center">
                     <Label position="left" text="Only my cases">
@@ -240,11 +297,10 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
                         </Tooltip>
                     </Label>
-                    <QueryStateWrapper
-                        queryResult={casesQuery}
+                    <PendingWrapper
+                        isPending={casesQuery.isFetching && !casesQuery.isRefetching}
+                        errorMessage={casesQuery.error ? "Error loading cases" : undefined}
                         className="h-full flex-1 min-h-0 min-w-56"
-                        errorComponent={<div className="text-red-500">Error loading cases</div>}
-                        loadingComponent={<CircularProgress />}
                     >
                         <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
                             <TagPicker
@@ -255,7 +311,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                                 onChange={(value) => setSelectedStandardResults([...value])}
                             />
                         </Tooltip>
-                    </QueryStateWrapper>
+                    </PendingWrapper>
                 </div>
             </div>
             <StatusWrapper
@@ -263,22 +319,49 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
             >
                 <div className="flex flex-col h-full">
-                    <div className="flex justify-end gap-4 items-center">
-                        <span className="grow text-sm text-slate-500">Select from {numberOfCases} cases</span>
+                    <div className="flex justify-end gap-4 items-center mb-1">
+                        <div className="grow flex flex-col">
+                            <span className="text-sm text-slate-500">Select from {numberOfCases} cases</span>
+                            <span className="text-xs text-slate-400 italic">
+                                Last updated:{" "}
+                                {lastUpdatedMs ? (
+                                    <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} />
+                                ) : casesQuery.isFetching ? (
+                                    "Loading..."
+                                ) : (
+                                    "Never"
+                                )}
+                            </span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <Tooltip title="Refresh fields and cases lists" enterDelay="medium">
+                                <Button color="primary" onClick={handleManualRefetch} size="medium">
+                                    {isFieldsQueryRefreshing || isCasesQueryRefreshing ? (
+                                        <CircularProgress size="small" />
+                                    ) : (
+                                        <Refresh fontSize="inherit" />
+                                    )}
+                                    Refresh
+                                </Button>
+                            </Tooltip>
+                        </div>
                     </div>
                     <div className="grow min-h-0">
                         <Table
                             rowIdentifier="caseId"
                             height={"100%"}
                             rowHeight={38}
-                            numPendingRows={!casesQuery.data ? "fill" : undefined}
+                            numPendingRows={!sortedCasesQueryData ? "fill" : undefined}
                             columns={caseTableColumns}
                             rows={caseRowData}
-                            selectedRows={[selectedCaseUuid]}
-                            filters={tableFiltersState}
                             selectable
-                            onSelectedRowsChange={(caseIds) => setSelectedCaseId((prev) => caseIds[0] ?? prev)}
+                            multiColumnSort
+                            selectedRows={selectedCaseUuid ? [selectedCaseUuid] : []}
+                            filters={tableFiltersState}
+                            sorting={tableSortingState}
+                            onSelectedRowsChange={(caseIds) => setSelectedCaseUuid(caseIds[0] ?? null)}
                             onFiltersChange={setTableFiltersState}
+                            onSortingChange={setTableSortingState}
                             onDataCollated={(data) => setNumberOfCases(data.length)}
                         />
                     </div>

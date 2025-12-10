@@ -118,3 +118,37 @@ export function fixupRegularEnsembleIdents(
 
     return currIdents.filter((currIdent) => ensembleSet.hasEnsemble(currIdent));
 }
+
+/**
+ * Utility to create display name for regular ensembles
+ */
+export function createRegularEnsembleDisplayName(
+    ensembleIdent: RegularEnsembleIdent,
+    caseName?: string,
+    customName?: string,
+): string {
+    if (customName) {
+        return customName;
+    }
+    if (caseName) {
+        return `${ensembleIdent.getEnsembleName()} (${caseName})`;
+    }
+    return `${ensembleIdent.getEnsembleName()} (${ensembleIdent.getCaseUuid()})`;
+}
+
+/**
+ * Utility to create display name for delta ensembles
+ */
+export function createDeltaEnsembleDisplayName(
+    comparisonEnsembleIdent: RegularEnsembleIdent,
+    referenceEnsembleIdent: RegularEnsembleIdent,
+    comparisonEnsembleCaseName?: string,
+    referenceEnsembleCaseName?: string,
+    customName?: string,
+): string {
+    if (customName) {
+        return customName;
+    }
+
+    return `(${createRegularEnsembleDisplayName(comparisonEnsembleIdent, comparisonEnsembleCaseName)}) - (${createRegularEnsembleDisplayName(referenceEnsembleIdent, referenceEnsembleCaseName)})`;
+}
