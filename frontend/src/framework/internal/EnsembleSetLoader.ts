@@ -35,15 +35,15 @@ export type EnsembleLoadingErrorInfoMap = {
 export type UserEnsembleSetting = {
     ensembleIdent: RegularEnsembleIdent;
     customName: string | null;
-    caseName: string;
+    caseName?: string; // Optional for backward compat serialization – awaiting schema versioning
     color: string;
 };
 
 export type UserDeltaEnsembleSetting = {
     comparisonEnsembleIdent: RegularEnsembleIdent;
     referenceEnsembleIdent: RegularEnsembleIdent;
-    comparisonEnsembleCaseName: string;
-    referenceEnsembleCaseName: string;
+    comparisonEnsembleCaseName?: string; // Optional for backward compat serialization – awaiting schema versioning
+    referenceEnsembleCaseName?: string; // Optional for backward compat serialization – awaiting schema versioning
     customName: string | null;
     color: string;
 };

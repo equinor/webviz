@@ -1,7 +1,8 @@
 import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-export type InternalRegularEnsembleSetting = UserEnsembleSetting & {
+// Internal type with required caseName for regular ensembles
+export type InternalRegularEnsembleSetting = Omit<UserEnsembleSetting, "caseName"> & {
     caseName: string;
 };
 

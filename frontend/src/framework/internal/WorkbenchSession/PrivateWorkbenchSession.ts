@@ -30,15 +30,15 @@ import {
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
     name: string | null;
-    caseName: string;
+    caseName?: string; // Optional for backward compat serialization – awaiting schema versioning
     color: string;
 };
 
 export type SerializedDeltaEnsemble = {
     comparisonEnsembleIdent: string;
     referenceEnsembleIdent: string;
-    comparisonEnsembleCaseName: string;
-    referenceEnsembleCaseName: string;
+    comparisonEnsembleCaseName?: string; // Optional for backward compat serialization – awaiting schema versioning
+    referenceEnsembleCaseName?: string; // Optional for backward compat serialization – awaiting schema versioning
     name: string | null;
     color: string;
 };
