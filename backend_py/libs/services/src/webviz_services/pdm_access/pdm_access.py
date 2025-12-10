@@ -22,15 +22,17 @@ def _get_query_date_range(
     If start_date_inclusive is False, add one day to exclude the start date from results.
     If end_date_inclusive is False, subtract one day to exclude the end date from results.
     """
-    query_start_date = start_date
-    query_end_date = end_date
+
+    # Extract only the date part (yyyy-mm-dd) in case time is included
+    query_start_date = start_date[:10]
+    query_end_date = end_date[:10]
 
     if not start_date_inclusive:
-        date = datetime.strptime(start_date, "%Y-%m-%d")
+        date = datetime.strptime(query_start_date, "%Y-%m-%d")
         query_start_date = (date + timedelta(days=1)).strftime("%Y-%m-%d")
 
     if not end_date_inclusive:
-        date = datetime.strptime(end_date, "%Y-%m-%d")
+        date = datetime.strptime(query_end_date, "%Y-%m-%d")
         query_end_date = (date - timedelta(days=1)).strftime("%Y-%m-%d")
 
     return query_start_date, query_end_date
