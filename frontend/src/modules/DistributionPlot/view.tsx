@@ -1,7 +1,6 @@
 import React from "react";
 
 import { Warning } from "@mui/icons-material";
-import { p } from "@tanstack/query-core/build/legacy/hydration-DpBMnFDT";
 import type { Layout, PlotData } from "plotly.js";
 
 import type { ModuleViewProps } from "@framework/Module";
