@@ -24,7 +24,12 @@ import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping, type InplaceVolumesPlotOptions } from "../typesAndEnums";
 import { BarSortBy } from "../view/utils/plotly/bar";
 
-import { plotOptionsAtom, selectedIndexValueCriteriaAtom, selectedPlotTypeAtom } from "./atoms/baseAtoms";
+import {
+    plotOptionsAtom,
+    selectedIndexValueCriteriaAtom,
+    selectedPlotTypeAtom,
+    showTableAtom,
+} from "./atoms/baseAtoms";
 import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
     selectedColorByAtom,
@@ -64,6 +69,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedPlotType, setSelectedPlotType] = useAtom(selectedPlotTypeAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
     const [plotOptions, setPlotOptions] = useAtom(plotOptionsAtom);
+    const [showTable, setShowTable] = useAtom(showTableAtom);
+
     usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
 
     useApplyInitialSettingsToState(
@@ -187,7 +194,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         </div>
     );
     const scatterContent = (
-        <SettingWrapper label="Second response" annotations={selectedSecondResultNameAnnotations}>
+        <SettingWrapper label="Scatterplot Y-axis response" annotations={selectedSecondResultNameAnnotations}>
             <Dropdown
                 value={selectedSecondResultName.value}
                 options={resultNameOptions}
@@ -253,7 +260,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     );
     const plotSettings = (
         <div>
-            <CollapsibleGroup title="Plot settings" expanded>
+            <CollapsibleGroup title="Data and plot type" expanded>
                 <div className="flex flex-col gap-2">
                     <SettingWrapper label="Response" annotations={selectedFirstResultNameAnnotations}>
                         <Dropdown
@@ -279,9 +286,16 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     <SettingWrapper label="Plot Type">
                         <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
                     </SettingWrapper>
+                    <SettingWrapper>
+                        <Checkbox
+                            label="Show statistics table below plot"
+                            checked={showTable}
+                            onChange={(_e, checked) => setShowTable(checked)}
+                        />
+                    </SettingWrapper>
                 </div>
             </CollapsibleGroup>
-            <CollapsibleGroup title="Plot type specific settings" expanded>
+            <CollapsibleGroup title="Plot type settings" expanded>
                 {selectedPlotType === PlotType.HISTOGRAM && histogramContent}
                 {selectedPlotType === PlotType.BAR && barContent}
                 {selectedPlotType === PlotType.SCATTER && scatterContent}

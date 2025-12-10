@@ -19,3 +19,4 @@ export const plotOptionsAtom = atom<InplaceVolumesPlotOptions>({
     hideConstants: false,
     showPercentageInHistogram: true,
 });
+export const showTableAtom = atom<boolean>(false);

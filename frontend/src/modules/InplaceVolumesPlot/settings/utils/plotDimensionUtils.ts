@@ -44,16 +44,16 @@ export function makeColorByOptions(
 
     const options: DropdownOption<string>[] = [];
 
-    // Allow ENSEMBLE for colorBy if multiple ensembles and single table name, or if not used for subplotBy
-    if ((numEnsembleIdents > 1 && numTableNames === 1) || selectedSubplotBy !== TableOriginKey.ENSEMBLE) {
+    // Allow ENSEMBLE for colorBy if single table name, or if not used for subplotBy
+    if (numTableNames === 1 || selectedSubplotBy !== TableOriginKey.ENSEMBLE) {
         options.push({
             value: TableOriginKey.ENSEMBLE,
             label: "ENSEMBLE",
         });
     }
 
-    // Allow TABLE_NAME for colorBy if multiple table names and single ensemble, or if not used for subplotBy
-    if ((numTableNames > 1 && numEnsembleIdents === 1) || selectedSubplotBy !== TableOriginKey.TABLE_NAME) {
+    // Allow TABLE_NAME for colorBy if single ensemble, or if not used for subplotBy
+    if (numEnsembleIdents === 1 || selectedSubplotBy !== TableOriginKey.TABLE_NAME) {
         options.push({
             value: TableOriginKey.TABLE_NAME,
             label: "TABLE NAME",

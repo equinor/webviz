@@ -22,6 +22,7 @@ import { makeInplaceVolumesPlotTitle } from "../utils/createTitle";
 import { PlotBuilder } from "../utils/PlotBuilder";
 import { makeFormatLabelFunction, makePlotData, type MakePlotDataOptions } from "../utils/plotComponentUtils";
 import { MAX_LABELS_FOR_BARS } from "../utils/plotly/bar";
+import { buildStatisticsTableData, type StatisticsTableData } from "../utils/statisticsTableUtils";
 
 export function useBuildPlotAndTable(
     viewContext: ViewContext<Interfaces>,
@@ -32,7 +33,7 @@ export function useBuildPlotAndTable(
     hoveredRegion: string | null,
     hoveredZone: string | null,
     hoveredFacies: string | null,
-): { plots: React.ReactNode; table: Table } | null {
+): { plots: React.ReactNode; table: Table; statisticsTableData: StatisticsTableData } | null {
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
     const plotType = useAtomValue(plotTypeAtom);
     const firstResultName = useAtomValue(firstResultNameAtom);
@@ -149,6 +150,14 @@ export function useBuildPlotAndTable(
 
         margin: plotType === PlotType.HISTOGRAM ? { t: 20, b: 50, l: 50, r: 20 } : { t: 20, b: 50, l: 50, r: 20 },
     });
+    const statisticsTableData = buildStatisticsTableData({
+        table,
+        resultName: firstResultName,
+        subplotBy,
+        colorBy,
+        ensembleSet,
+        colorSet,
+    });
 
-    return { plots, table };
+    return { plots, table, statisticsTableData };
 }

@@ -7,7 +7,12 @@ import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
 import { PlotType, type InplaceVolumesPlotOptions } from "../typesAndEnums";
 
-import { plotOptionsAtom, selectedIndexValueCriteriaAtom, selectedPlotTypeAtom } from "./atoms/baseAtoms";
+import {
+    plotOptionsAtom,
+    selectedIndexValueCriteriaAtom,
+    selectedPlotTypeAtom,
+    showTableAtom,
+} from "./atoms/baseAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
@@ -31,6 +36,7 @@ export type SerializedSettings = {
     plotType: PlotType;
     plotOptions: InplaceVolumesPlotOptions;
     indexValueCriteria: IndexValueCriteria;
+    showTable: boolean;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
@@ -59,6 +65,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         plotOptions: {
             ...inject("InplaceVolumesPlotOptions"),
         },
+        showTable: { type: "boolean" },
     },
 }));
 
@@ -82,6 +89,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         indexValueCriteria: get(selectedIndexValueCriteriaAtom),
         plotType: get(selectedPlotTypeAtom),
         plotOptions: get(plotOptionsAtom),
+        showTable: get(showTableAtom),
     };
 };
 
@@ -100,4 +108,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedTableNamesAtom, raw.tableNames);
     setIfDefined(set, selectedPlotTypeAtom, raw.plotType);
     setIfDefined(set, plotOptionsAtom, raw.plotOptions);
+    setIfDefined(set, showTableAtom, raw.showTable);
 };

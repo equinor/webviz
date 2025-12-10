@@ -75,11 +75,13 @@ export function makePlotData({
         let color = colorSet.getFirstColor();
         for (const [key, table] of collection.getCollectionMap()) {
             let title = key.toString();
+            let isEnsembleColor = false;
             if (colorBy === TableOriginKey.ENSEMBLE) {
                 const ensembleIdent = RegularEnsembleIdent.fromString(key.toString());
                 const ensemble = ensembleSet.findEnsemble(ensembleIdent);
                 if (ensemble) {
                     color = ensemble.getColor();
+                    isEnsembleColor = true;
                     title = makeDistinguishableEnsembleDisplayName(
                         ensembleIdent,
                         ensembleSet.getRegularEnsembleArray(),
@@ -92,7 +94,10 @@ export function makePlotData({
             if (keyColor === undefined) {
                 keyColor = color;
                 keyToColor.set(key.toString(), keyColor);
-                color = colorSet.getNextColor();
+                // Only advance color for non-ensemble colorBy
+                if (!isEnsembleColor) {
+                    color = colorSet.getNextColor();
+                }
             }
 
             if (plotType === PlotType.HISTOGRAM) {
