@@ -1203,6 +1203,9 @@ export type WellProductionData_api = {
     waterProductionM3: number;
 };
 
+/**
+ * Single casing for a wellbore
+ */
 export type WellboreCasing_api = {
     itemType: string;
     diameterNumeric: number;
@@ -1216,6 +1219,9 @@ export type WellboreCasing_api = {
     endDepth: number;
 };
 
+/**
+ * Single completion for a wellbore
+ */
 export type WellboreCompletion_api = {
     mdTop: number;
     mdBottom: number;
@@ -1227,7 +1233,7 @@ export type WellboreCompletion_api = {
 };
 
 /**
- * Simplified completion schema for use in nested structures (without wellbore identifiers)
+ * Completions_api for a wellbore
  */
 export type WellboreCompletions_api = {
     wellboreUuid: string;
@@ -1279,6 +1285,9 @@ export type WellboreLogCurveHeader_api = {
     curveUnit: string | null;
 };
 
+/**
+ * Single perforation for a wellbore
+ */
 export type WellborePerforation_api = {
     mdTop: number;
     mdBottom: number;
@@ -1290,6 +1299,9 @@ export type WellborePerforation_api = {
     dateClosed: string | null;
 };
 
+/**
+ * Perforations for a wellbore
+ */
 export type WellborePerforations_api = {
     wellboreUuid: string;
     perforations: Array<WellborePerforation_api>;
