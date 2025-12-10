@@ -12,7 +12,7 @@ export type ExplorerTitleProps = {
 
 export const ExplorerTitle: React.FC<ExplorerTitleProps> = ({ showExplorer, explorerMode, onClose }) => {
     if (!showExplorer) {
-        return <div className="pl-2">Selected Ensembles</div>;
+        return <div className="pl-2 text-xl">Selected Ensembles</div>;
     }
 
     let explorerTitle = "Add Ensemble";
@@ -25,13 +25,13 @@ export const ExplorerTitle: React.FC<ExplorerTitleProps> = ({ showExplorer, expl
     return (
         <div className="flex items-center space-x-1">
             <span
-                className="pl-2 text-slate-400 hover:bg-gray-100 hover:text-slate-500 rounded-md cursor-pointer"
+                className="pl-2 text-slate-400 text-xl hover:bg-gray-100 hover:text-slate-500 rounded-md cursor-pointer"
                 onClick={onClose}
             >
                 Selected Ensembles
                 <ChevronRight />
             </span>
-            <span className="text-black"> {explorerTitle}</span>
+            <span className="text-black text-xl"> {explorerTitle}</span>
         </div>
     );
 };
