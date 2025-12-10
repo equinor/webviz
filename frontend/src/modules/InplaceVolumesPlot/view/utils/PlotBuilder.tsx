@@ -1,12 +1,13 @@
 import type React from "react";
 
+import type { Axis, PlotData } from "plotly.js";
+
 import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure, MakeSubplotOptions } from "@modules/_shared/Figure";
 import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import type { HistogramType } from "@modules/_shared/histogram";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
-import type { Axis, PlotData } from "plotly.js";
 
 export class PlotBuilder {
     private _table: Table;

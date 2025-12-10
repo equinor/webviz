@@ -1,7 +1,8 @@
-import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import { formatRgb, parse } from "culori";
 import type { PlotData } from "plotly.js";
+
+import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
+import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 export type PlotlyConvergenceTracesOptions = {
     title: string;
