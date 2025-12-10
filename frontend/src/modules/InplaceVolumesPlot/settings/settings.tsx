@@ -1,27 +1,33 @@
+import { stat } from "fs";
+
 import type React from "react";
 
 import { useAtom, useAtomValue } from "jotai";
+import { C } from "vitest/dist/chunks/reporters.d.BFLkQcL6";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Slider } from "@lib/components/Slider";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
+import { HistogramType } from "@modules/_shared/histogram";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { Interfaces } from "../interfaces";
-import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
+import { PlotType, plotTypeToStringMapping, type InplaceVolumesPlotOptions } from "../typesAndEnums";
+import { BarSortBy } from "../view/utils/plotly/bar";
 
-import { selectedIndexValueCriteriaAtom, selectedPlotTypeAtom } from "./atoms/baseAtoms";
+import { plotOptionsAtom, selectedIndexValueCriteriaAtom, selectedPlotTypeAtom } from "./atoms/baseAtoms";
 import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
     selectedColorByAtom,
@@ -60,7 +66,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const [selectedPlotType, setSelectedPlotType] = useAtom(selectedPlotTypeAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
-
+    const [plotOptions, setPlotOptions] = useAtom(plotOptionsAtom);
     usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
 
     useApplyInitialSettingsToState(
@@ -106,53 +112,190 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
 
+    const handleOptionChange = <K extends keyof InplaceVolumesPlotOptions>(
+        key: K,
+        value: InplaceVolumesPlotOptions[K],
+    ) => {
+        setPlotOptions({
+            ...plotOptions,
+            [key]: value,
+        });
+    };
+
+    // Individual handlers
+    const handleHistogramTypeChange = (value: string | number) => {
+        handleOptionChange("histogramType", value as HistogramType);
+    };
+    const handleHistogramBinsChange = (_: Event, value: number | number[]) => {
+        if (Array.isArray(value)) {
+            return;
+        }
+        handleOptionChange("histogramBins", value);
+    };
+    const handleBarSortByChange = (value: string | number) => {
+        handleOptionChange("barSortBy", value as BarSortBy);
+    };
+
+    const handleSharedXAxisChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+        handleOptionChange("sharedXAxis", checked);
+    };
+
+    const handleSharedYAxisChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+        handleOptionChange("sharedYAxis", checked);
+    };
+
+    const handleShowStatisticalMarkersChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+        handleOptionChange("showStatisticalMarkers", checked);
+    };
+    const handleShowRealizationPointsChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+        handleOptionChange("showRealizationPoints", checked);
+    };
+    const handleHideConstantsChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+        handleOptionChange("hideConstants", checked);
+    };
+    const handleShowPercentageInHistogramChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+        handleOptionChange("showPercentageInHistogram", checked);
+    };
+    const histogramContent = (
+        <div>
+            <SettingWrapper label="Histogram Type" infoAnnotation="Controls how multiple data series are displayed">
+                <Dropdown
+                    options={[
+                        { label: "Stacked", value: HistogramType.Stack },
+                        { label: "Grouped", value: HistogramType.Group },
+                        { label: "Overlayed", value: HistogramType.Overlay },
+                        { label: "Relative", value: HistogramType.Relative },
+                    ]}
+                    value={plotOptions.histogramType}
+                    onChange={handleHistogramTypeChange}
+                />
+            </SettingWrapper>
+            <SettingWrapper label="Max number of histogram bins" key="number-of-histogram-bins">
+                <Slider
+                    value={plotOptions.histogramBins}
+                    onChange={handleHistogramBinsChange}
+                    min={5}
+                    step={1}
+                    max={30}
+                    valueLabelDisplay="auto"
+                />
+            </SettingWrapper>
+            <SettingWrapper>
+                <Checkbox
+                    label="Show labels"
+                    checked={plotOptions.showPercentageInHistogram}
+                    onChange={handleShowPercentageInHistogramChange}
+                />
+            </SettingWrapper>
+        </div>
+    );
+    const scatterContent = (
+        <SettingWrapper label="Second response" annotations={selectedSecondResultNameAnnotations}>
+            <Dropdown
+                value={selectedSecondResultName.value}
+                options={resultNameOptions}
+                onChange={setSelectedSecondResultName}
+                disabled={selectedPlotType !== PlotType.SCATTER}
+            />
+        </SettingWrapper>
+    );
+    const barContent = (
+        <div>
+            <SettingWrapper
+                label={`Category for each bar ${selectedPlotType !== PlotType.BAR ? "(only for bar plot)" : ""}`}
+                annotations={selectedSelectorColumnAnnotations}
+            >
+                <Dropdown
+                    value={selectedSelectorColumn.value}
+                    options={selectorOptions}
+                    onChange={setSelectedSelectorColumn}
+                    disabled={selectedPlotType !== PlotType.BAR}
+                />
+            </SettingWrapper>
+            <SettingWrapper label="Bar Sort By" infoAnnotation="Controls the order of bars in bar plots">
+                <Dropdown
+                    options={[
+                        { label: "Selector Values", value: BarSortBy.Xvalues },
+                        { label: "Response Values", value: BarSortBy.Yvalues },
+                    ]}
+                    value={plotOptions.barSortBy}
+                    onChange={handleBarSortByChange}
+                />
+            </SettingWrapper>
+        </div>
+    );
+    const plotMarkersContent = (
+        <div>
+            <SettingWrapper>
+                <Checkbox
+                    label="Show Statistical Markers"
+                    checked={plotOptions.showStatisticalMarkers}
+                    onChange={handleShowStatisticalMarkersChange}
+                />
+            </SettingWrapper>
+            <SettingWrapper>
+                <Checkbox
+                    label="Show Realization Points"
+                    checked={plotOptions.showRealizationPoints}
+                    onChange={handleShowRealizationPointsChange}
+                />
+            </SettingWrapper>
+        </div>
+    );
+    const layoutContent = (
+        <div className="flex flex-col ">
+            {/* <Label position="left" text="Hide plots where all values are equal"> */}
+            <Checkbox
+                label="Hide plots where all values are equal"
+                checked={plotOptions.hideConstants}
+                onChange={handleHideConstantsChange}
+            />
+            <Checkbox label="Shared X Axis" checked={plotOptions.sharedXAxis} onChange={handleSharedXAxisChange} />
+            <Checkbox label="Shared Y Axis" checked={plotOptions.sharedYAxis} onChange={handleSharedYAxisChange} />
+        </div>
+    );
     const plotSettings = (
-        <CollapsibleGroup title="Plot settings" expanded>
-            <div className="flex flex-col gap-2">
-                <Label text="Plot type">
-                    <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
-                </Label>
-                <SettingWrapper label="First Result" annotations={selectedFirstResultNameAnnotations}>
-                    <Dropdown
-                        value={selectedFirstResultName.value}
-                        options={resultNameOptions}
-                        onChange={setSelectedFirstResultName}
-                    />
-                </SettingWrapper>
-                {selectedPlotType !== PlotType.BAR ? (
-                    <SettingWrapper
-                        label={`Second Result ${selectedPlotType !== PlotType.SCATTER ? "(only for scatter plot)" : ""}`}
-                        annotations={selectedSecondResultNameAnnotations}
-                    >
+        <div>
+            <CollapsibleGroup title="Plot settings" expanded>
+                <div className="flex flex-col gap-2">
+                    <SettingWrapper label="Response" annotations={selectedFirstResultNameAnnotations}>
                         <Dropdown
-                            value={selectedSecondResultName.value}
+                            value={selectedFirstResultName.value}
                             options={resultNameOptions}
-                            onChange={setSelectedSecondResultName}
-                            disabled={selectedPlotType !== PlotType.SCATTER}
+                            onChange={setSelectedFirstResultName}
                         />
                     </SettingWrapper>
-                ) : (
-                    <SettingWrapper label="Selector" annotations={selectedSelectorColumnAnnotations}>
+                    <SettingWrapper label="Subplot by" annotations={selectedSubplotByAnnotations}>
                         <Dropdown
-                            value={selectedSelectorColumn.value}
-                            options={selectorOptions}
-                            onChange={setSelectedSelectorColumn}
-                            disabled={selectedPlotType !== PlotType.BAR}
+                            value={selectedSubplotBy.value}
+                            options={subplotOptions}
+                            onChange={setSelectedSubplotBy}
                         />
                     </SettingWrapper>
-                )}
-                <SettingWrapper label="Subplot by" annotations={selectedSubplotByAnnotations}>
-                    <Dropdown
-                        value={selectedSubplotBy.value}
-                        options={subplotOptions}
-                        onChange={setSelectedSubplotBy}
-                    />
-                </SettingWrapper>
-                <SettingWrapper label="Color by" annotations={selectedColorByAnnotations}>
-                    <Dropdown value={selectedColorBy.value} options={colorByOptions} onChange={setSelectedColorBy} />
-                </SettingWrapper>
-            </div>
-        </CollapsibleGroup>
+                    <SettingWrapper label="Color by" annotations={selectedColorByAnnotations}>
+                        <Dropdown
+                            value={selectedColorBy.value}
+                            options={colorByOptions}
+                            onChange={setSelectedColorBy}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper label="Plot Type">
+                        <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
+                    </SettingWrapper>
+                </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Plot type specific settings" expanded>
+                {selectedPlotType === PlotType.HISTOGRAM && histogramContent}
+                {selectedPlotType === PlotType.BAR && barContent}
+                {selectedPlotType === PlotType.SCATTER && scatterContent}
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Plot layout" expanded>
+                {layoutContent}
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Plot markers" expanded>
+                {plotMarkersContent}
+            </CollapsibleGroup>
+        </div>
     );
 
     return (

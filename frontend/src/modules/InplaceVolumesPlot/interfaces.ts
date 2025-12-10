@@ -1,6 +1,6 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import { selectedPlotTypeAtom } from "./settings/atoms/baseAtoms";
+import { plotOptionsAtom, selectedPlotTypeAtom } from "./settings/atoms/baseAtoms";
 import { areSelectedTablesComparableAtom, areTableDefinitionSelectionsValidAtom } from "./settings/atoms/derivedAtoms";
 import {
     selectedColorByAtom,
@@ -12,7 +12,7 @@ import {
     selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/persistableFixableAtoms";
-import type { InplaceVolumesFilterSelections, PlotType } from "./typesAndEnums";
+import type { InplaceVolumesFilterSelections, InplaceVolumesPlotOptions, PlotType } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     filter: InplaceVolumesFilterSelections;
@@ -23,6 +23,7 @@ export type SettingsToViewInterface = {
     colorBy: string;
     plotType: PlotType;
     areTableDefinitionSelectionsValid: boolean;
+    plotOptions: InplaceVolumesPlotOptions;
 };
 
 export type Interfaces = {
@@ -45,4 +46,5 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     colorBy: (get) => get(selectedColorByAtom).value,
     plotType: (get) => get(selectedPlotTypeAtom),
     areTableDefinitionSelectionsValid: (get) => get(areTableDefinitionSelectionsValidAtom),
+    plotOptions: (get) => get(plotOptionsAtom),
 };

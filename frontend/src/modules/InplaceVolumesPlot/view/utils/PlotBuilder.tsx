@@ -1,12 +1,12 @@
 import type React from "react";
 
+import { Plot } from "@modules/_shared/components/Plot";
+import type { Figure, MakeSubplotOptions } from "@modules/_shared/Figure";
+import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
+import type { HistogramType } from "@modules/_shared/histogram";
+import type { Table } from "@modules/_shared/InplaceVolumes/Table";
+import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 import type { Axis, PlotData } from "plotly.js";
-
-import { Plot } from "../components/Plot";
-import type { Figure, MakeSubplotOptions } from "../Figure";
-import { CoordinateDomain, makeSubplots } from "../Figure";
-
-import type { Table } from "./Table";
 
 export class PlotBuilder {
     private _table: Table;
@@ -17,7 +17,8 @@ export class PlotBuilder {
     private _subplotByColumn: string | null = null;
     private _axesOptions: { x: Partial<Axis> | null; y: Partial<Axis> | null } = { x: null, y: null };
     private _highlightedSubPlotNames: string[] = [];
-
+    private _histogramType: HistogramType | null = null;
+    private _plotType: PlotType | null = null;
     constructor(table: Table, plotFunction: (table: Table) => Partial<PlotData>[]) {
         this._table = table;
         this._plotFunction = plotFunction;
@@ -44,7 +45,12 @@ export class PlotBuilder {
     setYAxisOptions(options: Partial<Axis>): void {
         this._axesOptions.y = options;
     }
-
+    setHistogramType(histogramType: HistogramType): void {
+        this._histogramType = histogramType;
+    }
+    setPlotType(plotType: PlotType): void {
+        this._plotType = plotType;
+    }
     setFormatLabelFunction(func: (columnName: string, label: string | number) => string): void {
         this._formatLabelFunction = func;
     }
@@ -82,6 +88,18 @@ export class PlotBuilder {
                     [yAxisKey]: { ...oldLayout[yAxisKey], ...this._axesOptions.y },
                 });
             }
+        }
+        if (this._histogramType) {
+            figure.updateLayout({
+                barmode: this._histogramType,
+            });
+        }
+        if (this._plotType === PlotType.BAR) {
+            // Force normal legend order for the bar plot.
+            // traceorder seems to be overriden when a categoryorder is set.
+            figure.updateLayout({
+                legend: { traceorder: "normal" },
+            });
         }
     }
 
