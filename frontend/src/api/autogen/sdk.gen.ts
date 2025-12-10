@@ -127,6 +127,12 @@ import type {
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersResponse_api,
     GetDrilledWellboreHeadersError_api,
+    GetFieldPerforationsData_api,
+    GetFieldPerforationsResponse_api,
+    GetFieldPerforationsError_api,
+    GetFieldScreensData_api,
+    GetFieldScreensResponse_api,
+    GetFieldScreensError_api,
     GetWellTrajectoriesData_api,
     GetWellTrajectoriesResponse_api,
     GetWellTrajectoriesError_api,
@@ -939,6 +945,33 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
     >({
         ...options,
         url: "/well/drilled_wellbore_headers/",
+    });
+};
+
+/**
+ * Get Field Perforations
+ * Get field perforations for all wellbores in a given field.
+ */
+export const getFieldPerforations = <ThrowOnError extends boolean = false>(
+    options: Options<GetFieldPerforationsData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetFieldPerforationsResponse_api, GetFieldPerforationsError_api, ThrowOnError>({
+        ...options,
+        url: "/well/field_perforations",
+    });
+};
+
+/**
+ * Get Field Screens
+ * Get field screens for all wellbores in a given field.
+ * Screens are the SSDL completions with a filter on "Screen" type.
+ */
+export const getFieldScreens = <ThrowOnError extends boolean = false>(
+    options: Options<GetFieldScreensData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetFieldScreensResponse_api, GetFieldScreensError_api, ThrowOnError>({
+        ...options,
+        url: "/well/field_screens",
     });
 };
 
