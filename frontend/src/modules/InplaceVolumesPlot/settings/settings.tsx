@@ -1,9 +1,6 @@
-import { stat } from "fs";
-
 import type React from "react";
 
 import { useAtom, useAtomValue } from "jotai";
-import { C } from "vitest/dist/chunks/reporters.d.BFLkQcL6";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
