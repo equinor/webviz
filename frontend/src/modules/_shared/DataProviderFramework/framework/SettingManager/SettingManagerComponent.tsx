@@ -47,9 +47,16 @@ export function SettingManagerComponent<
         actuallyLoading = false;
     }
 
-    function handleValueChanged(newValue: TValue) {
-        props.setting.setValue(newValue);
-    }
+    const handleValueChanged = React.useCallback(
+        function handleValueChanged(newValue: TValue | null | ((prevValue: TValue | null) => TValue | null)) {
+            if (typeof newValue === "function") {
+                const updaterFunction = newValue;
+                newValue = updaterFunction(value as TValue | null);
+            }
+            props.setting.setValue(newValue);
+        },
+        [props.setting, value],
+    );
 
     if (!attributes.visible) {
         return null;

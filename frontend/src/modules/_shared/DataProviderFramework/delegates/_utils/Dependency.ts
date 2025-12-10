@@ -117,7 +117,9 @@ export class Dependency<
     }
 
     private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] {
-        if (!this._isInitialized) {
+        const setting = this._localSettingManagerGetter(settingName);
+
+        if (!this._isInitialized && !setting.isStatic()) {
             this._numParentDependencies++;
         }
 
@@ -138,7 +140,6 @@ export class Dependency<
             return this._cachedSettingsMap.get(settingName as string);
         }
 
-        const setting = this._localSettingManagerGetter(settingName);
         const value = setting.getValue();
         this._cachedSettingsMap.set(settingName as string, value);
 
