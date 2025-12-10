@@ -112,6 +112,12 @@ import type {
     GetRealizationFlowNetworkData_api,
     GetRealizationFlowNetworkResponse_api,
     GetRealizationFlowNetworkError_api,
+    GetProductionDataData_api,
+    GetProductionDataResponse_api,
+    GetProductionDataError_api,
+    GetInjectionDataData_api,
+    GetInjectionDataResponse_api,
+    GetInjectionDataError_api,
     GetTableDataData_api,
     GetTableDataResponse_api,
     GetTableDataError_api,
@@ -121,6 +127,12 @@ import type {
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersResponse_api,
     GetDrilledWellboreHeadersError_api,
+    GetFieldPerforationsData_api,
+    GetFieldPerforationsResponse_api,
+    GetFieldPerforationsError_api,
+    GetFieldScreensData_api,
+    GetFieldScreensResponse_api,
+    GetFieldScreensError_api,
     GetWellTrajectoriesData_api,
     GetWellTrajectoriesResponse_api,
     GetWellTrajectoriesError_api,
@@ -130,9 +142,6 @@ import type {
     GetWellborePicksForPickIdentifierData_api,
     GetWellborePicksForPickIdentifierResponse_api,
     GetWellborePicksForPickIdentifierError_api,
-    DeprecatedGetWellborePicksForWellboreData_api,
-    DeprecatedGetWellborePicksForWellboreResponse_api,
-    DeprecatedGetWellborePicksForWellboreError_api,
     GetWellborePicksInStratColumnData_api,
     GetWellborePicksInStratColumnResponse_api,
     GetWellborePicksInStratColumnError_api,
@@ -872,6 +881,32 @@ export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get Production Data
+ * Get allocated production per well in the time interval
+ */
+export const getProductionData = <ThrowOnError extends boolean = false>(
+    options: Options<GetProductionDataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetProductionDataResponse_api, GetProductionDataError_api, ThrowOnError>({
+        ...options,
+        url: "/flow_data/production_data/",
+    });
+};
+
+/**
+ * Get Injection Data
+ * Get allocated injection per well in the time interval
+ */
+export const getInjectionData = <ThrowOnError extends boolean = false>(
+    options: Options<GetInjectionDataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetInjectionDataResponse_api, GetInjectionDataError_api, ThrowOnError>({
+        ...options,
+        url: "/flow_data/injection_data/",
+    });
+};
+
+/**
  * Get Table Data
  * Get pvt table data for a given Sumo ensemble and realization
  */
@@ -898,7 +933,7 @@ export const getWellCompletionsData = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Drilled Wellbore Headers
- * Get wellbore headers for all wells in the field
+ * Get wellbore headers for all wells in a given field
  */
 export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
     options: Options<GetDrilledWellboreHeadersData_api, ThrowOnError>,
@@ -914,8 +949,35 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get Field Perforations
+ * Get field perforations for all wellbores in a given field.
+ */
+export const getFieldPerforations = <ThrowOnError extends boolean = false>(
+    options: Options<GetFieldPerforationsData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetFieldPerforationsResponse_api, GetFieldPerforationsError_api, ThrowOnError>({
+        ...options,
+        url: "/well/field_perforations",
+    });
+};
+
+/**
+ * Get Field Screens
+ * Get field screens for all wellbores in a given field.
+ * Screens are the SSDL completions with a filter on "Screen" type.
+ */
+export const getFieldScreens = <ThrowOnError extends boolean = false>(
+    options: Options<GetFieldScreensData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetFieldScreensResponse_api, GetFieldScreensError_api, ThrowOnError>({
+        ...options,
+        url: "/well/field_screens",
+    });
+};
+
+/**
  * Get Well Trajectories
- * Get well trajectories for field
+ * Get trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given
  */
 export const getWellTrajectories = <ThrowOnError extends boolean = false>(
     options: Options<GetWellTrajectoriesData_api, ThrowOnError>,
@@ -928,7 +990,7 @@ export const getWellTrajectories = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Wellbore Pick Identifiers
- * Get wellbore pick identifiers for field and stratigraphic column
+ * Get wellbore pick identifiers for a given stratigraphic column
  */
 export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePickIdentifiersData_api, ThrowOnError>,
@@ -945,7 +1007,7 @@ export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>
 
 /**
  * Get Wellbore Picks For Pick Identifier
- * Get picks for wellbores for field and pick identifier
+ * Get wellbore picks for a field and pick identifier
  *
  * This implies picks for multiple wellbores for given field and pick identifier.
  * E.g. picks for all wellbores in a given surface in a field.
@@ -964,27 +1026,8 @@ export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean =
 };
 
 /**
- * Deprecated Get Wellbore Picks For Wellbore
- * Get wellbore picks for field and pick identifier
- *
- * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
- */
-export const deprecatedGetWellborePicksForWellbore = <ThrowOnError extends boolean = false>(
-    options: Options<DeprecatedGetWellborePicksForWellboreData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<
-        DeprecatedGetWellborePicksForWellboreResponse_api,
-        DeprecatedGetWellborePicksForWellboreError_api,
-        ThrowOnError
-    >({
-        ...options,
-        url: "/well/deprecated_wellbore_picks_for_wellbore/",
-    });
-};
-
-/**
  * Get Wellbore Picks In Strat Column
- * Get wellbore picks for a single wellbore with stratigraphic column identifier
+ * Get wellbore picks for a single wellbore within stratigraphic column
  */
 export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePicksInStratColumnData_api, ThrowOnError>,
@@ -1001,6 +1044,7 @@ export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = fal
 
 /**
  * Get Wellbore Stratigraphic Columns
+ * Get stratigraphic columns for a given wellbore
  */
 export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreStratigraphicColumnsData_api, ThrowOnError>,
@@ -1017,7 +1061,7 @@ export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = f
 
 /**
  * Get Wellbore Completions
- * Get well bore completions for a single well bore
+ * Get wellbore completions for a given wellbore
  */
 export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreCompletionsData_api, ThrowOnError>,
@@ -1030,7 +1074,7 @@ export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Wellbore Casings
- * Get well bore casings for a single well bore
+ * Get wellbore casings for a given wellbore
  */
 export const getWellboreCasings = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreCasingsData_api, ThrowOnError>,
@@ -1043,7 +1087,7 @@ export const getWellboreCasings = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Wellbore Perforations
- * Get well bore casing for a single well bore
+ * Get wellbore perforations for a given wellbore
  */
 export const getWellborePerforations = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePerforationsData_api, ThrowOnError>,

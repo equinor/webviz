@@ -14,6 +14,10 @@ class WellboreHeader(BaseModel):
     depthReferenceElevation: float
     wellborePurpose: str
     wellboreStatus: str
+    currentTrack: int
+    kickoffDepthMd: float | None
+    kickoffDepthTvd: float | None
+    parentWellbore: str | None
     mdMin: float | None = None
     mdMax: float | None = None
     mdUnit: str | None = None
@@ -66,6 +70,8 @@ class WellborePick(BaseModel):
 
 
 class WellboreCompletion(BaseModel):
+    """Single completion for a wellbore"""
+
     mdTop: float
     mdBottom: float
     tvdTop: float | None
@@ -75,7 +81,16 @@ class WellboreCompletion(BaseModel):
     comment: str | None
 
 
+class WellboreCompletions(BaseModel):
+    """Completions for a wellbore"""
+
+    wellboreUuid: str
+    completions: List[WellboreCompletion]
+
+
 class WellboreCasing(BaseModel):
+    """Single casing for a wellbore"""
+
     itemType: str  # Casing type
     diameterNumeric: float
     diameterInner: float
@@ -89,12 +104,23 @@ class WellboreCasing(BaseModel):
 
 
 class WellborePerforation(BaseModel):
+    """Single perforation for a wellbore"""
+
     mdTop: float
     mdBottom: float
     tvdTop: float
     tvdBottom: float
     status: str
     completionMode: str
+    dateShot: str | None
+    dateClosed: str | None
+
+
+class WellborePerforations(BaseModel):
+    """Perforations for a wellbore"""
+
+    wellboreUuid: str
+    perforations: List[WellborePerforation]
 
 
 class WellLogCurveSourceEnum(Enum):

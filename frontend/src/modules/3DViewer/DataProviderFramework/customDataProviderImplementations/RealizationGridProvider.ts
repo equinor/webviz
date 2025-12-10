@@ -1,4 +1,5 @@
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
     AreSettingsValidArgs,
@@ -110,6 +111,7 @@ export class RealizationGridProvider
                 j_max: range[1][1],
                 k_min: range[2][0],
                 k_max: range[2][1],
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 
@@ -125,6 +127,7 @@ export class RealizationGridProvider
                 j_max: range[1][1],
                 k_min: range[2][0],
                 k_max: range[2][1],
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 
@@ -193,6 +196,7 @@ export class RealizationGridProvider
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
                         realization_num: realization,
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),

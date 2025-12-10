@@ -1,6 +1,7 @@
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { getRealizationFlowNetworkOptions } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import { selectedNodeTypesAtom, selectedResamplingFrequencyAtom } from "./baseAtoms";
 import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./persistableFixableAtoms";
@@ -19,6 +20,7 @@ export const realizationFlowNetworkQueryAtom = atomWithQuery((get) => {
                 realization: selectedRealization ?? 0,
                 resampling_frequency: selectedResamplingFrequency,
                 node_type_set: selectedNodeTypesArray,
+                ...makeCacheBustingQueryParam(selectedEnsembleIdent),
             },
         }),
         enabled: Boolean(

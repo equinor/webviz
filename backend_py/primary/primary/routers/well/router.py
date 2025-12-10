@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from webviz_services.smda_access.drogon import DrogonSmdaAccess
 from webviz_services.smda_access import SmdaAccess
 from webviz_services.smda_access import GeologyAccess as SmdaGeologyAccess
-from webviz_services.service_exceptions import NoDataError
+from webviz_services.service_exceptions import NoDataError, Service
 from webviz_services.ssdl_access.well_access import WellAccess as SsdlWellAccess
 from webviz_services.ssdl_access.drogon import DrogonWellAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
@@ -30,7 +30,8 @@ async def get_drilled_wellbore_headers(
     field_identifier: str = Query(description="Official field identifier"),
     # fmt:on
 ) -> List[schemas.WellboreHeader]:
-    """Get wellbore headers for all wells in the field"""
+    """Get wellbore headers for all wells in a given field"""
+
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
     if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
@@ -43,6 +44,50 @@ async def get_drilled_wellbore_headers(
     return [converters.convert_wellbore_header_to_schema(wellbore_header) for wellbore_header in wellbore_headers]
 
 
+@router.get("/field_perforations")
+async def get_field_perforations(
+    field_identifier: str = Query(description="Official field identifier"),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> list[schemas.WellborePerforations]:
+    """Get field perforations for all wellbores in a given field."""
+
+    if is_drogon_identifier(field_identifier=field_identifier):
+        return []
+        # Only fetch completions for non-DROGON fields
+    well_access_ssdl = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+
+    fields_info = await well_access_ssdl.get_fields_async()
+    field_uuid = next((field.field_uuid for field in fields_info if field.field_identifier == field_identifier), None)
+
+    if not field_uuid:
+        raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
+
+    perforations = await well_access_ssdl.get_field_perforations_async(field_uuid=field_uuid)
+    return converters.convert_field_perforations_to_schema(perforations)
+
+
+@router.get("/field_screens")
+async def get_field_screens(
+    field_identifier: str = Query(description="Official field identifier"),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> list[schemas.WellboreCompletions]:
+    """Get field screens for all wellbores in a given field.
+    Screens are the SSDL completions with a filter on "Screen" type."""
+    if is_drogon_identifier(field_identifier=field_identifier):
+        return []
+        # Only fetch screens for non-DROGON fields
+    well_access_ssdl = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+
+    fields_info = await well_access_ssdl.get_fields_async()
+    field_uuid = next((field.field_uuid for field in fields_info if field.field_identifier == field_identifier), None)
+
+    if not field_uuid:
+        raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
+
+    screens = await well_access_ssdl.get_field_screens_async(field_uuid=field_uuid)
+    return converters.convert_field_screens_to_schema(screens)
+
+
 @router.get("/well_trajectories/")
 @add_custom_cache_time(3600 * 24 * 7, 3600 * 24 * 7 * 10)  # 1 week cache, 10 week stale-while-revalidate
 async def get_well_trajectories(
@@ -52,7 +97,8 @@ async def get_well_trajectories(
     wellbore_uuids: List[str] | None = Query(None, description="Optional subset of wellbore uuids")
     # fmt:on
 ) -> List[schemas.WellboreTrajectory]:
-    """Get well trajectories for field"""
+    """Get trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given"""
+
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
     if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
@@ -78,7 +124,8 @@ async def get_wellbore_pick_identifiers(
     strat_column_identifier: str = Query(description="Stratigraphic column identifier")
     # fmt:on
 ) -> List[str]:
-    """Get wellbore pick identifiers for field and stratigraphic column"""
+    """Get wellbore pick identifiers for a given stratigraphic column"""
+
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
     if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         # Handle DROGON
@@ -101,7 +148,7 @@ async def get_wellbore_picks_for_pick_identifier(
     pick_identifier: str = Query(description="Pick identifier")
     # fmt:on
 ) -> List[schemas.WellborePick]:
-    """Get picks for wellbores for field and pick identifier
+    """Get wellbore picks for a field and pick identifier
 
     This implies picks for multiple wellbores for given field and pick identifier.
     E.g. picks for all wellbores in a given surface in a field.
@@ -121,39 +168,14 @@ async def get_wellbore_picks_for_pick_identifier(
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
 
 
-@router.get("/deprecated_wellbore_picks_for_wellbore/")
-async def deprecated_get_wellbore_picks_for_wellbore(
-    # fmt:off
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    wellbore_uuid: str = Query(description="Wellbore uuid")
-    # fmt:on
-) -> List[schemas.WellborePick]:
-    """Get wellbore picks for field and pick identifier
-
-    NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
-    """
-    well_access: Union[SmdaAccess, DrogonSmdaAccess]
-
-    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
-        # Handle DROGON
-        well_access = DrogonSmdaAccess()
-
-    else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
-
-    wellbore_picks = await well_access.get_wellbore_picks_for_wellbore_async(wellbore_uuid=wellbore_uuid)
-    return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
-
-
 @router.get("/wellbore_picks_in_strat_column")
 async def get_wellbore_picks_in_strat_column(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     strat_column_identifier: str = Query(description="Filter by stratigraphic column"),
 ) -> list[schemas.WellborePick]:
-    """
-    Get wellbore picks for a single wellbore with stratigraphic column identifier
-    """
+    """Get wellbore picks for a single wellbore within stratigraphic column"""
+
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
 
     if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
@@ -174,6 +196,7 @@ async def get_wellbore_stratigraphic_columns(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
 ) -> list[schemas.StratigraphicColumn]:
+    """Get stratigraphic columns for a given wellbore"""
 
     smda_access: SmdaAccess | DrogonSmdaAccess
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
@@ -194,7 +217,7 @@ async def get_wellbore_completions(
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
 ) -> List[schemas.WellboreCompletion]:
-    """Get well bore completions for a single well bore"""
+    """Get wellbore completions for a given wellbore"""
 
     # Handle DROGON
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
@@ -216,7 +239,7 @@ async def get_wellbore_casings(
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
 ) -> List[schemas.WellboreCasing]:
-    """Get well bore casings for a single well bore"""
+    """Get wellbore casings for a given wellbore"""
 
     # Handle DROGON
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
@@ -236,7 +259,7 @@ async def get_wellbore_perforations(
     wellbore_uuid: str = Query(description="Wellbore uuid"),
     # fmt:on
 ) -> List[schemas.WellborePerforation]:
-    """Get well bore casing for a single well bore"""
+    """Get wellbore perforations for a given wellbore"""
 
     # Handle DROGON
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
@@ -267,9 +290,6 @@ async def get_wellbore_log_curve_headers(
     Get all log curve headers for a single well bore.
     Logs are available from multiple sources, which can be specificed by the "sources" parameter.
     """
-
-    # pylint: disable=fixme
-    # TODO: Future work -- Add wellbore survey sample endpoint. for last set of curves (for now) SSDL might be best
 
     curve_headers = []
 

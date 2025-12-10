@@ -1171,6 +1171,15 @@ export type WellCompletionsZone_api = {
     subzones?: Array<WellCompletionsZone_api> | null;
 };
 
+export type WellInjectionData_api = {
+    wellboreUuid: string;
+    wellboreUwi: string;
+    startDate: string;
+    endDate: string;
+    waterInjection: number;
+    gasInjection: number;
+};
+
 export enum WellLogCurveSourceEnum_api {
     SSDL_WELL_LOG = "ssdl.well_log",
     SMDA_GEOLOGY = "smda.geology",
@@ -1184,6 +1193,19 @@ export enum WellLogCurveTypeEnum_api {
     FLAG = "flag",
 }
 
+export type WellProductionData_api = {
+    wellboreUuid: string;
+    wellboreUwi: string;
+    startDate: string;
+    endDate: string;
+    oilProductionSm3: number;
+    gasProductionSm3: number;
+    waterProductionM3: number;
+};
+
+/**
+ * Single casing for a wellbore
+ */
 export type WellboreCasing_api = {
     itemType: string;
     diameterNumeric: number;
@@ -1197,6 +1219,9 @@ export type WellboreCasing_api = {
     endDepth: number;
 };
 
+/**
+ * Single completion for a wellbore
+ */
 export type WellboreCompletion_api = {
     mdTop: number;
     mdBottom: number;
@@ -1205,6 +1230,14 @@ export type WellboreCompletion_api = {
     description: string | null;
     symbolName: string | null;
     comment: string | null;
+};
+
+/**
+ * Completions_api for a wellbore
+ */
+export type WellboreCompletions_api = {
+    wellboreUuid: string;
+    completions: Array<WellboreCompletion_api>;
 };
 
 export type WellboreHeader_api = {
@@ -1218,12 +1251,12 @@ export type WellboreHeader_api = {
     depthReferenceElevation: number;
     wellborePurpose: string;
     wellboreStatus: string;
-    mdMin?: number | null;
-    mdMax?: number | null;
-    mdUnit?: string | null;
-    tvdMin?: number | null;
-    tvdMax?: number | null;
-    tvdUnit?: string | null;
+    currentTrack: number;
+    tvdMax: number;
+    mdMax: number;
+    kickoffDepthMd: number | null;
+    kickoffDepthTvd: number | null;
+    parentWellbore: string | null;
 };
 
 export type WellboreLogCurveData_api = {
@@ -1252,6 +1285,9 @@ export type WellboreLogCurveHeader_api = {
     curveUnit: string | null;
 };
 
+/**
+ * Single perforation for a wellbore
+ */
 export type WellborePerforation_api = {
     mdTop: number;
     mdBottom: number;
@@ -1259,6 +1295,16 @@ export type WellborePerforation_api = {
     tvdBottom: number;
     status: string;
     completionMode: string;
+    dateShot: string | null;
+    dateClosed: string | null;
+};
+
+/**
+ * Perforations for a wellbore
+ */
+export type WellborePerforations_api = {
+    wellboreUuid: string;
+    perforations: Array<WellborePerforation_api>;
 };
 
 /**
@@ -2917,6 +2963,84 @@ export type GetRealizationFlowNetworkResponses_api = {
 export type GetRealizationFlowNetworkResponse_api =
     GetRealizationFlowNetworkResponses_api[keyof GetRealizationFlowNetworkResponses_api];
 
+export type GetProductionDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Start date in YYYY-MM-DD
+         */
+        start_date: string;
+        /**
+         * End date in YYYY-MM-DD
+         */
+        end_date: string;
+        zCacheBust?: string;
+    };
+    url: "/flow_data/production_data/";
+};
+
+export type GetProductionDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetProductionDataError_api = GetProductionDataErrors_api[keyof GetProductionDataErrors_api];
+
+export type GetProductionDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellProductionData_api>;
+};
+
+export type GetProductionDataResponse_api = GetProductionDataResponses_api[keyof GetProductionDataResponses_api];
+
+export type GetInjectionDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Start date in YYYY-MM-DD
+         */
+        start_date: string;
+        /**
+         * End date in YYYY-MM-DD
+         */
+        end_date: string;
+        zCacheBust?: string;
+    };
+    url: "/flow_data/injection_data/";
+};
+
+export type GetInjectionDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetInjectionDataError_api = GetInjectionDataErrors_api[keyof GetInjectionDataErrors_api];
+
+export type GetInjectionDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellInjectionData_api>;
+};
+
+export type GetInjectionDataResponse_api = GetInjectionDataResponses_api[keyof GetInjectionDataResponses_api];
+
 export type GetTableDataData_api = {
     body?: never;
     path?: never;
@@ -3027,6 +3151,68 @@ export type GetDrilledWellboreHeadersResponses_api = {
 export type GetDrilledWellboreHeadersResponse_api =
     GetDrilledWellboreHeadersResponses_api[keyof GetDrilledWellboreHeadersResponses_api];
 
+export type GetFieldPerforationsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        zCacheBust?: string;
+    };
+    url: "/well/field_perforations";
+};
+
+export type GetFieldPerforationsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetFieldPerforationsError_api = GetFieldPerforationsErrors_api[keyof GetFieldPerforationsErrors_api];
+
+export type GetFieldPerforationsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellborePerforations_api>;
+};
+
+export type GetFieldPerforationsResponse_api = GetFieldPerforationsResponses_api[keyof GetFieldPerforationsResponses_api];
+
+export type GetFieldScreensData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        zCacheBust?: string;
+    };
+    url: "/well/field_screens";
+};
+
+export type GetFieldScreensErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetFieldScreensError_api = GetFieldScreensErrors_api[keyof GetFieldScreensErrors_api];
+
+export type GetFieldScreensResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellboreCompletions_api>;
+};
+
+export type GetFieldScreensResponse_api = GetFieldScreensResponses_api[keyof GetFieldScreensResponses_api];
+
 export type GetWellTrajectoriesData_api = {
     body?: never;
     path?: never;
@@ -3130,39 +3316,6 @@ export type GetWellborePicksForPickIdentifierResponses_api = {
 
 export type GetWellborePicksForPickIdentifierResponse_api =
     GetWellborePicksForPickIdentifierResponses_api[keyof GetWellborePicksForPickIdentifierResponses_api];
-
-export type DeprecatedGetWellborePicksForWellboreData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Wellbore uuid
-         */
-        wellbore_uuid: string;
-        zCacheBust?: string;
-    };
-    url: "/well/deprecated_wellbore_picks_for_wellbore/";
-};
-
-export type DeprecatedGetWellborePicksForWellboreErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type DeprecatedGetWellborePicksForWellboreError_api =
-    DeprecatedGetWellborePicksForWellboreErrors_api[keyof DeprecatedGetWellborePicksForWellboreErrors_api];
-
-export type DeprecatedGetWellborePicksForWellboreResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<WellborePick_api>;
-};
-
-export type DeprecatedGetWellborePicksForWellboreResponse_api =
-    DeprecatedGetWellborePicksForWellboreResponses_api[keyof DeprecatedGetWellborePicksForWellboreResponses_api];
 
 export type GetWellborePicksInStratColumnData_api = {
     body?: never;

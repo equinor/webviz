@@ -42,7 +42,6 @@ class WellboreSurveyHeader(BaseModel):
     unique_wellbore_identifier: str
     wellbore_content: str
     wellbore_status: str
-
     azimuth_unit: str
     dogleg_severity_unit: str
     inclination_unit: str
@@ -87,12 +86,16 @@ class WellboreHeader(BaseModel):
     depth_reference_elevation: float
     wellbore_purpose: str | None
     wellbore_status: str | None
+    current_track: int
     md_min: float | None = None
     md_max: float | None = None
     md_unit: str | None = None
     tvd_min: float | None = None
     tvd_max: float | None = None
     tvd_unit: str | None = None
+    kickoff_depth_md: float | None
+    kickoff_depth_tvd: float | None
+    parent_wellbore: str | None
 
 
 class StratigraphicColumn(BaseModel):

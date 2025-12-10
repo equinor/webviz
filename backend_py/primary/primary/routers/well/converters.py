@@ -65,6 +65,10 @@ def convert_wellbore_header_to_schema(
         depthReferenceElevation=drilled_wellbore_header.depth_reference_elevation,
         wellborePurpose=(drilled_wellbore_header.wellbore_purpose if drilled_wellbore_header.wellbore_purpose else ""),
         wellboreStatus=drilled_wellbore_header.wellbore_status if drilled_wellbore_header.wellbore_status else "",
+        currentTrack=drilled_wellbore_header.current_track,
+        kickoffDepthMd=drilled_wellbore_header.kickoff_depth_md,
+        kickoffDepthTvd=drilled_wellbore_header.kickoff_depth_tvd,
+        parentWellbore=drilled_wellbore_header.parent_wellbore,
         mdMin=drilled_wellbore_header.md_min,
         mdMax=drilled_wellbore_header.md_max,
         mdUnit=drilled_wellbore_header.md_unit,
@@ -85,6 +89,44 @@ def convert_well_trajectory_to_schema(
         eastingArr=well_trajectory.easting_arr,
         northingArr=well_trajectory.northing_arr,
     )
+
+
+def convert_field_perforations_to_schema(
+    perforations: list[WellborePerforation],
+) -> list[schemas.WellborePerforations]:
+    """Convert a list of perforations to a list of WellborePerforations grouped by wellbore."""
+    perforations_by_wellbore: dict[str, list[schemas.WellborePerforation]] = {}
+    for perf in perforations:
+        if perf.wellbore_uuid not in perforations_by_wellbore:
+            perforations_by_wellbore[perf.wellbore_uuid] = []
+        perforations_by_wellbore[perf.wellbore_uuid].append(convert_wellbore_perforation_to_schema(perf))
+
+    return [
+        schemas.WellborePerforations(
+            wellboreUuid=wellbore_uuid,
+            perforations=perfs,
+        )
+        for wellbore_uuid, perfs in perforations_by_wellbore.items()
+    ]
+
+
+def convert_field_screens_to_schema(
+    screens: list[WellboreCompletion],
+) -> list[schemas.WellboreCompletions]:
+    """Convert a list of screens to a list of WellboreCompletions grouped by wellbore."""
+    screens_by_wellbore: dict[str, list[schemas.WellboreCompletion]] = {}
+    for screen in screens:
+        if screen.wellbore_uuid not in screens_by_wellbore:
+            screens_by_wellbore[screen.wellbore_uuid] = []
+        screens_by_wellbore[screen.wellbore_uuid].append(convert_wellbore_completion_to_schema(screen))
+
+    return [
+        schemas.WellboreCompletions(
+            wellboreUuid=wellbore_uuid,
+            completions=comps,
+        )
+        for wellbore_uuid, comps in screens_by_wellbore.items()
+    ]
 
 
 def convert_wellbore_completion_to_schema(
@@ -128,6 +170,8 @@ def convert_wellbore_perforation_to_schema(
         tvdBottom=wellbore_perforation.tvd_bottom,
         status=wellbore_perforation.status,
         completionMode=wellbore_perforation.completion_mode,
+        dateShot=wellbore_perforation.date_shot,
+        dateClosed=wellbore_perforation.date_closed,
     )
 
 
