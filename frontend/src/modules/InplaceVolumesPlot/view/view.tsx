@@ -12,7 +12,6 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import type { Interfaces } from "../interfaces";
 
-import { colorByAtom, firstResultNameAtom } from "./atoms/baseAtoms";
 import { areSelectedTablesComparableAtom } from "./atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
@@ -31,13 +30,12 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const divRef = React.useRef<HTMLDivElement>(null);
     const divBoundingRect = useElementBoundingRect(divRef);
 
-    const resultName = useAtomValue(firstResultNameAtom);
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
 
     statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
     useMakeViewStatusWriterMessages(statusWriter);
-    const colorBy = useAtomValue(colorByAtom);
+
     const plotAndTableData = useBuildPlotAndTable(
         props.viewContext,
         ensembleSet,
@@ -52,7 +50,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const table = plotAndTableData?.table;
     const plots = plotAndTableData?.plots;
 
-    usePublishToDataChannels(props.viewContext, ensembleSet, colorSet, colorBy, table, resultName ?? undefined);
+    usePublishToDataChannels(props.viewContext, ensembleSet, colorSet, table);
 
     function createErrorMessage(): string | null {
         if (aggregatedTableDataQueries.allQueriesFailed) {
