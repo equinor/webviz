@@ -70,6 +70,8 @@ export enum Setting {
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
     REPRESENTATION = "representation",
+    PDM_FILTER_TYPE = "pdmFilterType",
+    PDM_FILTER = "pdmFilter",
 }
 
 /**
@@ -224,6 +226,11 @@ export type SettingTypeDefinitions = {
         valueRange: string[];
     };
     [Setting.WELLBORE_DEPTH_FILTER_TYPE]: {
+        internalValue: string | null;
+        externalValue: string | null;
+        valueRange: { value: string; label: string }[] | null;
+    };
+    [Setting.PDM_FILTER_TYPE]: {
         internalValue: string | null;
         externalValue: string | null;
         valueRange: { value: string; label: string }[] | null;
@@ -389,6 +396,42 @@ export type SettingTypeDefinitions = {
         valueRange: {
             realizationNums: number[];
             surfaceNamesInStratOrder: string[];
+        } | null;
+    };
+
+    [Setting.PDM_FILTER]: {
+        internalValue: {
+            production: {
+                oil: number;
+                gas: number;
+                water: number;
+            };
+            injection: {
+                water: number;
+                gas: number;
+            };
+        } | null;
+        externalValue: {
+            production: {
+                oil: number;
+                gas: number;
+                water: number;
+            };
+            injection: {
+                water: number;
+                gas: number;
+            };
+        } | null;
+        valueRange: {
+            production: {
+                oil: number;
+                gas: number;
+                water: number;
+            };
+            injection: {
+                water: number;
+                gas: number;
+            };
         } | null;
     };
 };

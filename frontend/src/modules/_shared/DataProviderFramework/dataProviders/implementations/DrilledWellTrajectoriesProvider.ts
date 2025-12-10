@@ -3,6 +3,7 @@ import { isEqual } from "lodash";
 import type { WellboreTrajectory_api } from "@api";
 import {
     getDrilledWellboreHeadersOptions,
+    getObservedSurfacesMetadataOptions,
     getRealizationSurfacesMetadataOptions,
     getWellTrajectoriesOptions,
     SurfaceAttributeType_api,
@@ -26,6 +27,9 @@ const drilledWellTrajectoriesSettings = [
     Setting.TVD_RANGE,
     Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE,
     Setting.WELLBORE_DEPTH_FORMATION_FILTER,
+    Setting.PDM_FILTER_TYPE,
+    Setting.TIME_INTERVAL,
+    Setting.PDM_FILTER,
 ] as const;
 type DrilledWellTrajectoriesSettings = typeof drilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellTrajectoriesSettings>;
@@ -296,5 +300,95 @@ export class DrilledWellTrajectoriesProvider
                 };
             },
         );
+
+        settingAttributesUpdater(Setting.TIME_INTERVAL, ({ getLocalSetting }) => {
+            const pdmFilterType = getLocalSetting(Setting.PDM_FILTER_TYPE);
+            return {
+                visible: pdmFilterType === "production_injection",
+            };
+        });
+
+        const observedSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+
+            if (!ensembleIdent) {
+                return null;
+            }
+
+            return await queryClient.fetchQuery({
+                ...getObservedSurfacesMetadataOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                    },
+                    signal: abortSignal,
+                }),
+            });
+        });
+
+        valueRangeUpdater(Setting.TIME_INTERVAL, ({ getHelperDependency }) => {
+            const data = getHelperDependency(observedSurfaceMetadataDep);
+
+            if (!data) {
+                return [];
+            }
+
+            return data.time_intervals_iso_str;
+        });
+
+        settingAttributesUpdater(Setting.PDM_FILTER, ({ getLocalSetting }) => {
+            const pdmFilterType = getLocalSetting(Setting.PDM_FILTER_TYPE);
+            return {
+                visible: pdmFilterType === "production_injection",
+            };
+        });
+
+        const productionDataDep = helperDependency(async function fetchData({
+            getGlobalSetting,
+            getLocalSetting,
+            abortSignal,
+        }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const timeInterval = getLocalSetting(Setting.TIME_INTERVAL);
+            const startDate = timeInterval ? timeInterval.split("/")[0] : undefined;
+            const endDate = timeInterval ? timeInterval.split("/")[1] : undefined;
+            if (!fieldIdentifier || !startDate || !endDate) {
+                return [];
+            }
+            return await queryClient.fetchQuery({
+                ...getProductionDataOptions({
+                    query: {
+                        field_identifier: fieldIdentifier ?? "",
+                        start_date: startDate ?? "",
+                        end_date: endDate ?? "",
+                    },
+                    signal: abortSignal,
+                }),
+            });
+        });
+
+        // Injection data dependency
+        const injectionDataDep = helperDependency(async function fetchData({
+            getGlobalSetting,
+            getLocalSetting,
+            abortSignal,
+        }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const timeInterval = getLocalSetting(Setting.TIME_INTERVAL);
+            const startDate = timeInterval ? timeInterval.split("/")[0] : undefined;
+            const endDate = timeInterval ? timeInterval.split("/")[1] : undefined;
+            if (!fieldIdentifier || !startDate || !endDate) {
+                return [];
+            }
+            return await queryClient.fetchQuery({
+                ...getInjectionDataOptions({
+                    query: {
+                        field_identifier: fieldIdentifier ?? "",
+                        start_date: startDate ?? "",
+                        end_date: endDate ?? "",
+                    },
+                    signal: abortSignal,
+                }),
+            });
+        });
     }
 }

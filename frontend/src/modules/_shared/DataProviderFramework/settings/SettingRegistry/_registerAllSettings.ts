@@ -18,6 +18,7 @@ import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { LogCurveSetting } from "../implementations/LogCurveSetting";
 import { NumberRangeDropdownSetting } from "../implementations/NumberRangeDropdownSetting";
+import { PdmFilterSetting } from "../implementations/PdmFilterSetting";
 import { PolygonVisualizationSetting } from "../implementations/PolygonVisualizationSetting";
 import { RadioGroupSetting } from "../implementations/RadioGroupSetting";
 import { RepresentationSetting } from "../implementations/RepresentationSetting";
@@ -159,3 +160,15 @@ SettingRegistry.registerSetting(
     "Formation Filter",
     WellboreDepthFilterSetting,
 );
+SettingRegistry.registerSetting(Setting.PDM_FILTER, "PDM Filter", PdmFilterSetting);
+SettingRegistry.registerSetting(Setting.PDM_FILTER_TYPE, "PDM Filter Type", RadioGroupSetting, {
+    customConstructorParameters: [
+        {
+            staticOptions: [
+                { value: "none", label: "None" },
+                { value: "production_injection", label: "Production/Injection" },
+            ],
+            layout: "horizontal",
+        },
+    ],
+});

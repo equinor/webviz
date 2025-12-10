@@ -57,7 +57,7 @@ export class RadioGroupSetting implements CustomSettingImplementation<ValueType,
             const options = isStatic ? staticProps : (props.valueRange ?? [{ value: "", label: "" }]);
 
             return (
-                <div className="h-8 flex items-center">
+                <div className="flex h-8 items-center">
                     <RadioGroup
                         options={options ?? []}
                         value={props.value ?? options![0].value}
