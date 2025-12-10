@@ -27,6 +27,12 @@ def get_drogon_well_headers() -> List[WellboreHeader]:
             depth_reference_elevation=25.0,
             wellbore_purpose="production",
             wellbore_status="active",
+            current_track=1,
+            tvd_max=1774.5,
+            md_max=1799.5,
+            kickoff_depth_md=None,
+            kickoff_depth_tvd=None,
+            parent_wellbore=None,
         ),
         WellboreHeader(
             wellbore_uuid="drogon_horizontal",
@@ -39,6 +45,12 @@ def get_drogon_well_headers() -> List[WellboreHeader]:
             depth_reference_elevation=49.0,
             wellbore_purpose="production",
             wellbore_status="active",
+            current_track=1,
+            tvd_max=1656.9874,
+            md_max=3578.5,
+            kickoff_depth_md=None,
+            kickoff_depth_tvd=None,
+            parent_wellbore=None,
         ),
     ]
 
