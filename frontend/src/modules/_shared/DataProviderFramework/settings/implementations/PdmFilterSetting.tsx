@@ -4,6 +4,7 @@ import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import { debounce } from "lodash";
 
 import type {
@@ -81,19 +82,25 @@ export class PdmFilterSetting
                 phase: "oil" | "gas" | "water",
                 newValue: number,
             ) {
-                if (props.value === null) {
-                    return;
-                }
+                onValueChange((prev) => {
+                    let baseValue = prev;
+                    if (baseValue === null) {
+                        baseValue = {
+                            production: { oil: 0, gas: 0, water: 0 },
+                            injection: { gas: 0, water: 0 },
+                        };
+                    }
 
-                const updatedValue: InternalValueType = {
-                    ...props.value,
-                    [type]: {
-                        ...props.value[type],
-                        [phase]: newValue,
-                    },
-                };
+                    const updatedValue: InternalValueType = {
+                        ...baseValue,
+                        [type]: {
+                            ...baseValue[type],
+                            [phase]: newValue,
+                        },
+                    };
 
-                onValueChange(updatedValue);
+                    return updatedValue;
+                });
             }
 
             return (
@@ -172,7 +179,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
 
     const min = 0;
     const max = props.maxValue;
-    const step = 1;
+    const step = 1000;
 
     const [prevValue, setPrevValue] = React.useState(props.value ?? min);
     const [localValue, setLocalValue] = React.useState(props.value ?? min);
@@ -207,7 +214,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
 
     const handleInputChange = React.useCallback(
         function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-            let value = Number(event.target.value);
+            let value = Number(event.target.value) * 1000;
             const allowedValues = Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => min + i * step);
             value = allowedValues.reduce((prev, curr) =>
                 Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev,
@@ -228,10 +235,18 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
                 onChange={handleSliderChange}
                 value={localValue}
                 valueLabelDisplay="auto"
+                valueLabelFormat={(val) => formatNumber(val)}
                 step={step}
             />
             {props.inputVisible && (
-                <Input type="number" value={localValue} min={min} max={max} onChange={handleInputChange} />
+                <Input
+                    type="number"
+                    value={localValue / 1000}
+                    min={min / 1000}
+                    max={max / 1000}
+                    onChange={handleInputChange}
+                    endAdornment="K"
+                />
             )}
         </>
     );
