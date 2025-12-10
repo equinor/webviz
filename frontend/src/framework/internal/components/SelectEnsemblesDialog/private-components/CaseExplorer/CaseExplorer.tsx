@@ -16,7 +16,7 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
-import type { TableFilters } from "@lib/components/Table/types";
+import { SortDirection, type TableSorting, type TableFilters } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -63,6 +63,9 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         ...(showOnlyMyCases && { author: userName }),
         ...(showOnlyOfficialCases && { status: ["official"] }),
     });
+    const [tableSortingState, setTableSortingState] = React.useState<TableSorting>([
+        { columnId: "dateUtcMs", direction: SortDirection.DESC },
+    ]);
 
     // Have without fixup to allow resetting to null when table filters out selected case
     const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string | null>(null);
@@ -94,6 +97,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
     });
 
+    // Sort cases by date descending (to prevent random order when no sorting is applied in the table)
     const sortedCasesQueryData = React.useMemo(
         function sortCaseQueryDataByDate() {
             if (!casesQuery.data) {
@@ -350,11 +354,14 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             numPendingRows={!sortedCasesQueryData ? "fill" : undefined}
                             columns={caseTableColumns}
                             rows={caseRowData}
+                            selectable
+                            multiColumnSort
                             selectedRows={selectedCaseUuid ? [selectedCaseUuid] : []}
                             filters={tableFiltersState}
-                            selectable
+                            sorting={tableSortingState}
                             onSelectedRowsChange={(caseIds) => setSelectedCaseUuid(caseIds[0] ?? null)}
                             onFiltersChange={setTableFiltersState}
+                            onSortingChange={setTableSortingState}
                             onDataCollated={(data) => setNumberOfCases(data.length)}
                         />
                     </div>
