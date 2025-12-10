@@ -2,7 +2,15 @@ from typing import Any
 from pydantic import BaseModel
 
 
+class FieldInfo(BaseModel):
+    field_uuid: str
+    field_identifier: str
+    country_identifier: str
+
+
 class WellboreCompletion(BaseModel):
+    wellbore_uuid: str
+    wellbore_id: str
     md_top: float
     md_bottom: float
     tvd_top: float | None
@@ -26,12 +34,16 @@ class WellboreCasing(BaseModel):
 
 
 class WellborePerforation(BaseModel):
+    wellbore_uuid: str
+    wellbore_id: str
     md_top: float
     md_bottom: float
     tvd_top: float
     tvd_bottom: float
     status: str
     completion_mode: str
+    date_shot: str | None
+    date_closed: str | None
 
 
 class WellboreLogCurveHeader(BaseModel):
