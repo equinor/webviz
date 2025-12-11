@@ -325,7 +325,7 @@ export class RichDrilledWellTrajectoriesProvider
                 ...postGetWellTrajectoriesFormationSegmentsOptions({
                     query: {
                         top_depth_surf_addr_str: topSurfAddrStr || "",
-                        bottom_depth_surf_addr_str: bottomSurfAddrStr || "",
+                        bottom_depth_surf_addr_str: null,
                     },
                     body: { well_trajectories: wellBoresData },
 

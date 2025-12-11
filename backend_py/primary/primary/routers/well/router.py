@@ -55,15 +55,19 @@ async def get_field_perforations(
         return []
         # Only fetch completions for non-DROGON fields
     well_access_ssdl = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+    try:
+        fields_info = await well_access_ssdl.get_fields_async()
+        field_uuid = next(
+            (field.field_uuid for field in fields_info if field.field_identifier == field_identifier), None
+        )
 
-    fields_info = await well_access_ssdl.get_fields_async()
-    field_uuid = next((field.field_uuid for field in fields_info if field.field_identifier == field_identifier), None)
+        if not field_uuid:
+            raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
 
-    if not field_uuid:
-        raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
-
-    perforations = await well_access_ssdl.get_field_perforations_async(field_uuid=field_uuid)
-    return converters.convert_field_perforations_to_schema(perforations)
+        perforations = await well_access_ssdl.get_field_perforations_async(field_uuid=field_uuid)
+        return converters.convert_field_perforations_to_schema(perforations)
+    except:
+        return []
 
 
 @router.get("/field_screens")
@@ -77,15 +81,19 @@ async def get_field_screens(
         return []
         # Only fetch screens for non-DROGON fields
     well_access_ssdl = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+    try:
+        fields_info = await well_access_ssdl.get_fields_async()
+        field_uuid = next(
+            (field.field_uuid for field in fields_info if field.field_identifier == field_identifier), None
+        )
 
-    fields_info = await well_access_ssdl.get_fields_async()
-    field_uuid = next((field.field_uuid for field in fields_info if field.field_identifier == field_identifier), None)
+        if not field_uuid:
+            raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
 
-    if not field_uuid:
-        raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
-
-    screens = await well_access_ssdl.get_field_screens_async(field_uuid=field_uuid)
-    return converters.convert_field_screens_to_schema(screens)
+        screens = await well_access_ssdl.get_field_screens_async(field_uuid=field_uuid)
+        return converters.convert_field_screens_to_schema(screens)
+    except:
+        return []
 
 
 @router.get("/well_trajectories/")
