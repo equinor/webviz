@@ -30,7 +30,6 @@ import {
 } from "./SubsurfaceViewerWithCameraState";
 
 export type ReadoutWrapperProps = {
-    // moduleInstanceId: string;
     views: ViewsTypeExtended;
     layers: DeckGlLayer[];
     deckGlManager: DeckGlInstanceManager;
@@ -42,7 +41,7 @@ export type ReadoutWrapperProps = {
     onViewportHover?: (viewport: ViewportType | null) => void;
 };
 
-const PICKING_RADIUS = 20;
+const PICKING_RADIUS = 6;
 const PICKING_DEPTH = 6;
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {

@@ -1,4 +1,4 @@
-import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { GeoJsonLayer } from "@deck.gl/layers";
 
 import type { WellboreTrajectory_api } from "@api";
 import { HoverTopic } from "@framework/HoverService";
@@ -16,6 +16,11 @@ import {
     wellTrajectoryToGeojson,
 } from "@modules/_shared/utils/wellbore";
 
+function findWellboreTrajectory(uuid: string | null | undefined, trajectories: WellboreTrajectory_api[]) {
+    if (!uuid) return undefined;
+    return trajectories.find(({ wellboreUuid }) => wellboreUuid === uuid);
+}
+
 export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
 ): HoverVisualizationFunctions<VisualizationTarget.DECK_GL> {
@@ -29,34 +34,27 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
 
     return {
         [HoverTopic.WELLBORE]: (wellboreUuid) => {
-            const wellLayerDataFeatures: GeoWellFeature[] = [];
-
-            const wellboreTrajectory = wellboreTrajectories.find(
-                (wellTrajectory) => wellTrajectory.wellboreUuid === wellboreUuid,
-            );
+            const trajectoryData: GeoWellFeature[] = [];
+            const wellboreTrajectory = findWellboreTrajectory(wellboreUuid, wellboreTrajectories);
 
             if (wellboreTrajectory) {
-                wellLayerDataFeatures.push(wellTrajectoryToGeojson(wellboreTrajectory));
+                trajectoryData.push(wellTrajectoryToGeojson(wellboreTrajectory, { invertZAxis: true }));
             }
-
             return [
-                new WellsLayer({
+                new GeoJsonLayer({
                     id: `${id}-hovered-well`,
                     data: {
                         type: "FeatureCollection",
-                        features: wellLayerDataFeatures,
+                        features: trajectoryData,
                     },
-                    refine: false,
-                    lineStyle: { width: 3, color: [255, 0, 0] },
-                    wellHeadStyle: {
-                        size: 0,
-                    },
+                    getLineWidth: 3,
+                    lineWidthMinPixels: 3,
+                    lineBillboard: true,
+                    getLineColor: [255, 0, 0],
+
                     pickable: false,
+                    visible: trajectoryData.length > 0,
                     autoHighlight: false,
-                    wellNameVisible: false,
-                    ZIncreasingDownwards: true,
-                    visible: wellLayerDataFeatures.length > 0,
-                    depthTest: false,
                 }),
             ];
         },
@@ -87,14 +85,13 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                     normalVector: normal,
                     numberOfSegments: 32,
                     color: [255, 0, 0],
-                    opacity: 1,
+                    opacity: 0.3,
                     visible: visible,
                     autoHighlight: false,
                     pickable: false,
                     sizeUnits: "pixels",
                     minSizeInMeters: 0,
                     maxSizeInMeters: 200,
-                    depthTest: false,
                 }),
             ];
         },
