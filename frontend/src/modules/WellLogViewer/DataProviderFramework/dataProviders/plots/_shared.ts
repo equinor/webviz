@@ -61,7 +61,7 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
 export function verifyBasePlotSettings<T extends readonly Setting[]>(
     accessor: DataProviderInformationAccessors<T, WellboreLogCurveData_api>,
 ): boolean {
-    const availableCurves = accessor.getAvailableSettingValues(Setting.LOG_CURVE) ?? [];
+    const availableCurves = accessor.getSettingValueRange(Setting.LOG_CURVE) ?? [];
     const selectedCurve = accessor.getSetting(Setting.LOG_CURVE);
 
     return !!selectedCurve && !!availableCurves.find((curve) => curve.curveName === selectedCurve.curveName);

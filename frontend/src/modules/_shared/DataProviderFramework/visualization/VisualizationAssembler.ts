@@ -79,7 +79,7 @@ export type TransformerArgs<
     name: string;
     isLoading: boolean;
     getInjectedData: () => TInjectedData;
-    getValueRange: () => Readonly<[number, number]> | null;
+    getDataValueRange: () => Readonly<[number, number]> | null;
 };
 
 export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
@@ -529,7 +529,7 @@ export class VisualizationAssembler<
             name: dataProvider.getItemDelegate().getName(),
             isLoading: dataProvider.getStatus() === DataProviderStatus.LOADING,
             getInjectedData: getInjectedData.bind(this),
-            getValueRange: dataProvider.getValueRange.bind(dataProvider),
+            getDataValueRange: dataProvider.getDataValueRange.bind(dataProvider),
             ...dataProvider.makeAccessors(),
         };
     }

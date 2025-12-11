@@ -39,18 +39,16 @@ export type DataProviderInformationAccessors<
     getSetting: <K extends TSettingKey>(settingName: K) => SettingTypeDefinitions[K]["externalValue"] | null;
 
     /**
-     * Access the available values of a setting.
+     * Access the value range of a setting.
      * @param settingName The name of the setting to access.
-     * @returns The available values of the setting.
+     * @returns The value range of the setting.
      *
      * @example
      * ```typescript
-     * const availableValues = getAvailableSettingValues("settingName");
+     * const valueRange = getSettingValueRange("settingName");
      * ```
      */
-    getAvailableSettingValues: <K extends TSettingKey>(
-        settingName: K,
-    ) => SettingTypeDefinitions[K]["valueRange"] | null;
+    getSettingValueRange: <K extends TSettingKey>(settingName: K) => SettingTypeDefinitions[K]["valueRange"] | null;
 
     /**
      * Access the global settings of the data provider manager.

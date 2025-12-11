@@ -51,11 +51,12 @@ export function SettingManagerComponent<
         function handleValueChanged(newValue: TValue | null | ((prevValue: TValue | null) => TValue | null)) {
             if (typeof newValue === "function") {
                 const updaterFunction = newValue;
-                newValue = updaterFunction(value as TValue | null);
+                const currentValue = props.setting.getValue() as TValue | null;
+                newValue = updaterFunction(currentValue);
             }
             props.setting.setValue(newValue);
         },
-        [props.setting, value],
+        [props.setting],
     );
 
     if (!attributes.visible) {
@@ -65,8 +66,8 @@ export function SettingManagerComponent<
     if (props.sharedSetting && isInitialized && valueRange === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
-                <div className="p-0.5 px-2 w-full italic h-8 flex items-center text-orange-600">Empty intersection</div>
+                <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
+                <div className="p-0.5 px-2 w-full italic flex items-center text-orange-600">Empty intersection</div>
             </React.Fragment>
         );
     }
@@ -89,7 +90,7 @@ export function SettingManagerComponent<
                         <Link fontSize="inherit" titleAccess="This settings is controlled by a shared setting" />
                     </span>
                 </div>
-                <div className="p-0.5 px-2 w-full flex items-center h-8">
+                <div className="p-0.5 px-2 w-full flex items-center">
                     {isValid ? valueAsString : <i className="text-orange-600">No valid shared setting value</i>}
                 </div>
             </React.Fragment>
@@ -98,7 +99,7 @@ export function SettingManagerComponent<
 
     return (
         <React.Fragment key={props.setting.getId()}>
-            <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
+            <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
             <div className="p-0.5 px-2 w-full">
                 <PendingWrapper isPending={actuallyLoading}>
                     <div className="flex flex-col gap-1 min-w-0">

@@ -313,7 +313,7 @@ export class DataProvider<
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.SUBORDINATED);
     }
 
-    getValueRange(): readonly [number, number] | null {
+    getDataValueRange(): readonly [number, number] | null {
         return this._valueRange;
     }
 
@@ -376,7 +376,7 @@ export class DataProvider<
     makeAccessors(): DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey> {
         return {
             getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
-            getAvailableSettingValues: (settingName) =>
+            getSettingValueRange: (settingName) =>
                 this._settingsContextDelegate.getSettings()[settingName].getValueRange(),
             getGlobalSetting: (settingName) => this._dataProviderManager.getGlobalSetting(settingName),
             getStoredData: (key: keyof TStoredData) => this._settingsContextDelegate.getStoredData(key),
