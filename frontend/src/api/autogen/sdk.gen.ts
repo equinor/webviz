@@ -61,6 +61,12 @@ import type {
     GetSurfaceDataData_api,
     GetSurfaceDataResponse_api,
     GetSurfaceDataError_api,
+    PostGetWellTrajectoryPicksPerSurfaceData_api,
+    PostGetWellTrajectoryPicksPerSurfaceResponse_api,
+    PostGetWellTrajectoryPicksPerSurfaceError_api,
+    PostGetWellTrajectoriesFormationSegmentsData_api,
+    PostGetWellTrajectoriesFormationSegmentsResponse_api,
+    PostGetWellTrajectoriesFormationSegmentsError_api,
     GetStatisticalSurfaceDataHybridData_api,
     GetStatisticalSurfaceDataHybridResponse_api,
     GetStatisticalSurfaceDataHybridError_api,
@@ -617,6 +623,66 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetSurfaceDataResponse_api, GetSurfaceDataError_api, ThrowOnError>({
         ...options,
         url: "/surface/surface_data",
+    });
+};
+
+/**
+ * Post Get Well Trajectory Picks Per Surface
+ * Get surface picks along a well trajectory for multiple depth surfaces.
+ *
+ * For each provided depth surface address, the intersections (picks) between the surface and the
+ * well trajectory are calculated and returned.
+ *
+ * Returns a list of surface picks per depth surface, in the same order as the provided list of
+ * depth surface address strings.
+ */
+export const postGetWellTrajectoryPicksPerSurface = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<
+        PostGetWellTrajectoryPicksPerSurfaceResponse_api,
+        PostGetWellTrajectoryPicksPerSurfaceError_api,
+        ThrowOnError
+    >({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/surface/get_well_trajectory_picks_per_surface",
+    });
+};
+
+/**
+ * Post Get Well Trajectories Formation Segments
+ * Get well trajectory formation segments.
+ *
+ * Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
+ * formation (area between two surfaces in depth). If bottom surface is not provided, the formation
+ * is considered to extend down to the end of the well trajectory, i.e. end of well trajectory is
+ * used as lower bound for formation.
+ *
+ * For each well trajectory, the segments where the well is within the formation are calculated and
+ * returned. Each segment contains the measured depth (md) values where the well enters and exits
+ * the formation.
+ *
+ * NOTE: Expecting depth surfaces, no verification is done to ensure that the surfaces are indeed
+ * depth surfaces.
+ */
+export const postGetWellTrajectoriesFormationSegments = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        PostGetWellTrajectoriesFormationSegmentsError_api,
+        ThrowOnError
+    >({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/surface/get_well_trajectories_formation_segments",
     });
 };
 
