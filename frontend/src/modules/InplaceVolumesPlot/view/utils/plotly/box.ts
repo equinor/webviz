@@ -1,7 +1,8 @@
 import type { PlotData } from "plotly.js";
 
-import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+
+import { computeStatistics } from "../statistics";
 
 export type PlotlyBoxPlotTracesOptions = {
     title: string;
@@ -44,9 +45,8 @@ export function createQuantileAndMeanMarkerTracesForBoxPlot(
     yPosition: number,
     ensembleColor: string | undefined,
 ): Partial<PlotData>[] {
-    const p90 = computeReservesP90(values);
-    const p10 = computeReservesP10(values);
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const stats = computeStatistics(values);
+    const { p10, p90, mean } = stats;
 
     const createMarker = (value: number, label: string) => ({
         x: [value],

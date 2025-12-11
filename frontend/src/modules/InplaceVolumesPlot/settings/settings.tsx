@@ -35,7 +35,6 @@ import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
-    selectedSecondResultNameAtom,
     selectedFirstResultNameAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
@@ -60,8 +59,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
 
     const [selectedFirstResultName, setSelectedFirstResultName] = useAtom(selectedFirstResultNameAtom);
-    const [selectedSecondResultName, setSelectedSecondResultName] = useAtom(selectedSecondResultNameAtom);
-
     const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
 
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
@@ -111,7 +108,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     }
 
     const selectedFirstResultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedFirstResultNameAtom);
-    const selectedSecondResultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedSecondResultNameAtom);
     const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
@@ -193,22 +189,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             </SettingWrapper>
         </div>
     );
-    const scatterContent = (
-        <SettingWrapper label="Scatterplot Y-axis response" annotations={selectedSecondResultNameAnnotations}>
-            <Dropdown
-                value={selectedSecondResultName.value}
-                options={resultNameOptions}
-                onChange={setSelectedSecondResultName}
-                disabled={selectedPlotType !== PlotType.SCATTER}
-            />
-        </SettingWrapper>
-    );
     const barContent = (
         <div>
-            <SettingWrapper
-                label={`Category for each bar ${selectedPlotType !== PlotType.BAR ? "(only for bar plot)" : ""}`}
-                annotations={selectedSelectorColumnAnnotations}
-            >
+            <SettingWrapper label={"Create bar for each"} annotations={selectedSelectorColumnAnnotations}>
                 <Dropdown
                     value={selectedSelectorColumn.value}
                     options={selectorOptions}
@@ -216,11 +199,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     disabled={selectedPlotType !== PlotType.BAR}
                 />
             </SettingWrapper>
-            <SettingWrapper label="Bar Sort By" infoAnnotation="Controls the order of bars in bar plots">
+            <SettingWrapper label="Sort bars by">
                 <Dropdown
                     options={[
-                        { label: "Selector Values", value: BarSortBy.Xvalues },
-                        { label: "Response Values", value: BarSortBy.Yvalues },
+                        { label: "X values (Category)", value: BarSortBy.Xvalues },
+                        { label: "Y values (Response)", value: BarSortBy.Yvalues },
                     ]}
                     value={plotOptions.barSortBy}
                     onChange={handleBarSortByChange}
@@ -298,7 +281,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             <CollapsibleGroup title="Plot type settings" expanded>
                 {selectedPlotType === PlotType.HISTOGRAM && histogramContent}
                 {selectedPlotType === PlotType.BAR && barContent}
-                {selectedPlotType === PlotType.SCATTER && scatterContent}
             </CollapsibleGroup>
             <CollapsibleGroup title="Plot layout" expanded>
                 {layoutContent}

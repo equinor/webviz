@@ -63,21 +63,7 @@ export const selectedFirstResultNameAtom = persistableFixableAtom<string | null>
         return fixedSelection[0] ?? null;
     },
 });
-export const selectedSecondResultNameAtom = persistableFixableAtom<string | null, string[]>({
-    initialValue: null,
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
-    precomputeFunction: ({ get }) => {
-        const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-        return tableDefinitionsAccessor.getResultNamesIntersection();
-    },
-    isValidFunction: ({ value, precomputedValue }) => {
-        return value !== null && precomputedValue.includes(value);
-    },
-    fixupFunction: ({ value, precomputedValue }) => {
-        const fixedSelection = fixupUserSelection([value], precomputedValue) ?? [];
-        return fixedSelection[0] ?? null;
-    },
-});
+
 export const selectedSelectorColumnAtom = persistableFixableAtom<string | null, string[]>({
     initialValue: null,
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,

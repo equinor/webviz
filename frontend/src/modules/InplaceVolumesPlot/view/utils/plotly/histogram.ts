@@ -1,8 +1,9 @@
 import type { Dash, PlotData } from "plotly.js";
 
 import { makeHistogramTrace } from "@modules/_shared/histogram";
-import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+
+import { computeStatistics } from "../statistics";
 
 export type PlotlyHistogramTracesOptions = {
     title: string;
@@ -71,13 +72,12 @@ function createStatisticLinesForHistogram(
     resultName: string,
     showLabels: boolean,
 ): Partial<PlotData>[] {
-    const p90 = computeReservesP90(xValues);
-    const p10 = computeReservesP10(xValues);
-    const mean = xValues.reduce((a, b) => a + b, 0) / xValues.length;
+    const stats = computeStatistics(xValues);
+    const { p10, p90, mean, min, max } = stats;
 
     // Calculate histogram bins to find max percentage
-    const xMin = Math.min(...xValues);
-    const xMax = Math.max(...xValues);
+    const xMin = min;
+    const xMax = max;
     const range = xMax - xMin;
     const binSize = range / numBins;
 

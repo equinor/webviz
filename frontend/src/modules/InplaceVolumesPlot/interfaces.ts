@@ -6,7 +6,6 @@ import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
-    selectedSecondResultNameAtom,
     selectedFirstResultNameAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
@@ -17,7 +16,6 @@ import type { InplaceVolumesFilterSelections, InplaceVolumesPlotOptions, PlotTyp
 export type SettingsToViewInterface = {
     filter: InplaceVolumesFilterSelections;
     firstResultName: string | null;
-    secondResultName: string | null;
     selectorColumn: string | null;
     subplotBy: string;
     colorBy: string;
@@ -41,7 +39,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         };
     },
     firstResultName: (get) => get(selectedFirstResultNameAtom).value,
-    secondResultName: (get) => get(selectedSecondResultNameAtom).value,
     selectorColumn: (get) => get(selectedSelectorColumnAtom).value,
     subplotBy: (get) => get(selectedSubplotByAtom).value,
     colorBy: (get) => get(selectedColorByAtom).value,

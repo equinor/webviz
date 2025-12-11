@@ -6,37 +6,23 @@ import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure, MakeSubplotOptions } from "@modules/_shared/Figure";
 import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import type { HistogramType } from "@modules/_shared/histogram";
-import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
+import type { ColorEntry, GroupedTableData } from "./GroupedTableData";
+
+export type PlotFunction = (colorEntries: ColorEntry[]) => Partial<PlotData>[];
+
 export class PlotBuilder {
-    private _table: Table;
-    private _plotFunction: (table: Table) => Partial<PlotData>[];
-    private _formatLabelFunction: (columnName: string, label: string | number) => string = (_, value) =>
-        value.toString();
-    private _groupByColumn: string | null = null;
-    private _subplotByColumn: string | null = null;
+    private _groupedData: GroupedTableData;
+    private _plotFunction: PlotFunction;
     private _axesOptions: { x: Partial<Axis> | null; y: Partial<Axis> | null } = { x: null, y: null };
     private _highlightedSubPlotNames: string[] = [];
     private _histogramType: HistogramType | null = null;
     private _plotType: PlotType | null = null;
-    constructor(table: Table, plotFunction: (table: Table) => Partial<PlotData>[]) {
-        this._table = table;
+
+    constructor(groupedData: GroupedTableData, plotFunction: PlotFunction) {
+        this._groupedData = groupedData;
         this._plotFunction = plotFunction;
-    }
-
-    setGroupByColumn(columnName: string): void {
-        if (!this._table.getColumn(columnName)) {
-            throw new Error(`Column not found: ${columnName}`);
-        }
-        this._groupByColumn = columnName;
-    }
-
-    setSubplotByColumn(columnName: string): void {
-        if (!this._table.getColumn(columnName)) {
-            throw new Error(`Column not found: ${columnName}`);
-        }
-        this._subplotByColumn = columnName;
     }
 
     setXAxisOptions(options: Partial<Axis>): void {
@@ -46,27 +32,26 @@ export class PlotBuilder {
     setYAxisOptions(options: Partial<Axis>): void {
         this._axesOptions.y = options;
     }
+
     setHistogramType(histogramType: HistogramType): void {
         this._histogramType = histogramType;
     }
+
     setPlotType(plotType: PlotType): void {
         this._plotType = plotType;
-    }
-    setFormatLabelFunction(func: (columnName: string, label: string | number) => string): void {
-        this._formatLabelFunction = func;
     }
 
     setHighlightedSubPlots(subPlotNames: string[]): void {
         this._highlightedSubPlotNames = subPlotNames;
     }
 
-    private calcNumRowsAndCols(numTables: number): { numRows: number; numCols: number } {
-        if (numTables < 1) {
+    private calcNumRowsAndCols(numSubplots: number): { numRows: number; numCols: number } {
+        if (numSubplots < 1) {
             return { numRows: 1, numCols: 1 };
         }
 
-        const numRows = Math.ceil(Math.sqrt(numTables));
-        const numCols = Math.ceil(numTables / numRows);
+        const numRows = Math.ceil(Math.sqrt(numSubplots));
+        const numCols = Math.ceil(numSubplots / numRows);
         return { numRows, numCols };
     }
 
@@ -112,80 +97,54 @@ export class PlotBuilder {
             "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin" | "sharedXAxes" | "sharedYAxes"
         >,
     ): React.ReactNode {
-        if (!this._groupByColumn) {
-            const figure = this.buildSubplots(this._table, height, width, options ?? {});
-            this.updateLayout(figure);
-            return <Plot layout={figure.makeLayout()} data={figure.makeData()} />;
-        }
-
-        const components: React.ReactNode[] = [];
-        const tableCollection = this._table.splitByColumn(this._groupByColumn);
-        const numTables = tableCollection.getNumTables();
-        const collectionMap = tableCollection.getCollectionMap();
-
-        for (const [key, table] of collectionMap) {
-            const figure = this.buildSubplots(table, height / numTables, width, options ?? {});
-            this.updateLayout(figure);
-            const label = this._formatLabelFunction(tableCollection.getCollectedBy(), key);
-            components.push(<h3 key={key}>{label}</h3>);
-            components.push(<Plot layout={figure.makeLayout()} data={figure.makeData()} />);
-        }
-
-        return <>{components}</>;
+        const figure = this.buildSubplots(height, width, options ?? {});
+        this.updateLayout(figure);
+        return <Plot layout={figure.makeLayout()} data={figure.makeData()} />;
     }
 
     private buildSubplots(
-        table: Table,
         height: number,
         width: number,
-        options: Pick<MakeSubplotOptions, "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin">,
+        options: Pick<
+            MakeSubplotOptions,
+            "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin" | "sharedXAxes" | "sharedYAxes"
+        >,
     ): Figure {
-        if (!this._subplotByColumn) {
-            const figure = makeSubplots({
+        const subplotGroups = this._groupedData.getSubplotGroups();
+        const numSubplots = subplotGroups.length;
+
+        if (numSubplots === 0) {
+            return makeSubplots({
                 numRows: 1,
                 numCols: 1,
                 height,
                 width,
                 ...options,
             });
-
-            const traces = this._plotFunction(table);
-            for (const trace of traces) {
-                figure.addTrace(trace);
-            }
-            return figure;
         }
 
-        const keepColumn = true;
-        const tableCollection = table.splitByColumn(this._subplotByColumn, keepColumn);
-        const numTables = tableCollection.getNumTables();
-        const { numRows, numCols } = this.calcNumRowsAndCols(numTables);
-
-        const tables = tableCollection.getTables();
-        const keys = tableCollection.getKeys();
+        const { numRows, numCols } = this.calcNumRowsAndCols(numSubplots);
 
         const traces: { row: number; col: number; trace: Partial<PlotData> }[] = [];
         const subplotTitles: string[] = Array(numRows * numCols).fill("");
-
         const highlightedSubplots: { row: number; col: number }[] = [];
 
         let legendAdded = false;
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
                 const index = (row - 1) * numCols + col - 1;
-                if (!keys[index]) {
+                if (index >= numSubplots) {
                     continue;
                 }
-                const label = this._formatLabelFunction(tableCollection.getCollectedBy(), keys[index]);
-                subplotTitles[index] = label;
 
-                if (this._highlightedSubPlotNames.includes(keys[index].toString())) {
+                const subplotGroup = subplotGroups[index];
+                subplotTitles[index] = subplotGroup.subplotLabel;
+
+                if (this._highlightedSubPlotNames.includes(subplotGroup.subplotKey)) {
                     highlightedSubplots.push({ row, col });
                 }
 
-                const table = tables[index];
-
-                const plotDataArr = this._plotFunction(table);
+                const plotDataArr = this._plotFunction(subplotGroup.colorEntries);
                 for (const plotData of plotDataArr) {
                     if (legendAdded) {
                         plotData.showlegend = false;

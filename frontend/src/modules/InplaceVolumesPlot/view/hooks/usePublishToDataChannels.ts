@@ -115,8 +115,7 @@ export function usePublishToDataChannels(
         !resultName ||
         !table.getColumn("REAL") ||
         !table.getColumn(resultName) ||
-        plotType === PlotType.BAR ||
-        plotType === PlotType.SCATTER
+        plotType === PlotType.BAR
     ) {
         viewContext.usePublishChannelContents({
             channelIdString: ChannelIds.RESPONSE_PER_REAL,

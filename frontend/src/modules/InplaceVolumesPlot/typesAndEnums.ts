@@ -5,7 +5,6 @@ import type { BarSortBy } from "./view/utils/plotly/bar";
 
 export enum PlotType {
     HISTOGRAM = "histogram",
-    SCATTER = "scatter",
     DISTRIBUTION = "distribution",
     BOX = "box",
     BAR = "bar",
@@ -14,7 +13,6 @@ export enum PlotType {
 
 export const plotTypeToStringMapping: Record<PlotType, string> = {
     [PlotType.HISTOGRAM]: "Histogram",
-    [PlotType.SCATTER]: "Scatter",
     [PlotType.DISTRIBUTION]: "Distribution",
     [PlotType.BOX]: "Box",
     [PlotType.BAR]: "Bar",

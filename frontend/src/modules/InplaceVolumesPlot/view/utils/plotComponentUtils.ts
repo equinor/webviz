@@ -1,13 +1,9 @@
 import type { PlotData } from "plotly.js";
 
-import type { EnsembleSet } from "@framework/EnsembleSet";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { ColorSet } from "@lib/utils/ColorSet";
-import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
-import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
+import type { ColorEntry } from "./GroupedTableData";
 import { makePlotlyBarTraces, type BarSortBy } from "./plotly/bar";
 import { makePlotlyBoxPlotTraces } from "./plotly/box";
 import { makePlotlyConvergenceTraces } from "./plotly/convergence";
@@ -15,90 +11,37 @@ import { makePlotlyDensityTraces } from "./plotly/distribution";
 import { makePlotlyHistogramTraces } from "./plotly/histogram";
 import { makePlotlyScatterTraces } from "./plotly/scatter";
 
-export function makeFormatLabelFunction(
-    ensembleSet: EnsembleSet,
-): (columnName: string, value: string | number) => string {
-    return function formatLabel(columnName: string, value: string | number): string {
-        if (columnName === TableOriginKey.ENSEMBLE) {
-            const ensembleIdent = RegularEnsembleIdent.fromString(value.toString());
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-            if (ensemble) {
-                return makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getRegularEnsembleArray());
-            }
-        }
-        return value.toString();
-    };
-}
 export type MakePlotDataOptions = {
     plotType: PlotType;
     firstResultName: string;
     secondResultNameOrSelectorName: string;
-    colorBy: string;
-    ensembleSet: EnsembleSet;
-    colorSet: ColorSet;
     histogramBins: number;
     barSortBy: BarSortBy;
     showStatisticalMarkers: boolean;
     showRealizationPoints: boolean;
-    hasMultipleTraces: boolean;
     showPercentageInBar: boolean;
 };
+
+/**
+ * Creates a function that generates plot data from pre-grouped ColorEntry[].
+ * This uses the color and label information already computed by GroupedTableData.
+ */
 export function makePlotData({
     plotType,
     firstResultName,
     secondResultNameOrSelectorName,
-    colorBy,
-    ensembleSet,
-    colorSet,
     histogramBins,
     barSortBy,
     showStatisticalMarkers,
     showRealizationPoints,
-    hasMultipleTraces,
     showPercentageInBar,
-}: MakePlotDataOptions): (table: Table) => Partial<PlotData>[] {
-    return (table: Table): Partial<PlotData>[] => {
-        // Maps to store already used colors and position for each key for consistency across subplots
-        const keyToColor: Map<string, string> = new Map();
-        const boxPlotKeyToPositionMap: Map<string, number> = new Map();
-        if (table.getColumn(colorBy) === undefined) {
-            throw new Error(`Column to color by "${colorBy}" not found in the table.`);
-        }
-
-        const needsColorByColumn =
-            (plotType === PlotType.BAR && colorBy === secondResultNameOrSelectorName) ||
-            (plotType === PlotType.SCATTER && colorBy === secondResultNameOrSelectorName);
-
-        const collection = table.splitByColumn(colorBy, needsColorByColumn);
-
+}: MakePlotDataOptions): (colorEntries: ColorEntry[]) => Partial<PlotData>[] {
+    return (colorEntries: ColorEntry[]): Partial<PlotData>[] => {
         const data: Partial<PlotData>[] = [];
-        let color = colorSet.getFirstColor();
-        for (const [key, table] of collection.getCollectionMap()) {
-            let title = key.toString();
-            let isEnsembleColor = false;
-            if (colorBy === TableOriginKey.ENSEMBLE) {
-                const ensembleIdent = RegularEnsembleIdent.fromString(key.toString());
-                const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-                if (ensemble) {
-                    color = ensemble.getColor();
-                    isEnsembleColor = true;
-                    title = makeDistinguishableEnsembleDisplayName(
-                        ensembleIdent,
-                        ensembleSet.getRegularEnsembleArray(),
-                    );
-                }
-            }
+        const boxPlotKeyToPositionMap: Map<string, number> = new Map();
 
-            // Extract color or current collection key
-            let keyColor = keyToColor.get(key.toString());
-            if (keyColor === undefined) {
-                keyColor = color;
-                keyToColor.set(key.toString(), keyColor);
-                // Only advance color for non-ensemble colorBy
-                if (!isEnsembleColor) {
-                    color = colorSet.getNextColor();
-                }
-            }
+        for (const entry of colorEntries) {
+            const { colorLabel: title, color, table } = entry;
 
             if (plotType === PlotType.HISTOGRAM) {
                 data.push(
@@ -106,37 +49,34 @@ export function makePlotData({
                         title,
                         table,
                         firstResultName,
-                        keyColor,
+                        color,
                         histogramBins,
                         showStatisticalMarkers,
                         showRealizationPoints,
-                        !hasMultipleTraces,
                         showPercentageInBar,
                     ),
                 );
             } else if (plotType === PlotType.CONVERGENCE) {
-                data.push(...makeConvergencePlot(title, table, firstResultName, keyColor));
+                data.push(...makeConvergencePlot(title, table, firstResultName, color));
             } else if (plotType === PlotType.DISTRIBUTION) {
-                data.push(...makeDensityPlot(title, table, firstResultName, keyColor, showRealizationPoints));
+                data.push(...makeDensityPlot(title, table, firstResultName, color, showRealizationPoints));
             } else if (plotType === PlotType.BOX) {
-                let yAxisPosition = boxPlotKeyToPositionMap.get(key.toString());
+                let yAxisPosition = boxPlotKeyToPositionMap.get(entry.colorKey);
                 if (yAxisPosition === undefined) {
                     yAxisPosition = -boxPlotKeyToPositionMap.size; // Negative value for placing top down
-                    boxPlotKeyToPositionMap.set(key.toString(), yAxisPosition);
+                    boxPlotKeyToPositionMap.set(entry.colorKey, yAxisPosition);
                 }
                 data.push(
                     ...makeBoxPlot(
                         title,
                         table,
                         firstResultName,
-                        keyColor,
+                        color,
                         yAxisPosition,
                         showStatisticalMarkers,
                         showRealizationPoints,
                     ),
                 );
-            } else if (plotType === PlotType.SCATTER) {
-                data.push(...makeScatterPlot(title, table, firstResultName, secondResultNameOrSelectorName, keyColor));
             } else if (plotType === PlotType.BAR) {
                 data.push(
                     ...makeBarPlot(
@@ -144,7 +84,7 @@ export function makePlotData({
                         table,
                         firstResultName,
                         secondResultNameOrSelectorName,
-                        keyColor,
+                        color,
                         barSortBy,
                         showStatisticalMarkers,
                     ),
@@ -207,8 +147,7 @@ function makeHistogram(
     numBins: number,
     showStatisticalMarkers: boolean,
     showRealizationPoints: boolean,
-    showStatisticalLabels: boolean,
-    showPercentageInBar: boolean,
+    showLabels: boolean,
 ): Partial<PlotData>[] {
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
@@ -223,8 +162,8 @@ function makeHistogram(
         numBins,
         showStatisticalMarkers,
         showRealizationPoints,
-        showStatisticalLabels,
-        showPercentageInBar,
+        showStatisticalLabels: showLabels,
+        showPercentageInBar: showLabels,
     });
 }
 
@@ -271,37 +210,5 @@ function makeBoxPlot(
         yAxisPosition,
         showStatisticalMarkers: showStatisticalMarkers ?? false,
         showRealizationPoints: showRealizationPoints ?? false,
-    });
-}
-
-function makeScatterPlot(
-    title: string,
-    table: Table,
-    firstResultName: string,
-    secondResultName: string,
-    color: string,
-): Partial<PlotData>[] {
-    const firstResultColumn = table.getColumn(firstResultName);
-    if (!firstResultColumn) {
-        return [];
-    }
-
-    const secondResultColumn = table.getColumn(secondResultName);
-    if (!secondResultColumn) {
-        return [];
-    }
-
-    return makePlotlyScatterTraces({
-        title,
-        xValues: firstResultColumn.getAllRowValues() as number[],
-        yValues: secondResultColumn.getAllRowValues() as number[],
-        realizations:
-            table
-                .getColumn("REAL")
-                ?.getAllRowValues()
-                .map((v) => v.toString()) ?? [],
-        color,
-        xAxisLabel: firstResultName,
-        yAxisLabel: secondResultName,
     });
 }

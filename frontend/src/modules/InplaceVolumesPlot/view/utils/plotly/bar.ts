@@ -1,8 +1,9 @@
 import { sortBy } from "lodash";
 import type { Dash, PlotData } from "plotly.js";
 
-import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+
+import { computeStatistics } from "../statistics";
 
 export enum BarSortBy {
     Xvalues = "xvalues",
@@ -98,9 +99,8 @@ function createStatisticLinesForBarPlot(
     color: string,
     resultName: string,
 ): Partial<PlotData>[] {
-    const p90 = computeReservesP90(yValues);
-    const p10 = computeReservesP10(yValues);
-    const mean = yValues.reduce((a, b) => a + b, 0) / yValues.length;
+    const stats = computeStatistics(yValues);
+    const { p10, p90, mean } = stats;
 
     const xStart = xValues[0];
     const xEnd = xValues[xValues.length - 1];

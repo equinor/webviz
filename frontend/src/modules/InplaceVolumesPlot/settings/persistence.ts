@@ -18,7 +18,6 @@ import {
     selectedEnsembleIdentsAtom,
     selectedFirstResultNameAtom,
     selectedIndicesWithValuesAtom,
-    selectedSecondResultNameAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
@@ -29,7 +28,6 @@ export type SerializedSettings = {
     tableNames: string[];
     indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
     firstResultName: string | null;
-    secondResultName: string | null;
     selectorColumn: string | null;
     groupBy: string;
     colorBy: string;
@@ -51,7 +49,6 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
             ...inject("InplaceVolumesIndexWithValues"),
         },
         firstResultName: { type: "string", nullable: true },
-        secondResultName: { type: "string", nullable: true },
         selectorColumn: { type: "string", nullable: true },
         groupBy: { type: "string" },
         colorBy: { type: "string" },
@@ -82,7 +79,6 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         tableNames: get(selectedTableNamesAtom).value,
         indicesWithValues: indicesWithStringifiedValues,
         firstResultName: get(selectedFirstResultNameAtom).value,
-        secondResultName: get(selectedSecondResultNameAtom).value,
         selectorColumn: get(selectedSelectorColumnAtom).value,
         groupBy: get(selectedSubplotByAtom).value,
         colorBy: get(selectedColorByAtom).value,
@@ -99,7 +95,6 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
         : undefined;
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, selectedFirstResultNameAtom, raw.firstResultName);
-    setIfDefined(set, selectedSecondResultNameAtom, raw.secondResultName);
     setIfDefined(set, selectedSelectorColumnAtom, raw.selectorColumn);
     setIfDefined(set, selectedSubplotByAtom, raw.groupBy);
     setIfDefined(set, selectedColorByAtom, raw.colorBy);
