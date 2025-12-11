@@ -14,7 +14,7 @@ export enum HoverTopic {
     ZONE = "hover.zone",
     REGION = "hover.region",
     FACIES = "hover.facies",
-    WORLD_POS_UTM = "hover.world_pos",
+    WORLD_POS_UTM = "hover.world_pos_utm",
 }
 
 export type HoverData = {

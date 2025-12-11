@@ -101,7 +101,6 @@ export function getHoverDataInPicks<TTopic extends keyof HoverData>(
     topics.forEach((topic) => {
         const topicInfo = getTopicHoverDataFromPicks(topic, pickingInfoArr);
 
-        // TODO: Better typing here? This seems clunky
         values[topic] = topicInfo;
     });
 
