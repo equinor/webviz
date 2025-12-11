@@ -22,19 +22,6 @@ export type ReadoutBoxWrapperProps = {
     verticalScale?: number;
 };
 
-function makePositionReadout(coordinates?: number[]): ReadoutItem | null {
-    if (coordinates === undefined || coordinates.length < 2) {
-        return null;
-    }
-    return {
-        label: "Position",
-        info: [
-            { name: "x", value: coordinates[0], unit: "m" },
-            { name: "y", value: coordinates[1], unit: "m" },
-        ],
-    };
-}
-
 function makeInfoPickReadout(pick: PickingInfo): ReadoutItem | null {
     // @ts-expect-error -- name injected by subsurface viewer
     const label = pick.layer?.props.name;
@@ -60,12 +47,6 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
         if (!props.viewportPicks?.length) return [];
 
         const readoutItems: ReadoutItem[] = [];
-
-        // Coordinates can be taken from any of them
-        const position = makePositionReadout(props.viewportPicks[0].coordinate);
-        if (position) {
-            readoutItems.push(position);
-        }
 
         for (const pick of sortBy(props.viewportPicks, "index")) {
             const readout = makeInfoPickReadout(pick);

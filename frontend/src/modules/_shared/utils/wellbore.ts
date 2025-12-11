@@ -163,7 +163,7 @@ export function wellTrajectoryToGeojson(
 
     const wellHeadPoint: Point = {
         type: "Point",
-        coordinates: trajectoryLineString.coordinates[0],
+        coordinates: [...trajectoryLineString.coordinates[0]],
     };
 
     let color = [150, 150, 150] as Color;

@@ -179,11 +179,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            <PositionReadout
-                viewportPickInfo={pickingInfoPerView[activeViewportId ?? -1]?.[0]}
-                verticalScale={props.verticalScale}
-                visible={!hideReadout}
-            />
+            <PositionReadout coordinate={pickingCoordinate} visible={!hideReadout} />
             <SubsurfaceViewerWithCameraState
                 {...deckGlProps}
                 views={storedDeckGlViews}
