@@ -45,11 +45,71 @@ export class WellboreDepthFilterSetting
     };
 
     isValueValidStructure(value: unknown): value is InternalValueType {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value !== "object" || value === null) {
+            return false;
+        }
+
+        const v = value as Record<string, unknown>;
+
+        // Check realizationNum is a number
+        if (typeof v.realizationNum !== "number") {
+            return false;
+        }
+
+        // Check topSurfaceName is string or null
+        if (v.topSurfaceName !== null && typeof v.topSurfaceName !== "string") {
+            return false;
+        }
+
+        // Check baseSurfaceName is string or null
+        if (v.baseSurfaceName !== null && typeof v.baseSurfaceName !== "string") {
+            return false;
+        }
+
         return true;
     }
 
     mapInternalToExternalValue(internalValue: InternalValueType): ExternalValueType {
         return internalValue;
+    }
+
+    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
+        if (valueRange === null) {
+            return null;
+        }
+
+        if (currentValue === null) {
+            return {
+                topSurfaceName: valueRange.surfaceNamesInStratOrder[0],
+                baseSurfaceName: null,
+                realizationNum: valueRange.realizationNums[0],
+            };
+        }
+        const fixedValue = { ...currentValue };
+
+        if (
+            fixedValue.topSurfaceName === null ||
+            !valueRange.surfaceNamesInStratOrder.includes(fixedValue.topSurfaceName)
+        ) {
+            fixedValue.topSurfaceName = valueRange.surfaceNamesInStratOrder[0];
+        }
+
+        if (
+            fixedValue.baseSurfaceName !== null &&
+            !valueRange.surfaceNamesInStratOrder.includes(fixedValue.baseSurfaceName)
+        ) {
+            fixedValue.baseSurfaceName = null;
+        }
+
+        if (!valueRange.realizationNums.includes(fixedValue.realizationNum)) {
+            fixedValue.realizationNum = valueRange.realizationNums[0];
+        }
+
+        return fixedValue;
     }
 
     isValueValid(value: InternalValueType, valueRange: ValueRangeType): boolean {
@@ -171,22 +231,22 @@ export class WellboreDepthFilterSetting
             );
 
             return (
-                <div className="flex flex-col gap-2">
-                    <Label text="Top Surface:">
+                <div className="flex flex-col gap-2 mt-1">
+                    <Label text="Top Surface:" labelClassName="text-xs">
                         <Dropdown
                             options={topSurfaceOptions}
                             value={props.value?.topSurfaceName}
                             onChange={handleTopSurfaceChange}
                         />
                     </Label>
-                    <Label text="Base Surface:">
+                    <Label text="Base Surface:" labelClassName="text-xs">
                         <Dropdown
                             options={baseSurfaceOptions}
                             value={props.value?.baseSurfaceName}
                             onChange={handleBaseSurfaceChange}
                         />
                     </Label>
-                    <Label text="Realization Number:">
+                    <Label text="Realization Number:" labelClassName="text-xs">
                         <Dropdown
                             options={realizationNumOptions}
                             value={props.value?.realizationNum}

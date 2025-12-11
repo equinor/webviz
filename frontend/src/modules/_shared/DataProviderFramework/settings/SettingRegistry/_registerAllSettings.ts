@@ -160,8 +160,8 @@ SettingRegistry.registerSetting(
     "Formation Filter",
     WellboreDepthFilterSetting,
 );
-SettingRegistry.registerSetting(Setting.PDM_FILTER, "PDM Filter", PdmFilterSetting);
-SettingRegistry.registerSetting(Setting.PDM_FILTER_TYPE, "PDM Filter Type", RadioGroupSetting, {
+SettingRegistry.registerSetting(Setting.PDM_FILTER, "Flow Data Cut-off", PdmFilterSetting);
+SettingRegistry.registerSetting(Setting.PDM_FILTER_TYPE, "Flow Data Filter", RadioGroupSetting, {
     customConstructorParameters: [
         {
             staticOptions: [

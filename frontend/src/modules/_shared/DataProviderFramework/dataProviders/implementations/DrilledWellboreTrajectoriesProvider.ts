@@ -1,6 +1,4 @@
-import { isEqual } from "lodash";
-
-import type { WellboreTrajectory_api } from "@api";
+import type { WellboreTrajectory_api, WellInjectionData_api, WellProductionData_api } from "@api";
 import {
     getDrilledWellboreHeadersOptions,
     getInjectionDataOptions,
@@ -15,16 +13,18 @@ import {
     Setting,
     type SettingTypeDefinitions,
 } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { isEqual } from "lodash";
 
 import { NO_UPDATE } from "../../delegates/_utils/Dependency";
 import type {
+    AreSettingsValidArgs,
     CustomDataProviderImplementation,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
-const drilledWellTrajectoriesSettings = [
+const drilledWellboreTrajectoriesSettings = [
     Setting.ENSEMBLE,
     Setting.WELLBORES,
     Setting.WELLBORE_DEPTH_FILTER_TYPE,
@@ -36,18 +36,54 @@ const drilledWellTrajectoriesSettings = [
     Setting.TIME_INTERVAL,
     Setting.PDM_FILTER,
 ] as const;
-type DrilledWellTrajectoriesSettings = typeof drilledWellTrajectoriesSettings;
-type SettingsWithTypes = MakeSettingTypesMap<DrilledWellTrajectoriesSettings>;
+type DrilledWellboreTrajectoriesSettings = typeof drilledWellboreTrajectoriesSettings;
+type SettingsWithTypes = MakeSettingTypesMap<DrilledWellboreTrajectoriesSettings>;
 
-type DrilledWellTrajectoriesData = WellboreTrajectory_api[];
+type DrilledWellboreTrajectoriesData = WellboreTrajectory_api[];
 
-export class DrilledWellTrajectoriesProvider
-    implements CustomDataProviderImplementation<DrilledWellTrajectoriesSettings, DrilledWellTrajectoriesData>
+export type DrilledWellboreTrajectoriesStoredData = {
+    productionData: WellProductionData_api[];
+    injectionData: WellInjectionData_api[];
+};
+
+export class DrilledWellboreTrajectoriesProvider
+    implements
+        CustomDataProviderImplementation<
+            DrilledWellboreTrajectoriesSettings,
+            DrilledWellboreTrajectoriesData,
+            DrilledWellboreTrajectoriesStoredData
+        >
 {
-    settings = drilledWellTrajectoriesSettings;
+    settings = drilledWellboreTrajectoriesSettings;
 
     getDefaultName() {
         return "Well Trajectories (Official)";
+    }
+
+    areCurrentSettingsValid({
+        getSetting,
+    }: AreSettingsValidArgs<
+        DrilledWellboreTrajectoriesSettings,
+        DrilledWellboreTrajectoriesData,
+        DrilledWellboreTrajectoriesStoredData
+    >): boolean {
+        if (!getSetting(Setting.ENSEMBLE)) {
+            return false;
+        }
+
+        if (getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE) === "surface_based") {
+            if (!getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE)) {
+                return false;
+            }
+            if (!getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.topSurfaceName) {
+                return false;
+            }
+            if (!getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.realizationNum) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -58,9 +94,10 @@ export class DrilledWellTrajectoriesProvider
         getGlobalSetting,
         fetchQuery,
     }: FetchDataParams<
-        DrilledWellTrajectoriesSettings,
-        DrilledWellTrajectoriesData
-    >): Promise<DrilledWellTrajectoriesData> {
+        DrilledWellboreTrajectoriesSettings,
+        DrilledWellboreTrajectoriesData,
+        DrilledWellboreTrajectoriesStoredData
+    >): Promise<DrilledWellboreTrajectoriesData> {
         const fieldIdentifier = getGlobalSetting("fieldId");
 
         const queryOptions = getWellTrajectoriesOptions({
@@ -80,9 +117,10 @@ export class DrilledWellTrajectoriesProvider
         helperDependency,
         valueRangeUpdater,
         settingAttributesUpdater,
+        storedDataUpdater,
         workbenchSession,
         queryClient,
-    }: DefineDependenciesArgs<DrilledWellTrajectoriesSettings>) {
+    }: DefineDependenciesArgs<DrilledWellboreTrajectoriesSettings, DrilledWellboreTrajectoriesStoredData>) {
         valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -366,6 +404,11 @@ export class DrilledWellTrajectoriesProvider
             });
         });
 
+        storedDataUpdater("productionData", ({ getHelperDependency }) => {
+            const productionData = getHelperDependency(productionDataDep);
+            return productionData || [];
+        });
+
         // Injection data dependency
         const injectionDataDep = helperDependency(async function fetchData({
             getGlobalSetting,
@@ -389,6 +432,11 @@ export class DrilledWellTrajectoriesProvider
                     signal: abortSignal,
                 }),
             });
+        });
+
+        storedDataUpdater("injectionData", ({ getHelperDependency }) => {
+            const injectionData = getHelperDependency(injectionDataDep);
+            return injectionData || [];
         });
 
         valueRangeUpdater(Setting.PDM_FILTER, ({ getHelperDependency }) => {

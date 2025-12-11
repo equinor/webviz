@@ -1,12 +1,13 @@
 import React from "react";
 
+import { Lock, LockOpen } from "@mui/icons-material";
+import { debounce, isEqual } from "lodash";
+
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 import { ToggleButton } from "@lib/components/ToggleButton";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Lock, LockOpen } from "@mui/icons-material";
-import { debounce, isEqual } from "lodash";
 
 import type {
     CustomSettingImplementation,
@@ -111,7 +112,7 @@ export class SliderRangeSetting
         const max = valueRange[1];
 
         if (currentValue === null || currentValue.length !== 2) {
-            return [min, max];
+            return ["min", "max"];
         }
 
         const fixedValue: InternalValueType = [currentValue[0], currentValue[1]];

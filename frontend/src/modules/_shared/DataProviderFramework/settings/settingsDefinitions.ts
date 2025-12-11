@@ -402,24 +402,54 @@ export type SettingTypeDefinitions = {
     [Setting.PDM_FILTER]: {
         internalValue: {
             production: {
-                oil: number;
-                gas: number;
-                water: number;
+                oil: {
+                    value: number;
+                    color: string;
+                };
+                gas: {
+                    value: number;
+                    color: string;
+                };
+                water: {
+                    value: number;
+                    color: string;
+                };
             };
             injection: {
-                water: number;
-                gas: number;
+                water: {
+                    value: number;
+                    color: string;
+                };
+                gas: {
+                    value: number;
+                    color: string;
+                };
             };
         } | null;
         externalValue: {
             production: {
-                oil: number;
-                gas: number;
-                water: number;
+                oil: {
+                    value: number;
+                    color: string;
+                };
+                gas: {
+                    value: number;
+                    color: string;
+                };
+                water: {
+                    value: number;
+                    color: string;
+                };
             };
             injection: {
-                water: number;
-                gas: number;
+                water: {
+                    value: number;
+                    color: string;
+                };
+                gas: {
+                    value: number;
+                    color: string;
+                };
             };
         } | null;
         valueRange: {
