@@ -42,14 +42,15 @@ export type ReadoutWrapperProps = {
     onViewportHover?: (viewport: ViewportType | null) => void;
 };
 
-const PICKING_RADIUS = 5;
+const PICKING_RADIUS = 20;
+const PICKING_DEPTH = 6;
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const ctx = useDpfSubsurfaceViewerContext();
     const id = React.useId();
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
+    const [pickingCoordinate, setPickingCoordinate] = React.useState<number[]>([]);
     const [pickingInfoPerView, setPickingInfoPerView] = React.useState<Record<string, PickingInfo[]>>({});
-    const [activeViewportId, setActiveViewportId] = React.useState<string | null>(null);
 
     const [storedDeckGlViews, setStoredDeckGlViews] =
         React.useState<SubsurfaceViewerWithCameraStateProps["views"]>(undefined);
@@ -64,6 +65,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const [numRows] = props.views.layout;
 
     function handleMouseEvent(event: MapMouseEvent): void {
+        if (!event.infos.length) return;
+
         if (event.type === "hover") {
             const hoveredViewPort = event.infos[0]?.viewport;
 
@@ -73,6 +76,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 const newPickInfoDict = pickAtWorldPosition(
                     pickWithCoordinates.coordinate![0],
                     pickWithCoordinates.coordinate![1],
+                    pickWithCoordinates.coordinate![2] * props.verticalScale,
                 );
 
                 if (newPickInfoDict) {
@@ -80,7 +84,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 }
             }
 
-            setActiveViewportId(hoveredViewPort?.id ?? null);
+            setPickingCoordinate(pickWithCoordinates?.coordinate ?? []);
             props.onViewerHover?.(event);
             props.onViewportHover?.(hoveredViewPort ?? null);
         }
@@ -103,36 +107,42 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         return feat?.properties?.["name"];
     }
 
-    const pickAtWorldPosition = React.useCallback(function pickAtWorldPosition(x?: number, y?: number) {
-        if (!deckGlRef.current?.deck?.isInitialized) return;
+    const pickAtWorldPosition = React.useCallback(
+        function pickAtWorldPosition(x?: number, y?: number, z?: number) {
+            if (!deckGlRef.current?.deck?.isInitialized) return;
 
-        const deck = deckGlRef.current?.deck;
-        const deckViewports = deck?.getViewports();
+            const deck = deckGlRef.current?.deck;
+            const deckViewports = deck?.getViewports();
 
-        if (!deck || !deckViewports?.length || !x || !y) return;
+            if (!deck || !deckViewports?.length || !x || !y) return;
 
-        const pickInfoDict: Record<string, PickingInfo[]> = {};
+            const pickInfoDict: Record<string, PickingInfo[]> = {};
 
-        for (const viewport of deckViewports) {
-            const [screenX, screenY] = viewport.project([x, y]);
+            const coord = z !== undefined ? [x, y, z * props.verticalScale] : [x, y];
 
-            const picks = deck.pickMultipleObjects({
-                x: screenX + viewport.x,
-                y: screenY + viewport.y,
-                radius: PICKING_RADIUS,
-                depth: 6,
-            });
+            for (const viewport of deckViewports) {
+                const [screenX, screenY] = viewport.project(coord);
 
-            // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates.
-            // See issue #webviz-subsurface-components/2320
-            const uniquePicks = uniqBy(picks, (pick) => pick.sourceLayer?.id);
+                const picks = deck.pickMultipleObjects({
+                    x: screenX + viewport.x,
+                    y: screenY + viewport.y,
+                    radius: PICKING_RADIUS,
+                    depth: PICKING_DEPTH,
+                    unproject3D: true,
+                });
 
-            pickInfoDict[viewport.id] = uniquePicks;
-        }
+                // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates.
+                // See issue #webviz-subsurface-components/2320
+                const uniquePicks = uniqBy(picks, (pick) => pick.sourceLayer?.id);
 
-        setPickingInfoPerView(pickInfoDict);
-        return pickInfoDict;
-    }, []);
+                pickInfoDict[viewport.id] = uniquePicks;
+            }
+
+            setPickingInfoPerView(pickInfoDict);
+            return pickInfoDict;
+        },
+        [props.verticalScale],
+    );
 
     const deckGlProps = props.deckGlManager.makeDeckGlComponentProps({
         deckGlRef,
@@ -158,6 +168,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         },
         showReadout: false,
         triggerHome: props.triggerHome,
+        // We will do deeper picking manually in the onMouseEvent callback
+        pickingDepth: 1,
         pickingRadius: PICKING_RADIUS,
         layers: props.layers,
         onMouseEvent: handleMouseEvent,
