@@ -4,6 +4,7 @@ import simplify from "simplify-js";
 
 import type { WellboreTrajectory_api } from "@api";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
+import { distance, fromArray } from "@lib/utils/vec3";
 
 import type { GeoWellFeature } from "../DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 
@@ -173,4 +174,60 @@ export function wellTrajectoryToGeojson(
     };
 
     return geometryCollection;
+}
+
+export type MinimalWellboreTrajectory = Pick<
+    WellboreTrajectory_api,
+    "eastingArr" | "mdArr" | "northingArr" | "tvdMslArr"
+>;
+
+type TrajectoryPoint = { easting: number; northing: number; tvdMsl: number };
+
+function defaultRadialDistance(point1: TrajectoryPoint, point2: TrajectoryPoint) {
+    const vec1 = fromArray([point1.easting, point1.northing, point1.tvdMsl]);
+    const vec2 = fromArray([point2.easting, point2.northing, point2.tvdMsl]);
+
+    return distance(vec1, vec2);
+}
+
+export function simplifyWellTrajectoryRadialDist<TTrajectory extends MinimalWellboreTrajectory>(
+    trajectory: TTrajectory,
+    threshold: number,
+    computeDistance = defaultRadialDistance,
+): TTrajectory {
+    const thresholdSquared = threshold * threshold;
+
+    let prevPoint: TrajectoryPoint | null = null;
+
+    const simplifiedTrajectory: TTrajectory = {
+        ...trajectory,
+        eastingArr: [],
+        northingArr: [],
+        tvdMslArr: [],
+        mdArr: [],
+    };
+
+    for (let index = 0; index < trajectory.eastingArr.length; index++) {
+        const point = {
+            easting: trajectory.eastingArr[index],
+            northing: trajectory.northingArr[index],
+            tvdMsl: trajectory.tvdMslArr[index],
+            md: trajectory.mdArr[index],
+        };
+
+        if (
+            // Always include the first and last points
+            !prevPoint ||
+            index === trajectory.eastingArr.length - 1 ||
+            computeDistance(point, prevPoint) > thresholdSquared
+        ) {
+            simplifiedTrajectory.eastingArr.push(point.easting);
+            simplifiedTrajectory.northingArr.push(point.northing);
+            simplifiedTrajectory.tvdMslArr.push(point.tvdMsl);
+            simplifiedTrajectory.mdArr.push(point.md);
+
+            prevPoint = point;
+        }
+    }
+    return simplifiedTrajectory;
 }

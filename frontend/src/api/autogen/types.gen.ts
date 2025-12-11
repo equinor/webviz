@@ -1251,6 +1251,36 @@ export type WellProductionData_api = {
 };
 
 /**
+ * Well trajectory defined by a set of (x, y, z) coordinates and measured depths (md).
+ *
+ * uwi: Unique wellbore identifier.
+ * xPoints: X-coordinates of well trajectory points.
+ * yPoints: Y-coordinates of well trajectory points.
+ * zPoints: Z-coordinates (depth values) of well trajectory points.
+ * mdPoints: Measured depth values at each well trajectory point.
+ */
+export type WellTrajectory_api = {
+    xPoints: Array<number>;
+    yPoints: Array<number>;
+    zPoints: Array<number>;
+    mdPoints: Array<number>;
+    uwi: string;
+};
+
+/**
+ * Segments of a well trajectory that intersects a formation defined by top and bottom surfaces.
+ *
+ * A wellbore can enter and exit a formation multiple times, resulting in multiple segments.
+ *
+ * uniqueWellboreIdentifier: str
+ * formationSegments: List[FormationSegment_api]
+ */
+export type WellTrajectoryFormationSegments_api = {
+    uwi: string;
+    formationSegments: Array<FormationSegment_api>;
+};
+
+/**
  * Single casing for a wellbore
  */
 export type WellboreCasing_api = {

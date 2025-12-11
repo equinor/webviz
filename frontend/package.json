@@ -25,6 +25,8 @@
         "ts-key-enum v2 and v3 are the same, expect that v3 exports it as const enum. We cannot use v3 since we compile typescript with isolatedModules=true"
     ],
     "dependencies": {
+        "@deck.gl/core": "^9.1.15",
+        "@deck.gl/layers": "^9.1.15",
         "@equinor/eds-core-react": "^0.46.0",
         "@equinor/esv-intersection": "^3.1.4",
         "@headlessui/react": "^1.7.8",

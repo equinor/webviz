@@ -1,4 +1,12 @@
-import type { WellboreTrajectory_api, WellInjectionData_api, WellProductionData_api } from "@api";
+import type {
+    FormationSegment_api,
+    WellboreHeader_api,
+    WellboreTrajectory_api,
+    WellInjectionData_api,
+    WellProductionData_api,
+    WellTrajectory_api,
+    WellTrajectoryFormationSegments_api,
+} from "@api";
 import {
     getDrilledWellboreHeadersOptions,
     getInjectionDataOptions,
@@ -6,6 +14,7 @@ import {
     getProductionDataOptions,
     getRealizationSurfacesMetadataOptions,
     getWellTrajectoriesOptions,
+    postGetWellTrajectoriesFormationSegmentsOptions,
     SurfaceAttributeType_api,
 } from "@api";
 import { sortStringArray } from "@lib/utils/arrays";
@@ -13,6 +22,8 @@ import {
     Setting,
     type SettingTypeDefinitions,
 } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
+import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 import { isEqual } from "lodash";
 
 import { NO_UPDATE } from "../../delegates/_utils/Dependency";
@@ -36,10 +47,15 @@ const drilledWellboreTrajectoriesSettings = [
     Setting.TIME_INTERVAL,
     Setting.PDM_FILTER,
 ] as const;
-type DrilledWellboreTrajectoriesSettings = typeof drilledWellboreTrajectoriesSettings;
+export type DrilledWellboreTrajectoriesSettings = typeof drilledWellboreTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellboreTrajectoriesSettings>;
 
-type DrilledWellboreTrajectoriesData = WellboreTrajectory_api[];
+export type DrilledWellboreTrajectoriesData = (WellboreHeader_api &
+    Omit<WellboreTrajectory_api, "wellboreUuid" | "wellboreUwi"> & {
+        formationSegments: FormationSegment_api[];
+        productionData: Omit<WellProductionData_api, "wellboreUuid" | "wellboreUwi"> | null;
+        injectionData: Omit<WellInjectionData_api, "wellboreUuid" | "wellboreUwi"> | null;
+    })[];
 
 export type DrilledWellboreTrajectoriesStoredData = {
     productionData: WellProductionData_api[];
@@ -92,23 +108,115 @@ export class DrilledWellboreTrajectoriesProvider
 
     fetchData({
         getGlobalSetting,
+        getSetting,
+        getStoredData,
         fetchQuery,
     }: FetchDataParams<
         DrilledWellboreTrajectoriesSettings,
         DrilledWellboreTrajectoriesData,
         DrilledWellboreTrajectoriesStoredData
     >): Promise<DrilledWellboreTrajectoriesData> {
-        const fieldIdentifier = getGlobalSetting("fieldId");
+        const promise = (async () => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const ensembleIdent = getSetting(Setting.ENSEMBLE);
+            const selectedWellboreHeaders = getSetting(Setting.WELLBORES);
+            const depthFilterType = getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+            const productionData = getStoredData("productionData");
+            const injectionData = getStoredData("injectionData");
 
-        const queryOptions = getWellTrajectoriesOptions({
-            query: { field_identifier: fieldIdentifier ?? "" },
-        });
+            const selectedWellboreUuids = selectedWellboreHeaders?.map((wb) => wb.wellboreUuid) ?? [];
 
-        const promise = fetchQuery({
-            ...queryOptions,
-            staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
-            gcTime: 1800000,
-        });
+            const wellTrajectoriesQueryOptions = getWellTrajectoriesOptions({
+                query: { field_identifier: fieldIdentifier ?? "" },
+            });
+
+            const allWellTrajectories = await fetchQuery({
+                ...wellTrajectoriesQueryOptions,
+                staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
+                gcTime: 1800000,
+            });
+
+            const filteredWellTrajectories = allWellTrajectories.filter((traj) =>
+                selectedWellboreUuids.includes(traj.wellboreUuid),
+            );
+
+            const formationFilter = getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER);
+            const surfaceAttribute = getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE);
+            const formationSegments: WellTrajectoryFormationSegments_api[] = [];
+            if (
+                depthFilterType === "surface_based" &&
+                ensembleIdent &&
+                formationFilter &&
+                formationFilter.topSurfaceName &&
+                formationFilter.realizationNum != null &&
+                surfaceAttribute
+            ) {
+                const addrBuilder = new SurfaceAddressBuilder();
+                const topSurfaceAddress = addrBuilder
+                    .withEnsembleIdent(ensembleIdent)
+                    .withName(formationFilter.topSurfaceName)
+                    .withAttribute(surfaceAttribute)
+                    .withRealization(formationFilter.realizationNum)
+                    .buildRealizationAddress();
+
+                let bottomSurfaceAddressString: string | null = null;
+                if (formationFilter.baseSurfaceName) {
+                    const bottomSurfaceAddress = addrBuilder
+                        .withName(formationFilter.baseSurfaceName)
+                        .buildRealizationAddress();
+                    bottomSurfaceAddressString = encodeSurfAddrStr(bottomSurfaceAddress);
+                }
+
+                const convertedWellTrajectories: WellTrajectory_api[] = filteredWellTrajectories.map((traj) => {
+                    return {
+                        uwi: traj.uniqueWellboreIdentifier,
+                        xPoints: traj.eastingArr,
+                        yPoints: traj.northingArr,
+                        zPoints: traj.tvdMslArr,
+                        mdPoints: traj.mdArr,
+                    };
+                });
+
+                const formationSegmentsOptions = postGetWellTrajectoriesFormationSegmentsOptions({
+                    query: {
+                        top_depth_surf_addr_str: encodeSurfAddrStr(topSurfaceAddress),
+                        bottom_depth_surf_addr_str: bottomSurfaceAddressString,
+                    },
+                    body: {
+                        well_trajectories: convertedWellTrajectories,
+                    },
+                });
+
+                formationSegments.push(
+                    ...(await fetchQuery({
+                        ...formationSegmentsOptions,
+                    })),
+                );
+            }
+
+            const result: DrilledWellboreTrajectoriesData = [];
+            for (const traj of filteredWellTrajectories) {
+                const wellboreHeader = selectedWellboreHeaders?.find(
+                    (header) => header.wellboreUuid === traj.wellboreUuid,
+                );
+
+                if (!wellboreHeader) {
+                    continue;
+                }
+
+                result.push({
+                    ...traj,
+                    ...wellboreHeader,
+                    formationSegments:
+                        formationSegments.find((fs) => fs.uwi === traj.uniqueWellboreIdentifier)?.formationSegments ??
+                        [],
+                    productionData: productionData?.find((pd) => pd.wellboreUuid === traj.wellboreUuid) ?? null,
+                    injectionData: injectionData?.find((id) => id.wellboreUuid === traj.wellboreUuid) ?? null,
+                });
+            }
+
+            return result;
+        })();
 
         return promise;
     }
