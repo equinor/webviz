@@ -41,7 +41,7 @@ export function makeDrilledWellTrajectoriesLayer({
         if (object.properties && "lineWidth" in object.properties) {
             return object.properties.lineWidth as number;
         }
-        return 2;
+        return 8;
     }
 
     function getWellHeadStyleWidth(object: Feature): number {
@@ -67,16 +67,16 @@ export function makeDrilledWellTrajectoriesLayer({
         refine: false,
         lineStyle: { width: getLineStyleWidth, color: getColor },
         wellHeadStyle: { size: getWellHeadStyleWidth, color: getColor },
-        wellLabel: {
-            getSize: 9,
-            background: true,
-            autoPosition: true,
-            orientation: LabelOrientation.HORIZONTAL,
-        },
+        // wellLabel: {
+        //     getSize: 9,
+        //     background: true,
+        //     autoPosition: true,
+        //     orientation: LabelOrientation.HORIZONTAL,
+        // },
         pickable: true,
         ZIncreasingDownwards: true,
         outline: false,
-        lineWidthScale: 2,
+        lineWidthScale: 8,
     });
 
     return wellsLayer;

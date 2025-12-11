@@ -55,6 +55,10 @@ import { makeDrilledWellborePicksLayer2D } from "../../DataProviderFramework/vis
 import { makeDrilledWellTrajectoriesLayer2D } from "../../DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
+import {
+    makeDrilledWellTrajectoriesHoverVisualizationFunctions,
+    makeDrilledWellTrajectoriesHoverVisualizationFunctions2D,
+} from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>(
@@ -148,6 +152,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: makeDrilledWellTrajectoriesLayer2D,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions2D,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
