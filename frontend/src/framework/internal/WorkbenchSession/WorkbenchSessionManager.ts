@@ -178,6 +178,28 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this._activeToasts.clear();
     }
 
+    /**
+     * Set GUI state with possible ensemble loading errors for active session when opening sessions/snapshots.
+     *
+     * Sets the EnsemblesLoadingErrorInfoMap and opens the dialog if there are errors.
+     */
+    private applyActiveSessionEnsembleLoadErrorsToGuiState(): void {
+        if (!this._activeSession) {
+            throw new Error("No active session to check for ensemble loading errors.");
+        }
+
+        // Pass the session loading errors to GUI state
+        this._guiMessageBroker.setState(
+            GuiState.EnsemblesLoadingErrorInfoMap,
+            this._activeSession.getEnsembleLoadingErrorInfoMap(),
+        );
+
+        // Open info dialog if there were loading errors
+        if (Object.keys(this._activeSession.getEnsembleLoadingErrorInfoMap()).length > 0) {
+            this._guiMessageBroker.setState(GuiState.EnsembleLoadingErrorInfoDialogOpen, true);
+        }
+    }
+
     // ========== Session Lifecycle ==========
 
     async startNewSession(): Promise<PrivateWorkbenchSession> {
@@ -207,6 +229,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
             const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
+
             await this.setActiveSession(session);
             return true;
         } catch (error) {
@@ -252,6 +275,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
             const snapshot = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, snapshotData);
+
             await this.setActiveSession(snapshot);
 
             // Update GUI state for snapshots
@@ -332,6 +356,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 this._activeSession.setMetadata(localStorageSessionData.metadata);
                 await this._activeSession.deserializeContentState(localStorageSessionData.content);
 
+                // Update GUI states based on possible loading errors
+                this.applyActiveSessionEnsembleLoadErrorsToGuiState();
+
                 const url = buildSessionUrl(sessionId);
                 this._workbench.getNavigationManager().pushState(url);
             } else {
@@ -339,6 +366,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                     this._queryClient,
                     localStorageSessionData,
                 );
+
                 await this.setActiveSession(session);
             }
 
@@ -563,6 +591,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             await this._ensembleUpdateMonitor.pollImmediately();
             this._ensembleUpdateMonitor.startPolling();
+
+            // Update GUI states based on possible loading errors
+            this.applyActiveSessionEnsembleLoadErrorsToGuiState();
 
             this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION);
             this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionManagerTopic.ACTIVE_SESSION);
@@ -825,6 +856,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             this._activeSession.setMetadata(sessionData.metadata);
             await this._activeSession.deserializeContentState(sessionData.content);
+
+            // Update GUI states based on possible loading errors
+            this.applyActiveSessionEnsembleLoadErrorsToGuiState();
 
             this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
         } catch (error) {
