@@ -11,6 +11,8 @@ from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 
+from fmu.sumo.explorer import Explorer
+
 
 class SeismicAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
@@ -32,12 +34,18 @@ class SeismicAccess:
         seismic_context = self._ensemble_context.cubes.filter(
             realization=realizations[0],
         )
+        # tmp stuff: https://github.com/equinor/fmu-sumo/issues/455
+        exp = Explorer(env="prod", token=self._sumo_client.auth.get_token())
+
+        case_obs_context = exp.cubes.filter(uuid=self._case_uuid, stage="case")
 
         cube_meta_arr: list[SeismicCubeMeta] = []
         sumo_cube_object: Cube
+
         async for sumo_cube_object in seismic_context:
             cube_meta_arr.append(_create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object))
-
+        async for sumo_cube_object in case_obs_context:
+            cube_meta_arr.append(_create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object))
         return cube_meta_arr
 
     async def get_vds_handle_async(
@@ -65,13 +73,22 @@ class SeismicAccess:
                 end=timestamp_arr[1],
                 exact=True,
             )
-
-        cube_context: SearchContext = self._ensemble_context.cubes.filter(
-            tagname=seismic_attribute,
-            realization=realization,
-            time=time_filter,
-            # is_observation=observed,  # Does not work for observed. Only handles observed on case level?
-        )
+        cube_context: SearchContext
+        if observed:
+            sc = SearchContext(sumo=self._sumo_client).filter(uuid=self._case_uuid)
+            cube_context = sc.cubes.filter(
+                tagname=seismic_attribute,
+                stage="case",
+                time=time_filter,
+                # is_observation=observed,  # Does not work for observed. Only handles observed on case level?
+            )
+        else:
+            cube_context = self._ensemble_context.cubes.filter(
+                tagname=seismic_attribute,
+                realization=realization,
+                time=time_filter,
+                # is_observation=observed,  # Does not work for observed. Only handles observed on case level?
+            )
 
         # Filter on observed
         cubes: List[Cube] = []

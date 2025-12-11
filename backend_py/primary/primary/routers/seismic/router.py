@@ -176,7 +176,7 @@ async def get_seismic_slices(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
-            observed=observed,
+            observed=True,
         )
     except ValueError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
