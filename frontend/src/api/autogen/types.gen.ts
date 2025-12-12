@@ -103,6 +103,23 @@ export type BodyPostGetSurfaceIntersection_api = {
 };
 
 /**
+ * Body_post_get_well_trajectories_formation_segments
+ */
+export type BodyPostGetWellTrajectoriesFormationSegments_api = {
+    /**
+     * Well Trajectories
+     */
+    well_trajectories: Array<WellTrajectory_api>;
+};
+
+/**
+ * Body_post_get_well_trajectory_picks_per_surface
+ */
+export type BodyPostGetWellTrajectoryPicksPerSurface_api = {
+    well_trajectory: WellTrajectory_api;
+};
+
+/**
  * BoundingBox2d
  */
 export type BoundingBox2d_api = {
@@ -539,6 +556,25 @@ export enum FlowRateType_api {
     TM = "TM",
     WAT = "WAT",
 }
+
+/**
+ * FormationSegment
+ *
+ * Segment of a formation defined by top and bottom surface.
+ *
+ * The formation segment is defined by the md (measured depth) value along the well trajectory,
+ * at enter and exit of the formation.
+ */
+export type FormationSegment_api = {
+    /**
+     * Mdenter
+     */
+    mdEnter: number;
+    /**
+     * Mdexit
+     */
+    mdExit: number;
+};
 
 /**
  * Frequency
@@ -1070,6 +1106,16 @@ export type PageSnapshotMetadata_api = {
      */
     pageToken?: string | null;
 };
+
+/**
+ * PickDirection
+ *
+ * Direction of the pick relative to the surface
+ */
+export enum PickDirection_api {
+    UPWARD = "UPWARD",
+    DOWNWARD = "DOWNWARD",
+}
 
 /**
  * PointSetXY
@@ -2233,6 +2279,36 @@ export enum SurfaceTimeType_api {
 }
 
 /**
+ * SurfaceWellPick
+ *
+ * Surface pick data along a well trajectory
+ *
+ * md: Measured depth value at the pick point.
+ * direction: Direction of the pick relative to the surface.
+ */
+export type SurfaceWellPick_api = {
+    /**
+     * Md
+     */
+    md: number;
+    direction: PickDirection_api;
+};
+
+/**
+ * SurfaceWellPicks
+ *
+ * Surface picks along a well trajectory for a specific surface.
+ *
+ * Each pick contains the measured depth and direction.
+ */
+export type SurfaceWellPicks_api = {
+    /**
+     * Picks
+     */
+    picks: Array<SurfaceWellPick_api>;
+};
+
+/**
  * THP
  */
 export enum THP_api {
@@ -2768,6 +2844,61 @@ export type WellProductionData_api = {
 };
 
 /**
+ * WellTrajectory
+ *
+ * Well trajectory defined by a set of (x, y, z) coordinates and measured depths (md).
+ *
+ * uwi: Unique wellbore identifier.
+ * xPoints: X-coordinates of well trajectory points.
+ * yPoints: Y-coordinates of well trajectory points.
+ * zPoints: Z-coordinates (depth values) of well trajectory points.
+ * mdPoints: Measured depth values at each well trajectory point.
+ */
+export type WellTrajectory_api = {
+    /**
+     * Xpoints
+     */
+    xPoints: Array<number>;
+    /**
+     * Ypoints
+     */
+    yPoints: Array<number>;
+    /**
+     * Zpoints
+     */
+    zPoints: Array<number>;
+    /**
+     * Mdpoints
+     */
+    mdPoints: Array<number>;
+    /**
+     * Uwi
+     */
+    uwi: string;
+};
+
+/**
+ * WellTrajectoryFormationSegments
+ *
+ * Segments of a well trajectory that intersects a formation defined by top and bottom surfaces.
+ *
+ * A wellbore can enter and exit a formation multiple times, resulting in multiple segments.
+ *
+ * uniqueWellboreIdentifier: str
+ * formationSegments: List[FormationSegment]
+ */
+export type WellTrajectoryFormationSegments_api = {
+    /**
+     * Uwi
+     */
+    uwi: string;
+    /**
+     * Formationsegments
+     */
+    formationSegments: Array<FormationSegment_api>;
+};
+
+/**
  * WellboreCasing
  *
  * Single casing for a wellbore
@@ -2916,14 +3047,6 @@ export type WellboreHeader_api = {
      */
     currentTrack: number;
     /**
-     * Tvdmax
-     */
-    tvdMax: number;
-    /**
-     * Mdmax
-     */
-    mdMax: number;
-    /**
      * Kickoffdepthmd
      */
     kickoffDepthMd: number | null;
@@ -2935,11 +3058,29 @@ export type WellboreHeader_api = {
      * Parentwellbore
      */
     parentWellbore: string | null;
+    /**
+     * Mdmin
+     */
     mdMin?: number | null;
+    /**
+     * Mdmax
+     */
     mdMax?: number | null;
+    /**
+     * Mdunit
+     */
     mdUnit?: string | null;
+    /**
+     * Tvdmin
+     */
     tvdMin?: number | null;
+    /**
+     * Tvdmax
+     */
     tvdMax?: number | null;
+    /**
+     * Tvdunit
+     */
     tvdUnit?: string | null;
 };
 
@@ -4204,6 +4345,8 @@ export type PostGetWellTrajectoryPicksPerSurfaceData_api = {
     path?: never;
     query: {
         /**
+         * Depth Surface Addr Str List
+         *
          * List of surface address strings for depth surfaces. Supported address types are *REAL*, *OBS* and *STAT*
          */
         depth_surface_addr_str_list: Array<string>;
@@ -4216,7 +4359,7 @@ export type PostGetWellTrajectoryPicksPerSurfaceErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type PostGetWellTrajectoryPicksPerSurfaceError_api =
@@ -4224,6 +4367,8 @@ export type PostGetWellTrajectoryPicksPerSurfaceError_api =
 
 export type PostGetWellTrajectoryPicksPerSurfaceResponses_api = {
     /**
+     * Response Post Get Well Trajectory Picks Per Surface
+     *
      * Successful Response
      */
     200: Array<SurfaceWellPicks_api>;
@@ -4237,10 +4382,14 @@ export type PostGetWellTrajectoriesFormationSegmentsData_api = {
     path?: never;
     query: {
         /**
+         * Top Depth Surf Addr Str
+         *
          * Surface address string for top bounding depth surface. Supported address types are *REAL*, *OBS* and *STAT*
          */
         top_depth_surf_addr_str: string;
         /**
+         * Bottom Depth Surf Addr Str
+         *
          * Optional surface address string for bottom bounding depth surface. If not provided end of well trajectory is used as lower bound for formation. Supported address types are *REAL*, *OBS* and *STAT*
          */
         bottom_depth_surf_addr_str?: string | null;
@@ -4253,7 +4402,7 @@ export type PostGetWellTrajectoriesFormationSegmentsErrors_api = {
     /**
      * Validation Error
      */
-    422: HttpValidationError_api;
+    422: HTTPValidationError_api;
 };
 
 export type PostGetWellTrajectoriesFormationSegmentsError_api =
@@ -4261,6 +4410,8 @@ export type PostGetWellTrajectoriesFormationSegmentsError_api =
 
 export type PostGetWellTrajectoriesFormationSegmentsResponses_api = {
     /**
+     * Response Post Get Well Trajectories Formation Segments
+     *
      * Successful Response
      */
     200: Array<WellTrajectoryFormationSegments_api>;

@@ -422,6 +422,10 @@ export class SettingsContextDelegate<
                 this._settings[settingKey].updateAttributes(attributes);
             });
 
+            dependency.subscribeLoading(() => {
+                this.handleSettingChanged();
+            });
+
             dependency.initialize();
 
             return dependency;

@@ -32,6 +32,10 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<M_3DViewerSettings>,
     view?: Partial<M_3DViewerView>,
   },
+  "3DViewerNew": {
+    settings?: never,
+    view?: never,
+  },
   "DbgWorkbenchSpy": {
     settings?: never,
     view?: never,
@@ -44,12 +48,24 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<FlowNetworkSettings>,
     view?: never,
   },
+  "Grid3D": {
+    settings?: never,
+    view?: never,
+  },
+  "Grid3DIntersection": {
+    settings?: never,
+    view?: never,
+  },
   "InplaceVolumesPlot": {
     settings?: Partial<InplaceVolumesPlotSettings>,
     view?: never,
   },
   "InplaceVolumesTable": {
     settings?: Partial<InplaceVolumesTableSettings>,
+    view?: never,
+  },
+  "InplaceVolumetrics": {
+    settings?: never,
     view?: never,
   },
   "Intersection": {
@@ -96,6 +112,10 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "SeismicIntersection": {
+    settings?: never,
+    view?: never,
+  },
   "SensitivityPlot": {
     settings?: Partial<SensitivityPlotSettings>,
     view?: never,
@@ -104,11 +124,23 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<SimulationTimeSeriesSettings>,
     view?: Partial<SimulationTimeSeriesView>,
   },
+  "SimulationTimeSeriesMatrix": {
+    settings?: never,
+    view?: never,
+  },
   "SimulationTimeSeriesSensitivity": {
     settings?: Partial<SimulationTimeSeriesSensitivitySettings>,
     view?: Partial<SimulationTimeSeriesSensitivityView>,
   },
+  "StructuralUncertaintyIntersection": {
+    settings?: never,
+    view?: never,
+  },
   "SubsurfaceMap": {
+    settings?: never,
+    view?: never,
+  },
+  "TimeSeriesParameterDistribution": {
     settings?: never,
     view?: never,
   },

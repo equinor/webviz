@@ -26,70 +26,6 @@ export type GeoWellProperties = BaseWellProperties & {
 };
 export type GeoWellFeature = BaseWellFeature & { properties: GeoWellProperties };
 
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-    const color = parse(hex);
-
-    if (!color || !("r" in color && "g" in color && "b" in color)) {
-        // Fallback to gray if parsing fails
-        return { r: 128, g: 128, b: 128 };
-    }
-
-    const rgb = color as Rgb;
-    return {
-        r: Math.round(rgb.r * 255),
-        g: Math.round(rgb.g * 255),
-        b: Math.round(rgb.b * 255),
-    };
-}
-
-function setColorByFlowData(
-    oilProdMin: { value: number; color: string } | null,
-    gasProdMin: { value: number; color: string } | null,
-    waterProdMin: { value: number; color: string } | null,
-    waterInjMin: { value: number; color: string } | null,
-    gasInjMin: { value: number; color: string } | null,
-    productionData: Pick<WellProductionData_api, "oilProductionSm3" | "gasProductionSm3" | "waterProductionM3"> | null,
-    injectionData: Pick<WellInjectionData_api, "waterInjection" | "gasInjection"> | null,
-): { r: number; g: number; b: number } | null {
-    if (productionData) {
-        // Oil production
-        if (oilProdMin) {
-            if (productionData.oilProductionSm3 >= oilProdMin.value) {
-                return hexToRgb(oilProdMin.color);
-            }
-        }
-        // Gas production
-        if (gasProdMin) {
-            if (productionData.gasProductionSm3 >= gasProdMin.value) {
-                return hexToRgb(gasProdMin.color);
-            }
-        }
-        // Water production
-        if (waterProdMin) {
-            if (productionData.waterProductionM3 >= waterProdMin.value) {
-                return hexToRgb(waterProdMin.color);
-            }
-        }
-    }
-
-    if (injectionData) {
-        // Water injection
-        if (waterInjMin) {
-            if (injectionData.waterInjection >= waterInjMin.value) {
-                return hexToRgb(waterInjMin.color);
-            }
-        }
-        // Gas injection
-        if (gasInjMin) {
-            if (injectionData.gasInjection >= gasInjMin.value) {
-                return hexToRgb(gasInjMin.color);
-            }
-        }
-    }
-
-    // Default gray color
-    return null;
-}
 export function makeRichWellTrajectoriesLayer({
     id,
     isLoading,
@@ -158,7 +94,7 @@ export function makeRichWellTrajectoriesLayer({
             uniqueIdentifier: wt.uniqueWellboreIdentifier,
             trajectory: wt,
 
-            perforations: [],
+            perforations: wt.perforations,
             // TODO: Segments for the entire track, not just selected range?
             formationSegments: wt.formationSegments.map<FormationSegmentData>(
                 (fs): FormationSegmentData => ({
@@ -167,7 +103,7 @@ export function makeRichWellTrajectoriesLayer({
                     segmentIdent: "WITHIN_FILTER",
                 }),
             ),
-            screens: [],
+            screens: wt.screens,
             purpose: wt.wellborePurpose,
             status: wt.wellboreStatus,
             well: {
@@ -208,4 +144,69 @@ export function makeRichWellTrajectoriesLayer({
     });
 
     return wellsLayer;
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+    const color = parse(hex);
+
+    if (!color || !("r" in color && "g" in color && "b" in color)) {
+        // Fallback to gray if parsing fails
+        return { r: 128, g: 128, b: 128 };
+    }
+
+    const rgb = color as Rgb;
+    return {
+        r: Math.round(rgb.r * 255),
+        g: Math.round(rgb.g * 255),
+        b: Math.round(rgb.b * 255),
+    };
+}
+
+function setColorByFlowData(
+    oilProdMin: { value: number; color: string } | null,
+    gasProdMin: { value: number; color: string } | null,
+    waterProdMin: { value: number; color: string } | null,
+    waterInjMin: { value: number; color: string } | null,
+    gasInjMin: { value: number; color: string } | null,
+    productionData: Pick<WellProductionData_api, "oilProductionSm3" | "gasProductionSm3" | "waterProductionM3"> | null,
+    injectionData: Pick<WellInjectionData_api, "waterInjection" | "gasInjection"> | null,
+): { r: number; g: number; b: number } | null {
+    if (productionData) {
+        // Oil production
+        if (oilProdMin) {
+            if (productionData.oilProductionSm3 >= oilProdMin.value) {
+                return hexToRgb(oilProdMin.color);
+            }
+        }
+        // Gas production
+        if (gasProdMin) {
+            if (productionData.gasProductionSm3 >= gasProdMin.value) {
+                return hexToRgb(gasProdMin.color);
+            }
+        }
+        // Water production
+        if (waterProdMin) {
+            if (productionData.waterProductionM3 >= waterProdMin.value) {
+                return hexToRgb(waterProdMin.color);
+            }
+        }
+    }
+
+    if (injectionData) {
+        // Water injection
+        if (waterInjMin) {
+            if (injectionData.waterInjection >= waterInjMin.value) {
+                return hexToRgb(waterInjMin.color);
+            }
+        }
+        // Gas injection
+        if (gasInjMin) {
+            if (injectionData.gasInjection >= gasInjMin.value) {
+                return hexToRgb(gasInjMin.color);
+            }
+        }
+    }
+
+    // Default gray color
+    return null;
 }

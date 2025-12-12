@@ -251,6 +251,12 @@ import type {
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionErrors_api,
     PostGetSurfaceIntersectionResponses_api,
+    PostGetWellTrajectoriesFormationSegmentsData_api,
+    PostGetWellTrajectoriesFormationSegmentsErrors_api,
+    PostGetWellTrajectoriesFormationSegmentsResponses_api,
+    PostGetWellTrajectoryPicksPerSurfaceData_api,
+    PostGetWellTrajectoryPicksPerSurfaceErrors_api,
+    PostGetWellTrajectoryPicksPerSurfaceResponses_api,
     PostLogoutData_api,
     PostLogoutResponses_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -687,6 +693,7 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
 
 /**
  * Post Get Well Trajectory Picks Per Surface
+ *
  * Get surface picks along a well trajectory for multiple depth surfaces.
  *
  * For each provided depth surface address, the intersections (picks) between the surface and the
@@ -698,22 +705,24 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
 export const postGetWellTrajectoryPicksPerSurface = <ThrowOnError extends boolean = false>(
     options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).post<
-        PostGetWellTrajectoryPicksPerSurfaceResponse_api,
-        PostGetWellTrajectoryPicksPerSurfaceError_api,
+    return (options.client ?? client).post<
+        PostGetWellTrajectoryPicksPerSurfaceResponses_api,
+        PostGetWellTrajectoryPicksPerSurfaceErrors_api,
         ThrowOnError
     >({
+        responseType: "json",
+        url: "/surface/get_well_trajectory_picks_per_surface",
         ...options,
         headers: {
             "Content-Type": "application/json",
-            ...options?.headers,
+            ...options.headers,
         },
-        url: "/surface/get_well_trajectory_picks_per_surface",
     });
 };
 
 /**
  * Post Get Well Trajectories Formation Segments
+ *
  * Get well trajectory formation segments.
  *
  * Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
@@ -731,17 +740,18 @@ export const postGetWellTrajectoryPicksPerSurface = <ThrowOnError extends boolea
 export const postGetWellTrajectoriesFormationSegments = <ThrowOnError extends boolean = false>(
     options: Options<PostGetWellTrajectoriesFormationSegmentsData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).post<
-        PostGetWellTrajectoriesFormationSegmentsResponse_api,
-        PostGetWellTrajectoriesFormationSegmentsError_api,
+    return (options.client ?? client).post<
+        PostGetWellTrajectoriesFormationSegmentsResponses_api,
+        PostGetWellTrajectoriesFormationSegmentsErrors_api,
         ThrowOnError
     >({
+        responseType: "json",
+        url: "/surface/get_well_trajectories_formation_segments",
         ...options,
         headers: {
             "Content-Type": "application/json",
-            ...options?.headers,
+            ...options.headers,
         },
-        url: "/surface/get_well_trajectories_formation_segments",
     });
 };
 

@@ -1,6 +1,8 @@
 import type {
     FormationSegment_api,
+    WellboreCompletion_api,
     WellboreHeader_api,
+    WellborePerforation_api,
     WellboreTrajectory_api,
     WellInjectionData_api,
     WellProductionData_api,
@@ -9,6 +11,8 @@ import type {
 } from "@api";
 import {
     getDrilledWellboreHeadersOptions,
+    getFieldPerforationsOptions,
+    getFieldScreensOptions,
     getInjectionDataOptions,
     getObservedSurfacesMetadataOptions,
     getProductionDataOptions,
@@ -55,6 +59,8 @@ export type DrilledWellboreTrajectoriesData = (WellboreHeader_api &
         formationSegments: FormationSegment_api[];
         productionData: Omit<WellProductionData_api, "wellboreUuid" | "wellboreUwi"> | null;
         injectionData: Omit<WellInjectionData_api, "wellboreUuid" | "wellboreUwi"> | null;
+        perforations: WellborePerforation_api[];
+        screens: WellboreCompletion_api[];
     })[];
 
 export type DrilledWellboreTrajectoriesStoredData = {
@@ -102,8 +108,28 @@ export class DrilledWellboreTrajectoriesProvider
         return true;
     }
 
-    doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
-        return !isEqual(prevSettings, newSettings);
+    doSettingsChangesRequireDataRefetch(
+        prevSettings: SettingsWithTypes | null,
+        newSettings: SettingsWithTypes,
+    ): boolean {
+        // Only refetch when settings used in fetchData change
+        // Note: TIME_INTERVAL changes trigger refetch via stored data changes
+        return (
+            !isEqual(prevSettings?.[Setting.ENSEMBLE], newSettings[Setting.ENSEMBLE]) ||
+            !isEqual(prevSettings?.[Setting.WELLBORES], newSettings[Setting.WELLBORES]) ||
+            !isEqual(
+                prevSettings?.[Setting.WELLBORE_DEPTH_FILTER_TYPE],
+                newSettings[Setting.WELLBORE_DEPTH_FILTER_TYPE],
+            ) ||
+            !isEqual(
+                prevSettings?.[Setting.WELLBORE_DEPTH_FORMATION_FILTER],
+                newSettings[Setting.WELLBORE_DEPTH_FORMATION_FILTER],
+            ) ||
+            !isEqual(
+                prevSettings?.[Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE],
+                newSettings[Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE],
+            )
+        );
     }
 
     fetchData({
@@ -139,6 +165,22 @@ export class DrilledWellboreTrajectoriesProvider
             const filteredWellTrajectories = allWellTrajectories.filter((traj) =>
                 selectedWellboreUuids.includes(traj.wellboreUuid),
             );
+
+            const perforationsQueryOptions = getFieldPerforationsOptions({
+                query: { field_identifier: fieldIdentifier ?? "" },
+            });
+
+            const allPerforations = await fetchQuery({
+                ...perforationsQueryOptions,
+            });
+
+            const screensQueryOptions = getFieldScreensOptions({
+                query: { field_identifier: fieldIdentifier ?? "" },
+            });
+
+            const allScreens = await fetchQuery({
+                ...screensQueryOptions,
+            });
 
             const formationFilter = getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER);
             const surfaceAttribute = getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE);
@@ -212,6 +254,9 @@ export class DrilledWellboreTrajectoriesProvider
                         [],
                     productionData: productionData?.find((pd) => pd.wellboreUuid === traj.wellboreUuid) ?? null,
                     injectionData: injectionData?.find((id) => id.wellboreUuid === traj.wellboreUuid) ?? null,
+                    perforations:
+                        allPerforations?.find((perf) => perf.wellboreUuid === traj.wellboreUuid)?.perforations ?? [],
+                    screens: allScreens?.find((screen) => screen.wellboreUuid === traj.wellboreUuid)?.completions ?? [],
                 });
             }
 
