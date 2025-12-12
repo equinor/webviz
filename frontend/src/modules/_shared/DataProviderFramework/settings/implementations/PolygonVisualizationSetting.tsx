@@ -6,17 +6,16 @@ import { PolygonVisualizationForm } from "@modules/_shared/components/PolygonVis
 import { LabelPositionType } from "@modules/_shared/DataProviderFramework/visualization/deckgl/polygonUtils";
 
 import type {
-    CustomSettingImplementation,
     OverriddenValueRepresentationArgs,
-    SettingComponentProps,
+    StaticSettingComponentProps,
+    StaticSettingImplementation,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
 
 export type { PolygonVisualizationSpec };
 
 type ValueType = PolygonVisualizationSpec | null;
 
-export class PolygonVisualizationSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
+export class PolygonVisualizationSetting implements StaticSettingImplementation<ValueType> {
     defaultValue: ValueType = {
         color: "#000000",
         lineThickness: 2,
@@ -28,8 +27,34 @@ export class PolygonVisualizationSetting implements CustomSettingImplementation<
         labelColor: "#FFFFFF",
     };
 
-    getIsStatic(): boolean {
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    getIsStatic(): true {
         return true;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value !== "object" || Array.isArray(value)) {
+            return false;
+        }
+
+        const v = value as Record<string, unknown>;
+        return (
+            typeof v.color === "string" &&
+            typeof v.lineThickness === "number" &&
+            typeof v.lineOpacity === "number" &&
+            typeof v.fill === "boolean" &&
+            typeof v.fillOpacity === "number" &&
+            typeof v.showLabels === "boolean" &&
+            typeof v.labelPosition === "string" &&
+            typeof v.labelColor === "string"
+        );
     }
 
     isValueValid(value: ValueType): boolean {
@@ -55,7 +80,7 @@ export class PolygonVisualizationSetting implements CustomSettingImplementation<
         return JSON.stringify(value);
     }
 
-    deserializeValue?(serializedValue: string): ValueType {
+    deserializeValue(serializedValue: string): ValueType {
         try {
             const parsed = JSON.parse(serializedValue);
             if (this.isValueValid(parsed)) {
@@ -68,19 +93,17 @@ export class PolygonVisualizationSetting implements CustomSettingImplementation<
         }
     }
 
-    fixupValue(value: ValueType): NonNullable<ValueType> {
+    fixupValue(value: ValueType): ValueType {
         if (!value || !this.isValueValid(value)) {
-            return this.defaultValue!;
+            return this.defaultValue;
         }
         return value;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.STATIC>) => React.ReactNode {
+    makeComponent(): (props: StaticSettingComponentProps<ValueType>) => React.ReactNode {
         const fixupFunc = this.fixupValue.bind(this);
 
-        return function PolygonVisualizationSettingComponent(
-            props: SettingComponentProps<ValueType, SettingCategory.STATIC>,
-        ) {
+        return function PolygonVisualizationSettingComponent(props: StaticSettingComponentProps<ValueType>) {
             const currentValue = fixupFunc(props.value);
 
             const [localFormValue, setLocalFormValue] = React.useState<PolygonVisualizationSpec | null>(null);
@@ -112,7 +135,7 @@ export class PolygonVisualizationSetting implements CustomSettingImplementation<
                     onDiscard={handleDiscardConfig}
                     onApply={handleApplyConfig}
                 >
-                    <VisualizationPreview value={currentValue} />
+                    {currentValue && <VisualizationPreview value={currentValue} />}
                 </SettingConfigButton>
             );
         };

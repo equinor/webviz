@@ -2,9 +2,6 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
 import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
-import type { SettingCategory } from "../settings/settingsDefinitions";
-
-import type { MakeAvailableValuesTypeBasedOnCategory } from "./utils";
 
 export type OverriddenValueRepresentationArgs<TValue> = {
     value: TValue;
@@ -12,36 +9,95 @@ export type OverriddenValueRepresentationArgs<TValue> = {
     workbenchSettings: WorkbenchSettings;
 };
 
-export type SettingComponentProps<TValue, TCategory extends SettingCategory> = {
-    onValueChange: (newValue: TValue) => void;
-    value: TValue;
+// Base component props shared by both static and dynamic settings
+type SettingComponentPropsBase<TInternalValue> = {
+    onValueChange: (newValue: TInternalValue | ((prevValue: TInternalValue) => TInternalValue)) => void;
+    value: TInternalValue;
     isValueValid: boolean;
-    overriddenValue: TValue | null;
+    overriddenValue: TInternalValue | null;
     isOverridden: boolean;
-    availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     globalSettings: GlobalSettings;
 };
 
-export interface CustomSettingImplementation<TValue, TCategory extends SettingCategory> {
-    defaultValue?: TValue;
+// Component props for static settings (no valueRange)
+export type StaticSettingComponentProps<TInternalValue> = SettingComponentPropsBase<TInternalValue>;
+
+// Component props for dynamic settings (with valueRange)
+export type DynamicSettingComponentProps<TInternalValue, TValueRange> = SettingComponentPropsBase<TInternalValue> & {
+    valueRange: TValueRange;
+};
+
+// For backward compatibility - delegates to the correct type based on TValueRange
+export type SettingComponentProps<TInternalValue, TValueRange = never> = [TValueRange] extends [never]
+    ? StaticSettingComponentProps<TInternalValue>
+    : DynamicSettingComponentProps<TInternalValue, TValueRange>;
+
+export type ValueRangeIntersectionReducerDefinition<TValueRange, TStartingValue> = {
+    startingValue: TStartingValue;
+    reducer: (
+        accumulator: TValueRange | TStartingValue,
+        currentValueRange: TValueRange,
+        currentIndex: number,
+    ) => TValueRange;
+    isValid: (valueRange: TValueRange) => boolean;
+};
+
+// Base interface shared by both static and dynamic settings
+type CustomSettingImplementationBase<TInternalValue> = {
+    defaultValue?: TInternalValue;
+    serializeValue?: (value: TInternalValue) => string;
+    deserializeValue?: (serializedValue: string) => TInternalValue;
     /**
-     * A static setting does not have any available values and is not dependent on any other settings.
+     * Type guard to validate that a deserialized value has the correct structure.
+     * This is used to catch malformed persisted values before they cause runtime errors.
+     * Return true if the value has the expected structure, false otherwise.
+     * Note: This should check the structure/type, not the validity of values within the structure.
      *
-     * @returns true if the setting is static, false otherwise.
+     * Implementation note: You can use the createStructureValidator helper to create
+     * a validator from a JTD schema, or write a custom validation function.
      */
-    getIsStatic?: () => boolean;
-    makeComponent(): (props: SettingComponentProps<TValue, TCategory>) => React.ReactNode;
-    fixupValue?: (
-        currentValue: TValue,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>,
-    ) => TValue;
-    isValueValid?: (
-        value: TValue,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>,
-    ) => boolean;
-    serializeValue?: (value: TValue) => string;
-    deserializeValue?: (serializedValue: string) => TValue;
-    overriddenValueRepresentation?: (args: OverriddenValueRepresentationArgs<TValue>) => React.ReactNode;
-}
+    isValueValidStructure: (value: unknown) => value is TInternalValue;
+    overriddenValueRepresentation?: (args: OverriddenValueRepresentationArgs<TInternalValue>) => React.ReactNode;
+};
+
+/**
+ * Implementation for static settings (no valueRange).
+ * Static settings have fixed behavior and don't depend on external data.
+ */
+export type StaticSettingImplementation<
+    TInternalValue,
+    TExternalValue = TInternalValue,
+> = CustomSettingImplementationBase<TInternalValue> & {
+    getIsStatic: () => boolean;
+    makeComponent(): (props: StaticSettingComponentProps<TInternalValue>) => React.ReactNode;
+    fixupValue?: (currentValue: TInternalValue) => TInternalValue;
+    isValueValid?: (value: TInternalValue) => boolean;
+    mapInternalToExternalValue: (internalValue: TInternalValue, valueRange: any) => TExternalValue;
+};
+
+/**
+ * Implementation for dynamic settings (with valueRange).
+ * Dynamic settings adapt their behavior based on available values (valueRange).
+ */
+export type DynamicSettingImplementation<TInternalValue, TExternalValue, TValueRange> =
+    CustomSettingImplementationBase<TInternalValue> & {
+        getIsStatic?: () => boolean;
+        valueRangeIntersectionReducerDefinition: ValueRangeIntersectionReducerDefinition<TValueRange, any>;
+        makeComponent(): (props: DynamicSettingComponentProps<TInternalValue, TValueRange>) => React.ReactNode;
+        fixupValue?: (currentValue: TInternalValue, valueRange: TValueRange) => TInternalValue;
+        isValueValid?: (value: TInternalValue, valueRange: TValueRange) => boolean;
+        mapInternalToExternalValue: (internalValue: TInternalValue, valueRange: TValueRange) => TExternalValue;
+    };
+
+/**
+ * Main type for custom setting implementations.
+ * Automatically delegates to StaticSettingImplementation or DynamicSettingImplementation
+ * based on whether TValueRange is provided.
+ */
+export type CustomSettingImplementation<TInternalValue, TExternalValue = TInternalValue, TValueRange = never> = [
+    TValueRange,
+] extends [never]
+    ? StaticSettingImplementation<TInternalValue, TExternalValue>
+    : DynamicSettingImplementation<TInternalValue, TExternalValue, TValueRange>;

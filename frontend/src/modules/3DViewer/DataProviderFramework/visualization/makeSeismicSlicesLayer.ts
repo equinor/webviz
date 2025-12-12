@@ -216,14 +216,14 @@ export function makeSeismicSlicesLayer(
         RealizationSeismicSlicesStoredData
     >,
 ): Layer<any> | null {
-    const { id, name, getData, getSetting, getStoredData, isLoading, getValueRange } = args;
+    const { id, name, getData, getSetting, getStoredData, isLoading, getDataValueRange } = args;
     const data = getData();
     const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
     const slicesSettings = getSetting(Setting.SEISMIC_SLICES);
     const slices = getStoredData("seismicSlices");
     const seismicCubeMeta = getStoredData("seismicCubeMeta");
     const opacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
-    const valueRange = getValueRange();
+    const valueRange = getDataValueRange();
 
     if (!seismicCubeMeta || !slicesSettings) {
         return null;

@@ -48,7 +48,7 @@ export function createSeismicLayerItemsMaker({
     getData,
     getSetting,
     getStoredData,
-    getValueRange,
+    getDataValueRange,
     isLoading,
     name,
 }: TransformerArgs<
@@ -62,7 +62,7 @@ export function createSeismicLayerItemsMaker({
     const colorOpacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
     const attribute = getSetting(Setting.ATTRIBUTE);
-    const valueRange = getValueRange();
+    const valueRange = getDataValueRange();
 
     const extensionLength = createValidExtensionLength(
         getSetting(Setting.INTERSECTION),
