@@ -29,7 +29,9 @@ import {
     getDepthSlice,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
+    getFieldPerforations,
     getFields,
+    getFieldScreens,
     getGridModelsInfo,
     getGridParameter,
     getGridSurface,
@@ -125,6 +127,8 @@ import type {
     GetDepthSliceData_api,
     GetDrilledWellboreHeadersData_api,
     GetEnsembleDetailsData_api,
+    GetFieldPerforationsData_api,
+    GetFieldScreensData_api,
     GetFieldsData_api,
     GetGridModelsInfoData_api,
     GetGridParameterData_api,
@@ -198,35 +202,9 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
-<<<<<<< HEAD
     PostGetSampleSurfaceInPointsData_api,
     PostGetSampleSurfaceInPointsError_api,
     PostGetSampleSurfaceInPointsResponse_api,
-=======
-    GetRealizationFlowNetworkData_api,
-    GetProductionDataData_api,
-    GetInjectionDataData_api,
-    GetTableDataData_api,
-    GetWellCompletionsDataData_api,
-    GetDrilledWellboreHeadersData_api,
-    GetFieldPerforationsData_api,
-    GetFieldScreensData_api,
-    GetWellTrajectoriesData_api,
-    GetWellborePickIdentifiersData_api,
-    GetWellborePicksForPickIdentifierData_api,
-    GetWellborePicksInStratColumnData_api,
-    GetWellboreStratigraphicColumnsData_api,
-    GetWellboreCompletionsData_api,
-    GetWellboreCasingsData_api,
-    GetWellborePerforationsData_api,
-    GetWellboreLogCurveHeadersData_api,
-    GetLogCurveDataData_api,
-    GetSeismicCubeMetaListData_api,
-    GetInlineSliceData_api,
-    GetCrosslineSliceData_api,
-    GetDepthSliceData_api,
-    GetSeismicSlicesData_api,
->>>>>>> equinor/main
     PostGetSeismicFenceData_api,
     PostGetSeismicFenceError_api,
     PostGetSeismicFenceResponse_api,
@@ -243,101 +221,6 @@ import type {
     UpdateSessionError_api,
     UpdateSessionResponse_api,
 } from "../types.gen";
-<<<<<<< HEAD
-=======
-import {
-    getFields,
-    getCases,
-    getEnsembleDetails,
-    postRefreshFingerprintsForEnsembles,
-    getVectorList,
-    getDeltaEnsembleVectorList,
-    getRealizationsVectorData,
-    getDeltaEnsembleRealizationsVectorData,
-    getTimestampsList,
-    getHistoricalVectorData,
-    getStatisticalVectorData,
-    getDeltaEnsembleStatisticalVectorData,
-    getStatisticalVectorDataPerSensitivity,
-    getRealizationVectorAtTimestamp,
-    getTableDefinitions,
-    postGetAggregatedPerRealizationTableData,
-    postGetAggregatedStatisticalTableData,
-    getRealizationSurfacesMetadata,
-    getObservedSurfacesMetadata,
-    getSurfaceData,
-    getStatisticalSurfaceDataHybrid,
-    postGetSurfaceIntersection,
-    postGetSampleSurfaceInPoints,
-    getDeltaSurfaceData,
-    getMisfitSurfaceData,
-    deprecatedGetStratigraphicUnits,
-    getStratigraphicUnitsForStratColumn,
-    getParameterNamesAndDescription,
-    getParameter,
-    getParameters,
-    getIsSensitivityRun,
-    getSensitivities,
-    getGridModelsInfo,
-    getGridSurface,
-    getGridParameter,
-    postGetPolylineIntersection,
-    getRealizationFlowNetwork,
-    getProductionData,
-    getInjectionData,
-    getTableData,
-    getWellCompletionsData,
-    getDrilledWellboreHeaders,
-    getFieldPerforations,
-    getFieldScreens,
-    getWellTrajectories,
-    getWellborePickIdentifiers,
-    getWellborePicksForPickIdentifier,
-    getWellborePicksInStratColumn,
-    getWellboreStratigraphicColumns,
-    getWellboreCompletions,
-    getWellboreCasings,
-    getWellborePerforations,
-    getWellboreLogCurveHeaders,
-    getLogCurveData,
-    getSeismicCubeMetaList,
-    getInlineSlice,
-    getCrosslineSlice,
-    getDepthSlice,
-    getSeismicSlices,
-    postGetSeismicFence,
-    getPolygonsDirectory,
-    getPolygonsData,
-    getUserInfo,
-    getUserPhoto,
-    getObservations,
-    getTableDefinition,
-    getRealizationData,
-    getVfpTableNames,
-    getVfpTable,
-    getSessionsMetadata,
-    createSession,
-    deleteSession,
-    getSession,
-    updateSession,
-    getSessionMetadata,
-    getSnapshotAccessLogs,
-    getSnapshotsMetadata,
-    createSnapshot,
-    deleteSnapshot,
-    getSnapshot,
-    deleteSnapshotAccessLog,
-    loginRoute,
-    authorizedCallbackRoute,
-    getAlive,
-    getAliveProtected,
-    postLogout,
-    getLoggedInUser,
-    root,
-    client,
-} from "../sdk.gen";
-import type { AxiosError } from "axios";
->>>>>>> equinor/main
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, "baseURL" | "body" | "headers" | "path" | "query"> & {
@@ -1566,14 +1449,14 @@ export const getDrilledWellboreHeadersOptions = (options: Options<GetDrilledWell
     });
 };
 
-<<<<<<< HEAD
-export const getWellTrajectoriesQueryKey = (options: Options<GetWellTrajectoriesData_api>) =>
-    createQueryKey("getWellTrajectories", options);
-=======
-export const getFieldPerforationsQueryKey = (options: Options<GetFieldPerforationsData_api>) => [
-    createQueryKey("getFieldPerforations", options),
-];
+export const getFieldPerforationsQueryKey = (options: Options<GetFieldPerforationsData_api>) =>
+    createQueryKey("getFieldPerforations", options);
 
+/**
+ * Get Field Perforations
+ *
+ * Get field perforations for all wellbores in a given field.
+ */
 export const getFieldPerforationsOptions = (options: Options<GetFieldPerforationsData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -1589,10 +1472,15 @@ export const getFieldPerforationsOptions = (options: Options<GetFieldPerforation
     });
 };
 
-export const getFieldScreensQueryKey = (options: Options<GetFieldScreensData_api>) => [
-    createQueryKey("getFieldScreens", options),
-];
+export const getFieldScreensQueryKey = (options: Options<GetFieldScreensData_api>) =>
+    createQueryKey("getFieldScreens", options);
 
+/**
+ * Get Field Screens
+ *
+ * Get field screens for all wellbores in a given field.
+ * Screens are the SSDL completions with a filter on "Screen" type.
+ */
 export const getFieldScreensOptions = (options: Options<GetFieldScreensData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -1608,10 +1496,8 @@ export const getFieldScreensOptions = (options: Options<GetFieldScreensData_api>
     });
 };
 
-export const getWellTrajectoriesQueryKey = (options: Options<GetWellTrajectoriesData_api>) => [
-    createQueryKey("getWellTrajectories", options),
-];
->>>>>>> equinor/main
+export const getWellTrajectoriesQueryKey = (options: Options<GetWellTrajectoriesData_api>) =>
+    createQueryKey("getWellTrajectories", options);
 
 /**
  * Get Well Trajectories
