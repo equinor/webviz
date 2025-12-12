@@ -109,7 +109,7 @@ export const CrashView: React.FC<FormattedErrorProps> = (props) => {
                         )}
                         <div>
                             <b>Component stack:</b>
-                            {formatStack(props.errorInfo.componentStack)}
+                            {formatStack(props.errorInfo.componentStack ?? "")}
                         </div>
                     </div>
                 </Dialog>

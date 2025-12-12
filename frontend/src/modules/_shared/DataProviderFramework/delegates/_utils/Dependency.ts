@@ -230,12 +230,16 @@ export class Dependency<
         this._abortController = new AbortController();
 
         // Establishing subscriptions
-        await this._updateFunc({
-            getLocalSetting: this.getLocalSetting,
-            getGlobalSetting: this.getGlobalSetting,
-            getHelperDependency: this.getHelperDependency,
-            abortSignal: this._abortController.signal,
-        });
+        try {
+            await this._updateFunc({
+                getLocalSetting: this.getLocalSetting,
+                getGlobalSetting: this.getGlobalSetting,
+                getHelperDependency: this.getHelperDependency,
+                abortSignal: this._abortController.signal,
+            });
+        } catch (error) {
+            console.error(error);
+        }
 
         // If there are no dependencies, we can call the update function
         if (this._numParentDependencies === 0) {
