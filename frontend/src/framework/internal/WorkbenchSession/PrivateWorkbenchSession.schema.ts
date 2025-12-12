@@ -42,6 +42,9 @@ export const REGULAR_ENSEMBLE_STATE_SCHEMA: JTDSchemaType<SerializedRegularEnsem
         color: { type: "string" },
         name: { type: "string", nullable: true },
     },
+    optionalProperties: {
+        caseName: { type: "string" },
+    },
 } as const;
 
 export const DELTA_ENSEMBLE_STATE_SCHEMA: JTDSchemaType<SerializedDeltaEnsemble> = {
@@ -50,6 +53,10 @@ export const DELTA_ENSEMBLE_STATE_SCHEMA: JTDSchemaType<SerializedDeltaEnsemble>
         comparisonEnsembleIdent: { type: "string" },
         color: { type: "string" },
         name: { type: "string", nullable: true },
+    },
+    optionalProperties: {
+        referenceEnsembleCaseName: { type: "string" },
+        comparisonEnsembleCaseName: { type: "string" },
     },
 } as const;
 

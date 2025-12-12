@@ -2768,7 +2768,11 @@ export type WellProductionData_api = {
 };
 
 /**
+<<<<<<< HEAD
  * WellboreCasing
+=======
+ * Single casing for a wellbore
+>>>>>>> equinor/main
  */
 export type WellboreCasing_api = {
     /**
@@ -2814,7 +2818,11 @@ export type WellboreCasing_api = {
 };
 
 /**
+<<<<<<< HEAD
  * WellboreCompletion
+=======
+ * Single completion for a wellbore
+>>>>>>> equinor/main
  */
 export type WellboreCompletion_api = {
     /**
@@ -2848,8 +2856,18 @@ export type WellboreCompletion_api = {
 };
 
 /**
+<<<<<<< HEAD
  * WellboreHeader
  */
+=======
+ * Completions_api for a wellbore
+ */
+export type WellboreCompletions_api = {
+    wellboreUuid: string;
+    completions: Array<WellboreCompletion_api>;
+};
+
+>>>>>>> equinor/main
 export type WellboreHeader_api = {
     /**
      * Wellboreuuid
@@ -2891,6 +2909,12 @@ export type WellboreHeader_api = {
      * Wellborestatus
      */
     wellboreStatus: string;
+    currentTrack: number;
+    tvdMax: number;
+    mdMax: number;
+    kickoffDepthMd: number | null;
+    kickoffDepthTvd: number | null;
+    parentWellbore: string | null;
 };
 
 /**
@@ -2977,7 +3001,11 @@ export type WellboreLogCurveHeader_api = {
 };
 
 /**
+<<<<<<< HEAD
  * WellborePerforation
+=======
+ * Single perforation for a wellbore
+>>>>>>> equinor/main
  */
 export type WellborePerforation_api = {
     /**
@@ -3004,6 +3032,16 @@ export type WellborePerforation_api = {
      * Completionmode
      */
     completionMode: string;
+    dateShot: string | null;
+    dateClosed: string | null;
+};
+
+/**
+ * Perforations for a wellbore
+ */
+export type WellborePerforations_api = {
+    wellboreUuid: string;
+    perforations: Array<WellborePerforation_api>;
 };
 
 /**
@@ -5294,6 +5332,68 @@ export type GetDrilledWellboreHeadersResponses_api = {
 
 export type GetDrilledWellboreHeadersResponse_api =
     GetDrilledWellboreHeadersResponses_api[keyof GetDrilledWellboreHeadersResponses_api];
+
+export type GetFieldPerforationsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        zCacheBust?: string;
+    };
+    url: "/well/field_perforations";
+};
+
+export type GetFieldPerforationsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetFieldPerforationsError_api = GetFieldPerforationsErrors_api[keyof GetFieldPerforationsErrors_api];
+
+export type GetFieldPerforationsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellborePerforations_api>;
+};
+
+export type GetFieldPerforationsResponse_api = GetFieldPerforationsResponses_api[keyof GetFieldPerforationsResponses_api];
+
+export type GetFieldScreensData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        zCacheBust?: string;
+    };
+    url: "/well/field_screens";
+};
+
+export type GetFieldScreensErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetFieldScreensError_api = GetFieldScreensErrors_api[keyof GetFieldScreensErrors_api];
+
+export type GetFieldScreensResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellboreCompletions_api>;
+};
+
+export type GetFieldScreensResponse_api = GetFieldScreensResponses_api[keyof GetFieldScreensResponses_api];
 
 export type GetWellTrajectoriesData_api = {
     body?: never;
