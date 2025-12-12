@@ -2,6 +2,7 @@ import { isEqual } from "lodash";
 
 import { type SeismicCubeMeta_api, getSeismicCubeMetaListOptions, getSeismicSlicesOptions } from "@api";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
@@ -157,6 +158,7 @@ export class RealizationSeismicSlicesProvider
                 inline_number: slices?.[0] ?? 0,
                 crossline_number: slices?.[1] ?? 0,
                 depth_slice_number: slices?.[2] ?? 0,
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 
@@ -212,6 +214,7 @@ export class RealizationSeismicSlicesProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),

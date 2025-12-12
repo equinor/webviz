@@ -66,7 +66,7 @@ function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElem
         } else if (color === "success") {
             classNames.push("text-green-600", "hover:bg-green-100");
         } else if (color === "secondary") {
-            classNames.push("text-slate-600", "hover:bg-slate-100");
+            classNames.push("text-slate-600", "hover:bg-slate-200");
         }
     }
 

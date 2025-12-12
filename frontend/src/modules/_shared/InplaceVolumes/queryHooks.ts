@@ -7,6 +7,7 @@ import type {
 } from "@api";
 import { postGetAggregatedPerRealizationTableDataOptions, postGetAggregatedStatisticalTableDataOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import type {
     InplaceVolumesStatisticalTableData,
@@ -54,20 +55,22 @@ export function useGetAggregatedStatisticalTableDataQueries(
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
+        const options = postGetAggregatedStatisticalTableDataOptions({
+            query: {
+                ensemble_name: source.ensembleIdent.getEnsembleName(),
+                case_uuid: source.ensembleIdent.getCaseUuid(),
+                table_name: source.tableName,
+                result_names: resultNames,
+                group_by_indices: validGroupByIndices,
+                realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(source.ensembleIdent),
+            },
+            body: {
+                indices_with_values: indicesWithValues,
+            },
+        });
         return () => ({
-            ...postGetAggregatedStatisticalTableDataOptions({
-                query: {
-                    ensemble_name: source.ensembleIdent.getEnsembleName(),
-                    case_uuid: source.ensembleIdent.getCaseUuid(),
-                    table_name: source.tableName,
-                    result_names: resultNames,
-                    group_by_indices: validGroupByIndices,
-                    realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
-                },
-                body: {
-                    indices_with_values: indicesWithValues,
-                },
-            }),
+            ...options,
             enabled: Boolean(
                 allowEnable &&
                     source.ensembleIdent &&
@@ -134,20 +137,22 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
+        const options = postGetAggregatedPerRealizationTableDataOptions({
+            query: {
+                ensemble_name: source.ensembleIdent.getEnsembleName(),
+                case_uuid: source.ensembleIdent.getCaseUuid(),
+                table_name: source.tableName,
+                result_names: resultNames,
+                group_by_indices: validGroupByIndices,
+                realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(source.ensembleIdent),
+            },
+            body: {
+                indices_with_values: indicesWithValues,
+            },
+        });
         return () => ({
-            ...postGetAggregatedPerRealizationTableDataOptions({
-                query: {
-                    ensemble_name: source.ensembleIdent.getEnsembleName(),
-                    case_uuid: source.ensembleIdent.getCaseUuid(),
-                    table_name: source.tableName,
-                    result_names: resultNames,
-                    group_by_indices: validGroupByIndices,
-                    realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
-                },
-                body: {
-                    indices_with_values: indicesWithValues,
-                },
-            }),
+            ...options,
             enabled: Boolean(
                 allowEnable &&
                     source.ensembleIdent &&

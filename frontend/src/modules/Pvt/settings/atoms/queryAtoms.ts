@@ -3,6 +3,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { type PvtData_api, getTableDataOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import type { CombinedPvtDataResult } from "../../typesAndEnums";
 
@@ -21,14 +22,16 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
 
     const queries = ensembleIdentsAndRealizations
         .map((el) => {
+            const options = getTableDataOptions({
+                query: {
+                    case_uuid: el.ensembleIdent.getCaseUuid(),
+                    ensemble_name: el.ensembleIdent.getEnsembleName(),
+                    realization: el.realization,
+                    ...makeCacheBustingQueryParam(el.ensembleIdent),
+                },
+            });
             return () => ({
-                ...getTableDataOptions({
-                    query: {
-                        case_uuid: el.ensembleIdent.getCaseUuid(),
-                        ensemble_name: el.ensembleIdent.getEnsembleName(),
-                        realization: el.realization,
-                    },
-                }),
+                ...options,
                 enabled: Boolean(el.ensembleIdent && el.realization !== null),
             });
         })
