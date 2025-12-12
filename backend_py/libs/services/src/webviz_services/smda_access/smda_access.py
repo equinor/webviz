@@ -175,8 +175,12 @@ class SmdaAccess:
             "well_northing",
             "depth_reference_point",
             "depth_reference_elevation",
+            "tvd_min",
             "tvd_max",
+            "tvd_unit",
+            "md_min",
             "md_max",
+            "md_unit",
         ]
         params = {
             "_projection": ",".join(projection),
@@ -200,6 +204,7 @@ class SmdaAccess:
             "kickoff_depth_tvd",
             "parent_wellbore",
         ]
+
         params = {
             "_projection": ",".join(projection),
             "_sort": "unique_wellbore_identifier",

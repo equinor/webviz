@@ -21,7 +21,7 @@ export function createGridLayerItemsMaker({
     getData,
     getSetting,
     getStoredData,
-    getValueRange,
+    getDataValueRange,
 }: TransformerArgs<
     IntersectionRealizationGridSettings,
     IntersectionRealizationGridData,
@@ -35,7 +35,7 @@ export function createGridLayerItemsMaker({
     const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
     const selectedAttribute = getSetting(Setting.ATTRIBUTE);
     const sourcePolylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
-    const valueRange = getValueRange();
+    const valueRange = getDataValueRange();
 
     const extensionLength = createValidExtensionLength(
         getSetting(Setting.INTERSECTION),

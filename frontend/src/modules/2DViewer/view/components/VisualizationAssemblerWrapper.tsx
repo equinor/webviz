@@ -7,7 +7,7 @@ import {
 } from "@modules/_shared/components/SubsurfaceViewer/DpfSubsurfaceViewerWrapper";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
-import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
+import { DrilledWellboreTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
 import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/FaultPolygonsProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import {
@@ -51,9 +51,9 @@ import {
 import { CustomDataProviderType } from "../../DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { RealizationGridProvider } from "../../DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
 import { makeDrilledWellborePicksLayer2D } from "../../DataProviderFramework/visualization/makeDrilledWellborePicksLayer2D";
-import { makeDrilledWellTrajectoriesLayer2D } from "../../DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
+import { makeRichWellTrajectoriesLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRichWellTrajectoriesLayer";
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>(
@@ -143,9 +143,9 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELL_TRAJECTORIES,
-    DrilledWellTrajectoriesProvider,
+    DrilledWellboreTrajectoriesProvider,
     {
-        transformToVisualization: makeDrilledWellTrajectoriesLayer2D,
+        transformToVisualization: makeRichWellTrajectoriesLayer,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
     },
 );

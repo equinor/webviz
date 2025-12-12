@@ -1,9 +1,9 @@
 import { IntersectionType } from "@framework/types/intersection";
 
-import type { MakeSettingTypesMap } from "../..//settings/settingsDefinitions";
 import { Setting } from "../..//settings/settingsDefinitions";
 import type { CustomGroupImplementationWithSettings } from "../../interfacesAndTypes/customGroupImplementation";
 import type { DefineBasicDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const intersectionViewSettings = [Setting.INTERSECTION, Setting.WELLBORE_EXTENSION_LENGTH] as const;
 export type IntersectionViewSettings = typeof intersectionViewSettings;

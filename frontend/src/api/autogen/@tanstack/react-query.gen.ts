@@ -96,6 +96,8 @@ import {
     postGetSampleSurfaceInPoints,
     postGetSeismicFence,
     postGetSurfaceIntersection,
+    postGetWellTrajectoriesFormationSegments,
+    postGetWellTrajectoryPicksPerSurface,
     postLogout,
     postRefreshFingerprintsForEnsembles,
     root,
@@ -211,6 +213,12 @@ import type {
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionError_api,
     PostGetSurfaceIntersectionResponse_api,
+    PostGetWellTrajectoriesFormationSegmentsData_api,
+    PostGetWellTrajectoriesFormationSegmentsError_api,
+    PostGetWellTrajectoriesFormationSegmentsResponse_api,
+    PostGetWellTrajectoryPicksPerSurfaceData_api,
+    PostGetWellTrajectoryPicksPerSurfaceError_api,
+    PostGetWellTrajectoryPicksPerSurfaceResponse_api,
     PostLogoutData_api,
     PostLogoutResponse_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -869,6 +877,152 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
         },
         queryKey: getSurfaceDataQueryKey(options),
     });
+};
+
+export const postGetWellTrajectoryPicksPerSurfaceQueryKey = (
+    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api>,
+) => createQueryKey("postGetWellTrajectoryPicksPerSurface", options);
+
+/**
+ * Post Get Well Trajectory Picks Per Surface
+ *
+ * Get surface picks along a well trajectory for multiple depth surfaces.
+ *
+ * For each provided depth surface address, the intersections (picks) between the surface and the
+ * well trajectory are calculated and returned.
+ *
+ * Returns a list of surface picks per depth surface, in the same order as the provided list of
+ * depth surface address strings.
+ */
+export const postGetWellTrajectoryPicksPerSurfaceOptions = (
+    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api>,
+) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postGetWellTrajectoryPicksPerSurface({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postGetWellTrajectoryPicksPerSurfaceQueryKey(options),
+    });
+};
+
+/**
+ * Post Get Well Trajectory Picks Per Surface
+ *
+ * Get surface picks along a well trajectory for multiple depth surfaces.
+ *
+ * For each provided depth surface address, the intersections (picks) between the surface and the
+ * well trajectory are calculated and returned.
+ *
+ * Returns a list of surface picks per depth surface, in the same order as the provided list of
+ * depth surface address strings.
+ */
+export const postGetWellTrajectoryPicksPerSurfaceMutation = (
+    options?: Partial<Options<PostGetWellTrajectoryPicksPerSurfaceData_api>>,
+): UseMutationOptions<
+    PostGetWellTrajectoryPicksPerSurfaceResponse_api,
+    AxiosError<PostGetWellTrajectoryPicksPerSurfaceError_api>,
+    Options<PostGetWellTrajectoryPicksPerSurfaceData_api>
+> => {
+    const mutationOptions: UseMutationOptions<
+        PostGetWellTrajectoryPicksPerSurfaceResponse_api,
+        AxiosError<PostGetWellTrajectoryPicksPerSurfaceError_api>,
+        Options<PostGetWellTrajectoryPicksPerSurfaceData_api>
+    > = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postGetWellTrajectoryPicksPerSurface({
+                ...options,
+                ...fnOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
+
+export const postGetWellTrajectoriesFormationSegmentsQueryKey = (
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api>,
+) => createQueryKey("postGetWellTrajectoriesFormationSegments", options);
+
+/**
+ * Post Get Well Trajectories Formation Segments
+ *
+ * Get well trajectory formation segments.
+ *
+ * Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
+ * formation (area between two surfaces in depth). If bottom surface is not provided, the formation
+ * is considered to extend down to the end of the well trajectory, i.e. end of well trajectory is
+ * used as lower bound for formation.
+ *
+ * For each well trajectory, the segments where the well is within the formation are calculated and
+ * returned. Each segment contains the measured depth (md) values where the well enters and exits
+ * the formation.
+ *
+ * NOTE: Expecting depth surfaces, no verification is done to ensure that the surfaces are indeed
+ * depth surfaces.
+ */
+export const postGetWellTrajectoriesFormationSegmentsOptions = (
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api>,
+) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postGetWellTrajectoriesFormationSegments({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postGetWellTrajectoriesFormationSegmentsQueryKey(options),
+    });
+};
+
+/**
+ * Post Get Well Trajectories Formation Segments
+ *
+ * Get well trajectory formation segments.
+ *
+ * Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
+ * formation (area between two surfaces in depth). If bottom surface is not provided, the formation
+ * is considered to extend down to the end of the well trajectory, i.e. end of well trajectory is
+ * used as lower bound for formation.
+ *
+ * For each well trajectory, the segments where the well is within the formation are calculated and
+ * returned. Each segment contains the measured depth (md) values where the well enters and exits
+ * the formation.
+ *
+ * NOTE: Expecting depth surfaces, no verification is done to ensure that the surfaces are indeed
+ * depth surfaces.
+ */
+export const postGetWellTrajectoriesFormationSegmentsMutation = (
+    options?: Partial<Options<PostGetWellTrajectoriesFormationSegmentsData_api>>,
+): UseMutationOptions<
+    PostGetWellTrajectoriesFormationSegmentsResponse_api,
+    AxiosError<PostGetWellTrajectoriesFormationSegmentsError_api>,
+    Options<PostGetWellTrajectoriesFormationSegmentsData_api>
+> => {
+    const mutationOptions: UseMutationOptions<
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        AxiosError<PostGetWellTrajectoriesFormationSegmentsError_api>,
+        Options<PostGetWellTrajectoriesFormationSegmentsData_api>
+    > = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postGetWellTrajectoriesFormationSegments({
+                ...options,
+                ...fnOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
 };
 
 export const getStatisticalSurfaceDataHybridQueryKey = (options: Options<GetStatisticalSurfaceDataHybridData_api>) =>

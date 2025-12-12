@@ -1,4 +1,5 @@
 from typing import List
+import numpy as np
 
 from ..types import WellboreTrajectory, WellboreHeader, WellborePick, StratigraphicColumn
 
@@ -28,8 +29,12 @@ def get_drogon_well_headers() -> List[WellboreHeader]:
             wellbore_purpose="production",
             wellbore_status="active",
             current_track=1,
-            tvd_max=1774.5,
+            md_min=0.0,
             md_max=1799.5,
+            md_unit="m",
+            tvd_min=-25.0,
+            tvd_max=1774.5,
+            tvd_unit="m",
             kickoff_depth_md=None,
             kickoff_depth_tvd=None,
             parent_wellbore=None,
@@ -46,8 +51,12 @@ def get_drogon_well_headers() -> List[WellboreHeader]:
             wellbore_purpose="production",
             wellbore_status="active",
             current_track=1,
-            tvd_max=1656.9874,
+            md_min=0.0,
             md_max=3578.5,
+            md_unit="m",
+            tvd_min=-49.0,
+            tvd_max=1656.9874,
+            tvd_unit="m",
             kickoff_depth_md=None,
             kickoff_depth_tvd=None,
             parent_wellbore=None,
@@ -56,6 +65,22 @@ def get_drogon_well_headers() -> List[WellboreHeader]:
 
 
 def get_drogon_well_trajectories() -> List[WellboreTrajectory]:
+    # Original second wellbore data
+    original_tvd_msl = np.array([-49.0, 1293.4185, 1536.9384, 1616.4998, 1630.5153, 1656.9874])
+    original_easting = np.array([463256.911, 463564.402, 463637.925, 463690.658, 463910.452, 464465.876])
+    original_northing = np.array([5930542.294, 5931057.803, 5931184.235, 5931278.837, 5931688.122, 5932767.761])
+    original_md = np.array([0.0, 1477.0, 1761.5, 1899.2601, 2363.9988, 3578.5])
+
+    # Create 100x more sample points using linear interpolation
+    num_original_points = len(original_md)
+    num_interpolated_points = (num_original_points - 1) * 100 + 1
+
+    # Interpolate based on MD (measured depth) as the independent variable
+    md_interp = np.linspace(original_md[0], original_md[-1], num_interpolated_points)
+    tvd_msl_interp = np.interp(md_interp, original_md, original_tvd_msl)
+    easting_interp = np.interp(md_interp, original_md, original_easting)
+    northing_interp = np.interp(md_interp, original_md, original_northing)
+
     return [
         WellboreTrajectory(
             wellbore_uuid="drogon_vertical",
@@ -68,10 +93,10 @@ def get_drogon_well_trajectories() -> List[WellboreTrajectory]:
         WellboreTrajectory(
             wellbore_uuid="drogon_horizontal",
             unique_wellbore_identifier="55/33-A-4",
-            tvd_msl_arr=[-49.0, 1293.4185, 1536.9384, 1616.4998, 1630.5153, 1656.9874],
-            md_arr=[0.0, 1477.0, 1761.5, 1899.2601, 2363.9988, 3578.5],
-            easting_arr=[463256.911, 463564.402, 463637.925, 463690.658, 463910.452, 464465.876],
-            northing_arr=[5930542.294, 5931057.803, 5931184.235, 5931278.837, 5931688.122, 5932767.761],
+            tvd_msl_arr=tvd_msl_interp.tolist(),
+            md_arr=md_interp.tolist(),
+            easting_arr=easting_interp.tolist(),
+            northing_arr=northing_interp.tolist(),
         ),
     ]
 

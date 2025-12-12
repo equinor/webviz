@@ -9,9 +9,15 @@ from webviz_services.smda_access.types import StratigraphicSurface
 from webviz_services.sumo_access.surface_types import SurfaceMetaSet
 from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
 from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
-from webviz_services.utils.surface_helpers import surface_to_float32_numpy_array, get_min_max_surface_values
+from webviz_services.utils.surface_helpers import (
+    surface_to_float32_numpy_array,
+    get_min_max_surface_values,
+    SurfaceWellPick,
+    WellTrajectory,
+)
 from webviz_services.utils.surface_to_png import surface_to_png_bytes_optimized
 from webviz_services.smda_access import StratigraphicUnit
+from webviz_services.utils.surfaces_well_trajectory_formation_segments import WellTrajectoryFormationSegments
 
 from . import schemas
 
@@ -201,4 +207,56 @@ def to_api_stratigraphic_unit(
         colorG=stratigraphic_unit.color_g,
         colorB=stratigraphic_unit.color_b,
         lithologyType=stratigraphic_unit.lithology_type,
+    )
+
+
+def from_api_well_trajectory(
+    api_well_trajectory: schemas.WellTrajectory,
+) -> WellTrajectory:
+    """
+    Convert API well trajectory to service layer well trajectory
+    """
+    return WellTrajectory(
+        x_points=api_well_trajectory.xPoints,
+        y_points=api_well_trajectory.yPoints,
+        z_points=api_well_trajectory.zPoints,
+        md_points=api_well_trajectory.mdPoints,
+        unique_wellbore_identifier=api_well_trajectory.uwi,
+    )
+
+
+def to_api_well_trajectory_formation_segments(
+    well_trajectory_formation_segments: WellTrajectoryFormationSegments,
+) -> schemas.WellTrajectoryFormationSegments:
+    """
+    Convert service layer well trajectory formation segments to API well trajectory
+    formation segments
+    """
+    return schemas.WellTrajectoryFormationSegments(
+        uwi=well_trajectory_formation_segments.unique_wellbore_identifier,
+        formationSegments=[
+            schemas.FormationSegment(mdEnter=fs.md_enter, mdExit=fs.md_exit)
+            for fs in well_trajectory_formation_segments.formation_segments
+        ],
+    )
+
+
+def to_api_surface_well_picks(
+    surface_well_picks: list[SurfaceWellPick],
+) -> schemas.SurfaceWellPicks:
+    """
+    Convert list of service layer surface well pick to list of API surface well pick
+    """
+
+    return schemas.SurfaceWellPicks(
+        picks=[
+            schemas.SurfaceWellPick(
+                x=pick.x,
+                y=pick.y,
+                z=pick.z,
+                md=pick.md,
+                direction=schemas.PickDirection(pick.direction.value),
+            )
+            for pick in surface_well_picks
+        ]
     )

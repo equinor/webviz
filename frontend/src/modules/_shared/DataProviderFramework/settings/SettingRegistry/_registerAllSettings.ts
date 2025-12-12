@@ -14,11 +14,13 @@ import { DropdownNumberSetting } from "../implementations/DropdownNumberSetting"
 import { DropdownStringSetting } from "../implementations/DropdownStringSetting";
 import { EnsembleSetting } from "../implementations/EnsembleSetting";
 import { GridLayerRangeSetting } from "../implementations/GridLayerRangeSetting";
-import { Direction as GridLayerDirection, GridLayerSetting } from "../implementations/GridLayerSetting";
 import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { LogCurveSetting } from "../implementations/LogCurveSetting";
+import { NumberRangeDropdownSetting } from "../implementations/NumberRangeDropdownSetting";
+import { PdmFilterSetting } from "../implementations/PdmFilterSetting";
 import { PolygonVisualizationSetting } from "../implementations/PolygonVisualizationSetting";
+import { RadioGroupSetting } from "../implementations/RadioGroupSetting";
 import { RepresentationSetting } from "../implementations/RepresentationSetting";
 import { SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
@@ -26,9 +28,11 @@ import { SelectStringSetting } from "../implementations/SelectStringSetting";
 import { SensitivitySetting } from "../implementations/SensitivitySetting";
 import { SingleColorSetting } from "../implementations/SingleColorSetting";
 import { SliderNumberSetting } from "../implementations/SliderNumberSetting";
+import { SliderRangeSetting } from "../implementations/SliderRangeSetting";
 import { StaticRotationSetting } from "../implementations/StaticRotationSetting";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
 import { TimeOrIntervalSetting } from "../implementations/TimeOrIntervalSetting";
+import { WellboreDepthFilterSetting } from "../implementations/WellboreDepthFilterSetting";
 import { Setting } from "../settingsDefinitions";
 
 import { SettingRegistry } from "./_SettingRegistry";
@@ -96,9 +100,7 @@ SettingRegistry.registerSetting(Setting.COLOR_SET, "Color Set", ColorSetSetting)
 SettingRegistry.registerSetting(Setting.CONTOURS, "Contours", BooleanNumberSetting, {
     customConstructorParameters: [{ min: 10, max: 200 }],
 });
-SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", GridLayerSetting, {
-    customConstructorParameters: [GridLayerDirection.K],
-});
+SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", NumberRangeDropdownSetting);
 SettingRegistry.registerSetting(Setting.GRID_LAYER_RANGE, "Grid Ranges", GridLayerRangeSetting);
 SettingRegistry.registerSetting(Setting.GRID_NAME, "Grid Name", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting);
@@ -122,7 +124,7 @@ SettingRegistry.registerSetting(Setting.SEISMIC_SLICES, "Seismic Slices", Seismi
 SettingRegistry.registerSetting(Setting.SENSITIVITY, "Sensitivity", SensitivitySetting);
 SettingRegistry.registerSetting(Setting.SHOW_GRID_LINES, "Show Grid Lines", BooleanSetting);
 SettingRegistry.registerSetting(Setting.SMDA_INTERPRETER, "SMDA Interpreter", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.SMDA_WELLBORE_HEADERS, "SMDA Wellbore Headers", DrilledWellboresSetting);
+SettingRegistry.registerSetting(Setting.WELLBORES, "Wellbores", DrilledWellboresSetting);
 SettingRegistry.registerSetting(Setting.STATISTIC_FUNCTION, "Statistic Function", StatisticFunctionSetting);
 SettingRegistry.registerSetting(Setting.STRAT_COLUMN, "Stratigraphic Column", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.SURFACE_NAME, "Surface Name", DropdownStringSetting);
@@ -137,3 +139,36 @@ SettingRegistry.registerSetting(Setting.WELLBORE_EXTENSION_LENGTH, "Wellbore Ext
 });
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
 SettingRegistry.registerSetting(Setting.REPRESENTATION, "Representation", RepresentationSetting);
+SettingRegistry.registerSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE, "Depth Filter", RadioGroupSetting, {
+    customConstructorParameters: [
+        {
+            staticOptions: [
+                { value: "none", label: "None" },
+                { value: "md_range", label: "MD" },
+                { value: "tvd_range", label: "TVD" },
+                { value: "surface_based", label: "Surface" },
+            ],
+            layout: "horizontal",
+        },
+    ],
+});
+SettingRegistry.registerSetting(Setting.MD_RANGE, "MD Range", SliderRangeSetting);
+SettingRegistry.registerSetting(Setting.TVD_RANGE, "TVD Range", SliderRangeSetting);
+SettingRegistry.registerSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, "Surface Attribute", DropdownStringSetting);
+SettingRegistry.registerSetting(
+    Setting.WELLBORE_DEPTH_FORMATION_FILTER,
+    "Formation Filter",
+    WellboreDepthFilterSetting,
+);
+SettingRegistry.registerSetting(Setting.PDM_FILTER, "Flow Data Cut-off", PdmFilterSetting);
+SettingRegistry.registerSetting(Setting.PDM_FILTER_TYPE, "Flow Data Filter", RadioGroupSetting, {
+    customConstructorParameters: [
+        {
+            staticOptions: [
+                { value: "none", label: "None" },
+                { value: "production_injection", label: "Production/Injection" },
+            ],
+            layout: "horizontal",
+        },
+    ],
+});

@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import List, Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -164,6 +164,79 @@ class SurfaceRealizationSampleValues(BaseModel):
 class PointSetXY(BaseModel):
     x_points: list[float]
     y_points: list[float]
+
+
+class PickDirection(StrEnum):
+    """Direction of the pick relative to the surface"""
+
+    UPWARD = "UPWARD"
+    DOWNWARD = "DOWNWARD"
+
+
+class SurfaceWellPick(BaseModel):
+    """Surface pick data along a well trajectory
+
+    md: Measured depth value at the pick point.
+    direction: Direction of the pick relative to the surface.
+    """
+
+    md: float
+    direction: PickDirection
+
+
+class SurfaceWellPicks(BaseModel):
+    """Surface picks along a well trajectory for a specific surface.
+
+    Each pick contains the measured depth and direction.
+
+    """
+
+    picks: List[SurfaceWellPick]
+
+
+class FormationSegment(BaseModel):
+    """
+    Segment of a formation defined by top and bottom surface.
+
+    The formation segment is defined by the md (measured depth) value along the well trajectory,
+    at enter and exit of the formation.
+    """
+
+    mdEnter: float
+    mdExit: float
+
+
+class WellTrajectoryFormationSegments(BaseModel):
+    """
+    Segments of a well trajectory that intersects a formation defined by top and bottom surfaces.
+
+    A wellbore can enter and exit a formation multiple times, resulting in multiple segments.
+
+    uniqueWellboreIdentifier: str
+    formationSegments: List[FormationSegment]
+    """
+
+    uwi: str
+    formationSegments: List[FormationSegment]
+
+
+class WellTrajectory(BaseModel):
+    """
+    Well trajectory defined by a set of (x, y, z) coordinates and measured depths (md).
+
+    uwi: Unique wellbore identifier.
+    xPoints: X-coordinates of well trajectory points.
+    yPoints: Y-coordinates of well trajectory points.
+    zPoints: Z-coordinates (depth values) of well trajectory points.
+    mdPoints: Measured depth values at each well trajectory point.
+
+    """
+
+    xPoints: List[float]
+    yPoints: List[float]
+    zPoints: List[float]
+    mdPoints: List[float]
+    uwi: str
 
 
 class StratigraphicUnit(BaseModel):

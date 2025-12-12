@@ -26,7 +26,7 @@ export class LinearPlotProvider
     defineDependencies(args: DefineDependenciesArgs<LinearPlotSettingTypes>) {
         defineBaseContinuousDependencies(args);
 
-        args.availableSettingsUpdater(Setting.PLOT_VARIANT, () => {
+        args.valueRangeUpdater(Setting.PLOT_VARIANT, () => {
             return ["line", "linestep", "dot"];
         });
     }

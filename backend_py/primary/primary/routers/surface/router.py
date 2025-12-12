@@ -20,6 +20,8 @@ from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_us
 from webviz_services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from webviz_services.surface_query_service.surface_query_service import RealizationSampleResult
 from webviz_services.service_exceptions import ServiceLayerException
+from webviz_services.utils.surfaces_well_trajectory_formation_segments import create_well_trajectory_formation_segments
+from webviz_services.utils.surface_helpers import get_surface_picks_for_well_trajectory_from_xtgeo
 
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
@@ -169,38 +171,9 @@ async def get_surface_data(
     if not isinstance(addr, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
         raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
-    xtgeo_surf: xtgeo.RegularSurface | None = None
-    if addr.address_type == "REAL":
-        access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
-        xtgeo_surf = await access.get_realization_surface_data_async(
-            real_num=addr.realization,
-            name=addr.name,
-            attribute=addr.attribute,
-            time_or_interval_str=addr.iso_time_or_interval,
-        )
-        perf_metrics.record_lap("get-surf")
-
-    elif addr.address_type == "STAT":
-        service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
-        if service_stat_func_to_compute is None:
-            raise HTTPException(status_code=404, detail="Invalid statistic requested")
-
-        access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
-        xtgeo_surf = await access.get_statistical_surface_data_async(
-            statistic_function=service_stat_func_to_compute,
-            name=addr.name,
-            attribute=addr.attribute,
-            realizations=addr.stat_realizations,
-            time_or_interval_str=addr.iso_time_or_interval,
-        )
-        perf_metrics.record_lap("sumo-calc")
-
-    elif addr.address_type == "OBS":
-        access = SurfaceAccess.from_case_uuid_no_ensemble(access_token, addr.case_uuid)
-        xtgeo_surf = await access.get_observed_surface_data_async(
-            name=addr.name, attribute=addr.attribute, time_or_interval_str=addr.iso_time_or_interval
-        )
-        perf_metrics.record_lap("get-surf")
+    xtgeo_surf = await _get_xtgeo_surface_from_sumo_async(
+        access_token=access_token, surf_addr_str=surf_addr_str, perf_metrics=perf_metrics
+    )
 
     if not xtgeo_surf:
         raise HTTPException(status_code=500, detail="Did not get a valid xtgeo surface from Sumo")
@@ -212,6 +185,134 @@ async def get_surface_data(
     LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
+
+
+@router.post("/get_well_trajectory_picks_per_surface")
+async def post_get_well_trajectory_picks_per_surface(
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    well_trajectory: Annotated[schemas.WellTrajectory, Body(embed=True)],
+    depth_surface_addr_str_list: Annotated[
+        list[str],
+        Query(
+            description="List of surface address strings for depth surfaces. Supported address types are *REAL*, *OBS* and *STAT*"
+        ),
+    ],
+) -> list[schemas.SurfaceWellPicks]:
+    """
+    Get surface picks along a well trajectory for multiple depth surfaces.
+
+    For each provided depth surface address, the intersections (picks) between the surface and the
+    well trajectory are calculated and returned.
+
+    Returns a list of surface picks per depth surface, in the same order as the provided list of
+    depth surface address strings.
+    """
+    if not depth_surface_addr_str_list:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one depth surface address string must be provided",
+        )
+
+    perf_metrics = ResponsePerfMetrics(response)
+    access_token = authenticated_user.get_sumo_access_token()
+
+    try:
+        async with asyncio.TaskGroup() as tg:
+            xtgeo_surface_tasks = [
+                tg.create_task(_get_xtgeo_surface_from_sumo_async(access_token, surf_addr_str, perf_metrics))
+                for surf_addr_str in depth_surface_addr_str_list
+            ]
+
+        xtgeo_surfaces = [task.result() for task in xtgeo_surface_tasks]
+    except* ServiceLayerException as exc_group:
+        for exc in exc_group.exceptions:
+            raise exc from exc_group  # Reraise the first exception
+
+    perf_metrics.record_lap("get-surfaces")
+
+    well_traj = converters.from_api_well_trajectory(well_trajectory)
+    well_picks_per_surface = []
+    for xtgeo_surf in xtgeo_surfaces:
+        surface_picks = get_surface_picks_for_well_trajectory_from_xtgeo(
+            surf=xtgeo_surf,
+            well_trajectory=well_traj,
+        )
+
+        valid_picks = surface_picks if surface_picks is not None else []
+        well_picks_per_surface.append(valid_picks)
+    perf_metrics.record_lap("sample-picks")
+
+    result = [converters.to_api_surface_well_picks(surface_picks) for surface_picks in well_picks_per_surface]
+
+    LOGGER.info(f"Got well trajectory surface picks in: {perf_metrics.to_string()}")
+    return result
+
+
+@router.post("/get_well_trajectories_formation_segments")
+async def post_get_well_trajectories_formation_segments(
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    well_trajectories: Annotated[list[schemas.WellTrajectory], Body(embed=True)],
+    top_depth_surf_addr_str: Annotated[
+        str,
+        Query(
+            description="Surface address string for top bounding depth surface. Supported address types are *REAL*, *OBS* and *STAT*"
+        ),
+    ],
+    bottom_depth_surf_addr_str: Annotated[
+        str | None,
+        Query(
+            description="Optional surface address string for bottom bounding depth surface. If not provided end of well trajectory"
+            " is used as lower bound for formation. Supported address types are *REAL*, *OBS* and *STAT*"
+        ),
+    ] = None,
+) -> list[schemas.WellTrajectoryFormationSegments]:
+    """
+    Get well trajectory formation segments.
+
+    Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
+    formation (area between two surfaces in depth). If bottom surface is not provided, the formation
+    is considered to extend down to the end of the well trajectory, i.e. end of well trajectory is
+    used as lower bound for formation.
+
+    For each well trajectory, the segments where the well is within the formation are calculated and
+    returned. Each segment contains the measured depth (md) values where the well enters and exits
+    the formation.
+
+    NOTE: Expecting depth surfaces, no verification is done to ensure that the surfaces are indeed
+    depth surfaces.
+
+    """
+    perf_metrics = ResponsePerfMetrics(response)
+    access_token = authenticated_user.get_sumo_access_token()
+
+    top_xtgeo_surf = await _get_xtgeo_surface_from_sumo_async(
+        access_token=access_token, surf_addr_str=top_depth_surf_addr_str, perf_metrics=perf_metrics
+    )
+    perf_metrics.record_lap("get-top-surf")
+
+    bottom_xtgeo_surf = None
+    if bottom_depth_surf_addr_str:
+        bottom_xtgeo_surf = await _get_xtgeo_surface_from_sumo_async(
+            access_token=access_token, surf_addr_str=bottom_depth_surf_addr_str, perf_metrics=perf_metrics
+        )
+    perf_metrics.record_lap("get-bottom-surf")
+
+    per_well_trajectory_formation_segments = []
+    for well in well_trajectories:
+        formation_segments = create_well_trajectory_formation_segments(
+            well_trajectory=converters.from_api_well_trajectory(well),
+            top_depth_surface=top_xtgeo_surf,
+            bottom_depth_surface=bottom_xtgeo_surf,
+        )
+        per_well_trajectory_formation_segments.append(
+            converters.to_api_well_trajectory_formation_segments(formation_segments)
+        )
+
+    perf_metrics.record_lap("Create segments for all wells")
+    LOGGER.info(f"Got well trajectory formation segments in: {perf_metrics.to_string()}")
+    return per_well_trajectory_formation_segments
 
 
 @router.get("/statistical_surface_data/hybrid")
@@ -472,3 +573,53 @@ def _resample_and_convert_to_surface_data_response(
     perf_metrics.record_lap("convert")
 
     return surf_data_response
+
+
+async def _get_xtgeo_surface_from_sumo_async(
+    access_token: str,
+    surf_addr_str: str,
+    perf_metrics: ResponsePerfMetrics,
+) -> xtgeo.RegularSurface:
+    """
+    Retrieve an xtgeo RegularSurface from SUMO based on the provided surface address string.
+    """
+
+    addr = decode_surf_addr_str(surf_addr_str)
+    if not isinstance(addr, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
+        raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
+
+    xtgeo_surf: xtgeo.RegularSurface | None = None
+    if addr.address_type == "REAL":
+        access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
+        xtgeo_surf = await access.get_realization_surface_data_async(
+            real_num=addr.realization,
+            name=addr.name,
+            attribute=addr.attribute,
+            time_or_interval_str=addr.iso_time_or_interval,
+        )
+        perf_metrics.record_lap("get-surf")
+
+    elif addr.address_type == "STAT":
+        service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
+        if service_stat_func_to_compute is None:
+            raise HTTPException(status_code=404, detail="Invalid statistic requested")
+
+        access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
+        xtgeo_surf = await access.get_statistical_surface_data_async(
+            statistic_function=service_stat_func_to_compute,
+            name=addr.name,
+            attribute=addr.attribute,
+            realizations=addr.stat_realizations,
+            time_or_interval_str=addr.iso_time_or_interval,
+        )
+        perf_metrics.record_lap("sumo-calc")
+
+    elif addr.address_type == "OBS":
+        access = SurfaceAccess.from_case_uuid_no_ensemble(access_token, addr.case_uuid)
+        xtgeo_surf = await access.get_observed_surface_data_async(
+            name=addr.name, attribute=addr.attribute, time_or_interval_str=addr.iso_time_or_interval
+        )
+        perf_metrics.record_lap("get-surf")
+    LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
+
+    return xtgeo_surf

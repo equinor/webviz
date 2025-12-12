@@ -9,8 +9,8 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
-import type { SettingCategory } from "../settingsDefinitions";
+
+import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 export type IntersectionSettingValue = {
     type: IntersectionType;
@@ -18,44 +18,52 @@ export type IntersectionSettingValue = {
     uuid: string;
 };
 type ValueType = IntersectionSettingValue | null;
+type ValueRangeType = IntersectionSettingValue[];
 
-export class IntersectionSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
+export class IntersectionSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _activeType = IntersectionType.WELLBORE;
+    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>(
+        (a, b) => a.uuid === b.uuid,
+    );
 
-    isValueValid(
-        value: IntersectionSettingValue | null,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>,
-    ): boolean {
-        if (!value) {
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value !== "object" || Array.isArray(value)) {
             return false;
         }
 
-        return availableValues.some((v) => v.uuid === value.uuid && v.type === value.type);
+        const v = value as Record<string, unknown>;
+        return typeof v.type === "string" && typeof v.name === "string" && typeof v.uuid === "string";
     }
 
-    fixupValue(
-        currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>,
-    ): ValueType {
-        if (currentValue === null) {
-            return availableValues.find((v) => v.type === this._activeType) ?? null;
-        }
-
-        if (availableValues.some((v) => v.uuid === currentValue.uuid && v.type === currentValue.type)) {
-            return currentValue;
-        }
-
-        return availableValues.find((v) => v.type === currentValue.type) ?? null;
+    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+        return isValueValid<ValueType, IntersectionSettingValue>(value, valueRange, (v) => v);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+        return fixupValue<ValueType, IntersectionSettingValue>(
+            currentValue,
+            valueRange,
+            (v) => v,
+            (a, b) => a?.type === b?.type && a?.uuid === b?.uuid,
+        );
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
         const activeType = this._activeType;
         const setActiveType = (type: IntersectionType) => {
             this._activeType = type;
         };
 
-        return function IntersectionSetting(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
-            const availableValues = props.availableValues ?? [];
+        return function IntersectionSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
+            const availableValues = props.valueRange ?? [];
             const [type, setType] = React.useState<IntersectionSettingValue["type"]>(props.value?.type ?? activeType);
 
             React.useEffect(() => {

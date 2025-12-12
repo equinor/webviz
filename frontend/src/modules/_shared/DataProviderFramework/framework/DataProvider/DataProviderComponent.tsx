@@ -54,9 +54,12 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
             endAdornment={<EndActions dataProvider={props.dataProvider} />}
         >
             <div
-                className={resolveClassNames("grid grid-cols-[auto_1fr] items-center text-xs border", {
-                    hidden: !isExpanded,
-                })}
+                className={resolveClassNames(
+                    "grid grid-cols-[auto_1fr] items-stretch text-xs border [&>*:nth-child(4n-3)]:bg-slate-50 [&>*:nth-child(4n-2)]:bg-slate-50",
+                    {
+                        hidden: !isExpanded,
+                    },
+                )}
             >
                 {makeSettings(props.dataProvider.getSettingsContextDelegate().getSettings())}
             </div>
