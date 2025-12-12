@@ -11,7 +11,7 @@ export enum SerializedType {
     DATA_PROVIDER_MANAGER = "data-provider-manager",
     GROUP = "group",
     DATA_PROVIDER = "data-provider",
-    SETTINGS_GROUP = "settings-group",
+    CONTEXT_BOUNDARY = "context-boundary",
     COLOR_SCALE = "color-scale",
     DELTA_SURFACE = "delta-surface",
     SHARED_SETTING = "shared-setting",
@@ -27,14 +27,14 @@ export interface SerializedItem {
 
 export type SerializedSettingsState<
     TSettings extends Settings,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > = {
     [K in TSettingKey]: string;
 };
 
 export interface SerializedDataProvider<
     TSettings extends Settings,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > extends SerializedItem {
     type: SerializedType.DATA_PROVIDER;
     dataProviderType: string;
@@ -43,7 +43,7 @@ export interface SerializedDataProvider<
 
 export interface SerializedGroup<
     TSettings extends Settings,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > extends SerializedItem {
     type: SerializedType.GROUP;
     groupType: GroupType;
@@ -52,8 +52,8 @@ export interface SerializedGroup<
     children: SerializedItem[];
 }
 
-export interface SerializedSettingsGroup extends SerializedItem {
-    type: SerializedType.SETTINGS_GROUP;
+export interface SerializedContextBoundary extends SerializedItem {
+    type: SerializedType.CONTEXT_BOUNDARY;
     children: SerializedItem[];
 }
 

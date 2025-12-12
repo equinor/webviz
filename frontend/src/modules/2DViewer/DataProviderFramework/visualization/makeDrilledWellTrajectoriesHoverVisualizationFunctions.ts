@@ -1,20 +1,16 @@
-import { GeoJsonLayer } from "@deck.gl/layers";
+import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { GL } from "@luma.gl/constants";
+import type { Point3D } from "@webviz/subsurface-viewer";
 
 import type { WellboreTrajectory_api } from "@api";
 import { HoverTopic } from "@framework/HoverService";
-import { BiconeLayer } from "@modules/3DViewer/customDeckGlLayers/BiconeLayer";
 import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type {
     HoverVisualizationFunctions,
     TransformerArgs,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import {
-    getInterpolatedNormalAtMd,
-    getInterpolatedPositionAtMd,
-    getTrajectoryIndexForMd,
-    wellTrajectoryToGeojson,
-} from "@modules/_shared/utils/wellbore";
+import { getInterpolatedPositionAtMd, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
 function findWellboreTrajectory(uuid: string | null | undefined, trajectories: WellboreTrajectory_api[]) {
     if (!uuid) return undefined;
@@ -40,6 +36,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
             if (wellboreTrajectory) {
                 trajectoryData.push(wellTrajectoryToGeojson(wellboreTrajectory, { invertZAxis: true }));
             }
+
             return [
                 new GeoJsonLayer({
                     id: `${id}-hovered-well`,
@@ -47,51 +44,49 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                         type: "FeatureCollection",
                         features: trajectoryData,
                     },
-                    getLineWidth: 3,
-                    lineWidthMinPixels: 3,
+                    getLineWidth: 5,
+                    lineWidthMinPixels: 5,
                     lineBillboard: true,
                     getLineColor: [255, 0, 0],
 
                     pickable: false,
                     visible: trajectoryData.length > 0,
                     autoHighlight: false,
+                    parameters: { [GL.DEPTH_TEST]: false },
                 }),
             ];
         },
+
         [HoverTopic.WELLBORE_MD]: (hoverData) => {
-            const wellboreTrajectory = wellboreTrajectories.find(
-                (wellTrajectory) => wellTrajectory.wellboreUuid === hoverData?.wellboreUuid,
-            );
+            const mdPointData: Point3D[] = [];
+            if (hoverData?.md) {
+                const wellboreTrajectory = findWellboreTrajectory(hoverData?.wellboreUuid, wellboreTrajectories);
+                if (wellboreTrajectory) {
+                    const interpolatedPosition = getInterpolatedPositionAtMd(hoverData.md, wellboreTrajectory);
+                    interpolatedPosition[2] *= -1; // TVD value is positive, so we flip of for the actual z-position
 
-            let hoveredMdPoint3d: [number, number, number] = [0, 0, 0];
-            let normal: [number, number, number] = [0, 0, 1];
-
-            const visible = hoverData !== null && wellboreTrajectory !== undefined;
-
-            if (visible) {
-                const trajectoryIndex = getTrajectoryIndexForMd(hoverData.md, wellboreTrajectory);
-
-                normal = getInterpolatedNormalAtMd(hoverData.md, wellboreTrajectory, trajectoryIndex);
-                hoveredMdPoint3d = getInterpolatedPositionAtMd(hoverData.md, wellboreTrajectory, trajectoryIndex);
-                hoveredMdPoint3d[2] *= -1; // Invert z-axis
+                    mdPointData.push(interpolatedPosition);
+                }
             }
 
             return [
-                new BiconeLayer({
+                new ScatterplotLayer({
                     id: `${id}-hovered-md-point`,
-                    centerPoint: hoveredMdPoint3d,
-                    radius: 20,
-                    height: 10,
-                    normalVector: normal,
-                    numberOfSegments: 32,
-                    color: [255, 0, 0],
-                    opacity: 0.3,
-                    visible: visible,
-                    autoHighlight: false,
+                    data: mdPointData,
+                    getRadius: 2,
+                    radiusMinPixels: 8,
+                    getLineWidth: 0.1,
+                    lineWidthMinPixels: 1,
+                    getFillColor: [255, 0, 0, 180],
+                    getPosition: (d) => d,
+
+                    stroked: true,
+                    depthTest: false,
                     pickable: false,
-                    sizeUnits: "pixels",
-                    minSizeInMeters: 0,
-                    maxSizeInMeters: 200,
+                    billboard: true,
+                    autoHighlight: false,
+                    visible: mdPointData.length > 0,
+                    parameters: { [GL.DEPTH_TEST]: false },
                 }),
             ];
         },

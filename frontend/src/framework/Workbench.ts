@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { GuiMessageBroker } from "./GuiMessageBroker";
+import { HoverService } from "./HoverService";
 import { NavigationManager } from "./internal/NavigationManager";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { WorkbenchSessionManager } from "./internal/WorkbenchSession/WorkbenchSessionManager";
@@ -18,6 +19,7 @@ import type { WorkbenchServices } from "./WorkbenchServices";
  */
 export class Workbench {
     private readonly _workbenchServices: PrivateWorkbenchServices;
+    private readonly _hoverService: HoverService;
     private readonly _guiMessageBroker: GuiMessageBroker;
     private readonly _queryClient: QueryClient;
     private readonly _sessionManager: WorkbenchSessionManager;
@@ -27,6 +29,7 @@ export class Workbench {
     constructor(queryClient: QueryClient) {
         this._queryClient = queryClient;
         this._workbenchServices = new PrivateWorkbenchServices(this);
+        this._hoverService = new HoverService();
         this._guiMessageBroker = new GuiMessageBroker();
         this._sessionManager = new WorkbenchSessionManager(this, queryClient, this._guiMessageBroker);
 
@@ -46,6 +49,10 @@ export class Workbench {
 
     getWorkbenchServices(): WorkbenchServices {
         return this._workbenchServices;
+    }
+
+    getHoverService(): HoverService {
+        return this._hoverService;
     }
 
     getGuiMessageBroker(): GuiMessageBroker {

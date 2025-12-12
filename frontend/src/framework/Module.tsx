@@ -4,6 +4,7 @@ import type { JTDSchemaType } from "ajv/dist/core";
 import type { Getter, Setter } from "jotai";
 
 import type { AtomStore } from "./AtomStoreMaster";
+import type { HoverService } from "./HoverService";
 import type { InitialSettings } from "./InitialSettings";
 import type { SettingsContext, ViewContext } from "./ModuleContext";
 import type { ModuleDataTagId } from "./ModuleDataTags";
@@ -68,6 +69,7 @@ export type ModuleViewProps<
     viewContext: ViewContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
