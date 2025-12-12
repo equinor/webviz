@@ -388,9 +388,12 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
             !currentRead.isLoading &&
             !currentRead.depsHaveError
         ) {
-            set(internalStateAtom, {
-                value: internalState.value,
-                _source: Source.USER,
+            // Schedule the transition asynchronously to avoid synchronous state updates during read
+            queueMicrotask(() => {
+                set(internalStateAtom, {
+                    value: internalState.value,
+                    _source: Source.USER,
+                });
             });
         }
     });
