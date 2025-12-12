@@ -466,4 +466,4 @@ export type SettingTypeDefinitions = {
     };
 };
 
-export type Settings = ReadonlyArray<Setting> & { __brand?: "MyType" };
+export type Settings = ReadonlyArray<Setting> & { __brand?: "Settings" };
