@@ -211,6 +211,12 @@ export type FlowNetworkMetadata_api = {
     unit?: string | null;
 };
 
+export type FlowNetworkPerTreeType_api = {
+    tree_type_flow_network_map: {
+        [key: string]: FlowNetworkData_api;
+    };
+};
+
 export enum FlowRateType_api {
     OIL = "OIL",
     LIQ = "LIQ",
@@ -2957,7 +2963,7 @@ export type GetRealizationFlowNetworkResponses_api = {
     /**
      * Successful Response
      */
-    200: FlowNetworkData_api;
+    200: FlowNetworkPerTreeType_api;
 };
 
 export type GetRealizationFlowNetworkResponse_api =

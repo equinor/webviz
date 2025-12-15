@@ -1,10 +1,10 @@
-from enum import Enum, StrEnum
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
 from webviz_services.flow_network_assembler.flow_network_types import DatedFlowNetwork, FlowNetworkMetadata
 
 
-class Frequency(str, Enum):
+class Frequency(StrEnum):
     DAILY = "DAILY"
     WEEKLY = "WEEKLY"
     MONTHLY = "MONTHLY"
@@ -12,13 +12,18 @@ class Frequency(str, Enum):
     YEARLY = "YEARLY"
 
 
-class StatOption(str, Enum):
+class StatOption(StrEnum):
     MEAN = "MEAN"
     P10 = "P10"
     P90 = "P90"
     P50 = "P50"
     MIN = "MIN"
     MAX = "MAX"
+
+
+class TreeType(StrEnum):
+    EXTENDED_NETWORK = "EXTENDED_NETWORK"
+    PRODUCTION_NETWORK = "PRODUCTION_NETWORK"
 
 
 # ! Copy of the flow network service NodeType enum
@@ -34,3 +39,9 @@ class FlowNetworkData(BaseModel):
     edgeMetadataList: list[FlowNetworkMetadata]
     nodeMetadataList: list[FlowNetworkMetadata]
     datedNetworks: list[DatedFlowNetwork]
+
+
+class FlowNetworkPerTreeType(BaseModel):
+    model_config = ConfigDict(revalidate_instances="always")
+
+    tree_type_flow_network_map: dict[str, FlowNetworkData]
