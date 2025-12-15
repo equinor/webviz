@@ -22,9 +22,9 @@ def to_api_tree_type(tree_type: TreeType) -> str:
     Convert from internal TreeType enum to API tree type string
     """
     if tree_type == TreeType.GRUPTREE:
-        return "Extended Network"
-    if tree_type == TreeType.BRANPROP:
         return "Standard Network"
+    if tree_type == TreeType.BRANPROP:
+        return "Extended Network"
 
     raise ValueError(f"Unsupported tree type: {tree_type}")
 
