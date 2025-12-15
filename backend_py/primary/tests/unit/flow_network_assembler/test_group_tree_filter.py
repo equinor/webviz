@@ -1,177 +1,201 @@
-#!/usr/bin/env python3
-"""
-Test script to verify the group tree filtering logic works correctly.
-"""
+import datetime
+import pyarrow as pa
+import pytest
 
-import pandas as pd
-from webviz_services.sumo_access.group_tree_types import TreeType
-from webviz_services.flow_network_assembler._group_tree_dataframe_model import (
+from webviz_services.flow_network_assembler._types.network_node_types import TreeType
+from webviz_services.flow_network_assembler._utils.group_tree_dataframe_model import (
     GroupTreeDataframeModel,
 )
 
 
-def create_sample_data():
-    """Create sample data similar to the user's file."""
-    data = {
-        "DATE": [
-            # First date: Both GRUPTREE and BRANPROP defined
-            "2032-12-01",
-            "2032-12-01",
-            "2032-12-01",
-            "2032-12-01",
-            "2032-12-01",
-            "2032-12-01",
-            "2032-12-01",
-            "2032-12-01",
-            # Second date: Only BRANPROP redefined
-            "2036-07-01",
-            "2036-07-01",
-            "2036-07-01",
-            "2036-07-01",
-            "2036-07-01",
-        ],
-        "CHILD": [
-            # First date
-            "FIELD",
-            "WIST",
-            "WIST_OP",
-            "P1_1_LIN",
-            "P1_1",  # WELSPEC with parent in GRUPTREE
-            "FIELD",
-            "RISERB",
-            "P1_1_LIN",  # Same well in BRANPROP
-            # Second date - only BRANPROP
-            "FIELD",
-            "RISERB",
-            "SUBS_MPP",
-            "P1_1_LIN",
-            "P1_1",  # WELSPEC - should only be included if parent exists in BRANPROP
-        ],
-        "KEYWORD": [
-            # First date
-            "GRUPTREE",
-            "GRUPTREE",
-            "GRUPTREE",
-            "GRUPTREE",
-            "WELSPECS",
-            "BRANPROP",
-            "BRANPROP",
-            "BRANPROP",
-            # Second date
-            "BRANPROP",
-            "BRANPROP",
-            "BRANPROP",
-            "BRANPROP",
-            "WELSPECS",
-        ],
-        "PARENT": [
-            # First date
-            None,
-            "FIELD",
-            "WIST",
-            "WIST_OP",
-            "P1_1_LIN",  # Parent in GRUPTREE
-            None,
-            "FIELD",
-            "RISERB",  # Parent in BRANPROP
-            # Second date
-            None,
-            "FIELD",
-            "RISERB",
-            "SUBS_MPP",
-            "P1_1_LIN",  # Parent in BRANPROP
-        ],
-    }
-    return pd.DataFrame(data)
+@pytest.fixture
+def sample_group_tree_data() -> pa.Table:
+    """Create sample data similar to production data with both GRUPTREE and BRANPROP."""
+    return pa.table(
+        {
+            "DATE": pa.array(
+                [
+                    # First date: Both GRUPTREE and BRANPROP defined
+                    datetime.datetime(2032, 12, 1),
+                    datetime.datetime(2032, 12, 1),
+                    datetime.datetime(2032, 12, 1),
+                    datetime.datetime(2032, 12, 1),
+                    datetime.datetime(2032, 12, 1),
+                    datetime.datetime(2032, 12, 1),
+                    datetime.datetime(2032, 12, 1),
+                    datetime.datetime(2032, 12, 1),
+                    # Second date: Only BRANPROP redefined
+                    datetime.datetime(2036, 7, 1),
+                    datetime.datetime(2036, 7, 1),
+                    datetime.datetime(2036, 7, 1),
+                    datetime.datetime(2036, 7, 1),
+                    datetime.datetime(2036, 7, 1),
+                ],
+                type=pa.timestamp("ms"),
+            ),
+            "CHILD": [
+                # First date
+                "FIELD",
+                "WIST",
+                "WIST_OP",
+                "P1_1_LIN",
+                "P1_1",  # WELSPEC with parent in GRUPTREE
+                "FIELD",
+                "RISERB",
+                "P1_1_LIN",  # Same well in BRANPROP
+                # Second date - only BRANPROP
+                "FIELD",
+                "RISERB",
+                "SUBS_MPP",
+                "P1_1_LIN",
+                "P1_1",  # WELSPEC - should only be included if parent exists in BRANPROP
+            ],
+            "KEYWORD": [
+                # First date
+                "GRUPTREE",
+                "GRUPTREE",
+                "GRUPTREE",
+                "GRUPTREE",
+                "WELSPECS",
+                "BRANPROP",
+                "BRANPROP",
+                "BRANPROP",
+                # Second date
+                "BRANPROP",
+                "BRANPROP",
+                "BRANPROP",
+                "BRANPROP",
+                "WELSPECS",
+            ],
+            "PARENT": [
+                # First date
+                None,
+                "FIELD",
+                "WIST",
+                "WIST_OP",
+                "P1_1_LIN",  # Parent in GRUPTREE
+                None,
+                "FIELD",
+                "RISERB",  # Parent in BRANPROP
+                # Second date
+                None,
+                "FIELD",
+                "RISERB",
+                "SUBS_MPP",
+                "P1_1_LIN",  # Parent in BRANPROP
+            ],
+        }
+    )
 
 
-def test_gruptree_filtering():
-    """Test GRUPTREE filtering."""
-    print("=" * 80)
-    print("Testing GRUPTREE filtering")
-    print("=" * 80)
+def test_gruptree_filtering_excludes_dates_without_gruptree(sample_group_tree_data: pa.Table) -> None:
+    """Test that GRUPTREE filtering only includes dates where GRUPTREE is defined."""
+    model = GroupTreeDataframeModel(sample_group_tree_data)
+    filtered_df = model.create_df_for_tree_type(TreeType.GRUPTREE)
 
-    df = create_sample_data()
-    print("\nOriginal data:")
-    print(df.to_string())
-
-    # Create model with GRUPTREE
-    model = GroupTreeDataframeModel(df, TreeType.GRUPTREE)
-    filtered_df = model.dataframe
-
-    print("\n\nFiltered data for GRUPTREE:")
-    print(filtered_df.to_string())
-
-    # Verify expectations
-    print("\n\nVerifications:")
-    unique_dates = filtered_df["DATE"].unique()
-    print(f"✓ Unique dates in filtered data: {unique_dates}")
-    print(f"  Expected: Only ['2032-12-01'] (date where GRUPTREE is defined)")
-
-    branprop_rows = filtered_df[filtered_df["KEYWORD"] == "BRANPROP"]
-    print(f"✓ BRANPROP rows: {len(branprop_rows)}")
-    print(f"  Expected: 0 (BRANPROP should be filtered out)")
-
-    welspecs_at_first_date = filtered_df[
-        (filtered_df["DATE"] == "2032-12-01") & (filtered_df["KEYWORD"] == "WELSPECS")
-    ]
-    print(f"✓ WELSPECS at 2032-12-01: {len(welspecs_at_first_date)}")
-    print(f"  WELSPECS children: {welspecs_at_first_date['CHILD'].tolist()}")
-    print(f"  Expected: Only wells whose parent exists in GRUPTREE")
-
-    second_date_rows = filtered_df[filtered_df["DATE"] == "2036-07-01"]
-    print(f"✓ Rows at 2036-07-01: {len(second_date_rows)}")
-    print(f"  Expected: 0 (no GRUPTREE definition at this date)")
+    unique_dates = filtered_df["DATE"].unique().to_list()
+    assert len(unique_dates) == 1
 
 
-def test_branprop_filtering():
-    """Test BRANPROP filtering."""
-    print("\n\n" + "=" * 80)
-    print("Testing BRANPROP filtering")
-    print("=" * 80)
+def test_gruptree_filtering_excludes_branprop_rows(sample_group_tree_data: pa.Table) -> None:
+    """Test that GRUPTREE filtering removes all BRANPROP rows."""
+    model = GroupTreeDataframeModel(sample_group_tree_data)
+    filtered_df = model.create_df_for_tree_type(TreeType.GRUPTREE)
 
-    df = create_sample_data()
-
-    # Create model with BRANPROP
-    model = GroupTreeDataframeModel(df, TreeType.BRANPROP)
-    filtered_df = model.dataframe
-
-    print("\n\nFiltered data for BRANPROP:")
-    print(filtered_df.to_string())
-
-    # Verify expectations
-    print("\n\nVerifications:")
-    unique_dates = filtered_df["DATE"].unique()
-    print(f"✓ Unique dates in filtered data: {sorted(unique_dates)}")
-    print(f"  Expected: ['2032-12-01', '2036-07-01'] (dates where BRANPROP is defined)")
-
-    gruptree_rows = filtered_df[filtered_df["KEYWORD"] == "GRUPTREE"]
-    print(f"✓ GRUPTREE rows: {len(gruptree_rows)}")
-    print(f"  Expected: 0 (GRUPTREE should be filtered out)")
-
-    welspecs_at_first_date = filtered_df[
-        (filtered_df["DATE"] == "2032-12-01") & (filtered_df["KEYWORD"] == "WELSPECS")
-    ]
-    print(f"✓ WELSPECS at 2032-12-01: {len(welspecs_at_first_date)}")
-    print(f"  WELSPECS children: {welspecs_at_first_date['CHILD'].tolist()}")
-
-    welspecs_at_second_date = filtered_df[
-        (filtered_df["DATE"] == "2036-07-01") & (filtered_df["KEYWORD"] == "WELSPECS")
-    ]
-    print(f"✓ WELSPECS at 2036-07-01: {len(welspecs_at_second_date)}")
-    print(f"  WELSPECS children: {welspecs_at_second_date['CHILD'].tolist()}")
-    print(f"  Expected: Only wells whose parent exists in BRANPROP at that date")
+    branprop_rows = filtered_df.filter(filtered_df["KEYWORD"] == "BRANPROP")
+    assert branprop_rows.height == 0
 
 
-if __name__ == "__main__":
-    try:
-        test_gruptree_filtering()
-        test_branprop_filtering()
-        print("\n\n" + "=" * 80)
-        print("✓ All tests completed!")
-        print("=" * 80)
-    except Exception as e:
-        print(f"\n\n✗ Test failed with error: {e}")
-        import traceback
+def test_gruptree_filtering_includes_welspecs_with_valid_parent(sample_group_tree_data: pa.Table) -> None:
+    """Test that WELSPECS are only included if their parent exists in GRUPTREE."""
+    model = GroupTreeDataframeModel(sample_group_tree_data)
+    filtered_df = model.create_df_for_tree_type(TreeType.GRUPTREE)
 
-        traceback.print_exc()
+    welspecs_rows = filtered_df.filter(filtered_df["KEYWORD"] == "WELSPECS")
+    assert welspecs_rows.height == 1
+    assert welspecs_rows["CHILD"][0] == "P1_1"
+    assert welspecs_rows["PARENT"][0] == "P1_1_LIN"
+
+
+def test_branprop_filtering_includes_multiple_dates(sample_group_tree_data: pa.Table) -> None:
+    """Test that BRANPROP filtering includes all dates where BRANPROP is defined."""
+    model = GroupTreeDataframeModel(sample_group_tree_data)
+    filtered_df = model.create_df_for_tree_type(TreeType.BRANPROP)
+
+    unique_dates = filtered_df["DATE"].unique().to_list()
+    assert len(unique_dates) == 2
+
+
+def test_branprop_filtering_excludes_gruptree_rows(sample_group_tree_data: pa.Table) -> None:
+    """Test that BRANPROP filtering removes all GRUPTREE rows."""
+    model = GroupTreeDataframeModel(sample_group_tree_data)
+    filtered_df = model.create_df_for_tree_type(TreeType.BRANPROP)
+
+    gruptree_rows = filtered_df.filter(filtered_df["KEYWORD"] == "GRUPTREE")
+    assert gruptree_rows.height == 0
+
+
+def test_branprop_filtering_includes_welspecs_per_date(sample_group_tree_data: pa.Table) -> None:
+    """Test that WELSPECS are only included if their parent exists in BRANPROP at that date."""
+    model = GroupTreeDataframeModel(sample_group_tree_data)
+    filtered_df = model.create_df_for_tree_type(TreeType.BRANPROP)
+
+    # Check that WELSPECS are present at both dates
+    welspecs_rows = filtered_df.filter(filtered_df["KEYWORD"] == "WELSPECS")
+    assert welspecs_rows.height == 2
+
+
+def test_model_extracts_wells(sample_group_tree_data: pa.Table) -> None:
+    """Test that the model correctly extracts wells from WELSPECS."""
+    model = GroupTreeDataframeModel(sample_group_tree_data)
+
+    # Wells are from WELSPECS
+    assert "P1_1" in model.group_tree_wells
+    assert len(model.group_tree_wells) == 1
+
+
+def test_model_detects_tree_types(sample_group_tree_data: pa.Table) -> None:
+    """Test that the model correctly detects both tree types."""
+    model = GroupTreeDataframeModel(sample_group_tree_data)
+
+    # Should detect both GRUPTREE and BRANPROP
+    assert TreeType.GRUPTREE in model.tree_types
+    assert TreeType.BRANPROP in model.tree_types
+    assert len(model.tree_types) == 2
+
+
+def test_empty_dataframe_raises_error() -> None:
+    """Test that an empty DataFrame raises InvalidDataError."""
+    from webviz_services.service_exceptions import InvalidDataError
+
+    empty_table = pa.table(
+        {
+            "DATE": pa.array([], type=pa.timestamp("ms")),
+            "CHILD": pa.array([], type=pa.string()),
+            "KEYWORD": pa.array([], type=pa.string()),
+            "PARENT": pa.array([], type=pa.string()),
+        }
+    )
+
+    with pytest.raises(InvalidDataError, match="The group tree dataframe is empty"):
+        GroupTreeDataframeModel(empty_table)
+
+
+def test_missing_required_column_raises_error() -> None:
+    """Test that missing a required column raises InvalidDataError."""
+    from webviz_services.service_exceptions import InvalidDataError
+
+    # Missing PARENT column
+    incomplete_table = pa.table(
+        {
+            "DATE": pa.array([datetime.datetime(2032, 12, 1)], type=pa.timestamp("ms")),
+            "CHILD": ["FIELD"],
+            "KEYWORD": ["GRUPTREE"],
+        }
+    )
+
+    with pytest.raises(
+        InvalidDataError,
+        match=r"Expected columns:.*not found in the grouptree dataframe",
+    ):
+        GroupTreeDataframeModel(incomplete_table)

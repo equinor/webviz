@@ -12,20 +12,6 @@ class Frequency(StrEnum):
     YEARLY = "YEARLY"
 
 
-class StatOption(StrEnum):
-    MEAN = "MEAN"
-    P10 = "P10"
-    P90 = "P90"
-    P50 = "P50"
-    MIN = "MIN"
-    MAX = "MAX"
-
-
-class TreeType(StrEnum):
-    EXTENDED_NETWORK = "EXTENDED_NETWORK"
-    PRODUCTION_NETWORK = "PRODUCTION_NETWORK"
-
-
 # ! Copy of the flow network service NodeType enum
 class NodeType(StrEnum):
     PROD = "prod"

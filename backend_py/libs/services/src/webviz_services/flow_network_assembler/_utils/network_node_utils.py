@@ -38,7 +38,7 @@ def compute_tree_well_vectors(group_tree_wells: list[str], data_type: DataType) 
     return {f"{vector_name}:{well}" for well in group_tree_wells}
 
 
-def compute_tree_type_vectors(tree_types: list[str], data_type: DataType) -> set[str]:
+def compute_tree_type_vectors(tree_types: list[TreeType], data_type: DataType) -> set[str]:
     """Given a vector type (GOPR, GGIR, etc), returns a list of full summary vector names for each tree type in a group tree model.
     Returns an empty array (and logs a warning) if the datatype has no vector"""
     grup_tree_vectors = network_node_types.TREETYPE_DATATYPE_VECTORS_MAP[TreeType.GRUPTREE]
@@ -53,7 +53,7 @@ def compute_tree_type_vectors(tree_types: list[str], data_type: DataType) -> set
         return set()
 
     # Nested loop to create all possible combinations
-    return {f"{v_name}:{tree_type}" for v_name in v_names for tree_type in tree_types}
+    return {f"{v_name}:{tree_type.value}" for v_name in v_names for tree_type in tree_types}
 
 
 def compute_all_well_vectors(group_tree_wells: list[str]) -> set[str]:
@@ -66,7 +66,7 @@ def compute_all_well_vectors(group_tree_wells: list[str]) -> set[str]:
     return res
 
 
-def compute_all_tree_types_vectors(tree_types: list[str]) -> set[str]:
+def compute_all_tree_types_vectors(tree_types: list[TreeType]) -> set[str]:
     grup_data_types = network_node_types.TREETYPE_DATATYPE_VECTORS_MAP[TreeType.GRUPTREE].keys()
     bran_data_types = network_node_types.TREETYPE_DATATYPE_VECTORS_MAP[TreeType.BRANPROP].keys()
     all_data_types = set(grup_data_types) | set(bran_data_types)
@@ -78,7 +78,7 @@ def compute_all_tree_types_vectors(tree_types: list[str]) -> set[str]:
     return res
 
 
-def get_all_vectors_of_interest_for_tree_types(group_tree_wells: list[str], tree_types: list[str]) -> set[str]:
+def get_all_vectors_of_interest_for_tree_types(group_tree_wells: list[str], tree_types: list[TreeType]) -> set[str]:
     """
     Create a list of vectors based on the possible combinations of vector datatypes and vector nodes
     for a list of tree types

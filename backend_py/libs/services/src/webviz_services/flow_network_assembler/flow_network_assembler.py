@@ -4,14 +4,11 @@ from typing import Literal
 from dataclasses import dataclass
 
 import numpy as np
-
 import polars as pl
-import pyarrow as pa
-import pyarrow.compute as pc
 
 from webviz_core_utils.perf_timer import PerfTimer
 
-from webviz_services.service_exceptions import InvalidParameterError, NoDataError, Service
+from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, NoDataError, Service
 from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess, VectorMetadata
 from webviz_services.sumo_access.group_tree_access import GroupTreeAccess
 
@@ -97,11 +94,11 @@ class FlowNetworkAssembler:
         # Vector names and summary data maps are shared across all tree types
         self._all_available_vectors: set[str] | None = None
         self._vector_metadata_by_keyword: dict[str, list[VectorMetadata]] = {}
-        self._smry_table_sorted_by_date: pa.Table | None = None
+        self._smry_df_sorted_by_date: pl.DataFrame | None = None
         self._node_static_working_data: dict[str, StaticNodeWorkingData] | None = None
         self._performance_times = PerformanceTimes()
 
-        # Group tree data helper calss
+        # Group tree data helper class
         self._group_tree_df_model: GroupTreeDataframeModel | None = None
 
         # self._filtered_group_tree_df: pl.DataFrame | None = None
@@ -109,8 +106,6 @@ class FlowNetworkAssembler:
 
         # Store network details in data class to make it easier to feed it to the various helpers
         # when assembling the flow network for tree type
-        # TODO: Consider if this can be one single classification, not a dict per tree type
-        # self._network_classification_per_tree_type: dict[TreeType, NetworkClassification] = {}
         self._network_classification = NetworkClassification(
             HAS_GAS_INJ=False, HAS_WATER_INJ=False, TERMINAL_NODE=terminal_node
         )
@@ -131,14 +126,12 @@ class FlowNetworkAssembler:
     def _edge_data_types(self) -> list[DataType]:
         # ! Using a list to keep the datatypes in the same order every run
         data_types: list[DataType] = []
-
         if NodeType.PROD in self._selected_node_types:
             data_types.extend([DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE])
         if NodeType.INJ in self._selected_node_types and self._network_classification.HAS_WATER_INJ:
             data_types.append(DataType.WATERINJRATE)
         if NodeType.INJ in self._selected_node_types and self._network_classification.HAS_GAS_INJ:
             data_types.append(DataType.GASINJRATE)
-
         return data_types
 
     @property
@@ -241,6 +234,9 @@ class FlowNetworkAssembler:
             realization=self._realization,
         )
 
+        # Convert to Polars DataFrame
+        single_realization_vectors_df = pl.DataFrame(single_realization_vectors_table)
+
         # Store vector metadata entries in a dict for easy lookup later
         vector_metadata_by_keyword: dict[str, list[VectorMetadata]] = {}
         for vec_meta in vector_metadata:
@@ -253,14 +249,12 @@ class FlowNetworkAssembler:
         self._performance_times.init_summary_vector_data_table = timer.lap_ms()
 
         # Create list of column names in the table once (for performance)
-        vectors_table_column_names = single_realization_vectors_table.column_names
-        node_classifications = self._create_node_classifications(
-            expected_wstat_vectors, single_realization_vectors_table
-        )
+        vectors_table_column_names = single_realization_vectors_df.columns
+        node_classifications = self._create_node_classifications(expected_wstat_vectors, single_realization_vectors_df)
 
         # Initialize injection states based on summary data
         self._init_network_classification_injection_states(
-            node_classifications, single_realization_vectors_table, vectors_table_column_names
+            node_classifications, single_realization_vectors_df, vectors_table_column_names
         )
 
         # Get nodes with summary vectors and their metadata, and all summary vectors, and edge summary vectors
@@ -271,8 +265,8 @@ class FlowNetworkAssembler:
         self._init_node_static_working_data(
             node_classifications, network_summary_vectors_info.node_summary_vectors_info_dict
         )
-        self._init_sorted_summary_table(
-            single_realization_vectors_table,
+        self._init_sorted_summary_df(
+            single_realization_vectors_df,
             vectors_table_column_names,
             network_summary_vectors_info.all_summary_vectors,
         )
@@ -288,12 +282,18 @@ class FlowNetworkAssembler:
 
         It does not create new data structures, but access the already fetched and initialized data for the realization.
         Data structures are chosen and tested for optimized access and performance.
+
+        Returns:
+            A dict with tree type as key, and a tuple with:
+            - list of dated flow networks
+            - list of edge metadata
+            - list of node metadata
         """
         if self._network_mode != NetworkModeOptions.SINGLE_REAL:
             raise InvalidParameterError(
                 "Network mode must be SINGLE_REAL to create a single realization dataset", Service.GENERAL
             )
-        if self._smry_table_sorted_by_date is None:
+        if self._smry_df_sorted_by_date is None:
             raise NoDataError("Summary dataframe sorted by date has not been initialized", Service.GENERAL)
         if self._node_static_working_data is None:
             raise NoDataError("Static working data for nodes has not been initialized", Service.GENERAL)
@@ -301,7 +301,7 @@ class FlowNetworkAssembler:
             raise NoDataError("GroupTree dataframes model has not been initialized", Service.GENERAL)
 
         # Get network classification and filtered group tree df for each tree type
-        resulting_map: dict[
+        result_per_tree_type: dict[
             TreeType, tuple[list[DatedFlowNetwork], list[FlowNetworkMetadata], list[FlowNetworkMetadata]]
         ] = {}
         for tree_type in self._group_tree_df_model.tree_types:
@@ -312,20 +312,20 @@ class FlowNetworkAssembler:
             dataframe = self._group_tree_df_model.create_df_for_tree_type(tree_type)
             dated_network_list = _create_dated_networks(
                 dataframe,
-                self._smry_table_sorted_by_date,
+                self._smry_df_sorted_by_date,
                 self._node_static_working_data,
                 self._selected_node_types,
                 self._network_classification.TERMINAL_NODE,
                 data_types_of_interest,
             )
 
-            resulting_map[tree_type] = (
+            result_per_tree_type[tree_type] = (
                 dated_network_list,
                 self._assemble_metadata_for_data_types(edge_data_types),
                 self._assemble_metadata_for_data_types(node_data_types),
             )
 
-        return resulting_map
+        return result_per_tree_type
 
     def _assemble_metadata_for_data_types(self, data_types: list[DataType]) -> list[FlowNetworkMetadata]:
         """Returns a list with metadata for a set of data types"""
@@ -374,7 +374,7 @@ class FlowNetworkAssembler:
             raise NoDataError("Gas injection vectors (WGIR/GGIR) found, but missing expected: FGIR", Service.GENERAL)
 
     def _create_node_classifications(
-        self, wstat_vectors: set[str], vector_data_table: pa.Table
+        self, wstat_vectors: set[str], summary_vector_df: pl.DataFrame
     ) -> dict[str, NodeClassification]:
         timer = PerfTimer()
 
@@ -382,7 +382,7 @@ class FlowNetworkAssembler:
         well_node_classifications: dict[str, NodeClassification] = {}
         for wstat_vector in wstat_vectors:
             well = wstat_vector.split(":")[1]
-            well_states = set(vector_data_table[wstat_vector].to_pylist())
+            well_states = set(summary_vector_df[wstat_vector].to_list())
             well_node_classifications[well] = NodeClassification(
                 IS_PROD=1.0 in well_states,
                 IS_INJ=2.0 in well_states,
@@ -393,7 +393,7 @@ class FlowNetworkAssembler:
 
         # Create node classifications based on leaf node classifications
         node_classifications = _create_node_classification_dict(
-            self._group_tree_df_model.dataframe, well_node_classifications, vector_data_table
+            self._group_tree_df_model_safe.dataframe, well_node_classifications, summary_vector_df
         )
         self._performance_times.create_node_classifications = timer.lap_ms()
 
@@ -402,18 +402,17 @@ class FlowNetworkAssembler:
     def _init_network_classification_injection_states(
         self,
         node_classifications: dict[str, NodeClassification],
-        vector_table: pa.Table,
+        summary_vector_df: pl.DataFrame,
         vector_column_names: list[str],
     ) -> None:
         if self._terminal_node not in node_classifications:
             return
 
         is_inj_in_tree = node_classifications[self._terminal_node].IS_INJ
-
         if is_inj_in_tree and "FWIR" in vector_column_names:
-            self._network_classification.HAS_WATER_INJ = pc.sum(vector_table["FWIR"]).as_py() > 0
+            self._network_classification.HAS_WATER_INJ = summary_vector_df["FWIR"].sum() > 0
         if is_inj_in_tree and "FGIR" in vector_column_names:
-            self._network_classification.HAS_GAS_INJ = pc.sum(vector_table["FGIR"]).as_py() > 0
+            self._network_classification.HAS_GAS_INJ = summary_vector_df["FGIR"].sum() > 0
 
     def _create_and_verify_network_summary_info(
         self,
@@ -446,7 +445,7 @@ class FlowNetworkAssembler:
         node_summary_vectors_info_dict: dict[str, NodeSummaryVectorsInfo],
     ) -> None:
         # Create static working data for each node
-        filtered_group_tree_df = self._group_tree_df_model.dataframe
+        filtered_group_tree_df = self._group_tree_df_model_safe.dataframe
         node_static_working_data: dict[str, StaticNodeWorkingData] = {}
 
         for node_name, node_classification in node_classifications.items():
@@ -465,17 +464,16 @@ class FlowNetworkAssembler:
 
         self._node_static_working_data = node_static_working_data
 
-    def _init_sorted_summary_table(
+    def _init_sorted_summary_df(
         self,
-        vector_data_table: pa.Table,
+        summary_vector_df: pl.DataFrame,
         vector_column_names: list[str],
         all_summary_vectors: set[str],
     ) -> None:
-        # Find group tree vectors existing in summary data
+        # Valid vectors: existing in summary data
         valid_summary_vectors = [vec for vec in all_summary_vectors if vec in vector_column_names]
-
         columns_of_interest = list(valid_summary_vectors) + ["DATE"]
-        self._smry_table_sorted_by_date = vector_data_table.select(columns_of_interest).sort_by("DATE")
+        self._smry_df_sorted_by_date = summary_vector_df.select(columns_of_interest).sort("DATE")
 
     def _create_flow_network_summary_vectors_info(
         self, node_classification_dict: dict[str, NodeClassification]
@@ -505,8 +503,7 @@ class FlowNetworkAssembler:
         all_sumvecs: set[str] = set()
         edge_sumvecs: set[str] = set()
 
-        group_tree_df_unique = self._group_tree_df_model.dataframe.unique(subset=["CHILD", "KEYWORD"])
-
+        group_tree_df_unique = self._group_tree_df_model_safe.dataframe.unique(subset=["CHILD", "KEYWORD"])
         node_names = group_tree_df_unique["CHILD"].to_numpy()
         node_keywords = group_tree_df_unique["KEYWORD"].to_numpy()
 
@@ -532,7 +529,7 @@ class FlowNetworkAssembler:
 def _create_node_classification_dict(
     group_tree_df: pl.DataFrame,
     well_node_classifications: dict[str, NodeClassification],
-    summary_vectors_table: pa.Table,
+    summary_vectors_df: pl.DataFrame,
 ) -> dict[str, NodeClassification]:
     """
     Create dictionary with node name as key, and corresponding classification as value.
@@ -548,7 +545,7 @@ def _create_node_classification_dict(
     `Arguments`:
     `group_tree_df: pl.DataFrame - Group tree df to modify. Expected columns: ["PARENT", "CHILD", "KEYWORD", "DATE"]
     `well_node_classifications: dict[str, NodeClassification] - Dictionary with well node as key, and classification as value
-    `summary_vectors_table: pa.Table - Summary table with all summary vectors. Needed to retrieve the classification for leaf nodes of type "GRUPTREE" or "BRANPROP"
+    `summary_vectors_df: pl.DataFrame - Dataframe with all summary vectors. Needed to retrieve the classification for leaf nodes of type "GRUPTREE" or "BRANPROP"
     """
 
     # Get unique nodes, neglect dates
@@ -580,7 +577,7 @@ def _create_node_classification_dict(
 
     # Classify leaf nodes as producer, injector or other
     leaf_node_classification_map = _create_leaf_node_classification_map(
-        leaf_node_list, leaf_node_keyword_list, well_node_classifications, summary_vectors_table
+        leaf_node_list, leaf_node_keyword_list, well_node_classifications, summary_vectors_df
     )
 
     classifying_leafnodes_time_ms = timer.lap_ms()
@@ -666,7 +663,7 @@ def _create_leaf_node_classification_map(
     leaf_nodes: list[str],
     leaf_node_keywords: list[str],
     well_node_classifications: dict[str, NodeClassification],
-    summary_vectors_table: pa.Table,
+    summary_vectors_df: pl.DataFrame,
 ) -> dict[str, NodeClassification]:
     """Creates a dictionary with node names as keys and NodeClassification as values.
 
@@ -679,7 +676,7 @@ def _create_leaf_node_classification_map(
     - `leaf_nodes`: list[str] - List of leaf node names
     - `leaf_node_keywords`: list[str] - List of keywords for the leaf nodes
     - `well_node_classifications`: dict[str, NodeClassification] - Dictionary with well node as key, and classification as value
-    - `summary_vectors_table`: pa.Table - Summary table with all summary vectors. Needed to retrieve the classification for leaf nodes of type "GRUPTREE" or "BRANPROP"
+    - `summary_vectors_df`: pl.DataFrame - Summary dataframe with all summary vectors. Needed to retrieve the classification for leaf nodes of type "GRUPTREE" or "BRANPROP"
 
     `Return`:
     dict of leaf node name as key, and NodeClassification as value
@@ -687,7 +684,7 @@ def _create_leaf_node_classification_map(
     if len(leaf_nodes) != len(leaf_node_keywords):
         raise ValueError("Length of node names and keywords must be equal.")
 
-    summary_columns = summary_vectors_table.column_names
+    summary_columns = summary_vectors_df.columns
     leaf_node_classifications: dict[str, NodeClassification] = {}
 
     for i, node in enumerate(leaf_nodes):
@@ -713,12 +710,9 @@ def _create_leaf_node_classification_map(
                 else []
             )
 
-            prod_sum = sum(
-                pc.sum(summary_vectors_table[sumvec]).as_py() for sumvec in prod_sumvecs if sumvec in summary_columns
-            )
-            inj_sums = sum(
-                pc.sum(summary_vectors_table[sumvec]).as_py() for sumvec in inj_sumvecs if sumvec in summary_columns
-            )
+            # Use Polars expressions to efficiently sum columns
+            prod_sum = sum(summary_vectors_df[sumvec].sum() for sumvec in prod_sumvecs if sumvec in summary_columns)
+            inj_sums = sum(summary_vectors_df[sumvec].sum() for sumvec in inj_sumvecs if sumvec in summary_columns)
             is_prod = prod_sum > 0
             is_inj = inj_sums > 0
 
@@ -733,7 +727,7 @@ def _create_leaf_node_classification_map(
 # pylint: disable-next=too-many-locals
 def _create_dated_networks(
     group_tree_df: pl.DataFrame,
-    smry_sorted_by_date: pa.Table,
+    smry_sorted_by_date_df: pl.DataFrame,
     node_static_working_data_dict: dict[str, StaticNodeWorkingData],
     selected_node_types: set[NodeType],
     terminal_node: str,
@@ -748,8 +742,8 @@ def _create_dated_networks(
     the time span where the associated network is valid (from date of the network to the next network).
 
     `Arguments`:
-    - `smry_sorted_by_date`. pa.Table - Summary data table sorted by date. Expected columns: [DATE, summary_vector_1, ... , summary_vector_n]
     - `group_tree_df`: pl.DataFrame - Dataframe with group tree for dates - expected columns: [KEYWORD, CHILD, PARENT], optional column: [VFP_TABLE]
+    - `smry_sorted_by_date_df`. pl.DataFrame - Summary data sorted by date. Expected columns: [DATE, summary_vector_1, ... , summary_vector_n]
     - `node_static_working_data_dict`: Dictionary with node name as key and its static work data for building flow networks
     - `selected_node_types`: Set of node types to include from the group tree
     - `terminal_node`: Name of the terminal node in the group tree
@@ -786,25 +780,26 @@ def _create_dated_networks(
         next_date = grouptree_dates.filter(grouptree_dates > date).min()
         if next_date is None:
             # Pick last smry date from sorted date column
-            next_date = smry_sorted_by_date["DATE"][-1]
+            next_date = smry_sorted_by_date_df["DATE"][-1]
         total_find_next_date_time_ms += timer.lap_ms()
 
         timer.lap_ms()
         # Filter summary data for the time span defined by the group tree date and the next group tree date
-        greater_equal_expr = pc.greater_equal(pc.field("DATE"), date)
-        less_expr = pc.less(pc.field("DATE"), next_date)
-        datespan_mask_expr = pc.and_kleene(greater_equal_expr, less_expr)
-
-        smry_in_datespan_sorted_by_date: pa.Table = smry_sorted_by_date.filter(datespan_mask_expr)
+        greater_equal_date_mask = pl.col("DATE") >= date
+        less_than_next_date_mask = pl.col("DATE") < next_date
+        smry_in_datespan_sorted_by_date = smry_sorted_by_date_df.filter(
+            greater_equal_date_mask & less_than_next_date_mask
+        )
         total_smry_table_filtering_ms += timer.lap_ms()
 
-        if smry_in_datespan_sorted_by_date.num_rows > 0:
+        if smry_in_datespan_sorted_by_date.height > 0:
             timer.lap_ms()
-            dates = smry_in_datespan_sorted_by_date["DATE"]
-            formatted_dates = [date.as_py().strftime("%Y-%m-%d") for date in dates]
+            dates = smry_in_datespan_sorted_by_date["DATE"].to_list()
+            formatted_dates = [dt.strftime("%Y-%m-%d") for dt in dates]
+            formatted_date = date.strftime("%Y-%m-%d")
             network = _create_dated_network(
                 grouptree_at_date,
-                date,
+                formatted_date,
                 smry_in_datespan_sorted_by_date,
                 len(dates),
                 node_static_working_data_dict,
@@ -816,7 +811,7 @@ def _create_dated_networks(
             dated_networks.append(DatedFlowNetwork(dates=formatted_dates, network=network))
             total_create_dated_networks_time_ms += timer.lap_ms()
         else:
-            LOGGER.info(f"""No summary data found for gruptree between {date} and {next_date}""")
+            LOGGER.info(f"No summary data found for gruptree between {str(date)} and {str(next_date)}")
 
     total_loop_time_ms = timer.elapsed_ms() - total_loop_time_ms_start
 
@@ -832,8 +827,8 @@ def _create_dated_networks(
 
 def _create_dated_network(
     grouptree_at_date: pl.DataFrame,
-    grouptree_date: pl.Datetime,
-    smry_for_grouptree_sorted_by_date: pa.Table,
+    date_str: str,
+    smry_for_grouptree_sorted_by_date: pl.DataFrame,
     number_of_dates_in_smry: int,
     node_static_working_data_dict: dict[str, StaticNodeWorkingData],
     selected_node_types: set[NodeType],
@@ -879,8 +874,9 @@ def _create_dated_network(
     terminal_node_elm = nodes_dict.get(terminal_node)
 
     if terminal_node_elm is None:
-        date_str = grouptree_date.strftime("%Y-%m-%d")
-        raise ValueError(f"No terminal node {terminal_node} found in group tree at date {date_str}")
+        raise InvalidDataError(
+            f"No terminal node {terminal_node} found in group tree at date {date_str}", Service.GENERAL
+        )
 
     # Iterate over the nodes dict and add children to the nodes by looking at the parent name
     # Operates by reference, so each node is updated in the dict
@@ -899,7 +895,7 @@ def _create_flat_network_nodes_map(
     grouptree_at_date: pl.DataFrame,
     node_static_working_data_dict: dict[str, StaticNodeWorkingData],
     selected_node_types: set[NodeType],
-    smry_for_grouptree_sorted_by_date: pa.Table,
+    smry_for_grouptree_sorted_by_date: pl.DataFrame,
     number_of_dates_in_smry: int,
     data_types_of_interest: set[DataType] | None,
 ) -> dict[str, FlatNetworkNodeData]:
@@ -919,7 +915,7 @@ def _create_flat_network_nodes_map(
     keywords = grouptree_at_date["KEYWORD"].to_numpy()
 
     # Extract the names of all summary columns once
-    smry_columns_set = set(smry_for_grouptree_sorted_by_date.column_names)
+    smry_columns_set = set(smry_for_grouptree_sorted_by_date.columns)
 
     # Create edge label for nodes
     edge_labels = [""] * len(node_names)
@@ -959,7 +955,7 @@ def _create_network_node(
     edge_label: str,
     working_data: StaticNodeWorkingData,
     smry_columns_set: set,
-    smry_for_grouptree_sorted_by_date: pa.Table,
+    smry_for_grouptree_sorted_by_date: pl.DataFrame,
     number_of_dates_in_smry: int,
     data_types_of_interest: set[DataType] | None,
 ) -> NetworkNode:

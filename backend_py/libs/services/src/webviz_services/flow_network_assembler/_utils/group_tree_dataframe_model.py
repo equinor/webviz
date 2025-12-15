@@ -135,6 +135,9 @@ class GroupTreeDataframeModel:
         """
         Validate expected columns and their data types for the dataframe to ensure correct processing.
         """
+        if dataframe.is_empty():
+            raise InvalidDataError("The group tree dataframe is empty.", service=Service.GENERAL)
+
         if not GroupTreeDataframeModel.has_expected_columns(dataframe):
             raise InvalidDataError(
                 f"Expected columns: {GroupTreeDataframeModel._expected_columns()} not found in the grouptree dataframe. "
@@ -266,6 +269,6 @@ class GroupTreeDataframeModel:
             # Find all children of the current parents
             children = nodes_array[list(children_indices)]
             branch_node_set.update(children)
-            current_parents = children
+            current_parents = children.tolist()
 
         return list(branch_node_set)
