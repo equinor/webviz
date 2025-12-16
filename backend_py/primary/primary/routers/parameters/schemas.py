@@ -8,11 +8,11 @@ class EnsembleParameter(BaseModel):
     """Description/data for a single parameter in an ensemble"""
 
     name: str
-    is_logarithmic: bool
-    is_discrete: bool  # values are string or integer
-    is_constant: bool  # all values are equal
-    group_name: Optional[str] = None
-    descriptive_name: Optional[str] = None
+    isLogarithmic: bool
+    isDiscrete: bool  # values are string or integer
+    isConstant: bool  # all values are equal
+    groupName: Optional[str] = None
+    descriptiveName: Optional[str] = None
     realizations: List[int]
     values: Union[List[float], List[int], List[str]]
 
@@ -35,10 +35,3 @@ class EnsembleSensitivity(BaseModel):
     name: str
     type: SensitivityType
     cases: List[EnsembleSensitivityCase]
-
-
-class EnsembleParametersAndSensitivities(BaseModel):
-    """Description/data for all parameters and sensitivities in an ensemble"""
-
-    parameters: List[EnsembleParameter]
-    sensitivities: List[EnsembleSensitivity]

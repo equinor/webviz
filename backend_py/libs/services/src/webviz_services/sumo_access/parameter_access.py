@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import pyarrow as pa
@@ -12,7 +12,6 @@ from webviz_services.service_exceptions import NoDataError, InvalidDataError, Se
 from .sumo_client_factory import create_sumo_client
 from .parameter_types import (
     EnsembleParameter,
-    EnsembleParameters,
     EnsembleSensitivity,
     EnsembleSensitivityCase,
     SensitivityType,
@@ -35,7 +34,7 @@ class ParameterAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
-    async def get_parameters_and_sensitivities_async(self) -> EnsembleParameters:
+    async def get_parameters_and_sensitivities_async(self) -> Tuple[List[EnsembleParameter], List[EnsembleSensitivity]]:
         """Retrieve parameters for an ensemble"""
         perf_metrics = PerfMetrics()
 
@@ -77,15 +76,12 @@ class ParameterAccess:
             f"ParameterAccess.get_parameters_and_sensitivities_async() took: {perf_metrics.to_string()}, {self._case_uuid=}, {self._ensemble_name=}"
         )
 
-        return EnsembleParameters(
-            parameters=ensemble_parameters,
-            sensitivities=sensitivities,
-        )
+        return ensemble_parameters, sensitivities
 
     async def get_parameter_async(self, parameter_name: str) -> EnsembleParameter:
         """Retrieve a single parameter for an ensemble"""
-        parameters = await self.get_parameters_and_sensitivities_async()
-        return next(parameter for parameter in parameters.parameters if parameter.name == parameter_name)
+        parameters, _ = await self.get_parameters_and_sensitivities_async()
+        return next(parameter for parameter in parameters if parameter.name == parameter_name)
 
 
 def create_ensemble_sensitivities(

@@ -13,11 +13,11 @@ def to_api_parameters(parameters: List[EnsembleParameter]) -> List[schemas.Ensem
         api_parameters.append(
             schemas.EnsembleParameter(
                 name=parameter.name,
-                is_logarithmic=parameter.is_logarithmic,
-                is_discrete=parameter.is_discrete,
-                is_constant=parameter.is_constant,
-                group_name=parameter.group_name,
-                descriptive_name=parameter.descriptive_name,
+                isLogarithmic=parameter.is_logarithmic,
+                isDiscrete=parameter.is_discrete,
+                isConstant=parameter.is_constant,
+                groupName=parameter.group_name,
+                descriptiveName=parameter.descriptive_name,
                 realizations=parameter.realizations,
                 values=parameter.values,
             )

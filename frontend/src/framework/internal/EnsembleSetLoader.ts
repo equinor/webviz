@@ -1,11 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type {
-    EnsembleDetails_api,
-    EnsembleParameter_api,
-    EnsembleParametersAndSensitivities_api,
-    EnsembleSensitivity_api,
-} from "@api";
+import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersAndSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
@@ -260,7 +255,7 @@ async function loadEnsembleApiDataMapFromBackend(
     const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
     const ensembleDetailsPromiseArray: Promise<EnsembleDetails_api>[] = [];
-    const parametersAndSensitivitiesPromiseArray: Promise<EnsembleParametersAndSensitivities_api>[] = [];
+    const parametersAndSensitivitiesPromiseArray: Promise<[EnsembleParameter_api[], EnsembleSensitivity_api[]]>[] = [];
 
     const ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap = {};
 
@@ -337,10 +332,20 @@ async function loadEnsembleApiDataMapFromBackend(
         let parameterArray: EnsembleParameter_api[] = [];
         let sensitivityArray: EnsembleSensitivity_api[] = [];
         if (parametersAndSensitivitiesOutcome.status === "fulfilled") {
-            parameterArray = parametersAndSensitivitiesOutcome.value.parameters;
-            sensitivityArray = parametersAndSensitivitiesOutcome.value.sensitivities;
+            parameterArray = parametersAndSensitivitiesOutcome.value[0];
+            sensitivityArray = parametersAndSensitivitiesOutcome.value[1];
         } else {
             const errorMessage = "Error fetching ensemble parameters, dropping ensemble.";
+            console.error(errorMessage, ensembleIdentString);
+            ensembleLoadingErrorInfoMap[ensembleIdentString] = {
+                errorMessage: errorMessage,
+                displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
+            };
+            continue;
+        }
+
+        if (parameterArray.length === 0) {
+            const errorMessage = "No parameters found for ensemble, dropping ensemble.";
             console.error(errorMessage, ensembleIdentString);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
@@ -399,13 +404,13 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
     const retParameterArray: Parameter[] = [];
 
     for (const apiPar of apiParameterArray) {
-        if (apiPar.is_discrete) {
+        if (apiPar.isDiscrete) {
             const retPar: DiscreteParameter = {
                 type: ParameterType.DISCRETE,
                 name: apiPar.name,
-                groupName: apiPar.group_name ?? null,
-                description: apiPar.descriptive_name ?? null,
-                isConstant: apiPar.is_constant,
+                groupName: apiPar.groupName ?? null,
+                description: apiPar.descriptiveName ?? null,
+                isConstant: apiPar.isConstant,
                 realizations: apiPar.realizations,
                 values: apiPar.values,
             };
@@ -414,10 +419,10 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
             const retPar: ContinuousParameter = {
                 type: ParameterType.CONTINUOUS,
                 name: apiPar.name,
-                groupName: apiPar.group_name ?? null,
-                description: apiPar.descriptive_name ?? null,
-                isConstant: apiPar.is_constant,
-                isLogarithmic: apiPar.is_logarithmic,
+                groupName: apiPar.groupName ?? null,
+                description: apiPar.descriptiveName ?? null,
+                isConstant: apiPar.isConstant,
+                isLogarithmic: apiPar.isLogarithmic,
                 realizations: apiPar.realizations,
                 values: apiPar.values as number[],
             };

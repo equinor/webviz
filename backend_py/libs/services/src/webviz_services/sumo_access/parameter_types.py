@@ -35,12 +35,3 @@ class EnsembleSensitivity(BaseModel):
     name: str
     type: SensitivityType
     cases: List[EnsembleSensitivityCase]
-
-
-class EnsembleParameters(BaseModel):  # Find a better name
-    """Description/data for all parameters in an ensemble
-    type: "sensitivity" | "historymatch" | "prediction ??"
-    """
-
-    parameters: List[EnsembleParameter]
-    sensitivities: List[EnsembleSensitivity]

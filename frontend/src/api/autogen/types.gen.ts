@@ -347,25 +347,25 @@ export type EnsembleParameter_api = {
      */
     name: string;
     /**
-     * Is Logarithmic
+     * Islogarithmic
      */
-    is_logarithmic: boolean;
+    isLogarithmic: boolean;
     /**
-     * Is Discrete
+     * Isdiscrete
      */
-    is_discrete: boolean;
+    isDiscrete: boolean;
     /**
-     * Is Constant
+     * Isconstant
      */
-    is_constant: boolean;
+    isConstant: boolean;
     /**
-     * Group Name
+     * Groupname
      */
-    group_name?: string | null;
+    groupName?: string | null;
     /**
-     * Descriptive Name
+     * Descriptivename
      */
-    descriptive_name?: string | null;
+    descriptiveName?: string | null;
     /**
      * Realizations
      */
@@ -374,22 +374,6 @@ export type EnsembleParameter_api = {
      * Values
      */
     values: Array<number> | Array<number> | Array<string>;
-};
-
-/**
- * EnsembleParametersAndSensitivities
- *
- * Description/data for all parameters and sensitivities in an ensemble
- */
-export type EnsembleParametersAndSensitivities_api = {
-    /**
-     * Parameters
-     */
-    parameters: Array<EnsembleParameter_api>;
-    /**
-     * Sensitivities
-     */
-    sensitivities: Array<EnsembleSensitivity_api>;
 };
 
 /**
@@ -4588,9 +4572,11 @@ export type GetParametersAndSensitivitiesError_api =
 
 export type GetParametersAndSensitivitiesResponses_api = {
     /**
+     * Response Get Parameters And Sensitivities
+     *
      * Successful Response
      */
-    200: EnsembleParametersAndSensitivities_api;
+    200: [Array<EnsembleParameter_api>, Array<EnsembleSensitivity_api>];
 };
 
 export type GetParametersAndSensitivitiesResponse_api =
