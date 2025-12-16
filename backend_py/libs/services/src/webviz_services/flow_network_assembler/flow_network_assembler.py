@@ -101,11 +101,8 @@ class FlowNetworkAssembler:
         # Group tree data helper class
         self._group_tree_df_model: GroupTreeDataframeModel | None = None
 
-        # self._filtered_group_tree_df: pl.DataFrame | None = None
-        self._filtered_group_tree_df_per_tree_type: dict[TreeType, pl.DataFrame] = {}
-
-        # Store network details in data class to make it easier to feed it to the various helpers
-        # when assembling the flow network for tree type
+        # Store network details in data class to make it easier to feed it to functions
+        # when assembling the flow networks
         self._network_classification = NetworkClassification(
             HAS_GAS_INJ=False, HAS_WATER_INJ=False, TERMINAL_NODE=terminal_node
         )
@@ -374,7 +371,7 @@ class FlowNetworkAssembler:
             raise NoDataError("Gas injection vectors (WGIR/GGIR) found, but missing expected: FGIR", Service.GENERAL)
 
     def _create_node_classifications(
-        self, wstat_vectors: set[str], summary_vector_df: pl.DataFrame
+        self, wstat_vectors: set[str], summary_vectors_df: pl.DataFrame
     ) -> dict[str, NodeClassification]:
         timer = PerfTimer()
 
@@ -382,7 +379,7 @@ class FlowNetworkAssembler:
         well_node_classifications: dict[str, NodeClassification] = {}
         for wstat_vector in wstat_vectors:
             well = wstat_vector.split(":")[1]
-            well_states = set(summary_vector_df[wstat_vector].to_list())
+            well_states = set(summary_vectors_df[wstat_vector].to_list())
             well_node_classifications[well] = NodeClassification(
                 IS_PROD=1.0 in well_states,
                 IS_INJ=2.0 in well_states,
@@ -393,7 +390,7 @@ class FlowNetworkAssembler:
 
         # Create node classifications based on leaf node classifications
         node_classifications = _create_node_classification_dict(
-            self._group_tree_df_model_safe.dataframe, well_node_classifications, summary_vector_df
+            self._group_tree_df_model_safe.dataframe, well_node_classifications, summary_vectors_df
         )
         self._performance_times.create_node_classifications = timer.lap_ms()
 
@@ -402,7 +399,7 @@ class FlowNetworkAssembler:
     def _init_network_classification_injection_states(
         self,
         node_classifications: dict[str, NodeClassification],
-        summary_vector_df: pl.DataFrame,
+        summary_vectors_df: pl.DataFrame,
         vector_column_names: list[str],
     ) -> None:
         if self._terminal_node not in node_classifications:
@@ -410,9 +407,9 @@ class FlowNetworkAssembler:
 
         is_inj_in_tree = node_classifications[self._terminal_node].IS_INJ
         if is_inj_in_tree and "FWIR" in vector_column_names:
-            self._network_classification.HAS_WATER_INJ = summary_vector_df["FWIR"].sum() > 0
+            self._network_classification.HAS_WATER_INJ = summary_vectors_df["FWIR"].sum() > 0
         if is_inj_in_tree and "FGIR" in vector_column_names:
-            self._network_classification.HAS_GAS_INJ = summary_vector_df["FGIR"].sum() > 0
+            self._network_classification.HAS_GAS_INJ = summary_vectors_df["FGIR"].sum() > 0
 
     def _create_and_verify_network_summary_info(
         self,
@@ -466,14 +463,14 @@ class FlowNetworkAssembler:
 
     def _init_sorted_summary_df(
         self,
-        summary_vector_df: pl.DataFrame,
+        summary_vectors_df: pl.DataFrame,
         vector_column_names: list[str],
         all_summary_vectors: set[str],
     ) -> None:
         # Valid vectors: existing in summary data
         valid_summary_vectors = [vec for vec in all_summary_vectors if vec in vector_column_names]
         columns_of_interest = list(valid_summary_vectors) + ["DATE"]
-        self._smry_df_sorted_by_date = summary_vector_df.select(columns_of_interest).sort("DATE")
+        self._smry_df_sorted_by_date = summary_vectors_df.select(columns_of_interest).sort("DATE")
 
     def _create_flow_network_summary_vectors_info(
         self, node_classification_dict: dict[str, NodeClassification]
