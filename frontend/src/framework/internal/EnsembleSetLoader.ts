@@ -1,7 +1,12 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
-import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
+import type {
+    EnsembleDetails_api,
+    EnsembleParameter_api,
+    EnsembleParametersAndSensitivities_api,
+    EnsembleSensitivity_api,
+} from "@api";
+import { SensitivityType_api, getEnsembleDetailsOptions, getParametersAndSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
@@ -255,8 +260,7 @@ async function loadEnsembleApiDataMapFromBackend(
     const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
     const ensembleDetailsPromiseArray: Promise<EnsembleDetails_api>[] = [];
-    const parametersPromiseArray: Promise<EnsembleParameter_api[]>[] = [];
-    const sensitivitiesPromiseArray: Promise<EnsembleSensitivity_api[]>[] = [];
+    const parametersAndSensitivitiesPromiseArray: Promise<EnsembleParametersAndSensitivities_api>[] = [];
 
     const ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap = {};
 
@@ -280,8 +284,8 @@ async function loadEnsembleApiDataMapFromBackend(
         });
         ensembleDetailsPromiseArray.push(ensembleDetailsPromise);
 
-        const parametersPromise = queryClient.fetchQuery({
-            ...getParametersOptions({
+        const parametersAndSensitivitiesPromise = queryClient.fetchQuery({
+            ...getParametersAndSensitivitiesOptions({
                 query: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -291,26 +295,12 @@ async function loadEnsembleApiDataMapFromBackend(
             gcTime: CACHE_TIME,
             staleTime: STALE_TIME,
         });
-        parametersPromiseArray.push(parametersPromise);
-
-        const sensitivitiesPromise = queryClient.fetchQuery({
-            ...getSensitivitiesOptions({
-                query: {
-                    case_uuid: caseUuid,
-                    ensemble_name: ensembleName,
-                    zCacheBust: fingerprintHash,
-                },
-            }),
-            gcTime: CACHE_TIME,
-            staleTime: STALE_TIME,
-        });
-        sensitivitiesPromiseArray.push(sensitivitiesPromise);
+        parametersAndSensitivitiesPromiseArray.push(parametersAndSensitivitiesPromise);
     }
     console.debug(`Issued ${ensembleDetailsPromiseArray.length} promise(s)`);
 
     const ensembleDetailsOutcomeArray = await Promise.allSettled(ensembleDetailsPromiseArray);
-    const parametersOutcomeArray = await Promise.allSettled(parametersPromiseArray);
-    const sensitivitiesOutcomeArray = await Promise.allSettled(sensitivitiesPromiseArray);
+    const parametersAndSensitivitiesOutcomeArray = await Promise.allSettled(parametersAndSensitivitiesPromiseArray);
 
     const resMap: EnsembleIdentStringToEnsembleApiDataMap = {};
     for (let i = 0; i < ensembleDetailsOutcomeArray.length; i++) {
@@ -342,11 +332,13 @@ async function loadEnsembleApiDataMapFromBackend(
             continue;
         }
 
-        const parametersOutcome = parametersOutcomeArray[i];
-        console.debug(`parametersOutcome[${i}]:`, parametersOutcome.status);
+        const parametersAndSensitivitiesOutcome = parametersAndSensitivitiesOutcomeArray[i];
+        console.debug(`parametersAndSensitivitiesOutcome[${i}]:`, parametersAndSensitivitiesOutcome.status);
         let parameterArray: EnsembleParameter_api[] = [];
-        if (parametersOutcome.status === "fulfilled") {
-            parameterArray = parametersOutcome.value;
+        let sensitivityArray: EnsembleSensitivity_api[] = [];
+        if (parametersAndSensitivitiesOutcome.status === "fulfilled") {
+            parameterArray = parametersAndSensitivitiesOutcome.value.parameters;
+            sensitivityArray = parametersAndSensitivitiesOutcome.value.sensitivities;
         } else {
             const errorMessage = "Error fetching ensemble parameters, dropping ensemble.";
             console.error(errorMessage, ensembleIdentString);
@@ -355,20 +347,6 @@ async function loadEnsembleApiDataMapFromBackend(
                 displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
             };
             continue;
-        }
-
-        const sensitivitiesOutcome = sensitivitiesOutcomeArray[i];
-        console.debug(`sensitivitiesOutcome[${i}]:`, sensitivitiesOutcome.status);
-        let sensitivityArray: EnsembleSensitivity_api[] = [];
-        if (sensitivitiesOutcome.status === "fulfilled") {
-            sensitivityArray = sensitivitiesOutcome.value;
-        } else {
-            // We do not add the error message to the ensembleLoadingErrorInfoMap.
-            // We only log the error, as we want to continue loading the ensemble even if sensitivities fail
-            console.error(
-                "Error fetching ensemble sensitivities, continuing without sensitivities.",
-                ensembleIdentString,
-            );
         }
 
         resMap[ensembleIdentString] = {

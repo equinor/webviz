@@ -43,4 +43,4 @@ class EnsembleParameters(BaseModel):  # Find a better name
     """
 
     parameters: List[EnsembleParameter]
-    sensitivities: Optional[List[EnsembleSensitivity]] = None
+    sensitivities: List[EnsembleSensitivity]

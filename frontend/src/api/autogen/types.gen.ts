@@ -377,25 +377,19 @@ export type EnsembleParameter_api = {
 };
 
 /**
- * EnsembleParameterDescription
+ * EnsembleParametersAndSensitivities
+ *
+ * Description/data for all parameters and sensitivities in an ensemble
  */
-export type EnsembleParameterDescription_api = {
+export type EnsembleParametersAndSensitivities_api = {
     /**
-     * Name
+     * Parameters
      */
-    name: string;
+    parameters: Array<EnsembleParameter_api>;
     /**
-     * Group Name
+     * Sensitivities
      */
-    group_name?: string | null;
-    /**
-     * Descriptive Name
-     */
-    descriptive_name?: string | null;
-    /**
-     * Is Discrete
-     */
-    is_discrete: boolean;
+    sensitivities: Array<EnsembleSensitivity_api>;
 };
 
 /**
@@ -4561,109 +4555,7 @@ export type GetStratigraphicUnitsForStratColumnResponses_api = {
 export type GetStratigraphicUnitsForStratColumnResponse_api =
     GetStratigraphicUnitsForStratColumnResponses_api[keyof GetStratigraphicUnitsForStratColumnResponses_api];
 
-export type GetParameterNamesAndDescriptionData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Exclude All Values Constant
-         *
-         * Exclude all parameters where all values are the same value
-         */
-        exclude_all_values_constant?: boolean;
-        /**
-         * Sort Order
-         *
-         * Sort order
-         */
-        sort_order?: "alphabetically" | "standard_deviation";
-        zCacheBust?: string;
-    };
-    url: "/parameters/parameter_names_and_description/";
-};
-
-export type GetParameterNamesAndDescriptionErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetParameterNamesAndDescriptionError_api =
-    GetParameterNamesAndDescriptionErrors_api[keyof GetParameterNamesAndDescriptionErrors_api];
-
-export type GetParameterNamesAndDescriptionResponses_api = {
-    /**
-     * Response Get Parameter Names And Description
-     *
-     * Successful Response
-     */
-    200: Array<EnsembleParameterDescription_api>;
-};
-
-export type GetParameterNamesAndDescriptionResponse_api =
-    GetParameterNamesAndDescriptionResponses_api[keyof GetParameterNamesAndDescriptionResponses_api];
-
-export type GetParameterData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Parameter Name
-         *
-         * Parameter name
-         */
-        parameter_name: string;
-        zCacheBust?: string;
-    };
-    url: "/parameters/parameter/";
-};
-
-export type GetParameterErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetParameterError_api = GetParameterErrors_api[keyof GetParameterErrors_api];
-
-export type GetParameterResponses_api = {
-    /**
-     * Response Get Parameter
-     *
-     * Successful Response
-     */
-    200: EnsembleParameter_api | null;
-};
-
-export type GetParameterResponse_api = GetParameterResponses_api[keyof GetParameterResponses_api];
-
-export type GetParametersData_api = {
+export type GetParametersAndSensitivitiesData_api = {
     body?: never;
     path?: never;
     query: {
@@ -4681,110 +4573,28 @@ export type GetParametersData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/parameters/parameters/";
+    url: "/parameters/parameters_and_sensitivities/";
 };
 
-export type GetParametersErrors_api = {
+export type GetParametersAndSensitivitiesErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetParametersError_api = GetParametersErrors_api[keyof GetParametersErrors_api];
+export type GetParametersAndSensitivitiesError_api =
+    GetParametersAndSensitivitiesErrors_api[keyof GetParametersAndSensitivitiesErrors_api];
 
-export type GetParametersResponses_api = {
+export type GetParametersAndSensitivitiesResponses_api = {
     /**
-     * Response Get Parameters
-     *
      * Successful Response
      */
-    200: Array<EnsembleParameter_api>;
+    200: EnsembleParametersAndSensitivities_api;
 };
 
-export type GetParametersResponse_api = GetParametersResponses_api[keyof GetParametersResponses_api];
-
-export type GetIsSensitivityRunData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        zCacheBust?: string;
-    };
-    url: "/parameters/is_sensitivity_run/";
-};
-
-export type GetIsSensitivityRunErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetIsSensitivityRunError_api = GetIsSensitivityRunErrors_api[keyof GetIsSensitivityRunErrors_api];
-
-export type GetIsSensitivityRunResponses_api = {
-    /**
-     * Response Get Is Sensitivity Run
-     *
-     * Successful Response
-     */
-    200: boolean;
-};
-
-export type GetIsSensitivityRunResponse_api = GetIsSensitivityRunResponses_api[keyof GetIsSensitivityRunResponses_api];
-
-export type GetSensitivitiesData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        zCacheBust?: string;
-    };
-    url: "/parameters/sensitivities/";
-};
-
-export type GetSensitivitiesErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetSensitivitiesError_api = GetSensitivitiesErrors_api[keyof GetSensitivitiesErrors_api];
-
-export type GetSensitivitiesResponses_api = {
-    /**
-     * Response Get Sensitivities
-     *
-     * Successful Response
-     */
-    200: Array<EnsembleSensitivity_api>;
-};
-
-export type GetSensitivitiesResponse_api = GetSensitivitiesResponses_api[keyof GetSensitivitiesResponses_api];
+export type GetParametersAndSensitivitiesResponse_api =
+    GetParametersAndSensitivitiesResponses_api[keyof GetParametersAndSensitivitiesResponses_api];
 
 export type GetGridModelsInfoData_api = {
     body?: never;

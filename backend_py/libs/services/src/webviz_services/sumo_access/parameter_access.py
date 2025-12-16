@@ -90,7 +90,7 @@ class ParameterAccess:
 
 def create_ensemble_sensitivities(
     sumo_ensemble_parameters: List[EnsembleParameter],
-) -> Optional[List[EnsembleSensitivity]]:
+) -> List[EnsembleSensitivity]:
     """Extract sensitivities from a list of SumoEnsembleParameter objects"""
     sensitivities = []
 
@@ -103,7 +103,7 @@ def create_ensemble_sensitivities(
         None,
     )
     if sens_case_parameter is None or sens_name_parameter is None:
-        return None
+        return []
     df = pd.DataFrame(
         {
             "name": sens_name_parameter.values,
@@ -119,7 +119,7 @@ def create_ensemble_sensitivities(
                 cases=create_ensemble_sensitivity_cases(group),
             )
         )
-    return sensitivities if sensitivities else None
+    return sensitivities
 
 
 def find_sensitivity_type(sens_case_names: List[str]) -> SensitivityType:
