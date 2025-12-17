@@ -9,12 +9,13 @@ import type {
     WellPickProps,
 } from "@webviz/well-log-viewer/dist/components/WellLogView";
 import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-import { isEqual } from "lodash";
+import { isNaN } from "lodash";
 
 import type { WellboreHeader_api } from "@api";
+import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
-import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { Template } from "@modules/_shared/types/wellLogTemplates";
 
 import type { InterfaceTypes } from "../../interfaces";
@@ -44,8 +45,6 @@ const AXIS_TITLES = {
     time: "TIME",
 };
 
-type GlobalHoverMd = GlobalTopicDefinitions["global.hoverMd"];
-
 export type SubsurfaceLogViewerWrapperProps = {
     // Data
     wellboreHeader: WellboreHeader_api | null;
@@ -60,49 +59,6 @@ export type SubsurfaceLogViewerWrapperProps = {
     // Passing the module props to make context and service access less cumbersome
     moduleProps: ModuleViewProps<InterfaceTypes>;
 };
-
-function useSubscribeToGlobalHoverMdChange(
-    workbenchServices: WorkbenchServices,
-    wellLogController: WellLogController | null,
-    instanceId: string,
-    wellboreUuid: string,
-) {
-    const lastReceivedChange = React.useRef<GlobalHoverMd>(null);
-
-    React.useEffect(
-        function registerMdHoverSubscriber() {
-            function handleGlobalValueChange(newValue: GlobalHoverMd) {
-                if (!isEqual(lastReceivedChange, newValue)) {
-                    lastReceivedChange.current = newValue;
-
-                    if (newValue?.wellboreUuid === wellboreUuid) {
-                        wellLogController?.selectContent([newValue.md, undefined]);
-                    }
-                }
-            }
-
-            return workbenchServices.subscribe("global.hoverMd", handleGlobalValueChange, instanceId);
-        },
-        [instanceId, wellboreUuid, workbenchServices, wellLogController],
-    );
-}
-
-function useCreateGlobalHoverMdBroadcastFunc(
-    workbenchServices: WorkbenchServices,
-    instanceId: string,
-    wellboreUuid: string,
-) {
-    const broadcastGlobalMdChange = React.useCallback(
-        (newMd: number | null) => {
-            const payload: GlobalHoverMd = newMd ? { wellboreUuid, md: newMd } : null;
-
-            workbenchServices.publishGlobalData("global.hoverMd", payload, instanceId);
-        },
-        [instanceId, wellboreUuid, workbenchServices],
-    );
-
-    return broadcastGlobalMdChange;
-}
 
 function useSubscribeToGlobalVerticalScaleChange(
     workbenchServices: WorkbenchServices,
@@ -154,21 +110,38 @@ function useCreateGlobalVerticalScaleBroadcastFunc(
 }
 
 export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
+    const wellboreUuid = props.wellboreHeader?.wellboreUuid ?? null;
+    const hoverService = props.moduleProps.hoverService;
+
+    const moduleInstanceId = props.moduleProps.viewContext.getInstanceIdString();
+    const syncableSettingKeys = props.moduleProps.viewContext.useSyncedSettingKeys();
+
     // <WellLogViewer /> uses an internal controller to change things like zoom, selection and so on. Use this when possible to avoid uneccessary re-renders
     const [wellLogController, setWellLogController] = React.useState<WellLogController | null>(null);
     const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
-    const [showReadoutBox, setShowReadoutBox] = React.useState<boolean>(false);
 
-    const instanceId = props.moduleProps.viewContext.getInstanceIdString();
-    const syncableSettingKeys = props.moduleProps.viewContext.useSyncedSettingKeys();
-    const wellboreUuid = props.wellboreHeader?.wellboreUuid ?? "";
+    const [hoveredWellboreMd, setHoveredWellboreMd] = useHover(HoverTopic.WELLBORE_MD, hoverService, moduleInstanceId);
+    const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, hoverService, moduleInstanceId);
 
-    // Set up global hover md synchronization
-    useSubscribeToGlobalHoverMdChange(props.moduleProps.workbenchServices, wellLogController, instanceId, wellboreUuid);
-    const broadcastGlobalMdChange = useCreateGlobalHoverMdBroadcastFunc(
-        props.moduleProps.workbenchServices,
-        instanceId,
-        wellboreUuid,
+    const isHoveringThisWellbore = hoveredWellboreMd?.wellboreUuid === wellboreUuid && hoveredWellboreMd.md != null;
+
+    const wellLogSelection = React.useMemo<[number | undefined, undefined]>(() => {
+        if (!isHoveringThisWellbore) return [undefined, undefined];
+        return [hoveredWellboreMd.md ?? undefined, undefined];
+    }, [hoveredWellboreMd?.md, isHoveringThisWellbore]);
+
+    const broadcastMdHover = React.useCallback(
+        function broadcastWellboreAndMdHover(md: number | null) {
+            // An md of null implies we've stopped hovering this wellbore
+            if (md === null || wellboreUuid === null) {
+                setHoveredWellboreMd(null);
+                setHoveredWellbore(null);
+            } else {
+                setHoveredWellboreMd({ md, wellboreUuid });
+                setHoveredWellbore(wellboreUuid);
+            }
+        },
+        [setHoveredWellbore, setHoveredWellboreMd, wellboreUuid],
     );
 
     // Set up global vertical scale synchronization
@@ -176,27 +149,19 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         props.moduleProps.workbenchServices,
         wellLogController,
         syncableSettingKeys,
-        instanceId,
+        moduleInstanceId,
     );
+
     const broadcastVerticalScaleChange = useCreateGlobalVerticalScaleBroadcastFunc(
         props.moduleProps.workbenchServices,
         syncableSettingKeys,
-        instanceId,
+        moduleInstanceId,
     );
 
-    const handleMouseOut = React.useCallback(
-        function handleMouseOut() {
-            broadcastGlobalMdChange(null);
-            setShowReadoutBox(false);
-        },
-        [broadcastGlobalMdChange],
-    );
+    // Log viewer doesn't deselect when mouse moves out of the hover-able area, so we manually do it on mouse-leave
+    const handleMouseOut = React.useCallback(() => broadcastMdHover(null), [broadcastMdHover]);
 
-    const handleMouseIn = React.useCallback(function handleMouseIn() {
-        setShowReadoutBox(true);
-    }, []);
-
-    // Log viewer module callbacks
+    // Well log viewer event listener
     const handleCreateController = React.useCallback(function handleCreateController(controller: WellLogController) {
         // ? Something weird happens during HMR, where the controller ref becomes null, but this event still fires?
         console.debug("Setting well log viewer controller...", controller);
@@ -212,41 +177,38 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         [broadcastVerticalScaleChange, wellLogController],
     );
 
+    // Whenever the user hovers and moves the red "rubber band"
     const handleSelection = React.useCallback(
         function handleSelection() {
-            const currentSelection = wellLogController?.getContentSelection()[0] ?? null;
+            let currentSelection = wellLogController?.getContentSelection()[0] ?? null;
+            // Value given is occasionally NaN (i.e. when hovering an empty log)
+            if (isNaN(currentSelection)) currentSelection = null;
 
-            broadcastGlobalMdChange(currentSelection);
+            broadcastMdHover(currentSelection);
 
             // TODO: It's possible to pin and select a range, should we have that color a section of other synced intersections?
         },
-        [broadcastGlobalMdChange, wellLogController],
+        [broadcastMdHover, wellLogController],
     );
 
+    // We use the computed readout from the log viewer to deal with interpolated data
     const handleInfoFilled = React.useCallback(function handleInfoFilled(infos: Info[]) {
         setWellLogReadout(infos);
     }, []);
 
-    const handleTrackMouseEvent = React.useCallback(
-        (/* welllogView: WellLogView, e: TrackMouseEvent */) => {
-            // ! No-op method. Passed to the viewer to make it not show the context menu for tracks
-        },
-        [],
-    );
+    // ! No-op method. Passed to the viewer to make it not show the context menu for tracks
+    const handleTrackMouseEvent = React.useCallback((/* welllogView: WellLogView, e: TrackMouseEvent */) => {}, []);
 
     return (
         // The weird tailwind-class hides the built-in hover tooltip
-        <div
-            className="h-full [&_.welllogview_.overlay_.depth]:invisible!"
-            onMouseEnter={handleMouseIn}
-            onMouseLeave={handleMouseOut}
-        >
+        <div className="h-full [&_.welllogview_.overlay_.depth]:invisible!" onMouseLeave={handleMouseOut}>
             <WellLogViewer
                 id="well-log-viewer"
                 template={props.viewerTemplate}
                 wellLogSets={props.wellLogSets}
                 wellpick={props.wellPicks}
                 horizontal={props.horizontal}
+                selection={wellLogSelection}
                 layout={VIEWER_LAYOUT}
                 axisMnemos={AXIS_MNEMOS}
                 axisTitles={AXIS_TITLES}
@@ -263,7 +225,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
             <ReadoutWrapper
                 templateTracks={props.viewerTemplate?.tracks ?? []}
                 wellLogReadout={wellLogReadout}
-                hide={!showReadoutBox}
+                hide={!isHoveringThisWellbore}
             />
         </div>
     );

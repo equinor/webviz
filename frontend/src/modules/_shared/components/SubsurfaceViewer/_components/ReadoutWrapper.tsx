@@ -3,13 +3,11 @@ import React from "react";
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import type { LayerPickInfo, LightsType, MapMouseEvent } from "@webviz/subsurface-viewer";
-import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";
-import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
+import type { LayerPickInfo, LightsType, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
 import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { Feature } from "geojson";
-import { isEqual } from "lodash";
+import { isEqual, uniqBy } from "lodash";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -37,15 +35,22 @@ export type ReadoutWrapperProps = {
     deckGlManager: DeckGlInstanceManager;
     verticalScale: number;
     triggerHome: number;
-
     deckGlRef: React.RefObject<DeckGLRef | null>;
     children?: React.ReactNode;
+    onViewerHover?: (mouseEvent: MapMouseEvent) => void;
+    onViewportHover?: (viewport: ViewportType | null) => void;
 };
 
+const PICKING_RADIUS = 6;
+const PICKING_DEPTH = 6;
+
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
-    const context = useDpfSubsurfaceViewerContext();
+    const ctx = useDpfSubsurfaceViewerContext();
     const id = React.useId();
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
+    const [pickingCoordinate, setPickingCoordinate] = React.useState<number[]>([]);
+    const [pickingInfoPerView, setPickingInfoPerView] = React.useState<Record<string, PickingInfo[]>>({});
+
     const [storedDeckGlViews, setStoredDeckGlViews] =
         React.useState<SubsurfaceViewerWithCameraStateProps["views"]>(undefined);
 
@@ -58,38 +63,33 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     const [numRows] = props.views.layout;
 
-    const viewports = props.views?.viewports ?? [];
-    const layers = props.layers ?? [];
-
-    const { pickingInfoPerView, activeViewportId, getPickingInfo } = useMultiViewPicking({
-        deckGlRef,
-        pickDepth: 3,
-        multiPicking: true,
-    });
-
-    const { viewports: adjustedViewports, layers: adjustedLayers } = useMultiViewCursorTracking({
-        activeViewportId,
-        viewports,
-        layers,
-        worldCoordinates: pickingInfoPerView[activeViewportId]?.coordinates ?? null,
-        crosshairProps: {
-            // ! We hide the crosshair by opacity since toggling "visible" causes a full asset load/unload
-            color: [255, 255, 255, hideReadout ? 0 : 255],
-            sizePx: 32,
-        },
-    });
-
-    function handleMouseHover(event: MapMouseEvent): void {
-        getPickingInfo(event);
-    }
-
     function handleMouseEvent(event: MapMouseEvent): void {
+        if (!event.infos.length) return;
+
         if (event.type === "hover") {
-            handleMouseHover(event);
+            const hoveredViewPort = event.infos[0]?.viewport;
+
+            const pickWithCoordinates = event.infos.find((pick) => pick.coordinate?.length);
+
+            if (pickWithCoordinates) {
+                const newPickInfoDict = pickAtWorldPosition(
+                    pickWithCoordinates.coordinate![0],
+                    pickWithCoordinates.coordinate![1],
+                    pickWithCoordinates.coordinate![2] * props.verticalScale,
+                );
+
+                if (newPickInfoDict) {
+                    event.infos = Object.values(newPickInfoDict).flat();
+                }
+            }
+
+            setPickingCoordinate(pickWithCoordinates?.coordinate ?? []);
+            props.onViewerHover?.(event);
+            props.onViewportHover?.(hoveredViewPort ?? null);
         }
     }
 
-    function tooltip(info: PickingInfo): string {
+    function getTooltip(info: PickingInfo): string {
         if (
             (info.layer?.constructor === WellLabelLayer || info.sourceLayer?.constructor === WellLabelLayer) &&
             info.object?.wellLabels
@@ -106,17 +106,54 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         return feat?.properties?.["name"];
     }
 
+    const pickAtWorldPosition = React.useCallback(
+        function pickAtWorldPosition(x?: number, y?: number, z?: number) {
+            if (!deckGlRef.current?.deck?.isInitialized) return;
+
+            const deck = deckGlRef.current?.deck;
+            const deckViewports = deck?.getViewports();
+
+            if (!deck || !deckViewports?.length || !x || !y) return;
+
+            const pickInfoDict: Record<string, PickingInfo[]> = {};
+
+            const coord = z !== undefined ? [x, y, z * props.verticalScale] : [x, y];
+
+            for (const viewport of deckViewports) {
+                const [screenX, screenY] = viewport.project(coord);
+
+                const picks = deck.pickMultipleObjects({
+                    x: screenX + viewport.x,
+                    y: screenY + viewport.y,
+                    radius: PICKING_RADIUS,
+                    depth: PICKING_DEPTH,
+                    unproject3D: true,
+                });
+
+                // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates.
+                // See issue #webviz-subsurface-components/2320
+                const uniquePicks = uniqBy(picks, (pick) => pick.sourceLayer?.id);
+
+                pickInfoDict[viewport.id] = uniquePicks;
+            }
+
+            setPickingInfoPerView(pickInfoDict);
+            return pickInfoDict;
+        },
+        [props.verticalScale],
+    );
+
     const deckGlProps = props.deckGlManager.makeDeckGlComponentProps({
         deckGlRef,
         id: `subsurface-viewer-${id}`,
-        bounds: context.bounds,
+        bounds: ctx.bounds,
         views: {
             ...props.views,
-            viewports: adjustedViewports,
+            viewports: props.views.viewports,
             layout: props.views?.layout ?? [1, 1],
         },
         lights: {
-            ...(context.visualizationMode === "2D" ? LIGHTS_2D : LIGHTS_3D),
+            ...(ctx.visualizationMode === "2D" ? LIGHTS_2D : LIGHTS_3D),
         },
         verticalScale: props.verticalScale,
         scale: {
@@ -128,16 +165,14 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 top: 10,
             },
         },
-        coords: {
-            visible: false,
-            multiPicking: true,
-            pickDepth: 2,
-        },
+        showReadout: false,
         triggerHome: props.triggerHome,
-        pickingRadius: 5,
-        layers: adjustedLayers,
+        // We will do deeper picking manually in the onMouseEvent callback
+        pickingDepth: 1,
+        pickingRadius: PICKING_RADIUS,
+        layers: props.layers,
         onMouseEvent: handleMouseEvent,
-        getTooltip: tooltip,
+        getTooltip: getTooltip,
     });
 
     if (!isEqual(deckGlProps.views, storedDeckGlViews)) {
@@ -155,16 +190,12 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            <PositionReadout
-                viewportPickInfo={pickingInfoPerView[activeViewportId]}
-                verticalScale={props.verticalScale}
-                visible={!hideReadout}
-            />
+            <PositionReadout coordinate={pickingCoordinate} visible={!hideReadout} />
             <SubsurfaceViewerWithCameraState
                 {...deckGlProps}
                 views={storedDeckGlViews}
-                getCameraPosition={context.onViewStateChange}
-                initialCameraPosition={context.viewState ?? undefined}
+                getCameraPosition={ctx.onViewStateChange}
+                initialCameraPosition={ctx.viewState ?? undefined}
             >
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
@@ -178,7 +209,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
                         <ReadoutBoxWrapper
                             compact={props.views.viewports.length > 1}
-                            viewportPickInfo={pickingInfoPerView[viewport.id]}
+                            viewportPicks={pickingInfoPerView[viewport.id]}
                             visible={!hideReadout && !!pickingInfoPerView[viewport.id]}
                             verticalScale={props.verticalScale}
                         />

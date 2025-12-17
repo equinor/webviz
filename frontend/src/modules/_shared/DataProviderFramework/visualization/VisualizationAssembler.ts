@@ -1,8 +1,8 @@
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
+import type { HoverData, HoverTopic } from "@framework/HoverService";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
@@ -24,7 +24,7 @@ import type {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
 } from "../interfacesAndTypes/customGroupImplementation";
-import { instanceofItemGroup } from "../interfacesAndTypes/entities";
+import { instanceofItemGroup, type ItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
@@ -154,21 +154,13 @@ export type DataProviderTransformers<
     >;
 };
 
-type KeysMatching<T, Pattern extends string> = {
-    [K in keyof T]: K extends Pattern ? K : never;
-}[keyof T];
-
-type PickMatching<T, Pattern extends string> = {
-    [K in KeysMatching<T, Pattern>]: T[K];
+export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = {
+    [K in HoverTopic]?: HoverVisualizationFunction<TTarget, K>;
 };
 
-export type HoverTopicDefinitions = PickMatching<GlobalTopicDefinitions, `global.hover${string}`>;
-
-export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = Partial<{
-    [K in keyof HoverTopicDefinitions]: (
-        hoverInfo: HoverTopicDefinitions[K],
-    ) => DataProviderHoverVisualizationTargetTypes[TTarget][];
-}>;
+export type HoverVisualizationFunction<TTarget extends VisualizationTarget, TTopic extends HoverTopic> = (
+    hoverInfo: HoverData[TTopic],
+) => DataProviderHoverVisualizationTargetTypes[TTarget][];
 
 export type VisualizationTransformer<
     TSettings extends Settings,
@@ -297,6 +289,7 @@ export class VisualizationAssembler<
     ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
         return this.makeRecursively(
             dataProviderManager.getGroupDelegate(),
+            [],
             options?.initialAccumulatedData ?? ({} as TAccumulatedData),
             options?.injectedData,
             options?.disableCache,
@@ -305,6 +298,7 @@ export class VisualizationAssembler<
 
     private makeRecursively(
         groupDelegate: GroupDelegate,
+        inheritedDataProviders: DataProvider<any, any, any>[],
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
         /**
@@ -322,6 +316,9 @@ export class VisualizationAssembler<
         let numLoadingDataProviders = 0;
         let numDataProviders = 0;
         let combinedBoundingBox: bbox.BBox | null = null;
+
+        const itemGroups: ItemGroup[] = [];
+        const dataProviders: DataProvider<any, any, any>[] = [];
 
         const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
             if (boundingBox) {
@@ -341,78 +338,86 @@ export class VisualizationAssembler<
             }
 
             if (instanceofItemGroup(child)) {
-                const product = this.makeRecursively(
-                    child.getGroupDelegate(),
-                    accumulatedData,
-                    injectedData,
-                    disableCache,
-                );
-
-                accumulatedData = product.accumulatedData;
-                aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
-                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
-                    hoverVisualizationFunctions,
-                    product.hoverVisualizationFunctions,
-                );
-                numLoadingDataProviders += product.numLoadingDataProviders;
-                numDataProviders += product.numDataProviders;
-                maybeApplyBoundingBox(product.combinedBoundingBox);
-
-                if (child instanceof Group) {
-                    const group = this.makeGroup(child, product);
-
-                    children.push(group);
-                    continue;
-                } else {
-                    annotations.push(...product.annotations);
-                }
-
-                children.push(...product.children);
+                itemGroups.push(child);
             }
 
             if (child instanceof DataProvider) {
-                numDataProviders++;
-
-                if (child.getStatus() === DataProviderStatus.LOADING) {
-                    numLoadingDataProviders++;
-                }
-
-                if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
-                    continue;
-                }
-
-                if (child.getStatus() === DataProviderStatus.ERROR) {
-                    const error = child.getError();
-                    if (error) {
-                        aggregatedErrorMessages.push(error);
-                    }
-                    continue;
-                }
-
-                if (child.getData() === null) {
-                    continue;
-                }
-
-                const dataProviderObjects = this.makeDataProviderObjects(
-                    child,
-                    accumulatedData,
-                    injectedData,
-                    disableCache,
-                );
-
-                if (!dataProviderObjects.visualization) {
-                    continue;
-                }
-
-                maybeApplyBoundingBox(dataProviderObjects.boundingBox);
-                children.push(dataProviderObjects.visualization);
-                annotations.push(...dataProviderObjects.annotations);
-                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
-                    hoverVisualizationFunctions,
-                    dataProviderObjects.hoverVisualizationFunctions,
-                );
-                accumulatedData = dataProviderObjects.accumulatedData ?? accumulatedData;
+                dataProviders.push(child);
             }
+        }
+
+        for (const itemGroup of itemGroups) {
+            const product = this.makeRecursively(
+                itemGroup.getGroupDelegate(),
+                [...inheritedDataProviders, ...dataProviders],
+                accumulatedData,
+                injectedData,
+                disableCache,
+            );
+
+            accumulatedData = product.accumulatedData;
+            aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
+            hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
+                hoverVisualizationFunctions,
+                product.hoverVisualizationFunctions,
+            );
+            numLoadingDataProviders += product.numLoadingDataProviders;
+            numDataProviders += product.numDataProviders;
+            maybeApplyBoundingBox(product.combinedBoundingBox);
+
+            if (itemGroup instanceof Group) {
+                const group = this.makeGroup(itemGroup, product);
+
+                children.push(group);
+                continue;
+            } else {
+                annotations.push(...product.annotations);
+            }
+
+            children.push(...product.children);
+        }
+
+        for (const child of [...inheritedDataProviders, ...dataProviders]) {
+            if (children.some((el) => el.id === child.getItemDelegate().getId())) {
+                continue;
+            }
+
+            numDataProviders++;
+
+            if (child.getStatus() === DataProviderStatus.LOADING) {
+                numLoadingDataProviders++;
+            }
+
+            if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
+                continue;
+            }
+
+            if (child.getStatus() === DataProviderStatus.ERROR) {
+                const error = child.getError();
+                if (error) {
+                    aggregatedErrorMessages.push(error);
+                }
+                continue;
+            }
+
+            if (child.getData() === null) {
+                continue;
+            }
+
+            const dataProviderObjects = this.makeDataProviderObjects(child, accumulatedData, injectedData);
+
+            if (!dataProviderObjects.visualization) {
+                continue;
+            }
+
+            maybeApplyBoundingBox(dataProviderObjects.boundingBox);
+            children.push(dataProviderObjects.visualization);
+            annotations.push(...dataProviderObjects.annotations);
+            hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
+                hoverVisualizationFunctions,
+                dataProviderObjects.hoverVisualizationFunctions,
+            );
+            accumulatedData = dataProviderObjects.accumulatedData ?? accumulatedData;
         }
 
         return {
@@ -615,7 +620,7 @@ export class VisualizationAssembler<
         const merged: HoverVisualizationFunctions<TTarget> = { ...base };
 
         for (const key in additional) {
-            const typedKey = key as keyof HoverTopicDefinitions;
+            const typedKey = key as HoverTopic;
             const baseFn = base[typedKey];
             const additionalFn = additional[typedKey];
 
