@@ -1,4 +1,3 @@
-from typing import List, Optional, Union
 from enum import Enum
 
 from pydantic import BaseModel
@@ -11,10 +10,10 @@ class EnsembleParameter(BaseModel):
     isLogarithmic: bool
     isDiscrete: bool  # values are string or integer
     isConstant: bool  # all values are equal
-    groupName: Optional[str] = None
-    descriptiveName: Optional[str] = None
-    realizations: List[int]
-    values: Union[List[float], List[int], List[str]]
+    groupName: str | None = None
+    descriptiveName: str | None = None
+    realizations: list[int]
+    values: list[float] | list[int] | list[str]
 
 
 class SensitivityType(str, Enum):
@@ -26,7 +25,7 @@ class EnsembleSensitivityCase(BaseModel):
     """Description/data for a single sensitivity case in an ensemble"""
 
     name: str
-    realizations: List[int]
+    realizations: list[int]
 
 
 class EnsembleSensitivity(BaseModel):
@@ -34,4 +33,11 @@ class EnsembleSensitivity(BaseModel):
 
     name: str
     type: SensitivityType
-    cases: List[EnsembleSensitivityCase]
+    cases: list[EnsembleSensitivityCase]
+
+
+class EnsembleParametersAndSensitivities(BaseModel):
+    """Description/data for all parameters and sensitivities in an ensemble"""
+
+    parameters: list[EnsembleParameter]
+    sensitivities: list[EnsembleSensitivity]

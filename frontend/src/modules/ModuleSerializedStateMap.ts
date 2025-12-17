@@ -112,6 +112,10 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "TopographicMap": {
+    settings?: never,
+    view?: never,
+  },
   "Vfp": {
     settings?: never,
     view?: never,

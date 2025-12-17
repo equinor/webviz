@@ -1,6 +1,11 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
+import type {
+    EnsembleDetails_api,
+    EnsembleParameter_api,
+    EnsembleParametersAndSensitivities_api,
+    EnsembleSensitivity_api,
+} from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersAndSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
@@ -255,7 +260,7 @@ async function loadEnsembleApiDataMapFromBackend(
     const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
     const ensembleDetailsPromiseArray: Promise<EnsembleDetails_api>[] = [];
-    const parametersAndSensitivitiesPromiseArray: Promise<[EnsembleParameter_api[], EnsembleSensitivity_api[]]>[] = [];
+    const parametersAndSensitivitiesPromiseArray: Promise<EnsembleParametersAndSensitivities_api>[] = [];
 
     const ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap = {};
 
@@ -299,10 +304,11 @@ async function loadEnsembleApiDataMapFromBackend(
 
     const resMap: EnsembleIdentStringToEnsembleApiDataMap = {};
     for (let i = 0; i < ensembleDetailsOutcomeArray.length; i++) {
-        const ensembleDetailsOutcome = ensembleDetailsOutcomeArray[i];
         const ensembleIdentString = ensembleIdents[i].toString();
-        console.debug(`ensembleDetailsOutcome[${i}]:`, ensembleDetailsOutcome.status);
 
+        // Handle rejected ensemble details outcome
+        const ensembleDetailsOutcome = ensembleDetailsOutcomeArray[i];
+        console.debug(`ensembleDetailsOutcome[${i}]:`, ensembleDetailsOutcome.status);
         if (ensembleDetailsOutcome.status === "rejected") {
             const errorMessage = "Error fetching ensemble details, dropping ensemble.";
             console.error(errorMessage, ensembleIdentString);
@@ -313,6 +319,7 @@ async function loadEnsembleApiDataMapFromBackend(
             continue;
         }
 
+        // Handle ensemble details and validate
         const ensembleDetails: EnsembleDetails_api = ensembleDetailsOutcome.value;
         if (
             ensembleDetails.caseUuid !== ensembleIdents[i].getCaseUuid() ||
@@ -327,15 +334,11 @@ async function loadEnsembleApiDataMapFromBackend(
             continue;
         }
 
+        // Handle rejected parameters and sensitivities outcome
         const parametersAndSensitivitiesOutcome = parametersAndSensitivitiesOutcomeArray[i];
         console.debug(`parametersAndSensitivitiesOutcome[${i}]:`, parametersAndSensitivitiesOutcome.status);
-        let parameterArray: EnsembleParameter_api[] = [];
-        let sensitivityArray: EnsembleSensitivity_api[] = [];
-        if (parametersAndSensitivitiesOutcome.status === "fulfilled") {
-            parameterArray = parametersAndSensitivitiesOutcome.value[0];
-            sensitivityArray = parametersAndSensitivitiesOutcome.value[1];
-        } else {
-            const errorMessage = "Error fetching ensemble parameters, dropping ensemble.";
+        if (parametersAndSensitivitiesOutcome.status === "rejected") {
+            const errorMessage = "Error fetching ensemble parameters and sensitivities, dropping ensemble.";
             console.error(errorMessage, ensembleIdentString);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
@@ -344,6 +347,10 @@ async function loadEnsembleApiDataMapFromBackend(
             continue;
         }
 
+        // Handle parameters and sensitivities and validate (Only validate parameters, as sensitivities can be empty)
+        const parametersAndSensitivities = parametersAndSensitivitiesOutcome.value;
+        const parameterArray = parametersAndSensitivities.parameters;
+        const sensitivityArray = parametersAndSensitivities.sensitivities;
         if (parameterArray.length === 0) {
             const errorMessage = "No parameters found for ensemble, dropping ensemble.";
             console.error(errorMessage, ensembleIdentString);

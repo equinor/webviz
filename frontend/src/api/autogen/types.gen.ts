@@ -377,6 +377,22 @@ export type EnsembleParameter_api = {
 };
 
 /**
+ * EnsembleParametersAndSensitivities
+ *
+ * Description/data for all parameters and sensitivities in an ensemble
+ */
+export type EnsembleParametersAndSensitivities_api = {
+    /**
+     * Parameters
+     */
+    parameters: Array<EnsembleParameter_api>;
+    /**
+     * Sensitivities
+     */
+    sensitivities: Array<EnsembleSensitivity_api>;
+};
+
+/**
  * EnsembleScalarResponse
  *
  * A generic type for a scalar response from each of the members of the ensemble.
@@ -4572,11 +4588,9 @@ export type GetParametersAndSensitivitiesError_api =
 
 export type GetParametersAndSensitivitiesResponses_api = {
     /**
-     * Response Get Parameters And Sensitivities
-     *
      * Successful Response
      */
-    200: [Array<EnsembleParameter_api>, Array<EnsembleSensitivity_api>];
+    200: EnsembleParametersAndSensitivities_api;
 };
 
 export type GetParametersAndSensitivitiesResponse_api =

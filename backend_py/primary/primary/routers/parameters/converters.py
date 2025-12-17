@@ -1,10 +1,8 @@
-from typing import List
-
 from webviz_services.sumo_access.parameter_types import EnsembleParameter, EnsembleSensitivity
 from . import schemas
 
 
-def to_api_parameters(parameters: List[EnsembleParameter]) -> List[schemas.EnsembleParameter]:
+def to_api_parameters(parameters: list[EnsembleParameter]) -> list[schemas.EnsembleParameter]:
     """
     Convert Sumo ensemble parameters to API ensemble parameters
     """
@@ -25,7 +23,7 @@ def to_api_parameters(parameters: List[EnsembleParameter]) -> List[schemas.Ensem
     return api_parameters
 
 
-def to_api_sensitivities(sensitivities: List[EnsembleSensitivity]) -> List[schemas.EnsembleSensitivity]:
+def to_api_sensitivities(sensitivities: list[EnsembleSensitivity]) -> list[schemas.EnsembleSensitivity]:
     """
     Convert Sumo ensemble sensitivities to API ensemble sensitivities
     """
