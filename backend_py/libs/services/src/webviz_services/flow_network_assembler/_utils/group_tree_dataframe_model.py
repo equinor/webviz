@@ -1,5 +1,4 @@
 import polars as pl
-import pyarrow as pa
 
 from webviz_services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 
@@ -25,7 +24,7 @@ class GroupTreeDataframeModel:
     If not, all trees are stored.
     """
 
-    _grouptree_df: pl.DataFrame
+    _group_tree_df: pl.DataFrame
     _grouptree_wells: list[str] = []
     _grouptree_tree_types: list[TreeType] = []
 
@@ -35,7 +34,7 @@ class GroupTreeDataframeModel:
 
     def __init__(
         self,
-        group_tree_table_pa: pa.Table,
+        group_tree_df: pl.DataFrame,
         terminal_node: str | None = None,
         excl_well_startswith: list[str] | None = None,
         excl_well_endswith: list[str] | None = None,
@@ -50,14 +49,11 @@ class GroupTreeDataframeModel:
         * KEYWORD (GRUPTREE, BRANPROP or WELSPECS)
         """
 
-        # Convert PyArrow to Polars DataFrame
-        grouptree_df = pl.DataFrame(group_tree_table_pa)
-
         # Validate expected columns - verify existence and data types
-        GroupTreeDataframeModel.validate_expected_columns(grouptree_df)
+        GroupTreeDataframeModel.validate_expected_columns(group_tree_df)
 
         # Note: Only support single realization for now
-        if "REAL" in grouptree_df.columns:
+        if "REAL" in group_tree_df.columns:
             raise MultipleDataMatchesError(
                 "Only single realization is supported for group tree now.", service=Service.GENERAL
             )
@@ -69,8 +65,8 @@ class GroupTreeDataframeModel:
         # Extract wells and groups with expressions
         wells_expr = pl.col("KEYWORD") == "WELSPECS"
         tree_type_expr = pl.col("KEYWORD").is_in(["GRUPTREE", "BRANPROP"])
-        self._grouptree_wells = grouptree_df.filter(wells_expr)["CHILD"].unique().to_list()
-        tree_type_strings = grouptree_df.filter(tree_type_expr)["KEYWORD"].unique().to_list()
+        self._grouptree_wells = group_tree_df.filter(wells_expr)["CHILD"].unique().to_list()
+        tree_type_strings = group_tree_df.filter(tree_type_expr)["KEYWORD"].unique().to_list()
 
         # Convert to TreeType enums
         self._grouptree_tree_types = []
@@ -85,8 +81,8 @@ class GroupTreeDataframeModel:
             self._grouptree_tree_types.append(tree_type)
 
         # Filter dataframe
-        self._grouptree_df = GroupTreeDataframeModel._create_filtered_dataframe(
-            grouptree_df,
+        self._group_tree_df = GroupTreeDataframeModel._create_filtered_dataframe(
+            group_tree_df,
             terminal_node=self._terminal_node,
             excl_well_startswith=self._excl_well_startswith,
             excl_well_endswith=self._excl_well_endswith,
@@ -97,7 +93,7 @@ class GroupTreeDataframeModel:
         """
         Get the full filtered group tree dataframe
         """
-        return self._grouptree_df
+        return self._group_tree_df
 
     def create_df_for_tree_type(self, tree_type: TreeType) -> pl.DataFrame:
         """
@@ -116,10 +112,10 @@ class GroupTreeDataframeModel:
         tree_type_expr = pl.col("KEYWORD") == tree_type.value
 
         # Find dates where the selected tree type is defined
-        dates_for_tree_type = self._grouptree_df.filter(tree_type_expr)["DATE"].unique()
+        dates_for_tree_type = self._group_tree_df.filter(tree_type_expr)["DATE"].unique()
 
         # Filter to only include rows from those dates
-        date_filtered_df = self._grouptree_df.filter(pl.col("DATE").is_in(dates_for_tree_type))
+        date_filtered_df = self._group_tree_df.filter(pl.col("DATE").is_in(dates_for_tree_type))
 
         # Get all nodes that are defined in the selected tree type (across all dates)
         tree_nodes = date_filtered_df.filter(tree_type_expr)["CHILD"].unique()

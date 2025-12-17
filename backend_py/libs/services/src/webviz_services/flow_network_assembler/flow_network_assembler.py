@@ -163,8 +163,11 @@ class FlowNetworkAssembler:
         if group_tree_table_pa is None:
             raise NoDataError("Group tree data not found", Service.GENERAL)
 
+        # Convert PyArrow to Polars DataFrame
+        group_tree_df = pl.DataFrame(group_tree_table_pa)
+
         self._group_tree_df_model = GroupTreeDataframeModel(
-            group_tree_table_pa, self._terminal_node, self._excl_well_startswith, self._excl_well_endswith
+            group_tree_df, self._terminal_node, self._excl_well_startswith, self._excl_well_endswith
         )
 
         # Store performance time for later logging
