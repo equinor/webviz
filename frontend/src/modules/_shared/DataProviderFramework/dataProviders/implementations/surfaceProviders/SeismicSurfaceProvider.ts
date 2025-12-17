@@ -1,8 +1,7 @@
-import type { Options } from "@hey-api/client-axios";
 import { hashKey } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
-import type { GetStatisticalSurfaceDataHybridData_api } from "@api";
+import type { Options, GetStatisticalSurfaceDataHybridData_api } from "@api";
 import {
     SurfaceAttributeType_api,
     SurfaceStatisticFunction_api,

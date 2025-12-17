@@ -1,5 +1,4 @@
 import logging
-from typing import List, Optional
 
 import pandas as pd
 import pyarrow as pa
@@ -12,7 +11,6 @@ from webviz_services.service_exceptions import NoDataError, InvalidDataError, Se
 from .sumo_client_factory import create_sumo_client
 from .parameter_types import (
     EnsembleParameter,
-    EnsembleParameters,
     EnsembleSensitivity,
     EnsembleSensitivityCase,
     SensitivityType,
@@ -35,7 +33,7 @@ class ParameterAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
-    async def get_parameters_and_sensitivities_async(self) -> EnsembleParameters:
+    async def get_parameters_and_sensitivities_async(self) -> tuple[list[EnsembleParameter], list[EnsembleSensitivity]]:
         """Retrieve parameters for an ensemble"""
         perf_metrics = PerfMetrics()
 
@@ -74,23 +72,16 @@ class ParameterAccess:
         perf_metrics.record_lap("transform")
 
         LOGGER.debug(
-            f"ParameterAccess.get_parameters_and_sensitivities_async() took: {perf_metrics.to_string()}, {self._case_uuid=}, {self._ensemble_name=}"
+            f"ParameterAccess.get_parameters_and_sensitivities_async() took: {perf_metrics.to_string()},"
+            f" {self._case_uuid=}, {self._ensemble_name=}"
         )
 
-        return EnsembleParameters(
-            parameters=ensemble_parameters,
-            sensitivities=sensitivities,
-        )
-
-    async def get_parameter_async(self, parameter_name: str) -> EnsembleParameter:
-        """Retrieve a single parameter for an ensemble"""
-        parameters = await self.get_parameters_and_sensitivities_async()
-        return next(parameter for parameter in parameters.parameters if parameter.name == parameter_name)
+        return ensemble_parameters, sensitivities
 
 
 def create_ensemble_sensitivities(
-    sumo_ensemble_parameters: List[EnsembleParameter],
-) -> Optional[List[EnsembleSensitivity]]:
+    sumo_ensemble_parameters: list[EnsembleParameter],
+) -> list[EnsembleSensitivity]:
     """Extract sensitivities from a list of SumoEnsembleParameter objects"""
     sensitivities = []
 
@@ -103,7 +94,7 @@ def create_ensemble_sensitivities(
         None,
     )
     if sens_case_parameter is None or sens_name_parameter is None:
-        return None
+        return []
     df = pd.DataFrame(
         {
             "name": sens_name_parameter.values,
@@ -119,10 +110,10 @@ def create_ensemble_sensitivities(
                 cases=create_ensemble_sensitivity_cases(group),
             )
         )
-    return sensitivities if sensitivities else None
+    return sensitivities
 
 
-def find_sensitivity_type(sens_case_names: List[str]) -> SensitivityType:
+def find_sensitivity_type(sens_case_names: list[str]) -> SensitivityType:
     """Find the sensitivity type based on the sensitivity case names"""
     if len(sens_case_names) == 1 and sens_case_names[0] == "p10_p90":
         return SensitivityType.MONTECARLO
@@ -131,7 +122,7 @@ def find_sensitivity_type(sens_case_names: List[str]) -> SensitivityType:
 
 def create_ensemble_sensitivity_cases(
     df: pd.DataFrame,
-) -> List[EnsembleSensitivityCase]:
+) -> list[EnsembleSensitivityCase]:
     """Create a list of EnsembleSensitivityCase objects from a dataframe"""
     cases = []
     for case_name, case_df in df.groupby("case"):
@@ -144,14 +135,14 @@ def create_ensemble_sensitivity_cases(
     return cases
 
 
-def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[EnsembleParameter]:
+def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> list[EnsembleParameter]:
     """Convert a parameter table to EnsembleParameters"""
     _validate_parameter_table(parameter_table)
     parameter_table = _cast_datetime_columns_to_string(parameter_table)
 
     parameter_str_arr = [param_str for param_str in parameter_table.column_names if param_str != "REAL"]
     parameter_group_dict = _parameter_str_arr_to_parameter_group_dict(parameter_str_arr)
-    ensemble_parameters: List[EnsembleParameter] = []
+    ensemble_parameters: list[EnsembleParameter] = []
     for group_name, parameter_names in parameter_group_dict.items():
         if group_name and "LOG10_" in group_name:
             continue
@@ -179,7 +170,7 @@ def _cast_datetime_columns_to_string(parameter_table: pa.Table) -> pa.Table:
 
 
 def _create_ensemble_parameter(
-    parameter_name: str, group_name: Optional[str], parameter_group_dict: dict, parameter_table: pa.Table
+    parameter_name: str, group_name: str | None, parameter_group_dict: dict, parameter_table: pa.Table
 ) -> EnsembleParameter:
     is_logarithmic = parameter_name in parameter_group_dict.get(f"LOG10_{group_name}", [])
     table_column_name = _parameter_name_and_group_name_to_parameter_str(parameter_name, group_name)
@@ -209,12 +200,12 @@ def _is_discrete_column(column_type: pa.DataType) -> bool:
     )
 
 
-def _parameter_name_and_group_name_to_parameter_str(parameter_name: str, group_name: Optional[str]) -> str:
+def _parameter_name_and_group_name_to_parameter_str(parameter_name: str, group_name: str | None) -> str:
     """Convert a parameter name and group name to a parameter string"""
     return f"{group_name}:{parameter_name}" if group_name else parameter_name
 
 
-def _parameter_str_arr_to_parameter_group_dict(parameter_str_arr: List[str]) -> dict:
+def _parameter_str_arr_to_parameter_group_dict(parameter_str_arr: list[str]) -> dict:
     """Convert a list of parameter strings to a dictionary of parameter groups"""
     parameter_group_dict: dict = {}
     for parameter_str in parameter_str_arr:
