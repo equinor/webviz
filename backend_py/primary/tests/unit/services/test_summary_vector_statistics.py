@@ -1,7 +1,7 @@
+from datetime import datetime
 import pytest
 import pyarrow as pa
-from datetime import datetime
-from unittest.mock import patch, MagicMock
+
 from webviz_services.summary_vector_statistics import compute_vector_statistics_table
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.service_exceptions import InvalidParameterError

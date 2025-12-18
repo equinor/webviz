@@ -94,7 +94,7 @@ def create_ensemble_sensitivities(
         None,
     )
     if sens_case_parameter is None or sens_name_parameter is None:
-        return None
+        return []
     df = pl.DataFrame(
         {
             "name": sens_name_parameter.values,
