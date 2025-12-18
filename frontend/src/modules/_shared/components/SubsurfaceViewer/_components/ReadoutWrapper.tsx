@@ -195,7 +195,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 {...deckGlProps}
                 views={storedDeckGlViews}
                 getCameraPosition={ctx.onViewStateChange}
-                initialCameraPosition={ctx.viewState ?? undefined}
+                cameraPosition={ctx.viewState}
             >
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is

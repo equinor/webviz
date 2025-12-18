@@ -183,7 +183,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             layers={adjustedLayers}
             views={{ ...props.views, viewports: adjustedViewports }}
             deckGlManager={deckGlManagerRef.current}
-            verticalScale={verticalScale}
+            verticalScale={1}
             triggerHome={triggerHomeCounter}
         >
             <Toolbar
@@ -192,7 +192,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 onGridVisibilityChange={handleGridVisibilityChange}
                 polylinesPlugin={polylinesPluginRef.current}
                 onVerticalScaleChange={handleVerticalScaleChange}
-                verticalScale={verticalScale}
+                verticalScale={1}
                 hasActivePolyline={Boolean(polylinesPluginRef.current.getCurrentEditingPolylineId())}
                 onPolylineNameChange={handlePolylineNameChange}
                 activePolylineName={activePolylineName}

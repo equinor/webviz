@@ -21,6 +21,7 @@ import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/t
 import { PlaceholderLayer } from "../../customDeckGlLayers/PlaceholderLayer";
 
 import { InteractionWrapper } from "./_components/InteractionWrapper";
+import { PerformanceRecorder } from "./PerformanceRecorder";
 import { PreferredViewLayout } from "./typesAndEnums";
 
 export type DpfSubsurfaceViewerContextType = {
@@ -63,10 +64,15 @@ export type DpfSubsurfaceViewerWrapperProps = {
 };
 
 export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProps): React.ReactNode {
+    // State to override the camera during benchmark
+    const [benchmarkViewState, setBenchmarkViewState] = React.useState<ViewStateType | undefined>(undefined);
+
+    // State to track "real" camera position (even if uncontrolled)
+    const [lastKnownViewState, setLastKnownViewState] = React.useState<ViewStateType | undefined>(props.viewState);
+
     const [changingFields, setChangingFields] = React.useState<boolean>(false);
     const [prevFieldId, setPrevFieldId] = React.useState<string | null>(null);
     const statusWriter = useViewStatusWriter(props.viewContext);
-
     const usedPolylineIds = props.visualizationAssemblerProduct.accumulatedData.polylineIds;
 
     const viewports: ViewportTypeExtended[] = [];
@@ -77,13 +83,10 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
             const colorScales = item.annotations.filter((el) => "colorScale" in el);
             const layerIds: string[] = [...globalLayerIds];
-
             for (const child of item.children) {
                 if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
                     const layer = child.visualization;
-
                     layerIds.push(layer.id);
-                    // Shared layers (aka, root group layers) might already have been added
                     if (!deckGlLayers.some((l) => l.id === layer.id)) deckGlLayers.push(layer);
                 }
             }
@@ -99,28 +102,20 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         }
     }
 
-    const views: ViewsTypeExtended = {
-        layout: [0, 0],
-        showLabel: false,
-        viewports: viewports,
-    };
-
+    const views: ViewsTypeExtended = { layout: [0, 0], showLabel: false, viewports: viewports };
     const numViews = props.visualizationAssemblerProduct.children.filter(
         (item) => item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW,
     ).length;
-
     if (numViews) {
         const numCols = Math.ceil(Math.sqrt(numViews));
         const numRows = Math.ceil(numViews / numCols);
         views.layout = [numCols, numRows];
     }
-
     if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
         views.layout = [views.layout[1], views.layout[0]];
     }
 
     statusWriter.setLoading(props.visualizationAssemblerProduct.numLoadingDataProviders > 0);
-
     for (const message of props.visualizationAssemblerProduct.aggregatedErrorMessages) {
         statusWriter.addError(message);
     }
@@ -144,21 +139,37 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         ];
     }
 
+    // Compute a default view state from bounds so benchmark can start immediately
+    const defaultViewStateFromBounds = React.useMemo((): ViewStateType | undefined => {
+        if (!bounds3D) return undefined;
+
+        const centerX = (bounds3D[0] + bounds3D[3]) / 2;
+        const centerY = (bounds3D[1] + bounds3D[4]) / 2;
+        const centerZ = (bounds3D[2] + bounds3D[5]) / 2;
+
+        return {
+            target: [centerX, centerY, centerZ],
+            zoom: -4,
+            rotationX: 45,
+            rotationOrbit: 0,
+            minZoom: -10,
+            maxZoom: 20,
+        };
+    }, [bounds3D]);
+
+    // Initialize lastKnownViewState from bounds when they become available
+    React.useEffect(() => {
+        if (!lastKnownViewState && defaultViewStateFromBounds) {
+            setLastKnownViewState(defaultViewStateFromBounds);
+        }
+    }, [defaultViewStateFromBounds, lastKnownViewState]);
+
     deckGlLayers.push(
         new PlaceholderLayer({ id: "placeholder" }),
         new AxesLayer({ id: "axes", bounds: bounds3D, ZIncreasingDownwards: true }),
     );
-
     deckGlLayers.reverse();
 
-    // We are using this pattern (emptying the layers list + setting a new key for the InteractionWrapper)
-    // as a workaround due to subsurface-viewer's bounding box model not respecting the removal of layers.
-    // In case of a field change, the total accumulated bounding box would become very large and homing wouldn't work properly.
-    //
-    // This is a temporary solution until the subsurface-viewer is updated to handle
-    // bounding boxes more correctly.
-    //
-    // See: https://github.com/equinor/webviz-subsurface-components/pull/2573
     if (prevFieldId !== props.fieldId) {
         setChangingFields(true);
         setPrevFieldId(props.fieldId);
@@ -168,22 +179,47 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     if (changingFields && props.visualizationAssemblerProduct.numLoadingDataProviders === 0) {
         setChangingFields(false);
     }
-
     if (!changingFields) {
         finalLayers.push(...deckGlLayers);
     }
 
-    // -----------------------------------------------------------------------------
+    // Determine active view state: benchmark override takes precedence
+    const activeViewState = benchmarkViewState || props.viewState;
+
+    // Intercept view state updates from the viewer
+    const handleViewStateChange = (newViewState: ViewStateType) => {
+        // Always track the latest state so we have a valid start point for benchmark
+        setLastKnownViewState(newViewState);
+
+        // If benchmark is running, update the override
+        if (benchmarkViewState) {
+            setBenchmarkViewState(newViewState);
+        }
+
+        // Notify parent
+        props.onViewStateChange?.(newViewState);
+    };
 
     return (
         <DpfSubsurfaceViewerContext.Provider
             value={{
                 ...props,
+                viewState: activeViewState,
+                onViewStateChange: handleViewStateChange,
                 bounds: props.visualizationMode === "2D" ? bounds2D : undefined,
                 moduleInstanceId: props.moduleInstanceId,
                 hoverService: props.hoverService,
             }}
         >
+            <PerformanceRecorder
+                currentViewState={activeViewState || lastKnownViewState}
+                onViewStateChange={(vs) => {
+                    setBenchmarkViewState(vs);
+                    props.onViewStateChange?.(vs);
+                }}
+                onBenchmarkEnd={() => setBenchmarkViewState(undefined)}
+            />
+
             <InteractionWrapper
                 key={`interaction-wrapper-${props.fieldId}`}
                 views={views}
