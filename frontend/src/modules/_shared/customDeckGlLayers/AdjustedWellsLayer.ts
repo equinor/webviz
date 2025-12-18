@@ -1,9 +1,11 @@
 import type { FilterContext, LayersList, UpdateParameters } from "@deck.gl/core";
 import { Layer } from "@deck.gl/core";
+import type { GeoJsonLayerProps } from "@deck.gl/layers";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { BoundingBox3D } from "@webviz/subsurface-viewer";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { GetBoundingBox } from "@webviz/subsurface-viewer/dist/layers/wells/utils/spline";
+import { SubLayerId } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
 
 export class AdjustedWellsLayer extends WellsLayer {
     static layerName: string = "AdjustedWellsLayer";
@@ -48,7 +50,7 @@ export class AdjustedWellsLayer extends WellsLayer {
                 return false;
             }
 
-            return layer.id.includes("colors");
+            return layer.id.includes(SubLayerId.COLORS);
         });
 
         if (!(colorsLayer instanceof GeoJsonLayer)) {
@@ -72,7 +74,7 @@ export class AdjustedWellsLayer extends WellsLayer {
                 lineWidthMaxPixels: 5,
                 autoHighlight: true,
                 onHover: () => {},
-            }),
+            } as GeoJsonLayerProps),
         );
 
         return [newColorsLayer, ...layers.filter((layer) => layer !== colorsLayer)];

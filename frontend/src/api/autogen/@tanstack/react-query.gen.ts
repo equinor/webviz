@@ -38,15 +38,12 @@ import {
     getHistoricalVectorData,
     getInjectionData,
     getInlineSlice,
-    getIsSensitivityRun,
     getLogCurveData,
     getLoggedInUser,
     getMisfitSurfaceData,
     getObservations,
     getObservedSurfacesMetadata,
-    getParameter,
-    getParameterNamesAndDescription,
-    getParameters,
+    getParametersAndSensitivities,
     getPolygonsData,
     getPolygonsDirectory,
     getProductionData,
@@ -57,7 +54,6 @@ import {
     getRealizationVectorAtTimestamp,
     getSeismicCubeMetaList,
     getSeismicSlices,
-    getSensitivities,
     getSession,
     getSessionMetadata,
     getSessionsMetadata,
@@ -136,15 +132,12 @@ import type {
     GetHistoricalVectorDataData_api,
     GetInjectionDataData_api,
     GetInlineSliceData_api,
-    GetIsSensitivityRunData_api,
     GetLogCurveDataData_api,
     GetLoggedInUserData_api,
     GetMisfitSurfaceDataData_api,
     GetObservationsData_api,
     GetObservedSurfacesMetadataData_api,
-    GetParameterData_api,
-    GetParameterNamesAndDescriptionData_api,
-    GetParametersData_api,
+    GetParametersAndSensitivitiesData_api,
     GetPolygonsDataData_api,
     GetPolygonsDirectoryData_api,
     GetProductionDataData_api,
@@ -155,7 +148,6 @@ import type {
     GetRealizationVectorAtTimestampData_api,
     GetSeismicCubeMetaListData_api,
     GetSeismicSlicesData_api,
-    GetSensitivitiesData_api,
     GetSessionData_api,
     GetSessionMetadataData_api,
     GetSessionsMetadataData_api,
@@ -1087,18 +1079,16 @@ export const getStratigraphicUnitsForStratColumnOptions = (
     });
 };
 
-export const getParameterNamesAndDescriptionQueryKey = (options: Options<GetParameterNamesAndDescriptionData_api>) =>
-    createQueryKey("getParameterNamesAndDescription", options);
+export const getParametersAndSensitivitiesQueryKey = (options: Options<GetParametersAndSensitivitiesData_api>) =>
+    createQueryKey("getParametersAndSensitivities", options);
 
 /**
- * Get Parameter Names And Description
- *
- * Retrieve parameter names and description for an ensemble
+ * Get Parameters And Sensitivities
  */
-export const getParameterNamesAndDescriptionOptions = (options: Options<GetParameterNamesAndDescriptionData_api>) => {
+export const getParametersAndSensitivitiesOptions = (options: Options<GetParametersAndSensitivitiesData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getParameterNamesAndDescription({
+            const { data } = await getParametersAndSensitivities({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1106,96 +1096,7 @@ export const getParameterNamesAndDescriptionOptions = (options: Options<GetParam
             });
             return data;
         },
-        queryKey: getParameterNamesAndDescriptionQueryKey(options),
-    });
-};
-
-export const getParameterQueryKey = (options: Options<GetParameterData_api>) => createQueryKey("getParameter", options);
-
-/**
- * Get Parameter
- *
- * Get a parameter in a given Sumo ensemble
- */
-export const getParameterOptions = (options: Options<GetParameterData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getParameter({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getParameterQueryKey(options),
-    });
-};
-
-export const getParametersQueryKey = (options: Options<GetParametersData_api>) =>
-    createQueryKey("getParameters", options);
-
-/**
- * Get Parameters
- */
-export const getParametersOptions = (options: Options<GetParametersData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getParameters({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getParametersQueryKey(options),
-    });
-};
-
-export const getIsSensitivityRunQueryKey = (options: Options<GetIsSensitivityRunData_api>) =>
-    createQueryKey("getIsSensitivityRun", options);
-
-/**
- * Get Is Sensitivity Run
- *
- * Check if a given Sumo ensemble is a sensitivity run
- */
-export const getIsSensitivityRunOptions = (options: Options<GetIsSensitivityRunData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getIsSensitivityRun({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getIsSensitivityRunQueryKey(options),
-    });
-};
-
-export const getSensitivitiesQueryKey = (options: Options<GetSensitivitiesData_api>) =>
-    createQueryKey("getSensitivities", options);
-
-/**
- * Get Sensitivities
- *
- * Get sensitivities in a given Sumo ensemble
- */
-export const getSensitivitiesOptions = (options: Options<GetSensitivitiesData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getSensitivities({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getSensitivitiesQueryKey(options),
+        queryKey: getParametersAndSensitivitiesQueryKey(options),
     });
 };
 

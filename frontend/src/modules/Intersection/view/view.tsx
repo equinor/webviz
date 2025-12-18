@@ -22,6 +22,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
             workbenchServices={props.workbenchServices}
+            hoverService={props.hoverService}
         />
     );
 }
