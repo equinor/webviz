@@ -27,7 +27,7 @@ import type {
 import { instanceofItemGroup, type ItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
-import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
+import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 export enum VisualizationItemType {
     DATA_PROVIDER_VISUALIZATION = "data-provider-visualization",
@@ -79,7 +79,7 @@ export type TransformerArgs<
     name: string;
     isLoading: boolean;
     getInjectedData: () => TInjectedData;
-    getValueRange: () => Readonly<[number, number]> | null;
+    getDataValueRange: () => Readonly<[number, number]> | null;
 };
 
 export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
@@ -113,7 +113,7 @@ export type GroupPropsCollectorArgs<
 > = {
     id: string;
     name: string;
-    getSetting: <TKey extends TSettingKey>(setting: TKey) => SettingTypes[TKey];
+    getSetting: <TKey extends TSettingKey>(setting: TKey) => SettingTypeDefinitions[TKey]["externalValue"];
 };
 
 export interface GroupCustomPropsCollector<
@@ -534,7 +534,7 @@ export class VisualizationAssembler<
             name: dataProvider.getItemDelegate().getName(),
             isLoading: dataProvider.getStatus() === DataProviderStatus.LOADING,
             getInjectedData: getInjectedData.bind(this),
-            getValueRange: dataProvider.getValueRange.bind(dataProvider),
+            getDataValueRange: dataProvider.getDataValueRange.bind(dataProvider),
             ...dataProvider.makeAccessors(),
         };
     }

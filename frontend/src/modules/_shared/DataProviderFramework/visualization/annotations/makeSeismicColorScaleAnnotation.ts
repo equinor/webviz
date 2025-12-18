@@ -7,14 +7,14 @@ import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
 export function makeSeismicColorScaleAnnotation({
     getSetting,
-    getValueRange,
+    getDataValueRange,
     id,
     name,
     isLoading,
 }: TransformerArgs<[Setting.SEISMIC_COLOR_SCALE], any>): Annotation[] {
     const colorScale = getSetting(Setting.SEISMIC_COLOR_SCALE)?.colorScale;
     const useCustomColorScaleBoundaries = getSetting(Setting.SEISMIC_COLOR_SCALE)?.areBoundariesUserDefined ?? false;
-    const valueRange = getValueRange();
+    const valueRange = getDataValueRange();
 
     if (!colorScale || !valueRange || isLoading) {
         return [];

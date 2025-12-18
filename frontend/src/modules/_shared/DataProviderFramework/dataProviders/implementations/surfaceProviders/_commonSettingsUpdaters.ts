@@ -7,7 +7,7 @@ import type { SensitivityNameCasePair } from "@modules/_shared/DataProviderFrame
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 /**
- * Creates an availableSettingsUpdater for Setting.ENSEMBLE that filters ensembles by the current field.
+ * Creates an valueRangeUpdater for Setting.ENSEMBLE that filters ensembles by the current field.
  */
 export function createEnsembleUpdater() {
     return ({ getGlobalSetting }: any) => {
@@ -23,7 +23,7 @@ export function createEnsembleUpdater() {
 }
 
 /**
- * Creates an availableSettingsUpdater for Setting.SENSITIVITY that returns sensitivity name/case pairs
+ * Creates an valueRangeUpdater for Setting.SENSITIVITY that returns sensitivity name/case pairs
  * for the selected ensemble.
  */
 export function createSensitivityUpdater(workbenchSession: WorkbenchSession) {
@@ -54,7 +54,7 @@ export function createSensitivityUpdater(workbenchSession: WorkbenchSession) {
 }
 
 /**
- * Creates an availableSettingsUpdater for Setting.REALIZATION that returns filtered realizations
+ * Creates an valueRangeUpdater for Setting.REALIZATION that returns filtered realizations
  * for the selected ensemble.
  */
 export function createRealizationUpdater() {
@@ -73,7 +73,7 @@ export function createRealizationUpdater() {
 }
 
 /**
- * Creates an availableSettingsUpdater for Setting.STATISTIC_FUNCTION that returns all available
+ * Creates an valueRangeUpdater for Setting.STATISTIC_FUNCTION that returns all available
  * surface statistic functions.
  */
 export function createStatisticFunctionUpdater() {

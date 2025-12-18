@@ -12,8 +12,8 @@ import { SettingTopic } from "../framework/SettingManager/SettingManager";
 import type { CustomSettingsHandler, SettingAttributes, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
-import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
-import type { MakeSettingTypesMap, SettingTypes, Settings } from "../settings/settingsDefinitions";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
+import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 import { Dependency } from "./_utils/Dependency";
 
@@ -65,8 +65,10 @@ export class SettingsContextDelegate<
         TStoredDataKey
     >;
     private _dataProviderManager: DataProviderManager;
-    private _settings: { [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null> } = {} as {
-        [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null>;
+    private _settings: {
+        [K in TSettingKey]: SettingManager<K>;
+    } = {} as {
+        [K in TSettingKey]: SettingManager<K>;
     };
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegatePayloads>();
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
@@ -222,9 +224,9 @@ export class SettingsContextDelegate<
         return invalidSettings;
     }
 
-    setAvailableValues<K extends TSettingKey>(key: K, availableValues: AvailableValuesType<K>): void {
+    setValueRange<K extends TSettingKey>(key: K, valueRange: SettingTypeDefinitions[K]["valueRange"]): void {
         const settingDelegate = this._settings[key];
-        settingDelegate.setAvailableValues(availableValues);
+        settingDelegate.setValueRange(valueRange);
     }
 
     setStoredData<K extends TStoredDataKey>(key: K, data: TStoredData[K] | null): void {
@@ -359,11 +361,16 @@ export class SettingsContextDelegate<
             return this.getDataProviderManager.bind(this)().getGlobalSetting(key);
         };
 
-        const availableSettingsUpdater = <K extends TSettingKey>(
+        const valueRangeUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey>,
-        ): Dependency<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey> => {
-            const dependency = new Dependency<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey>(
+            updateFunc: UpdateFunc<SettingTypeDefinitions[K]["valueRange"], TSettings, TSettingTypes, TSettingKey>,
+        ): Dependency<SettingTypeDefinitions[K]["valueRange"], TSettings, TSettingTypes, TSettingKey> => {
+            const dependency = new Dependency<
+                SettingTypeDefinitions[K]["valueRange"],
+                TSettings,
+                TSettingTypes,
+                TSettingKey
+            >(
                 localSettingManagerGetter,
                 globalSettingGetter,
                 updateFunc,
@@ -373,12 +380,12 @@ export class SettingsContextDelegate<
             );
             this._dependencies.push(dependency);
 
-            dependency.subscribe((availableValues) => {
-                if (availableValues === null) {
-                    this.setAvailableValues(settingKey, [] as unknown as AvailableValuesType<K>);
+            dependency.subscribe((valueRange) => {
+                if (valueRange === null) {
+                    this.setValueRange(settingKey, null as SettingTypeDefinitions[K]["valueRange"]);
                     return;
                 }
-                this.setAvailableValues(settingKey, availableValues);
+                this.setValueRange(settingKey, valueRange);
                 this.handleSettingChanged();
             });
 
@@ -413,6 +420,10 @@ export class SettingsContextDelegate<
                     return;
                 }
                 this._settings[settingKey].updateAttributes(attributes);
+            });
+
+            dependency.subscribeLoading(() => {
+                this.handleSettingChanged();
             });
 
             dependency.initialize();
@@ -462,7 +473,7 @@ export class SettingsContextDelegate<
                 getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
                 getHelperDependency: <TDep>(
                     dep: Dependency<TDep, TSettings, TSettingTypes, TSettingKey>,
-                ) => TDep | null;
+                ) => Awaited<TDep> | null;
                 abortSignal: AbortSignal;
             }) => T,
         ) => {
@@ -487,7 +498,7 @@ export class SettingsContextDelegate<
 
         if (this._customSettingsHandler.defineDependencies) {
             this._customSettingsHandler.defineDependencies({
-                availableSettingsUpdater: availableSettingsUpdater.bind(this),
+                valueRangeUpdater: valueRangeUpdater.bind(this),
                 settingAttributesUpdater: settingAttributesUpdater.bind(this),
                 storedDataUpdater: storedDataUpdater.bind(this),
                 helperDependency: helperDependency.bind(this),
@@ -507,7 +518,9 @@ export class SettingsContextDelegate<
         for (const key in this._settings) {
             this._settings[key].beforeDestroy();
         }
-        this._settings = {} as { [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null> };
+        this._settings = {} as {
+            [K in TSettingKey]: SettingManager<K>;
+        };
     }
 
     private setStatus(status: SettingsContextStatus) {

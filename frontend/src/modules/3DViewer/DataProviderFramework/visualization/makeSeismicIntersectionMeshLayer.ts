@@ -34,11 +34,11 @@ export function makeSeismicIntersectionMeshLayer(
         IntersectionRealizationSeismicStoredData
     >,
 ): Layer<any> | null {
-    const { id, name, getData, getSetting, getStoredData, getValueRange } = args;
+    const { id, name, getData, getSetting, getStoredData, getDataValueRange } = args;
     const fenceData = getData();
     const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
     const opacityPercent = (getSetting(Setting.OPACITY_PERCENT) ?? 100) / 100;
-    const valueRange = getValueRange();
+    const valueRange = getDataValueRange();
     const polyline = getStoredData("seismicFencePolylineWithSectionLengths");
 
     if (!fenceData || !polyline) {
