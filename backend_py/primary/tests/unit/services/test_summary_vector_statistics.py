@@ -149,3 +149,21 @@ class TestComputeVectorStatisticsTable:
         # P90 = 10th percentile (oil industry convention)
         assert result["P10"][0].as_py() > result["P50"][0].as_py()
         assert result["P50"][0].as_py() > result["P90"][0].as_py()
+
+    def test_float_downcasting_applied(self):
+        """Test that float64 statistics are downcast to float32"""
+        dates = [datetime(2020, 1, 1)] * 3
+        values = [1.0, 2.0, 3.0]
+        table = pa.table(
+            {"DATE": pa.array(dates, type=pa.timestamp("ms")), "VECTOR": pa.array(values, type=pa.float64())}
+        )
+
+        result = compute_vector_statistics_table(table, "VECTOR", [StatisticFunction.MIN, StatisticFunction.MAX])
+
+        # Input VECTOR column is float64
+        assert table.field("VECTOR").type == pa.float64()
+
+        assert result is not None
+        # All statistic columns should be float32, not float64
+        assert result.field("MIN").type == pa.float32()
+        assert result.field("MAX").type == pa.float32()

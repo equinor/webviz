@@ -4,6 +4,7 @@ import polars as pl
 import pyarrow as pa
 from pydantic import BaseModel
 
+from .utils.arrow_helpers import create_float_downcasting_schema
 from .utils.statistic_function import StatisticFunction
 from .service_exceptions import Service, InvalidParameterError
 
@@ -65,6 +66,11 @@ def compute_vector_statistics_table(
 
     # Convert to PyArrow
     statistics_table = statistics_df.to_arrow()
+
+    # Downcast float columns to save memory
+    schema_to_use = create_float_downcasting_schema(statistics_table.schema)
+    statistics_table = statistics_table.cast(schema_to_use)
+
     return statistics_table
 
 
