@@ -1,35 +1,34 @@
-from typing import Dict, List, Optional, Sequence, cast
+from typing import Sequence, cast
 
-import numpy as np
-import pandas as pd
+import polars as pl
 import pyarrow as pa
 from pydantic import BaseModel
 
-
-from .utils.arrow_helpers import (
-    create_float_downcasting_schema,
-    set_date_column_type_to_timestamp_ms,
-)
 from .utils.statistic_function import StatisticFunction
 from .service_exceptions import Service, InvalidParameterError
 
 
 class VectorStatistics(BaseModel):
-    realizations: List[int]
-    timestamps_utc_ms: List[int]
-    values_dict: Dict[StatisticFunction, List[float]]
+    realizations: list[int]
+    timestamps_utc_ms: list[int]
+    values_dict: dict[StatisticFunction, list[float]]
 
 
 def compute_vector_statistics_table(
     summary_vector_table: pa.Table,
     vector_name: str,
-    statistic_functions: Optional[Sequence[StatisticFunction]],
-) -> Optional[pa.Table]:
+    statistic_functions: Sequence[StatisticFunction] | None,
+) -> pa.Table | None:
     """
     Compute statistics for specified summary vector in the pyarrow table.
     If statistics is None, all available statistics are computed.
     Returns a pyarrow.Table with a DATE column and then one column for each statistic.
     """
+    if statistic_functions is not None and len(statistic_functions) == 0:
+        raise InvalidParameterError("At least one statistic must be requested", Service.GENERAL)
+
+    if summary_vector_table.num_rows == 0:
+        return None
 
     if statistic_functions is None:
         statistic_functions = [
@@ -41,77 +40,49 @@ def compute_vector_statistics_table(
             StatisticFunction.P50,
         ]
 
-    # Use wrappers for np.nanmin(), np.nanmax() and np.nanmean() to be explicit about the usage of the
-    # NumPy functions and to be consistent with the other statistics functions in this module.
-    def nanmin_func(x: List[float]) -> np.floating:
-        return np.nanmin(x)
-
-    def nanmax_func(x: List[float]) -> np.floating:
-        return np.nanmax(x)
-
-    def nanmean_func(x: List[float]) -> np.floating:
-        return np.nanmean(x)
-
-    # Invert p10 and p90 due to oil industry convention.
-    def p10_func(x: List[float]) -> np.floating:
-        return np.nanpercentile(x, q=90)
-
-    def p90_func(x: List[float]) -> np.floating:
-        return np.nanpercentile(x, q=10)
-
-    def p50_func(x: List[float]) -> np.floating:
-        return np.nanpercentile(x, q=50)
-
-    agg_dict = {}
+    # Build list of statistic expressions based on requested functions
+    statistics_expressions: list[pl.Expr] = []
+    valid_col_expr = pl.col(vector_name).drop_nans().drop_nulls()
     for stat_func in statistic_functions:
         if stat_func == StatisticFunction.MIN:
-            agg_dict["MIN"] = pd.NamedAgg(column=vector_name, aggfunc=nanmin_func)
+            statistics_expressions.append(valid_col_expr.min().alias("MIN"))
         elif stat_func == StatisticFunction.MAX:
-            agg_dict["MAX"] = pd.NamedAgg(column=vector_name, aggfunc=nanmax_func)
+            statistics_expressions.append(valid_col_expr.max().alias("MAX"))
         elif stat_func == StatisticFunction.MEAN:
-            agg_dict["MEAN"] = pd.NamedAgg(column=vector_name, aggfunc=nanmean_func)
+            statistics_expressions.append(valid_col_expr.mean().alias("MEAN"))
         elif stat_func == StatisticFunction.P10:
-            agg_dict["P10"] = pd.NamedAgg(column=vector_name, aggfunc=p10_func)
+            # Inverted due to oil industry convention (P10 = 90th percentile)
+            statistics_expressions.append(valid_col_expr.quantile(0.9).alias("P10"))
         elif stat_func == StatisticFunction.P90:
-            agg_dict["P90"] = pd.NamedAgg(column=vector_name, aggfunc=p90_func)
+            # Inverted due to oil industry convention (P90 = 10th percentile)
+            statistics_expressions.append(valid_col_expr.quantile(0.1).alias("P90"))
         elif stat_func == StatisticFunction.P50:
-            agg_dict["P50"] = pd.NamedAgg(column=vector_name, aggfunc=p50_func)
+            statistics_expressions.append(valid_col_expr.quantile(0.5).alias("P50"))
 
-    if not agg_dict:
-        raise InvalidParameterError("At least one statistic must be requested", Service.GENERAL)
+    # Create Polars DataFrame from Arrow table and compute statistics
+    vector_df = pl.DataFrame(summary_vector_table.select(["DATE", vector_name]))
+    statistics_df = vector_df.sort("DATE").group_by("DATE", maintain_order=True).agg(statistics_expressions)
 
-    if summary_vector_table.num_rows == 0:
-        return None
-
-    df = summary_vector_table.select(["DATE", vector_name]).to_pandas(timestamp_as_object=True)
-
-    grouped: pd.core.groupby.DataFrameGroupBy = df.groupby("DATE", as_index=False, sort=True)
-    statistics_df: pd.DataFrame = grouped.agg(**agg_dict)
-
-    default_schema = pa.Schema.from_pandas(statistics_df, preserve_index=False)
-    schema_to_use = set_date_column_type_to_timestamp_ms(default_schema)
-    schema_to_use = create_float_downcasting_schema(schema_to_use)
-
-    statistics_table = pa.Table.from_pandas(statistics_df, schema=schema_to_use, preserve_index=False)
-
+    # Convert to PyArrow
+    statistics_table = statistics_df.to_arrow()
     return statistics_table
 
 
 def compute_vector_statistics(
     summary_vector_table: pa.Table,
     vector_name: str,
-    statistic_functions: Optional[Sequence[StatisticFunction]],
-) -> Optional[VectorStatistics]:
+    statistic_functions: Sequence[StatisticFunction] | None,
+) -> VectorStatistics | None:
     statistics_table = compute_vector_statistics_table(summary_vector_table, vector_name, statistic_functions)
     if not statistics_table:
         return None
 
-    unique_realizations: List[int] = []
+    unique_realizations: list[int] = []
     if "REAL" in summary_vector_table.column_names:
         # ! We assume the list never has None-values
         unique_realizations = cast(list[int], summary_vector_table.column("REAL").unique().to_pylist())
 
-    values_dict: Dict[StatisticFunction, List[float]] = {}
+    values_dict: dict[StatisticFunction, list[float]] = {}
     column_names = statistics_table.column_names
     for stat_func in StatisticFunction:
         if stat_func.value in column_names:

@@ -1,6 +1,6 @@
 import logging
 
-import pandas as pd
+import polars as pl
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
@@ -94,19 +94,20 @@ def create_ensemble_sensitivities(
         None,
     )
     if sens_case_parameter is None or sens_name_parameter is None:
-        return []
-    df = pd.DataFrame(
+        return None
+    df = pl.DataFrame(
         {
             "name": sens_name_parameter.values,
             "case": sens_case_parameter.values,
             "REAL": sens_case_parameter.realizations,
         }
     )
-    for name, group in df.groupby("name"):
+    for grouped_by_columns, group in df.group_by("name"):
+        name = grouped_by_columns[0]
         sensitivities.append(
             EnsembleSensitivity(
                 name=name,
-                type=find_sensitivity_type(list(group["case"].unique())),
+                type=find_sensitivity_type(group["case"].unique().to_list()),
                 cases=create_ensemble_sensitivity_cases(group),
             )
         )
@@ -121,15 +122,16 @@ def find_sensitivity_type(sens_case_names: list[str]) -> SensitivityType:
 
 
 def create_ensemble_sensitivity_cases(
-    df: pd.DataFrame,
+    per_sensitivity_df: pl.DataFrame,
 ) -> list[EnsembleSensitivityCase]:
     """Create a list of EnsembleSensitivityCase objects from a dataframe"""
     cases = []
-    for case_name, case_df in df.groupby("case"):
+    for group_by_columns, case_df in per_sensitivity_df.group_by("case"):
+        case_name = group_by_columns[0]
         cases.append(
             EnsembleSensitivityCase(
                 name=case_name,
-                realizations=case_df["REAL"].unique().tolist(),
+                realizations=case_df["REAL"].unique().to_list(),
             )
         )
     return cases
