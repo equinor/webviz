@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 
 from webviz_core_utils.perf_timer import PerfTimer
 from webviz_services.flow_network_assembler.flow_network_assembler import FlowNetworkAssembler
-from webviz_services.flow_network_assembler.flow_network_types import NetworkModeOptions, NodeType
+from webviz_services.flow_network_assembler.flow_network_types import NetworkModeOptions
 from webviz_services.sumo_access.group_tree_access import GroupTreeAccess
 from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
@@ -11,6 +11,7 @@ from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 
 from . import schemas
+from . import converters
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ async def get_realization_flow_network(
     resampling_frequency: schemas.Frequency = Query(description="Resampling frequency"),
     node_type_set: set[schemas.NodeType] = Query(description="Node types"),
     # fmt:on
-) -> schemas.FlowNetworkData:
+) -> schemas.FlowNetworkPerTreeType:
     timer = PerfTimer()
 
     group_tree_access = GroupTreeAccess.from_ensemble_name(
@@ -40,9 +41,9 @@ async def get_realization_flow_network(
     if summary_frequency is None:
         summary_frequency = Frequency.YEARLY
 
-    # Convert to NodeType enum in group_tree_types
-    unique_node_types = {NodeType(elm.value) for elm in node_type_set}
+    unique_node_types = {converters.from_api_node_type(elm) for elm in node_type_set}
 
+    # Create flow network assembler
     network_assembler = FlowNetworkAssembler(
         group_tree_access=group_tree_access,
         summary_access=summary_access,
@@ -51,16 +52,14 @@ async def get_realization_flow_network(
         selected_node_types=unique_node_types,
         flow_network_mode=NetworkModeOptions.SINGLE_REAL,
     )
-
     timer.lap_ms()
+
+    # Fetch and initialize flow network assembler data
     await network_assembler.fetch_and_initialize_async()
     initialize_time_ms = timer.lap_ms()
 
-    (
-        dated_networks,
-        edge_metadata,
-        node_metadata,
-    ) = network_assembler.create_dated_networks_and_metadata_lists()
+    # Create the network with tree initialized tree structure and summary data
+    network_assembler_res = network_assembler.create_dated_networks_and_metadata_lists_per_tree_type()
     create_data_time_ms = timer.lap_ms()
 
     LOGGER.info(
@@ -68,6 +67,4 @@ async def get_realization_flow_network(
         f"(initialize={initialize_time_ms}ms, create group tree={create_data_time_ms}ms)"
     )
 
-    return schemas.FlowNetworkData(
-        edgeMetadataList=edge_metadata, nodeMetadataList=node_metadata, datedNetworks=dated_networks
-    )
+    return converters.to_api_flow_network_per_tree_type(network_assembler_res)

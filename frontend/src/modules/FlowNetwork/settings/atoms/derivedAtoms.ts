@@ -5,12 +5,8 @@ import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 
 import { QueryStatus } from "../../types";
 
-import { selectedEnsembleIdentAtom } from "./persistableFixableAtoms";
+import { selectedEnsembleIdentAtom, selectedTreeTypeAtom } from "./persistableFixableAtoms";
 import { realizationFlowNetworkQueryAtom } from "./queryAtoms";
-
-export const flowNetworkQueryResultAtom = atom((get) => {
-    return get(realizationFlowNetworkQueryAtom);
-});
 
 export const availableRealizationsAtom = atom<number[]>((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
@@ -23,24 +19,35 @@ export const availableRealizationsAtom = atom<number[]>((get) => {
 });
 
 export const queryStatusAtom = atom<QueryStatus>((get) => {
-    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
+    const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
 
-    if (flowNetworkQueryResult.isFetching) {
+    if (flowNetworkQuery.isFetching) {
         return QueryStatus.Loading;
     }
-    if (flowNetworkQueryResult.isError) {
+    if (flowNetworkQuery.isError) {
         return QueryStatus.Error;
     }
     return QueryStatus.Idle;
 });
 
-export const availableDateTimesAtom = atom<string[]>((get) => {
-    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
+export const availableTreeTypesAtom = atom<string[]>((get) => {
+    const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
 
-    if (!flowNetworkQueryResult.data) return [];
+    if (!flowNetworkQuery.data) return [];
+
+    return Object.keys(flowNetworkQuery.data.tree_type_flow_network_map);
+});
+
+export const availableDateTimesAtom = atom<string[]>((get) => {
+    const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
+    const selectedTreeType = get(selectedTreeTypeAtom).value;
+
+    if (!flowNetworkQuery.data || !selectedTreeType) {
+        return [];
+    }
 
     const dateTimes = new Set<string>();
-    flowNetworkQueryResult.data.datedNetworks.forEach((datedNetwork) => {
+    flowNetworkQuery.data.tree_type_flow_network_map[selectedTreeType].datedNetworks.forEach((datedNetwork) => {
         datedNetwork.dates.forEach((date) => {
             dateTimes.add(date);
         });
@@ -50,34 +57,34 @@ export const availableDateTimesAtom = atom<string[]>((get) => {
 });
 
 export const edgeMetadataListAtom = atom<FlowNetworkMetadata_api[]>((get) => {
-    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
+    const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
+    const selectedTreeType = get(selectedTreeTypeAtom).value;
 
-    const data = flowNetworkQueryResult.data;
-    if (!data) {
+    if (!flowNetworkQuery.data || !selectedTreeType) {
         return [];
     }
 
-    return data.edgeMetadataList;
+    return flowNetworkQuery.data.tree_type_flow_network_map[selectedTreeType].edgeMetadataList;
 });
 
 export const nodeMetadataListAtom = atom<FlowNetworkMetadata_api[]>((get) => {
-    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
+    const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
+    const selectedTreeType = get(selectedTreeTypeAtom).value;
 
-    const data = flowNetworkQueryResult.data;
-    if (!data) {
+    if (!flowNetworkQuery.data || !selectedTreeType) {
         return [];
     }
 
-    return data.nodeMetadataList;
+    return flowNetworkQuery.data.tree_type_flow_network_map[selectedTreeType].nodeMetadataList;
 });
 
 export const datedNetworksAtom = atom<DatedFlowNetwork_api[]>((get) => {
-    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
+    const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
+    const selectedTreeType = get(selectedTreeTypeAtom).value;
 
-    const data = flowNetworkQueryResult.data;
-    if (!data) {
+    if (!flowNetworkQuery.data || !selectedTreeType) {
         return [];
     }
 
-    return data.datedNetworks;
+    return flowNetworkQuery.data.tree_type_flow_network_map[selectedTreeType].datedNetworks;
 });

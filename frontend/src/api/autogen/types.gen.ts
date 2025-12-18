@@ -523,6 +523,18 @@ export type FlowNetworkMetadata_api = {
 };
 
 /**
+ * FlowNetworkPerTreeType
+ */
+export type FlowNetworkPerTreeType_api = {
+    /**
+     * Tree Type Flow Network Map
+     */
+    tree_type_flow_network_map: {
+        [key: string]: FlowNetworkData_api;
+    };
+};
+
+/**
  * FlowRateType
  */
 export enum FlowRateType_api {
@@ -4945,7 +4957,7 @@ export type GetRealizationFlowNetworkResponses_api = {
     /**
      * Successful Response
      */
-    200: FlowNetworkData_api;
+    200: FlowNetworkPerTreeType_api;
 };
 
 export type GetRealizationFlowNetworkResponse_api =
