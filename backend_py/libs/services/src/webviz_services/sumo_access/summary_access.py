@@ -328,8 +328,8 @@ class SummaryAccess:
         table = table.filter(mask)
 
         return EnsembleScalarResponse(
-            realizations=table["REAL"].to_pylist(),
-            values=table[vector_name].to_pylist(),
+            realizations=table["REAL"].to_numpy().astype(int).tolist(),
+            values=table[vector_name].to_numpy().tolist(),
         )
 
     async def get_timestamps_async(

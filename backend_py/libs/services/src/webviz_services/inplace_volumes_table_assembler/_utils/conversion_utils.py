@@ -219,9 +219,9 @@ def create_repeated_table_column_data_from_polars_column(
     """
 
     # unique() method might not preserve the order of the unique values
-    unique_values: list[str | int] = column_values.unique().to_list()
+    unique_values: list[str | int] = column_values.unique().to_numpy().tolist()
     value_to_index_map = {value: index for index, value in enumerate(unique_values)}
-    indices: list[int] = [value_to_index_map[value] for value in column_values.to_list()]
+    indices: list[int] = [value_to_index_map[value] for value in column_values.to_numpy().tolist()]
 
     return RepeatedTableColumnData(column_name=column_name, unique_values=unique_values, indices=indices)
 

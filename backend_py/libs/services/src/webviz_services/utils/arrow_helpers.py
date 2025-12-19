@@ -64,7 +64,7 @@ def detect_missing_realizations(table_with_real_column: pa.Table, required_reals
 
     reals_present_mask = pc.is_in(required_reals_arr, value_set=unique_reals_in_table)
     reals_not_present_mask = pc.invert(reals_present_mask)
-    missing_realizations_list = required_reals_arr.filter(reals_not_present_mask).to_pylist()
+    missing_realizations_list = required_reals_arr.filter(reals_not_present_mask).to_numpy().tolist()
 
     # `to_pylist()` returns List[Any | None]; unsure if the values can actually be None, but we filter away None just in case (and to make the type checker happy)
     return [rel for rel in missing_realizations_list if rel is not None]

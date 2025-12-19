@@ -236,8 +236,8 @@ def _convert_statistical_results_df_to_statistical_results_table_data(
             if statistic_column_name not in available_statistic_column_names:
                 raise ValueError(f"Column {statistic_column_name} not found in statistical table")
 
-            statistic_array = statistical_df[statistic_column_name].fill_null(np.nan)
-            result_statistical_data.statistic_values[statistic] = statistic_array.to_list()
+            statistic_array = statistical_df[statistic_column_name].fill_null(np.nan).to_numpy().tolist()
+            result_statistical_data.statistic_values[statistic] = statistic_array
 
         # Add result statistical data to dictionary
         results_statistical_data_dict[result_name] = result_statistical_data

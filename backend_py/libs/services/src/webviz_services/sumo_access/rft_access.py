@@ -68,7 +68,7 @@ class RftAccess:
 
         rft_well_infos: list[RftWellInfo] = []
         # ! We assume that list never has None
-        well_names = cast(list[str], table["WELL"].unique().to_pylist())
+        well_names = cast(list[str], table["WELL"].unique().to_numpy().tolist())
 
         for well_name in well_names:
             well_table = table.filter(pc.equal(table["WELL"], pa.scalar(well_name)))

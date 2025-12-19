@@ -1,7 +1,8 @@
 from typing import List
 from enum import Enum
 
-import pandas as pd
+import polars as pl
+import pyarrow as pa
 
 from .schemas import PvtData
 
@@ -22,35 +23,50 @@ class PHASES(str, Enum):
     WATER = "Water"
 
 
-def pvt_dataframe_to_api_data(data_frame: pd.DataFrame) -> List[PvtData]:
+def pvt_dataframe_to_api_data(pvt_table_pa: pa.Table) -> List[PvtData]:
     """Converts the PVT table from Sumo/Ecl2Df to a list of PvtData objects"""
     # Dataframe manipulation is copied from webviz-subsurface
+    dataframe = pl.DataFrame(pvt_table_pa)
 
-    data_frame = data_frame.rename(str.upper, axis="columns").rename(
-        columns={
-            "TYPE": "KEYWORD",
-            "RS": "GOR",
-            "RSO": "GOR",
-            "R": "GOR",
-            "RV": "OGR",
-        }
-    )
-    data_frame = data_frame.fillna(0)
-    if "GOR" in data_frame.columns and "OGR" in data_frame.columns:
-        data_frame["RATIO"] = data_frame["GOR"] + data_frame["OGR"]
-    elif "GOR" in data_frame.columns:
-        data_frame["RATIO"] = data_frame["GOR"]
-    elif "OGR" in data_frame.columns:
-        data_frame["RATIO"] = data_frame["OGR"]
+    # Make upper case columns map
+    uppercase_columns_map = {col: col.upper() for col in dataframe.columns}
 
-    if not "DENSITY" in data_frame.columns:
-        data_frame = calculate_densities(data_frame)
-    if not "RATIO" in data_frame.columns:
+    # Rename specific columns
+    rename_map = {
+        "TYPE": "KEYWORD",
+        "RS": "GOR",
+        "RSO": "GOR",
+        "R": "GOR",
+        "RV": "OGR",
+    }
+
+    rename_columns_map = {
+        **uppercase_columns_map,
+        **{k: v for k, v in rename_map.items() if k in uppercase_columns_map.values()},
+    }
+
+    # Rename columns to uppercase
+    dataframe = dataframe.rename(rename_columns_map)
+
+    # Fill null values with 0
+    dataframe = dataframe.fill_null(0.0)
+
+    # Create RATIO column
+    if "GOR" in dataframe.columns and "OGR" in dataframe.columns:
+        dataframe = dataframe.with_columns((pl.col("GOR") + pl.col("OGR")).alias("RATIO"))
+    elif "GOR" in dataframe.columns:
+        dataframe = dataframe.with_columns(pl.col("GOR").alias("RATIO"))
+    elif "OGR" in dataframe.columns:
+        dataframe = dataframe.with_columns(pl.col("OGR").alias("RATIO"))
+
+    if "DENSITY" not in dataframe.columns:
+        dataframe = calculate_densities(dataframe)
+    if "RATIO" not in dataframe.columns:
         raise ValueError("The dataframe must contain a column for the ratio (OGR, GOR, R, RV, RS).")
 
     list_of_pvtdata: List[PvtData] = []
-
-    for keyword, df_grouped_on_keyword in data_frame.groupby("KEYWORD"):
+    for group_by_columns, df_grouped_on_keyword in dataframe.group_by("KEYWORD", maintain_order=True):
+        keyword = group_by_columns[0]
         if keyword in OIL_KEYWORDS:
             phase = PHASES.OIL.value
             name = OIL_KEYWORDS[keyword]
@@ -62,40 +78,40 @@ def pvt_dataframe_to_api_data(data_frame: pd.DataFrame) -> List[PvtData]:
             name = WATER_KEYWORDS[keyword]
         else:
             continue
-        for pvtnum, df_grouped_on_pvtnum in df_grouped_on_keyword.groupby("PVTNUM"):
+
+        for group_by_columns, df_grouped_on_pvtnum in df_grouped_on_keyword.group_by("PVTNUM", maintain_order=True):
+            pvtnum = group_by_columns[0]
             pvt_data = PvtData(
                 pvtnum=pvtnum,
                 name=name,
                 phase=phase,
-                ratio=df_grouped_on_pvtnum["RATIO"].tolist(),
-                pressure=df_grouped_on_pvtnum["PRESSURE"].tolist(),
-                volumefactor=df_grouped_on_pvtnum["VOLUMEFACTOR"].tolist(),
-                viscosity=df_grouped_on_pvtnum["VISCOSITY"].tolist(),
-                density=df_grouped_on_pvtnum["DENSITY"].tolist(),
+                ratio=df_grouped_on_pvtnum["RATIO"].to_numpy().tolist(),
+                pressure=df_grouped_on_pvtnum["PRESSURE"].to_numpy().tolist()(),
+                volumefactor=df_grouped_on_pvtnum["VOLUMEFACTOR"].to_numpy().tolist(),
+                viscosity=df_grouped_on_pvtnum["VISCOSITY"].to_numpy().tolist(),
+                density=df_grouped_on_pvtnum["DENSITY"].to_numpy().tolist(),
                 pressure_unit=(
-                    df_grouped_on_pvtnum["PRESSURE_UNIT"].iloc[0]
+                    df_grouped_on_pvtnum["PRESSURE_UNIT"][0]
                     if "PRESSURE_UNIT" in df_grouped_on_pvtnum.columns
                     else "bar"
                 ),
                 volumefactor_unit=(
-                    df_grouped_on_pvtnum["VOLUMEFACTOR_UNIT"].iloc[0]
+                    df_grouped_on_pvtnum["VOLUMEFACTOR_UNIT"][0]
                     if "VOLUMEFACTOR_UNIT" in df_grouped_on_pvtnum.columns
                     else "Rm³/Sm³"
                 ),
                 viscosity_unit=(
-                    df_grouped_on_pvtnum["VISCOSITY_UNIT"].iloc[0]
+                    df_grouped_on_pvtnum["VISCOSITY_UNIT"][0]
                     if "VISCOSITY_UNIT" in df_grouped_on_pvtnum.columns
                     else "cP"
                 ),
                 density_unit=(
-                    df_grouped_on_pvtnum["DENSITY_UNIT"].iloc[0]
+                    df_grouped_on_pvtnum["DENSITY_UNIT"][0]
                     if "DENSITY_UNIT" in df_grouped_on_pvtnum.columns
                     else "kg/m³"
                 ),
                 ratio_unit=(
-                    df_grouped_on_pvtnum["RATIO_UNIT"].iloc[0]
-                    if "RATIO_UNIT" in df_grouped_on_pvtnum.columns
-                    else "Sm³/Sm³"
+                    df_grouped_on_pvtnum["RATIO_UNIT"][0] if "RATIO_UNIT" in df_grouped_on_pvtnum.columns else "Sm³/Sm³"
                 ),
             )
             list_of_pvtdata.append(pvt_data)
@@ -103,29 +119,23 @@ def pvt_dataframe_to_api_data(data_frame: pd.DataFrame) -> List[PvtData]:
     return list_of_pvtdata
 
 
-def calculate_densities(data_frame: pd.DataFrame) -> pd.DataFrame:
-    oil_density = data_frame.loc[data_frame["KEYWORD"] == "DENSITY", "OILDENSITY"].values[0]
-    gas_density = data_frame.loc[data_frame["KEYWORD"] == "DENSITY", "GASDENSITY"].values[0]
-    water_density = data_frame.loc[data_frame["KEYWORD"] == "DENSITY", "WATERDENSITY"].values[0]
+def calculate_densities(data_frame: pl.DataFrame) -> pl.DataFrame:
+    oil_density = data_frame.filter(pl.col("KEYWORD") == "DENSITY")["OILDENSITY"][0]
+    gas_density = data_frame.filter(pl.col("KEYWORD") == "DENSITY")["GASDENSITY"][0]
+    water_density = data_frame.filter(pl.col("KEYWORD") == "DENSITY")["WATERDENSITY"][0]
 
-    def calculate_density(keyword: str, ratio: float, volume_factor: float) -> float:
-        density = 0.0
-        if keyword == "PVTO":
-            density = (oil_density + ratio * gas_density) / volume_factor
-        elif keyword == "PVDO":
-            density = oil_density / volume_factor
-        elif keyword == "PVTG":
-            density = (gas_density + ratio * oil_density) / volume_factor
-        elif keyword == "PVDG":
-            density = gas_density / volume_factor
-        elif keyword == "PVCDO":
-            density = oil_density / volume_factor
-        elif keyword == "PVTW":
-            density = water_density / volume_factor
-        return density
-
-    data_frame["DENSITY"] = data_frame.apply(
-        lambda row: calculate_density(row["KEYWORD"], row["RATIO"], row["VOLUMEFACTOR"]),
-        axis=1,
+    density_expr = (
+        pl.when(pl.col("KEYWORD") == "PVTO")
+        .then((oil_density + pl.col("RATIO") * gas_density) / pl.col("VOLUMEFACTOR"))
+        .when(pl.col("KEYWORD").is_in(["PVDO", "PVCDO"]))
+        .then(oil_density / pl.col("VOLUMEFACTOR"))
+        .when(pl.col("KEYWORD") == "PVTG")
+        .then((gas_density + pl.col("RATIO") * oil_density) / pl.col("VOLUMEFACTOR"))
+        .when(pl.col("KEYWORD") == "PVDG")
+        .then(gas_density / pl.col("VOLUMEFACTOR"))
+        .when(pl.col("KEYWORD") == "PVTW")
+        .then(water_density / pl.col("VOLUMEFACTOR"))
+        .otherwise(0.0)
     )
-    return data_frame
+
+    return data_frame.with_columns(density_expr.alias("DENSITY"))
