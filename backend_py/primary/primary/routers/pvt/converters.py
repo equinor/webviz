@@ -85,11 +85,11 @@ def pvt_dataframe_to_api_data(pvt_table_pa: pa.Table) -> List[PvtData]:
                 pvtnum=pvtnum,
                 name=name,
                 phase=phase,
-                ratio=df_grouped_on_pvtnum["RATIO"].to_list(),
-                pressure=df_grouped_on_pvtnum["PRESSURE"].to_list(),
-                volumefactor=df_grouped_on_pvtnum["VOLUMEFACTOR"].to_list(),
-                viscosity=df_grouped_on_pvtnum["VISCOSITY"].to_list(),
-                density=df_grouped_on_pvtnum["DENSITY"].to_list(),
+                ratio=df_grouped_on_pvtnum["RATIO"].to_numpy().tolist(),
+                pressure=df_grouped_on_pvtnum["PRESSURE"].to_numpy().tolist()(),
+                volumefactor=df_grouped_on_pvtnum["VOLUMEFACTOR"].to_numpy().tolist(),
+                viscosity=df_grouped_on_pvtnum["VISCOSITY"].to_numpy().tolist(),
+                density=df_grouped_on_pvtnum["DENSITY"].to_numpy().tolist(),
                 pressure_unit=(
                     df_grouped_on_pvtnum["PRESSURE_UNIT"][0]
                     if "PRESSURE_UNIT" in df_grouped_on_pvtnum.columns
@@ -124,28 +124,18 @@ def calculate_densities(data_frame: pl.DataFrame) -> pl.DataFrame:
     gas_density = data_frame.filter(pl.col("KEYWORD") == "DENSITY")["GASDENSITY"][0]
     water_density = data_frame.filter(pl.col("KEYWORD") == "DENSITY")["WATERDENSITY"][0]
 
-    def calculate_density(keyword: str, ratio: float, volume_factor: float) -> float:
-        density = 0.0
-        if keyword == "PVTO":
-            density = (oil_density + ratio * gas_density) / volume_factor
-        elif keyword == "PVDO":
-            density = oil_density / volume_factor
-        elif keyword == "PVTG":
-            density = (gas_density + ratio * oil_density) / volume_factor
-        elif keyword == "PVDG":
-            density = gas_density / volume_factor
-        elif keyword == "PVCDO":
-            density = oil_density / volume_factor
-        elif keyword == "PVTW":
-            density = water_density / volume_factor
-        return density
-
-    data_frame = data_frame.with_columns(
-        pl.struct(["KEYWORD", "RATIO", "VOLUMEFACTOR"])
-        .map_elements(
-            lambda row: calculate_density(row["KEYWORD"], row["RATIO"], row["VOLUMEFACTOR"]),
-            return_dtype=pl.Float64,
-        )
-        .alias("DENSITY")
+    density_expr = (
+        pl.when(pl.col("KEYWORD") == "PVTO")
+        .then((oil_density + pl.col("RATIO") * gas_density) / pl.col("VOLUMEFACTOR"))
+        .when(pl.col("KEYWORD").is_in(["PVDO", "PVCDO"]))
+        .then(oil_density / pl.col("VOLUMEFACTOR"))
+        .when(pl.col("KEYWORD") == "PVTG")
+        .then((gas_density + pl.col("RATIO") * oil_density) / pl.col("VOLUMEFACTOR"))
+        .when(pl.col("KEYWORD") == "PVDG")
+        .then(gas_density / pl.col("VOLUMEFACTOR"))
+        .when(pl.col("KEYWORD") == "PVTW")
+        .then(water_density / pl.col("VOLUMEFACTOR"))
+        .otherwise(0.0)
     )
-    return data_frame
+
+    return data_frame.with_columns(density_expr.alias("DENSITY"))

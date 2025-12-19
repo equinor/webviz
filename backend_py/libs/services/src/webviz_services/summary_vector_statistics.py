@@ -1,15 +1,16 @@
+from dataclasses import dataclass
 from typing import Sequence, cast
 
 import polars as pl
 import pyarrow as pa
-from pydantic import BaseModel
 
 from .utils.arrow_helpers import create_float_downcasting_schema
 from .utils.statistic_function import StatisticFunction
 from .service_exceptions import Service, InvalidParameterError
 
 
-class VectorStatistics(BaseModel):
+@dataclass
+class VectorStatistics:
     realizations: list[int]
     timestamps_utc_ms: list[int]
     values_dict: dict[StatisticFunction, list[float]]
@@ -41,9 +42,11 @@ def compute_vector_statistics_table(
             StatisticFunction.P50,
         ]
 
+    # Polars drops null by default for aggregations, cast to Float64 for precision in aggregations
+    valid_col_expr = pl.col(vector_name).drop_nans().cast(pl.Float64)
+
     # Build list of statistic expressions based on requested functions
     statistics_expressions: list[pl.Expr] = []
-    valid_col_expr = pl.col(vector_name).drop_nans().drop_nulls()
     for stat_func in statistic_functions:
         if stat_func == StatisticFunction.MIN:
             statistics_expressions.append(valid_col_expr.min().alias("MIN"))
@@ -53,21 +56,21 @@ def compute_vector_statistics_table(
             statistics_expressions.append(valid_col_expr.mean().alias("MEAN"))
         elif stat_func == StatisticFunction.P10:
             # Inverted due to oil industry convention (P10 = 90th percentile)
-            statistics_expressions.append(valid_col_expr.quantile(0.9).alias("P10"))
+            statistics_expressions.append(valid_col_expr.quantile(0.9, interpolation="linear").alias("P10"))
         elif stat_func == StatisticFunction.P90:
             # Inverted due to oil industry convention (P90 = 10th percentile)
-            statistics_expressions.append(valid_col_expr.quantile(0.1).alias("P90"))
+            statistics_expressions.append(valid_col_expr.quantile(0.1, interpolation="linear").alias("P90"))
         elif stat_func == StatisticFunction.P50:
-            statistics_expressions.append(valid_col_expr.quantile(0.5).alias("P50"))
+            statistics_expressions.append(valid_col_expr.quantile(0.5, interpolation="linear").alias("P50"))
 
     # Create Polars DataFrame from Arrow table and compute statistics
     vector_df = pl.DataFrame(summary_vector_table.select(["DATE", vector_name]))
-    statistics_df = vector_df.sort("DATE").group_by("DATE", maintain_order=True).agg(statistics_expressions)
+    statistics_df = vector_df.group_by("DATE", maintain_order=True).agg(statistics_expressions).sort("DATE")
 
     # Convert to PyArrow
     statistics_table = statistics_df.to_arrow()
 
-    # Downcast float columns to save memory
+    # Downcast float64 columns after computations to save memory
     schema_to_use = create_float_downcasting_schema(statistics_table.schema)
     statistics_table = statistics_table.cast(schema_to_use)
 
@@ -86,14 +89,16 @@ def compute_vector_statistics(
     unique_realizations: list[int] = []
     if "REAL" in summary_vector_table.column_names:
         # ! We assume the list never has None-values
-        unique_realizations = cast(list[int], summary_vector_table.column("REAL").unique().to_pylist())
+        unique_realizations = cast(
+            list[int], summary_vector_table.column("REAL").unique().to_numpy().astype(int).tolist()
+        )
 
     values_dict: dict[StatisticFunction, list[float]] = {}
     column_names = statistics_table.column_names
     for stat_func in StatisticFunction:
         if stat_func.value in column_names:
             # ! We assume the list never has None-values
-            values_dict[stat_func] = cast(list[float], statistics_table.column(stat_func.value).to_pylist())
+            values_dict[stat_func] = cast(list[float], statistics_table.column(stat_func.value).to_numpy().tolist())
 
     ret_data = VectorStatistics(
         realizations=unique_realizations,

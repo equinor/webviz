@@ -83,8 +83,6 @@ def create_ensemble_sensitivities(
     sumo_ensemble_parameters: list[EnsembleParameter],
 ) -> list[EnsembleSensitivity]:
     """Extract sensitivities from a list of SumoEnsembleParameter objects"""
-    sensitivities = []
-
     sens_name_parameter = next(
         (parameter for parameter in sumo_ensemble_parameters if parameter.name == "SENSNAME"),
         None,
@@ -95,46 +93,42 @@ def create_ensemble_sensitivities(
     )
     if sens_case_parameter is None or sens_name_parameter is None:
         return []
-    df = pl.DataFrame(
+
+    sensitivities_df = pl.DataFrame(
         {
             "name": sens_name_parameter.values,
             "case": sens_case_parameter.values,
             "REAL": sens_case_parameter.realizations,
         }
     )
-    for grouped_by_columns, group in df.group_by("name"):
-        name = grouped_by_columns[0]
+
+    # Group by sensitivity name and case to get unique realizations
+    per_sensitivity_df = sensitivities_df.group_by("name", "case").agg(pl.col("REAL").unique().alias("realizations"))
+
+    # Assemble ensemble sensitivities
+    sensitivities = []
+    for (sens_name,), sens_df in per_sensitivity_df.group_by("name"):
+        sens_type = find_sensitivity_type_from_case_names(sens_df["case"].unique().to_numpy().tolist())
+        sensitivity_cases: list[EnsembleSensitivityCase] = []
+        for (case_name,), case_df in sens_df.group_by("case"):
+            sensitivity_cases.append(
+                EnsembleSensitivityCase(name=case_name, realizations=case_df["realizations"].item())
+            )
         sensitivities.append(
             EnsembleSensitivity(
-                name=name,
-                type=find_sensitivity_type(group["case"].unique().to_list()),
-                cases=create_ensemble_sensitivity_cases(group),
+                name=sens_name,
+                type=sens_type,
+                cases=sensitivity_cases,
             )
         )
     return sensitivities
 
 
-def find_sensitivity_type(sens_case_names: list[str]) -> SensitivityType:
+def find_sensitivity_type_from_case_names(sens_case_names: list[str]) -> SensitivityType:
     """Find the sensitivity type based on the sensitivity case names"""
     if len(sens_case_names) == 1 and sens_case_names[0] == "p10_p90":
         return SensitivityType.MONTECARLO
     return SensitivityType.SCENARIO
-
-
-def create_ensemble_sensitivity_cases(
-    per_sensitivity_df: pl.DataFrame,
-) -> list[EnsembleSensitivityCase]:
-    """Create a list of EnsembleSensitivityCase objects from a dataframe"""
-    cases = []
-    for group_by_columns, case_df in per_sensitivity_df.group_by("case"):
-        case_name = group_by_columns[0]
-        cases.append(
-            EnsembleSensitivityCase(
-                name=case_name,
-                realizations=case_df["REAL"].unique().to_list(),
-            )
-        )
-    return cases
 
 
 def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> list[EnsembleParameter]:
