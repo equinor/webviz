@@ -26,10 +26,17 @@ export class ExternalSettingController<
     private _valueRangesMap: Map<string, TValueRange | null> = new Map();
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
+    private _additionalControlledSetting: SettingManager<TSetting, TInternalValue, TExternalValue, TValueRange> | null =
+        null;
 
-    constructor(parentItem: Item, setting: SettingManager<TSetting, TInternalValue, TExternalValue, TValueRange>) {
+    constructor(
+        parentItem: Item,
+        setting: SettingManager<TSetting, TInternalValue, TExternalValue, TValueRange>,
+        additionalControlledSetting?: SettingManager<TSetting, TInternalValue, TExternalValue, TValueRange>,
+    ) {
         this._parentItem = parentItem;
         this._setting = setting;
+        this._additionalControlledSetting = additionalControlledSetting ?? null;
 
         const dataProviderManager = parentItem.getItemDelegate().getDataProviderManager();
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -128,6 +135,12 @@ export class ExternalSettingController<
         }
 
         const settings = this.findControlledSettingsRecursively(parentGroup, this._parentItem);
+
+        // Add the additional controlled setting to the array if provided
+        if (this._additionalControlledSetting) {
+            settings.push(this._additionalControlledSetting);
+        }
+
         for (const setting of settings) {
             if (setting.isExternallyControlled()) {
                 continue;
@@ -142,7 +155,7 @@ export class ExternalSettingController<
             return;
         }
 
-        this.makeIntersectionOfAvailableValues();
+        this.makeIntersectionOfValueRanges();
     }
 
     unregisterAllControlledSettings(): void {
@@ -153,17 +166,17 @@ export class ExternalSettingController<
         this._valueRangesMap.clear();
     }
 
-    setAvailableValues(settingId: string, valueRange: TValueRange | null): void {
+    setValueRange(settingId: string, valueRange: TValueRange | null): void {
         if (valueRange !== null) {
             this._valueRangesMap.set(settingId, valueRange);
         } else {
             this._valueRangesMap.delete(settingId);
         }
 
-        this.makeIntersectionOfAvailableValues();
+        this.makeIntersectionOfValueRanges();
     }
 
-    makeIntersectionOfAvailableValues(): void {
+    makeIntersectionOfValueRanges(): void {
         for (const setting of this._controlledSettings.values()) {
             if (!setting.isInitialized(true) || setting.isLoading(true)) {
                 return;

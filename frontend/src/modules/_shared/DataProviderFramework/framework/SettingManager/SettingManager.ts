@@ -636,7 +636,7 @@ export class SettingManager<
             this.maybeResetPersistedValue();
             this._loading = false;
             this.initialize();
-            this._externalController.setAvailableValues(this.getId(), valueRange);
+            this._externalController.setValueRange(this.getId(), valueRange);
             return;
         }
 
