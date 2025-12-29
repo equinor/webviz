@@ -2,10 +2,10 @@ import React from "react";
 
 import { BugReport, ContentCopy } from "@mui/icons-material";
 
+import { shouldSymbolicate, symbolicateStackTrace } from "@framework/utils/stackTraceSymbolication";
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { shouldSymbolicate, symbolicateStackTrace } from "@framework/utils/stackTraceSymbolication";
 
 type Props = {
     children?: React.ReactNode;
@@ -63,16 +63,16 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         const reportIssue = async (error: Error) => {
             this.setState({ symbolicatingStack: true });
 
-            let stackToReport = error.stack || '';
+            let stackToReport = error.stack || "";
 
             // Symbolicate the stack if in production and source maps are available
             if (shouldSymbolicate() && error) {
                 try {
                     stackToReport = await symbolicateStackTrace(error);
                 } catch (err) {
-                    console.error('Failed to symbolicate stack trace:', err);
+                    console.error("Failed to symbolicate stack trace:", err);
                     // Fall back to original stack
-                    stackToReport = error.stack || '';
+                    stackToReport = error.stack || "";
                 }
             }
 
@@ -139,7 +139,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                                 startIcon={<BugReport fontSize="small" />}
                                 disabled={this.state.symbolicatingStack}
                             >
-                                {this.state.symbolicatingStack ? 'Symbolicating stack...' : 'Report issue'}
+                                {this.state.symbolicatingStack ? "Symbolicating stack..." : "Report issue"}
                             </Button>
                         </div>
                     </div>

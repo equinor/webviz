@@ -2,9 +2,9 @@ import React from "react";
 
 import { BugReport, Info, MoodBad, Refresh } from "@mui/icons-material";
 
+import { shouldSymbolicate, symbolicateStackTrace } from "@framework/utils/stackTraceSymbolication";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
-import { shouldSymbolicate, symbolicateStackTrace } from "@framework/utils/stackTraceSymbolication";
 
 export type FormattedErrorProps = {
     moduleName: string;
@@ -66,16 +66,16 @@ export const CrashView: React.FC<FormattedErrorProps> = (props) => {
     const handleReportError = async () => {
         setSymbolicatingStack(true);
 
-        let stackToReport = props.error.stack || '';
+        let stackToReport = props.error.stack || "";
 
         // Symbolicate the stack if in production and source maps are available
         if (shouldSymbolicate() && props.error) {
             try {
                 stackToReport = await symbolicateStackTrace(props.error);
             } catch (err) {
-                console.error('Failed to symbolicate stack trace:', err);
+                console.error("Failed to symbolicate stack trace:", err);
                 // Fall back to original stack
-                stackToReport = props.error.stack || '';
+                stackToReport = props.error.stack || "";
             }
         }
 
@@ -117,7 +117,7 @@ export const CrashView: React.FC<FormattedErrorProps> = (props) => {
                         startIcon={<BugReport fontSize="small" />}
                         disabled={symbolicatingStack}
                     >
-                        {symbolicatingStack ? 'Symbolicating stack...' : 'Report error'}
+                        {symbolicatingStack ? "Symbolicating stack..." : "Report error"}
                     </Button>
                 </div>
             </div>
