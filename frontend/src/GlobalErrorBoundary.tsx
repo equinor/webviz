@@ -5,6 +5,7 @@ import { BugReport, ContentCopy } from "@mui/icons-material";
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { shouldSymbolicate, symbolicateStackTrace } from "@framework/utils/stackTraceSymbolication";
 
 type Props = {
     children?: React.ReactNode;
@@ -13,19 +14,21 @@ type Props = {
 interface State {
     error: Error | null;
     copiedToClipboard: boolean;
+    symbolicatingStack: boolean;
 }
 
 export class GlobalErrorBoundary extends React.Component<Props, State> {
     state: State = {
         error: null,
         copiedToClipboard: false,
+        symbolicatingStack: false,
     };
 
     private _boundHandleWindowError: (event: ErrorEvent) => void;
     private _boundHandleUnhandledRejection: (event: PromiseRejectionEvent) => void;
 
     static getDerivedStateFromError(err: Error): State {
-        return { error: err, copiedToClipboard: false };
+        return { error: err, copiedToClipboard: false, symbolicatingStack: false };
     }
 
     constructor(props: Props) {
@@ -57,20 +60,38 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         const freshStartUrl = new URL(window.location.protocol + "//" + window.location.host);
         freshStartUrl.searchParams.set("cleanStart", "true");
 
-        function reportIssue(errorMessage: string, errorStack: string) {
+        const reportIssue = async (error: Error) => {
+            this.setState({ symbolicatingStack: true });
+
+            let stackToReport = error.stack || '';
+
+            // Symbolicate the stack if in production and source maps are available
+            if (shouldSymbolicate() && error) {
+                try {
+                    stackToReport = await symbolicateStackTrace(error);
+                } catch (err) {
+                    console.error('Failed to symbolicate stack trace:', err);
+                    // Fall back to original stack
+                    stackToReport = error.stack || '';
+                }
+            }
+
+            this.setState({ symbolicatingStack: false });
+
+            const errorMessage = `${error.name}: ${error.message}`;
             const title = encodeURIComponent(`[USER REPORTED ERROR] ${errorMessage}`);
             const body = encodeURIComponent(
                 `<!-- ⚠️ DO NOT INCLUDE DATA/SCREENSHOTS THAT CAN'T BE PUBLICLY AVAILABLE.-->\n\n\
 **How to reproduce**\nPlease describe what you were doing when the error occurred.\n\n\
 **Screenshots**\nIf applicable, add screenshots to help explain your problem.\n\n\
-**Error stack**\n\`\`\`\n${errorStack}\n\`\`\``,
+**Error stack**\n\`\`\`\n${stackToReport}\n\`\`\``,
             );
             const label = encodeURIComponent("user reported error");
             window.open(
                 `https://github.com/equinor/webviz/issues/new?title=${title}&body=${body}&labels=${label}`,
                 "_blank",
             );
-        }
+        };
 
         const copyToClipboard = () => {
             navigator.clipboard.writeText(freshStartUrl.toString());
@@ -114,15 +135,11 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                         </div>
                         <div className="p-4 bg-slate-100 flex gap-4 shadow-sm">
                             <Button
-                                onClick={() =>
-                                    reportIssue(
-                                        `${this.state.error?.name ?? ""}: ${this.state.error?.message ?? ""}`,
-                                        this.state.error?.stack ?? "",
-                                    )
-                                }
+                                onClick={() => this.state.error && reportIssue(this.state.error)}
                                 startIcon={<BugReport fontSize="small" />}
+                                disabled={this.state.symbolicatingStack}
                             >
-                                Report issue
+                                {this.state.symbolicatingStack ? 'Symbolicating stack...' : 'Report issue'}
                             </Button>
                         </div>
                     </div>

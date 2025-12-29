@@ -4,6 +4,7 @@ import { BugReport, Info, MoodBad, Refresh } from "@mui/icons-material";
 
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
+import { shouldSymbolicate, symbolicateStackTrace } from "@framework/utils/stackTraceSymbolication";
 
 export type FormattedErrorProps = {
     moduleName: string;
@@ -48,6 +49,7 @@ function formatStack(stack: string): React.ReactNode {
 
 export const CrashView: React.FC<FormattedErrorProps> = (props) => {
     const [showDetails, setShowDetails] = React.useState<boolean>(false);
+    const [symbolicatingStack, setSymbolicatingStack] = React.useState<boolean>(false);
 
     const handleReload = () => {
         if (!props.onReload) {
@@ -61,13 +63,30 @@ export const CrashView: React.FC<FormattedErrorProps> = (props) => {
         setShowDetails(true);
     };
 
-    const handleReportError = () => {
+    const handleReportError = async () => {
+        setSymbolicatingStack(true);
+
+        let stackToReport = props.error.stack || '';
+
+        // Symbolicate the stack if in production and source maps are available
+        if (shouldSymbolicate() && props.error) {
+            try {
+                stackToReport = await symbolicateStackTrace(props.error);
+            } catch (err) {
+                console.error('Failed to symbolicate stack trace:', err);
+                // Fall back to original stack
+                stackToReport = props.error.stack || '';
+            }
+        }
+
+        setSymbolicatingStack(false);
+
         const title = encodeURIComponent(`[USER REPORTED ERROR] (${props.moduleName}) ${props.error.message}`);
         const body = encodeURIComponent(
             `<!-- ⚠️ DO NOT INCLUDE DATA/SCREENSHOTS THAT CAN'T BE PUBLICLY AVAILABLE.-->\n\n\
 **How to reproduce**\nPlease describe what you were doing when the error occurred.\n\n\
 **Screenshots**\nIf applicable, add screenshots to help explain your problem.\n\n\
-**Error stack**\n\`\`\`\n${props.error.stack}\n\`\`\`\n\n\
+**Error stack**\n\`\`\`\n${stackToReport}\n\`\`\`\n\n\
 **Component stack**\n\`\`\`${props.errorInfo.componentStack}\n\`\`\``,
         );
         const label = encodeURIComponent("user reported error");
@@ -93,8 +112,12 @@ export const CrashView: React.FC<FormattedErrorProps> = (props) => {
                     <Button onClick={handleShowDetails} startIcon={<Info fontSize="small" />}>
                         Show error details
                     </Button>
-                    <Button onClick={handleReportError} startIcon={<BugReport fontSize="small" />}>
-                        Report error
+                    <Button
+                        onClick={handleReportError}
+                        startIcon={<BugReport fontSize="small" />}
+                        disabled={symbolicatingStack}
+                    >
+                        {symbolicatingStack ? 'Symbolicating stack...' : 'Report error'}
                     </Button>
                 </div>
             </div>
