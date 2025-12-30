@@ -5,7 +5,7 @@ import { setIfDefined } from "@framework/utils/atomUtils";
 import type { Vec3 } from "@lib/utils/vec3";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { viewStateAtom } from "./atoms/baseAtoms";
+import { verticalScaleAtom, viewStateAtom } from "./atoms/baseAtoms";
 
 type PersistableViewState = {
     rotationOrbit: number;
@@ -25,6 +25,7 @@ type ExtendedViewStateType = ViewStateType & {
 
 export type SerializedView = {
     viewState: PersistableViewState | null;
+    verticalScale: number;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedView>(({ inject }) => ({
@@ -44,6 +45,7 @@ const schemaBuilder = new SchemaBuilder<SerializedView>(({ inject }) => ({
             },
             nullable: true,
         },
+        verticalScale: { type: "float64" },
     },
 }));
 
@@ -51,13 +53,17 @@ export const SERIALIZED_VIEW = schemaBuilder.build();
 
 export const serializeView: SerializeStateFunction<SerializedView> = (get) => {
     const viewState = get(viewStateAtom);
+    const verticalScale = get(verticalScaleAtom);
+
     return {
         viewState: viewState ? convertToPersistableViewState(viewState) : null,
+        verticalScale,
     };
 };
 
 export const deserializeView: DeserializeStateFunction<SerializedView> = (raw, set) => {
     setIfDefined(set, viewStateAtom, raw.viewState ? convertFromPersistableViewState(raw.viewState) : null);
+    setIfDefined(set, verticalScaleAtom, raw.verticalScale);
 };
 
 function convertToPersistableViewState(viewState: ExtendedViewStateType): PersistableViewState {

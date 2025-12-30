@@ -61,7 +61,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
 
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
-    const [verticalScale, setVerticalScale] = React.useState<number>(context.visualizationMode === "2D" ? 1 : 10);
+    const [verticalScale, setVerticalScale] = React.useState<number>(context.initialVerticalScale);
     const [activePolylineName, setActivePolylineName] = React.useState<string | undefined>(undefined);
 
     const deckGlManagerRef = React.useRef<DeckGlInstanceManager>(new DeckGlInstanceManager(deckGlRef.current));
@@ -95,6 +95,13 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             }
         },
         [props.usedPolylineIds],
+    );
+
+    React.useEffect(
+        function notifyAboutVerticalScaleChangeEffect() {
+            context.onVerticalScaleChange?.(verticalScale);
+        },
+        [verticalScale, context.onVerticalScaleChange],
     );
 
     React.useLayoutEffect(
