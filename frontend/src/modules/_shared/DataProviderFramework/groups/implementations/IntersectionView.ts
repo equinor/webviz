@@ -1,11 +1,11 @@
+import { getDrilledWellboreHeadersOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 
 import { Setting } from "../..//settings/settingsDefinitions";
+import { getAvailableIntersectionOptions } from "../../dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type { CustomGroupImplementationWithSettings } from "../../interfacesAndTypes/customGroupImplementation";
 import type { DefineBasicDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
-import { getDrilledWellboreHeadersOptions } from "@api";
-import { getAvailableIntersectionOptions } from "../../dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 
 const intersectionViewSettings = [Setting.INTERSECTION, Setting.WELLBORE_EXTENSION_LENGTH] as const;
 export type IntersectionViewSettings = typeof intersectionViewSettings;
