@@ -56,6 +56,8 @@ function convertPolylinesToIntersectionPolylines(polylines: Polyline[], fieldId:
 
 export function InteractionWrapper(props: InteractionWrapperProps): React.ReactNode {
     const context = useDpfSubsurfaceViewerContext();
+    const { onVerticalScaleChange } = context;
+
     const deckGlRef = React.useRef<DeckGLRef>(null);
     const intersectionPolylines = useIntersectionPolylines(context.workbenchSession);
 
@@ -99,9 +101,9 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
 
     React.useEffect(
         function notifyAboutVerticalScaleChangeEffect() {
-            context.onVerticalScaleChange?.(verticalScale);
+            onVerticalScaleChange?.(verticalScale);
         },
-        [verticalScale, context.onVerticalScaleChange],
+        [verticalScale, onVerticalScaleChange],
     );
 
     React.useLayoutEffect(

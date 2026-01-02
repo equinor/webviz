@@ -1,12 +1,13 @@
 import type React from "react";
 
+import { useAtom } from "jotai";
+
 import type { ModuleViewProps } from "@framework/Module";
 
 import type { Interfaces } from "../interfaces";
 
-import { DataProvidersWrapper } from "./components/VisualizationAssemblerWrapper";
-import { useAtom } from "jotai";
 import { verticalScaleAtom, viewStateAtom } from "./atoms/baseAtoms";
+import { DataProvidersWrapper } from "./components/VisualizationAssemblerWrapper";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
