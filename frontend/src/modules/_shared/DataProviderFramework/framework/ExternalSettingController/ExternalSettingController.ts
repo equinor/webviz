@@ -142,7 +142,7 @@ export class ExternalSettingController<
             return;
         }
 
-        this.makeIntersectionOfAvailableValues();
+        this.makeIntersectionOfValueRanges();
     }
 
     unregisterAllControlledSettings(): void {
@@ -153,17 +153,17 @@ export class ExternalSettingController<
         this._valueRangesMap.clear();
     }
 
-    setAvailableValues(settingId: string, valueRange: TValueRange | null): void {
+    setValueRange(settingId: string, valueRange: TValueRange | null): void {
         if (valueRange !== null) {
             this._valueRangesMap.set(settingId, valueRange);
         } else {
             this._valueRangesMap.delete(settingId);
         }
 
-        this.makeIntersectionOfAvailableValues();
+        this.makeIntersectionOfValueRanges();
     }
 
-    makeIntersectionOfAvailableValues(): void {
+    makeIntersectionOfValueRanges(): void {
         for (const setting of this._controlledSettings.values()) {
             if (!setting.isInitialized(true) || setting.isLoading(true)) {
                 return;

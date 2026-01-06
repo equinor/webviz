@@ -22,7 +22,9 @@ type ValueRangeType = IntersectionSettingValue[];
 
 export class IntersectionSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _activeType = IntersectionType.WELLBORE;
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>(
+        (a, b) => a.type === b.type && a.uuid === b.uuid,
+    );
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -42,7 +44,12 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
     }
 
     isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
-        return isValueValid<ValueType, IntersectionSettingValue>(value, valueRange, (v) => v);
+        return isValueValid<ValueType, IntersectionSettingValue>(
+            value,
+            valueRange,
+            (v) => v,
+            (a, b) => a?.type === b?.type && a?.uuid === b?.uuid,
+        );
     }
 
     fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
