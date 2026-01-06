@@ -4,6 +4,7 @@ from typing import Sequence, cast
 import polars as pl
 import pyarrow as pa
 
+
 from .utils.arrow_helpers import create_float_downcasting_schema
 from .utils.statistic_function import StatisticFunction
 from .service_exceptions import Service, InvalidParameterError
@@ -11,6 +12,10 @@ from .service_exceptions import Service, InvalidParameterError
 
 @dataclass
 class VectorStatistics:
+    """
+    Data class to hold vector statistics results.
+    """
+
     realizations: list[int]
     timestamps_utc_ms: list[int]
     values_dict: dict[StatisticFunction, list[float]]
@@ -42,8 +47,12 @@ def compute_vector_statistics_table(
             StatisticFunction.P50,
         ]
 
-    # Polars drops null by default for aggregations, cast to Float64 for precision in aggregations
-    valid_col_expr = pl.col(vector_name).drop_nans().cast(pl.Float64)
+    # Create Polars DataFrame from Arrow table, polars states to perform aggregations in float64
+    # for precision, even if input is float32. Then cast back to float32 if input was float32.
+    vector_df = pl.DataFrame(summary_vector_table.select(["DATE", vector_name]))
+
+    # Polars drops NaN by default for aggregations (null value dropped by default)
+    valid_col_expr = pl.col(vector_name).drop_nans()
 
     # Build list of statistic expressions based on requested functions
     statistics_expressions: list[pl.Expr] = []
@@ -63,14 +72,16 @@ def compute_vector_statistics_table(
         elif stat_func == StatisticFunction.P50:
             statistics_expressions.append(valid_col_expr.quantile(0.5, interpolation="linear").alias("P50"))
 
-    # Create Polars DataFrame from Arrow table and compute statistics
-    vector_df = pl.DataFrame(summary_vector_table.select(["DATE", vector_name]))
+    # Create Polars DataFrame for statistics
     statistics_df = vector_df.group_by("DATE", maintain_order=True).agg(statistics_expressions).sort("DATE")
 
     # Convert to PyArrow
     statistics_table = statistics_df.to_arrow()
 
     # Downcast float64 columns after computations to save memory
+    # - Perhaps unnecessary to downcast, as polars seem to cast internal aggregation float64
+    #   back to float32, when input is float32. And Sumo generally uses float32 for summary
+    #   vectors.
     schema_to_use = create_float_downcasting_schema(statistics_table.schema)
     statistics_table = statistics_table.cast(schema_to_use)
 
