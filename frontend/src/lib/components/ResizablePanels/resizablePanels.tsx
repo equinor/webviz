@@ -6,7 +6,6 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 
-
 export type ResizablePanelsProps = {
     id: string;
     direction: "horizontal" | "vertical";
@@ -17,49 +16,7 @@ export type ResizablePanelsProps = {
     visible?: boolean[];
 };
 
-function loadConfigurationFromLocalStorage(id: string): number[] | undefined {
-    const configuration = localStorage.getItem(`resizable-panels-${id}`);
-    if (configuration) {
-        return JSON.parse(configuration);
-    }
-    return undefined;
-}
-
-function storeConfigurationInLocalStorage(id: string, sizes: number[]) {
-    localStorage.setItem(`resizable-panels-${id}`, JSON.stringify(sizes));
-}
-
-type DragBarProps = {
-    direction: "horizontal" | "vertical";
-    index: number;
-    isDragging: boolean;
-};
-
-const DragBar: React.FC<DragBarProps> = (props) => {
-    return (
-        <div
-            className={resolveClassNames(
-                "relative z-40 transition-colors ease-in-out duration-100 hover:bg-sky-500 outline-sky-500 hover:outline-2 touch-none",
-                {
-                    "bg-sky-500 outline-2 outline-sky-500": props.isDragging,
-                    "border-transparent bg-gray-300": !props.isDragging,
-                    "cursor-ew-resize w-px": props.direction === "horizontal",
-                    "cursor-ns-resize h-px": props.direction === "vertical",
-                },
-            )}
-        >
-            <div
-                data-handle={props.index}
-                className={resolveClassNames("z-40 touch-none absolute bg-transparent", {
-                    "cursor-ew-resize w-1 -left-0.25 top-0 h-full": props.direction === "horizontal",
-                    "cursor-ns-resize h-2 left-0 -top-0.25 w-full": props.direction === "vertical",
-                })}
-            />
-        </div>
-    );
-};
-
-export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
+export function ResizablePanels(props: ResizablePanelsProps) {
     const { onSizesChange } = props;
 
     if (props.minSizes && props.minSizes.length !== props.children.length) {
@@ -180,7 +137,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                     const adjustedSizes: number[] = [...newSizes];
 
                     for (let i = 0; i < newSizes.length; i++) {
-                        const minSizeInPercent = ((props.minSizes?.at(i) || 0) / totalWidth) * 100;
+                        const minSizeInPercent = ((props.minSizes?.at(i) || 0) / totalSize) * 100;
 
                         if (props.visible?.at(i) === false) {
                             adjustedSizes[i] = 0;
@@ -267,8 +224,12 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
         if (index === 0 || index === props.children.length - 1) {
             subtractHandleSize = 0.5;
         }
+        // Round to 6 decimal places to prevent floating-point precision issues
+        // that can cause 1px flickering when useElementSize observes the rendered size
+        const roundedSize = Math.round(sizes[index] * 1000000) / 1000000;
+
         if (props.direction === "horizontal") {
-            style.width = `calc(${sizes[index]}% - ${subtractHandleSize}px)`;
+            style.width = `calc(${roundedSize}% - ${subtractHandleSize}px)`;
             style.minWidth = undefined;
             if (props.visible?.at(index) !== false && sizes[index] >= minSizesToggleVisibilityValue) {
                 const minSize = props.minSizes?.at(index);
@@ -285,7 +246,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                 style.maxWidth = undefined;
             }
         } else {
-            style.height = `calc(${sizes[index]}% - ${subtractHandleSize}px)`;
+            style.height = `calc(${roundedSize}% - ${subtractHandleSize}px)`;
             style.minHeight = undefined;
             if (props.visible?.at(index) !== false && sizes[index] >= minSizesToggleVisibilityValue) {
                 const minSize = props.minSizes?.at(index);
@@ -339,6 +300,46 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             ))}
         </div>
     );
+}
+
+function loadConfigurationFromLocalStorage(id: string): number[] | undefined {
+    const configuration = localStorage.getItem(`resizable-panels-${id}`);
+    if (configuration) {
+        return JSON.parse(configuration);
+    }
+    return undefined;
+}
+
+function storeConfigurationInLocalStorage(id: string, sizes: number[]) {
+    localStorage.setItem(`resizable-panels-${id}`, JSON.stringify(sizes));
+}
+
+type DragBarProps = {
+    direction: "horizontal" | "vertical";
+    index: number;
+    isDragging: boolean;
 };
 
-ResizablePanels.displayName = "ResizablePanels";
+function DragBar(props: DragBarProps) {
+    return (
+        <div
+            className={resolveClassNames(
+                "relative z-40 transition-colors ease-in-out duration-100 hover:bg-sky-500 outline-sky-500 hover:outline-2 touch-none",
+                {
+                    "bg-sky-500 outline-2 outline-sky-500": props.isDragging,
+                    "border-transparent bg-gray-300": !props.isDragging,
+                    "cursor-ew-resize w-px": props.direction === "horizontal",
+                    "cursor-ns-resize h-px": props.direction === "vertical",
+                },
+            )}
+        >
+            <div
+                data-handle={props.index}
+                className={resolveClassNames("z-40 touch-none absolute bg-transparent", {
+                    "cursor-ew-resize w-1 -left-0.25 top-0 h-full": props.direction === "horizontal",
+                    "cursor-ns-resize h-2 left-0 -top-0.25 w-full": props.direction === "vertical",
+                })}
+            />
+        </div>
+    );
+}
