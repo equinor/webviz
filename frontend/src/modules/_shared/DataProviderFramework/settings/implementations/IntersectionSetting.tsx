@@ -10,7 +10,7 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
-import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 export type IntersectionSettingValue = {
     type: IntersectionType;
@@ -18,11 +18,11 @@ export type IntersectionSettingValue = {
     uuid: string;
 };
 type ValueType = IntersectionSettingValue | null;
-type ValueRangeType = IntersectionSettingValue[];
+type ValueConstraintsType = IntersectionSettingValue[];
 
-export class IntersectionSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
+export class IntersectionSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     private _activeType = IntersectionType.WELLBORE;
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>(
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
         (a, b) => a.type === b.type && a.uuid === b.uuid,
     );
 
@@ -43,32 +43,32 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
         return typeof v.type === "string" && typeof v.name === "string" && typeof v.uuid === "string";
     }
 
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
         return isValueValid<ValueType, IntersectionSettingValue>(
             value,
-            valueRange,
+            valueConstraints,
             (v) => v,
             (a, b) => a?.type === b?.type && a?.uuid === b?.uuid,
         );
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
         return fixupValue<ValueType, IntersectionSettingValue>(
             currentValue,
-            valueRange,
+            valueConstraints,
             (v) => v,
             (a, b) => a?.type === b?.type && a?.uuid === b?.uuid,
         );
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
         const activeType = this._activeType;
         const setActiveType = (type: IntersectionType) => {
             this._activeType = type;
         };
 
-        return function IntersectionSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
-            const availableValues = props.valueRange ?? [];
+        return function IntersectionSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
+            const availableValues = props.valueConstraints ?? [];
             const [type, setType] = React.useState<IntersectionSettingValue["type"]>(props.value?.type ?? activeType);
 
             React.useEffect(() => {

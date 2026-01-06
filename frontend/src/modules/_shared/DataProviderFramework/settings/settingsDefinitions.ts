@@ -71,244 +71,244 @@ export enum Setting {
  *
  * - internalValue: The value stored internally (preserves user intent/selection details)
  * - externalValue: The value exposed to external consumers (simplified/derived form)
- * - valueRange: The selection space/boundaries that define what users can choose from
+ * - valueConstraints: The selection space/boundaries that define what users can choose from
  *
  * For most settings, internalValue and externalValue are the same type. For complex settings
  * like GRID_LAYER_RANGE, they differ to preserve additional state information internally.
  */
 
 export type SettingTypeDefinitions = {
-    // Boolean settings (BOOLEAN category) - no valueRange
+    // Boolean settings (BOOLEAN category) - no valueConstraints
     [Setting.SHOW_LABELS]: {
         internalValue: boolean;
         externalValue: boolean;
-        valueRange: null;
+        valueConstraints: null;
     };
     [Setting.SHOW_LINES]: {
         internalValue: boolean;
         externalValue: boolean;
-        valueRange: null;
+        valueConstraints: null;
     };
     [Setting.SHOW_GRID_LINES]: {
         internalValue: boolean;
         externalValue: boolean;
-        valueRange: null;
+        valueConstraints: null;
     };
 
-    // Number settings (NUMBER category) - valueRange is [min, max]
+    // Number settings (NUMBER category) - valueConstraints is [min, max]
     [Setting.TRACK_WIDTH]: {
         internalValue: number | null;
         externalValue: number | null;
-        valueRange: [number, number];
+        valueConstraints: [number, number];
     };
     [Setting.GRID_LAYER_K]: {
         internalValue: number | null;
         externalValue: number | null;
-        valueRange: [number, number];
+        valueConstraints: [number, number];
     };
     [Setting.SAMPLE_RESOLUTION_IN_METERS]: {
         internalValue: number | null;
         externalValue: number | null;
-        valueRange: [number, number];
+        valueConstraints: [number, number];
     };
     [Setting.WELLBORE_EXTENSION_LENGTH]: {
         internalValue: number | null;
         externalValue: number | null;
-        valueRange: [number, number];
+        valueConstraints: [number, number];
     };
 
-    // Number with step settings (NUMBER_WITH_STEP category) - valueRange is [min, max, step]
+    // Number with step settings (NUMBER_WITH_STEP category) - valueConstraints is [min, max, step]
     [Setting.LABEL_ROTATION]: {
         internalValue: number | null;
         externalValue: number | null;
-        valueRange: [number, number, number];
+        valueConstraints: [number, number, number];
     };
     [Setting.OPACITY_PERCENT]: {
         internalValue: number | null;
         externalValue: number | null;
-        valueRange: [number, number, number];
+        valueConstraints: [number, number, number];
     };
 
     // Single select string settings (SINGLE_SELECT category)
     [Setting.SCALE]: {
         internalValue: "linear" | "log" | null;
         externalValue: "linear" | "log" | null;
-        valueRange: ("linear" | "log")[];
+        valueConstraints: ("linear" | "log")[];
     };
     [Setting.ATTRIBUTE]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.DEPTH_ATTRIBUTE]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.SEISMIC_ATTRIBUTE]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.GRID_NAME]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.POLYGONS_ATTRIBUTE]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.POLYGONS_NAME]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.SMDA_INTERPRETER]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.STRAT_COLUMN]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.SURFACE_NAME]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.FORMATION_NAME]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.TIME_OR_INTERVAL]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.TIME_POINT]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.TIME_INTERVAL]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.WELLBORE_PICK_IDENTIFIER]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
 
     // Single select complex object settings (SINGLE_SELECT category)
     [Setting.REPRESENTATION]: {
         internalValue: Representation | null;
         externalValue: Representation | null;
-        valueRange: Representation[];
+        valueConstraints: Representation[];
     };
     [Setting.PLOT_VARIANT]: {
         internalValue: TemplatePlotType | null;
         externalValue: TemplatePlotType | null;
-        valueRange: TemplatePlotType[];
+        valueConstraints: TemplatePlotType[];
     };
     [Setting.LOG_CURVE]: {
         internalValue: WellboreLogCurveHeader_api | null;
         externalValue: WellboreLogCurveHeader_api | null;
-        valueRange: WellboreLogCurveHeader_api[];
+        valueConstraints: WellboreLogCurveHeader_api[];
     };
     [Setting.ENSEMBLE]: {
         internalValue: RegularEnsembleIdent | null;
         externalValue: RegularEnsembleIdent | null;
-        valueRange: RegularEnsembleIdent[];
+        valueConstraints: RegularEnsembleIdent[];
     };
     [Setting.INTERSECTION]: {
         internalValue: IntersectionSettingValue | null;
         externalValue: IntersectionSettingValue | null;
-        valueRange: IntersectionSettingValue[];
+        valueConstraints: IntersectionSettingValue[];
     };
     [Setting.SENSITIVITY]: {
         internalValue: SensitivityNameCasePair | null;
         externalValue: SensitivityNameCasePair | null;
-        valueRange: SensitivityNameCasePair[];
+        valueConstraints: SensitivityNameCasePair[];
     };
     [Setting.STATISTIC_FUNCTION]: {
         internalValue: SurfaceStatisticFunction_api;
         externalValue: SurfaceStatisticFunction_api;
-        valueRange: SurfaceStatisticFunction_api[];
+        valueConstraints: SurfaceStatisticFunction_api[];
     };
 
     // Single select number settings (SINGLE_SELECT category)
     [Setting.REALIZATION]: {
         internalValue: number | null;
         externalValue: number | null;
-        valueRange: number[];
+        valueConstraints: number[];
     };
 
     // Multi select settings (MULTI_SELECT category)
     [Setting.REALIZATIONS]: {
         internalValue: number[] | null;
         externalValue: number[] | null;
-        valueRange: number[];
+        valueConstraints: number[];
     };
     [Setting.SMDA_WELLBORE_HEADERS]: {
         internalValue: string[] | null;
         externalValue: WellboreHeader_api[] | null;
-        valueRange: WellboreHeader_api[];
+        valueConstraints: WellboreHeader_api[];
     };
     [Setting.SURFACE_NAMES]: {
         internalValue: string[] | null;
         externalValue: string[] | null;
-        valueRange: string[];
+        valueConstraints: string[];
     };
     [Setting.WELLBORE_PICKS]: {
         internalValue: string[] | null;
         externalValue: WellborePick_api[] | null;
-        valueRange: WellborePick_api[];
+        valueConstraints: WellborePick_api[];
     };
 
-    // Static settings (STATIC category) - no valueRange
+    // Static settings (STATIC category) - no valueConstraints
     [Setting.COLOR]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: null;
+        valueConstraints: null;
     };
     [Setting.COLOR_SCALE]: {
         internalValue: ColorScaleSpecification | null;
         externalValue: ColorScaleSpecification | null;
-        valueRange: null;
+        valueConstraints: null;
     };
     [Setting.DEPTH_COLOR_SCALE]: {
         internalValue: ColorScaleSpecification | null;
         externalValue: ColorScaleSpecification | null;
-        valueRange: null;
+        valueConstraints: null;
     };
     [Setting.SEISMIC_COLOR_SCALE]: {
         internalValue: ColorScaleSpecification | null;
         externalValue: ColorScaleSpecification | null;
-        valueRange: null;
+        valueConstraints: null;
     };
     [Setting.COLOR_SET]: {
         internalValue: ColorSet | null;
         externalValue: ColorSet | null;
-        valueRange: null;
+        valueConstraints: null;
     };
     [Setting.POLYGON_VISUALIZATION]: {
         internalValue: PolygonVisualizationSpec | null;
         externalValue: PolygonVisualizationSpec | null;
-        valueRange: null;
+        valueConstraints: null;
     };
 
     // Boolean + Number settings (BOOLEAN_NUMBER category)
     [Setting.CONTOURS]: {
         internalValue: { enabled: boolean; value: number } | null;
         externalValue: { enabled: boolean; value: number } | null;
-        valueRange: [number, number] | null;
+        valueConstraints: [number, number] | null;
     };
 
     // XYZ range settings (XYZ_RANGE category) - demonstrates all three types being different
@@ -319,7 +319,7 @@ export type SettingTypeDefinitions = {
             k: { type: "range"; range: [number, number] } | { type: "zone"; range: [number, number]; name: string };
         } | null;
         externalValue: [[number, number], [number, number], [number, number]] | null;
-        valueRange: {
+        valueConstraints: {
             range: { i: [number, number, number]; j: [number, number, number]; k: [number, number, number] };
             zones: Grid3dZone_api[];
         } | null;
@@ -337,7 +337,7 @@ export type SettingTypeDefinitions = {
             visible: [boolean, boolean, boolean];
             applied: boolean;
         } | null;
-        valueRange: [[number, number, number], [number, number, number], [number, number, number]];
+        valueConstraints: [[number, number, number], [number, number, number], [number, number, number]];
     };
 };
 

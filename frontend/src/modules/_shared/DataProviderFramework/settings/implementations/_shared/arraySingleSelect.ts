@@ -1,55 +1,59 @@
-import type { ValueRangeIntersectionReducerDefinition } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingImplementation";
+import type { ValueConstraintsIntersectionReducerDefinition } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingImplementation";
 
-export function fixupValue<TValue, TValueRangeElement>(
+export function fixupValue<TValue, TValueConstraintsElement>(
     currentSelection: TValue | null,
-    valueRange: TValueRangeElement[],
-    mappingFunc: (value: TValueRangeElement) => TValue,
+    valueConstraints: TValueConstraintsElement[],
+    mappingFunc: (value: TValueConstraintsElement) => TValue,
     isEqualFunc: (a: TValue, b: TValue) => boolean = (a, b) => a === b,
 ): TValue | null {
-    if (valueRange.length === 0) {
+    if (valueConstraints.length === 0) {
         return null;
     }
 
     if (currentSelection === null) {
-        return mappingFunc(valueRange[0]);
+        return mappingFunc(valueConstraints[0]);
     }
 
-    if (valueRange.some((v) => isEqualFunc(mappingFunc(v), currentSelection))) {
+    if (valueConstraints.some((v) => isEqualFunc(mappingFunc(v), currentSelection))) {
         return currentSelection;
     }
 
-    return mappingFunc(valueRange[0]);
+    return mappingFunc(valueConstraints[0]);
 }
 
-export function isValueValid<TValue, TValueRangeElement>(
+export function isValueValid<TValue, TValueConstraintsElement>(
     selection: TValue | null,
-    valueRange: TValueRangeElement[],
-    mappingFunc: (value: TValueRangeElement) => TValue,
+    valueConstraints: TValueConstraintsElement[],
+    mappingFunc: (value: TValueConstraintsElement) => TValue,
     isEqualFunc: (a: TValue, b: TValue) => boolean = (a, b) => a === b,
 ): boolean {
     if (selection === null) {
         return false;
     }
 
-    return valueRange.some((availableValue) => isEqualFunc(mappingFunc(availableValue), selection));
+    return valueConstraints.some((availableValue) => isEqualFunc(mappingFunc(availableValue), selection));
 }
 
-export function makeValueRangeIntersectionReducerDefinition<TValueRange extends unknown[]>(
-    isEqualFunc: (a: TValueRange[number], b: TValueRange[number]) => boolean = (a, b) => a === b,
-): ValueRangeIntersectionReducerDefinition<TValueRange, TValueRange> {
+export function makeValueConstraintsIntersectionReducerDefinition<TValueConstraints extends unknown[]>(
+    isEqualFunc: (a: TValueConstraints[number], b: TValueConstraints[number]) => boolean = (a, b) => a === b,
+): ValueConstraintsIntersectionReducerDefinition<TValueConstraints, TValueConstraints> {
     return {
-        reducer: (accumulator: TValueRange, currentValueRange: TValueRange, index: number): TValueRange => {
+        reducer: (
+            accumulator: TValueConstraints,
+            currentValueConstraints: TValueConstraints,
+            index: number,
+        ): TValueConstraints => {
             if (index === 0) {
-                return currentValueRange;
+                return currentValueConstraints;
             }
 
             return accumulator.filter((value) =>
-                currentValueRange.some((currentValue) => isEqualFunc(currentValue, value)),
-            ) as TValueRange;
+                currentValueConstraints.some((currentValue) => isEqualFunc(currentValue, value)),
+            ) as TValueConstraints;
         },
-        startingValue: [] as unknown as TValueRange,
-        isValid: (valueRange: TValueRange): boolean => {
-            return valueRange.length > 0;
+        startingValue: [] as unknown as TValueConstraints,
+        isValid: (valueConstraints: TValueConstraints): boolean => {
+            return valueConstraints.length > 0;
         },
     };
 }

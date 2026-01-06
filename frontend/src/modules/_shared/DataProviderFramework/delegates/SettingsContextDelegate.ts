@@ -224,9 +224,12 @@ export class SettingsContextDelegate<
         return invalidSettings;
     }
 
-    setValueRange<K extends TSettingKey>(key: K, valueRange: SettingTypeDefinitions[K]["valueRange"]): void {
+    setValueConstraints<K extends TSettingKey>(
+        key: K,
+        valueConstraints: SettingTypeDefinitions[K]["valueConstraints"],
+    ): void {
         const settingDelegate = this._settings[key];
-        settingDelegate.setValueRange(valueRange);
+        settingDelegate.setValueConstraints(valueConstraints);
     }
 
     setStoredData<K extends TStoredDataKey>(key: K, data: TStoredData[K] | null): void {
@@ -361,12 +364,17 @@ export class SettingsContextDelegate<
             return this.getDataProviderManager.bind(this)().getGlobalSetting(key);
         };
 
-        const valueRangeUpdater = <K extends TSettingKey>(
+        const valueConstraintsUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<SettingTypeDefinitions[K]["valueRange"], TSettings, TSettingTypes, TSettingKey>,
-        ): Dependency<SettingTypeDefinitions[K]["valueRange"], TSettings, TSettingTypes, TSettingKey> => {
+            updateFunc: UpdateFunc<
+                SettingTypeDefinitions[K]["valueConstraints"],
+                TSettings,
+                TSettingTypes,
+                TSettingKey
+            >,
+        ): Dependency<SettingTypeDefinitions[K]["valueConstraints"], TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<
-                SettingTypeDefinitions[K]["valueRange"],
+                SettingTypeDefinitions[K]["valueConstraints"],
                 TSettings,
                 TSettingTypes,
                 TSettingKey
@@ -380,12 +388,12 @@ export class SettingsContextDelegate<
             );
             this._dependencies.push(dependency);
 
-            dependency.subscribe((valueRange) => {
-                if (valueRange === null) {
-                    this.setValueRange(settingKey, null as SettingTypeDefinitions[K]["valueRange"]);
+            dependency.subscribe((valueConstraints) => {
+                if (valueConstraints === null) {
+                    this.setValueConstraints(settingKey, null as SettingTypeDefinitions[K]["valueConstraints"]);
                     return;
                 }
-                this.setValueRange(settingKey, valueRange);
+                this.setValueConstraints(settingKey, valueConstraints);
                 this.handleSettingChanged();
             });
 
@@ -498,7 +506,7 @@ export class SettingsContextDelegate<
 
         if (this._customSettingsHandler.defineDependencies) {
             this._customSettingsHandler.defineDependencies({
-                valueRangeUpdater: valueRangeUpdater.bind(this),
+                valueConstraintsUpdater: valueConstraintsUpdater.bind(this),
                 settingAttributesUpdater: settingAttributesUpdater.bind(this),
                 storedDataUpdater: storedDataUpdater.bind(this),
                 helperDependency: helperDependency.bind(this),

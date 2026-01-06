@@ -22,7 +22,7 @@ type InternalValueType = {
     k: { type: "range"; range: [number, number] } | { type: "zone"; range: [number, number]; name: string };
 } | null;
 type ExternalValueType = [[number, number], [number, number], [number, number]] | null;
-type ValueRangeType = {
+type ValueConstraintsType = {
     range: { i: [number, number, number]; j: [number, number, number]; k: [number, number, number] };
     zones: Grid3dZone_api[];
 } | null;
@@ -35,35 +35,35 @@ function isNumberTuple(value: unknown, length: number): value is number[] {
 }
 
 export class GridLayerRangeSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
+    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueConstraintsType>
 {
     defaultValue: InternalValueType = null;
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType, index: number) => {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueConstraintsType, valueConstraints: ValueConstraintsType, index: number) => {
             if (index === 0) {
-                return valueRange;
+                return valueConstraints;
             }
 
-            if (valueRange === null || accumulator === null) {
+            if (valueConstraints === null || accumulator === null) {
                 return null;
             }
 
-            const mergedRanges: NonNullable<ValueRangeType>["range"] = {
+            const mergedRanges: NonNullable<ValueConstraintsType>["range"] = {
                 i: [0, 0, 1],
                 j: [0, 0, 1],
                 k: [0, 0, 1],
             };
 
             for (const key of ["i", "j", "k"] as const) {
-                const min = Math.max(accumulator.range[key][0], valueRange?.range[key][0]);
-                const max = Math.min(accumulator.range[key][1], valueRange?.range[key][1]);
-                const step = Math.max(accumulator.range[key][2], valueRange?.range[key][2]);
+                const min = Math.max(accumulator.range[key][0], valueConstraints?.range[key][0]);
+                const max = Math.min(accumulator.range[key][1], valueConstraints?.range[key][1]);
+                const step = Math.max(accumulator.range[key][2], valueConstraints?.range[key][2]);
 
                 mergedRanges[key] = [min, max, step];
             }
 
             const mergedZones = accumulator.zones.filter((zoneA) =>
-                valueRange.zones.some(
+                valueConstraints.zones.some(
                     (zoneB) =>
                         zoneA.name === zoneB.name &&
                         zoneA.start_layer === zoneB.start_layer &&
@@ -74,11 +74,11 @@ export class GridLayerRangeSetting
             return { range: mergedRanges, zones: mergedZones };
         },
         startingValue: null,
-        isValid: (valueRange: ValueRangeType): boolean => {
-            if (valueRange === null) {
+        isValid: (valueConstraints: ValueConstraintsType): boolean => {
+            if (valueConstraints === null) {
                 return false;
             }
-            const { i: iRange, j: jRange, k: kRange } = valueRange.range;
+            const { i: iRange, j: jRange, k: kRange } = valueConstraints.range;
             return iRange[0] <= iRange[1] && jRange[0] <= jRange[1] && kRange[0] <= kRange[1];
         },
     };
@@ -139,12 +139,12 @@ export class GridLayerRangeSetting
         return [internalValue.i, internalValue.j, internalValue.k.range];
     }
 
-    isValueValid(value: InternalValueType, valueRange: ValueRangeType): boolean {
-        if (value === null || valueRange === null) {
+    isValueValid(value: InternalValueType, valueConstraints: ValueConstraintsType): boolean {
+        if (value === null || valueConstraints === null) {
             return false;
         }
 
-        const { i: iRange, j: jRange, k: kRange } = valueRange.range;
+        const { i: iRange, j: jRange, k: kRange } = valueConstraints.range;
         const [xmin, xmax] = value.i;
         const [ymin, ymax] = value.j;
         const type = value.k.type;
@@ -169,7 +169,7 @@ export class GridLayerRangeSetting
         } else if (type === "zone") {
             const zoneName = value.k.name;
             const [zmin, zmax] = value.k.range;
-            const zoneExists = valueRange.zones.some(
+            const zoneExists = valueConstraints.zones.some(
                 (zone) => zone.name === zoneName && zone.start_layer === zmin && zone.end_layer === zmax,
             );
             if (!zoneExists) {
@@ -181,11 +181,11 @@ export class GridLayerRangeSetting
         throw new Error(`Unknown type: ${type}`);
     }
 
-    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
-        if (valueRange === null) {
+    fixupValue(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): InternalValueType {
+        if (valueConstraints === null) {
             return null;
         }
-        const { i: iRange, j: jRange, k: kRange } = valueRange.range;
+        const { i: iRange, j: jRange, k: kRange } = valueConstraints.range;
 
         if (currentValue === null) {
             return {
@@ -215,7 +215,7 @@ export class GridLayerRangeSetting
         if (type === "zone") {
             const zoneName = currentValue.k.name;
             const [zmin, zmax] = currentValue.k.range;
-            const zoneExists = valueRange.zones.some(
+            const zoneExists = valueConstraints.zones.some(
                 (zone) => zone.name === zoneName && zone.start_layer === zmin && zone.end_layer === zmax,
             );
             if (zoneExists) {
@@ -232,12 +232,12 @@ export class GridLayerRangeSetting
         throw new Error(`Unknown type: ${type}`);
     }
 
-    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueRangeType>) => React.ReactNode {
-        return function RangeSlider(props: SettingComponentProps<InternalValueType, ValueRangeType>) {
+    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueConstraintsType>) => React.ReactNode {
+        return function RangeSlider(props: SettingComponentProps<InternalValueType, ValueConstraintsType>) {
             const divRef = React.useRef<HTMLDivElement>(null);
             const divSize = useElementSize(divRef);
 
-            const valueRange: NonNullable<ValueRangeType> = props.valueRange ?? {
+            const valueConstraints: NonNullable<ValueConstraintsType> = props.valueConstraints ?? {
                 range: { i: [0, 0, 1], j: [0, 0, 1], k: [0, 0, 1] },
                 zones: [],
             };
@@ -263,9 +263,9 @@ export class GridLayerRangeSetting
             }
 
             function handleInputChange(key: keyof NonNullable<InternalValueType>, innerIndex: number, val: number) {
-                const min = valueRange.range[key][0];
-                const max = valueRange.range[key][1];
-                const step = valueRange.range[key][2];
+                const min = valueConstraints.range[key][0];
+                const max = valueConstraints.range[key][1];
+                const step = valueConstraints.range[key][2];
                 const allowedValues = Array.from(
                     { length: Math.floor((max - min) / step) + 1 },
                     (_, i) => min + i * step,
@@ -309,8 +309,8 @@ export class GridLayerRangeSetting
                     newValue.k = { type: "range", range: newValue.k.range };
                 } else if (newType === "zone") {
                     // Default to first zone if available
-                    if (valueRange.zones.length > 0) {
-                        const zone = valueRange.zones[0];
+                    if (valueConstraints.zones.length > 0) {
+                        const zone = valueConstraints.zones[0];
                         newValue.k = { type: "zone", range: [zone.start_layer, zone.end_layer], name: zone.name };
                     } else {
                         // No zones available, fallback to range
@@ -334,29 +334,29 @@ export class GridLayerRangeSetting
                                 <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                     <Input
                                         type="number"
-                                        value={internalValue?.[label][0] ?? valueRange.range[label][0]}
+                                        value={internalValue?.[label][0] ?? valueConstraints.range[label][0]}
                                         onChange={(e) => handleInputChange(label, 0, parseInt(e.target.value))}
                                     />
                                 </div>
                                 <div className="grow">
                                     <Slider
-                                        min={valueRange.range[label][0]}
-                                        max={valueRange.range[label][1]}
+                                        min={valueConstraints.range[label][0]}
+                                        max={valueConstraints.range[label][1]}
                                         onChange={(_, value) => handleSliderChange(label, value as [number, number])}
                                         value={
                                             internalValue?.[label] ?? [
-                                                valueRange.range[label][0],
-                                                valueRange.range[label][1],
+                                                valueConstraints.range[label][0],
+                                                valueConstraints.range[label][1],
                                             ]
                                         }
                                         valueLabelDisplay="auto"
-                                        step={valueRange.range[label][2]}
+                                        step={valueConstraints.range[label][2]}
                                     />
                                 </div>
                                 <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                     <Input
                                         type="number"
-                                        value={internalValue?.[label][1] ?? valueRange.range[label][1]}
+                                        value={internalValue?.[label][1] ?? valueConstraints.range[label][1]}
                                         onChange={(e) => handleInputChange(label, 1, parseInt(e.target.value))}
                                     />
                                 </div>
@@ -369,7 +369,7 @@ export class GridLayerRangeSetting
                                     value={internalValue?.["k"].type ?? "range"}
                                     options={[
                                         { label: "Range", value: "range" },
-                                        { label: "Zone", value: "zone", disabled: valueRange.zones.length === 0 },
+                                        { label: "Zone", value: "zone", disabled: valueConstraints.zones.length === 0 },
                                     ]}
                                     onChange={handleRadioChange}
                                     direction="horizontal"
@@ -384,29 +384,29 @@ export class GridLayerRangeSetting
                             <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                 <Input
                                     type="number"
-                                    value={internalValue?.["k"].range[0] ?? valueRange.range["k"][0]}
+                                    value={internalValue?.["k"].range[0] ?? valueConstraints.range["k"][0]}
                                     onChange={(e) => handleInputChange("k", 0, parseInt(e.target.value))}
                                 />
                             </div>
                             <div className="grow">
                                 <Slider
-                                    min={valueRange.range["k"][0]}
-                                    max={valueRange.range["k"][1]}
+                                    min={valueConstraints.range["k"][0]}
+                                    max={valueConstraints.range["k"][1]}
                                     onChange={(_, value) => handleSliderChange("k", value as [number, number])}
                                     value={
                                         internalValue?.["k"].range ?? [
-                                            valueRange.range["k"][0],
-                                            valueRange.range["k"][1],
+                                            valueConstraints.range["k"][0],
+                                            valueConstraints.range["k"][1],
                                         ]
                                     }
                                     valueLabelDisplay="auto"
-                                    step={valueRange.range["k"][2]}
+                                    step={valueConstraints.range["k"][2]}
                                 />
                             </div>
                             <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                 <Input
                                     type="number"
-                                    value={internalValue?.["k"].range[1] ?? valueRange.range["k"][1]}
+                                    value={internalValue?.["k"].range[1] ?? valueConstraints.range["k"][1]}
                                     onChange={(e) => handleInputChange("k", 1, parseInt(e.target.value))}
                                 />
                             </div>
@@ -417,13 +417,13 @@ export class GridLayerRangeSetting
                             })}
                         >
                             <Dropdown
-                                options={valueRange.zones.map((zone) => ({
+                                options={valueConstraints.zones.map((zone) => ({
                                     label: zone.name,
                                     value: zone.name,
                                 }))}
                                 value={internalValue?.["k"].type === "zone" ? internalValue.k.name : undefined}
                                 onChange={(val) => {
-                                    const zone = valueRange.zones.find((z) => z.name === val);
+                                    const zone = valueConstraints.zones.find((z) => z.name === val);
                                     if (zone) {
                                         const newValue: InternalValueType = {
                                             ...(internalValue ?? {

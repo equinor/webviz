@@ -11,13 +11,13 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { isNumberArrayOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
+import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
 type ValueType = number[] | null;
-type ValueRangeType = number[];
+type ValueConstraintsType = number[];
 
-export class SelectNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+export class SelectNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -27,23 +27,23 @@ export class SelectNumberSetting implements CustomSettingImplementation<ValueTyp
         return isNumberArrayOrNull(value);
     }
 
-    isValueValid(currentValue: ValueType, valueRange: ValueRangeType): boolean {
-        return isValueValid<number, number>(currentValue, valueRange, (v) => v);
+    isValueValid(currentValue: ValueType, valueConstraints: ValueConstraintsType): boolean {
+        return isValueValid<number, number>(currentValue, valueConstraints, (v) => v);
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
-        return fixupValue<number, number>(currentValue, valueRange, (v) => v, "firstAvailable");
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
+        return fixupValue<number, number>(currentValue, valueConstraints, (v) => v, "firstAvailable");
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
-        return function SelectNumberSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
+        return function SelectNumberSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const options: SelectOption<number>[] = React.useMemo(() => {
-                const availableValues = props.valueRange ?? [];
+                const availableValues = props.valueConstraints ?? [];
                 return availableValues.map((value) => ({
                     value: value,
                     label: upperFirst(value.toString()),
                 }));
-            }, [props.valueRange]);
+            }, [props.valueConstraints]);
 
             function handleChange(value: number[]) {
                 props.onValueChange(value);

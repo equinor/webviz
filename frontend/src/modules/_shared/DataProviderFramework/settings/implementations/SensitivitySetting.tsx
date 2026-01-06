@@ -7,7 +7,7 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
-import { fixupValue, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import { fixupValue, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 export type SensitivityNameCasePair = {
     sensitivityName: string;
@@ -15,9 +15,9 @@ export type SensitivityNameCasePair = {
 };
 
 type ValueType = SensitivityNameCasePair | null;
-type ValueRangeType = SensitivityNameCasePair[];
-export class SensitivitySetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+type ValueConstraintsType = SensitivityNameCasePair[];
+export class SensitivitySetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -36,14 +36,14 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
         return typeof v.sensitivityName === "string" && typeof v.sensitivityCase === "string";
     }
 
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
-        if (valueRange.length === 0) {
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
+        if (valueConstraints.length === 0) {
             return true;
         }
         if (!value) {
             return false;
         }
-        return valueRange
+        return valueConstraints
             .filter((el) => el !== null)
             .some(
                 (sensitivity) =>
@@ -52,25 +52,25 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
             );
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
         return fixupValue<SensitivityNameCasePair, SensitivityNameCasePair>(
             currentValue,
-            valueRange,
+            valueConstraints,
             (v) => v,
             (a, b) => a.sensitivityName === b.sensitivityName && a.sensitivityCase === b.sensitivityCase,
         );
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
-        return function Sensitivity(props: SettingComponentProps<ValueType, ValueRangeType>) {
-            const valueRange = props.valueRange ?? [];
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
+        return function Sensitivity(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
+            const valueConstraints = props.valueConstraints ?? [];
 
             const availableSensitivityNames: string[] = [
-                ...Array.from(new Set(valueRange.map((sensitivity) => sensitivity.sensitivityName))),
+                ...Array.from(new Set(valueConstraints.map((sensitivity) => sensitivity.sensitivityName))),
             ];
 
             const currentSensitivityName = props.value?.sensitivityName;
-            const availableSensitiveCases = valueRange
+            const availableSensitiveCases = valueConstraints
                 .filter((sensitivity) => sensitivity.sensitivityName === currentSensitivityName)
                 .map((sensitivity) => sensitivity.sensitivityCase);
 
@@ -99,7 +99,7 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
             }
 
             function handleSensitivityNameChange(selectedValue: string) {
-                const availableSensitiveCases = valueRange
+                const availableSensitiveCases = valueConstraints
                     .filter((sensitivity) => sensitivity.sensitivityName === selectedValue)
                     .map((sensitivity) => sensitivity.sensitivityCase);
 
@@ -119,7 +119,7 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
                     sensitivityCase: selectedValue,
                 });
             }
-            if (valueRange.length === 0) {
+            if (valueConstraints.length === 0) {
                 return "No sensitivities available";
             }
             return (

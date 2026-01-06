@@ -21,27 +21,27 @@ type SettingComponentPropsBase<TInternalValue> = {
     globalSettings: GlobalSettings;
 };
 
-// Component props for static settings (no valueRange)
+// Component props for static settings (no valueConstraints)
 export type StaticSettingComponentProps<TInternalValue> = SettingComponentPropsBase<TInternalValue>;
 
-// Component props for dynamic settings (with valueRange)
-export type DynamicSettingComponentProps<TInternalValue, TValueRange> = SettingComponentPropsBase<TInternalValue> & {
-    valueRange: TValueRange;
+// Component props for dynamic settings (with valueConstraints)
+export type DynamicSettingComponentProps<TInternalValue, TValueConstraints> = SettingComponentPropsBase<TInternalValue> & {
+    valueConstraints: TValueConstraints;
 };
 
-// For backward compatibility - delegates to the correct type based on TValueRange
-export type SettingComponentProps<TInternalValue, TValueRange = never> = [TValueRange] extends [never]
+// For backward compatibility - delegates to the correct type based on TValueConstraints
+export type SettingComponentProps<TInternalValue, TValueConstraints = never> = [TValueConstraints] extends [never]
     ? StaticSettingComponentProps<TInternalValue>
-    : DynamicSettingComponentProps<TInternalValue, TValueRange>;
+    : DynamicSettingComponentProps<TInternalValue, TValueConstraints>;
 
-export type ValueRangeIntersectionReducerDefinition<TValueRange, TStartingValue> = {
+export type ValueConstraintsIntersectionReducerDefinition<TValueConstraints, TStartingValue> = {
     startingValue: TStartingValue;
     reducer: (
-        accumulator: TValueRange | TStartingValue,
-        currentValueRange: TValueRange,
+        accumulator: TValueConstraints | TStartingValue,
+        currentValueConstraints: TValueConstraints,
         currentIndex: number,
-    ) => TValueRange;
-    isValid: (valueRange: TValueRange) => boolean;
+    ) => TValueConstraints;
+    isValid: (valueConstraints: TValueConstraints) => boolean;
 };
 
 // Base interface shared by both static and dynamic settings
@@ -63,7 +63,7 @@ type CustomSettingImplementationBase<TInternalValue> = {
 };
 
 /**
- * Implementation for static settings (no valueRange).
+ * Implementation for static settings (no valueConstraints).
  * Static settings have fixed behavior and don't depend on external data.
  */
 export type StaticSettingImplementation<
@@ -74,30 +74,30 @@ export type StaticSettingImplementation<
     makeComponent(): (props: StaticSettingComponentProps<TInternalValue>) => React.ReactNode;
     fixupValue?: (currentValue: TInternalValue) => TInternalValue;
     isValueValid?: (value: TInternalValue) => boolean;
-    mapInternalToExternalValue: (internalValue: TInternalValue, valueRange: any) => TExternalValue;
+    mapInternalToExternalValue: (internalValue: TInternalValue, valueConstraints: any) => TExternalValue;
 };
 
 /**
- * Implementation for dynamic settings (with valueRange).
- * Dynamic settings adapt their behavior based on available values (valueRange).
+ * Implementation for dynamic settings (with valueConstraints).
+ * Dynamic settings adapt their behavior based on available values (valueConstraints).
  */
-export type DynamicSettingImplementation<TInternalValue, TExternalValue, TValueRange> =
+export type DynamicSettingImplementation<TInternalValue, TExternalValue, TValueConstraints> =
     CustomSettingImplementationBase<TInternalValue> & {
         getIsStatic?: () => boolean;
-        valueRangeIntersectionReducerDefinition: ValueRangeIntersectionReducerDefinition<TValueRange, any>;
-        makeComponent(): (props: DynamicSettingComponentProps<TInternalValue, TValueRange>) => React.ReactNode;
-        fixupValue?: (currentValue: TInternalValue, valueRange: TValueRange) => TInternalValue;
-        isValueValid?: (value: TInternalValue, valueRange: TValueRange) => boolean;
-        mapInternalToExternalValue: (internalValue: TInternalValue, valueRange: TValueRange) => TExternalValue;
+        valueConstraintsIntersectionReducerDefinition: ValueConstraintsIntersectionReducerDefinition<TValueConstraints, any>;
+        makeComponent(): (props: DynamicSettingComponentProps<TInternalValue, TValueConstraints>) => React.ReactNode;
+        fixupValue?: (currentValue: TInternalValue, valueConstraints: TValueConstraints) => TInternalValue;
+        isValueValid?: (value: TInternalValue, valueConstraints: TValueConstraints) => boolean;
+        mapInternalToExternalValue: (internalValue: TInternalValue, valueConstraints: TValueConstraints) => TExternalValue;
     };
 
 /**
  * Main type for custom setting implementations.
  * Automatically delegates to StaticSettingImplementation or DynamicSettingImplementation
- * based on whether TValueRange is provided.
+ * based on whether TValueConstraints is provided.
  */
-export type CustomSettingImplementation<TInternalValue, TExternalValue = TInternalValue, TValueRange = never> = [
-    TValueRange,
+export type CustomSettingImplementation<TInternalValue, TExternalValue = TInternalValue, TValueConstraints = never> = [
+    TValueConstraints,
 ] extends [never]
     ? StaticSettingImplementation<TInternalValue, TExternalValue>
-    : DynamicSettingImplementation<TInternalValue, TExternalValue, TValueRange>;
+    : DynamicSettingImplementation<TInternalValue, TExternalValue, TValueConstraints>;

@@ -20,24 +20,24 @@ type ValueType = {
     visible: [boolean, boolean, boolean];
     applied: boolean;
 } | null;
-type ValueRangeType = [[number, number, number], [number, number, number], [number, number, number]];
-export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType) => {
+type ValueConstraintsType = [[number, number, number], [number, number, number], [number, number, number]];
+export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueConstraintsType, valueConstraints: ValueConstraintsType) => {
             if (accumulator === null) {
-                return valueRange;
+                return valueConstraints;
             }
 
-            const mergedRanges: ValueRangeType = [
+            const mergedRanges: ValueConstraintsType = [
                 [0, 0, 1],
                 [0, 0, 1],
                 [0, 0, 1],
             ];
 
             for (let i = 0; i < 3; i++) {
-                const min = Math.max(accumulator[i][0], valueRange[i][0]);
-                const max = Math.min(accumulator[i][1], valueRange[i][1]);
-                const step = Math.max(accumulator[i][2], valueRange[i][2]);
+                const min = Math.max(accumulator[i][0], valueConstraints[i][0]);
+                const max = Math.min(accumulator[i][1], valueConstraints[i][1]);
+                const step = Math.max(accumulator[i][2], valueConstraints[i][2]);
 
                 mergedRanges[i] = [min, max, step];
             }
@@ -45,8 +45,8 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
             return mergedRanges;
         },
         startingValue: null,
-        isValid: (valueRange: ValueRangeType): boolean => {
-            const [xRange, yRange, zRange] = valueRange;
+        isValid: (valueConstraints: ValueConstraintsType): boolean => {
+            const [xRange, yRange, zRange] = valueConstraints;
             return xRange[0] <= xRange[1] && yRange[0] <= yRange[1] && zRange[0] <= zRange[1];
         },
     };
@@ -90,39 +90,39 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
         return true;
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
         if (!currentValue || !Array.isArray(currentValue.value) || currentValue.value.length !== 3) {
             return {
-                value: [valueRange[0][0], valueRange[1][0], valueRange[2][0]],
+                value: [valueConstraints[0][0], valueConstraints[1][0], valueConstraints[2][0]],
                 visible: [true, true, true],
                 applied: true,
             };
         }
 
         const fixedValue: [number, number, number] = currentValue.value.map((val, index) => {
-            const [min, max, step] = valueRange[index];
+            const [min, max, step] = valueConstraints[index];
             return Math.max(min, Math.min(max, Math.round(val / step) * step));
         }) as [number, number, number];
 
         return { value: fixedValue, visible: [true, true, true], applied: currentValue.applied };
     }
 
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
         if (!value || !Array.isArray(value.value) || value.value.length !== 3) {
             return false;
         }
         return value.value.every((val, index) => {
-            const [min, max, step] = valueRange[index];
+            const [min, max, step] = valueConstraints[index];
             return val >= min && val <= max && (val - min) % step === 0;
         });
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
-        return function RangeSlider(props: SettingComponentProps<ValueType, ValueRangeType>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
+        return function RangeSlider(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const divRef = React.useRef<HTMLDivElement>(null);
             const divSize = useElementSize(divRef);
 
-            const valueRange = props.valueRange ?? [
+            const valueConstraints = props.valueConstraints ?? [
                 [0, 0, 1],
                 [0, 0, 1],
                 [0, 0, 1],
@@ -150,9 +150,9 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
             }
 
             function handleInputChange(index: number, val: number) {
-                const min = valueRange[index][0];
-                const max = valueRange[index][1];
-                const step = valueRange[index][2];
+                const min = valueConstraints[index][0];
+                const max = valueConstraints[index][1];
+                const step = valueConstraints[index][2];
                 const allowedValues = Array.from(
                     { length: Math.floor((max - min) / step) + 1 },
                     (_, i) => min + i * step,
@@ -208,12 +208,12 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                                 </div>
                                 <div className="flex-4">
                                     <Slider
-                                        min={valueRange[index][0]}
-                                        max={valueRange[index][1]}
+                                        min={valueConstraints[index][0]}
+                                        max={valueConstraints[index][1]}
                                         onChange={(_, value) => handleSliderChange(index, value as number)}
-                                        value={props.value?.value[index] ?? valueRange[index][0]}
+                                        value={props.value?.value[index] ?? valueConstraints[index][0]}
                                         valueLabelDisplay="auto"
-                                        step={valueRange[index][2]}
+                                        step={valueConstraints[index][2]}
                                         track={false}
                                     />
                                 </div>

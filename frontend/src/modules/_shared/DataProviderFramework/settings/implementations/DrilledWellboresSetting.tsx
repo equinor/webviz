@@ -10,26 +10,26 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { isStringArrayOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
+import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
 type InternalValueType = string[] | null;
 type ExternalValueType = WellboreHeader_api[] | null;
-type ValueRangeType = WellboreHeader_api[];
+type ValueConstraintsType = WellboreHeader_api[];
 
 export class DrilledWellboresSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
+    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueConstraintsType>
 {
     defaultValue: InternalValueType = null;
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>(
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
         (a, b) => a.wellboreUuid === b.wellboreUuid,
     );
 
-    mapInternalToExternalValue(internalValue: InternalValueType, valueRange: ValueRangeType): ExternalValueType {
+    mapInternalToExternalValue(internalValue: InternalValueType, valueConstraints: ValueConstraintsType): ExternalValueType {
         if (internalValue === null) {
             return null;
         }
 
-        const externalValues = valueRange.filter((wellbore) => internalValue.includes(wellbore.wellboreUuid));
+        const externalValues = valueConstraints.filter((wellbore) => internalValue.includes(wellbore.wellboreUuid));
         return externalValues;
     }
 
@@ -37,33 +37,33 @@ export class DrilledWellboresSetting
         return isStringArrayOrNull(value);
     }
 
-    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
+    fixupValue(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): InternalValueType {
         const fixedValue = fixupValue<string, WellboreHeader_api>(
             currentValue,
-            valueRange,
+            valueConstraints,
             mappingFunc,
             "allAvailable",
         );
 
         if (fixedValue.length === 0) {
-            return valueRange.map(mappingFunc);
+            return valueConstraints.map(mappingFunc);
         }
 
         return fixedValue;
     }
 
-    isValueValid(currentValue: InternalValueType, valueRange: ValueRangeType): boolean {
+    isValueValid(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): boolean {
         function mappingFunc(value: WellboreHeader_api): string {
             return value.wellboreUuid;
         }
-        return isValueValid<string, WellboreHeader_api>(currentValue, valueRange, mappingFunc);
+        return isValueValid<string, WellboreHeader_api>(currentValue, valueConstraints, mappingFunc);
     }
 
-    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueRangeType>) => React.ReactNode {
-        return function DrilledWellbores(props: SettingComponentProps<InternalValueType, ValueRangeType>) {
-            const valueRange = props.valueRange ?? [];
+    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueConstraintsType>) => React.ReactNode {
+        return function DrilledWellbores(props: SettingComponentProps<InternalValueType, ValueConstraintsType>) {
+            const valueConstraints = props.valueConstraints ?? [];
 
-            const options: SelectOption[] = valueRange?.map((ident) => ({
+            const options: SelectOption[] = valueConstraints?.map((ident) => ({
                 value: ident.wellboreUuid,
                 label: ident.uniqueWellboreIdentifier,
             }));

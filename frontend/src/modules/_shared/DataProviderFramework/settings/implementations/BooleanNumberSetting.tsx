@@ -14,40 +14,40 @@ type ValueType = {
     value: number;
 } | null;
 
-type ValueRangeType = [number, number] | null;
+type ValueConstraintsType = [number, number] | null;
 
 type StaticProps = { min?: number; max?: number };
 
-export class BooleanNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
+export class BooleanNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     private _staticProps: StaticProps | null;
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
     }
 
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType) => {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueConstraintsType, valueConstraints: ValueConstraintsType) => {
             if (accumulator === null) {
-                return valueRange;
+                return valueConstraints;
             }
-            if (valueRange === null) {
+            if (valueConstraints === null) {
                 return accumulator;
             }
 
-            const min = Math.max(accumulator[0], valueRange[0]);
-            const max = Math.min(accumulator[1], valueRange[1]);
+            const min = Math.max(accumulator[0], valueConstraints[0]);
+            const max = Math.min(accumulator[1], valueConstraints[1]);
 
             if (min > max) {
                 return null;
             }
-            return [min, max] as ValueRangeType;
+            return [min, max] as ValueConstraintsType;
         },
         startingValue: null,
-        isValid: (valueRange: ValueRangeType): boolean => {
-            if (valueRange === null) {
+        isValid: (valueConstraints: ValueConstraintsType): boolean => {
+            if (valueConstraints === null) {
                 return true;
             }
-            return valueRange[0] <= valueRange[1];
+            return valueConstraints[0] <= valueConstraints[1];
         },
     };
 
@@ -72,7 +72,7 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
         return typeof v.enabled === "boolean" && typeof v.value === "number";
     }
 
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
         if (value === null) {
             return true;
         }
@@ -89,11 +89,11 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
             );
         }
 
-        if (valueRange === null) {
+        if (valueConstraints === null) {
             // If no available values are provided, any valid tuple is acceptable
             return typeof value.enabled === "boolean" && typeof value.value === "number";
         }
-        const [min, max] = valueRange;
+        const [min, max] = valueConstraints;
         return (
             typeof value.enabled === "boolean" &&
             typeof value.value === "number" &&
@@ -106,14 +106,14 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
         return this._staticProps !== null;
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
         if (currentValue === null) {
             // Default: boolean false, number at minimum value or 0
             let defaultNumber = 0;
             if (this._staticProps) {
                 defaultNumber = this._staticProps.min ?? 0;
-            } else if (valueRange) {
-                defaultNumber = valueRange[0];
+            } else if (valueConstraints) {
+                defaultNumber = valueConstraints[0];
             }
             return {
                 enabled: false,
@@ -132,12 +132,12 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
             };
         }
 
-        if (valueRange === null) {
+        if (valueConstraints === null) {
             // If no available values, return the current value as-is
             return currentValue;
         }
 
-        const [min, max] = valueRange;
+        const [min, max] = valueConstraints;
 
         // Clamp the number value to the available range
         const clampedNumber = Math.max(min, Math.min(max, currentValue.value));
@@ -148,15 +148,15 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
         };
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
         const isStatic = this.getIsStatic();
         const staticProps = this._staticProps;
 
-        return function BooleanNumberSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
-            const defaultMin = isStatic ? (staticProps?.min ?? 0) : (props.valueRange?.[0] ?? 0);
+        return function BooleanNumberSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
+            const defaultMin = isStatic ? (staticProps?.min ?? 0) : (props.valueConstraints?.[0] ?? 0);
             const { enabled, value } = props.value ?? { enabled: false, value: defaultMin };
-            const min = isStatic ? (staticProps?.min ?? 0) : (props.valueRange?.[0] ?? 0);
-            const max = isStatic ? (staticProps?.max ?? 100) : (props.valueRange?.[1] ?? 100);
+            const min = isStatic ? (staticProps?.min ?? 0) : (props.valueConstraints?.[0] ?? 0);
+            const max = isStatic ? (staticProps?.max ?? 100) : (props.valueConstraints?.[1] ?? 100);
 
             function handleBooleanChange(e: ChangeEvent<HTMLInputElement>) {
                 props.onValueChange({ enabled: e.target.checked, value });

@@ -7,26 +7,26 @@ import type {
 import { isNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
-type ValueRangeType = [number, number];
+type ValueConstraintsType = [number, number];
 
 type StaticProps = { min?: number; max?: number };
 
-export class InputNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
+export class InputNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     private _staticProps: StaticProps | null;
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType) => {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueConstraintsType, valueConstraints: ValueConstraintsType) => {
             if (accumulator === null) {
-                return valueRange;
+                return valueConstraints;
             }
 
-            const min = Math.max(accumulator[0], valueRange[0]);
-            const max = Math.min(accumulator[1], valueRange[1]);
+            const min = Math.max(accumulator[0], valueConstraints[0]);
+            const max = Math.min(accumulator[1], valueConstraints[1]);
 
-            return [min, max] as ValueRangeType;
+            return [min, max] as ValueConstraintsType;
         },
         startingValue: null,
-        isValid: (valueRange: ValueRangeType): boolean => {
-            return valueRange[0] <= valueRange[1];
+        isValid: (valueConstraints: ValueConstraintsType): boolean => {
+            return valueConstraints[0] <= valueConstraints[1];
         },
     };
 
@@ -51,15 +51,15 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         return this._staticProps !== null;
     }
 
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
         // If static limits are provided, Input component limits the value
         // i.e. no need to run fixupValue()
         if (this._staticProps) {
             return true;
         }
 
-        const min = valueRange[0];
-        const max = valueRange[1];
+        const min = valueConstraints[0];
+        const max = valueConstraints[1];
 
         if (value === null || value > max || value < min) {
             return false;
@@ -68,14 +68,14 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         return true;
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
         // If static limits are provided, return value as Input component controls the value
         if (this._staticProps) {
             return currentValue;
         }
 
-        const min = valueRange[0];
-        const max = valueRange[1];
+        const min = valueConstraints[0];
+        const max = valueConstraints[1];
 
         if (currentValue === null || currentValue < min) {
             return min;
@@ -87,13 +87,13 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         return currentValue;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
         const isStatic = this.getIsStatic();
         const staticProps = this._staticProps;
 
-        return function InputNumberSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
-            const min = isStatic ? staticProps?.min : props.valueRange?.[0];
-            const max = isStatic ? staticProps?.max : props.valueRange?.[1];
+        return function InputNumberSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
+            const min = isStatic ? staticProps?.min : props.valueConstraints?.[0];
+            const max = isStatic ? staticProps?.max : props.valueConstraints?.[1];
 
             function handleInputChange(value: string) {
                 props.onValueChange(Number(value));

@@ -14,20 +14,20 @@ type ValueRange = [number, number];
 
 export class NumberRangeDropdownSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRange> {
     defaultValue: ValueType = null;
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRange, valueRange: ValueRange) => {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRange, valueConstraints: ValueRange) => {
             if (accumulator === null) {
-                return valueRange;
+                return valueConstraints;
             }
 
-            const min = Math.max(accumulator[0], valueRange[0]);
-            const max = Math.min(accumulator[1], valueRange[1]);
+            const min = Math.max(accumulator[0], valueConstraints[0]);
+            const max = Math.min(accumulator[1], valueConstraints[1]);
 
             return [min, max] as ValueRange;
         },
         startingValue: null,
-        isValid: (valueRange: ValueRange): boolean => {
-            return valueRange[0] <= valueRange[1];
+        isValid: (valueConstraints: ValueRange): boolean => {
+            return valueConstraints[0] <= valueConstraints[1];
         },
     };
 
@@ -39,17 +39,17 @@ export class NumberRangeDropdownSetting implements CustomSettingImplementation<V
         return isNumberOrNull(value);
     }
 
-    isValueValid(value: ValueType, valueRange: ValueRange): boolean {
+    isValueValid(value: ValueType, valueConstraints: ValueRange): boolean {
         if (value === null) {
             return false;
         }
 
-        if (!valueRange) {
+        if (!valueConstraints) {
             return false;
         }
 
-        const min = valueRange[0];
-        const max = valueRange[1];
+        const min = valueConstraints[0];
+        const max = valueConstraints[1];
 
         if (max === null || min === null) {
             return false;
@@ -58,13 +58,13 @@ export class NumberRangeDropdownSetting implements CustomSettingImplementation<V
         return value >= min && value <= max;
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRange): ValueType {
-        if (!valueRange) {
+    fixupValue(currentValue: ValueType, valueConstraints: ValueRange): ValueType {
+        if (!valueConstraints) {
             return null;
         }
 
-        const min = valueRange[0];
-        const max = valueRange[1];
+        const min = valueConstraints[0];
+        const max = valueConstraints[1];
 
         if (max === null || min === null) {
             return null;
@@ -87,8 +87,8 @@ export class NumberRangeDropdownSetting implements CustomSettingImplementation<V
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueRange>) => React.ReactNode {
         return function Ensemble(props: SettingComponentProps<ValueType, ValueRange>) {
-            const start = props.valueRange?.[0] ?? 0;
-            const end = props.valueRange?.[1] ?? 0;
+            const start = props.valueConstraints?.[0] ?? 0;
+            const end = props.valueConstraints?.[1] ?? 0;
 
             const rangeSize = end - start;
 

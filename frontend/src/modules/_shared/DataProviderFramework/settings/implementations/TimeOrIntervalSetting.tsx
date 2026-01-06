@@ -17,15 +17,15 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { isStringOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = string | null;
-type ValueRangeType = string[];
+type ValueConstraintsType = string[];
 
-export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
+export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     defaultValue: ValueType = null;
 
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -35,17 +35,17 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
         return isStringOrNull(value);
     }
 
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
-        return isValueValid<string, string>(value, valueRange, (v) => v);
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
+        return isValueValid<string, string>(value, valueConstraints, (v) => v);
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
-        return fixupValue<string, string>(currentValue, valueRange, (v) => v);
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
+        return fixupValue<string, string>(currentValue, valueConstraints, (v) => v);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
-        return function TimeOrIntervalSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
-            const availableValues = props.valueRange ?? [];
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
+        return function TimeOrIntervalSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
+            const availableValues = props.valueConstraints ?? [];
 
             const options: DropdownOption[] = availableValues.map((value) => {
                 return {

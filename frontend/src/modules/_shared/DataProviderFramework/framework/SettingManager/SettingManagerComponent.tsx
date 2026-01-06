@@ -32,7 +32,7 @@ export function SettingManagerComponent<
     const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_VALID);
     const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED);
     const isValidPersistedValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED_VALUE_VALID);
-    const valueRange = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_RANGE);
+    const valueConstraints = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_CONSTRAINTS);
     const isExternallyControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_EXTERNALLY_CONTROLLED);
     const externalControllerProvider = usePublishSubscribeTopicValue(
         props.setting,
@@ -63,7 +63,7 @@ export function SettingManagerComponent<
         return null;
     }
 
-    if (props.sharedSetting && isInitialized && valueRange === null && !props.setting.isStatic()) {
+    if (props.sharedSetting && isInitialized && valueConstraints === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
                 <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
@@ -115,7 +115,7 @@ export function SettingManagerComponent<
                                 isValueValid={isValid}
                                 isOverridden={isExternallyControlled}
                                 overriddenValue={value}
-                                valueRange={valueRange}
+                                valueConstraints={valueConstraints}
                                 globalSettings={globalSettings}
                                 workbenchSession={props.manager.getWorkbenchSession()}
                                 workbenchSettings={props.manager.getWorkbenchSettings()}

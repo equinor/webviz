@@ -173,11 +173,11 @@ export class RealizationSeismicSlicesProvider
 
     defineDependencies({
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         storedDataUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationSeismicSlicesSettings, RealizationSeismicSlicesStoredData>): void {
-        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -188,7 +188,7 @@ export class RealizationSeismicSlicesProvider
             return ensembleIdents;
         });
 
-        valueRangeUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
@@ -239,7 +239,7 @@ export class RealizationSeismicSlicesProvider
             );
         });
 
-        valueRangeUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);
 
             if (!data) {
@@ -253,7 +253,7 @@ export class RealizationSeismicSlicesProvider
             return availableSeismicAttributes;
         });
 
-        valueRangeUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
 
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);
@@ -275,7 +275,7 @@ export class RealizationSeismicSlicesProvider
             return availableTimeOrIntervals;
         });
 
-        valueRangeUpdater(Setting.SEISMIC_SLICES, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.SEISMIC_SLICES, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);

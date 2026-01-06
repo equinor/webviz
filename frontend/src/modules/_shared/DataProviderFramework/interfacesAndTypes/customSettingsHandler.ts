@@ -55,10 +55,10 @@ export interface DefineDependenciesArgs<
     TKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > extends DefineBasicDependenciesArgs<TSettings, TSettingTypes, TKey> {
-    valueRangeUpdater: <TSettingKey extends TKey>(
+    valueConstraintsUpdater: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
-        update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueRange"], TSettings, TSettingTypes, TKey>,
-    ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueRange"], TSettings, TSettingTypes, TKey>;
+        update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>,
+    ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>;
     storedDataUpdater: <K extends TStoredDataKey>(
         key: K,
         update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
@@ -109,12 +109,12 @@ export interface CustomSettingsHandler<
      * @example
      * ```typescript
      * defineDependencies({
-     *    valueRangeUpdater,
+     *    valueConstraintsUpdater,
      *    storedDataUpdater,
      *    helperDependency,
      *    queryClient
      * }: DefineDependenciesArgs<TSettings, SettingsWithTypes>) {
-     *   valueRangeUpdater(SettingType.REALIZATION, ({ getGlobalSetting, getLocalSetting, getHelperDependency }) => {
+     *   valueConstraintsUpdater(SettingType.REALIZATION, ({ getGlobalSetting, getLocalSetting, getHelperDependency }) => {
      *       // Get global settings
      *       const fieldIdentifier = getGlobalSetting("fieldId");
      *
@@ -128,7 +128,7 @@ export interface CustomSettingsHandler<
      *       ...
      *
      *       // Return the value range for the setting
-     *       return valueRange;
+     *       return valueConstraints;
      *     });
      *
      *     // The same can be done with stored data

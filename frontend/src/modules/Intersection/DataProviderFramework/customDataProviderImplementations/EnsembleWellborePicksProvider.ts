@@ -41,11 +41,11 @@ export class EnsembleWellborePicksProvider
 
     defineDependencies({
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         queryClient,
         workbenchSession,
     }: DefineDependenciesArgs<EnsembleWellborePicksSettings>): void {
-        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
             return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
@@ -56,7 +56,7 @@ export class EnsembleWellborePicksProvider
             return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
-        valueRangeUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -90,7 +90,7 @@ export class EnsembleWellborePicksProvider
             });
         });
 
-        valueRangeUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
             const wellborePicks = getHelperDependency(wellborePicksDep);
 
             if (!wellborePicks) return [];
@@ -101,7 +101,7 @@ export class EnsembleWellborePicksProvider
             return interpreters;
         });
 
-        valueRangeUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
             const wellborePicks = getHelperDependency(wellborePicksDep);
             const selectedInterpreter = getLocalSetting(Setting.SMDA_INTERPRETER);
 
