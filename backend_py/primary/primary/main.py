@@ -106,13 +106,11 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
 
+    # This part, after the yield, will be executed after the application has finished.
     yield
 
     await MessageBusSingleton.shutdown_async()
-
     await azure_services_credential.close()
-
-    # This part, after the yield, will be executed after the application has finished.
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
 
