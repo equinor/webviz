@@ -147,6 +147,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                                     viewContext={props.moduleInstance.getContext()}
                                     workbenchSession={props.workbench.getSessionManager().getActiveSession()}
                                     workbenchServices={props.workbench.getWorkbenchServices()}
+                                    hoverService={props.workbench.getHoverService()}
                                     workbenchSettings={props.workbench
                                         .getSessionManager()
                                         .getActiveSession()

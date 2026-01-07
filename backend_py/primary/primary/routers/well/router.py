@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from webviz_services.smda_access.drogon import DrogonSmdaAccess
 from webviz_services.smda_access import SmdaAccess
 from webviz_services.smda_access import GeologyAccess as SmdaGeologyAccess
-from webviz_services.service_exceptions import NoDataError
+from webviz_services.service_exceptions import NoDataError, Service
 from webviz_services.ssdl_access.well_access import WellAccess as SsdlWellAccess
 from webviz_services.ssdl_access.drogon import DrogonWellAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
@@ -42,6 +42,50 @@ async def get_drilled_wellbore_headers(
     wellbore_headers = await well_access.get_wellbore_headers_async(field_identifier)
 
     return [converters.convert_wellbore_header_to_schema(wellbore_header) for wellbore_header in wellbore_headers]
+
+
+@router.get("/field_perforations")
+async def get_field_perforations(
+    field_identifier: str = Query(description="Official field identifier"),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> list[schemas.WellborePerforations]:
+    """Get field perforations for all wellbores in a given field."""
+
+    if is_drogon_identifier(field_identifier=field_identifier):
+        return []
+        # Only fetch completions for non-DROGON fields
+    well_access_ssdl = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+
+    fields_info = await well_access_ssdl.get_fields_async()
+    field_uuid = next((field.field_uuid for field in fields_info if field.field_identifier == field_identifier), None)
+
+    if not field_uuid:
+        raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
+
+    perforations = await well_access_ssdl.get_field_perforations_async(field_uuid=field_uuid)
+    return converters.convert_field_perforations_to_schema(perforations)
+
+
+@router.get("/field_screens")
+async def get_field_screens(
+    field_identifier: str = Query(description="Official field identifier"),
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> list[schemas.WellboreCompletions]:
+    """Get field screens for all wellbores in a given field.
+    Screens are the SSDL completions with a filter on "Screen" type."""
+    if is_drogon_identifier(field_identifier=field_identifier):
+        return []
+        # Only fetch screens for non-DROGON fields
+    well_access_ssdl = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+
+    fields_info = await well_access_ssdl.get_fields_async()
+    field_uuid = next((field.field_uuid for field in fields_info if field.field_identifier == field_identifier), None)
+
+    if not field_uuid:
+        raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
+
+    screens = await well_access_ssdl.get_field_screens_async(field_uuid=field_uuid)
+    return converters.convert_field_screens_to_schema(screens)
 
 
 @router.get("/well_trajectories/")

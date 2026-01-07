@@ -76,8 +76,8 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     } = props;
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const [value, setValue] = React.useState<number | number[]>(propsValue ?? 0);
-    const [prevValue, setPrevValue] = React.useState<number | number[]>(propsValue ?? 0);
+    const [value, setValue] = React.useState(propsValue ?? 0);
+    const [prevValue, setPrevValue] = React.useState(propsValue ?? 0);
     const [valueLabelVisible, setValueLabelVisible] = React.useState<boolean>(false);
 
     const divRef = React.useRef<HTMLDivElement>(null);
