@@ -1,13 +1,7 @@
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { useGetAggregatedPerRealizationTableDataQueries } from "@modules/_shared/InplaceVolumes/queryHooks";
-import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
-import {
-    areTableDefinitionSelectionsValidAtom,
-    secondResultNameAtom,
-    firstResultNameAtom,
-    plotTypeAtom,
-} from "./baseAtoms";
+import { areTableDefinitionSelectionsValidAtom, firstResultNameAtom } from "./baseAtoms";
 import {
     areSelectedTablesComparableAtom,
     ensembleIdentsWithRealizationsAtom,
@@ -18,15 +12,10 @@ import {
 
 export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
     const firstResultName = get(firstResultNameAtom);
-    const secondResultName = get(secondResultNameAtom);
-    const plotType = get(plotTypeAtom);
 
     const resultNames: string[] = [];
     if (firstResultName !== null) {
         resultNames.push(firstResultName);
-    }
-    if (secondResultName !== null && plotType === PlotType.SCATTER) {
-        resultNames.push(secondResultName);
     }
 
     const groupByIndices = get(groupByIndicesAtom);

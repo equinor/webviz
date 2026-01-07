@@ -7,7 +7,6 @@ import {
     selectedEnsembleIdentsAtom,
     selectedFirstResultNameAtom,
     selectedIndicesWithValuesAtom,
-    selectedSecondResultNameAtom,
     selectedTableNamesAtom,
 } from "./persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
@@ -29,7 +28,6 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedTableNames = get(selectedTableNamesAtom);
     const selectedFirstResultName = get(selectedFirstResultNameAtom);
-    const selectedSecondResultName = get(selectedSecondResultNameAtom);
     const selectedIndicesWithValues = get(selectedIndicesWithValuesAtom);
 
     const tableDefinitionsQuery = get(tableDefinitionsQueryAtom);
@@ -47,10 +45,6 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     }
 
     if (!selectedFirstResultName.value || !tableDefinitionsAccessor.hasResultName(selectedFirstResultName.value)) {
-        return false;
-    }
-
-    if (selectedSecondResultName.value && !tableDefinitionsAccessor.hasResultName(selectedSecondResultName.value)) {
         return false;
     }
 

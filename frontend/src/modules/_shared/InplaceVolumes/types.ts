@@ -58,3 +58,19 @@ export const InplaceVolumesStatisticEnumToStringMapping = {
     [InplaceVolumesStatistic_api.P10]: "P10",
     [InplaceVolumesStatistic_api.P90]: "P90",
 };
+export enum InplaceSelectorKey {
+    ZONE = "ZONE",
+    REGION = "REGION",
+    FACIES = "FACIES",
+    LICENCE = "LICENCE",
+}
+export const InplaceVolumesSelectorMapping: Record<string, string> = {
+    [TableOriginKey.ENSEMBLE]: "Ensemble",
+    [TableOriginKey.TABLE_NAME]: "Grid source",
+    [TableOriginKey.FLUID]: "Fluid zone",
+    [InplaceSelectorKey.ZONE]: "Zone",
+    [InplaceSelectorKey.REGION]: "Region",
+    [InplaceSelectorKey.FACIES]: "Facies",
+    [InplaceSelectorKey.LICENCE]: "Licence",
+    REAL: "Realization",
+};
