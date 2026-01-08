@@ -7,7 +7,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isStringOrNull } from "../utils/structureValidation";
+import { assertStringOrNull } from "../utils/structureValidation";
 
 import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
@@ -20,10 +20,6 @@ export class DropdownStringSetting implements CustomSettingImplementation<ValueT
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
-    }
-
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isStringOrNull(value);
     }
 
     constructor(props?: { options?: ValueType[] | DropdownOptionOrGroup<ValueType>[] }) {
@@ -48,6 +44,16 @@ export class DropdownStringSetting implements CustomSettingImplementation<ValueT
 
     fixupValue(value: ValueType, valueConstraints: ValueConstraintsType): ValueType {
         return fixupValue<string, string>(value, valueConstraints, (v) => v);
+    }
+
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringOrNull(parsed);
+        return parsed;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {

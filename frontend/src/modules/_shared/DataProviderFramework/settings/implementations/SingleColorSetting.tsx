@@ -9,7 +9,7 @@ import type {
     SettingComponentProps,
     StaticSettingImplementation,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isStringOrNull } from "../utils/structureValidation";
+import { assertStringOrNull } from "../utils/structureValidation";
 
 type ValueType = string | null;
 
@@ -41,10 +41,6 @@ export class SingleColorSetting implements StaticSettingImplementation<ValueType
         return true;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isStringOrNull(value);
-    }
-
     isValueValid(value: ValueType): boolean {
         if (!value) return false;
 
@@ -52,12 +48,13 @@ export class SingleColorSetting implements StaticSettingImplementation<ValueType
     }
 
     serializeValue(value: ValueType): string {
-        return value ?? "";
+        return JSON.stringify(value);
     }
 
-    deserializeValue?(serializedValue: string): ValueType {
-        if (serializedValue === "") return null;
-        return serializedValue;
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringOrNull(parsed);
+        return parsed;
     }
 
     fixupValue(value: ValueType): NonNullable<ValueType> {

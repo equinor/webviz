@@ -25,9 +25,10 @@ type SettingComponentPropsBase<TInternalValue> = {
 export type StaticSettingComponentProps<TInternalValue> = SettingComponentPropsBase<TInternalValue>;
 
 // Component props for dynamic settings (with valueConstraints)
-export type DynamicSettingComponentProps<TInternalValue, TValueConstraints> = SettingComponentPropsBase<TInternalValue> & {
-    valueConstraints: TValueConstraints;
-};
+export type DynamicSettingComponentProps<TInternalValue, TValueConstraints> =
+    SettingComponentPropsBase<TInternalValue> & {
+        valueConstraints: TValueConstraints;
+    };
 
 // For backward compatibility - delegates to the correct type based on TValueConstraints
 export type SettingComponentProps<TInternalValue, TValueConstraints = never> = [TValueConstraints] extends [never]
@@ -47,18 +48,22 @@ export type ValueConstraintsIntersectionReducerDefinition<TValueConstraints, TSt
 // Base interface shared by both static and dynamic settings
 type CustomSettingImplementationBase<TInternalValue> = {
     defaultValue?: TInternalValue;
-    serializeValue?: (value: TInternalValue) => string;
-    deserializeValue?: (serializedValue: string) => TInternalValue;
+    serializeValue: (value: TInternalValue) => string;
     /**
-     * Type guard to validate that a deserialized value has the correct structure.
-     * This is used to catch malformed persisted values before they cause runtime errors.
-     * Return true if the value has the expected structure, false otherwise.
-     * Note: This should check the structure/type, not the validity of values within the structure.
+     * Deserializes a string value back into the internal value type.
+     * This method must either return a valid TInternalValue or throw an error.
+     * Any errors thrown will be caught and handled by the SettingManager.
      *
-     * Implementation note: You can use the createStructureValidator helper to create
-     * a validator from a JTD schema, or write a custom validation function.
+     * Implementation guidelines:
+     * - Validate the serialized string format and throw if invalid
+     * - Validate the structure of the parsed value and throw if invalid
+     * - Return the correctly typed internal value if valid
+     *
+     * @param serializedValue - The serialized string to deserialize
+     * @returns The deserialized internal value
+     * @throws Error if the serialized value is invalid or has incorrect structure
      */
-    isValueValidStructure: (value: unknown) => value is TInternalValue;
+    deserializeValue: (serializedValue: string) => TInternalValue;
     overriddenValueRepresentation?: (args: OverriddenValueRepresentationArgs<TInternalValue>) => React.ReactNode;
 };
 
@@ -84,11 +89,17 @@ export type StaticSettingImplementation<
 export type DynamicSettingImplementation<TInternalValue, TExternalValue, TValueConstraints> =
     CustomSettingImplementationBase<TInternalValue> & {
         getIsStatic?: () => boolean;
-        valueConstraintsIntersectionReducerDefinition: ValueConstraintsIntersectionReducerDefinition<TValueConstraints, any>;
+        valueConstraintsIntersectionReducerDefinition: ValueConstraintsIntersectionReducerDefinition<
+            TValueConstraints,
+            any
+        >;
         makeComponent(): (props: DynamicSettingComponentProps<TInternalValue, TValueConstraints>) => React.ReactNode;
         fixupValue?: (currentValue: TInternalValue, valueConstraints: TValueConstraints) => TInternalValue;
         isValueValid?: (value: TInternalValue, valueConstraints: TValueConstraints) => boolean;
-        mapInternalToExternalValue: (internalValue: TInternalValue, valueConstraints: TValueConstraints) => TExternalValue;
+        mapInternalToExternalValue: (
+            internalValue: TInternalValue,
+            valueConstraints: TValueConstraints,
+        ) => TExternalValue;
     };
 
 /**

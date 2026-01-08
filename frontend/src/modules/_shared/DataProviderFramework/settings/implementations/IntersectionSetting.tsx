@@ -30,17 +30,27 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        if (value === null) {
-            return true;
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+
+        if (parsed === null) {
+            return null;
         }
 
-        if (typeof value !== "object" || Array.isArray(value)) {
-            return false;
+        if (typeof parsed !== "object" || Array.isArray(parsed)) {
+            throw new Error("Expected object or null");
         }
 
-        const v = value as Record<string, unknown>;
-        return typeof v.type === "string" && typeof v.name === "string" && typeof v.uuid === "string";
+        const v = parsed as Record<string, unknown>;
+        if (typeof v.type !== "string" || typeof v.name !== "string" || typeof v.uuid !== "string") {
+            throw new Error("Expected object with string properties: type, name, uuid");
+        }
+
+        return parsed as ValueType;
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {

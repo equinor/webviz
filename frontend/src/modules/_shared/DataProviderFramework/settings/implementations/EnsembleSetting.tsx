@@ -23,15 +23,6 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        if (value === null) {
-            return true;
-        }
-
-        // RegularEnsembleIdent is a class instance, check if it has expected methods
-        return typeof value === "object" && value !== null && "equals" in value && "toString" in value;
-    }
-
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
         return isValueValid<RegularEnsembleIdent, RegularEnsembleIdent>(
             value,

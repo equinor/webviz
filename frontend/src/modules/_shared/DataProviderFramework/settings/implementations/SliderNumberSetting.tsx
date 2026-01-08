@@ -11,7 +11,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isNumberOrNull } from "../utils/structureValidation";
+import { assertNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
 type ValueConstraintsType = [number, number, number]; // [min, max, step]
@@ -57,10 +57,6 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isNumberOrNull(value);
-    }
-
     getIsStatic(): boolean {
         // If static options are provided in constructor, the setting is defined as static
         return this._staticOptions !== null;
@@ -100,6 +96,16 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         }
 
         return currentValue;
+    }
+
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertNumberOrNull(parsed);
+        return parsed;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {

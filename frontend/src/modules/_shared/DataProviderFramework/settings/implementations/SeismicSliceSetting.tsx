@@ -55,39 +55,45 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        if (value === null) {
-            return true;
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+
+        if (parsed === null) {
+            return null;
         }
 
-        if (typeof value !== "object" || Array.isArray(value)) {
-            return false;
+        if (typeof parsed !== "object" || Array.isArray(parsed)) {
+            throw new Error("Expected object or null");
         }
 
-        const v = value as Record<string, unknown>;
+        const v = parsed as Record<string, unknown>;
 
         // Check 'value' property - must be [number, number, number]
         if (!Array.isArray(v.value) || v.value.length !== 3) {
-            return false;
+            throw new Error("Expected 'value' to be array of 3 numbers");
         }
         if (!v.value.every((item) => typeof item === "number")) {
-            return false;
+            throw new Error("Expected 'value' array elements to be numbers");
         }
 
         // Check 'visible' property - must be [boolean, boolean, boolean]
         if (!Array.isArray(v.visible) || v.visible.length !== 3) {
-            return false;
+            throw new Error("Expected 'visible' to be array of 3 booleans");
         }
         if (!v.visible.every((item) => typeof item === "boolean")) {
-            return false;
+            throw new Error("Expected 'visible' array elements to be booleans");
         }
 
         // Check 'applied' property - must be boolean
         if (typeof v.applied !== "boolean") {
-            return false;
+            throw new Error("Expected 'applied' to be boolean");
         }
 
-        return true;
+        return parsed as ValueType;
     }
 
     fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {

@@ -52,7 +52,8 @@ export type SettingManagerParams<
     TExternalValue extends SettingTypeDefinitions[TSetting]["externalValue"] | null =
         | SettingTypeDefinitions[TSetting]["externalValue"]
         | null,
-    TValueConstraints extends SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
+    TValueConstraints extends
+        SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
 > = {
     type: TSetting;
     label: string;
@@ -82,13 +83,18 @@ export class SettingManager<
     TExternalValue extends SettingTypeDefinitions[TSetting]["externalValue"] | null =
         | SettingTypeDefinitions[TSetting]["externalValue"]
         | null,
-    TValueConstraints extends SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
+    TValueConstraints extends
+        SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
 > implements PublishSubscribe<SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstraints>>
 {
     private _id: string;
     private _type: TSetting;
     private _label: string;
-    private _customSettingImplementation: CustomSettingImplementation<TInternalValue, TExternalValue, TValueConstraints>;
+    private _customSettingImplementation: CustomSettingImplementation<
+        TInternalValue,
+        TExternalValue,
+        TValueConstraints
+    >;
     private _internalValue: TInternalValue;
     private _isValueValid: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<
@@ -332,25 +338,9 @@ export class SettingManager<
         this._cachedExternalValue = NO_CACHE;
 
         try {
-            let deserializedValue;
-            if (this._customSettingImplementation.deserializeValue) {
-                deserializedValue = this._customSettingImplementation.deserializeValue.bind(
-                    this._customSettingImplementation,
-                )(serializedValue);
-            } else {
-                deserializedValue = JSON.parse(serializedValue);
-            }
-
-            // Validate parsed value has correct structure
-            if (!this.isDeserializedValueValidStructure(deserializedValue)) {
-                console.error(
-                    `Deserialized value for setting "${this._label}" has invalid structure, resetting to null`,
-                );
-                this._currentValueFromPersistence = null;
-                this.setPersistedValueIsValid(false);
-                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
-                return;
-            }
+            const deserializedValue = this._customSettingImplementation.deserializeValue.bind(
+                this._customSettingImplementation,
+            )(serializedValue);
 
             this._currentValueFromPersistence = deserializedValue;
             this.setPersistedValueIsValid(true);
@@ -361,15 +351,6 @@ export class SettingManager<
             this.setPersistedValueIsValid(false);
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
         }
-    }
-
-    /**
-     * Validates that a deserialized value has the correct structure/type.
-     * This is a basic structural validation before the value is used.
-     * Uses the required isValueValidStructure method from the custom implementation.
-     */
-    private isDeserializedValueValidStructure(value: unknown): value is TInternalValue {
-        return this._customSettingImplementation.isValueValidStructure.bind(this._customSettingImplementation)(value);
     }
 
     isExternallyControlled(): boolean {
@@ -616,9 +597,9 @@ export class SettingManager<
 
     private applyValueConstraints(): boolean {
         let valueChanged = false;
-        const valueFixedUp = !this.checkIfValueIsValid(this.getInternalValue()) && this.maybeFixupValue();
-        const persistedValueReset = this.maybeResetPersistedValue();
-        if (valueFixedUp || persistedValueReset) {
+        const isValueFixedUp = !this.checkIfValueIsValid(this.getInternalValue()) && this.maybeFixupValue();
+        const isPersistedValueReset = this.maybeResetPersistedValue();
+        if (isValueFixedUp || isPersistedValueReset) {
             valueChanged = true;
         }
         const prevIsValid = this._isValueValid;
@@ -675,7 +656,10 @@ export class SettingManager<
         const customFixupFunction = this._customSettingImplementation.fixupValue;
 
         const candidate = customFixupFunction
-            ? customFixupFunction.bind(this._customSettingImplementation)(this._internalValue, this._valueConstraints as any)
+            ? customFixupFunction.bind(this._customSettingImplementation)(
+                  this._internalValue,
+                  this._valueConstraints as any,
+              )
             : this._internalValue;
 
         if (isEqual(candidate, this._internalValue)) {

@@ -83,52 +83,58 @@ export class GridLayerRangeSetting
         },
     };
 
-    isValueValidStructure(value: unknown): value is InternalValueType {
+    serializeValue(value: InternalValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): InternalValueType {
+        const parsed = JSON.parse(serializedValue);
+
         // null is always valid
-        if (value === null) {
-            return true;
+        if (parsed === null) {
+            return null;
         }
 
         // Check if value is an object (not array, not null)
-        if (typeof value !== "object" || Array.isArray(value)) {
-            return false;
+        if (typeof parsed !== "object" || Array.isArray(parsed)) {
+            throw new Error("Expected object or null");
         }
 
-        const v = value as Record<string, unknown>;
+        const v = parsed as Record<string, unknown>;
 
         // Check 'i' property - must be [number, number]
         if (!isNumberTuple(v.i, 2)) {
-            return false;
+            throw new Error("Expected 'i' to be array of 2 numbers");
         }
 
         // Check 'j' property - must be [number, number]
         if (!isNumberTuple(v.j, 2)) {
-            return false;
+            throw new Error("Expected 'j' to be array of 2 numbers");
         }
 
         // Check 'k' property exists and is an object
         if (typeof v.k !== "object" || v.k === null || Array.isArray(v.k)) {
-            return false;
+            throw new Error("Expected 'k' to be an object");
         }
 
         const k = v.k as Record<string, unknown>;
 
         // Check 'k.type' is either "range" or "zone"
         if (k.type !== "range" && k.type !== "zone") {
-            return false;
+            throw new Error("Expected 'k.type' to be 'range' or 'zone'");
         }
 
         // Check 'k.range' is [number, number]
         if (!isNumberTuple(k.range, 2)) {
-            return false;
+            throw new Error("Expected 'k.range' to be array of 2 numbers");
         }
 
         // For zone type, check 'k.name' is a string
         if (k.type === "zone" && typeof k.name !== "string") {
-            return false;
+            throw new Error("Expected 'k.name' to be string for zone type");
         }
 
-        return true;
+        return parsed as InternalValueType;
     }
 
     mapInternalToExternalValue(internalValue: InternalValueType): ExternalValueType {
@@ -145,40 +151,37 @@ export class GridLayerRangeSetting
         }
 
         const { i: iRange, j: jRange, k: kRange } = valueConstraints.range;
-        const [xmin, xmax] = value.i;
-        const [ymin, ymax] = value.j;
+        const [iMin, iMax] = value.i;
+        const [jMin, jMax] = value.j;
+        const [kMin, kMax] = value.k.range;
         const type = value.k.type;
 
-        if (type === "range") {
-            const [zmin, zmax] = value.k.range;
+        if (iMin < iRange[0] || iMax > iRange[1] || iMin > iMax) {
+            return false;
+        }
+        if (jMin < jRange[0] || jMax > jRange[1] || jMin > jMax) {
+            return false;
+        }
 
-            return (
-                xmin >= iRange[0] &&
-                xmin <= iRange[1] &&
-                xmax >= iRange[0] &&
-                xmax <= iRange[1] &&
-                ymin >= jRange[0] &&
-                ymin <= jRange[1] &&
-                ymax >= jRange[0] &&
-                ymax <= jRange[1] &&
-                zmin >= kRange[0] &&
-                zmin <= kRange[1] &&
-                zmax >= kRange[0] &&
-                zmax <= kRange[1]
-            );
-        } else if (type === "zone") {
+        if (kMin < kRange[0] || kMax > kRange[1] || kMin > kMax) {
+            return false;
+        }
+
+        if (type === "zone") {
             const zoneName = value.k.name;
-            const [zmin, zmax] = value.k.range;
             const zoneExists = valueConstraints.zones.some(
-                (zone) => zone.name === zoneName && zone.start_layer === zmin && zone.end_layer === zmax,
+                (zone) => zone.name === zoneName && zone.start_layer === kMin && zone.end_layer === kMax,
             );
             if (!zoneExists) {
                 return false;
             }
-            return true;
         }
 
-        throw new Error(`Unknown type: ${type}`);
+        if (type !== "range" && type !== "zone") {
+            throw new Error(`Unknown type: ${type}`);
+        }
+
+        return true;
     }
 
     fixupValue(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): InternalValueType {
@@ -195,36 +198,39 @@ export class GridLayerRangeSetting
             };
         }
 
-        const [iMin, iMax] = currentValue.i;
-        const [jMin, jMax] = currentValue.j;
+        const iMin = Math.min(currentValue.i[0], currentValue.i[1]);
+        const iMax = Math.max(currentValue.i[0], currentValue.i[1]);
+        const jMin = Math.min(currentValue.j[0], currentValue.j[1]);
+        const jMax = Math.max(currentValue.j[0], currentValue.j[1]);
+        const kMin = Math.min(currentValue.k.range[0], currentValue.k.range[1]);
+        const kMax = Math.max(currentValue.k.range[0], currentValue.k.range[1]);
 
         const newIRange: [number, number] = [Math.max(iRange[0], iMin), Math.min(iRange[1], iMax)];
         const newJRange: [number, number] = [Math.max(jRange[0], jMin), Math.min(jRange[1], jMax)];
+        const newKRange: [number, number] = [Math.max(kRange[0], kMin), Math.min(kRange[1], kMax)];
 
         const type = currentValue.k.type;
 
         if (type === "range") {
-            const [zmin, zmax] = currentValue.k.range;
             return {
                 i: newIRange,
                 j: newJRange,
-                k: { type: "range", range: [Math.max(kRange[0], zmin), Math.min(kRange[1], zmax)] },
+                k: { type: "range", range: newKRange },
             };
         }
 
         if (type === "zone") {
             const zoneName = currentValue.k.name;
-            const [zmin, zmax] = currentValue.k.range;
             const zoneExists = valueConstraints.zones.some(
-                (zone) => zone.name === zoneName && zone.start_layer === zmin && zone.end_layer === zmax,
+                (zone) => zone.name === zoneName && zone.start_layer === kMin && zone.end_layer === kMax,
             );
             if (zoneExists) {
-                return { i: newIRange, j: newJRange, k: { type: "zone", range: [zmin, zmax], name: zoneName } };
+                return { i: newIRange, j: newJRange, k: { type: "zone", range: [kMin, kMax], name: zoneName } };
             } else {
                 return {
                     i: newIRange,
                     j: newJRange,
-                    k: { type: "range", range: [Math.max(kRange[0], zmin), Math.min(kRange[1], zmax)] },
+                    k: { type: "range", range: newKRange },
                 };
             }
         }

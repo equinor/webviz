@@ -8,9 +8,13 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isStringArrayOrNull } from "../utils/structureValidation";
+import { assertStringArrayOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arrayMultiSelect";
 
 type InternalValueType = string[] | null;
 type ExternalValueType = WellborePick_api[] | null;
@@ -20,20 +24,35 @@ export class DrilledWellborePicksSetting
     implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueConstraintsType>
 {
     defaultValue: InternalValueType = null;
-    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
-        (a, b) => a.wellboreUuid === b.wellboreUuid,
-    );
+    valueConstraintsIntersectionReducerDefinition =
+        makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
+            (a, b) => a.wellboreUuid === b.wellboreUuid,
+        );
 
-    mapInternalToExternalValue(internalValue: InternalValueType, valueConstraints: ValueConstraintsType): ExternalValueType {
+    mapInternalToExternalValue(
+        internalValue: InternalValueType,
+        valueConstraints: ValueConstraintsType,
+    ): ExternalValueType {
         return valueConstraints.filter((pick) => internalValue?.includes(pick.pickIdentifier) ?? false);
     }
 
-    isValueValidStructure(value: unknown): value is InternalValueType {
-        return isStringArrayOrNull(value);
+    serializeValue(value: InternalValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): InternalValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringArrayOrNull(parsed);
+        return parsed;
     }
 
     fixupValue(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): InternalValueType {
-        const fixedValue = fixupValue<string, WellborePick_api>(currentValue, valueConstraints, mappingFunc, "allAvailable");
+        const fixedValue = fixupValue<string, WellborePick_api>(
+            currentValue,
+            valueConstraints,
+            mappingFunc,
+            "allAvailable",
+        );
 
         if (fixedValue.length === 0) {
             return valueConstraints.map(mappingFunc);
@@ -43,9 +62,6 @@ export class DrilledWellborePicksSetting
     }
 
     isValueValid(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): boolean {
-        function mappingFunc(value: WellborePick_api): string {
-            return value.pickIdentifier;
-        }
         return isValueValid<string, WellborePick_api>(currentValue, valueConstraints, mappingFunc);
     }
 

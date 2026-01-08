@@ -27,22 +27,32 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        if (value === null) {
-            return true;
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+
+        if (parsed === null) {
+            return null;
         }
 
-        if (typeof value !== "object" || Array.isArray(value)) {
-            return false;
+        if (typeof parsed !== "object" || Array.isArray(parsed)) {
+            throw new Error("Expected object or null");
         }
 
-        const v = value as Record<string, unknown>;
-        return (
-            typeof v.logName === "string" &&
-            typeof v.curveName === "string" &&
-            typeof v.curveUnit === "string" &&
-            typeof v.curveDescription === "string"
-        );
+        const v = parsed as Record<string, unknown>;
+        if (
+            typeof v.logName !== "string" ||
+            typeof v.curveName !== "string" ||
+            typeof v.curveUnit !== "string" ||
+            typeof v.curveDescription !== "string"
+        ) {
+            throw new Error("Expected object with string properties: logName, curveName, curveUnit, curveDescription");
+        }
+
+        return parsed as ValueType;
     }
 
     fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {

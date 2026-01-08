@@ -7,7 +7,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isNumberOrNull } from "../utils/structureValidation";
+import { assertNumberOrNull } from "../utils/structureValidation";
 
 import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
@@ -21,8 +21,14 @@ export class DropdownNumberSetting implements CustomSettingImplementation<ValueT
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isNumberOrNull(value);
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertNumberOrNull(parsed);
+        return parsed;
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {

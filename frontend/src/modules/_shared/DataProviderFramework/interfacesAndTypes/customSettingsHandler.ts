@@ -102,7 +102,7 @@ export interface CustomSettingsHandler<
 
     /**
      * A method that defines the dependencies of the settings of the data provider.
-     * A dependency can either be an updater for the value range of a setting or a stored data object, or a helper dependency (e.g. a fetching operation).
+     * A dependency can either be an updater for the value constraints of a setting or a stored data object, or a helper dependency (e.g. a fetching operation).
      *
      * @param args An object containing the functions for defining the different dependencies.
      *
@@ -127,7 +127,7 @@ export interface CustomSettingsHandler<
      *       // Do something with the settings and data
      *       ...
      *
-     *       // Return the value range for the setting
+     *       // Return the value constraints for the setting
      *       return valueConstraints;
      *     });
      *

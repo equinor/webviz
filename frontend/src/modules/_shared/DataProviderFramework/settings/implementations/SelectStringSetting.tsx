@@ -9,7 +9,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isStringArrayOrNull } from "../utils/structureValidation";
+import { assertStringArrayOrNull } from "../utils/structureValidation";
 
 import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
@@ -23,8 +23,14 @@ export class SelectStringSetting implements CustomSettingImplementation<ValueTyp
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isStringArrayOrNull(value);
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringArrayOrNull(parsed);
+        return parsed;
     }
 
     isValueValid(currentValue: ValueType, valueConstraints: ValueConstraintsType): boolean {

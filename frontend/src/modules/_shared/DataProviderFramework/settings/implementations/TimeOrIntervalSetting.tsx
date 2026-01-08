@@ -15,7 +15,7 @@ import type {
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isStringOrNull } from "../utils/structureValidation";
+import { assertStringOrNull } from "../utils/structureValidation";
 
 import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
@@ -31,8 +31,14 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isStringOrNull(value);
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringOrNull(parsed);
+        return parsed;
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {

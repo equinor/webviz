@@ -8,9 +8,13 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isStringArrayOrNull } from "../utils/structureValidation";
+import { assertStringArrayOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arrayMultiSelect";
 
 type InternalValueType = string[] | null;
 type ExternalValueType = WellboreHeader_api[] | null;
@@ -20,11 +24,15 @@ export class DrilledWellboresSetting
     implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueConstraintsType>
 {
     defaultValue: InternalValueType = null;
-    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
-        (a, b) => a.wellboreUuid === b.wellboreUuid,
-    );
+    valueConstraintsIntersectionReducerDefinition =
+        makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
+            (a, b) => a.wellboreUuid === b.wellboreUuid,
+        );
 
-    mapInternalToExternalValue(internalValue: InternalValueType, valueConstraints: ValueConstraintsType): ExternalValueType {
+    mapInternalToExternalValue(
+        internalValue: InternalValueType,
+        valueConstraints: ValueConstraintsType,
+    ): ExternalValueType {
         if (internalValue === null) {
             return null;
         }
@@ -33,8 +41,14 @@ export class DrilledWellboresSetting
         return externalValues;
     }
 
-    isValueValidStructure(value: unknown): value is InternalValueType {
-        return isStringArrayOrNull(value);
+    serializeValue(value: InternalValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): InternalValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringArrayOrNull(parsed);
+        return parsed;
     }
 
     fixupValue(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): InternalValueType {
@@ -53,9 +67,6 @@ export class DrilledWellboresSetting
     }
 
     isValueValid(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): boolean {
-        function mappingFunc(value: WellboreHeader_api): string {
-            return value.wellboreUuid;
-        }
         return isValueValid<string, WellboreHeader_api>(currentValue, valueConstraints, mappingFunc);
     }
 

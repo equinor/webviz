@@ -59,17 +59,27 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
         this._staticProps = props ?? null;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        if (value === null) {
-            return true;
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+
+        if (parsed === null) {
+            return null;
         }
 
-        if (typeof value !== "object" || Array.isArray(value)) {
-            return false;
+        if (typeof parsed !== "object" || Array.isArray(parsed)) {
+            throw new Error("Expected object or null");
         }
 
-        const v = value as Record<string, unknown>;
-        return typeof v.enabled === "boolean" && typeof v.value === "number";
+        const v = parsed as Record<string, unknown>;
+        if (typeof v.enabled !== "boolean" || typeof v.value !== "number") {
+            throw new Error("Expected object with boolean 'enabled' and number 'value'");
+        }
+
+        return parsed as ValueType;
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {

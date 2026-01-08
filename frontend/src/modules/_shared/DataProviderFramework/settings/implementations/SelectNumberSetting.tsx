@@ -9,7 +9,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isNumberArrayOrNull } from "../utils/structureValidation";
+import { assertNumberArrayOrNull } from "../utils/structureValidation";
 
 import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
@@ -23,16 +23,22 @@ export class SelectNumberSetting implements CustomSettingImplementation<ValueTyp
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isNumberArrayOrNull(value);
-    }
-
     isValueValid(currentValue: ValueType, valueConstraints: ValueConstraintsType): boolean {
         return isValueValid<number, number>(currentValue, valueConstraints, (v) => v);
     }
 
     fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
         return fixupValue<number, number>(currentValue, valueConstraints, (v) => v, "firstAvailable");
+    }
+
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertNumberArrayOrNull(parsed);
+        return parsed;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {

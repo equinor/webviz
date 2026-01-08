@@ -4,7 +4,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isNumberOrNull } from "../utils/structureValidation";
+import { assertNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
 type ValueConstraintsType = [number, number];
@@ -42,8 +42,14 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isNumberOrNull(value);
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertNumberOrNull(parsed);
+        return parsed;
     }
 
     getIsStatic(): boolean {
