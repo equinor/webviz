@@ -89,6 +89,11 @@ def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.name}"
 
 
+# !!!!!!!!!!!!
+# from azure.cosmos.aio import CosmosClient
+# from azure.cosmos.aio import DatabaseProxy
+
+
 @asynccontextmanager
 async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
@@ -100,6 +105,21 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
         client_secret=config.CLIENT_SECRET,
     )
     azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
+
+
+    # Test Cosmos DB connection
+    # -----------------------------------------
+    # cosmos_client = CosmosClient("https://webviz-dev-db.documents.azure.com:443/", azure_services_credential)
+    # LOGGER.info(f"{cosmos_client=}")
+    # db_proxy: DatabaseProxy = cosmos_client.get_database_client("persistence")
+    # LOGGER.info(f"{db_proxy=}")
+    # container = db_proxy.get_container_client("sessions")
+    # LOGGER.info(f"{container=}")
+
+    # items_iterable = container.query_items(query="SELECT * FROM c")
+    # items = [item async for item in items_iterable]    
+    # LOGGER.info(f"Cosmos DB 'sessions' container has {len(items)} items")
+    # -----------------------------------------
 
     sb_conn_string = os.getenv("SERVICEBUS_CONNECTION_STRING")
     if sb_conn_string:
