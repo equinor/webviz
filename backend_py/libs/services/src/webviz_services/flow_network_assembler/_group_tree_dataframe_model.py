@@ -77,8 +77,8 @@ class GroupTreeDataframeModel:
 
         group_tree_wells: set[str] = set()
         group_tree_groups: set[str] = set()
-        group_tree_keywords: List[str] = self._grouptree_df["KEYWORD"].to_list()
-        group_tree_nodes: List[str] = self._grouptree_df["CHILD"].to_list()
+        group_tree_keywords: List[str] = self._grouptree_df["KEYWORD"].to_numpy().tolist()
+        group_tree_nodes: List[str] = self._grouptree_df["CHILD"].to_numpy().tolist()
         for keyword, node in zip(group_tree_keywords, group_tree_nodes):
             if keyword == "WELSPECS":
                 group_tree_wells.add(node)
