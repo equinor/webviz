@@ -34,7 +34,7 @@ export class StackedPlotProvider
 
     // Uses the same external things as the other types
     defineDependencies(args: DefineDependenciesArgs<StackedPlotSettingTypes>) {
-        const { valueRangeUpdater, helperDependency } = args;
+        const { valueConstraintsUpdater, helperDependency } = args;
 
         const headerQueryDeps = [
             WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
@@ -55,7 +55,7 @@ export class StackedPlotProvider
             }),
         );
 
-        valueRangeUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreId = getGlobalSetting("wellboreUuid");
             const allHeaderData = headerQueryDeps.flatMap((dep) => getHelperDependency(dep));
 

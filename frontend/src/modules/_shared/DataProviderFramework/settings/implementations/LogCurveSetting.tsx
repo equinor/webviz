@@ -12,14 +12,14 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
-import { isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import { isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = WellboreLogCurveHeader_api | null;
-type ValueRangeType = WellboreLogCurveHeader_api[];
+type ValueConstraintsType = WellboreLogCurveHeader_api[];
 
-export class LogCurveSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
+export class LogCurveSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     defaultValue: ValueType = null;
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<WellboreLogCurveHeader_api[]>(
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<WellboreLogCurveHeader_api[]>(
         (a, b) => isEqual(a, b),
     );
 
@@ -27,34 +27,44 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        if (value === null) {
-            return true;
-        }
-
-        if (typeof value !== "object" || Array.isArray(value)) {
-            return false;
-        }
-
-        const v = value as Record<string, unknown>;
-        return (
-            typeof v.logName === "string" &&
-            typeof v.curveName === "string" &&
-            typeof v.curveUnit === "string" &&
-            typeof v.curveDescription === "string"
-        );
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+
+        if (parsed === null) {
+            return null;
+        }
+
+        if (typeof parsed !== "object" || Array.isArray(parsed)) {
+            throw new Error("Expected object or null");
+        }
+
+        const v = parsed as Record<string, unknown>;
+        if (
+            typeof v.logName !== "string" ||
+            typeof v.curveName !== "string" ||
+            typeof v.curveUnit !== "string" ||
+            typeof v.curveDescription !== "string"
+        ) {
+            throw new Error("Expected object with string properties: logName, curveName, curveUnit, curveDescription");
+        }
+
+        return parsed as ValueType;
+    }
+
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
         if (!currentValue) {
             // Match sorting used in dropdown
-            return sortBy(valueRange, [sortStatLogsToTop, "logName", "curveName"])[0] ?? null;
+            return sortBy(valueConstraints, [sortStatLogsToTop, "logName", "curveName"])[0] ?? null;
         }
         // We look for any curve that at the least matches on curve name. Optimally, there's an entry that matches both
         // on curve *and* log name, but we'll accept it if at least the name matches
         let bestMatch = null;
 
-        for (const value of valueRange) {
+        for (const value of valueConstraints) {
             if (value.curveName === currentValue?.curveName) {
                 bestMatch = value;
                 // If the both matches, there well be no better alternatives
@@ -65,14 +75,14 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
         return bestMatch;
     }
 
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
-        return isValueValid<ValueType, WellboreLogCurveHeader_api>(value, valueRange, (v) => v);
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
+        return isValueValid<ValueType, WellboreLogCurveHeader_api>(value, valueConstraints, (v) => v);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
-        return function DrilledWellbores(props: SettingComponentProps<ValueType, ValueRangeType>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
+        return function DrilledWellbores(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const selectedValue = makeSelectValueForCurveHeader(props.value);
-            const availableValues = props.valueRange ?? [];
+            const availableValues = props.valueConstraints ?? [];
 
             const curveOptions = chain(availableValues)
                 .groupBy("logName")

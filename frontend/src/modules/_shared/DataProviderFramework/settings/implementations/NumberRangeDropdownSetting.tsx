@@ -7,27 +7,27 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isNumberOrNull } from "../utils/structureValidation";
+import { assertNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
-type ValueRange = [number, number];
+type ValueConstraints = [number, number];
 
-export class NumberRangeDropdownSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRange> {
+export class NumberRangeDropdownSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraints> {
     defaultValue: ValueType = null;
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRange, valueRange: ValueRange) => {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueConstraints, valueConstraints: ValueConstraints) => {
             if (accumulator === null) {
-                return valueRange;
+                return valueConstraints;
             }
 
-            const min = Math.max(accumulator[0], valueRange[0]);
-            const max = Math.min(accumulator[1], valueRange[1]);
+            const min = Math.max(accumulator[0], valueConstraints[0]);
+            const max = Math.min(accumulator[1], valueConstraints[1]);
 
-            return [min, max] as ValueRange;
+            return [min, max] as ValueConstraints;
         },
         startingValue: null,
-        isValid: (valueRange: ValueRange): boolean => {
-            return valueRange[0] <= valueRange[1];
+        isValid: (valueConstraints: ValueConstraints): boolean => {
+            return valueConstraints[0] <= valueConstraints[1];
         },
     };
 
@@ -35,21 +35,27 @@ export class NumberRangeDropdownSetting implements CustomSettingImplementation<V
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isNumberOrNull(value);
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
     }
 
-    isValueValid(value: ValueType, valueRange: ValueRange): boolean {
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertNumberOrNull(parsed);
+        return parsed;
+    }
+
+    isValueValid(value: ValueType, valueConstraints: ValueConstraints): boolean {
         if (value === null) {
             return false;
         }
 
-        if (!valueRange) {
+        if (!valueConstraints) {
             return false;
         }
 
-        const min = valueRange[0];
-        const max = valueRange[1];
+        const min = valueConstraints[0];
+        const max = valueConstraints[1];
 
         if (max === null || min === null) {
             return false;
@@ -58,13 +64,13 @@ export class NumberRangeDropdownSetting implements CustomSettingImplementation<V
         return value >= min && value <= max;
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRange): ValueType {
-        if (!valueRange) {
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraints): ValueType {
+        if (!valueConstraints) {
             return null;
         }
 
-        const min = valueRange[0];
-        const max = valueRange[1];
+        const min = valueConstraints[0];
+        const max = valueConstraints[1];
 
         if (max === null || min === null) {
             return null;
@@ -85,10 +91,10 @@ export class NumberRangeDropdownSetting implements CustomSettingImplementation<V
         return currentValue;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRange>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType, ValueRange>) {
-            const start = props.valueRange?.[0] ?? 0;
-            const end = props.valueRange?.[1] ?? 0;
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraints>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<ValueType, ValueConstraints>) {
+            const start = props.valueConstraints?.[0] ?? 0;
+            const end = props.valueConstraints?.[1] ?? 0;
 
             const rangeSize = end - start;
 

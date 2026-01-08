@@ -158,11 +158,11 @@ export class RealizationGridProvider
 
     defineDependencies({
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         storedDataUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationGridSettings, StoredData>) {
-        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -173,7 +173,7 @@ export class RealizationGridProvider
             return ensembleIdents;
         });
 
-        valueRangeUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
@@ -206,7 +206,7 @@ export class RealizationGridProvider
             });
         });
 
-        valueRangeUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!data) {
@@ -218,7 +218,7 @@ export class RealizationGridProvider
             return availableGridNames;
         });
 
-        valueRangeUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
@@ -236,7 +236,7 @@ export class RealizationGridProvider
             return availableGridAttributes;
         });
 
-        valueRangeUpdater(Setting.GRID_LAYER_K, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.GRID_LAYER_K, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
@@ -253,7 +253,7 @@ export class RealizationGridProvider
             return availableGridLayers;
         });
 
-        valueRangeUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const gridAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const data = getHelperDependency(realizationGridDataDep);

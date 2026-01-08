@@ -376,8 +376,8 @@ export class DataProvider<
     makeAccessors(): DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey> {
         return {
             getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
-            getSettingValueRange: (settingName) =>
-                this._settingsContextDelegate.getSettings()[settingName].getValueRange(),
+            getSettingValueConstraints: (settingName) =>
+                this._settingsContextDelegate.getSettings()[settingName].getValueConstraints(),
             getGlobalSetting: (settingName) => this._dataProviderManager.getGlobalSetting(settingName),
             getStoredData: (key: keyof TStoredData) => this._settingsContextDelegate.getStoredData(key),
             getData: () => this._data,

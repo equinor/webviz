@@ -68,3 +68,48 @@ export function isStringArrayOrNull(value: unknown): value is string[] | null {
 export function isNumberArrayOrNull(value: unknown): value is number[] | null {
     return value === null || (Array.isArray(value) && value.every((v) => typeof v === "number"));
 }
+
+/**
+ * Asserts that a value is a string or null, throws if not
+ */
+export function assertStringOrNull(value: unknown): asserts value is string | null {
+    if (!isStringOrNull(value)) {
+        throw new Error(`Expected string or null, got ${typeof value}`);
+    }
+}
+
+/**
+ * Asserts that a value is a number or null, throws if not
+ */
+export function assertNumberOrNull(value: unknown): asserts value is number | null {
+    if (!isNumberOrNull(value)) {
+        throw new Error(`Expected number or null, got ${typeof value}`);
+    }
+}
+
+/**
+ * Asserts that a value is a boolean or null, throws if not
+ */
+export function assertBooleanOrNull(value: unknown): asserts value is boolean | null {
+    if (!isBooleanOrNull(value)) {
+        throw new Error(`Expected boolean or null, got ${typeof value}`);
+    }
+}
+
+/**
+ * Asserts that a value is an array of strings or null, throws if not
+ */
+export function assertStringArrayOrNull(value: unknown): asserts value is string[] | null {
+    if (!isStringArrayOrNull(value)) {
+        throw new Error(`Expected string array or null, got ${typeof value}`);
+    }
+}
+
+/**
+ * Asserts that a value is an array of numbers or null, throws if not
+ */
+export function assertNumberArrayOrNull(value: unknown): asserts value is number[] | null {
+    if (!isNumberArrayOrNull(value)) {
+        throw new Error(`Expected number array or null, got ${typeof value}`);
+    }
+}

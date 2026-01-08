@@ -59,11 +59,11 @@ export class DrilledWellTrajectoriesProvider
 
     defineDependencies({
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<DrilledWellTrajectoriesSettings>) {
-        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -97,7 +97,7 @@ export class DrilledWellTrajectoriesProvider
                 }),
             });
         });
-        valueRangeUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
             if (!wellboreHeaders) {

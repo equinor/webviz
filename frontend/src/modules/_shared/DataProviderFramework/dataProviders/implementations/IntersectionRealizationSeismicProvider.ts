@@ -165,7 +165,7 @@ export class IntersectionRealizationSeismicProvider
 
     defineDependencies({
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         settingAttributesUpdater,
         queryClient,
         workbenchSession,
@@ -178,13 +178,13 @@ export class IntersectionRealizationSeismicProvider
             return { enabled: isEnabled };
         });
 
-        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
             return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
         });
 
-        valueRangeUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
@@ -210,7 +210,7 @@ export class IntersectionRealizationSeismicProvider
             });
         });
 
-        valueRangeUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const seismicCubeMetaList = getHelperDependency(ensembleSeismicCubeMetaListDep);
 
             if (!seismicCubeMetaList) {
@@ -235,7 +235,7 @@ export class IntersectionRealizationSeismicProvider
             return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
-        valueRangeUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -247,7 +247,7 @@ export class IntersectionRealizationSeismicProvider
             return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
-        valueRangeUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const seismicCubeMetaList = getHelperDependency(ensembleSeismicCubeMetaListDep);
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
 

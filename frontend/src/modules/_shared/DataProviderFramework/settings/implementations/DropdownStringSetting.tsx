@@ -7,23 +7,19 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isStringOrNull } from "../utils/structureValidation";
+import { assertStringOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = string | null;
-type ValueRangeType = string[];
+type ValueConstraintsType = string[];
 
-export class DropdownStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
+export class DropdownStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     private _staticOptions: DropdownOptionOrGroup<ValueType>[] | null = null;
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<string[]>();
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<string[]>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
-    }
-
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isStringOrNull(value);
     }
 
     constructor(props?: { options?: ValueType[] | DropdownOptionOrGroup<ValueType>[] }) {
@@ -42,25 +38,35 @@ export class DropdownStringSetting implements CustomSettingImplementation<ValueT
         return this._staticOptions !== null;
     }
 
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
-        return isValueValid<string, string>(value, valueRange, (v) => v);
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
+        return isValueValid<string, string>(value, valueConstraints, (v) => v);
     }
 
-    fixupValue(value: ValueType, valueRange: ValueRangeType): ValueType {
-        return fixupValue<string, string>(value, valueRange, (v) => v);
+    fixupValue(value: ValueType, valueConstraints: ValueConstraintsType): ValueType {
+        return fixupValue<string, string>(value, valueConstraints, (v) => v);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringOrNull(parsed);
+        return parsed;
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
         const isStatic = this.getIsStatic();
         const staticOptions = this._staticOptions;
 
-        return function DropdownStringSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
+        return function DropdownStringSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             let options: DropdownOptionOrGroup<ValueType>[];
 
             if (isStatic && staticOptions) {
                 options = staticOptions;
-            } else if (!isStatic && props.valueRange) {
-                options = props.valueRange.map((value) => ({
+            } else if (!isStatic && props.valueConstraints) {
+                options = props.valueConstraints.map((value) => ({
                     value: value,
                     label: value === null ? "None" : value,
                 }));

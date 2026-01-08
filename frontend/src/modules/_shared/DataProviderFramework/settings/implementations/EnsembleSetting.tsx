@@ -10,39 +10,30 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
-import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = RegularEnsembleIdent | null;
-type ValueRangeType = RegularEnsembleIdent[];
+type ValueConstraintsType = RegularEnsembleIdent[];
 
-export class EnsembleSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
+export class EnsembleSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     defaultValue: ValueType = null;
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<RegularEnsembleIdent[]>();
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<RegularEnsembleIdent[]>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        if (value === null) {
-            return true;
-        }
-
-        // RegularEnsembleIdent is a class instance, check if it has expected methods
-        return typeof value === "object" && value !== null && "equals" in value && "toString" in value;
-    }
-
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
         return isValueValid<RegularEnsembleIdent, RegularEnsembleIdent>(
             value,
-            valueRange,
+            valueConstraints,
             (v) => v,
             (a, b) => a.equals(b),
         );
     }
 
-    fixupValue(value: ValueType, valueRange: ValueRangeType): ValueType {
-        return fixupValue<RegularEnsembleIdent, RegularEnsembleIdent>(value, valueRange, (v) => v);
+    fixupValue(value: ValueType, valueConstraints: ValueConstraintsType): ValueType {
+        return fixupValue<RegularEnsembleIdent, RegularEnsembleIdent>(value, valueConstraints, (v) => v);
     }
 
     serializeValue(value: ValueType): string {
@@ -53,9 +44,9 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
         return serializedValue !== "" ? RegularEnsembleIdent.fromString(serializedValue) : null;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
-        return function EnsembleSelect(props: SettingComponentProps<ValueType, ValueRangeType>) {
-            const availableValues = props.valueRange ?? [];
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
+        return function EnsembleSelect(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
+            const availableValues = props.valueConstraints ?? [];
 
             const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
                 availableValues.some((value) => value.equals(ensemble.getIdent())),

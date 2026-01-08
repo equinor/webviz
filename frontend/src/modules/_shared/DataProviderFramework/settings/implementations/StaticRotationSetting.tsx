@@ -6,7 +6,7 @@ import type {
     SettingComponentProps,
     StaticSettingImplementation,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isNumberOrNull } from "../utils/structureValidation";
+import { assertNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
 
@@ -38,8 +38,14 @@ export class StaticRotationSetting implements StaticSettingImplementation<ValueT
         return true;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isNumberOrNull(value);
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertNumberOrNull(parsed);
+        return parsed;
     }
 
     fixupValue(v: ValueType) {

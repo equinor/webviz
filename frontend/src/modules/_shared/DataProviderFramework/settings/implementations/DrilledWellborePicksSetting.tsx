@@ -8,50 +8,66 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isStringArrayOrNull } from "../utils/structureValidation";
+import { assertStringArrayOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arrayMultiSelect";
 
 type InternalValueType = string[] | null;
 type ExternalValueType = WellborePick_api[] | null;
-type ValueRangeType = WellborePick_api[];
+type ValueConstraintsType = WellborePick_api[];
 
 export class DrilledWellborePicksSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
+    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueConstraintsType>
 {
     defaultValue: InternalValueType = null;
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>(
-        (a, b) => a.wellboreUuid === b.wellboreUuid,
-    );
+    valueConstraintsIntersectionReducerDefinition =
+        makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
+            (a, b) => a.wellboreUuid === b.wellboreUuid,
+        );
 
-    mapInternalToExternalValue(internalValue: InternalValueType, valueRange: ValueRangeType): ExternalValueType {
-        return valueRange.filter((pick) => internalValue?.includes(pick.pickIdentifier) ?? false);
+    mapInternalToExternalValue(
+        internalValue: InternalValueType,
+        valueConstraints: ValueConstraintsType,
+    ): ExternalValueType {
+        return valueConstraints.filter((pick) => internalValue?.includes(pick.pickIdentifier) ?? false);
     }
 
-    isValueValidStructure(value: unknown): value is InternalValueType {
-        return isStringArrayOrNull(value);
+    serializeValue(value: InternalValueType): string {
+        return JSON.stringify(value);
     }
 
-    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
-        const fixedValue = fixupValue<string, WellborePick_api>(currentValue, valueRange, mappingFunc, "allAvailable");
+    deserializeValue(serializedValue: string): InternalValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringArrayOrNull(parsed);
+        return parsed;
+    }
+
+    fixupValue(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): InternalValueType {
+        const fixedValue = fixupValue<string, WellborePick_api>(
+            currentValue,
+            valueConstraints,
+            mappingFunc,
+            "allAvailable",
+        );
 
         if (fixedValue.length === 0) {
-            return valueRange.map(mappingFunc);
+            return valueConstraints.map(mappingFunc);
         }
 
         return fixedValue;
     }
 
-    isValueValid(currentValue: InternalValueType, valueRange: ValueRangeType): boolean {
-        function mappingFunc(value: WellborePick_api): string {
-            return value.pickIdentifier;
-        }
-        return isValueValid<string, WellborePick_api>(currentValue, valueRange, mappingFunc);
+    isValueValid(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): boolean {
+        return isValueValid<string, WellborePick_api>(currentValue, valueConstraints, mappingFunc);
     }
 
-    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueRangeType>) => React.ReactNode {
-        return function DrilledWellborePicks(props: SettingComponentProps<InternalValueType, ValueRangeType>) {
-            const availableValues = props.valueRange ?? [];
+    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueConstraintsType>) => React.ReactNode {
+        return function DrilledWellborePicks(props: SettingComponentProps<InternalValueType, ValueConstraintsType>) {
+            const availableValues = props.valueConstraints ?? [];
 
             // Prevent duplicated pickIdentifiers in the options
             const uniquePickIdentifiers = Array.from(new Set(availableValues.map((ident) => ident.pickIdentifier)));

@@ -9,41 +9,47 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isStringArrayOrNull } from "../utils/structureValidation";
+import { assertStringArrayOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueRangeIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
+import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
 type ValueType = string[] | null;
-type ValueRangeType = string[];
+type ValueConstraintsType = string[];
 
-export class SelectStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
-    valueRangeIntersectionReducerDefinition = makeValueRangeIntersectionReducerDefinition<ValueRangeType>();
+export class SelectStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return isStringArrayOrNull(value);
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
     }
 
-    isValueValid(currentValue: ValueType, valueRange: ValueRangeType): boolean {
-        return isValueValid<string, string>(currentValue, valueRange, (v) => v);
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringArrayOrNull(parsed);
+        return parsed;
     }
 
-    fixupValue(currentValue: ValueType, valueRange: ValueRangeType): ValueType {
-        return fixupValue<string, string>(currentValue, valueRange, (v) => v, "firstAvailable");
+    isValueValid(currentValue: ValueType, valueConstraints: ValueConstraintsType): boolean {
+        return isValueValid<string, string>(currentValue, valueConstraints, (v) => v);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
-        return function SelectStringSetting(props: SettingComponentProps<ValueType, ValueRangeType>) {
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
+        return fixupValue<string, string>(currentValue, valueConstraints, (v) => v, "firstAvailable");
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
+        return function SelectStringSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const options: SelectOption[] = React.useMemo(() => {
-                const availableValues = props.valueRange ?? [];
+                const availableValues = props.valueConstraints ?? [];
                 return availableValues.map((stringVals) => ({
                     value: stringVals,
                     label: upperFirst(stringVals),
                 }));
-            }, [props.valueRange]);
+            }, [props.valueConstraints]);
 
             function handleChange(selectedUuids: string[]) {
                 props.onValueChange(selectedUuids);

@@ -74,11 +74,11 @@ export class DrilledWellborePicksProvider
 
     defineDependencies({
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<DrilledWellborePicksSettings>) {
-        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -137,7 +137,7 @@ export class DrilledWellborePicksProvider
             });
         });
 
-        valueRangeUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
             if (!wellboreHeaders) {
@@ -147,7 +147,7 @@ export class DrilledWellborePicksProvider
             return wellboreHeaders;
         });
 
-        valueRangeUpdater(Setting.SURFACE_NAME, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency }) => {
             const pickIdentifiers = getHelperDependency(pickIdentifiersDep);
 
             if (!pickIdentifiers) {

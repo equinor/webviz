@@ -22,7 +22,7 @@ export class WellborePicksProvider
 
     // Uses the same external things as the other types
     defineDependencies(args: DefineDependenciesArgs<WellPickSettingTypes>) {
-        const { helperDependency, valueRangeUpdater, queryClient } = args;
+        const { helperDependency, valueConstraintsUpdater, queryClient } = args;
 
         const columnOptions = helperDependency(({ getGlobalSetting, abortSignal }) => {
             const wellboreUuid = getGlobalSetting("wellboreUuid");
@@ -51,14 +51,14 @@ export class WellborePicksProvider
             });
         });
 
-        valueRangeUpdater(Setting.STRAT_COLUMN, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.STRAT_COLUMN, ({ getHelperDependency }) => {
             const columns = getHelperDependency(columnOptions);
 
             if (!columns) return [];
             return map(columns, "identifier");
         });
 
-        valueRangeUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
             const wellPicks = getHelperDependency(wellPickOptions);
 
             if (!wellPicks) return [];
@@ -68,7 +68,7 @@ export class WellborePicksProvider
             return keys(picksByInterpreter);
         });
 
-        valueRangeUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
             const wellPicks = getHelperDependency(wellPickOptions);
             const interpreter = getLocalSetting(Setting.SMDA_INTERPRETER);
 

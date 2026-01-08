@@ -14,8 +14,16 @@ export class BooleanSetting implements CustomSettingImplementation<ValueType, Va
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return typeof value === "boolean";
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        if (typeof parsed !== "boolean") {
+            throw new Error("Expected boolean");
+        }
+        return parsed;
     }
 
     isValueValid(): boolean {
