@@ -47,7 +47,7 @@ def compute_vector_statistics_table(
             StatisticFunction.P50,
         ]
 
-    # Polars column expression without NaN values for aggregations (null value dropped by default)
+    # Polars column expression with drop NaN values for aggregations (null value dropped by default)
     valid_col_expr = pl.col(vector_name).drop_nans()
 
     # Build list of statistic expressions based on requested functions
@@ -69,8 +69,10 @@ def compute_vector_statistics_table(
             statistics_expressions.append(valid_col_expr.quantile(0.5, interpolation="linear").alias("P50"))
 
     # Create Polars DataFrame from Arrow table and compute statistics
-    # - Polars seems to perform aggregations in float64 for precision, even if input is float32,
-    #   and then cast back to float32 if input was float32.
+    # - Sumo summary data is often float32
+    # - Vector column not cast to float64 - from testing Polars seems to handle precision internally
+    #   during aggregation. Seems like Polars cast to float64 internally, and cast aggregation
+    #   result back to float32 if input was float32.
     vector_df = pl.DataFrame(summary_vector_table.select(["DATE", vector_name]))
     statistics_df = vector_df.group_by("DATE", maintain_order=True).agg(statistics_expressions).sort("DATE")
 
@@ -78,6 +80,8 @@ def compute_vector_statistics_table(
     statistics_table = statistics_df.to_arrow()
 
     # Downcast float64 columns after computations to save memory
+    # - Sumo summary vectors are often float32, so downcast might not be necessary, but kept
+    #   for safety and consistency.
     schema_to_use = create_float_downcasting_schema(statistics_table.schema)
     statistics_table = statistics_table.cast(schema_to_use)
 
