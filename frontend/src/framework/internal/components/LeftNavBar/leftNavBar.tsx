@@ -2,7 +2,7 @@ import type React from "react";
 
 import { Link, List, Palette, Tune } from "@mui/icons-material";
 
-import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
@@ -13,22 +13,23 @@ import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useActiveDashboard } from "../ActiveDashboardBoundary";
+
 type LeftNavBarProps = {
     workbench: Workbench;
 };
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
-    const workbenchSession = props.workbench.getWorkbenchSession();
+    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
-    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
-    const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
+    const dashboard = useActiveDashboard();
+    const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);
+    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
+
+    const isEnsembleSetLoading = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingEnsembleSet);
     const [ensembleDialogOpen, setEnsembleDialogOpen] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.EnsembleDialogOpen,
-    );
-    const loadingEnsembleSet = usePublishSubscribeTopicValue(
-        workbenchSession,
-        PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
     );
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -78,12 +79,14 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <NavBarButton
                     active={ensembleDialogOpen}
                     tooltip={"Open ensemble selection dialog"}
+                    disabledTooltip={"Ensembles cannot be changed in snapshot mode"}
+                    disabled={isSnapshot}
                     icon={
                         <Badge
-                            invisible={ensembleSet.getEnsembleArray().length === 0 && !loadingEnsembleSet}
+                            invisible={ensembleSet.getEnsembleArray().length === 0 && !isEnsembleSetLoading}
                             color="bg-blue-500"
                             badgeContent={
-                                loadingEnsembleSet ? (
+                                isEnsembleSetLoading ? (
                                     <CircularProgress size="extra-small" color="inherit" />
                                 ) : (
                                     ensembleSet.getEnsembleArray().length
@@ -106,9 +109,12 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.SyncSettings}
                     tooltip="Show sync settings"
+                    disabledTooltip={
+                        layoutEmpty ? "Please add modules first" : "Sync settings cannot be changed in snapshot mode"
+                    }
                     icon={<Link fontSize="small" className="size-5" />}
                     onClick={handleSyncSettingsClick}
-                    disabled={layoutEmpty}
+                    disabled={layoutEmpty || isSnapshot}
                 />
                 <NavBarDivider />
                 <NavBarButton

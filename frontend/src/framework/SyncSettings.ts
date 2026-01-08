@@ -10,6 +10,8 @@
  */
 
 /* eslint-disable react-hooks/rules-of-hooks */
+import React from "react";
+
 import type { GlobalTopicDefinitions, TopicDefinitionsType, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useSubscribedValueConditionally } from "@framework/WorkbenchServices";
 
@@ -87,4 +89,20 @@ export class SyncSettingsHelper {
             this._workbenchServices.publishGlobalData(topic, value, this._moduleContext?.getInstanceIdString());
         }
     }
+}
+
+export type UseRefStableSyncSettingsHelperOptions = {
+    workbenchServices: WorkbenchServices;
+    moduleContext: SettingsContext<any> | ViewContext<any>;
+};
+
+export function useRefStableSyncSettingsHelper(options: UseRefStableSyncSettingsHelperOptions): SyncSettingsHelper {
+    const syncedSettingKeys = options.moduleContext.useSyncedSettingKeys();
+
+    const syncHelper = React.useMemo(
+        () => new SyncSettingsHelper(syncedSettingKeys, options.workbenchServices, options.moduleContext),
+        [syncedSettingKeys, options.workbenchServices, options.moduleContext],
+    );
+
+    return syncHelper;
 }

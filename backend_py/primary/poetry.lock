@@ -265,6 +265,22 @@ azure-core = ">=1.24.0"
 opentelemetry-api = ">=1.12.0"
 
 [[package]]
+name = "azure-cosmos"
+version = "4.14.0"
+description = "Microsoft Azure Cosmos Client Library for Python"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "azure_cosmos-4.14.0-py3-none-any.whl", hash = "sha256:9d659e9be3d13b95c639f7fbae6b159cb62025d16aa17e1a4171077986c28a58"},
+    {file = "azure_cosmos-4.14.0.tar.gz", hash = "sha256:3cc7ca6a68b87e4da18f9e9b07a4a9bb03ddf015b4ed1f48f7fe140e6d6689b0"},
+]
+
+[package.dependencies]
+azure-core = ">=1.30.0"
+typing-extensions = ">=4.6.0"
+
+[[package]]
 name = "azure-identity"
 version = "1.24.0"
 description = "Microsoft Azure Identity Library for Python"
@@ -2014,6 +2030,18 @@ files = [
     {file = "multidict-6.7.0-cp39-cp39-win_arm64.whl", hash = "sha256:6bdce131e14b04fd34a809b6380dbfd826065c3e2fe8a50dbae659fa0c390546"},
     {file = "multidict-6.7.0-py3-none-any.whl", hash = "sha256:394fc5c42a333c9ffc3e421a4c85e08580d990e08b99f6bf35b4132114c5dcb3"},
     {file = "multidict-6.7.0.tar.gz", hash = "sha256:c6e99d9a65ca282e578dfea819cfa9c0a62b2499d8677392e09feaf305e9e6f5"},
+]
+
+[[package]]
+name = "nanoid"
+version = "2.0.0"
+description = "A tiny, secure, URL-friendly, unique string ID generator for Python"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "nanoid-2.0.0-py3-none-any.whl", hash = "sha256:90aefa650e328cffb0893bbd4c236cfd44c48bc1f2d0b525ecc53c3187b653bb"},
+    {file = "nanoid-2.0.0.tar.gz", hash = "sha256:5a80cad5e9c6e9ae3a41fa2fb34ae189f7cb420b2a5d8f82bd9d23466e4efa68"},
 ]
 
 [[package]]
@@ -3957,6 +3985,18 @@ files = [
 types-setuptools = "*"
 
 [[package]]
+name = "types-nanoid"
+version = "2.0.0.20240601"
+description = "Typing stubs for nanoid"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "types-nanoid-2.0.0.20240601.tar.gz", hash = "sha256:7246ee685ed55a367fc160d87cde75a550296ecca26e0602619552dae72efda0"},
+    {file = "types_nanoid-2.0.0.20240601-py3-none-any.whl", hash = "sha256:5219f721b80748d82b14edd5429cc888d32eb816966d2a4719730ef3f2e3a417"},
+]
+
+[[package]]
 name = "types-pyopenssl"
 version = "24.1.0.20240722"
 description = "Typing stubs for pyOpenSSL"
@@ -4479,4 +4519,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "8826ad8a66f45e8e5addb9001c33ddd8d2c0825a2a506c6ae50ad55c741c1894"
+content-hash = "beb7b2cc3f3c78f7b7ea672934eef18959f067c8e68cc0ff1973179b7ff2ccc3"

@@ -10,7 +10,6 @@ import {
     LogEntryType,
     useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerInternal";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
@@ -23,28 +22,27 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
+import { useActiveDashboard } from "../../ActiveDashboardBoundary";
+
 export type ModuleInstanceLogProps = {
     workbench: Workbench;
     onClose: () => void;
 };
 
 export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNode {
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = useActiveDashboard();
     const [details, setDetails] = React.useState<Record<string, unknown> | null>(null);
     const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
     const [pointerOverDetails, setPointerOverDetails] = React.useState<boolean>(false);
 
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
-    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(ref);
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const moduleInstance = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances).find(
+    const moduleInstance = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES).find(
         (instance) => instance.getId() === activeModuleInstanceId,
     );
 
@@ -179,7 +177,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
 type LogListProps = {
     onShowDetails: (details: Record<string, unknown>, yPos: number) => void;
     onHideDetails: () => void;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
 };
 
 function LogList(props: LogListProps): React.ReactNode {

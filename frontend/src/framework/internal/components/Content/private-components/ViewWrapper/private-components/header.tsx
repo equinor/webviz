@@ -11,6 +11,7 @@ import {
     useGuiState,
     useGuiValue,
 } from "@framework/GuiMessageBroker";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -33,16 +34,17 @@ export type HeaderProps = {
     workbench: Workbench;
     isMaximized?: boolean;
     isMinimized?: boolean;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     isDragged: boolean;
     onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
     onReceiversClick?: (event: React.PointerEvent<HTMLButtonElement>) => void;
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
+    const dashboard = useActiveDashboard();
+    const isSnapshot = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager().getActiveSession(),
+        PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
     const moduleInstanceId = props.moduleInstance.getId();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
@@ -54,6 +56,17 @@ export const Header: React.FC<HeaderProps> = (props) => {
         "hotMessageCache",
     );
     const devToolsVisible = useGuiValue(guiMessageBroker, GuiState.DevToolsVisible);
+
+    const persistedSettingsInvalid = useModuleInstanceTopicValue(
+        props.moduleInstance,
+        ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS,
+    );
+    const persistedViewInvalid = useModuleInstanceTopicValue(
+        props.moduleInstance,
+        ModuleInstanceTopic.HAS_INVALID_PERSISTED_VIEW,
+    );
+
+    const invalidPersistedState = persistedSettingsInvalid || persistedViewInvalid;
 
     const handleMaximizeClick = React.useCallback(
         function handleMaximizeClick(e: React.PointerEvent<HTMLButtonElement>) {
@@ -85,18 +98,24 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     const handleRemoveClick = React.useCallback(
         function handleRemoveClick(e: React.PointerEvent<HTMLButtonElement>) {
+            if (isSnapshot) {
+                return;
+            }
             guiMessageBroker.publishEvent(GuiEvent.RemoveModuleInstanceRequest, { moduleInstanceId: moduleInstanceId });
 
             e.preventDefault();
             e.stopPropagation();
         },
-        [guiMessageBroker, moduleInstanceId],
+        [isSnapshot, guiMessageBroker, moduleInstanceId],
     );
 
     const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
     const title = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.TITLE);
 
     function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        if (isSnapshot) {
+            return;
+        }
         props.onPointerDown?.(e);
     }
 
@@ -107,6 +126,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }
 
     function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+        if (isSnapshot) {
+            return;
+        }
         if (!dataChannelOriginRef.current) {
             return;
         }
@@ -140,14 +162,11 @@ export const Header: React.FC<HeaderProps> = (props) => {
             className={resolveClassNames(
                 "flex items-center gap-0.5 px-1 select-none shadow-sm relative touch-none text-lg",
                 {
-                    "cursor-grabbing": props.isDragged,
-                    "cursor-move": !props.isDragged,
-                    "bg-red-100": hasErrors,
-                    "bg-slate-300": !hasErrors && props.isMinimized,
-                    "bg-slate-100": !hasErrors && !props.isMinimized,
+                    "bg-red-100": hasErrors || invalidPersistedState,
+                    "bg-slate-300": !hasErrors && props.isMinimized && !invalidPersistedState,
+                    "bg-slate-100": !hasErrors && !props.isMinimized && !invalidPersistedState,
                 },
             )}
-            onPointerDown={handlePointerDown}
             onDoubleClick={handleDoubleClick}
         >
             <div
@@ -157,10 +176,16 @@ export const Header: React.FC<HeaderProps> = (props) => {
             >
                 <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
             </div>
-            <div className="grow flex items-center text-sm font-bold min-w-0 p-1.5">
-                <Tooltip title={title}>
-                    <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0">{title}</span>
-                </Tooltip>
+            <div
+                className={resolveClassNames("grow flex items-center text-sm font-bold min-w-0 p-1.5", {
+                    "cursor-grabbing": props.isDragged,
+                    "cursor-move": !props.isDragged && !isSnapshot,
+                })}
+                onPointerDown={handlePointerDown}
+            >
+                <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0" title={title}>
+                    {title}
+                </span>
                 {devToolsVisible && (
                     <span
                         title={props.moduleInstance.getId()}
@@ -193,15 +218,20 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
                     className="cursor-grab touch-none"
-                    title="Connect data channels to other module instances"
+                    title={
+                        isSnapshot
+                            ? "Cannot change data channels in snapshot mode"
+                            : "Connect data channels to other module instances"
+                    }
                     onPointerDown={handleDataChannelOriginPointerDown}
+                    disabled={isSnapshot}
                 >
                     <Output fontSize="inherit" />
                 </DenseIconButton>
             )}
             {showDataChannelButtons && hasDataReceiver && (
                 <DenseIconButton
-                    title="Edit input data channels"
+                    title={isSnapshot ? "Show input data channels" : "Edit input data channels"}
                     onPointerUp={handleReceiversPointerUp}
                     onPointerDown={handleReceiverPointerDown}
                 >
@@ -218,10 +248,12 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     <OpenInFull fontSize="inherit" />
                 </DenseIconButton>
             )}
+
             <DenseIconButton
                 onPointerDown={handleRemoveClick}
                 onPointerUp={handlePointerUp}
-                title="Remove this module"
+                disabled={isSnapshot}
+                title={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}
                 colorScheme={DenseIconButtonColorScheme.DANGER}
             >
                 <Close fontSize="inherit" />
@@ -232,16 +264,13 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
 type StatusIndicatorProps = {
     workbench: Workbench;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     isMinimized?: boolean;
 };
 
 function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = useActiveDashboard();
 
     const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
     const hotStatusMessages = useStatusControllerStateValue(

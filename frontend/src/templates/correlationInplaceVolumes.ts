@@ -1,17 +1,17 @@
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
-import { TemplateRegistry } from "@framework/TemplateRegistry";
+import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
 
 const template: Template = {
+    name: "Parameter Analysis of Inplace Volumes",
     description: "Inplace volumes overview correlated against input parameters",
     moduleInstances: [
-        {
-            instanceRef: "MainInplaceVolumesPlotInstance",
-            moduleName: "InplaceVolumesPlot",
+        createTemplateModuleInstance("InplaceVolumesPlot", {
+            instanceRef: "MainInplaceVolumetricsPlotInstance",
             layout: {
                 relHeight: 0.4,
                 relWidth: 0.5,
@@ -19,13 +19,14 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
-            initialSettings: {
-                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+            initialState: {
+                settings: {
+                    indexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+                },
             },
-        },
-        {
-            instanceRef: "MainInplaceVolumesTableInstance2",
-            moduleName: "InplaceVolumesTable",
+        }),
+        createTemplateModuleInstance("InplaceVolumesTable", {
+            instanceRef: "MainInplaceVolumetricsTableInstance",
             layout: {
                 relHeight: 0.2,
                 relWidth: 1,
@@ -33,13 +34,14 @@ const template: Template = {
                 relY: 0.8,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
-            initialSettings: {
-                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+            initialState: {
+                settings: {
+                    selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+                },
             },
-        },
-        {
+        }),
+        createTemplateModuleInstance("ParameterResponseCrossPlot", {
             instanceRef: "MyParameterResponseCrossPlotInstance",
-            moduleName: "ParameterResponseCrossPlot",
             layout: {
                 relHeight: 0.4,
                 relWidth: 0.5,
@@ -49,20 +51,20 @@ const template: Template = {
 
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
-                    listensToInstanceRef: "MainInplaceVolumesPlotInstance",
+                    listensToInstanceRef: "MainInplaceVolumetricsPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
-                plotType: CrossPlotType.ParameterResponseCrossPlot,
-                crossPlottingType: KeyKind.REALIZATION,
+            initialState: {
+                settings: {
+                    plotType: CrossPlotType.ParameterResponseCrossPlot,
+                },
             },
             syncedSettings: [SyncSettingKey.PARAMETER],
-        },
-        {
-            instanceRef: "MyParameterResponseCorrelationBarPlotInstance",
-            moduleName: "ParameterResponseCorrelationBarPlot",
+        }),
+        createTemplateModuleInstance("ParameterResponseCorrelationBarPlot", {
+            instanceRef: "MyParameterCorrelationPlotInstance",
             layout: {
                 relHeight: 0.8,
                 relWidth: 0.5,
@@ -72,19 +74,20 @@ const template: Template = {
 
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
-                    listensToInstanceRef: "MainInplaceVolumesPlotInstance",
+                    listensToInstanceRef: "MainInplaceVolumetricsPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
-                crossPlottingType: KeyKind.REALIZATION,
-                showLabels: true,
-                numParams: 10,
+            initialState: {
+                settings: {
+                    showLabels: true,
+                    numParams: 10,
+                },
             },
             syncedSettings: [SyncSettingKey.PARAMETER],
-        },
+        }),
     ],
 };
 
-TemplateRegistry.registerTemplate("Correlations between input parameters and inplace volumes", template);
+TemplateRegistry.registerTemplate(template);

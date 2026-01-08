@@ -4,7 +4,7 @@ import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSess
 export function computeRealizationsIntersection(
     ensembleIdents: RegularEnsembleIdent[],
     filterEnsembleRealizations: EnsembleRealizationFilterFunction,
-) {
+): number[] {
     let realizationsIntersection: number[] = [];
     for (const ensembleIdent of ensembleIdents) {
         const realizations = filterEnsembleRealizations(ensembleIdent);

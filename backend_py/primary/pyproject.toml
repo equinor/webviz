@@ -24,11 +24,15 @@ azure-monitor-opentelemetry = "^1.8.1"
 opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-redis = "*"
 aiohttp = "^3.13.2"
+azure-cosmos = "^4.9.0"
+nanoid = "^2.0.0"
 azure-servicebus = "^7.14.3"
 webviz-core-utils = { path = "../libs/core_utils", develop = true }
 webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
 webviz-services = { path = "../libs/services", develop = true }
 
+[tool.poetry.group.dev.dependencies]
+types-nanoid = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core"]

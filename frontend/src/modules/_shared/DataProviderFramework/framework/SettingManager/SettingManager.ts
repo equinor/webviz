@@ -193,7 +193,10 @@ export class SettingManager<
         this._value = this._externalController?.getSetting().getValue() ?? this._value;
         this._externalController = null;
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("external-setting-controller");
-        this.applyAvailableValues();
+        const shouldNotifyValueChanged = this.applyAvailableValues();
+        if (shouldNotifyValueChanged) {
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+        }
     }
 
     beforeDestroy(): void {
@@ -334,6 +337,7 @@ export class SettingManager<
         this._initialized = true;
 
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
     }
 
     isInitialized(itself: boolean = false): boolean {
@@ -400,6 +404,9 @@ export class SettingManager<
                         return ExternalControllerProviderType.SHARED_SETTING;
                     }
                     throw new Error("Unknown external controller provider type");
+                }
+                if (topic === SettingTopic.ATTRIBUTES) {
+                    return this._attributes;
                 }
                 return externalController.getSetting().makeSnapshotGetter(topic)();
             };
@@ -486,7 +493,7 @@ export class SettingManager<
         return false;
     }
 
-    private applyAvailableValues() {
+    private applyAvailableValues(): boolean {
         let valueChanged = false;
         const valueFixedUp = !this.checkIfValueIsValid(this.getValue()) && this.maybeFixupValue();
         const persistedValueReset = this.maybeResetPersistedValue();
@@ -496,9 +503,9 @@ export class SettingManager<
         const prevIsValid = this._isValueValid;
         this.setValueValid(this.checkIfValueIsValid(this.getValue()));
         this.setLoading(false);
-        if (valueChanged || this._isValueValid !== prevIsValid || this._value === null) {
-            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
-        }
+
+        const shouldNotifyValueChanged = valueChanged || this._isValueValid !== prevIsValid || this._value === null;
+        return shouldNotifyValueChanged;
     }
 
     setAvailableValues(availableValues: AvailableValuesType<TSetting> | null): void {
@@ -518,8 +525,11 @@ export class SettingManager<
 
         this._availableValues = availableValues;
 
-        this.applyAvailableValues();
+        const shouldNotifyValueChanged = this.applyAvailableValues();
         this.initialize();
+        if (shouldNotifyValueChanged) {
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+        }
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES);
     }
 

@@ -4,12 +4,13 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import type { Interfaces } from "./interfaces";
+import { SERIALIZED_STATE, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 
 export const MODULE_NAME = "InplaceVolumesTable";
 const description = "Inplace Volumes Table";
 
-ModuleRegistry.registerModule<Interfaces>({
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "Inplace Volumes Table",
     category: ModuleCategory.MAIN,
@@ -18,4 +19,5 @@ ModuleRegistry.registerModule<Interfaces>({
     description,
     syncableSettingKeys: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
     preview,
+    serializedStateSchema: SERIALIZED_STATE,
 });

@@ -16,6 +16,7 @@ from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFact
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
 
+from primary.persistence.setup_local_database import maybe_setup_local_database
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
@@ -27,6 +28,7 @@ from primary.routers.general import router as general_router
 from primary.routers.graph.router import router as graph_router
 from primary.routers.grid3d.router import router as grid3d_router
 from primary.routers.flow_network.router import router as flow_network_router
+from primary.routers.flow_data.router import router as flow_data_router
 from primary.routers.inplace_volumes.router import router as inplace_volumes_router
 from primary.routers.observations.router import router as observations_router
 from primary.routers.parameters.router import router as parameters_router
@@ -39,6 +41,7 @@ from primary.routers.timeseries.router import router as timeseries_router
 from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
+from primary.routers.persistence.router import router as persistence_router
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
@@ -61,12 +64,15 @@ logging.getLogger("webviz_services.surface_query_service").setLevel(logging.DEBU
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
+logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 # logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 
+# Setup Cosmos DB emulator database if running locally
+maybe_setup_local_database()
 
 services_config = ServicesConfig(
     sumo_env=config.SUMO_ENV,
@@ -137,6 +143,7 @@ app.include_router(surface_router, prefix="/surface", tags=["surface"])
 app.include_router(parameters_router, prefix="/parameters", tags=["parameters"])
 app.include_router(grid3d_router, prefix="/grid3d", tags=["grid3d"])
 app.include_router(flow_network_router, prefix="/flow_network", tags=["flow_network"])
+app.include_router(flow_data_router, prefix="/flow_data", tags=["flow_data"])
 app.include_router(pvt_router, prefix="/pvt", tags=["pvt"])
 app.include_router(well_completions_router, prefix="/well_completions", tags=["well_completions"])
 app.include_router(well_router, prefix="/well", tags=["well"])
@@ -147,6 +154,7 @@ app.include_router(observations_router, prefix="/observations", tags=["observati
 app.include_router(rft_router, prefix="/rft", tags=["rft"])
 app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
+app.include_router(persistence_router, prefix="/persistence", tags=["persistence"])
 
 auth_helper = AuthHelper()
 app.include_router(auth_helper.router)

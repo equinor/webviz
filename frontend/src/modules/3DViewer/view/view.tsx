@@ -4,14 +4,14 @@ import type { ModuleViewProps } from "@framework/Module";
 
 import type { Interfaces } from "../interfaces";
 
-import { DataProvidersWrapper } from "./components/DataProvidersWrapper";
+import { DataProvidersWrapper } from "./components/VisualizationAssemblerWrapper";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
-    const layerManager = props.viewContext.useSettingsToViewInterfaceValue("layerManager");
+    const dataProviderManager = props.viewContext.useSettingsToViewInterfaceValue("dataProviderManager");
     const fieldId = props.viewContext.useSettingsToViewInterfaceValue("fieldId");
 
-    if (!layerManager) {
+    if (!dataProviderManager) {
         return null;
     }
 
@@ -21,10 +21,12 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <DataProvidersWrapper
+            moduleInstanceId={props.viewContext.getInstanceIdString()}
             fieldId={fieldId}
-            layerManager={layerManager}
+            dataProviderManager={dataProviderManager}
             preferredViewLayout={preferredViewLayout}
             viewContext={props.viewContext}
+            hoverService={props.hoverService}
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
             workbenchServices={props.workbenchServices}
