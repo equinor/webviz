@@ -2633,15 +2633,13 @@ files = [
 
 [[package]]
 name = "sumo-wrapper-python"
-version = "1.1.2"
+version = "1.2.1.dev3+geaff0bf10"
 description = "Python wrapper for the Sumo API"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-files = [
-    {file = "sumo_wrapper_python-1.1.2-py3-none-any.whl", hash = "sha256:8d73cbf7d7854fc36fc5340b955f5a02bef2857403f6fe31c60e9042343f6b30"},
-    {file = "sumo_wrapper_python-1.1.2.tar.gz", hash = "sha256:c62fa0795de953f7119346a876a045f5f8363c28810ba5eaf6a9fa0d33cd22c9"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 azure-identity = ">=1.13.0"
@@ -2655,6 +2653,12 @@ tenacity = ">=8.2.2,<8.4.0 || >8.4.0"
 dev = ["pre-commit", "ruff"]
 docs = ["autoapi", "sphinx (==7.1.2)", "sphinx-autodoc-typehints", "sphinx-rtd-theme", "sphinxcontrib-apidoc"]
 test = ["PyYAML", "pytest"]
+
+[package.source]
+type = "git"
+url = "https://github.com/equinor/sumo-wrapper-python.git"
+reference = "fix/auth-setup-order"
+resolved_reference = "eaff0bf10c918b2e7556b1cf3b9e55208a6d3e68"
 
 [[package]]
 name = "tables"
@@ -2932,4 +2936,4 @@ tests = ["coverage (>=4.1)", "mypy", "pylint", "pytest", "pytest-cov", "pytest-m
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "4521ac24c99f5a1b25fedf5a7182e1f3e5cfbec7a13d40a7b6dcff7a80596257"
+content-hash = "ac21cbbe4ab5914933245adc943d93dcc32fd0d555a1e7d3b97ec52528edae84"

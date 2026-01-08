@@ -16,7 +16,8 @@ numpy = "^2.2.0"
 pandas = { version = "^2.0.1", extras = ["performance"] }
 httpx = "^0.28.1"
 fmu-sumo = "^2.6.1"
-sumo-wrapper-python = "^1.1.2"
+#sumo-wrapper-python = "^1.1.2"
+sumo-wrapper-python = { git = "https://github.com/equinor/sumo-wrapper-python.git", branch = "fix/auth-setup-order" }
 pottery = "^3.0.0"
 requests-toolbelt = "^1.0.0"
 xtgeo = "^4.11.0"
