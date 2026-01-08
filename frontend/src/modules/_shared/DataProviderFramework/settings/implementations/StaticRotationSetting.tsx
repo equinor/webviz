@@ -3,10 +3,10 @@ import React from "react";
 import { Input } from "@lib/components/Input";
 
 import type {
-    CustomSettingImplementation,
     SettingComponentProps,
+    StaticSettingImplementation,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { assertNumberOrNull } from "../utils/structureValidation";
 
 type ValueType = number | null;
 
@@ -16,7 +16,7 @@ export type StaticRotationSettingProps = {
     loopAround?: boolean;
 };
 
-export class StaticRotationSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER_WITH_STEP> {
+export class StaticRotationSetting implements StaticSettingImplementation<ValueType> {
     defaultValue = 0;
     private _min: number;
     private _max: number;
@@ -30,8 +30,22 @@ export class StaticRotationSetting implements CustomSettingImplementation<ValueT
         this.loopAround = props?.loopAround ?? true;
     }
 
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
     getIsStatic() {
         return true;
+    }
+
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertNumberOrNull(parsed);
+        return parsed;
     }
 
     fixupValue(v: ValueType) {
@@ -39,15 +53,13 @@ export class StaticRotationSetting implements CustomSettingImplementation<ValueT
         return v;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.NUMBER_WITH_STEP>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
         const min = this._min;
         const max = this._max;
         const step = this._step;
         const loopAround = this.loopAround;
 
-        return function DropdownStringSetting(
-            props: SettingComponentProps<ValueType, SettingCategory.NUMBER_WITH_STEP>,
-        ) {
+        return function DropdownStringSetting(props: SettingComponentProps<ValueType>) {
             const { onValueChange } = props;
             const value = props.isOverridden ? props.overriddenValue : props.value;
 

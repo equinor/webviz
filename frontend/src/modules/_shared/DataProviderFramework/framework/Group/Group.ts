@@ -13,8 +13,8 @@ import type { DefineBasicDependenciesArgs } from "../../interfacesAndTypes/custo
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 import type { SerializedGroup, SerializedSettingsState } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
-import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
-import type { MakeSettingTypesMap, SettingTypes, Settings } from "../../settings/settingsDefinitions";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { Settings } from "../../settings/settingsDefinitions";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
@@ -37,7 +37,7 @@ export function isGroup(obj: any): obj is Group {
 
 export type GroupParams<
     TSettingTypes extends Settings,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
 > = {
     dataProviderManager: DataProviderManager;
     color?: string;
@@ -50,7 +50,7 @@ export type GroupParams<
 export class Group<
     TSettings extends Settings = [],
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > implements ItemGroup
 {
     private _itemDelegate: ItemDelegate;
@@ -70,11 +70,11 @@ export class Group<
                 this,
                 makeSettings<TSettings, TSettingTypes, TSettingKey>(
                     customGroupImplementation.settings as unknown as TSettings,
-                    customGroupImplementation.getDefaultSettingsValues?.() ?? {}
+                    customGroupImplementation.getDefaultSettingsValues?.() ?? {},
                 ),
                 customGroupImplementation.defineDependencies as unknown as
                     | ((args: DefineBasicDependenciesArgs<TSettings, TSettingTypes>) => void)
-                    | undefined
+                    | undefined,
             );
         }
         this._type = type;
@@ -103,7 +103,7 @@ export class Group<
         return this._sharedSettingsDelegate;
     }
 
-    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null> } {
+    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K> } {
         if (!this._sharedSettingsDelegate) {
             throw new Error("Group does not have shared settings.");
         }

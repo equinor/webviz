@@ -2,13 +2,7 @@ import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunct
 
 import type { GroupDelegate } from "../../delegates/GroupDelegate";
 import { instanceofItemGroup, type Item } from "../../interfacesAndTypes/entities";
-import type { AvailableValuesType } from "../../interfacesAndTypes/utils";
-import {
-    type Setting,
-    type SettingCategories,
-    type SettingTypes,
-    settingCategoryAvailableValuesIntersectionReducerMap,
-} from "../../settings/settingsDefinitions";
+import { type Setting, type SettingTypeDefinitions } from "../../settings/settingsDefinitions";
 import { DataProvider } from "../DataProvider/DataProvider";
 import { DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 import { Group } from "../Group/Group";
@@ -17,17 +11,23 @@ import { SharedSetting } from "../SharedSetting/SharedSetting";
 
 export class ExternalSettingController<
     TSetting extends Setting,
-    TValue extends SettingTypes[TSetting] | null = SettingTypes[TSetting] | null,
-    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
+    TInternalValue extends SettingTypeDefinitions[TSetting]["internalValue"] | null =
+        | SettingTypeDefinitions[TSetting]["internalValue"]
+        | null,
+    TExternalValue extends SettingTypeDefinitions[TSetting]["externalValue"] | null =
+        | SettingTypeDefinitions[TSetting]["externalValue"]
+        | null,
+    TValueConstraints extends SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
 > {
     private _parentItem: Item;
-    private _setting: SettingManager<TSetting, TValue, TCategory>;
-    private _controlledSettings: Map<string, SettingManager<TSetting, TValue, TCategory>> = new Map();
-    private _availableValuesMap: Map<string, AvailableValuesType<TSetting>> = new Map();
+    private _setting: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>;
+    private _controlledSettings: Map<string, SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>> =
+        new Map();
+    private _valueConstraintsMap: Map<string, TValueConstraints | null> = new Map();
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
 
-    constructor(parentItem: Item, setting: SettingManager<TSetting, TValue, TCategory>) {
+    constructor(parentItem: Item, setting: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>) {
         this._parentItem = parentItem;
         this._setting = setting;
 
@@ -59,19 +59,19 @@ export class ExternalSettingController<
         return this._parentItem;
     }
 
-    registerSetting(settingManager: SettingManager<TSetting, TValue, TCategory>): void {
+    registerSetting(settingManager: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>): void {
         this._controlledSettings.set(settingManager.getId(), settingManager);
         settingManager.registerExternalSettingController(this);
     }
 
-    getSetting(): SettingManager<TSetting, TValue, TCategory> {
+    getSetting(): SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints> {
         return this._setting;
     }
 
     private findControlledSettingsRecursively(
         groupDelegate: GroupDelegate,
         thisItem?: Item,
-    ): SettingManager<TSetting, TValue, TCategory>[] {
+    ): SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>[] {
         let children = groupDelegate.getChildren();
         if (thisItem) {
             const position = children.indexOf(thisItem);
@@ -79,7 +79,7 @@ export class ExternalSettingController<
                 children = children.slice(position + 1, children.length);
             }
         }
-        const foundSettings: SettingManager<TSetting, TValue, TCategory>[] = [];
+        const foundSettings: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>[] = [];
 
         for (const child of children) {
             if (child instanceof DataProvider) {
@@ -133,19 +133,16 @@ export class ExternalSettingController<
                 continue;
             }
             this._controlledSettings.set(setting.getId(), setting);
-            this._availableValuesMap.set(
-                setting.getId(),
-                setting.getAvailableValues() as AvailableValuesType<TSetting>,
-            );
+            this._valueConstraintsMap.set(setting.getId(), setting.getValueConstraints());
             setting.registerExternalSettingController(this);
         }
 
         if (this._controlledSettings.size === 0) {
-            this._setting.setAvailableValues(null);
+            this._setting.setValueConstraints(null);
             return;
         }
 
-        this.makeIntersectionOfAvailableValues();
+        this.makeIntersectionOfValueConstraints();
     }
 
     unregisterAllControlledSettings(): void {
@@ -153,28 +150,26 @@ export class ExternalSettingController<
             setting.unregisterExternalSettingController();
         }
         this._controlledSettings.clear();
-        this._availableValuesMap.clear();
+        this._valueConstraintsMap.clear();
     }
 
-    setAvailableValues(settingId: string, availableValues: AvailableValuesType<TSetting> | null): void {
-        if (availableValues !== null) {
-            this._availableValuesMap.set(settingId, availableValues);
+    setValueConstraints(settingId: string, valueConstraints: TValueConstraints | null): void {
+        if (valueConstraints !== null) {
+            this._valueConstraintsMap.set(settingId, valueConstraints);
         } else {
-            this._availableValuesMap.delete(settingId);
+            this._valueConstraintsMap.delete(settingId);
         }
 
-        this.makeIntersectionOfAvailableValues();
+        this.makeIntersectionOfValueConstraints();
     }
 
-    makeIntersectionOfAvailableValues(): void {
+    makeIntersectionOfValueConstraints(): void {
         for (const setting of this._controlledSettings.values()) {
             if (!setting.isInitialized(true) || setting.isLoading(true)) {
                 return;
             }
         }
-
-        const category = this._setting.getCategory();
-        const reducerDefinition = settingCategoryAvailableValuesIntersectionReducerMap[category];
+        const reducerDefinition = this._setting.getValueConstraintsReducerDefinition();
 
         if (this._setting.isStatic()) {
             this._setting.maybeResetPersistedValue();
@@ -191,24 +186,24 @@ export class ExternalSettingController<
         }
 
         const { reducer, startingValue, isValid } = reducerDefinition;
-        let availableValues: AvailableValuesType<TSetting> = startingValue as AvailableValuesType<TSetting>;
+        let valueConstraints = startingValue;
         let index = 0;
         let isInvalid = false;
 
-        for (const value of this._availableValuesMap.values()) {
+        for (const value of this._valueConstraintsMap.values()) {
             if (value === null) {
                 isInvalid = true;
                 break;
             }
-            availableValues = reducer(availableValues as any, value as any, index++) as AvailableValuesType<TSetting>;
+            valueConstraints = reducer(valueConstraints, value, index++);
         }
 
-        if (!isValid(availableValues as any) || isInvalid) {
-            this._setting.setAvailableValues(null);
+        if (!isValid(valueConstraints as any) || isInvalid) {
+            this._setting.setValueConstraints(null);
             this._setting.setValue(null as any);
             return;
         }
 
-        this._setting.setAvailableValues(availableValues);
+        this._setting.setValueConstraints(valueConstraints);
     }
 }
