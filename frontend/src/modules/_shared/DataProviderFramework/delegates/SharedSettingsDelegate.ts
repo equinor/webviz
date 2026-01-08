@@ -1,3 +1,4 @@
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { DataProviderManagerTopic, type GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
@@ -16,11 +17,22 @@ import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefin
 
 import { Dependency } from "./_utils/Dependency";
 
+export enum SharedSettingsDelegateTopic {
+    SETTINGS_CHANGED = "SHARED_SETTINGS_DELEGATE_SETTINGS_CHANGED",
+}
+
+export type SharedSettingsDelegatePayloads = {
+    [SharedSettingsDelegateTopic.SETTINGS_CHANGED]: void;
+};
+
 export class SharedSettingsDelegate<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> {
+> implements PublishSubscribe<SharedSettingsDelegatePayloads>
+{
+    private _publishSubscribeDelegate: PublishSubscribeDelegate<SharedSettingsDelegatePayloads> =
+        new PublishSubscribeDelegate<SharedSettingsDelegatePayloads>();
     private _externalSettingControllers: { [K in TSettingKey]: ExternalSettingController<K> } = {} as {
         [K in TSettingKey]: ExternalSettingController<K>;
     };
@@ -61,7 +73,38 @@ export class SharedSettingsDelegate<
             const internalSetting = this._internalSettings.get(key);
             const externalSettingController = new ExternalSettingController(parentItem, setting, internalSetting);
             this._externalSettingControllers[key] = externalSettingController;
+
+            // Subscribe to changes in the external setting controller to notify listeners
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "externalSettingControllers",
+                externalSettingController
+                    .getSetting()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(SettingTopic.VALUE)(() => {
+                    this.handleSettingChanged();
+                }),
+            );
         }
+    }
+
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SharedSettingsDelegatePayloads> {
+        return this._publishSubscribeDelegate;
+    }
+
+    makeSnapshotGetter<T extends SharedSettingsDelegateTopic.SETTINGS_CHANGED>(
+        topic: T,
+    ): () => SharedSettingsDelegatePayloads[T] {
+        const snapshotGetter = (): any => {
+            if (topic === SharedSettingsDelegateTopic.SETTINGS_CHANGED) {
+                return;
+            }
+        };
+
+        return snapshotGetter;
+    }
+
+    private handleSettingChanged(): void {
+        this._publishSubscribeDelegate.notifySubscribers(SharedSettingsDelegateTopic.SETTINGS_CHANGED);
     }
 
     getWrappedSettings(): { [K in TSettingKey]: SettingManager<K> } {
