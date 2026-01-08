@@ -13,6 +13,15 @@ export function Confirmation(props: ConfirmationProps): React.ReactNode {
                 You can find all your created and visited snapshots in the snapshots dialog.
             </div>
             <CopyInputField value={props.snapshotUrl} className="w-full" />
+            <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
+                <ul className="list-disc list-outside pl-4">
+                    <li>Snapshots are not guaranteed to persist, as underlying data or module states may change.</li>
+                    <li>
+                        All Equinor-onboarded users with the link can access the snapshot settings; access to the data
+                        itself requires appropriate permissions (Sumo, SMDA, SSDL etc.).
+                    </li>
+                </ul>
+            </div>
         </div>
     );
 }
