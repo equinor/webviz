@@ -190,10 +190,15 @@ export class SharedSettingsDelegate<
             return this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key);
         };
 
-        const valueRangeUpdater = <K extends TSettingKey>(
+        const valueConstraintsUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<SettingTypeDefinitions[K]["valueRange"], TSettings, TSettingTypes, TSettingKey>,
-        ): Dependency<SettingTypeDefinitions[K]["valueRange"], TSettings, TSettingTypes, TSettingKey> => {
+            updateFunc: UpdateFunc<
+                SettingTypeDefinitions[K]["valueConstraints"],
+                TSettings,
+                TSettingTypes,
+                TSettingKey
+            >,
+        ): Dependency<SettingTypeDefinitions[K]["valueConstraints"], TSettings, TSettingTypes, TSettingKey> => {
             // Create an internal setting for this key if it doesn't exist yet
             // This setting will hold the group's own value range
             if (!this._internalSettings.has(settingKey)) {
@@ -206,7 +211,7 @@ export class SharedSettingsDelegate<
             const internalSetting = this._internalSettings.get(settingKey)!;
 
             const dependency = new Dependency<
-                SettingTypeDefinitions[K]["valueRange"],
+                SettingTypeDefinitions[K]["valueConstraints"],
                 TSettings,
                 TSettingTypes,
                 TSettingKey
@@ -223,10 +228,10 @@ export class SharedSettingsDelegate<
             dependency.subscribe((valueRange) => {
                 // Set the value range on the internal setting, not the wrapped setting
                 if (valueRange === null) {
-                    internalSetting.setValueRange(null as SettingTypeDefinitions[K]["valueRange"]);
+                    internalSetting.setValueConstraints(null as SettingTypeDefinitions[K]["valueConstraints"]);
                     return;
                 }
-                internalSetting.setValueRange(valueRange);
+                internalSetting.setValueConstraints(valueRange);
             });
 
             dependency.subscribeLoading((loading: boolean) => {
@@ -296,7 +301,7 @@ export class SharedSettingsDelegate<
         if (this._customDependenciesDefinition) {
             this._customDependenciesDefinition({
                 settingAttributesUpdater: settingAttributesUpdater.bind(this),
-                valueRangeUpdater: valueRangeUpdater.bind(this),
+                valueConstraintsUpdater: valueConstraintsUpdater.bind(this),
                 helperDependency: helperDependency.bind(this),
                 workbenchSession: dataProviderManager.getWorkbenchSession(),
                 workbenchSettings: dataProviderManager.getWorkbenchSettings(),

@@ -46,26 +46,10 @@ export interface DefineBasicDependenciesArgs<
         settingKey: TSettingKey,
         update: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
     ) => Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>;
-    valueRangeUpdater: <TSettingKey extends TKey>(
-}
-
-export interface DefineDependenciesArgs<
-    TSettings extends Settings,
-    TStoredData extends StoredData = Record<string, never>,
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData,
-> extends DefineBasicDependenciesArgs<TSettings, TSettingTypes, TKey> {
     valueConstraintsUpdater: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
-        update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueRange"], TSettings, TSettingTypes, TKey>,
-    ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueRange"], TSettings, TSettingTypes, TKey>;
         update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>,
     ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>;
-    storedDataUpdater: <K extends TStoredDataKey>(
-        key: K,
-        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
-    ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>;
     helperDependency: <T>(
         update: (args: {
             getLocalSetting: <T extends TKey>(settingName: T) => TSettingTypes[T];

@@ -21,7 +21,7 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
     defineDependencies({
         settingAttributesUpdater,
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         queryClient,
     }: DefineBasicDependenciesArgs<IntersectionViewSettings, SettingTypes>): void {
         settingAttributesUpdater(Setting.WELLBORE_EXTENSION_LENGTH, ({ getLocalSetting }) => {
@@ -46,7 +46,7 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
             });
         });
 
-        valueRangeUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
