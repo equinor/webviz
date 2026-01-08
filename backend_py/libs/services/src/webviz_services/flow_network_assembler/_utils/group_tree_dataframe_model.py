@@ -65,8 +65,8 @@ class GroupTreeDataframeModel:
         # Extract wells and groups with expressions
         wells_expr = pl.col("KEYWORD") == "WELSPECS"
         tree_type_expr = pl.col("KEYWORD").is_in(["GRUPTREE", "BRANPROP"])
-        self._grouptree_wells = group_tree_df.filter(wells_expr)["CHILD"].unique().to_list()
-        tree_type_strings = group_tree_df.filter(tree_type_expr)["KEYWORD"].unique().to_list()
+        self._grouptree_wells = group_tree_df.filter(wells_expr)["CHILD"].unique().to_numpy().tolist()
+        tree_type_strings = group_tree_df.filter(tree_type_expr)["KEYWORD"].unique().to_numpy().tolist()
 
         # Convert to TreeType enums
         self._grouptree_tree_types = []
@@ -209,7 +209,7 @@ class GroupTreeDataframeModel:
 
         # Filter by terminal node (branch extraction)
         if terminal_node is not None:
-            if terminal_node not in grouptree_df["CHILD"].unique().to_list():
+            if terminal_node not in grouptree_df["CHILD"].unique().to_numpy().tolist():
                 raise NoDataError(
                     f"Terminal node '{terminal_node}' not found in 'CHILD' column of the gruptree data.",
                     Service.GENERAL,
