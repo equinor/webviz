@@ -96,7 +96,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         }
         ensembleFingerprintsMap.set(item.ensembleIdent.toString(), item.fingerprint);
     }
-    EnsembleFingerprintStore.setAll(ensembleFingerprintsMap);
+    EnsembleFingerprintStore.update(ensembleFingerprintsMap);
 
     // Fetch from back-end
     const {
