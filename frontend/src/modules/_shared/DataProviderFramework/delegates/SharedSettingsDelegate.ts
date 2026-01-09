@@ -243,10 +243,10 @@ export class SharedSettingsDelegate<
             >,
         ): Dependency<SettingTypeDefinitions[K]["valueConstraints"], TSettings, TSettingTypes, TSettingKey> => {
             // Create an internal setting for this key if it doesn't exist yet
-            // This setting will hold the group's own value range
+            // This setting will hold the group's own value constraints
             if (!this._internalSettings.has(settingKey)) {
                 const internalSetting = SettingRegistry.makeSetting(settingKey, null);
-                // Mark as loading initially so the intersection waits for the value range to be computed
+                // Mark as loading initially so the intersection waits for the value constraints to be computed
                 internalSetting.setLoading(true);
                 this._internalSettings.set(settingKey, internalSetting);
             }
@@ -269,7 +269,7 @@ export class SharedSettingsDelegate<
             this._dependencies.push(dependency);
 
             dependency.subscribe((valueRange) => {
-                // Set the value range on the internal setting, not the wrapped setting
+                // Set the value constraints on the internal setting, not the wrapped setting
                 if (valueRange === null) {
                     internalSetting.setValueConstraints(null as SettingTypeDefinitions[K]["valueConstraints"]);
                     return;
