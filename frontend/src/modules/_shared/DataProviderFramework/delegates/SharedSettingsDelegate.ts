@@ -1,3 +1,4 @@
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { DataProviderManagerTopic, type GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
@@ -11,21 +12,34 @@ import type {
 import type { Item } from "../interfacesAndTypes/entities";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
-import type { Settings } from "../settings/settingsDefinitions";
+import { SettingRegistry } from "../settings/SettingRegistry";
+import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 import { Dependency } from "./_utils/Dependency";
+
+export enum SharedSettingsDelegateTopic {
+    SETTINGS_CHANGED = "SHARED_SETTINGS_DELEGATE_SETTINGS_CHANGED",
+}
+
+export type SharedSettingsDelegatePayloads = {
+    [SharedSettingsDelegateTopic.SETTINGS_CHANGED]: void;
+};
 
 export class SharedSettingsDelegate<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> {
+> implements PublishSubscribe<SharedSettingsDelegatePayloads>
+{
+    private _publishSubscribeDelegate: PublishSubscribeDelegate<SharedSettingsDelegatePayloads> =
+        new PublishSubscribeDelegate<SharedSettingsDelegatePayloads>();
     private _externalSettingControllers: { [K in TSettingKey]: ExternalSettingController<K> } = {} as {
         [K in TSettingKey]: ExternalSettingController<K>;
     };
     private _wrappedSettings: { [K in TSettingKey]: SettingManager<K> } = {} as {
         [K in TSettingKey]: SettingManager<K>;
     };
+    private _internalSettings: Map<TSettingKey, SettingManager<any>> = new Map();
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
     private _dependencies: Dependency<any, TSettings, any, any>[] = [];
@@ -45,18 +59,52 @@ export class SharedSettingsDelegate<
         this._parentItem = parentItem;
         this._customDependenciesDefinition = customDependenciesDefinition ?? null;
 
-        for (const key in wrappedSettings) {
-            const setting = wrappedSettings[key];
-            const externalSettingController = new ExternalSettingController(parentItem, setting);
-            this._externalSettingControllers[key] = externalSettingController;
-        }
-
         const dataProviderManager = parentItem.getItemDelegate().getDataProviderManager();
         if (!dataProviderManager) {
             throw new Error("SharedSettingDelegate must have a parent item with a data provider manager.");
         }
 
+        // Create dependencies first, which may populate _internalSettings
         this.createDependencies();
+
+        // Now create external controllers, passing internal settings if they exist
+        for (const key in wrappedSettings) {
+            const setting = wrappedSettings[key];
+            const internalSetting = this._internalSettings.get(key);
+            const externalSettingController = new ExternalSettingController(parentItem, setting, internalSetting);
+            this._externalSettingControllers[key] = externalSettingController;
+
+            // Subscribe to changes in the external setting controller to notify listeners
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "externalSettingControllers",
+                externalSettingController
+                    .getSetting()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(SettingTopic.VALUE)(() => {
+                    this.handleSettingChanged();
+                }),
+            );
+        }
+    }
+
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SharedSettingsDelegatePayloads> {
+        return this._publishSubscribeDelegate;
+    }
+
+    makeSnapshotGetter<T extends SharedSettingsDelegateTopic.SETTINGS_CHANGED>(
+        topic: T,
+    ): () => SharedSettingsDelegatePayloads[T] {
+        const snapshotGetter = (): any => {
+            if (topic === SharedSettingsDelegateTopic.SETTINGS_CHANGED) {
+                return;
+            }
+        };
+
+        return snapshotGetter;
+    }
+
+    private handleSettingChanged(): void {
+        this._publishSubscribeDelegate.notifySubscribers(SharedSettingsDelegateTopic.SETTINGS_CHANGED);
     }
 
     getWrappedSettings(): { [K in TSettingKey]: SettingManager<K> } {
@@ -77,6 +125,10 @@ export class SharedSettingsDelegate<
             const setting = this._wrappedSettings[key];
             setting.beforeDestroy();
         }
+        for (const internalSetting of this._internalSettings.values()) {
+            internalSetting.beforeDestroy();
+        }
+        this._internalSettings.clear();
         for (const dependency of this._dependencies) {
             dependency.beforeDestroy();
         }
@@ -181,6 +233,61 @@ export class SharedSettingsDelegate<
             return this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key);
         };
 
+        const valueConstraintsUpdater = <K extends TSettingKey>(
+            settingKey: K,
+            updateFunc: UpdateFunc<
+                SettingTypeDefinitions[K]["valueConstraints"],
+                TSettings,
+                TSettingTypes,
+                TSettingKey
+            >,
+        ): Dependency<SettingTypeDefinitions[K]["valueConstraints"], TSettings, TSettingTypes, TSettingKey> => {
+            // Create an internal setting for this key if it doesn't exist yet
+            // This setting will hold the group's own value constraints
+            if (!this._internalSettings.has(settingKey)) {
+                const internalSetting = SettingRegistry.makeSetting(settingKey, null);
+                // Mark as loading initially so the intersection waits for the value constraints to be computed
+                internalSetting.setLoading(true);
+                this._internalSettings.set(settingKey, internalSetting);
+            }
+
+            const internalSetting = this._internalSettings.get(settingKey)!;
+
+            const dependency = new Dependency<
+                SettingTypeDefinitions[K]["valueConstraints"],
+                TSettings,
+                TSettingTypes,
+                TSettingKey
+            >(
+                localSettingManagerGetter.bind(this),
+                globalSettingGetter.bind(this),
+                updateFunc,
+                makeLocalSettingGetter,
+                loadingStateGetter,
+                makeGlobalSettingGetter,
+            );
+            this._dependencies.push(dependency);
+
+            dependency.subscribe((valueRange) => {
+                // Set the value constraints on the internal setting, not the wrapped setting
+                if (valueRange === null) {
+                    internalSetting.setValueConstraints(null as SettingTypeDefinitions[K]["valueConstraints"]);
+                    return;
+                }
+                internalSetting.setValueConstraints(valueRange);
+            });
+
+            dependency.subscribeLoading((loading: boolean) => {
+                if (loading) {
+                    internalSetting.setLoading(loading);
+                }
+            });
+
+            dependency.initialize();
+
+            return dependency;
+        };
+
         const settingAttributesUpdater = <K extends TSettingKey>(
             settingKey: K,
             updateFunc: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
@@ -207,9 +314,41 @@ export class SharedSettingsDelegate<
             return dependency;
         };
 
+        const helperDependency = <T>(
+            update: (args: {
+                getLocalSetting: <T extends TSettingKey>(settingName: T) => TSettingTypes[T];
+                getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
+                getHelperDependency: <TDep>(
+                    dep: Dependency<TDep, TSettings, TSettingTypes, TSettingKey>,
+                ) => Awaited<TDep> | null;
+                abortSignal: AbortSignal;
+            }) => T,
+        ) => {
+            const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
+                localSettingManagerGetter.bind(this),
+                globalSettingGetter.bind(this),
+                update,
+                makeLocalSettingGetter,
+                loadingStateGetter,
+                makeGlobalSettingGetter,
+            );
+            this._dependencies.push(dependency);
+
+            dependency.initialize();
+
+            return dependency;
+        };
+
+        const dataProviderManager = this._parentItem.getItemDelegate().getDataProviderManager();
+
         if (this._customDependenciesDefinition) {
             this._customDependenciesDefinition({
                 settingAttributesUpdater: settingAttributesUpdater.bind(this),
+                valueConstraintsUpdater: valueConstraintsUpdater.bind(this),
+                helperDependency: helperDependency.bind(this),
+                workbenchSession: dataProviderManager.getWorkbenchSession(),
+                workbenchSettings: dataProviderManager.getWorkbenchSettings(),
+                queryClient: dataProviderManager.getQueryClient(),
             });
         }
     }

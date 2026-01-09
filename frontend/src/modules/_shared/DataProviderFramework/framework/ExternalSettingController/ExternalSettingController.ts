@@ -17,19 +17,33 @@ export class ExternalSettingController<
     TExternalValue extends SettingTypeDefinitions[TSetting]["externalValue"] | null =
         | SettingTypeDefinitions[TSetting]["externalValue"]
         | null,
-    TValueConstraints extends SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
+    TValueConstraints extends
+        SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
 > {
     private _parentItem: Item;
     private _setting: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>;
-    private _controlledSettings: Map<string, SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>> =
-        new Map();
+    private _controlledSettings: Map<
+        string,
+        SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>
+    > = new Map();
     private _valueConstraintsMap: Map<string, TValueConstraints | null> = new Map();
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
+    private _additionalControlledSetting: SettingManager<
+        TSetting,
+        TInternalValue,
+        TExternalValue,
+        TValueConstraints
+    > | null = null;
 
-    constructor(parentItem: Item, setting: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>) {
+    constructor(
+        parentItem: Item,
+        setting: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>,
+        additionalControlledSetting?: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>,
+    ) {
         this._parentItem = parentItem;
         this._setting = setting;
+        this._additionalControlledSetting = additionalControlledSetting ?? null;
 
         const dataProviderManager = parentItem.getItemDelegate().getDataProviderManager();
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -128,6 +142,12 @@ export class ExternalSettingController<
         }
 
         const settings = this.findControlledSettingsRecursively(parentGroup, this._parentItem);
+
+        // Add the additional controlled setting to the array if provided
+        if (this._additionalControlledSetting) {
+            settings.push(this._additionalControlledSetting);
+        }
+
         for (const setting of settings) {
             if (setting.isExternallyControlled()) {
                 continue;
