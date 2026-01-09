@@ -11,12 +11,14 @@ import {
     selectedEnsembleIdentAtom,
     selectedNodeKeyAtom,
     selectedRealizationAtom,
+    selectedTreeTypeAtom,
 } from "./atoms/persistableFixableAtoms";
 
 export type SerializedSettings = {
     ensembleIdentString: string | null;
     resamplingFrequency: Frequency_api;
     selectedRealization: number | null;
+    selectedTreeType: string | null;
     selectedNodeTypes: NodeType_api[];
     selectedEdgeKey: string | null;
     selectedNodeKey: string | null;
@@ -28,6 +30,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         ensembleIdentString: { type: "string", nullable: true },
         resamplingFrequency: { enum: Object.values(Frequency_api) },
         selectedRealization: { type: "int16", nullable: true },
+        selectedTreeType: { type: "string", nullable: true },
         selectedNodeTypes: { elements: { enum: Object.values(NodeType_api) } },
         selectedEdgeKey: { type: "string", nullable: true },
         selectedNodeKey: { type: "string", nullable: true },
@@ -45,6 +48,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         ensembleIdentString: selectedEnsembleIdentString,
         resamplingFrequency: get(selectedResamplingFrequencyAtom),
         selectedRealization: get(selectedRealizationAtom).value,
+        selectedTreeType: get(selectedTreeTypeAtom).value,
         selectedNodeTypes: selectedNodeTypesArray,
         selectedEdgeKey: get(selectedEdgeKeyAtom).value,
         selectedNodeKey: get(selectedNodeKeyAtom).value,

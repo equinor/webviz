@@ -1,7 +1,29 @@
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal
+from typing import Literal, Optional
 from pydantic import BaseModel
+
+
+class TreeType(StrEnum):
+    """
+    In a group tree table, it can be two types of tree definitions for a given date.
+
+    GRUPTREE: Group tree definition for both producing and injecting wells.
+    BRANPROP: Group tree definition for producing wells only.
+    """
+
+    GRUPTREE = "GRUPTREE"
+    BRANPROP = "BRANPROP"
+
+    @classmethod
+    def from_string_value(cls, value: str) -> Optional["TreeType"]:
+        """
+        Convert string value to TreeType enum, or None if invalid
+        """
+        try:
+            return cls(value)
+        except ValueError:
+            return None
 
 
 class NodeType(StrEnum):
