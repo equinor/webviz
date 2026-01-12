@@ -38,6 +38,16 @@ export class PublishSubscribeDelegate<TTopicPayloads extends TopicPayloads> {
         }
     }
 
+    subscribe(topic: keyof TTopicPayloads, handler: () => void): () => void {
+        const subscribers = this._subscribers.get(topic) || new Set();
+        subscribers.add(handler);
+        this._subscribers.set(topic, subscribers);
+
+        return () => {
+            subscribers.delete(handler);
+        };
+    }
+
     /**
      * Registers a topic subscriber, returning an unsubscribe function
      * @param topic The topic to subscribe to
@@ -46,13 +56,7 @@ export class PublishSubscribeDelegate<TTopicPayloads extends TopicPayloads> {
     makeSubscriberFunction(topic: keyof TTopicPayloads): (onStoreChangeCallback: () => void) => () => void {
         // Using arrow function in order to keep "this" in context
         const subscriber = (onStoreChangeCallback: () => void): (() => void) => {
-            const subscribers = this._subscribers.get(topic) || new Set();
-            subscribers.add(onStoreChangeCallback);
-            this._subscribers.set(topic, subscribers);
-
-            return () => {
-                subscribers.delete(onStoreChangeCallback);
-            };
+            return this.subscribe(topic, onStoreChangeCallback);
         };
 
         return subscriber;

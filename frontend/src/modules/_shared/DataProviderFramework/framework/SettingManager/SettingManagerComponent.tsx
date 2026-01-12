@@ -7,35 +7,32 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { SettingComponentProps as SettingComponentPropsInterface } from "../../interfacesAndTypes/customSettingImplementation";
-import type { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";
+import type { Setting, SettingTypeDefinitions } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 
 import { ExternalControllerProviderType, SettingTopic } from "./SettingManager";
 import type { SettingManager } from "./SettingManager";
 
-export type SettingComponentProps<
-    TSetting extends Setting,
-    TValue extends SettingTypes[TSetting],
-    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
-> = {
-    setting: SettingManager<TSetting, TValue, TCategory>;
+export type SettingComponentProps<TSetting extends Setting> = {
+    setting: SettingManager<TSetting>;
     manager: DataProviderManager;
     sharedSetting: boolean;
 };
 
 export function SettingManagerComponent<
     TSetting extends Setting,
-    TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
-    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
->(props: SettingComponentProps<TSetting, TValue, TCategory>): React.ReactNode {
-    const componentRef = React.useRef<(props: SettingComponentPropsInterface<TValue, TCategory>) => React.ReactNode>(
+    TValue extends
+        SettingTypeDefinitions[TSetting]["internalValue"] = SettingTypeDefinitions[TSetting]["internalValue"],
+>(props: SettingComponentProps<TSetting>): React.ReactNode {
+    const componentRef = React.useRef<(props: SettingComponentPropsInterface<any, any>) => React.ReactNode>(
         props.setting.makeComponent(),
     );
-    const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE);
+    const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.INTERNAL_VALUE);
     const attributes = usePublishSubscribeTopicValue(props.setting, SettingTopic.ATTRIBUTES);
     const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_VALID);
     const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED);
-    const availableValues = usePublishSubscribeTopicValue(props.setting, SettingTopic.AVAILABLE_VALUES);
+    const isValidPersistedValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED_VALUE_VALID);
+    const valueConstraints = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_CONSTRAINTS);
     const isExternallyControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_EXTERNALLY_CONTROLLED);
     const externalControllerProvider = usePublishSubscribeTopicValue(
         props.setting,
@@ -50,19 +47,27 @@ export function SettingManagerComponent<
         actuallyLoading = false;
     }
 
-    function handleValueChanged(newValue: TValue) {
-        props.setting.setValue(newValue);
-    }
+    const handleValueChanged = React.useCallback(
+        function handleValueChanged(newValue: TValue | null | ((prevValue: TValue | null) => TValue | null)) {
+            if (typeof newValue === "function") {
+                const updaterFunction = newValue;
+                const currentValue = props.setting.getValue() as TValue | null;
+                newValue = updaterFunction(currentValue);
+            }
+            props.setting.setValue(newValue);
+        },
+        [props.setting],
+    );
 
     if (!attributes.visible) {
         return null;
     }
 
-    if (props.sharedSetting && isInitialized && availableValues === null && !props.setting.isStatic()) {
+    if (props.sharedSetting && isInitialized && valueConstraints === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
-                <div className="p-0.5 px-2 w-full italic h-8 flex items-center text-orange-600">Empty intersection</div>
+                <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
+                <div className="p-0.5 px-2 w-full italic flex items-center text-orange-600">Empty intersection</div>
             </React.Fragment>
         );
     }
@@ -85,7 +90,7 @@ export function SettingManagerComponent<
                         <Link fontSize="inherit" titleAccess="This settings is controlled by a shared setting" />
                     </span>
                 </div>
-                <div className="p-0.5 px-2 w-full flex items-center h-8">
+                <div className="p-0.5 px-2 w-full flex items-center">
                     {isValid ? valueAsString : <i className="text-orange-600">No valid shared setting value</i>}
                 </div>
             </React.Fragment>
@@ -94,7 +99,7 @@ export function SettingManagerComponent<
 
     return (
         <React.Fragment key={props.setting.getId()}>
-            <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
+            <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
             <div className="p-0.5 px-2 w-full">
                 <PendingWrapper isPending={actuallyLoading}>
                     <div className="flex flex-col gap-1 min-w-0">
@@ -110,13 +115,13 @@ export function SettingManagerComponent<
                                 isValueValid={isValid}
                                 isOverridden={isExternallyControlled}
                                 overriddenValue={value}
-                                availableValues={availableValues}
+                                valueConstraints={valueConstraints}
                                 globalSettings={globalSettings}
                                 workbenchSession={props.manager.getWorkbenchSession()}
                                 workbenchSettings={props.manager.getWorkbenchSettings()}
                             />
                         </div>
-                        {isPersisted && !isLoading && isInitialized && !isValid && (
+                        {isPersisted && isValidPersistedValue && !isLoading && isInitialized && !isValid && (
                             <span
                                 className="text-xs flex items-center gap-1 text-orange-600"
                                 title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."
@@ -124,6 +129,17 @@ export function SettingManagerComponent<
                                 <Warning fontSize="inherit" />
                                 <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                                     Persisted value not valid.
+                                </span>
+                            </span>
+                        )}
+                        {isPersisted && !isValidPersistedValue && (
+                            <span
+                                className="text-xs flex items-center gap-1 text-red-600"
+                                title="The persisted value for this setting has an invalid structure and could not be loaded."
+                            >
+                                <Warning fontSize="inherit" />
+                                <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    Persisted value has invalid structure.
                                 </span>
                             </span>
                         )}

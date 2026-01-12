@@ -9,20 +9,47 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { assertStringArrayOrNull } from "../utils/structureValidation";
+
+import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
 
 type ValueType = string[] | null;
+type ValueConstraintsType = string[];
 
-export class SelectStringSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_SELECT> {
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) => React.ReactNode {
-        return function SelectStringSetting(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
+export class SelectStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringArrayOrNull(parsed);
+        return parsed;
+    }
+
+    isValueValid(currentValue: ValueType, valueConstraints: ValueConstraintsType): boolean {
+        return isValueValid<string, string>(currentValue, valueConstraints, (v) => v);
+    }
+
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
+        return fixupValue<string, string>(currentValue, valueConstraints, (v) => v, "firstAvailable");
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
+        return function SelectStringSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const options: SelectOption[] = React.useMemo(() => {
-                const availableValues = props.availableValues ?? [];
+                const availableValues = props.valueConstraints ?? [];
                 return availableValues.map((stringVals) => ({
                     value: stringVals,
                     label: upperFirst(stringVals),
                 }));
-            }, [props.availableValues]);
+            }, [props.valueConstraints]);
 
             function handleChange(selectedUuids: string[]) {
                 props.onValueChange(selectedUuids);
