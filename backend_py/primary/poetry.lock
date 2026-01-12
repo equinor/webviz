@@ -3896,13 +3896,15 @@ redis = ["redis (>=4.2.0rc1)"]
 
 [[package]]
 name = "sumo-wrapper-python"
-version = "1.2.1.dev3+geaff0bf10"
+version = "1.2.1"
 description = "Python wrapper for the Sumo API"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "sumo_wrapper_python-1.2.1-py3-none-any.whl", hash = "sha256:bc578c3657fbdfccbc8eb687ca7762fa1f0e2aa23fdb6f53f429cbd3d669818c"},
+    {file = "sumo_wrapper_python-1.2.1.tar.gz", hash = "sha256:ea10ea56c263ccedc66f28a9906f03028e81978b75a46eca9a302023f6856642"},
+]
 
 [package.dependencies]
 azure-identity = ">=1.13.0"
@@ -3916,12 +3918,6 @@ tenacity = ">=8.2.2,<8.4.0 || >8.4.0"
 dev = ["pre-commit", "ruff"]
 docs = ["autoapi", "sphinx (==7.1.2)", "sphinx-autodoc-typehints", "sphinx-rtd-theme", "sphinxcontrib-apidoc"]
 test = ["PyYAML", "pytest"]
-
-[package.source]
-type = "git"
-url = "https://github.com/equinor/sumo-wrapper-python.git"
-reference = "fix/auth-setup-order"
-resolved_reference = "eaff0bf10c918b2e7556b1cf3b9e55208a6d3e68"
 
 [[package]]
 name = "tables"
@@ -4179,7 +4175,7 @@ pyarrow-stubs = "^20.0.0.20250825"
 pydantic = "^2.11.0"
 redis = "^5.3.1"
 requests-toolbelt = "^1.0.0"
-sumo-wrapper-python = {git = "https://github.com/equinor/sumo-wrapper-python.git", branch = "fix/auth-setup-order"}
+sumo-wrapper-python = "^1.2.1"
 types-redis = "^4.6.0"
 webviz-core-utils = {path = "../core_utils", develop = true}
 webviz-server-schemas = {path = "../server_schemas", develop = true}
