@@ -8,6 +8,7 @@ import type { VectorHexColorMap } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
 import {
+    hasInvalidStatisticsResampleFrequencyAtom,
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     loadedVectorSpecificationsAndObservationDataAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
@@ -30,7 +31,7 @@ export function usePlotBuilder(
     vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null,
-): PlotBuilder {
+): PlotBuilder | null {
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
     const vectorSpecifications = viewContext.useSettingsToViewInterfaceValue("vectorSpecifications");
@@ -39,6 +40,7 @@ export function usePlotBuilder(
     const subplotLimitation = viewContext.useSettingsToViewInterfaceValue("subplotLimitation");
 
     const resampleFrequency = useAtomValue(resampleFrequencyAtom);
+    const hasInvalidStatisticsResampleFrequency = useAtomValue(hasInvalidStatisticsResampleFrequencyAtom);
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
     const loadedVectorSpecificationsAndObservationData = useAtomValue(loadedVectorSpecificationsAndObservationDataAtom);
@@ -49,6 +51,11 @@ export function usePlotBuilder(
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
+
+    // Do not assemble plot for invalid statistical resampling frequency
+    if (hasInvalidStatisticsResampleFrequency) {
+        return null;
+    }
 
     const scatterType =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||

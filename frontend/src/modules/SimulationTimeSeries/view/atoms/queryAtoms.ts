@@ -280,11 +280,15 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
 
 // ----------------------------------------------------
 
-function isStatisticsQueryEnabled(visualizationMode: VisualizationMode): boolean {
+function isStatisticsQueryEnabled(
+    visualizationMode: VisualizationMode,
+    resampleFrequency: Frequency_api | null,
+): boolean {
     return (
-        visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
-        visualizationMode === VisualizationMode.STATISTICAL_LINES ||
-        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+        resampleFrequency !== null &&
+        (visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
+            visualizationMode === VisualizationMode.STATISTICAL_LINES ||
+            visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS)
     );
 }
 
@@ -294,7 +298,7 @@ const regularEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
     const visualizationMode = get(visualizationModeAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
-    const enabled = isStatisticsQueryEnabled(visualizationMode);
+    const enabled = isStatisticsQueryEnabled(visualizationMode, resampleFrequency);
 
     const queries = regularEnsembleVectorSpecifications.map((item) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
@@ -329,7 +333,7 @@ const deltaEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
     const visualizationMode = get(visualizationModeAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
-    const enabled = isStatisticsQueryEnabled(visualizationMode);
+    const enabled = isStatisticsQueryEnabled(visualizationMode, resampleFrequency);
 
     const queries = deltaEnsembleVectorSpecifications.map((item) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];

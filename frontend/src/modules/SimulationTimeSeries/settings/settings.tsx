@@ -29,7 +29,6 @@ import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 import type { Interfaces } from "../interfaces";
@@ -100,8 +99,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useAtom(selectedParameterIdentStringAtom);
-
-    usePropagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
 
     // Receive global parameter string and update local state if different
     useSyncSetting({
@@ -301,12 +298,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
             <CollapsibleGroup expanded={false} title="Resampling frequency">
                 <Dropdown
                     options={[
-                        { value: "RAW", label: "None (raw)" },
+                        { value: "RAW", label: "None (Raw)" },
                         ...Object.values(Frequency_api).map((val: Frequency_api) => {
                             return { value: val, label: FrequencyEnumToStringMapping[val] };
                         }),
                     ]}
-                    value={resampleFrequency ?? Frequency_api.MONTHLY}
+                    value={resampleFrequency ?? "RAW"}
                     onChange={handleFrequencySelectionChange}
                 />
             </CollapsibleGroup>
