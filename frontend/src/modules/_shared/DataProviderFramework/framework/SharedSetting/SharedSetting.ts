@@ -6,7 +6,7 @@ import type { Item, SharedSettingsProvider } from "../../interfacesAndTypes/enti
 import type { SerializedSharedSetting } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import { SettingRegistry } from "../../settings/SettingRegistry";
-import type { Setting, SettingTypes } from "../../settings/settingsDefinitions";
+import type { Setting, SettingTypeDefinitions } from "../../settings/settingsDefinitions";
 import { type DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 
@@ -31,7 +31,7 @@ export class SharedSetting<TSetting extends Setting> implements Item, SharedSett
 
     constructor(
         wrappedSettingType: TSetting,
-        defaultValue: SettingTypes[TSetting],
+        defaultValue: SettingTypeDefinitions[TSetting]["internalValue"],
         dataProviderManager: DataProviderManager,
     ) {
         const wrappedSetting = SettingRegistry.makeSetting(wrappedSettingType, defaultValue);

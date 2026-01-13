@@ -148,7 +148,7 @@ export class EnsembleUpdateMonitor {
             }
 
             // Update the EnsembleFingerprintsStore with the latest fingerprints
-            EnsembleFingerprintStore.setAll(latestFingerprintsMap);
+            EnsembleFingerprintStore.update(latestFingerprintsMap);
 
             logger.console?.log(`checkForEnsembleUpdate - fetched and updated fingerprints for ensembles.`);
         } catch (error) {

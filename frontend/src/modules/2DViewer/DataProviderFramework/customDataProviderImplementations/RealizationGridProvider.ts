@@ -9,7 +9,7 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { RealizationGridData } from "@modules/_shared/DataProviderFramework/visualization/utils/types";
 import {
@@ -158,11 +158,11 @@ export class RealizationGridProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueConstraintsUpdater,
         storedDataUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationGridSettings, StoredData>) {
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -173,7 +173,7 @@ export class RealizationGridProvider
             return ensembleIdents;
         });
 
-        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
@@ -206,7 +206,7 @@ export class RealizationGridProvider
             });
         });
 
-        availableSettingsUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!data) {
@@ -218,7 +218,7 @@ export class RealizationGridProvider
             return availableGridNames;
         });
 
-        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
@@ -236,7 +236,7 @@ export class RealizationGridProvider
             return availableGridAttributes;
         });
 
-        availableSettingsUpdater(Setting.GRID_LAYER_K, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.GRID_LAYER_K, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
@@ -253,7 +253,7 @@ export class RealizationGridProvider
             return availableGridLayers;
         });
 
-        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const gridAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const data = getHelperDependency(realizationGridDataDep);

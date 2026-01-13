@@ -14,50 +14,121 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
 
-type ValueType = { value: [number, number, number]; visible: [boolean, boolean, boolean]; applied: boolean } | null;
-type Category = SettingCategory.XYZ_VALUES_WITH_VISIBILITY;
-export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, Category> {
-    fixupValue(
-        currentValue: ValueType,
-        availableValues: [[number, number, number], [number, number, number], [number, number, number]],
-    ): ValueType {
+type ValueType = {
+    value: [number, number, number];
+    visible: [boolean, boolean, boolean];
+    applied: boolean;
+} | null;
+type ValueConstraintsType = [[number, number, number], [number, number, number], [number, number, number]];
+export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueConstraintsType, valueConstraints: ValueConstraintsType) => {
+            if (accumulator === null) {
+                return valueConstraints;
+            }
+
+            const mergedRanges: ValueConstraintsType = [
+                [0, 0, 1],
+                [0, 0, 1],
+                [0, 0, 1],
+            ];
+
+            for (let i = 0; i < 3; i++) {
+                const min = Math.max(accumulator[i][0], valueConstraints[i][0]);
+                const max = Math.min(accumulator[i][1], valueConstraints[i][1]);
+                const step = Math.max(accumulator[i][2], valueConstraints[i][2]);
+
+                mergedRanges[i] = [min, max, step];
+            }
+
+            return mergedRanges;
+        },
+        startingValue: null,
+        isValid: (valueConstraints: ValueConstraintsType): boolean => {
+            const [xRange, yRange, zRange] = valueConstraints;
+            return xRange[0] <= xRange[1] && yRange[0] <= yRange[1] && zRange[0] <= zRange[1];
+        },
+    };
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+
+        if (parsed === null) {
+            return null;
+        }
+
+        if (typeof parsed !== "object" || Array.isArray(parsed)) {
+            throw new Error("Expected object or null");
+        }
+
+        const v = parsed as Record<string, unknown>;
+
+        // Check 'value' property - must be [number, number, number]
+        if (!Array.isArray(v.value) || v.value.length !== 3) {
+            throw new Error("Expected 'value' to be array of 3 numbers");
+        }
+        if (!v.value.every((item) => typeof item === "number")) {
+            throw new Error("Expected 'value' array elements to be numbers");
+        }
+
+        // Check 'visible' property - must be [boolean, boolean, boolean]
+        if (!Array.isArray(v.visible) || v.visible.length !== 3) {
+            throw new Error("Expected 'visible' to be array of 3 booleans");
+        }
+        if (!v.visible.every((item) => typeof item === "boolean")) {
+            throw new Error("Expected 'visible' array elements to be booleans");
+        }
+
+        // Check 'applied' property - must be boolean
+        if (typeof v.applied !== "boolean") {
+            throw new Error("Expected 'applied' to be boolean");
+        }
+
+        return parsed as ValueType;
+    }
+
+    fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
         if (!currentValue || !Array.isArray(currentValue.value) || currentValue.value.length !== 3) {
             return {
-                value: [availableValues[0][0], availableValues[1][0], availableValues[2][0]],
+                value: [valueConstraints[0][0], valueConstraints[1][0], valueConstraints[2][0]],
                 visible: [true, true, true],
                 applied: true,
             };
         }
 
         const fixedValue: [number, number, number] = currentValue.value.map((val, index) => {
-            const [min, max, step] = availableValues[index];
+            const [min, max, step] = valueConstraints[index];
             return Math.max(min, Math.min(max, Math.round(val / step) * step));
         }) as [number, number, number];
 
         return { value: fixedValue, visible: [true, true, true], applied: currentValue.applied };
     }
 
-    isValueValid(
-        value: ValueType,
-        availableValues: [[number, number, number], [number, number, number], [number, number, number]],
-    ): boolean {
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
         if (!value || !Array.isArray(value.value) || value.value.length !== 3) {
             return false;
         }
         return value.value.every((val, index) => {
-            const [min, max, step] = availableValues[index];
+            const [min, max, step] = valueConstraints[index];
             return val >= min && val <= max && (val - min) % step === 0;
         });
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, Category>) => React.ReactNode {
-        return function RangeSlider(props: SettingComponentProps<ValueType, Category>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
+        return function RangeSlider(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const divRef = React.useRef<HTMLDivElement>(null);
             const divSize = useElementSize(divRef);
 
-            const availableValues = props.availableValues ?? [
+            const valueConstraints = props.valueConstraints ?? [
                 [0, 0, 1],
                 [0, 0, 1],
                 [0, 0, 1],
@@ -85,9 +156,9 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
             }
 
             function handleInputChange(index: number, val: number) {
-                const min = availableValues[index][0];
-                const max = availableValues[index][1];
-                const step = availableValues[index][2];
+                const min = valueConstraints[index][0];
+                const max = valueConstraints[index][1];
+                const step = valueConstraints[index][2];
                 const allowedValues = Array.from(
                     { length: Math.floor((max - min) / step) + 1 },
                     (_, i) => min + i * step,
@@ -143,12 +214,12 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                                 </div>
                                 <div className="flex-4">
                                     <Slider
-                                        min={availableValues[index][0]}
-                                        max={availableValues[index][1]}
+                                        min={valueConstraints[index][0]}
+                                        max={valueConstraints[index][1]}
                                         onChange={(_, value) => handleSliderChange(index, value as number)}
-                                        value={props.value?.value[index] ?? availableValues[index][0]}
+                                        value={props.value?.value[index] ?? valueConstraints[index][0]}
                                         valueLabelDisplay="auto"
-                                        step={availableValues[index][2]}
+                                        step={valueConstraints[index][2]}
                                         track={false}
                                     />
                                 </div>

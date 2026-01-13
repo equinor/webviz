@@ -8,7 +8,8 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 export const wellPickSettings = [Setting.STRAT_COLUMN, Setting.SMDA_INTERPRETER, Setting.WELLBORE_PICKS] as const;
 export type WellPickSettingTypes = typeof wellPickSettings;
@@ -21,7 +22,7 @@ export class WellborePicksProvider
 
     // Uses the same external things as the other types
     defineDependencies(args: DefineDependenciesArgs<WellPickSettingTypes>) {
-        const { helperDependency, availableSettingsUpdater, queryClient } = args;
+        const { helperDependency, valueConstraintsUpdater, queryClient } = args;
 
         const columnOptions = helperDependency(({ getGlobalSetting, abortSignal }) => {
             const wellboreUuid = getGlobalSetting("wellboreUuid");
@@ -50,14 +51,14 @@ export class WellborePicksProvider
             });
         });
 
-        availableSettingsUpdater(Setting.STRAT_COLUMN, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.STRAT_COLUMN, ({ getHelperDependency }) => {
             const columns = getHelperDependency(columnOptions);
 
             if (!columns) return [];
             return map(columns, "identifier");
         });
 
-        availableSettingsUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
             const wellPicks = getHelperDependency(wellPickOptions);
 
             if (!wellPicks) return [];
@@ -67,7 +68,7 @@ export class WellborePicksProvider
             return keys(picksByInterpreter);
         });
 
-        availableSettingsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
             const wellPicks = getHelperDependency(wellPickOptions);
             const interpreter = getLocalSetting(Setting.SMDA_INTERPRETER);
 

@@ -7,14 +7,41 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { assertNumberOrNull } from "../utils/structureValidation";
+
+import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
 
 type ValueType = number | null;
+type ValueConstraintsType = number[];
 
-export class DropdownNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
-        return function DropdownNumberSetting(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
-            const availableValues = props.availableValues ?? [];
+export class DropdownNumberSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<number[]>();
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
+    }
+
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertNumberOrNull(parsed);
+        return parsed;
+    }
+
+    isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
+        return isValueValid<number, number>(value, valueConstraints, (v) => v);
+    }
+
+    fixupValue(value: ValueType, valueConstraints: ValueConstraintsType): ValueType {
+        return fixupValue<number, number>(value, valueConstraints, (v) => v);
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
+        return function DropdownNumberSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
+            const availableValues = props.valueConstraints ?? [];
 
             const options: DropdownOption<number>[] = availableValues.map((value) => {
                 return {

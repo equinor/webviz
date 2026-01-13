@@ -2,7 +2,8 @@ import type { WellboreLogCurveData_api, WellboreLogCurveHeader_api } from "@api"
 import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api, getWellboreLogCurveHeadersOptions } from "@api";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
     baseDiscreteSettings,
@@ -33,7 +34,7 @@ export class StackedPlotProvider
 
     // Uses the same external things as the other types
     defineDependencies(args: DefineDependenciesArgs<StackedPlotSettingTypes>) {
-        const { availableSettingsUpdater, helperDependency } = args;
+        const { valueConstraintsUpdater, helperDependency } = args;
 
         const headerQueryDeps = [
             WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
@@ -54,7 +55,7 @@ export class StackedPlotProvider
             }),
         );
 
-        availableSettingsUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreId = getGlobalSetting("wellboreUuid");
             const allHeaderData = headerQueryDeps.flatMap((dep) => getHelperDependency(dep));
 
