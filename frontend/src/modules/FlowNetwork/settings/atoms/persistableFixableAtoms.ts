@@ -7,10 +7,11 @@ import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import {
     availableDateTimesAtom,
     availableRealizationsAtom,
+    availableTreeTypesAtom,
     edgeMetadataListAtom,
-    flowNetworkQueryResultAtom,
     nodeMetadataListAtom,
 } from "./derivedAtoms";
+import { realizationFlowNetworkQueryAtom } from "./queryAtoms";
 
 export const selectedEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleIdent | null>({
     initialValue: null,
@@ -44,6 +45,23 @@ export const selectedRealizationAtom = persistableFixableAtom<number | null>({
 
         // When value is invalid number, enforce user to reselect
         return null;
+    },
+});
+
+export const selectedTreeTypeAtom = persistableFixableAtom<string | null>({
+    initialValue: null,
+    computeDependenciesState: computeFlowNetworkQueryResultDependenciesState,
+    isValidFunction: ({ get, value }) => {
+        const availableTreeTypes = get(availableTreeTypesAtom);
+
+        if (!value) {
+            return availableTreeTypes.length === 0;
+        }
+        return availableTreeTypes.includes(value);
+    },
+    fixupFunction: ({ get }) => {
+        const availableTreeTypes = get(availableTreeTypesAtom);
+        return availableTreeTypes[0] ?? null;
     },
 });
 
@@ -108,7 +126,7 @@ function computeFlowNetworkQueryResultDependenciesState({
 }: {
     get: (atom: any) => any;
 }): "error" | "loading" | "loaded" {
-    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
+    const flowNetworkQueryResult = get(realizationFlowNetworkQueryAtom);
     if (flowNetworkQueryResult.isError) {
         return "error";
     }

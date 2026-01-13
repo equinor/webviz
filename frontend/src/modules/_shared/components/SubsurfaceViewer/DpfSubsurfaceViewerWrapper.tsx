@@ -26,7 +26,9 @@ import { PreferredViewLayout } from "./typesAndEnums";
 export type DpfSubsurfaceViewerContextType = {
     visualizationMode: "2D" | "3D";
     viewState?: ViewStateType;
+    initialVerticalScale: number;
     onViewStateChange?: (viewState: ViewStateType) => void;
+    onVerticalScaleChange?: (verticalScale: number) => void;
     visualizationAssemblerProduct: AssemblerProduct<any>;
     preferredViewLayout: PreferredViewLayout;
     bounds: BoundingBox2D | undefined;
@@ -50,7 +52,9 @@ export function useDpfSubsurfaceViewerContext() {
 export type DpfSubsurfaceViewerWrapperProps = {
     visualizationMode: "2D" | "3D";
     viewState?: ViewStateType;
+    initialVerticalScale: number;
     onViewStateChange?: (viewState: ViewStateType) => void;
+    onVerticalScaleChange?: (verticalScale: number) => void;
     fieldId: string;
     visualizationAssemblerProduct: AssemblerProduct<VisualizationTarget.DECK_GL, any, any>;
     viewContext: ViewContext<any>;
