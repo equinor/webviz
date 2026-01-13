@@ -20,7 +20,6 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
@@ -28,7 +27,6 @@ import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelect
 import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
-import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 import type { Interfaces } from "../interfaces";
@@ -70,6 +68,12 @@ import {
 } from "./atoms/derivedAtoms";
 import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "./atoms/persistableFixableAtoms";
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
+import {
+    useResampleFrequencyWarningAnnotation,
+    useSelectedEnsembleIdentsAnnotations,
+    useSelectedParameterIdentStringAnnotations,
+    useVectorListQueriesErrorAnnotation,
+} from "./hooks/useMakeSettingAnnotations";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>) {
@@ -252,15 +256,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const selectedVectorNamesHasHistorical =
         !isVectorListQueriesFetching && ensembleVectorListsHelper.hasAnyHistoricalVector(selectedVectorNames);
 
-    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
-    const selectedParameterIdentStringAnnotations = useMakePersistableFixableAtomAnnotations(
-        selectedParameterIdentStringAtom,
-    );
-
-    const vectorListQueriesErrorMessage =
-        vectorListQueries.length > 0 && vectorListQueries.every((q) => q.isError)
-            ? "Could not load vectors for selected ensembles"
-            : undefined;
+    const selectedEnsembleIdentsAnnotations = useSelectedEnsembleIdentsAnnotations();
+    const selectedParameterIdentStringAnnotations = useSelectedParameterIdentStringAnnotations();
+    const resampleFrequencyWarningAnnotation = useResampleFrequencyWarningAnnotation();
+    const vectorListQueriesErrorAnnotation = useVectorListQueriesErrorAnnotation();
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
@@ -296,16 +295,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                 />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Resampling frequency">
-                <Dropdown
-                    options={[
-                        { value: "RAW", label: "None (Raw)" },
-                        ...Object.values(Frequency_api).map((val: Frequency_api) => {
-                            return { value: val, label: FrequencyEnumToStringMapping[val] };
-                        }),
-                    ]}
-                    value={resampleFrequency ?? "RAW"}
-                    onChange={handleFrequencySelectionChange}
-                />
+                <SettingWrapper warningAnnotation={resampleFrequencyWarningAnnotation}>
+                    <Dropdown
+                        options={[
+                            { value: "RAW", label: "None (Raw)" },
+                            ...Object.values(Frequency_api).map((val: Frequency_api) => {
+                                return { value: val, label: FrequencyEnumToStringMapping[val] };
+                            }),
+                        ]}
+                        value={resampleFrequency ?? "RAW"}
+                        onChange={handleFrequencySelectionChange}
+                    />
+                </SettingWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Ensembles">
                 <SettingWrapper annotations={selectedEnsembleIdentsAnnotations}>
@@ -331,9 +332,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         "pointer-events-none opacity-80": vectorListQueries.some((query) => query.isLoading),
                     })}
                 >
-                    <PendingWrapper
-                        isPending={isVectorListQueriesFetching}
-                        errorMessage={vectorListQueriesErrorMessage}
+                    <SettingWrapper
+                        loadingOverlay={isVectorListQueriesFetching}
+                        errorAnnotation={vectorListQueriesErrorAnnotation}
                     >
                         <VectorSelector
                             data={vectorSelectorData}
@@ -345,7 +346,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             customVectorDefinitions={customVectorDefinitions ?? undefined}
                             selectedTags={selectedVectorTags}
                         />
-                    </PendingWrapper>
+                    </SettingWrapper>
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Visualization">

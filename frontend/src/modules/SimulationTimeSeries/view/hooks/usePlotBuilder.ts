@@ -3,12 +3,12 @@ import { useAtomValue } from "jotai";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import { isInvalidStatisticsResampleFrequency } from "@modules/SimulationTimeSeries/utils/resamplingFrequencyUtils";
 
 import type { VectorHexColorMap } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
 import {
-    hasInvalidStatisticsResampleFrequencyAtom,
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     loadedVectorSpecificationsAndObservationDataAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
@@ -40,7 +40,6 @@ export function usePlotBuilder(
     const subplotLimitation = viewContext.useSettingsToViewInterfaceValue("subplotLimitation");
 
     const resampleFrequency = useAtomValue(resampleFrequencyAtom);
-    const hasInvalidStatisticsResampleFrequency = useAtomValue(hasInvalidStatisticsResampleFrequencyAtom);
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
     const loadedVectorSpecificationsAndObservationData = useAtomValue(loadedVectorSpecificationsAndObservationDataAtom);
@@ -53,7 +52,7 @@ export function usePlotBuilder(
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
     // Do not assemble plot for invalid statistical resampling frequency
-    if (hasInvalidStatisticsResampleFrequency) {
+    if (isInvalidStatisticsResampleFrequency(resampleFrequency, visualizationMode)) {
         return null;
     }
 

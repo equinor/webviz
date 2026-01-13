@@ -17,13 +17,9 @@ import type { Interfaces } from "../interfaces";
 import type { VectorHexColorMap } from "../typesAndEnums";
 import { GroupBy } from "../typesAndEnums";
 
-import {
-    hasInvalidStatisticsResampleFrequencyAtom,
-    queryIsFetchingAtom,
-    realizationsQueryHasErrorAtom,
-    statisticsQueryHasErrorAtom,
-} from "./atoms/derivedAtoms";
+import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
 import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
+import { useResampleFrequencyWarningMessage } from "./hooks/useMakeContentWarningMessage";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
@@ -45,7 +41,6 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
     const isAnyQueryLoading = useAtomValue(queryIsFetchingAtom);
-    const hasInvalidStatisticsResampleFrequency = useAtomValue(hasInvalidStatisticsResampleFrequencyAtom);
 
     const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
 
@@ -85,6 +80,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap);
+    const resampleFrequencyWarningMessage = useResampleFrequencyWarningMessage();
 
     const handleClickInChart = React.useCallback(
         function handleClickInChart(e: PlotMouseEvent) {
@@ -115,12 +111,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     const createContent = React.useCallback(
         function createContent(): React.ReactNode {
-            if (hasInvalidStatisticsResampleFrequency) {
-                return (
-                    <ContentWarning>
-                        Statistical visualization requires a resample frequency other than RAW.
-                    </ContentWarning>
-                );
+            if (resampleFrequencyWarningMessage !== null) {
+                return <ContentWarning>{resampleFrequencyWarningMessage}</ContentWarning>;
             }
             if (hasQueryErrors) {
                 return <ContentError>One or more queries have an error state. See the log for details.</ContentError>;
@@ -142,7 +134,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 />
             );
         },
-        [plotBuilder, hasQueryErrors, hasInvalidStatisticsResampleFrequency, isAnyQueryLoading, handleClickInChart],
+        [plotBuilder, hasQueryErrors, isAnyQueryLoading, resampleFrequencyWarningMessage, handleClickInChart],
     );
 
     return (

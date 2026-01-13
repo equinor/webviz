@@ -1,10 +1,8 @@
 import { atom } from "jotai";
 
-import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
-
 import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
 
-import { resampleFrequencyAtom, vectorSpecificationsAtom, visualizationModeAtom } from "./baseAtoms";
+import { vectorSpecificationsAtom } from "./baseAtoms";
 import {
     regularEnsembleHistoricalVectorDataQueriesAtom,
     vectorDataQueriesAtom,
@@ -42,18 +40,6 @@ export const statisticsQueryHasErrorAtom = atom((get) => {
     const vectorStatisticsQueries = get(vectorStatisticsQueriesAtom);
 
     return vectorStatisticsQueries.some((query) => query.isError);
-});
-
-export const hasInvalidStatisticsResampleFrequencyAtom = atom((get) => {
-    const resampleFrequency = get(resampleFrequencyAtom);
-    const visualizationMode = get(visualizationModeAtom);
-
-    return (
-        resampleFrequency === null &&
-        (visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
-            visualizationMode === VisualizationMode.STATISTICAL_LINES ||
-            visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS)
-    );
 });
 
 export const loadedVectorSpecificationsAndRealizationDataAtom = atom((get) => {
