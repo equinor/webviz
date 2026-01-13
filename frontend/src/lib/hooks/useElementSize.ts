@@ -27,8 +27,6 @@ export function useElementSize(ref: React.RefObject<HTMLElement>): Size2D {
                         height: ref.current.offsetHeight,
                     };
 
-                    console.debug(newSize);
-
                     if (isHidden && currentSize.width === newSize.width && currentSize.height === newSize.height) {
                         isHidden = false;
                         return;
