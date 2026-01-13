@@ -842,7 +842,7 @@ def _create_dated_network(
 
     `Arguments`:
     - `grouptree_at_date`: pl.DataFrame - Dataframe with group tree for one date - expected columns: [KEYWORD, CHILD, PARENT, EDGE_LABEL]
-    - `grouptree_date`: pl.Datetime - Date of the group tree
+    - `date_str`: str - Date of the group tree as string
     - `smry_for_grouptree_sorted_by_date`: Summary data for time span defined from the group tree at date to the next group tree date. The summary data is
     sorted by date, which implies unique dates, ordered by date. Thereby each node or edge is a column in the summary dataframe.
     - `number_of_dates_in_smry`: Number of unique dates in the summary data df. To be used for filling missing data - i.e. num rows of smry_sorted_by_date

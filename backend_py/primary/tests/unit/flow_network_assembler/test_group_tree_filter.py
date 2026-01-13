@@ -162,8 +162,8 @@ def test_model_detects_tree_types(sample_group_tree_df: pl.DataFrame) -> None:
 
 
 def test_empty_dataframe_raises_error() -> None:
-    """Test that an empty DataFrame raises InvalidDataError."""
-    from webviz_services.service_exceptions import InvalidDataError
+    """Test that an empty DataFrame raises NoDataError."""
+    from webviz_services.service_exceptions import NoDataError
 
     empty_df = pl.DataFrame(
         {
@@ -174,7 +174,7 @@ def test_empty_dataframe_raises_error() -> None:
         }
     )
 
-    with pytest.raises(InvalidDataError, match="The group tree dataframe is empty"):
+    with pytest.raises(NoDataError, match="The group tree dataframe is empty"):
         GroupTreeDataframeModel(empty_df)
 
 

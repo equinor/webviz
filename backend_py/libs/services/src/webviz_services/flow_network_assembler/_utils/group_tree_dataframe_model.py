@@ -132,7 +132,7 @@ class GroupTreeDataframeModel:
         Validate expected columns and their data types for the dataframe to ensure correct processing.
         """
         if dataframe.is_empty():
-            raise InvalidDataError("The group tree dataframe is empty.", service=Service.GENERAL)
+            raise NoDataError("The group tree dataframe is empty.", service=Service.GENERAL)
 
         if not GroupTreeDataframeModel.has_expected_columns(dataframe):
             raise InvalidDataError(
