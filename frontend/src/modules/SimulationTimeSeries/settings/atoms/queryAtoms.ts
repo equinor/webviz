@@ -6,30 +6,35 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import type { CategorizedItem } from "@modules/SimulationTimeSeries/typesAndEnums";
+import { assembleQueriesInOriginalOrder } from "@modules/SimulationTimeSeries/utils/querySortingUtils";
 
 import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
 
 export const vectorListQueriesAtom = atom((get) => {
+    const { regularEnsembleIdents, deltaEnsembleIdents } = get(categorizedEnsembleIdentsAtom);
     const regularQueries = get(regularEnsembleVectorListQueriesAtom);
     const deltaQueries = get(deltaEnsembleVectorListQueriesAtom);
 
-    return [...regularQueries, ...deltaQueries];
+    return assembleQueriesInOriginalOrder(regularQueries, deltaQueries, regularEnsembleIdents, deltaEnsembleIdents);
 });
+
+// ----------------------------------------------------
 
 const categorizedEnsembleIdentsAtom = atom((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
-    const regularEnsembleIdents: RegularEnsembleIdent[] = [];
-    const deltaEnsembleIdents: DeltaEnsembleIdent[] = [];
+    const regularEnsembleIdents: CategorizedItem<RegularEnsembleIdent>[] = [];
+    const deltaEnsembleIdents: CategorizedItem<DeltaEnsembleIdent>[] = [];
 
-    for (const ensembleIdent of selectedEnsembleIdents) {
+    selectedEnsembleIdents.forEach((ensembleIdent, originalIndex) => {
         if (isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent)) {
-            regularEnsembleIdents.push(ensembleIdent);
+            regularEnsembleIdents.push({ item: ensembleIdent, originalIndex });
         } else if (isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent)) {
-            deltaEnsembleIdents.push(ensembleIdent);
+            deltaEnsembleIdents.push({ item: ensembleIdent, originalIndex });
         } else {
             throw new Error(`Invalid ensemble ident type: ${ensembleIdent}`);
         }
-    }
+    });
 
     return {
         regularEnsembleIdents,
@@ -40,13 +45,13 @@ const categorizedEnsembleIdentsAtom = atom((get) => {
 const regularEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
     const { regularEnsembleIdents } = get(categorizedEnsembleIdentsAtom);
 
-    const queries = regularEnsembleIdents.map((ensembleIdent) => {
+    const queries = regularEnsembleIdents.map(({ item }) => {
         const options = getVectorListOptions({
             query: {
-                case_uuid: ensembleIdent.getCaseUuid(),
-                ensemble_name: ensembleIdent.getEnsembleName(),
+                case_uuid: item.getCaseUuid(),
+                ensemble_name: item.getEnsembleName(),
                 include_derived_vectors: true,
-                ...makeCacheBustingQueryParam(ensembleIdent),
+                ...makeCacheBustingQueryParam(item),
             },
         });
         return () => options;
@@ -60,9 +65,9 @@ const regularEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
 const deltaEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
     const { deltaEnsembleIdents } = get(categorizedEnsembleIdentsAtom);
 
-    const queries = deltaEnsembleIdents.map((ensembleIdent) => {
-        const comparisonEnsembleIdent = ensembleIdent.getComparisonEnsembleIdent();
-        const referenceEnsembleIdent = ensembleIdent.getReferenceEnsembleIdent();
+    const queries = deltaEnsembleIdents.map(({ item }) => {
+        const comparisonEnsembleIdent = item.getComparisonEnsembleIdent();
+        const referenceEnsembleIdent = item.getReferenceEnsembleIdent();
 
         const options = getDeltaEnsembleVectorListOptions({
             query: {
