@@ -1,12 +1,11 @@
 import type { InterfaceEffects } from "@framework/Module";
-import type { SettingsToViewInterface } from "@modules/InplaceVolumesPlot/interfaces";
+import type { SettingsToViewInterface } from "@modules/InplaceVolumesNew/interfaces";
 
 import {
     areTableDefinitionSelectionsValidAtom,
     colorByAtom,
     filterAtom,
     plotTypeAtom,
-    secondResultNameAtom,
     firstResultNameAtom,
     selectorColumnAtom,
     subplotByAtom,
@@ -20,10 +19,6 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     (getInterfaceValue, setAtomValue) => {
         const firstResultName = getInterfaceValue("firstResultName");
         setAtomValue(firstResultNameAtom, firstResultName);
-    },
-    (getInterfaceValue, setAtomValue) => {
-        const secondResultName = getInterfaceValue("secondResultName");
-        setAtomValue(secondResultNameAtom, secondResultName);
     },
     (getInterfaceValue, setAtomValue) => {
         const selectorColumn = getInterfaceValue("selectorColumn");

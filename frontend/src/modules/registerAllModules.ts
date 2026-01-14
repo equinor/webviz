@@ -4,6 +4,7 @@ import "./2DViewer/registerModule";
 import "./3DViewer/registerModule";
 import "./DistributionPlot/registerModule";
 import "./FlowNetwork/registerModule";
+import "./InplaceVolumesNew/registerModule";
 import "./InplaceVolumesPlot/registerModule";
 import "./InplaceVolumesTable/registerModule";
 import "./Intersection/registerModule";

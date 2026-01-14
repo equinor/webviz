@@ -5,15 +5,19 @@ import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinit
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { PlotType } from "../typesAndEnums";
+import { PlotType, type InplaceVolumesPlotOptions } from "../typesAndEnums";
 
-import { selectedIndexValueCriteriaAtom, selectedPlotTypeAtom } from "./atoms/baseAtoms";
+import {
+    plotOptionsAtom,
+    selectedIndexValueCriteriaAtom,
+    selectedPlotTypeAtom,
+    showTableAtom,
+} from "./atoms/baseAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedFirstResultNameAtom,
     selectedIndicesWithValuesAtom,
-    selectedSecondResultNameAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
@@ -24,13 +28,13 @@ export type SerializedSettings = {
     tableNames: string[];
     indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
     firstResultName: string | null;
-    secondResultName: string | null;
     selectorColumn: string | null;
     groupBy: string;
     colorBy: string;
     plotType: PlotType;
-
+    plotOptions: InplaceVolumesPlotOptions;
     indexValueCriteria: IndexValueCriteria;
+    showTable: boolean;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
@@ -45,7 +49,6 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
             ...inject("InplaceVolumesIndexWithValues"),
         },
         firstResultName: { type: "string", nullable: true },
-        secondResultName: { type: "string", nullable: true },
         selectorColumn: { type: "string", nullable: true },
         groupBy: { type: "string" },
         colorBy: { type: "string" },
@@ -56,6 +59,10 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         plotType: {
             enum: Object.values(PlotType),
         },
+        plotOptions: {
+            ...inject("InplaceVolumesPlotOptions"),
+        },
+        showTable: { type: "boolean" },
     },
 }));
 
@@ -72,12 +79,13 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         tableNames: get(selectedTableNamesAtom).value,
         indicesWithValues: indicesWithStringifiedValues,
         firstResultName: get(selectedFirstResultNameAtom).value,
-        secondResultName: get(selectedSecondResultNameAtom).value,
         selectorColumn: get(selectedSelectorColumnAtom).value,
         groupBy: get(selectedSubplotByAtom).value,
         colorBy: get(selectedColorByAtom).value,
         indexValueCriteria: get(selectedIndexValueCriteriaAtom),
         plotType: get(selectedPlotTypeAtom),
+        plotOptions: get(plotOptionsAtom),
+        showTable: get(showTableAtom),
     };
 };
 
@@ -87,7 +95,6 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
         : undefined;
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, selectedFirstResultNameAtom, raw.firstResultName);
-    setIfDefined(set, selectedSecondResultNameAtom, raw.secondResultName);
     setIfDefined(set, selectedSelectorColumnAtom, raw.selectorColumn);
     setIfDefined(set, selectedSubplotByAtom, raw.groupBy);
     setIfDefined(set, selectedColorByAtom, raw.colorBy);
@@ -95,4 +102,6 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedIndicesWithValuesAtom, raw.indicesWithValues);
     setIfDefined(set, selectedTableNamesAtom, raw.tableNames);
     setIfDefined(set, selectedPlotTypeAtom, raw.plotType);
+    setIfDefined(set, plotOptionsAtom, raw.plotOptions);
+    setIfDefined(set, showTableAtom, raw.showTable);
 };

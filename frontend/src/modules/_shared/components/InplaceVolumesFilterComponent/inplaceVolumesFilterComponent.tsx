@@ -5,7 +5,6 @@ import { cloneDeep, isEqual } from "lodash";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -19,6 +18,7 @@ import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { Tooltip } from "@lib/components/Tooltip";
 
 export type InplaceVolumesFilterComponentProps = {
@@ -246,27 +246,30 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 />
 
                 <div className="flex mt-2">
-                    <Label wrapperClassName="mb-2 flex-1" position="left" text="Allow table intersections">
+                    {" "}
+                    {/* <Label wrapperClassName="mb-2 flex-1" position="left" text="Allow table intersections"> */}
+                    <SettingWrapper
+                        labelPosition="right"
+                        label="Allow table intersections"
+                        help={{
+                            title: "Allow table intersections",
+                            content: (
+                                <>
+                                    When active allows comparison of tables where available zones, regions, facies,
+                                    fluids or responses differs.
+                                    <br />
+                                    Only the <b>intersection</b> of options will then be available for filtering. <br />
+                                    Identifiers not present in all tables will be <b>filtered out</b>.
+                                </>
+                            ),
+                        }}
+                    >
                         <Checkbox
                             checked={props.selectedAllowIndicesValuesIntersection}
                             onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
                         />
-                    </Label>
-                    <Tooltip
-                        title={
-                            <>
-                                When active allows comparison of tables where available zones, regions, facies, fluids
-                                or responses differs.
-                                <br />
-                                Only the <b>intersection</b> of options will then be available for filtering. <br />
-                                Identifiers not present in all tables will be <b>filtered out</b>.
-                            </>
-                        }
-                    >
-                        <IconButton size="small">
-                            <Info className="mr-2" fontSize="medium" />
-                        </IconButton>
-                    </Tooltip>
+                    </SettingWrapper>
+                    {/* </Label> */}
                 </div>
                 <PendingWrapper
                     isPending={props.isPending ?? false}

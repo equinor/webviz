@@ -5,8 +5,8 @@ import type { ViewContext } from "@framework/ModuleContext";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumes/tableUtils";
-import type { Interfaces } from "@modules/InplaceVolumesPlot/interfaces";
-import { PlotType, type InplaceVolumesPlotOptions } from "@modules/InplaceVolumesPlot/typesAndEnums";
+import type { Interfaces } from "@modules/InplaceVolumesNew/interfaces";
+import { PlotType, type InplaceVolumesPlotOptions } from "@modules/InplaceVolumesNew/typesAndEnums";
 
 import { colorByAtom, firstResultNameAtom, plotTypeAtom, selectorColumnAtom, subplotByAtom } from "../atoms/baseAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";

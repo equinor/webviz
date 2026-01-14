@@ -44,30 +44,16 @@ export function makeColorByOptions(
 
     const options: DropdownOption<string>[] = [];
 
-    if (numEnsembleIdents > 1 && selectedSubplotBy !== TableOriginKey.ENSEMBLE) {
-        options.push({
-            value: TableOriginKey.ENSEMBLE,
-            label: "ENSEMBLE",
-        });
-        return options;
-    }
-
-    if (numTableNames > 1 && selectedSubplotBy !== TableOriginKey.TABLE_NAME) {
-        options.push({
-            value: TableOriginKey.TABLE_NAME,
-            label: "TABLE NAME",
-        });
-        return options;
-    }
-
-    if (selectedSubplotBy !== TableOriginKey.ENSEMBLE) {
+    // Allow ENSEMBLE for colorBy if single table name, or if not used for subplotBy
+    if (numTableNames === 1 || selectedSubplotBy !== TableOriginKey.ENSEMBLE) {
         options.push({
             value: TableOriginKey.ENSEMBLE,
             label: "ENSEMBLE",
         });
     }
 
-    if (selectedSubplotBy !== TableOriginKey.TABLE_NAME) {
+    // Allow TABLE_NAME for colorBy if single ensemble, or if not used for subplotBy
+    if (numEnsembleIdents === 1 || selectedSubplotBy !== TableOriginKey.TABLE_NAME) {
         options.push({
             value: TableOriginKey.TABLE_NAME,
             label: "TABLE NAME",
@@ -75,6 +61,17 @@ export function makeColorByOptions(
     }
 
     if (numEnsembleIdents > 1 && numTableNames > 1) {
+        return options;
+    }
+
+    // Only skip index options if there are multiples of both, or if the one with multiples is NOT the subplotBy
+    const ensembleIsMultipleAndSubplot = numEnsembleIdents > 1 && selectedSubplotBy === TableOriginKey.ENSEMBLE;
+    const tableNameIsMultipleAndSubplot = numTableNames > 1 && selectedSubplotBy === TableOriginKey.TABLE_NAME;
+
+    if (
+        (numEnsembleIdents > 1 && !ensembleIsMultipleAndSubplot) ||
+        (numTableNames > 1 && !tableNameIsMultipleAndSubplot)
+    ) {
         return options;
     }
 

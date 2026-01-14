@@ -6,7 +6,7 @@ import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure, MakeSubplotOptions } from "@modules/_shared/Figure";
 import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import type { HistogramType } from "@modules/_shared/histogram";
-import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
+import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
 import type { ColorEntry, GroupedTableData } from "./GroupedTableData";
 

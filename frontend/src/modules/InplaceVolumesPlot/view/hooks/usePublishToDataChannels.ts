@@ -1,5 +1,3 @@
-import { useAtomValue } from "jotai";
-
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -10,44 +8,19 @@ import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumesPlot/interfaces";
-import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
-import { colorByAtom, firstResultNameAtom, plotTypeAtom, subplotByAtom } from "../atoms/baseAtoms";
-
-const STANDARD_ORIGIN_KEYS = [TableOriginKey.ENSEMBLE, TableOriginKey.TABLE_NAME, TableOriginKey.FLUID];
-
-interface ContentContext {
-    ensembleName: string;
-    ensembleIdent: RegularEnsembleIdent;
-    ensembleIdentStr: string | number;
-    tableName: string | number;
-    fluidZone: string | number;
-    resultName: string;
-    subplotByValue?: string | number;
-    colorByValue?: string | number;
-}
-
-function buildContentIdString(ctx: ContentContext): string {
-    const parts = [ctx.fluidZone, ctx.tableName, ctx.ensembleIdentStr];
-    if (ctx.subplotByValue !== undefined) parts.push(ctx.subplotByValue);
-    if (ctx.colorByValue !== undefined) parts.push(ctx.colorByValue);
-    return parts.join("-");
-}
-
-function buildDisplayName(ctx: ContentContext): string {
-    const baseParts = [ctx.ensembleName, ctx.tableName, ctx.fluidZone];
-    const extraParts: (string | number)[] = [];
-    if (ctx.subplotByValue !== undefined) extraParts.push(ctx.subplotByValue);
-    if (ctx.colorByValue !== undefined) extraParts.push(ctx.colorByValue);
-
-    const allParts = [...baseParts, ...extraParts].join(", ");
-    return `${ctx.resultName} (${allParts})`;
-}
-
-function makeResultRealizationDataGenerator(table: Table, ctx: ContentContext, preferredColor?: string): DataGenerator {
+function makeResultRealizationDataGenerator(
+    ensembleName: string,
+    ensembleIdent: RegularEnsembleIdent,
+    tableName: string,
+    fluid: string,
+    table: Table,
+    resultName: string,
+    preferredColor?: string,
+): DataGenerator {
     return () => {
         const realColumn = table.getColumn("REAL");
-        const resultColumn = table.getColumn(ctx.resultName);
+        const resultColumn = table.getColumn(resultName);
 
         if (!realColumn || !resultColumn) {
             throw new Error("REAL and result columns must be present");
@@ -62,39 +35,15 @@ function makeResultRealizationDataGenerator(table: Table, ctx: ContentContext, p
 
         const metaData: ChannelContentMetaData = {
             unit: "",
-            ensembleIdentString: ctx.ensembleIdent.toString(),
-            displayString: buildDisplayName(ctx),
-            preferredColor,
+            ensembleIdentString: ensembleIdent.toString(),
+            displayString: `${resultName} (${ensembleName}, ${tableName}, ${fluid})`,
+            preferredColor: preferredColor,
         };
 
-        return { data, metaData };
-    };
-}
-
-function getColorKey(
-    colorBy: string,
-    ensembleIdentStr: string | number,
-    tableName: string | number,
-    fluidZone: string | number,
-): string | number {
-    if (colorBy === TableOriginKey.TABLE_NAME) return tableName;
-    if (colorBy === TableOriginKey.FLUID) return fluidZone;
-    return ensembleIdentStr;
-}
-
-function createChannelContent(
-    table: Table,
-    ctx: ContentContext,
-    colorByMap: Map<string | number, string>,
-    colorBy: string,
-): ChannelContentDefinition {
-    const colorKey = ctx.colorByValue ?? getColorKey(colorBy, ctx.ensembleIdentStr, ctx.tableName, ctx.fluidZone);
-    const determinedColor = colorByMap.get(colorKey);
-
-    return {
-        contentIdString: buildContentIdString(ctx),
-        displayName: buildDisplayName(ctx),
-        dataGenerator: makeResultRealizationDataGenerator(table, ctx, determinedColor),
+        return {
+            data,
+            metaData,
+        };
     };
 }
 
@@ -102,21 +51,13 @@ export function usePublishToDataChannels(
     viewContext: ViewContext<Interfaces>,
     ensembleSet: EnsembleSet,
     colorSet: ColorSet,
+    colorBy: string,
     table?: Table,
+    resultName?: string,
 ) {
     const contents: ChannelContentDefinition[] = [];
-    const subplotBy = useAtomValue(subplotByAtom);
-    const colorBy = useAtomValue(colorByAtom);
-    const resultName = useAtomValue(firstResultNameAtom);
-    const plotType = useAtomValue(plotTypeAtom);
 
-    if (
-        !table ||
-        !resultName ||
-        !table.getColumn("REAL") ||
-        !table.getColumn(resultName) ||
-        plotType === PlotType.BAR
-    ) {
+    if (!table || !resultName || !table.getColumn("REAL") || !table.getColumn(resultName)) {
         viewContext.usePublishChannelContents({
             channelIdString: ChannelIds.RESPONSE_PER_REAL,
             dependencies: [table, ensembleSet, resultName, colorBy, colorSet],
@@ -127,49 +68,43 @@ export function usePublishToDataChannels(
     }
 
     const colorByMap = createColumnValuesToColorMap(table, ensembleSet, colorBy, colorSet);
-    const isStandardSubplotBy = STANDARD_ORIGIN_KEYS.includes(subplotBy as TableOriginKey);
-    const isStandardColorBy = STANDARD_ORIGIN_KEYS.includes(colorBy as TableOriginKey);
 
-    for (const [ensembleIdentStr, ensembleTable] of table.splitByColumn(TableOriginKey.ENSEMBLE).getCollectionMap()) {
+    const ensembleCollection = table.splitByColumn(TableOriginKey.ENSEMBLE);
+    for (const [ensembleIdentStr, ensembleTable] of ensembleCollection.getCollectionMap()) {
         const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentStr.toString());
         const ensembleName = makeDistinguishableEnsembleDisplayName(
             ensembleIdent,
             ensembleSet.getRegularEnsembleArray(),
         );
 
-        for (const [tableName, tableForTableName] of ensembleTable
-            .splitByColumn(TableOriginKey.TABLE_NAME)
-            .getCollectionMap()) {
-            for (const [fluidZone, fluidZoneTable] of tableForTableName
-                .splitByColumn(TableOriginKey.FLUID)
-                .getCollectionMap()) {
-                const baseCtx: Omit<ContentContext, "subplotByValue" | "colorByValue"> = {
+        const tableCollection = ensembleTable.splitByColumn(TableOriginKey.TABLE_NAME);
+        for (const [tableName, tableForTableName] of tableCollection.getCollectionMap()) {
+            const fluidZoneCollection = tableForTableName.splitByColumn(TableOriginKey.FLUID);
+            for (const [fluidZone, fluidZoneTable] of fluidZoneCollection.getCollectionMap()) {
+                let keyForColorLookup: string | number = ensembleIdentStr;
+
+                if (colorBy === TableOriginKey.TABLE_NAME) {
+                    keyForColorLookup = tableName;
+                } else if (colorBy === TableOriginKey.FLUID) {
+                    keyForColorLookup = fluidZone;
+                }
+                const determinedColor = colorByMap.get(keyForColorLookup);
+
+                const dataGenerator = makeResultRealizationDataGenerator(
                     ensembleName,
                     ensembleIdent,
-                    ensembleIdentStr,
-                    tableName,
-                    fluidZone,
+                    tableName.toString(),
+                    fluidZone.toString(),
+                    fluidZoneTable,
                     resultName,
-                };
+                    determinedColor,
+                );
 
-                const tablesToProcess = isStandardSubplotBy
-                    ? [{ table: fluidZoneTable, subplotByValue: undefined }]
-                    : Array.from(fluidZoneTable.splitByColumn(subplotBy).getCollectionMap()).map(
-                          ([subplotValue, subplotTable]) => ({ table: subplotTable, subplotByValue: subplotValue }),
-                      );
-
-                for (const { table: currentTable, subplotByValue } of tablesToProcess) {
-                    const colorEntries = isStandardColorBy
-                        ? [{ table: currentTable, colorByValue: undefined }]
-                        : Array.from(currentTable.splitByColumn(colorBy).getCollectionMap()).map(
-                              ([colorValue, colorTable]) => ({ table: colorTable, colorByValue: colorValue }),
-                          );
-
-                    for (const { table: finalTable, colorByValue } of colorEntries) {
-                        const ctx: ContentContext = { ...baseCtx, subplotByValue, colorByValue };
-                        contents.push(createChannelContent(finalTable, ctx, colorByMap, colorBy));
-                    }
-                }
+                contents.push({
+                    contentIdString: `${fluidZone}-${tableName}-${ensembleIdentStr}`,
+                    displayName: `${resultName} (${ensembleName}, ${tableName}, ${fluidZone})`,
+                    dataGenerator,
+                });
             }
         }
     }

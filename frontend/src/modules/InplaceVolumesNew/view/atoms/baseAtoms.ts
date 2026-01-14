@@ -1,8 +1,8 @@
 import { atom } from "jotai";
 
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
-import type { InplaceVolumesFilterSelections } from "@modules/InplaceVolumesPlot/typesAndEnums";
-import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
+import type { InplaceVolumesFilterSelections } from "@modules/InplaceVolumesNew/typesAndEnums";
+import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
 export const filterAtom = atom<InplaceVolumesFilterSelections>({
     ensembleIdents: [],
@@ -11,7 +11,6 @@ export const filterAtom = atom<InplaceVolumesFilterSelections>({
     areSelectedTablesComparable: false,
 });
 export const firstResultNameAtom = atom<string | null>(null);
-export const secondResultNameAtom = atom<string | null>(null);
 export const selectorColumnAtom = atom<string | null>(null);
 export const subplotByAtom = atom<string>(TableOriginKey.ENSEMBLE);
 export const plotTypeAtom = atom<PlotType>(PlotType.HISTOGRAM);

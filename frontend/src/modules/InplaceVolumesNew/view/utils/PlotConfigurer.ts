@@ -1,6 +1,6 @@
 import type { HistogramType } from "@modules/_shared/histogram";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
-import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
+import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 import type { Axis } from "plotly.js";
 
 import type { PlotBuilder } from "./PlotBuilder";

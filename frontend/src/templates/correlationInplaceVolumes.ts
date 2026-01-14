@@ -3,7 +3,7 @@ import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
-import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
+import { ChannelIds } from "@modules/InplaceVolumesNew/channelDefs";
 import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
 
 const template: Template = {
