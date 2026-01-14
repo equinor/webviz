@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import type { WellboreHeader_api } from "@api";
 import type { SelectOption } from "@lib/components/Select";
@@ -8,60 +8,87 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
-import type { SettingCategory } from "../settingsDefinitions";
+import { assertStringArrayOrNull } from "../utils/structureValidation";
 
-type ValueType = WellboreHeader_api[] | null;
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arrayMultiSelect";
 
-export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_SELECT> {
-    defaultValue: ValueType = null;
+type InternalValueType = string[] | null;
+type ExternalValueType = WellboreHeader_api[] | null;
+type ValueConstraintsType = WellboreHeader_api[];
 
-    getLabel(): string {
-        return "Drilled wellbores";
-    }
-
-    fixupValue(
-        currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>,
-    ): ValueType {
-        if (!currentValue) {
-            return availableValues;
-        }
-
-        const matchingValues = currentValue.filter((value) =>
-            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
+export class DrilledWellboresSetting
+    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueConstraintsType>
+{
+    defaultValue: InternalValueType = null;
+    valueConstraintsIntersectionReducerDefinition =
+        makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
+            (a, b) => a.wellboreUuid === b.wellboreUuid,
         );
-        if (matchingValues.length === 0) {
-            return availableValues;
+
+    mapInternalToExternalValue(
+        internalValue: InternalValueType,
+        valueConstraints: ValueConstraintsType,
+    ): ExternalValueType {
+        if (internalValue === null) {
+            return null;
         }
-        return matchingValues;
+
+        const externalValues = valueConstraints.filter((wellbore) => internalValue.includes(wellbore.wellboreUuid));
+        return externalValues;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) => React.ReactNode {
-        return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
-            const availableValues = props.availableValues ?? [];
+    serializeValue(value: InternalValueType): string {
+        return JSON.stringify(value);
+    }
 
-            const options: SelectOption[] = availableValues?.map((ident) => ({
+    deserializeValue(serializedValue: string): InternalValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringArrayOrNull(parsed);
+        return parsed;
+    }
+
+    fixupValue(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): InternalValueType {
+        const fixedValue = fixupValue<string, WellboreHeader_api>(
+            currentValue,
+            valueConstraints,
+            mappingFunc,
+            "allAvailable",
+        );
+
+        if (fixedValue.length === 0) {
+            return valueConstraints.map(mappingFunc);
+        }
+
+        return fixedValue;
+    }
+
+    isValueValid(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): boolean {
+        return isValueValid<string, WellboreHeader_api>(currentValue, valueConstraints, mappingFunc);
+    }
+
+    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueConstraintsType>) => React.ReactNode {
+        return function DrilledWellbores(props: SettingComponentProps<InternalValueType, ValueConstraintsType>) {
+            const valueConstraints = props.valueConstraints ?? [];
+
+            const options: SelectOption[] = valueConstraints?.map((ident) => ({
                 value: ident.wellboreUuid,
                 label: ident.uniqueWellboreIdentifier,
             }));
 
             function handleChange(selectedUuids: string[]) {
-                const selectedWellbores = availableValues.filter((ident) => selectedUuids.includes(ident.wellboreUuid));
-                props.onValueChange(selectedWellbores);
+                props.onValueChange(selectedUuids);
             }
-
-            const selectedValues = React.useMemo(
-                () => props.value?.map((ident) => ident.wellboreUuid) ?? [],
-                [props.value],
-            );
 
             return (
                 <div className="flex flex-col gap-1 mt-1">
                     <Select
                         filter
                         options={options}
-                        value={selectedValues}
+                        value={props.value ?? []}
                         onChange={handleChange}
                         showQuickSelectButtons={true}
                         disabled={props.isOverridden}
@@ -72,4 +99,8 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
             );
         };
     }
+}
+
+function mappingFunc(value: WellboreHeader_api): string {
+    return value.wellboreUuid;
 }

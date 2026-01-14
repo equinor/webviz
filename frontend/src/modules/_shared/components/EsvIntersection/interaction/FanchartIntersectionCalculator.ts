@@ -31,6 +31,12 @@ export class FanchartIntersectionCalculator implements IntersectionCalculator {
         const y1 = p1[1];
         const x2 = p2[0];
         const y2 = p2[1];
+
+        // Handle vertical line (x2 === x1) - cannot interpolate
+        if (x2 === x1) {
+            return y1;
+        }
+
         return y1 + ((x - x1) * (y2 - y1)) / (x2 - x1);
     }
 

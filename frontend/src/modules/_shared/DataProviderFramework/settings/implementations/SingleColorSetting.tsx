@@ -5,11 +5,11 @@ import { ColorSelect } from "@lib/components/ColorSelect";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 import type {
-    CustomSettingImplementation,
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
+    StaticSettingImplementation,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
+import { assertStringOrNull } from "../utils/structureValidation";
 
 type ValueType = string | null;
 
@@ -23,7 +23,7 @@ function* makeColorGenerator(palette: ColorPalette) {
     }
 }
 
-export class SingleColorSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
+export class SingleColorSetting implements StaticSettingImplementation<ValueType> {
     // ? How do I get this one tied to work-bench settings?
     static _colorGenerator = makeColorGenerator(defaultColorPalettes[0]);
 
@@ -31,6 +31,10 @@ export class SingleColorSetting implements CustomSettingImplementation<ValueType
 
     constructor() {
         this.defaultValue = SingleColorSetting._colorGenerator.next().value ?? null;
+    }
+
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
     }
 
     getIsStatic(): boolean {
@@ -44,12 +48,13 @@ export class SingleColorSetting implements CustomSettingImplementation<ValueType
     }
 
     serializeValue(value: ValueType): string {
-        return value ?? "";
+        return JSON.stringify(value);
     }
 
-    deserializeValue?(serializedValue: string): ValueType {
-        if (serializedValue === "") return null;
-        return serializedValue;
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertStringOrNull(parsed);
+        return parsed;
     }
 
     fixupValue(value: ValueType): NonNullable<ValueType> {
@@ -57,8 +62,8 @@ export class SingleColorSetting implements CustomSettingImplementation<ValueType
         return value;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.STATIC>) => React.ReactNode {
-        return function SingleColorSettingComponent(props: SettingComponentProps<ValueType, SettingCategory.STATIC>) {
+    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
+        return function SingleColorSettingComponent(props: SettingComponentProps<ValueType>) {
             const initialColor = props.value?.slice(0, 7) ?? "#000000";
 
             const [color, setColor] = React.useState<string>(initialColor);

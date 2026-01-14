@@ -155,7 +155,7 @@ export class LineIntersectionCalculator implements IntersectionCalculator {
     } {
         let nearestPoint = this._points[startIndex];
         let smallestDistance = this.calcPointDistance(nearestPoint, point);
-        let nearestPointIndex = 0;
+        let nearestPointIndex = startIndex;
 
         if (startIndex === endIndex) {
             return {
@@ -164,7 +164,7 @@ export class LineIntersectionCalculator implements IntersectionCalculator {
             };
         }
 
-        for (let i = startIndex + 1; i < endIndex; i++) {
+        for (let i = startIndex + 1; i <= endIndex; i++) {
             const distance = this.calcPointDistance(this._points[i], point);
             if (distance < smallestDistance) {
                 nearestPoint = this._points[i];
@@ -182,7 +182,7 @@ export class LineIntersectionCalculator implements IntersectionCalculator {
 
         if (nearestPointIndex === endIndex) {
             return {
-                p1: nearestPoint,
+                p1: this._points[endIndex - 1],
                 p2: this._points[endIndex],
             };
         }
@@ -238,8 +238,16 @@ export class LineIntersectionCalculator implements IntersectionCalculator {
         const scalarProduct = p1ToPointVector[0] * p1ToP2Vector[0] + p1ToPointVector[1] * p1ToP2Vector[1];
 
         const p1ToP2Length = this.calcPointDistance(lineSegment.p1, lineSegment.p2);
+
+        // Handle degenerate case where p1 and p2 are the same point
+        if (p1ToP2Length === 0) {
+            return [lineSegment.p1[0], lineSegment.p1[1]];
+        }
+
         const scalar = scalarProduct / p1ToP2Length ** 2;
-        const result = [p1ToP2Vector[0] * scalar, p1ToP2Vector[1] * scalar];
+        // Clamp scalar to [0, 1] to keep the result within the line segment
+        const clampedScalar = Math.max(0, Math.min(1, scalar));
+        const result = [p1ToP2Vector[0] * clampedScalar, p1ToP2Vector[1] * clampedScalar];
 
         const resultVector = [lineSegment.p1[0] + result[0], lineSegment.p1[1] + result[1]];
 

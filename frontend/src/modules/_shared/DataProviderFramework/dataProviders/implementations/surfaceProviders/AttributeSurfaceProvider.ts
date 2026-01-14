@@ -21,7 +21,7 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
@@ -126,7 +126,7 @@ export class AttributeSurfaceProvider
     }
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueConstraintsUpdater,
         settingAttributesUpdater,
         storedDataUpdater,
         workbenchSession,
@@ -159,12 +159,12 @@ export class AttributeSurfaceProvider
             }
             return { enabled: false, visible: false };
         });
-        availableSettingsUpdater(Setting.REPRESENTATION, () => {
+        valueConstraintsUpdater(Setting.REPRESENTATION, () => {
             return [Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
         });
-        availableSettingsUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
-        availableSettingsUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
-        availableSettingsUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
+        valueConstraintsUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
+        valueConstraintsUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
+        valueConstraintsUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
 
         const surfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
@@ -184,8 +184,8 @@ export class AttributeSurfaceProvider
                 }),
             });
         });
-        availableSettingsUpdater(Setting.REALIZATION, createRealizationUpdater());
-        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, createRealizationUpdater());
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(surfaceMetadataDep);
 
             if (!data) {
@@ -218,7 +218,7 @@ export class AttributeSurfaceProvider
 
             return availableAttributes;
         });
-        availableSettingsUpdater(Setting.FORMATION_NAME, ({ getHelperDependency, getLocalSetting }) => {
+        valueConstraintsUpdater(Setting.FORMATION_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(Setting.ATTRIBUTE);
             const data = getHelperDependency(surfaceMetadataDep);
 
@@ -236,7 +236,7 @@ export class AttributeSurfaceProvider
             return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
         });
 
-        availableSettingsUpdater(Setting.TIME_POINT, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.TIME_POINT, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(Setting.ATTRIBUTE);
             const formationName = getLocalSetting(Setting.FORMATION_NAME);
             const data = getHelperDependency(surfaceMetadataDep);
@@ -251,7 +251,7 @@ export class AttributeSurfaceProvider
 
             return [SurfaceTimeType_api.NO_TIME];
         });
-        availableSettingsUpdater(Setting.TIME_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.TIME_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(Setting.ATTRIBUTE);
             const formationName = getLocalSetting(Setting.FORMATION_NAME);
             const data = getHelperDependency(surfaceMetadataDep);

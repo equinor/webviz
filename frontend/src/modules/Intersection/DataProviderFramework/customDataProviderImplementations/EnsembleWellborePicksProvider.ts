@@ -12,7 +12,8 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 const ensembleWellborePicksSettings = [
     Setting.INTERSECTION,
@@ -40,11 +41,11 @@ export class EnsembleWellborePicksProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueConstraintsUpdater,
         queryClient,
         workbenchSession,
     }: DefineDependenciesArgs<EnsembleWellborePicksSettings>): void {
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
             return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
@@ -55,7 +56,7 @@ export class EnsembleWellborePicksProvider
             return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
-        availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -89,7 +90,7 @@ export class EnsembleWellborePicksProvider
             });
         });
 
-        availableSettingsUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
             const wellborePicks = getHelperDependency(wellborePicksDep);
 
             if (!wellborePicks) return [];
@@ -100,7 +101,7 @@ export class EnsembleWellborePicksProvider
             return interpreters;
         });
 
-        availableSettingsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
             const wellborePicks = getHelperDependency(wellborePicksDep);
             const selectedInterpreter = getLocalSetting(Setting.SMDA_INTERPRETER);
 

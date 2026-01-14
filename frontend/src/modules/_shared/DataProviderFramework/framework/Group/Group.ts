@@ -1,8 +1,9 @@
 import { isDevMode } from "@lib/utils/devMode";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
+import { SharedSettingsDelegate, SharedSettingsDelegateTopic } from "../../delegates/SharedSettingsDelegate";
 import type { GroupType } from "../../groups/groupTypes";
 import type {
     CustomGroupImplementation,
@@ -13,9 +14,9 @@ import type { DefineBasicDependenciesArgs } from "../../interfacesAndTypes/custo
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 import type { SerializedGroup, SerializedSettingsState } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
-import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
-import type { MakeSettingTypesMap, SettingTypes, Settings } from "../../settings/settingsDefinitions";
-import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { Settings } from "../../settings/settingsDefinitions";
+import { DataProviderManagerTopic, type DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
 
@@ -37,7 +38,7 @@ export function isGroup(obj: any): obj is Group {
 
 export type GroupParams<
     TSettingTypes extends Settings,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
 > = {
     dataProviderManager: DataProviderManager;
     color?: string;
@@ -50,7 +51,7 @@ export type GroupParams<
 export class Group<
     TSettings extends Settings = [],
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > implements ItemGroup
 {
     private _itemDelegate: ItemDelegate;
@@ -59,6 +60,8 @@ export class Group<
     private _icon: React.ReactNode | null = null;
     private _emptyContentMessage: string | null = null;
     private _sharedSettingsDelegate: SharedSettingsDelegate<TSettings, TSettingTypes, TSettingKey> | null = null;
+    private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
+        new UnsubscribeFunctionsManagerDelegate();
 
     constructor(params: GroupParams<TSettings, TSettingTypes>) {
         const { dataProviderManager, customGroupImplementation, type } = params;
@@ -70,17 +73,29 @@ export class Group<
                 this,
                 makeSettings<TSettings, TSettingTypes, TSettingKey>(
                     customGroupImplementation.settings as unknown as TSettings,
-                    customGroupImplementation.getDefaultSettingsValues?.() ?? {}
+                    customGroupImplementation.getDefaultSettingsValues?.() ?? {},
                 ),
                 customGroupImplementation.defineDependencies as unknown as
                     | ((args: DefineBasicDependenciesArgs<TSettings, TSettingTypes>) => void)
-                    | undefined
+                    | undefined,
+            );
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "shared-settings",
+                this._sharedSettingsDelegate
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(SharedSettingsDelegateTopic.SETTINGS_CHANGED)(() =>
+                    this.handleSettingsChange(),
+                ),
             );
         }
         this._type = type;
         this._emptyContentMessage = customGroupImplementation.getEmptyContentMessage
             ? customGroupImplementation.getEmptyContentMessage()
             : null;
+    }
+
+    handleSettingsChange() {
+        this._itemDelegate.getDataProviderManager().publishTopic(DataProviderManagerTopic.DATA_REVISION);
     }
 
     getItemDelegate(): ItemDelegate {
@@ -103,7 +118,7 @@ export class Group<
         return this._sharedSettingsDelegate;
     }
 
-    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null> } {
+    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K> } {
         if (!this._sharedSettingsDelegate) {
             throw new Error("Group does not have shared settings.");
         }
@@ -137,5 +152,6 @@ export class Group<
     beforeDestroy(): void {
         this._groupDelegate.beforeDestroy();
         this._sharedSettingsDelegate?.beforeDestroy();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
 }
