@@ -26,6 +26,8 @@ export function isInvalidStatisticsResampleFrequency(
 /**
  * Function to get warning string for the resample frequency setting
  *
+ * Optional parameter selectedEnsembleIdents can be provided to check for delta ensembles.
+ *
  * Returns warning if:
  * - Resample frequency is RAW (null) and visualization mode requires resampling
  * - Resample frequency is RAW (null) and delta ensembles are selected
@@ -33,7 +35,7 @@ export function isInvalidStatisticsResampleFrequency(
 export function makeResampleFrequencyWarningString(
     resampleFrequency: Frequency_api | null,
     visualizationMode: VisualizationMode,
-    selectedEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null,
+    selectedEnsembleIdents?: (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null,
 ): string | undefined {
     const isInvalidStatisticsResampleFreq = isInvalidStatisticsResampleFrequency(resampleFrequency, visualizationMode);
     const isInvalidDeltaEnsemblaResampleFreq =
