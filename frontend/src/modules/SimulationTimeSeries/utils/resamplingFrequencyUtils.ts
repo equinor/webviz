@@ -38,18 +38,18 @@ export function makeResampleFrequencyWarningString(
     selectedEnsembleIdents?: (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null,
 ): string | undefined {
     const isInvalidStatisticsResampleFreq = isInvalidStatisticsResampleFrequency(resampleFrequency, visualizationMode);
-    const isInvalidDeltaEnsemblaResampleFreq =
+    const isInvalidDeltaEnsembleResampleFreq =
         resampleFrequency === null &&
         selectedEnsembleIdents &&
         selectedEnsembleIdents.some((ident) => isEnsembleIdentOfType(ident, DeltaEnsembleIdent));
 
-    if (isInvalidStatisticsResampleFreq && isInvalidDeltaEnsemblaResampleFreq) {
+    if (isInvalidStatisticsResampleFreq && isInvalidDeltaEnsembleResampleFreq) {
         return "Statistical visualization and delta ensembles requires resampled data (not Raw).";
     }
     if (isInvalidStatisticsResampleFreq) {
         return "Statistical visualization requires resampled data (not Raw).";
     }
-    if (isInvalidDeltaEnsemblaResampleFreq) {
+    if (isInvalidDeltaEnsembleResampleFreq) {
         return "Delta ensembles requires resampled data (not Raw).";
     }
     return undefined;
