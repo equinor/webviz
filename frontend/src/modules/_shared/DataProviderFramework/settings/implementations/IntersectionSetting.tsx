@@ -97,13 +97,22 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 props.value?.type ?? activeIntersectionType,
             );
 
-            React.useEffect(() => {
-                setActiveIntersectionType(type);
-            }, [type]);
+            // Initialize cached value for the current type on mount
+            React.useEffect(function initializeCachedValueOnMount() {
+                setCachedValueForIntersectionType(type, props.value);
+            }, []);
+
+            React.useEffect(
+                function updateActiveIntersectionType() {
+                    setActiveIntersectionType(type);
+                },
+                [type],
+            );
 
             function handleSelectionChange(selectedValue: string) {
                 const newValue = availableValues.find((v) => v.uuid === selectedValue) ?? null;
                 setCachedValueForIntersectionType(type, newValue);
+                // setCachedValue(newValue);
                 props.onValueChange(newValue);
             }
 
