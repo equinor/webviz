@@ -246,8 +246,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 />
 
                 <div className="flex mt-2">
-                    {" "}
-                    {/* <Label wrapperClassName="mb-2 flex-1" position="left" text="Allow table intersections"> */}
                     <SettingWrapper
                         labelPosition="right"
                         label="Allow table intersections"
@@ -269,7 +267,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                             onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
                         />
                     </SettingWrapper>
-                    {/* </Label> */}
                 </div>
                 <PendingWrapper
                     isPending={props.isPending ?? false}
