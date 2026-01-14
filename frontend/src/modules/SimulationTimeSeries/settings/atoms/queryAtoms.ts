@@ -7,7 +7,7 @@ import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type { CategorizedItem } from "@modules/SimulationTimeSeries/typesAndEnums";
-import { assembleQueriesInOriginalOrder } from "@modules/SimulationTimeSeries/utils/querySortingUtils";
+import { assembleQueryResultsInOriginalOrder } from "@modules/SimulationTimeSeries/utils/querySortingUtils";
 
 import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
 
@@ -16,7 +16,12 @@ export const vectorListQueriesAtom = atom((get) => {
     const regularQueries = get(regularEnsembleVectorListQueriesAtom);
     const deltaQueries = get(deltaEnsembleVectorListQueriesAtom);
 
-    return assembleQueriesInOriginalOrder(regularQueries, deltaQueries, regularEnsembleIdents, deltaEnsembleIdents);
+    return assembleQueryResultsInOriginalOrder(
+        regularQueries,
+        deltaQueries,
+        regularEnsembleIdents,
+        deltaEnsembleIdents,
+    );
 });
 
 // ----------------------------------------------------

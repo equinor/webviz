@@ -25,7 +25,7 @@ import type {
     VectorWithHistoricalData,
 } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
-import { assembleQueriesInOriginalOrder } from "@modules/SimulationTimeSeries/utils/querySortingUtils";
+import { assembleQueryResultsInOriginalOrder } from "@modules/SimulationTimeSeries/utils/querySortingUtils";
 
 import {
     resampleFrequencyAtom,
@@ -42,7 +42,7 @@ export const vectorDataQueriesAtom = atom((get) => {
     const regularQueries = get(regularEnsembleVectorDataQueriesAtom);
     const deltaQueries = get(deltaEnsembleVectorDataQueriesAtom);
 
-    return assembleQueriesInOriginalOrder(
+    return assembleQueryResultsInOriginalOrder(
         regularQueries,
         deltaQueries,
         regularEnsembleVectorSpecifications,
@@ -57,7 +57,7 @@ export const vectorStatisticsQueriesAtom = atom((get) => {
     const regularQueries = get(regularEnsembleStatisticsQueriesAtom);
     const deltaQueries = get(deltaEnsembleStatisticsQueriesAtom);
 
-    return assembleQueriesInOriginalOrder(
+    return assembleQueryResultsInOriginalOrder(
         regularQueries,
         deltaQueries,
         regularEnsembleVectorSpecifications,

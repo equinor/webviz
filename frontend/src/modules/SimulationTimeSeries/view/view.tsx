@@ -19,7 +19,7 @@ import { GroupBy } from "../typesAndEnums";
 
 import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
 import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
-import { useResampleFrequencyWarningMessage } from "./hooks/useMakeContentWarningMessage";
+import { useMakeResampleFrequencyWarningMessage } from "./hooks/useMakeResampleFrequencyWarningMessage";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
@@ -80,7 +80,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap);
-    const resampleFrequencyWarningMessage = useResampleFrequencyWarningMessage();
+    const resampleFrequencyWarningMessage = useMakeResampleFrequencyWarningMessage();
 
     const handleClickInChart = React.useCallback(
         function handleClickInChart(e: PlotMouseEvent) {
@@ -109,8 +109,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     const hasQueryErrors = hasRealizationsQueryError || hasStatisticsQueryError;
 
-    const createContent = React.useCallback(
-        function createContent(): React.ReactNode {
+    const viewContent = React.useMemo(
+        function createViewContent(): React.ReactNode {
             if (resampleFrequencyWarningMessage !== null) {
                 return <ContentWarning>{resampleFrequencyWarningMessage}</ContentWarning>;
             }
@@ -139,7 +139,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {createContent()}
+            {viewContent}
         </div>
     );
 };

@@ -6,7 +6,7 @@ import { makeResampleFrequencyWarningString } from "@modules/SimulationTimeSerie
 
 import { resampleFrequencyAtom, vectorSpecificationsAtom, visualizationModeAtom } from "../atoms/baseAtoms";
 
-export function useResampleFrequencyWarningMessage(): string | null {
+export function useMakeResampleFrequencyWarningMessage(): string | null {
     const resampleFrequency = useAtomValue(resampleFrequencyAtom);
     const visualizationMode = useAtomValue(visualizationModeAtom);
     const vectorSpecifications = useAtomValue(vectorSpecificationsAtom);

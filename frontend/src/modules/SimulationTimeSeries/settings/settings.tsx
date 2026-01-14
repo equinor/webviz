@@ -73,7 +73,7 @@ import {
     useSelectedEnsembleIdentsAnnotations,
     useSelectedParameterIdentStringAnnotations,
     useVectorListQueriesErrorAnnotation,
-} from "./hooks/useMakeSettingAnnotations";
+} from "./hooks/settingAnnotationHooks";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>) {
