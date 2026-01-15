@@ -1,5 +1,7 @@
 import { atom } from "jotai";
 
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -21,11 +23,19 @@ export const availableParameterIdentsAtom = atom((get) => {
         (content) => content.metaData.ensembleIdentString,
     );
 
-    // Get regular ensemble identifiers
+    // Get ensemble identifiers
     const ensembleSet = get(EnsembleSetAtom);
-    const regularEnsembleIdents = ensembleIdentStrings
+    const ensembleIdents = ensembleIdentStrings
         .map((id) => ensembleSet.findEnsembleByIdentString(id))
-        .filter((ensemble) => ensemble instanceof RegularEnsemble)
-        .map((ensemble) => RegularEnsembleIdent.fromString(ensemble.getIdent().toString()));
-    return getContinuousAndNonConstantParameterIdentsInEnsembles(ensembleSet, regularEnsembleIdents);
+        .filter(
+            (ensemble): ensemble is RegularEnsemble | DeltaEnsemble =>
+                ensemble instanceof RegularEnsemble || ensemble instanceof DeltaEnsemble,
+        )
+        .map((ensemble) => {
+            if (ensemble instanceof RegularEnsemble) {
+                return RegularEnsembleIdent.fromString(ensemble.getIdent().toString());
+            }
+            return DeltaEnsembleIdent.fromString(ensemble.getIdent().toString());
+        });
+    return getContinuousAndNonConstantParameterIdentsInEnsembles(ensembleSet, ensembleIdents);
 });
