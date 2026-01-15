@@ -1,10 +1,11 @@
 import logging
-import pandas as pd
+
+import polars as pl
 import numpy as np
 
-from webviz_services.sumo_access.group_tree_types import TreeType
+from webviz_services.flow_network_assembler.flow_network_types import TreeType
 
-from .flow_network_types import (
+from webviz_services.flow_network_assembler.flow_network_types import (
     CategorizedNodeSummaryVectors,
     NodeClassification,
     SummaryVectorInfo,
@@ -15,72 +16,20 @@ from .flow_network_types import (
     NodeType,
 )
 
+from webviz_services.flow_network_assembler._types import network_node_types
+
 
 LOGGER = logging.getLogger(__name__)
 
-NODE_TYPE_ENUM_TO_STRING_MAPPING = {
-    NodeType.INJ: "Injector",
-    NodeType.PROD: "Producer",
-    NodeType.OTHER: "Other",
-}
-
-
-FIELD_DATATYPE_VECTOR_MAP = {
-    DataType.OILRATE: "FOPR",
-    DataType.GASRATE: "FGPR",
-    DataType.WATERRATE: "FWPR",
-    DataType.WATERINJRATE: "FWIR",
-    DataType.GASINJRATE: "FGIR",
-    DataType.PRESSURE: "GPR",
-}
-GROUPTYPE_DATATYPE_VECTORS_MAP = {
-    TreeType.GRUPTREE: {
-        DataType.OILRATE: "GOPR",
-        DataType.GASRATE: "GGPR",
-        DataType.WATERRATE: "GWPR",
-        DataType.WATERINJRATE: "GWIR",
-        DataType.GASINJRATE: "GGIR",
-        DataType.PRESSURE: "GPR",
-    },
-    # BRANPROP can not be used for injection, but the nodes
-    # might also be GNETINJE and could therefore have injection.
-    TreeType.BRANPROP: {
-        DataType.OILRATE: "GOPRNB",
-        DataType.GASRATE: "GGPRNB",
-        DataType.WATERRATE: "GWPRNB",
-        DataType.WATERINJRATE: "GWIR",
-        DataType.GASINJRATE: "GGIR",
-        DataType.PRESSURE: "GPR",
-    },
-}
-WELL_DATATYPE_VECTOR_MAP = {
-    DataType.WELL_STATUS: "WSTAT",
-    DataType.OILRATE: "WOPR",
-    DataType.GASRATE: "WGPR",
-    DataType.WATERRATE: "WWPR",
-    DataType.WATERINJRATE: "WWIR",
-    DataType.GASINJRATE: "WGIR",
-    DataType.PRESSURE: "WTHP",
-    DataType.BHP: "WBHP",
-    DataType.WMCTL: "WMCTL",
-}
-
-DATATYPE_LABEL_MAP = {
-    DataType.OILRATE: "Oil Rate",
-    DataType.GASRATE: "Gas Rate",
-    DataType.WATERRATE: "Water Rate",
-    DataType.WATERINJRATE: "Water Inj Rate",
-    DataType.GASINJRATE: "Gas Inj Rate",
-    DataType.PRESSURE: "Pressure",
-    DataType.BHP: "BHP",
-    DataType.WMCTL: "WMCTL",
-}
-
 
 def compute_tree_well_vectors(group_tree_wells: list[str], data_type: DataType) -> set[str]:
-    """Given a vector type (WSTAT, WOPT, etc), returns a list of full summary vector names for each well in a group tree model; e.g. "WSTAT:A1", "WSTAT:A2", etc. Returns an empty array (and logs a warning) if the datatype has no vector"""
+    """
+    Given a vector type (WSTAT, WOPT, etc), returns a list of full summary vector names foreach well in a group tree model; e.g. "WSTAT:A1", "WSTAT:A2", etc.
 
-    vector_name = WELL_DATATYPE_VECTOR_MAP.get(data_type)
+    Returns an empty array (and logs a warning) if the datatype has no vector
+    """
+
+    vector_name = network_node_types.WELL_DATATYPE_VECTOR_MAP.get(data_type)
 
     if vector_name is None:
         LOGGER.warning("No recognized well vector for type %s", data_type)
@@ -89,25 +38,26 @@ def compute_tree_well_vectors(group_tree_wells: list[str], data_type: DataType) 
     return {f"{vector_name}:{well}" for well in group_tree_wells}
 
 
-def compute_tree_group_vectors(group_tree_groups: list[str], data_type: DataType) -> set[str]:
-    """Given a vector type (GOPR, GGIR, etc), returns a list of full summary vector names for each group in a group tree model. Returns an empty array (and logs a warning) if the datatype has no vector"""
-    grup_tree_vectors = GROUPTYPE_DATATYPE_VECTORS_MAP[TreeType.GRUPTREE]
-    bran_prop_vectors = GROUPTYPE_DATATYPE_VECTORS_MAP[TreeType.BRANPROP]
+def compute_tree_type_vectors(tree_types: list[TreeType], data_type: DataType) -> set[str]:
+    """Given a vector type (GOPR, GGIR, etc), returns a list of full summary vector names for each tree type in a group tree model.
+    Returns an empty array (and logs a warning) if the datatype has no vector"""
+    grup_tree_vectors = network_node_types.TREETYPE_DATATYPE_VECTORS_MAP[TreeType.GRUPTREE]
+    bran_prop_vectors = network_node_types.TREETYPE_DATATYPE_VECTORS_MAP[TreeType.BRANPROP]
 
     v_name_grup = grup_tree_vectors.get(data_type)
     v_name_bran = bran_prop_vectors.get(data_type)
     v_names = [v for v in (v_name_grup, v_name_bran) if v is not None]
 
     if len(v_names) == 0:
-        LOGGER.warning("No recognized group vectors for type %s", data_type)
+        LOGGER.warning("No recognized vectors for type %s", data_type)
         return set()
 
     # Nested loop to create all possible combinations
-    return {f"{v_name}:{group}" for v_name in v_names for group in group_tree_groups}
+    return {f"{v_name}:{tree_type.value}" for v_name in v_names for tree_type in tree_types}
 
 
 def compute_all_well_vectors(group_tree_wells: list[str]) -> set[str]:
-    data_types = WELL_DATATYPE_VECTOR_MAP.keys()
+    data_types = network_node_types.WELL_DATATYPE_VECTOR_MAP.keys()
 
     res = set()
     for data_type in data_types:
@@ -116,36 +66,36 @@ def compute_all_well_vectors(group_tree_wells: list[str]) -> set[str]:
     return res
 
 
-def compute_all_group_vectors(group_tree_groups: list[str]) -> set[str]:
-    grup_data_types = GROUPTYPE_DATATYPE_VECTORS_MAP[TreeType.GRUPTREE].keys()
-    bran_data_types = GROUPTYPE_DATATYPE_VECTORS_MAP[TreeType.BRANPROP].keys()
+def compute_all_tree_types_vectors(tree_types: list[TreeType]) -> set[str]:
+    grup_data_types = network_node_types.TREETYPE_DATATYPE_VECTORS_MAP[TreeType.GRUPTREE].keys()
+    bran_data_types = network_node_types.TREETYPE_DATATYPE_VECTORS_MAP[TreeType.BRANPROP].keys()
     all_data_types = set(grup_data_types) | set(bran_data_types)
 
     res = set()
     for data_type in all_data_types:
-        res |= compute_tree_group_vectors(group_tree_groups, data_type)
+        res |= compute_tree_type_vectors(tree_types, data_type)
 
     return res
 
 
-def get_all_vectors_of_interest_for_tree(group_tree_wells: list[str], group_tree_groups: list[str]) -> set[str]:
+def get_all_vectors_of_interest_for_tree_types(group_tree_wells: list[str], tree_types: list[TreeType]) -> set[str]:
     """
     Create a list of vectors based on the possible combinations of vector datatypes and vector nodes
-    for a group tree
+    for a list of tree types
 
-    This implies vectors for field, group and well.
+    This implies vectors for field, tree type and well.
 
     Only returns the candidates which exist among the valid vectors
     """
 
     # Find all summary vectors with field vectors
-    field_vectors = set(FIELD_DATATYPE_VECTOR_MAP.values())
+    field_vectors = set(network_node_types.FIELD_DATATYPE_VECTOR_MAP.values())
     # Find all summary vectors with group tree wells
     well_vectors = compute_all_well_vectors(group_tree_wells)
-    # Find all summary vectors with group tree groups
-    group_vectors = compute_all_group_vectors(group_tree_groups)
+    # Find all summary vectors with group tree tree types
+    tree_types_vectors = compute_all_tree_types_vectors(tree_types)
 
-    all_vectors = field_vectors | well_vectors | group_vectors
+    all_vectors = field_vectors | well_vectors | tree_types_vectors
 
     return all_vectors
 
@@ -162,15 +112,15 @@ def create_sumvec_from_datatype_node_name_and_keyword(
     """
 
     if node_name == "FIELD":
-        datatype_ecl = FIELD_DATATYPE_VECTOR_MAP[datatype]
+        datatype_ecl = network_node_types.FIELD_DATATYPE_VECTOR_MAP[datatype]
         if datatype == "pressure":
             return f"{datatype_ecl}:{node_name}"
         return datatype_ecl
     try:
         if keyword == "WELSPECS":
-            datatype_ecl = WELL_DATATYPE_VECTOR_MAP[datatype]
+            datatype_ecl = network_node_types.WELL_DATATYPE_VECTOR_MAP[datatype]
         elif keyword in [t.value for t in TreeType]:
-            datatype_ecl = GROUPTYPE_DATATYPE_VECTORS_MAP[TreeType[keyword]][datatype]
+            datatype_ecl = network_node_types.TREETYPE_DATATYPE_VECTORS_MAP[TreeType[keyword]][datatype]
     except KeyError as exc:
         error = (
             f"Summary vector not found for eclipse keyword: {keyword}, "
@@ -197,7 +147,7 @@ def get_tree_element_for_data_type(data_type: DataType) -> EdgeOrNode:
 
 def get_label_for_datatype(datatype: DataType) -> str:
     """Returns a more readable label for the summary datatypes"""
-    label = DATATYPE_LABEL_MAP.get(datatype)
+    label = network_node_types.DATATYPE_LABEL_MAP.get(datatype)
     if label is None:
         raise ValueError(f"Label for datatype {datatype.value} not implemented.")
     return label
@@ -209,6 +159,9 @@ def get_node_vectors_info_and_categorized_node_summary_vectors_from_name_and_key
     node_classifications: dict[str, NodeClassification],
     tree_classification: NetworkClassification,
 ) -> tuple[NodeSummaryVectorsInfo, CategorizedNodeSummaryVectors]:
+    """
+    Given a node name and keyword, returns the NodeSummaryVectorsInfo and CategorizedNodeSummaryVectors for the node
+    """
     if not isinstance(node_name, str) or not isinstance(node_keyword, str):
         raise ValueError(f'Nodename and keyword must be strings, got: "{node_name}" and "{node_keyword}"')
 
@@ -278,13 +231,13 @@ def is_valid_node_type(node_classification: NodeClassification, valid_node_types
     return False
 
 
-def create_edge_label_list_from_vfp_table_column(vfp_table_column: pd.Series) -> list[str]:
+def create_edge_label_list_from_vfp_table_column(vfp_table_column: pl.Series) -> list[str]:
     """
     Creates an edge label list based on the column named "VFP_TABLE".
 
     If the VFP_TABLE column is not present, the function will raise a ValueError.
     """
-    if vfp_table_column.empty:
+    if vfp_table_column.is_empty():
         raise ValueError("VFP_TABLE column is empty.")
 
     edge_labels: list[str] = []

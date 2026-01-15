@@ -1,8 +1,10 @@
 import { SettingManager } from "../../framework/SettingManager/SettingManager";
-import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
-
-import type { Setting, SettingCategories, SettingTypes } from "./../settingsDefinitions";
-import { settingCategories } from "./../settingsDefinitions";
+import type {
+    CustomSettingImplementation,
+    DynamicSettingImplementation,
+    StaticSettingImplementation,
+} from "../../interfacesAndTypes/customSettingImplementation";
+import type { Setting, SettingTypeDefinitions } from "../settingsDefinitions";
 
 export class SettingRegistry {
     private static _registeredSettings: Map<
@@ -10,7 +12,9 @@ export class SettingRegistry {
         {
             label: string;
             customSettingImplementation: {
-                new (customConstructorParameters?: any): CustomSettingImplementation<any, any>;
+                new (
+                    customConstructorParameters?: any,
+                ): StaticSettingImplementation<any, any> | DynamicSettingImplementation<any, any, any>;
             };
             customConstructorParameters?: any;
         }
@@ -18,10 +22,23 @@ export class SettingRegistry {
 
     static registerSetting<
         TSetting extends Setting,
-        TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
-        TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
-        TSettingImpl extends new (...args: any) => CustomSettingImplementation<TValue, TCategory> = {
-            new (params?: any): CustomSettingImplementation<TValue, TCategory>;
+        TSettingDef extends SettingTypeDefinitions[TSetting] = SettingTypeDefinitions[TSetting],
+        TSettingImpl extends new (
+            ...args: any
+        ) =>
+            | StaticSettingImplementation<TSettingDef["internalValue"], TSettingDef["externalValue"]>
+            | DynamicSettingImplementation<
+                  TSettingDef["internalValue"],
+                  TSettingDef["externalValue"],
+                  TSettingDef["valueConstraints"]
+              > = {
+            new (
+                params?: any,
+            ): CustomSettingImplementation<
+                TSettingDef["internalValue"],
+                TSettingDef["externalValue"],
+                TSettingDef["valueConstraints"]
+            >;
         },
     >(
         type: TSetting,
@@ -43,7 +60,7 @@ export class SettingRegistry {
 
     static makeSetting<TSetting extends Setting>(
         type: TSetting,
-        defaultValue?: SettingTypes[TSetting],
+        defaultValue?: SettingTypeDefinitions[TSetting]["internalValue"],
     ): SettingManager<TSetting> {
         const stored = this._registeredSettings.get(type);
         if (!stored) {
@@ -53,10 +70,13 @@ export class SettingRegistry {
 
         return new SettingManager<TSetting>({
             type,
-            category: settingCategories[type],
             label: stored.label,
             defaultValue: defaultValue ?? customSettingImpl.defaultValue ?? null,
-            customSettingImplementation: customSettingImpl,
+            customSettingImplementation: customSettingImpl as CustomSettingImplementation<
+                SettingTypeDefinitions[TSetting]["internalValue"] | null,
+                SettingTypeDefinitions[TSetting]["externalValue"] | null,
+                SettingTypeDefinitions[TSetting]["valueConstraints"]
+            >,
         });
     }
 }

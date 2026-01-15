@@ -33,7 +33,7 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["fmu.sumo.*", "sumo.wrapper.*", "pandas", "requests_toolbelt.*", "msal"]
+module = ["fmu.sumo.*", "sumo.wrapper.*", "requests_toolbelt.*", "msal"]
 follow_untyped_imports = true
 
 [[tool.mypy.overrides]]

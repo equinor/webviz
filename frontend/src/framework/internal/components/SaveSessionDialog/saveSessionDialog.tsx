@@ -115,6 +115,9 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                 </>
             }
         >
+            <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
+                Sessions are not guaranteed to persist, as underlying data or module states may change.
+            </div>
             <div className="flex gap-4 items-center">
                 <DashboardPreview height={100} width={100} layout={layout} />
                 <div className="flex flex-col gap-2 grow min-w-0">
