@@ -9,7 +9,7 @@ import { createGridColorScaleValues, createSeismicColorScaleValues } from "../ut
 
 function makeColorScaleAnnotation({
     getSetting,
-    getValueRange,
+    getDataValueRange,
     id,
     isLoading,
     createColorScaleValues,
@@ -18,7 +18,7 @@ function makeColorScaleAnnotation({
 }): Annotation[] {
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
-    const valueRange = getValueRange();
+    const valueRange = getDataValueRange();
     const attribute = getSetting(Setting.ATTRIBUTE);
 
     if (!colorScale || !valueRange || !attribute || isLoading) {

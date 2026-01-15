@@ -1,6 +1,5 @@
 import type { Controller, Layer } from "@equinor/esv-intersection";
 
-
 import { FanchartIntersectionCalculator } from "../interaction/FanchartIntersectionCalculator";
 import type { IntersectionHandlerOptions } from "../interaction/IntersectionHandler";
 import { LineIntersectionCalculator } from "../interaction/LineIntersectionCalculator";
@@ -81,7 +80,7 @@ export function getColorFromLayerData(layer: Layer<unknown>, index: number): str
     }
 
     if (isStatisticalFanchartsCanvasLayer(layer) && layer.data) {
-        return layer.data.fancharts[index].color ?? "#000";
+        return layer.data.fancharts[index]?.color ?? "#000";
     }
 
     if (isCalloutCanvasLayer(layer) && layer.data) {

@@ -467,7 +467,7 @@ export function esvReadoutToGenericReadout(
 ): GenericReadoutItem {
     return {
         label: makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout),
-        color: getColorFromLayerData(readout.layer, index),
+        color: getColorFromLayerData(readout.layer, readout.index),
         info: esvReadoutToInfoItems(readout),
     };
 }

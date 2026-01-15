@@ -12,10 +12,8 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type {
-    MakeSettingTypesMap,
-    Settings,
-} from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 export const baseSettings = [Setting.LOG_CURVE] as const;
@@ -32,7 +30,7 @@ export const baseDiscreteSettings = [
 ] as const;
 
 export function defineBaseContinuousDependencies<T extends readonly Setting[]>(args: DefineDependenciesArgs<T>) {
-    const { availableSettingsUpdater, helperDependency } = args;
+    const { valueConstraintsUpdater, helperDependency } = args;
 
     const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal }) => {
         const wellboreId = getGlobalSetting("wellboreUuid");
@@ -50,7 +48,7 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
         });
     });
 
-    availableSettingsUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
+    valueConstraintsUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
         const wellboreId = getGlobalSetting("wellboreUuid");
         const headerData = getHelperDependency(curveHeaderQueryDep);
 
@@ -63,7 +61,7 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
 export function verifyBasePlotSettings<T extends readonly Setting[]>(
     accessor: DataProviderInformationAccessors<T, WellboreLogCurveData_api>,
 ): boolean {
-    const availableCurves = accessor.getAvailableSettingValues(Setting.LOG_CURVE) ?? [];
+    const availableCurves = accessor.getSettingValueConstraints(Setting.LOG_CURVE) ?? [];
     const selectedCurve = accessor.getSetting(Setting.LOG_CURVE);
 
     return !!selectedCurve && !!availableCurves.find((curve) => curve.curveName === selectedCurve.curveName);

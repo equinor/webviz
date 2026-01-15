@@ -449,34 +449,27 @@ function buildScatterTraceData(
     contentY: ChannelReceiverChannelContent<KeyKind.REALIZATION[]>,
     dataColor: ChannelReceiverChannelContent<KeyKind.REALIZATION[]> | null,
 ): { xValues: number[]; yValues: number[]; colorValues: number[]; realizations: number[] } {
-    const keysX = contentX.dataArray.map((el) => el.key).sort((a, b) => (a as number) - (b as number));
-    const keysY = contentY.dataArray.map((el) => el.key).sort((a, b) => (a as number) - (b as number));
-    const keysColor = dataColor?.dataArray.map((el) => el.key).sort((a, b) => (a as number) - (b as number)) ?? [];
+    // Build lookup maps on realization keys
+    const xMap = new Map(contentX.dataArray.map((el) => [el.key, el.value as number]));
+    const yMap = new Map(contentY.dataArray.map((el) => [el.key, el.value as number]));
+    const colorMap = dataColor ? new Map(dataColor.dataArray.map((el) => [el.key, el.value as number])) : null;
 
-    const keysMatch =
-        keysX.length === keysY.length &&
-        (dataColor === null || keysColor.length === keysX.length) &&
-        keysX.every((key, i) => key === keysY[i] && (dataColor === null || key === keysColor[i]));
+    // We need to find common realization keys across all used channels in order to cross-plot
+    const commonKeys = [...xMap.keys()]
+        .filter((key) => yMap.has(key) && (colorMap === null || colorMap.has(key)))
+        .sort((a, b) => (a as number) - (b as number));
 
     const xValues: number[] = [];
     const yValues: number[] = [];
     const colorValues: number[] = [];
     const realizations: number[] = [];
 
-    if (keysMatch) {
-        keysX.forEach((key) => {
-            const pointX = contentX.dataArray.find((el) => el.key === key);
-            const pointY = contentY.dataArray.find((el) => el.key === key);
-            const pointColor = dataColor?.dataArray.find((el) => el.key === key);
-
-            if (pointX && pointY) {
-                xValues.push(pointX.value as number);
-                yValues.push(pointY.value as number);
-                if (pointColor) colorValues.push(pointColor.value as number);
-                realizations.push(key as number);
-            }
-        });
-    }
+    commonKeys.forEach((key) => {
+        xValues.push(xMap.get(key)!);
+        yValues.push(yMap.get(key)!);
+        if (colorMap) colorValues.push(colorMap.get(key)!);
+        realizations.push(key as number);
+    });
 
     return { xValues, yValues, colorValues, realizations };
 }
@@ -488,10 +481,9 @@ function getMarkerColor(
 ): string {
     const { preferredColor: prefColorX } = contentX.metaData;
     const { preferredColor: prefColorY } = contentY.metaData;
-    if (prefColorX && prefColorY && prefColorX === prefColorY) {
-        return prefColorX;
-    }
-    return colorSet.getFirstColor();
+
+    // Prefer X's color, then Y's, then fall back to colorSet default
+    return prefColorX ?? prefColorY ?? colorSet.getFirstColor();
 }
 
 interface AxisLayoutOptions {

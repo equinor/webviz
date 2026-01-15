@@ -35,6 +35,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
             workbenchServices={props.workbenchServices}
+            initialVerticalScale={1}
         />
     );
 }

@@ -24,108 +24,109 @@ import type { SerializedSettings as WellCompletionsSettings } from "@modules/Wel
 import type { SerializedSettings as WellLogViewerSettings } from "@modules/WellLogViewer/settings/persistence";
 
 export type ModuleSerializedStateMap = {
-    "2DViewer": {
-        settings?: Partial<M_2DViewerSettings>;
-        view?: Partial<M_2DViewerView>;
-    };
-    "3DViewer": {
-        settings?: Partial<M_3DViewerSettings>;
-        view?: Partial<M_3DViewerView>;
-    };
-    DbgWorkbenchSpy: {
-        settings?: never;
-        view?: never;
-    };
-    DistributionPlot: {
-        settings?: Partial<DistributionPlotSettings>;
-        view?: never;
-    };
-    FlowNetwork: {
-        settings?: Partial<FlowNetworkSettings>;
-        view?: never;
-    };
-    InplaceVolumesPlot: {
-        settings?: Partial<InplaceVolumesPlotSettings>;
-        view?: never;
-    };
-    InplaceVolumesTable: {
-        settings?: Partial<InplaceVolumesTableSettings>;
-        view?: never;
-    };
-    Intersection: {
-        settings?: Partial<IntersectionSettings>;
-        view?: never;
-    };
-    Map: {
-        settings?: never;
-        view?: never;
-    };
-    MyModule: {
-        settings?: never;
-        view?: never;
-    };
-    MyModule2: {
-        settings?: never;
-        view?: never;
-    };
-    ParameterDistributions: {
-        settings?: Partial<ParameterDistributionsSettings>;
-        view?: never;
-    };
-    ParameterResponseCorrelationBarPlot: {
-        settings?: Partial<ParameterResponseCorrelationBarPlotSettings>;
-        view?: never;
-    };
-    ParameterResponseCorrelationMatrixPlot: {
-        settings?: Partial<ParameterResponseCorrelationMatrixPlotSettings>;
-        view?: never;
-    };
-    ParameterResponseCorrelationParallelCoordsPlot: {
-        settings?: Partial<ParameterResponseCorrelationParallelCoordsPlotSettings>;
-        view?: never;
-    };
-    ParameterResponseCrossPlot: {
-        settings?: Partial<ParameterResponseCrossPlotSettings>;
-        view?: never;
-    };
-    Pvt: {
-        settings?: never;
-        view?: never;
-    };
-    Rft: {
-        settings?: never;
-        view?: never;
-    };
-    SensitivityPlot: {
-        settings?: Partial<SensitivityPlotSettings>;
-        view?: never;
-    };
-    SimulationTimeSeries: {
-        settings?: Partial<SimulationTimeSeriesSettings>;
-        view?: Partial<SimulationTimeSeriesView>;
-    };
-    SimulationTimeSeriesSensitivity: {
-        settings?: Partial<SimulationTimeSeriesSensitivitySettings>;
-        view?: Partial<SimulationTimeSeriesSensitivityView>;
-    };
-    SubsurfaceMap: {
-        settings?: never;
-        view?: never;
-    };
-    TopographicMap: {
-        settings?: never;
-        view?: never;
-    };
-    Vfp: {
-        settings?: never;
-        view?: never;
-    };
-    WellCompletions: {
-        settings?: Partial<WellCompletionsSettings>;
-        view?: never;
-    };
-    WellLogViewer: {
-        settings?: Partial<WellLogViewerSettings>;
-        view?: never;
-    };
+  "2DViewer": {
+    settings?: Partial<M_2DViewerSettings>,
+    view?: Partial<M_2DViewerView>,
+  },
+  "3DViewer": {
+    settings?: Partial<M_3DViewerSettings>,
+    view?: Partial<M_3DViewerView>,
+  },
+  "DbgWorkbenchSpy": {
+    settings?: never,
+    view?: never,
+  },
+  "DistributionPlot": {
+    settings?: Partial<DistributionPlotSettings>,
+    view?: never,
+  },
+  "FlowNetwork": {
+    settings?: Partial<FlowNetworkSettings>,
+    view?: never,
+  },
+  "InplaceVolumesPlot": {
+    settings?: Partial<InplaceVolumesPlotSettings>,
+    view?: never,
+  },
+  "InplaceVolumesTable": {
+    settings?: Partial<InplaceVolumesTableSettings>,
+    view?: never,
+  },
+  "Intersection": {
+    settings?: Partial<IntersectionSettings>,
+    view?: never,
+  },
+  "Map": {
+    settings?: never,
+    view?: never,
+  },
+  "MyModule": {
+    settings?: never,
+    view?: never,
+  },
+  "MyModule2": {
+    settings?: never,
+    view?: never,
+  },
+  "ParameterDistributions": {
+    settings?: Partial<ParameterDistributionsSettings>,
+    view?: never,
+  },
+  "ParameterResponseCorrelationBarPlot": {
+    settings?: Partial<ParameterResponseCorrelationBarPlotSettings>,
+    view?: never,
+  },
+  "ParameterResponseCorrelationMatrixPlot": {
+    settings?: Partial<ParameterResponseCorrelationMatrixPlotSettings>,
+    view?: never,
+  },
+  "ParameterResponseCorrelationParallelCoordsPlot": {
+    settings?: Partial<ParameterResponseCorrelationParallelCoordsPlotSettings>,
+    view?: never,
+  },
+  "ParameterResponseCrossPlot": {
+    settings?: Partial<ParameterResponseCrossPlotSettings>,
+    view?: never,
+  },
+  "Pvt": {
+    settings?: never,
+    view?: never,
+  },
+  "Rft": {
+    settings?: never,
+    view?: never,
+  },
+  "SensitivityPlot": {
+    settings?: Partial<SensitivityPlotSettings>,
+    view?: never,
+  },
+  "SimulationTimeSeries": {
+    settings?: Partial<SimulationTimeSeriesSettings>,
+    view?: Partial<SimulationTimeSeriesView>,
+  },
+  "SimulationTimeSeriesSensitivity": {
+    settings?: Partial<SimulationTimeSeriesSensitivitySettings>,
+    view?: Partial<SimulationTimeSeriesSensitivityView>,
+  },
+  "SubsurfaceMap": {
+    settings?: never,
+    view?: never,
+  },
+  "TopographicMap": {
+    settings?: never,
+    view?: never,
+  },
+  "Vfp": {
+    settings?: never,
+    view?: never,
+  },
+  "WellCompletions": {
+    settings?: Partial<WellCompletionsSettings>,
+    view?: never,
+  },
+  "WellLogViewer": {
+    settings?: Partial<WellLogViewerSettings>,
+    view?: never,
+  },
 };
+
