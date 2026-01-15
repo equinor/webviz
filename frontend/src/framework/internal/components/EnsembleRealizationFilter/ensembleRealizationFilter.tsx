@@ -3,8 +3,10 @@ import React from "react";
 import { Check, Clear, FilterAlt, WarningAmberRounded } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
-import type { EnsembleParameters } from "@framework/EnsembleParameters";
+import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { RealizationFilter } from "@framework/RealizationFilter";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { ParameterValueSelection, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 import {
     IncludeExcludeFilter,
@@ -35,9 +37,7 @@ export type EnsembleRealizationFilterProps = {
     filteredRealizationNumbers: readonly number[]; // The current applied/filtered realization numbers (not current selection)
     selections: EnsembleRealizationFilterSelections; // The current selection state, which may be unsaved
     hasUnsavedSelections: boolean;
-    ensembleName: string;
-    availableEnsembleRealizations: readonly number[];
-    ensembleParameters: EnsembleParameters;
+    ensemble: RegularEnsemble | DeltaEnsemble;
     isActive: boolean;
     isAnotherFilterActive: boolean;
     onClick?: () => void;
@@ -73,7 +73,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
     const areRealizationsFiltered = !isEqual(
         props.filteredRealizationNumbers.toSorted(),
-        props.availableEnsembleRealizations.toSorted(),
+        props.ensemble.getRealizations().toSorted(),
     );
 
     function handleRealizationNumberFilterChanged(selection: ByRealizationNumberFilterSelection) {
@@ -84,7 +84,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         // Create realization number array to display based on current selection
         const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
             selection.realizationNumberSelections,
-            props.availableEnsembleRealizations,
+            props.ensemble.getRealizations(),
             selection.includeOrExcludeFilter,
         );
 
@@ -106,8 +106,8 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         // Create realization number array to display based on current selection
         const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
             newParameterIdentStringToValueSelectionMap,
-            props.ensembleParameters,
-            props.availableEnsembleRealizations,
+            props.ensemble.getParameters(),
+            props.ensemble.getRealizations(),
         );
 
         onFilterChange({
@@ -132,15 +132,15 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             // Update realization numbers based on current selection
             realizationNumberArray = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
                 props.selections.realizationNumberSelections,
-                props.availableEnsembleRealizations,
+                props.ensemble.getRealizations(),
                 props.selections.includeOrExcludeFilter,
             );
         } else if (newFilterType === RealizationFilterType.BY_PARAMETER_VALUES) {
             // Create realization number array to display based on current parameters
             realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
                 props.selections.parameterIdentStringToValueSelectionReadonlyMap,
-                props.ensembleParameters,
-                props.availableEnsembleRealizations,
+                props.ensemble.getParameters(),
+                props.ensemble.getRealizations(),
             );
         }
 
@@ -160,15 +160,15 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         let candidateSelectedRealizationNumbers = displayRealizationNumbers;
         if (props.selections.includeOrExcludeFilter === IncludeExcludeFilter.EXCLUDE_FILTER) {
             // Invert selection for exclude filter
-            candidateSelectedRealizationNumbers = props.availableEnsembleRealizations.filter(
-                (realization) => !displayRealizationNumbers.includes(realization),
-            );
+            candidateSelectedRealizationNumbers = props.ensemble
+                .getRealizations()
+                .filter((realization) => !displayRealizationNumbers.includes(realization));
         }
 
         // Create realization number selections based on the current selection and available realization numbers
         const newRealizationNumberSelections = createBestSuggestedRealizationNumberSelections(
             candidateSelectedRealizationNumbers,
-            props.availableEnsembleRealizations,
+            props.ensemble.getRealizations(),
         );
 
         onFilterChange({
@@ -232,6 +232,12 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     };
     const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
 
+    const ensembleDescriptiveName = React.useMemo(
+        function getReadableName() {
+            return props.ensemble.getCustomName() ?? props.ensemble.getDisplayName();
+        },
+        [props.ensemble],
+    );
     return (
         <div className={resolveClassNames("rounded-md", mainDivStyleClasses)}>
             <div className="flex justify-center items-center bg-slate-100 rounded-tl-md rounded-tr-md">
@@ -242,11 +248,12 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     })}
                     onClick={handleHeaderOnClick}
                 >
+                    <EnsembleColorTile wrapperClassName="w-5 h-5" ensemble={props.ensemble} />
                     <div
                         className="grow min-w-0 h-full pl-2 pr-2 flex items-center cursor-pointer font-bold text-sm"
-                        title={props.isActive ? `Ensemble: ${props.ensembleName}` : "Click to open filter"}
+                        title={props.isActive ? `Ensemble: ${ensembleDescriptiveName}` : "Click to open filter"}
                     >
-                        <span className="truncate">{props.ensembleName}</span>
+                        <span className="truncate">{ensembleDescriptiveName}</span>
                     </div>
                     <div
                         className={resolveClassNames("flex h-full items-center pr-3 justify-center cursor-help", {
@@ -300,7 +307,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     <div className="border p-2 rounded-md">
                         <RealizationNumberDisplay
                             selectedRealizations={props.selections.realizationNumbers}
-                            availableRealizations={props.availableEnsembleRealizations}
+                            availableRealizations={props.ensemble.getRealizations()}
                             showAsCompact={!props.isActive}
                             disableOnClick={
                                 props.selections.filterType !== RealizationFilterType.BY_REALIZATION_NUMBER ||
@@ -332,7 +339,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                                 <ByRealizationNumberFilter
                                     initialRealizationNumberSelections={actualInitialRealizationNumberSelections}
                                     realizationNumberSelections={props.selections.realizationNumberSelections}
-                                    availableRealizationNumbers={props.availableEnsembleRealizations}
+                                    availableRealizationNumbers={props.ensemble.getRealizations()}
                                     selectedIncludeOrExcludeFilter={props.selections.includeOrExcludeFilter}
                                     disabled={
                                         props.selections.filterType !== RealizationFilterType.BY_REALIZATION_NUMBER
@@ -347,7 +354,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                             >
                                 <ByParameterValueFilter
                                     disabled={props.selections.filterType !== RealizationFilterType.BY_PARAMETER_VALUES}
-                                    ensembleParameters={props.ensembleParameters}
+                                    ensembleParameters={props.ensemble.getParameters()}
                                     parameterIdentStringToValueSelectionReadonlyMap={
                                         props.selections.parameterIdentStringToValueSelectionReadonlyMap
                                     }
