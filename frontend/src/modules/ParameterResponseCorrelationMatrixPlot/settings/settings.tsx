@@ -2,11 +2,9 @@ import React from "react";
 
 import { useAtom } from "jotai";
 
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { Checkbox } from "@lib/components/Checkbox";
