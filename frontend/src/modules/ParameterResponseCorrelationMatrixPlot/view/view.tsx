@@ -198,8 +198,8 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             });
             for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
                 const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-                if (!ensemble || ensemble instanceof DeltaEnsemble) {
-                    const ensembleType = !ensemble ? "Invalid" : "Delta";
+                if (!ensemble || !(ensemble instanceof RegularEnsemble || ensemble instanceof DeltaEnsemble)) {
+                    const ensembleType = !ensemble ? "Invalid" : "Unknown";
                     setContent(
                         <ContentWarning>
                             <p>{ensembleType} ensemble detected in the data channel.</p>
@@ -268,7 +268,7 @@ function fillParameterCorrelationMatrixFigure(
             const ensembleIdentString = Array.from(receiveResponsesPerEnsembleIdent.keys())[cellIndex];
 
             const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-            if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
+            if (!ensemble || !(ensemble instanceof RegularEnsemble || ensemble instanceof DeltaEnsemble)) {
                 continue;
             }
             const fullParameterArr = getVaryingContinuousParameters(ensemble);

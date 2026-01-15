@@ -2,6 +2,8 @@ import React from "react";
 
 import { useAtom } from "jotai";
 
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -67,16 +69,24 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     const ensembleSet = workbenchSession.getEnsembleSet();
 
-    const regularEnsembleIdentsFromChannels: RegularEnsembleIdent[] = React.useMemo(() => {
-        return ensembleIdentStringsFromChannels.flatMap((id) => {
-            const ensemble = ensembleSet.findEnsembleByIdentString(id);
-            return ensemble instanceof RegularEnsemble ? [RegularEnsembleIdent.fromString(id)] : [];
+    const ensembleIdentsFromChannels = React.useMemo(() => {
+        return ensembleIdentStringsFromChannels.flatMap((id): (RegularEnsembleIdent | DeltaEnsembleIdent)[] => {
+            if (!ensembleSet.findEnsembleByIdentString(id)) {
+                return [];
+            }
+            if (RegularEnsembleIdent.isValidEnsembleIdentString(id)) {
+                return [RegularEnsembleIdent.fromString(id)];
+            }
+            if (DeltaEnsembleIdent.isValidEnsembleIdentString(id)) {
+                return [DeltaEnsembleIdent.fromString(id)];
+            }
+            return [];
         });
     }, [ensembleIdentStringsFromChannels, ensembleSet]);
 
     const allParameterIdents = getContinuousAndNonConstantParameterIdentsInEnsembles(
         ensembleSet,
-        regularEnsembleIdentsFromChannels,
+        ensembleIdentsFromChannels,
     );
 
     function handleParametersChanged(parameterIdents: ParameterIdent[]) {

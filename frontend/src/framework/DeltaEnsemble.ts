@@ -55,10 +55,34 @@ export class DeltaEnsemble {
             .filter((realization) => this._referenceEnsemble.getRealizations().includes(realization));
         this._realizationsArray = Array.from(realizationIntersection).sort((a, b) => a - b);
 
-        // For future implementation:
-        // - Decide how to handle parameters and sensitivities.
-        // - Note: Intersection or union? How to handle parameter values?
-        this._parameters = new EnsembleParameters([]);
+        const realizationsSet = new Set(this._realizationsArray);
+
+        // Parameters are taken from the reference ensemble
+        // and only realizations in the intersection are kept
+        this._parameters = new EnsembleParameters(
+            referenceEnsemble
+                .getParameters()
+                .getParameterArr()
+                .map((param) => {
+                    const newRealizations: number[] = [];
+                    const newValues: any[] = [];
+
+                    for (let i = 0; i < param.realizations.length; i++) {
+                        if (realizationsSet.has(param.realizations[i])) {
+                            newRealizations.push(param.realizations[i]);
+                            newValues.push(param.values[i]);
+                        }
+                    }
+
+                    return {
+                        ...param,
+                        realizations: newRealizations,
+                        values: newValues,
+                    };
+                }),
+        );
+
+        // Sensitivities are not supported for delta ensembles at this time
         this._sensitivities = null;
     }
 

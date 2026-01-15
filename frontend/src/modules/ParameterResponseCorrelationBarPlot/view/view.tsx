@@ -5,6 +5,7 @@ import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleViewProps } from "@framework/Module";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { KeyKind } from "@framework/types/dataChannnel";
@@ -138,8 +139,8 @@ export function View(props: ModuleViewProps<Interfaces>) {
                     const responseChannelData = receiverResponse.channel.contents[cellIndex];
                     const ensembleIdentString = responseChannelData.metaData.ensembleIdentString;
                     const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-                    if (!ensemble || ensemble instanceof DeltaEnsemble) {
-                        const ensembleType = !ensemble ? "Invalid" : "Delta";
+                    if (!ensemble || !(ensemble instanceof RegularEnsemble || ensemble instanceof DeltaEnsemble)) {
+                        const ensembleType = !ensemble ? "Invalid" : "Unknown";
                         setContent(
                             <ContentWarning>
                                 <p>{ensembleType} ensemble detected in the data channel.</p>
@@ -148,6 +149,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
                         );
                         return;
                     }
+
                     const continuousParameters = getVaryingContinuousParameters(ensemble);
                     if (!continuousParameters) {
                         continue;
