@@ -57,10 +57,10 @@ export class DeltaEnsemble {
 
         const realizationsSet = new Set(this._realizationsArray);
 
-        // Parameters are taken from the reference ensemble
+        // Parameters are taken from the comparison ensemble
         // and only realizations in the intersection are kept
         this._parameters = new EnsembleParameters(
-            referenceEnsemble
+            comparisonEnsemble
                 .getParameters()
                 .getParameterArr()
                 .map((param) => {
