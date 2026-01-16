@@ -7,20 +7,32 @@ import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSess
 import { ColorTileWithBadge } from "@lib/components/ColorTileWithBadge";
 import { Tooltip } from "@lib/components/Tooltip";
 
-export type EnsembleColorTileProps = {
+type EnsembleColorTileBaseProps = {
     ensemble: RegularEnsemble | DeltaEnsemble;
-    ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction;
     wrapperClassName?: string;
     badgeClassName?: string;
 };
+type EnsembleColorTileWithFilterFuncProps = EnsembleColorTileBaseProps & {
+    ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction;
+};
+type EnsembleColorTileWithFilterFlagProps = EnsembleColorTileBaseProps & {
+    isRealizationFilterEffective: boolean;
+};
+
+export type EnsembleColorTileProps = EnsembleColorTileWithFilterFuncProps | EnsembleColorTileWithFilterFlagProps;
 
 export function EnsembleColorTile(props: EnsembleColorTileProps): React.ReactNode {
-    const { ensemble, ensembleRealizationFilterFunction, badgeClassName } = props;
+    const { ensemble, badgeClassName } = props;
 
-    const isRealizationFilterEffective = isEnsembleRealizationFilterEffective(
-        ensemble,
-        ensembleRealizationFilterFunction,
-    );
+    let isRealizationFilterEffective = false;
+    if ("isRealizationFilterEffective" in props) {
+        isRealizationFilterEffective = props.isRealizationFilterEffective;
+    } else {
+        isRealizationFilterEffective = isEnsembleRealizationFilterEffective(
+            ensemble,
+            props.ensembleRealizationFilterFunction,
+        );
+    }
 
     return (
         <Tooltip

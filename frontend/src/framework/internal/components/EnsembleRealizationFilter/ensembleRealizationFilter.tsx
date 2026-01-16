@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Check, Clear, FilterAlt, WarningAmberRounded } from "@mui/icons-material";
+import { Check, Clear } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
@@ -15,6 +15,7 @@ import {
 } from "@framework/types/realizationFilterTypes";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
+import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -218,17 +219,12 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     }
 
     const activeStyleClasses = {
-        ring: true,
-        "ring-blue-400": !props.hasUnsavedSelections,
-        "ring-orange-400": props.hasUnsavedSelections,
+        "ring ring-blue-400": true,
     };
     const inactiveStyleClasses = {
-        "cursor-pointer ring hover:ring-2": true,
-        "[--ring-opacity:100%]": !props.isAnotherFilterActive,
+        "cursor-pointer ring hover:ring-2 ring-gray-300/(--ring-opacity) hover:ring-blue-200": true,
+        "[--ring-opacity:100%] hover:ring-blue-400/(--ring-opacity)": !props.isAnotherFilterActive,
         "[--ring-opacity:50%] group hover:[--ring-opacity:75%] transition-opacity": props.isAnotherFilterActive,
-        "ring-gray-300/(--ring-opacity) hover:ring-blue-200": !props.hasUnsavedSelections,
-        "ring-orange-400/(--ring-opacity)": props.hasUnsavedSelections,
-        "hover:ring-blue-400/(--ring-opacity)": !props.isAnotherFilterActive && !props.hasUnsavedSelections,
     };
     const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
 
@@ -248,31 +244,23 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     })}
                     onClick={handleHeaderOnClick}
                 >
-                    <EnsembleColorTile wrapperClassName="w-5 h-5" ensemble={props.ensemble} />
+                    <EnsembleColorTile
+                        badgeClassName="bg-slate-100"
+                        wrapperClassName="w-5 h-5"
+                        ensemble={props.ensemble}
+                        isRealizationFilterEffective={areRealizationsFiltered}
+                    />
                     <div
                         className="grow min-w-0 h-full pl-2 pr-2 flex items-center cursor-pointer font-bold text-sm"
                         title={props.isActive ? `Ensemble: ${ensembleDescriptiveName}` : "Click to open filter"}
                     >
                         <span className="truncate">{ensembleDescriptiveName}</span>
                     </div>
-                    <div
-                        className={resolveClassNames("flex h-full items-center pr-3 justify-center cursor-help", {
-                            hidden: !areRealizationsFiltered && !props.hasUnsavedSelections,
-                            "cursor-pointer": !props.isActive,
-                        })}
-                    >
-                        {props.hasUnsavedSelections ? (
-                            <WarningAmberRounded
-                                titleAccess={`Unapplied changes${!props.isActive ? "\n(Click to open filter)" : ""}`}
-                                fontSize="small"
-                            />
-                        ) : (
-                            <FilterAlt
-                                titleAccess={`Some realizations are being filtered out${!props.isActive ? "\n(Click to open filter)" : ""}`}
-                                fontSize="small"
-                                className="text-green-600"
-                            />
-                        )}
+                    <div className="flex h-full items-center pr-2">
+                        <HasChangesIndicator
+                            visible={props.hasUnsavedSelections}
+                            tooltipText="You have unapplied changes"
+                        />
                     </div>
                     <div className="bg-slate-400 w-px self-stretch" />
                 </div>
