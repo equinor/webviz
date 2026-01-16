@@ -389,14 +389,12 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                             return (
                                 <EnsembleRealizationFilter
                                     key={ensembleIdent.toString()}
-                                    ensembleName={ensemble.getCustomName() ?? ensemble.getDisplayName()}
+                                    ensemble={ensemble}
                                     filteredRealizationNumbers={currentFilteredRealizations}
                                     selections={selections}
                                     hasUnsavedSelections={
                                         ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]
                                     }
-                                    availableEnsembleRealizations={ensemble.getRealizations()}
-                                    ensembleParameters={ensemble.getParameters()}
                                     isActive={isActive}
                                     isAnotherFilterActive={isAnotherActive}
                                     onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
