@@ -188,7 +188,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
     }
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
             {content}
         </div>
     );

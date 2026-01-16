@@ -106,8 +106,9 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     );
     const hasNoQueryErrors = !hasRealizationsQueryError && !hasStatisticsQueryError;
 
+    // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
             {hasNoQueryErrors ? (
                 <Plot
                     plotUpdateReady={!anyLoading}
