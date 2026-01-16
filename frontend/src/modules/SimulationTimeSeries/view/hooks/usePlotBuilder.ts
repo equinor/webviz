@@ -3,6 +3,7 @@ import { useAtomValue } from "jotai";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import { isInvalidStatisticsResampleFrequency } from "@modules/SimulationTimeSeries/utils/resamplingFrequencyUtils";
 
 import type { VectorHexColorMap } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
@@ -30,7 +31,7 @@ export function usePlotBuilder(
     vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null,
-): PlotBuilder {
+): PlotBuilder | null {
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
     const vectorSpecifications = viewContext.useSettingsToViewInterfaceValue("vectorSpecifications");
@@ -49,6 +50,11 @@ export function usePlotBuilder(
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
+
+    // Do not assemble plot for invalid statistical resampling frequency
+    if (isInvalidStatisticsResampleFrequency(resampleFrequency, visualizationMode)) {
+        return null;
+    }
 
     const scatterType =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
