@@ -35,6 +35,7 @@ export type SettingWrapperProps = {
     loadingOverlay?: boolean;
     label?: React.ReactNode;
     help?: Help;
+    labelPosition?: "top" | "left" | "right";
 } & (
     | {
           annotations?: SettingAnnotation[];
@@ -77,6 +78,41 @@ export function SettingWrapper(props: SettingWrapperProps) {
         overlayType = "warning";
     } else if (props.infoOverlay) {
         overlayType = "info";
+    }
+
+    const labelPosition = props.labelPosition ?? "top";
+
+    if (labelPosition === "left" || labelPosition === "right") {
+        return (
+            <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                    {labelPosition === "left" && props.label && (
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm text-gray-500 leading-tight cursor-pointer" htmlFor={id}>
+                                {props.label}
+                            </label>
+                            {props.help && <Help title={props.help.title} content={props.help.content} />}
+                        </div>
+                    )}
+                    <div className="relative">
+                        {React.cloneElement(props.children, { id })}
+                        <Overlay
+                            type={overlayType}
+                            message={props.errorOverlay ?? props.warningOverlay ?? props.infoOverlay}
+                        />
+                    </div>
+                    {labelPosition === "right" && props.label && (
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm text-gray-500 leading-tight cursor-pointer" htmlFor={id}>
+                                {props.label}
+                            </label>
+                            {props.help && <Help title={props.help.title} content={props.help.content} />}
+                        </div>
+                    )}
+                </div>
+                <Annotations annotations={annotations} />
+            </div>
+        );
     }
 
     return (
