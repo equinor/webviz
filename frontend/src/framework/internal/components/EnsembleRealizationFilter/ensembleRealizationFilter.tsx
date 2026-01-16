@@ -218,6 +218,8 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         }
     }
 
+    const readableEnsembleName = props.ensemble.getCustomName() ?? props.ensemble.getDisplayName();
+
     const activeStyleClasses = {
         "ring ring-blue-400": true,
     };
@@ -227,13 +229,6 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         "[--ring-opacity:50%] group hover:[--ring-opacity:75%] transition-opacity": props.isAnotherFilterActive,
     };
     const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
-
-    const ensembleDescriptiveName = React.useMemo(
-        function getReadableName() {
-            return props.ensemble.getCustomName() ?? props.ensemble.getDisplayName();
-        },
-        [props.ensemble],
-    );
     return (
         <div className={resolveClassNames("rounded-md", mainDivStyleClasses)}>
             <div className="flex justify-center items-center bg-slate-100 rounded-tl-md rounded-tr-md">
@@ -252,9 +247,9 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     />
                     <div
                         className="grow min-w-0 h-full pl-2 pr-2 flex items-center cursor-pointer font-bold text-sm"
-                        title={props.isActive ? `Ensemble: ${ensembleDescriptiveName}` : "Click to open filter"}
+                        title={props.isActive ? `Ensemble: ${readableEnsembleName}` : "Click to open filter"}
                     >
-                        <span className="truncate">{ensembleDescriptiveName}</span>
+                        <span className="truncate">{readableEnsembleName}</span>
                     </div>
                     <div className="flex h-full items-center pr-2">
                         <HasChangesIndicator
