@@ -22,42 +22,71 @@ export function ParametersSelector({
     onChange,
 }: ParametersSelectorProps): React.ReactNode {
     const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(true);
+    const [userHasInteracted, setUserHasInteracted] = React.useState<boolean>(false);
+    const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>([]);
 
-    const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>(() => {
-        if (selectedParameterIdents.length > 0) {
-            return Array.from(new Set(selectedParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)));
-        }
-        return [];
-    });
-
-    const handleGroupChange = (newlySelectedGroupFilterStrings: string[]) => {
-        setSelectedGroupFilterValues(newlySelectedGroupFilterStrings);
-
-        if (newlySelectedGroupFilterStrings.length === 0) {
-            onChange([]);
-        } else {
-            const parametersThatMatchNewGroups = allParameterIdents.filter((p) =>
-                newlySelectedGroupFilterStrings.some(
-                    (groupValue) => groupValue === (p.groupName ?? GroupType.NO_GROUP),
-                ),
+    const [prevSelectedParameterIdents, setPrevSelectedParameterIdents] =
+        React.useState<ParameterIdent[]>(selectedParameterIdents);
+    if (prevSelectedParameterIdents !== selectedParameterIdents) {
+        setPrevSelectedParameterIdents(selectedParameterIdents);
+        if (selectedGroupFilterValues.length === 0 && selectedParameterIdents.length > 0) {
+            setSelectedGroupFilterValues(
+                Array.from(new Set(selectedParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP))),
             );
-
-            let newSelectedParameters: ParameterIdent[] = [];
-
-            if (autoSelectAllOnGroupChange) {
-                newSelectedParameters = parametersThatMatchNewGroups;
-            } else {
-                newSelectedParameters = selectedParameterIdents.filter((p) =>
-                    parametersThatMatchNewGroups.some((pg) => pg.equals(p)),
-                );
-            }
-
-            onChange(newSelectedParameters);
         }
-    };
+    }
+    React.useEffect(
+        function selectAllParametersUntilUserInteracts() {
+            if (!userHasInteracted && allParameterIdents.length > 0) {
+                const allGroups = Array.from(new Set(allParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)));
+                setSelectedGroupFilterValues(allGroups);
+                onChange(allParameterIdents);
+            }
+        },
+        [allParameterIdents, userHasInteracted, onChange],
+    );
+    const handleInteractiveOnChange = React.useCallback(
+        function handleInteractiveOnChange(newParameters: ParameterIdent[]) {
+            if (!userHasInteracted) {
+                setUserHasInteracted(true);
+            }
+            onChange(newParameters);
+        },
+        [userHasInteracted, onChange],
+    );
+    const handleGroupChange = React.useCallback(
+        function handleGroupChange(newlySelectedGroupFilterStrings: string[]) {
+            setSelectedGroupFilterValues(newlySelectedGroupFilterStrings);
 
+            if (newlySelectedGroupFilterStrings.length === 0) {
+                handleInteractiveOnChange([]);
+            } else {
+                const parametersThatMatchNewGroups = allParameterIdents.filter((p) =>
+                    newlySelectedGroupFilterStrings.some(
+                        (groupValue) => groupValue === (p.groupName ?? GroupType.NO_GROUP),
+                    ),
+                );
+
+                let newSelectedParameters: ParameterIdent[] = [];
+
+                if (autoSelectAllOnGroupChange) {
+                    newSelectedParameters = parametersThatMatchNewGroups;
+                } else {
+                    newSelectedParameters = selectedParameterIdents.filter((p) =>
+                        parametersThatMatchNewGroups.some((pg) => pg.equals(p)),
+                    );
+                    if (newSelectedParameters.length === 0 && parametersThatMatchNewGroups.length > 0) {
+                        newSelectedParameters = [parametersThatMatchNewGroups[0]];
+                    }
+                }
+
+                handleInteractiveOnChange(newSelectedParameters);
+            }
+        },
+        [allParameterIdents, autoSelectAllOnGroupChange, selectedParameterIdents, handleInteractiveOnChange],
+    );
     const handleParameterChange = (selectedValues: string[]) => {
-        onChange(selectedValues.map((s) => ParameterIdent.fromString(s)));
+        handleInteractiveOnChange(selectedValues.map((s) => ParameterIdent.fromString(s)));
     };
 
     const groupSelectOptions: SelectOption[] = Array.from(
