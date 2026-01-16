@@ -47,7 +47,7 @@ export class ParameterCorrelationMatrixFigure {
             numCols: numCols,
             width: wrapperDivSize.width,
             height: wrapperDivSize.height,
-            sharedXAxes: true,
+            sharedXAxes: false,
             sharedYAxes: false,
             horizontalSpacing: 0,
             showGrid: true,
@@ -57,7 +57,7 @@ export class ParameterCorrelationMatrixFigure {
             showlegend: false,
             font: {
                 family: "Roboto, sans-serif",
-                size: 12,
+                size: 10,
                 color: "#333",
             },
         });
@@ -71,18 +71,18 @@ export class ParameterCorrelationMatrixFigure {
     }
     private setPlotMargin(): void {
         const margin = {
-            t: 20,
+            t: 30,
             r: 20,
             b: 20,
             l: 20,
         };
         // Always show response labels
         if (this._forceShowYAxisLabels) {
-            margin.l = 200;
+            margin.l = 40;
         }
         if (this._showLabels) {
-            margin.l = 200;
-            margin.b = 200;
+            margin.l = 40;
+            margin.b = 40;
         }
         this._figure.updateLayout({
             margin: margin,
@@ -139,7 +139,7 @@ export class ParameterCorrelationMatrixFigure {
             [`xaxis${cellIndex + 1}`]: {
                 showticklabels: this._showLabels,
                 tickangle: 45,
-                autosize: false,
+                automargin: true,
                 ticks: "",
                 ticksuffix: " ",
                 spikemode: "across",
@@ -149,11 +149,12 @@ export class ParameterCorrelationMatrixFigure {
                 spikecolor: "black",
                 showgrid: false,
                 zeroline: false,
+                categoryorder: "trace",
             },
             [`yaxis${cellIndex + 1}`]: {
                 showticklabels: this._showLabels || this._forceShowYAxisLabels,
                 tickangle: -45,
-                autosize: false,
+                automargin: true,
                 ticks: "",
                 ticksuffix: " ",
                 showspikes: true,
@@ -164,6 +165,8 @@ export class ParameterCorrelationMatrixFigure {
                 spikecolor: "black",
                 showgrid: false,
                 zeroline: false,
+                autorange: "reversed",
+                categoryorder: "trace",
             },
         });
     }

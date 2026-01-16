@@ -7,7 +7,7 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { DiscreteSlider } from "@lib/components/DiscreteSlider";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -24,8 +24,8 @@ import { selectedNodeTypesAtom, selectedResamplingFrequencyAtom } from "./atoms/
 import {
     availableDateTimesAtom,
     availableRealizationsAtom,
+    availableTreeTypesAtom,
     edgeMetadataListAtom,
-    flowNetworkQueryResultAtom,
     nodeMetadataListAtom,
 } from "./atoms/derivedAtoms";
 import {
@@ -34,19 +34,23 @@ import {
     selectedEnsembleIdentAtom,
     selectedNodeKeyAtom,
     selectedRealizationAtom,
+    selectedTreeTypeAtom,
 } from "./atoms/persistableFixableAtoms";
+import { realizationFlowNetworkQueryAtom } from "./atoms/queryAtoms";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
     const availableRealizations = useAtomValue(availableRealizationsAtom);
+    const availableTreeTypes = useAtomValue(availableTreeTypesAtom);
     const availableDateTimes = useAtomValue(availableDateTimesAtom);
     const edgeMetadataList = useAtomValue(edgeMetadataListAtom);
     const nodeMetadataList = useAtomValue(nodeMetadataListAtom);
 
     const [selectedResamplingFrequency, setSelectedResamplingFrequency] = useAtom(selectedResamplingFrequencyAtom);
     const [selectedNodeTypes, setSelectedNodeTypes] = useAtom(selectedNodeTypesAtom);
+    const [selectedTreeType, setSelectedTreeType] = useAtom(selectedTreeTypeAtom);
 
     const [selectedEdgeKey, setSelectedEdgeKey] = useAtom(selectedEdgeKeyAtom);
     const [selectedNodeKey, setSelectedNodeKey] = useAtom(selectedNodeKeyAtom);
@@ -54,9 +58,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedRealization, setSelectedRealization] = useAtom(selectedRealizationAtom);
     const [selectedDateTime, setSelectedDateTime] = useAtom(selectedDateTimeAtom);
 
-    const FlowNetworkQueryResult = useAtomValue(flowNetworkQueryResultAtom);
+    const flowNetworkQuery = useAtomValue(realizationFlowNetworkQueryAtom);
 
-    usePropagateQueryErrorToStatusWriter(FlowNetworkQueryResult, statusWriter);
+    usePropagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
+
+    const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(workbenchSession);
 
     const timeStepSliderDebounceTimeMs = 10;
     const timeStepSliderDebounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,6 +126,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedDateTimeIndex = selectedDateTime.value ? availableDateTimes.indexOf(selectedDateTime.value) : -1;
 
     const selectedEnsembleIdentAnnotation = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
+    const selectedTreeTypeAnnotation = useMakePersistableFixableAtomAnnotations(selectedTreeTypeAtom);
     const selectedRealizationAnnotation = useMakePersistableFixableAtomAnnotations(selectedRealizationAtom);
     const selectedEdgeKeyAnnotation = useMakePersistableFixableAtomAnnotations(selectedEdgeKeyAtom);
     const selectedNodeKeyAnnotation = useMakePersistableFixableAtomAnnotations(selectedNodeKeyAtom);
@@ -131,6 +138,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 <SettingWrapper annotations={selectedEnsembleIdentAnnotation}>
                     <EnsembleDropdown
                         ensembles={ensembleSet.getRegularEnsembleArray()}
+                        ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                         value={selectedEnsembleIdent.value}
                         onChange={handleEnsembleSelectionChange}
                     />
@@ -147,19 +155,17 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Data Fetching Options">
                 <div className="flex flex-col gap-2">
-                    <Label text="Realization Number">
-                        <SettingWrapper annotations={selectedRealizationAnnotation}>
-                            <Dropdown
-                                options={
-                                    availableRealizations?.map((real) => {
-                                        return { value: real.toString(), label: real.toString() };
-                                    }) ?? []
-                                }
-                                value={selectedRealization.value?.toString() ?? undefined}
-                                onChange={handleRealizationNumberChange}
-                            />
-                        </SettingWrapper>
-                    </Label>
+                    <SettingWrapper label="Realization Number" annotations={selectedRealizationAnnotation}>
+                        <Dropdown
+                            options={
+                                availableRealizations?.map((real) => {
+                                    return { value: real.toString(), label: real.toString() };
+                                }) ?? []
+                            }
+                            value={selectedRealization.value?.toString() ?? undefined}
+                            onChange={handleRealizationNumberChange}
+                        />
+                    </SettingWrapper>
                     <Label text="Node Types">
                         <Select
                             options={Object.values(NodeType_api).map((val: NodeType_api) => {
@@ -175,12 +181,26 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             </CollapsibleGroup>
             <CollapsibleGroup
                 expanded={true}
-                title="Edge, node and date selections"
+                title="Network selections"
                 hasError={
                     selectedDateTime.depsHaveError || selectedEdgeKey.depsHaveError || selectedNodeKey.depsHaveError
                 }
             >
                 <div className="flex flex-col gap-2">
+                    <SettingWrapper
+                        label="Tree Type"
+                        loadingOverlay={selectedTreeType.isLoading}
+                        errorOverlay={selectedTreeType.depsHaveError ? "Could not load tree types." : undefined}
+                        annotations={selectedTreeTypeAnnotation}
+                    >
+                        <Dropdown
+                            options={availableTreeTypes.map((type) => {
+                                return { value: type, label: type };
+                            })}
+                            value={selectedTreeType.value}
+                            onChange={setSelectedTreeType}
+                        />
+                    </SettingWrapper>
                     <SettingWrapper
                         label="Edge options"
                         annotations={selectedEdgeKeyAnnotation}
