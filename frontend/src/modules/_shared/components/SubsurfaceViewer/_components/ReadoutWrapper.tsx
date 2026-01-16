@@ -72,11 +72,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             const pickWithCoordinates = event.infos.find((pick) => pick.coordinate?.length);
 
             if (pickWithCoordinates) {
-                const newPickInfoDict = pickAtWorldPosition(
-                    pickWithCoordinates.coordinate![0],
-                    pickWithCoordinates.coordinate![1],
-                    pickWithCoordinates.coordinate![2] * props.verticalScale,
-                );
+                const newPickInfoDict = pickAtWorldPosition(...pickWithCoordinates.coordinate!);
 
                 if (newPickInfoDict) {
                     event.infos = Object.values(newPickInfoDict).flat();
