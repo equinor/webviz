@@ -5,6 +5,7 @@ import { Close } from "@mui/icons-material";
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import { IconButton } from "@lib/components/IconButton";
 import type { TagProps } from "@lib/components/TagInput";
@@ -41,7 +42,10 @@ export function EnsembleTag(props: EnsembleTagProps): React.ReactNode {
             {ensemble && (
                 <EnsembleColorTile
                     ensemble={ensemble}
-                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    isRealizationFilterEffective={isEnsembleRealizationFilterEffective(
+                        ensemble,
+                        ensembleRealizationFilterFunction,
+                    )}
                     wrapperClassName="w-6 h-6"
                     badgeClassName={TAG_BACKGROUND_COLOR}
                 />
