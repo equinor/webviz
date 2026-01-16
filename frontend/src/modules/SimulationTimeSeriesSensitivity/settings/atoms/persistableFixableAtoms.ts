@@ -40,8 +40,8 @@ export const selectedRegularEnsembleIdentAtom = persistableFixableAtom<RegularEn
 /**
  * Atom that handles vector name and tag in synch with fixup
  */
-export const selectedVectorNameAndTagAtom = persistableFixableAtom<{ name: string | null; tag: string | null }>({
-    initialValue: { name: null, tag: null },
+export const selectedVectorNameAndTagAtom = persistableFixableAtom<{ name: string | null; tag: string | null } | null>({
+    initialValue: null,
     areEqualFunction: isEqual,
     computeDependenciesState: ({ get }) => {
         const vectorListQuery = get(vectorListQueryAtom);
@@ -58,13 +58,11 @@ export const selectedVectorNameAndTagAtom = persistableFixableAtom<{ name: strin
         const availableVectorNames = get(availableVectorNamesAtom);
 
         if (syncedVectorName) {
-            return value.name === syncedVectorName && value.tag === syncedVectorName;
+            return value?.name === syncedVectorName && value?.tag === syncedVectorName;
         }
-
         if (!value || (value.name && !availableVectorNames.includes(value.name))) {
             return false;
         }
-
         return true;
     },
     fixupFunction: ({ get, value }) => {

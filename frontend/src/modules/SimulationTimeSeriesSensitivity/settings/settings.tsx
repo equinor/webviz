@@ -99,11 +99,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         }
         setResamplingFrequency(newFreq);
     }
-    function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
-        const userSelectedVectorName = selection.selectedNodes[0] ?? null;
-        const userSelectedVectorTag = selection.selectedTags[0]?.text ?? null;
-        setSelectedVectorNameAndTag({ name: userSelectedVectorName, tag: userSelectedVectorTag });
-    }
+
+    const handleVectorSelectChange = React.useCallback(
+        function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
+            // vectorSelectorData is null when still loading
+            if (!vectorSelectorData) {
+                return;
+            }
+            const userSelectedVectorName = selection.selectedNodes[0] ?? null;
+            const userSelectedVectorTag = selection.selectedTags[0]?.text ?? null;
+            setSelectedVectorNameAndTag({ name: userSelectedVectorName, tag: userSelectedVectorTag });
+        },
+        [vectorSelectorData, setSelectedVectorNameAndTag],
+    );
+
     function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
         setShowHistorical(event.target.checked);
     }
@@ -142,8 +151,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                     }
                 >
                     <VectorSelector
-                        data={vectorSelectorData}
-                        selectedTags={selectedVectorNameAndTag.value.tag ? [selectedVectorNameAndTag.value.tag] : []}
+                        data={vectorSelectorData ?? []}
+                        selectedTags={selectedVectorNameAndTag.value?.tag ? [selectedVectorNameAndTag.value.tag] : []}
                         placeholder="Add new vector..."
                         maxNumSelectedNodes={1}
                         numSecondsUntilSuggestionsAreShown={0.5}

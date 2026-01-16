@@ -44,10 +44,13 @@ export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
     const selectedEnsembleIdentString = get(selectedRegularEnsembleIdentAtom).value?.toString() ?? null;
+    const selectedVectorName = get(selectedVectorNameAndTagAtom).value?.name ?? null;
+    const selectedVectorTag = get(selectedVectorNameAndTagAtom).value?.tag ?? null;
+
     return {
         selectedEnsembleIdentString: selectedEnsembleIdentString,
-        selectedVectorName: get(selectedVectorNameAndTagAtom).value.name,
-        selectedVectorTag: get(selectedVectorNameAndTagAtom).value.tag,
+        selectedVectorName: selectedVectorName,
+        selectedVectorTag: selectedVectorTag,
         selectedSensitivityNames: get(selectedSensitivityNamesAtom).value,
         resampleFrequency: get(resamplingFrequencyAtom),
         showStatistics: get(showStatisticsAtom),
