@@ -71,7 +71,7 @@ export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
     );
 
     React.useEffect(
-        () => {
+        function updateReceivedChannel() {
             setReceivedChannel(receiverResponses);
         }, // We only want to listen to revision number changes, but we need the whole channel response to set it
         // eslint-disable-next-line react-hooks/exhaustive-deps

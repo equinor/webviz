@@ -27,8 +27,7 @@ export const availableParameterIdentsAtom = atom((get) => {
     // Get regular ensemble identifiers
     const ensembleSet = get(EnsembleSetAtom);
     const regularEnsembleIdents = ensembleIdentStrings
-        .map((id) => ensembleSet.findEnsembleByIdentString(id))
-        .filter((ensemble) => ensemble instanceof RegularEnsemble)
-        .map((ensemble) => RegularEnsembleIdent.fromString(ensemble.getIdent().toString()));
+        .filter((id) => RegularEnsembleIdent.isValidEnsembleIdentString(id))
+        .map((id) => RegularEnsembleIdent.fromString(id));
     return getContinuousAndNonConstantParameterIdentsInEnsembles(ensembleSet, regularEnsembleIdents);
 });
