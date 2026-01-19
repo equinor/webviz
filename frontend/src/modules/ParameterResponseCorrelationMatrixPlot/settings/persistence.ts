@@ -7,7 +7,7 @@ import { PlotType } from "../typesAndEnums";
 
 import {
     plotTypeAtom,
-    parameterIdentsAtom,
+    selectedParameterIdentsAtom,
     showLabelsAtom,
     useFixedColorRangeAtom,
     correlationThresholdAtom,
@@ -47,7 +47,7 @@ export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
     return {
         plotType: get(plotTypeAtom),
-        parameterIdentStrings: get(parameterIdentsAtom).map((ident) => ident.toString()),
+        parameterIdentStrings: get(selectedParameterIdentsAtom).map((ident) => ident.toString()),
         showLabels: get(showLabelsAtom),
         useFixedColorRange: get(useFixedColorRangeAtom),
         correlationThreshold: get(correlationThresholdAtom),
@@ -60,7 +60,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     const parameterIdents = raw.parameterIdentStrings?.map((id) => ParameterIdent.fromString(id)) ?? [];
     setIfDefined(set, plotTypeAtom, raw.plotType);
-    setIfDefined(set, parameterIdentsAtom, parameterIdents);
+    setIfDefined(set, selectedParameterIdentsAtom, parameterIdents);
     setIfDefined(set, showLabelsAtom, raw.showLabels);
     setIfDefined(set, useFixedColorRangeAtom, raw.useFixedColorRange);
     setIfDefined(set, correlationThresholdAtom, raw.correlationThreshold);
