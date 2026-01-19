@@ -50,37 +50,36 @@ export class DeltaEnsemble {
         }
 
         // Intersection of realizations
-        const realizationIntersection = this._comparisonEnsemble
-            .getRealizations()
-            .filter((realization) => this._referenceEnsemble.getRealizations().includes(realization));
+        const realizationIntersection = new Set(
+            this._comparisonEnsemble
+                .getRealizations()
+                .filter((realization) => this._referenceEnsemble.getRealizations().includes(realization)),
+        );
         this._realizationsArray = Array.from(realizationIntersection).sort((a, b) => a - b);
-
-        const realizationsSet = new Set(this._realizationsArray);
 
         // Parameters are taken from the comparison ensemble
         // and only realizations in the intersection are kept
-        this._parameters = new EnsembleParameters(
-            comparisonEnsemble
-                .getParameters()
-                .getParameterArr()
-                .map((param) => {
-                    const newRealizations: number[] = [];
-                    const newValues: any[] = [];
+        const comparisonParamsIntersectedReals = comparisonEnsemble
+            .getParameters()
+            .getParameterArr()
+            .map((param) => {
+                const newRealizations: number[] = [];
+                const newValues: any[] = [];
 
-                    for (let i = 0; i < param.realizations.length; i++) {
-                        if (realizationsSet.has(param.realizations[i])) {
-                            newRealizations.push(param.realizations[i]);
-                            newValues.push(param.values[i]);
-                        }
+                for (let i = 0; i < param.realizations.length; i++) {
+                    if (realizationIntersection.has(param.realizations[i])) {
+                        newRealizations.push(param.realizations[i]);
+                        newValues.push(param.values[i]);
                     }
+                }
 
-                    return {
-                        ...param,
-                        realizations: newRealizations,
-                        values: newValues,
-                    };
-                }),
-        );
+                return {
+                    ...param,
+                    realizations: newRealizations,
+                    values: newValues,
+                };
+            });
+        this._parameters = new EnsembleParameters(comparisonParamsIntersectedReals);
 
         // Sensitivities are not supported for delta ensembles at this time
         this._sensitivities = null;

@@ -3,19 +3,7 @@ import React from "react";
 import { Icon, Typography } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
 import { Dropdown, MenuButton } from "@mui/base";
-import {
-    AddLink,
-    ArrowDropDown,
-    Category,
-    Circle,
-    Close,
-    Edit,
-    Link,
-    Lock,
-    Refresh,
-    Save,
-    SaveAs,
-} from "@mui/icons-material";
+import { AddLink, ArrowDropDown, Category, Close, Edit, Link, Lock, Refresh, Save, SaveAs } from "@mui/icons-material";
 
 import FmuLogo from "@assets/fmu.svg";
 
@@ -27,6 +15,7 @@ import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -278,11 +267,7 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                 >
                     <span className="truncate">{metadata.title}</span>
                 </Tooltip>
-                {hasChanges && (
-                    <Tooltip title="You have unsaved changes">
-                        <Circle fontSize="small" color="warning" />
-                    </Tooltip>
-                )}
+                <HasChangesIndicator visible={hasChanges} />
             </Typography>
         </>
     );
