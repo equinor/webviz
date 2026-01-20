@@ -14,7 +14,7 @@ import { makeInplaceVolumesPlotTitle } from "../utils/createTitle";
 import { GroupedTableData } from "../utils/GroupedTableData";
 import { PlotBuilder } from "../utils/PlotBuilder";
 import { makePlotData, type MakePlotDataOptions } from "../utils/plotComponentUtils";
-import { configurePlotBuilder } from "../utils/PlotConfigurer";
+import { configurePlotlyLayoutAxisByPlotType } from "../utils/plotlyLayoutAxisOptions";
 import { buildStatisticsTableData, type StatisticsTableData } from "../utils/TableBuilder";
 
 export function useBuildPlotAndTable(
@@ -89,7 +89,7 @@ export function useBuildPlotAndTable(
     const plotBuilder = new PlotBuilder(groupedData, makePlotData(plotDataOptions));
 
     // Configure plot-type-specific axis options
-    configurePlotBuilder(plotBuilder, {
+    configurePlotlyLayoutAxisByPlotType(plotBuilder, {
         plotType,
         firstResultName,
         barSelectorColumn,

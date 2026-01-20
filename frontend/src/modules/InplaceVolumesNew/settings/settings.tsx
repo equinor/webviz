@@ -272,6 +272,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             onChange={setSelectedColorBy}
                         />
                     </SettingWrapper>
+                </div>
+                <CollapsibleGroup title="Plot type settings" expanded>
+                    {" "}
                     <SettingWrapper label="Plot Type">
                         <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
                     </SettingWrapper>
@@ -282,17 +285,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             onChange={(_e, checked) => setShowTable(checked)}
                         />
                     </SettingWrapper>
-                </div>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Plot type settings" expanded>
-                {selectedPlotType === PlotType.HISTOGRAM && histogramContent}
-                {selectedPlotType === PlotType.BAR && barContent}
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Plot layout" expanded>
-                {layoutContent}
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Plot markers" expanded>
-                {plotMarkersContent}
+                    {selectedPlotType === PlotType.HISTOGRAM && histogramContent}
+                    {selectedPlotType === PlotType.BAR && barContent}
+                </CollapsibleGroup>
+                <CollapsibleGroup title="Plot layout" expanded>
+                    {layoutContent} {plotMarkersContent}
+                </CollapsibleGroup>
+                {/* <CollapsibleGroup title="Plot markers" expanded></CollapsibleGroup> */}
             </CollapsibleGroup>
         </div>
     );

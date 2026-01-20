@@ -36,6 +36,7 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
     initialValue: [],
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => {
+        //Cannot use tableDefinitionsAccessorAtom here due to circular dependency
         const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
         const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
 

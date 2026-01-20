@@ -243,6 +243,24 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         onChange={handleEnsembleIdentsChange}
                     />
                 </SettingWrapper>
+
+                <SettingWrapper
+                    loadingOverlay={props.isPending ?? false}
+                    label="Table sources"
+                    errorOverlay={
+                        !props.isPending && tableSourceOptions.length === 0
+                            ? "No table names. See logs for details."
+                            : undefined
+                    }
+                >
+                    <Select
+                        options={tableSourceOptions}
+                        value={tableNames}
+                        onChange={handleTableNamesChange}
+                        multiple
+                        size={3}
+                    />
+                </SettingWrapper>
                 <div className="flex mt-2">
                     <div className="flex flex-row gap-2">
                         <Checkbox
@@ -264,23 +282,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         />
                     </div>
                 </div>
-                <SettingWrapper
-                    loadingOverlay={props.isPending ?? false}
-                    label="Table sources"
-                    errorOverlay={
-                        !props.isPending && tableSourceOptions.length === 0
-                            ? "No table names. See logs for details."
-                            : undefined
-                    }
-                >
-                    <Select
-                        options={tableSourceOptions}
-                        value={tableNames}
-                        onChange={handleTableNamesChange}
-                        multiple
-                        size={3}
-                    />
-                </SettingWrapper>
             </CollapsibleGroup>
             <div className="flex flex-col gap-2">{props.additionalSettings}</div>
             <div className="flex flex-col gap-2">

@@ -9,7 +9,6 @@ import { makePlotlyBoxPlotTraces } from "./plotly/box";
 import { makePlotlyConvergenceTraces } from "./plotly/convergence";
 import { makePlotlyDensityTraces } from "./plotly/distribution";
 import { makePlotlyHistogramTraces } from "./plotly/histogram";
-import { makePlotlyScatterTraces } from "./plotly/scatter";
 
 export type MakePlotDataOptions = {
     plotType: PlotType;

@@ -1,7 +1,8 @@
+import type { Axis } from "plotly.js";
+
 import type { HistogramType } from "@modules/_shared/histogram";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
-import type { Axis } from "plotly.js";
 
 import type { PlotBuilder } from "./PlotBuilder";
 import { MAX_LABELS_FOR_BARS } from "./plotly/bar";
@@ -20,7 +21,7 @@ export interface PlotConfigurerOptions {
  * based on the plot type. This centralizes all plot-type-specific
  * configuration logic.
  */
-export function configurePlotBuilder(plotBuilder: PlotBuilder, options: PlotConfigurerOptions): void {
+export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, options: PlotConfigurerOptions): void {
     const { plotType, firstResultName, barSelectorColumn, colorBy, histogramType, table } = options;
 
     switch (plotType) {
