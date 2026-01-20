@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Info } from "@mui/icons-material";
 import { cloneDeep, isEqual } from "lodash";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
@@ -14,12 +13,10 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { IconButton } from "@lib/components/IconButton";
-import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
-import { Tooltip } from "@lib/components/Tooltip";
+import { Help } from "@lib/components/SettingWrapper/_components/Help";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -237,21 +234,25 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     return (
         <>
             <CollapsibleGroup title="Ensembles and table sources" expanded>
-                <EnsemblePicker
-                    ensembles={props.ensembleSet.getRegularEnsembleArray()}
-                    value={ensembleIdents}
-                    allowDeltaEnsembles={false}
-                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                    onChange={handleEnsembleIdentsChange}
-                />
-
+                <SettingWrapper label="Ensembles">
+                    <EnsemblePicker
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
+                        value={ensembleIdents}
+                        allowDeltaEnsembles={false}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                        onChange={handleEnsembleIdentsChange}
+                    />
+                </SettingWrapper>
                 <div className="flex mt-2">
-                    <SettingWrapper
-                        labelPosition="right"
-                        label="Allow table intersections"
-                        help={{
-                            title: "Allow table intersections",
-                            content: (
+                    <div className="flex flex-row gap-2">
+                        <Checkbox
+                            label="Allow table intersections"
+                            checked={props.selectedAllowIndicesValuesIntersection}
+                            onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
+                        />
+                        <Help
+                            title="Allow table intersections"
+                            content={
                                 <>
                                     When active allows comparison of tables where available zones, regions, facies,
                                     fluids or responses differs.
@@ -259,18 +260,14 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                     Only the <b>intersection</b> of options will then be available for filtering. <br />
                                     Identifiers not present in all tables will be <b>filtered out</b>.
                                 </>
-                            ),
-                        }}
-                    >
-                        <Checkbox
-                            checked={props.selectedAllowIndicesValuesIntersection}
-                            onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
+                            }
                         />
-                    </SettingWrapper>
+                    </div>
                 </div>
-                <PendingWrapper
-                    isPending={props.isPending ?? false}
-                    errorMessage={
+                <SettingWrapper
+                    loadingOverlay={props.isPending ?? false}
+                    label="Table sources"
+                    errorOverlay={
                         !props.isPending && tableSourceOptions.length === 0
                             ? "No table names. See logs for details."
                             : undefined
@@ -283,7 +280,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         multiple
                         size={3}
                     />
-                </PendingWrapper>
+                </SettingWrapper>
             </CollapsibleGroup>
             <div className="flex flex-col gap-2">{props.additionalSettings}</div>
             <div className="flex flex-col gap-2">
