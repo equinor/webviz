@@ -10,14 +10,19 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
-import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arraySingleSelect";
 
 type ValueType = RegularEnsembleIdent | null;
 type ValueConstraintsType = RegularEnsembleIdent[];
 
 export class EnsembleSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     defaultValue: ValueType = null;
-    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<RegularEnsembleIdent[]>();
+    valueConstraintsIntersectionReducerDefinition =
+        makeValueConstraintsIntersectionReducerDefinition<RegularEnsembleIdent[]>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -52,10 +57,12 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
                 availableValues.some((value) => value.equals(ensemble.getIdent())),
             );
 
+            const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(props.workbenchSession);
+
             return (
                 <EnsembleDropdown
                     ensembles={ensembles}
-                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                     value={!props.isOverridden ? props.value : props.overriddenValue}
                     onChange={props.onValueChange}
                     disabled={props.isOverridden}

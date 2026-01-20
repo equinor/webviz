@@ -9,6 +9,8 @@ import { FanchartStatisticOption } from "../../typesAndEnums";
 /**
     Helper function to create an array with pair of vector specification and loaded query data
 
+    Note that vector specifications and query results must be in the same order
+
     If query data is not valid, the vector specification and corresponding query data will not
     be included in the output array
  */

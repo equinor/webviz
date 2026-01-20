@@ -27,7 +27,7 @@ import {
 } from "@modules/_shared/utils/math/correlationMatrix";
 
 import type { Interfaces } from "../interfaces";
-import { PlotType } from "../typesAndEnums";
+import { MAX_NUMBER_OF_PARAMETERS_IN_MATRIX, PlotType } from "../typesAndEnums";
 
 import { ParameterCorrelationMatrixFigure } from "./utils/parameterCorrelationMatrixFigure";
 import { createResponseParameterCorrelationMatrix } from "./utils/parameterCorrelationMatrixUtils";
@@ -94,6 +94,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     statusWriter.setLoading(isPending || receiverResponses.some((r) => r.isPending));
     const receiverResponseRevisionNumbers = receiverResponses.map((response) => response.revisionNumber);
+
     const hasParameterIdentsChanged =
         parameterIdents.length !== prevParameterIdents.length ||
         !parameterIdents.every((ident, index) => ident.equals(prevParameterIdents[index]));
@@ -125,24 +126,49 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
         startTransition(function makeContent() {
             // Content when no data channels are defined
+
             if (receiverResponses.every((response) => !response.channel)) {
                 setContent(
                     <ContentWarning>
-                        <span>
-                            Data channel required for use. Add a main module to the workbench and use the data channels
-                            <Input fontSize="small" />
-                        </span>{" "}
-                        Up to 3 modules can be connected.
-                        <span>
-                            <Tag label="Response" />
-                            <Tag label="Response" />
-                            <Tag label="Response" />
-                        </span>
+                        <div className="space-y-3 text-sm">
+                            <p className="font-medium">Data channel required for use.</p>
+                            <p>Add a module supporting data channels to the dashboard and connect it to this module.</p>
+                            <p>
+                                Modules supporting data channels have an <Input fontSize="small" /> icon on their
+                                toolbar.
+                            </p>
+                            <p>Drag from this icon to a response below:</p>
+                            <div className="flex gap-2 flex-wrap">
+                                <Tag label="Response" />
+                                <Tag label="Response" />
+                                <Tag label="Response" />
+                            </div>
+                        </div>
                     </ContentWarning>,
                 );
                 return;
             }
-
+            if (parameterIdents.length === 0) {
+                setContent(
+                    <ContentWarning>
+                        <Warning fontSize="large" className="mb-2" />
+                        No parameters selected or available. Please select parameters in the settings pane. If no
+                        parameters are available, ensure that the connected ensembles have continuous and varying
+                        parameters.
+                    </ContentWarning>,
+                );
+                return;
+            }
+            if (parameterIdents.length > MAX_NUMBER_OF_PARAMETERS_IN_MATRIX) {
+                setContent(
+                    <ContentWarning>
+                        <Warning fontSize="large" className="mb-2" />
+                        {`Too many parameters selected. Please select ${MAX_NUMBER_OF_PARAMETERS_IN_MATRIX} or fewer parameters to display the correlation
+                        matrix.`}
+                    </ContentWarning>,
+                );
+                return;
+            }
             const usedChannels = receiverResponses.filter((response) => response.channel);
             const usedChannelsWithoutData = receiverResponses.filter(
                 (response) => response.channel && response.channel.contents.length === 0,
@@ -179,6 +205,31 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                     receiveResponsesPerEnsembleIdent.get(ensembleIdentString)?.push(content);
                 });
             });
+            for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
+                const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+                if (!ensemble || ensemble instanceof DeltaEnsemble) {
+                    const ensembleType = !ensemble ? "Invalid" : "Delta";
+                    setContent(
+                        <ContentWarning>
+                            <p>{ensembleType} ensemble detected in the data channel.</p>
+                            <p>Unable to compute parameter correlations.</p>
+                        </ContentWarning>,
+                    );
+                    return;
+                }
+            }
+            // Content when no parameters are selected
+            if (parameterIdents.length === 0) {
+                setContent(
+                    <ContentWarning>
+                        <Warning fontSize="large" className="mb-2" />
+                        No parameters selected or available. Please select parameters in the settings pane. If
+                        parameters are selected but not available, ensure that the connected ensembles have continuous
+                        and varying parameters.
+                    </ContentWarning>,
+                );
+                return;
+            }
 
             const numContents = receiveResponsesPerEnsembleIdent.size;
 
@@ -196,19 +247,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 showLabels,
                 useFixedColorRange,
             });
-            for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
-                const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-                if (!ensemble || ensemble instanceof DeltaEnsemble) {
-                    const ensembleType = !ensemble ? "Invalid" : "Delta";
-                    setContent(
-                        <ContentWarning>
-                            <p>{ensembleType} ensemble detected in the data channel.</p>
-                            <p>Unable to compute parameter correlations.</p>
-                        </ContentWarning>,
-                    );
-                    return;
-                }
-            }
+
             fillParameterCorrelationMatrixFigure(
                 figure,
                 parameterIdents,
