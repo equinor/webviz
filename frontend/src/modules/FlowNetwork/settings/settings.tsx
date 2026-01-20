@@ -7,7 +7,7 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { DiscreteSlider } from "@lib/components/DiscreteSlider";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -61,6 +61,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const flowNetworkQuery = useAtomValue(realizationFlowNetworkQueryAtom);
 
     usePropagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
+
+    const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(workbenchSession);
 
     const timeStepSliderDebounceTimeMs = 10;
     const timeStepSliderDebounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -136,6 +138,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 <SettingWrapper annotations={selectedEnsembleIdentAnnotation}>
                     <EnsembleDropdown
                         ensembles={ensembleSet.getRegularEnsembleArray()}
+                        ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                         value={selectedEnsembleIdent.value}
                         onChange={handleEnsembleSelectionChange}
                     />
