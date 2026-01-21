@@ -10,7 +10,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { ContentError } from "@modules/_shared/components/ContentMessage";
+import { ContentError, ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 
 import type { Interfaces } from "../interfaces";
@@ -19,6 +19,7 @@ import { GroupBy } from "../typesAndEnums";
 
 import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
 import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
+import { useMakeResampleFrequencyWarningMessage } from "./hooks/useMakeResampleFrequencyWarningMessage";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
@@ -39,7 +40,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const groupBy = viewContext.useSettingsToViewInterfaceValue("groupBy");
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
-    const anyLoading = useAtomValue(queryIsFetchingAtom);
+    const isAnyQueryLoading = useAtomValue(queryIsFetchingAtom);
 
     const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
 
@@ -79,6 +80,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap);
+    const resampleFrequencyWarningMessage = useMakeResampleFrequencyWarningMessage();
 
     const handleClickInChart = React.useCallback(
         function handleClickInChart(e: PlotMouseEvent) {
@@ -104,21 +106,40 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         subplotOwner,
         ensemblesParameterColoring,
     );
-    const hasNoQueryErrors = !hasRealizationsQueryError && !hasStatisticsQueryError;
 
-    // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
-    return (
-        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
-            {hasNoQueryErrors ? (
+    const hasQueryErrors = hasRealizationsQueryError || hasStatisticsQueryError;
+
+    const viewContent = React.useMemo(
+        function createViewContent(): React.ReactNode {
+            if (resampleFrequencyWarningMessage !== null) {
+                return <ContentWarning>{resampleFrequencyWarningMessage}</ContentWarning>;
+            }
+            if (hasQueryErrors) {
+                return <ContentError>One or more queries have an error state. See the log for details.</ContentError>;
+            }
+            if (!plotBuilder) {
+                return (
+                    <ContentError>
+                        An unhandled error occurred. Plot could not be constructed with the current settings.
+                    </ContentError>
+                );
+            }
+
+            return (
                 <Plot
-                    plotUpdateReady={!anyLoading}
+                    plotUpdateReady={!isAnyQueryLoading}
                     onClick={handleClickInChart}
                     data={plotBuilder.makePlotData()}
                     layout={plotBuilder.makePlotLayout()}
                 />
-            ) : (
-                <ContentError>One or more queries have an error state. See the log for details.</ContentError>
-            )}
+            );
+        },
+        [plotBuilder, hasQueryErrors, isAnyQueryLoading, resampleFrequencyWarningMessage, handleClickInChart],
+    );
+
+    return (
+        <div className="w-full h-full" ref={wrapperDivRef}>
+            {viewContent}
         </div>
     );
 };

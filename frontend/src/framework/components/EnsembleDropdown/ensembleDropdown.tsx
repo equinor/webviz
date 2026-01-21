@@ -4,6 +4,7 @@ import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -37,7 +38,10 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
             adornment: (
                 <EnsembleColorTile
                     ensemble={ens}
-                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    isRealizationFilterEffective={isEnsembleRealizationFilterEffective(
+                        ens,
+                        ensembleRealizationFilterFunction,
+                    )}
                     wrapperClassName="w-7 h-7"
                 />
             ),
