@@ -187,6 +187,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
         });
     }
 
+    // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
         <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
             {content}
