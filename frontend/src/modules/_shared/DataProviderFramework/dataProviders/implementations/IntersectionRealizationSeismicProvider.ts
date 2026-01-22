@@ -20,6 +20,7 @@ import type {
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
+import { Representation } from "../../settings/implementations/RepresentationSetting";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -34,6 +35,7 @@ const intersectionRealizationSeismicSettings = [
     Setting.INTERSECTION,
     Setting.WELLBORE_EXTENSION_LENGTH,
     Setting.ENSEMBLE,
+    Setting.REPRESENTATION,
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
     Setting.TIME_OR_INTERVAL,
@@ -177,7 +179,13 @@ export class IntersectionRealizationSeismicProvider
             const isEnabled = intersection?.type === IntersectionType.WELLBORE;
             return { enabled: isEnabled };
         });
-
+        settingAttributesUpdater(Setting.REALIZATION, ({ getLocalSetting }) => {
+            const representation = getLocalSetting(Setting.REPRESENTATION);
+            const enabled =
+                representation === Representation.REALIZATION ||
+                representation === Representation.OBSERVATION_PER_REALIZATION;
+            return { enabled, visible: enabled };
+        });
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -189,25 +197,31 @@ export class IntersectionRealizationSeismicProvider
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
         });
-
+        valueConstraintsUpdater(Setting.REPRESENTATION, () => {
+            return [Representation.REALIZATION, Representation.OBSERVATION, Representation.OBSERVATION_PER_REALIZATION];
+        });
         const ensembleSeismicCubeMetaListDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
+            const representation = getLocalSetting(Setting.REPRESENTATION);
             if (!ensembleIdent) {
                 return null;
             }
+            if (
+                representation === Representation.OBSERVATION_PER_REALIZATION ||
+                representation === Representation.REALIZATION
+            ) {
+                return await queryClient.fetchQuery({
+                    ...getSeismicCubeMetaListOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid() ?? "",
+                            ensemble_name: ensembleIdent.getEnsembleName() ?? "",
+                            ...makeCacheBustingQueryParam(ensembleIdent ?? null),
+                        },
 
-            return await queryClient.fetchQuery({
-                ...getSeismicCubeMetaListOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid() ?? "",
-                        ensemble_name: ensembleIdent.getEnsembleName() ?? "",
-                        ...makeCacheBustingQueryParam(ensembleIdent ?? null),
-                    },
-
-                    signal: abortSignal,
-                }),
-            });
+                        signal: abortSignal,
+                    }),
+                });
+            }
         });
 
         valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {

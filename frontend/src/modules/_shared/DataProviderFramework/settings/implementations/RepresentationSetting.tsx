@@ -9,10 +9,15 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertStringOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arraySingleSelect";
 
 export enum Representation {
     OBSERVATION = "Observation",
+    OBSERVATION_PER_REALIZATION = "Observation Per Realization",
     REALIZATION = "Realization",
     ENSEMBLE_STATISTICS = "Ensemble Statistics",
 }
@@ -21,7 +26,8 @@ type ValueConstraintsType = Representation[];
 
 export class RepresentationSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     private _staticOptions: DropdownOptionOrGroup<ValueType>[] | null = null;
-    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
+    valueConstraintsIntersectionReducerDefinition =
+        makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
 
     constructor(props?: { options?: ValueType[] | DropdownOptionOrGroup<ValueType>[] }) {
         if (!props?.options) return;
