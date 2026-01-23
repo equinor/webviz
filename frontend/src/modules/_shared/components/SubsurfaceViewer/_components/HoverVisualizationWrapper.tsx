@@ -1,5 +1,5 @@
 import React from "react";
-
+import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { BoundingBox2D, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
 import { CrosshairLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { inRange } from "lodash";
@@ -12,19 +12,32 @@ import { getHoverDataInPicks } from "@modules/_shared/utils/subsurfaceViewerLaye
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
-import { ReadoutWrapper, type ReadoutWrapperProps } from "./ReadoutWrapper";
+import { ReadoutWrapper } from "./ReadoutWrapper";
+import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
+import type { DeckGlInstanceManager } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
+import type { DeckGLRef } from "@deck.gl/react";
 
-export type HoverVisualizationWrapperProps = ReadoutWrapperProps;
+export type HoverVisualizationWrapperProps = {
+    views: ViewsTypeExtended;
+    layers: DeckGlLayer[];
+    deckGlManager: DeckGlInstanceManager;
+    verticalScale: number;
+    triggerHome: number;
+    deckGlRef: React.RefObject<DeckGLRef | null>;
+    children?: React.ReactNode;
+};
 
 export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps): React.ReactNode {
-    const { onViewerHover, onViewportHover } = props;
-
     const [currentlyHoveredViewport, setCurrentlyHoveredViewport] = React.useState<null | string>(null);
 
     const ctx = useDpfSubsurfaceViewerContext();
-    const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS_UTM, ctx.hoverService, ctx.moduleInstanceId);
-    const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, ctx.hoverService, ctx.moduleInstanceId);
-    const setHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
+    const publishHoveredWorldPos = usePublishHoverValue(
+        HoverTopic.WORLD_POS_UTM,
+        ctx.hoverService,
+        ctx.moduleInstanceId,
+    );
+    const publishHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, ctx.hoverService, ctx.moduleInstanceId);
+    const publishHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
 
     const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
 
@@ -44,8 +57,12 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
                 if (hoverVisualizationGroup.groupId !== viewport.id) continue;
 
                 for (const layer of hoverVisualizationGroup.hoverVisualizations) {
-                    if (!adjustedLayers.some(({ id }) => layer.id === id)) adjustedLayers.push(layer);
-                    if (!viewportLayerIds.includes(layer.id)) viewportLayerIds.push(layer.id);
+                    if (!adjustedLayers.some(({ id }) => layer.id === id)) {
+                        adjustedLayers.push(layer);
+                    }
+                    if (!viewportLayerIds.includes(layer.id)) {
+                        viewportLayerIds.push(layer.id);
+                    }
                 }
             }
 
@@ -61,30 +78,24 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     };
 
     const handleViewerHover = React.useCallback(
-        function handleViewerHover(mouseEvent: MapMouseEvent) {
+        function handleViewerHover(mouseEvent: MapMouseEvent | null) {
             const hoverData = getHoverDataInPicks(
-                mouseEvent.infos,
+                mouseEvent?.infos ?? [],
                 HoverTopic.WELLBORE_MD,
                 HoverTopic.WELLBORE,
                 HoverTopic.WORLD_POS_UTM,
             );
 
-            setHoveredWorldPos(hoverData[HoverTopic.WORLD_POS_UTM]);
-            setHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
-            setHoveredMd(hoverData[HoverTopic.WELLBORE_MD]);
-
-            onViewerHover?.(mouseEvent);
+            publishHoveredWorldPos(hoverData[HoverTopic.WORLD_POS_UTM]);
+            publishHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
+            publishHoveredMd(hoverData[HoverTopic.WELLBORE_MD]);
         },
-        [onViewerHover, setHoveredMd, setHoveredWellbore, setHoveredWorldPos],
+        [publishHoveredMd, publishHoveredWellbore, publishHoveredWorldPos],
     );
 
-    const handleViewportHover = React.useCallback(
-        function handleViewportHover(viewport: ViewportType | null) {
-            setCurrentlyHoveredViewport(viewport?.id ?? null);
-            onViewportHover?.(viewport);
-        },
-        [onViewportHover],
-    );
+    const handleViewportHover = React.useCallback(function handleViewportHover(viewport: ViewportType | null) {
+        setCurrentlyHoveredViewport(viewport?.id ?? null);
+    }, []);
 
     return (
         <ReadoutWrapper

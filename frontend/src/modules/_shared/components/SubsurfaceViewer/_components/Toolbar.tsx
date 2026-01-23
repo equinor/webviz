@@ -21,6 +21,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
 import { type PolylinesPlugin, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { PolylineEditingMode } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
+import { PerformanceSettingsPopover } from "./PerformanceSettingsPopover";
 
 export type ToolbarProps = {
     hideVerticalScaleControls?: boolean;
@@ -32,6 +33,7 @@ export type ToolbarProps = {
     onGridVisibilityChange: (visible: boolean) => void;
     onVerticalScaleChange(value: number): void;
     onPolylineNameChange(name: string): void;
+    onOpenPerformanceSettings: () => void;
 };
 
 export function Toolbar(props: ToolbarProps): React.ReactNode {
@@ -102,6 +104,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                     <Button onClick={handleFitInViewClick} title="Reset view to fit all objects">
                         <FilterCenterFocus fontSize="inherit" />
                     </Button>
+                    <PerformanceSettingsPopover />
                     <div
                         className={resolveClassNames("gap-1 items-center justify-start", expanded ? "flex" : "hidden")}
                     >
