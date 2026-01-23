@@ -1,7 +1,5 @@
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
-import type { HistogramType } from "@modules/_shared/histogram";
-
-import type { BarSortBy } from "./view/utils/plotly/bar";
+import type { BarSortBy, InplaceVolumesPlotOptions } from "@modules/_shared/InplaceVolumes/plotOptions";
 
 export enum PlotType {
     HISTOGRAM = "histogram",
@@ -22,14 +20,5 @@ export const plotTypeToStringMapping: Record<PlotType, string> = {
 export type InplaceVolumesFilterSelections = Omit<InplaceVolumesFilterSettings, "allowIndicesValuesIntersection"> & {
     areSelectedTablesComparable: boolean;
 };
-export type InplaceVolumesPlotOptions = {
-    histogramType: HistogramType; // For histogram plots
-    histogramBins: number;
-    barSortBy: BarSortBy; // How to sort the bars in a bar plot,
-    showStatisticalMarkers: boolean;
-    showRealizationPoints: boolean;
-    sharedXAxis: boolean;
-    sharedYAxis: boolean;
-    hideConstants: boolean;
-    showPercentageInHistogram: boolean;
-};
+
+export type { InplaceVolumesPlotOptions, BarSortBy };

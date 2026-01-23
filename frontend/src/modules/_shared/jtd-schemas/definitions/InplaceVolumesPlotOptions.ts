@@ -1,8 +1,7 @@
 import type { JTDSchemaType } from "ajv/dist/core";
 
 import { HistogramType } from "@modules/_shared/histogram";
-import type { InplaceVolumesPlotOptions } from "@modules/InplaceVolumesNew/typesAndEnums";
-import { BarSortBy } from "@modules/InplaceVolumesNew/view/utils/plotly/bar";
+import { BarSortBy, type InplaceVolumesPlotOptions } from "@modules/_shared/InplaceVolumes/plotOptions";
 
 export const INPLACE_VOLUMES_PLOT_OPTIONS_SCHEMA: JTDSchemaType<InplaceVolumesPlotOptions> = {
     properties: {

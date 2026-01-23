@@ -1,14 +1,12 @@
 import { sortBy } from "lodash";
 import type { Dash, PlotData } from "plotly.js";
 
+import { BarSortBy } from "@modules/_shared/InplaceVolumes/plotOptions";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import { computeStatistics } from "../statistics";
 
-export enum BarSortBy {
-    Xvalues = "xvalues",
-    Yvalues = "yvalues",
-}
+export { BarSortBy };
 export const MAX_LABELS_FOR_BARS = 20;
 export type PlotlyBarTracesOptions = {
     title: string;
