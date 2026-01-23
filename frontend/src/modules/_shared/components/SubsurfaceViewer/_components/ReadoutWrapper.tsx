@@ -3,7 +3,7 @@ import React from "react";
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import type { LayerPickInfo, LightsType, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
+import type { LayerPickInfo, LightsType, MapMouseEvent, ViewportType, ViewStateType } from "@webviz/subsurface-viewer";
 import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { Feature } from "geojson";
@@ -28,6 +28,7 @@ import {
     SubsurfaceViewerWithCameraState,
     type SubsurfaceViewerWithCameraStateProps,
 } from "./SubsurfaceViewerWithCameraState";
+import { PerformanceOverlay, type PerformanceOverlayHandle } from "./PerformanceOverlay";
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
@@ -65,6 +66,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
     const deckGlRef = React.useRef<DeckGLRef | null>(null);
+    const perfOverlayRef = React.useRef<PerformanceOverlayHandle>(null);
 
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
     usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
@@ -158,15 +160,17 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     const handleHoverEvent = React.useCallback(
         function handleHoverEvent(event: MapMouseEvent): void {
+            // Record frame for FPS measurement during hover/readout interactions
+            perfOverlayRef.current?.recordFrame();
+
+            setPickingCoordinate(event.infos[0]?.coordinate ?? []);
+
             if (readoutMode !== "hover") {
                 return;
             }
 
             // Cancel any pending debounced picking
             debouncedMultiViewPicking.cancel();
-
-            // Debug/metrics
-            // recordHoverEvent();
 
             // Hover events should be cheap - we keep it simple as long as the mouse is moving
             // and do multi-view picking only when the mouse stops moving (debounced).
@@ -190,7 +194,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             updatedPickingInfoPerView[hoveredViewPort.id] = event.infos;
 
             setPickingInfoPerView(updatedPickingInfoPerView);
-            setPickingCoordinate(event.infos[0]?.coordinate ?? []);
 
             onViewerHover?.(event);
             onViewportHover?.(hoveredViewPort);
@@ -312,6 +315,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
 
+    
     return (
         <div
             ref={mainDivRef}
@@ -320,7 +324,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            {/* <PerformanceOverlay visible={showPerfOverlay || true} metrics={metrics} /> */}
+            <PerformanceOverlay ref={perfOverlayRef} visible={showPerfOverlay || true} />
             <PositionReadout coordinate={pickingCoordinate} visible={!hideReadout} />
             <SubsurfaceViewerWithCameraState
                 {...deckGlProps}
