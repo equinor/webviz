@@ -150,107 +150,21 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const handleShowPercentageInHistogramChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
         handleOptionChange("showPercentageInHistogram", checked);
     };
-    const histogramContent = (
-        <div>
-            <SettingWrapper
-                label="Histogram Type"
-                help={{
-                    title: "Histogram Type",
-                    content: <HistogramTypeInfoContent />,
-                }}
-            >
-                <Dropdown
-                    options={[
-                        { label: "Stacked", value: HistogramType.Stack },
-                        { label: "Grouped", value: HistogramType.Group },
-                        { label: "Overlayed", value: HistogramType.Overlay },
-                        { label: "Relative", value: HistogramType.Relative },
-                    ]}
-                    value={plotOptions.histogramType}
-                    onChange={handleHistogramTypeChange}
-                />
-            </SettingWrapper>
-            <SettingWrapper label="Max number of histogram bins" key="number-of-histogram-bins">
-                <Slider
-                    value={plotOptions.histogramBins}
-                    onChange={handleHistogramBinsChange}
-                    min={5}
-                    step={1}
-                    max={30}
-                    valueLabelDisplay="auto"
-                />
-            </SettingWrapper>
-            <SettingWrapper>
-                <Checkbox
-                    label="Show labels"
-                    checked={plotOptions.showPercentageInHistogram}
-                    onChange={handleShowPercentageInHistogramChange}
-                />
-            </SettingWrapper>
-        </div>
-    );
-    const barContent = (
-        <div>
-            <SettingWrapper label={"Create bar for each"} annotations={selectedSelectorColumnAnnotations}>
-                <Dropdown
-                    value={selectedSelectorColumn.value}
-                    options={selectorOptions}
-                    onChange={setSelectedSelectorColumn}
-                    disabled={selectedPlotType !== PlotType.BAR}
-                />
-            </SettingWrapper>
-            <SettingWrapper label="Sort bars by">
-                <Dropdown
-                    options={[
-                        { label: "X values (Category)", value: BarSortBy.Xvalues },
-                        { label: "Y values (Response)", value: BarSortBy.Yvalues },
-                    ]}
-                    value={plotOptions.barSortBy}
-                    onChange={handleBarSortByChange}
-                />
-            </SettingWrapper>
-        </div>
-    );
-    const plotMarkersContent = (
-        <div>
-            <SettingWrapper>
-                <Checkbox
-                    label="Show Statistical Markers"
-                    checked={plotOptions.showStatisticalMarkers}
-                    onChange={handleShowStatisticalMarkersChange}
-                />
-            </SettingWrapper>
-            <SettingWrapper>
-                <Checkbox
-                    label="Show Realization Points"
-                    checked={plotOptions.showRealizationPoints}
-                    onChange={handleShowRealizationPointsChange}
-                />
-            </SettingWrapper>
-        </div>
-    );
-    const layoutContent = (
-        <div className="flex flex-col ">
-            <Checkbox
-                label="Hide plots where all values are equal"
-                checked={plotOptions.hideConstants}
-                onChange={handleHideConstantsChange}
-            />
-            <Checkbox label="Shared X Axis" checked={plotOptions.sharedXAxis} onChange={handleSharedXAxisChange} />
-            <Checkbox label="Shared Y Axis" checked={plotOptions.sharedYAxis} onChange={handleSharedYAxisChange} />
-        </div>
-    );
+
     const plotSettings = (
-        <div>
-            <CollapsibleGroup title="Data and plot type" expanded>
+        <div className="flex flex-col gap-2">
+            <CollapsibleGroup title="Data selection" expanded>
+                <SettingWrapper label="Response" annotations={selectedFirstResultNameAnnotations}>
+                    <Dropdown
+                        value={selectedFirstResultName.value}
+                        options={resultNameOptions}
+                        onChange={setSelectedFirstResultName}
+                    />
+                </SettingWrapper>
+            </CollapsibleGroup>
+
+            <CollapsibleGroup title="Visual mapping" expanded>
                 <div className="flex flex-col gap-2">
-                    <SettingWrapper label="Response" annotations={selectedFirstResultNameAnnotations}>
-                        <Dropdown
-                            value={selectedFirstResultName.value}
-                            options={resultNameOptions}
-                            onChange={setSelectedFirstResultName}
-                        />
-                    </SettingWrapper>
                     <SettingWrapper label="Subplot by" annotations={selectedSubplotByAnnotations}>
                         <Dropdown
                             value={selectedSubplotBy.value}
@@ -266,25 +180,118 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         />
                     </SettingWrapper>
                 </div>
-                <CollapsibleGroup title="Plot type settings" expanded>
-                    {" "}
+            </CollapsibleGroup>
+
+            <CollapsibleGroup title="Plot & layout" expanded>
+                <div className="flex flex-col gap-2">
                     <SettingWrapper label="Plot Type">
                         <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
                     </SettingWrapper>
-                    <SettingWrapper>
+
+                    <Checkbox
+                        label="Show statistics table below plot"
+                        checked={showTable}
+                        onChange={(_e, checked) => setShowTable(checked)}
+                    />
+
+                    <Checkbox
+                        label="Hide plots where all values are equal"
+                        checked={plotOptions.hideConstants}
+                        onChange={handleHideConstantsChange}
+                    />
+
+                    <div className="flex gap-4 mt-1">
                         <Checkbox
-                            label="Show statistics table below plot"
-                            checked={showTable}
-                            onChange={(_e, checked) => setShowTable(checked)}
+                            label="Shared X Axis"
+                            checked={plotOptions.sharedXAxis}
+                            onChange={handleSharedXAxisChange}
                         />
-                    </SettingWrapper>
-                    {selectedPlotType === PlotType.HISTOGRAM && histogramContent}
-                    {selectedPlotType === PlotType.BAR && barContent}
-                </CollapsibleGroup>
-                <CollapsibleGroup title="Plot layout" expanded>
-                    {layoutContent} {plotMarkersContent}
-                </CollapsibleGroup>
-                {/* <CollapsibleGroup title="Plot markers" expanded></CollapsibleGroup> */}
+                        <Checkbox
+                            label="Shared Y Axis"
+                            checked={plotOptions.sharedYAxis}
+                            onChange={handleSharedYAxisChange}
+                        />
+                    </div>
+                </div>
+            </CollapsibleGroup>
+
+            <CollapsibleGroup title="Markers & labels" expanded>
+                <div className="flex flex-col gap-1">
+                    <Checkbox
+                        label="Show Statistical Markers"
+                        checked={plotOptions.showStatisticalMarkers}
+                        onChange={handleShowStatisticalMarkersChange}
+                    />
+                    <Checkbox
+                        label="Show Realization Points"
+                        checked={plotOptions.showRealizationPoints}
+                        onChange={handleShowRealizationPointsChange}
+                    />
+                    <Checkbox
+                        label="Show labels"
+                        checked={plotOptions.showPercentageInHistogram}
+                        onChange={handleShowPercentageInHistogramChange}
+                        disabled={selectedPlotType !== PlotType.HISTOGRAM}
+                    />
+                </div>
+            </CollapsibleGroup>
+
+            <CollapsibleGroup title="Specific configuration" expanded>
+                <div className="flex flex-col gap-2">
+                    <div className={selectedPlotType !== PlotType.HISTOGRAM ? "opacity-50 pointer-events-none" : ""}>
+                        <SettingWrapper
+                            label="Histogram Type"
+                            help={{ title: "Histogram Type", content: <HistogramTypeInfoContent /> }}
+                        >
+                            <Dropdown
+                                options={[
+                                    { label: "Stacked", value: HistogramType.Stack },
+                                    { label: "Grouped", value: HistogramType.Group },
+                                    { label: "Overlayed", value: HistogramType.Overlay },
+                                    { label: "Relative", value: HistogramType.Relative },
+                                ]}
+                                value={plotOptions.histogramType}
+                                onChange={handleHistogramTypeChange}
+                                disabled={selectedPlotType !== PlotType.HISTOGRAM}
+                            />
+                        </SettingWrapper>
+                        <SettingWrapper label="Max number of histogram bins">
+                            <Slider
+                                value={plotOptions.histogramBins}
+                                onChange={handleHistogramBinsChange}
+                                min={5}
+                                step={1}
+                                max={30}
+                                valueLabelDisplay="auto"
+                                disabled={selectedPlotType !== PlotType.HISTOGRAM}
+                            />
+                        </SettingWrapper>
+                    </div>
+
+                    <hr className="border-gray-200 my-1" />
+
+                    <div className={selectedPlotType !== PlotType.BAR ? "opacity-50 pointer-events-none" : ""}>
+                        <SettingWrapper label="Create bar for each" annotations={selectedSelectorColumnAnnotations}>
+                            <Dropdown
+                                value={selectedSelectorColumn.value}
+                                options={selectorOptions}
+                                onChange={setSelectedSelectorColumn}
+                                disabled={selectedPlotType !== PlotType.BAR}
+                            />
+                        </SettingWrapper>
+                        <SettingWrapper label="Sort bars by">
+                            <Dropdown
+                                options={[
+                                    { label: "X values (Category)", value: BarSortBy.Xvalues },
+                                    { label: "Y values (Response)", value: BarSortBy.Yvalues },
+                                ]}
+                                value={plotOptions.barSortBy}
+                                onChange={handleBarSortByChange}
+                                disabled={selectedPlotType !== PlotType.BAR}
+                            />
+                        </SettingWrapper>
+                    </div>
+                </div>
             </CollapsibleGroup>
         </div>
     );
