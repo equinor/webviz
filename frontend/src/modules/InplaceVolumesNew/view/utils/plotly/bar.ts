@@ -75,10 +75,6 @@ export function makePlotlyBarTraces({
         textposition: showText ? "inside" : undefined,
         textfont: showText ? { color: "black", size: 12 } : undefined,
         hovertemplate: hoverText,
-        hoverlabel: {
-            bgcolor: "white",
-            font: { size: 12, color: "black" },
-        },
     });
 
     if (showStatisticalMarkers) {
@@ -116,7 +112,6 @@ function createStatisticLinesForBarPlot(
             name: label,
             legendgroup: title,
             hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatNumber(value)}<extra></extra>`,
-            hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
         };
     }
 

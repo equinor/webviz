@@ -43,7 +43,6 @@ export function makePlotlyConvergenceTraces({
             showlegend: false,
             line: { color, width: 1, dash: "dashdot" },
             mode: "lines",
-            hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
             hovertemplate: convergenceArr.map(
                 (p) =>
                     `${title}</br>Realization: ${p.realization}<br>P90: ${formatNumber(Number(p.p90))}<extra></extra>`,
@@ -59,7 +58,6 @@ export function makePlotlyConvergenceTraces({
             mode: "lines",
             fill: "tonexty",
             fillcolor: lightColor,
-            hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
             hovertemplate: convergenceArr.map(
                 (p) =>
                     `${title}</br>Realization: ${p.realization}<br>Mean: ${formatNumber(Number(p.mean))}<extra></extra>`,
@@ -75,7 +73,6 @@ export function makePlotlyConvergenceTraces({
             mode: "lines",
             fill: "tonexty",
             fillcolor: lightColor,
-            hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
             hovertemplate: convergenceArr.map(
                 (p) =>
                     `${title}</br>Realization: ${p.realization}<br>P10: ${formatNumber(Number(p.p10))}<extra></extra>`,

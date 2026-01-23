@@ -46,7 +46,8 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
         return value.length > 0 && value.every((name) => uniqueTableNames.includes(name));
     },
     fixupFunction: ({ precomputedValue: uniqueTableNames }) => {
-        return uniqueTableNames;
+        // Just pick the first valid table name as a fixup
+        return uniqueTableNames.length > 0 ? [uniqueTableNames[0]] : [];
     },
 });
 

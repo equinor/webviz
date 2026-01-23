@@ -31,8 +31,8 @@ export function computeStatistics(values: number[]): Statistics {
     const variance = count > 1 ? values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (count - 1) : 0;
     const stdDev = Math.sqrt(variance);
 
-    const min = Math.min(...values);
-    const max = Math.max(...values);
+    const min = values.reduce((acc, val) => Math.min(acc, val), Infinity);
+    const max = values.reduce((acc, val) => Math.max(acc, val), -Infinity);
     const p10 = computeReservesP10(values);
     const p50 = computeReservesP50(values);
     const p90 = computeReservesP90(values);

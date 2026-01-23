@@ -24,8 +24,7 @@ export function makePlotlyDensityTraces({
             orientation: "h",
             spanmode: "hard",
             meanline: { visible: true },
-            hovertemplate: `<b>%{x}</b> <br>Realization: <b>%{pointNumber}</b> <extra></extra>`,
-            hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
+            hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{pointNumber}<extra></extra>`,
             hoverinfo: "x",
             // @ts-expect-error - arguments in the plotly types
             hoveron: "points+kde",

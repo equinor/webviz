@@ -28,7 +28,6 @@ export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Pa
         hoverinfo: "skip",
         boxpoints: showRealizationPoints ? "all" : "outliers",
         hovertemplate: `${title}<br>${resultName}: <b>%{x}</b> <br>Realization: <b>%{pointNumber}</b> <extra></extra>`,
-        hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
     });
 
     if (showStatisticalMarkers) {
@@ -57,7 +56,6 @@ function createQuantileAndMeanMarkerTracesForBoxPlot(
         showlegend: false,
         marker: { color: ensembleColor, symbol: "x", size: 10 },
         hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatNumber(value)}<extra></extra>`,
-        hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
     });
 
     return [createMarker(p10, "P10"), createMarker(mean, "Mean"), createMarker(p90, "P90")];
