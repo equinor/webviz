@@ -12,7 +12,7 @@ import { ChannelIds } from "@modules/InplaceVolumesNew/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumesNew/interfaces";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
-import { colorByAtom, firstResultNameAtom, plotTypeAtom, subplotByAtom } from "../atoms/baseAtoms";
+import { colorByAtom, resultNameAtom, plotTypeAtom, subplotByAtom } from "../atoms/baseAtoms";
 
 const STANDARD_ORIGIN_KEYS = [TableOriginKey.ENSEMBLE, TableOriginKey.TABLE_NAME, TableOriginKey.FLUID];
 
@@ -107,7 +107,7 @@ export function usePublishToDataChannels(
     const contents: ChannelContentDefinition[] = [];
     const subplotBy = useAtomValue(subplotByAtom);
     const colorBy = useAtomValue(colorByAtom);
-    const resultName = useAtomValue(firstResultNameAtom);
+    const resultName = useAtomValue(resultNameAtom);
     const plotType = useAtomValue(plotTypeAtom);
 
     if (

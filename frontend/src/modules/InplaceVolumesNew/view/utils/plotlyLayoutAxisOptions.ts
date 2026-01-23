@@ -9,7 +9,7 @@ import { MAX_LABELS_FOR_BARS } from "./plotly/bar";
 
 export interface PlotConfigurerOptions {
     plotType: PlotType;
-    firstResultName: string;
+    resultName: string;
     barSelectorColumn: string | null;
     colorBy: string;
     histogramType: HistogramType;
@@ -22,11 +22,11 @@ export interface PlotConfigurerOptions {
  * configuration logic.
  */
 export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, options: PlotConfigurerOptions): void {
-    const { plotType, firstResultName, barSelectorColumn, colorBy, histogramType, table } = options;
+    const { plotType, resultName, barSelectorColumn, colorBy, histogramType, table } = options;
 
     switch (plotType) {
         case PlotType.CONVERGENCE:
-            configureConvergencePlot(plotBuilder, firstResultName);
+            configureConvergencePlot(plotBuilder, resultName);
             break;
         case PlotType.BOX:
             configureBoxPlot(plotBuilder);
@@ -42,12 +42,12 @@ export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, op
     }
 }
 
-function configureConvergencePlot(plotBuilder: PlotBuilder, firstResultName: string): void {
+function configureConvergencePlot(plotBuilder: PlotBuilder, resultName: string): void {
     plotBuilder.setXAxisOptions({
         title: { text: "Realizations", standoff: 5 },
     });
     plotBuilder.setYAxisOptions({
-        title: { text: firstResultName, standoff: 5 },
+        title: { text: resultName, standoff: 5 },
     });
 }
 

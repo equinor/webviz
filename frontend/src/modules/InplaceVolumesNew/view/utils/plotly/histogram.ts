@@ -103,7 +103,6 @@ function createStatisticLinesForHistogram(
             name: label,
             legendgroup: title,
             hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${value ? formatNumber(value) : ""}<extra></extra>`,
-            hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
         };
 
         if (showLabels) {
@@ -137,6 +136,5 @@ function createRugTraceForHistogram(xValues: number[], title: string, color: str
         name: "Realizations",
         legendgroup: title,
         hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{pointNumber}<extra></extra>`,
-        hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
     };
 }

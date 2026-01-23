@@ -16,7 +16,7 @@ import {
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
-    selectedFirstResultNameAtom,
+    selectedResultNameAtom,
     selectedIndicesWithValuesAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
@@ -27,7 +27,7 @@ export type SerializedSettings = {
     ensembleIdentStrings: string[];
     tableNames: string[];
     indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
-    firstResultName: string | null;
+    resultName: string | null;
     selectorColumn: string | null;
     groupBy: string;
     colorBy: string;
@@ -48,7 +48,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         indicesWithValues: {
             ...inject("InplaceVolumesIndexWithValues"),
         },
-        firstResultName: { type: "string", nullable: true },
+        resultName: { type: "string", nullable: true },
         selectorColumn: { type: "string", nullable: true },
         groupBy: { type: "string" },
         colorBy: { type: "string" },
@@ -78,7 +78,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         ensembleIdentStrings: selectedEnsembleIdentStrings,
         tableNames: get(selectedTableNamesAtom).value,
         indicesWithValues: indicesWithStringifiedValues,
-        firstResultName: get(selectedFirstResultNameAtom).value,
+        resultName: get(selectedResultNameAtom).value,
         selectorColumn: get(selectedSelectorColumnAtom).value,
         groupBy: get(selectedSubplotByAtom).value,
         colorBy: get(selectedColorByAtom).value,
@@ -94,7 +94,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
         ? raw.ensembleIdentStrings.map((id) => RegularEnsembleIdent.fromString(id))
         : undefined;
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
-    setIfDefined(set, selectedFirstResultNameAtom, raw.firstResultName);
+    setIfDefined(set, selectedResultNameAtom, raw.resultName);
     setIfDefined(set, selectedSelectorColumnAtom, raw.selectorColumn);
     setIfDefined(set, selectedSubplotByAtom, raw.groupBy);
     setIfDefined(set, selectedColorByAtom, raw.colorBy);

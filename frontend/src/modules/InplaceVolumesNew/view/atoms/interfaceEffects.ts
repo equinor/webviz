@@ -6,7 +6,7 @@ import {
     colorByAtom,
     filterAtom,
     plotTypeAtom,
-    firstResultNameAtom,
+    resultNameAtom,
     selectorColumnAtom,
     subplotByAtom,
 } from "./baseAtoms";
@@ -17,8 +17,8 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(filterAtom, filter);
     },
     (getInterfaceValue, setAtomValue) => {
-        const firstResultName = getInterfaceValue("firstResultName");
-        setAtomValue(firstResultNameAtom, firstResultName);
+        const resultName = getInterfaceValue("resultName");
+        setAtomValue(resultNameAtom, resultName);
     },
     (getInterfaceValue, setAtomValue) => {
         const selectorColumn = getInterfaceValue("selectorColumn");

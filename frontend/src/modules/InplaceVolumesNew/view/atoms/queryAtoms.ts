@@ -1,7 +1,7 @@
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { useGetAggregatedPerRealizationTableDataQueries } from "@modules/_shared/InplaceVolumes/queryHooks";
 
-import { areTableDefinitionSelectionsValidAtom, firstResultNameAtom } from "./baseAtoms";
+import { areTableDefinitionSelectionsValidAtom, resultNameAtom } from "./baseAtoms";
 import {
     areSelectedTablesComparableAtom,
     ensembleIdentsWithRealizationsAtom,
@@ -11,11 +11,11 @@ import {
 } from "./derivedAtoms";
 
 export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
-    const firstResultName = get(firstResultNameAtom);
+    const resultName = get(resultNameAtom);
 
     const resultNames: string[] = [];
-    if (firstResultName !== null) {
-        resultNames.push(firstResultName);
+    if (resultName !== null) {
+        resultNames.push(resultName);
     }
 
     const groupByIndices = get(groupByIndicesAtom);

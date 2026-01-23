@@ -38,7 +38,7 @@ export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Pa
     return data;
 }
 
-export function createQuantileAndMeanMarkerTracesForBoxPlot(
+function createQuantileAndMeanMarkerTracesForBoxPlot(
     title: string,
     resultName: string,
     values: number[],

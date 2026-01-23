@@ -50,7 +50,7 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
     },
 });
 
-export const selectedFirstResultNameAtom = persistableFixableAtom<string | null>({
+export const selectedResultNameAtom = persistableFixableAtom<string | null>({
     initialValue: null,
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     isValidFunction: ({ get, value }) => {

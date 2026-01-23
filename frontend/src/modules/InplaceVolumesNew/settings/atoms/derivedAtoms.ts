@@ -5,7 +5,7 @@ import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableD
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
-    selectedFirstResultNameAtom,
+    selectedResultNameAtom,
     selectedIndicesWithValuesAtom,
     selectedTableNamesAtom,
 } from "./persistableFixableAtoms";
@@ -27,7 +27,7 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedTableNames = get(selectedTableNamesAtom);
-    const selectedFirstResultName = get(selectedFirstResultNameAtom);
+    const selectedResultName = get(selectedResultNameAtom);
     const selectedIndicesWithValues = get(selectedIndicesWithValuesAtom);
 
     const tableDefinitionsQuery = get(tableDefinitionsQueryAtom);
@@ -44,7 +44,7 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         return false;
     }
 
-    if (!selectedFirstResultName.value || !tableDefinitionsAccessor.hasResultName(selectedFirstResultName.value)) {
+    if (!selectedResultName.value || !tableDefinitionsAccessor.hasResultName(selectedResultName.value)) {
         return false;
     }
 

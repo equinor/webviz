@@ -2,7 +2,6 @@ import type React from "react";
 
 import { useAtom, useAtomValue } from "jotai";
 
-import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
@@ -35,7 +34,7 @@ import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
-    selectedFirstResultNameAtom,
+    selectedResultNameAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
@@ -59,7 +58,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
 
-    const [selectedFirstResultName, setSelectedFirstResultName] = useAtom(selectedFirstResultNameAtom);
+    const [selectedFirstResultName, setSelectedFirstResultName] = useAtom(selectedResultNameAtom);
     const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
 
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
@@ -71,12 +70,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
 
-    useApplyInitialSettingsToState(
-        props.initialSettings,
-        "selectedIndexValueCriteria",
-        "string",
-        setSelectedIndexValueCriteria,
-    );
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
@@ -108,7 +101,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         plotTypeOptions.push({ label, value: type as PlotType });
     }
 
-    const selectedFirstResultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedFirstResultNameAtom);
+    const selectedFirstResultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNameAtom);
     const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
