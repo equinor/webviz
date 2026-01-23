@@ -263,7 +263,7 @@ export class RealizationSurfacesProvider
             throw new Error("Invalid polyline in stored data. Must contain at least two (x,y)-points");
         }
 
-        // Add hard coded sample resolution of 25 meters for now (should be from metadata in future)
+        // Add hard coded sample resolution of 25 meters for now (should be derived from metadata in future)
         const sampleResolutionInMeters = 25.0;
 
         const initialHorizontalPosition = -extensionLength;

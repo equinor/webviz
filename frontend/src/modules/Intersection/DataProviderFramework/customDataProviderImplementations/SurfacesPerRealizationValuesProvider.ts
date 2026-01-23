@@ -230,7 +230,7 @@ export class SurfacesPerRealizationValuesProvider
                 getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH),
             );
 
-            // Add hard coded sample resolution of 25 meters for now (should be from metadata in future)
+            // Add hard coded sample resolution of 25 meters for now (should be derived from metadata in future)
             const sampleResolutionInMeters = 25.0;
 
             // If no intersection is selected, or polyline is empty, cancel update
