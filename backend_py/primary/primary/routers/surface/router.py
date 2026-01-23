@@ -307,6 +307,12 @@ async def post_get_surface_intersection(
     """
     access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
+    # Emulate nginx client_max_body_size = 1m limit locally
+    # Each float in JSON is roughly 20 bytes (e.g., "-123456.789012345,")
+    estimated_body_size = (len(cumulative_length_polyline.x_points) + len(cumulative_length_polyline.y_points)) * 20
+    if estimated_body_size > 1_000_000:
+        raise HTTPException(status_code=413, detail="Request body exceeds maximum size of 1MB")
+
     surface = await access.get_realization_surface_data_async(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
     )

@@ -238,6 +238,12 @@ async def post_get_seismic_fence(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
+    # Emulate nginx client_max_body_size = 1m limit locally
+    # Each float in JSON is roughly 20 bytes (e.g., "-123456.789012345,")
+    estimated_body_size = (len(polyline.x_points) + len(polyline.y_points)) * 20
+    if estimated_body_size > 1_000_000:
+        raise HTTPException(status_code=413, detail="Request body exceeds maximum size of 1MB")
+
     # Retrieve fence and post as seismic intersection using cdp coordinates for vds-slice
     # NOTE: Correct coordinate format and scaling - see VdsCoordinateSystem?
     [

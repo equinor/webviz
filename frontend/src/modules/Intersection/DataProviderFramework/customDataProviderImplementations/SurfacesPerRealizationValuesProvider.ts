@@ -39,7 +39,6 @@ const surfacesPerRealizationValuesSettings = [
     Setting.REALIZATIONS,
     Setting.ATTRIBUTE,
     Setting.SURFACE_NAMES,
-    Setting.SAMPLE_RESOLUTION_IN_METERS,
     Setting.COLOR_SET,
 ] as const;
 export type SurfacesPerRealizationValuesSettings = typeof surfacesPerRealizationValuesSettings;
@@ -73,7 +72,6 @@ export class SurfacesPerRealizationValuesProvider
     getDefaultSettingsValues() {
         return {
             [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-            [Setting.SAMPLE_RESOLUTION_IN_METERS]: 1,
         };
     }
 
@@ -85,8 +83,7 @@ export class SurfacesPerRealizationValuesProvider
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.realizations, newSettings.realizations) ||
             !isEqual(prevSettings.attribute, newSettings.attribute) ||
-            !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames) ||
-            !isEqual(prevSettings.sampleResolutionInMeters, newSettings.sampleResolutionInMeters)
+            !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames)
         );
     }
 
@@ -108,8 +105,7 @@ export class SurfacesPerRealizationValuesProvider
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATIONS) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
-            getSetting(Setting.SURFACE_NAMES) !== null &&
-            getSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) !== null
+            getSetting(Setting.SURFACE_NAMES) !== null
         );
     }
 
@@ -229,11 +225,13 @@ export class SurfacesPerRealizationValuesProvider
             const intersectionPolylineWithSectionLengths = getHelperDependency(
                 intersectionPolylineWithSectionLengthsDep,
             );
-            const sampleResolutionInMeters = getLocalSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) ?? 1;
             const extensionLength = createValidExtensionLength(
                 getLocalSetting(Setting.INTERSECTION),
                 getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH),
             );
+
+            // Add hard coded sample resolution of 25 meters for now (should be from metadata in future)
+            const sampleResolutionInMeters = 25.0;
 
             // If no intersection is selected, or polyline is empty, cancel update
             if (
