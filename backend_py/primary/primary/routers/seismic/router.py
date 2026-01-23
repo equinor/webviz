@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from webviz_core_utils.b64 import b64_encode_float_array_as_float32
-from webviz_services.sumo_access.seismic_access import SeismicAccess, VdsHandle
+from webviz_services.sumo_access.seismic_access import SeismicAccess, VdsHandle, SeismicRepresentation
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.vds_access.request_types import VdsCoordinates, VdsCoordinateSystem
 from webviz_services.vds_access.response_types import VdsMetadata
@@ -42,7 +42,7 @@ async def get_inline_slice(
     realization_num: int = Query(description="Realization number"),
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    observed: bool = Query(description="Observed or simulated"),
+    representation: schemas.SeismicRepresentation = Query(description="Seismic representation"),
     inline_number: int = Query(description="Inline number"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic inline from a seismic cube."""
@@ -56,7 +56,7 @@ async def get_inline_slice(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
-            observed=observed,
+            representation=SeismicRepresentation(representation.value),
         )
     except ValueError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
@@ -81,7 +81,7 @@ async def get_crossline_slice(
     realization_num: int = Query(description="Realization number"),
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    observed: bool = Query(description="Observed or simulated"),
+    representation: schemas.SeismicRepresentation = Query(description="Seismic representation"),
     crossline_num: int = Query(description="Crossline number"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic crossline from a seismic cube."""
@@ -95,7 +95,7 @@ async def get_crossline_slice(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
-            observed=observed,
+            representation=SeismicRepresentation(representation.value),
         )
     except ValueError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
@@ -120,7 +120,7 @@ async def get_depth_slice(
     realization_num: int = Query(description="Realization number"),
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    observed: bool = Query(description="Observed or simulated"),
+    representation: schemas.SeismicRepresentation = Query(description="Seismic representation"),
     depth_slice_num: int = Query(description="Depth slice number"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic depth slice from a seismic cube."""
@@ -134,7 +134,7 @@ async def get_depth_slice(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
-            observed=observed,
+            representation=SeismicRepresentation(representation.value),
         )
     except ValueError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
@@ -160,7 +160,7 @@ async def get_seismic_slices(
     realization_num: int = Query(description="Realization number"),
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    observed: bool = Query(description="Observed or simulated"),
+    representation: schemas.SeismicRepresentation = Query(description="Seismic representation"),
     inline_number: int = Query(description="Inline number"),
     crossline_number: int = Query(description="Crossline number"),
     depth_slice_number: int = Query(description="Depth slice number"),
@@ -176,7 +176,7 @@ async def get_seismic_slices(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
-            observed=observed,
+            representation=SeismicRepresentation(representation.value),
         )
     except ValueError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
@@ -207,7 +207,7 @@ async def post_get_seismic_fence(
     realization_num: int = Query(description="Realization number"),
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    observed: bool = Query(description="Observed or simulated"),
+    representation: schemas.SeismicRepresentation = Query(description="Seismic representation"),
     polyline: schemas.SeismicFencePolyline = Body(embed=True),
 ) -> schemas.SeismicFenceData:
     """Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system.
@@ -228,7 +228,7 @@ async def post_get_seismic_fence(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
-            observed=observed,
+            representation=SeismicRepresentation(representation.value),
         )
     except ValueError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err

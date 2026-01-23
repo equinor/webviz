@@ -14,13 +14,19 @@ import type {
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { NullableStoredData } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import { Representation } from "@modules/_shared/DataProviderFramework/settings/implementations/RepresentationSetting";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { type SeismicSliceData_trans, transformSeismicSlice } from "../utils/transformSeismicSlice";
+import {
+    type SeismicSliceData_trans,
+    transformSeismicSlice,
+} from "../../../../../3DViewer/DataProviderFramework/utils/transformSeismicSlice";
 
+import { representationToApiRepresentation } from "./representationUtils";
 
-const realizationSeismicSlicesSettings = [
+const seismicSlicesSettings = [
     Setting.ENSEMBLE,
+    Setting.REPRESENTATION,
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
     Setting.TIME_OR_INTERVAL,
@@ -28,29 +34,24 @@ const realizationSeismicSlicesSettings = [
     Setting.COLOR_SCALE,
     Setting.OPACITY_PERCENT,
 ] as const;
-export type RealizationSeismicSlicesSettings = typeof realizationSeismicSlicesSettings;
-type SettingsWithTypes = MakeSettingTypesMap<RealizationSeismicSlicesSettings>;
+export type SeismicSlicesSettings = typeof seismicSlicesSettings;
+type SettingsWithTypes = MakeSettingTypesMap<SeismicSlicesSettings>;
 
-export type RealizationSeismicSlicesData = {
+export type SeismicSlicesData = {
     inline: SeismicSliceData_trans;
     crossline: SeismicSliceData_trans;
     depthSlice: SeismicSliceData_trans;
 };
 
-export type RealizationSeismicSlicesStoredData = {
+export type SeismicSlicesStoredData = {
     seismicCubeMeta: SeismicCubeMeta_api;
     seismicSlices: [number, number, number];
 };
 
-export class RealizationSeismicSlicesProvider
-    implements
-        CustomDataProviderImplementation<
-            RealizationSeismicSlicesSettings,
-            RealizationSeismicSlicesData,
-            RealizationSeismicSlicesStoredData
-        >
+export class SeismicSlicesProvider
+    implements CustomDataProviderImplementation<SeismicSlicesSettings, SeismicSlicesData, SeismicSlicesStoredData>
 {
-    settings = realizationSeismicSlicesSettings;
+    settings = seismicSlicesSettings;
 
     getDefaultSettingsValues() {
         const defaultColorPalette =
@@ -74,7 +75,7 @@ export class RealizationSeismicSlicesProvider
     }
 
     getDefaultName(): string {
-        return "Seismic Slices (realization)";
+        return "Seismic Slices";
     }
 
     doSettingsChangesRequireDataRefetch(
@@ -86,41 +87,35 @@ export class RealizationSeismicSlicesProvider
             !isEqual(prevSettings[Setting.ENSEMBLE], newSettings[Setting.ENSEMBLE]) ||
             !isEqual(prevSettings[Setting.REALIZATION], newSettings[Setting.REALIZATION]) ||
             !isEqual(prevSettings[Setting.ATTRIBUTE], newSettings[Setting.ATTRIBUTE]) ||
-            !isEqual(prevSettings[Setting.TIME_OR_INTERVAL], newSettings[Setting.TIME_OR_INTERVAL])
+            !isEqual(prevSettings[Setting.TIME_OR_INTERVAL], newSettings[Setting.TIME_OR_INTERVAL]) ||
+            !isEqual(prevSettings[Setting.REPRESENTATION], newSettings[Setting.REPRESENTATION])
         );
     }
 
     areCurrentSettingsValid({
         getStoredData,
         getSetting,
-    }: AreSettingsValidArgs<
-        RealizationSeismicSlicesSettings,
-        RealizationSeismicSlicesData,
-        RealizationSeismicSlicesStoredData
-    >): boolean {
+    }: AreSettingsValidArgs<SeismicSlicesSettings, SeismicSlicesData, SeismicSlicesStoredData>): boolean {
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
             getSetting(Setting.TIME_OR_INTERVAL) !== null &&
+            getSetting(Setting.REPRESENTATION) !== null &&
             getStoredData("seismicSlices") !== null &&
             getStoredData("seismicCubeMeta") !== null
         );
     }
 
     doStoredDataChangesRequireDataRefetch(
-        prevStoredData: NullableStoredData<RealizationSeismicSlicesStoredData> | null,
-        newStoredData: NullableStoredData<RealizationSeismicSlicesStoredData>,
+        prevStoredData: NullableStoredData<SeismicSlicesStoredData> | null,
+        newStoredData: NullableStoredData<SeismicSlicesStoredData>,
     ): boolean {
         return !prevStoredData || !isEqual(prevStoredData.seismicSlices, newStoredData.seismicSlices);
     }
 
     makeValueRange(
-        accessors: DataProviderInformationAccessors<
-            RealizationSeismicSlicesSettings,
-            RealizationSeismicSlicesData,
-            RealizationSeismicSlicesStoredData
-        >,
+        accessors: DataProviderInformationAccessors<SeismicSlicesSettings, SeismicSlicesData, SeismicSlicesStoredData>,
     ): [number, number] | null {
         const data = accessors.getData();
         if (!data) {
@@ -137,14 +132,12 @@ export class RealizationSeismicSlicesProvider
         getSetting,
         getStoredData,
         fetchQuery,
-    }: FetchDataParams<
-        RealizationSeismicSlicesSettings,
-        RealizationSeismicSlicesData
-    >): Promise<RealizationSeismicSlicesData> {
+    }: FetchDataParams<SeismicSlicesSettings, SeismicSlicesData>): Promise<SeismicSlicesData> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
         const attribute = getSetting(Setting.ATTRIBUTE);
         const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
+        const representation = getSetting(Setting.REPRESENTATION);
         const slices = getStoredData("seismicSlices");
 
         const queryOptions = getSeismicSlicesOptions({
@@ -154,7 +147,7 @@ export class RealizationSeismicSlicesProvider
                 realization_num: realizationNum ?? 0,
                 seismic_attribute: attribute ?? "",
                 time_or_interval_str: timeOrInterval ?? "",
-                observed: false,
+                representation: representationToApiRepresentation(representation),
                 inline_number: slices?.[0] ?? 0,
                 crossline_number: slices?.[1] ?? 0,
                 depth_slice_number: slices?.[2] ?? 0,
@@ -175,8 +168,16 @@ export class RealizationSeismicSlicesProvider
         helperDependency,
         valueConstraintsUpdater,
         storedDataUpdater,
+        settingAttributesUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationSeismicSlicesSettings, RealizationSeismicSlicesStoredData>): void {
+    }: DefineDependenciesArgs<SeismicSlicesSettings, SeismicSlicesStoredData>): void {
+        settingAttributesUpdater(Setting.REALIZATION, ({ getLocalSetting }) => {
+            const representation = getLocalSetting(Setting.REPRESENTATION);
+            const enabled =
+                representation === Representation.REALIZATION ||
+                representation === Representation.OBSERVATION_PER_REALIZATION;
+            return { enabled, visible: enabled };
+        });
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -200,29 +201,50 @@ export class RealizationSeismicSlicesProvider
 
             return [...realizations];
         });
+        valueConstraintsUpdater(Setting.REPRESENTATION, () => {
+            return [Representation.REALIZATION, Representation.OBSERVATION, Representation.OBSERVATION_PER_REALIZATION];
+        });
 
-        const realizationSeismicCrosslineDataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+        const seismicCubeMetaListDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realization = getLocalSetting(Setting.REALIZATION);
 
-            if (!ensembleIdent || realization === null) {
+            if (!ensembleIdent) {
                 return null;
             }
 
             return await queryClient.fetchQuery({
                 ...getSeismicCubeMetaListOptions({
                     query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                        ...makeCacheBustingQueryParam(ensembleIdent),
+                        case_uuid: ensembleIdent.getCaseUuid() ?? "",
+                        ensemble_name: ensembleIdent.getEnsembleName() ?? "",
+                        ...makeCacheBustingQueryParam(ensembleIdent ?? null),
                     },
+
                     signal: abortSignal,
                 }),
             });
         });
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency, getLocalSetting }) => {
+            const seismicCubeMetaList = getHelperDependency(seismicCubeMetaListDep);
+
+            if (!seismicCubeMetaList) {
+                return [];
+            }
+
+            const representation = getLocalSetting(Setting.REPRESENTATION);
+            const apiRepresentation = representationToApiRepresentation(representation);
+
+            return Array.from(
+                new Set(
+                    seismicCubeMetaList
+                        .filter((el) => el.isDepth && el.representation === apiRepresentation)
+                        .map((el) => el.seismicAttribute),
+                ),
+            ).sort();
+        });
 
         storedDataUpdater("seismicCubeMeta", ({ getHelperDependency, getLocalSetting }) => {
-            const data = getHelperDependency(realizationSeismicCrosslineDataDep);
+            const data = getHelperDependency(seismicCubeMetaListDep);
             const attribute = getLocalSetting(Setting.ATTRIBUTE);
             const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
 
@@ -240,7 +262,7 @@ export class RealizationSeismicSlicesProvider
         });
 
         valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(realizationSeismicCrosslineDataDep);
+            const data = getHelperDependency(seismicCubeMetaListDep);
 
             if (!data) {
                 return [];
@@ -256,7 +278,7 @@ export class RealizationSeismicSlicesProvider
         valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
 
-            const data = getHelperDependency(realizationSeismicCrosslineDataDep);
+            const data = getHelperDependency(seismicCubeMetaListDep);
 
             if (!seismicAttribute || !data) {
                 return [];
@@ -278,7 +300,7 @@ export class RealizationSeismicSlicesProvider
         valueConstraintsUpdater(Setting.SEISMIC_SLICES, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
-            const data = getHelperDependency(realizationSeismicCrosslineDataDep);
+            const data = getHelperDependency(seismicCubeMetaListDep);
 
             if (!seismicAttribute || !timeOrInterval || !data) {
                 return [

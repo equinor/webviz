@@ -100,21 +100,12 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                     ),
                 );
                 return;
-            case "realization-simulated-seismic":
+            case "seismic":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        DataProviderType.INTERSECTION_REALIZATION_SIMULATED_SEISMIC,
+                        DataProviderType.INTERSECTION_SEISMIC,
                         props.dataProviderManager,
-                        "Realization Simulated Seismic",
-                    ),
-                );
-                return;
-            case "realization-observed-seismic":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.INTERSECTION_REALIZATION_OBSERVED_SEISMIC,
-                        props.dataProviderManager,
-                        "Realization Observed Seismic",
+                        "Seismic",
                     ),
                 );
                 return;
@@ -251,14 +242,9 @@ const ACTIONS: ActionGroup[] = [
                 label: "Seismic",
                 children: [
                     {
-                        identifier: "realization-simulated-seismic",
+                        identifier: "seismic",
                         icon: <Icon data={timeline} fontSize="small" />,
-                        label: "Realization Simulated Seismic",
-                    },
-                    {
-                        identifier: "realization-observed-seismic",
-                        icon: <Icon data={timeline} fontSize="small" />,
-                        label: "Realization Observed Seismic",
+                        label: "Seismic",
                     },
                 ],
             },

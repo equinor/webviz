@@ -5,10 +5,10 @@ import {
     type SeismicFence,
 } from "@modules/3DViewer/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 import type {
-    IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicStoredData,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
+    IntersectionSeismicData,
+    IntersectionSeismicSettings,
+    IntersectionSeismicStoredData,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -28,11 +28,7 @@ function makeTraceXYZPointsArrayFromPolyline(polylineUtmXy: number[], z: number)
 }
 
 export function makeSeismicIntersectionMeshLayer(
-    args: TransformerArgs<
-        IntersectionRealizationSeismicSettings,
-        IntersectionRealizationSeismicData,
-        IntersectionRealizationSeismicStoredData
-    >,
+    args: TransformerArgs<IntersectionSeismicSettings, IntersectionSeismicData, IntersectionSeismicStoredData>,
 ): Layer<any> | null {
     const { id, name, getData, getSetting, getStoredData, getDataValueRange } = args;
     const fenceData = getData();

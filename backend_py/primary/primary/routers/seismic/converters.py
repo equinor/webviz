@@ -12,7 +12,7 @@ def to_api_vds_cube_meta(seismic_meta: SeismicCubeMeta) -> schemas.SeismicCubeMe
         seismicAttribute=seismic_meta.seismic_attribute,
         unit=seismic_meta.unit,
         isoDateOrInterval=seismic_meta.iso_date_or_interval,
-        isObservation=seismic_meta.is_observation,
+        representation=schemas.SeismicRepresentation(seismic_meta.representation.value),
         isDepth=seismic_meta.is_depth,
         bbox=schemas.BoundingBox3d(
             xmin=seismic_meta.bbox.xmin,

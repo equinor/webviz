@@ -2,13 +2,13 @@ import type { BBox } from "@lib/utils/bbox";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import type {
-    RealizationSeismicSlicesData,
-    RealizationSeismicSlicesStoredData,
-} from "../customDataProviderImplementations/RealizationSeismicSlicesProvider";
+    SeismicSlicesData,
+    SeismicSlicesStoredData,
+} from "../../../_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/SeismicSlicesProvider";
 
-export function makeRealizationSeismicSlicesBoundingBox({
+export function makeSeismicSlicesBoundingBox({
     getStoredData,
-}: TransformerArgs<any, RealizationSeismicSlicesData, RealizationSeismicSlicesStoredData>): BBox | null {
+}: TransformerArgs<any, SeismicSlicesData, SeismicSlicesStoredData>): BBox | null {
     const seismicCubeMeta = getStoredData("seismicCubeMeta");
     if (!seismicCubeMeta) {
         return null;
