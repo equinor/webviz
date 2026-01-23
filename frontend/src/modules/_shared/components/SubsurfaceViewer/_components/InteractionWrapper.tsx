@@ -115,7 +115,9 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
 
             const polylinesPlugin = new PolylinesPlugin(manager, colorGenerator());
             polylinesPlugin.setPolylines(
-                convertIntersectionPolylinesToPolylines([...intersectionPolylines.getPolylines()]),
+                convertIntersectionPolylinesToPolylines([
+                    ...intersectionPolylines.getPolylines().filter((p) => p.fieldId === props.fieldId),
+                ]),
             );
             manager.addPlugin(polylinesPlugin);
             polylinesPluginRef.current = polylinesPlugin;
@@ -124,8 +126,10 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PolylinesPluginTopic.EDITING_POLYLINE_ID)(() => {
                 const editingId = polylinesPlugin.getCurrentEditingPolylineId();
-                if (editingId == null) {
-                    intersectionPolylines.setPolylines(
+                // Only update intersection polylines when not editing a polyline
+                if (editingId === null) {
+                    // We haven't changed all polylines, only the ones related to this field
+                    intersectionPolylines.updatePolylines(
                         convertPolylinesToIntersectionPolylines(polylinesPlugin.getPolylines(), props.fieldId),
                     );
                 } else {
@@ -138,7 +142,9 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 IntersectionPolylinesEvent.CHANGE,
                 () => {
                     polylinesPlugin.setPolylines(
-                        convertIntersectionPolylinesToPolylines([...intersectionPolylines.getPolylines()]),
+                        convertIntersectionPolylinesToPolylines([
+                            ...intersectionPolylines.getPolylines().filter((p) => p.fieldId === props.fieldId),
+                        ]),
                     );
                 },
             );
