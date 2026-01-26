@@ -1,8 +1,5 @@
 import type React from "react";
 
-import { makeSeismicSlicesBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeSeismicSlicesBoundingBox";
-import { SeismicSlicesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/SeismicSlicesProvider";
-
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
     accumulatePolylineIds,
@@ -10,6 +7,7 @@ import {
 } from "@modules/3DViewer/DataProviderFramework/accumulators/polylineIdsAccumulator";
 import { makeIntersectionRealizationGridBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeIntersectionRealizationGridBoundingBox";
 import { makeIntersectionSeismicBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeIntersectionSeismicBoundingBox";
+import { makeSeismicSlicesBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeSeismicSlicesBoundingBox";
 import { RealizationGridProvider } from "@modules/3DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
 import { CustomDataProviderType } from "@modules/3DViewer/DataProviderFramework/customDataProviderTypes";
 import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
@@ -28,6 +26,7 @@ import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/da
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import { IntersectionSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
+import { SeismicSlicesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/SeismicSlicesProvider";
 import {
     DepthSurfaceProvider,
     type DepthSurfaceSettings,

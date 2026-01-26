@@ -30,8 +30,7 @@ class SeismicAccess:
         ensemble_context = self._case_context.filter(ensemble=self._ensemble_name)
         realizations = await ensemble_context.realizationids_async
 
-        if realizations is not None and len(realizations) > 1:
-
+        if realizations:
             seismic_real_context = ensemble_context.cubes.filter(
                 realization=realizations[0],
             )
@@ -40,8 +39,8 @@ class SeismicAccess:
                 cube_meta_arr.append(
                     _create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object, realization_stage=True)
                 )
-        seismc_case_context = self._case_context.cubes.filter(stage="case")
-        async for sumo_cube_object in seismc_case_context:
+        seismic_case_context = self._case_context.cubes.filter(stage="case")
+        async for sumo_cube_object in seismic_case_context:
             cube_meta_arr.append(
                 _create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object, realization_stage=False)
             )
@@ -55,59 +54,9 @@ class SeismicAccess:
         time_or_interval_str: str,
     ) -> VdsHandle:
         """Get the vds handle for a given cube"""
-        timestamp_arr = time_or_interval_str.split("/", 1)
-        if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
-            raise InvalidDataError("time_or_interval_str must contain a single timestamp or interval", Service.SUMO)
-        if len(timestamp_arr) == 1:
-            time_filter = TimeFilter(
-                TimeType.TIMESTAMP,
-                start=timestamp_arr[0],
-                end=timestamp_arr[0],
-                exact=True,
-            )
-        else:
-            time_filter = TimeFilter(
-                TimeType.INTERVAL,
-                start=timestamp_arr[0],
-                end=timestamp_arr[1],
-                exact=True,
-            )
-        cube_context: SearchContext
-        if representation == SeismicRepresentation.OBSERVED_IN_CASE:
-
-            cube_context = self._case_context.cubes.filter(
-                tagname=seismic_attribute,
-                stage="case",
-                time=time_filter,
-            )
-        else:
-            # Realization context
-            if realization is None:
-                raise InvalidDataError("realization must be provided for non-observed cubes", Service.SUMO)
-            cube_context = self._case_context.cubes.filter(
-                ensemble=self._ensemble_name,
-                tagname=seismic_attribute,
-                realization=realization,
-                time=time_filter,
-            )
-        # Filter on observed
-        cubes: List[Cube] = []
-        async for cube in cube_context:
-            if cube["data"]["is_observation"] == (
-                representation == SeismicRepresentation.OBSERVED_IN_CASE
-                or representation == SeismicRepresentation.OBSERVED_IN_REALIZATION
-            ):
-                cubes.append(cube)
-                break
-
-        if not cubes:
-            raise NoDataError(f"Cube {seismic_attribute} not found in case {self._case_uuid}", Service.SUMO)
-        if len(cubes) > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple cubes found for {seismic_attribute} in case {self._case_uuid}", Service.SUMO
-            )
-
-        cube = cubes[0]
+        time_filter = _create_time_filter(time_or_interval_str)
+        cube_context = self._get_cube_context(seismic_attribute, representation, realization, time_filter)
+        cube = await _find_matching_cube_async(cube_context, representation, seismic_attribute, self._case_uuid)
 
         url, sas_token = await cube.auth_async
 
@@ -115,6 +64,83 @@ class SeismicAccess:
             sas_token=sas_token,
             vds_url=clean_vds_url(url),
         )
+
+    def _get_cube_context(
+        self,
+        seismic_attribute: str,
+        representation: SeismicRepresentation,
+        realization: int | None,
+        time_filter: TimeFilter,
+    ) -> SearchContext:
+        """Get the cube context for the given parameters"""
+        if representation == SeismicRepresentation.OBSERVED_IN_CASE:
+            return self._case_context.cubes.filter(
+                tagname=seismic_attribute,
+                stage="case",
+                time=time_filter,
+            )
+
+        # Realization context
+        if realization is None:
+            raise InvalidDataError("realization must be provided for non-observed cubes", Service.SUMO)
+        return self._case_context.cubes.filter(
+            ensemble=self._ensemble_name,
+            tagname=seismic_attribute,
+            realization=realization,
+            time=time_filter,
+        )
+
+
+def _create_time_filter(time_or_interval_str: str) -> TimeFilter:
+    """Create a time filter from a timestamp or interval string"""
+    timestamp_arr = time_or_interval_str.split("/", 1)
+    if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
+        raise InvalidDataError("time_or_interval_str must contain a single timestamp or interval", Service.SUMO)
+
+    if len(timestamp_arr) == 1:
+        return TimeFilter(
+            TimeType.TIMESTAMP,
+            start=timestamp_arr[0],
+            end=timestamp_arr[0],
+            exact=True,
+        )
+
+    return TimeFilter(
+        TimeType.INTERVAL,
+        start=timestamp_arr[0],
+        end=timestamp_arr[1],
+        exact=True,
+    )
+
+
+async def _find_matching_cube_async(
+    cube_context: SearchContext,
+    representation: SeismicRepresentation,
+    seismic_attribute: str,
+    case_uuid: str,
+) -> Cube:
+    """Find a cube matching the observation criteria"""
+    is_observed = representation in (
+        SeismicRepresentation.OBSERVED_IN_CASE,
+        SeismicRepresentation.OBSERVED_IN_REALIZATION,
+    )
+    print("***************************************", representation, is_observed)
+    async for cube in cube_context:
+        if cube["data"]["is_observation"] == is_observed:
+            return cube
+
+    raise NoDataError(f"Cube {seismic_attribute} not found in case {case_uuid}", Service.SUMO)
+
+
+def _determine_representation(is_observed: bool, realization_stage: bool) -> SeismicRepresentation:
+    """Determine the seismic representation based on observation status and stage"""
+    if realization_stage:
+        return SeismicRepresentation.OBSERVED_IN_REALIZATION if is_observed else SeismicRepresentation.MODELLED
+
+    if is_observed:
+        return SeismicRepresentation.OBSERVED_IN_CASE
+
+    raise InvalidDataError("In case stage, only observed cubes are allowed", Service.SUMO)
 
 
 def clean_vds_url(vds_url: str) -> str:
@@ -150,16 +176,8 @@ def _create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object: Cube, real
         rotation=sumo_cube_object["data"]["spec"]["rotation"],
     )
     is_observed = sumo_cube_object["data"]["is_observation"]
-    if realization_stage:
-        if is_observed:
-            representation = SeismicRepresentation.OBSERVED_IN_REALIZATION
-        else:
-            representation = SeismicRepresentation.MODELLED
-    else:
-        if is_observed:
-            representation = SeismicRepresentation.OBSERVED_IN_CASE
-        else:
-            raise InvalidDataError("In case stage, only observed cubes are allowed", Service.SUMO)
+    representation = _determine_representation(is_observed, realization_stage)
+
     seismic_meta = SeismicCubeMeta(
         seismic_attribute=sumo_cube_object["data"].get("tagname"),
         unit=sumo_cube_object["data"].get("unit"),
