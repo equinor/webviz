@@ -2,7 +2,6 @@ import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
 
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ContinuousParameter } from "@framework/EnsembleParameters";
 import { ParameterType } from "@framework/EnsembleParameters";
 import type { ModuleViewProps } from "@framework/Module";
@@ -95,11 +94,10 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
             const ensembleIdentString = responseChannelData.metaData.ensembleIdentString;
             const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
 
-            if (!ensemble || ensemble instanceof DeltaEnsemble) {
-                const ensembleType = !ensemble ? "Invalid" : "Delta";
+            if (!ensemble) {
                 setContent(
                     <ContentWarning>
-                        <p>{ensembleType} ensemble detected in the data channel.</p>
+                        <p>Invalid ensemble detected in the data channel.</p>
                         <p>Unable to compute parameter correlations.</p>
                     </ContentWarning>,
                 );
