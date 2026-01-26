@@ -379,7 +379,6 @@ export class Tag extends React.Component<TagProps> {
         const displayText = treeNodeSelection.displayText();
 
         const valid = treeNodeSelection.isValid();
-        const duplicate = isDuplicate;
 
         let placeholder = "";
         if (treeNodeSelection.getFocusedNodeName() === "" && treeNodeSelection.getFocusedLevel() === 0 && !active) {
@@ -390,7 +389,7 @@ export class Tag extends React.Component<TagProps> {
             <li
                 key={"Tag_" + index}
                 title={this.tagTitle(treeNodeSelection, index)}
-                className={this.outerTagClasses(!valid && !currentTag, duplicate, frameless)}
+                className={this.outerTagClasses(!valid && !currentTag, isDuplicate, frameless)}
                 style={this.makeStyle()}
                 onMouseEnter={(): void => this.setState({ hovered: true })}
                 onMouseLeave={(): void => this.setState({ hovered: false })}
@@ -410,9 +409,9 @@ export class Tag extends React.Component<TagProps> {
                 {this.createBrowseButtons(treeNodeSelection, index)}
                 <div
                     key={"InnerTag_" + index}
-                    className={this.innerTagClasses(!valid && !currentTag, duplicate)}
+                    className={this.innerTagClasses(!valid && !currentTag, isDuplicate)}
                     style={
-                        (valid || currentTag) && !duplicate && treeNodeSelection.icons().length === 1
+                        (valid || currentTag) && !isDuplicate && treeNodeSelection.icons().length === 1
                             ? {
                                   backgroundImage: "url(" + treeNodeSelection.icons()[0] + ")",
                                   backgroundRepeat: "no-repeat",
@@ -426,12 +425,12 @@ export class Tag extends React.Component<TagProps> {
                     {this.addAdditionalClasses(!valid) && !valid && !currentTag && (
                         <Error fontSize="small" className="mr-2" />
                     )}
-                    {this.addAdditionalClasses(!valid) && valid && duplicate && (
+                    {this.addAdditionalClasses(!valid) && valid && isDuplicate && (
                         <Warning fontSize="small" className="mr-2" />
                     )}
                     {this.addAdditionalClasses(!valid) &&
                         (valid || currentTag) &&
-                        !duplicate &&
+                        !isDuplicate &&
                         treeNodeSelection.icons().length > 1 && <Help fontSize="small" className="mr-2" />}
                     {this.createMatchesCounter(treeNodeSelection, index)}
                     <div className="flex whitespace-nowrap relative">

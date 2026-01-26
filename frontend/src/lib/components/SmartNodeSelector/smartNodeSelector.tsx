@@ -1682,6 +1682,8 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         const frameless = maxNumSelectedNodes === 1;
         let numSelectedNodes = maxNumSelectedNodes;
 
+        const duplicateFlags = this.computeDuplicateFlags(nodeSelections);
+
         return (
             <div id={id} ref={this.ref}>
                 {label && <label>{label}</label>}
@@ -1691,8 +1693,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                         {
                             "border-0 p-0 pr-10": frameless,
                             "rounded-b-none!": suggestionsVisible,
-                            "border-red-600":
-                                maxNumSelectedNodes > 0 && this.numValidSelections > maxNumSelectedNodes,
+                            "border-red-600": maxNumSelectedNodes > 0 && this.numValidSelections > maxNumSelectedNodes,
                         },
                     )}
                     onClick={this.selectLastInput}
@@ -1705,41 +1706,38 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                         })}
                         ref={this.tagFieldRef}
                     >
-                        {(() => {
-                            const duplicateFlags = this.computeDuplicateFlags(nodeSelections);
-                            return nodeSelections.map((selection, index) => {
-                                const isActiveTag = index === this.currentTagIndex();
-                                const tag = (
-                                    <Tag
-                                        key={`${index}`}
-                                        index={index}
-                                        frameless={frameless}
-                                        active={isActiveTag}
-                                        placeholder={placeholder ? placeholder : "Add new tag"}
-                                        treeNodeSelection={selection}
-                                        countTags={this.countTags()}
-                                        currentTag={isActiveTag}
-                                        isDuplicate={duplicateFlags[index]}
-                                        inputKeyDown={this.handleInputKeyDown}
-                                        inputKeyUp={this.handleInputKeyUp}
-                                        inputChange={this.handleInputChange}
-                                        inputSelect={this.handleInputSelect}
-                                        inputBlur={this.handleInputBlur}
-                                        hideSuggestions={(cb?: () => void) => this.hideSuggestions({ callback: cb })}
-                                        removeTag={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>, index: number) =>
-                                            this.removeTag(index, true, e)
-                                        }
-                                        updateSelectedTagsAndNodes={this.updateSelectedTagsAndNodes}
-                                        shake={this.state.currentTagShaking && index === this.currentTagIndex()}
-                                        maxNumSelectedNodes={numSelectedNodes === -1 ? -1 : numSelectedNodes}
-                                    />
-                                );
-                                if (maxNumSelectedNodes !== -1) {
-                                    numSelectedNodes -= selection.numberOfExactlyMatchedNodes();
-                                }
-                                return tag;
-                            });
-                        })()}
+                        {nodeSelections.map((selection, index) => {
+                            const isActiveTag = index === this.currentTagIndex();
+                            const tag = (
+                                <Tag
+                                    key={`${index}`}
+                                    index={index}
+                                    frameless={frameless}
+                                    active={isActiveTag}
+                                    placeholder={placeholder ? placeholder : "Add new tag"}
+                                    treeNodeSelection={selection}
+                                    countTags={this.countTags()}
+                                    currentTag={isActiveTag}
+                                    isDuplicate={duplicateFlags[index]}
+                                    inputKeyDown={this.handleInputKeyDown}
+                                    inputKeyUp={this.handleInputKeyUp}
+                                    inputChange={this.handleInputChange}
+                                    inputSelect={this.handleInputSelect}
+                                    inputBlur={this.handleInputBlur}
+                                    hideSuggestions={(cb?: () => void) => this.hideSuggestions({ callback: cb })}
+                                    removeTag={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>, index: number) =>
+                                        this.removeTag(index, true, e)
+                                    }
+                                    updateSelectedTagsAndNodes={this.updateSelectedTagsAndNodes}
+                                    shake={this.state.currentTagShaking && index === this.currentTagIndex()}
+                                    maxNumSelectedNodes={numSelectedNodes === -1 ? -1 : numSelectedNodes}
+                                />
+                            );
+                            if (maxNumSelectedNodes !== -1) {
+                                numSelectedNodes -= selection.numberOfExactlyMatchedNodes();
+                            }
+                            return tag;
+                        })}
                     </ul>
                     <div className="absolute right-2 top-1/2 -mt-3">
                         <button
