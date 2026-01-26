@@ -25,11 +25,11 @@ export class VectorSelection extends TreeNodeSelection {
             data === "" &&
             index === super.countLevel() - 1 &&
             ((index !== undefined && index === super.getNumMetaNodes()) ||
-                (index === undefined && super.getFocussedLevel() === super.getNumMetaNodes()))
+                (index === undefined && super.getFocusedLevel() === super.getNumMetaNodes()))
         ) {
-            super.setNodeName(data, index || super.getFocussedLevel());
+            super.setNodeName(data, index || super.getFocusedLevel());
             super.decrementFocussedLevel();
-            super.setNodeName("", (index || super.getFocussedLevel() + 1) - 1);
+            super.setNodeName("", (index || super.getFocusedLevel() + 1) - 1);
         } else {
             if (index !== undefined) {
                 if (index === super.getNumMetaNodes() - 1 && data.length === 1) {
@@ -38,21 +38,21 @@ export class VectorSelection extends TreeNodeSelection {
                 }
                 super.setNodeName(data, index);
             } else {
-                if (super.getFocussedLevel() === super.getNumMetaNodes() - 1 && data.length == 1) {
+                if (super.getFocusedLevel() === super.getNumMetaNodes() - 1 && data.length == 1) {
                     data = "*";
                     increment = true;
                 }
-                super.setNodeName(data, super.getFocussedLevel());
+                super.setNodeName(data, super.getFocusedLevel());
             }
             if (increment) {
                 super.incrementFocussedLevel();
-                super.setNodeName(newData, super.getFocussedLevel());
+                super.setNodeName(newData, super.getFocusedLevel());
             }
         }
     }
 
     incrementFocussedLevel(): boolean {
-        const focussedLevel = super.getFocussedLevel();
+        const focussedLevel = super.getFocusedLevel();
         if (focussedLevel + 1 === super.getNumMetaNodes() - 1 && super.countLevel() >= super.getNumMetaNodes()) {
             super.setFocussedLevel(focussedLevel + 1);
         }
@@ -60,7 +60,7 @@ export class VectorSelection extends TreeNodeSelection {
     }
 
     decrementFocussedLevel(): void {
-        const focussedLevel = super.getFocussedLevel();
+        const focussedLevel = super.getFocusedLevel();
         if (focussedLevel - 1 === super.getNumMetaNodes() - 1) {
             if (super.getNodeName(focussedLevel) === "") {
                 super.setNodeName("", super.getNumMetaNodes() - 1);
@@ -144,7 +144,7 @@ export class VectorSelection extends TreeNodeSelection {
 
     clone(): VectorSelection {
         return new VectorSelection({
-            focussedLevel: this.getFocussedLevel(),
+            focussedLevel: this.getFocusedLevel(),
             nodePath: this.getNodePath() as Array<string>,
             selected: false,
             delimiter: super.getDelimiter(),
