@@ -127,14 +127,17 @@ function makeBarPlot(
 }
 
 function makeConvergencePlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
-    const realValues = table.getColumn("REAL")?.getAllRowValues() as number[];
-    const resultValues = table.getColumn(resultName)?.getAllRowValues() as number[];
-    if (!realValues) {
+    const realColumn = table.getColumn("REAL");
+    const resultColumn = table.getColumn(resultName);
+    if (!realColumn) {
         throw new Error("REAL column not found");
     }
-    if (!resultValues) {
+    if (!resultColumn) {
         return [];
     }
+
+    const realValues = realColumn.getAllRowValues() as number[];
+    const resultValues = resultColumn.getAllRowValues() as number[];
     return makePlotlyConvergenceTraces({ title, realValues, resultValues, color });
 }
 

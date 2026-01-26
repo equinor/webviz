@@ -89,13 +89,16 @@ export function useBuildPlotAndTable(
     const plotBuilder = new PlotBuilder(groupedData, makePlotData(plotDataOptions));
 
     // Configure plot-type-specific axis options
+    const barSelectorLength = barSelectorColumn
+        ? (table.getColumn(barSelectorColumn)?.getUniqueValues().length ?? 0)
+        : 0;
     configurePlotlyLayoutAxisByPlotType(plotBuilder, {
         plotType,
         resultName,
         barSelectorColumn,
         colorBy,
         histogramType,
-        table,
+        barSelectorLength,
     });
 
     // Set highlighted subplots based on hover state

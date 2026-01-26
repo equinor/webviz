@@ -38,7 +38,7 @@ export const computeReservesP10 = (data: number[]): number => {
     return computeQuantile(data, 0.9);
 };
 
-export const computeReservesP50 = (data: number[]): number => {
+export const computeP50 = (data: number[]): number => {
     // P50: Median estimate - 50% probability of at least this value
     // This is the 50th percentile (median)
     return computeQuantile(data, 0.5);

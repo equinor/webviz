@@ -1,4 +1,3 @@
-import type { TableColumns } from "@lib/components/Table/types";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { GroupedTableData } from "./GroupedTableData";
@@ -17,63 +16,6 @@ export type StatisticsTableRowData = {
     p50: string;
     p90: string;
 };
-
-export const STATISTICS_TABLE_COLUMNS: TableColumns<StatisticsTableRowData> = [
-    {
-        _type: "data",
-        columnId: "subplotValue",
-        label: "Subplot",
-        sizeInPercent: 15,
-    },
-    {
-        _type: "data",
-        columnId: "colorByValue",
-        label: "Color",
-        sizeInPercent: 15,
-    },
-    {
-        _type: "data",
-        columnId: "mean",
-        label: "Mean",
-        sizeInPercent: 10,
-    },
-    {
-        _type: "data",
-        columnId: "p10",
-        label: "P10",
-        sizeInPercent: 10,
-    },
-    {
-        _type: "data",
-        columnId: "p90",
-        label: "P90",
-        sizeInPercent: 10,
-    },
-    {
-        _type: "data",
-        columnId: "p50",
-        label: "P50",
-        sizeInPercent: 10,
-    },
-    {
-        _type: "data",
-        columnId: "stdDev",
-        label: "Std Dev",
-        sizeInPercent: 10,
-    },
-    {
-        _type: "data",
-        columnId: "min",
-        label: "Min",
-        sizeInPercent: 10,
-    },
-    {
-        _type: "data",
-        columnId: "max",
-        label: "Max",
-        sizeInPercent: 10,
-    },
-];
 
 export interface StatisticsTableData {
     rows: StatisticsTableRowData[];

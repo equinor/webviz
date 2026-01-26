@@ -1,7 +1,6 @@
 import type { Axis } from "plotly.js";
 
 import type { HistogramType } from "@modules/_shared/histogram";
-import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
 import type { PlotBuilder } from "./PlotBuilder";
@@ -13,7 +12,7 @@ export interface PlotConfigurerOptions {
     barSelectorColumn: string | null;
     colorBy: string;
     histogramType: HistogramType;
-    table: Table;
+    barSelectorLength: number;
 }
 
 /**
@@ -22,23 +21,16 @@ export interface PlotConfigurerOptions {
  * configuration logic.
  */
 export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, options: PlotConfigurerOptions): void {
-    const { plotType, resultName, barSelectorColumn, colorBy, histogramType, table } = options;
+    const { plotType, resultName, barSelectorColumn, colorBy, histogramType, barSelectorLength } = options;
 
-    switch (plotType) {
-        case PlotType.CONVERGENCE:
-            configureConvergencePlot(plotBuilder, resultName);
-            break;
-        case PlotType.BOX:
-            configureBoxPlot(plotBuilder);
-            break;
-        case PlotType.HISTOGRAM:
-            configureHistogramPlot(plotBuilder, histogramType);
-            break;
-        case PlotType.BAR:
-            configureBarPlot(plotBuilder, barSelectorColumn, colorBy, table);
-            break;
-        case PlotType.DISTRIBUTION:
-            break;
+    if (plotType === PlotType.CONVERGENCE) {
+        configureConvergencePlot(plotBuilder, resultName);
+    } else if (plotType === PlotType.BOX) {
+        configureBoxPlot(plotBuilder);
+    } else if (plotType === PlotType.HISTOGRAM) {
+        configureHistogramPlot(plotBuilder, histogramType);
+    } else if (plotType === PlotType.BAR) {
+        configureBarPlot(plotBuilder, barSelectorColumn, colorBy, barSelectorLength);
     }
 }
 
@@ -66,7 +58,7 @@ function configureBarPlot(
     plotBuilder: PlotBuilder,
     selectorColumn: string | null,
     colorBy: string,
-    table: Table,
+    selectorLength: number,
 ): void {
     if (!selectorColumn) {
         return;
@@ -74,7 +66,6 @@ function configureBarPlot(
 
     plotBuilder.setPlotType(PlotType.BAR);
 
-    const selectorLength = table.getColumn(selectorColumn)?.getUniqueValues().length ?? 0;
     const baseOptions: Partial<Axis> = {
         type: "category",
         categoryorder: selectorColumn === colorBy ? "total descending" : undefined,

@@ -68,7 +68,7 @@ export class GroupedTableData {
 
         const uniqueValues = colorByColumn.getUniqueValues();
         // Create a copy before sorting for consistent color assignment
-        const sortedValues = [...uniqueValues].toSorted((a, b) => a.toString().localeCompare(b.toString()));
+        const sortedValues = uniqueValues.toSorted((a, b) => a.toString().localeCompare(b.toString()));
         let color = this._colorSet.getFirstColor();
 
         for (const value of sortedValues) {

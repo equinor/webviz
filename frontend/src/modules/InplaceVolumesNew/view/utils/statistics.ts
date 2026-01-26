@@ -1,4 +1,4 @@
-import { computeReservesP10, computeReservesP50, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
+import { computeReservesP10, computeP50, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
 
 /**
  * Statistics computed for a set of values.
@@ -34,7 +34,7 @@ export function computeStatistics(values: number[]): Statistics {
     const min = values.reduce((acc, val) => Math.min(acc, val), Infinity);
     const max = values.reduce((acc, val) => Math.max(acc, val), -Infinity);
     const p10 = computeReservesP10(values);
-    const p50 = computeReservesP50(values);
+    const p50 = computeP50(values);
     const p90 = computeReservesP90(values);
 
     return { count, mean, stdDev, min, max, p10, p50, p90 };
