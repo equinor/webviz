@@ -18,7 +18,7 @@ import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useBuildPlotAndTable } from "./hooks/usePlotAndTableBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
-import { makeStatisticsTableColumns } from "./utils/statisticsTableColumnsBuilder";
+import { makeStatisticsTableColumns } from "./utils/makeStatisticsTableColumns";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

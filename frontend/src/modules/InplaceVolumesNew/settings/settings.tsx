@@ -174,7 +174,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 </SettingWrapper>
             </CollapsibleGroup>
 
-            <CollapsibleGroup title="Plot & layout" expanded>
+            <CollapsibleGroup title="Plot settings" expanded>
                 <div className="flex flex-col gap-2">
                     <SettingWrapper label="Plot Type">
                         <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
