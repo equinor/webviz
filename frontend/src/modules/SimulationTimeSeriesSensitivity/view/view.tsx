@@ -64,8 +64,9 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
         setSelectedTimestampUtcMs(timestampUtcMs);
     }
 
+    // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
             <TimeSeriesChart
                 traceDataArr={traceDataArr}
                 title={descriptiveVectorName}
