@@ -16,6 +16,7 @@ import {
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
+import { debugFlagIsEnabled } from "@framework/internal/utils/debug";
 import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
@@ -31,6 +32,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
+
+const SHOW_DEBUG_MODULES_FLAG = "showDebugModules";
 
 const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Vec2): React.CSSProperties => {
     if (isDragged) {
@@ -278,7 +281,7 @@ function ModulesListCategory(props: ModulesListCategoryProps): React.ReactNode {
 function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
     if (devState === ModuleDevState.PROD) {
         return (
-            <span title="Ready for user testing" className="inline-block align-middle text-base">
+            <span title="Ready for use" className="inline-block align-middle text-base">
                 <Attribution fontSize="inherit" />
             </span>
         );
@@ -314,7 +317,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             return (
                 <div className="flex gap-2 text-green-600 text-xs items-center">
                     {makeDevStateIcon(devState)}
-                    <span className="mt-[0.2rem]">Ready for user testing</span>
+                    <span className="mt-[0.2rem]">Ready for use</span>
                 </div>
             );
         }
@@ -449,6 +452,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         props.onClose();
     }
 
+    const showDebugModules = isDevMode() || debugFlagIsEnabled(SHOW_DEBUG_MODULES_FLAG);
     const filteredModules = Object.values(ModuleRegistry.getRegisteredModules())
         .filter((mod) => devStates.includes(mod.getDevState()))
         .filter((mod) => mod.getDefaultTitle().toLowerCase().includes(searchQuery.toLowerCase()));
@@ -458,12 +462,15 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         right = window.innerWidth - boundingClientRect.left + 10;
     }
 
-    const visible = drawerContent === RightDrawerContent.ModulesList;
+    const isVisible = drawerContent === RightDrawerContent.ModulesList;
+    const visibleModuleCategories = MODULE_CATEGORIES.filter(
+        (el) => el.category !== ModuleCategory.DEBUG || showDebugModules,
+    );
 
     return (
-        <div ref={ref} className={resolveClassNames("w-full h-full relative", { hidden: !visible })}>
+        <div ref={ref} className={resolveClassNames("w-full h-full relative", { hidden: !isVisible })}>
             <Drawer
-                visible
+                visible={isVisible}
                 onClose={handleClose}
                 title="Add modules"
                 icon={<WebAsset />}
@@ -478,7 +485,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                                 <span className="text-green-600 flex items-center">
                                     {makeDevStateIcon(ModuleDevState.PROD)}
                                 </span>
-                                <span className="mt-[0.2rem]">Ready for user testing</span>
+                                <span className="mt-[0.2rem]">Ready for use</span>
                             </>
                         ),
                         initiallySelected: devStates.includes(ModuleDevState.PROD),
@@ -509,7 +516,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 onFilterItemSelectionChange={(selectedItems) => setDevStates(selectedItems)}
             >
                 <>
-                    {MODULE_CATEGORIES.map((el) => (
+                    {visibleModuleCategories.map((el) => (
                         <ModulesListCategory key={el.category} title={el.label}>
                             {filteredModules
                                 .filter((mod) => mod.getCategory() === el.category)
@@ -533,7 +540,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 </>
             </Drawer>
             {showDetailsForModule &&
-                visible &&
+                isVisible &&
                 createPortal(
                     <DetailsPopup
                         module={ModuleRegistry.getModule(showDetailsForModule)}
