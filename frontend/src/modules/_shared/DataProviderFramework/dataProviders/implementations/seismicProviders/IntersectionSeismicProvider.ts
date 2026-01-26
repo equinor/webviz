@@ -12,70 +12,60 @@ import type { SeismicFenceData_trans } from "@modules/_shared/Intersection/seism
 import { transformSeismicFenceData } from "@modules/_shared/Intersection/seismicIntersectionTransform";
 import { createSeismicFencePolylineFromPolylineXy } from "@modules/_shared/Intersection/seismicIntersectionUtils";
 
-import { Setting } from "../../../DataProviderFramework/settings/settingsDefinitions";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
-} from "../../interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
+} from "../../../interfacesAndTypes/customDataProviderImplementation";
+import type { DefineDependenciesArgs } from "../../../interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "../../../interfacesAndTypes/utils";
+import { Representation } from "../../../settings/implementations/RepresentationSetting";
+import { Setting } from "../../../settings/settingsDefinitions";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
-} from "../dependencyFunctions/sharedHelperDependencyFunctions";
+} from "../../dependencyFunctions/sharedHelperDependencyFunctions";
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableIntersectionOptions,
     getAvailableRealizationsForEnsembleIdent,
-} from "../dependencyFunctions/sharedSettingUpdaterFunctions";
+} from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 
-const intersectionRealizationSeismicSettings = [
+import { representationToApiRepresentation } from "./representationUtils";
+
+const intersectionSeismicSettings = [
     Setting.INTERSECTION,
-    Setting.WELLBORE_EXTENSION_LENGTH,
+
     Setting.ENSEMBLE,
+    Setting.REPRESENTATION,
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
     Setting.TIME_OR_INTERVAL,
-    Setting.SAMPLE_RESOLUTION_IN_METERS,
+
     Setting.COLOR_SCALE,
     Setting.OPACITY_PERCENT,
+    Setting.WELLBORE_EXTENSION_LENGTH,
+    Setting.SAMPLE_RESOLUTION_IN_METERS,
 ] as const;
-export type IntersectionRealizationSeismicSettings = typeof intersectionRealizationSeismicSettings;
-type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationSeismicSettings>;
+export type IntersectionSeismicSettings = typeof intersectionSeismicSettings;
+type SettingsWithTypes = MakeSettingTypesMap<IntersectionSeismicSettings>;
 
-export type IntersectionRealizationSeismicStoredData = {
+export type IntersectionSeismicStoredData = {
     sourcePolylineWithSectionLengths: PolylineWithSectionLengths;
     seismicFencePolylineWithSectionLengths: PolylineWithSectionLengths;
 };
 
-export enum SeismicDataSource {
-    OBSERVED = "observed",
-    SIMULATED = "simulated",
-}
+export type IntersectionSeismicData = SeismicFenceData_trans;
 
-const SeismicDataSourceEnumToStringMapping = {
-    [SeismicDataSource.OBSERVED]: "Observed",
-    [SeismicDataSource.SIMULATED]: "Simulated",
-};
-
-export type IntersectionRealizationSeismicData = SeismicFenceData_trans;
-
-export class IntersectionRealizationSeismicProvider
+export class IntersectionSeismicProvider
     implements
         CustomDataProviderImplementation<
-            IntersectionRealizationSeismicSettings,
-            IntersectionRealizationSeismicData,
-            IntersectionRealizationSeismicStoredData
+            IntersectionSeismicSettings,
+            IntersectionSeismicData,
+            IntersectionSeismicStoredData
         >
 {
-    settings = intersectionRealizationSeismicSettings;
-
-    private _dataSource: SeismicDataSource;
-
-    constructor(dataSource: SeismicDataSource) {
-        this._dataSource = dataSource;
-    }
+    settings = intersectionSeismicSettings;
 
     getDefaultSettingsValues() {
         const defaultColorPalette =
@@ -100,8 +90,7 @@ export class IntersectionRealizationSeismicProvider
     }
 
     getDefaultName(): string {
-        const dataSourceString = SeismicDataSourceEnumToStringMapping[this._dataSource];
-        return `Seismic fence (${dataSourceString}`;
+        return `Seismic fence `;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -110,6 +99,7 @@ export class IntersectionRealizationSeismicProvider
             !isEqual(prevSettings.intersection, newSettings.intersection) ||
             !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
+            !isEqual(prevSettings.representation, newSettings.representation) ||
             !isEqual(prevSettings.realization, newSettings.realization) ||
             !isEqual(prevSettings.attribute, newSettings.attribute) ||
             !isEqual(prevSettings.timeOrInterval, newSettings.timeOrInterval) ||
@@ -120,9 +110,9 @@ export class IntersectionRealizationSeismicProvider
     makeValueRange({
         getData,
     }: DataProviderInformationAccessors<
-        IntersectionRealizationSeismicSettings,
-        IntersectionRealizationSeismicData,
-        IntersectionRealizationSeismicStoredData
+        IntersectionSeismicSettings,
+        IntersectionSeismicData,
+        IntersectionSeismicStoredData
     >): [number, number] | null {
         const data = getData();
         if (!data) {
@@ -143,9 +133,9 @@ export class IntersectionRealizationSeismicProvider
     areCurrentSettingsValid({
         getSetting,
     }: DataProviderInformationAccessors<
-        IntersectionRealizationSeismicSettings,
-        IntersectionRealizationSeismicData,
-        IntersectionRealizationSeismicStoredData
+        IntersectionSeismicSettings,
+        IntersectionSeismicData,
+        IntersectionSeismicStoredData
     >): boolean {
         // Extension has to be set if intersection is wellbore
         const isValidExtensionLength =
@@ -170,14 +160,20 @@ export class IntersectionRealizationSeismicProvider
         queryClient,
         workbenchSession,
         storedDataUpdater,
-    }: DefineDependenciesArgs<IntersectionRealizationSeismicSettings, IntersectionRealizationSeismicStoredData>): void {
+    }: DefineDependenciesArgs<IntersectionSeismicSettings, IntersectionSeismicStoredData>): void {
         settingAttributesUpdater(Setting.WELLBORE_EXTENSION_LENGTH, ({ getLocalSetting }) => {
             const intersection = getLocalSetting(Setting.INTERSECTION);
 
             const isEnabled = intersection?.type === IntersectionType.WELLBORE;
             return { enabled: isEnabled };
         });
-
+        settingAttributesUpdater(Setting.REALIZATION, ({ getLocalSetting }) => {
+            const representation = getLocalSetting(Setting.REPRESENTATION);
+            const enabled =
+                representation === Representation.REALIZATION ||
+                representation === Representation.OBSERVATION_PER_REALIZATION;
+            return { enabled, visible: enabled };
+        });
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -189,8 +185,10 @@ export class IntersectionRealizationSeismicProvider
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
         });
-
-        const ensembleSeismicCubeMetaListDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+        valueConstraintsUpdater(Setting.REPRESENTATION, () => {
+            return [Representation.REALIZATION, Representation.OBSERVATION, Representation.OBSERVATION_PER_REALIZATION];
+        });
+        const seismicCubeMetaListDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
             if (!ensembleIdent) {
@@ -210,24 +208,23 @@ export class IntersectionRealizationSeismicProvider
             });
         });
 
-        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
-            const seismicCubeMetaList = getHelperDependency(ensembleSeismicCubeMetaListDep);
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency, getLocalSetting }) => {
+            const seismicCubeMetaList = getHelperDependency(seismicCubeMetaListDep);
 
             if (!seismicCubeMetaList) {
                 return [];
             }
 
-            // Get seismic attributes that are depth of correct data source
-            const doRequestObservation = this._dataSource === SeismicDataSource.OBSERVED;
-            const availableAttributes = Array.from(
+            const representation = getLocalSetting(Setting.REPRESENTATION);
+            const apiRepresentation = representationToApiRepresentation(representation);
+
+            return Array.from(
                 new Set(
                     seismicCubeMetaList
-                        .filter((el) => el.isDepth && el.isObservation === doRequestObservation)
+                        .filter((el) => el.isDepth && el.representation === apiRepresentation)
                         .map((el) => el.seismicAttribute),
                 ),
             ).sort();
-
-            return availableAttributes;
         });
 
         const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
@@ -248,7 +245,7 @@ export class IntersectionRealizationSeismicProvider
         });
 
         valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const seismicCubeMetaList = getHelperDependency(ensembleSeismicCubeMetaListDep);
+            const seismicCubeMetaList = getHelperDependency(seismicCubeMetaListDep);
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
 
             if (!seismicAttribute || !seismicCubeMetaList) {
@@ -328,14 +325,15 @@ export class IntersectionRealizationSeismicProvider
         getStoredData,
         fetchQuery,
     }: FetchDataParams<
-        IntersectionRealizationSeismicSettings,
-        IntersectionRealizationSeismicData,
-        IntersectionRealizationSeismicStoredData
-    >): Promise<IntersectionRealizationSeismicData> {
+        IntersectionSeismicSettings,
+        IntersectionSeismicData,
+        IntersectionSeismicStoredData
+    >): Promise<IntersectionSeismicData> {
         const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
         const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization number selected");
         const attribute = assertNonNull(getSetting(Setting.ATTRIBUTE), "No attribute selected");
         const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
+        const representation = getSetting(Setting.REPRESENTATION);
         const seismicFencePolylineUtmXy = assertNonNull(
             getStoredData("seismicFencePolylineWithSectionLengths"),
             "No seismic fence polyline found in stored data",
@@ -353,7 +351,7 @@ export class IntersectionRealizationSeismicProvider
                 realization_num: realization,
                 seismic_attribute: attribute,
                 time_or_interval_str: timeOrInterval ?? "",
-                observed: this._dataSource === SeismicDataSource.OBSERVED,
+                representation: representationToApiRepresentation(representation),
                 ...makeCacheBustingQueryParam(ensembleIdent),
             },
             body: {

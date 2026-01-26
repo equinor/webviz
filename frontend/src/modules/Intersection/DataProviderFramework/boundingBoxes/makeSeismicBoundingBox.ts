@@ -1,9 +1,9 @@
 import { fromNumArray, type BBox } from "@lib/utils/bbox";
 import type {
-    IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicStoredData,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
+    IntersectionSeismicData,
+    IntersectionSeismicSettings,
+    IntersectionSeismicStoredData,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
@@ -21,9 +21,9 @@ export function makeSeismicBoundingBox({
     getStoredData,
     isLoading,
 }: TransformerArgs<
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicStoredData,
+    IntersectionSeismicSettings,
+    IntersectionSeismicData,
+    IntersectionSeismicStoredData,
     any
 >): BBox | null {
     const data = getData();
