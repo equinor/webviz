@@ -4,7 +4,7 @@ from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects.cube import Cube
 
-from webviz_services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
+from webviz_services.service_exceptions import InvalidDataError, NoDataError, Service
 
 from .seismic_types import SeismicCubeMeta, SeismicCubeSpec, VdsHandle, SeismicRepresentation
 from .sumo_client_factory import create_sumo_client
@@ -124,7 +124,7 @@ async def _find_matching_cube_async(
         SeismicRepresentation.OBSERVED_IN_CASE,
         SeismicRepresentation.OBSERVED_IN_REALIZATION,
     )
-    print("***************************************", representation, is_observed)
+
     async for cube in cube_context:
         if cube["data"]["is_observation"] == is_observed:
             return cube

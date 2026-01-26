@@ -17,12 +17,8 @@ import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework
 import { Representation } from "@modules/_shared/DataProviderFramework/settings/implementations/RepresentationSetting";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import {
-    type SeismicSliceData_trans,
-    transformSeismicSlice,
-} from "../../../../../3DViewer/DataProviderFramework/utils/transformSeismicSlice";
-
 import { representationToApiRepresentation } from "./representationUtils";
+import { type SeismicSliceData_trans, transformSeismicSlice } from "./transformSeismicSlice";
 
 const seismicSlicesSettings = [
     Setting.ENSEMBLE,
