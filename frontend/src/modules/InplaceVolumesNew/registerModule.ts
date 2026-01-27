@@ -14,7 +14,7 @@ ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "Inplace Volumes (New)",
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.PROD,
+    devState: ModuleDevState.DEV,
     dataTagIds: [ModuleDataTagId.INPLACE_VOLUMES],
     description,
     syncableSettingKeys: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
