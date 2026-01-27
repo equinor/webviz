@@ -1,4 +1,4 @@
-import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/internal/utils/debug";
+import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@lib/utils/debug";
 import { isDevMode } from "@lib/utils/devMode";
 
 import "./2DViewer/registerModule";

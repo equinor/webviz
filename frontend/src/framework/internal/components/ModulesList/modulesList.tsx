@@ -15,7 +15,6 @@ import {
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/internal/utils/debug";
 import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
@@ -24,6 +23,7 @@ import type { DrawPreviewFunc } from "@framework/Preview";
 import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
+import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@lib/utils/debug";
 import { isDevMode } from "@lib/utils/devMode";
 import type { Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, pointRelativeToDomRect } from "@lib/utils/geometry";
