@@ -3,14 +3,16 @@ import React from "react";
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import type { LayerPickInfo, LightsType, MapMouseEvent, ViewportType, ViewStateType } from "@webviz/subsurface-viewer";
+import type { LayerPickInfo, LightsType, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
 import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { Feature } from "geojson";
 import { debounce, isEqual, uniqBy } from "lodash";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { MANHATTAN_LENGTH } from "@lib/utils/geometry";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import * as vec2 from "@lib/utils/vec2";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
@@ -22,13 +24,13 @@ import {
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
+import { PerformanceOverlay, type PerformanceOverlayHandle } from "./PerformanceOverlay";
 import { PositionReadout } from "./PositionReadout";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import {
     SubsurfaceViewerWithCameraState,
     type SubsurfaceViewerWithCameraStateProps,
 } from "./SubsurfaceViewerWithCameraState";
-import { PerformanceOverlay, type PerformanceOverlayHandle } from "./PerformanceOverlay";
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
@@ -40,6 +42,7 @@ export type ReadoutWrapperProps = {
     children?: React.ReactNode;
     onViewerHover?: (mouseEvent: MapMouseEvent | null) => void;
     onViewportHover?: (viewport: ViewportType | null) => void;
+    onIsGoingToRemovePickedWorldPos?: (isRemoving: boolean) => void;
 };
 
 // These are settings that impact performance - make them configurable later if needed
@@ -50,15 +53,13 @@ const PICKING_RADIUS = 0;
 const USER_PICKING_DEPTH = 6;
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
-    const { onViewerHover, onViewportHover } = props;
+    const { onViewerHover, onViewportHover, onIsGoingToRemovePickedWorldPos } = props;
     const ctx = useDpfSubsurfaceViewerContext();
     const id = React.useId();
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
     const [pickingCoordinate, setPickingCoordinate] = React.useState<number[]>([]);
     const [pickingInfoPerView, setPickingInfoPerView] = React.useState<Record<string, PickingInfo[]>>({});
     const [readoutMode, setReadoutMode] = React.useState<"hover" | "click">("hover");
-    const [showPerfOverlay, setShowPerfOverlay] = React.useState<boolean>(false);
-    // const { metrics, recordPickingTime, recordHoverEvent } = usePerformanceMetrics(USER_PICKING_DEPTH, PICKING_RADIUS);
 
     const [storedDeckGlViews, setStoredDeckGlViews] =
         React.useState<SubsurfaceViewerWithCameraStateProps["views"]>(undefined);
@@ -163,11 +164,49 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             // Record frame for FPS measurement during hover/readout interactions
             perfOverlayRef.current?.recordFrame();
 
-            setPickingCoordinate(event.infos[0]?.coordinate ?? []);
-
-            if (readoutMode !== "hover") {
+            // No picks - clear readout
+            if (!event.infos.length && readoutMode !== "click") {
+                clearReadout();
                 return;
             }
+
+            // We need a viewport - if none, clear readout
+            const hoveredViewPort = event.infos[0]?.viewport;
+            if (!hoveredViewPort && readoutMode !== "click") {
+                clearReadout();
+                return;
+            }
+
+            const coordinate = event.infos[0]?.coordinate ?? [];
+
+            if (readoutMode === "click") {
+                if (coordinate.length < 3 || !hoveredViewPort) {
+                    return;
+                }
+                const pickingScreenCoordinate = hoveredViewPort.project(pickingCoordinate);
+                const screenCoordinate = hoveredViewPort.project(coordinate);
+
+                // If already in click mode, and clicked again at the same screen location, exit click mode
+                const screenDistance = vec2.point2Distance(
+                    vec2.vec2FromArray(screenCoordinate),
+                    vec2.vec2FromArray(pickingScreenCoordinate),
+                );
+
+                if (screenDistance < MANHATTAN_LENGTH) {
+                    onIsGoingToRemovePickedWorldPos?.(true);
+                    return;
+                }
+
+                onIsGoingToRemovePickedWorldPos?.(false);
+
+                return;
+            }
+
+            if (!hoveredViewPort) {
+                return;
+            }
+
+            setPickingCoordinate(coordinate);
 
             // Cancel any pending debounced picking
             debouncedMultiViewPicking.cancel();
@@ -175,19 +214,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             // Hover events should be cheap - we keep it simple as long as the mouse is moving
             // and do multi-view picking only when the mouse stops moving (debounced).
             // Deep picks must be confirmed by user (e.g. click) to avoid performance issues.
-
-            // No picks - clear readout
-            if (!event.infos.length) {
-                clearReadout();
-                return;
-            }
-
-            // We need a viewport - if none, clear readout
-            const hoveredViewPort = event.infos[0]?.viewport;
-            if (!hoveredViewPort) {
-                clearReadout();
-                return;
-            }
 
             // We have our readout pick - first, update readout information immediately
             const updatedPickingInfoPerView: Record<string, PickingInfo[]> = {};
@@ -210,11 +236,20 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 DEBOUNCED_HOVER_PICKING_DEPTH,
             );
         },
-        [onViewerHover, onViewportHover, debouncedMultiViewPicking, clearReadout, readoutMode],
+        [
+            onViewerHover,
+            onViewportHover,
+            debouncedMultiViewPicking,
+            clearReadout,
+            readoutMode,
+            pickingCoordinate,
+            onIsGoingToRemovePickedWorldPos,
+        ],
     );
 
     const handleClickEvent = React.useCallback(
         function handleClickEvent(event: MapMouseEvent): void {
+            const coordinate = event.infos[0]?.coordinate ?? [];
             setReadoutMode("click");
 
             // Deep picking on click - cancel any pending debounced picking
@@ -225,6 +260,26 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             if (!hoveredViewPort) {
                 clearReadout();
                 return;
+            }
+
+            if (readoutMode === "click") {
+                if (coordinate.length < 3) {
+                    return;
+                }
+                const pickingScreenCoordinate = hoveredViewPort.project(pickingCoordinate);
+                const screenCoordinate = hoveredViewPort.project(coordinate);
+
+                // If already in click mode, and clicked again at the same screen location, exit click mode
+                const screenDistance = vec2.point2Distance(
+                    vec2.vec2FromArray(screenCoordinate),
+                    vec2.vec2FromArray(pickingScreenCoordinate),
+                );
+                if (screenDistance < MANHATTAN_LENGTH) {
+                    setReadoutMode("hover");
+                    clearReadout();
+                    onIsGoingToRemovePickedWorldPos?.(false);
+                    return;
+                }
             }
 
             onViewerHover?.(event);
@@ -239,7 +294,16 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
             collectReadoutInformationFromAllViewports(pickingInfoWithCoordinates.coordinate, {}, USER_PICKING_DEPTH);
         },
-        [collectReadoutInformationFromAllViewports, debouncedMultiViewPicking],
+        [
+            collectReadoutInformationFromAllViewports,
+            debouncedMultiViewPicking,
+            clearReadout,
+            onViewerHover,
+            onViewportHover,
+            pickingCoordinate,
+            readoutMode,
+            onIsGoingToRemovePickedWorldPos,
+        ],
     );
 
     const [numRows] = props.views.layout;
@@ -315,7 +379,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
 
-    
     return (
         <div
             ref={mainDivRef}
@@ -324,7 +387,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            <PerformanceOverlay ref={perfOverlayRef} visible={showPerfOverlay || true} />
+            <PerformanceOverlay ref={perfOverlayRef} visible={true} />
             <PositionReadout coordinate={pickingCoordinate} visible={!hideReadout} />
             <SubsurfaceViewerWithCameraState
                 {...deckGlProps}
