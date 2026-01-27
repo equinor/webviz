@@ -114,8 +114,8 @@ export function useBuildPlotAndTable(
         horizontalSpacing,
         verticalSpacing,
         showGrid: true,
-        sharedXAxes: sharedXAxis,
-        sharedYAxes: sharedYAxis,
+        sharedXAxes: sharedXAxis ? "all" : false,
+        sharedYAxes: sharedYAxis ? "all" : false,
         margin: { t: 20, b: 50, l: 50, r: 20 },
     });
 
