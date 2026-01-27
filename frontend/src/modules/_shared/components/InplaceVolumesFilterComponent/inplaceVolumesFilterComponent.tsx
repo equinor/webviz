@@ -285,42 +285,38 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             <div className="flex flex-col gap-2">{props.additionalSettings}</div>
             <div className="flex flex-col gap-2">
                 <CollapsibleGroup title="Index filters" expanded>
-                    <div className="flex flex-col gap-2">
-                        <PendingWrapper
-                            isPending={props.isPending ?? false}
-                            errorMessage={
-                                !props.areCurrentlySelectedTablesComparable
-                                    ? "Selected tables are not comparable due to mismatching index columns"
-                                    : undefined
-                            }
-                        >
-                            {props.availableIndicesWithValues.map((indexWithValues) => (
-                                <CollapsibleGroup
-                                    key={indexWithValues.indexColumn}
-                                    title={indexWithValues.indexColumn}
-                                    expanded
-                                >
-                                    <Select
-                                        options={indexWithValues.values.map((value) => ({
-                                            value: value,
-                                            label: value.toString(),
-                                        }))}
-                                        value={
-                                            indicesWithValues.find(
-                                                (el) => el.indexColumn === indexWithValues.indexColumn,
-                                            )?.values ?? []
-                                        }
-                                        onChange={(value) =>
-                                            handleIndexValuesChange(indexWithValues.indexColumn, value)
-                                        }
-                                        multiple
-                                        size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
-                                        showQuickSelectButtons={true}
-                                    />
-                                </CollapsibleGroup>
-                            ))}
-                        </PendingWrapper>
-                    </div>
+                    <PendingWrapper
+                        className="flex flex-col gap-2"
+                        isPending={props.isPending ?? false}
+                        errorMessage={
+                            !props.areCurrentlySelectedTablesComparable
+                                ? "Selected tables are not comparable due to mismatching index columns"
+                                : undefined
+                        }
+                    >
+                        {props.availableIndicesWithValues.map((indexWithValues) => (
+                            <CollapsibleGroup
+                                key={indexWithValues.indexColumn}
+                                title={indexWithValues.indexColumn}
+                                expanded
+                            >
+                                <Select
+                                    options={indexWithValues.values.map((value) => ({
+                                        value: value,
+                                        label: value.toString(),
+                                    }))}
+                                    value={
+                                        indicesWithValues.find((el) => el.indexColumn === indexWithValues.indexColumn)
+                                            ?.values ?? []
+                                    }
+                                    onChange={(value) => handleIndexValuesChange(indexWithValues.indexColumn, value)}
+                                    multiple
+                                    size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
+                                    showQuickSelectButtons={true}
+                                />
+                            </CollapsibleGroup>
+                        ))}
+                    </PendingWrapper>
                 </CollapsibleGroup>
             </div>
         </>
