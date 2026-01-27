@@ -47,7 +47,6 @@ export enum Setting {
     REALIZATION = "realization",
     STRAT_COLUMN = "stratColumn",
     REALIZATIONS = "realizations",
-    SAMPLE_RESOLUTION_IN_METERS = "sampleResolutionInMeters",
     SEISMIC_SLICES = "seismicSlices",
     SENSITIVITY = "sensitivity",
     SHOW_GRID_LINES = "showGridLines",
@@ -102,11 +101,6 @@ export type SettingTypeDefinitions = {
         valueConstraints: [number, number];
     };
     [Setting.GRID_LAYER_K]: {
-        internalValue: number | null;
-        externalValue: number | null;
-        valueConstraints: [number, number];
-    };
-    [Setting.SAMPLE_RESOLUTION_IN_METERS]: {
         internalValue: number | null;
         externalValue: number | null;
         valueConstraints: [number, number];
