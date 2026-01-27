@@ -68,7 +68,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
 
         this.state = {
             nodeSelections,
-            currentTagIndex: 0,
+            currentTagIndex: -1,
             suggestionsVisible: false,
             showAllSuggestions: false,
             hasError: error !== undefined,
@@ -242,7 +242,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
                 return;
             } else {
                 if (eventTarget.selectionStart === 0 && eventTarget.selectionEnd === 0) {
-                    if (this.currentNodeSelection() && this.currentNodeSelection().getFocussedLevel() === 1) {
+                    if (this.currentNodeSelection() && this.currentNodeSelection().getFocusedLevel() === 1) {
                         if (this.currentTagIndex() > 0) {
                             this.decrementCurrentTagIndex(() => {
                                 this.focusCurrentTag(Direction.Right);
