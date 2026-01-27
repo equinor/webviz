@@ -1,4 +1,5 @@
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
+import type { IDiscretePropertyValueName } from "@webviz/subsurface-viewer/dist/layers/grid3d/grid3dLayer";
 
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
@@ -48,6 +49,12 @@ export function makeRealizationGridLayer(
     const offsetXyz = [gridSurfaceData.origin_utm_x, gridSurfaceData.origin_utm_y, 0];
     const pointsNumberArray = gridSurfaceData.pointsFloat32Arr.map((val, i) => val + offsetXyz[i % 3]);
     const polysNumberArray = gridSurfaceData.polysUint32Arr;
+    const discretePropertyValueNames: IDiscretePropertyValueName[] = [];
+    if (gridParameterData.discrete_codes_map) {
+        for (const [key, value] of Object.entries(gridParameterData.discrete_codes_map)) {
+            discretePropertyValueNames.push({ value: Number(key), name: value });
+        }
+    }
     const grid3dLayer = new Grid3DLayer({
         id: id,
         pointsData: pointsNumberArray,
@@ -66,6 +73,7 @@ export function makeRealizationGridLayer(
             valueMax: gridParameterData.max_grid_prop_value,
             denormalize: true,
         }),
+        discretePropertyValueNames: discretePropertyValueNames.length > 0 ? discretePropertyValueNames : undefined,
     });
     return grid3dLayer;
 }

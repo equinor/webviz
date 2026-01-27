@@ -64,6 +64,7 @@ class MappedGridProperties(BaseModel):
     undefined_int_value: int | None
     min_grid_prop_value: float | int
     max_grid_prop_value: float | int
+    discrete_codes_map: dict[int, str] | None
 
 
 class FenceMeshSection(BaseModel):
@@ -232,6 +233,7 @@ class UserGrid3dService:
             undefined_int_value=api_obj.undefined_int_value,
             max_grid_prop_value=api_obj.max_grid_prop_value,
             min_grid_prop_value=api_obj.min_grid_prop_value,
+            discrete_codes_map=api_obj.discrete_codes_map,
         )
         perf_metrics.record_lap("convert")
 
