@@ -137,8 +137,9 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         [plotBuilder, hasQueryErrors, isAnyQueryLoading, resampleFrequencyWarningMessage, handleClickInChart],
     );
 
+    // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
             {viewContent}
         </div>
     );

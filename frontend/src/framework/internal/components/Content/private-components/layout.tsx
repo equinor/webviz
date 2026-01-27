@@ -41,10 +41,10 @@ type LayoutProps = {
 
 function convertLayoutRectToRealRect(element: LayoutElement, size: Size2D): Rect2D {
     return {
-        x: element.relX * size.width,
-        y: element.relY * size.height,
-        width: element.relWidth * size.width,
-        height: element.relHeight * size.height,
+        x: Math.round(element.relX * size.width),
+        y: Math.round(element.relY * size.height),
+        width: Math.round(element.relWidth * size.width),
+        height: Math.round(element.relHeight * size.height),
     };
 }
 

@@ -1,10 +1,11 @@
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export function getContinuousAndNonConstantParameterIdentsInEnsembles(
     ensembleSet: EnsembleSet,
-    selectedEnsembleIdents: RegularEnsembleIdent[],
+    selectedEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
 ): ParameterIdent[] {
     const parameterIdentsUnion: ParameterIdent[] = [];
 

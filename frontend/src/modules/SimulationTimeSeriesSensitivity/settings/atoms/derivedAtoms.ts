@@ -27,15 +27,19 @@ export const vectorSelectorDataAtom = atom((get) => {
     const availableVectorNames = get(availableVectorNamesAtom);
 
     if (isFetching) {
-        return [];
+        return null;
     }
 
     return createVectorSelectorDataFromVectors(availableVectorNames);
 });
 
 export const selectedVectorNameHasHistoricalAtom = atom<boolean>((get) => {
-    const selectedVectorName = get(selectedVectorNameAndTagAtom).value.name;
     const vectorListQuery = get(vectorListQueryAtom);
+    const selectedVectorName = get(selectedVectorNameAndTagAtom).value?.name ?? null;
+
+    if (!selectedVectorName) {
+        return false;
+    }
 
     const selectedVector = vectorListQuery.data?.find((vec) => vec.name === selectedVectorName);
     return !!selectedVector?.hasHistorical;
@@ -43,7 +47,7 @@ export const selectedVectorNameHasHistoricalAtom = atom<boolean>((get) => {
 
 export const vectorSpecificationAtom = atom<VectorSpec | null>((get) => {
     const selectedRegularEnsembleIdent = get(selectedRegularEnsembleIdentAtom).value;
-    const selectedVectorName = get(selectedVectorNameAndTagAtom).value.name;
+    const selectedVectorName = get(selectedVectorNameAndTagAtom).value?.name ?? null;
     const selectedVectorNameHasHistorical = get(selectedVectorNameHasHistoricalAtom);
 
     if (!selectedRegularEnsembleIdent || !selectedVectorName) {
