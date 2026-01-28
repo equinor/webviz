@@ -1,11 +1,11 @@
-import type React from "react";
+import React from "react";
 
-import { Settings as SettingsIcon } from "@mui/icons-material";
+import { Settings as SettingsIcon, WarningRounded } from "@mui/icons-material";
 import { Provider } from "jotai";
 
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { DashboardTopic } from "@framework/internal/Dashboard";
-import { ImportStatus } from "@framework/Module";
+import { ImportStatus, ModuleDevState } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import {
     ModuleInstanceTopic,
@@ -16,6 +16,7 @@ import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -47,7 +48,27 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS,
     );
 
+    const moduleWarningClosedKey = `module-warning-closed-${props.moduleInstance.getId()}`;
     const isSerializable = props.moduleInstance.getModule().canBeSerialized();
+    const isDevModule = props.moduleInstance.getModule().getDevState() === ModuleDevState.DEV;
+
+    const moduleWarningText: string | null = React.useMemo(
+        function makeModuleWarningText() {
+            if (!isSerializable && isDevModule) {
+                return "This module is under development and without persistence. Major changes can occur without warning, and state changes will not be saved.";
+            } else if (isDevModule) {
+                return "This module is under development. Major changes can occur without warning.";
+            } else if (!isSerializable) {
+                return "This module cannot be persisted yet. State changes will not be saved.";
+            }
+            return null;
+        },
+        [isSerializable, isDevModule],
+    );
+
+    const [isWarningTextOpen, setIsWarningTextOpen] = React.useState(
+        localStorage.getItem(moduleWarningClosedKey) !== "true" && (!isSerializable || isDevModule),
+    );
 
     if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;
@@ -85,6 +106,24 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         }
     }
 
+    function handleCloseWarningText() {
+        if (!isWarningTextOpen) {
+            return;
+        }
+
+        setIsWarningTextOpen(false);
+        localStorage.setItem(moduleWarningClosedKey, "true");
+    }
+
+    function handleOpenWarningText() {
+        if (isWarningTextOpen) {
+            return;
+        }
+
+        setIsWarningTextOpen(true);
+        localStorage.removeItem(moduleWarningClosedKey);
+    }
+
     function makeContent() {
         if (moduleInstanceSettingsStateInvalid) {
             return (
@@ -111,9 +150,16 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
 
         return (
             <>
-                {!isSerializable && (
+                {isWarningTextOpen && moduleWarningText && (
                     <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
-                        <strong>Note:</strong> This module cannot be persisted yet. State changes will not be saved.
+                        <div className="flex flex-col">
+                            <span>
+                                <strong>Note:</strong> {moduleWarningText}
+                            </span>
+                            <strong className="cursor-pointer self-end" onClick={handleCloseWarningText}>
+                                Close [X]
+                            </strong>
+                        </div>
                     </div>
                 )}
                 <DebugProfiler
@@ -162,6 +208,20 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                     >
                         {props.moduleInstance.getTitle()}
                     </span>
+                    {moduleWarningText && (
+                        <Tooltip
+                            title={`The module has a warning${isWarningTextOpen ? "" : " (click to open)"}`}
+                            enterDelay="medium"
+                        >
+                            <WarningRounded
+                                fontSize="small"
+                                className={
+                                    isWarningTextOpen ? "text-slate-400" : "text-yellow-500 rounded cursor-pointer"
+                                }
+                                onClick={handleOpenWarningText}
+                            />
+                        </Tooltip>
+                    )}
                 </div>
                 <div className="flex flex-col gap-4 overflow-auto grow">
                     <div className="p-2 grow">{makeContent()}</div>
