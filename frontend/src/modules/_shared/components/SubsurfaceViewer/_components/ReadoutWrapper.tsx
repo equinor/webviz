@@ -24,6 +24,7 @@ import {
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
+import type { PickingInfoAndRayScreenCoordinate } from "./HoverVisualizationWrapper";
 import { PerformanceOverlay, type PerformanceOverlayHandle } from "./PerformanceOverlay";
 import { PositionReadout } from "./PositionReadout";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
@@ -43,17 +44,18 @@ export type ReadoutWrapperProps = {
     onViewerHover?: (mouseEvent: MapMouseEvent | null) => void;
     onViewportHover?: (viewport: ViewportType | null) => void;
     onIsGoingToRemovePickedWorldPos?: (isRemoving: boolean) => void;
+    onPickingInfoChange?: (pickingInfoPerView: Record<string, PickingInfoAndRayScreenCoordinate>) => void;
 };
 
 // These are settings that impact performance - make them configurable later if needed
 const INITIAL_HOVER_PICKING_DEPTH = 1;
 const DEBOUNCED_HOVER_PICKING_DEPTH = 1;
 const DEBOUNCED_HOVER_DELAY_MS = 50;
-const PICKING_RADIUS = 0;
+const PICKING_RADIUS = 5;
 const USER_PICKING_DEPTH = 6;
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
-    const { onViewerHover, onViewportHover, onIsGoingToRemovePickedWorldPos } = props;
+    const { onViewerHover, onViewportHover, onIsGoingToRemovePickedWorldPos, onPickingInfoChange } = props;
     const ctx = useDpfSubsurfaceViewerContext();
     const id = React.useId();
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
@@ -72,18 +74,22 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
     usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
 
-    React.useEffect(function onMountEffect() {
-        function handleKeydown(event: KeyboardEvent) {
-            if (event.key === "Escape") {
-                setReadoutMode("hover");
+    React.useEffect(
+        function onMountEffect() {
+            function handleKeydown(event: KeyboardEvent) {
+                if (event.key === "Escape") {
+                    setReadoutMode("hover");
+                    onPickingInfoChange?.({});
+                }
             }
-        }
 
-        window.addEventListener("keydown", handleKeydown);
-        return () => {
-            window.removeEventListener("keydown", handleKeydown);
-        };
-    }, []);
+            window.addEventListener("keydown", handleKeydown);
+            return () => {
+                window.removeEventListener("keydown", handleKeydown);
+            };
+        },
+        [onPickingInfoChange],
+    );
 
     const pickAtWorldCoordinates = React.useCallback(
         function pickAtWorldCoordinates(
@@ -121,9 +127,18 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                     unproject3D: true,
                 });
 
+                // Debug: check if all picks are truly identical
+                // eslint-disable-next-line no-console
+                console.log(
+                    "Picks detail:",
+                    picks.map((p, i) => ({ i, layerId: p.layer?.id, index: p.index, object: p.object })),
+                );
+
                 // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates.
                 // See issue #webviz-subsurface-components/2320
-                const uniquePicks = uniqBy(picks, (pick) => pick.sourceLayer?.id);
+                // Use layer.id (the actual layer instance) rather than sourceLayer.id to allow
+                // picking through multiple stacked layers of the same type
+                const uniquePicks = uniqBy(picks, (pick) => pick.layer?.id);
 
                 pickingInfo[viewport.id] = uniquePicks;
             }
@@ -137,9 +152,10 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             worldCoordinates: number[],
             initialPickingInfo: Record<string, PickingInfo[]>,
             pickingDepth: number,
-        ): void {
+        ): Record<string, PickingInfo[]> {
             const newPickInfoDict = pickAtWorldCoordinates(worldCoordinates, initialPickingInfo, pickingDepth);
             setPickingInfoPerView(newPickInfoDict);
+            return newPickInfoDict;
         },
         [pickAtWorldCoordinates],
     );
@@ -278,6 +294,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                     setReadoutMode("hover");
                     clearReadout();
                     onIsGoingToRemovePickedWorldPos?.(false);
+                    onPickingInfoChange?.({});
                     return;
                 }
             }
@@ -292,7 +309,33 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 return;
             }
 
-            collectReadoutInformationFromAllViewports(pickingInfoWithCoordinates.coordinate, {}, USER_PICKING_DEPTH);
+            const newPickInfoDict = collectReadoutInformationFromAllViewports(
+                pickingInfoWithCoordinates.coordinate,
+                {},
+                USER_PICKING_DEPTH,
+            );
+
+            const adjustedPickingInfoDict: Record<string, PickingInfoAndRayScreenCoordinate> = {};
+            for (const [viewId, picks] of Object.entries(newPickInfoDict)) {
+                const firstPick = picks[0];
+                if (!firstPick) {
+                    continue;
+                }
+
+                const viewport = firstPick.viewport;
+                if (!viewport) {
+                    continue;
+                }
+
+                const [screenX, screenY] = [firstPick.x - viewport.x, firstPick.y - viewport.y];
+                const reprojectedCoordinate = viewport.unproject([screenX, screenY, 0]);
+
+                adjustedPickingInfoDict[viewId] = {
+                    pickingInfoArray: picks,
+                    screenCoordinate: [reprojectedCoordinate[0], reprojectedCoordinate[1], reprojectedCoordinate[2]],
+                };
+            }
+            onPickingInfoChange?.(adjustedPickingInfoDict);
         },
         [
             collectReadoutInformationFromAllViewports,
@@ -303,6 +346,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             pickingCoordinate,
             readoutMode,
             onIsGoingToRemovePickedWorldPos,
+            onPickingInfoChange,
         ],
     );
 

@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { Layer as DeckGlLayer } from "@deck.gl/core";
+import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
 import type { BoundingBox2D, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
 import { CrosshairLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -8,6 +8,7 @@ import { inRange } from "lodash";
 
 import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
+import { PickingRayLayer } from "@modules/_shared/customDeckGlLayers/PickingRayLayer";
 import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
@@ -17,6 +18,11 @@ import { getHoverDataInPicks } from "@modules/_shared/utils/subsurfaceViewerLaye
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
+
+export type PickingInfoAndRayScreenCoordinate = {
+    pickingInfoArray: PickingInfo[];
+    screenCoordinate: [number, number, number];
+};
 
 export type HoverVisualizationWrapperProps = {
     views: ViewsTypeExtended;
@@ -31,6 +37,9 @@ export type HoverVisualizationWrapperProps = {
 export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps): React.ReactNode {
     const [isGoingToRemovePickedWorldPos, setIsGoingToRemovePickedWorldPos] = React.useState<boolean>(false);
     const [currentlyHoveredViewport, setCurrentlyHoveredViewport] = React.useState<null | string>(null);
+    const [pickingInfoPerView, setPickingInfoPerView] = React.useState<
+        Record<string, PickingInfoAndRayScreenCoordinate>
+    >({});
 
     const ctx = useDpfSubsurfaceViewerContext();
     const publishHoveredWorldPos = usePublishHoverValue(
@@ -47,6 +56,8 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         ctx.moduleInstanceId,
         isGoingToRemovePickedWorldPos,
     );
+
+    const pickingRayLayers = usePickingRayLayers(pickingInfoPerView);
 
     const hoverVisualizationGroups = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
         ctx.visualizationAssemblerProduct,
@@ -75,6 +86,12 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
 
             if (viewport.id !== currentlyHoveredViewport) {
                 viewportLayerIds.push(HOVER_CROSSHAIR_LAYER_ID);
+            }
+
+            const pickingRayLayer = pickingRayLayers[viewport.id];
+            if (pickingRayLayer) {
+                adjustedLayers.push(pickingRayLayer);
+                viewportLayerIds.push(pickingRayLayer.id);
             }
 
             return {
@@ -110,6 +127,12 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         setCurrentlyHoveredViewport(viewport?.id ?? null);
     }, []);
 
+    const handlePickingInfoChange = React.useCallback(function handlePickingInfoChange(
+        newPickingInfoPerView: Record<string, PickingInfoAndRayScreenCoordinate>,
+    ) {
+        setPickingInfoPerView(newPickingInfoPerView);
+    }, []);
+
     return (
         <ReadoutWrapper
             {...props}
@@ -118,6 +141,7 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
             onViewerHover={handleViewerHover}
             onViewportHover={handleViewportHover}
             onIsGoingToRemovePickedWorldPos={handleIsGoingToRemovePickedWorldPos}
+            onPickingInfoChange={handlePickingInfoChange}
         />
     );
 }
@@ -142,4 +166,28 @@ function useCrosshairLayer(
         // Hide the crosshair with opacity to keep layer mounted
         color: [...color, xInRange && yInRange ? 225 : 0],
     });
+}
+
+function usePickingRayLayers(
+    pickingInfoPerView: Record<string, PickingInfoAndRayScreenCoordinate>,
+): Record<string, PickingRayLayer> {
+    const pickingRayLayers: Record<string, PickingRayLayer> = {};
+
+    for (const [viewId, picksAndRayScreenCoordinate] of Object.entries(pickingInfoPerView)) {
+        const { pickingInfoArray, screenCoordinate } = picksAndRayScreenCoordinate;
+
+        const pickCoordinates = pickingInfoArray
+            .map((pick) => pick.coordinate)
+            .filter((coord): coord is number[] => Array.isArray(coord) && coord.length === 3);
+
+        if (pickCoordinates.length === 0) continue;
+
+        pickingRayLayers[viewId] = new PickingRayLayer({
+            id: `picking-ray-layer-${viewId}`,
+            pickInfoCoordinates: pickCoordinates as [number, number, number][],
+            origin: screenCoordinate,
+        });
+    }
+
+    return pickingRayLayers;
 }
