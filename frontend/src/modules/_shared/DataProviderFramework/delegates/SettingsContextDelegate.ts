@@ -282,6 +282,13 @@ export class SettingsContextDelegate<
     deserializeSettings(serializedSettings: SerializedSettingsState<TSettings, TSettingKey>): void {
         for (const [key, value] of Object.entries(serializedSettings)) {
             const settingDelegate = this._settings[key as TSettingKey];
+
+            // Temporary skip undefined settingsDelegate (await persistence versioning)
+            // - Setting might have been removed since creation of the serialized state (e.g. session).
+            if (settingDelegate === undefined) {
+                continue;
+            }
+
             settingDelegate.deserializeValue(value as string);
             if (settingDelegate.isStatic()) {
                 settingDelegate.maybeResetPersistedValue();

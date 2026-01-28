@@ -78,11 +78,31 @@ export class IntersectionPolylines {
     }
 
     updatePolyline(id: string, polyline: IntersectionPolylineWithoutId): void {
-        const index = this._polylines.findIndex((polyline) => polyline.id === id);
-        this._polylines[index] = {
+        // Creating a new array to avoid mutation wrt reference checks
+        const newPolylinesArray: IntersectionPolyline[] = [...this._polylines];
+        const index = newPolylinesArray.findIndex((polyline) => polyline.id === id);
+        newPolylinesArray[index] = {
             id,
             ...polyline,
         };
+        this._polylines = newPolylinesArray;
+        this.notifySubscribers(IntersectionPolylinesEvent.CHANGE);
+    }
+
+    updatePolylines(polylines: IntersectionPolyline[]): void {
+        // Creating a new array to avoid mutation wrt reference checks
+        const newPolylinesArray: IntersectionPolyline[] = [...this._polylines];
+        for (const updatedPolyline of polylines) {
+            const index = newPolylinesArray.findIndex((p) => p.id === updatedPolyline.id);
+            if (index === -1) {
+                // New polyline, add it
+                newPolylinesArray.push(updatedPolyline);
+            } else {
+                // Existing polyline, update it
+                newPolylinesArray[index] = { ...updatedPolyline };
+            }
+        }
+        this._polylines = newPolylinesArray;
         this.notifySubscribers(IntersectionPolylinesEvent.CHANGE);
     }
 

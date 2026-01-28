@@ -4,6 +4,30 @@ import type { TreeData } from "./treeData";
 import { MatchType } from "./treeData";
 import type { TreeDataNodeMetaData } from "./treeDataNodeTypes";
 
+type TreeNodeSelectionCache = {
+    nodePath: string | null;
+    isValid: boolean | null;
+    exactlyMatchedNodePaths: string[] | null;
+    exactlyMatchedNodeIds: (string | undefined)[][] | null;
+    containsWildcard: boolean | null;
+    numberOfExactlyMatchedNodes: number | null;
+    colors: string[] | null;
+    icons: string[] | null;
+};
+
+function createEmptyCache(): TreeNodeSelectionCache {
+    return {
+        nodePath: null,
+        isValid: null,
+        exactlyMatchedNodePaths: null,
+        exactlyMatchedNodeIds: null,
+        containsWildcard: null,
+        numberOfExactlyMatchedNodes: null,
+        colors: null,
+        icons: null,
+    };
+}
+
 export class TreeNodeSelection {
     private _focussedLevel: number;
     private _nodePath: Array<string>;
@@ -16,6 +40,7 @@ export class TreeNodeSelection {
     protected caseInsensitiveMatching: boolean;
     protected allowOrOperator: boolean;
     protected orOperator: string;
+    private _cache: TreeNodeSelectionCache = createEmptyCache();
 
     constructor({
         focussedLevel = 0,
@@ -49,6 +74,22 @@ export class TreeNodeSelection {
         this.orOperator = "|";
     }
 
+    private getCacheKey(): string {
+        return JSON.stringify(this._nodePath);
+    }
+
+    private ensureCacheValid(): void {
+        const currentKey = this.getCacheKey();
+        if (this._cache.nodePath !== currentKey) {
+            this._cache = createEmptyCache();
+            this._cache.nodePath = currentKey;
+        }
+    }
+
+    private invalidateCache(): void {
+        this._cache = createEmptyCache();
+    }
+
     objectEquals(other: TreeNodeSelection): boolean {
         return other._objectIdentifier == this._objectIdentifier;
     }
@@ -71,7 +112,7 @@ export class TreeNodeSelection {
         return [];
     }
 
-    getFocussedNodeName(): string {
+    getFocusedNodeName(): string {
         return this._nodePath[this._focussedLevel];
     }
 
@@ -83,6 +124,7 @@ export class TreeNodeSelection {
     setNodeName(data: string, index?: number): void {
         const adjustedIndex = index || this._focussedLevel;
         this._nodePath[adjustedIndex] = data;
+        this.invalidateCache();
     }
 
     getId(): string | undefined {
@@ -103,13 +145,14 @@ export class TreeNodeSelection {
 
     setNodePath(nodePath: Array<string>): void {
         this._nodePath = nodePath;
+        this.invalidateCache();
     }
 
     getRef(): React.Ref<HTMLInputElement> {
         return this._ref;
     }
 
-    getFocussedLevel(): number {
+    getFocusedLevel(): number {
         return this._focussedLevel;
     }
 
@@ -129,6 +172,7 @@ export class TreeNodeSelection {
     incrementFocussedLevel(): boolean {
         if (this.caseInsensitiveMatching) {
             this._nodePath[this._focussedLevel] = this._treeData.findNode(this.getNodePath(this._focussedLevel));
+            this.invalidateCache();
         }
         if (this._focussedLevel < this.countLevel() - 1) {
             this._focussedLevel++;
@@ -136,10 +180,12 @@ export class TreeNodeSelection {
         } else if (this.hasAvailableChildNodesOnNextLevel()) {
             this._focussedLevel++;
             this._nodePath[this._focussedLevel] = "";
+            this.invalidateCache();
             return true;
         } else if (this.containsWildcard() && this._treeData.findChildNodes(this._nodePath).length > 0) {
             this._focussedLevel++;
             this._nodePath[this._focussedLevel] = "";
+            this.invalidateCache();
             return true;
         }
         return false;
@@ -163,45 +209,53 @@ export class TreeNodeSelection {
     }
 
     colors(): Array<string> {
-        const colors: string[] = [];
         if (this._focussedLevel == 0) {
             return [];
         }
-        const level = this.countLevel() - 1;
-        const allMetaData = this._treeData.findNodes(this.getNodePath(level), MatchType.partialMatch).metaData;
-        for (const metaData of allMetaData) {
-            for (let i = 0; i < metaData.length; i++) {
-                if (i >= this._numMetaNodes) {
-                    break;
-                }
-                const color = metaData[i].color;
-                if (color && !colors.some((el) => el === color)) {
-                    colors.push(color);
+        this.ensureCacheValid();
+        if (this._cache.colors === null) {
+            const colors: string[] = [];
+            const level = this.countLevel() - 1;
+            const allMetaData = this._treeData.findNodes(this.getNodePath(level), MatchType.partialMatch).metaData;
+            for (const metaData of allMetaData) {
+                for (let i = 0; i < metaData.length; i++) {
+                    if (i >= this._numMetaNodes) {
+                        break;
+                    }
+                    const color = metaData[i].color;
+                    if (color && !colors.some((el) => el === color)) {
+                        colors.push(color);
+                    }
                 }
             }
+            this._cache.colors = colors;
         }
-        return colors;
+        return this._cache.colors;
     }
 
     icons(): Array<string> {
-        const icons: string[] = [];
         if (this._focussedLevel === 0) {
             return [];
         }
-        const level = this.countLevel() - 1;
-        const allMetaData = this._treeData.findNodes(this.getNodePath(level), MatchType.partialMatch).metaData;
-        for (const metaData of allMetaData) {
-            for (let i = 0; i < metaData.length; i++) {
-                if (i >= this._numMetaNodes) {
-                    break;
-                }
-                const icon = metaData[i].icon;
-                if (icon && !icons.some((el) => el === icon)) {
-                    icons.push(icon);
+        this.ensureCacheValid();
+        if (this._cache.icons === null) {
+            const icons: string[] = [];
+            const level = this.countLevel() - 1;
+            const allMetaData = this._treeData.findNodes(this.getNodePath(level), MatchType.partialMatch).metaData;
+            for (const metaData of allMetaData) {
+                for (let i = 0; i < metaData.length; i++) {
+                    if (i >= this._numMetaNodes) {
+                        break;
+                    }
+                    const icon = metaData[i].icon;
+                    if (icon && !icons.some((el) => el === icon)) {
+                        icons.push(icon);
+                    }
                 }
             }
+            this._cache.icons = icons;
         }
-        return icons;
+        return this._cache.icons;
     }
 
     equals(other: TreeNodeSelection): boolean {
@@ -211,7 +265,7 @@ export class TreeNodeSelection {
     trulyEquals(other: TreeNodeSelection): boolean {
         let check = this.equals(other);
         check = check && this._selected == other.isSelected();
-        check = check && this._focussedLevel == other.getFocussedLevel();
+        check = check && this._focussedLevel == other.getFocusedLevel();
         return check;
     }
 
@@ -233,17 +287,17 @@ export class TreeNodeSelection {
     }
 
     displayText(): string {
-        if (this.getFocussedLevel() < this._numMetaNodes) {
-            return this.getFocussedNodeName();
+        if (this.getFocusedLevel() < this._numMetaNodes) {
+            return this.getFocusedNodeName();
         } else {
             let text = "";
             for (let i = 0; i < this.countLevel(); i++) {
                 const el = this.getNodeName(i);
-                if (this.getFocussedLevel() === i && i < this._numMetaNodes && typeof el === "string") {
+                if (this.getFocusedLevel() === i && i < this._numMetaNodes && typeof el === "string") {
                     text = el;
                     break;
                 } else if (i >= this._numMetaNodes) {
-                    if (el === "" && this.getFocussedLevel() < i) break;
+                    if (el === "" && this.getFocusedLevel() < i) break;
                     text += i <= this._numMetaNodes ? el : this.delimiter + el;
                 }
             }
@@ -260,11 +314,11 @@ export class TreeNodeSelection {
     }
 
     displayAsTag(): boolean {
-        return this.getFocussedLevel() > 0 || (this._numMetaNodes == 0 && this.countLevel() > 1);
+        return this.getFocusedLevel() > 0 || (this._numMetaNodes == 0 && this.countLevel() > 1);
     }
 
     isEmpty(): boolean {
-        return !this.displayAsTag() && this.getFocussedNodeName() == "";
+        return !this.displayAsTag() && this.getFocusedNodeName() == "";
     }
 
     isValidUpToFocussedNode(): boolean {
@@ -277,7 +331,7 @@ export class TreeNodeSelection {
     protected tidy(): void {
         const newData: string[] = [];
         for (let i = 0; i < this.countLevel(); i++) {
-            if (i > this.getFocussedLevel() && this.getNodeName(i) === "") {
+            if (i > this.getFocusedLevel() && this.getNodeName(i) === "") {
                 break;
             }
             newData[i] = this.getNodeName(i) as string;
@@ -286,10 +340,15 @@ export class TreeNodeSelection {
     }
 
     isValid(): boolean {
-        if (this._nodePath.length === 0) {
-            return false;
+        this.ensureCacheValid();
+        if (this._cache.isValid === null) {
+            if (this._nodePath.length === 0) {
+                this._cache.isValid = false;
+            } else {
+                this._cache.isValid = this._treeData.findFirstNode(this._nodePath) !== null;
+            }
         }
-        return this._treeData.findFirstNode(this._nodePath) !== null;
+        return this._cache.isValid;
     }
 
     numberOfPossiblyMatchedNodes(): number {
@@ -297,17 +356,29 @@ export class TreeNodeSelection {
     }
 
     numberOfExactlyMatchedNodes(): number {
-        return this._treeData.countMatchedNodes(this._nodePath, true);
+        this.ensureCacheValid();
+        if (this._cache.numberOfExactlyMatchedNodes === null) {
+            this._cache.numberOfExactlyMatchedNodes = this._treeData.countMatchedNodes(this._nodePath, true);
+        }
+        return this._cache.numberOfExactlyMatchedNodes;
     }
 
     exactlyMatchedNodePaths(): Array<string> {
-        return this._treeData.findNodes(this._nodePath, MatchType.fullMatch).nodePaths;
+        this.ensureCacheValid();
+        if (this._cache.exactlyMatchedNodePaths === null) {
+            this._cache.exactlyMatchedNodePaths = this._treeData.findNodes(this._nodePath, MatchType.fullMatch).nodePaths;
+        }
+        return this._cache.exactlyMatchedNodePaths;
     }
 
     exactlyMatchedNodeIds(): (string | undefined)[][] {
-        return this._treeData
-            .findNodes(this._nodePath, MatchType.fullMatch)
-            .metaData.map((el) => el.map((meta) => meta.id));
+        this.ensureCacheValid();
+        if (this._cache.exactlyMatchedNodeIds === null) {
+            this._cache.exactlyMatchedNodeIds = this._treeData
+                .findNodes(this._nodePath, MatchType.fullMatch)
+                .metaData.map((el) => el.map((meta) => meta.id));
+        }
+        return this._cache.exactlyMatchedNodeIds;
     }
 
     countExactlyMatchedNodePaths(): number {
@@ -343,13 +414,19 @@ export class TreeNodeSelection {
     }
 
     containsWildcard(): boolean {
-        const reg = RegExp(`^(([^${this.delimiter}\\|]+\\|)+([^${this.delimiter}\\|]+){1})$`);
-        for (const el of this.getNodePath()) {
-            if (el.includes("?") || el.includes("*") || (this.allowOrOperator && reg.test(el))) {
-                return true;
+        this.ensureCacheValid();
+        if (this._cache.containsWildcard === null) {
+            const reg = RegExp(`^(([^${this.delimiter}\\|]+\\|)+([^${this.delimiter}\\|]+){1})$`);
+            let result = false;
+            for (const el of this.getNodePath()) {
+                if (el.includes("?") || el.includes("*") || (this.allowOrOperator && reg.test(el))) {
+                    result = true;
+                    break;
+                }
             }
+            this._cache.containsWildcard = result;
         }
-        return false;
+        return this._cache.containsWildcard;
     }
 
     availableChildNodes(level: number): { nodeName: string; metaData: TreeDataNodeMetaData }[] {
@@ -363,12 +440,12 @@ export class TreeNodeSelection {
     }
 
     focussedNodeNameContainsWildcard(): boolean {
-        return this.getFocussedNodeName().includes("?") || this.getFocussedNodeName().includes("*");
+        return this.getFocusedNodeName().includes("?") || this.getFocusedNodeName().includes("*");
     }
 
     clone(): TreeNodeSelection {
         return new TreeNodeSelection({
-            focussedLevel: this.getFocussedLevel(),
+            focussedLevel: this.getFocusedLevel(),
             nodePath: this.getNodePath().map((x) => x) as Array<string>,
             selected: false,
             delimiter: this.delimiter,
