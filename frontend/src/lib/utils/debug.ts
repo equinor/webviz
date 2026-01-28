@@ -1,9 +1,14 @@
 const DEBUG_FLAG_PREFIX = "webvizDebug_";
 
 /**
+ * Flag to show debug modules in the modules list
+ */
+export const SHOW_DEBUG_MODULES_FLAG = "showDebugModules";
+
+/**
  * Checks if a stored debug flag is true (as in, "true" or "1", case insensitive)
  * @param flag a debug flag key
- * @returns
+ * @returns true if the debug flag is enabled
  */
 export function debugFlagIsEnabled(flag: string) {
     const storedFlag = localStorage.getItem(DEBUG_FLAG_PREFIX + flag);
