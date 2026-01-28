@@ -37,7 +37,6 @@ const intersectionRealizationSeismicSettings = [
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
     Setting.TIME_OR_INTERVAL,
-    Setting.SAMPLE_RESOLUTION_IN_METERS,
     Setting.COLOR_SCALE,
     Setting.OPACITY_PERCENT,
 ] as const;
@@ -90,7 +89,6 @@ export class IntersectionRealizationSeismicProvider
 
         return {
             [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-            [Setting.SAMPLE_RESOLUTION_IN_METERS]: 25.0,
             [Setting.COLOR_SCALE]: {
                 colorScale: defaultColorScale,
                 areBoundariesUserDefined: false,
@@ -112,8 +110,7 @@ export class IntersectionRealizationSeismicProvider
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.realization, newSettings.realization) ||
             !isEqual(prevSettings.attribute, newSettings.attribute) ||
-            !isEqual(prevSettings.timeOrInterval, newSettings.timeOrInterval) ||
-            !isEqual(prevSettings.sampleResolutionInMeters, newSettings.sampleResolutionInMeters)
+            !isEqual(prevSettings.timeOrInterval, newSettings.timeOrInterval)
         );
     }
 
@@ -158,8 +155,7 @@ export class IntersectionRealizationSeismicProvider
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
-            getSetting(Setting.TIME_OR_INTERVAL) !== null &&
-            getSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) !== null
+            getSetting(Setting.TIME_OR_INTERVAL) !== null
         );
     }
 
@@ -303,7 +299,10 @@ export class IntersectionRealizationSeismicProvider
             const intersectionPolylineWithSectionLengths = getHelperDependency(
                 intersectionPolylineWithSectionLengthsDep,
             );
-            const sampleResolutionInMeters = getLocalSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) ?? 1;
+
+            const seismicCubeMetaList = getHelperDependency(ensembleSeismicCubeMetaListDep);
+            const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
+            const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
 
             // If no intersection is selected, or polyline is empty, cancel update
             if (
@@ -311,6 +310,19 @@ export class IntersectionRealizationSeismicProvider
                 intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
             ) {
                 return { polylineUtmXy: [], actualSectionLengths: [] };
+            }
+
+            // Find step size for resampling
+            let sampleResolutionInMeters = 25.0; // Default value
+            const matchingSeismicCubeMeta = seismicCubeMetaList?.find(
+                (meta) => meta.seismicAttribute === seismicAttribute && meta.isoDateOrInterval === timeOrInterval,
+            );
+            if (matchingSeismicCubeMeta) {
+                // Use the smallest increment in x- and y-direction from seismic cube spec, and divide by 2.0 as sample
+                // resolution for resampling the polyline.
+                sampleResolutionInMeters =
+                    Math.min(Math.abs(matchingSeismicCubeMeta.spec.xInc), Math.abs(matchingSeismicCubeMeta.spec.yInc)) /
+                    2.0;
             }
 
             // Resample the polyline, as seismic fence is created by one trace per (x,y) point in the polyline

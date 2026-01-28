@@ -1,0 +1,52 @@
+import type { QueryObserverResult } from "@tanstack/query-core";
+
+import type { InplaceVolumesTableDefinition_api } from "@api";
+import { getTableDefinitionsOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { atomWithQueries } from "@framework/utils/atomUtils";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+
+import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
+
+export type TableDefinitionsQueryResult = {
+    data: {
+        ensembleIdent: RegularEnsembleIdent;
+        tableDefinitions: InplaceVolumesTableDefinition_api[];
+    }[];
+    isLoading: boolean;
+    errors: Error[];
+};
+
+export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+
+    const queries = selectedEnsembleIdents.map((ensembleIdent) => {
+        const options = getTableDefinitionsOptions({
+            query: {
+                case_uuid: ensembleIdent.getCaseUuid(),
+                ensemble_name: ensembleIdent.getEnsembleName(),
+                ...makeCacheBustingQueryParam(ensembleIdent),
+            },
+        });
+        return () => options;
+    });
+
+    return {
+        queries,
+        combine: (
+            results: QueryObserverResult<InplaceVolumesTableDefinition_api[], Error>[],
+        ): TableDefinitionsQueryResult => {
+            const tableDefinitionsPerEnsembleIdent: TableDefinitionsQueryResult["data"] = results.map(
+                (result, index) => ({
+                    ensembleIdent: selectedEnsembleIdents[index],
+                    tableDefinitions: result.data ?? [],
+                }),
+            );
+            return {
+                data: tableDefinitionsPerEnsembleIdent,
+                isLoading: results.some((result) => result.isLoading),
+                errors: results.filter((result) => result.isError).map((result) => result.error!),
+            };
+        },
+    };
+});

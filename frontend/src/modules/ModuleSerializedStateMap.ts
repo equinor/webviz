@@ -7,6 +7,7 @@ import type { SerializedSettings as M_3DViewerSettings } from "@modules/3DViewer
 import type { SerializedView as M_3DViewerView } from "@modules/3DViewer/view/persistence";
 import type { SerializedSettings as DistributionPlotSettings } from "@modules/DistributionPlot/settings/persistence";
 import type { SerializedSettings as FlowNetworkSettings } from "@modules/FlowNetwork/settings/persistence";
+import type { SerializedSettings as InplaceVolumesNewSettings } from "@modules/InplaceVolumesNew/settings/persistence";
 import type { SerializedSettings as InplaceVolumesPlotSettings } from "@modules/InplaceVolumesPlot/settings/persistence";
 import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
 import type { SerializedSettings as IntersectionSettings } from "@modules/Intersection/settings/persistence";
@@ -42,6 +43,10 @@ export type ModuleSerializedStateMap = {
   },
   "FlowNetwork": {
     settings?: Partial<FlowNetworkSettings>,
+    view?: never,
+  },
+  "InplaceVolumesNew": {
+    settings?: Partial<InplaceVolumesNewSettings>,
     view?: never,
   },
   "InplaceVolumesPlot": {
@@ -109,10 +114,6 @@ export type ModuleSerializedStateMap = {
     view?: Partial<SimulationTimeSeriesSensitivityView>,
   },
   "SubsurfaceMap": {
-    settings?: never,
-    view?: never,
-  },
-  "TopographicMap": {
     settings?: never,
     view?: never,
   },

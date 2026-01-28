@@ -3,11 +3,9 @@ import React from "react";
 import { Input, Warning } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { KeyKind } from "@framework/types/dataChannnel";
 import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
@@ -205,19 +203,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                     receiveResponsesPerEnsembleIdent.get(ensembleIdentString)?.push(content);
                 });
             });
-            for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
-                const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-                if (!ensemble || ensemble instanceof DeltaEnsemble) {
-                    const ensembleType = !ensemble ? "Invalid" : "Delta";
-                    setContent(
-                        <ContentWarning>
-                            <p>{ensembleType} ensemble detected in the data channel.</p>
-                            <p>Unable to compute parameter correlations.</p>
-                        </ContentWarning>,
-                    );
-                    return;
-                }
-            }
+
             // Content when no parameters are selected
             if (parameterIdents.length === 0) {
                 setContent(
@@ -247,7 +233,18 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 showLabels,
                 useFixedColorRange,
             });
-
+            for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
+                const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+                if (!ensemble) {
+                    setContent(
+                        <ContentWarning>
+                            <p>Invalid ensemble detected in the data channel.</p>
+                            <p>Unable to compute parameter correlations.</p>
+                        </ContentWarning>,
+                    );
+                    return;
+                }
+            }
             fillParameterCorrelationMatrixFigure(
                 figure,
                 parameterIdents,
@@ -307,7 +304,7 @@ function fillParameterCorrelationMatrixFigure(
             const ensembleIdentString = Array.from(receiveResponsesPerEnsembleIdent.keys())[cellIndex];
 
             const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-            if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
+            if (!ensemble) {
                 continue;
             }
             const fullParameterArr = getVaryingContinuousParameters(ensemble);
