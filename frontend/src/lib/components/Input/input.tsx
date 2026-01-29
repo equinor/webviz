@@ -69,38 +69,44 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
         event.stopPropagation();
     }, []);
 
-    function clampNumberValue(val: unknown): number {
-        let newValue = 0;
-        if (!isNaN(parseFloat(val as string))) {
-            newValue = parseFloat((val as string) || "0");
-            if (props.min !== undefined) {
-                newValue = Math.max(props.min, newValue);
+    const clampNumberValue = React.useCallback(
+        function clampNumberValue(val: unknown): number {
+            let newValue = 0;
+            if (!isNaN(parseFloat(val as string))) {
+                newValue = parseFloat((val as string) || "0");
+                if (props.min !== undefined) {
+                    newValue = Math.max(props.min, newValue);
+                }
+                if (props.max !== undefined) {
+                    newValue = Math.min(props.max, newValue);
+                }
             }
-            if (props.max !== undefined) {
-                newValue = Math.min(props.max, newValue);
+            return newValue;
+        },
+        [props.min, props.max],
+    );
+
+    const commitValue = React.useCallback(
+        function commitValue(val: unknown) {
+            if (!onValueChange) {
+                return;
             }
-        }
-        return newValue;
-    }
 
-    function commitValue(val: unknown) {
-        if (!onValueChange) {
-            return;
-        }
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
 
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
+            if (!debounceTimeMs) {
+                onValueChange(`${val}`);
+                return;
+            }
 
-        if (!debounceTimeMs) {
-            onValueChange(`${val}`);
-            return;
-        }
-
-        debounceTimerRef.current = setTimeout(() => {
-            onValueChange(`${val}`);
-        }, debounceTimeMs);
-    }
+            debounceTimerRef.current = setTimeout(() => {
+                onValueChange(`${val}`);
+            }, debounceTimeMs);
+        },
+        [debounceTimeMs, onValueChange],
+    );
 
     function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
         // For number inputs: Arrow up/down should trigger immediate update like spinner buttons
@@ -111,47 +117,59 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
         }
     }
 
-    function handleKeyUp(event: React.KeyboardEvent<HTMLInputElement>) {
-        if (event.key === "Enter") {
+    const handleInputEditingDone = React.useCallback(
+        function handleInputEditingDone() {
+            let adjustedValue: unknown = value;
+            if (props.type === "number") {
+                const newValue = clampNumberValue(value);
+                adjustedValue = newValue.toString();
+                setValue(adjustedValue);
+            }
+
+            commitValue(adjustedValue);
+        },
+        [value, props.type, clampNumberValue, commitValue],
+    );
+
+    const handleKeyUp = React.useCallback(
+        function handleKeyUp(event: React.KeyboardEvent<HTMLInputElement>) {
+            if (event.key === "Enter") {
+                isTypingRef.current = false;
+                handleInputEditingDone();
+            }
+        },
+        [handleInputEditingDone],
+    );
+
+    const handleInputBlur = React.useCallback(
+        function handleInputBlur(evt: React.FocusEvent<HTMLInputElement>) {
             isTypingRef.current = false;
             handleInputEditingDone();
-        }
-    }
+            props.onBlur?.(evt);
+        },
+        [handleInputEditingDone, props],
+    );
 
-    function handleInputBlur(evt: React.FocusEvent<HTMLInputElement>) {
-        isTypingRef.current = false;
-        handleInputEditingDone();
-        props.onBlur?.(evt);
-    }
+    const handleInputChange = React.useCallback(
+        function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+            const newRawValue = event.target.value;
 
-    function handleInputEditingDone() {
-        let adjustedValue: unknown = value;
-        if (props.type === "number") {
-            const newValue = clampNumberValue(value);
-            adjustedValue = newValue.toString();
-            setValue(adjustedValue);
-        }
+            if (props.type === "number" && !isTypingRef.current) {
+                // Spinner button or wheel: apply min/max immediately and commit
+                const clampedValue = clampNumberValue(newRawValue);
+                setValue(clampedValue.toString());
+                commitValue(clampedValue.toString());
+            } else {
+                // Typing: just update local state, don't clamp or commit yet
+                setValue(newRawValue);
+            }
 
-        commitValue(adjustedValue);
-    }
-
-    function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const newRawValue = event.target.value;
-
-        if (props.type === "number" && !isTypingRef.current) {
-            // Spinner button or wheel: apply min/max immediately and commit
-            const clampedValue = clampNumberValue(newRawValue);
-            setValue(clampedValue.toString());
-            commitValue(clampedValue.toString());
-        } else {
-            // Typing: just update local state, don't clamp or commit yet
-            setValue(newRawValue);
-        }
-
-        if (props.onChange) {
-            props.onChange(event);
-        }
-    }
+            if (props.onChange) {
+                props.onChange(event);
+            }
+        },
+        [props, clampNumberValue, commitValue],
+    );
 
     return (
         <BaseComponent
