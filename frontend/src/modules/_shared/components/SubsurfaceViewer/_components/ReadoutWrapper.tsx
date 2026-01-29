@@ -23,6 +23,9 @@ import {
 } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
+import { AnnotationOrganizer, useAnnotations } from "../utils/AnnotationOrganizer";
+import { RenderLoopLayer } from "../utils/RenderLoopLayer";
+import type { LabelAnnotation } from "../utils/utils/types";
 
 import type { PickingInfoAndRayScreenCoordinate } from "./HoverVisualizationWrapper";
 import { PerformanceOverlay, type PerformanceOverlayHandle } from "./PerformanceOverlay";
@@ -54,6 +57,9 @@ const DEBOUNCED_HOVER_DELAY_MS = 50;
 const PICKING_RADIUS = 5;
 const USER_PICKING_DEPTH = 6;
 
+// Layer ID for pick annotations
+const PICK_ANNOTATIONS_LAYER_ID = "pick-annotations";
+
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const { onViewerHover, onViewportHover, onIsGoingToRemovePickedWorldPos, onPickingInfoChange } = props;
     const ctx = useDpfSubsurfaceViewerContext();
@@ -71,6 +77,14 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const deckGlRef = React.useRef<DeckGLRef | null>(null);
     const perfOverlayRef = React.useRef<PerformanceOverlayHandle>(null);
 
+    // Annotation organizer for rendering labels at 3D positions
+    const annotationOrganizer = React.useMemo(() => new AnnotationOrganizer({}), []);
+
+    // Connect organizer to deck.gl ref when it changes
+    React.useEffect(() => {
+        annotationOrganizer.setDeckRef(deckGlRef.current);
+    });
+
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
     usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
 
@@ -80,6 +94,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 if (event.key === "Escape") {
                     setReadoutMode("hover");
                     onPickingInfoChange?.({});
+                    // Clear pick annotations
+                    annotationOrganizer.registerAnnotations(PICK_ANNOTATIONS_LAYER_ID, []);
                 }
             }
 
@@ -88,7 +104,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 window.removeEventListener("keydown", handleKeydown);
             };
         },
-        [onPickingInfoChange],
+        [onPickingInfoChange, annotationOrganizer],
     );
 
     const pickAtWorldCoordinates = React.useCallback(
@@ -127,13 +143,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                     unproject3D: true,
                 });
 
-                // Debug: check if all picks are truly identical
-                // eslint-disable-next-line no-console
-                console.log(
-                    "Picks detail:",
-                    picks.map((p, i) => ({ i, layerId: p.layer?.id, index: p.index, object: p.object })),
-                );
-
                 // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates.
                 // See issue #webviz-subsurface-components/2320
                 // Use layer.id (the actual layer instance) rather than sourceLayer.id to allow
@@ -171,8 +180,10 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             setPickingCoordinate([]);
             onViewerHover?.(null);
             onViewportHover?.(null);
+            // Clear pick annotations
+            annotationOrganizer.registerAnnotations(PICK_ANNOTATIONS_LAYER_ID, []);
         },
-        [onViewerHover, onViewportHover],
+        [onViewerHover, onViewportHover, annotationOrganizer],
     );
 
     const handleHoverEvent = React.useCallback(
@@ -336,6 +347,30 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 };
             }
             onPickingInfoChange?.(adjustedPickingInfoDict);
+
+            // Create one annotation per picking info
+            // Note: Z coordinate must be scaled by verticalScale to match the rendered geometry
+            const pickAnnotations: LabelAnnotation[] = [];
+            for (const [viewId, pickInfo] of Object.entries(adjustedPickingInfoDict)) {
+                for (let i = 0; i < pickInfo.pickingInfoArray.length; i++) {
+                    const pick = pickInfo.pickingInfoArray[i];
+                    const coord = pick.coordinate;
+                    if (!coord || coord.length < 3) continue;
+
+                    // Get layer name if available
+                    // @ts-expect-error -- name injected by subsurface viewer
+                    const layerName = pick.layer?.props?.name ?? pick.layer?.id ?? "Unknown";
+
+                    pickAnnotations.push({
+                        id: `pick-${viewId}-${i}`,
+                        type: "label",
+                        position: [coord[0], coord[1], coord[2]],
+                        name: layerName,
+                        priority: 1000 - i, // Higher priority for first picks
+                    });
+                }
+            }
+            annotationOrganizer.registerAnnotations(PICK_ANNOTATIONS_LAYER_ID, pickAnnotations);
         },
         [
             collectReadoutInformationFromAllViewports,
@@ -347,6 +382,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             readoutMode,
             onIsGoingToRemovePickedWorldPos,
             onPickingInfoChange,
+            annotationOrganizer,
+            props.verticalScale,
         ],
     );
 
@@ -374,7 +411,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         ) {
             return info.object.wellLabels?.join("\n");
         } else if ((info as WellsPickInfo)?.logName) {
-            return (info as WellsPickInfo)?.logName;
+            return (info as WellsPickInfo)?.logName ?? "";
         } else if (info.layer?.id === "drawing-layer") {
             return (info as LayerPickInfo).propertyValue?.toFixed(2) ?? "";
         } else if (info.layer?.constructor === PolylinesLayer) {
@@ -383,6 +420,25 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         const feat = info.object as Feature;
         return feat?.properties?.["name"];
     }
+
+    // Annotation system for rendering labels at 3D positions
+    const [annotationOverlay, renderAnnotations] = useAnnotations({
+        organizer: annotationOrganizer,
+        layers: props.layers,
+        maxVisibleAnnotations: 50,
+    });
+
+    // Add RenderLoopLayer to drive the annotation render loop
+    const layersWithRenderLoop = React.useMemo(() => {
+        return [
+            ...props.layers,
+            new RenderLoopLayer({
+                id: "annotation-render-loop",
+                data: [],
+                onRender: renderAnnotations,
+            }),
+        ];
+    }, [props.layers, renderAnnotations]);
 
     const deckGlProps = props.deckGlManager.makeDeckGlComponentProps({
         deckGlRef,
@@ -411,7 +467,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         // We will do deeper picking manually in the onMouseEvent callback
         pickingDepth: INITIAL_HOVER_PICKING_DEPTH,
         pickingRadius: PICKING_RADIUS,
-        layers: props.layers,
+        layers: layersWithRenderLoop,
         onMouseEvent: handleMouseEvent,
         getTooltip: getTooltip,
     });
@@ -458,6 +514,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                     </DeckGlView>
                 ))}
             </SubsurfaceViewerWithCameraState>
+            {annotationOverlay}
             {props.views.viewports.length === 0 && (
                 <div className="absolute left-1/2 top-1/2 w-64 h-10 -ml-32 -mt-5 text-center">
                     Please add views and layers in the settings panel.

@@ -56,6 +56,7 @@
         "jotai-tanstack-query": "~0.11.0",
         "lodash": "^4.17.21",
         "pixi.js": "^7.1.0",
+        "rbush": "^4.0.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-plotly.js": "^2.6.0",
@@ -66,6 +67,16 @@
         "uuid": "^11.1.0",
         "wonka": "^6.3.4"
     },
+    "overrides": {
+        "@deck.gl/core": "~9.1.15",
+        "@deck.gl/layers": "~9.1.15",
+        "@deck.gl/aggregation-layers": "~9.1.15",
+        "@deck.gl/extensions": "~9.1.15",
+        "@deck.gl/geo-layers": "~9.1.15",
+        "@deck.gl/json": "~9.1.15",
+        "@deck.gl/mesh-layers": "~9.1.15",
+        "@deck.gl/react": "~9.1.15"
+    },
     "devDependencies": {
         "@hey-api/openapi-ts": "~0.85.2",
         "@playwright/experimental-ct-react": "~1.55.0",
@@ -75,6 +86,7 @@
         "@types/geojson": "^7946.0.16",
         "@types/lodash-es": "^4.17.9",
         "@types/node": "^18.11.18",
+        "@types/rbush": "^4.0.0",
         "@types/react": "^18.2.21",
         "@types/react-dom": "^18.2.7",
         "@types/react-plotly.js": "^2.6.0",
