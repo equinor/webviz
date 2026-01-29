@@ -11,6 +11,7 @@ import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { createDeltaEnsembleDisplayName, createRegularEnsembleDisplayName } from "@framework/utils/ensembleUiHelpers";
+import { tanstackDebugTimeOverride } from "@lib/utils/debug";
 import { calcFnv1aHash } from "@lib/utils/hashUtils";
 
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
@@ -21,7 +22,6 @@ import { EnsembleSet } from "../EnsembleSet";
 import { RegularEnsemble } from "../RegularEnsemble";
 import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
-import { tanstackDebugTimeOverride } from "./utils/debug";
 import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
 
 type EnsembleApiData = {
