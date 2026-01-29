@@ -695,6 +695,12 @@ export type Grid3dMappedProperty_api = {
      * Max Grid Prop Value
      */
     max_grid_prop_value: number;
+    /**
+     * Discrete Codes Map
+     */
+    discrete_codes_map?: {
+        [key: string]: string;
+    } | null;
 };
 
 /**
