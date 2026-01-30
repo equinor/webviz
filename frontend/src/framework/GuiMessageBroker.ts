@@ -17,6 +17,7 @@ export enum RightDrawerContent {
 
 export enum GuiState {
     RightDrawerContent = "rightDrawerContent",
+    LeftSettingsPanelIsCollapsed = "leftSettingsPanelIsCollapsed",
     LeftSettingsPanelWidthInPercent = "leftSettingsPanelWidthInPercent",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
     DevToolsVisible = "devToolsVisible",
@@ -96,6 +97,7 @@ export type GuiEventPayloads = {
 
 type GuiStateValueTypes = {
     [GuiState.RightDrawerContent]: RightDrawerContent | undefined;
+    [GuiState.LeftSettingsPanelIsCollapsed]: boolean;
     [GuiState.LeftSettingsPanelWidthInPercent]: number;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
     [GuiState.DevToolsVisible]: boolean;
@@ -123,6 +125,7 @@ type GuiStateValueTypes = {
 
 const defaultStates: Map<GuiState, any> = new Map();
 defaultStates.set(GuiState.RightDrawerContent, undefined);
+defaultStates.set(GuiState.LeftSettingsPanelIsCollapsed, false);
 defaultStates.set(GuiState.LeftSettingsPanelWidthInPercent, 30);
 defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
 defaultStates.set(GuiState.DevToolsVisible, isDevMode());
@@ -147,6 +150,7 @@ defaultStates.set(GuiState.EnsemblesLoadingErrorInfoMap, {});
 defaultStates.set(GuiState.EnsembleLoadingErrorInfoDialogOpen, false);
 
 const persistentStates: GuiState[] = [
+    GuiState.LeftSettingsPanelIsCollapsed,
     GuiState.LeftSettingsPanelWidthInPercent,
     GuiState.DevToolsVisible,
     GuiState.RightSettingsPanelWidthInPercent,

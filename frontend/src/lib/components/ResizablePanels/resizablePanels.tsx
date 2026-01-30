@@ -11,13 +11,15 @@ export type ResizablePanelsProps = {
     direction: "horizontal" | "vertical";
     children: React.ReactNode[];
     minSizes?: number[];
+    collapsedSizes?: number[];
     sizesInPercent?: number[];
     onSizesChange?: (sizesInPercent: number[]) => void;
+    onCollapsedChange?: (collapsedStates: boolean[]) => void;
     visible?: boolean[];
 };
 
 export function ResizablePanels(props: ResizablePanelsProps) {
-    const { onSizesChange } = props;
+    const { onSizesChange, onCollapsedChange } = props;
 
     if (props.minSizes && props.minSizes.length !== props.children.length) {
         throw new Error("minSizes must have the same length as children");
@@ -46,6 +48,7 @@ export function ResizablePanels(props: ResizablePanelsProps) {
 
     const resizablePanelsRef = React.useRef<HTMLDivElement | null>(null);
     const individualPanelRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+    const prevCollapsedStatesRef = React.useRef<boolean[]>([]);
 
     const { width: totalWidth, height: totalHeight } = useElementSize(resizablePanelsRef);
 
@@ -147,12 +150,15 @@ export function ResizablePanels(props: ResizablePanelsProps) {
                                 adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i];
                             }
                         }
+
                         if (newSizes[i] < minSizesToggleVisibilityValue) {
-                            adjustedSizes[i] = 0;
+                            const collapsedSizeInPercent = ((props.collapsedSizes?.at(i) || 0) / totalSize) * 100;
+                            adjustedSizes[i] = collapsedSizeInPercent;
+                            const sizeReduction = newSizes[i] - collapsedSizeInPercent;
                             if (i < newSizes.length - 1) {
-                                adjustedSizes[i + 1] = adjustedSizes[i + 1] + newSizes[i];
+                                adjustedSizes[i + 1] = adjustedSizes[i + 1] + sizeReduction;
                             } else {
-                                adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i];
+                                adjustedSizes[i - 1] = adjustedSizes[i - 1] + sizeReduction;
                             }
                         } else if (newSizes[i] < minSizeInPercent) {
                             adjustedSizes[i] = minSizeInPercent;
@@ -166,6 +172,18 @@ export function ResizablePanels(props: ResizablePanelsProps) {
                     }
 
                     changedSizes = adjustedSizes;
+
+                    // Determine current collapsed states and fire callback if changed
+                    if (onCollapsedChange) {
+                        const currentCollapsedStates = newSizes.map(
+                            (size, i) => props.minSizes?.at(i) !== undefined && size < minSizesToggleVisibilityValue,
+                        );
+                        const prevCollapsedStates = prevCollapsedStatesRef.current;
+                        if (!isEqual(currentCollapsedStates, prevCollapsedStates)) {
+                            prevCollapsedStatesRef.current = currentCollapsedStates;
+                            onCollapsedChange(currentCollapsedStates);
+                        }
+                    }
 
                     return adjustedSizes;
                 });
@@ -205,7 +223,17 @@ export function ResizablePanels(props: ResizablePanelsProps) {
             document.removeEventListener("pointerdown", handlePointerDown);
             removeEventListeners();
         };
-    }, [props.direction, props.id, props.minSizes, onSizesChange, totalWidth, totalHeight, props.visible]);
+    }, [
+        props.direction,
+        props.id,
+        props.minSizes,
+        props.collapsedSizes,
+        props.visible,
+        totalWidth,
+        totalHeight,
+        onSizesChange,
+        onCollapsedChange,
+    ]);
 
     function maybeMakeDragBar(index: number) {
         if (index < props.children.length - 1) {
@@ -239,7 +267,9 @@ export function ResizablePanels(props: ResizablePanelsProps) {
             }
 
             if (sizes[index] < minSizesToggleVisibilityValue && props.minSizes?.at(index)) {
-                style.maxWidth = 0;
+                const collapsedSize = props.collapsedSizes?.at(index) ?? 0;
+                style.maxWidth = collapsedSize;
+                style.minWidth = collapsedSize;
             } else if (props.visible?.at(index) === false) {
                 style.maxWidth = 0;
             } else {
@@ -256,7 +286,9 @@ export function ResizablePanels(props: ResizablePanelsProps) {
             }
 
             if (sizes[index] < minSizesToggleVisibilityValue && props.minSizes?.at(index)) {
-                style.maxHeight = 0;
+                const collapsedSize = props.collapsedSizes?.at(index) ?? 0;
+                style.maxHeight = collapsedSize;
+                style.minHeight = collapsedSize;
             } else if (props.visible?.at(index) === false) {
                 style.maxHeight = 0;
             } else {

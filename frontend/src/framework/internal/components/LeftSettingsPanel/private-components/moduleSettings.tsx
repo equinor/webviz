@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Link, Settings as SettingsIcon } from "@mui/icons-material";
+import { ChevronLeft, Link, Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
@@ -30,6 +30,7 @@ type ModuleSettingsProps = {
     moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
     onRequestOpenSyncSettings?: () => void;
+    onRequestCollapseSettings?: () => void;
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
@@ -174,6 +175,13 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                         title="Open sync settings"
                     >
                         <Link fontSize="small" />
+                    </DenseIconButton>
+                    <DenseIconButton
+                        onClick={props.onRequestCollapseSettings}
+                        className="ml-2"
+                        title="Collapse settings panel"
+                    >
+                        <ChevronLeft fontSize="small" />
                     </DenseIconButton>
                 </div>
                 <div className="flex flex-col gap-4 overflow-auto grow">
