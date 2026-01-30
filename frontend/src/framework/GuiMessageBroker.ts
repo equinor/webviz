@@ -7,21 +7,15 @@ import type { Vec2 } from "@lib/utils/vec2";
 import type { EnsembleLoadingErrorInfoMap } from "./internal/EnsembleSetLoader";
 import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
-export enum LeftDrawerContent {
-    ModuleSettings = "ModuleSettings",
-    SyncSettings = "SyncSettings",
-    ColorPaletteSettings = "ColorPaletteSettings",
-}
-
 export enum RightDrawerContent {
     RealizationFilterSettings = "RealizationFilterSettings",
     ModuleInstanceLog = "ModuleInstanceLog",
     ModulesList = "ModulesList",
     TemplatesList = "TemplatesList",
+    ColorPaletteSettings = "ColorPaletteSettings",
 }
 
 export enum GuiState {
-    LeftDrawerContent = "leftDrawerContent",
     RightDrawerContent = "rightDrawerContent",
     LeftSettingsPanelWidthInPercent = "leftSettingsPanelWidthInPercent",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
@@ -101,7 +95,6 @@ export type GuiEventPayloads = {
 };
 
 type GuiStateValueTypes = {
-    [GuiState.LeftDrawerContent]: LeftDrawerContent;
     [GuiState.RightDrawerContent]: RightDrawerContent | undefined;
     [GuiState.LeftSettingsPanelWidthInPercent]: number;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
@@ -129,7 +122,6 @@ type GuiStateValueTypes = {
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
-defaultStates.set(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
 defaultStates.set(GuiState.RightDrawerContent, undefined);
 defaultStates.set(GuiState.LeftSettingsPanelWidthInPercent, 30);
 defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
@@ -305,4 +297,12 @@ export function useGuiState<T extends GuiState>(
 export function useGuiValue<T extends GuiState>(guiMessageBroker: GuiMessageBroker, state: T): GuiStateValueTypes[T] {
     const [stateValue] = useGuiState(guiMessageBroker, state);
     return stateValue;
+}
+
+export function useSetGuiState<T extends GuiState>(
+    guiMessageBroker: GuiMessageBroker,
+    state: T,
+): (value: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])) => void {
+    const [, stateSetter] = useGuiState(guiMessageBroker, state);
+    return stateSetter;
 }

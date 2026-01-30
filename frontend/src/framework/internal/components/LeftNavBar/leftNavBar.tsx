@@ -1,9 +1,8 @@
 import type React from "react";
 
-import { Link, List, Palette, Tune } from "@mui/icons-material";
+import { GridView, List } from "@mui/icons-material";
 
-import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { DashboardTopic } from "@framework/internal/Dashboard";
+import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
@@ -13,8 +12,6 @@ import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useActiveDashboard } from "../ActiveDashboardBoundary";
-
 type LeftNavBarProps = {
     workbench: Workbench;
 };
@@ -22,52 +19,19 @@ type LeftNavBarProps = {
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
-    const dashboard = useActiveDashboard();
-    const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);
     const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     const isEnsembleSetLoading = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingEnsembleSet);
-    const [ensembleDialogOpen, setEnsembleDialogOpen] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.EnsembleDialogOpen,
-    );
-    const [drawerContent, setDrawerContent] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.LeftDrawerContent,
-    );
-    const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.LeftSettingsPanelWidthInPercent,
-    );
+    const setEnsembleDialogOpen = useSetGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
+    const setTemplatesDialogOpen = useSetGuiState(props.workbench.getGuiMessageBroker(), GuiState.TemplatesDialogOpen);
 
-    function ensureSettingsPanelIsVisible() {
-        if (leftSettingsPanelWidth <= 5) {
-            setLeftSettingsPanelWidth(20);
-        }
-    }
-
-    function togglePanelContent(targetContent: LeftDrawerContent) {
-        setDrawerContent(targetContent);
-        ensureSettingsPanelIsVisible();
-    }
-
-    function handleEnsembleClick() {
+    function handleEnsembleDialogOpenClick() {
         setEnsembleDialogOpen(true);
     }
 
-    function handleModuleSettingsClick() {
-        togglePanelContent(LeftDrawerContent.ModuleSettings);
+    function handleTemplatesListClick() {
+        setTemplatesDialogOpen(true);
     }
-
-    function handleSyncSettingsClick() {
-        togglePanelContent(LeftDrawerContent.SyncSettings);
-    }
-
-    function handleColorPaletteSettingsClick() {
-        togglePanelContent(LeftDrawerContent.ColorPaletteSettings);
-    }
-
-    const layoutEmpty = layout.length === 0;
 
     return (
         <div
@@ -77,7 +41,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         >
             <div className="flex flex-col gap-2 grow">
                 <NavBarButton
-                    active={ensembleDialogOpen}
                     tooltip={"Open ensemble selection dialog"}
                     disabledTooltip={"Ensembles cannot be changed in snapshot mode"}
                     disabled={isSnapshot}
@@ -96,34 +59,16 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                             <List fontSize="small" className="size-5" />
                         </Badge>
                     }
-                    onClick={handleEnsembleClick}
+                    onClick={handleEnsembleDialogOpenClick}
                 />
                 <NavBarDivider />
                 <NavBarButton
-                    active={drawerContent === LeftDrawerContent.ModuleSettings}
-                    tooltip="Show module settings"
-                    icon={<Tune fontSize="small" className="size-5" />}
-                    onClick={handleModuleSettingsClick}
-                    disabled={layoutEmpty}
+                    tooltip="Show templates dialog"
+                    icon={<GridView fontSize="small" className="size-5" />}
+                    onClick={handleTemplatesListClick}
+                    disabled={isSnapshot}
+                    disabledTooltip="Templates cannot be applied in snapshot mode"
                 />
-                <NavBarButton
-                    active={drawerContent === LeftDrawerContent.SyncSettings}
-                    tooltip="Show sync settings"
-                    disabledTooltip={
-                        layoutEmpty ? "Please add modules first" : "Sync settings cannot be changed in snapshot mode"
-                    }
-                    icon={<Link fontSize="small" className="size-5" />}
-                    onClick={handleSyncSettingsClick}
-                    disabled={layoutEmpty || isSnapshot}
-                />
-                <NavBarDivider />
-                <NavBarButton
-                    active={drawerContent === LeftDrawerContent.ColorPaletteSettings}
-                    tooltip="Show color settings"
-                    icon={<Palette fontSize="small" className="size-5" />}
-                    onClick={handleColorPaletteSettingsClick}
-                />
-
                 <div className="grow h-5" />
             </div>
         </div>

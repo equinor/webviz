@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
@@ -8,6 +8,7 @@ import { Dialog } from "@lib/components/Dialog";
 
 import { ModulesList } from "../ModulesList";
 
+import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModuleInstanceLog } from "./private-components/moduleInstanceLog";
 import { RealizationFilterSettings } from "./private-components/realizationFilterSettings";
 
@@ -17,12 +18,9 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
 
-    const [, setRightDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
-    const [, setRightSettingsPanelWidth] = useGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
-    const [numberOfUnsavedRealizationFilters] = useGuiState(
-        guiMessageBroker,
-        GuiState.NumberOfUnsavedRealizationFilters,
-    );
+    const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
+    const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
+    const numberOfUnsavedRealizationFilters = useGuiValue(guiMessageBroker, GuiState.NumberOfUnsavedRealizationFilters);
 
     function handleOnClose() {
         if (numberOfUnsavedRealizationFilters !== 0) {
@@ -62,6 +60,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
             <ModulesList workbench={props.workbench} onClose={handleOnClose} />
             <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
             <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
+            <ColorPaletteSettings workbench={props.workbench} />
             <Dialog
                 open={dialogOpen}
                 onClose={handleDialogCloseClick}

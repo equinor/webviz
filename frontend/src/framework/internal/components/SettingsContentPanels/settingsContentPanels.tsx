@@ -35,8 +35,8 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
         [setLeftSettingsPanelWidth, setRightSettingsPanelWidth],
     );
 
-    let sizes: number[];
     let minSizes: number[] = [300, 0];
+    let sizes = [leftSettingsPanelWidth, 100 - leftSettingsPanelWidth];
     const panels: React.ReactNode[] = [
         <LeftSettingsPanel key="left-panel" workbench={props.workbench} />,
         <div key="content-panel" className="flex flex-col grow h-full">
@@ -44,6 +44,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
         </div>,
     ];
 
+    // If right drawer content is set, add the right settings panel
     if (rightDrawerContent) {
         sizes = [
             leftSettingsPanelWidth,
@@ -52,8 +53,6 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
         ];
         minSizes = [...minSizes, 400];
         panels.push(<RightSettingsPanel key="right-panel" workbench={props.workbench} />);
-    } else {
-        sizes = [leftSettingsPanelWidth, 100 - leftSettingsPanelWidth];
     }
 
     return (

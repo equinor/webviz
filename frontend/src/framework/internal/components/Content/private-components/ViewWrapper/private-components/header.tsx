@@ -6,10 +6,10 @@ import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warn
 import {
     GuiEvent,
     GuiState,
-    LeftDrawerContent,
     RightDrawerContent,
     useGuiState,
     useGuiValue,
+    useSetGuiState,
 } from "@framework/GuiMessageBroker";
 import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
@@ -120,7 +120,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }
 
     function handleDoubleClick(e: React.PointerEvent<HTMLDivElement>) {
-        guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
         e.preventDefault();
         e.stopPropagation();
     }
@@ -278,7 +277,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         "hotMessageCache",
     );
     const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
-    const [, setRightDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
+    const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,

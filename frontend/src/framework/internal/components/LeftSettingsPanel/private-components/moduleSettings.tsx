@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Settings as SettingsIcon } from "@mui/icons-material";
+import { Link, Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
@@ -16,6 +16,7 @@ import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -28,6 +29,7 @@ import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 type ModuleSettingsProps = {
     moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
+    onRequestOpenSyncSettings?: () => void;
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
@@ -83,6 +85,10 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 </div>
             );
         }
+    }
+
+    function handleRequestOpenSyncSettings() {
+        props.onRequestOpenSyncSettings?.();
     }
 
     function makeContent() {
@@ -162,6 +168,13 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                     >
                         {props.moduleInstance.getTitle()}
                     </span>
+                    <DenseIconButton
+                        onClick={handleRequestOpenSyncSettings}
+                        className="ml-2"
+                        title="Open sync settings"
+                    >
+                        <Link fontSize="small" />
+                    </DenseIconButton>
                 </div>
                 <div className="flex flex-col gap-4 overflow-auto grow">
                     <div className="p-2 grow">{makeContent()}</div>
