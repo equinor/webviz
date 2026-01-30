@@ -1,7 +1,7 @@
 /*
 This manager is responsible for managing plugins for DeckGL, forwarding events to them, and adding/adjusting layers based on the plugins' responses.
 */
-import type { Layer, PickingInfo } from "@deck.gl/core";
+import type { Layer, PickingInfo, View } from "@deck.gl/core";
 import type { DeckGLProps, DeckGLRef } from "@deck.gl/react";
 import type { MapMouseEvent } from "@webviz/subsurface-viewer";
 import { v4 } from "uuid";
@@ -19,6 +19,8 @@ export type ContextMenu = {
     position: { x: number; y: number };
     items: ContextMenuItem[];
 };
+
+export type LayerFilter = (args: any) => boolean;
 
 export class DeckGlPlugin {
     private _manager: DeckGlInstanceManager;
@@ -57,6 +59,14 @@ export class DeckGlPlugin {
         return `${this._id}-${layerId}`;
     }
 
+    protected getDeck() {
+        return this._manager.getDeck();
+    }
+
+    protected runWithTemporaryDeckProps<T>(tempProps: Partial<DeckGLProps>, fn: () => T): T | undefined {
+        return this._manager.runWithTemporaryDeckProps(tempProps, fn);
+    }
+
     handleDrag?(pickingInfo: PickingInfo): void;
     handleLayerHover?(pickingInfo: PickingInfo): void;
     handleLayerClick?(pickingInfo: PickingInfo): void;
@@ -68,6 +78,24 @@ export class DeckGlPlugin {
     getCursor?(pickingInfo: PickingInfo): string | null;
     getLayers?(): Layer<any>[];
     getContextMenuItems?(pickingInfo: PickingInfo): ContextMenuItem[];
+
+    /**
+     * Views that should exist in deck.gl but must NOT be surfaced via subsurface-viewer props.
+     */
+    getHiddenDeckViews?(): View[];
+
+    /**
+     * ViewState fragments for hidden views (keyed by view id)
+     */
+    getHiddenViewStatePatch?(): Record<string, any>;
+
+    /**
+     * Allow plugins to wrap/combine layerFilter (e.g. “probe view draws only in picking pass”)
+     */
+    wrapLayerFilter?(prev?: LayerFilter): LayerFilter;
+
+    // Debug only
+    getViewStateOverride?(): any | null;
 }
 
 export enum DeckGlInstanceManagerTopic {
@@ -95,6 +123,13 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     private _contextMenu: ContextMenu | null = null;
     private _verticalScale: number = 1;
 
+    private _deckSetPropsWrapped = false;
+    private _originalDeckSetProps: ((props: any) => void) | null = null;
+
+    private _hiddenViews: View[] = []; // plugin registered
+    private _hiddenViewStatePatch: Record<string, any> = {};
+    private _layerFilterWrappers: ((prev?: any) => any)[] = [];
+
     constructor(ref: DeckGLRef | null) {
         this._ref = ref;
         this.addKeyboardEventListeners();
@@ -102,6 +137,73 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
 
     setRef(ref: DeckGLRef | null) {
         this._ref = ref;
+    }
+
+    private installDeckPropsInterceptionIfPossible() {
+        const deck = this._ref?.deck;
+        if (!deck || this._deckSetPropsWrapped) return;
+
+        this._deckSetPropsWrapped = true;
+        this._originalDeckSetProps = deck.setProps.bind(deck);
+
+        deck.setProps = (incoming: any = {}) => {
+            // incoming is what subsurface-viewer / DeckGL React wants to apply
+            const merged = this.mergeDeckProps(incoming);
+            this._originalDeckSetProps?.(merged);
+        };
+    }
+
+    private mergeDeckProps(incoming: any) {
+        // 1) Merge views: keep incoming views, append hidden views (by id)
+        const inViews = incoming.views
+            ? Array.isArray(incoming.views)
+                ? incoming.views
+                : [incoming.views]
+            : this._ref?.deck?.props?.views
+              ? Array.isArray(this._ref.deck.props.views)
+                  ? this._ref.deck.props.views
+                  : [this._ref.deck.props.views]
+              : [];
+
+        const existingIds = new Set(inViews.map((v: any) => v?.id ?? v?.props?.id).filter(Boolean));
+
+        const mergedViews = [...inViews, ...this._hiddenViews.filter((v) => !existingIds.has((v as any).id))];
+
+        // 2) Collect dynamic viewState patches from plugins
+        let dynamicPatches: Record<string, any> = { ...this._hiddenViewStatePatch };
+        for (const plugin of this._plugins) {
+            const patch = plugin.getHiddenViewStatePatch?.();
+            if (patch) {
+                dynamicPatches = { ...dynamicPatches, ...patch };
+            }
+        }
+
+        // 3) Merge viewState: preserve incoming viewState, add patches for hidden view ids
+        //    (If viewState is a function, don't touch it — see note below.)
+        const inVS = incoming.viewState ?? this._ref?.deck?.props?.viewState;
+        const mergedViewState =
+            typeof inVS === "function"
+                ? inVS
+                : {
+                      ...(inVS ?? {}),
+                      ...Object.fromEntries(
+                          Object.entries(dynamicPatches).map(([id, patch]) => [
+                              id,
+                              { ...(inVS?.[id] ?? {}), ...patch },
+                          ]),
+                      ),
+                  };
+
+        // 4) Compose layerFilter
+        const baseLayerFilter = incoming.layerFilter ?? this._ref?.deck?.props?.layerFilter;
+        const mergedLayerFilter = this._layerFilterWrappers.reduce((prev, wrap) => wrap(prev), baseLayerFilter);
+
+        return {
+            ...incoming,
+            views: mergedViews,
+            viewState: mergedViewState,
+            layerFilter: mergedLayerFilter,
+        };
     }
 
     private addKeyboardEventListeners() {
@@ -134,6 +236,24 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
 
     addPlugin(plugin: DeckGlPlugin) {
         this._plugins.push(plugin);
+
+        // Collect hidden view contributions (if any)
+        const hiddenViews = plugin.getHiddenDeckViews?.() ?? [];
+        for (const v of hiddenViews) {
+            this._hiddenViews.push(v);
+        }
+
+        const vsPatch = plugin.getHiddenViewStatePatch?.() ?? {};
+        this._hiddenViewStatePatch = { ...this._hiddenViewStatePatch, ...vsPatch };
+
+        const wrap = plugin.wrapLayerFilter?.bind(plugin);
+        if (wrap) {
+            this._layerFilterWrappers.push(wrap);
+        }
+
+        // If deck exists already, ensure interception is installed (and refresh)
+        this.installDeckPropsInterceptionIfPossible();
+        this._ref?.deck?.setProps({}); // triggers recompute via wrapper
     }
 
     redraw() {
@@ -165,6 +285,32 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                 dragPan: true,
             },
         });
+    }
+
+    getDeck() {
+        return this._ref?.deck ?? null;
+    }
+
+    /**
+     * Temporarily set deck props, run a synchronous function, then restore.
+     * IMPORTANT: fn must be synchronous (no await), or you may see visual flicker.
+     */
+    runWithTemporaryDeckProps<T>(tempProps: Partial<DeckGLProps>, fn: () => T): T | undefined {
+        const deck = this._ref?.deck;
+        if (!deck) return undefined;
+
+        const prev = {
+            views: deck.props.views,
+            viewState: deck.props.viewState,
+            layerFilter: deck.props.layerFilter,
+        };
+
+        deck.setProps(tempProps as any);
+        try {
+            return fn();
+        } finally {
+            deck.setProps(prev as any);
+        }
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<DeckGlInstanceManagerPayloads> {
