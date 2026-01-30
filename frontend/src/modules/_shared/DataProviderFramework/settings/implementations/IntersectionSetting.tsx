@@ -10,7 +10,11 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
-import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arraySingleSelect";
 
 export type IntersectionSettingValue = {
     type: IntersectionType;
@@ -21,10 +25,16 @@ type ValueType = IntersectionSettingValue | null;
 type ValueConstraintsType = IntersectionSettingValue[];
 
 export class IntersectionSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
-    private _activeType = IntersectionType.WELLBORE;
-    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
-        (a, b) => a.type === b.type && a.uuid === b.uuid,
-    );
+    private _activeIntersectionType = IntersectionType.WELLBORE;
+    private _cachedValueByIntersectionType: Record<IntersectionType, ValueType> = {
+        [IntersectionType.WELLBORE]: null,
+        [IntersectionType.CUSTOM_POLYLINE]: null,
+    };
+
+    valueConstraintsIntersectionReducerDefinition =
+        makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
+            (a, b) => a.type === b.type && a.uuid === b.uuid,
+        );
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -72,30 +82,55 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
-        const activeType = this._activeType;
-        const setActiveType = (type: IntersectionType) => {
-            this._activeType = type;
+        const activeIntersectionType = this._activeIntersectionType;
+        const setActiveIntersectionType = (type: IntersectionType) => {
+            this._activeIntersectionType = type;
+        };
+        const cachedValueByIntersectionType = this._cachedValueByIntersectionType;
+        const setCachedValueForIntersectionType = (type: IntersectionType, value: ValueType) => {
+            this._cachedValueByIntersectionType[type] = value;
         };
 
         return function IntersectionSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const availableValues = props.valueConstraints ?? [];
-            const [type, setType] = React.useState<IntersectionSettingValue["type"]>(props.value?.type ?? activeType);
+            const [type, setType] = React.useState<IntersectionSettingValue["type"]>(
+                props.value?.type ?? activeIntersectionType,
+            );
 
-            React.useEffect(() => {
-                setActiveType(type);
-            }, [type]);
+            // Initialize cached value for the current type on mount
+            const hasInitialized = React.useRef(false);
+            React.useEffect(
+                function initializeCachedValueOnMount() {
+                    if (!hasInitialized.current) {
+                        hasInitialized.current = true;
+                        setCachedValueForIntersectionType(type, props.value);
+                    }
+                },
+                [type, props.value],
+            );
+
+            React.useEffect(
+                function updateActiveIntersectionType() {
+                    setActiveIntersectionType(type);
+                },
+                [type],
+            );
 
             function handleSelectionChange(selectedValue: string) {
                 const newValue = availableValues.find((v) => v.uuid === selectedValue) ?? null;
+                setCachedValueForIntersectionType(type, newValue);
                 props.onValueChange(newValue);
             }
 
             function handleCategoryChange(_: any, value: IntersectionSettingValue["type"]) {
                 setType(value);
-                const firstValue = availableValues.find((v) => v.type === value);
-                if (firstValue) {
+
+                // Use cached value if valid, or pick first available value of the new type
+                const candidateValue = cachedValueByIntersectionType[value];
+                const newValue = candidateValue ?? availableValues.find((v) => v.type === value);
+                if (newValue) {
                     props.onValueChange({
-                        ...firstValue,
+                        ...newValue,
                     });
                     return;
                 }
@@ -111,6 +146,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                         value: value.uuid,
                     };
                 });
+
             return (
                 <div className="flex flex-col gap-2 my-1">
                     <RadioGroup
