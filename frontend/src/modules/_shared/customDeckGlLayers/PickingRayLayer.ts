@@ -1,4 +1,4 @@
-import type { Layer } from "@deck.gl/core";
+import type { Layer, UpdateParameters } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { SphereGeometry, TruncatedConeGeometry } from "@luma.gl/engine";
@@ -10,18 +10,24 @@ export type PickingRayLayerProps = {
     id: string;
     pickInfoCoordinates: [number, number, number][];
     origin: [number, number, number];
+    showRay?: boolean;
     sphereRadius?: number;
     cylinderRadius?: number;
+    sizeUnits?: "meters" | "pixels";
 };
 
 export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
     static layerName: string = "PickingRayLayer";
+    static defaultProps = {
+        pickable: false,
+    };
 
-    private _sphereMesh = new SphereGeometry({ radius: 10, nlat: 16, nlong: 16 });
-    // TS bug workaround: as any to avoid error about missing properties in CylinderGeometryProps
+    // Unit sphere (radius=1) so scale directly equals desired size
+    private _sphereMesh = new SphereGeometry({ radius: 1, nlat: 16, nlong: 16 });
+    // Unit cylinder (radius=1, height=1) so scale directly controls dimensions
     private _cylinderMesh = new TruncatedConeGeometry({
-        topRadius: 3,
-        bottomRadius: 3,
+        topRadius: 1,
+        bottomRadius: 1,
         height: 1,
         nradial: 24,
         nvertical: 1,
@@ -29,12 +35,57 @@ export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
         bottomCap: true,
     });
 
+    shouldUpdateState({ changeFlags }: UpdateParameters<this>): boolean {
+        // Re-render on viewport changes when using pixel units
+        if (this.props.sizeUnits === "pixels" && changeFlags.viewportChanged) {
+            return true;
+        }
+        return changeFlags.propsOrDataChanged ?? false;
+    }
+
+    private getPixelScale(position: [number, number, number]): number {
+        const viewport = this.context.viewport;
+        if (!viewport) return 1;
+
+        try {
+            // Project the position to screen space (includes depth as z)
+            const screenPos = viewport.project(position);
+            if (!screenPos || !Number.isFinite(screenPos[0])) return 1;
+
+            // Unproject a point 1 pixel to the right at the same depth back to world space
+            // This gives us the world-space size of 1 pixel at this depth
+            const worldPosRight = viewport.unproject([screenPos[0] + 1, screenPos[1], screenPos[2]]);
+            if (!worldPosRight || !Number.isFinite(worldPosRight[0])) return 1;
+
+            // Calculate the world distance for 1 pixel
+            const dx = worldPosRight[0] - position[0];
+            const dy = worldPosRight[1] - position[1];
+            const dz = worldPosRight[2] - position[2];
+
+            const scale = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            return Number.isFinite(scale) && scale > 0 ? scale : 1;
+        } catch {
+            return 1;
+        }
+    }
+
     renderLayers(): Layer[] {
-        const { origin, pickInfoCoordinates, sphereRadius = 2, cylinderRadius = 0.5 } = this.props;
+        const {
+            origin,
+            pickInfoCoordinates,
+            sphereRadius: sphereRadiusProp = 8,
+            cylinderRadius: cylinderRadiusProp = 2,
+            showRay = true,
+            sizeUnits = "pixels",
+        } = this.props;
 
         if (!pickInfoCoordinates?.length) {
             return [];
         }
+
+        // For pixel units, we compute per-instance scale based on distance from camera
+        const usePixelUnits = sizeUnits === "pixels";
+
         const segments = buildSegments(origin, pickInfoCoordinates as [number, number, number][]);
 
         const commonParams = {
@@ -43,8 +94,31 @@ export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
             blendFunc: [1, 1], // additive glow-ish (gl.ONE, gl.ONE)
         };
 
-        // Spheres at origin + points (or only points if you prefer)
+        // Spheres at pick coordinates
         const sphereData = pickInfoCoordinates.map((p) => ({ position: p }));
+
+        // Calculate sphere scale - either fixed meters or per-instance pixel-based
+        const getSphereScale = usePixelUnits
+            ? (d: { position: [number, number, number] }) => {
+                  const pixelScale = this.getPixelScale(d.position);
+                  const r = sphereRadiusProp * pixelScale;
+                  return [r, r, r];
+              }
+            : () => {
+                  const r = sphereRadiusProp;
+                  return [r, r, r];
+              };
+
+        const getSphereScaleGlow = usePixelUnits
+            ? (d: { position: [number, number, number] }) => {
+                  const pixelScale = this.getPixelScale(d.position);
+                  const r = sphereRadiusProp * 1.8 * pixelScale;
+                  return [r, r, r];
+              }
+            : () => {
+                  const r = sphereRadiusProp * 1.8;
+                  return [r, r, r];
+              };
 
         const spheresGlow = new SimpleMeshLayer(
             this.getSubLayerProps({
@@ -52,7 +126,7 @@ export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
                 data: sphereData,
                 mesh: this._sphereMesh,
                 getPosition: (d: { position: [number, number, number] }) => d.position,
-                getScale: () => [sphereRadius * 1.8, sphereRadius * 1.8, sphereRadius * 1.8],
+                getScale: getSphereScaleGlow,
                 getColor: [255, 0, 0],
                 opacity: 0.1,
                 pickable: false,
@@ -67,7 +141,7 @@ export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
                 data: sphereData,
                 mesh: this._sphereMesh,
                 getPosition: (d: { position: [number, number, number] }) => d.position,
-                getScale: () => [sphereRadius, sphereRadius, sphereRadius],
+                getScale: getSphereScale,
                 getColor: [255, 0, 0],
                 opacity: 0.35,
                 pickable: false,
@@ -77,14 +151,25 @@ export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
         );
 
         // Cylinders between consecutive points
-        // Use per-instance transformation matrix for precise control
+        // For cylinders, use the midpoint position for pixel scale calculation
+        const getCylinderRadius = usePixelUnits
+            ? (segment: Segment) => {
+                  const mid: [number, number, number] = [
+                      (segment.a[0] + segment.b[0]) / 2,
+                      (segment.a[1] + segment.b[1]) / 2,
+                      (segment.a[2] + segment.b[2]) / 2,
+                  ];
+                  return cylinderRadiusProp * this.getPixelScale(mid);
+              }
+            : () => cylinderRadiusProp;
+
         const cylindersGlow = new SimpleMeshLayer(
             this.getSubLayerProps({
                 id: "ray-cylinders-glow",
                 data: segments,
                 mesh: this._cylinderMesh,
                 getPosition: () => [0, 0, 0], // Position baked into matrix
-                getTransformMatrix: (d: Segment) => makeCylinderMatrix(d.a, d.b, cylinderRadius * 1.8),
+                getTransformMatrix: (d: Segment) => makeCylinderMatrix(d.a, d.b, getCylinderRadius(d) * 1.8),
                 getColor: [255, 0, 0],
                 opacity: 0.08,
                 pickable: false,
@@ -99,7 +184,7 @@ export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
                 data: segments,
                 mesh: this._cylinderMesh,
                 getPosition: () => [0, 0, 0], // Position baked into matrix
-                getTransformMatrix: (d: Segment) => makeCylinderMatrix(d.a, d.b, cylinderRadius),
+                getTransformMatrix: (d: Segment) => makeCylinderMatrix(d.a, d.b, getCylinderRadius(d)),
                 getColor: [255, 0, 0],
                 opacity: 0.3,
                 pickable: false,
@@ -107,6 +192,10 @@ export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
                 modelMatrix: IDENTITY_MATRIX,
             }),
         );
+
+        if (!showRay) {
+            return [spheresGlow, spheresCore];
+        }
 
         return [cylindersGlow, cylindersCore, spheresGlow, spheresCore];
     }

@@ -19,11 +19,6 @@ import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
-export type PickingInfoAndRayScreenCoordinate = {
-    pickingInfoArray: PickingInfo[];
-    screenCoordinate: [number, number, number];
-};
-
 export type HoverVisualizationWrapperProps = {
     views: ViewsTypeExtended;
     layers: DeckGlLayer[];
@@ -35,11 +30,8 @@ export type HoverVisualizationWrapperProps = {
 };
 
 export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps): React.ReactNode {
-    const [isGoingToRemovePickedWorldPos, setIsGoingToRemovePickedWorldPos] = React.useState<boolean>(false);
     const [currentlyHoveredViewport, setCurrentlyHoveredViewport] = React.useState<null | string>(null);
-    const [pickingInfoPerView, setPickingInfoPerView] = React.useState<
-        Record<string, PickingInfoAndRayScreenCoordinate>
-    >({});
+    const [pickingInfoPerView, setPickingInfoPerView] = React.useState<Record<string, PickingInfo[]>>({});
 
     const ctx = useDpfSubsurfaceViewerContext();
     const publishHoveredWorldPos = usePublishHoverValue(
@@ -50,14 +42,9 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     const publishHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, ctx.hoverService, ctx.moduleInstanceId);
     const publishHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
 
-    const crossHairLayer = useCrosshairLayer(
-        ctx.bounds,
-        ctx.hoverService,
-        ctx.moduleInstanceId,
-        isGoingToRemovePickedWorldPos,
-    );
+    const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
 
-    const pickingRayLayers = usePickingRayLayers(pickingInfoPerView);
+    const pickingRayLayers = usePickingRayLayers(pickingInfoPerView, false);
 
     const hoverVisualizationGroups = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
         ctx.visualizationAssemblerProduct,
@@ -117,18 +104,12 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         [publishHoveredMd, publishHoveredWellbore, publishHoveredWorldPos],
     );
 
-    const handleIsGoingToRemovePickedWorldPos = React.useCallback(function handleIsGoingToRemovePickedWorldPos(
-        isRemoving: boolean,
-    ) {
-        setIsGoingToRemovePickedWorldPos(isRemoving);
-    }, []);
-
     const handleViewportHover = React.useCallback(function handleViewportHover(viewport: ViewportType | null) {
         setCurrentlyHoveredViewport(viewport?.id ?? null);
     }, []);
 
     const handlePickingInfoChange = React.useCallback(function handlePickingInfoChange(
-        newPickingInfoPerView: Record<string, PickingInfoAndRayScreenCoordinate>,
+        newPickingInfoPerView: Record<string, PickingInfo[]>,
     ) {
         setPickingInfoPerView(newPickingInfoPerView);
     }, []);
@@ -140,7 +121,6 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
             layers={adjustedLayers}
             onViewerHover={handleViewerHover}
             onViewportHover={handleViewportHover}
-            onIsGoingToRemovePickedWorldPos={handleIsGoingToRemovePickedWorldPos}
             onPickingInfoChange={handlePickingInfoChange}
         />
     );
@@ -152,12 +132,11 @@ function useCrosshairLayer(
     boundingBox: BoundingBox2D | undefined,
     hoverService: HoverService,
     instanceId: string,
-    markAsGonnaBeRemoved?: boolean,
 ): CrosshairLayer {
     const { x, y } = useHoverValue(HoverTopic.WORLD_POS_UTM, hoverService, instanceId) ?? {};
     const xInRange = boundingBox && x && inRange(x, boundingBox[0], boundingBox[2]);
     const yInRange = boundingBox && y && inRange(y, boundingBox[1], boundingBox[3]);
-    const color: [number, number, number] = markAsGonnaBeRemoved ? [255, 0, 0] : [255, 255, 255];
+    const color: [number, number, number] = [255, 255, 255];
 
     return new CrosshairLayer({
         id: HOVER_CROSSHAIR_LAYER_ID,
@@ -169,23 +148,23 @@ function useCrosshairLayer(
 }
 
 function usePickingRayLayers(
-    pickingInfoPerView: Record<string, PickingInfoAndRayScreenCoordinate>,
+    pickingInfoPerView: Record<string, PickingInfo[]>,
+    showRay: boolean = true,
 ): Record<string, PickingRayLayer> {
     const pickingRayLayers: Record<string, PickingRayLayer> = {};
 
-    for (const [viewId, picksAndRayScreenCoordinate] of Object.entries(pickingInfoPerView)) {
-        const { pickingInfoArray, screenCoordinate } = picksAndRayScreenCoordinate;
-
+    for (const [viewId, pickingInfoArray] of Object.entries(pickingInfoPerView)) {
         const pickCoordinates = pickingInfoArray
             .map((pick) => pick.coordinate)
             .filter((coord): coord is number[] => Array.isArray(coord) && coord.length === 3);
 
-        if (pickCoordinates.length === 0) continue;
-
         pickingRayLayers[viewId] = new PickingRayLayer({
             id: `picking-ray-layer-${viewId}`,
             pickInfoCoordinates: pickCoordinates as [number, number, number][],
-            origin: screenCoordinate,
+            origin: [0, 0, 0], // Not relevant when not showing a ray
+            showRay,
+            sizeUnits: "pixels",
+            sphereRadius: 6,
         });
     }
 

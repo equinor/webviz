@@ -20,6 +20,7 @@ export type ReadoutBoxWrapperProps = {
     visible?: boolean;
     compact?: boolean;
     verticalScale?: number;
+    onClose?: () => void;
 };
 
 function makeInfoPickReadout(pick: PickingInfo): ReadoutItem | null {
@@ -66,6 +67,8 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
             readoutItems={readoutItems}
             edgeDistanceRem={READOUT_EDGE_DISTANCE_REM}
             compact={props.compact}
+            flipDisabled
+            onClose={props.onClose}
         />
     );
 }

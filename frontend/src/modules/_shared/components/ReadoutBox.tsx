@@ -7,6 +7,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
 import { formatNumber } from "../utils/numberFormatting";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { Close } from "@mui/icons-material";
 
 export type ReadoutItem = {
     label: string;
@@ -37,6 +39,8 @@ export type ReadoutBoxProps = {
     /** The distance between the box and the edges of the parent container. Give a single number for equal distance on all sides */
     edgeDistanceRem?: number | PartialEdgeDistance;
     compact?: boolean;
+    /** A callback for when the box is closed - this will automatically show a cross */
+    onClose?: () => void;
 };
 
 export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
@@ -109,6 +113,11 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
                 gridTemplateColumns: "1rem auto 1fr auto",
             }}
         >
+            {props.onClose && (
+                <DenseIconButton onClick={props.onClose} className="absolute top-1 right-1 pointer-events-auto">
+                    <Close fontSize="inherit" />
+                </DenseIconButton>
+            )}
             {visibleReadoutItems.map((item, idx) => (
                 <React.Fragment key={idx}>
                     <InfoLabel item={item} noLabelColor={props.noLabelColor} />

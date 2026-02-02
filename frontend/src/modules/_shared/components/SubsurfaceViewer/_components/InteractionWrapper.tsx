@@ -15,7 +15,6 @@ import {
     PolylinesPluginTopic,
     type Polyline,
 } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
-import { VerticalProbePlugin } from "@modules/_shared/utils/subsurfaceViewer/VerticalProbePlugin";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
@@ -124,9 +123,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             manager.addPlugin(polylinesPlugin);
             polylinesPluginRef.current = polylinesPlugin;
 
-            const probePlugin = new VerticalProbePlugin(manager);
-            manager.addPlugin(probePlugin);
-
             const unsubscribeFromPolylinesPlugin = polylinesPlugin
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PolylinesPluginTopic.EDITING_POLYLINE_ID)(() => {
@@ -216,7 +212,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 hasActivePolyline={Boolean(polylinesPluginRef.current.getCurrentEditingPolylineId())}
                 onPolylineNameChange={handlePolylineNameChange}
                 activePolylineName={activePolylineName}
-                onOpenPerformanceSettings={() => setPerformanceSettingsOpen(true)}
             />
             <ContextMenu deckGlManager={deckGlManagerRef.current} />
             <ControlsInfoBox />

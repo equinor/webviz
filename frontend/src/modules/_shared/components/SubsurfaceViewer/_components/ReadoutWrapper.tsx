@@ -10,9 +10,7 @@ import type { Feature } from "geojson";
 import { debounce, isEqual, uniqBy } from "lodash";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { MANHATTAN_LENGTH } from "@lib/utils/geometry";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import * as vec2 from "@lib/utils/vec2";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
@@ -23,12 +21,7 @@ import {
 } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
-import { AnnotationOrganizer, useAnnotations } from "../utils/AnnotationOrganizer";
-import { RenderLoopLayer } from "../utils/RenderLoopLayer";
-import type { LabelAnnotation } from "../utils/utils/types";
 
-import type { PickingInfoAndRayScreenCoordinate } from "./HoverVisualizationWrapper";
-import { PerformanceOverlay, type PerformanceOverlayHandle } from "./PerformanceOverlay";
 import { PositionReadout } from "./PositionReadout";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import {
@@ -46,8 +39,7 @@ export type ReadoutWrapperProps = {
     children?: React.ReactNode;
     onViewerHover?: (mouseEvent: MapMouseEvent | null) => void;
     onViewportHover?: (viewport: ViewportType | null) => void;
-    onIsGoingToRemovePickedWorldPos?: (isRemoving: boolean) => void;
-    onPickingInfoChange?: (pickingInfoPerView: Record<string, PickingInfoAndRayScreenCoordinate>) => void;
+    onPickingInfoChange?: (pickingInfoPerView: Record<string, PickingInfo[]>) => void;
 };
 
 // These are settings that impact performance - make them configurable later if needed
@@ -57,11 +49,8 @@ const DEBOUNCED_HOVER_DELAY_MS = 50;
 const PICKING_RADIUS = 5;
 const USER_PICKING_DEPTH = 6;
 
-// Layer ID for pick annotations
-const PICK_ANNOTATIONS_LAYER_ID = "pick-annotations";
-
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
-    const { onViewerHover, onViewportHover, onIsGoingToRemovePickedWorldPos, onPickingInfoChange } = props;
+    const { onViewerHover, onViewportHover, onPickingInfoChange } = props;
     const ctx = useDpfSubsurfaceViewerContext();
     const id = React.useId();
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
@@ -75,15 +64,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
     const deckGlRef = React.useRef<DeckGLRef | null>(null);
-    const perfOverlayRef = React.useRef<PerformanceOverlayHandle>(null);
 
-    // Annotation organizer for rendering labels at 3D positions
-    const annotationOrganizer = React.useMemo(() => new AnnotationOrganizer({}), []);
-
-    // Connect organizer to deck.gl ref when it changes
-    React.useEffect(() => {
-        annotationOrganizer.setDeckRef(deckGlRef.current);
-    });
+    const userPickingDepth = ctx.visualizationMode === "3D" ? 1 : USER_PICKING_DEPTH;
 
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
     usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
@@ -94,8 +76,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 if (event.key === "Escape") {
                     setReadoutMode("hover");
                     onPickingInfoChange?.({});
-                    // Clear pick annotations
-                    annotationOrganizer.registerAnnotations(PICK_ANNOTATIONS_LAYER_ID, []);
                 }
             }
 
@@ -104,7 +84,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 window.removeEventListener("keydown", handleKeydown);
             };
         },
-        [onPickingInfoChange, annotationOrganizer],
+        [onPickingInfoChange],
     );
 
     const pickAtWorldCoordinates = React.useCallback(
@@ -180,54 +160,32 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             setPickingCoordinate([]);
             onViewerHover?.(null);
             onViewportHover?.(null);
-            // Clear pick annotations
-            annotationOrganizer.registerAnnotations(PICK_ANNOTATIONS_LAYER_ID, []);
+            onPickingInfoChange?.({});
         },
-        [onViewerHover, onViewportHover, annotationOrganizer],
+        [onViewerHover, onViewportHover, onPickingInfoChange],
     );
 
     const handleHoverEvent = React.useCallback(
         function handleHoverEvent(event: MapMouseEvent): void {
-            // Record frame for FPS measurement during hover/readout interactions
-            perfOverlayRef.current?.recordFrame();
+            // We have switched to click mode - ignore hover events
+            if (readoutMode === "click") {
+                return;
+            }
 
             // No picks - clear readout
-            if (!event.infos.length && readoutMode !== "click") {
+            if (!event.infos.length) {
                 clearReadout();
                 return;
             }
 
             // We need a viewport - if none, clear readout
             const hoveredViewPort = event.infos[0]?.viewport;
-            if (!hoveredViewPort && readoutMode !== "click") {
+            if (!hoveredViewPort) {
                 clearReadout();
                 return;
             }
 
             const coordinate = event.infos[0]?.coordinate ?? [];
-
-            if (readoutMode === "click") {
-                if (coordinate.length < 3 || !hoveredViewPort) {
-                    return;
-                }
-                const pickingScreenCoordinate = hoveredViewPort.project(pickingCoordinate);
-                const screenCoordinate = hoveredViewPort.project(coordinate);
-
-                // If already in click mode, and clicked again at the same screen location, exit click mode
-                const screenDistance = vec2.point2Distance(
-                    vec2.vec2FromArray(screenCoordinate),
-                    vec2.vec2FromArray(pickingScreenCoordinate),
-                );
-
-                if (screenDistance < MANHATTAN_LENGTH) {
-                    onIsGoingToRemovePickedWorldPos?.(true);
-                    return;
-                }
-
-                onIsGoingToRemovePickedWorldPos?.(false);
-
-                return;
-            }
 
             if (!hoveredViewPort) {
                 return;
@@ -251,7 +209,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onViewerHover?.(event);
             onViewportHover?.(hoveredViewPort);
 
-            // Now, initiate debounce for deeper picking across all viewports
+            // Now, initiate debounce for picking across all viewports
             const pickingInfoWithCoordinates = event.infos.find((pick) => pick.coordinate?.length);
             if (!pickingInfoWithCoordinates?.coordinate) {
                 return;
@@ -263,15 +221,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 DEBOUNCED_HOVER_PICKING_DEPTH,
             );
         },
-        [
-            onViewerHover,
-            onViewportHover,
-            debouncedMultiViewPicking,
-            clearReadout,
-            readoutMode,
-            pickingCoordinate,
-            onIsGoingToRemovePickedWorldPos,
-        ],
+        [onViewerHover, onViewportHover, debouncedMultiViewPicking, clearReadout, readoutMode, pickingCoordinate],
     );
 
     const handleClickEvent = React.useCallback(
@@ -284,30 +234,10 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
             // We need a viewport - if none, clear readout
             const hoveredViewPort = event.infos[0]?.viewport;
-            if (!hoveredViewPort) {
+            if (!hoveredViewPort || !coordinate.length) {
+                setReadoutMode("hover");
                 clearReadout();
                 return;
-            }
-
-            if (readoutMode === "click") {
-                if (coordinate.length < 3) {
-                    return;
-                }
-                const pickingScreenCoordinate = hoveredViewPort.project(pickingCoordinate);
-                const screenCoordinate = hoveredViewPort.project(coordinate);
-
-                // If already in click mode, and clicked again at the same screen location, exit click mode
-                const screenDistance = vec2.point2Distance(
-                    vec2.vec2FromArray(screenCoordinate),
-                    vec2.vec2FromArray(pickingScreenCoordinate),
-                );
-                if (screenDistance < MANHATTAN_LENGTH) {
-                    setReadoutMode("hover");
-                    clearReadout();
-                    onIsGoingToRemovePickedWorldPos?.(false);
-                    onPickingInfoChange?.({});
-                    return;
-                }
             }
 
             onViewerHover?.(event);
@@ -323,54 +253,18 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             const newPickInfoDict = collectReadoutInformationFromAllViewports(
                 pickingInfoWithCoordinates.coordinate,
                 {},
-                USER_PICKING_DEPTH,
+                userPickingDepth,
             );
 
-            const adjustedPickingInfoDict: Record<string, PickingInfoAndRayScreenCoordinate> = {};
-            for (const [viewId, picks] of Object.entries(newPickInfoDict)) {
-                const firstPick = picks[0];
-                if (!firstPick) {
-                    continue;
-                }
-
-                const viewport = firstPick.viewport;
-                if (!viewport) {
-                    continue;
-                }
-
-                const [screenX, screenY] = [firstPick.x - viewport.x, firstPick.y - viewport.y];
-                const reprojectedCoordinate = viewport.unproject([screenX, screenY, 0]);
-
-                adjustedPickingInfoDict[viewId] = {
-                    pickingInfoArray: picks,
-                    screenCoordinate: [reprojectedCoordinate[0], reprojectedCoordinate[1], reprojectedCoordinate[2]],
-                };
+            const yieldedPicks = Object.values(newPickInfoDict).some((picks) => picks.length > 0);
+            if (!yieldedPicks) {
+                // No picks at all - revert to hover mode
+                setReadoutMode("hover");
+                clearReadout();
+                return;
             }
-            onPickingInfoChange?.(adjustedPickingInfoDict);
 
-            // Create one annotation per picking info
-            // Note: Z coordinate must be scaled by verticalScale to match the rendered geometry
-            const pickAnnotations: LabelAnnotation[] = [];
-            for (const [viewId, pickInfo] of Object.entries(adjustedPickingInfoDict)) {
-                for (let i = 0; i < pickInfo.pickingInfoArray.length; i++) {
-                    const pick = pickInfo.pickingInfoArray[i];
-                    const coord = pick.coordinate;
-                    if (!coord || coord.length < 3) continue;
-
-                    // Get layer name if available
-                    // @ts-expect-error -- name injected by subsurface viewer
-                    const layerName = pick.layer?.props?.name ?? pick.layer?.id ?? "Unknown";
-
-                    pickAnnotations.push({
-                        id: `pick-${viewId}-${i}`,
-                        type: "label",
-                        position: [coord[0], coord[1], coord[2]],
-                        name: layerName,
-                        priority: 1000 - i, // Higher priority for first picks
-                    });
-                }
-            }
-            annotationOrganizer.registerAnnotations(PICK_ANNOTATIONS_LAYER_ID, pickAnnotations);
+            onPickingInfoChange?.(newPickInfoDict);
         },
         [
             collectReadoutInformationFromAllViewports,
@@ -380,10 +274,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onViewportHover,
             pickingCoordinate,
             readoutMode,
-            onIsGoingToRemovePickedWorldPos,
             onPickingInfoChange,
-            annotationOrganizer,
             props.verticalScale,
+            userPickingDepth,
         ],
     );
 
@@ -421,25 +314,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         return feat?.properties?.["name"];
     }
 
-    // Annotation system for rendering labels at 3D positions
-    const [annotationOverlay, renderAnnotations] = useAnnotations({
-        organizer: annotationOrganizer,
-        layers: props.layers,
-        maxVisibleAnnotations: 50,
-    });
-
-    // Add RenderLoopLayer to drive the annotation render loop
-    const layersWithRenderLoop = React.useMemo(() => {
-        return [
-            ...props.layers,
-            new RenderLoopLayer({
-                id: "annotation-render-loop",
-                data: [],
-                onRender: renderAnnotations,
-            }),
-        ];
-    }, [props.layers, renderAnnotations]);
-
     const deckGlProps = props.deckGlManager.makeDeckGlComponentProps({
         deckGlRef,
         id: `subsurface-viewer-${id}`,
@@ -467,7 +341,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         // We will do deeper picking manually in the onMouseEvent callback
         pickingDepth: INITIAL_HOVER_PICKING_DEPTH,
         pickingRadius: PICKING_RADIUS,
-        layers: layersWithRenderLoop,
+        layers: props.layers,
         onMouseEvent: handleMouseEvent,
         getTooltip: getTooltip,
     });
@@ -475,6 +349,14 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     if (!isEqual(deckGlProps.views, storedDeckGlViews)) {
         setStoredDeckGlViews(deckGlProps.views);
     }
+
+    const handleCloseReadout = React.useCallback(
+        function handleCloseReadout() {
+            setReadoutMode("hover");
+            clearReadout();
+        },
+        [clearReadout],
+    );
 
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
@@ -487,7 +369,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            <PerformanceOverlay ref={perfOverlayRef} visible={true} />
             <PositionReadout coordinate={pickingCoordinate} visible={!hideReadout} />
             <SubsurfaceViewerWithCameraState
                 {...deckGlProps}
@@ -508,13 +389,13 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                         <ReadoutBoxWrapper
                             compact={props.views.viewports.length > 1}
                             viewportPicks={pickingInfoPerView[viewport.id]}
-                            visible={!hideReadout}
+                            visible={readoutMode === "click" ? true : !hideReadout}
                             verticalScale={props.verticalScale}
+                            onClose={readoutMode === "click" ? handleCloseReadout : undefined}
                         />
                     </DeckGlView>
                 ))}
             </SubsurfaceViewerWithCameraState>
-            {annotationOverlay}
             {props.views.viewports.length === 0 && (
                 <div className="absolute left-1/2 top-1/2 w-64 h-10 -ml-32 -mt-5 text-center">
                     Please add views and layers in the settings panel.
