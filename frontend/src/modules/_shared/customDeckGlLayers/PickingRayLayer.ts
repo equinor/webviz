@@ -90,21 +90,22 @@ export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
         // We apply this only to positions, not to mesh geometry, to keep spheres spherical
         const modelMatrix = this.props.modelMatrix as number[] | undefined;
         const verticalScale = modelMatrix?.[10] ?? 1;
-        console.log("PickingRayLayer modelMatrix", modelMatrix, "verticalScale", verticalScale);
 
         // For pixel units, we compute per-instance scale based on distance from camera
         const usePixelUnits = sizeUnits === "pixels";
 
         // Apply vertical scale to Z coordinates for positioning
-        const scaledCoordinates = pickInfoCoordinates.map(
-            (p): [number, number, number] => [p[0], p[1], p[2] * verticalScale]
-        );
+        const scaledCoordinates = pickInfoCoordinates.map((p): [number, number, number] => [
+            p[0],
+            p[1],
+            p[2] * verticalScale,
+        ]);
         const scaledOrigin: [number, number, number] = [origin[0], origin[1], origin[2] * verticalScale];
 
         const segments = buildSegments(scaledOrigin, scaledCoordinates);
 
         const commonParams = {
-            depthTest: false, // set true if you want occlusion
+            depthTest: false, // set true for occlusion
             blend: true,
             blendFunc: [1, 1], // additive glow-ish (gl.ONE, gl.ONE)
         };

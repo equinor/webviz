@@ -221,7 +221,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 DEBOUNCED_HOVER_PICKING_DEPTH,
             );
         },
-        [onViewerHover, onViewportHover, debouncedMultiViewPicking, clearReadout, readoutMode, pickingCoordinate],
+        [onViewerHover, onViewportHover, debouncedMultiViewPicking, clearReadout, readoutMode],
     );
 
     const handleClickEvent = React.useCallback(
@@ -272,10 +272,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             clearReadout,
             onViewerHover,
             onViewportHover,
-            pickingCoordinate,
-            readoutMode,
             onPickingInfoChange,
-            props.verticalScale,
             userPickingDepth,
         ],
     );
