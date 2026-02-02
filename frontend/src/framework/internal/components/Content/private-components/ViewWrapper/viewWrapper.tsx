@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GuiEvent, GuiState, useGuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -42,10 +42,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const isActive = props.moduleInstance.getId() === activeModuleInstanceId;
 
     const ref = React.useRef<HTMLDivElement>(null);
-    const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.LeftSettingsPanelWidthInPercent,
-    );
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
@@ -94,9 +90,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     function handleModuleClick() {
         if (dataChannelConnectionsLayerVisible) {
             return;
-        }
-        if (leftSettingsPanelWidth <= 5) {
-            setLeftSettingsPanelWidth(20);
         }
         if (isActive) return;
         dashboard.setActiveModuleInstanceId(props.moduleInstance.getId());

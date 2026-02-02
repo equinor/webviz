@@ -41,11 +41,13 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
     );
 
     function handleExpandPanel() {
-        setLeftSettingsPanelWidth(15);
+        // Set some default width, minSize/collapsedSizes for ResizablePanels should handle the rest
+        setLeftSettingsPanelWidth(10);
         setIsCollapsed(false);
     }
 
     function handleCollapsePanel() {
+        // Request zero width, minSize/collapsedSizes for ResizablePanels should handle the rest
         setLeftSettingsPanelWidth(0);
         setIsCollapsed(true);
     }
@@ -70,7 +72,11 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
                 <div className="bg-gray-100 h-full flex flex-col items-center pt-2">
                     <DenseIconButton onClick={handleExpandPanel} title="Expand settings panel">
                         <div className="flex flex-row items-center">
-                            <Settings fontSize="small" />
+                            {drawerContent === DrawerContent.ModuleSettings ? (
+                                <Settings fontSize="small" />
+                            ) : (
+                                <Link fontSize="small" />
+                            )}
                             <ChevronRight fontSize="small" />
                         </div>
                     </DenseIconButton>
