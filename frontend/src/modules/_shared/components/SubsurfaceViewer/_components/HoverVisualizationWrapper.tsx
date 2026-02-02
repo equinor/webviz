@@ -31,7 +31,10 @@ export type HoverVisualizationWrapperProps = {
 
 export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps): React.ReactNode {
     const [currentlyHoveredViewport, setCurrentlyHoveredViewport] = React.useState<null | string>(null);
-    const [pickingInfoPerView, setPickingInfoPerView] = React.useState<Record<string, PickingInfo[]>>({});
+    // Store unscaled coordinates - converted at pick time so they stay correct when verticalScale changes
+    const [unscaledCoordinatesPerView, setUnscaledCoordinatesPerView] = React.useState<
+        Record<string, [number, number, number][]>
+    >({});
 
     const ctx = useDpfSubsurfaceViewerContext();
     const publishHoveredWorldPos = usePublishHoverValue(
@@ -44,7 +47,7 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
 
     const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
 
-    const pickingRayLayers = usePickingRayLayers(pickingInfoPerView, false);
+    const pickingRayLayers = usePickingRayLayers(unscaledCoordinatesPerView, false);
 
     const hoverVisualizationGroups = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
         ctx.visualizationAssemblerProduct,
@@ -108,11 +111,21 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         setCurrentlyHoveredViewport(viewport?.id ?? null);
     }, []);
 
-    const handlePickingInfoChange = React.useCallback(function handlePickingInfoChange(
-        newPickingInfoPerView: Record<string, PickingInfo[]>,
-    ) {
-        setPickingInfoPerView(newPickingInfoPerView);
-    }, []);
+    const handlePickingInfoChange = React.useCallback(
+        function handlePickingInfoChange(newPickingInfoPerView: Record<string, PickingInfo[]>) {
+            // Convert to unscaled coordinates at the time of picking
+            // This ensures coordinates stay correct when verticalScale changes later
+            const unscaled: Record<string, [number, number, number][]> = {};
+            for (const [viewId, picks] of Object.entries(newPickingInfoPerView)) {
+                unscaled[viewId] = picks
+                    .map((pick) => pick.coordinate)
+                    .filter((coord): coord is number[] => Array.isArray(coord) && coord.length === 3)
+                    .map((coord): [number, number, number] => [coord[0], coord[1], coord[2] / props.verticalScale]);
+            }
+            setUnscaledCoordinatesPerView(unscaled);
+        },
+        [props.verticalScale]
+    );
 
     return (
         <ReadoutWrapper
@@ -148,19 +161,17 @@ function useCrosshairLayer(
 }
 
 function usePickingRayLayers(
-    pickingInfoPerView: Record<string, PickingInfo[]>,
+    unscaledCoordinatesPerView: Record<string, [number, number, number][]>,
     showRay: boolean = true,
 ): Record<string, PickingRayLayer> {
     const pickingRayLayers: Record<string, PickingRayLayer> = {};
 
-    for (const [viewId, pickingInfoArray] of Object.entries(pickingInfoPerView)) {
-        const pickCoordinates = pickingInfoArray
-            .map((pick) => pick.coordinate)
-            .filter((coord): coord is number[] => Array.isArray(coord) && coord.length === 3);
-
+    for (const [viewId, pickCoordinates] of Object.entries(unscaledCoordinatesPerView)) {
+        // Coordinates are already unscaled - the layer will apply vertical scale
+        // from its inherited modelMatrix to positions only (not mesh geometry)
         pickingRayLayers[viewId] = new PickingRayLayer({
             id: `picking-ray-layer-${viewId}`,
-            pickInfoCoordinates: pickCoordinates as [number, number, number][],
+            pickInfoCoordinates: pickCoordinates,
             origin: [0, 0, 0], // Not relevant when not showing a ray
             showRay,
             sizeUnits: "pixels",

@@ -3,11 +3,14 @@ import { CompositeLayer } from "@deck.gl/core";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { SphereGeometry, TruncatedConeGeometry } from "@luma.gl/engine";
 
-// Identity matrix to prevent inherited modelMatrix transformations
+// Identity matrix to prevent mesh distortion from inherited modelMatrix.
+// Coordinates passed to this layer are already in scaled space (from picking),
+// so we use identity to keep spheres spherical instead of ellipsoidal.
 const IDENTITY_MATRIX = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
 export type PickingRayLayerProps = {
     id: string;
+    /** Coordinates in unscaled world space */
     pickInfoCoordinates: [number, number, number][];
     origin: [number, number, number];
     showRay?: boolean;
@@ -83,10 +86,22 @@ export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
             return [];
         }
 
+        // Extract vertical scale from inherited modelMatrix (Z scale is at index 10)
+        // We apply this only to positions, not to mesh geometry, to keep spheres spherical
+        const modelMatrix = this.props.modelMatrix as number[] | undefined;
+        const verticalScale = modelMatrix?.[10] ?? 1;
+        console.log("PickingRayLayer modelMatrix", modelMatrix, "verticalScale", verticalScale);
+
         // For pixel units, we compute per-instance scale based on distance from camera
         const usePixelUnits = sizeUnits === "pixels";
 
-        const segments = buildSegments(origin, pickInfoCoordinates as [number, number, number][]);
+        // Apply vertical scale to Z coordinates for positioning
+        const scaledCoordinates = pickInfoCoordinates.map(
+            (p): [number, number, number] => [p[0], p[1], p[2] * verticalScale]
+        );
+        const scaledOrigin: [number, number, number] = [origin[0], origin[1], origin[2] * verticalScale];
+
+        const segments = buildSegments(scaledOrigin, scaledCoordinates);
 
         const commonParams = {
             depthTest: false, // set true if you want occlusion
@@ -94,8 +109,8 @@ export class PickingRayLayer extends CompositeLayer<PickingRayLayerProps> {
             blendFunc: [1, 1], // additive glow-ish (gl.ONE, gl.ONE)
         };
 
-        // Spheres at pick coordinates
-        const sphereData = pickInfoCoordinates.map((p) => ({ position: p }));
+        // Spheres at pick coordinates (using scaled positions)
+        const sphereData = scaledCoordinates.map((p) => ({ position: p }));
 
         // Calculate sphere scale - either fixed meters or per-instance pixel-based
         const getSphereScale = usePixelUnits

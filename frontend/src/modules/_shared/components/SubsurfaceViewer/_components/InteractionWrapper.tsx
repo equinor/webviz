@@ -65,7 +65,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
     const [verticalScale, setVerticalScale] = React.useState<number>(context.initialVerticalScale);
     const [activePolylineName, setActivePolylineName] = React.useState<string | undefined>(undefined);
-    const [performanceSettingsOpen, setPerformanceSettingsOpen] = React.useState<boolean>(false);
 
     const deckGlManagerRef = React.useRef<DeckGlInstanceManager>(new DeckGlInstanceManager(deckGlRef.current));
     const polylinesPluginRef = React.useRef<PolylinesPlugin>(new PolylinesPlugin(deckGlManagerRef.current));
