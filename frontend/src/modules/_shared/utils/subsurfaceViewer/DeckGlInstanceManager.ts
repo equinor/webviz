@@ -167,7 +167,8 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
 
         const existingIds = new Set(inViews.map((v: any) => v?.id ?? v?.props?.id).filter(Boolean));
 
-        const mergedViews = [...inViews, ...this._hiddenViews.filter((v) => !existingIds.has((v as any).id))];
+        // Prepend hidden views so they render behind (deck.gl renders views in order)
+        const mergedViews = [...this._hiddenViews.filter((v) => !existingIds.has((v as any).id)), ...inViews];
 
         // 2) Collect dynamic viewState patches from plugins
         let dynamicPatches: Record<string, any> = { ...this._hiddenViewStatePatch };
