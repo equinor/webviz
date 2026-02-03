@@ -1,3 +1,5 @@
+import React from "react";
+
 import { createRoot } from "react-dom/client";
 import { ToastContainer } from "react-toastify";
 
@@ -45,14 +47,16 @@ if (!container) {
 const root = createRoot(container);
 
 root.render(
-    <GlobalErrorBoundary>
-        <AuthProvider>
-            <CustomQueryClientProvider>
-                <>
-                    <ToastContainer limit={3} position="bottom-right" />
-                    <App />
-                </>
-            </CustomQueryClientProvider>
-        </AuthProvider>
-    </GlobalErrorBoundary>,
+    <React.StrictMode>
+        <GlobalErrorBoundary>
+            <AuthProvider>
+                <CustomQueryClientProvider>
+                    <>
+                        <ToastContainer limit={3} position="bottom-right" />
+                        <App />
+                    </>
+                </CustomQueryClientProvider>
+            </AuthProvider>
+        </GlobalErrorBoundary>
+    </React.StrictMode>,
 );
