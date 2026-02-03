@@ -5,6 +5,7 @@ import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } f
 import { Dropdown } from "@mui/base";
 import {
     Check,
+    Difference,
     Panorama,
     SettingsApplications,
     Settings as SettingsIcon,
@@ -34,6 +35,7 @@ import { ContextBoundary } from "@modules/_shared/DataProviderFramework/framewor
 import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
+import { DeltaGroup } from "@modules/_shared/DataProviderFramework/framework/DeltaGroup/DeltaGroup";
 import { DeltaSurface } from "@modules/_shared/DataProviderFramework/framework/DeltaSurface/DeltaSurface";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
@@ -65,8 +67,8 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor()),
                 );
                 return;
-            case "delta-surface":
-                groupDelegate.prependChild(new DeltaSurface("Delta surface", props.dataProviderManager));
+            case "delta":
+                groupDelegate.prependChild(new DeltaGroup("Delta group", props.dataProviderManager));
                 return;
             case "context-boundary":
                 groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));
@@ -253,6 +255,12 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
         }
 
         groupActions.children.push({
+            identifier: "delta",
+            icon: <Difference fontSize="small" />,
+            label: "Delta group",
+        });
+
+        groupActions.children.push({
             identifier: "context-boundary",
             icon: <SettingsApplications fontSize="small" />,
             label: "Context boundary",
@@ -322,6 +330,11 @@ const INITIAL_ACTIONS: ActionGroup[] = [
                 identifier: "view",
                 icon: <Panorama fontSize="small" />,
                 label: "View",
+            },
+            {
+                identifier: "delta",
+                icon: <Difference fontSize="small" />,
+                label: "Delta group",
             },
             {
                 identifier: "context-boundary",

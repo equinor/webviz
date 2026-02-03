@@ -4,8 +4,8 @@ import { isContextBoundary } from "../ContextBoundary/ContextBoundary";
 import { ContextBoundaryComponent } from "../ContextBoundary/ContextBoundaryComponent";
 import { isDataProvider } from "../DataProvider/DataProvider";
 import { DataProviderComponent } from "../DataProvider/DataProviderComponent";
-import { DeltaSurface } from "../DeltaSurface/DeltaSurface";
-import { DeltaSurfaceComponent } from "../DeltaSurface/DeltaSurfaceComponent";
+import { DeltaGroup } from "../DeltaGroup/DeltaGroup";
+import { DeltaGroupComponent } from "../DeltaGroup/DeltaSurfaceComponent";
 import { isGroup } from "../Group/Group";
 import { GroupComponent } from "../Group/GroupComponent";
 import { isSharedSetting } from "../SharedSetting/SharedSetting";
@@ -39,11 +39,11 @@ export function makeSortableListItemComponent(
             />
         );
     }
-    if (item instanceof DeltaSurface) {
+    if (item instanceof DeltaGroup) {
         return (
-            <DeltaSurfaceComponent
+            <DeltaGroupComponent
                 key={item.getItemDelegate().getId()}
-                deltaSurface={item}
+                deltaGroup={item}
                 makeActionsForGroup={makeActionsForGroup}
                 onActionClick={onActionClick}
             />

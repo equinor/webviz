@@ -14,6 +14,7 @@ export enum SerializedType {
     CONTEXT_BOUNDARY = "context-boundary",
     COLOR_SCALE = "color-scale",
     DELTA_SURFACE = "delta-surface",
+    DELTA_GROUP = "delta-group",
     SHARED_SETTING = "shared-setting",
 }
 
@@ -76,5 +77,10 @@ export interface SerializedDataProviderManager extends SerializedItem {
 
 export interface SerializedDeltaSurface extends SerializedItem {
     type: SerializedType.DELTA_SURFACE;
+    children: SerializedItem[];
+}
+
+export interface SerializedDeltaGroup extends SerializedItem {
+    type: SerializedType.DELTA_GROUP;
     children: SerializedItem[];
 }
