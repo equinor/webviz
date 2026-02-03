@@ -41,6 +41,7 @@ export class DeltaGroup implements ItemGroup {
     deserializeState(serialized: SerializedDeltaGroup): void {
         this._itemDelegate.deserializeState(serialized);
         this._groupDelegate.deserializeChildren(serialized.children);
+        this.handleChildrenChange();
     }
 
     serializeState(): SerializedDeltaGroup {
@@ -75,6 +76,7 @@ export class DeltaGroup implements ItemGroup {
     private handleSettingsChange(): void {
         // We need to check each provider's settings state to see if settings are valid.
         // Currently no specific action is needed when settings change.
+        console.debug("Settings changed in one of the delta group providers.");
     }
 
     private clear(): void {

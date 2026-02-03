@@ -7,10 +7,12 @@ import type {
     SerializedItem,
     SerializedContextBoundary,
     SerializedSharedSetting,
+    SerializedDeltaGroup,
 } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import { ContextBoundary } from "../ContextBoundary/ContextBoundary";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
+import { DeltaGroup } from "../DeltaGroup/DeltaGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
 export class DeserializationAssistant {
@@ -63,6 +65,13 @@ export class DeserializationAssistant {
             );
             setting.deserializeState(serializedSharedSetting);
             return setting;
+        }
+
+        if (serialized.type === SerializedType.DELTA_GROUP) {
+            const serializedDeltaGroup = serialized as SerializedDeltaGroup;
+            const deltaGroup = new DeltaGroup(serializedDeltaGroup.name, this._dataProviderManager);
+            deltaGroup.deserializeState(serializedDeltaGroup);
+            return deltaGroup;
         }
 
         throw new Error(`Unhandled serialized item type: ${serialized.type}`);

@@ -11,6 +11,13 @@ import type { NullableStoredData, StoredData } from "./sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "./utils";
 
 /**
+ * Operations for multi-provider data fetching.
+ */
+export enum DataProviderSupportedOperation {
+    DELTA = "delta",
+}
+
+/**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
  * It contains accessors to the data and settings of the provider and other useful information.
  */
@@ -139,6 +146,57 @@ export type FetchDataParams<
     onFetchCancelOrFinish: (callback: () => void) => void;
 } & DataProviderInformationAccessors<TSettings, TData, TStoredData>;
 
+export type MultiProviderFetchParams<
+    TSettings extends Settings,
+    TStoredData extends StoredData = Record<string, never>,
+> = {
+    /**
+     * Array of settings from each child provider in the group.
+     * Order matches the order of children in the group.
+     */
+    childrenSettings: Array<{
+        settings: MakeSettingTypesMap<TSettings>;
+        storedData: NullableStoredData<TStoredData>;
+    }>;
+
+    /**
+     * Fetch data using Tanstack Query client.
+     */
+    fetchQuery: <
+        TQueryFnData = unknown,
+        TError = DefaultError,
+        TData = TQueryFnData,
+        TQueryKey extends QueryKey = QueryKey,
+    >(
+        options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+    ) => Promise<TData>;
+
+    /**
+     * Set progress message for the delta group.
+     */
+    setProgressMessage: (message: string | null) => void;
+
+    /**
+     * Called when fetch is cancelled or finished.
+     */
+    onFetchCancelOrFinish: (callback: () => void) => void;
+
+    /**
+     * Access to global settings.
+     */
+    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T] | null;
+
+    /**
+     * Access to the workbench session.
+     */
+    getWorkbenchSession: () => WorkbenchSession;
+
+    /**
+     * Access to the workbench settings.
+     */
+    getWorkbenchSettings: () => WorkbenchSettings;
+};
+
 export interface CustomDataProviderImplementation<
     TSettings extends Settings,
     TData,
@@ -146,6 +204,7 @@ export interface CustomDataProviderImplementation<
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
+    TSupportedOperations extends DataProviderSupportedOperation[] = [],
 > extends CustomSettingsHandler<TSettings, TStoredData, TSettingTypes, TSettingKey, TStoredDataKey> {
     /**
      * The default name of a provider of this type.
@@ -209,4 +268,21 @@ export interface CustomDataProviderImplementation<
      * @returns true if the settings are valid, false otherwise.
      */
     areCurrentSettingsValid?: (args: AreSettingsValidArgs<TSettings, TData, TStoredData>) => boolean;
+
+    /**
+     * Supported operations by this data provider.
+     */
+    supportedOperations?: TSupportedOperations;
+
+    /**
+     * Multi-provider fetch implementation for supported operations.
+     *
+     * @param operation The operation to perform.
+     * @param params An object containing accessors to the data and settings of the provider and other useful information.
+     * @returns A promise that resolves to the data that this data provider is providing for the operation.
+     */
+    multiProviderFetchData?(
+        operation: TSupportedOperations[number],
+        params: MultiProviderFetchParams<TSettings, TStoredData>,
+    ): Promise<TData>;
 }
