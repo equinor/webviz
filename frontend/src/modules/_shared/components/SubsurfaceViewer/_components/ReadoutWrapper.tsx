@@ -142,9 +142,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
                 // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates.
                 // See issue #webviz-subsurface-components/2320
-                // Use layer.id (the actual layer instance) rather than sourceLayer.id to allow
-                // picking through multiple stacked layers of the same type
-                const uniquePicks = uniqBy(picks, (pick) => pick.layer?.id);
+                const uniquePicks = uniqBy(picks, (pick) => pick.sourceLayer?.id);
 
                 pickingInfo[viewport.id] = uniquePicks;
             }
@@ -323,11 +321,18 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 return;
             }
 
+            // Create a stable copy of the event data before scheduling the timeout.
+            // This avoids relying on any potential event pooling or mutation.
+            const stableEvent: MapMouseEvent = {
+                ...event,
+                infos: event.infos?.map((info) => ({ ...info })),
+            };
+
             // Schedule the click handling after the double-click interval
             // If another click comes in before the timeout, it will be treated as a double-click
             clickTimeoutRef.current = setTimeout(function processDelayedClick() {
                 clickTimeoutRef.current = null;
-                processClickEvent(event);
+                processClickEvent(stableEvent);
             }, DOUBLE_CLICK_INTERVAL_MS);
         },
         [processClickEvent],
