@@ -1,15 +1,15 @@
 import React from "react";
 
-import { ChevronRight, Settings, Tune } from "@mui/icons-material";
+import { Link, Settings, Tune } from "@mui/icons-material";
 
 import { GuiState, useSetGuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { Workbench } from "@framework/Workbench";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useActiveDashboard } from "../ActiveDashboardBoundary";
+import { SettingsPanelHeader } from "../SettingsPanelHeader";
 
 import { ModuleSettings } from "./private-components/moduleSettings";
 import { SyncSettings } from "./private-components/syncSettings";
@@ -28,6 +28,9 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
     const dashboard = useActiveDashboard();
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
+
+    const activeModuleInstance = moduleInstances.find((instance) => instance.getId() === activeModuleInstanceId);
 
     const [drawerContent, setDrawerContent] = React.useState<DrawerContent>(DrawerContent.ModuleSettings);
 
@@ -52,15 +55,12 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
         setIsCollapsed(true);
     }
 
-    function handleOpenSyncSettings() {
+    function handleSetDrawerContent(content: string) {
         if (mainRef.current === null) {
             return;
         }
-        setDrawerContent(DrawerContent.SyncSettings);
-    }
-
-    function handleCloseSyncSettings() {
-        if (mainRef.current === null) {
+        if (content in DrawerContent) {
+            setDrawerContent(content as DrawerContent);
             return;
         }
         setDrawerContent(DrawerContent.ModuleSettings);
@@ -68,24 +68,26 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
 
     return (
         <div ref={mainRef} className="bg-white h-full" style={{ boxShadow: "4px 0px 4px 1px rgba(0, 0, 0, 0.05)" }}>
-            {isCollapsed && (
-                <div className="bg-gray-100 h-full flex flex-col items-center pt-2">
-                    <DenseIconButton onClick={handleExpandPanel} title="Expand settings panel">
-                        <div className="flex flex-row items-center">
-                            {drawerContent === DrawerContent.ModuleSettings ? (
-                                <Settings fontSize="small" />
-                            ) : (
-                                <Link fontSize="small" />
-                            )}
-                            <ChevronRight fontSize="small" />
-                        </div>
-                    </DenseIconButton>
-                </div>
-            )}
+            <SettingsPanelHeader
+                activeSetting={drawerContent}
+                availableSettings={{
+                    [DrawerContent.ModuleSettings]: {
+                        title: "Module Settings",
+                        icon: <Settings fontSize="small" />,
+                    },
+                    [DrawerContent.SyncSettings]: {
+                        title: "Sync Settings",
+                        icon: <Link fontSize="small" />,
+                    },
+                }}
+                isCollapsed={isCollapsed}
+                onExpandClick={handleExpandPanel}
+                onCollapseClick={handleCollapsePanel}
+                onSettingChange={handleSetDrawerContent}
+            />
             <SyncSettings
                 workbench={props.workbench}
                 visible={!isCollapsed && drawerContent === DrawerContent.SyncSettings}
-                onClose={handleCloseSyncSettings}
             />
             <div
                 className={resolveClassNames(
@@ -95,13 +97,7 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
                 )}
             >
                 {moduleInstances.map((instance) => (
-                    <ModuleSettings
-                        key={instance.getId()}
-                        moduleInstance={instance}
-                        workbench={props.workbench}
-                        onRequestOpenSyncSettings={handleOpenSyncSettings}
-                        onRequestCollapseSettings={handleCollapsePanel}
-                    />
+                    <ModuleSettings key={instance.getId()} moduleInstance={instance} workbench={props.workbench} />
                 ))}
                 {moduleInstances.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full">

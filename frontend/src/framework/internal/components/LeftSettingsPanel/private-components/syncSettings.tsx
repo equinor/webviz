@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Tooltip } from "@equinor/eds-core-react";
-import { Link, PinDrop, Public } from "@mui/icons-material";
+import { PinDrop, Public } from "@mui/icons-material";
 
 import { Drawer } from "@framework/internal/components/Drawer";
 import { DashboardTopic } from "@framework/internal/Dashboard";
@@ -19,7 +19,6 @@ import { useActiveSession } from "../../ActiveSessionBoundary";
 type ModulesListProps = {
     workbench: Workbench;
     visible: boolean;
-    onClose?: () => void;
 };
 
 export const SyncSettings: React.FC<ModulesListProps> = (props) => {
@@ -77,10 +76,6 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
         }
 
         return true;
-    }
-
-    function handleOnClose() {
-        props.onClose?.();
     }
 
     function makeContent() {
@@ -144,18 +139,5 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
         );
     }
 
-    return (
-        <Drawer
-            title={activeModuleInstance?.getTitle() ?? "Sync settings"}
-            icon={
-                <Link
-                    titleAccess={`Sync settings${activeModuleInstance ? ` for ${activeModuleInstance.getTitle()}` : ""}`}
-                />
-            }
-            visible={props.visible}
-            onClose={handleOnClose}
-        >
-            {makeContent()}
-        </Drawer>
-    );
+    return <Drawer visible={props.visible}>{makeContent()}</Drawer>;
 };
