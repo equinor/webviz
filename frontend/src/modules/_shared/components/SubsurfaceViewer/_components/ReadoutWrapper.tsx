@@ -49,6 +49,9 @@ const DEBOUNCED_HOVER_DELAY_MS = 50;
 const PICKING_RADIUS = 5;
 const USER_PICKING_DEPTH = 6;
 
+// Double-click detection interval
+const DOUBLE_CLICK_INTERVAL_MS = 300;
+
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const { onViewerHover, onViewportHover, onPickingInfoChange } = props;
     const ctx = useDpfSubsurfaceViewerContext();
@@ -64,6 +67,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
     const deckGlRef = React.useRef<DeckGLRef | null>(null);
+    const clickTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const userPickingDepth = ctx.visualizationMode === "3D" ? 1 : USER_PICKING_DEPTH;
 
@@ -224,9 +228,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         [onViewerHover, onViewportHover, debouncedMultiViewPicking, clearReadout, readoutMode],
     );
 
-    const handleClickEvent = React.useCallback(
-        function handleClickEvent(event: MapMouseEvent): void {
-            const coordinate = event.infos[0]?.coordinate ?? [];
+    const processClickEvent = React.useCallback(
+        function processClickEvent(event: MapMouseEvent): void {
             setReadoutMode("click");
 
             // Deep picking on click - cancel any pending debounced picking
@@ -234,7 +237,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
             // We need a viewport - if none, clear readout
             const hoveredViewPort = event.infos[0]?.viewport;
-            if (!hoveredViewPort || !coordinate.length) {
+            if (!hoveredViewPort) {
                 setReadoutMode("hover");
                 clearReadout();
                 return;
@@ -275,6 +278,26 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onPickingInfoChange,
             userPickingDepth,
         ],
+    );
+
+    const handleClickEvent = React.useCallback(
+        function handleClickEvent(event: MapMouseEvent): void {
+            // Check if there's a pending click - if so, this is a double-click
+            // Clear the pending click and don't process either click
+            if (clickTimeoutRef.current) {
+                clearTimeout(clickTimeoutRef.current);
+                clickTimeoutRef.current = null;
+                return;
+            }
+
+            // Schedule the click handling after the double-click interval
+            // If another click comes in before the timeout, it will be treated as a double-click
+            clickTimeoutRef.current = setTimeout(function processDelayedClick() {
+                clickTimeoutRef.current = null;
+                processClickEvent(event);
+            }, DOUBLE_CLICK_INTERVAL_MS);
+        },
+        [processClickEvent],
     );
 
     const [numRows] = props.views.layout;
