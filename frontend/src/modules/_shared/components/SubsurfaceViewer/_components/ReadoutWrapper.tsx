@@ -240,7 +240,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                         }));
                     }
                 }
-                return { ...prev, ...newPickingInfoPerView };
+                return { ...newPickingInfoPerView, ...updatedPickingInfoPerView };
             });
 
             onViewerHover?.(event);
