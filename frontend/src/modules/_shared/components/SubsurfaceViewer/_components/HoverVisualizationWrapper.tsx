@@ -124,7 +124,7 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
             }
             setUnscaledCoordinatesPerView(unscaled);
         },
-        [props.verticalScale]
+        [props.verticalScale],
     );
 
     return (
@@ -167,8 +167,6 @@ function usePickingRayLayers(
     const pickingRayLayers: Record<string, PickingRayLayer> = {};
 
     for (const [viewId, pickCoordinates] of Object.entries(unscaledCoordinatesPerView)) {
-        // Coordinates are already unscaled - the layer will apply vertical scale
-        // from its inherited modelMatrix to positions only (not mesh geometry)
         pickingRayLayers[viewId] = new PickingRayLayer({
             id: `picking-ray-layer-${viewId}`,
             pickInfoCoordinates: pickCoordinates,

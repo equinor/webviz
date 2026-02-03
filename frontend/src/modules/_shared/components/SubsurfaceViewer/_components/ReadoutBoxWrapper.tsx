@@ -19,6 +19,7 @@ export type ReadoutBoxWrapperProps = {
     maxNumItems?: number;
     visible?: boolean;
     compact?: boolean;
+    stale?: boolean;
     verticalScale?: number;
     onClose?: () => void;
 };
@@ -69,6 +70,7 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
             compact={props.compact}
             flipDisabled
             onClose={props.onClose}
+            textGrayedOut={props.stale}
         />
     );
 }

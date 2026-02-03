@@ -41,6 +41,8 @@ export type ReadoutBoxProps = {
     compact?: boolean;
     /** A callback for when the box is closed - this will automatically show a cross */
     onClose?: () => void;
+    /** Gray out the text to indicate stale data */
+    textGrayedOut?: boolean;
 };
 
 export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
@@ -106,6 +108,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
                 {
                     "gap-2 p-2 text-sm w-72": !props.compact,
                     "gap-y-0.5 gap-x-2 py-2 px-2 text-xs min-w-52": props.compact,
+                    "text-neutral-500": props.textGrayedOut,
                 },
             )}
             style={{

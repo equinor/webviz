@@ -29,6 +29,8 @@ import {
     type SubsurfaceViewerWithCameraStateProps,
 } from "./SubsurfaceViewerWithCameraState";
 
+type PickingInfoWithStaleInfo = PickingInfo & { isStale?: boolean };
+
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
     layers: DeckGlLayer[];
@@ -39,7 +41,7 @@ export type ReadoutWrapperProps = {
     children?: React.ReactNode;
     onViewerHover?: (mouseEvent: MapMouseEvent | null) => void;
     onViewportHover?: (viewport: ViewportType | null) => void;
-    onPickingInfoChange?: (pickingInfoPerView: Record<string, PickingInfo[]>) => void;
+    onPickingInfoChange?: (pickingInfoPerView: Record<string, PickingInfoWithStaleInfo[]>) => void;
 };
 
 // These are settings that impact performance - make them configurable later if needed
@@ -58,7 +60,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const id = React.useId();
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
     const [pickingCoordinate, setPickingCoordinate] = React.useState<number[]>([]);
-    const [pickingInfoPerView, setPickingInfoPerView] = React.useState<Record<string, PickingInfo[]>>({});
+    const [pickingInfoPerView, setPickingInfoPerView] = React.useState<Record<string, PickingInfoWithStaleInfo[]>>({});
     const [readoutMode, setReadoutMode] = React.useState<"hover" | "click">("hover");
 
     const [storedDeckGlViews, setStoredDeckGlViews] =
@@ -74,8 +76,18 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
     usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
 
+    React.useEffect(function onMountEffect() {
+        return function onUnmountEffect() {
+            // Clear any pending click timeout
+            if (clickTimeoutRef.current) {
+                clearTimeout(clickTimeoutRef.current);
+                clickTimeoutRef.current = null;
+            }
+        };
+    }, []);
+
     React.useEffect(
-        function onMountEffect() {
+        function mountKeyboardHandlersEffect() {
             function handleKeydown(event: KeyboardEvent) {
                 if (event.key === "Escape") {
                     setReadoutMode("hover");
@@ -84,7 +96,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             }
 
             window.addEventListener("keydown", handleKeydown);
-            return () => {
+
+            return function unmountKeyboardHandlersEffect() {
                 window.removeEventListener("keydown", handleKeydown);
             };
         },
@@ -94,9 +107,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const pickAtWorldCoordinates = React.useCallback(
         function pickAtWorldCoordinates(
             worldCoordinates: number[],
-            initialPickingInfo: Record<string, PickingInfo[]> = {},
+            initialPickingInfo: Record<string, PickingInfoWithStaleInfo[]> = {},
             maxPickingDepth: number,
-        ): Record<string, PickingInfo[]> {
+        ): Record<string, PickingInfoWithStaleInfo[]> {
             const [x, y, z] = worldCoordinates;
 
             if (!deckGlRef.current?.deck?.isInitialized) return initialPickingInfo;
@@ -104,9 +117,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             const deck = deckGlRef.current?.deck;
             const viewports = deck?.getViewports();
 
-            if (!deck || !viewports?.length || !x || !y) return initialPickingInfo;
+            if (!deck || !viewports?.length || x === undefined || y === undefined) return initialPickingInfo;
 
-            const pickingInfo: Record<string, PickingInfo[]> = initialPickingInfo;
+            const pickingInfo: Record<string, PickingInfoWithStaleInfo[]> = { ...initialPickingInfo };
 
             // Prepare coordinate for picking by applying vertical scale if z is defined
             const coord = z !== undefined ? [x, y, z * props.verticalScale] : [x, y];
@@ -114,7 +127,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             for (const viewport of viewports) {
                 // If we already have picks for this viewport (e.g. from initial hover), skip it if
                 // picks are already at max depth
-                if (initialPickingInfo[viewport.id] && initialPickingInfo[viewport.id].length === maxPickingDepth) {
+                if (initialPickingInfo[viewport.id] && initialPickingInfo[viewport.id].length >= maxPickingDepth) {
                     continue;
                 }
 
@@ -143,9 +156,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const collectReadoutInformationFromAllViewports = React.useCallback(
         function collectReadoutInformationFromAllViewports(
             worldCoordinates: number[],
-            initialPickingInfo: Record<string, PickingInfo[]>,
+            initialPickingInfo: Record<string, PickingInfoWithStaleInfo[]>,
             pickingDepth: number,
-        ): Record<string, PickingInfo[]> {
+        ): Record<string, PickingInfoWithStaleInfo[]> {
             const newPickInfoDict = pickAtWorldCoordinates(worldCoordinates, initialPickingInfo, pickingDepth);
             setPickingInfoPerView(newPickInfoDict);
             return newPickInfoDict;
@@ -156,6 +169,15 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const debouncedMultiViewPicking = React.useMemo(
         () => debounce(collectReadoutInformationFromAllViewports, DEBOUNCED_HOVER_DELAY_MS),
         [collectReadoutInformationFromAllViewports],
+    );
+
+    React.useEffect(
+        function mountCancelDebouncedPickingEffect() {
+            return function unmountCancelDebouncedPickingEffect() {
+                debouncedMultiViewPicking.cancel();
+            };
+        },
+        [debouncedMultiViewPicking],
     );
 
     const clearReadout = React.useCallback(
@@ -190,11 +212,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             }
 
             const coordinate = event.infos[0]?.coordinate ?? [];
-
-            if (!hoveredViewPort) {
-                return;
-            }
-
             setPickingCoordinate(coordinate);
 
             // Cancel any pending debounced picking
@@ -205,10 +222,26 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             // Deep picks must be confirmed by user (e.g. click) to avoid performance issues.
 
             // We have our readout pick - first, update readout information immediately
-            const updatedPickingInfoPerView: Record<string, PickingInfo[]> = {};
+            // We keep the existing picks for other viewports (if any) to avoid flickering
+            const updatedPickingInfoPerView: Record<string, PickingInfoWithStaleInfo[]> = {};
             updatedPickingInfoPerView[hoveredViewPort.id] = event.infos;
 
-            setPickingInfoPerView(updatedPickingInfoPerView);
+            setPickingInfoPerView(function updatePickingInfoPerView(prev) {
+                const newPickingInfoPerView: Record<string, PickingInfoWithStaleInfo[]> = {};
+                for (const [viewId, picks] of Object.entries(prev)) {
+                    if (viewId === hoveredViewPort.id) {
+                        // Update current viewport picks - this happens anyways when returning from setState
+                        newPickingInfoPerView[viewId] = event.infos;
+                    } else {
+                        // Mark other viewports' picks as stale until updated by debounced picking
+                        newPickingInfoPerView[viewId] = picks.map((pick) => ({
+                            ...pick,
+                            isStale: true,
+                        }));
+                    }
+                }
+                return { ...prev, ...newPickingInfoPerView };
+            });
 
             onViewerHover?.(event);
             onViewportHover?.(hoveredViewPort);
@@ -410,6 +443,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                             compact={props.views.viewports.length > 1}
                             viewportPicks={pickingInfoPerView[viewport.id]}
                             visible={readoutMode === "click" ? true : !hideReadout}
+                            stale={pickingInfoPerView[viewport.id]?.some((pick) => pick.isStale)}
                             verticalScale={props.verticalScale}
                             onClose={readoutMode === "click" ? handleCloseReadout : undefined}
                         />
