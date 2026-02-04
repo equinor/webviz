@@ -2,7 +2,7 @@ import React from "react";
 
 import { Link, Settings, Tune } from "@mui/icons-material";
 
-import { GuiState, useSetGuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -38,20 +38,12 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelIsCollapsed,
     );
-    const setLeftSettingsPanelWidth = useSetGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.LeftSettingsPanelWidthInPercent,
-    );
 
     function handleExpandPanel() {
-        // Set some default width, minSize/collapsedSizes for ResizablePanels should handle the rest
-        setLeftSettingsPanelWidth(10);
         setIsCollapsed(false);
     }
 
     function handleCollapsePanel() {
-        // Request zero width, minSize/collapsedSizes for ResizablePanels should handle the rest
-        setLeftSettingsPanelWidth(0);
         setIsCollapsed(true);
     }
 
