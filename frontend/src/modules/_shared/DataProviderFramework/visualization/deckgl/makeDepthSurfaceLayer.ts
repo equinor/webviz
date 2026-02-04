@@ -52,5 +52,6 @@ export function makeDepthSurfaceLayer({
         contours: contours,
         isContoursDepth: true,
         gridLines: false,
+        pickable: true,
     });
 }
