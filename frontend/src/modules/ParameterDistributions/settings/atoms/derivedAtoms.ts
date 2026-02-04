@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { ParameterIdent, ParameterType, type ContinuousParameter } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { EnsembleMode } from "@modules/ParameterDistributions/typesAndEnums";
 
@@ -33,14 +33,14 @@ export const intersectedParameterIdentsAtom = atom((get) => {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (!ensemble) continue;
 
-        let parameters = ensemble
+        let parameters: ContinuousParameter[] = ensemble
             .getParameters()
             .getParameterArr()
             .filter(
-                (parameter) =>
-                    (showConstantParameters || !parameter.isConstant) && parameter.type === ParameterType.CONTINUOUS,
+                (parameter) =>parameter.type === ParameterType.CONTINUOUS,
             );
-        !showLogParameters && (parameters = parameters.filter((parameter) => !parameter.groupName?.includes("LOG"))); // Only include non-log parameters unless showLogParameters is true
+        !showConstantParameters && (parameters = parameters.filter((parameter) => !parameter.isConstant));
+        !showLogParameters && (parameters = parameters.filter((parameter) => !parameter.isLogarithmic));
         const identArr: ParameterIdent[] = [];
         for (const parameter of parameters) {
             identArr.push(new ParameterIdent(parameter.name, parameter.groupName));
