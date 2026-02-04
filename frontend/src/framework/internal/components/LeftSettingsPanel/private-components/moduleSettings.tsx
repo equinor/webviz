@@ -25,8 +25,11 @@ import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
-    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
+    moduleInstance: ModuleInstance<any, any>;
+    warningText?: string | null;
+    isWarningVisible?: boolean;
+    dismissWarning?: () => void;
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
@@ -45,8 +48,6 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         props.moduleInstance,
         ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS,
     );
-
-    const isSerializable = props.moduleInstance.getModule().canBeSerialized();
 
     if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;
@@ -110,9 +111,16 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
 
         return (
             <>
-                {!isSerializable && (
+                {props.isWarningVisible && props.warningText && (
                     <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
-                        <strong>Note:</strong> This module cannot be persisted yet. State changes will not be saved.
+                        <div className="flex flex-col">
+                            <span>
+                                <strong>Note:</strong> {props.warningText}
+                            </span>
+                            <strong className="cursor-pointer self-end" onClick={props.dismissWarning}>
+                                Close [X]
+                            </strong>
+                        </div>
                     </div>
                 )}
                 <DebugProfiler
