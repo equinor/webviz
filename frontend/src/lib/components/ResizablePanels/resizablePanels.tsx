@@ -6,55 +6,18 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 
-const COLLAPSE_EXPAND_THRESHOLD_EPSILON = 1e-3;
-const COLLAPSE_EXPAND_THRESHOLD_PX = 50;
-
-function pxToPercent(px: number, totalSizePx: number, threshold = COLLAPSE_EXPAND_THRESHOLD_EPSILON): number {
-    return (px / totalSizePx) * 100 + threshold;
-}
-
-/**
- * Adjusts a panel to a target size in percent, redistributing the difference to the adjacent panel.
- * Mutates the sizes array in place.
- */
-function adjustPanelToSize(sizes: number[], index: number, targetSizeInPercent: number): void {
-    const delta = sizes[index] - targetSizeInPercent;
-    sizes[index] = targetSizeInPercent;
-    if (index < sizes.length - 1) {
-        sizes[index + 1] += delta;
-    } else if (index > 0) {
-        sizes[index - 1] += delta;
-    }
-}
-
 export type ResizablePanelsProps = {
     id: string;
     direction: "horizontal" | "vertical";
     children: React.ReactNode[];
     minSizes?: number[];
-    collapsedSizes?: number[];
     sizesInPercent?: number[];
-    collapsedStates?: (boolean | null)[];
     onSizesChange?: (sizesInPercent: number[]) => void;
-    onCollapsedChange?: (collapsedStates: boolean[]) => void;
     visible?: boolean[];
 };
 
-/**
- * This component renders a set of resizable panels, either horizontally or vertically.
- *
- * It provides drag handles between the panels that can be used to resize them. And also the ability
- * to collapse panels by dragging them below a certain threshold.
- *
- * - The internal sizes are updated continuously as the user drags the resize handles, but the
- *   onSizesChange callback is only fired when the user releases the mouse button.
- * - The collapsed states are updated continuously as the user drags the resize handles, and the
- *   onCollapsedChange callback is fired whenever a panel's collapsed state changes.
- * - Thereby the content of a collapsed panel can be updated immediately when the panel is collapsed,
- *   and not based on the actual size change which may happen later.
- */
 export function ResizablePanels(props: ResizablePanelsProps) {
-    const { onSizesChange, onCollapsedChange } = props;
+    const { onSizesChange } = props;
 
     if (props.minSizes && props.minSizes.length !== props.children.length) {
         throw new Error("minSizes must have the same length as children");
@@ -62,14 +25,6 @@ export function ResizablePanels(props: ResizablePanelsProps) {
 
     if (props.visible && props.visible.length !== props.children.length) {
         throw new Error("visible must have the same length as children");
-    }
-
-    if (props.collapsedSizes && props.collapsedSizes.length !== props.children.length) {
-        throw new Error("collapsedSizes must have the same length as children");
-    }
-
-    if (props.collapsedStates && props.collapsedStates.length !== props.children.length) {
-        throw new Error("collapsedStates must have the same length as children");
     }
 
     function getInitialSizes() {
@@ -94,53 +49,10 @@ export function ResizablePanels(props: ResizablePanelsProps) {
 
     const { width: totalWidth, height: totalHeight } = useElementSize(resizablePanelsRef);
 
-    const collapsedStatesRef = React.useRef(props.collapsedStates);
-    collapsedStatesRef.current = props.collapsedStates;
-    const prevCollapsedStates = React.useRef<(boolean | null)[] | undefined>(props.collapsedStates);
-
-    const hasCollapsedStatesChanged = !isEqual(prevCollapsedStates.current, props.collapsedStates);
-
-    // Update prevSizes
-    const hasSizesInPercentChanged = props.sizesInPercent && !isEqual(props.sizesInPercent, prevSizes);
-    if (hasSizesInPercentChanged) {
-        setPrevSizes(props.sizesInPercent!);
-        if (!hasCollapsedStatesChanged) {
-            setSizes(props.sizesInPercent!);
-        }
+    if (props.sizesInPercent && !isEqual(props.sizesInPercent, prevSizes)) {
+        setSizes(props.sizesInPercent);
+        setPrevSizes(props.sizesInPercent);
     }
-
-    if (hasCollapsedStatesChanged) {
-        // Update sizes to reflect new collapsed states, giving freed/needed space to next panel.
-        // When sizesInPercent also changed in this render, use the new prop values as the base
-        // so the collapse adjustment operates on the most up-to-date sizes.
-        const totalSizePx = props.direction === "horizontal" ? totalWidth : totalHeight;
-        const newSizes = hasSizesInPercentChanged ? [...props.sizesInPercent!] : [...sizes];
-        for (let i = 0; i < newSizes.length; i++) {
-            const wasCollapsed = prevCollapsedStates.current?.[i] ?? false;
-            const isNowCollapsed = props.collapsedStates?.[i] ?? false;
-            if (wasCollapsed === isNowCollapsed) continue;
-
-            if (isNowCollapsed) {
-                // Collapsing: snap to collapsed size, freed space goes to next panel
-                const collapsedPercent = ((props.collapsedSizes?.[i] ?? 0) / totalSizePx) * 100;
-                adjustPanelToSize(newSizes, i, collapsedPercent);
-            } else {
-                // Expanding: snap to min size, take space from next panel
-                const minSize = props.minSizes?.at(i) ?? props.collapsedSizes?.[i] ?? 0;
-                const minSizePercent = (minSize / totalSizePx) * 100;
-                adjustPanelToSize(newSizes, i, minSizePercent);
-            }
-        }
-        setSizes(newSizes);
-        prevCollapsedStates.current = props.collapsedStates;
-    }
-
-    const validCollapsedSizes = React.useMemo<number[]>(
-        function calculateValidCollapsedSizes() {
-            return props.collapsedSizes ?? Array(props.children.length).fill(0);
-        },
-        [props.collapsedSizes, props.children.length],
-    );
 
     if (props.children.length !== prevNumChildren) {
         individualPanelRefs.current = individualPanelRefs.current.slice(0, props.children.length);
@@ -182,7 +94,9 @@ export function ResizablePanels(props: ResizablePanelsProps) {
             }
 
             const firstElementBoundingRect = individualPanelRefs.current[index]?.getBoundingClientRect();
-            if (containerBoundingRect && firstElementBoundingRect) {
+            const secondElementBoundingRect = individualPanelRefs.current[index + 1]?.getBoundingClientRect();
+
+            if (containerBoundingRect && firstElementBoundingRect && secondElementBoundingRect) {
                 const cursorWithinBounds: Vec2 = {
                     x: Math.max(
                         containerBoundingRect.left,
@@ -195,84 +109,63 @@ export function ResizablePanels(props: ResizablePanelsProps) {
                 };
 
                 setSizes((prev) => {
-                    const totalSizePx = props.direction === "horizontal" ? totalWidth : totalHeight;
-                    const collapseThresholdInPercent = pxToPercent(COLLAPSE_EXPAND_THRESHOLD_PX, totalSizePx);
-                    const expandThresholdInPercentPerPanel = validCollapsedSizes.map((size) =>
-                        pxToPercent(size + COLLAPSE_EXPAND_THRESHOLD_PX, totalSizePx),
-                    );
+                    const minSizesToggleVisibilityValue =
+                        100 * (props.direction === "horizontal" ? 50 / totalWidth : 50 / totalHeight);
 
-                    // Compute only the first panel's size from the cursor position,
-                    // then derive the second panel as the remainder of their combined
-                    // previous size. This ensures the total of all sizes stays constant
-                    // and prevents other panels from growing due to flex redistribution
-                    // when CSS min/max constraints cause bounding rects to diverge from
-                    // percentage-based sizes.
-                    const newSizes = [...prev];
-                    const combinedSize = prev[index] + prev[index + 1];
-                    const newFirstPanelPx =
-                        props.direction === "horizontal"
-                            ? cursorWithinBounds.x - firstElementBoundingRect.left
-                            : cursorWithinBounds.y - firstElementBoundingRect.top;
-                    const newFirstPanelPercent = Math.max(
-                        Math.min((newFirstPanelPx / totalSize) * 100, combinedSize),
-                        0,
-                    );
-                    newSizes[index] = newFirstPanelPercent;
-                    newSizes[index + 1] = combinedSize - newFirstPanelPercent;
+                    const newSizes = prev.map((size, i) => {
+                        if (i === index) {
+                            let newSize = cursorWithinBounds.x - firstElementBoundingRect.left;
+                            if (props.direction === "vertical") {
+                                newSize = cursorWithinBounds.y - firstElementBoundingRect.top;
+                            }
+                            return Math.max((newSize / totalSize) * 100, 0);
+                        }
+                        if (i === index + 1) {
+                            let newSize =
+                                secondElementBoundingRect.right -
+                                Math.max(firstElementBoundingRect.left, cursorWithinBounds.x);
+                            if (props.direction === "vertical") {
+                                newSize =
+                                    secondElementBoundingRect.bottom -
+                                    Math.max(firstElementBoundingRect.top, cursorWithinBounds.y);
+                            }
+                            return Math.max((newSize / totalSize) * 100, 0);
+                        }
+                        return size;
+                    }) as number[];
 
                     const adjustedSizes: number[] = [...newSizes];
 
                     for (let i = 0; i < newSizes.length; i++) {
-                        // Use minSizes if provided, otherwise fall back to collapsedSizes, then 0
-                        const effectiveMinSize = props.minSizes?.at(i) ?? validCollapsedSizes[i];
-                        const minSizeInPercent = (effectiveMinSize / totalSize) * 100;
-                        const collapsedSizeInPercent = (validCollapsedSizes[i] / totalSize) * 100;
-                        const isCurrentlyCollapsed = collapsedStatesRef.current?.[i] ?? false;
+                        const minSizeInPercent = ((props.minSizes?.at(i) || 0) / totalSize) * 100;
 
                         if (props.visible?.at(i) === false) {
-                            // Panel is hidden
-                            adjustPanelToSize(adjustedSizes, i, 0);
-                        } else if (isCurrentlyCollapsed && effectiveMinSize > 0) {
-                            // Panel is currently collapsed - use expand threshold (hysteresis)
-                            if (newSizes[i] < expandThresholdInPercentPerPanel[i]) {
-                                // Stay collapsed
-                                adjustPanelToSize(adjustedSizes, i, collapsedSizeInPercent);
-                            } else if (newSizes[i] < minSizeInPercent) {
-                                // Expanding - snap to minSize
-                                adjustPanelToSize(adjustedSizes, i, minSizeInPercent);
+                            adjustedSizes[i] = 0;
+                            if (i < newSizes.length - 1) {
+                                adjustedSizes[i + 1] = adjustedSizes[i + 1] + newSizes[i];
+                            } else {
+                                adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i];
                             }
-                            // else: size >= minSize, use actual size (no adjustment needed)
-                        } else if (newSizes[i] < collapseThresholdInPercent) {
-                            // Panel is expanded and being dragged below collapse threshold
-                            adjustPanelToSize(adjustedSizes, i, collapsedSizeInPercent);
+                        }
+                        if (newSizes[i] < minSizesToggleVisibilityValue) {
+                            adjustedSizes[i] = 0;
+                            if (i < newSizes.length - 1) {
+                                adjustedSizes[i + 1] = adjustedSizes[i + 1] + newSizes[i];
+                            } else {
+                                adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i];
+                            }
                         } else if (newSizes[i] < minSizeInPercent) {
-                            // Panel is expanded but below minSize - snap to minSize
-                            adjustPanelToSize(adjustedSizes, i, minSizeInPercent);
+                            adjustedSizes[i] = minSizeInPercent;
+
+                            if (i < newSizes.length - 1) {
+                                adjustedSizes[i + 1] = newSizes[i + 1] + newSizes[i] - minSizeInPercent;
+                            } else {
+                                adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i] - minSizeInPercent;
+                            }
                         }
                     }
 
                     changedSizes = adjustedSizes;
-
-                    // Determine current collapsed states and fire callback if changed
-                    // Use the appropriate threshold based on current collapsed state (hysteresis)
-                    const currentCollapsedStates = newSizes.map((size, i) => {
-                        const wasCollapsed = collapsedStatesRef.current?.[i] ?? false;
-                        if (wasCollapsed) {
-                            // Use expand threshold to determine if still collapsed
-                            return size < expandThresholdInPercentPerPanel[i];
-                        }
-                        // Use collapse threshold to determine if now collapsed
-                        return size < collapseThresholdInPercent;
-                    });
-
-                    // Compare against the collapsedStates prop - fire callback when detected state differs
-                    const propCollapsedStates = (collapsedStatesRef.current ?? []).map((s) => s ?? false);
-                    if (!isEqual(currentCollapsedStates, propCollapsedStates)) {
-                        if (onCollapsedChange) {
-                            // Defer callback to avoid updating another component during state update
-                            queueMicrotask(() => onCollapsedChange(currentCollapsedStates));
-                        }
-                    }
 
                     return adjustedSizes;
                 });
@@ -312,17 +205,7 @@ export function ResizablePanels(props: ResizablePanelsProps) {
             document.removeEventListener("pointerdown", handlePointerDown);
             removeEventListeners();
         };
-    }, [
-        props.direction,
-        props.id,
-        props.minSizes,
-        props.visible,
-        totalWidth,
-        totalHeight,
-        validCollapsedSizes,
-        onSizesChange,
-        onCollapsedChange,
-    ]);
+    }, [props.direction, props.id, props.minSizes, onSizesChange, totalWidth, totalHeight, props.visible]);
 
     function maybeMakeDragBar(index: number) {
         if (index < props.children.length - 1) {
@@ -335,28 +218,8 @@ export function ResizablePanels(props: ResizablePanelsProps) {
 
     function makeStyle(index: number): React.CSSProperties {
         const style: React.CSSProperties = {};
-
-        // Use the collapsedStates prop as the source of truth for collapsed state
-        const isCollapsed = props.collapsedStates?.[index];
-
-        // Force collapsed size if panel is hidden or stated as collapsed.
-        // Use explicit width + flex: 0 0 auto to completely remove from flex redistribution.
-        if (props.visible?.at(index) === false || isCollapsed === true) {
-            const collapsedSize = validCollapsedSizes[index] ?? 0;
-            style.flexGrow = 0;
-            style.flexShrink = 0;
-            if (props.direction === "horizontal") {
-                style.width = collapsedSize;
-                style.maxWidth = collapsedSize;
-                style.minWidth = collapsedSize;
-            } else {
-                style.height = collapsedSize;
-                style.maxHeight = collapsedSize;
-                style.minHeight = collapsedSize;
-            }
-            return style;
-        }
-
+        const minSizesToggleVisibilityValue =
+            100 * (props.direction === "horizontal" ? 50 / totalWidth : 50 / totalHeight);
         let subtractHandleSize = 1;
         if (index === 0 || index === props.children.length - 1) {
             subtractHandleSize = 0.5;
@@ -365,45 +228,39 @@ export function ResizablePanels(props: ResizablePanelsProps) {
         // that can cause 1px flickering when useElementSize observes the rendered size
         const roundedSize = Math.round(sizes[index] * 1000000) / 1000000;
 
-        // Use minSizes if provided, otherwise fall back to collapsedSizes
-        const effectiveMinSize = props.minSizes?.at(index) ?? validCollapsedSizes[index];
-        const totalSizePx = props.direction === "horizontal" ? totalWidth : totalHeight;
-        const toggleVisibilityValue = pxToPercent(COLLAPSE_EXPAND_THRESHOLD_PX, totalSizePx);
-
-        // Panels with a min constraint are rigid (don't grow/shrink via flex).
-        // Panels without a min constraint (typically the content panel) are flexible
-        // and absorb any remaining space or overflow from the flex layout.
-        if (effectiveMinSize > 0) {
-            style.flexGrow = 0;
-            style.flexShrink = 0;
-        } else {
-            style.flexGrow = 1;
-            style.flexShrink = 1;
-        }
-
         if (props.direction === "horizontal") {
             style.width = `calc(${roundedSize}% - ${subtractHandleSize}px)`;
             style.minWidth = undefined;
-            if (sizes[index] >= toggleVisibilityValue) {
-                style.minWidth = Math.max(effectiveMinSize - subtractHandleSize, subtractHandleSize);
+            if (props.visible?.at(index) !== false && sizes[index] >= minSizesToggleVisibilityValue) {
+                const minSize = props.minSizes?.at(index);
+                if (minSize) {
+                    style.minWidth = minSize - subtractHandleSize;
+                }
             }
-            if (sizes[index] < toggleVisibilityValue && isCollapsed === false) {
-                style.minWidth = effectiveMinSize;
-            }
-            if (sizes[index] < toggleVisibilityValue) {
+
+            if (sizes[index] < minSizesToggleVisibilityValue && props.minSizes?.at(index)) {
                 style.maxWidth = 0;
+            } else if (props.visible?.at(index) === false) {
+                style.maxWidth = 0;
+            } else {
+                style.maxWidth = undefined;
             }
         } else {
             style.height = `calc(${roundedSize}% - ${subtractHandleSize}px)`;
             style.minHeight = undefined;
-            if (sizes[index] >= toggleVisibilityValue) {
-                style.minHeight = Math.max(effectiveMinSize - subtractHandleSize, subtractHandleSize);
+            if (props.visible?.at(index) !== false && sizes[index] >= minSizesToggleVisibilityValue) {
+                const minSize = props.minSizes?.at(index);
+                if (minSize) {
+                    style.minHeight = minSize - subtractHandleSize;
+                }
             }
-            if (sizes[index] < toggleVisibilityValue && isCollapsed === false) {
-                style.minHeight = effectiveMinSize;
-            }
-            if (sizes[index] < toggleVisibilityValue) {
+
+            if (sizes[index] < minSizesToggleVisibilityValue && props.minSizes?.at(index)) {
                 style.maxHeight = 0;
+            } else if (props.visible?.at(index) === false) {
+                style.maxHeight = 0;
+            } else {
+                style.maxHeight = undefined;
             }
         }
 
