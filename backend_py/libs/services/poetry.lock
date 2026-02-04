@@ -560,21 +560,21 @@ packaging = "*"
 
 [[package]]
 name = "fmu-datamodels"
-version = "0.14.0"
+version = "0.18.1"
 description = "FMU data standard, including models and schemas"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "fmu_datamodels-0.14.0-py3-none-any.whl", hash = "sha256:bca37b0a7297eee6062bdd21ffce0141f8d29b87689d961d725bf44b1676ea1e"},
-    {file = "fmu_datamodels-0.14.0.tar.gz", hash = "sha256:bfef13c8921098c5ef79115f0a281908fcbc7cd22d9288bf252eb2ebdcbceaec"},
+    {file = "fmu_datamodels-0.18.1-py3-none-any.whl", hash = "sha256:c4e92f3f63e29c7cea65a8bce06f2a0bc0f6a6a17c40cbb5610ca0079402c012"},
+    {file = "fmu_datamodels-0.18.1.tar.gz", hash = "sha256:c1a2e445a13bc7208531ec1c4d55788e9f68b6340bcd9ce8ebfc1b0ef6f78977"},
 ]
 
 [package.dependencies]
 pydantic = "*"
 
 [package.extras]
-dev = ["coverage (>=4.1)", "hypothesis", "mypy", "pytest", "pytest-cov", "pytest-mock", "pytest-runner", "pytest-xdist", "ruff", "xtgeo (>=2.16)"]
+dev = ["coverage (>=4.1)", "hypothesis", "mypy", "pyarrow", "pyarrow-stubs", "pytest", "pytest-cov", "pytest-mock", "pytest-runner", "pytest-xdist", "ruff", "xtgeo (>=2.16)"]
 docs = ["pydocstyle"]
 
 [[package]]
@@ -2797,4 +2797,4 @@ tests = ["coverage (>=4.1)", "mypy", "pylint", "pytest", "pytest-cov", "pytest-m
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "fe10bc409325bfd168db27a72212d18386cdfe34e3241a8e32f25b82c78bf5c9"
+content-hash = "a489bd66b43dc5f39af7218bb2abb9ac2068abac56fbbb133f770bf0bb66995c"
