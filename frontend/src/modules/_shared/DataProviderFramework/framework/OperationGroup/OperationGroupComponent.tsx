@@ -7,6 +7,7 @@ import { Actions } from "../../Actions";
 import { SortableListGroup } from "../../components/group";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
+import { MultiDataProviderOperation } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { isDataProvider } from "../DataProvider/DataProvider";
 import { EditName } from "../utilityComponents/EditName";
@@ -16,46 +17,65 @@ import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
-import type { DeltaGroup } from "./DeltaGroup";
+import { OperationGroupTopic, type OperationGroup } from "./OperationGroup";
 
-export type DeltaGroupComponentProps = {
-    deltaGroup: DeltaGroup;
+export type OperationGroupComponentProps = {
+    operationGroup: OperationGroup;
     makeActionsForGroup: (group: ItemGroup) => ActionGroup[];
     onActionClick?: (actionIdentifier: string, group: ItemGroup) => void;
 };
 
-export function DeltaGroupComponent(props: DeltaGroupComponentProps): React.ReactNode {
+export function OperationGroupComponent(props: OperationGroupComponentProps): React.ReactNode {
     const { makeActionsForGroup } = props;
 
-    const children = usePublishSubscribeTopicValue(props.deltaGroup.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
-    const isExpanded = usePublishSubscribeTopicValue(props.deltaGroup.getItemDelegate(), ItemDelegateTopic.EXPANDED);
-    const color = props.deltaGroup.getGroupDelegate().getColor();
+    const children = usePublishSubscribeTopicValue(
+        props.operationGroup.getGroupDelegate(),
+        GroupDelegateTopic.CHILDREN,
+    );
+    const isExpanded = usePublishSubscribeTopicValue(
+        props.operationGroup.getItemDelegate(),
+        ItemDelegateTopic.EXPANDED,
+    );
+    const operation = usePublishSubscribeTopicValue(props.operationGroup, OperationGroupTopic.OPERATION);
+
+    const color = props.operationGroup.getGroupDelegate().getColor();
 
     const actions = React.useMemo(() => {
-        return makeActionsForGroup(props.deltaGroup);
-    }, [props.deltaGroup, makeActionsForGroup]);
+        return makeActionsForGroup(props.operationGroup);
+    }, [props.operationGroup, makeActionsForGroup]);
 
     function handleActionClick(actionIdentifier: string) {
         if (props.onActionClick) {
-            props.onActionClick(actionIdentifier, props.deltaGroup);
+            props.onActionClick(actionIdentifier, props.operationGroup);
         }
     }
 
     function makeEndAdornment() {
         const adornment: React.ReactNode[] = [];
-        if (props.deltaGroup.getGroupDelegate().findChildren((item) => isDataProvider(item)).length < 2) {
+        if (props.operationGroup.getGroupDelegate().findChildren((item) => isDataProvider(item)).length < 2) {
             adornment.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
         }
-        adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.deltaGroup} />);
-        adornment.push(<RemoveItemButton key="remove" item={props.deltaGroup} />);
+        adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.operationGroup} />);
+        adornment.push(<RemoveItemButton key="remove" item={props.operationGroup} />);
         return adornment;
+    }
+
+    function makePlaceholder() {
+        switch (operation) {
+            case MultiDataProviderOperation.DELTA:
+                return "Drag two or more data providers of the same type inside to calculate the difference between them.";
+            default: {
+                const _exhaustiveCheck: never = operation;
+                return _exhaustiveCheck;
+            }
+        }
     }
 
     return (
         <SortableListGroup
-            key={props.deltaGroup.getItemDelegate().getId()}
-            id={props.deltaGroup.getItemDelegate().getId()}
-            title={<EditName item={props.deltaGroup} />}
+            key={props.operationGroup.getItemDelegate().getId()}
+            id={props.operationGroup.getItemDelegate().getId()}
+            title={<EditName item={props.operationGroup} />}
             contentStyle={{
                 backgroundColor: color ?? undefined,
             }}
@@ -64,15 +84,11 @@ export function DeltaGroupComponent(props: DeltaGroupComponentProps): React.Reac
             }}
             startAdornment={
                 <div className="flex items-center gap-2">
-                    <VisibilityToggle item={props.deltaGroup} />
+                    <VisibilityToggle item={props.operationGroup} />
                 </div>
             }
             endAdornment={<>{makeEndAdornment()}</>}
-            contentWhenEmpty={
-                <EmptyContent>
-                    Drag two or more data providers of the same type inside to calculate the difference between them.
-                </EmptyContent>
-            }
+            contentWhenEmpty={<EmptyContent>{makePlaceholder()}</EmptyContent>}
             expanded={isExpanded}
         >
             {children.map((child: Item) =>

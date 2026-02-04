@@ -35,12 +35,13 @@ import { ContextBoundary } from "@modules/_shared/DataProviderFramework/framewor
 import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
-import { DeltaGroup } from "@modules/_shared/DataProviderFramework/framework/DeltaGroup/DeltaGroup";
 import { DeltaSurface } from "@modules/_shared/DataProviderFramework/framework/DeltaSurface/DeltaSurface";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
+import { OperationGroup } from "@modules/_shared/DataProviderFramework/framework/OperationGroup/OperationGroup";
 import { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { MultiDataProviderOperation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -68,7 +69,9 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 );
                 return;
             case "delta":
-                groupDelegate.prependChild(new DeltaGroup("Delta group", props.dataProviderManager));
+                groupDelegate.prependChild(
+                    new OperationGroup("Delta group", MultiDataProviderOperation.DELTA, props.dataProviderManager),
+                );
                 return;
             case "context-boundary":
                 groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));

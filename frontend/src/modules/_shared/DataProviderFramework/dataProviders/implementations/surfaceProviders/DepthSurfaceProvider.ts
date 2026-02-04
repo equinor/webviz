@@ -14,10 +14,13 @@ import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
-import type {
-    CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
-    FetchDataParams,
+import {
+    beforeFetchHandler,
+    MultiDataProviderOperation,
+    type BeforeFetchParams,
+    type CustomDataProviderImplementationWithOperations,
+    type DataProviderInformationAccessors,
+    type FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
@@ -25,7 +28,6 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 
@@ -60,7 +62,13 @@ export type SurfaceProviderArgs = {
 };
 
 export class DepthSurfaceProvider
-    implements CustomDataProviderImplementation<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>
+    implements
+        CustomDataProviderImplementationWithOperations<
+            DepthSurfaceSettings,
+            SurfaceData,
+            MultiDataProviderOperation.DELTA,
+            SurfaceStoredData
+        >
 {
     settings = surfaceSettings;
 
@@ -314,4 +322,14 @@ export class DepthSurfaceProvider
 
         return promise as Promise<SurfaceData>;
     }
+
+    operationHandlers = {
+        [MultiDataProviderOperation.DELTA]: beforeFetchHandler<SurfaceData, DepthSurfaceSettings, SurfaceStoredData>(
+            (params) => {
+                return this.fetchDeltaData(params);
+            },
+        ),
+    };
+
+    private fetchDeltaData(params: BeforeFetchParams<DepthSurfaceSettings, SurfaceStoredData>): Promise<SurfaceData> {}
 }

@@ -19,6 +19,7 @@ import {
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
+    MultiDataProviderOperation,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { Item } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
@@ -42,6 +43,7 @@ export enum DataProviderStatus {
     ERROR = "ERROR",
     INVALID_SETTINGS = "INVALID_SETTINGS",
     SUCCESS = "SUCCESS",
+    AWAITING_OPERATION = "AWAITING_OPERATION",
 }
 
 export type DataProviderPayloads<TData> = {
@@ -176,6 +178,10 @@ export class DataProvider<
         );
     }
 
+    getSupportedOperations(): MultiDataProviderOperation[] {
+        return [];
+    }
+
     getRevisionNumber(): number {
         return this._revisionNumber;
     }
@@ -239,6 +245,10 @@ export class DataProvider<
             // still require a rerender of the data provider.
             if (this._status === DataProviderStatus.SUCCESS) {
                 this.incrementRevisionNumber();
+                return;
+            }
+            if (this._isSubordinated) {
+                this.setStatus(DataProviderStatus.AWAITING_OPERATION);
                 return;
             }
             this.setStatus(DataProviderStatus.SUCCESS);
@@ -403,6 +413,7 @@ export class DataProvider<
         }
 
         if (this._isSubordinated) {
+            this.setStatus(DataProviderStatus.AWAITING_OPERATION);
             return;
         }
 
