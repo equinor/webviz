@@ -60,7 +60,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
             <ModulesList workbench={props.workbench} onClose={handleOnClose} />
             <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
             <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
-            <ColorPaletteSettings workbench={props.workbench} />
+            <ColorPaletteSettings workbench={props.workbench} onClose={handleOnClose} />
             <Dialog
                 open={dialogOpen}
                 onClose={handleDialogCloseClick}

@@ -14,6 +14,7 @@ import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorPaletteSettingsProps = {
     workbench: Workbench;
+    onClose: () => void;
 };
 
 export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props) => {
@@ -55,6 +56,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
             title="Color palette settings"
             icon={<Palette />}
             visible={drawerContent === RightDrawerContent.ColorPaletteSettings}
+            onClose={props.onClose}
         >
             <div className="flex flex-col gap-2 m-2">
                 <Label text="Categorical colors">
