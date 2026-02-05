@@ -1,13 +1,10 @@
-import type React from "react";
+import React from "react";
 
-import { Dropdown, MenuButton } from "@mui/base";
-import { ChevronLeft, ChevronRight, ExpandMore, Settings, WarningRounded } from "@mui/icons-material";
+import { ChevronLeft, ChevronRight, Settings, WarningRounded } from "@mui/icons-material";
 
 import { useModuleWarning } from "@framework/internal/hooks/useModuleWarning";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Menu } from "@lib/components/Menu";
-import { MenuItem } from "@lib/components/MenuItem";
 import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -36,6 +33,43 @@ type SettingConfig = {
     icon: React.ReactElement;
 };
 
+type SettingTabDividerProps = {
+    visible: boolean;
+};
+
+function SettingTabDivider(props: SettingTabDividerProps): React.ReactNode {
+    return <div className={resolveClassNames("w-px h-1/2", props.visible ? "bg-slate-300" : "bg-transparent")} />;
+}
+
+type SettingTabProps = {
+    config: SettingConfig;
+    isActive: boolean;
+    onClick: () => void;
+    onMouseEnter: () => void;
+    onMouseLeave: () => void;
+};
+
+const SettingTab: React.FC<SettingTabProps> = (props) => {
+    return (
+        <Tooltip title={props.config.title} placement="bottom">
+            <button
+                onClick={props.onClick}
+                onMouseEnter={props.onMouseEnter}
+                onMouseLeave={props.onMouseLeave}
+                className={resolveClassNames(
+                    "relative flex items-center justify-center h-full px-2 transition-colors",
+                    {
+                        "bg-white rounded-t-xl": props.isActive,
+                        "hover:bg-slate-200 cursor-pointer": !props.isActive,
+                    },
+                )}
+            >
+                {props.config.icon}
+            </button>
+        </Tooltip>
+    );
+};
+
 type ModuleSettingsHeaderProps = {
     activeModuleInstance: ModuleInstance<any, any> | undefined;
     activeSetting: string | null;
@@ -47,6 +81,8 @@ type ModuleSettingsHeaderProps = {
 };
 
 export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props) => {
+    const [hoveredTabIndex, setHoveredTabIndex] = React.useState<number | null>(null);
+
     const settingKeys = Object.keys(props.availableSettings);
     const activeSettingConfig = props.activeSetting ? props.availableSettings[props.activeSetting] : undefined;
 
@@ -60,47 +96,38 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
         }
     }
 
-    function makeSettingsIcon() {
-        // No settings or no active setting — show default gear icon (non-interactive)
-        if (settingKeys.length === 0 || !activeSettingConfig) {
+    function makeSettingsTabs() {
+        if (settingKeys.length === 0) {
             return (
-                <div className="p-1">
+                <div className="flex items-center justify-center h-full px-2">
                     <Settings fontSize="small" />
                 </div>
             );
         }
 
-        // Single setting — show its icon (non-interactive, no dropdown)
-        if (settingKeys.length === 1) {
-            return (
-                <Tooltip title={activeSettingConfig.title} placement="bottom">
-                    <div className="p-1">{activeSettingConfig.icon}</div>
-                </Tooltip>
-            );
-        }
-
-        // Multiple settings — dropdown to select
         return (
-            <Dropdown>
-                <Tooltip title="Select settings view" placement="bottom">
-                    <MenuButton className="flex items-center gap-1 rounded-sm p-1 hover:bg-blue-200 focus:outline-blue-600">
-                        {activeSettingConfig.icon}
-                        <ExpandMore fontSize="small" />
-                    </MenuButton>
-                </Tooltip>
-                <Menu anchorOrigin="bottom-start">
-                    {settingKeys.map((key) => (
-                        <MenuItem
-                            key={key}
-                            onClick={() => props.onSettingChange(key)}
-                            disabled={key === props.activeSetting}
-                        >
-                            {props.availableSettings[key].icon}
-                            <span>{props.availableSettings[key].title}</span>
-                        </MenuItem>
-                    ))}
-                </Menu>
-            </Dropdown>
+            <div className="flex h-full items-center" onMouseLeave={() => setHoveredTabIndex(null)}>
+                {settingKeys.map((key, index) => {
+                    const isActive = key === props.activeSetting;
+                    const isNextActive = settingKeys.at(index + 1) === props.activeSetting;
+                    const isHovered = hoveredTabIndex === index;
+                    const isNextHovered = hoveredTabIndex === index + 1;
+                    const showDividerAfter = !isActive && !isHovered && !isNextActive && !isNextHovered;
+
+                    return (
+                        <React.Fragment key={key}>
+                            <SettingTab
+                                config={props.availableSettings[key]}
+                                isActive={isActive}
+                                onClick={() => props.onSettingChange(key)}
+                                onMouseEnter={() => setHoveredTabIndex(index)}
+                                onMouseLeave={() => setHoveredTabIndex(null)}
+                            />
+                            <SettingTabDivider visible={showDividerAfter} />
+                        </React.Fragment>
+                    );
+                })}
+            </div>
         );
     }
 
@@ -120,7 +147,7 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
 
         return (
             <>
-                {makeSettingsIcon()}
+                {makeSettingsTabs()}
                 <span
                     title={activeModuleTitle ?? undefined}
                     className={resolveClassNames(
@@ -153,9 +180,7 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
 
     return (
         <div className="flex flex-col">
-            <div className="flex items-center bg-slate-100 h-10 shadow-sm gap-2 py-2 pr-2 pl-1">
-                {makeHeaderContent()}
-            </div>
+            <div className="flex items-center bg-slate-100 h-10 shadow-sm gap-2 pr-2">{makeHeaderContent()}</div>
             {!props.isCollapsed && isWarningVisible && warningText && (
                 <WarningBanner text={warningText} onDismiss={dismissWarning} />
             )}
