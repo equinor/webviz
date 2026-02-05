@@ -139,102 +139,6 @@ export type FetchDataParams<
     onFetchCancelOrFinish: (callback: () => void) => void;
 } & DataProviderInformationAccessors<TSettings, TData, TStoredData>;
 
-type MultiProviderFetchParamsBase = {
-    /**
-     * Set progress message for the delta group.
-     */
-    setProgressMessage: (message: string | null) => void;
-
-    /**
-     * Access to global settings.
-     */
-    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T] | null;
-
-    /**
-     * Access to the workbench session.
-     */
-    getWorkbenchSession: () => WorkbenchSession;
-
-    /**
-     * Access to the workbench settings.
-     */
-    getWorkbenchSettings: () => WorkbenchSettings;
-};
-
-export type BeforeFetchParams<
-    TSettings extends Settings,
-    TStoredData extends StoredData,
-> = MultiProviderFetchParamsBase & {
-    /**
-     * Array of settings from each child provider in the group.
-     * Order matches the order of children in the group.
-     */
-    childrenSettings: Array<{
-        settings: MakeSettingTypesMap<TSettings>;
-        storedData: NullableStoredData<TStoredData>;
-    }>;
-
-    /**
-     * Fetch data using Tanstack Query client.
-     */
-    fetchQuery: <
-        TQueryFnData = unknown,
-        TError = DefaultError,
-        TData = TQueryFnData,
-        TQueryKey extends QueryKey = QueryKey,
-    >(
-        options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
-    ) => Promise<TData>;
-
-    /**
-     * Called when fetch is cancelled or finished.
-     */
-    onFetchCancelOrFinish: (callback: () => void) => void;
-};
-
-export type AfterFetchParams<
-    TData,
-    TSettings extends Settings,
-    TStoredData extends StoredData,
-> = MultiProviderFetchParamsBase & {
-    results: {
-        settings: MakeSettingTypesMap<TSettings>;
-        storedData: NullableStoredData<TStoredData>;
-        data: TData;
-    }[];
-};
-
-type OperationHandler<TData, TSettings extends Settings, TStoredData extends StoredData> =
-    | {
-          entryPoint: "beforeFetch";
-          operation: (params: BeforeFetchParams<TSettings, TStoredData>) => Promise<TData>;
-      }
-    | {
-          entryPoint: "afterFetch";
-          operation: (params: AfterFetchParams<TData, TSettings, TStoredData>) => Promise<TData>;
-      };
-
-type OperationHandlers<
-    TData,
-    TSettings extends Settings,
-    TStoredData extends StoredData,
-    TOperations extends MultiDataProviderOperation,
-> = {
-    [K in TOperations]: OperationHandler<TData, TSettings, TStoredData>;
-};
-
-export function beforeFetchHandler<TData, TSettings extends Settings, TStoredData extends StoredData>(
-    operation: (params: BeforeFetchParams<TSettings, TStoredData>) => Promise<TData>,
-): OperationHandler<TData, TSettings, TStoredData> {
-    return { entryPoint: "beforeFetch", operation };
-}
-
-export function afterFetchHandler<TData, TSettings extends Settings, TStoredData extends StoredData>(
-    operation: (params: AfterFetchParams<TData, TSettings, TStoredData>) => Promise<TData>,
-): OperationHandler<TData, TSettings, TStoredData> {
-    return { entryPoint: "afterFetch", operation };
-}
-
 export interface CustomDataProviderImplementation<
     TSettings extends Settings,
     TData,
@@ -305,16 +209,4 @@ export interface CustomDataProviderImplementation<
      * @returns true if the settings are valid, false otherwise.
      */
     areCurrentSettingsValid?: (args: AreSettingsValidArgs<TSettings, TData, TStoredData>) => boolean;
-}
-
-export interface CustomDataProviderImplementationWithOperations<
-    TSettings extends Settings,
-    TData,
-    TSupportedOperations extends MultiDataProviderOperation,
-    TStoredData extends StoredData = Record<string, never>,
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData,
-> extends CustomDataProviderImplementation<TSettings, TData, TStoredData, TSettingTypes, TSettingKey, TStoredDataKey> {
-    operationHandlers: OperationHandlers<TData, TSettings, TStoredData, TSupportedOperations>;
 }

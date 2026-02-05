@@ -6,11 +6,25 @@ import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunct
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegateTopic, SettingsContextStatus } from "../../delegates/SettingsContextDelegate";
-import type { MultiDataProviderOperation } from "../../interfacesAndTypes/customDataProviderImplementation";
+import { SharedSettingsDelegate, SharedSettingsDelegateTopic } from "../../delegates/SharedSettingsDelegate";
+import type {
+    CustomOperationGroupImplementation,
+    DataProviderImplementation,
+    Operation,
+} from "../../interfacesAndTypes/customOperationGroupImplementation";
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
-import { SerializedType, type SerializedOperationGroup } from "../../interfacesAndTypes/serialization";
+import {
+    SerializedType,
+    type SerializedOperationGroup,
+    type SerializedSettingsState,
+} from "../../interfacesAndTypes/serialization";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { OperationGroupType } from "../../operationGroups/operationGroupTypes";
+import type { Settings } from "../../settings/settingsDefinitions";
 import { DataProvider } from "../DataProvider/DataProvider";
-import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
+import { DataProviderManagerTopic, type DataProviderManager } from "../DataProviderManager/DataProviderManager";
+import type { SettingManager } from "../SettingManager/SettingManager";
+import { makeSettings } from "../utils/makeSettings";
 
 export enum OperationGroupTopic {
     OPERATION = "operation",
@@ -29,22 +43,47 @@ export enum OperationGroupStatus {
 }
 
 export type OperationGroupPayloads = {
-    [OperationGroupTopic.OPERATION]: MultiDataProviderOperation;
+    [OperationGroupTopic.OPERATION]: Operation;
     [OperationGroupTopic.STATUS]: OperationGroupStatus;
     [OperationGroupTopic.PROGRESS_MESSAGE]: string | null;
 };
 
-export class OperationGroup implements ItemGroup, PublishSubscribe<OperationGroupPayloads> {
+export type OperationGroupParams<
+    TData,
+    TSupportedDataProviderImplementations extends DataProviderImplementation[],
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+> = {
+    dataProviderManager: DataProviderManager;
+    operation: Operation;
+    operationGroupType: OperationGroupType;
+    customOperationGroupImplementation: CustomOperationGroupImplementation<
+        TData,
+        TSupportedDataProviderImplementations,
+        TSettings,
+        TSettingTypes
+    >;
+};
+
+export class OperationGroup<
+        TData,
+        TSettings extends Settings = [],
+        TSupportedDataProviderImplementations extends DataProviderImplementation[] = [],
+        TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+        TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+    >
+    implements ItemGroup, PublishSubscribe<OperationGroupPayloads>
+{
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
-
+    private _sharedSettingsDelegate: SharedSettingsDelegate<TSettings, TSettingTypes, TSettingKey> | null = null;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<OperationGroupPayloads>();
 
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
     private _childrenDataProviderSet: Set<DataProvider<any, any>> = new Set();
 
-    private _operation: MultiDataProviderOperation;
+    private _operation: Operation;
     private _status: OperationGroupStatus = OperationGroupStatus.IDLE;
 
     private _error: StatusMessage | string | null = null;
@@ -57,12 +96,31 @@ export class OperationGroup implements ItemGroup, PublishSubscribe<OperationGrou
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
 
-    constructor(name: string, operation: MultiDataProviderOperation, dataProviderManager: DataProviderManager) {
-        this._itemDelegate = new ItemDelegate(name, 1, dataProviderManager);
+    constructor(params: OperationGroupParams<TData, TSupportedDataProviderImplementations, TSettings, TSettingTypes>) {
+        const { dataProviderManager, operation, customOperationGroupImplementation } = params;
+
+        this._itemDelegate = new ItemDelegate(customOperationGroupImplementation.getName(), 1, dataProviderManager);
         this._groupDelegate = new GroupDelegate(this);
         this._operation = operation;
         this._scopedQueryController = new ScopedQueryController(dataProviderManager.getQueryClient());
 
+        if (customOperationGroupImplementation.settings.length > 0) {
+            this._sharedSettingsDelegate = new SharedSettingsDelegate<TSettings, TSettingTypes, TSettingKey>(
+                this,
+                makeSettings<TSettings, TSettingTypes, TSettingKey>(
+                    customOperationGroupImplementation.settings as unknown as TSettings,
+                    customOperationGroupImplementation.getDefaultSettingsValues?.() ?? {},
+                ),
+            );
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "shared-settings",
+                this._sharedSettingsDelegate
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(SharedSettingsDelegateTopic.SETTINGS_CHANGED)(() =>
+                    this.handleSettingsChange(),
+                ),
+            );
+        }
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "children",
             this._groupDelegate.getPublishSubscribeDelegate().makeSubscriberFunction(GroupDelegateTopic.CHILDREN)(
@@ -73,12 +131,27 @@ export class OperationGroup implements ItemGroup, PublishSubscribe<OperationGrou
         );
     }
 
+    handleSettingsChange() {
+        this._itemDelegate.getDataProviderManager().publishTopic(DataProviderManagerTopic.DATA_REVISION);
+    }
+
     getItemDelegate(): ItemDelegate {
         return this._itemDelegate;
     }
 
     getGroupDelegate(): GroupDelegate {
         return this._groupDelegate;
+    }
+
+    getSharedSettingsDelegate(): SharedSettingsDelegate<TSettings, TSettingTypes, TSettingKey> | null {
+        return this._sharedSettingsDelegate;
+    }
+
+    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K> } {
+        if (!this._sharedSettingsDelegate) {
+            throw new Error("Group does not have shared settings.");
+        }
+        return this._sharedSettingsDelegate.getWrappedSettings();
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<OperationGroupPayloads> {
@@ -99,24 +172,27 @@ export class OperationGroup implements ItemGroup, PublishSubscribe<OperationGrou
         return snapshotGetter;
     }
 
-    deserializeState(serialized: SerializedOperationGroup): void {
+    deserializeState(serialized: SerializedOperationGroup<TSettings, TSettingKey>): void {
         this._itemDelegate.deserializeState(serialized);
         this._groupDelegate.deserializeChildren(serialized.children);
+        this._sharedSettingsDelegate?.deserializeSettings(serialized.settings);
         this.handleChildrenChange();
     }
 
-    serializeState(): SerializedOperationGroup {
+    serializeState(): SerializedOperationGroup<TSettings, TSettingKey> {
         return {
             ...this._itemDelegate.serializeState(),
             type: SerializedType.OPERATION_GROUP,
             operation: this._operation,
+            settings:
+                this._sharedSettingsDelegate?.serializeSettings() ??
+                ({} as SerializedSettingsState<TSettings, TSettingKey>),
             children: this.getGroupDelegate().serializeChildren(),
         };
     }
 
-    setOperation(operation: MultiDataProviderOperation): void {
+    setOperation(operation: Operation): void {
         this._operation = operation;
-        this.checkIfChildrenSupportOperation();
     }
 
     getError(): StatusMessage | string | null {
@@ -151,40 +227,6 @@ export class OperationGroup implements ItemGroup, PublishSubscribe<OperationGrou
         }
     }
 
-    private checkIfChildrenSupportOperation(): void {
-        for (const child of this._groupDelegate.getChildren()) {
-            if (!(child instanceof DataProvider)) {
-                this._isOperationSupportedByAllChildren = false;
-                return;
-            }
-
-            if (!child.getSupportedOperations().includes(this._operation)) {
-                this._isOperationSupportedByAllChildren = false;
-                return;
-            }
-        }
-
-        this._isOperationSupportedByAllChildren = true;
-    }
-
-    private checkIfChildrenOfSameType(): void {
-        const children = this._groupDelegate.getChildren();
-        if (children.length === 0) {
-            this._areChildrenOfSameType = true;
-            return;
-        }
-
-        const firstChildType = children[0].constructor.name;
-        for (const child of children) {
-            if (child.constructor.name !== firstChildType) {
-                this._areChildrenOfSameType = false;
-                return;
-            }
-        }
-
-        this._areChildrenOfSameType = true;
-    }
-
     private handleChildrenChange(): void {
         this.clear();
 
@@ -204,9 +246,6 @@ export class OperationGroup implements ItemGroup, PublishSubscribe<OperationGrou
                 );
             }
         }
-
-        this.checkIfChildrenSupportOperation();
-        this.checkIfChildrenOfSameType();
     }
 
     private handleSettingsAndStoredDataChange(): void {

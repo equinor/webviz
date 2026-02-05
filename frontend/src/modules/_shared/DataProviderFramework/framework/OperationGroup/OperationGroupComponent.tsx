@@ -7,7 +7,7 @@ import { Actions } from "../../Actions";
 import { SortableListGroup } from "../../components/group";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { MultiDataProviderOperation } from "../../interfacesAndTypes/customDataProviderImplementation";
+import { Operation } from "../../interfacesAndTypes/customOperationGroupImplementation";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { isDataProvider } from "../DataProvider/DataProvider";
 import { EditName } from "../utilityComponents/EditName";
@@ -20,7 +20,7 @@ import { makeSortableListItemComponent } from "../utils/makeSortableListItemComp
 import { OperationGroupTopic, type OperationGroup } from "./OperationGroup";
 
 export type OperationGroupComponentProps = {
-    operationGroup: OperationGroup;
+    operationGroup: OperationGroup<any, any, any>;
     makeActionsForGroup: (group: ItemGroup) => ActionGroup[];
     onActionClick?: (actionIdentifier: string, group: ItemGroup) => void;
 };
@@ -62,7 +62,7 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
 
     function makePlaceholder() {
         switch (operation) {
-            case MultiDataProviderOperation.DELTA:
+            case Operation.DELTA:
                 return "Drag two or more data providers of the same type inside to calculate the difference between them.";
             default: {
                 const _exhaustiveCheck: never = operation;

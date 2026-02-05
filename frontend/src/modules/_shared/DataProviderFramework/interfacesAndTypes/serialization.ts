@@ -1,9 +1,10 @@
 import type { ColorScaleSerialization } from "@lib/utils/ColorScale";
 
 import type { GroupType } from "../groups/groupTypes";
+import type { OperationGroupType } from "../operationGroups/operationGroupTypes";
 import type { Setting, Settings } from "../settings/settingsDefinitions";
 
-import type { MultiDataProviderOperation } from "./customDataProviderImplementation";
+import type { Operation } from "./customOperationGroupImplementation";
 import type { SettingsKeysFromTuple } from "./utils";
 
 // The following interfaces/types are used to define the structure of the serialized state of the respective items in the data provider framework.
@@ -81,8 +82,13 @@ export interface SerializedDeltaSurface extends SerializedItem {
     children: SerializedItem[];
 }
 
-export interface SerializedOperationGroup extends SerializedItem {
+export interface SerializedOperationGroup<
+    TSettings extends Settings,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+> extends SerializedItem {
     type: SerializedType.OPERATION_GROUP;
-    operation: MultiDataProviderOperation;
+    operationGroupType: OperationGroupType;
+    operation: Operation;
+    settings: SerializedSettingsState<TSettings, TSettingKey>;
     children: SerializedItem[];
 }

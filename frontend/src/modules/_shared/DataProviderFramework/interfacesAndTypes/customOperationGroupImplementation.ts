@@ -4,13 +4,13 @@ import type { Settings } from "../settings/settingsDefinitions";
 
 import type { CustomDataProviderImplementation } from "./customDataProviderImplementation";
 import type { NullableStoredData } from "./sharedTypes";
-import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "./utils";
+import type { MakeSettingTypesMap } from "./utils";
 
 export enum Operation {
     DELTA = "DELTA",
 }
 
-type DataProviderImplementation = {
+export type DataProviderImplementation = {
     new (...params: any[]): CustomDataProviderImplementation<any, any, any>;
 };
 
@@ -83,12 +83,22 @@ export type FetchParams<TSupportedDataProviderImplementations extends DataProvid
 };
 
 export interface CustomOperationGroupImplementation<
-    TSettings extends Settings,
     TData,
     TSupportedDataProviderImplementations extends DataProviderImplementation[],
+    TSettings extends Settings = [],
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > {
+    /**
+     * The settings that this group is using/providing.
+     */
+    settings: TSettings;
+
+    /**
+     * A method that returns the default values of the settings.
+     * @returns The default values of the settings.
+     */
+    getDefaultSettingsValues?(): Partial<TSettingTypes>;
+
     supportedDataProviderImplementations: TSupportedDataProviderImplementations;
 
     getName(): string;

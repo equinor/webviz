@@ -7,9 +7,7 @@ import type {
 const SUPPORTED_DATA_PROVIDER_IMPLEMENTATIONS = [DepthSurfaceProvider];
 type SupportedDataProviderImplementations = typeof SUPPORTED_DATA_PROVIDER_IMPLEMENTATIONS;
 
-export class DeltaSurface
-    implements CustomOperationGroupImplementation<[], string, SupportedDataProviderImplementations>
-{
+export class DeltaSurface implements CustomOperationGroupImplementation<string, SupportedDataProviderImplementations> {
     supportedDataProviderImplementations = SUPPORTED_DATA_PROVIDER_IMPLEMENTATIONS;
 
     getName(): string {

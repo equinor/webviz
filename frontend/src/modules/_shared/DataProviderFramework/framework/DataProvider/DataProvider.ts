@@ -19,7 +19,6 @@ import {
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
-    MultiDataProviderOperation,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { Item } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
@@ -176,10 +175,6 @@ export class DataProvider<
                 this.handleSettingsStatusChange();
             }),
         );
-    }
-
-    getSupportedOperations(): MultiDataProviderOperation[] {
-        return [];
     }
 
     getRevisionNumber(): number {

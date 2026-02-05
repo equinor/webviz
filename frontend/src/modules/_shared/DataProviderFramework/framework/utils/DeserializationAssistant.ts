@@ -10,9 +10,9 @@ import type {
     SerializedOperationGroup,
 } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
+import { OperationGroupRegistry } from "../../operationGroups/OperationGroupRegistry/_OperationGroupRegistry";
 import { ContextBoundary } from "../ContextBoundary/ContextBoundary";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
-import { OperationGroup } from "../OperationGroup/OperationGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
 export class DeserializationAssistant {
@@ -68,13 +68,13 @@ export class DeserializationAssistant {
         }
 
         if (serialized.type === SerializedType.OPERATION_GROUP) {
-            const serializedDeltaGroup = serialized as SerializedOperationGroup;
-            const deltaGroup = new OperationGroup(
-                serializedDeltaGroup.name,
-                serializedDeltaGroup.operation,
+            const serializedOperationGroup = serialized as SerializedOperationGroup<any, any>;
+            const deltaGroup = OperationGroupRegistry.makeGroup(
+                serializedOperationGroup.operationGroupType,
+                serializedOperationGroup.operation,
                 this._dataProviderManager,
             );
-            deltaGroup.deserializeState(serializedDeltaGroup);
+            deltaGroup.deserializeState(serializedOperationGroup);
             return deltaGroup;
         }
 

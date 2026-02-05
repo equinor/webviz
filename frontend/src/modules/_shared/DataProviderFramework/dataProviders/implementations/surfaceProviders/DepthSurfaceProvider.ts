@@ -15,10 +15,7 @@ import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import {
-    beforeFetchHandler,
-    MultiDataProviderOperation,
-    type BeforeFetchParams,
-    type CustomDataProviderImplementationWithOperations,
+    type CustomDataProviderImplementation,
     type DataProviderInformationAccessors,
     type FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
@@ -62,13 +59,7 @@ export type SurfaceProviderArgs = {
 };
 
 export class DepthSurfaceProvider
-    implements
-        CustomDataProviderImplementationWithOperations<
-            DepthSurfaceSettings,
-            SurfaceData,
-            MultiDataProviderOperation.DELTA,
-            SurfaceStoredData
-        >
+    implements CustomDataProviderImplementation<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>
 {
     settings = surfaceSettings;
 
@@ -322,14 +313,4 @@ export class DepthSurfaceProvider
 
         return promise as Promise<SurfaceData>;
     }
-
-    operationHandlers = {
-        [MultiDataProviderOperation.DELTA]: beforeFetchHandler<SurfaceData, DepthSurfaceSettings, SurfaceStoredData>(
-            (params) => {
-                return this.fetchDeltaData(params);
-            },
-        ),
-    };
-
-    private fetchDeltaData(params: BeforeFetchParams<DepthSurfaceSettings, SurfaceStoredData>): Promise<SurfaceData> {}
 }
