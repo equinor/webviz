@@ -32,7 +32,12 @@ from . import schemas
 from . import dependencies
 from . import task_helpers
 
-from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
+from .surface_address import (
+    RealizationSurfaceAddress,
+    ObservedSurfaceAddress,
+    StatisticalSurfaceAddress,
+    PartialSurfaceAddress,
+)
 from .surface_address import decode_surf_addr_str
 
 

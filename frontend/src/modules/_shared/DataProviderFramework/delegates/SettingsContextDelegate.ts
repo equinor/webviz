@@ -125,6 +125,10 @@ export class SettingsContextDelegate<
         this.createDependencies();
     }
 
+    getElevatableSettings(): readonly SettingsKeysFromTuple<TSettings>[] {
+        return this._customSettingsHandler.elevatableSettings ?? [];
+    }
+
     getDataProviderManager(): DataProviderManager {
         return this._dataProviderManager;
     }

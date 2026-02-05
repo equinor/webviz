@@ -112,6 +112,7 @@ export class DataProvider<
         TSettingTypes,
         TSettingKey
     >;
+    private _customDataProviderImplementation: CustomDataProviderImplementation<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>;
     private _settingsContextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>;
     private _itemDelegate: ItemDelegate;
     private _dataProviderManager: DataProviderManager;
@@ -142,6 +143,7 @@ export class DataProvider<
         } = params;
         this._type = type;
         this._dataProviderManager = dataProviderManager;
+        this._customDataProviderImplementation = customDataProviderImplementation;
         this._settingsContextDelegate = new SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>(
             customDataProviderImplementation,
             dataProviderManager,
@@ -179,6 +181,10 @@ export class DataProvider<
 
     getRevisionNumber(): number {
         return this._revisionNumber;
+    }
+
+    getProviderImplementation(): CustomDataProviderImplementation<TSettings, TData, TStoredData, TSettingTypes, TSettingKey> {
+        return this._customDataProviderImplementation;
     }
 
     areCurrentSettingsValid(): boolean {

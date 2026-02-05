@@ -62,6 +62,7 @@ export class DepthSurfaceProvider
     implements CustomDataProviderImplementation<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>
 {
     settings = surfaceSettings;
+    elevatableSettings = [Setting.DEPTH_COLOR_SCALE, Setting.CONTOURS] as const;
 
     private _dataFormat: SurfaceDataFormat = SurfaceDataFormat.FLOAT;
 

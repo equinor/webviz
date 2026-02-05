@@ -6,7 +6,7 @@ import { isDataProvider } from "../DataProvider/DataProvider";
 import { DataProviderComponent } from "../DataProvider/DataProviderComponent";
 import { isGroup } from "../Group/Group";
 import { GroupComponent } from "../Group/GroupComponent";
-import { OperationGroup } from "../OperationGroup/OperationGroup";
+import { isOperationGroup } from "../OperationGroup/OperationGroup";
 import { OperationGroupComponent } from "../OperationGroup/OperationGroupComponent";
 import { isSharedSetting } from "../SharedSetting/SharedSetting";
 import { SharedSettingComponent } from "../SharedSetting/SharedSettingComponent";
@@ -39,7 +39,7 @@ export function makeSortableListItemComponent(
             />
         );
     }
-    if (item instanceof OperationGroup) {
+    if (isOperationGroup(item)) {
         return (
             <OperationGroupComponent
                 key={item.getItemDelegate().getId()}

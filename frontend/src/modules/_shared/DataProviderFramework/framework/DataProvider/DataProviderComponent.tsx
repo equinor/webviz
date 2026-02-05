@@ -26,6 +26,7 @@ export type DataProviderComponentProps = {
 
 export function DataProviderComponent(props: DataProviderComponentProps): React.ReactNode {
     const isExpanded = usePublishSubscribeTopicValue(props.dataProvider.getItemDelegate(), ItemDelegateTopic.EXPANDED);
+    const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
 
     function makeSetting(setting: SettingManager<any>) {
         const manager = props.dataProvider.getItemDelegate().getDataProviderManager();
@@ -38,8 +39,15 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
     }
 
     function makeSettings(settings: Record<string, SettingManager<any>>): React.ReactNode[] {
+        const elevatedSettingKeys = isSubordinated
+            ? new Set(props.dataProvider.getSettingsContextDelegate().getElevatableSettings() as string[])
+            : null;
+
         const settingNodes: React.ReactNode[] = [];
         for (const key of Object.keys(settings)) {
+            if (elevatedSettingKeys?.has(key)) {
+                continue;
+            }
             settingNodes.push(makeSetting(settings[key]));
         }
         return settingNodes;

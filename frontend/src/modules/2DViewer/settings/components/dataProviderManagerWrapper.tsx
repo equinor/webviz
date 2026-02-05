@@ -2,6 +2,7 @@ import type React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
+import { OperationGroupRegistry } from "@modules/_shared/DataProviderFramework/operationGroups/OperationGroupRegistry";
 import { Dropdown } from "@mui/base";
 import {
     Check,
@@ -43,7 +44,6 @@ import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTy
 import { Operation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customOperationGroupImplementation";
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
-import { OperationGroupRegistry } from "@modules/_shared/DataProviderFramework/operationGroups/OperationGroupRegistry/_OperationGroupRegistry";
 import { OperationGroupType } from "@modules/_shared/DataProviderFramework/operationGroups/operationGroupTypes";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 

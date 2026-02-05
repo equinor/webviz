@@ -1,7 +1,5 @@
 import type { DefaultError, FetchQueryOptions, QueryKey } from "@tanstack/query-core";
 
-import type { Settings } from "../settings/settingsDefinitions";
-
 import type { CustomDataProviderImplementation } from "./customDataProviderImplementation";
 import type { NullableStoredData } from "./sharedTypes";
 import type { MakeSettingTypesMap } from "./utils";
@@ -80,26 +78,20 @@ export type FetchParams<TSupportedDataProviderImplementations extends DataProvid
      * Called when fetch is cancelled or finished.
      */
     onFetchCancelOrFinish: (callback: () => void) => void;
+
+    /**
+     * Set progress message for the operation group.
+     */
+    setProgressMessage: (message: string | null) => void;
 };
 
 export interface CustomOperationGroupImplementation<
     TData,
     TSupportedDataProviderImplementations extends DataProviderImplementation[],
-    TSettings extends Settings = [],
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
 > {
-    /**
-     * The settings that this group is using/providing.
-     */
-    settings: TSettings;
-
-    /**
-     * A method that returns the default values of the settings.
-     * @returns The default values of the settings.
-     */
-    getDefaultSettingsValues?(): Partial<TSettingTypes>;
-
     supportedDataProviderImplementations: TSupportedDataProviderImplementations;
+
+    maxChildrenCount?: number;
 
     getName(): string;
 

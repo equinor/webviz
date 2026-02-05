@@ -95,6 +95,11 @@ export interface CustomSettingsHandler<
     settings: TSettings;
 
     /**
+     * Settings that can be elevated and shared across multiple data providers of the same type to perform cross-provider operations.
+     */
+    elevatableSettings?: readonly SettingsKeysFromTuple<TSettings>[];
+
+    /**
      * A method that returns the default values of the settings.
      * @returns The default values of the settings.
      */

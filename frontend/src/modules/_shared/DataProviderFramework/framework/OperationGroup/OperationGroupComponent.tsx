@@ -1,5 +1,10 @@
 import React from "react";
 
+import { Block, CheckCircle, Error, Rule } from "@mui/icons-material";
+
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { ActionGroup } from "../../Actions";
@@ -10,17 +15,18 @@ import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { Operation } from "../../interfacesAndTypes/customOperationGroupImplementation";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { isDataProvider } from "../DataProvider/DataProvider";
-import { EditName } from "../utilityComponents/EditName";
+import type { SettingManager } from "../SettingManager/SettingManager";
+import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
-import { OperationGroupTopic, type OperationGroup } from "./OperationGroup";
+import { OperationGroupStatus, OperationGroupTopic, type OperationGroup } from "./OperationGroup";
 
 export type OperationGroupComponentProps = {
-    operationGroup: OperationGroup<any, any, any>;
+    operationGroup: OperationGroup<any, any>;
     makeActionsForGroup: (group: ItemGroup) => ActionGroup[];
     onActionClick?: (actionIdentifier: string, group: ItemGroup) => void;
 };
@@ -37,6 +43,8 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
         ItemDelegateTopic.EXPANDED,
     );
     const operation = usePublishSubscribeTopicValue(props.operationGroup, OperationGroupTopic.OPERATION);
+    const status = usePublishSubscribeTopicValue(props.operationGroup, OperationGroupTopic.STATUS);
+    const progressMessage = usePublishSubscribeTopicValue(props.operationGroup, OperationGroupTopic.PROGRESS_MESSAGE);
 
     const color = props.operationGroup.getGroupDelegate().getColor();
 
@@ -50,8 +58,77 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
         }
     }
 
+    function makeStatus(): React.ReactNode {
+        if (status === OperationGroupStatus.LOADING) {
+            return (
+                <Tooltip title={progressMessage ?? "Loading"}>
+                    <div className="flex gap-2 min-w-0 items-center">
+                        <span className="overflow-hidden whitespace-nowrap min-w-0 text-ellipsis">
+                            {progressMessage}
+                        </span>
+                        <CircularProgress size="extra-small" />
+                    </div>
+                </Tooltip>
+            );
+        }
+        if (status === OperationGroupStatus.ERROR) {
+            const error = props.operationGroup.getError();
+            if (!error) {
+                return (
+                    <Tooltip title="Error">
+                        <Error className="text-red-700 p-0.5" fontSize="small" />
+                    </Tooltip>
+                );
+            }
+
+            if (typeof error === "string") {
+                return (
+                    <Tooltip title={error}>
+                        <div className="text-red-700 p-0.5">
+                            <Error fontSize="small" />
+                        </div>
+                    </Tooltip>
+                );
+            } else {
+                const statusMessage = error as StatusMessage;
+                return (
+                    <Tooltip title={statusMessage.message}>
+                        <Error className="text-red-700 p-0.5" fontSize="small" />
+                    </Tooltip>
+                );
+            }
+        }
+        if (status === OperationGroupStatus.CHILDREN_OF_DIFFERENT_TYPES) {
+            const errorMessage = "Children are of different types, cannot perform operation.";
+
+            return (
+                <Tooltip title={errorMessage}>
+                    <Rule className="text-red-700 p-0.5" fontSize="small" />
+                </Tooltip>
+            );
+        }
+        if (status === OperationGroupStatus.INVALID_SETTINGS) {
+            const errorMessage = "Invalid settings";
+
+            return (
+                <Tooltip title={errorMessage}>
+                    <Block className="text-red-700 p-0.5" fontSize="small" />
+                </Tooltip>
+            );
+        }
+        if (status === OperationGroupStatus.SUCCESS) {
+            return (
+                <Tooltip title="Successfully loaded">
+                    <CheckCircle className="text-green-700 p-0.5" fontSize="small" />
+                </Tooltip>
+            );
+        }
+        return null;
+    }
+
     function makeEndAdornment() {
         const adornment: React.ReactNode[] = [];
+        adornment.push(makeStatus());
         if (props.operationGroup.getGroupDelegate().findChildren((item) => isDataProvider(item)).length < 2) {
             adornment.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
         }
@@ -63,7 +140,7 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
     function makePlaceholder() {
         switch (operation) {
             case Operation.DELTA:
-                return "Drag two or more data providers of the same type inside to calculate the difference between them.";
+                return "Drag exactly two data providers of the same type inside to calculate the difference between them.";
             default: {
                 const _exhaustiveCheck: never = operation;
                 return _exhaustiveCheck;
@@ -71,11 +148,29 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
         }
     }
 
+    function makeSetting(setting: SettingManager<any>) {
+        const manager = props.operationGroup.getItemDelegate().getDataProviderManager();
+        if (!manager) {
+            return null;
+        }
+        return (
+            <SettingManagerComponent key={setting.getId()} setting={setting} manager={manager} sharedSetting={false} />
+        );
+    }
+
+    function makeSettings(settings: SettingManager<any>[]): React.ReactNode[] {
+        const settingNodes: React.ReactNode[] = [];
+        for (const setting of settings) {
+            settingNodes.push(makeSetting(setting));
+        }
+        return settingNodes;
+    }
+
     return (
         <SortableListGroup
             key={props.operationGroup.getItemDelegate().getId()}
             id={props.operationGroup.getItemDelegate().getId()}
-            title={<EditName item={props.operationGroup} />}
+            title={props.operationGroup.getItemDelegate().getName()}
             contentStyle={{
                 backgroundColor: color ?? undefined,
             }}
@@ -90,6 +185,13 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
             endAdornment={<>{makeEndAdornment()}</>}
             contentWhenEmpty={<EmptyContent>{makePlaceholder()}</EmptyContent>}
             expanded={isExpanded}
+            content={
+                props.operationGroup.getSharedSettingsDelegate() ? (
+                    <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
+                        {makeSettings(Object.values(props.operationGroup.getWrappedSettings()))}
+                    </div>
+                ) : undefined
+            }
         >
             {children.map((child: Item) =>
                 makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick),
