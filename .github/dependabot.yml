@@ -1,0 +1,109 @@
+version: 2
+updates:
+  # Frontend dependencies (npm)
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
+
+  # Python dependencies in primary service
+  - package-ecosystem: pip
+    directory: /backend_py/primary
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
+
+  # Python dependencies in user_grid3d_ri service
+  - package-ecosystem: pip
+    directory: /backend_py/user_grid3d_ri
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
+
+  # Python dependencies in user_mock service
+  - package-ecosystem: pip
+    directory: /backend_py/user_mock
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
+
+  # Python dependencies in core_utils library
+  - package-ecosystem: pip
+    directory: /backend_py/libs/core_utils
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
+
+  # Python dependencies in server_schemas library
+  - package-ecosystem: pip
+    directory: /backend_py/libs/server_schemas
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
+
+  # Python dependencies in services library
+  - package-ecosystem: pip
+    directory: /backend_py/libs/services
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
+
+  # Go dependencies
+  - package-ecosystem: gomod
+    directory: /backend_go/surface_query
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
