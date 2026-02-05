@@ -27,9 +27,6 @@ import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 type ModuleSettingsProps = {
     workbench: Workbench;
     moduleInstance: ModuleInstance<any, any>;
-    warningText?: string | null;
-    isWarningVisible?: boolean;
-    dismissWarning?: () => void;
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
@@ -110,43 +107,29 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         }
 
         return (
-            <>
-                {props.isWarningVisible && props.warningText && (
-                    <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
-                        <div className="flex flex-col">
-                            <span>
-                                <strong>Note:</strong> {props.warningText}
-                            </span>
-                            <strong className="cursor-pointer self-end" onClick={props.dismissWarning}>
-                                Close [X]
-                            </strong>
-                        </div>
-                    </div>
-                )}
-                <DebugProfiler
-                    id={`${props.moduleInstance.getId()}-settings`}
-                    source={StatusSource.Settings}
-                    statusController={props.moduleInstance.getStatusController()}
-                    guiMessageBroker={props.workbench.getGuiMessageBroker()}
-                >
-                    <Provider store={atomStore}>
-                        <HydrateQueryClientAtom>
-                            <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
-                                <Settings
-                                    settingsContext={props.moduleInstance.getContext()}
-                                    workbenchSession={props.workbench.getSessionManager().getActiveSession()}
-                                    workbenchServices={props.workbench.getWorkbenchServices()}
-                                    workbenchSettings={props.workbench
-                                        .getSessionManager()
-                                        .getActiveSession()
-                                        .getWorkbenchSettings()}
-                                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                />
-                            </ApplyInterfaceEffectsToSettings>
-                        </HydrateQueryClientAtom>
-                    </Provider>
-                </DebugProfiler>
-            </>
+            <DebugProfiler
+                id={`${props.moduleInstance.getId()}-settings`}
+                source={StatusSource.Settings}
+                statusController={props.moduleInstance.getStatusController()}
+                guiMessageBroker={props.workbench.getGuiMessageBroker()}
+            >
+                <Provider store={atomStore}>
+                    <HydrateQueryClientAtom>
+                        <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
+                            <Settings
+                                settingsContext={props.moduleInstance.getContext()}
+                                workbenchSession={props.workbench.getSessionManager().getActiveSession()}
+                                workbenchServices={props.workbench.getWorkbenchServices()}
+                                workbenchSettings={props.workbench
+                                    .getSessionManager()
+                                    .getActiveSession()
+                                    .getWorkbenchSettings()}
+                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                            />
+                        </ApplyInterfaceEffectsToSettings>
+                    </HydrateQueryClientAtom>
+                </Provider>
+            </DebugProfiler>
         );
     }
 
@@ -156,7 +139,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
                 activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
-                "flex-col h-full w-full relative",
+                "flex-col h-full w-full relative grow",
             )}
             style={{ contain: "content" }}
         >

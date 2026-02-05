@@ -16,12 +16,12 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 import { useActiveSession } from "../../ActiveSessionBoundary";
 
-type ModulesListProps = {
+type ModuleSyncSettingProps = {
     workbench: Workbench;
     visible: boolean;
 };
 
-export const SyncSettings: React.FC<ModulesListProps> = (props) => {
+export const ModuleSyncSettings: React.FC<ModuleSyncSettingProps> = (props) => {
     const dashboard = useActiveDashboard();
     const workbenchSession = useActiveSession();
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
