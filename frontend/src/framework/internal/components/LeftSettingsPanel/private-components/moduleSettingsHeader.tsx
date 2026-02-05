@@ -9,6 +9,7 @@ import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { Tooltip } from "@lib/components/Tooltip";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type WarningBannerProps = {
     text: string;
@@ -49,7 +50,7 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
     const settingKeys = Object.keys(props.availableSettings);
     const activeSettingConfig = props.activeSetting ? props.availableSettings[props.activeSetting] : undefined;
 
-    const activeModuleTitle = props.activeModuleInstance?.getTitle() ?? "No module selected";
+    const activeModuleTitle = props.activeModuleInstance?.getTitle() ?? null;
 
     const { warningText, isWarningVisible, dismissWarning, showWarning } = useModuleWarning(props.activeModuleInstance);
 
@@ -121,10 +122,13 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
             <>
                 {makeSettingsIcon()}
                 <span
-                    title={activeModuleTitle}
-                    className="font-bold grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm"
+                    title={activeModuleTitle ?? undefined}
+                    className={resolveClassNames(
+                        "grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm self-center",
+                        { "italic text-gray-500": !activeModuleTitle, "font-bold": !!activeModuleTitle },
+                    )}
                 >
-                    {activeModuleTitle}
+                    {activeModuleTitle ?? "No module selected"}
                 </span>
                 {warningText && (
                     <Tooltip
