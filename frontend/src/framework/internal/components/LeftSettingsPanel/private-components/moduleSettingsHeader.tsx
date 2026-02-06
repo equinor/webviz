@@ -59,7 +59,7 @@ const SettingTab: React.FC<SettingTabProps> = (props) => {
                 className={resolveClassNames(
                     "relative flex items-center justify-center h-full px-2 transition-colors",
                     {
-                        "bg-white rounded-t-xl inset-shadow": props.isActive,
+                        "bg-white rounded-t-xl pb-2 -mb-2": props.isActive,
                         "hover:bg-slate-200 hover:rounded-t-xl cursor-pointer": !props.isActive,
                     },
                 )}
@@ -180,7 +180,7 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
 
     return (
         <div className="flex flex-col">
-            <div className="flex items-center bg-slate-100 h-10 gap-2 pr-2">{makeHeaderContent()}</div>
+            <div className="flex items-center bg-slate-100 h-10 gap-2 pr-2 shadow-sm">{makeHeaderContent()}</div>
             {!props.isCollapsed && isWarningVisible && warningText && (
                 <WarningBanner text={warningText} onDismiss={dismissWarning} />
             )}
