@@ -23,7 +23,7 @@ export type SettingAttributes = {
     enabled: boolean;
 };
 
-export interface UpdateFunc<
+export interface HelperUpdateFunc<
     TReturnValue,
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
@@ -34,8 +34,16 @@ export interface UpdateFunc<
         getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
         getHelperDependency: GetHelperDependency<TSettings, TSettingTypes, TKey>;
         abortSignal: AbortSignal;
-    }): TReturnValue | NoUpdate;
+        statusWriter: StatusWriter;
+    }): TReturnValue;
 }
+
+export type UpdateFunc<
+    TReturnValue,
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>,
+> = HelperUpdateFunc<TReturnValue | NoUpdate, TSettings, TSettingTypes, TKey>;
 
 export interface DefineBasicDependenciesArgs<
     TSettings extends Settings,
@@ -51,15 +59,9 @@ export interface DefineBasicDependenciesArgs<
         update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>,
     ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>;
     helperDependency: <T>(
-        update: (args: {
-            getLocalSetting: <T extends TKey>(settingName: T) => TSettingTypes[T];
-            getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-            getHelperDependency: <TDep>(
-                helperDependency: Dependency<TDep, TSettings, TSettingTypes, TKey>,
-            ) => Awaited<TDep> | null;
-            abortSignal: AbortSignal;
-        }) => T,
+        update: HelperUpdateFunc<T, TSettings, TSettingTypes, TKey>,
     ) => Dependency<T, TSettings, TSettingTypes, TKey>;
+
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     queryClient: QueryClient;

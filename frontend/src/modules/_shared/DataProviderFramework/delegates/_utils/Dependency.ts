@@ -6,6 +6,8 @@ import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler"
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
 
+import { DependencyStatusWriter } from "./DependencyStatusWriter";
+
 class DependencyLoadingError extends Error {}
 
 export const NO_UPDATE = Symbol("NO_UPDATE");
@@ -51,6 +53,8 @@ export class Dependency<
     private _numParentDependencies = 0;
     private _numChildDependencies = 0;
 
+    private _statusWriter = new DependencyStatusWriter();
+
     constructor(
         localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>,
         globalSettingGetter: <K extends keyof GlobalSettings>(key: K) => GlobalSettings[K] | null,
@@ -77,6 +81,7 @@ export class Dependency<
     beforeDestroy() {
         this._abortController?.abort();
         this._abortController = null;
+        this._statusWriter.clear();
         this._dependencies.clear();
         this._loadingDependencies.clear();
     }
@@ -114,6 +119,14 @@ export class Dependency<
         return () => {
             this._loadingDependencies.delete(callback);
         };
+    }
+
+    getStatusMessages() {
+        return this._statusWriter.getMessages();
+    }
+
+    getStatusWriter(): DependencyStatusWriter {
+        return this._statusWriter;
     }
 
     private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] {
@@ -236,6 +249,7 @@ export class Dependency<
                 getGlobalSetting: this.getGlobalSetting,
                 getHelperDependency: this.getHelperDependency,
                 abortSignal: this._abortController.signal,
+                statusWriter: this._statusWriter,
             });
         } catch (error) {
             console.error(error);
@@ -253,6 +267,7 @@ export class Dependency<
         if (!this._isLoading) {
             this.setLoadingState(true);
         }
+
         this.callUpdateFunc();
     }
 
@@ -263,6 +278,7 @@ export class Dependency<
         }
 
         this._abortController = new AbortController();
+        this._statusWriter.clear();
 
         let newValue: Awaited<TReturnValue> | null | NoUpdate = null;
         try {
@@ -271,6 +287,7 @@ export class Dependency<
                 getGlobalSetting: this.getGlobalSetting,
                 getHelperDependency: this.getHelperDependency,
                 abortSignal: this._abortController.signal,
+                statusWriter: this._statusWriter,
             });
         } catch (e: any) {
             if (e instanceof DependencyLoadingError) {

@@ -7,6 +7,7 @@ import {
     getLogCurveDataOptions,
     getWellboreLogCurveHeadersOptions,
 } from "@api";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type {
     DataProviderInformationAccessors,
     FetchDataParams,
@@ -32,20 +33,32 @@ export const baseDiscreteSettings = [
 export function defineBaseContinuousDependencies<T extends readonly Setting[]>(args: DefineDependenciesArgs<T>) {
     const { valueConstraintsUpdater, helperDependency } = args;
 
-    const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal }) => {
+    const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal, statusWriter }) => {
         const wellboreId = getGlobalSetting("wellboreUuid");
 
         if (!wellboreId) return null;
 
-        return await args.queryClient.fetchQuery({
-            ...getWellboreLogCurveHeadersOptions({
-                query: {
-                    wellbore_uuid: wellboreId,
-                    sources: [WellLogCurveSourceEnum_api.SSDL_WELL_LOG, WellLogCurveSourceEnum_api.SMDA_SURVEY],
-                },
-                signal: abortSignal,
-            }),
-        });
+        try {
+            return await args.queryClient.fetchQuery({
+                ...getWellboreLogCurveHeadersOptions({
+                    query: {
+                        wellbore_uuid: wellboreId,
+                        sources: [WellLogCurveSourceEnum_api.SSDL_WELL_LOG, WellLogCurveSourceEnum_api.SMDA_SURVEY],
+                    },
+                    signal: abortSignal,
+                }),
+            });
+        } catch (error: any) {
+            const errorHelper = ApiErrorHelper.fromError(error);
+            if (errorHelper && errorHelper.getType() === "AuthorizationError") {
+                statusWriter.addError(
+                    `Unable to get log curves from service: no access (${errorHelper.getService()?.toUpperCase()})`,
+                );
+            }
+
+            // Rethrow to let
+            throw error;
+        }
     });
 
     valueConstraintsUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
