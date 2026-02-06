@@ -180,7 +180,7 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
 
     return (
         <div className="flex flex-col">
-            <div className="flex items-center bg-slate-100 h-10 --shadow-sm gap-2 pr-2">{makeHeaderContent()}</div>
+            <div className="flex items-center bg-slate-100 h-10 gap-2 pr-2">{makeHeaderContent()}</div>
             {!props.isCollapsed && isWarningVisible && warningText && (
                 <WarningBanner text={warningText} onDismiss={dismissWarning} />
             )}
