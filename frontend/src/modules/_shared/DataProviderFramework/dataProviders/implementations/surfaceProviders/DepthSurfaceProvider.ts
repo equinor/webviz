@@ -15,12 +15,16 @@ import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import {
+    ProviderSnapshot,
     type CustomDataProviderImplementation,
     type DataProviderInformationAccessors,
     type FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import type {
+    MakeSettingTypesMap,
+    SettingsKeysFromTuple,
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
@@ -35,6 +39,8 @@ import {
     createStatisticFunctionUpdater,
 } from "./_commonSettingsUpdaters";
 import { SurfaceDataFormat, type SurfaceData, type SurfaceStoredData } from "./types";
+import { ColorScale } from "@lib/utils/ColorScale";
+import { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 
 const surfaceSettings = [
     Setting.ENSEMBLE,
@@ -58,8 +64,17 @@ export type SurfaceProviderArgs = {
     surfaceType: SurfaceType;
 };
 
+export type SurfaceProviderMeta = {
+    showContours: {
+        enabled: boolean;
+        value: number;
+    } | null;
+    colorScale: ColorScaleSpecification | null;
+};
+
 export class DepthSurfaceProvider
-    implements CustomDataProviderImplementation<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>
+    implements
+        CustomDataProviderImplementation<DepthSurfaceSettings, SurfaceData, SurfaceStoredData, SurfaceProviderMeta>
 {
     settings = surfaceSettings;
     elevatableSettings = [Setting.DEPTH_COLOR_SCALE, Setting.CONTOURS] as const;
@@ -69,6 +84,27 @@ export class DepthSurfaceProvider
     getDefaultSettingsValues() {
         return {
             [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api.MEAN,
+        };
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>,
+    ): ProviderSnapshot<SurfaceData, SurfaceProviderMeta> {
+        const { getSetting, getData } = args;
+        const data = getData();
+        const surfaceData = data?.surfaceData;
+        const colorScale = getSetting(Setting.DEPTH_COLOR_SCALE);
+        const showContours = getSetting(Setting.CONTOURS);
+        const attributeName = getSetting(Setting.DEPTH_ATTRIBUTE);
+
+        return {
+            data,
+            valueRange: surfaceData ? [surfaceData.value_min, surfaceData.value_max] : null,
+            dataLabel: attributeName,
+            meta: {
+                colorScale: colorScale,
+                showContours: showContours,
+            },
         };
     }
 

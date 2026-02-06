@@ -4422,7 +4422,7 @@ export type GetDeltaSurfaceDataResponses_api = {
      *
      * Successful Response
      */
-    200: Array<SurfaceDataFloat_api>;
+    200: SurfaceDataFloat_api | SurfaceDataPng_api;
 };
 
 export type GetDeltaSurfaceDataResponse_api = GetDeltaSurfaceDataResponses_api[keyof GetDeltaSurfaceDataResponses_api];

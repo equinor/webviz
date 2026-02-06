@@ -28,6 +28,7 @@ import { instanceofItemGroup, type ItemGroup } from "../interfacesAndTypes/entit
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
+import { OperationGroup } from "../framework/OperationGroup/OperationGroup";
 
 export enum VisualizationItemType {
     DATA_PROVIDER_VISUALIZATION = "data-provider-visualization",
@@ -332,9 +333,8 @@ export class VisualizationAssembler<
                 continue;
             }
 
-            // Skip DeltaSurface for now
-            if (child instanceof DeltaSurface) {
-                continue;
+            if (child instanceof OperationGroup) {
+                // OperationGroups are derived data providers, and should be treated as such in the visualization assembly
             }
 
             if (instanceofItemGroup(child)) {

@@ -100,6 +100,13 @@ export type AreSettingsValidArgs<
     reportError: (error: string) => void;
 };
 
+export type ProviderSnapshot<TData, TMeta extends Record<string, unknown> = Record<string, unknown>> = {
+    data: TData | null;
+    meta: TMeta;
+    valueRange: readonly [number, number] | null;
+    dataLabel: string | null;
+};
+
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
  * It contains accessors to the data and settings of the provider and other useful information.
@@ -143,6 +150,7 @@ export interface CustomDataProviderImplementation<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
+    TMeta extends Record<string, unknown> = Record<string, never>,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
@@ -209,4 +217,12 @@ export interface CustomDataProviderImplementation<
      * @returns true if the settings are valid, false otherwise.
      */
     areCurrentSettingsValid?: (args: AreSettingsValidArgs<TSettings, TData, TStoredData>) => boolean;
+
+    /**
+     * Produce a minimal snapshot for downstream consumers (e.g. visualization).
+     * Must NOT expose settings/storedData directly unless intentionally included in meta.
+     */
+    makeProviderSnapshot: (
+        accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey>,
+    ) => ProviderSnapshot<TData, TMeta>;
 }

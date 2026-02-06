@@ -27,6 +27,7 @@ import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interface
 import type { Settings } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 import { makeSettings } from "../utils/makeSettings";
+import { ItemView } from "../../interfacesAndTypes/ItemView";
 
 export enum DataProviderTopic {
     STATUS = "STATUS",
@@ -75,6 +76,7 @@ export type DataProviderParams<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
+    TMeta extends Record<string, unknown> = Record<string, never>,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > = {
@@ -85,6 +87,7 @@ export type DataProviderParams<
         TSettings,
         TData,
         TStoredData,
+        TMeta,
         TSettingTypes,
         TSettingKey
     >;
@@ -99,20 +102,29 @@ export class DataProvider<
         TSettings extends Settings,
         TData,
         TStoredData extends StoredData = Record<string, never>,
+        TMeta extends Record<string, unknown> = Record<string, never>,
         TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
         TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     >
-    implements Item, PublishSubscribe<DataProviderPayloads<TData>>
+    implements Item, PublishSubscribe<DataProviderPayloads<TData>>, ItemView
 {
     private _type: string;
     private _customDataProviderImpl: CustomDataProviderImplementation<
         TSettings,
         TData,
         TStoredData,
+        TMeta,
         TSettingTypes,
         TSettingKey
     >;
-    private _customDataProviderImplementation: CustomDataProviderImplementation<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>;
+    private _customDataProviderImplementation: CustomDataProviderImplementation<
+        TSettings,
+        TData,
+        TStoredData,
+        TMeta,
+        TSettingTypes,
+        TSettingKey
+    >;
     private _settingsContextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>;
     private _itemDelegate: ItemDelegate;
     private _dataProviderManager: DataProviderManager;
@@ -134,7 +146,7 @@ export class DataProvider<
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
 
-    constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
+    constructor(params: DataProviderParams<TSettings, TData, TStoredData, TMeta, TSettingTypes, TSettingKey>) {
         const {
             dataProviderManager: dataProviderManager,
             type,
@@ -183,7 +195,14 @@ export class DataProvider<
         return this._revisionNumber;
     }
 
-    getProviderImplementation(): CustomDataProviderImplementation<TSettings, TData, TStoredData, TSettingTypes, TSettingKey> {
+    getProviderImplementation(): CustomDataProviderImplementation<
+        TSettings,
+        TData,
+        TStoredData,
+        TMeta,
+        TSettingTypes,
+        TSettingKey
+    > {
         return this._customDataProviderImplementation;
     }
 
@@ -292,6 +311,14 @@ export class DataProvider<
         }
     }
 
+    getId(): string {
+        return this._itemDelegate.getId();
+    }
+
+    getName(): string {
+        return this._itemDelegate.getName();
+    }
+
     getStatus(): DataProviderStatus {
         return this._status;
     }
@@ -314,6 +341,10 @@ export class DataProvider<
 
     isSubordinated(): boolean {
         return this._isSubordinated;
+    }
+
+    isVisible(): boolean {
+        return this.getItemDelegate().isVisible();
     }
 
     setIsSubordinated(isSubordinated: boolean): void {
