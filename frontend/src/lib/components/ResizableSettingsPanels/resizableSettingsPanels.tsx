@@ -72,6 +72,10 @@ function assertPropsConsistency(props: ResizableSettingsPanelsProps) {
  * - Content area (required)
  * - Right settings panel (optional)
  *
+ * 1 panel layout: [Content]
+ * 2 panel layout: [Left Settings Panel] [Content]
+ * 3 panel layout: [Left Settings Panel] [Content] [Right Settings Panel]
+ *
  * If sizesInPercent, collapsedSizes, minSizes, collapsedStates, etc are provided, they must match the number
  * of settings panels (i.e. children.length - 1).
  */
