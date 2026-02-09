@@ -10,6 +10,8 @@ import type { CustomSettingsHandler } from "./customSettingsHandler";
 import type { NullableStoredData, StoredData } from "./sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "./utils";
 
+export type DataProviderMeta = Record<string, unknown>;
+
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
  * It contains accessors to the data and settings of the provider and other useful information.
@@ -150,7 +152,7 @@ export interface CustomDataProviderImplementation<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TMeta extends Record<string, unknown> = Record<string, never>,
+    TMeta extends DataProviderMeta = Record<string, never>,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,

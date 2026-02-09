@@ -1,4 +1,5 @@
 import { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import { ProviderSnapshot } from "./customDataProviderImplementation";
 
 export interface ItemView {
     getId(): string;
@@ -13,14 +14,14 @@ export interface ItemView {
 }
 
 export type StateSnapshot<TData = unknown, TMeta extends Record<string, unknown> = Record<string, unknown>> = {
+    id: string;
+    name: string;
+    type: string;
+    visible: boolean;
+
     status: "loading" | "ready" | "error";
     error?: StatusMessage | string | null;
-
-    meta?: TMeta;
-
     revision: number;
 
-    data: TData;
-    dataValueRange?: readonly [number, number] | null;
-    dataLabel?: string;
+    snapshot: ProviderSnapshot<TData, TMeta> | null;
 };

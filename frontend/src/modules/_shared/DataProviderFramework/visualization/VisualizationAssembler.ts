@@ -19,6 +19,7 @@ import type { GroupType } from "../groups/groupTypes";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
+    DataProviderMeta,
 } from "../interfacesAndTypes/customDataProviderImplementation";
 import type {
     CustomGroupImplementation,
@@ -29,6 +30,7 @@ import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 import { OperationGroup } from "../framework/OperationGroup/OperationGroup";
+import { StateSnapshot } from "../interfacesAndTypes/ItemView";
 
 export enum VisualizationItemType {
     DATA_PROVIDER_VISUALIZATION = "data-provider-visualization",
@@ -71,16 +73,15 @@ export type DataProviderVisualization<
 };
 
 export type TransformerArgs<
-    TSettings extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, never>,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = DataProviderInformationAccessors<TSettings, TData, TStoredData> & {
+> = {
     id: string;
     name: string;
     isLoading: boolean;
     getInjectedData: () => TInjectedData;
-    getDataValueRange: () => Readonly<[number, number]> | null;
+    state: StateSnapshot<TData, TMeta> | null;
 };
 
 export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
@@ -129,30 +130,17 @@ export interface GroupCustomPropsCollector<
 export type Annotation = ColorScaleWithId; // Add more possible annotation types here, e.g. ColorSets etc.
 
 export type DataProviderTransformers<
-    TSettings extends Settings,
-    TData,
     TTarget extends VisualizationTarget,
-    TStoredData extends StoredData = Record<string, never>,
+    TData,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
     TAccumulatedData extends Record<string, any> = Record<string, never>,
 > = {
-    transformToVisualization: VisualizationTransformer<TSettings, TData, TTarget, TStoredData, TInjectedData>;
-    transformToBoundingBox?: BoundingBoxTransformer<TSettings, TData, TStoredData, TInjectedData>;
-    transformToAnnotations?: AnnotationsTransformer<TSettings, TData, TStoredData, TInjectedData>;
-    transformToHoverVisualization?: HoverVisualizationTransformer<
-        TSettings,
-        TData,
-        TTarget,
-        TStoredData,
-        TInjectedData
-    >;
-    reduceAccumulatedData?: ReduceAccumulatedDataFunction<
-        TSettings,
-        TData,
-        TAccumulatedData,
-        TStoredData,
-        TInjectedData
-    >;
+    transformToVisualization: VisualizationTransformer<TTarget, TData, TMeta, TInjectedData>;
+    transformToBoundingBox?: BoundingBoxTransformer<TData, TMeta, TInjectedData>;
+    transformToAnnotations?: AnnotationsTransformer<TData, TMeta, TInjectedData>;
+    transformToHoverVisualization?: HoverVisualizationTransformer<TTarget, TData, TMeta, TInjectedData>;
+    reduceAccumulatedData?: ReduceAccumulatedDataFunction<TData, TMeta, TAccumulatedData, TInjectedData>;
 };
 
 export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = {
@@ -164,48 +152,38 @@ export type HoverVisualizationFunction<TTarget extends VisualizationTarget, TTop
 ) => DataProviderHoverVisualizationTargetTypes[TTarget][];
 
 export type VisualizationTransformer<
-    TSettings extends Settings,
-    TData,
     TTarget extends VisualizationTarget,
-    TStoredData extends StoredData = Record<string, never>,
+    TData,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = (
-    args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
-) => DataProviderVisualizationTargetTypes[TTarget] | null;
+> = (args: TransformerArgs<TData, TMeta, TInjectedData>) => DataProviderVisualizationTargetTypes[TTarget] | null;
 
 // This does likely require a refactor as soon as we have tested against a use case
 export type HoverVisualizationTransformer<
-    TSettings extends Settings,
-    TData,
     TTarget extends VisualizationTarget,
-    TStoredData extends StoredData = Record<string, never>,
+    TData,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => HoverVisualizationFunctions<TTarget>;
+> = (args: TransformerArgs<TData, TMeta, TInjectedData>) => HoverVisualizationFunctions<TTarget>;
 
 export type BoundingBoxTransformer<
-    TSettings extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, never>,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => bbox.BBox | null;
+> = (args: TransformerArgs<TData, TMeta, TInjectedData>) => bbox.BBox | null;
 
 export type AnnotationsTransformer<
-    TSettings extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, never>,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => Annotation[];
+> = (args: TransformerArgs<TData, TMeta, TInjectedData>) => Annotation[];
 
 export type ReduceAccumulatedDataFunction<
-    TSettings extends Settings,
     TData,
+    TMeta extends DataProviderMeta,
     TAccumulatedData,
-    TStoredData extends StoredData = Record<string, never>,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = (
-    accumulatedData: TAccumulatedData,
-    args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
-) => TAccumulatedData;
+> = (accumulatedData: TAccumulatedData, args: TransformerArgs<TData, TMeta, TInjectedData>) => TAccumulatedData;
 
 export type AssemblerProduct<
     TTarget extends VisualizationTarget,
@@ -231,7 +209,7 @@ export class VisualizationAssembler<
 > {
     private _dataProviderTransformers: Map<
         string,
-        DataProviderTransformers<any, any, TTarget, any, TInjectedData, TAccumulatedData>
+        DataProviderTransformers<TTarget, any, any, TInjectedData, TAccumulatedData>
     > = new Map();
 
     private _groupCustomPropsCollectors: Map<
@@ -256,7 +234,7 @@ export class VisualizationAssembler<
         dataProviderCtor: {
             new (...params: any[]): CustomDataProviderImplementation<TSettings, TData, TStoredData>;
         },
-        transformers: DataProviderTransformers<TSettings, TData, TTarget, TStoredData, TInjectedData, TAccumulatedData>,
+        transformers: DataProviderTransformers<TTarget, any, any, TInjectedData, TAccumulatedData>,
     ): void {
         if (this._dataProviderTransformers.has(dataProviderCtor.name)) {
             throw new Error(`Transformer function for data provider ${dataProviderCtor.name} already registered`);
@@ -514,14 +492,10 @@ export class VisualizationAssembler<
         };
     }
 
-    private makeFactoryFunctionArgs<
-        TSettings extends Settings,
-        TData,
-        TStoredData extends StoredData = Record<string, never>,
-    >(
-        dataProvider: DataProvider<TSettings, TData, any>,
+    private makeFactoryFunctionArgs<TData, TMeta extends DataProviderMeta>(
+        dataProvider: DataProvider<any, TData, any, TMeta>,
         injectedData?: TInjectedData,
-    ): TransformerArgs<TSettings, TData, TStoredData, TInjectedData> {
+    ): TransformerArgs<TData, TMeta, TInjectedData> {
         function getInjectedData() {
             if (!injectedData) {
                 throw new Error("No injected data provided. Did you forget to pass it to the factory?");
@@ -534,7 +508,7 @@ export class VisualizationAssembler<
             name: dataProvider.getItemDelegate().getName(),
             isLoading: dataProvider.getStatus() === DataProviderStatus.LOADING,
             getInjectedData: getInjectedData.bind(this),
-            getDataValueRange: dataProvider.getDataValueRange.bind(dataProvider),
+            state: dataProvider.getStateSnapshot(),
             ...dataProvider.makeAccessors(),
         };
     }

@@ -19,6 +19,8 @@ import {
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
+    DataProviderMeta,
+    ProviderSnapshot,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { Item } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
@@ -27,7 +29,7 @@ import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interface
 import type { Settings } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 import { makeSettings } from "../utils/makeSettings";
-import { ItemView } from "../../interfacesAndTypes/ItemView";
+import { ItemView, StateSnapshot } from "../../interfacesAndTypes/ItemView";
 
 export enum DataProviderTopic {
     STATUS = "STATUS",
@@ -146,6 +148,9 @@ export class DataProvider<
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
 
+    private _cachedStateSnapshot: StateSnapshot<TData, TMeta> | null = null;
+    private _cachedStateSnapshotRevision: number = -1;
+
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TMeta, TSettingTypes, TSettingKey>) {
         const {
             dataProviderManager: dataProviderManager,
@@ -195,6 +200,22 @@ export class DataProvider<
         return this._revisionNumber;
     }
 
+    private mapStatusToStateSnapshotStatus(status: DataProviderStatus): StateSnapshot<TData, TMeta>["status"] {
+        switch (status) {
+            case DataProviderStatus.LOADING:
+            case DataProviderStatus.AWAITING_OPERATION:
+                return "loading";
+            case DataProviderStatus.SUCCESS:
+                return "ready";
+            case DataProviderStatus.ERROR:
+            case DataProviderStatus.INVALID_SETTINGS:
+                return "error";
+            case DataProviderStatus.IDLE:
+            default:
+                return "loading";
+        }
+    }
+
     getProviderImplementation(): CustomDataProviderImplementation<
         TSettings,
         TData,
@@ -204,6 +225,33 @@ export class DataProvider<
         TSettingKey
     > {
         return this._customDataProviderImplementation;
+    }
+
+    getStateSnapshot(): StateSnapshot<TData, TMeta> | null {
+        if (this._cachedStateSnapshot && this._cachedStateSnapshotRevision === this._revisionNumber) {
+            return this._cachedStateSnapshot;
+        }
+
+        let providerSnapshot: ProviderSnapshot<TData, TMeta> | null = null;
+
+        if (this._data !== null && this._status === DataProviderStatus.SUCCESS) {
+            providerSnapshot = this._customDataProviderImplementation.makeProviderSnapshot(this.makeAccessors());
+        }
+
+        const snapshot = {
+            id: this.getId(),
+            name: this.getName(),
+            type: this.getType(),
+            visible: this.isVisible(),
+            status: this.mapStatusToStateSnapshotStatus(this._status),
+            error: this.getError(),
+            revision: this.getRevisionNumber(),
+            snapshot: providerSnapshot,
+        };
+
+        this._cachedStateSnapshot = snapshot;
+        this._cachedStateSnapshotRevision = this._revisionNumber;
+        return snapshot;
     }
 
     areCurrentSettingsValid(): boolean {
