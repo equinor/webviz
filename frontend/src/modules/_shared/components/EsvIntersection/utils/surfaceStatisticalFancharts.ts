@@ -19,6 +19,9 @@ function calcPercentile(values: readonly number[], percentile: number): number {
 }
 
 function mergeXAndYArrays(arrayX: readonly number[], arrayY: number[]): number[][] {
+    if (arrayX.length !== arrayY.length) {
+        throw new Error("X and Y arrays must have the same length");
+    }
     return arrayX.map((x, i) => [x, arrayY[i]]);
 }
 

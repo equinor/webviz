@@ -86,10 +86,15 @@ export class SurfaceStatisticalFanchartsCanvasLayer<T extends SurfaceStatistical
 
         requestAnimationFrame(() => {
             this.clearCanvas();
-            this._fillPaths.forEach((fillPath) => this.drawPolygonPath(fillPath.path, fillPath.color));
-            this._linePaths.forEach((linePath) =>
-                linePath.paths.forEach((path) => this.drawLinePath(path, linePath.color, linePath.dashSegments)),
-            );
+
+            for (const fillPath of this._fillPaths) {
+                this.drawPolygonPath(fillPath.path, fillPath.color);
+            }
+            for (const linePath of this._linePaths) {
+                for (const path of linePath.paths) {
+                    this.drawLinePath(path, linePath.color, linePath.dashSegments);
+                }
+            }
         });
     }
 
@@ -194,6 +199,10 @@ export class SurfaceStatisticalFanchartsCanvasLayer<T extends SurfaceStatistical
     }
 
     private makeFillPaths(topLine: (number | null)[][], bottomLine: (number | null)[][]): Path2D[] {
+        if (topLine.length !== bottomLine.length) {
+            throw new Error("Top and bottom lines must have the same number of points");
+        }
+
         const paths: Path2D[] = [];
 
         let segmentTop: number[][] = [];
@@ -228,6 +237,10 @@ export class SurfaceStatisticalFanchartsCanvasLayer<T extends SurfaceStatistical
     }
 
     private makeLinePath(line: (number | null)[][]): Path2D[] {
+        if (line.length === 0) {
+            return [];
+        }
+
         const paths: Path2D[] = [];
 
         let penDown = false;
