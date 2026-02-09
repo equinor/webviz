@@ -102,12 +102,19 @@ export type AreSettingsValidArgs<
     reportError: (error: string) => void;
 };
 
+export type MetaField<TMeta> = [TMeta] extends [never]
+    ? {
+          meta: null;
+      }
+    : {
+          meta: TMeta;
+      };
+
 export type ProviderSnapshot<TData, TMeta extends Record<string, unknown> = Record<string, unknown>> = {
     data: TData | null;
-    meta: TMeta;
     valueRange: readonly [number, number] | null;
     dataLabel: string | null;
-};
+} & MetaField<TMeta>;
 
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
@@ -152,7 +159,7 @@ export interface CustomDataProviderImplementation<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TMeta extends DataProviderMeta = Record<string, never>,
+    TMeta extends DataProviderMeta = never,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,

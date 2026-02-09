@@ -12,9 +12,10 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 
 const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
@@ -156,5 +157,18 @@ export class DrilledWellborePicksProvider
 
             return pickIdentifiers;
         });
+    }
+
+    makeProviderSnapshot(
+        accessors: DataProviderInformationAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>,
+    ) {
+        const data = accessors.getData();
+
+        return {
+            data,
+            valueRange: null,
+            meta: null,
+            dataLabel: "Wellbore Picks",
+        };
     }
 }

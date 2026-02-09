@@ -104,7 +104,7 @@ export class DataProvider<
         TSettings extends Settings,
         TData,
         TStoredData extends StoredData = Record<string, never>,
-        TMeta extends Record<string, unknown> = Record<string, never>,
+        TMeta extends DataProviderMeta = Record<string, never>,
         TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
         TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     >
