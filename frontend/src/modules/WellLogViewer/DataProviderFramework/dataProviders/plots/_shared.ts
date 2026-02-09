@@ -9,7 +9,7 @@ import {
 } from "@api";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type {
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -71,7 +71,7 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
 }
 
 export function verifyBasePlotSettings<T extends readonly Setting[]>(
-    accessor: DataProviderInformationAccessors<T, WellboreLogCurveData_api>,
+    accessor: DataProviderAccessors<T, WellboreLogCurveData_api>,
 ): boolean {
     const availableCurves = accessor.getSettingValueConstraints(Setting.LOG_CURVE) ?? [];
     const selectedCurve = accessor.getSetting(Setting.LOG_CURVE);

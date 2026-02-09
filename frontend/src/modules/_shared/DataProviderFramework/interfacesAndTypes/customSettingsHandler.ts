@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
+import type { StatusWriter } from "@framework/types/statusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
@@ -33,8 +34,8 @@ export interface HelperUpdateFunc<
         getLocalSetting: <K extends TKey>(settingName: K) => TSettingTypes[K];
         getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
         getHelperDependency: GetHelperDependency<TSettings, TSettingTypes, TKey>;
+        getStatusWriter: () => StatusWriter;
         abortSignal: AbortSignal;
-        statusWriter: StatusWriter;
     }): TReturnValue;
 }
 

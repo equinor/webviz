@@ -15,7 +15,7 @@ import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "./utils";
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
  * It contains accessors to the data and settings of the provider and other useful information.
  */
-export type DataProviderInformationAccessors<
+export type DataProviderAccessors<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
@@ -94,15 +94,6 @@ export type DataProviderInformationAccessors<
     getStatusWriter: () => StatusWriter;
 };
 
-export type AreSettingsValidArgs<
-    TSettings extends Settings,
-    TData,
-    TStoredData extends StoredData = Record<string, never>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> = DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey> & {
-    reportError: (error: string) => void;
-};
-
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
  * It contains accessors to the data and settings of the provider and other useful information.
@@ -140,7 +131,7 @@ export type FetchDataParams<
      * @param callback The callback function to call when the fetch is cancelled or finished.
      */
     onFetchCancelOrFinish: (callback: () => void) => void;
-} & DataProviderInformationAccessors<TSettings, TData, TStoredData>;
+} & DataProviderAccessors<TSettings, TData, TStoredData>;
 
 export interface CustomDataProviderImplementation<
     TSettings extends Settings,
@@ -167,7 +158,7 @@ export interface CustomDataProviderImplementation<
     doSettingsChangesRequireDataRefetch?(
         prevSettings: TSettingTypes | null,
         newSettings: TSettingTypes,
-        accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>,
+        accessors: DataProviderAccessors<TSettings, TData, TStoredData>,
     ): boolean;
 
     /**
@@ -182,7 +173,7 @@ export interface CustomDataProviderImplementation<
     doStoredDataChangesRequireDataRefetch?(
         prevStoredData: NullableStoredData<TStoredData> | null,
         newStoredData: NullableStoredData<TStoredData>,
-        accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>,
+        accessors: DataProviderAccessors<TSettings, TData, TStoredData>,
     ): boolean;
 
     /**
@@ -198,9 +189,7 @@ export interface CustomDataProviderImplementation<
      *
      * @param accessors Accessors to the data and settings of the provider.
      */
-    makeValueRange?(
-        accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>,
-    ): readonly [number, number] | null;
+    makeValueRange?(accessors: DataProviderAccessors<TSettings, TData, TStoredData>): readonly [number, number] | null;
 
     /**
      * This method is called to check if the current settings are valid. It should return true if the settings are valid
@@ -211,5 +200,5 @@ export interface CustomDataProviderImplementation<
      * some settings are not valid. It can be called multiple times if multiple settings are not valid.
      * @returns true if the settings are valid, false otherwise.
      */
-    areCurrentSettingsValid?: (args: AreSettingsValidArgs<TSettings, TData, TStoredData>) => boolean;
+    areCurrentSettingsValid?: (args: DataProviderAccessors<TSettings, TData, TStoredData>) => boolean;
 }

@@ -3,9 +3,8 @@ import { isEqual } from "lodash";
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
-    AreSettingsValidArgs,
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -63,9 +62,7 @@ export class RealizationGridProvider
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>):
-        | [number, number]
-        | null {
+    }: DataProviderAccessors<RealizationGridSettings, RealizationGridData, StoredData>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -145,7 +142,7 @@ export class RealizationGridProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: AreSettingsValidArgs<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
+    }: DataProviderAccessors<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&

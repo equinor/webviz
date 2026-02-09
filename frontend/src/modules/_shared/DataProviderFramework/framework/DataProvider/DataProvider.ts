@@ -18,7 +18,7 @@ import {
 } from "../../delegates/SettingsContextDelegate";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { Item } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
@@ -366,7 +366,7 @@ export class DataProvider<
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.PROGRESS_MESSAGE);
     }
 
-    makeAccessors(): DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey> {
+    makeAccessors(): DataProviderAccessors<TSettings, TData, TStoredData, TSettingKey> {
         return {
             getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
             getSettingValueConstraints: (settingName) =>
