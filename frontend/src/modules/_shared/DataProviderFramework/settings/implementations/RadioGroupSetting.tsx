@@ -12,21 +12,21 @@ export class RadioGroupSetting implements CustomSettingImplementation<ValueType,
     private _staticOptions: ValueRangeType;
     private _layout: "horizontal" | "vertical";
 
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType, index: number) => {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType, index: number) => {
             if (index === 0) {
-                return valueRange;
+                return valueConstraints;
             }
 
-            if (accumulator === null || valueRange === null) {
+            if (accumulator === null || valueConstraints === null) {
                 return null;
             }
 
-            return accumulator.filter((option) => valueRange.includes(option));
+            return accumulator.filter((option) => valueConstraints.includes(option));
         },
         startingValue: null,
-        isValid: (valueRange: ValueRangeType): boolean => {
-            return Array.isArray(valueRange) && valueRange.length > 0;
+        isValid: (valueConstraints: ValueRangeType): boolean => {
+            return Array.isArray(valueConstraints) && valueConstraints.length > 0;
         },
     };
 
@@ -48,13 +48,25 @@ export class RadioGroupSetting implements CustomSettingImplementation<ValueType,
         return this._staticOptions !== null;
     }
 
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        if (parsed !== null && typeof parsed !== "string") {
+            throw new Error(`Expected string or null, got ${typeof parsed}`);
+        }
+        return parsed;
+    }
+
     makeComponent(): (props: SettingComponentProps<ValueType, ValueRangeType>) => React.ReactNode {
         const isStatic = this.getIsStatic();
         const staticProps = this._staticOptions;
         const layout = this._layout;
 
         return function RadioGroupSettingComponent(props: SettingComponentProps<ValueType, ValueRangeType>) {
-            const options = isStatic ? staticProps : (props.valueRange ?? [{ value: "", label: "" }]);
+            const options = isStatic ? staticProps : (props.valueConstraints ?? [{ value: "", label: "" }]);
 
             return (
                 <div className="flex h-8 items-center">

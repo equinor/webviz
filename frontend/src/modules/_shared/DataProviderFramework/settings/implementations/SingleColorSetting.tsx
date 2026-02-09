@@ -9,7 +9,7 @@ import type {
     SettingComponentProps,
     StaticSettingImplementation,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { assertStringOrNull } from "../utils/structureValidation";
+import { assertStringOrNull, isStringOrNull } from "../utils/structureValidation";
 
 type ValueType = string | null;
 

@@ -1,5 +1,7 @@
 import React from "react";
 
+import { debounce } from "lodash";
+
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
@@ -7,7 +9,6 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { PHASE_COLORS } from "@modules/_shared/constants/colors";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
-import { debounce } from "lodash";
 
 import type {
     CustomSettingImplementation,
@@ -17,37 +18,37 @@ import type { Setting, SettingTypeDefinitions } from "../settingsDefinitions";
 
 type InternalValueType = SettingTypeDefinitions[Setting.PDM_FILTER]["internalValue"];
 type ExternalValueType = SettingTypeDefinitions[Setting.PDM_FILTER]["externalValue"];
-type ValueRangeType = SettingTypeDefinitions[Setting.PDM_FILTER]["valueRange"];
+type ValueRangeType = SettingTypeDefinitions[Setting.PDM_FILTER]["valueConstraints"];
 
 export class PdmFilterSetting
     implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
 {
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType, index: number) => {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType, index: number) => {
             if (index === 0) {
-                return valueRange;
+                return valueConstraints;
             }
 
-            if (accumulator === null || valueRange === null) {
+            if (accumulator === null || valueConstraints === null) {
                 return null;
             }
 
             const mergedValueRange: ValueRangeType = accumulator;
 
-            mergedValueRange.injection.gas = Math.max(mergedValueRange.injection.gas, valueRange.injection.gas);
-            mergedValueRange.injection.water = Math.max(mergedValueRange.injection.water, valueRange.injection.water);
-            mergedValueRange.production.oil = Math.max(mergedValueRange.production.oil, valueRange.production.oil);
-            mergedValueRange.production.gas = Math.max(mergedValueRange.production.gas, valueRange.production.gas);
+            mergedValueRange.injection.gas = Math.max(mergedValueRange.injection.gas, valueConstraints.injection.gas);
+            mergedValueRange.injection.water = Math.max(mergedValueRange.injection.water, valueConstraints.injection.water);
+            mergedValueRange.production.oil = Math.max(mergedValueRange.production.oil, valueConstraints.production.oil);
+            mergedValueRange.production.gas = Math.max(mergedValueRange.production.gas, valueConstraints.production.gas);
             mergedValueRange.production.water = Math.max(
                 mergedValueRange.production.water,
-                valueRange.production.water,
+                valueConstraints.production.water,
             );
 
             return mergedValueRange;
         },
         startingValue: null,
-        isValid: (valueRange: ValueRangeType) => {
-            return valueRange !== null;
+        isValid: (valueConstraints: ValueRangeType) => {
+            return valueConstraints !== null;
         },
     };
 
@@ -96,16 +97,16 @@ export class PdmFilterSetting
         return internalValue;
     }
 
-    isValueValid(value: InternalValueType, valueRange: ValueRangeType): boolean {
-        if (value === null || valueRange === null) {
+    isValueValid(value: InternalValueType, valueConstraints: ValueRangeType): boolean {
+        if (value === null || valueConstraints === null) {
             return false;
         }
 
         return true;
     }
 
-    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
-        if (valueRange === null) {
+    fixupValue(currentValue: InternalValueType, valueConstraints: ValueRangeType): InternalValueType {
+        if (valueConstraints === null) {
             return null;
         }
 
@@ -149,6 +150,14 @@ export class PdmFilterSetting
                 },
             },
         };
+    }
+
+    serializeValue(value: InternalValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): InternalValueType {
+        return JSON.parse(serializedValue);
     }
 
     makeComponent(): (props: SettingComponentProps<InternalValueType, ValueRangeType>) => React.ReactNode {
@@ -263,7 +272,7 @@ export class PdmFilterSetting
                     </div>
                     <SliderNumberSettingComponent
                         label="Oil"
-                        maxValue={props.valueRange ? props.valueRange.production.oil : 0}
+                        maxValue={props.valueConstraints ? props.valueConstraints.production.oil : 0}
                         value={props.value ? props.value.production.oil.value : 0}
                         color={props.value ? props.value.production.oil.color : PHASE_COLORS.oil}
                         onValueChange={(newValue) => handleValueChange("production", "oil", newValue)}
@@ -272,7 +281,7 @@ export class PdmFilterSetting
                     />
                     <SliderNumberSettingComponent
                         label="Gas"
-                        maxValue={props.valueRange ? props.valueRange.production.gas : 0}
+                        maxValue={props.valueConstraints ? props.valueConstraints.production.gas : 0}
                         value={props.value ? props.value.production.gas.value : 0}
                         color={props.value ? props.value.production.gas.color : PHASE_COLORS.gas}
                         onValueChange={(newValue) => handleValueChange("production", "gas", newValue)}
@@ -281,7 +290,7 @@ export class PdmFilterSetting
                     />
                     <SliderNumberSettingComponent
                         label="Water"
-                        maxValue={props.valueRange ? props.valueRange.production.water : 0}
+                        maxValue={props.valueConstraints ? props.valueConstraints.production.water : 0}
                         value={props.value ? props.value.production.water.value : 0}
                         color={props.value ? props.value.production.water.color : PHASE_COLORS.water}
                         onValueChange={(newValue) => handleValueChange("production", "water", newValue)}
@@ -298,7 +307,7 @@ export class PdmFilterSetting
                     </div>
                     <SliderNumberSettingComponent
                         label="Gas"
-                        maxValue={props.valueRange ? props.valueRange.injection.gas : 0}
+                        maxValue={props.valueConstraints ? props.valueConstraints.injection.gas : 0}
                         value={props.value ? props.value.injection.gas.value : 0}
                         color={props.value ? props.value.injection.gas.color : PHASE_COLORS.gas}
                         onValueChange={(newValue) => handleValueChange("injection", "gas", newValue)}
@@ -307,7 +316,7 @@ export class PdmFilterSetting
                     />
                     <SliderNumberSettingComponent
                         label="Water"
-                        maxValue={props.valueRange ? props.valueRange.injection.water : 0}
+                        maxValue={props.valueConstraints ? props.valueConstraints.injection.water : 0}
                         value={props.value ? props.value.injection.water.value : 0}
                         color={props.value ? props.value.injection.water.color : PHASE_COLORS.water}
                         onValueChange={(newValue) => handleValueChange("injection", "water", newValue)}

@@ -113,3 +113,29 @@ export function assertNumberArrayOrNull(value: unknown): asserts value is number
         throw new Error(`Expected number array or null, got ${typeof value}`);
     }
 }
+
+/**
+ * Validates that a value is a tuple of [number | "min" | "max", number | "min" | "max"] or null
+ */
+export function isNumberOrStringTuple(
+    value: unknown,
+): value is [number | "min" | "max", number | "min" | "max"] | null {
+    if (value === null) {
+        return true;
+    }
+    if (!Array.isArray(value) || value.length !== 2) {
+        return false;
+    }
+    return value.every((v) => typeof v === "number" || v === "min" || v === "max");
+}
+
+/**
+ * Asserts that a value is a tuple of [number | "min" | "max", number | "min" | "max"] or null, throws if not
+ */
+export function assertNumberOrStringTuple(
+    value: unknown,
+): asserts value is [number | "min" | "max", number | "min" | "max"] | null {
+    if (!isNumberOrStringTuple(value)) {
+        throw new Error(`Expected [number | "min" | "max", number | "min" | "max"] tuple or null`);
+    }
+}

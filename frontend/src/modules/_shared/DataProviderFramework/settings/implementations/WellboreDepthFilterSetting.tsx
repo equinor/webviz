@@ -11,36 +11,36 @@ import type { Setting, SettingTypeDefinitions } from "../settingsDefinitions";
 
 type InternalValueType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["internalValue"] | null;
 type ExternalValueType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["externalValue"] | null;
-type ValueRangeType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["valueRange"] | null;
+type ValueRangeType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["valueConstraints"] | null;
 
 export class WellboreDepthFilterSetting
     implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
 {
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType, index: number) => {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType, index: number) => {
             if (index === 0) {
-                return valueRange;
+                return valueConstraints;
             }
 
-            if (accumulator === null || valueRange === null) {
+            if (accumulator === null || valueConstraints === null) {
                 return null;
             }
 
             const mergedValueRange: ValueRangeType = accumulator;
 
             mergedValueRange.realizationNums = mergedValueRange.realizationNums.filter((num) =>
-                valueRange.realizationNums.includes(num),
+                valueConstraints.realizationNums.includes(num),
             );
 
             mergedValueRange.surfaceNamesInStratOrder = mergedValueRange.surfaceNamesInStratOrder.filter((name) =>
-                valueRange.surfaceNamesInStratOrder.includes(name),
+                valueConstraints.surfaceNamesInStratOrder.includes(name),
             );
 
             return mergedValueRange;
         },
         startingValue: null,
-        isValid: (valueRange: ValueRangeType) => {
-            return valueRange !== null;
+        isValid: (valueConstraints: ValueRangeType) => {
+            return valueConstraints !== null;
         },
     };
 
@@ -77,43 +77,43 @@ export class WellboreDepthFilterSetting
         return internalValue;
     }
 
-    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
-        if (valueRange === null) {
+    fixupValue(currentValue: InternalValueType, valueConstraints: ValueRangeType): InternalValueType {
+        if (valueConstraints === null) {
             return null;
         }
 
         if (currentValue === null) {
             return {
-                topSurfaceName: valueRange.surfaceNamesInStratOrder[0],
+                topSurfaceName: valueConstraints.surfaceNamesInStratOrder[0],
                 baseSurfaceName: null,
-                realizationNum: valueRange.realizationNums[0],
+                realizationNum: valueConstraints.realizationNums[0],
             };
         }
         const fixedValue = { ...currentValue };
 
         if (
             fixedValue.topSurfaceName === null ||
-            !valueRange.surfaceNamesInStratOrder.includes(fixedValue.topSurfaceName)
+            !valueConstraints.surfaceNamesInStratOrder.includes(fixedValue.topSurfaceName)
         ) {
-            fixedValue.topSurfaceName = valueRange.surfaceNamesInStratOrder[0];
+            fixedValue.topSurfaceName = valueConstraints.surfaceNamesInStratOrder[0];
         }
 
         if (
             fixedValue.baseSurfaceName !== null &&
-            !valueRange.surfaceNamesInStratOrder.includes(fixedValue.baseSurfaceName)
+            !valueConstraints.surfaceNamesInStratOrder.includes(fixedValue.baseSurfaceName)
         ) {
             fixedValue.baseSurfaceName = null;
         }
 
-        if (!valueRange.realizationNums.includes(fixedValue.realizationNum)) {
-            fixedValue.realizationNum = valueRange.realizationNums[0];
+        if (!valueConstraints.realizationNums.includes(fixedValue.realizationNum)) {
+            fixedValue.realizationNum = valueConstraints.realizationNums[0];
         }
 
         return fixedValue;
     }
 
-    isValueValid(value: InternalValueType, valueRange: ValueRangeType): boolean {
-        if (value === null || valueRange === null) {
+    isValueValid(value: InternalValueType, valueConstraints: ValueRangeType): boolean {
+        if (value === null || valueConstraints === null) {
             return false;
         }
 
@@ -121,28 +121,36 @@ export class WellboreDepthFilterSetting
             return false;
         }
 
-        if (!valueRange.surfaceNamesInStratOrder.includes(value.topSurfaceName)) {
+        if (!valueConstraints.surfaceNamesInStratOrder.includes(value.topSurfaceName)) {
             return false;
         }
 
         if (value.baseSurfaceName !== null) {
-            if (!valueRange.surfaceNamesInStratOrder.includes(value.baseSurfaceName)) {
+            if (!valueConstraints.surfaceNamesInStratOrder.includes(value.baseSurfaceName)) {
                 return false;
             }
 
-            const topIndex = valueRange.surfaceNamesInStratOrder.indexOf(value.topSurfaceName);
-            const bottomIndex = valueRange.surfaceNamesInStratOrder.indexOf(value.baseSurfaceName);
+            const topIndex = valueConstraints.surfaceNamesInStratOrder.indexOf(value.topSurfaceName);
+            const bottomIndex = valueConstraints.surfaceNamesInStratOrder.indexOf(value.baseSurfaceName);
 
             if (topIndex === -1 || bottomIndex === -1 || topIndex > bottomIndex) {
                 return false;
             }
         }
 
-        if (!valueRange.realizationNums.includes(value.realizationNum)) {
+        if (!valueConstraints.realizationNums.includes(value.realizationNum)) {
             return false;
         }
 
         return true;
+    }
+
+    serializeValue(value: InternalValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): InternalValueType {
+        return JSON.parse(serializedValue);
     }
 
     makeComponent(): (props: SettingComponentProps<InternalValueType, ValueRangeType>) => React.ReactNode {
@@ -153,38 +161,38 @@ export class WellboreDepthFilterSetting
 
             const topSurfaceOptions = React.useMemo(
                 () =>
-                    props.valueRange
-                        ? props.valueRange.surfaceNamesInStratOrder.map((name) => ({
+                    props.valueConstraints
+                        ? props.valueConstraints.surfaceNamesInStratOrder.map((name) => ({
                               value: name,
                               label: name,
                           }))
                         : [],
-                [props.valueRange],
+                [props.valueConstraints],
             );
 
             const baseSurfaceOptions = React.useMemo(
                 () =>
-                    props.valueRange
+                    props.valueConstraints
                         ? [
                               { value: null, label: "None" },
-                              ...props.valueRange.surfaceNamesInStratOrder.map((name) => ({
+                              ...props.valueConstraints.surfaceNamesInStratOrder.map((name) => ({
                                   value: name,
                                   label: name,
                               })),
                           ].filter((option) => option.value !== props.value?.topSurfaceName)
                         : [],
-                [props.valueRange, props.value?.topSurfaceName],
+                [props.valueConstraints, props.value?.topSurfaceName],
             );
 
             const realizationNumOptions = React.useMemo(
                 () =>
-                    props.valueRange
-                        ? props.valueRange.realizationNums.map((num) => ({
+                    props.valueConstraints
+                        ? props.valueConstraints.realizationNums.map((num) => ({
                               value: num,
                               label: num.toString(),
                           }))
                         : [],
-                [props.valueRange],
+                [props.valueConstraints],
             );
 
             const handleTopSurfaceChange = React.useCallback(
@@ -195,15 +203,15 @@ export class WellboreDepthFilterSetting
                         baseSurfaceName:
                             prev?.baseSurfaceName &&
                             newTopSurfaceName &&
-                            props.valueRange &&
-                            props.valueRange.surfaceNamesInStratOrder.indexOf(prev.baseSurfaceName) >
-                                props.valueRange.surfaceNamesInStratOrder.indexOf(newTopSurfaceName)
+                            props.valueConstraints &&
+                            props.valueConstraints.surfaceNamesInStratOrder.indexOf(prev.baseSurfaceName) >
+                                props.valueConstraints.surfaceNamesInStratOrder.indexOf(newTopSurfaceName)
                                 ? prev.baseSurfaceName
                                 : null,
                         topSurfaceName: newTopSurfaceName,
                     }));
                 },
-                [onValueChange, props.valueRange],
+                [onValueChange, props.valueConstraints],
             );
 
             const handleBaseSurfaceChange = React.useCallback(

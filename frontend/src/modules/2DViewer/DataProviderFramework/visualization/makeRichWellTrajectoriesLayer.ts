@@ -1,3 +1,9 @@
+import type {
+    WellFeature as BaseWellFeature,
+    GeoJsonWellProperties as BaseWellProperties,
+} from "@webviz/subsurface-viewer/dist/layers/wells/types";
+import { parse, type Rgb } from "culori";
+
 import type { WellInjectionData_api, WellProductionData_api } from "@api";
 import type {
     FormationSegmentData,
@@ -12,11 +18,6 @@ import type {
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type {
-    WellFeature as BaseWellFeature,
-    GeoJsonWellProperties as BaseWellProperties,
-} from "@webviz/subsurface-viewer/dist/layers/wells/types";
-import { parse, type Rgb } from "culori";
 
 export type GeoWellProperties = BaseWellProperties & {
     uuid: string;

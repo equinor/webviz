@@ -50,19 +50,6 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
         if (valueConstraints.length === 0) {
             return true;
         }
-
-        if (typeof value !== "object" || Array.isArray(value)) {
-            return false;
-        }
-
-        const v = value as Record<string, unknown>;
-        return typeof v.sensitivityName === "string" && typeof v.sensitivityCase === "string";
-    }
-
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
-        if (valueRange.length === 0) {
-            return true;
-        }
         if (!value) {
             return false;
         }

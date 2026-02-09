@@ -16,7 +16,7 @@ import type {
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
-const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.WELLBORES, Setting.SURFACE_NAME] as const;
+const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
 
 export type DrilledWellborePicksData = WellborePick_api[];
@@ -63,7 +63,7 @@ export class DrilledWellborePicksProvider
     areCurrentSettingsValid({
         getSetting,
     }: DataProviderInformationAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>): boolean {
-        const smdaWellboreHeaders = getSetting(Setting.WELLBORES);
+        const smdaWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             smdaWellboreHeaders !== null &&

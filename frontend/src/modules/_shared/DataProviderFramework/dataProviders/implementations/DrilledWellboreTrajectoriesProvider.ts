@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import type {
     FormationSegment_api,
     WellboreCompletion_api,
@@ -28,7 +30,6 @@ import {
 } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-import { isEqual } from "lodash";
 
 import { NO_UPDATE } from "../../delegates/_utils/Dependency";
 import type {
@@ -268,13 +269,13 @@ export class DrilledWellboreTrajectoriesProvider
 
     defineDependencies({
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         settingAttributesUpdater,
         storedDataUpdater,
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<DrilledWellboreTrajectoriesSettings, DrilledWellboreTrajectoriesStoredData>) {
-        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -309,7 +310,7 @@ export class DrilledWellboreTrajectoriesProvider
             });
         });
 
-        valueRangeUpdater(Setting.WELLBORES, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.WELLBORES, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
             if (!wellboreHeaders) {
@@ -344,7 +345,7 @@ export class DrilledWellboreTrajectoriesProvider
             };
         });
 
-        valueRangeUpdater(Setting.MD_RANGE, ({ getHelperDependency, getLocalSetting }) => {
+        valueConstraintsUpdater(Setting.MD_RANGE, ({ getHelperDependency, getLocalSetting }) => {
             const data = getHelperDependency(wellboreHeadersDep);
             const selectedWellboreHeaders = getLocalSetting(Setting.WELLBORES);
 
@@ -386,7 +387,7 @@ export class DrilledWellboreTrajectoriesProvider
             };
         });
 
-        valueRangeUpdater(Setting.TVD_RANGE, ({ getHelperDependency, getLocalSetting }) => {
+        valueConstraintsUpdater(Setting.TVD_RANGE, ({ getHelperDependency, getLocalSetting }) => {
             const data = getHelperDependency(wellboreHeadersDep);
             const selectedWellboreHeaders = getLocalSetting(Setting.WELLBORES);
 
@@ -428,7 +429,7 @@ export class DrilledWellboreTrajectoriesProvider
             };
         });
 
-        valueRangeUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!data) {
@@ -455,7 +456,7 @@ export class DrilledWellboreTrajectoriesProvider
             };
         });
 
-        valueRangeUpdater(
+        valueConstraintsUpdater(
             Setting.WELLBORE_DEPTH_FORMATION_FILTER,
             ({ getLocalSetting, getGlobalSetting, getHelperDependency }) => {
                 const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
@@ -516,7 +517,7 @@ export class DrilledWellboreTrajectoriesProvider
             });
         });
 
-        valueRangeUpdater(Setting.TIME_INTERVAL, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.TIME_INTERVAL, ({ getHelperDependency }) => {
             const data = getHelperDependency(observedSurfaceMetadataDep);
 
             if (!data) {
@@ -592,7 +593,7 @@ export class DrilledWellboreTrajectoriesProvider
             return injectionData || [];
         });
 
-        valueRangeUpdater(Setting.PDM_FILTER, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.PDM_FILTER, ({ getHelperDependency }) => {
             const productionData = getHelperDependency(productionDataDep);
             const injectionData = getHelperDependency(injectionDataDep);
 
@@ -617,7 +618,7 @@ export class DrilledWellboreTrajectoriesProvider
                 }
             }
 
-            const valueRange: SettingTypeDefinitions[Setting.PDM_FILTER]["valueRange"] = {
+            const valueConstraints: SettingTypeDefinitions[Setting.PDM_FILTER]["valueConstraints"] = {
                 production: {
                     oil: maxOilProduction,
                     gas: maxGasProduction,
@@ -629,7 +630,7 @@ export class DrilledWellboreTrajectoriesProvider
                 },
             };
 
-            return valueRange;
+            return valueConstraints;
         });
     }
 }

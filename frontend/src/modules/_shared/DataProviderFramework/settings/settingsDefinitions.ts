@@ -28,8 +28,8 @@ export enum Setting {
     PLOT_VARIANT = "plotVariant",
     DEPTH_ATTRIBUTE = "depthAttribute",
     SEISMIC_ATTRIBUTE = "seismicAttribute",
-    WELLBORE_DEPTH_FILTER_ATTRIBUTE = "wellboreDepthFilterAttribute",
     ATTRIBUTE = "attribute",
+    WELLBORE_DEPTH_FILTER_ATTRIBUTE = "wellboreDepthFilterAttribute",
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
     DEPTH_COLOR_SCALE = "depthColorScale",
@@ -54,6 +54,7 @@ export enum Setting {
     SHOW_GRID_LINES = "showGridLines",
     SMDA_INTERPRETER = "smdaInterpreter",
     WELLBORES = "wellbores",
+    SMDA_WELLBORE_HEADERS = "smdaWellboresHeaders",
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
     FORMATION_NAME = "formationName",
@@ -131,16 +132,16 @@ export type SettingTypeDefinitions = {
         valueConstraints: [number, number, number];
     };
 
-    // Range settings (RANGE category) - valueRange is [min, max, step]
+    // Range settings (RANGE category) - valueConstraints is [min, max, step]
     [Setting.MD_RANGE]: {
         internalValue: [number | "min", number | "max"] | null;
         externalValue: [number, number] | null;
-        valueRange: [number, number, number];
+        valueConstraints: [number, number, number];
     };
     [Setting.TVD_RANGE]: {
         internalValue: [number | "min", number | "max"] | null;
         externalValue: [number, number] | null;
-        valueRange: [number, number, number];
+        valueConstraints: [number, number, number];
     };
     // Single select string settings (SINGLE_SELECT category)
     [Setting.SCALE]: {
@@ -159,6 +160,11 @@ export type SettingTypeDefinitions = {
         valueConstraints: string[];
     };
     [Setting.SEISMIC_ATTRIBUTE]: {
+        internalValue: string | null;
+        externalValue: string | null;
+        valueConstraints: string[];
+    };
+    [Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE]: {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: string[];
@@ -213,6 +219,11 @@ export type SettingTypeDefinitions = {
         externalValue: string | null;
         valueConstraints: string[];
     };
+    [Setting.TIME_RANGE_WITH_POINTS]: {
+        internalValue: string[] | null;
+        externalValue: string[] | null;
+        valueConstraints: string[];
+    };
     [Setting.WELLBORE_PICK_IDENTIFIER]: {
         internalValue: string | null;
         externalValue: string | null;
@@ -222,17 +233,12 @@ export type SettingTypeDefinitions = {
     [Setting.WELLBORE_DEPTH_FILTER_TYPE]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: { value: string; label: string }[] | null;
+        valueConstraints: { value: string; label: string }[] | null;
     };
     [Setting.PDM_FILTER_TYPE]: {
         internalValue: string | null;
         externalValue: string | null;
-        valueRange: { value: string; label: string }[] | null;
-    };
-    [Setting.WELLBORE_PICK_IDENTIFIER]: {
-        internalValue: string | null;
-        externalValue: string | null;
-        valueRange: string[];
+        valueConstraints: { value: string; label: string }[] | null;
     };
     // Single select complex object settings (SINGLE_SELECT category)
     [Setting.REPRESENTATION]: {
@@ -283,6 +289,11 @@ export type SettingTypeDefinitions = {
         internalValue: number[] | null;
         externalValue: number[] | null;
         valueConstraints: number[];
+    };
+    [Setting.WELLBORES]: {
+        internalValue: string[] | null;
+        externalValue: WellboreHeader_api[] | null;
+        valueConstraints: WellboreHeader_api[];
     };
     [Setting.SMDA_WELLBORE_HEADERS]: {
         internalValue: string[] | null;
@@ -379,7 +390,7 @@ export type SettingTypeDefinitions = {
             topSurfaceName: string | null;
             baseSurfaceName: string | null;
         } | null;
-        valueRange: {
+        valueConstraints: {
             realizationNums: number[];
             surfaceNamesInStratOrder: string[];
         } | null;
@@ -438,7 +449,7 @@ export type SettingTypeDefinitions = {
                 };
             };
         } | null;
-        valueRange: {
+        valueConstraints: {
             production: {
                 oil: number;
                 gas: number;

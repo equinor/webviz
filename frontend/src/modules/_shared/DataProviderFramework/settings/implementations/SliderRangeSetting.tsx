@@ -13,7 +13,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { isNumberOrStringTuple } from "../utils/structureValidation";
+import { assertNumberOrStringTuple, isNumberOrStringTuple } from "../utils/structureValidation";
 
 type InternalValueType = [number | "min", number | "max"] | null;
 type ExternalValueType = [number, number] | null;
@@ -24,21 +24,21 @@ export class SliderRangeSetting
 {
     private _staticOptions: { minMax: { min: number; max: number }; step: number } | null;
 
-    valueRangeIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType, valueRange: ValueRangeType) => {
+    valueConstraintsIntersectionReducerDefinition = {
+        reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType) => {
             if (accumulator === null) {
-                return valueRange;
+                return valueConstraints;
             }
 
-            const min = Math.max(accumulator[0], valueRange[0]);
-            const max = Math.min(accumulator[1], valueRange[1]);
-            const step = Math.max(accumulator[2], valueRange[2]);
+            const min = Math.max(accumulator[0], valueConstraints[0]);
+            const max = Math.min(accumulator[1], valueConstraints[1]);
+            const step = Math.max(accumulator[2], valueConstraints[2]);
 
             return [min, max, step] as ValueRangeType;
         },
         startingValue: null,
-        isValid: (valueRange: ValueRangeType): boolean => {
-            return valueRange[0] <= valueRange[1] && valueRange[2] > 0;
+        isValid: (valueConstraints: ValueRangeType): boolean => {
+            return valueConstraints[0] <= valueConstraints[1] && valueConstraints[2] > 0;
         },
     };
 
@@ -71,7 +71,7 @@ export class SliderRangeSetting
     }
 
     isValueValidStructure(value: unknown): value is InternalValueType {
-        return isNumberOrStringTuple(value, 2) || value === null;
+        return isNumberOrStringTuple(value);
     }
 
     getIsStatic(): boolean {
@@ -130,6 +130,16 @@ export class SliderRangeSetting
         return fixedValue;
     }
 
+    serializeValue(value: InternalValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): InternalValueType {
+        const parsed = JSON.parse(serializedValue);
+        assertNumberOrStringTuple(parsed);
+        return parsed as InternalValueType;
+    }
+
     makeComponent(): (props: SettingComponentProps<InternalValueType, ValueRangeType>) => React.ReactNode {
         const staticOptions = this._staticOptions;
         const isStatic = staticOptions !== null;
@@ -143,9 +153,9 @@ export class SliderRangeSetting
             const MIN_DIV_WIDTH = 250;
             const inputVisible = divSize.width >= MIN_DIV_WIDTH;
 
-            const min = isStatic ? (staticOptions.minMax.min ?? 0) : (props.valueRange?.[0] ?? 0);
-            const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.valueRange?.[1] ?? 0);
-            const step = isStatic ? (staticOptions.step ?? 1) : (props.valueRange?.[2] ?? 1);
+            const min = isStatic ? (staticOptions.minMax.min ?? 0) : (props.valueConstraints?.[0] ?? 0);
+            const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.valueConstraints?.[1] ?? 0);
+            const step = isStatic ? (staticOptions.step ?? 1) : (props.valueConstraints?.[2] ?? 1);
 
             const [prevValue, setPrevValue] = React.useState(props.value);
             const [localValue, setLocalValue] = React.useState(props.value ?? [min, max]);

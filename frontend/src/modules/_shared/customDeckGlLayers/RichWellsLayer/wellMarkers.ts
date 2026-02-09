@@ -1,5 +1,6 @@
-import { rotatePoint2Around, vec2ToArray, type Vec2 } from "@lib/utils/vec2";
 import type { Geometry } from "geojson";
+
+import { rotatePoint2Around, vec2ToArray, type Vec2 } from "@lib/utils/vec2";
 
 const PERFORATION_WIDTH = 2;
 const PERFORATION_OFFSET = 4;

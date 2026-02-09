@@ -1,8 +1,10 @@
+import isEqual from "lodash-es/isEqual";
+
 import type { WellboreTrajectory_api } from "@api";
+
+import type { CustomDataProviderImplementation } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import { Setting } from "../../settings/settingsDefinitions";
-import type { CustomDataProviderImplementation } from "../../interfacesAndTypes/customDataProviderImplementation";
-import isEqual from "lodash-es/isEqual";
 
 const WELL_TRAJECTORIES_SETTINGS = [Setting.ENSEMBLE];
 type WellTrajectoriesSettings = typeof WELL_TRAJECTORIES_SETTINGS;

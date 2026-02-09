@@ -87,19 +87,6 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
             return true;
         }
 
-        if (typeof value !== "object" || Array.isArray(value)) {
-            return false;
-        }
-
-        const v = value as Record<string, unknown>;
-        return typeof v.enabled === "boolean" && typeof v.value === "number";
-    }
-
-    isValueValid(value: ValueType, valueRange: ValueRangeType): boolean {
-        if (value === null) {
-            return true;
-        }
-
         // If static props are provided, use those for validation
         if (this._staticProps) {
             const min = this._staticProps.min ?? 0;

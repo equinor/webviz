@@ -11,14 +11,15 @@ import type {
 import { CompositeLayer } from "@deck.gl/core";
 import { DataFilterExtension } from "@deck.gl/extensions";
 import { GeoJsonLayer } from "@deck.gl/layers";
-import type { Vec2 } from "@lib/utils/vec2";
-import { point2Distance, subtractVec2, vec2FromArray } from "@lib/utils/vec2";
 import { GL } from "@luma.gl/constants";
-import { simplifyWellTrajectoryRadialDist } from "@modules/_shared/utils/wellbore";
 import type { WellFeature } from "@webviz/subsurface-viewer";
 import { LabelOrientation, WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { Feature, FeatureCollection, Geometry, LineString } from "geojson";
 import { inRange, sortBy, zip, zipWith } from "lodash";
+
+import { point2Distance, subtractVec2, vec2FromArray } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
+import { simplifyWellTrajectoryRadialDist } from "@modules/_shared/utils/wellbore";
 
 import { getCoordinateForMd, getSegmentIndexForMd } from "../WellsLayer/_private/wellTrajectoryUtils";
 
