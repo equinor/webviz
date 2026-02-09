@@ -11,7 +11,6 @@ import {
     type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-
 import type { TargetViewReturnTypes } from "../components/DataProvidersWrapper";
 
 import { createReferenceLinesLayerItem } from "./createReferenceLines";

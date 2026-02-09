@@ -39,10 +39,10 @@ export class FaultPolygonsProvider
 
     defineDependencies({
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         queryClient,
     }: DefineDependenciesArgs<FaultPolygonsSettings>) {
-        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -53,7 +53,7 @@ export class FaultPolygonsProvider
             return ensembleIdents;
         });
 
-        valueRangeUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
@@ -85,7 +85,7 @@ export class FaultPolygonsProvider
             });
         });
 
-        valueRangeUpdater(Setting.POLYGONS_ATTRIBUTE, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.POLYGONS_ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationPolygonsMetadataDep);
 
             if (!data) {
@@ -101,7 +101,7 @@ export class FaultPolygonsProvider
             return availableAttributes;
         });
 
-        valueRangeUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
+        valueConstraintsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(Setting.POLYGONS_ATTRIBUTE);
             const data = getHelperDependency(realizationPolygonsMetadataDep);
 

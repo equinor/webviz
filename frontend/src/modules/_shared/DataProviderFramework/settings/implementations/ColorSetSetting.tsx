@@ -42,7 +42,7 @@ export class ColorSetSetting implements CustomSettingImplementation<ValueType, V
         return JSON.stringify(serializedValue);
     }
 
-    deserializeValue?(serializedValue: string): ValueType {
+    deserializeValue(serializedValue: string): ValueType {
         const parsedValue = JSON.parse(serializedValue);
         return ColorSet.fromSerialized(parsedValue);
     }

@@ -20,8 +20,16 @@ export class StatisticFunctionSetting implements StaticSettingImplementation<Val
         return internalValue;
     }
 
-    isValueValidStructure(value: unknown): value is ValueType {
-        return typeof value === "string";
+    serializeValue(value: ValueType): string {
+        return JSON.stringify(value);
+    }
+
+    deserializeValue(serializedValue: string): ValueType {
+        const parsed = JSON.parse(serializedValue);
+        if (typeof parsed !== "string") {
+            throw new Error("Expected string");
+        }
+        return parsed as ValueType;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {

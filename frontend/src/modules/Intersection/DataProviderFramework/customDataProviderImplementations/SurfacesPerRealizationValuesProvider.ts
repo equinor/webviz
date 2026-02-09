@@ -39,7 +39,6 @@ const surfacesPerRealizationValuesSettings = [
     Setting.REALIZATIONS,
     Setting.ATTRIBUTE,
     Setting.SURFACE_NAMES,
-    Setting.SAMPLE_RESOLUTION_IN_METERS,
     Setting.COLOR_SET,
 ] as const;
 export type SurfacesPerRealizationValuesSettings = typeof surfacesPerRealizationValuesSettings;
@@ -73,7 +72,6 @@ export class SurfacesPerRealizationValuesProvider
     getDefaultSettingsValues() {
         return {
             [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-            [Setting.SAMPLE_RESOLUTION_IN_METERS]: 1,
         };
     }
 
@@ -85,8 +83,7 @@ export class SurfacesPerRealizationValuesProvider
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.realizations, newSettings.realizations) ||
             !isEqual(prevSettings.attribute, newSettings.attribute) ||
-            !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames) ||
-            !isEqual(prevSettings.sampleResolutionInMeters, newSettings.sampleResolutionInMeters)
+            !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames)
         );
     }
 
@@ -108,14 +105,13 @@ export class SurfacesPerRealizationValuesProvider
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATIONS) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
-            getSetting(Setting.SURFACE_NAMES) !== null &&
-            getSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) !== null
+            getSetting(Setting.SURFACE_NAMES) !== null
         );
     }
 
     defineDependencies({
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         settingAttributesUpdater,
         queryClient,
         workbenchSession,
@@ -128,13 +124,13 @@ export class SurfacesPerRealizationValuesProvider
             return { enabled: isEnabled };
         });
 
-        valueRangeUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
             return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
         });
 
-        valueRangeUpdater(Setting.REALIZATIONS, ({ getLocalSetting, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.REALIZATIONS, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
@@ -145,7 +141,7 @@ export class SurfacesPerRealizationValuesProvider
             return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
-        valueRangeUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -178,7 +174,7 @@ export class SurfacesPerRealizationValuesProvider
             return surfaceMetadata;
         });
 
-        valueRangeUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
             if (!surfaceMetadataSet) {
                 return [];
@@ -193,7 +189,7 @@ export class SurfacesPerRealizationValuesProvider
             return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.attribute_name))).sort();
         });
 
-        valueRangeUpdater(Setting.SURFACE_NAMES, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.SURFACE_NAMES, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(Setting.ATTRIBUTE);
             const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
 
@@ -229,11 +225,13 @@ export class SurfacesPerRealizationValuesProvider
             const intersectionPolylineWithSectionLengths = getHelperDependency(
                 intersectionPolylineWithSectionLengthsDep,
             );
-            const sampleResolutionInMeters = getLocalSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) ?? 1;
             const extensionLength = createValidExtensionLength(
                 getLocalSetting(Setting.INTERSECTION),
                 getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH),
             );
+
+            // Add hard coded sample resolution of 25 meters for now (should be derived from metadata in future)
+            const sampleResolutionInMeters = 25.0;
 
             // If no intersection is selected, or polyline is empty, cancel update
             if (

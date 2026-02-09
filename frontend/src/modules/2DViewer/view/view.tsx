@@ -29,11 +29,13 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             viewContext={props.viewContext}
             preferredViewLayout={preferredViewLayout}
             dataProviderManager={dataProviderManager}
+            hoverService={props.hoverService}
             onViewStateChange={setViewState}
             viewState={viewState ?? undefined}
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
             workbenchServices={props.workbenchServices}
+            initialVerticalScale={1}
         />
     );
 }

@@ -147,7 +147,25 @@ export class Table {
 
         return row;
     }
+    filterRows(predicate: (row: Row) => boolean): Table {
+        const rowIndices: number[] = [];
 
+        for (let i = 0; i < this.getNumRows(); i++) {
+            if (predicate(this.getRow(i))) {
+                rowIndices.push(i);
+            }
+        }
+
+        const newColumns: Column[] = this._columns.map((col) => {
+            const newCol = col.cloneEmpty();
+            for (const idx of rowIndices) {
+                newCol.addRowValue(col.getRowValue(idx));
+            }
+            return newCol;
+        });
+
+        return new Table(newColumns);
+    }
     filterRowsByColumn(
         columnName: string,
         predicate: (value: string | number | RegularEnsembleIdent) => boolean,

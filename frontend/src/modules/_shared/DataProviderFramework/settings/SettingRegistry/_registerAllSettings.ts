@@ -112,14 +112,6 @@ SettingRegistry.registerSetting(Setting.POLYGONS_NAME, "Polygons Name", Dropdown
 SettingRegistry.registerSetting(Setting.POLYGON_VISUALIZATION, "Polygon Visualization", PolygonVisualizationSetting);
 SettingRegistry.registerSetting(Setting.REALIZATION, "Realization", DropdownNumberSetting);
 SettingRegistry.registerSetting(Setting.REALIZATIONS, "Realizations", SelectNumberSetting);
-SettingRegistry.registerSetting(
-    Setting.SAMPLE_RESOLUTION_IN_METERS,
-    "Sample Resolution in Meters",
-    InputNumberSetting,
-    {
-        customConstructorParameters: [{ min: 1.0, max: 50.0 }],
-    },
-);
 SettingRegistry.registerSetting(Setting.SEISMIC_SLICES, "Seismic Slices", SeismicSliceSetting);
 SettingRegistry.registerSetting(Setting.SENSITIVITY, "Sensitivity", SensitivitySetting);
 SettingRegistry.registerSetting(Setting.SHOW_GRID_LINES, "Show Grid Lines", BooleanSetting);

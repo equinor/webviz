@@ -4,7 +4,6 @@ import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close } from "@mui/icons-material";
 
 import type { CaseInfo_api } from "@api";
-import { UserAvatar } from "@framework/internal/components/UserAvatar";
 import { edsDateRangeToEpochMsRange } from "@framework/utils/edsDateUtils";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
@@ -12,7 +11,7 @@ import type { ColumnFilterImplementationProps, TableColumns } from "@lib/compone
 import { TagPicker } from "@lib/components/TagPicker";
 import { formatDate } from "@lib/utils/dates";
 
-import { CaseNameAndIdCell } from "./_components";
+import { AuthorCell, CaseNameAndIdCell, DescriptionCell } from "./_components";
 import type { CaseRowData } from "./_types";
 
 export function storeStateInLocalStorage(stateName: string, value: string) {
@@ -57,6 +56,7 @@ export function makeCaseTableColumns(
             columnId: "description",
             sizeInPercent: 25,
             showTooltip: true,
+            renderData: (value) => <DescriptionCell description={value} />,
             filter: { render: (props) => filterInput(props) },
         },
         {
@@ -67,17 +67,7 @@ export function makeCaseTableColumns(
             filter: {
                 render: (props) => filterInput(props, disabledFilterComponents.disableAuthorComponent),
             },
-            renderData: (value, context) => (
-                <div className="flex justify-center gap-1">
-                    <UserAvatar key={context.entry.caseId} userIdOrEmail={`${value}@equinor.com`} />
-                    <span
-                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block"
-                        title={value}
-                    >
-                        {value}
-                    </span>
-                </div>
-            ),
+            renderData: (value, context) => <AuthorCell author={value} key={context.entry.caseId} />,
         },
         {
             label: "Status",

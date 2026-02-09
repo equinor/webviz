@@ -80,9 +80,6 @@ import type {
     GetInlineSliceData_api,
     GetInlineSliceErrors_api,
     GetInlineSliceResponses_api,
-    GetIsSensitivityRunData_api,
-    GetIsSensitivityRunErrors_api,
-    GetIsSensitivityRunResponses_api,
     GetLogCurveDataData_api,
     GetLogCurveDataErrors_api,
     GetLogCurveDataResponses_api,
@@ -98,15 +95,9 @@ import type {
     GetObservedSurfacesMetadataData_api,
     GetObservedSurfacesMetadataErrors_api,
     GetObservedSurfacesMetadataResponses_api,
-    GetParameterData_api,
-    GetParameterErrors_api,
-    GetParameterNamesAndDescriptionData_api,
-    GetParameterNamesAndDescriptionErrors_api,
-    GetParameterNamesAndDescriptionResponses_api,
-    GetParameterResponses_api,
-    GetParametersData_api,
-    GetParametersErrors_api,
-    GetParametersResponses_api,
+    GetParametersAndSensitivitiesData_api,
+    GetParametersAndSensitivitiesErrors_api,
+    GetParametersAndSensitivitiesResponses_api,
     GetPolygonsDataData_api,
     GetPolygonsDataErrors_api,
     GetPolygonsDataResponses_api,
@@ -137,9 +128,6 @@ import type {
     GetSeismicSlicesData_api,
     GetSeismicSlicesErrors_api,
     GetSeismicSlicesResponses_api,
-    GetSensitivitiesData_api,
-    GetSensitivitiesErrors_api,
-    GetSensitivitiesResponses_api,
     GetSessionData_api,
     GetSessionErrors_api,
     GetSessionMetadataData_api,
@@ -890,82 +878,18 @@ export const getStratigraphicUnitsForStratColumn = <ThrowOnError extends boolean
 };
 
 /**
- * Get Parameter Names And Description
- *
- * Retrieve parameter names and description for an ensemble
+ * Get Parameters And Sensitivities
  */
-export const getParameterNamesAndDescription = <ThrowOnError extends boolean = false>(
-    options: Options<GetParameterNamesAndDescriptionData_api, ThrowOnError>,
+export const getParametersAndSensitivities = <ThrowOnError extends boolean = false>(
+    options: Options<GetParametersAndSensitivitiesData_api, ThrowOnError>,
 ) => {
     return (options.client ?? client).get<
-        GetParameterNamesAndDescriptionResponses_api,
-        GetParameterNamesAndDescriptionErrors_api,
+        GetParametersAndSensitivitiesResponses_api,
+        GetParametersAndSensitivitiesErrors_api,
         ThrowOnError
     >({
         responseType: "json",
-        url: "/parameters/parameter_names_and_description/",
-        ...options,
-    });
-};
-
-/**
- * Get Parameter
- *
- * Get a parameter in a given Sumo ensemble
- */
-export const getParameter = <ThrowOnError extends boolean = false>(
-    options: Options<GetParameterData_api, ThrowOnError>,
-) => {
-    return (options.client ?? client).get<GetParameterResponses_api, GetParameterErrors_api, ThrowOnError>({
-        responseType: "json",
-        url: "/parameters/parameter/",
-        ...options,
-    });
-};
-
-/**
- * Get Parameters
- */
-export const getParameters = <ThrowOnError extends boolean = false>(
-    options: Options<GetParametersData_api, ThrowOnError>,
-) => {
-    return (options.client ?? client).get<GetParametersResponses_api, GetParametersErrors_api, ThrowOnError>({
-        responseType: "json",
-        url: "/parameters/parameters/",
-        ...options,
-    });
-};
-
-/**
- * Get Is Sensitivity Run
- *
- * Check if a given Sumo ensemble is a sensitivity run
- */
-export const getIsSensitivityRun = <ThrowOnError extends boolean = false>(
-    options: Options<GetIsSensitivityRunData_api, ThrowOnError>,
-) => {
-    return (options.client ?? client).get<
-        GetIsSensitivityRunResponses_api,
-        GetIsSensitivityRunErrors_api,
-        ThrowOnError
-    >({
-        responseType: "json",
-        url: "/parameters/is_sensitivity_run/",
-        ...options,
-    });
-};
-
-/**
- * Get Sensitivities
- *
- * Get sensitivities in a given Sumo ensemble
- */
-export const getSensitivities = <ThrowOnError extends boolean = false>(
-    options: Options<GetSensitivitiesData_api, ThrowOnError>,
-) => {
-    return (options.client ?? client).get<GetSensitivitiesResponses_api, GetSensitivitiesErrors_api, ThrowOnError>({
-        responseType: "json",
-        url: "/parameters/sensitivities/",
+        url: "/parameters/parameters_and_sensitivities/",
         ...options,
     });
 };

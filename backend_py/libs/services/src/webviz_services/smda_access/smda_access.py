@@ -265,7 +265,8 @@ class SmdaAccess:
             .get_column("unique_wellbore_identifier")
             .unique()
             .sort()
-            .to_list()
+            .to_numpy()
+            .tolist()
         )
         if wellbores_with_nulls:
             for wellbore in wellbores_with_nulls:

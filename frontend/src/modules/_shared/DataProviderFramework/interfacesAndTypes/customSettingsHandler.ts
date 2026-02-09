@@ -46,23 +46,10 @@ export interface DefineBasicDependenciesArgs<
         settingKey: TSettingKey,
         update: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
     ) => Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>;
-}
-
-export interface DefineDependenciesArgs<
-    TSettings extends Settings,
-    TStoredData extends StoredData = Record<string, never>,
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData,
-> extends DefineBasicDependenciesArgs<TSettings, TSettingTypes, TKey> {
-    valueRangeUpdater: <TSettingKey extends TKey>(
+    valueConstraintsUpdater: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
-        update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueRange"], TSettings, TSettingTypes, TKey>,
-    ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueRange"], TSettings, TSettingTypes, TKey>;
-    storedDataUpdater: <K extends TStoredDataKey>(
-        key: K,
-        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
-    ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>;
+        update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>,
+    ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>;
     helperDependency: <T>(
         update: (args: {
             getLocalSetting: <T extends TKey>(settingName: T) => TSettingTypes[T];
@@ -76,6 +63,19 @@ export interface DefineDependenciesArgs<
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     queryClient: QueryClient;
+}
+
+export interface DefineDependenciesArgs<
+    TSettings extends Settings,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData,
+> extends DefineBasicDependenciesArgs<TSettings, TSettingTypes, TKey> {
+    storedDataUpdater: <K extends TStoredDataKey>(
+        key: K,
+        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
+    ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>;
 }
 
 /**
@@ -102,19 +102,19 @@ export interface CustomSettingsHandler<
 
     /**
      * A method that defines the dependencies of the settings of the data provider.
-     * A dependency can either be an updater for the value range of a setting or a stored data object, or a helper dependency (e.g. a fetching operation).
+     * A dependency can either be an updater for the value constraints of a setting or a stored data object, or a helper dependency (e.g. a fetching operation).
      *
      * @param args An object containing the functions for defining the different dependencies.
      *
      * @example
      * ```typescript
      * defineDependencies({
-     *    valueRangeUpdater,
+     *    valueConstraintsUpdater,
      *    storedDataUpdater,
      *    helperDependency,
      *    queryClient
      * }: DefineDependenciesArgs<TSettings, SettingsWithTypes>) {
-     *   valueRangeUpdater(SettingType.REALIZATION, ({ getGlobalSetting, getLocalSetting, getHelperDependency }) => {
+     *   valueConstraintsUpdater(SettingType.REALIZATION, ({ getGlobalSetting, getLocalSetting, getHelperDependency }) => {
      *       // Get global settings
      *       const fieldIdentifier = getGlobalSetting("fieldId");
      *
@@ -127,8 +127,8 @@ export interface CustomSettingsHandler<
      *       // Do something with the settings and data
      *       ...
      *
-     *       // Return the value range for the setting
-     *       return valueRange;
+     *       // Return the value constraints for the setting
+     *       return valueConstraints;
      *     });
      *
      *     // The same can be done with stored data

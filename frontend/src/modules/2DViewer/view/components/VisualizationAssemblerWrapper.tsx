@@ -1,6 +1,7 @@
 import type React from "react";
 
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import {
     DpfSubsurfaceViewerWrapper,
     type DpfSubsurfaceViewerWrapperProps,
@@ -147,12 +148,13 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: makeRichWellTrajectoriesLayer,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
     },
 );
 
 export type VisualizationAssemblerWrapperProps = Omit<
     DpfSubsurfaceViewerWrapperProps,
-    "visualizationAssemblerProduct" | "visualizationMode"
+    "visualizationAssemblerProduct" | "visualizationMode" | "moduleInstanceId"
 > & {
     dataProviderManager: DataProviderManager;
 };
@@ -167,6 +169,7 @@ export function VisualizationAssemblerWrapper(props: VisualizationAssemblerWrapp
             {...props}
             visualizationMode="2D"
             visualizationAssemblerProduct={visualizationAssemblerProduct}
+            moduleInstanceId={props.viewContext.getInstanceIdString()}
         />
     );
 }

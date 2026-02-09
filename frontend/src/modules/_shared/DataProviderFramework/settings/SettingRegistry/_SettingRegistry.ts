@@ -30,14 +30,14 @@ export class SettingRegistry {
             | DynamicSettingImplementation<
                   TSettingDef["internalValue"],
                   TSettingDef["externalValue"],
-                  TSettingDef["valueRange"]
+                  TSettingDef["valueConstraints"]
               > = {
             new (
                 params?: any,
             ): CustomSettingImplementation<
                 TSettingDef["internalValue"],
                 TSettingDef["externalValue"],
-                TSettingDef["valueRange"]
+                TSettingDef["valueConstraints"]
             >;
         },
     >(
@@ -75,7 +75,7 @@ export class SettingRegistry {
             customSettingImplementation: customSettingImpl as CustomSettingImplementation<
                 SettingTypeDefinitions[TSetting]["internalValue"] | null,
                 SettingTypeDefinitions[TSetting]["externalValue"] | null,
-                SettingTypeDefinitions[TSetting]["valueRange"]
+                SettingTypeDefinitions[TSetting]["valueConstraints"]
             >,
         });
     }

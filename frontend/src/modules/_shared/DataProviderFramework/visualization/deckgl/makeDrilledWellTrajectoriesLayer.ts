@@ -76,7 +76,6 @@ export function makeDrilledWellTrajectoriesLayer({
         pickable: true,
         ZIncreasingDownwards: true,
         outline: false,
-        lineWidthScale: 2,
     });
 
     return wellsLayer;

@@ -70,16 +70,46 @@ export function isNumberArrayOrNull(value: unknown): value is number[] | null {
 }
 
 /**
- * Helper function to validate that an array is a number tuple of specific length
+ * Asserts that a value is a string or null, throws if not
  */
-export function isNumberTuple(value: unknown, length: number): value is number[] {
-    return Array.isArray(value) && value.length === length && value.every((v) => typeof v === "number");
+export function assertStringOrNull(value: unknown): asserts value is string | null {
+    if (!isStringOrNull(value)) {
+        throw new Error(`Expected string or null, got ${typeof value}`);
+    }
 }
 
-export function isNumberOrStringTuple(value: unknown, length: number): value is (number | string)[] {
-    return (
-        Array.isArray(value) &&
-        value.length === length &&
-        value.every((v) => typeof v === "number" || typeof v === "string")
-    );
+/**
+ * Asserts that a value is a number or null, throws if not
+ */
+export function assertNumberOrNull(value: unknown): asserts value is number | null {
+    if (!isNumberOrNull(value)) {
+        throw new Error(`Expected number or null, got ${typeof value}`);
+    }
+}
+
+/**
+ * Asserts that a value is a boolean or null, throws if not
+ */
+export function assertBooleanOrNull(value: unknown): asserts value is boolean | null {
+    if (!isBooleanOrNull(value)) {
+        throw new Error(`Expected boolean or null, got ${typeof value}`);
+    }
+}
+
+/**
+ * Asserts that a value is an array of strings or null, throws if not
+ */
+export function assertStringArrayOrNull(value: unknown): asserts value is string[] | null {
+    if (!isStringArrayOrNull(value)) {
+        throw new Error(`Expected string array or null, got ${typeof value}`);
+    }
+}
+
+/**
+ * Asserts that a value is an array of numbers or null, throws if not
+ */
+export function assertNumberArrayOrNull(value: unknown): asserts value is number[] | null {
+    if (!isNumberArrayOrNull(value)) {
+        throw new Error(`Expected number array or null, got ${typeof value}`);
+    }
 }

@@ -95,7 +95,7 @@ export class DepthSurfaceProvider
 
     defineDependencies({
         helperDependency,
-        valueRangeUpdater,
+        valueConstraintsUpdater,
         settingAttributesUpdater,
         storedDataUpdater,
         workbenchSession,
@@ -117,12 +117,12 @@ export class DepthSurfaceProvider
             return { enabled, visible: enabled };
         });
 
-        valueRangeUpdater(Setting.REPRESENTATION, () => {
+        valueConstraintsUpdater(Setting.REPRESENTATION, () => {
             return [Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
         });
-        valueRangeUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
-        valueRangeUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
-        valueRangeUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
+        valueConstraintsUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
+        valueConstraintsUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
+        valueConstraintsUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
 
         const surfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
@@ -142,8 +142,8 @@ export class DepthSurfaceProvider
                 }),
             });
         });
-        valueRangeUpdater(Setting.REALIZATION, createRealizationUpdater());
-        valueRangeUpdater(Setting.DEPTH_ATTRIBUTE, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, createRealizationUpdater());
+        valueConstraintsUpdater(Setting.DEPTH_ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(surfaceMetadataDep);
 
             if (!data) {
@@ -161,7 +161,7 @@ export class DepthSurfaceProvider
 
             return availableAttributes;
         });
-        valueRangeUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
+        valueConstraintsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(Setting.DEPTH_ATTRIBUTE);
             const data = getHelperDependency(surfaceMetadataDep);
 

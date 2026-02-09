@@ -63,7 +63,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
             >
                 <Add fontSize="inherit" />
             </HoldPressedIntervalCallbackButton>
-            <span title="Vertical scale">{props.zFactor.toFixed(2)}</span>
+            <span title="Vertical scale">{props.zFactor}</span>
             <HoldPressedIntervalCallbackButton
                 onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
                 title="Decrease vertical scale"

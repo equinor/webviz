@@ -19,7 +19,7 @@ export enum SettingTopic {
     VALUE = "VALUE",
     VALUE_ABOUT_TO_BE_CHANGED = "VALUE_ABOUT_TO_BE_CHANGED",
     IS_VALID = "IS_VALID",
-    VALUE_RANGE = "VALUE_RANGE",
+    VALUE_CONSTRAINTS = "VALUE_CONSTRAINTS",
     IS_EXTERNALLY_CONTROLLED = "IS_EXTERNALLY_CONTROLLED",
     EXTERNAL_CONTROLLER_PROVIDER = "EXTERNAL_CONTROLLER_PROVIDER",
     IS_LOADING = "IS_LOADING",
@@ -29,12 +29,12 @@ export enum SettingTopic {
     IS_PERSISTED_VALUE_VALID = "IS_PERSISTED_VALUE_VALID",
 }
 
-export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueRange> = {
+export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstraints> = {
     [SettingTopic.VALUE]: TExternalValue;
     [SettingTopic.INTERNAL_VALUE]: TInternalValue;
     [SettingTopic.VALUE_ABOUT_TO_BE_CHANGED]: void;
     [SettingTopic.IS_VALID]: boolean;
-    [SettingTopic.VALUE_RANGE]: TValueRange | null;
+    [SettingTopic.VALUE_CONSTRAINTS]: TValueConstraints | null;
     [SettingTopic.IS_EXTERNALLY_CONTROLLED]: boolean;
     [SettingTopic.EXTERNAL_CONTROLLER_PROVIDER]: ExternalControllerProviderType | undefined;
     [SettingTopic.IS_LOADING]: boolean;
@@ -52,12 +52,13 @@ export type SettingManagerParams<
     TExternalValue extends SettingTypeDefinitions[TSetting]["externalValue"] | null =
         | SettingTypeDefinitions[TSetting]["externalValue"]
         | null,
-    TValueRange extends SettingTypeDefinitions[TSetting]["valueRange"] = SettingTypeDefinitions[TSetting]["valueRange"],
+    TValueConstraints extends
+        SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
 > = {
     type: TSetting;
     label: string;
     defaultValue: TInternalValue;
-    customSettingImplementation: CustomSettingImplementation<TInternalValue, TExternalValue, TValueRange>;
+    customSettingImplementation: CustomSettingImplementation<TInternalValue, TExternalValue, TValueConstraints>;
 };
 
 export enum ExternalControllerProviderType {
@@ -82,19 +83,24 @@ export class SettingManager<
     TExternalValue extends SettingTypeDefinitions[TSetting]["externalValue"] | null =
         | SettingTypeDefinitions[TSetting]["externalValue"]
         | null,
-    TValueRange extends SettingTypeDefinitions[TSetting]["valueRange"] = SettingTypeDefinitions[TSetting]["valueRange"],
-> implements PublishSubscribe<SettingTopicPayloads<TInternalValue, TExternalValue, TValueRange>>
+    TValueConstraints extends
+        SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
+> implements PublishSubscribe<SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstraints>>
 {
     private _id: string;
     private _type: TSetting;
     private _label: string;
-    private _customSettingImplementation: CustomSettingImplementation<TInternalValue, TExternalValue, TValueRange>;
+    private _customSettingImplementation: CustomSettingImplementation<
+        TInternalValue,
+        TExternalValue,
+        TValueConstraints
+    >;
     private _internalValue: TInternalValue;
     private _isValueValid: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<
-        SettingTopicPayloads<TInternalValue, TExternalValue, TValueRange>
+        SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstraints>
     >();
-    private _valueRange: TValueRange | null = null;
+    private _valueConstraints: TValueConstraints | null = null;
     private _loading: boolean = false;
     private _initialized: boolean = false;
     private _currentValueFromPersistence: TInternalValue | null = null;
@@ -108,7 +114,7 @@ export class SettingManager<
         TSetting,
         TInternalValue,
         TExternalValue,
-        TValueRange
+        TValueConstraints
     > | null = null;
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
@@ -119,7 +125,7 @@ export class SettingManager<
         customSettingImplementation,
         defaultValue,
         label,
-    }: SettingManagerParams<TSetting, TInternalValue, TExternalValue, TValueRange>) {
+    }: SettingManagerParams<TSetting, TInternalValue, TExternalValue, TValueConstraints>) {
         this._id = v4();
         this._type = type;
         this._label = label;
@@ -131,15 +137,15 @@ export class SettingManager<
         }
     }
 
-    getValueRangeReducerDefinition() {
-        if ("valueRangeIntersectionReducerDefinition" in this._customSettingImplementation) {
-            return this._customSettingImplementation.valueRangeIntersectionReducerDefinition ?? null;
+    getValueConstraintsReducerDefinition() {
+        if ("valueConstraintsIntersectionReducerDefinition" in this._customSettingImplementation) {
+            return this._customSettingImplementation.valueConstraintsIntersectionReducerDefinition ?? null;
         }
         return null;
     }
 
     registerExternalSettingController(
-        externalController: ExternalSettingController<TSetting, TInternalValue, TExternalValue, TValueRange>,
+        externalController: ExternalSettingController<TSetting, TInternalValue, TExternalValue, TValueConstraints>,
     ): void {
         this._externalController = externalController;
         this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
@@ -210,8 +216,8 @@ export class SettingManager<
             externalController
                 .getSetting()
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(SettingTopic.VALUE_RANGE)(() => {
-                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_RANGE);
+                .makeSubscriberFunction(SettingTopic.VALUE_CONSTRAINTS)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CONSTRAINTS);
             }),
         );
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -230,7 +236,7 @@ export class SettingManager<
         this.setInternalValueAndInvalidateCache(newInternalValue);
         this._externalController = null;
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("external-setting-controller");
-        const shouldNotifyValueChanged = this.applyValueRange();
+        const shouldNotifyValueChanged = this.applyValueConstraints();
         if (shouldNotifyValueChanged) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
         }
@@ -291,7 +297,7 @@ export class SettingManager<
             value = this._currentValueFromPersistence;
         }
 
-        if (!this._isStatic && this._valueRange === null) {
+        if (!this._isStatic && this._valueConstraints === null) {
             return null;
         }
 
@@ -302,10 +308,10 @@ export class SettingManager<
 
         const mappingFunc = this._customSettingImplementation.mapInternalToExternalValue;
         // Type assertion needed because:
-        // - Static settings accept `any` for valueRange (which can be null)
-        // - Dynamic settings require non-null valueRange, but we've already guarded against null above
+        // - Static settings accept `any` for valueConstraints (which can be null)
+        // - Dynamic settings require non-null valueConstraints, but we've already guarded against null above
         // - TypeScript can't infer that the guard ensures non-null for dynamic settings at this point
-        const externalValue = mappingFunc.bind(this._customSettingImplementation)(value, this._valueRange as any);
+        const externalValue = mappingFunc.bind(this._customSettingImplementation)(value, this._valueConstraints as any);
 
         // Cache the computed external value
         this._cachedExternalValue = externalValue;
@@ -332,25 +338,9 @@ export class SettingManager<
         this._cachedExternalValue = NO_CACHE;
 
         try {
-            let deserializedValue;
-            if (this._customSettingImplementation.deserializeValue) {
-                deserializedValue = this._customSettingImplementation.deserializeValue.bind(
-                    this._customSettingImplementation,
-                )(serializedValue);
-            } else {
-                deserializedValue = JSON.parse(serializedValue);
-            }
-
-            // Validate parsed value has correct structure
-            if (!this.isDeserializedValueValidStructure(deserializedValue)) {
-                console.error(
-                    `Deserialized value for setting "${this._label}" has invalid structure, resetting to null`,
-                );
-                this._currentValueFromPersistence = null;
-                this.setPersistedValueIsValid(false);
-                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
-                return;
-            }
+            const deserializedValue = this._customSettingImplementation.deserializeValue.bind(
+                this._customSettingImplementation,
+            )(serializedValue);
 
             this._currentValueFromPersistence = deserializedValue;
             this.setPersistedValueIsValid(true);
@@ -361,15 +351,6 @@ export class SettingManager<
             this.setPersistedValueIsValid(false);
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
         }
-    }
-
-    /**
-     * Validates that a deserialized value has the correct structure/type.
-     * This is a basic structural validation before the value is used.
-     * Uses the required isValueValidStructure method from the custom implementation.
-     */
-    private isDeserializedValueValidStructure(value: unknown): value is TInternalValue {
-        return this._customSettingImplementation.isValueValidStructure.bind(this._customSettingImplementation)(value);
     }
 
     isExternallyControlled(): boolean {
@@ -511,7 +492,7 @@ export class SettingManager<
 
     makeSnapshotGetter<T extends SettingTopic>(
         topic: T,
-    ): () => SettingTopicPayloads<TInternalValue, TExternalValue, TValueRange>[T] {
+    ): () => SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstraints>[T] {
         const externalController = this._externalController;
         if (externalController) {
             return (): any => {
@@ -545,8 +526,8 @@ export class SettingManager<
                     return;
                 case SettingTopic.IS_VALID:
                     return this._isValueValid;
-                case SettingTopic.VALUE_RANGE:
-                    return this._valueRange;
+                case SettingTopic.VALUE_CONSTRAINTS:
+                    return this._valueConstraints;
                 case SettingTopic.IS_EXTERNALLY_CONTROLLED:
                     return this._externalController !== null;
                 case SettingTopic.EXTERNAL_CONTROLLER_PROVIDER:
@@ -573,11 +554,11 @@ export class SettingManager<
         return this._publishSubscribeDelegate;
     }
 
-    getValueRange(): TValueRange | null {
+    getValueConstraints(): TValueConstraints | null {
         if (this._externalController) {
-            return this._externalController.getSetting().getValueRange();
+            return this._externalController.getSetting().getValueConstraints();
         }
-        return this._valueRange;
+        return this._valueConstraints;
     }
 
     maybeResetPersistedValue(): boolean {
@@ -589,7 +570,7 @@ export class SettingManager<
             }
             return true;
         }
-        if (this._currentValueFromPersistence === null || this._valueRange === null) {
+        if (this._currentValueFromPersistence === null || this._valueConstraints === null) {
             return false;
         }
 
@@ -598,7 +579,7 @@ export class SettingManager<
         const isPersistedValueValid = customIsValueValidFunction
             ? customIsValueValidFunction.bind(this._customSettingImplementation)(
                   this._currentValueFromPersistence,
-                  this._valueRange as any,
+                  this._valueConstraints as any,
               )
             : true;
 
@@ -614,11 +595,11 @@ export class SettingManager<
         return false;
     }
 
-    private applyValueRange(): boolean {
+    private applyValueConstraints(): boolean {
         let valueChanged = false;
-        const valueFixedUp = !this.checkIfValueIsValid(this.getInternalValue()) && this.maybeFixupValue();
-        const persistedValueReset = this.maybeResetPersistedValue();
-        if (valueFixedUp || persistedValueReset) {
+        const isValueFixedUp = !this.checkIfValueIsValid(this.getInternalValue()) && this.maybeFixupValue();
+        const isPersistedValueReset = this.maybeResetPersistedValue();
+        if (isValueFixedUp || isPersistedValueReset) {
             valueChanged = true;
         }
         const prevIsValid = this._isValueValid;
@@ -630,29 +611,29 @@ export class SettingManager<
         return shouldNotifyValueChanged;
     }
 
-    setValueRange(valueRange: TValueRange | null): void {
+    setValueConstraints(valueConstraints: TValueConstraints | null): void {
         if (this._externalController) {
-            this.setValueRangeAndInvalidateCache(valueRange);
+            this.setValueConstraintsAndInvalidateCache(valueConstraints);
             this.maybeResetPersistedValue();
             this._loading = false;
             this.initialize();
-            this._externalController.setAvailableValues(this.getId(), valueRange);
+            this._externalController.setValueConstraints(this.getId(), valueConstraints);
             return;
         }
 
-        if (isEqual(this._valueRange, valueRange) && this._initialized) {
+        if (isEqual(this._valueConstraints, valueConstraints) && this._initialized) {
             this.setLoading(false);
             return;
         }
 
-        this.setValueRangeAndInvalidateCache(valueRange);
+        this.setValueConstraintsAndInvalidateCache(valueConstraints);
 
-        const shouldNotifyValueChanged = this.applyValueRange();
+        const shouldNotifyValueChanged = this.applyValueConstraints();
         this.initialize();
         if (shouldNotifyValueChanged) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
         }
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_RANGE);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CONSTRAINTS);
     }
 
     makeComponent() {
@@ -668,14 +649,17 @@ export class SettingManager<
             return false;
         }
 
-        if (this._valueRange === null) {
+        if (this._valueConstraints === null) {
             return false;
         }
 
         const customFixupFunction = this._customSettingImplementation.fixupValue;
 
         const candidate = customFixupFunction
-            ? customFixupFunction.bind(this._customSettingImplementation)(this._internalValue, this._valueRange as any)
+            ? customFixupFunction.bind(this._customSettingImplementation)(
+                  this._internalValue,
+                  this._valueConstraints as any,
+              )
             : this._internalValue;
 
         if (isEqual(candidate, this._internalValue)) {
@@ -689,7 +673,7 @@ export class SettingManager<
         if (this._isStatic) {
             return true;
         }
-        if (this._valueRange === null) {
+        if (this._valueConstraints === null) {
             return false;
         }
 
@@ -699,7 +683,7 @@ export class SettingManager<
             return true;
         }
 
-        return customIsValueValidFunction.bind(this._customSettingImplementation)(value, this._valueRange as any);
+        return customIsValueValidFunction.bind(this._customSettingImplementation)(value, this._valueConstraints as any);
     }
 
     /**
@@ -712,11 +696,11 @@ export class SettingManager<
     }
 
     /**
-     * Sets the value range and invalidates the external value cache.
-     * Use this instead of directly assigning to this._valueRange.
+     * Sets the value constraints and invalidates the external value cache.
+     * Use this instead of directly assigning to this._valueConstraints.
      */
-    private setValueRangeAndInvalidateCache(valueRange: TValueRange | null): void {
-        this._valueRange = valueRange;
+    private setValueConstraintsAndInvalidateCache(valueConstraints: TValueConstraints | null): void {
+        this._valueConstraints = valueConstraints;
         this._cachedExternalValue = NO_CACHE;
     }
 }
