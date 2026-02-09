@@ -214,9 +214,11 @@ export class SurfaceStatisticalFanchartsCanvasLayer<T extends SurfaceStatistical
             const bottomX = bottomLine[i][0];
             const bottomY = bottomLine[i][1];
 
-            const isValid = topX !== null && topY !== null && bottomX !== null && bottomY !== null;
+            const isValidTop = topX !== null && topX !== undefined && topY !== null && topY !== undefined;
+            const isValidBottom =
+                bottomX !== null && bottomX !== undefined && bottomY !== null && bottomY !== undefined;
 
-            if (isValid) {
+            if (isValidTop && isValidBottom) {
                 // Add point to current segment
                 segmentTop.push([topX, topY]);
                 segmentBottom.push([bottomX, bottomY]);
@@ -243,28 +245,31 @@ export class SurfaceStatisticalFanchartsCanvasLayer<T extends SurfaceStatistical
 
         const paths: Path2D[] = [];
 
-        let penDown = false;
-        let path: Path2D | undefined = undefined;
+        let segmentPath: Path2D | null = null;
         for (let i = 0; i < line.length; i++) {
             const x = line[i][0];
             const y = line[i][1];
 
-            if (y !== null && x !== null) {
-                if (penDown && path) {
-                    path.lineTo(x, y);
-                } else {
-                    path = new Path2D();
-                    path.moveTo(x, y);
-                    penDown = true;
+            const isValid = x !== null && x !== undefined && y !== null && y !== undefined;
+            if (isValid) {
+                // Add point to current segment
+                if (segmentPath) {
+                    segmentPath.lineTo(x, y);
                 }
-            } else if (penDown && path) {
-                paths.push(path);
-                penDown = false;
+                // Start new segment
+                else {
+                    segmentPath = new Path2D();
+                    segmentPath.moveTo(x, y);
+                }
+            } else if (segmentPath) {
+                // End of continuous segment - save path
+                paths.push(segmentPath);
+                segmentPath = null;
             }
         }
 
-        if (penDown && path) {
-            paths.push(path);
+        if (segmentPath) {
+            paths.push(segmentPath);
         }
 
         return paths;
