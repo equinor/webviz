@@ -33,8 +33,6 @@
         "ts-key-enum v2 and v3 are the same, expect that v3 exports it as const enum. We cannot use v3 since we compile typescript with isolatedModules=true"
     ],
     "dependencies": {
-        "@deck.gl/core": "^9.1.15",
-        "@deck.gl/layers": "^9.1.15",
         "@equinor/eds-core-react": "~0.48.0",
         "@equinor/esv-intersection": "^3.1.4",
         "@mui/base": "^5.0.0-beta.3",
@@ -43,7 +41,7 @@
         "@tanstack/react-query": "^5.63",
         "@tanstack/react-query-devtools": "^5.63",
         "@webviz/group-tree-plot": "^1.6.19",
-        "@webviz/subsurface-viewer": "^1.15.13",
+        "@webviz/subsurface-viewer": "^1.16.0",
         "@webviz/well-completions-plot": "^1.8.9",
         "@webviz/well-log-viewer": "^2.6.10",
         "animate.css": "^4.1.1",
