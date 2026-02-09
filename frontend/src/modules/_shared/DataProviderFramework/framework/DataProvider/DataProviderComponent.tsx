@@ -157,10 +157,6 @@ function EndActions(props: EndActionProps): React.ReactNode {
             }
             errorMessage += ".";
 
-            const customReportedErrors = props.dataProvider.getSettingsErrorMessages();
-            if (customReportedErrors.length > 0) {
-                errorMessage += `\n${customReportedErrors.join("\n")}`;
-            }
             errorMessage += "\nPlease check the settings.";
 
             return (

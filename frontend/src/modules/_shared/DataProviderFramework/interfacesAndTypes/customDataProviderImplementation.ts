@@ -1,5 +1,6 @@
 import type { DefaultError, FetchQueryOptions, QueryKey } from "@tanstack/query-core";
 
+import type { StatusWriter } from "@framework/types/statusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
@@ -89,6 +90,8 @@ export type DataProviderInformationAccessors<
      * @returns The workbench settings.
      */
     getWorkbenchSettings: () => WorkbenchSettings;
+
+    getStatusWriter: () => StatusWriter;
 };
 
 export type AreSettingsValidArgs<

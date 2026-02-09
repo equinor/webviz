@@ -1,12 +1,13 @@
 import { isCancelledError } from "@tanstack/react-query";
 
+import { GenericPubSubStatusWriter } from "@framework/types/statusWriter";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
+
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
 import { SettingTopic, type SettingManager } from "../../framework/SettingManager/SettingManager";
 import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
-
-import { DependencyStatusWriter } from "./DependencyStatusWriter";
 
 class DependencyLoadingError extends Error {}
 
@@ -53,7 +54,7 @@ export class Dependency<
     private _numParentDependencies = 0;
     private _numChildDependencies = 0;
 
-    private _statusWriter = new DependencyStatusWriter();
+    private _statusWriter = new GenericPubSubStatusWriter("Dependency");
 
     constructor(
         localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>,
@@ -76,6 +77,7 @@ export class Dependency<
         this.getGlobalSetting = this.getGlobalSetting.bind(this);
         this.getLocalSetting = this.getLocalSetting.bind(this);
         this.getHelperDependency = this.getHelperDependency.bind(this);
+        this.getStatusWriter = this.getStatusWriter.bind(this);
     }
 
     beforeDestroy() {
@@ -125,7 +127,7 @@ export class Dependency<
         return this._statusWriter.getMessages();
     }
 
-    getStatusWriter(): DependencyStatusWriter {
+    getStatusWriter(): GenericPubSubStatusWriter {
         return this._statusWriter;
     }
 
@@ -248,11 +250,16 @@ export class Dependency<
                 getLocalSetting: this.getLocalSetting,
                 getGlobalSetting: this.getGlobalSetting,
                 getHelperDependency: this.getHelperDependency,
+                getStatusWriter: this.getStatusWriter,
                 abortSignal: this._abortController.signal,
-                statusWriter: this._statusWriter,
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
+
+            const errorHelper = ApiErrorHelper.fromError(error);
+            if (errorHelper) {
+                this._statusWriter.addError(errorHelper?.makeFullErrorMessage());
+            }
         }
 
         // If there are no dependencies, we can call the update function
@@ -286,8 +293,8 @@ export class Dependency<
                 getLocalSetting: this.getLocalSetting,
                 getGlobalSetting: this.getGlobalSetting,
                 getHelperDependency: this.getHelperDependency,
+                getStatusWriter: this.getStatusWriter,
                 abortSignal: this._abortController.signal,
-                statusWriter: this._statusWriter,
             });
         } catch (e: any) {
             if (e instanceof DependencyLoadingError) {
@@ -298,10 +305,17 @@ export class Dependency<
                 return;
             }
 
-            if (!isCancelledError(e)) {
-                this.applyNewValue(null);
+            if (isCancelledError(e)) {
                 return;
             }
+
+            this.applyNewValue(null);
+
+            const errorHelper = ApiErrorHelper.fromError(e);
+            if (errorHelper) {
+                this._statusWriter.addError(errorHelper?.makeFullErrorMessage());
+            }
+
             return;
         }
 

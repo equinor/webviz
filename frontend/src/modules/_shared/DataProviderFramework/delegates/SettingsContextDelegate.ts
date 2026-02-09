@@ -1,4 +1,5 @@
 import type { StatusMessage } from "@framework/types/statusWriter";
+import { GenericStatusWriterTopic, GenericPubSubStatusWriter } from "@framework/types/statusWriter";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -22,7 +23,6 @@ import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAn
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 import { Dependency } from "./_utils/Dependency";
-import { DependencyStatusTopic } from "./_utils/DependencyStatusWriter";
 
 export enum SettingsContextStatus {
     VALID_SETTINGS = "VALID_SETTINGS",
@@ -88,7 +88,9 @@ export class SettingsContextDelegate<
         [K in TStoredDataKey]: boolean;
     };
     private _dependencies: Dependency<any, TSettings, any, any>[] = [];
-    private _dependencyStatusMessages: StatusMessage[] = [];
+
+    private _statusWriter = new GenericPubSubStatusWriter("SettingContextDelegate");
+    private _allStatusMessages: StatusMessage[] = [];
 
     constructor(
         customSettingsHandler: CustomSettingsHandler<
@@ -113,6 +115,13 @@ export class SettingsContextDelegate<
                 .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(() => {
                 this.handleSettingChanged();
             }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "statusMessages",
+            this._statusWriter
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(GenericStatusWriterTopic.UPDATE_MESSAGES)(() => this.syncAllStatusMessages()),
         );
 
         for (const key in this._settings) {
@@ -141,6 +150,10 @@ export class SettingsContextDelegate<
 
     getStatus(): SettingsContextStatus {
         return this._status;
+    }
+
+    getStatusWriter(): GenericPubSubStatusWriter {
+        return this._statusWriter;
     }
 
     getValues(): { [K in TSettingKey]?: TSettingTypes[K] } {
@@ -270,7 +283,7 @@ export class SettingsContextDelegate<
                 return this._status;
             }
             if (topic === SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES) {
-                return this._dependencyStatusMessages;
+                return this._allStatusMessages;
             }
         };
 
@@ -587,11 +600,15 @@ export class SettingsContextDelegate<
         dependency
             .getStatusWriter()
             .getPublishSubscribeDelegate()
-            .subscribe(DependencyStatusTopic.UPDATE_MESSAGES, () => this.syncAllStatusMessages());
+            .subscribe(GenericStatusWriterTopic.UPDATE_MESSAGES, () => this.syncAllStatusMessages());
     }
 
     private syncAllStatusMessages(): void {
-        this._dependencyStatusMessages = this._dependencies.flatMap((d) => d.getStatusMessages());
+        this._allStatusMessages = [
+            ...this._statusWriter.getMessages(),
+            ...this._dependencies.flatMap((d) => d.getStatusMessages()),
+        ];
+
         this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES);
     }
 }

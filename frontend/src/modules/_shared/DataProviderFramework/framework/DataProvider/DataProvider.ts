@@ -125,7 +125,6 @@ export class DataProvider<
     private _prevSettings: TSettingTypes | null = null;
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
     private _currentTransactionId: number = 0;
-    private _settingsErrorMessages: string[] = [];
     private _revisionNumber: number = 0;
     private _progressMessage: string | null = null;
     private _scopedQueryController: ScopedQueryController;
@@ -185,18 +184,12 @@ export class DataProvider<
             return true;
         }
 
-        this._settingsErrorMessages = [];
-        const reportError = (message: string) => {
-            this._settingsErrorMessages.push(message);
-        };
-        return this._customDataProviderImpl.areCurrentSettingsValid({ ...this.makeAccessors(), reportError });
-    }
-
-    getSettingsErrorMessages(): string[] {
-        return this._settingsErrorMessages;
+        return this._customDataProviderImpl.areCurrentSettingsValid(this.makeAccessors());
     }
 
     private handleSettingsAndStoredDataChange(): void {
+        this._settingsContextDelegate.getStatusWriter().clear();
+
         if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
             this.setStatus(DataProviderStatus.LOADING);
             return;
@@ -383,6 +376,7 @@ export class DataProvider<
             getData: () => this._data,
             getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
             getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
+            getStatusWriter: () => this._settingsContextDelegate.getStatusWriter(),
         };
     }
 

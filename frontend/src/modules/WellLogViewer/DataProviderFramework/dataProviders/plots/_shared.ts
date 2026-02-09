@@ -33,7 +33,7 @@ export const baseDiscreteSettings = [
 export function defineBaseContinuousDependencies<T extends readonly Setting[]>(args: DefineDependenciesArgs<T>) {
     const { valueConstraintsUpdater, helperDependency } = args;
 
-    const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal, statusWriter }) => {
+    const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal, getStatusWriter }) => {
         const wellboreId = getGlobalSetting("wellboreUuid");
 
         if (!wellboreId) return null;
@@ -51,13 +51,12 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
         } catch (error: any) {
             const errorHelper = ApiErrorHelper.fromError(error);
             if (errorHelper && errorHelper.getType() === "AuthorizationError") {
-                statusWriter.addError(
+                getStatusWriter().addError(
                     `Unable to get log curves from service: no access (${errorHelper.getService()?.toUpperCase()})`,
                 );
             }
 
-            // Rethrow to let
-            throw error;
+            return null;
         }
     });
 
