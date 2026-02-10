@@ -2,9 +2,9 @@ import type { FetchQueryOptions, QueryClient, QueryKey } from "@tanstack/react-q
 import { isCancelledError } from "@tanstack/react-query";
 import { clone, isEqual } from "lodash";
 
+import { GenericPubSubStatusWriter, GenericStatusWriterTopic } from "@framework/GenericPubSubStatusWriter";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import type { StatusMessage as GenericStatusMessage } from "@framework/types/statusWriter";
-import { GenericPubSubStatusWriter, GenericStatusWriterTopic } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";

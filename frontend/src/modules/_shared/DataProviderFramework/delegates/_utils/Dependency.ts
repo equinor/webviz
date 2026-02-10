@@ -1,6 +1,6 @@
 import { isCancelledError } from "@tanstack/react-query";
 
-import { GenericPubSubStatusWriter } from "@framework/types/statusWriter";
+import { GenericPubSubStatusWriter } from "@framework/GenericPubSubStatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";

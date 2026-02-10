@@ -1,5 +1,5 @@
+import { GenericStatusWriterTopic } from "@framework/GenericPubSubStatusWriter";
 import type { StatusMessage } from "@framework/types/statusWriter";
-import { GenericStatusWriterTopic } from "@framework/types/statusWriter";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
