@@ -9,6 +9,8 @@ from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.query_string_utils import decode_uint_list_str
 
+from primary.middleware.add_browser_cache import cache_time, CacheTime
+
 from . import schemas
 from . import converters
 
@@ -18,6 +20,7 @@ router = APIRouter()
 
 
 @router.get("/table_definition")
+@cache_time(CacheTime.LONG)
 async def get_table_definition(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -30,6 +33,7 @@ async def get_table_definition(
 
 
 @router.get("/realization_data")
+@cache_time(CacheTime.LONG)
 async def get_realization_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],

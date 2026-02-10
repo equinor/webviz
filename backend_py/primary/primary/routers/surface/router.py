@@ -33,6 +33,8 @@ from . import dependencies
 from . import task_helpers
 
 from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
+from primary.middleware.add_browser_cache import cache_time, CacheTime
+
 from .surface_address import decode_surf_addr_str
 
 
@@ -67,6 +69,7 @@ encoded as a `UintListStr` or "*" to include all realizations.
 
 
 @router.get("/realization_surfaces_metadata/")
+@cache_time(CacheTime.LONG)
 async def get_realization_surfaces_metadata(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -111,6 +114,7 @@ async def get_realization_surfaces_metadata(
 
 
 @router.get("/observed_surfaces_metadata/")
+@cache_time(CacheTime.LONG)
 async def get_observed_surfaces_metadata(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -152,6 +156,7 @@ async def get_observed_surfaces_metadata(
 
 
 @router.get("/surface_data", description="Get surface data for the specified surface." + GENERAL_SURF_ADDR_DOC_STR)
+@cache_time(CacheTime.LONG)
 async def get_surface_data(
     # fmt:off
     response: Response,
@@ -214,7 +219,9 @@ async def get_surface_data(
     return surf_data_response
 
 
+# TODO: What to do here? Have default cache time and override inside as before, or just set to long cache time?
 @router.get("/statistical_surface_data/hybrid")
+# @cache_time(CacheTime.DEFAULT)
 async def get_statistical_surface_data_hybrid(
     # fmt:off
     response: Response,
@@ -290,6 +297,7 @@ async def get_statistical_surface_data_hybrid(
 
 
 @router.post("/get_surface_intersection")
+@cache_time(CacheTime.LONG)
 async def post_get_surface_intersection(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -323,6 +331,7 @@ async def post_get_surface_intersection(
 
 
 @router.post("/get_sample_surface_in_points")
+@cache_time(CacheTime.LONG)
 async def post_get_sample_surface_in_points(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -359,6 +368,7 @@ async def post_get_sample_surface_in_points(
 
 
 @router.get("/delta_surface_data")
+@cache_time(CacheTime.LONG)
 async def get_delta_surface_data(
     # fmt:off
     response: Response,
@@ -373,6 +383,7 @@ async def get_delta_surface_data(
 
 
 @router.get("/misfit_surface_data")
+@cache_time(CacheTime.LONG)
 async def get_misfit_surface_data(
     # fmt:off
     response: Response,
@@ -386,49 +397,6 @@ async def get_misfit_surface_data(
     # fmt:on
 ) -> list[schemas.SurfaceDataFloat]:
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
-
-
-@router.get("/deprecated_stratigraphic_units")
-async def deprecated_get_stratigraphic_units(
-    # fmt:off
-    response: Response,
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
-    # fmt:on
-) -> list[schemas.StratigraphicUnit]:
-    """
-    NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
-    """
-    perf_metrics = ResponsePerfMetrics(response)
-
-    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
-    perf_metrics.record_lap("get-strat-ident")
-
-    strat_units = await _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_identifier)
-    api_strat_units = [converters.to_api_stratigraphic_unit(strat_unit) for strat_unit in strat_units]
-
-    LOGGER.info(f"Got stratigraphic units in: {perf_metrics.to_string()}")
-
-    return api_strat_units
-
-
-@router.get("/stratigraphic_units_for_strat_column")
-async def get_stratigraphic_units_for_strat_column(
-    # fmt:off
-    response: Response,
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    strat_column: Annotated[str, Query(description="SMDA stratigraphic column identifier")],
-    # fmt:on
-) -> list[schemas.StratigraphicUnit]:
-    perf_metrics = ResponsePerfMetrics(response)
-
-    strat_units = await _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column)
-    api_strat_units = [converters.to_api_stratigraphic_unit(strat_unit) for strat_unit in strat_units]
-
-    LOGGER.info(f"Got stratigraphic units in: {perf_metrics.to_string()}")
-
-    return api_strat_units
 
 
 async def _get_stratigraphic_units_for_strat_column_async(

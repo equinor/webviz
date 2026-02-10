@@ -27,6 +27,8 @@ from ._deprecated_format.route_handlers import (
     handle_aggregated_statistical_table_data_for_deprecated_format_async,
 )
 
+from primary.middleware.add_browser_cache import cache_time, CacheTime
+
 from . import schemas
 
 LOGGER = logging.getLogger(__name__)
@@ -35,6 +37,7 @@ router = APIRouter()
 
 
 @router.get("/table_definitions/", tags=["inplace_volumes"])
+@cache_time(CacheTime.LONG)
 async def get_table_definitions(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -56,6 +59,7 @@ async def get_table_definitions(
 
 
 @router.post("/get_aggregated_per_realization_table_data/", tags=["inplace_volumes"])
+@cache_time(CacheTime.LONG)
 # pylint: disable=too-many-arguments
 async def post_get_aggregated_per_realization_table_data(
     response: Response,
@@ -126,6 +130,7 @@ async def post_get_aggregated_per_realization_table_data(
 
 
 @router.post("/get_aggregated_statistical_table_data/", tags=["inplace_volumes"])
+@cache_time(CacheTime.LONG)
 # pylint: disable=too-many-arguments
 async def post_get_aggregated_statistical_table_data(
     response: Response,

@@ -16,9 +16,6 @@ from primary.persistence.snapshot_store.types import (
     SnapshotAccessLogSortBy,
     SnapshotSortBy,
 )
-from primary.middleware.add_browser_cache import no_cache
-
-
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
 from .converters import (
     to_api_session_metadata,
@@ -36,7 +33,6 @@ router = APIRouter()
 
 
 @router.get("/sessions")
-@no_cache
 async def get_sessions_metadata(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
@@ -83,7 +79,6 @@ async def get_sessions_metadata(
 
 
 @router.get("/sessions/{session_id}")
-@no_cache
 async def get_session(
     session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.Session:
@@ -103,7 +98,6 @@ async def get_session(
 
 
 @router.get("/sessions/metadata/{session_id}")
-@no_cache
 async def get_session_metadata(
     session_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.SessionMetadata:
@@ -208,7 +202,6 @@ async def delete_session(
 
 
 @router.get("/snapshot_access_logs")
-@no_cache
 # pylint: disable=too-many-arguments
 async def get_snapshot_access_logs(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -280,7 +273,6 @@ async def get_snapshot_access_logs(
 
 
 @router.get("/snapshots")
-@no_cache
 async def get_snapshots_metadata(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
@@ -328,7 +320,6 @@ async def get_snapshots_metadata(
 
 
 @router.get("/snapshots/{snapshot_id}")
-@no_cache
 async def get_snapshot(
     snapshot_id: str, authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.Snapshot:

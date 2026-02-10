@@ -10,6 +10,8 @@ from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
 
+from primary.middleware.add_browser_cache import cache_time, CacheTime
+
 from . import schemas
 from . import converters
 
@@ -19,6 +21,7 @@ router = APIRouter()
 
 
 @router.get("/realization_flow_network/")
+@cache_time(CacheTime.LONG)
 async def get_realization_flow_network(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -29,6 +32,7 @@ async def get_realization_flow_network(
     node_type_set: set[schemas.NodeType] = Query(description="Node types"),
     # fmt:on
 ) -> schemas.FlowNetworkPerTreeType:
+    """Get flow network data for single realization"""
     timer = PerfTimer()
 
     group_tree_access = GroupTreeAccess.from_ensemble_name(

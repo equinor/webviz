@@ -14,6 +14,8 @@ from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.drogon import is_drogon_identifier
 
+from primary.middleware.add_browser_cache import cache_time, CacheTime
+
 from . import converters, schemas
 
 LOGGER = logging.getLogger(__name__)
@@ -22,6 +24,7 @@ router = APIRouter()
 
 
 @router.get("/polygons_directory/")
+@cache_time(CacheTime.LONG)
 async def get_polygons_directory(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -48,6 +51,7 @@ async def get_polygons_directory(
 
 
 @router.get("/polygons_data/")
+@cache_time(CacheTime.LONG)
 async def get_polygons_data(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
