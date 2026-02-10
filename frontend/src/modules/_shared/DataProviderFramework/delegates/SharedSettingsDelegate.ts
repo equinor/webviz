@@ -8,6 +8,7 @@ import { ExternalSettingController } from "../framework/ExternalSettingControlle
 import { SettingTopic, type SettingManager } from "../framework/SettingManager/SettingManager";
 import type {
     DefineBasicDependenciesArgs,
+    HelperUpdateFunc,
     SettingAttributes,
     UpdateFunc,
 } from "../interfacesAndTypes/customSettingsHandler";
@@ -327,16 +328,7 @@ export class SharedSettingsDelegate<
             return dependency;
         };
 
-        const helperDependency = <T>(
-            update: (args: {
-                getLocalSetting: <T extends TSettingKey>(settingName: T) => TSettingTypes[T];
-                getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-                getHelperDependency: <TDep>(
-                    dep: Dependency<TDep, TSettings, TSettingTypes, TSettingKey>,
-                ) => Awaited<TDep> | null;
-                abortSignal: AbortSignal;
-            }) => T,
-        ) => {
+        const helperDependency = <T>(update: HelperUpdateFunc<T, TSettings, TSettingTypes, TSettingKey>) => {
             const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
                 localSettingManagerGetter.bind(this),
                 globalSettingGetter.bind(this),
