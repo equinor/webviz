@@ -1,10 +1,8 @@
-import React from "react";
+import type React from "react";
 
-import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore, Info, Warning } from "@mui/icons-material";
+import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import type { StatusMessage as GenericStatusMessage } from "@framework/types/statusWriter";
-import { StatusMessageType } from "@framework/types/statusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -17,6 +15,7 @@ import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
+import { StatusMessages } from "../utilityComponents/StatusWriterMessages";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 
 import { DataProviderStatus, DataProviderTopic } from "./DataProvider";
@@ -96,6 +95,7 @@ type EndActionProps = {
 
 function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS);
+    const statusMessages = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS_WRITER_MESSAGES);
     const progressMessage = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.PROGRESS_MESSAGE);
     const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
 
@@ -175,55 +175,9 @@ function EndActions(props: EndActionProps): React.ReactNode {
 
     return (
         <>
-            <StatusMessages dataProvider={props.dataProvider} />
+            <StatusMessages statusMessages={statusMessages} />
             {makeStatus()}
             <RemoveItemButton item={props.dataProvider} />
         </>
-    );
-}
-type StatusMessagesProps = { dataProvider: DataProvider<any, any> };
-function StatusMessages(props: StatusMessagesProps) {
-    const statusMessages = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS_WRITER_MESSAGES);
-
-    const categorizedMessages = React.useMemo(
-        () => ({
-            warning: statusMessages.filter((m) => m.type === StatusMessageType.Warning),
-            error: statusMessages.filter((m) => m.type === StatusMessageType.Error),
-            info: statusMessages.filter((m) => m.type === StatusMessageType.Info),
-        }),
-        [statusMessages],
-    );
-    return (
-        <>
-            <StatusMessage messages={categorizedMessages.info}>
-                <Info className="text-slate-500 p-0.5" fontSize="small" />
-            </StatusMessage>
-
-            <StatusMessage messages={categorizedMessages.warning}>
-                <Warning className="text-orange-500 p-0.5" fontSize="small" />
-            </StatusMessage>
-
-            <StatusMessage messages={categorizedMessages.error}>
-                <Error className="text-red-700 p-0.5" fontSize="small" />
-            </StatusMessage>
-        </>
-    );
-}
-
-function StatusMessage(props: { messages: GenericStatusMessage[]; children: React.ReactElement }) {
-    if (!props.messages.length) return null;
-
-    return (
-        <Tooltip
-            title={
-                <ul>
-                    {props.messages.map((m, i) => (
-                        <li key={i}>{m.message}</li>
-                    ))}
-                </ul>
-            }
-        >
-            {props.children}
-        </Tooltip>
     );
 }
