@@ -66,6 +66,8 @@ export class GenericPubSubStatusWriter implements StatusWriter, PublishSubscribe
 
     clear(): void {
         this._messages = [];
+
+        this._pubSubDelegate.notifySubscribers(GenericStatusWriterTopic.UPDATE_MESSAGES);
     }
     getMessages(): StatusMessage[] {
         return this._messages;

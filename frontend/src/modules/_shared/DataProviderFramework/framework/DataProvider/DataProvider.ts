@@ -3,6 +3,8 @@ import { isCancelledError } from "@tanstack/react-query";
 import { clone, isEqual } from "lodash";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { StatusMessage as GenericStatusMessage } from "@framework/types/statusWriter";
+import { GenericPubSubStatusWriter, GenericStatusWriterTopic } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -34,6 +36,7 @@ export enum DataProviderTopic {
     SUBORDINATED = "SUBORDINATED",
     REVISION_NUMBER = "REVISION_NUMBER",
     PROGRESS_MESSAGE = "PROGRESS_MESSAGE",
+    STATUS_WRITER_MESSAGES = "STATUS_WRITER_MESSAGES",
 }
 
 export enum DataProviderStatus {
@@ -50,6 +53,7 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.SUBORDINATED]: boolean;
     [DataProviderTopic.REVISION_NUMBER]: number;
     [DataProviderTopic.PROGRESS_MESSAGE]: string | null;
+    [DataProviderTopic.STATUS_WRITER_MESSAGES]: GenericStatusMessage[];
 };
 
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
@@ -131,6 +135,9 @@ export class DataProvider<
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
 
+    private _statusWriter = new GenericPubSubStatusWriter("DataProvider");
+    private _allStatusMessages: GenericStatusMessage[] = [];
+
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
             dataProviderManager: dataProviderManager,
@@ -154,6 +161,22 @@ export class DataProvider<
             instanceName ?? customDataProviderImplementation.getDefaultName(),
             1,
             dataProviderManager,
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "status-writer",
+            this._statusWriter
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(GenericStatusWriterTopic.UPDATE_MESSAGES)(() => this.syncAllStatusMessages()),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "settings-context",
+            this._settingsContextDelegate
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES)(() => {
+                this.syncAllStatusMessages();
+            }),
         );
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -188,7 +211,7 @@ export class DataProvider<
     }
 
     private handleSettingsAndStoredDataChange(): void {
-        this._settingsContextDelegate.getStatusWriter().clear();
+        this._statusWriter.clear();
 
         if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
             this.setStatus(DataProviderStatus.LOADING);
@@ -331,6 +354,9 @@ export class DataProvider<
             if (topic === DataProviderTopic.PROGRESS_MESSAGE) {
                 return this._progressMessage;
             }
+            if (topic === DataProviderTopic.STATUS_WRITER_MESSAGES) {
+                return this._allStatusMessages;
+            }
             throw new Error(`Unknown topic: ${topic}`);
         };
 
@@ -376,7 +402,7 @@ export class DataProvider<
             getData: () => this._data,
             getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
             getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
-            getStatusWriter: () => this._settingsContextDelegate.getStatusWriter(),
+            getStatusWriter: () => this._statusWriter,
         };
     }
 
@@ -501,5 +527,14 @@ export class DataProvider<
 
     private invalidateValueRange(): void {
         this._valueRange = null;
+    }
+
+    private syncAllStatusMessages(): void {
+        const localMessages = this._statusWriter.getMessages();
+        const settingsContextMessages = this._settingsContextDelegate.getDependencyStatusMessages();
+
+        this._allStatusMessages = [...localMessages, ...settingsContextMessages];
+
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS_WRITER_MESSAGES);
     }
 }

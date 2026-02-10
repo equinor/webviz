@@ -1,5 +1,5 @@
 import type { StatusMessage } from "@framework/types/statusWriter";
-import { GenericStatusWriterTopic, GenericPubSubStatusWriter } from "@framework/types/statusWriter";
+import { GenericStatusWriterTopic } from "@framework/types/statusWriter";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -89,8 +89,7 @@ export class SettingsContextDelegate<
     };
     private _dependencies: Dependency<any, TSettings, any, any>[] = [];
 
-    private _statusWriter = new GenericPubSubStatusWriter("SettingContextDelegate");
-    private _allStatusMessages: StatusMessage[] = [];
+    private _dependencyStatusMessages: StatusMessage[] = [];
 
     constructor(
         customSettingsHandler: CustomSettingsHandler<
@@ -115,13 +114,6 @@ export class SettingsContextDelegate<
                 .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(() => {
                 this.handleSettingChanged();
             }),
-        );
-
-        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "statusMessages",
-            this._statusWriter
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(GenericStatusWriterTopic.UPDATE_MESSAGES)(() => this.syncAllStatusMessages()),
         );
 
         for (const key in this._settings) {
@@ -152,8 +144,8 @@ export class SettingsContextDelegate<
         return this._status;
     }
 
-    getStatusWriter(): GenericPubSubStatusWriter {
-        return this._statusWriter;
+    getDependencyStatusMessages(): StatusMessage[] {
+        return this._dependencyStatusMessages;
     }
 
     getValues(): { [K in TSettingKey]?: TSettingTypes[K] } {
@@ -283,7 +275,7 @@ export class SettingsContextDelegate<
                 return this._status;
             }
             if (topic === SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES) {
-                return this._allStatusMessages;
+                return this._dependencyStatusMessages;
             }
         };
 
@@ -604,10 +596,7 @@ export class SettingsContextDelegate<
     }
 
     private syncAllStatusMessages(): void {
-        this._allStatusMessages = [
-            ...this._statusWriter.getMessages(),
-            ...this._dependencies.flatMap((d) => d.getStatusMessages()),
-        ];
+        this._dependencyStatusMessages = this._dependencies.flatMap((d) => d.getStatusMessages());
 
         this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES);
     }

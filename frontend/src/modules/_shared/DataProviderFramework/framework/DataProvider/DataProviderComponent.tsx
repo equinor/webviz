@@ -13,8 +13,6 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { SortableListItem } from "../../components/item";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import type { SettingsContextDelegate } from "../../delegates/SettingsContextDelegate";
-import { SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
@@ -177,18 +175,15 @@ function EndActions(props: EndActionProps): React.ReactNode {
 
     return (
         <>
-            <StatusMessages settingsContext={props.dataProvider.getSettingsContextDelegate()} />
+            <StatusMessages dataProvider={props.dataProvider} />
             {makeStatus()}
             <RemoveItemButton item={props.dataProvider} />
         </>
     );
 }
-
-function StatusMessages(props: { settingsContext: SettingsContextDelegate<any> }) {
-    const statusMessages = usePublishSubscribeTopicValue(
-        props.settingsContext,
-        SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES,
-    );
+type StatusMessagesProps = { dataProvider: DataProvider<any, any> };
+function StatusMessages(props: StatusMessagesProps) {
+    const statusMessages = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS_WRITER_MESSAGES);
 
     const categorizedMessages = React.useMemo(
         () => ({
@@ -205,7 +200,7 @@ function StatusMessages(props: { settingsContext: SettingsContextDelegate<any> }
             </StatusMessage>
 
             <StatusMessage messages={categorizedMessages.warning}>
-                <Warning className="text-orange-700 p-0.5" fontSize="small" />
+                <Warning className="text-orange-500 p-0.5" fontSize="small" />
             </StatusMessage>
 
             <StatusMessage messages={categorizedMessages.error}>
