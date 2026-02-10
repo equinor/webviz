@@ -208,15 +208,6 @@ export interface CustomDataProviderImplementation<
     fetchData(params: FetchDataParams<TSettings, TData, TStoredData>): Promise<TData>;
 
     /**
-     * Used to determine the value range of the data in the provider. This is used for coloring the provider.
-     *
-     * @param accessors Accessors to the data and settings of the provider.
-     */
-    makeValueRange?(
-        accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>,
-    ): readonly [number, number] | null;
-
-    /**
      * This method is called to check if the current settings are valid. It should return true if the settings are valid
      * and false if they are not.
      * As long as the settings are not valid, the provider will not fetch data.

@@ -23,13 +23,13 @@ import type {
     ProviderSnapshot,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { Item } from "../../interfacesAndTypes/entities";
+import type { ItemView, StateSnapshot } from "../../interfacesAndTypes/ItemView";
 import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../../interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 import { makeSettings } from "../utils/makeSettings";
-import { ItemView, StateSnapshot } from "../../interfacesAndTypes/ItemView";
 
 export enum DataProviderTopic {
     STATUS = "STATUS",
@@ -136,7 +136,6 @@ export class DataProvider<
     private _status: DataProviderStatus = DataProviderStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
-    private _valueRange: readonly [number, number] | null = null;
     private _isSubordinated: boolean = false;
     private _prevSettings: TSettingTypes | null = null;
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
@@ -403,10 +402,6 @@ export class DataProvider<
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.SUBORDINATED);
     }
 
-    getDataValueRange(): readonly [number, number] | null {
-        return this._valueRange;
-    }
-
     getDataProviderManager(): DataProviderManager {
         return this._dataProviderManager;
     }
@@ -499,7 +494,6 @@ export class DataProvider<
 
         const accessors = this.makeAccessors();
 
-        this.invalidateValueRange();
         this.setProgressMessage(null);
         this.setStatus(DataProviderStatus.LOADING);
 
@@ -525,9 +519,6 @@ export class DataProvider<
                 return;
             }
 
-            if (this._customDataProviderImpl.makeValueRange) {
-                this._valueRange = this._customDataProviderImpl.makeValueRange(accessors);
-            }
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
             this.setStatus(DataProviderStatus.SUCCESS);
         } catch (error: any) {
@@ -594,9 +585,5 @@ export class DataProvider<
 
     private getQueryClient(): QueryClient | null {
         return this._dataProviderManager?.getQueryClient() ?? null;
-    }
-
-    private invalidateValueRange(): void {
-        this._valueRange = null;
     }
 }

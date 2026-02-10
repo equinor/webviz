@@ -10,21 +10,19 @@ import {
     getSurfaceDataOptions,
 } from "@api";
 import type { GetStatisticalSurfaceDataHybridData_api, Options } from "@api";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
-import {
+import type {
     ProviderSnapshot,
-    type CustomDataProviderImplementation,
-    type DataProviderInformationAccessors,
-    type FetchDataParams,
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
+    FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type {
-    MakeSettingTypesMap,
-    SettingsKeysFromTuple,
-} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
@@ -39,8 +37,6 @@ import {
     createStatisticFunctionUpdater,
 } from "./_commonSettingsUpdaters";
 import { SurfaceDataFormat, type SurfaceData, type SurfaceStoredData } from "./types";
-import { ColorScale } from "@lib/utils/ColorScale";
-import { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 
 const surfaceSettings = [
     Setting.ENSEMBLE,
@@ -114,19 +110,6 @@ export class DepthSurfaceProvider
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
-    }
-
-    makeValueRange({
-        getData,
-    }: DataProviderInformationAccessors<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>):
-        | [number, number]
-        | null {
-        const data = getData()?.surfaceData;
-        if (!data) {
-            return null;
-        }
-
-        return [data.value_min, data.value_max];
     }
 
     defineDependencies({

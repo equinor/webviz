@@ -8,6 +8,7 @@ import type { Feature } from "geojson";
 
 import type { WellboreTrajectory_api } from "@api";
 import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
+import type { DataProviderMeta } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
 import type { TransformerArgs } from "../VisualizationAssembler";
@@ -22,9 +23,9 @@ export type GeoWellFeature = BaseWellFeature & { properties: GeoWellProperties }
 
 export function makeDrilledWellTrajectoriesLayer({
     id,
-    getData,
-}: TransformerArgs<any, WellboreTrajectory_api[], any>): WellsLayer | null {
-    const fieldWellboreTrajectoriesData = getData();
+    state,
+}: TransformerArgs<WellboreTrajectory_api[], DataProviderMeta>): WellsLayer | null {
+    const fieldWellboreTrajectoriesData = state?.snapshot?.data;
 
     if (!fieldWellboreTrajectoriesData) {
         return null;

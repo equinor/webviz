@@ -2,24 +2,25 @@ import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { RealizationGridProviderMeta } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import { makeColorMapFunctionFromColorScale } from "../utils/colors";
 import type { RealizationGridData } from "../utils/types";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const realizationGridSettings = [Setting.SHOW_GRID_LINES, Setting.COLOR_SCALE, Setting.OPACITY_PERCENT] as const;
-type RealizationGridSettings = typeof realizationGridSettings;
-
 export function makeRealizationGridLayer(
-    args: TransformerArgs<RealizationGridSettings, RealizationGridData>,
+    args: TransformerArgs<RealizationGridData, RealizationGridProviderMeta>,
 ): Grid3DLayer | null {
-    const { id, getData, getSetting, isLoading } = args;
-    const data = getData();
-    let colorScaleSpec = getSetting(Setting.COLOR_SCALE);
-    const showGridLines = getSetting(Setting.SHOW_GRID_LINES) ?? false;
-    const opacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
+    const { id, state, isLoading } = args;
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
+
+    const data = snapshot.data;
+    let colorScaleSpec = snapshot.meta.colorScale;
+    const showGridLines = snapshot.meta.showGridLines;
+    const opacityPercent = snapshot.meta.opacityPercent;
 
     if (!data || !colorScaleSpec) {
         return null;

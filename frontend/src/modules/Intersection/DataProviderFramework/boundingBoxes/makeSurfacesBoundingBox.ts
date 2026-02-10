@@ -3,8 +3,7 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 
 import type {
     RealizationSurfacesData,
-    RealizationSurfacesSettings,
-    RealizationSurfacesStoredData,
+    RealizationSurfacesProviderMeta,
 } from "../customDataProviderImplementations/RealizationSurfacesProvider";
 
 /**
@@ -14,17 +13,16 @@ import type {
  * as they are to be visualized in a 2D view.
  */
 export function makeSurfacesBoundingBox({
-    getData,
-    getStoredData,
+    state,
     isLoading,
-}: TransformerArgs<
-    RealizationSurfacesSettings,
-    RealizationSurfacesData,
-    RealizationSurfacesStoredData,
-    any
->): BBox | null {
-    const data = getData();
-    const polylineActualSectionLengths = getStoredData("polylineWithSectionLengths")?.actualSectionLengths;
+}: TransformerArgs<RealizationSurfacesData, RealizationSurfacesProviderMeta>): BBox | null {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
+
+    const data = snapshot.data;
+    const polylineActualSectionLengths = snapshot.meta.polylineActualSectionLengths;
 
     if (!data || !polylineActualSectionLengths || isLoading) {
         return null;

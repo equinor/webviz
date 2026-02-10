@@ -3,9 +3,12 @@ import { isEqual } from "lodash";
 import type { PolygonData_api } from "@api";
 import { getPolygonsDataOptions, getPolygonsDirectoryOptions, PolygonsAttributeType_api } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import type { PolygonVisualizationSpec } from "@modules/_shared/components/PolygonVisualizationForm";
 import type {
     CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -24,10 +27,38 @@ export type FaultPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<FaultPolygonsSettings>;
 
 export type FaultPolygonsData = PolygonData_api[];
+
+export type FaultPolygonsProviderMeta = {
+    polygonVisualization: PolygonVisualizationSpec;
+};
 export class FaultPolygonsProvider
-    implements CustomDataProviderImplementation<FaultPolygonsSettings, FaultPolygonsData>
+    implements
+        CustomDataProviderImplementation<
+            FaultPolygonsSettings,
+            FaultPolygonsData,
+            Record<string, never>,
+            FaultPolygonsProviderMeta
+        >
 {
     settings = realizationPolygonsSettings;
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<FaultPolygonsSettings, FaultPolygonsData>,
+    ): ProviderSnapshot<FaultPolygonsData, FaultPolygonsProviderMeta> {
+        const { getSetting, getData } = args;
+        const data = getData();
+        const polygonVisualization = getSetting(Setting.POLYGON_VISUALIZATION);
+        const attributeName = getSetting(Setting.POLYGONS_ATTRIBUTE) ?? "Polygons";
+
+        return {
+            data,
+            valueRange: null,
+            dataLabel: attributeName,
+            meta: {
+                polygonVisualization: polygonVisualization!,
+            },
+        };
+    }
 
     getDefaultName(): string {
         return "Fault Polygons";

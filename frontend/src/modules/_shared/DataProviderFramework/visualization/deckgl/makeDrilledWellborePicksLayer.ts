@@ -1,14 +1,15 @@
 import type { WellborePick_api } from "@api";
 import type { WellborePicksLayerData } from "@modules/_shared/customDeckGlLayers/WellborePicksLayer";
 import { WellborePicksLayer } from "@modules/_shared/customDeckGlLayers/WellborePicksLayer";
+import type { DataProviderMeta } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 
 import type { TransformerArgs } from "../VisualizationAssembler";
 
 export function makeDrilledWellborePicksLayer({
     id,
-    getData,
-}: TransformerArgs<any, WellborePick_api[], any>): WellborePicksLayer | null {
-    const data = getData();
+    state,
+}: TransformerArgs<WellborePick_api[], DataProviderMeta>): WellborePicksLayer | null {
+    const data = state?.snapshot?.data;
 
     if (!data) {
         return null;

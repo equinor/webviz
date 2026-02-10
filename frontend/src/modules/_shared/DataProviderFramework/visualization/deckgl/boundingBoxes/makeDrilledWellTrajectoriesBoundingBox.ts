@@ -1,11 +1,12 @@
 import type { WellboreTrajectory_api } from "@api";
 import type { BBox } from "@lib/utils/bbox";
+import type { DataProviderMeta } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 export function makeDrilledWellTrajectoriesBoundingBox({
-    getData,
-}: TransformerArgs<any, WellboreTrajectory_api[]>): BBox | null {
-    const data = getData();
+    state,
+}: TransformerArgs<WellboreTrajectory_api[], DataProviderMeta>): BBox | null {
+    const data = state?.snapshot?.data;
     if (!data) {
         return null;
     }

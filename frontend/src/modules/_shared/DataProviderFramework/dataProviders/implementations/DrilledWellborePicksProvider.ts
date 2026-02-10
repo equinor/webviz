@@ -12,10 +12,9 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
-    ProviderSnapshot,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;

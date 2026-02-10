@@ -3,9 +3,12 @@ import { isEqual } from "lodash";
 import type { PolygonData_api } from "@api";
 import { getPolygonsDataOptions, getPolygonsDirectoryOptions, PolygonsAttributeType_api } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import type { PolygonVisualizationSpec } from "@modules/_shared/components/PolygonVisualizationForm";
 import type {
     CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -24,10 +27,39 @@ export type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;
 
 export type RealizationPolygonsData = PolygonData_api[];
+
+export type RealizationPolygonsProviderMeta = {
+    polygonVisualization: PolygonVisualizationSpec;
+};
+
 export class RealizationPolygonsProvider
-    implements CustomDataProviderImplementation<RealizationPolygonsSettings, RealizationPolygonsData>
+    implements
+        CustomDataProviderImplementation<
+            RealizationPolygonsSettings,
+            RealizationPolygonsData,
+            Record<string, never>,
+            RealizationPolygonsProviderMeta
+        >
 {
     settings = realizationPolygonsSettings;
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<RealizationPolygonsSettings, RealizationPolygonsData>,
+    ): ProviderSnapshot<RealizationPolygonsData, RealizationPolygonsProviderMeta> {
+        const { getSetting, getData } = args;
+        const data = getData();
+        const polygonVisualization = getSetting(Setting.POLYGON_VISUALIZATION);
+        const attributeName = getSetting(Setting.POLYGONS_ATTRIBUTE) ?? "Polygons";
+
+        return {
+            data,
+            valueRange: null,
+            dataLabel: attributeName,
+            meta: {
+                polygonVisualization: polygonVisualization!,
+            },
+        };
+    }
 
     getDefaultName(): string {
         return "Polygons";

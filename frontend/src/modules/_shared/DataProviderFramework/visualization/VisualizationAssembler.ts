@@ -13,12 +13,11 @@ import type { WellPickDataCollection } from "@modules/_shared/types/wellpicks";
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
-import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
 import { Group } from "../framework/Group/Group";
+import { OperationGroup } from "../framework/OperationGroup/OperationGroup";
 import type { GroupType } from "../groups/groupTypes";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
     DataProviderMeta,
 } from "../interfacesAndTypes/customDataProviderImplementation";
 import type {
@@ -26,11 +25,9 @@ import type {
     CustomGroupImplementationWithSettings,
 } from "../interfacesAndTypes/customGroupImplementation";
 import { instanceofItemGroup, type ItemGroup } from "../interfacesAndTypes/entities";
-import type { StoredData } from "../interfacesAndTypes/sharedTypes";
+import type { StateSnapshot } from "../interfacesAndTypes/ItemView";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
-import { OperationGroup } from "../framework/OperationGroup/OperationGroup";
-import { StateSnapshot } from "../interfacesAndTypes/ItemView";
 
 export enum VisualizationItemType {
     DATA_PROVIDER_VISUALIZATION = "data-provider-visualization",
@@ -225,16 +222,12 @@ export class VisualizationAssembler<
         }
     > = new Map();
 
-    registerDataProviderTransformers<
-        TSettings extends Settings,
-        TData,
-        TStoredData extends StoredData = Record<string, never>,
-    >(
+    registerDataProviderTransformers<TData, TMeta extends DataProviderMeta>(
         dataProviderName: string,
         dataProviderCtor: {
-            new (...params: any[]): CustomDataProviderImplementation<TSettings, TData, TStoredData>;
+            new (...params: any[]): CustomDataProviderImplementation<any, TData, any, TMeta>;
         },
-        transformers: DataProviderTransformers<TTarget, any, any, TInjectedData, TAccumulatedData>,
+        transformers: DataProviderTransformers<TTarget, TData, TMeta, TInjectedData, TAccumulatedData>,
     ): void {
         if (this._dataProviderTransformers.has(dataProviderCtor.name)) {
             throw new Error(`Transformer function for data provider ${dataProviderCtor.name} already registered`);
@@ -509,7 +502,6 @@ export class VisualizationAssembler<
             isLoading: dataProvider.getStatus() === DataProviderStatus.LOADING,
             getInjectedData: getInjectedData.bind(this),
             state: dataProvider.getStateSnapshot(),
-            ...dataProvider.makeAccessors(),
         };
     }
 

@@ -1,10 +1,8 @@
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import type {
     IntersectionRealizationGridData,
-    IntersectionRealizationGridSettings,
-    IntersectionRealizationGridStoredData,
+    IntersectionRealizationGridProviderMeta,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
@@ -12,54 +10,50 @@ import type {
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
 import { createGridColorScaleValues } from "../utils/colorScaleUtils";
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 export function createGridLayerItemsMaker({
     id,
     name,
     isLoading,
-    getData,
-    getSetting,
-    getStoredData,
-    getDataValueRange,
-}: TransformerArgs<
-    IntersectionRealizationGridSettings,
-    IntersectionRealizationGridData,
-    IntersectionRealizationGridStoredData,
-    any
->): EsvLayerItemsMaker | null {
-    const intersectionData = getData();
-    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
-    const colorOpacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
-    const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
-    const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
-    const selectedAttribute = getSetting(Setting.ATTRIBUTE);
-    const sourcePolylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
-    const valueRange = getDataValueRange();
-
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
-
-    if (!intersectionData || !sourcePolylineWithSectionLengths || !colorScale || isLoading || !valueRange) {
+    state,
+}: TransformerArgs<IntersectionRealizationGridData, IntersectionRealizationGridProviderMeta>):
+    | EsvLayerItemsMaker
+    | null {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
         return null;
     }
 
-    if (sourcePolylineWithSectionLengths.polylineUtmXy.length === 0) {
+    const intersectionData = snapshot.data;
+    const colorScale = snapshot.meta.colorScale?.colorScale;
+    const colorOpacityPercent = snapshot.meta.opacityPercent ?? 100;
+    const useCustomColorScaleBoundaries = snapshot.meta.colorScale?.areBoundariesUserDefined ?? false;
+    const showGridLines = snapshot.meta.showGridLines;
+    const selectedAttribute = snapshot.dataLabel;
+    const polylineActualSectionLengths = snapshot.meta.polylineActualSectionLengths;
+    const valueRange = snapshot.valueRange;
+    const extensionLength = snapshot.meta.extensionLength;
+
+    if (
+        !intersectionData ||
+        polylineActualSectionLengths.length === 0 ||
+        !colorScale ||
+        isLoading ||
+        !valueRange
+    ) {
         return null;
     }
 
-    if (intersectionData.fenceMeshSections.length !== sourcePolylineWithSectionLengths.actualSectionLengths.length) {
+    if (intersectionData.fenceMeshSections.length !== polylineActualSectionLengths.length) {
         throw new Error(
             `Number of fence mesh sections (${intersectionData.fenceMeshSections.length}) does not match number of actual section
-            lengths (${sourcePolylineWithSectionLengths.actualSectionLengths.length}) for requested polyline`,
+            lengths (${polylineActualSectionLengths.length}) for requested polyline`,
         );
     }
 
     const transformedPolylineIntersection = createTransformedPolylineIntersectionResult(
         intersectionData,
-        sourcePolylineWithSectionLengths.actualSectionLengths,
+        polylineActualSectionLengths,
     );
 
     const adjustedColorScale = colorScale.clone();

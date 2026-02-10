@@ -23,6 +23,7 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
@@ -55,18 +56,45 @@ export type SurfacesPerRealizationValuesStoredData = {
 // Key is surface name, value is surface sample values per selected realization
 export type SurfacesPerRealizationValuesData = Record<string, SurfaceRealizationSampleValues_api[]>;
 
+export type SurfacesPerRealizationValuesProviderMeta = {
+    cumulatedHorizontalPolylineLengthArr: readonly number[];
+};
+
 export class SurfacesPerRealizationValuesProvider
     implements
         CustomDataProviderImplementation<
             SurfacesPerRealizationValuesSettings,
             SurfacesPerRealizationValuesData,
-            SurfacesPerRealizationValuesStoredData
+            SurfacesPerRealizationValuesStoredData,
+            SurfacesPerRealizationValuesProviderMeta
         >
 {
     settings = surfacesPerRealizationValuesSettings;
 
     getDefaultName() {
         return "Surfaces Per Realization Values";
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<
+            SurfacesPerRealizationValuesSettings,
+            SurfacesPerRealizationValuesData,
+            SurfacesPerRealizationValuesStoredData
+        >,
+    ): ProviderSnapshot<SurfacesPerRealizationValuesData, SurfacesPerRealizationValuesProviderMeta> {
+        const { getData, getStoredData } = args;
+        const data = getData();
+        const requestedPolyline = getStoredData("requestedPolylineWithCumulatedLengths");
+
+        return {
+            data,
+            valueRange: null,
+            dataLabel: "Surfaces Per Realization",
+            meta: {
+                cumulatedHorizontalPolylineLengthArr:
+                    requestedPolyline?.cumulatedHorizontalPolylineLengthArr ?? [],
+            },
+        };
     }
 
     getDefaultSettingsValues() {

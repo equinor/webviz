@@ -1,4 +1,5 @@
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { SurfaceProviderMeta } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/SeismicSurfaceProvider";
+import type { SurfaceData } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
 import type {
     Annotation,
     TransformerArgs,
@@ -6,15 +7,19 @@ import type {
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
 export function makeSeismicColorScaleAnnotation({
-    getSetting,
-    getDataValueRange,
     id,
     name,
     isLoading,
-}: TransformerArgs<[Setting.SEISMIC_COLOR_SCALE], any>): Annotation[] {
-    const colorScale = getSetting(Setting.SEISMIC_COLOR_SCALE)?.colorScale;
-    const useCustomColorScaleBoundaries = getSetting(Setting.SEISMIC_COLOR_SCALE)?.areBoundariesUserDefined ?? false;
-    const valueRange = getDataValueRange();
+    state,
+}: TransformerArgs<SurfaceData, SurfaceProviderMeta>): Annotation[] {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return [];
+    }
+
+    const colorScale = snapshot.meta.colorScale?.colorScale;
+    const useCustomColorScaleBoundaries = snapshot.meta.colorScale?.areBoundariesUserDefined ?? false;
+    const valueRange = snapshot.valueRange;
 
     if (!colorScale || !valueRange || isLoading) {
         return [];

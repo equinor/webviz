@@ -1,15 +1,12 @@
 import type { BBox } from "@lib/utils/bbox";
+import type { DrilledWellborePicksData } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
+import type { DataProviderMeta } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import type {
-    DrilledWellborePicksData,
-    DrilledWellborePicksSettings,
-} from "../../../dataProviders/implementations/DrilledWellborePicksProvider";
-
 export function makeDrilledWellborePicksBoundingBox({
-    getData,
-}: TransformerArgs<DrilledWellborePicksSettings, DrilledWellborePicksData>): BBox | null {
-    const data = getData();
+    state,
+}: TransformerArgs<DrilledWellborePicksData, DataProviderMeta>): BBox | null {
+    const data = state?.snapshot?.data;
     if (!data) {
         return null;
     }

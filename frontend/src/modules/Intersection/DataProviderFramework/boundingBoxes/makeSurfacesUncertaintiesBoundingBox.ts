@@ -3,8 +3,7 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 
 import type {
     SurfacesPerRealizationValuesData,
-    SurfacesPerRealizationValuesSettings,
-    SurfacesPerRealizationValuesStoredData,
+    SurfacesPerRealizationValuesProviderMeta,
 } from "../customDataProviderImplementations/SurfacesPerRealizationValuesProvider";
 
 /**
@@ -14,19 +13,16 @@ import type {
  * as they are to be visualized in a 2D view.
  */
 export function makeSurfacesUncertaintiesBoundingBox({
-    getData,
-    getStoredData,
+    state,
     isLoading,
-}: TransformerArgs<
-    SurfacesPerRealizationValuesSettings,
-    SurfacesPerRealizationValuesData,
-    SurfacesPerRealizationValuesStoredData,
-    any
->): BBox | null {
-    const data = getData();
-    const cumulatedHorizontalPolylineLengthArr = getStoredData(
-        "requestedPolylineWithCumulatedLengths",
-    )?.cumulatedHorizontalPolylineLengthArr;
+}: TransformerArgs<SurfacesPerRealizationValuesData, SurfacesPerRealizationValuesProviderMeta>): BBox | null {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
+
+    const data = snapshot.data;
+    const cumulatedHorizontalPolylineLengthArr = snapshot.meta.cumulatedHorizontalPolylineLengthArr;
 
     if (!data || !cumulatedHorizontalPolylineLengthArr || isLoading) {
         return null;
