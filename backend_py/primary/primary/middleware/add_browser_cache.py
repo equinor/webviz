@@ -1,41 +1,47 @@
+from enum import Enum
 from functools import wraps
 from contextvars import ContextVar
-from typing import Dict, Any, Callable
+from typing import Any, Callable
 
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Scope, Receive, Send, Message
-from primary.config import DEFAULT_CACHE_MAX_AGE, DEFAULT_STALE_WHILE_REVALIDATE
 
 
-# Initialize with a factory function to ensure a new dict for each context
-def get_default_context() -> Dict[str, Any]:
-    return {"max_age": DEFAULT_CACHE_MAX_AGE, "stale_while_revalidate": DEFAULT_STALE_WHILE_REVALIDATE}
+class CacheTime(Enum):
+    """Browser cache time durations for endpoint responses.
+
+    DEFAULT: 1 hour max-age
+    LONG: 2 weeks max-age
+    """
+
+    DEFAULT = 3600  # 1 hour
+    LONG = 3600 * 24 * 14  # 2 weeks
 
 
-cache_context: ContextVar[Dict[str, Any]] = ContextVar("cache_context", default=get_default_context())
+# None means no cache override set (middleware will use no-store default)
+_cache_max_age: ContextVar[int | None] = ContextVar("_cache_max_age", default=None)
 
 
-def add_custom_cache_time(max_age_s: int, stale_while_revalidate_s: int = 0) -> Callable:
+def custom_cache_time(max_age_s: int) -> Callable:
     """
     Decorator that sets a custom browser cache time for the endpoint response.
 
     Args:
-        max_age_s (int): The maximum age in seconds for the cache
-        stale_while_revalidate_s (int): The stale-while-revalidate time in seconds
+        max_age_s: Cache max-age in seconds (must be positive)
 
     Example:
-        @add_custom_cache_time(300, 600) # 5 minutes max age, 10 minutes stale-while-revalidate
+        @custom_cache_time(max_age_s=3600 * 24 * 7)  # 1 week
         async def my_endpoint():
             return {"data": "some_data"}
     """
 
+    if max_age_s <= 0:
+        raise ValueError("Cache time must be a positive number of seconds")
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Callable:
-            context = cache_context.get()
-            context["max_age"] = max_age_s
-            context["stale_while_revalidate"] = stale_while_revalidate_s
-
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            _cache_max_age.set(max_age_s)
             return await func(*args, **kwargs)
 
         return wrapper
@@ -43,30 +49,28 @@ def add_custom_cache_time(max_age_s: int, stale_while_revalidate_s: int = 0) -> 
     return decorator
 
 
-def no_cache(func: Callable) -> Callable:
+def cache_time(duration: CacheTime) -> Callable:
     """
-    Decorator that explicitly disables browser caching for the endpoint response.
+    Decorator that sets browser cache time for the endpoint response using a preset duration.
 
-    Example:
-        @no_cache
-        async def my_endpoint():
+    Args:
+        duration: CacheTime enum value (DEFAULT or LONG)
+
+    Examples:
+        @cache_time(CacheTime.LONG)
+        async def my_sumo_endpoint():
             return {"data": "some_data"}
     """
 
-    @wraps(func)
-    async def wrapper(*args: Any, **kwargs: Any) -> Callable:
-        context = cache_context.get()
-        context["max_age"] = 0
-        context["stale_while_revalidate"] = 0
-
-        return await func(*args, **kwargs)
-
-    return wrapper
+    return custom_cache_time(max_age_s=duration.value)
 
 
 class AddBrowserCacheMiddleware:
     """
-    Adds cache-control to the response headers
+    Adds Cache-Control header to HTTP responses.
+
+    Default: "no-store, private" (no caching).
+    Endpoints opt in to caching via @cache_time(CacheTime.X) or @custom_cache_time decorator.
     """
 
     def __init__(self, app: ASGIApp) -> None:
@@ -76,16 +80,19 @@ class AddBrowserCacheMiddleware:
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
 
-        # Set initial context and store token
-        cache_context.set(get_default_context())
+        # Reset context for each request
+        _cache_max_age.set(None)
 
         async def send_with_cache_header(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
                 # Only set cache-control if not already present so we don't overwrite settings done in router
                 if headers.get("cache-control") is None:
-                    context = cache_context.get()
-                    cache_control_str = f"max-age={context['max_age']}, stale-while-revalidate={context['stale_while_revalidate']}, private"
+                    max_age = _cache_max_age.get()
+                    if max_age is not None and max_age > 0:
+                        cache_control_str = f"max-age={max_age}, private"
+                    else:
+                        cache_control_str = "no-store, private"
                     headers.append("cache-control", cache_control_str)
 
             await send(message)

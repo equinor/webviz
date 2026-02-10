@@ -13,7 +13,7 @@ from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.drogon import is_drogon_identifier
-from primary.middleware.add_browser_cache import add_custom_cache_time
+from primary.middleware.add_browser_cache import cache_time, CacheTime
 
 from . import schemas
 from . import converters
@@ -89,7 +89,7 @@ async def get_field_screens(
 
 
 @router.get("/well_trajectories/")
-@add_custom_cache_time(3600 * 24 * 7, 3600 * 24 * 7 * 10)  # 1 week cache, 10 week stale-while-revalidate
+@cache_time(CacheTime.CUSTOM, custom_max_age_s=3600 * 24 * 7)  # TODO: Enusre if we want 1 week cache, or "LONG"?
 async def get_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
