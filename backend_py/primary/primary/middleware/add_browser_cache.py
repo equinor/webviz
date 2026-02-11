@@ -8,6 +8,19 @@ from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Scope, Receive, Send, Message
 
 
+class StaleTime(Enum):
+    """Browser cache durations for endpoint responses in seconds.
+
+    E.g. stale-while-revalidate
+
+    SHORT: 1 day
+    LONG: 2 weeks
+    """
+
+    SHORT = 3600 * 24  # 1 day
+    LONG = 3600 * 24 * 14  # 2 weeks
+
+
 class CacheTime(Enum):
     """Browser cache time durations for endpoint responses in seconds.
 
@@ -24,20 +37,20 @@ class CacheSettings:
     """Cache settings for an endpoint response."""
 
     max_age_s: int
-    stale_while_revalidate_s: int
+    stale_while_revalidate_s: int | None
 
 
 # None means no cache override set (middleware will use no-store default)
 _cache_context: ContextVar[CacheSettings | None] = ContextVar("_cache_context", default=None)
 
 
-def custom_cache_time(max_age_s: int, stale_while_revalidate_s: int = 0) -> Callable:
+def custom_cache_time(max_age_s: int, stale_while_revalidate_s: int | None) -> Callable:
     """
     Decorator that sets a custom browser cache time for the endpoint response.
 
     Args:
         max_age_s: Cache max-age in seconds (must be positive)
-        stale_while_revalidate_s: stale-while-revalidate in seconds (must be non-negative)
+        stale_while_revalidate_s: Optional stale-while-revalidate in seconds (must be positive)
 
     Example:
         @custom_cache_time(max_age_s=3600 * 24 * 7)  # 1 week
@@ -47,8 +60,8 @@ def custom_cache_time(max_age_s: int, stale_while_revalidate_s: int = 0) -> Call
 
     if max_age_s <= 0:
         raise ValueError("Cache time must be a positive number of seconds")
-    if stale_while_revalidate_s < 0:
-        raise ValueError("stale_while_revalidate_s must be a non-negative number of seconds")
+    if stale_while_revalidate_s is not None and stale_while_revalidate_s <= 0:
+        raise ValueError("stale_while_revalidate_s must be a positive number of seconds")
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
@@ -61,26 +74,25 @@ def custom_cache_time(max_age_s: int, stale_while_revalidate_s: int = 0) -> Call
     return decorator
 
 
-# TODO: Consider if stale_while_revalidate_s should be replaced with a StaleTime enum similar to CacheTime for this
-# non-custom decorator for simplicity?
-def cache_time(duration: CacheTime, stale_while_revalidate_s: int = 0) -> Callable:
+def cache_time(duration: CacheTime, stale_while_revalidate: StaleTime | None = None) -> Callable:
     """
     Decorator that sets browser cache time for the endpoint response using a preset duration.
 
     Args:
         duration: CacheTime enum value (DEFAULT or LONG)
-        stale_while_revalidate_s: stale-while-revalidate in seconds (must be non-negative)
+        stale_while_revalidate: Optional StaleTime enum value (SHORT or LONG)
 
     Examples:
         @cache_time(CacheTime.LONG)
         async def my_sumo_endpoint():
             return {"data": "some_data"}
     """
+    stale_while_revalidate_s = stale_while_revalidate.value if stale_while_revalidate is not None else None
 
     return custom_cache_time(max_age_s=duration.value, stale_while_revalidate_s=stale_while_revalidate_s)
 
 
-def set_cache_time(duration: CacheTime, stale_while_revalidate_s: int = 0) -> None:
+def set_cache_time(duration: CacheTime, stale_while_revalidate: StaleTime | None = None) -> None:
     """
     Utility function to opt in to caching from within an endpoint at runtime.
 
@@ -89,18 +101,20 @@ def set_cache_time(duration: CacheTime, stale_while_revalidate_s: int = 0) -> No
 
     Args:
         duration: CacheTime enum value (DEFAULT or LONG)
-        stale_while_revalidate_s: stale-while-revalidate in seconds (must be non-negative)
+        stale_while_revalidate: Optional StaleTime enum value (SHORT or LONG)
 
     Example:
         async def my_endpoint():
             result = await compute()
             if result.is_success:
-                set_cache_time(CacheTime.DEFAULT)
+                set_cache_time(CacheTime.DEFAULT, StaleTime.SHORT)
             return result
     """
 
-    if stale_while_revalidate_s < 0:
-        raise ValueError("stale_while_revalidate_s must be a non-negative number of seconds")
+    stale_while_revalidate_s = stale_while_revalidate.value if stale_while_revalidate is not None else None
+
+    if stale_while_revalidate_s is not None and stale_while_revalidate_s <= 0:
+        raise ValueError("stale_while_revalidate_s must be a positive number of seconds")
 
     _cache_context.set(CacheSettings(max_age_s=duration.value, stale_while_revalidate_s=stale_while_revalidate_s))
 
@@ -140,7 +154,7 @@ class AddBrowserCacheMiddleware:
         settings = _cache_context.get()
         if settings is not None and settings.max_age_s > 0:
             cache_control_str = f"max-age={settings.max_age_s}"
-            if settings.stale_while_revalidate_s >= 0:
+            if settings.stale_while_revalidate_s is not None and settings.stale_while_revalidate_s > 0:
                 cache_control_str += f", stale-while-revalidate={settings.stale_while_revalidate_s}"
             cache_control_str += ", private"
             return cache_control_str
