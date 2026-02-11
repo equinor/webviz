@@ -1,7 +1,6 @@
 import { GL } from "@luma.gl/constants";
 
 import type { WellborePick_api } from "@api";
-import type { DataProviderMeta } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
@@ -9,7 +8,7 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 // The shared visualizer function has all the general settings we want, so
 // we just inject an extra prop to disable the depth test.
 export function makeDrilledWellborePicksLayer2D(
-    args: TransformerArgs<WellborePick_api[], DataProviderMeta>,
+    args: TransformerArgs<WellborePick_api[], never>,
 ): ReturnType<typeof makeDrilledWellborePicksLayer> {
     const layer = makeDrilledWellborePicksLayer(args);
 

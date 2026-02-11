@@ -1,11 +1,10 @@
 import type { BBox } from "@lib/utils/bbox";
 import type { DrilledWellborePicksData } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
-import type { DataProviderMeta } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 export function makeDrilledWellborePicksBoundingBox({
     state,
-}: TransformerArgs<DrilledWellborePicksData, DataProviderMeta>): BBox | null {
+}: TransformerArgs<DrilledWellborePicksData, never>): BBox | null {
     const data = state?.snapshot?.data;
     if (!data) {
         return null;

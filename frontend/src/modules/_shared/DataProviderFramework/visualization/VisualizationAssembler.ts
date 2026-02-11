@@ -72,7 +72,7 @@ export type DataProviderVisualization<
 export type TransformerArgs<
     TData,
     TMeta extends DataProviderMeta,
-    TInjectedData extends Record<string, any> = Record<string, never>,
+    TInjectedData extends Record<string, any> = Record<string, any>,
 > = {
     id: string;
     name: string;

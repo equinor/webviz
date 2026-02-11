@@ -2,13 +2,12 @@ import type { Feature } from "geojson";
 
 import type { WellboreTrajectory_api } from "@api";
 import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
-import type { DataProviderMeta } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
 export function makeDrilledWellTrajectoriesLayer(
-    args: TransformerArgs<WellboreTrajectory_api[], DataProviderMeta>,
+    args: TransformerArgs<WellboreTrajectory_api[], never>,
 ): AdjustedWellsLayer | null {
     const { id, state, name } = args;
 

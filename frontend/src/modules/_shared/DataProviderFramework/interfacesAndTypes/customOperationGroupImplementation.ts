@@ -9,7 +9,7 @@ export enum Operation {
 }
 
 export type DataProviderImplementation = {
-    new (...params: any[]): CustomDataProviderImplementation<any, any, any>;
+    new (...params: any[]): CustomDataProviderImplementation<any, any, any, any>;
 };
 
 /**
@@ -17,7 +17,7 @@ export type DataProviderImplementation = {
  */
 export type ExtractSettings<T> = T extends new (
     ...args: any[]
-) => CustomDataProviderImplementation<infer TSettings, any, any>
+) => CustomDataProviderImplementation<infer TSettings, any, any, any>
     ? TSettings
     : never;
 
@@ -26,7 +26,7 @@ export type ExtractSettings<T> = T extends new (
  */
 export type ExtractStoredData<T> = T extends new (
     ...args: any[]
-) => CustomDataProviderImplementation<any, any, infer TStoredData>
+) => CustomDataProviderImplementation<any, any, infer TStoredData, any>
     ? TStoredData
     : never;
 

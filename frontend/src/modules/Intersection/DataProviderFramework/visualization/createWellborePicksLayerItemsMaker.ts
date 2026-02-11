@@ -1,7 +1,6 @@
 import { getPicksData, transformFormationData } from "@equinor/esv-intersection";
 
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
-import type { DataProviderMeta } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
@@ -14,7 +13,7 @@ export function createWellborePicksLayerItemsMaker({
     name,
     isLoading,
     state,
-}: TransformerArgs<EnsembleWellborePicksData, DataProviderMeta>): EsvLayerItemsMaker | null {
+}: TransformerArgs<EnsembleWellborePicksData, never>): EsvLayerItemsMaker | null {
     const selectedWellborePicks = state?.snapshot?.data;
     if (!selectedWellborePicks || isLoading) {
         return null;
