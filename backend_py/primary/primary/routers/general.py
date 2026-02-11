@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from webviz_services.graph_access.graph_access import GraphApiAccess
 
 from primary.auth.auth_helper import AuthHelper
+
 LOGGER = logging.getLogger(__name__)
 
 
