@@ -9,7 +9,7 @@ from starlette.types import ASGIApp, Scope, Receive, Send, Message
 
 
 class CacheTime(Enum):
-    """Browser cache time durations for endpoint responses.
+    """Browser cache time durations for endpoint responses in seconds.
 
     DEFAULT: 1 hour max-age
     LONG: 2 weeks max-age
@@ -80,6 +80,31 @@ def cache_time(duration: CacheTime, stale_while_revalidate_s: int = 0) -> Callab
     return custom_cache_time(max_age_s=duration.value, stale_while_revalidate_s=stale_while_revalidate_s)
 
 
+def set_cache_time(duration: CacheTime, stale_while_revalidate_s: int = 0) -> None:
+    """
+    Utility function to opt in to caching from within an endpoint at runtime.
+
+    Use this instead of the @cache_time decorator when caching should be conditional
+    (e.g. only cache successful responses, not errors or in-progress).
+
+    Args:
+        duration: CacheTime enum value (DEFAULT or LONG)
+        stale_while_revalidate_s: stale-while-revalidate in seconds (must be non-negative)
+
+    Example:
+        async def my_endpoint():
+            result = await compute()
+            if result.is_success:
+                set_cache_time(CacheTime.DEFAULT)
+            return result
+    """
+
+    if stale_while_revalidate_s < 0:
+        raise ValueError("stale_while_revalidate_s must be a non-negative number of seconds")
+
+    _cache_context.set(CacheSettings(max_age_s=duration.value, stale_while_revalidate_s=stale_while_revalidate_s))
+
+
 class AddBrowserCacheMiddleware:
     """
     Adds Cache-Control header to HTTP responses.
@@ -119,6 +144,8 @@ class AddBrowserCacheMiddleware:
                 cache_control_str += f", stale-while-revalidate={settings.stale_while_revalidate_s}"
             cache_control_str += ", private"
             return cache_control_str
+
+        # TODO: "no-store, private", "no-cache, private", or "max-age=0, stale-while-revalidate=0, private"?
 
         # No caching
         return "no-store, private"

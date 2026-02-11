@@ -92,7 +92,7 @@ async def get_field_screens(
 
 
 @router.get("/well_trajectories/")
-@custom_cache_time(max_age_s=3600 * 24 * 7)  # TODO: Ensure if we want 1 week cache, or "LONG"?
+@custom_cache_time(max_age_s=3600 * 24 * 7, stale_while_revalidate_s=3600 * 24 * 7 * 10)
 async def get_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),

@@ -22,6 +22,7 @@ from webviz_services.surface_query_service.surface_query_service import Realizat
 from webviz_services.service_exceptions import ServiceLayerException
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.add_browser_cache import cache_time, set_cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
 
@@ -33,7 +34,7 @@ from . import dependencies
 from . import task_helpers
 
 from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
-from primary.middleware.add_browser_cache import cache_time, CacheTime
+
 
 from .surface_address import decode_surf_addr_str
 
@@ -219,9 +220,7 @@ async def get_surface_data(
     return surf_data_response
 
 
-# TODO: What to do here? Have default cache time and override inside as before, or just set to long cache time?
 @router.get("/statistical_surface_data/hybrid")
-# @cache_time(CacheTime.DEFAULT)
 async def get_statistical_surface_data_hybrid(
     # fmt:off
     response: Response,
@@ -270,13 +269,11 @@ async def get_statistical_surface_data_hybrid(
 
         if isinstance(maybe_xtgeo_surf, ExpectedError):
             await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
-            response.headers["Cache-Control"] = "no-store"
             return task_helpers.make_lro_failure_resp(maybe_xtgeo_surf)
 
         if isinstance(maybe_xtgeo_surf, InProgress):
             LOGGER.info(f"Returning in-progress for statistical surface task (hybrid) in: {perf_metrics.to_string()}")
             response.status_code = status.HTTP_202_ACCEPTED
-            response.headers["Cache-Control"] = "no-store"
             return task_helpers.make_lro_in_progress_resp(task_meta, new_sumo_task_was_submitted, maybe_xtgeo_surf)
 
         # We should now be left with a xtgeo RegularSurface
@@ -287,6 +284,7 @@ async def get_statistical_surface_data_hybrid(
 
         LOGGER.info(f"Got statistical surface data (hybrid) in: {perf_metrics.to_string()}")
 
+        set_cache_time(CacheTime.DEFAULT)
         return LroSuccessResp(status="success", result=api_surf_data)
 
     except Exception as _exc:
