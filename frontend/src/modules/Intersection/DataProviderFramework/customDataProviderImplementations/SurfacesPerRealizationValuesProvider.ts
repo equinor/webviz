@@ -1,6 +1,7 @@
 import { isEqual } from "lodash";
 
 import type { SurfaceRealizationSampleValues_api } from "@api";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import {
     SurfaceAttributeType_api,
     getRealizationSurfacesMetadataOptions,
@@ -58,6 +59,8 @@ export type SurfacesPerRealizationValuesData = Record<string, SurfaceRealization
 
 export type SurfacesPerRealizationValuesProviderMeta = {
     cumulatedHorizontalPolylineLengthArr: readonly number[];
+    polylineLength: number;
+    colorSet: ColorSet | null;
 };
 
 export class SurfacesPerRealizationValuesProvider
@@ -82,7 +85,7 @@ export class SurfacesPerRealizationValuesProvider
             SurfacesPerRealizationValuesStoredData
         >,
     ): ProviderSnapshot<SurfacesPerRealizationValuesData, SurfacesPerRealizationValuesProviderMeta> {
-        const { getData, getStoredData } = args;
+        const { getData, getStoredData, getSetting } = args;
         const data = getData();
         const requestedPolyline = getStoredData("requestedPolylineWithCumulatedLengths");
 
@@ -93,6 +96,8 @@ export class SurfacesPerRealizationValuesProvider
             meta: {
                 cumulatedHorizontalPolylineLengthArr:
                     requestedPolyline?.cumulatedHorizontalPolylineLengthArr ?? [],
+                polylineLength: requestedPolyline?.xUtmPoints.length ?? 0,
+                colorSet: getSetting(Setting.COLOR_SET),
             },
         };
     }

@@ -6,6 +6,7 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
@@ -15,10 +16,35 @@ export const wellPickSettings = [Setting.STRAT_COLUMN, Setting.SMDA_INTERPRETER,
 export type WellPickSettingTypes = typeof wellPickSettings;
 type SettingsTypeMap = MakeSettingTypesMap<WellPickSettingTypes>;
 
+export type WellPicksProviderMeta = {
+    stratColumn: string | null;
+    interpreter: string | null;
+};
+
 export class WellborePicksProvider
-    implements CustomDataProviderImplementation<WellPickSettingTypes, WellborePick_api[]>
+    implements
+        CustomDataProviderImplementation<
+            WellPickSettingTypes,
+            WellborePick_api[],
+            Record<string, never>,
+            WellPicksProviderMeta
+        >
 {
     settings = wellPickSettings;
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<WellPickSettingTypes, WellborePick_api[]>,
+    ): ProviderSnapshot<WellborePick_api[], WellPicksProviderMeta> {
+        return {
+            data: args.getData(),
+            valueRange: null,
+            dataLabel: null,
+            meta: {
+                stratColumn: args.getSetting(Setting.STRAT_COLUMN),
+                interpreter: args.getSetting(Setting.SMDA_INTERPRETER),
+            },
+        };
+    }
 
     // Uses the same external things as the other types
     defineDependencies(args: DefineDependenciesArgs<WellPickSettingTypes>) {

@@ -1,6 +1,9 @@
 import type { WellboreLogCurveData_api, WellboreLogCurveHeader_api } from "@api";
 import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api, getWellboreLogCurveHeadersOptions } from "@api";
-import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
+import type {
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -10,6 +13,8 @@ import {
     doSettingsChangesRequireDataRefetch,
     fetchLogCurveData,
     verifyBasePlotSettings,
+    type WellLogPlotProviderMeta,
+    type WellLogPlotProviderSnapshot,
 } from "./_shared";
 
 export const stackedPlotSettings = [...baseDiscreteSettings, Setting.LABEL_ROTATION] as const;
@@ -17,7 +22,13 @@ export type StackedPlotSettingTypes = typeof stackedPlotSettings;
 type SettingsTypeMap = MakeSettingTypesMap<StackedPlotSettingTypes>;
 
 export class StackedPlotProvider
-    implements CustomDataProviderImplementation<StackedPlotSettingTypes, WellboreLogCurveData_api>
+    implements
+        CustomDataProviderImplementation<
+            StackedPlotSettingTypes,
+            WellboreLogCurveData_api,
+            Record<string, never>,
+            WellLogPlotProviderMeta
+        >
 {
     doSettingsChangesRequireDataRefetch = doSettingsChangesRequireDataRefetch;
     areCurrentSettingsValid = verifyBasePlotSettings<StackedPlotSettingTypes>;
@@ -29,6 +40,24 @@ export class StackedPlotProvider
             [Setting.SHOW_LABELS]: true,
             [Setting.SHOW_LINES]: true,
             [Setting.LABEL_ROTATION]: 90,
+        };
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<StackedPlotSettingTypes, WellboreLogCurveData_api>,
+    ): WellLogPlotProviderSnapshot {
+        return {
+            data: args.getData(),
+            valueRange: null,
+            dataLabel: args.getSetting(Setting.LOG_CURVE)?.curveName ?? null,
+            meta: {
+                color: null,
+                plotVariant: null,
+                showLabels: args.getSetting(Setting.SHOW_LABELS),
+                showLines: args.getSetting(Setting.SHOW_LINES),
+                labelRotation: args.getSetting(Setting.LABEL_ROTATION),
+                colorScale: null,
+            },
         };
     }
 

@@ -3,8 +3,6 @@ import { maxBy, minBy } from "lodash";
 
 import type { WellboreLogCurveData_api } from "@api";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type {
     DataProviderVisualization,
@@ -16,10 +14,7 @@ import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/vi
 import type { TemplatePlot } from "@modules/_shared/types/wellLogTemplates";
 import { isNumericalDataPoints } from "@modules/WellLogViewer/utils/queryDataTransform";
 
-import type { AreaPlotSettingTypes } from "../dataProviders/plots/AreaPlotProvider";
-import type { DiffPlotSettingTypes } from "../dataProviders/plots/DiffPlotProvider";
-import type { LinearPlotSettingTypes } from "../dataProviders/plots/LinearPlotProvider";
-import type { StackedPlotSettingTypes } from "../dataProviders/plots/StackedPlotProvider";
+import type { WellLogPlotProviderMeta } from "../dataProviders/plots/_shared";
 import { CustomDataProviderType } from "../dataProviderTypes";
 
 export const DATA_ACC_KEY = "LOG_CURVE_DATA";
@@ -32,25 +27,16 @@ export type FactoryAccResult = {
     [COLOR_MAP_ACC_KEY]: ColorMapFunction[];
 };
 
-type PlotVisualizationArgs<PlotSettings extends Settings> = TransformerArgs<PlotSettings, WellboreLogCurveData_api>;
+type PlotVisualizationArgs = TransformerArgs<WellboreLogCurveData_api, WellLogPlotProviderMeta>;
 
-function hasColorFunctionSetting(args: TransformerArgs<Setting[], WellboreLogCurveData_api>) {
-    // ! Temporary workaround; we are not able to check if a setting exists in the accumulator,
-    // ! and the provider crashes when you attempt to access a non-existent setting.
-    try {
-        return args.getSetting(Setting.COLOR_SCALE)?.colorScale;
-    } catch {
-        return false;
-    }
-}
-
-function colorFuncName(args: PlotVisualizationArgs<any>): string {
+function colorFuncName(args: PlotVisualizationArgs): string {
     return `colorMapping::${args.id}`;
 }
 
-function getCommonConfig(args: PlotVisualizationArgs<AreaPlotSettingTypes>): TemplatePlot {
-    const data = args.getData()!;
-    const color = args.getSetting(Setting.COLOR)!;
+function getCommonConfig(args: PlotVisualizationArgs): TemplatePlot {
+    const snapshot = args.state!.snapshot!;
+    const data = snapshot.data!;
+    const color = snapshot.meta.color!;
 
     return {
         name: data.name,
@@ -59,10 +45,10 @@ function getCommonConfig(args: PlotVisualizationArgs<AreaPlotSettingTypes>): Tem
     };
 }
 
-export function makeAreaPlotConfig(args: PlotVisualizationArgs<AreaPlotSettingTypes>): TemplatePlot | null {
-    if (!args.getData()) return null;
+export function makeAreaPlotConfig(args: PlotVisualizationArgs): TemplatePlot | null {
+    if (!args.state?.snapshot?.data) return null;
 
-    const plotVariant = args.getSetting(Setting.PLOT_VARIANT);
+    const plotVariant = args.state.snapshot.meta.plotVariant;
     const commonConfig = getCommonConfig(args);
 
     const colorFillOptions: Partial<TemplatePlot> = {};
@@ -78,10 +64,10 @@ export function makeAreaPlotConfig(args: PlotVisualizationArgs<AreaPlotSettingTy
     };
 }
 
-export function makeLinePlotConfig(args: PlotVisualizationArgs<LinearPlotSettingTypes>): TemplatePlot | null {
-    if (!args.getData()) return null;
+export function makeLinePlotConfig(args: PlotVisualizationArgs): TemplatePlot | null {
+    if (!args.state?.snapshot?.data) return null;
 
-    const plotVariant = args.getSetting(Setting.PLOT_VARIANT) ?? undefined;
+    const plotVariant = args.state.snapshot.meta.plotVariant ?? undefined;
     const commonConfig = getCommonConfig(args);
 
     return {
@@ -90,8 +76,8 @@ export function makeLinePlotConfig(args: PlotVisualizationArgs<LinearPlotSetting
     };
 }
 
-export function makeDiffPlotConfig(args: PlotVisualizationArgs<DiffPlotSettingTypes>): TemplatePlot | null {
-    if (!args.getData()) return null;
+export function makeDiffPlotConfig(args: PlotVisualizationArgs): TemplatePlot | null {
+    if (!args.state?.snapshot?.data) return null;
 
     const commonConfig = getCommonConfig(args);
 
@@ -102,18 +88,17 @@ export function makeDiffPlotConfig(args: PlotVisualizationArgs<DiffPlotSettingTy
     };
 }
 
-export function makeStackedPlotConfig(args: PlotVisualizationArgs<StackedPlotSettingTypes>): TemplatePlot | null {
-    if (!args.getData()) return null;
+export function makeStackedPlotConfig(args: PlotVisualizationArgs): TemplatePlot | null {
+    const snapshot = args.state?.snapshot;
+    if (!snapshot?.data) return null;
 
-    const data = args.getData()!;
-
-    const showLabels = args.getSetting(Setting.SHOW_LABELS) ?? true;
-    const showLines = args.getSetting(Setting.SHOW_LINES) ?? true;
-    const rotation = args.getSetting(Setting.LABEL_ROTATION) ?? 90;
+    const showLabels = snapshot.meta.showLabels ?? true;
+    const showLines = snapshot.meta.showLines ?? true;
+    const rotation = snapshot.meta.labelRotation ?? 90;
 
     return {
-        name: data.name,
-        logName: data.logName,
+        name: snapshot.data.name,
+        logName: snapshot.data.logName,
         type: "stacked",
         showLabels,
         showLines,
@@ -123,11 +108,8 @@ export function makeStackedPlotConfig(args: PlotVisualizationArgs<StackedPlotSet
     };
 }
 
-export function plotDataAccumulator(
-    acc: FactoryAccResult,
-    args: TransformerArgs<Setting[], WellboreLogCurveData_api>,
-): FactoryAccResult {
-    const newData = args.getData();
+export function plotDataAccumulator(acc: FactoryAccResult, args: PlotVisualizationArgs): FactoryAccResult {
+    const newData = args.state?.snapshot?.data;
     if (!newData) return acc;
 
     const duplicatedNames = acc[DUPLICATE_NAMES_ACC_KEY] ?? new Set();
@@ -138,15 +120,15 @@ export function plotDataAccumulator(
     const sameName = existingCurve?.name === newData.name;
     const sameLog = existingCurve?.logName === newData.logName;
 
-    if (hasColorFunctionSetting(args)) {
-        const colorScale = args.getSetting(Setting.COLOR_SCALE)?.colorScale;
+    const colorScale = args.state?.snapshot?.meta.colorScale?.colorScale;
+    if (colorScale) {
         const dataPoints = newData.dataPoints;
 
         if (!isNumericalDataPoints(dataPoints)) {
             console.warn("Cannot create color mapping for non-numeric data");
         }
 
-        if (colorScale && isNumericalDataPoints(dataPoints)) {
+        if (isNumericalDataPoints(dataPoints)) {
             const minValue = newData.minCurveValue ?? minBy(dataPoints, "1")![1];
             const maxValue = newData.maxCurveValue ?? maxBy(dataPoints, "1")![1];
 

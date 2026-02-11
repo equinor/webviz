@@ -3,6 +3,7 @@ import { GeoJsonLayer } from "@deck.gl/layers";
 import type { WellboreTrajectory_api } from "@api";
 import { HoverTopic } from "@framework/HoverService";
 import { BiconeLayer } from "@modules/3DViewer/customDeckGlLayers/BiconeLayer";
+import type { DataProviderMeta } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type {
     HoverVisualizationFunctions,
@@ -22,11 +23,11 @@ function findWellboreTrajectory(uuid: string | null | undefined, trajectories: W
 }
 
 export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
-    args: TransformerArgs<any, WellboreTrajectory_api[], any>,
+    args: TransformerArgs<WellboreTrajectory_api[], DataProviderMeta>,
 ): HoverVisualizationFunctions<VisualizationTarget.DECK_GL> {
-    const { id, getData } = args;
+    const { id, state } = args;
 
-    const wellboreTrajectories = getData();
+    const wellboreTrajectories = state?.snapshot?.data;
 
     if (!wellboreTrajectories) {
         return {};

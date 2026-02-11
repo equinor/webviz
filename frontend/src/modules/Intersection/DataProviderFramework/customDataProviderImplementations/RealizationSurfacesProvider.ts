@@ -1,6 +1,7 @@
 import { isEqual } from "lodash";
 
 import type { SurfaceIntersectionData_api } from "@api";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import {
     SurfaceAttributeType_api,
     getRealizationSurfacesMetadataOptions,
@@ -54,6 +55,7 @@ export type RealizationSurfacesData = SurfaceIntersectionData_api[];
 
 export type RealizationSurfacesProviderMeta = {
     polylineActualSectionLengths: readonly number[];
+    colorSet: ColorSet | null;
 };
 
 export class RealizationSurfacesProvider
@@ -78,7 +80,7 @@ export class RealizationSurfacesProvider
             RealizationSurfacesStoredData
         >,
     ): ProviderSnapshot<RealizationSurfacesData, RealizationSurfacesProviderMeta> {
-        const { getData, getStoredData } = args;
+        const { getData, getStoredData, getSetting } = args;
         const data = getData();
         const polylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
 
@@ -88,6 +90,7 @@ export class RealizationSurfacesProvider
             dataLabel: "Realization Surfaces",
             meta: {
                 polylineActualSectionLengths: polylineWithSectionLengths?.actualSectionLengths ?? [],
+                colorSet: getSetting(Setting.COLOR_SET),
             },
         };
     }

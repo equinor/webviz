@@ -25,8 +25,8 @@ function makeColorScaleAnnotation<TData, TMeta extends ColorScaleMeta>({
         return [];
     }
 
-    const colorScale = snapshot.meta.colorScale?.colorScale;
-    const useCustomColorScaleBoundaries = snapshot.meta.colorScale?.areBoundariesUserDefined ?? false;
+    const colorScale = snapshot.meta?.colorScale?.colorScale;
+    const useCustomColorScaleBoundaries = snapshot.meta?.colorScale?.areBoundariesUserDefined ?? false;
     const valueRange = snapshot.valueRange;
     const attribute = snapshot.dataLabel;
 

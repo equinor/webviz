@@ -1,8 +1,8 @@
-import { IntersectionType } from "@framework/types/intersection";
-import type { IntersectionRealizationGridSettings } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type {
+    IntersectionRealizationGridData,
+    IntersectionRealizationGridProviderMeta,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { PolylineIntersection_trans } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
 export type AccumulatedData = {
     polylineIds: string[];
@@ -10,20 +10,16 @@ export type AccumulatedData = {
 
 export function accumulatePolylineIds(
     accumulatedData: AccumulatedData,
-    { getSetting }: TransformerArgs<IntersectionRealizationGridSettings, PolylineIntersection_trans>,
+    { state }: TransformerArgs<IntersectionRealizationGridData, IntersectionRealizationGridProviderMeta>,
 ): AccumulatedData {
-    const intersection = getSetting(Setting.INTERSECTION);
+    const customPolylineId = state?.snapshot?.meta.customPolylineId;
 
-    if (!intersection) {
-        return accumulatedData;
-    }
-
-    if (intersection.type !== IntersectionType.CUSTOM_POLYLINE) {
+    if (!customPolylineId) {
         return accumulatedData;
     }
 
     const polylineIdsSet = new Set(accumulatedData.polylineIds);
-    polylineIdsSet.add(intersection.uuid);
+    polylineIdsSet.add(customPolylineId);
 
     return {
         ...accumulatedData,

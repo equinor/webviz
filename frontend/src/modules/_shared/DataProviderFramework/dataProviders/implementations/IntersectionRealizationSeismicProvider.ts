@@ -67,6 +67,7 @@ export type IntersectionRealizationSeismicProviderMeta = {
     opacityPercent: number;
     extensionLength: number;
     seismicFenceSectionLengths: readonly number[];
+    seismicFencePolylineUtmXy: readonly number[];
     sourcePolylineActualSectionLengths: readonly number[];
 };
 
@@ -167,6 +168,7 @@ export class IntersectionRealizationSeismicProvider
                 opacityPercent: opacityPercent!,
                 extensionLength,
                 seismicFenceSectionLengths: seismicFencePolyline?.actualSectionLengths ?? [],
+                seismicFencePolylineUtmXy: seismicFencePolyline?.polylineUtmXy ?? [],
                 sourcePolylineActualSectionLengths: sourcePolyline?.actualSectionLengths ?? [],
             },
         };

@@ -59,6 +59,7 @@ export type IntersectionRealizationGridProviderMeta = {
     opacityPercent: number;
     extensionLength: number;
     polylineActualSectionLengths: readonly number[];
+    customPolylineId: string | null;
 };
 
 export class IntersectionRealizationGridProvider
@@ -104,6 +105,9 @@ export class IntersectionRealizationGridProvider
             ? [data.min_grid_prop_value, data.max_grid_prop_value]
             : null;
 
+        const customPolylineId =
+            intersection?.type === IntersectionType.CUSTOM_POLYLINE ? intersection.uuid : null;
+
         return {
             data,
             valueRange,
@@ -114,6 +118,7 @@ export class IntersectionRealizationGridProvider
                 opacityPercent: opacityPercent!,
                 extensionLength,
                 polylineActualSectionLengths: polylineWithSectionLengths?.actualSectionLengths ?? [],
+                customPolylineId,
             },
         };
     }

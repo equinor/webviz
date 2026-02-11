@@ -1,11 +1,14 @@
 import type { BBox } from "@lib/utils/bbox";
-import type { IntersectionRealizationGridData } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
+import type {
+    IntersectionRealizationGridData,
+    IntersectionRealizationGridProviderMeta,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 export function makeIntersectionRealizationGridBoundingBox({
-    getData,
-}: TransformerArgs<any, IntersectionRealizationGridData>): BBox | null {
-    const data = getData();
+    state,
+}: TransformerArgs<IntersectionRealizationGridData, IntersectionRealizationGridProviderMeta>): BBox | null {
+    const data = state?.snapshot?.data;
     if (!data) {
         return null;
     }

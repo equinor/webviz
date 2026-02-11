@@ -6,14 +6,12 @@ import { degreesToRadians, ShapeType, type Geometry } from "@lib/utils/geometry"
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import * as vec3 from "@lib/utils/vec3";
 import { SeismicSlicesLayer, type SeismicFenceWithId } from "@modules/3DViewer/customDeckGlLayers/SeismicSlicesLayer";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import type {
     RealizationSeismicSlicesData,
-    RealizationSeismicSlicesSettings,
-    RealizationSeismicSlicesStoredData,
+    RealizationSeismicSlicesProviderMeta,
 } from "../customDataProviderImplementations/RealizationSeismicSlicesProvider";
 
 function predictDepthSliceGeometry(
@@ -210,20 +208,21 @@ function interpolateTrace(
 }
 
 export function makeSeismicSlicesLayer(
-    args: TransformerArgs<
-        RealizationSeismicSlicesSettings,
-        RealizationSeismicSlicesData,
-        RealizationSeismicSlicesStoredData
-    >,
+    args: TransformerArgs<RealizationSeismicSlicesData, RealizationSeismicSlicesProviderMeta>,
 ): Layer<any> | null {
-    const { id, name, getData, getSetting, getStoredData, isLoading, getDataValueRange } = args;
-    const data = getData();
-    const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
-    const slicesSettings = getSetting(Setting.SEISMIC_SLICES);
-    const slices = getStoredData("seismicSlices");
-    const seismicCubeMeta = getStoredData("seismicCubeMeta");
-    const opacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
-    const valueRange = getDataValueRange();
+    const { id, name, state, isLoading } = args;
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
+
+    const data = snapshot.data;
+    const colorScaleSpec = snapshot.meta.colorScale;
+    const slicesSettings = snapshot.meta.slicesSettings;
+    const slices = snapshot.meta.seismicSlices;
+    const seismicCubeMeta = snapshot.meta.seismicCubeMeta;
+    const opacityPercent = snapshot.meta.opacityPercent;
+    const valueRange = snapshot.valueRange;
 
     if (!seismicCubeMeta || !slicesSettings) {
         return null;
