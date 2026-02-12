@@ -24,6 +24,7 @@ export class DeltaSurface
         CustomOperationGroupImplementation<SurfaceData, SurfaceProviderMeta, SupportedDataProviderImplementations>
 {
     supportedDataProviderImplementations = SUPPORTED_DATA_PROVIDER_IMPLEMENTATIONS;
+    maxChildrenCount = 2;
 
     getName(): string {
         return "Delta Surface";

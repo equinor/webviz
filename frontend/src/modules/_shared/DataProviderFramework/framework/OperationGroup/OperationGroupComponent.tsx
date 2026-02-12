@@ -4,6 +4,7 @@ import { Block, CheckCircle, Error, Rule } from "@mui/icons-material";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { SortableList } from "@lib/components/SortableList";
 import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
@@ -107,6 +108,33 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
                 </Tooltip>
             );
         }
+        if (status === OperationGroupStatus.UNSUPPORTED_CHILDREN) {
+            const errorMessage = "One or more children are not supported by this operation.";
+
+            return (
+                <Tooltip title={errorMessage}>
+                    <Block className="text-red-700 p-0.5" fontSize="small" />
+                </Tooltip>
+            );
+        }
+        if (status === OperationGroupStatus.INSUFFICIENT_CHILDREN) {
+            const errorMessage = "Not enough children to perform operation.";
+
+            return (
+                <Tooltip title={errorMessage}>
+                    <Rule className="text-orange-500 p-0.5" fontSize="small" />
+                </Tooltip>
+            );
+        }
+        if (status === OperationGroupStatus.TOO_MANY_CHILDREN) {
+            const errorMessage = "Too many children for this operation.";
+
+            return (
+                <Tooltip title={errorMessage}>
+                    <Block className="text-red-700 p-0.5" fontSize="small" />
+                </Tooltip>
+            );
+        }
         if (status === OperationGroupStatus.INVALID_SETTINGS) {
             const errorMessage = "Invalid settings";
 
@@ -187,9 +215,11 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
             expanded={isExpanded}
             content={
                 props.operationGroup.getSharedSettingsDelegate() ? (
-                    <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
-                        {makeSettings(Object.values(props.operationGroup.getWrappedSettings()))}
-                    </div>
+                    <SortableList.NoDropZone>
+                        <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
+                            {makeSettings(Object.values(props.operationGroup.getWrappedSettings()))}
+                        </div>
+                    </SortableList.NoDropZone>
                 ) : undefined
             }
         >

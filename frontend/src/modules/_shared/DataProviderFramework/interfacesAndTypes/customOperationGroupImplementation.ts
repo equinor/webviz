@@ -6,9 +6,9 @@ import type {
     ProviderSnapshot,
 } from "./customDataProviderImplementation";
 import type { NullableStoredData } from "./sharedTypes";
-import type { MakeSettingTypesMap } from "./utils";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "./utils";
 import { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
-import type { Setting, SettingTypeDefinitions } from "../settings/settingsDefinitions";
+import type { SettingTypeDefinitions } from "../settings/settingsDefinitions";
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
@@ -36,6 +36,14 @@ export type ExtractStoredData<T> = T extends new (
     ...args: any[]
 ) => CustomDataProviderImplementation<any, any, infer TStoredData, any>
     ? TStoredData
+    : never;
+
+/**
+ * Utility type to extract all Setting keys from a DataProviderImplementation.
+ * Distributes over unions, so it collects keys from all implementations in a tuple.
+ */
+export type ExtractSettingKeys<T> = T extends DataProviderImplementation
+    ? SettingsKeysFromTuple<ExtractSettings<T>>
     : never;
 
 /**
@@ -70,7 +78,9 @@ export type OperationGroupInformationAccessors<
      * Access the elevated/shared settings of the operation group.
      * @returns A partial record of setting values elevated from child providers.
      */
-    getSharedSettings: () => Partial<{ [K in Setting]: SettingTypeDefinitions[K]["externalValue"] }>;
+    getSharedSettings: () => Partial<{
+        [K in ExtractSettingKeys<TSupportedDataProviderImplementations[number]>]: SettingTypeDefinitions[K]["externalValue"];
+    }>;
 
     /**
      * Access the data that the group is currently storing.
@@ -149,6 +159,7 @@ export interface CustomOperationGroupImplementation<
 > {
     supportedDataProviderImplementations: TSupportedDataProviderImplementations;
 
+    minChildrenCount?: number;
     maxChildrenCount?: number;
 
     getName(): string;

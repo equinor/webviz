@@ -18,7 +18,7 @@ import type {
     Operation,
     OperationGroupInformationAccessors,
 } from "../../interfacesAndTypes/customOperationGroupImplementation";
-import type { ItemGroup } from "../../interfacesAndTypes/entities";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import {
     SerializedType,
     type SerializedOperationGroup,
@@ -48,6 +48,9 @@ export enum OperationGroupStatus {
     INVALID_SETTINGS = "INVALID_SETTINGS",
     SUCCESS = "SUCCESS",
     CHILDREN_OF_DIFFERENT_TYPES = "CHILDREN_OF_DIFFERENT_TYPES",
+    UNSUPPORTED_CHILDREN = "UNSUPPORTED_CHILDREN",
+    INSUFFICIENT_CHILDREN = "INSUFFICIENT_CHILDREN",
+    TOO_MANY_CHILDREN = "TOO_MANY_CHILDREN",
 }
 
 export type OperationGroupPayloads = {
@@ -115,7 +118,6 @@ export class OperationGroup<
     private _status: OperationGroupStatus = OperationGroupStatus.IDLE;
 
     private _error: StatusMessage | string | null = null;
-    private _areChildrenOfSameType: boolean = true;
     private _revisionNumber: number = 0;
     private _currentTransactionId: number = 0;
     private _data: TData | null = null;
@@ -179,6 +181,11 @@ export class OperationGroup<
                 return "ready";
             case OperationGroupStatus.ERROR:
             case OperationGroupStatus.INVALID_SETTINGS:
+                return "error";
+            case OperationGroupStatus.CHILDREN_OF_DIFFERENT_TYPES:
+            case OperationGroupStatus.UNSUPPORTED_CHILDREN:
+            case OperationGroupStatus.INSUFFICIENT_CHILDREN:
+            case OperationGroupStatus.TOO_MANY_CHILDREN:
                 return "error";
             case OperationGroupStatus.IDLE:
             default:
@@ -257,15 +264,37 @@ export class OperationGroup<
     }
 
     handleSettingsChange() {
-        this._itemDelegate.getDataProviderManager().publishTopic(DataProviderManagerTopic.DATA_REVISION);
+        this.incrementRevisionNumber();
     }
 
     getItemDelegate(): ItemDelegate {
         return this._itemDelegate;
     }
 
+    getMinChildrenCount(): number {
+        return this._customOperationGroupImplementation.minChildrenCount ?? 2;
+    }
+
     getMaxChildrenCount(): number | null {
         return this._customOperationGroupImplementation.maxChildrenCount ?? null;
+    }
+
+    canAcceptChild(child: Item): boolean {
+        if (!isDataProvider(child)) {
+            return false;
+        }
+
+        const maxChildren = this.getMaxChildrenCount();
+        if (maxChildren != null && this._groupDelegate.getChildren().length >= maxChildren) {
+            return false;
+        }
+
+        const supportedImplementations = this._customOperationGroupImplementation.supportedDataProviderImplementations;
+        if (!supportedImplementations.includes(child.getProviderImplementation().constructor as any)) {
+            return false;
+        }
+
+        return true;
     }
 
     getGroupDelegate(): GroupDelegate {
@@ -374,33 +403,40 @@ export class OperationGroup<
         this._itemDelegate.getDataProviderManager().publishTopic(DataProviderManagerTopic.DATA_REVISION);
     }
 
-    private checkIfChildrenAreOfSameType(): void {
-        let firstType: string | null = null;
+    private validateChildren(): OperationGroupStatus | null {
+        const children = [...this._childrenDataProviderSet];
 
-        for (const child of this._groupDelegate.getChildren()) {
-            if (!isDataProvider(child)) {
-                throw new Error("OperationGroup can only have DataProvider children.");
+        const minChildren = this._customOperationGroupImplementation.minChildrenCount ?? 2;
+        if (children.length < minChildren) {
+            return OperationGroupStatus.INSUFFICIENT_CHILDREN;
+        }
+
+        const maxChildren = this._customOperationGroupImplementation.maxChildrenCount;
+        if (maxChildren != null && children.length > maxChildren) {
+            return OperationGroupStatus.TOO_MANY_CHILDREN;
+        }
+
+        const supportedImplementations = this._customOperationGroupImplementation.supportedDataProviderImplementations;
+
+        let firstType: string | null = null;
+        for (const child of children) {
+            if (!supportedImplementations.includes(child.getProviderImplementation().constructor as any)) {
+                return OperationGroupStatus.UNSUPPORTED_CHILDREN;
             }
+
             const childType = child.getType();
             if (!firstType) {
                 firstType = childType;
             } else if (childType !== firstType) {
-                this._areChildrenOfSameType = false;
-                return;
+                return OperationGroupStatus.CHILDREN_OF_DIFFERENT_TYPES;
             }
         }
 
-        this._areChildrenOfSameType = true;
+        return null;
     }
 
     private handleChildrenChange(): void {
         this.clear();
-        this.checkIfChildrenAreOfSameType();
-
-        if (!this._areChildrenOfSameType) {
-            this.setStatus(OperationGroupStatus.CHILDREN_OF_DIFFERENT_TYPES);
-            return;
-        }
 
         for (const [index, child] of this._groupDelegate.getChildren().entries()) {
             if (!isDataProvider(child)) {
@@ -415,8 +451,18 @@ export class OperationGroup<
                 child
                     .getSettingsContextDelegate()
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(SettingsContextDelegateTopic.STATUS)(() => {
+                    .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_AND_STORED_DATA_CHANGED)(() => {
                     this.handleSettingsAndStoredDataChange();
+                }),
+            );
+
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "providers",
+                child
+                    .getSettingsContextDelegate()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(SettingsContextDelegateTopic.STATUS)(() => {
+                    this.handleChildSettingsStatusChange();
                 }),
             );
 
@@ -439,14 +485,27 @@ export class OperationGroup<
             }
         }
 
-        this.checkIfChildrenAreOfSameType();
-
         this.handleSettingsAndStoredDataChange();
     }
 
+    private handleChildSettingsStatusChange(): void {
+        for (const child of this._childrenDataProviderSet) {
+            const status = child.getSettingsContextDelegate().getStatus();
+            if (status === SettingsContextStatus.LOADING) {
+                this.setStatus(OperationGroupStatus.LOADING);
+                return;
+            }
+            if (status === SettingsContextStatus.INVALID_SETTINGS) {
+                this.setStatus(OperationGroupStatus.INVALID_SETTINGS);
+                return;
+            }
+        }
+    }
+
     private handleSettingsAndStoredDataChange(): void {
-        if (!this._areChildrenOfSameType) {
-            this.setStatus(OperationGroupStatus.CHILDREN_OF_DIFFERENT_TYPES);
+        const childrenValidationError = this.validateChildren();
+        if (childrenValidationError) {
+            this.setStatus(childrenValidationError);
             return;
         }
 
@@ -476,7 +535,25 @@ export class OperationGroup<
             return;
         }
 
-        // Now we know all children have valid settings, we can collect all settings
+        this.tidyUpFetchRelatedResources();
+
+        this._currentTransactionId += 1;
+        const localTransactionId = this._currentTransactionId;
+
+        // Debounce the refetch to avoid multiple refetches in a short time span.
+        if (this._debounceTimeout) {
+            clearTimeout(this._debounceTimeout);
+        }
+        this._debounceTimeout = setTimeout(() => {
+            if (this._currentTransactionId !== localTransactionId) {
+                return;
+            }
+            this.fetchData();
+        }, 10);
+    }
+
+    private fetchData(): void {
+        // Collect all children settings
         const allSettings: ChildSettingsUnion<TSupportedDataProviderImplementations>[] = [];
 
         for (const child of this._childrenDataProviderSet) {
@@ -507,6 +584,8 @@ export class OperationGroup<
             setProgressMessage: (message: string | null) => this.setProgressMessage(message),
         };
 
+        this.setStatus(OperationGroupStatus.LOADING);
+
         this._customOperationGroupImplementation
             .fetchData(params)
             .then((data) => {
@@ -535,6 +614,13 @@ export class OperationGroup<
     }
 
     private clear(): void {
+        this.tidyUpFetchRelatedResources();
+
+        if (this._debounceTimeout) {
+            clearTimeout(this._debounceTimeout);
+            this._debounceTimeout = null;
+        }
+
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("providers");
 
         for (const provider of this._childrenDataProviderSet) {
@@ -545,5 +631,7 @@ export class OperationGroup<
         this._sharedSettingsDelegate = null;
 
         this._childrenDataProviderSet.clear();
+        this._data = null;
+        this._error = null;
     }
 }
