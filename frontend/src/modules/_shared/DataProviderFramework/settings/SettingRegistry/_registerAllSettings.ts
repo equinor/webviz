@@ -137,7 +137,6 @@ SettingRegistry.registerSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE, "Depth Filte
             staticOptions: [
                 { value: "none", label: "None" },
                 { value: "md_range", label: "MD" },
-                { value: "tvd_range", label: "TVD" },
                 { value: "surface_based", label: "Surface" },
             ],
             layout: "horizontal",

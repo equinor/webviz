@@ -12,7 +12,7 @@ export class AdjustedWellsLayer extends WellsLayer {
     static layerName: string = "AdjustedWellsLayer";
 
     filterSubLayer(context: FilterContext): boolean {
-        if (context.layer.id.includes("names")) {
+        if (context.layer.id.includes("labels")) {
             return context.viewport.zoom > -2;
         }
 

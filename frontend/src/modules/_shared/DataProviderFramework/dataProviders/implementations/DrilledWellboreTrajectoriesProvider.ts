@@ -103,7 +103,7 @@ export class DrilledWellboreTrajectoriesProvider
             if (!getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.topSurfaceName) {
                 return false;
             }
-            if (!getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.realizationNum) {
+            if (getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.realizationNum === undefined) {
                 return false;
             }
         }
