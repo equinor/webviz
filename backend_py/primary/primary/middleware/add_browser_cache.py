@@ -123,8 +123,20 @@ class AddBrowserCacheMiddleware:
     """
     Adds Cache-Control header to HTTP responses.
 
-    Default: "no-store, private" (no caching).
-    Endpoints opt in to caching via @cache_time(CacheTime.X) or @custom_cache_time decorator.
+    Default: "no-store, private" (no store, more strict than no caching).
+    Opt in: Endpoints opt in to caching via @cache_time(CacheTime.X) or @custom_cache_time
+            decorator.
+
+    Cache-control strings:
+
+    - `no-store`: do not store response, not in browser memory, disk, proxy or temporary.
+    - `no-cache`: can store response but must revalidate with server before using cached response.
+    - `max-age`: browser can store response and use cached version for up to max-age seconds without
+                 revalidating with server. After max-age expires, browser must revalidate with
+                 server before using cached response.
+    - `stale-while-revalidate`: when response is stale (after max-age expires), browser can still
+                                use cached response while it revalidates with server in background,
+                                for up to stale-while-revalidate seconds.
     """
 
     def __init__(self, app: ASGIApp) -> None:
@@ -159,7 +171,5 @@ class AddBrowserCacheMiddleware:
             cache_control_str += ", private"
             return cache_control_str
 
-        # TODO: "no-store, private", "no-cache, private", or "max-age=0, stale-while-revalidate=0, private"?
-
-        # No caching
+        # No store by default
         return "no-store, private"
