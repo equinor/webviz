@@ -33,7 +33,7 @@ pyarrow-stubs = "^20.0.0.20250825"
 polars = "~1.33.0"
 
 ### Might change model fields in minor updates, so pinned for stability 
-fmu-datamodels = "0.14.0"
+fmu-datamodels = "^0.18.1"
 
 
 [build-system]
