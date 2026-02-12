@@ -11,14 +11,15 @@ import type { TemplatePlot } from "@modules/_shared/types/wellLogTemplates";
 import type { WellPickDataCollection } from "@modules/_shared/types/wellpicks";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
+import type { ItemDelegate } from "../delegates/ItemDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
 import { Group } from "../framework/Group/Group";
 import { OperationGroup } from "../framework/OperationGroup/OperationGroup";
 import type { GroupType } from "../groups/groupTypes";
 import type {
-    CustomDataProviderImplementation,
     DataProviderMeta,
+    ProviderSnapshot,
 } from "../interfacesAndTypes/customDataProviderImplementation";
 import type {
     CustomGroupImplementation,
@@ -198,6 +199,16 @@ type DataProviderObjects<TTarget extends VisualizationTarget, TAccumulatedData e
     accumulatedData: TAccumulatedData | null;
 };
 
+type DataProviderLike = {
+    getItemDelegate(): ItemDelegate;
+    getType(): string;
+    getRevisionNumber(): number;
+    getStateSnapshot(): StateSnapshot | null;
+    getStatus(): string;
+    getData(): unknown;
+    getError(): StatusMessage | string | null;
+};
+
 export class VisualizationAssembler<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
@@ -225,7 +236,7 @@ export class VisualizationAssembler<
     registerDataProviderTransformers<TData, TMeta extends DataProviderMeta>(
         dataProviderName: string,
         dataProviderCtor: {
-            new (...params: any[]): CustomDataProviderImplementation<any, TData, any, TMeta>;
+            new (...params: any[]): { makeProviderSnapshot: (...args: any[]) => ProviderSnapshot<TData, TMeta> };
         },
         transformers: DataProviderTransformers<TTarget, TData, TMeta, TInjectedData, TAccumulatedData>,
     ): void {
@@ -270,7 +281,7 @@ export class VisualizationAssembler<
 
     private makeRecursively(
         groupDelegate: GroupDelegate,
-        inheritedDataProviders: DataProvider<any, any, any>[],
+        inheritedDataProviders: DataProviderLike[],
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
         /**
@@ -290,7 +301,7 @@ export class VisualizationAssembler<
         let combinedBoundingBox: bbox.BBox | null = null;
 
         const itemGroups: ItemGroup[] = [];
-        const dataProviders: DataProvider<any, any, any>[] = [];
+        const dataProviders: DataProviderLike[] = [];
 
         const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
             if (boundingBox) {
@@ -305,7 +316,8 @@ export class VisualizationAssembler<
             }
 
             if (child instanceof OperationGroup) {
-                // OperationGroups are derived data providers, and should be treated as such in the visualization assembly
+                dataProviders.push(child);
+                continue;
             }
 
             if (instanceofItemGroup(child)) {
@@ -410,7 +422,7 @@ export class VisualizationAssembler<
     }
 
     private makeDataProviderObjects(
-        dataProvider: DataProvider<any, any, any>,
+        dataProvider: DataProviderLike,
         initialAccumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
         /**
@@ -485,10 +497,10 @@ export class VisualizationAssembler<
         };
     }
 
-    private makeFactoryFunctionArgs<TData, TMeta extends DataProviderMeta>(
-        dataProvider: DataProvider<any, TData, any, TMeta>,
+    private makeFactoryFunctionArgs(
+        dataProvider: DataProviderLike,
         injectedData?: TInjectedData,
-    ): TransformerArgs<TData, TMeta, TInjectedData> {
+    ): TransformerArgs<any, any, TInjectedData> {
         function getInjectedData() {
             if (!injectedData) {
                 throw new Error("No injected data provided. Did you forget to pass it to the factory?");
@@ -506,7 +518,7 @@ export class VisualizationAssembler<
     }
 
     private makeDataProviderVisualization(
-        dataProvider: DataProvider<any, any, any>,
+        dataProvider: DataProviderLike,
         injectedData?: TInjectedData,
     ): DataProviderVisualization<TTarget> | null {
         const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToVisualization;
@@ -531,7 +543,7 @@ export class VisualizationAssembler<
     }
 
     private makeDataProviderHoverVisualizationFunctions(
-        dataProvider: DataProvider<any, any, any>,
+        dataProvider: DataProviderLike,
         injectedData?: TInjectedData,
     ): HoverVisualizationFunctions<TTarget> {
         const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToHoverVisualization;
@@ -543,7 +555,7 @@ export class VisualizationAssembler<
     }
 
     private makeDataProviderBoundingBox(
-        dataProvider: DataProvider<any, any, any>,
+        dataProvider: DataProviderLike,
         injectedData?: TInjectedData,
     ): bbox.BBox | null {
         const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToBoundingBox;
@@ -554,10 +566,7 @@ export class VisualizationAssembler<
         return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
     }
 
-    private makeDataProviderAnnotations(
-        dataProvider: DataProvider<any, any, any>,
-        injectedData?: TInjectedData,
-    ): Annotation[] {
+    private makeDataProviderAnnotations(dataProvider: DataProviderLike, injectedData?: TInjectedData): Annotation[] {
         const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToAnnotations;
         if (!func) {
             return [];
@@ -567,7 +576,7 @@ export class VisualizationAssembler<
     }
 
     private accumulateDataProviderData(
-        dataProvider: DataProvider<any, any, any>,
+        dataProvider: DataProviderLike,
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
     ): TAccumulatedData | null {

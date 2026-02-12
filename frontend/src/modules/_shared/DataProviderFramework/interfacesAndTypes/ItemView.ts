@@ -10,7 +10,7 @@ export interface ItemView {
 
     getChildren?(): ItemView[] | undefined;
 
-    getStateSnapshot?(): StateSnapshot | null;
+    getStateSnapshot(): StateSnapshot | null;
 }
 
 export type StateSnapshot<TData = unknown, TMeta extends Record<string, unknown> = Record<string, unknown>> = {

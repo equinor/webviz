@@ -11,12 +11,12 @@ export class OperationGroupRegistry {
     private static _registeredGroups: Map<
         OperationGroupType,
         {
-            group: { new (customParams?: any): CustomOperationGroupImplementation<any, any> };
+            group: { new (customParams?: any): CustomOperationGroupImplementation<any, any, any> };
             customParams?: any;
         }
     > = new Map();
 
-    static registerGroup<TGroup extends { new (params?: any): CustomOperationGroupImplementation<any, any> }>(
+    static registerGroup<TGroup extends { new (params?: any): CustomOperationGroupImplementation<any, any, any> }>(
         name: OperationGroupType,
         group: TGroup,
         customParams?: ConstructorParameters<TGroup>,

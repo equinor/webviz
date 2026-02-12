@@ -1,20 +1,27 @@
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
-import { DepthSurfaceProvider } from "../../dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
+import {
+    DepthSurfaceProvider,
+    SurfaceProviderMeta,
+} from "../../dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
 import type {
     CustomOperationGroupImplementation,
     FetchParams,
+    OperationGroupInformationAccessors,
 } from "../../interfacesAndTypes/customOperationGroupImplementation";
 import { Representation } from "../../settings/implementations/RepresentationSetting";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 import { getDeltaSurfaceDataOptions } from "@api";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { SurfaceDataFormat, type SurfaceData } from "../../dataProviders/implementations/surfaceProviders/types";
+import { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import { ProviderSnapshot } from "../../interfacesAndTypes/customDataProviderImplementation";
 
 const SUPPORTED_DATA_PROVIDER_IMPLEMENTATIONS = [DepthSurfaceProvider];
 type SupportedDataProviderImplementations = typeof SUPPORTED_DATA_PROVIDER_IMPLEMENTATIONS;
 
 export class DeltaSurface
-    implements CustomOperationGroupImplementation<SurfaceData, SupportedDataProviderImplementations>
+    implements
+        CustomOperationGroupImplementation<SurfaceData, SurfaceProviderMeta, SupportedDataProviderImplementations>
 {
     supportedDataProviderImplementations = SUPPORTED_DATA_PROVIDER_IMPLEMENTATIONS;
 
@@ -61,5 +68,23 @@ export class DeltaSurface
         }));
 
         return promise as Promise<SurfaceData>;
+    }
+
+    makeProviderSnapshot(
+        accessors: OperationGroupInformationAccessors<SurfaceData, SupportedDataProviderImplementations>,
+    ): ProviderSnapshot<SurfaceData, SurfaceProviderMeta> {
+        const data = accessors.getData();
+        const surfaceData = data?.surfaceData;
+        const sharedSettings = accessors.getSharedSettings();
+
+        return {
+            data,
+            meta: {
+                colorScale: sharedSettings.depthColorScale ?? null,
+                showContours: sharedSettings.contours ?? null,
+            },
+            valueRange: surfaceData ? [surfaceData.value_min, surfaceData.value_max] : null,
+            dataLabel: null,
+        };
     }
 }

@@ -1,8 +1,16 @@
 import type { DefaultError, FetchQueryOptions, QueryKey } from "@tanstack/query-core";
 
-import type { CustomDataProviderImplementation } from "./customDataProviderImplementation";
+import type {
+    CustomDataProviderImplementation,
+    DataProviderMeta,
+    ProviderSnapshot,
+} from "./customDataProviderImplementation";
 import type { NullableStoredData } from "./sharedTypes";
 import type { MakeSettingTypesMap } from "./utils";
+import { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
+import type { Setting, SettingTypeDefinitions } from "../settings/settingsDefinitions";
+import { WorkbenchSession } from "@framework/WorkbenchSession";
+import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
 export enum Operation {
     DELTA = "DELTA",
@@ -54,6 +62,55 @@ export type ChildSettingsUnion<TImplementations extends DataProviderImplementati
         : never;
 }[number];
 
+export type OperationGroupInformationAccessors<
+    TData,
+    TSupportedDataProviderImplementations extends DataProviderImplementation[],
+> = {
+    /**
+     * Access the elevated/shared settings of the operation group.
+     * @returns A partial record of setting values elevated from child providers.
+     */
+    getSharedSettings: () => Partial<{ [K in Setting]: SettingTypeDefinitions[K]["externalValue"] }>;
+
+    /**
+     * Access the data that the group is currently storing.
+     * @returns The data that the provider is currently storing, or null if the provider has no data.
+     */
+    getData: () => TData | null;
+
+    /**
+     * Array of settings from each child provider in the group.
+     * Order matches the order of children in the group.
+     * Type is a discriminated union of all supported data provider implementations.
+     */
+    childrenSettings: Array<ChildSettingsUnion<TSupportedDataProviderImplementations>>;
+
+    /**
+     * Access the global settings of the data provider manager.
+     *
+     * @param settingName The name of the global setting to access.
+     * @returns The value of the global setting.
+     *
+     * @example
+     * ```typescript
+     * const value = getGlobalSetting("settingName");
+     * ```
+     */
+    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T] | null;
+
+    /**
+     * Access to the workbench session.
+     * @returns The workbench session.
+     */
+    getWorkbenchSession: () => WorkbenchSession;
+
+    /**
+     * Access to the workbench settings.
+     * @returns The workbench settings.
+     */
+    getWorkbenchSettings: () => WorkbenchSettings;
+};
+
 export type FetchParams<TSupportedDataProviderImplementations extends DataProviderImplementation[]> = {
     /**
      * Array of settings from each child provider in the group.
@@ -87,6 +144,7 @@ export type FetchParams<TSupportedDataProviderImplementations extends DataProvid
 
 export interface CustomOperationGroupImplementation<
     TData,
+    TMeta extends DataProviderMeta,
     TSupportedDataProviderImplementations extends DataProviderImplementation[],
 > {
     supportedDataProviderImplementations: TSupportedDataProviderImplementations;
@@ -96,4 +154,12 @@ export interface CustomOperationGroupImplementation<
     getName(): string;
 
     fetchData(params: FetchParams<TSupportedDataProviderImplementations>): Promise<TData>;
+
+    /**
+     * Produce a minimal snapshot for downstream consumers (e.g. visualization).
+     * Must NOT expose settings/storedData directly unless intentionally included in meta.
+     */
+    makeProviderSnapshot: (
+        accessors: OperationGroupInformationAccessors<TData, TSupportedDataProviderImplementations>,
+    ) => ProviderSnapshot<TData, TMeta>;
 }

@@ -16,6 +16,7 @@ import type {
     DataProviderImplementation,
     FetchParams,
     Operation,
+    OperationGroupInformationAccessors,
 } from "../../interfacesAndTypes/customOperationGroupImplementation";
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 import {
@@ -30,11 +31,14 @@ import { isDataProvider } from "../DataProvider/DataProvider";
 import { DataProviderManagerTopic, type DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
+import { ItemView, StateSnapshot } from "../../interfacesAndTypes/ItemView";
+import { DataProviderMeta, ProviderSnapshot } from "../../interfacesAndTypes/customDataProviderImplementation";
 
 export enum OperationGroupTopic {
     OPERATION = "operation",
     STATUS = "status",
     PROGRESS_MESSAGE = "progress-message",
+    REVISION_NUMBER = "revision-number",
 }
 
 export enum OperationGroupStatus {
@@ -50,6 +54,7 @@ export type OperationGroupPayloads = {
     [OperationGroupTopic.OPERATION]: Operation;
     [OperationGroupTopic.STATUS]: OperationGroupStatus;
     [OperationGroupTopic.PROGRESS_MESSAGE]: string | null;
+    [OperationGroupTopic.REVISION_NUMBER]: number;
 };
 
 export function isOperationGroup(obj: any): obj is OperationGroup<any, any> {
@@ -68,18 +73,27 @@ export function isOperationGroup(obj: any): obj is OperationGroup<any, any> {
     return Boolean(obj.getOperationGroupType) && Boolean(obj.getGroupDelegate);
 }
 
-export type OperationGroupParams<TData, TSupportedDataProviderImplementations extends DataProviderImplementation[]> = {
+export type OperationGroupParams<
+    TData,
+    TMeta extends DataProviderMeta,
+    TSupportedDataProviderImplementations extends DataProviderImplementation[],
+> = {
     dataProviderManager: DataProviderManager;
     operation: Operation;
     operationGroupType: OperationGroupType;
     customOperationGroupImplementation: CustomOperationGroupImplementation<
         TData,
+        TMeta,
         TSupportedDataProviderImplementations
     >;
 };
 
-export class OperationGroup<TData, TSupportedDataProviderImplementations extends DataProviderImplementation[] = []>
-    implements ItemGroup, PublishSubscribe<OperationGroupPayloads>
+export class OperationGroup<
+        TData,
+        TMeta extends DataProviderMeta,
+        TSupportedDataProviderImplementations extends DataProviderImplementation[] = [],
+    >
+    implements ItemGroup, PublishSubscribe<OperationGroupPayloads>, ItemView
 {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
@@ -92,6 +106,7 @@ export class OperationGroup<TData, TSupportedDataProviderImplementations extends
 
     private _customOperationGroupImplementation: CustomOperationGroupImplementation<
         TData,
+        TMeta,
         TSupportedDataProviderImplementations
     >;
 
@@ -103,12 +118,16 @@ export class OperationGroup<TData, TSupportedDataProviderImplementations extends
     private _areChildrenOfSameType: boolean = true;
     private _revisionNumber: number = 0;
     private _currentTransactionId: number = 0;
+    private _data: TData | null = null;
     private _progressMessage: string | null = null;
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
 
-    constructor(params: OperationGroupParams<TData, TSupportedDataProviderImplementations>) {
+    private _cachedStateSnapshot: StateSnapshot<TData, TMeta> | null = null;
+    private _cachedStateSnapshotRevision: number = -1;
+
+    constructor(params: OperationGroupParams<TData, TMeta, TSupportedDataProviderImplementations>) {
         const { dataProviderManager, operation, customOperationGroupImplementation, operationGroupType } = params;
 
         this._customOperationGroupImplementation = customOperationGroupImplementation;
@@ -126,6 +145,115 @@ export class OperationGroup<TData, TSupportedDataProviderImplementations extends
                 },
             ),
         );
+    }
+
+    getId(): string {
+        return this._itemDelegate.getId();
+    }
+
+    getName(): string {
+        return this._itemDelegate.getName();
+    }
+
+    isVisible(): boolean {
+        return this._itemDelegate.isVisible();
+    }
+
+    getType(): string {
+        return this._type;
+    }
+
+    getStatus(): OperationGroupStatus {
+        return this._status;
+    }
+
+    getData(): TData | null {
+        return this._data;
+    }
+
+    private mapStatusToStateSnapshotStatus(status: OperationGroupStatus): StateSnapshot<TData, TMeta>["status"] {
+        switch (status) {
+            case OperationGroupStatus.LOADING:
+                return "loading";
+            case OperationGroupStatus.SUCCESS:
+                return "ready";
+            case OperationGroupStatus.ERROR:
+            case OperationGroupStatus.INVALID_SETTINGS:
+                return "error";
+            case OperationGroupStatus.IDLE:
+            default:
+                return "loading";
+        }
+    }
+
+    getRevisionNumber(): number {
+        return this._revisionNumber;
+    }
+
+    private makeAccessors(): OperationGroupInformationAccessors<TData, TSupportedDataProviderImplementations> {
+        const allSettings: ChildSettingsUnion<TSupportedDataProviderImplementations>[] = [];
+
+        for (const child of this._childrenDataProviderSet) {
+            const settings: ChildSettingsUnion<TSupportedDataProviderImplementations>["settings"] =
+                {} as ChildSettingsUnion<TSupportedDataProviderImplementations>["settings"];
+            for (const [settingKey, settingManager] of Object.entries(
+                child.getSettingsContextDelegate().getSettings(),
+            )) {
+                settings[settingKey as keyof typeof settings] = settingManager.getValue();
+            }
+            allSettings.push({
+                providerImplementation: child.getProviderImplementation().constructor,
+                settings: child.getSettingsContextDelegate().getValues(),
+                storedData: child.getSettingsContextDelegate().getStoredDataRecord(),
+            } as ChildSettingsUnion<TSupportedDataProviderImplementations>);
+        }
+
+        return {
+            childrenSettings: allSettings,
+            getSharedSettings: () => {
+                if (!this._sharedSettingsDelegate) {
+                    return {};
+                }
+                const wrappedSettings = this._sharedSettingsDelegate.getWrappedSettings();
+                const values: Record<string, unknown> = {};
+                for (const [key, manager] of Object.entries(wrappedSettings)) {
+                    values[key] = manager.getValue();
+                }
+                return values as any;
+            },
+            getGlobalSetting: (settingName) =>
+                this._itemDelegate.getDataProviderManager().getGlobalSetting(settingName),
+            getData: () => this._data,
+            getWorkbenchSession: () => this._itemDelegate.getDataProviderManager().getWorkbenchSession(),
+            getWorkbenchSettings: () => this._itemDelegate.getDataProviderManager().getWorkbenchSettings(),
+        };
+    }
+
+    getStateSnapshot(): StateSnapshot<TData, TMeta> | null {
+        if (this._cachedStateSnapshot && this._cachedStateSnapshotRevision === this._revisionNumber) {
+            return this._cachedStateSnapshot;
+        }
+
+        let providerSnapshot: ProviderSnapshot<TData, TMeta> | null = null;
+
+        if (this._data !== null && this._status === OperationGroupStatus.SUCCESS) {
+            providerSnapshot = this._customOperationGroupImplementation.makeProviderSnapshot(this.makeAccessors());
+        }
+
+        const snapshot = {
+            id: this.getId(),
+            name: this.getName(),
+            type: this.getType(),
+            visible: this.isVisible(),
+            status: this.mapStatusToStateSnapshotStatus(this._status),
+            error: this.getError(),
+            revision: this.getRevisionNumber(),
+            snapshot: providerSnapshot,
+        };
+
+        this._cachedStateSnapshot = snapshot;
+        this._cachedStateSnapshotRevision = this._revisionNumber;
+        return snapshot;
     }
 
     handleSettingsChange() {
@@ -173,6 +301,9 @@ export class OperationGroup<TData, TSupportedDataProviderImplementations extends
             }
             if (topic === OperationGroupTopic.PROGRESS_MESSAGE) {
                 return this._progressMessage;
+            }
+            if (topic === OperationGroupTopic.REVISION_NUMBER) {
+                return this._revisionNumber;
             }
             throw new Error(`Unknown topic: ${topic}`);
         };
@@ -228,10 +359,19 @@ export class OperationGroup<TData, TSupportedDataProviderImplementations extends
     }
 
     private setStatus(status: OperationGroupStatus): void {
-        if (this._status !== status) {
-            this._status = status;
-            this._publishSubscribeDelegate.notifySubscribers(OperationGroupTopic.STATUS);
+        if (this._status === status) {
+            return;
         }
+
+        this._status = status;
+        this.incrementRevisionNumber();
+        this._publishSubscribeDelegate.notifySubscribers(OperationGroupTopic.STATUS);
+    }
+
+    private incrementRevisionNumber(): void {
+        this._revisionNumber += 1;
+        this._publishSubscribeDelegate.notifySubscribers(OperationGroupTopic.REVISION_NUMBER);
+        this._itemDelegate.getDataProviderManager().publishTopic(DataProviderManagerTopic.DATA_REVISION);
     }
 
     private checkIfChildrenAreOfSameType(): void {
@@ -369,7 +509,8 @@ export class OperationGroup<TData, TSupportedDataProviderImplementations extends
 
         this._customOperationGroupImplementation
             .fetchData(params)
-            .then(() => {
+            .then((data) => {
+                this._data = data;
                 this.setStatus(OperationGroupStatus.SUCCESS);
                 this._error = null;
             })

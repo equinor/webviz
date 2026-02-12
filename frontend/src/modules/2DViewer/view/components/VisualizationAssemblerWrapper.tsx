@@ -42,6 +42,8 @@ import { makeDrilledWellborePicksLayer2D } from "../../DataProviderFramework/vis
 import { makeDrilledWellTrajectoriesLayer2D } from "../../DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
+import { OperationGroupType } from "@modules/_shared/DataProviderFramework/operationGroups/operationGroupTypes";
+import { DeltaSurface } from "@modules/_shared/DataProviderFramework/operationGroups/implementations/DeltaSurface";
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(DataProviderType.DEPTH_SURFACE, DepthSurfaceProvider, {
@@ -126,6 +128,10 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
     },
 );
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(OperationGroupType.DELTA_SURFACE, DeltaSurface, {
+    transformToVisualization: makeDepthSurfaceLayer,
+    transformToAnnotations: makeColorScaleAnnotation,
+});
 
 export type VisualizationAssemblerWrapperProps = Omit<
     DpfSubsurfaceViewerWrapperProps,
