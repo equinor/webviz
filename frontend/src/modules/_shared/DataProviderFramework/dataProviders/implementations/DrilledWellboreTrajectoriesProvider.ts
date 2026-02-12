@@ -55,14 +55,16 @@ const drilledWellboreTrajectoriesSettings = [
 export type DrilledWellboreTrajectoriesSettings = typeof drilledWellboreTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellboreTrajectoriesSettings>;
 
-export type DrilledWellboreTrajectoriesData = (WellboreHeader_api &
+export type DrilledWellboreTrajectoryData = WellboreHeader_api &
     Omit<WellboreTrajectory_api, "wellboreUuid" | "wellboreUwi"> & {
         formationSegments: FormationSegment_api[];
         productionData: Omit<WellProductionData_api, "wellboreUuid" | "wellboreUwi"> | null;
         injectionData: Omit<WellInjectionData_api, "wellboreUuid" | "wellboreUwi"> | null;
         perforations: WellborePerforation_api[];
         screens: WellboreCompletion_api[];
-    })[];
+    };
+
+export type DrilledWellboreTrajectoriesData = DrilledWellboreTrajectoryData[];
 
 export type DrilledWellboreTrajectoriesStoredData = {
     productionData: WellProductionData_api[];

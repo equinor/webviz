@@ -8,7 +8,7 @@ import type { WellboreTrajectory_api } from "@api";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 import { distance, fromArray } from "@lib/utils/vec3";
 
-import type { GeoWellFeature } from "../DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
+import type { ExtendedWellFeature } from "../types/geojson";
 
 function normalizeVector(vector: number[]): number[] {
     const vectorLength = Math.sqrt(vector[0] ** 2 + vector[1] ** 2);
@@ -151,7 +151,7 @@ export function wellTrajectoryToGeojson(
         /** Highlights a specified wellbore */
         selectedWellboreUuid?: string;
     },
-): GeoWellFeature {
+): ExtendedWellFeature {
     const trajectoryLineString: LineString = {
         type: "LineString",
         coordinates: zipCoords(
@@ -177,7 +177,7 @@ export function wellTrajectoryToGeojson(
         wellHeadSize = 10;
     }
 
-    const geometryCollection: GeoWellFeature = {
+    const geometryCollection: ExtendedWellFeature = {
         type: "Feature",
         geometry: {
             type: "GeometryCollection",
