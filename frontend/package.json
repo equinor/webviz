@@ -64,7 +64,7 @@
         "simplify-js": "^1.2.4",
         "source-map-js": "^1.2.1",
         "ts-key-enum": "^2.0.13",
-        "uuid": "^11.1.0",
+        "uuid": "^13.0.0",
         "wonka": "^6.3.4"
     },
     "overrides": {
