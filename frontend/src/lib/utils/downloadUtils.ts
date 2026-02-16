@@ -53,3 +53,14 @@ export async function downloadZip(files: { filename: string; content: string }[]
     const blob = await createZipBlobAsync(files);
     downloadBlobFile(blob, zipFilename);
 }
+
+/**
+ * Generate a timestamped filename for a zip file, using the provided base name and current date/time.
+ * Format: `${baseName}_YYYYMMDD_HHMMSS.zip`
+ * Example: `MyBaseName_20240615_143025.zip`
+ */
+export function createZipFilename(baseName: string): string {
+    const now = new Date();
+    const timestamp = now.toISOString().slice(0, 19).replace(/[-:]/g, "").replace("T", "_");
+    return `${baseName}_${timestamp}.zip`;
+}

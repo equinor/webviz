@@ -173,7 +173,7 @@ function assembleObservationCsvFiles(
     return files;
 }
 
-export function assembleCsvFiles(
+export async function assembleCsvFiles(
     visualizationMode: VisualizationMode,
     realizationData: { ensembleDisplayName: string; vectorName: string; data: VectorRealizationData_api[] }[],
     statisticsData: { ensembleDisplayName: string; vectorName: string; data: VectorStatisticData_api }[],
@@ -182,8 +182,11 @@ export function assembleCsvFiles(
     statisticsSelection: StatisticsSelection,
     showHistorical: boolean,
     showObservations: boolean,
-): { filename: string; csvContent: string }[] {
+): Promise<{ filename: string; csvContent: string }[]> {
     const files: { filename: string; csvContent: string }[] = [];
+
+    // Add sleep to emulate even longer processing time for large datasets, to better test the loading state in the UI
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const includeRealizations =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
