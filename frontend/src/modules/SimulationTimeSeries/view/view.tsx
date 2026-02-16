@@ -19,6 +19,7 @@ import { GroupBy } from "../typesAndEnums";
 
 import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
 import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
+import { useDownloadData } from "./hooks/useDownloadData";
 import { useMakeResampleFrequencyWarningMessage } from "./hooks/useMakeResampleFrequencyWarningMessage";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
@@ -80,6 +81,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap);
+
     const resampleFrequencyWarningMessage = useMakeResampleFrequencyWarningMessage();
 
     const handleClickInChart = React.useCallback(
@@ -98,6 +100,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         },
         [setActiveTimestampUtcMs],
     );
+
+    useDownloadData();
 
     const plotBuilder = usePlotBuilder(
         viewContext,

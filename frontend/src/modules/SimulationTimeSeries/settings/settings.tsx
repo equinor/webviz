@@ -1,7 +1,7 @@
 import React from "react";
 
-import { FilterAlt } from "@mui/icons-material";
-import { useAtom, useAtomValue } from "jotai";
+import { Download, FilterAlt } from "@mui/icons-material";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
@@ -14,6 +14,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -46,6 +47,7 @@ import {
 
 import {
     colorRealizationsByParameterAtom,
+    csvDownloadRequestCounterAtom,
     filteredParameterIdentListAtom,
     groupByAtom,
     resampleFrequencyAtom,
@@ -113,6 +115,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         value: selectedParameterIdentStr.value,
         setValue: setSelectedParameterIdentStr,
     });
+
+    const setCsvDownloadRequestCounter = useSetAtom(csvDownloadRequestCounterAtom);
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
@@ -263,6 +267,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
+            <Button
+                variant="outlined"
+                startIcon={<Download fontSize="small" />}
+                onClick={() => setCsvDownloadRequestCounter((prev) => prev + 1)}
+                size="small"
+            >
+                Download CSV
+            </Button>
             <CollapsibleGroup expanded={true} title="Plot settings">
                 <Label text="Limit subplots by">
                     <div className="flex flex-row gap-2">

@@ -34,3 +34,5 @@ export const filteredParameterIdentListAtom = atom<ParameterIdent[]>([]);
 export const selectedVectorTagsAtom = atomWithCompare<string[]>([], isEqual);
 
 export const selectedVectorNamesAtom = atomWithCompare<string[]>([], isEqual);
+
+export const csvDownloadRequestCounterAtom = atom<number>(0);
