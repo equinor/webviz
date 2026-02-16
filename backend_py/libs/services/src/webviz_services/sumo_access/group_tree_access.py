@@ -1,12 +1,10 @@
 import logging
-from typing import Optional
 
-import pandas as pd
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_core_utils.perf_timer import PerfTimer
-from webviz_services.service_exceptions import InvalidDataError, Service
+from webviz_services.service_exceptions import InvalidDataError, ServiceLayerException, Service
 
 from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client
@@ -35,24 +33,26 @@ class GroupTreeAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
-    async def get_group_tree_table_for_realization_async(self, realization: int) -> Optional[pd.DataFrame]:
+    async def get_group_tree_table_for_realization_async(self, realization: int) -> pa.Table:
         """Get well group tree data for case and ensemble"""
         timer = PerfTimer()
 
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_tagname(GroupTreeAccess.TAGNAME)
 
-        pa_table: pa.Table = await table_loader.get_single_realization_async(realization)
+        try:
+            pa_table: pa.Table = await table_loader.get_single_realization_async(realization)
+        except ServiceLayerException as e:
+            enhanced_message = f"Failed to load group tree table data for case '{self._case_uuid}', ensemble '{self._ensemble_name}', realization '{realization}': {e.message}"
+            raise type(e)(enhanced_message, e.service) from e
 
-        group_tree_df_pandas = pa_table.to_pandas()
-        _validate_group_tree_df(group_tree_df_pandas)
+        _validate_group_tree_table(pa_table)
 
         LOGGER.debug(f"Loaded gruptree table from Sumo in: {timer.elapsed_ms()}ms")
-        return group_tree_df_pandas
+        return pa_table
 
 
-def _validate_group_tree_df(df: pd.DataFrame) -> None:
+def _validate_group_tree_table(df: pa.Table) -> None:
     expected_columns = {"DATE", "CHILD", "KEYWORD", "PARENT"}
-
-    if not expected_columns.issubset(df.columns):
-        raise InvalidDataError(f"Expected columns: {expected_columns} - got: {df.columns}", Service.SUMO)
+    if not expected_columns.issubset(df.column_names):
+        raise InvalidDataError(f"Expected columns: {expected_columns} - got: {df.column_names}", Service.SUMO)

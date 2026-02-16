@@ -135,12 +135,16 @@ export class HighlightOverlay {
             }
             if (item.shape === HighlightItemShape.POINTS) {
                 for (const point of item.points) {
-                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    circle.setAttribute("cx", xScale(point[0]).toString());
-                    circle.setAttribute("cy", yScale(point[1]).toString());
-                    circle.setAttribute("r", "5");
-                    circle.setAttribute("fill", item.color);
-                    svgLayer.appendChild(circle);
+                    try {
+                        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        circle.setAttribute("cx", xScale(point[0]).toString());
+                        circle.setAttribute("cy", yScale(point[1]).toString());
+                        circle.setAttribute("r", "5");
+                        circle.setAttribute("fill", item.color);
+                        svgLayer.appendChild(circle);
+                    } catch (error) {
+                        console.error("Error drawing highlight items:", error);
+                    }
                 }
             }
         }

@@ -26,16 +26,21 @@ export type SurfaceStatisticalFanchartsData = {
     fancharts: SurfaceStatisticalFanchart[];
 };
 
-type Path = {
+type LinePath = {
     color: string;
     dashSegments?: Iterable<number>;
+    paths: Path2D[];
+};
+
+type FillPath = {
+    color: string;
     path: Path2D;
 };
 
 export class SurfaceStatisticalFanchartsCanvasLayer<T extends SurfaceStatisticalFanchartsData> extends CanvasLayer<T> {
     private _rescaleEvent: OnRescaleEvent | null = null;
-    private _linePaths: Path[] = [];
-    private _fillPaths: Path[] = [];
+    private _linePaths: LinePath[] = [];
+    private _fillPaths: FillPath[] = [];
     private _transform: OnRescaleEvent["transform"];
 
     constructor(id?: string, options?: LayerOptions<T>) {
@@ -81,8 +86,15 @@ export class SurfaceStatisticalFanchartsCanvasLayer<T extends SurfaceStatistical
 
         requestAnimationFrame(() => {
             this.clearCanvas();
-            this._fillPaths.forEach((path) => this.drawPolygonPath(path.path, path.color));
-            this._linePaths.forEach((path) => this.drawLinePath(path.path, path.color, path.dashSegments));
+
+            for (const fillPath of this._fillPaths) {
+                this.drawPolygonPath(fillPath.path, fillPath.color);
+            }
+            for (const linePath of this._linePaths) {
+                for (const path of linePath.paths) {
+                    this.drawLinePath(path, linePath.color, linePath.dashSegments);
+                }
+            }
         });
     }
 
@@ -130,16 +142,22 @@ export class SurfaceStatisticalFanchartsCanvasLayer<T extends SurfaceStatistical
 
         for (const fanchart of this.data.fancharts) {
             if (fanchart.visibility?.minMax ?? true) {
-                this._fillPaths.push({
-                    color: this.colorToCss(fanchart.color, 0.2),
-                    path: this.makeFillPath(this.createMinMaxFillPolygon(fanchart)),
-                });
+                const paths = this.makeFillPaths(fanchart.data.min, fanchart.data.max);
+                for (const path of paths) {
+                    this._fillPaths.push({
+                        color: this.colorToCss(fanchart.color, 0.2),
+                        path,
+                    });
+                }
             }
             if (fanchart.visibility?.p10p90 ?? true) {
-                this._fillPaths.push({
-                    color: this.colorToCss(fanchart.color, 0.4),
-                    path: this.makeFillPath(this.createP10P90FillPolygon(fanchart)),
-                });
+                const paths = this.makeFillPaths(fanchart.data.p10, fanchart.data.p90);
+                for (const path of paths) {
+                    this._fillPaths.push({
+                        color: this.colorToCss(fanchart.color, 0.4),
+                        path,
+                    });
+                }
             }
         }
     }
@@ -155,31 +173,22 @@ export class SurfaceStatisticalFanchartsCanvasLayer<T extends SurfaceStatistical
             if (fanchart.visibility?.mean ?? true) {
                 this._linePaths.push({
                     color: this.colorToCss(fanchart.color, 1),
-                    path: this.makeLinePath(fanchart.data.mean),
+                    paths: this.makeLinePath(fanchart.data.mean),
                 });
             }
 
             if (fanchart.visibility?.p50 ?? true) {
                 this._linePaths.push({
                     color: this.colorToCss(fanchart.color, 1),
-                    path: this.makeLinePath(fanchart.data.p50),
+                    paths: this.makeLinePath(fanchart.data.p50),
                     dashSegments: [1, 1, 5, 1],
                 });
             }
         }
     }
 
-    private createMinMaxFillPolygon(fanchart: SurfaceStatisticalFanchart): number[][] {
-        const polygon = fanchart.data.min.concat(fanchart.data.max.slice().reverse());
-        return polygon;
-    }
-
-    private createP10P90FillPolygon(fanchart: SurfaceStatisticalFanchart): number[][] {
-        const polygon = fanchart.data.p10.concat(fanchart.data.p90.slice().reverse());
-        return polygon;
-    }
-
-    private makeFillPath(polygon: number[][]): Path2D {
+    private createClosedPolygonPath(topSegment: number[][], bottomSegment: number[][]): Path2D {
+        const polygon = topSegment.concat(bottomSegment.slice().reverse());
         const path = new Path2D();
         path.moveTo(polygon[0][0], polygon[0][1]);
         for (let i = 1; i < polygon.length; i++) {
@@ -189,16 +198,80 @@ export class SurfaceStatisticalFanchartsCanvasLayer<T extends SurfaceStatistical
         return path;
     }
 
-    private makeLinePath(line: number[][]): Path2D {
-        const path = new Path2D();
-
-        for (let i = 0; i < line.length; i++) {
-            if (i === 0) {
-                path.moveTo(line[i][0], line[i][1]);
-                continue;
-            }
-            path.lineTo(line[i][0], line[i][1]);
+    private makeFillPaths(topLine: (number | null)[][], bottomLine: (number | null)[][]): Path2D[] {
+        if (topLine.length !== bottomLine.length) {
+            throw new Error("Top and bottom lines must have the same number of points");
         }
-        return path;
+
+        const paths: Path2D[] = [];
+
+        let segmentTop: number[][] = [];
+        let segmentBottom: number[][] = [];
+
+        for (let i = 0; i < topLine.length; i++) {
+            const topX = topLine[i][0];
+            const topY = topLine[i][1];
+            const bottomX = bottomLine[i][0];
+            const bottomY = bottomLine[i][1];
+
+            const isValidTop = topX !== null && topX !== undefined && topY !== null && topY !== undefined;
+            const isValidBottom =
+                bottomX !== null && bottomX !== undefined && bottomY !== null && bottomY !== undefined;
+
+            if (isValidTop && isValidBottom) {
+                // Add point to current segment
+                segmentTop.push([topX, topY]);
+                segmentBottom.push([bottomX, bottomY]);
+            } else if (segmentTop.length > 0) {
+                // End of continuous segment - create polygon
+                paths.push(this.createClosedPolygonPath(segmentTop, segmentBottom));
+                segmentTop = [];
+                segmentBottom = [];
+            }
+        }
+
+        // Handle final segment if it exists
+        if (segmentTop.length > 0) {
+            paths.push(this.createClosedPolygonPath(segmentTop, segmentBottom));
+        }
+
+        return paths;
+    }
+
+    private makeLinePath(line: (number | null)[][]): Path2D[] {
+        if (line.length === 0) {
+            return [];
+        }
+
+        const paths: Path2D[] = [];
+
+        let segmentPath: Path2D | null = null;
+        for (let i = 0; i < line.length; i++) {
+            const x = line[i][0];
+            const y = line[i][1];
+
+            const isValid = x !== null && x !== undefined && y !== null && y !== undefined;
+            if (isValid) {
+                // Add point to current segment
+                if (segmentPath) {
+                    segmentPath.lineTo(x, y);
+                }
+                // Start new segment
+                else {
+                    segmentPath = new Path2D();
+                    segmentPath.moveTo(x, y);
+                }
+            } else if (segmentPath) {
+                // End of continuous segment - save path
+                paths.push(segmentPath);
+                segmentPath = null;
+            }
+        }
+
+        if (segmentPath) {
+            paths.push(segmentPath);
+        }
+
+        return paths;
     }
 }

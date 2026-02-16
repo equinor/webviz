@@ -1,0 +1,216 @@
+import React from "react";
+
+import { OrbitView, OrthographicView, type Layer } from "@deck.gl/core";
+import type { BoundingBox2D, BoundingBox3D, ViewStateType } from "@webviz/subsurface-viewer";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+
+import type { HoverService } from "@framework/HoverService";
+import type { ViewContext } from "@framework/ModuleContext";
+import { useViewStatusWriter } from "@framework/StatusWriter";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import type {
+    AssemblerProduct,
+    VisualizationTarget,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
+
+import { PlaceholderLayer } from "../../customDeckGlLayers/PlaceholderLayer";
+
+import { InteractionWrapper } from "./_components/InteractionWrapper";
+import { PreferredViewLayout } from "./typesAndEnums";
+
+export type DpfSubsurfaceViewerContextType = {
+    visualizationMode: "2D" | "3D";
+    viewState?: ViewStateType;
+    initialVerticalScale: number;
+    onViewStateChange?: (viewState: ViewStateType) => void;
+    onVerticalScaleChange?: (verticalScale: number) => void;
+    visualizationAssemblerProduct: AssemblerProduct<any>;
+    preferredViewLayout: PreferredViewLayout;
+    bounds: BoundingBox2D | undefined;
+    workbenchSession: WorkbenchSession;
+    workbenchSettings: WorkbenchSettings;
+    workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
+    moduleInstanceId: string;
+};
+
+export const DpfSubsurfaceViewerContext = React.createContext<DpfSubsurfaceViewerContextType | null>(null);
+
+export function useDpfSubsurfaceViewerContext() {
+    const context = React.useContext(DpfSubsurfaceViewerContext);
+    if (!context) {
+        throw new Error("useDpfSubsurfaceViewerContext must be used within a DpfSubsurfaceViewerContext.Provider");
+    }
+    return context;
+}
+
+export type DpfSubsurfaceViewerWrapperProps = {
+    visualizationMode: "2D" | "3D";
+    viewState?: ViewStateType;
+    initialVerticalScale: number;
+    onViewStateChange?: (viewState: ViewStateType) => void;
+    onVerticalScaleChange?: (verticalScale: number) => void;
+    fieldId: string;
+    visualizationAssemblerProduct: AssemblerProduct<VisualizationTarget.DECK_GL, any, any>;
+    viewContext: ViewContext<any>;
+    workbenchSession: WorkbenchSession;
+    workbenchSettings: WorkbenchSettings;
+    workbenchServices: WorkbenchServices;
+    preferredViewLayout: PreferredViewLayout;
+    hoverService: HoverService;
+    moduleInstanceId: string;
+};
+
+export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProps): React.ReactNode {
+    const { onViewStateChange } = props;
+
+    const [changingFields, setChangingFields] = React.useState<boolean>(false);
+    const [prevFieldId, setPrevFieldId] = React.useState<string | null>(props.fieldId);
+    const [initialViewState, setInitialViewState] = React.useState<ViewStateType | undefined>(props.viewState);
+
+    const statusWriter = useViewStatusWriter(props.viewContext);
+
+    const usedPolylineIds = props.visualizationAssemblerProduct.accumulatedData.polylineIds;
+
+    const viewports: ViewportTypeExtended[] = [];
+    const deckGlLayers: Layer<any>[] = [];
+    const globalLayerIds: string[] = ["placeholder", "axes"];
+
+    for (const item of props.visualizationAssemblerProduct.children) {
+        if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
+            const colorScales = item.annotations.filter((el) => "colorScale" in el);
+            const layerIds: string[] = [...globalLayerIds];
+
+            for (const child of item.children) {
+                if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
+                    const layer = child.visualization;
+
+                    layerIds.push(layer.id);
+                    // Shared layers (aka, root group layers) might already have been added
+                    if (!deckGlLayers.some((l) => l.id === layer.id)) deckGlLayers.push(layer);
+                }
+            }
+            viewports.push({
+                id: item.id,
+                name: item.name,
+                color: item.color,
+                isSync: true,
+                viewType: props.visualizationMode === "3D" ? OrbitView : OrthographicView,
+                layerIds,
+                colorScales,
+            });
+        }
+    }
+
+    const views: ViewsTypeExtended = {
+        layout: [0, 0],
+        showLabel: false,
+        viewports: viewports,
+    };
+
+    const numViews = props.visualizationAssemblerProduct.children.filter(
+        (item) => item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW,
+    ).length;
+
+    if (numViews) {
+        const numCols = Math.ceil(Math.sqrt(numViews));
+        const numRows = Math.ceil(numViews / numCols);
+        views.layout = [numCols, numRows];
+    }
+
+    if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
+        views.layout = [views.layout[1], views.layout[0]];
+    }
+
+    statusWriter.setLoading(props.visualizationAssemblerProduct.numLoadingDataProviders > 0);
+
+    for (const message of props.visualizationAssemblerProduct.aggregatedErrorMessages) {
+        statusWriter.addError(message);
+    }
+
+    let bounds3D: BoundingBox3D | undefined = undefined;
+    let bounds2D: BoundingBox2D | undefined = undefined;
+    if (props.visualizationAssemblerProduct.combinedBoundingBox) {
+        bounds3D = [
+            props.visualizationAssemblerProduct.combinedBoundingBox.min.x,
+            props.visualizationAssemblerProduct.combinedBoundingBox.min.y,
+            props.visualizationAssemblerProduct.combinedBoundingBox.min.z,
+            props.visualizationAssemblerProduct.combinedBoundingBox.max.x,
+            props.visualizationAssemblerProduct.combinedBoundingBox.max.y,
+            props.visualizationAssemblerProduct.combinedBoundingBox.max.z,
+        ];
+        bounds2D = [
+            props.visualizationAssemblerProduct.combinedBoundingBox.min.x,
+            props.visualizationAssemblerProduct.combinedBoundingBox.min.y,
+            props.visualizationAssemblerProduct.combinedBoundingBox.max.x,
+            props.visualizationAssemblerProduct.combinedBoundingBox.max.y,
+        ];
+    }
+
+    deckGlLayers.push(
+        new PlaceholderLayer({ id: "placeholder" }),
+        new AxesLayer({ id: "axes", bounds: bounds3D, ZIncreasingDownwards: true }),
+    );
+
+    deckGlLayers.reverse();
+
+    // We are using this pattern (emptying the layers list + setting a new key for the InteractionWrapper)
+    // as a workaround due to subsurface-viewer's bounding box model not respecting the removal of layers.
+    // In case of a field change, the total accumulated bounding box would become very large and homing wouldn't work properly.
+    //
+    // This is a temporary solution until the subsurface-viewer is updated to handle
+    // bounding boxes more correctly.
+    //
+    // See: https://github.com/equinor/webviz-subsurface-components/pull/2573
+    if (prevFieldId !== props.fieldId) {
+        setInitialViewState(undefined);
+        setChangingFields(true);
+        setPrevFieldId(props.fieldId);
+    }
+
+    const finalLayers: Layer<any>[] = [];
+    if (changingFields && props.visualizationAssemblerProduct.numLoadingDataProviders === 0) {
+        setChangingFields(false);
+    }
+
+    if (!changingFields) {
+        finalLayers.push(...deckGlLayers);
+    }
+
+    const handleViewStateChange = React.useCallback(
+        function handleViewStateChange(viewState: ViewStateType) {
+            onViewStateChange?.(viewState);
+            // Clear initial view state after first change to allow user interactions
+            setInitialViewState(undefined);
+        },
+        [onViewStateChange],
+    );
+
+    // -----------------------------------------------------------------------------
+
+    return (
+        <DpfSubsurfaceViewerContext.Provider
+            value={{
+                ...props,
+                onViewStateChange: handleViewStateChange,
+                viewState: initialViewState,
+                bounds: props.visualizationMode === "2D" ? bounds2D : undefined,
+                moduleInstanceId: props.moduleInstanceId,
+                hoverService: props.hoverService,
+            }}
+        >
+            <InteractionWrapper
+                key={`interaction-wrapper-${props.fieldId}`}
+                views={views}
+                fieldId={props.fieldId}
+                layers={finalLayers}
+                usedPolylineIds={usedPolylineIds}
+            />
+        </DpfSubsurfaceViewerContext.Provider>
+    );
+}

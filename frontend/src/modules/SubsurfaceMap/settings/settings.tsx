@@ -112,10 +112,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
     // Mesh surface
-    const meshSurfMetaQuery = useRealizationSurfacesMetadataQuery(
-        computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName(),
-    );
+    const meshSurfMetaQuery = useRealizationSurfacesMetadataQuery(computedEnsembleIdent);
     const meshSurfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: meshSurfMetaQuery.data,
         timeType: SurfaceTimeType.None,
@@ -153,10 +150,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         .map((attr) => ({ value: attr, label: attr }));
 
     // Property surface
-    const propertySurfMetaQuery = useRealizationSurfacesMetadataQuery(
-        computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName(),
-    );
+    const propertySurfMetaQuery = useRealizationSurfacesMetadataQuery(computedEnsembleIdent);
     const propertySurfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: propertySurfMetaQuery.data,
         timeType: timeType,
@@ -210,10 +204,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     }
 
     // Polygon
-    const polygonsDirectoryQuery = usePolygonsDirectoryQuery(
-        computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName(),
-    );
+    const polygonsDirectoryQuery = usePolygonsDirectoryQuery(computedEnsembleIdent);
 
     const polygonsDirectory = new PolygonsDirectory(
         polygonsDirectoryQuery.data

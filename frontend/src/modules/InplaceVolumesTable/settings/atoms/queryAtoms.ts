@@ -4,8 +4,9 @@ import type { InplaceVolumesTableDefinition_api } from "@api";
 import { getTableDefinitionsOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
-import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
+import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
 
 export type TableDefinitionsQueryResult = {
     data: {
@@ -17,17 +18,17 @@ export type TableDefinitionsQueryResult = {
 };
 
 export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
-        return () => ({
-            ...getTableDefinitionsOptions({
-                query: {
-                    case_uuid: ensembleIdent.getCaseUuid(),
-                    ensemble_name: ensembleIdent.getEnsembleName(),
-                },
-            }),
+        const options = getTableDefinitionsOptions({
+            query: {
+                case_uuid: ensembleIdent.getCaseUuid(),
+                ensemble_name: ensembleIdent.getEnsembleName(),
+                ...makeCacheBustingQueryParam(ensembleIdent),
+            },
         });
+        return () => options;
     });
 
     return {

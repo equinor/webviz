@@ -1,0 +1,32 @@
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type {
+    Annotation,
+    TransformerArgs,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
+
+export function makeSeismicColorScaleAnnotation({
+    getSetting,
+    getDataValueRange,
+    id,
+    name,
+    isLoading,
+}: TransformerArgs<[Setting.SEISMIC_COLOR_SCALE], any>): Annotation[] {
+    const colorScale = getSetting(Setting.SEISMIC_COLOR_SCALE)?.colorScale;
+    const useCustomColorScaleBoundaries = getSetting(Setting.SEISMIC_COLOR_SCALE)?.areBoundariesUserDefined ?? false;
+    const valueRange = getDataValueRange();
+
+    if (!colorScale || !valueRange || isLoading) {
+        return [];
+    }
+
+    // Adjust color scale boundaries
+    const adjustedColorScale = colorScale.clone();
+    if (!useCustomColorScaleBoundaries) {
+        const [min, max] = valueRange;
+        const mid = min + (max - min) / 2;
+        adjustedColorScale.setRangeAndMidPoint(min, max, mid);
+    }
+
+    return [{ id, colorScale: ColorScaleWithName.fromColorScale(adjustedColorScale, name) }];
+}

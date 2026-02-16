@@ -1,30 +1,31 @@
 import React from "react";
 
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import type { ParameterIdent } from "@framework/EnsembleParameters";
-import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
-import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
 import {
-    correlationSettingsAtom,
-    parameterIdentsAtom,
+    correlationThresholdAtom,
+    filterColumnsAtom,
+    filterRowsAtom,
+    hideIndividualCellsAtom,
     plotTypeAtom,
     showLabelsAtom,
     useFixedColorRangeAtom,
+    receivedChannelAtom,
+    selectedParameterIdentsAtom,
 } from "./atoms/baseAtoms";
+import { availableParameterIdentsAtom } from "./atoms/derivedAtoms";
 
 const plotTypesOptions = [
     {
@@ -41,40 +42,45 @@ const plotTypesOptions = [
     },
 ];
 
-export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
-    const [parameterIdents, setParameterIdents] = useAtom(parameterIdentsAtom);
+export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
+    const [parameterIdents, setParameterIdents] = useAtom(selectedParameterIdentsAtom);
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [useFixedColorRange, setUseFixedColorRange] = useAtom(useFixedColorRangeAtom);
-    const [correlationSettings, setCorrelationSettings] = useAtom(correlationSettingsAtom);
-
-    useApplyInitialSettingsToState(initialSettings, "parameterIdents", "array", setParameterIdents);
-    useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
-    useApplyInitialSettingsToState(initialSettings, "correlationSettings", "object", setCorrelationSettings);
+    const setReceivedChannel = useSetAtom(receivedChannelAtom);
+    const availableParameterIdents = useAtomValue(availableParameterIdentsAtom);
+    const [correlationThreshold, setCorrelationThreshold] = useAtom(correlationThresholdAtom);
+    const [hideIndividualCells, setHideIndividualCells] = useAtom(hideIndividualCellsAtom);
+    const [filterColumns, setFilterColumns] = useAtom(filterColumnsAtom);
+    const [filterRows, setFilterRows] = useAtom(filterRowsAtom);
     const receiverResponse = settingsContext.useChannelReceiver({
         receiverIdString: "channelResponse",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
+    const receiverResponse2 = settingsContext.useChannelReceiver({
+        receiverIdString: "channelResponse2",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
+    });
+    const receiverResponse3 = settingsContext.useChannelReceiver({
+        receiverIdString: "channelResponse3",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
+    });
+    const receiverResponses = React.useMemo(
+        () => [receiverResponse, receiverResponse2, receiverResponse3],
+        [receiverResponse, receiverResponse2, receiverResponse3],
+    );
 
-    const ensembleIdentStringsFromChannels: string[] = React.useMemo(() => {
-        if (receiverResponse.channel && receiverResponse.channel.contents) {
-            return receiverResponse.channel.contents.map((content) => content.metaData.ensembleIdentString);
-        }
-        return [];
-    }, [receiverResponse.channel]);
-
-    const ensembleSet = workbenchSession.getEnsembleSet();
-
-    const regularEnsembleIdentsFromChannels: RegularEnsembleIdent[] = React.useMemo(() => {
-        return ensembleIdentStringsFromChannels.flatMap((id) => {
-            const ensemble = ensembleSet.findEnsembleByIdentString(id);
-            return ensemble instanceof RegularEnsemble ? [RegularEnsembleIdent.fromString(id)] : [];
-        });
-    }, [ensembleIdentStringsFromChannels, ensembleSet]);
-
-    const allParameterIdents = getContinuousAndNonConstantParameterIdentsInEnsembles(
-        ensembleSet,
-        regularEnsembleIdentsFromChannels,
+    React.useEffect(
+        function updateReceivedChannel() {
+            setReceivedChannel(receiverResponses);
+        }, // We only want to listen to revision number changes, but we need the whole channel response to set it
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [
+            receiverResponse.revisionNumber,
+            receiverResponse2.revisionNumber,
+            receiverResponse3.revisionNumber,
+            setReceivedChannel,
+        ],
     );
 
     function handleParametersChanged(parameterIdents: ParameterIdent[]) {
@@ -92,28 +98,16 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
     function handleThresholdChanged(e: React.ChangeEvent<HTMLInputElement>) {
         let threshold = e.target.value ? parseFloat(e.target.value) : 0.0;
         threshold = Math.max(0.0, Math.min(1.0, Math.abs(threshold))); // Ensure threshold is between 0 and 1
-        setCorrelationSettings((prev) => ({
-            ...prev,
-            threshold,
-        }));
+        setCorrelationThreshold(threshold);
     }
     function handleHideIndividualCellsChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setCorrelationSettings((prev) => ({
-            ...prev,
-            hideIndividualCells: e.target.checked,
-        }));
+        setHideIndividualCells(e.target.checked);
     }
     function handleFilterColumnsChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setCorrelationSettings((prev) => ({
-            ...prev,
-            filterColumns: e.target.checked,
-        }));
+        setFilterColumns(e.target.checked);
     }
     function handleFilterRowsChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setCorrelationSettings((prev) => ({
-            ...prev,
-            filterRows: e.target.checked,
-        }));
+        setFilterRows(e.target.checked);
     }
     return (
         <div className="flex flex-col gap-2">
@@ -144,31 +138,31 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
                             step={0.01}
                             min={0}
                             max={1}
-                            value={correlationSettings.threshold ?? ""}
+                            value={correlationThreshold ?? ""}
                             onChange={handleThresholdChanged}
                             className="w-full p-1 border border-gray-300 rounded"
                         />
                     </Label>
                     <Checkbox
                         label="Blank individual cells below cutoff"
-                        checked={correlationSettings.hideIndividualCells}
+                        checked={hideIndividualCells}
                         onChange={handleHideIndividualCellsChanged}
                     />
                     <Checkbox
                         label="Filter columns below cutoff"
-                        checked={correlationSettings.filterColumns}
+                        checked={filterColumns}
                         onChange={handleFilterColumnsChanged}
                     />
                     <Checkbox
                         label="Filter rows below cutoff"
-                        checked={correlationSettings.filterRows}
+                        checked={filterRows}
                         onChange={handleFilterRowsChanged}
                     />
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Parameter selection" expanded>
                 <ParametersSelector
-                    allParameterIdents={allParameterIdents}
+                    allParameterIdents={availableParameterIdents}
                     selectedParameterIdents={parameterIdents}
                     onChange={handleParametersChanged}
                 />

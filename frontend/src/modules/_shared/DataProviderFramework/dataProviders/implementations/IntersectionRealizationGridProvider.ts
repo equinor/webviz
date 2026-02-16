@@ -2,8 +2,8 @@ import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, postGetPolylineIntersectionOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { assertNonNull } from "@lib/utils/assertNonNull";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { PolylineIntersection_trans } from "@modules/_shared/Intersection/gridIntersectionTransform";
 import { transformPolylineIntersection } from "@modules/_shared/Intersection/gridIntersectionTransform";
@@ -15,6 +15,7 @@ import type {
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -69,14 +70,13 @@ export class IntersectionRealizationGridProvider
     getDefaultSettingsValues() {
         return {
             [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-            [Setting.SAMPLE_RESOLUTION_IN_METERS]: 1,
             [Setting.SHOW_GRID_LINES]: false,
             [Setting.OPACITY_PERCENT]: 100,
         };
     }
 
     getDefaultName(): string {
-        return "Intersection Realization Grid";
+        return "Grid Model Fence";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -142,7 +142,7 @@ export class IntersectionRealizationGridProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueConstraintsUpdater,
         settingAttributesUpdater,
         storedDataUpdater,
         queryClient,
@@ -160,13 +160,13 @@ export class IntersectionRealizationGridProvider
             return { enabled: isEnabled, visible: true };
         });
 
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
             return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
         });
 
-        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
@@ -186,13 +186,14 @@ export class IntersectionRealizationGridProvider
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
                         realization_num: realization,
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
             });
         });
 
-        availableSettingsUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!data) {
@@ -204,7 +205,7 @@ export class IntersectionRealizationGridProvider
             return availableGridNames;
         });
 
-        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
@@ -227,7 +228,7 @@ export class IntersectionRealizationGridProvider
             return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
-        availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -239,7 +240,7 @@ export class IntersectionRealizationGridProvider
             return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
-        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const gridAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const data = getHelperDependency(realizationGridDataDep);
@@ -332,6 +333,7 @@ export class IntersectionRealizationGridProvider
                 parameter_name: parameterName,
                 parameter_time_or_interval_str: timeOrInterval,
                 realization_num: realizationNum,
+                ...makeCacheBustingQueryParam(ensembleIdent),
             },
             body: { polyline_utm_xy: polylineWithSectionLengths.polylineUtmXy },
         });

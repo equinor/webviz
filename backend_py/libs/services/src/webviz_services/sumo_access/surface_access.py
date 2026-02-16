@@ -3,6 +3,7 @@ import logging
 from dataclasses import dataclass
 from io import BytesIO
 from typing import Sequence
+from urllib.parse import urlparse
 
 import httpx
 import xtgeo
@@ -437,7 +438,10 @@ class SurfaceAccess:
             if not task_state.result_url:
                 raise InvalidDataError("No result_url was found in the Sumo task response", Service.SUMO)
 
-            relative_result_url = task_state.result_url.removeprefix(self._sumo_client.base_url)
+            # Both the result_url and the sumo_client.base_url contain the API prefix (e.g. /api/v1),
+            # so we need to strip that from the result_url to get the relative path before passing it to the sumo client
+            api_prefix = _extract_api_prefix(self._sumo_client.base_url)
+            relative_result_url = _strip_api_prefix(task_state.result_url, api_prefix)
             result_resp = await self._sumo_client.get_async(relative_result_url)
             sumo_obj_meta_dict = result_resp.json()
 
@@ -605,12 +609,12 @@ def _build_surface_meta_arr(
 
         content_enum = SumoContent.UNKNOWN
         if not content_str:
-            content_enum = SumoContent.DEPTH
-            LOGGER.warning(f"Surface {info.name} (tagname={info.tagname}) has empty content, defaulting to DEPTH")
+            content_enum = SumoContent.UNKNOWN
+            LOGGER.warning(f"Surface {info.name} (tagname={info.tagname}) has empty content, defaulting to UNKNOWN")
         elif content_str == "unset":
             # Remove this once Sumo enforces content (content-unset), https://github.com/equinor/webviz/issues/433
-            content_enum = SumoContent.DEPTH
-            LOGGER.warning(f"Surface {info.name} (tagname={info.tagname}) has unset content, defaulting to DEPTH")
+            content_enum = SumoContent.UNKNOWN
+            LOGGER.warning(f"Surface {info.name} (tagname={info.tagname}) has unset content, defaulting to UNKNOWN")
         else:
             try:
                 content_enum = SumoContent(content_str)
@@ -673,3 +677,25 @@ def _map_to_sumo_aggregation_operation(statistic_function: StatisticFunction) ->
         raise ValueError(f"Unhandled statistic function: {statistic_function}")
 
     return sumo_agg_op
+
+
+def _extract_api_prefix(base_url: str) -> str:
+    # Extract the path part of the base_url to get the API prefix, e.g. /api/v1
+    parsed = urlparse(base_url)
+    path = parsed.path.rstrip("/")
+    return path or "/"
+
+
+def _strip_api_prefix(path: str, api_prefix: str) -> str:
+    # Remove the specified api_prefix from the given path, if it starts with it
+
+    # Ensure there is one, and only one, leading slash
+    path = "/" + path.lstrip("/")
+
+    if api_prefix != "/" and path.startswith(api_prefix + "/"):
+        return path[len(api_prefix) :]
+
+    if path == api_prefix:
+        return "/"
+
+    return path

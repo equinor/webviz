@@ -4,6 +4,16 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 /**
+ * Type for categorized items with their original index (array index before categorization)
+ *
+ * Used to keep track of the original order of items after categorization.
+ */
+export type CategorizedItem<T> = {
+    item: T;
+    originalIndex: number;
+};
+
+/**
  * Definition of vector with historical data
  *
  * An object with vector specification and its historical data.

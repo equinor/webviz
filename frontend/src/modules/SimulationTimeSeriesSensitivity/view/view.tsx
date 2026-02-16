@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -11,8 +11,8 @@ import { simulationVectorDescription } from "@modules/_shared/reservoirSimulatio
 
 import type { Interfaces } from "../interfaces";
 
-import { userSelectedActiveTimestampUtcMsAtom, vectorSpecificationAtom } from "./atoms/baseAtoms";
-import { activeTimestampUtcMsAtom } from "./atoms/derivedAtoms";
+import { vectorSpecificationAtom } from "./atoms/baseAtoms";
+import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
 import type { TimeSeriesChartHoverInfo } from "./components/timeSeriesChart";
 import { TimeSeriesChart } from "./components/timeSeriesChart";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
@@ -25,9 +25,9 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
 
     const statusWriter = useViewStatusWriter(viewContext);
 
-    const setUserSelectedTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
+    const [activeTimestampUtcMs, setSelectedTimestampUtcMs] = useAtom(activeTimestampUtcMsAtom);
     const vectorSpecification = useAtomValue(vectorSpecificationAtom);
+
     const descriptiveVectorName = vectorSpecification
         ? simulationVectorDescription(vectorSpecification?.vectorName)
         : "";
@@ -42,7 +42,7 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
     function handleHoverInChart(hoverInfo: TimeSeriesChartHoverInfo | null) {
         if (hoverInfo) {
             if (hoverInfo.shiftKeyIsDown) {
-                setUserSelectedTimestampUtcMs(hoverInfo.timestampUtcMs);
+                setSelectedTimestampUtcMs(hoverInfo.timestampUtcMs);
             }
 
             workbenchServices.publishGlobalData("global.hoverTimestamp", {
@@ -61,16 +61,17 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
     }
 
     function handleClickInChart(timestampUtcMs: number) {
-        setUserSelectedTimestampUtcMs(timestampUtcMs);
+        setSelectedTimestampUtcMs(timestampUtcMs);
     }
 
+    // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
             <TimeSeriesChart
                 traceDataArr={traceDataArr}
                 title={descriptiveVectorName}
                 uirevision={vectorSpecification?.vectorName}
-                activeTimestampUtcMs={activeTimestampUtcMs ?? undefined}
+                activeTimestampUtcMs={activeTimestampUtcMs.value ?? undefined}
                 hoveredTimestampUtcMs={subscribedHoverTimestampUtcMs?.timestampUtcMs ?? undefined}
                 onClick={handleClickInChart}
                 onHover={handleHoverInChart}

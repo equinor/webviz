@@ -3,6 +3,7 @@ import type React from "react";
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import type { TagOptionProps } from "@lib/components/TagPicker";
@@ -35,7 +36,10 @@ export function EnsembleTagOption(props: EnsembleTagOptionProps): React.ReactNod
                     {ensemble && (
                         <EnsembleColorTile
                             ensemble={ensemble}
-                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            isRealizationFilterEffective={isEnsembleRealizationFilterEffective(
+                                ensemble,
+                                ensembleRealizationFilterFunction,
+                            )}
                             wrapperClassName="w-6 h-6"
                             badgeClassName={tagOptionBackgroundColor}
                         />

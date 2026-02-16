@@ -65,7 +65,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
 
         if (this.props.treeNodeSelection) {
             this._allOptions = this.props.treeNodeSelection.getSuggestions();
-            this._currentNodeLevel = this.props.treeNodeSelection.getFocussedLevel();
+            this._currentNodeLevel = this.props.treeNodeSelection.getFocusedLevel();
         }
 
         this.renderPopup = this.renderPopup.bind(this);
@@ -111,7 +111,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         if (previousProps.visible !== visible || previousProps.treeNodeSelection !== treeNodeSelection) {
             if (this.props.treeNodeSelection) {
                 this._allOptions = this.props.treeNodeSelection.getSuggestions();
-                this._currentNodeLevel = this.props.treeNodeSelection.getFocussedLevel();
+                this._currentNodeLevel = this.props.treeNodeSelection.getFocusedLevel();
             }
 
             this._upperSpacerHeight = 0;
@@ -141,17 +141,17 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         const { treeNodeSelection, suggestionsRef, showAllSuggestions } = this.props;
         if (
             treeNodeSelection !== undefined &&
-            (treeNodeSelection.getFocussedLevel() !== this._currentNodeLevel ||
-                treeNodeSelection.getFocussedNodeName() !== this._currentNodeName ||
+            (treeNodeSelection.getFocusedLevel() !== this._currentNodeLevel ||
+                treeNodeSelection.getFocusedNodeName() !== this._currentNodeName ||
                 this._lastNodeSelection === undefined ||
                 !treeNodeSelection.objectEquals(this._lastNodeSelection) ||
                 this.props.showAllSuggestions !== this._showingAllSuggestions)
         ) {
             this._showingAllSuggestions = this.props.showAllSuggestions;
             this._allOptions = treeNodeSelection.getSuggestions(showAllSuggestions);
-            this._currentNodeLevel = treeNodeSelection.getFocussedLevel();
+            this._currentNodeLevel = treeNodeSelection.getFocusedLevel();
             this._lastNodeSelection = treeNodeSelection;
-            this._currentNodeName = treeNodeSelection.getFocussedNodeName();
+            this._currentNodeName = treeNodeSelection.getFocusedNodeName();
             if (suggestionsRef.current) {
                 (suggestionsRef.current as HTMLDivElement).scrollTo(0, 0);
             }
@@ -275,8 +275,8 @@ export class Suggestions extends React.Component<SuggestionsProps> {
     }
 
     private decorateOption(option: Option, treeNodeSelection: TreeNodeSelection): React.ReactNode {
-        const regexName = RegExp(`^${treeNodeSelection.getFocussedNodeName()}`, "i");
-        const regexDescription = RegExp(`${treeNodeSelection.getFocussedNodeName()}`, "i");
+        const regexName = RegExp(`^${treeNodeSelection.getFocusedNodeName()}`, "i");
+        const regexDescription = RegExp(`${treeNodeSelection.getFocusedNodeName()}`, "i");
         const matchName = option.nodeName.match(regexName);
         const matchDescription = option.metaData.description?.match(regexDescription);
 

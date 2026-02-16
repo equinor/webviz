@@ -1,61 +1,76 @@
-import React from "react";
+import type React from "react";
 
-import { ContentCopy, Done } from "@mui/icons-material";
-
+import { UserAvatar } from "@framework/internal/components/UserAvatar";
+import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+/**
+ * Component to render the case name and ID cell with copy functionality
+ */
 type CaseNameAndIdCellProps = {
     caseName: string;
     caseId: string;
     cellRowSelected: boolean;
 };
-
 export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNode {
-    const [copied, setCopied] = React.useState(false);
-
-    function handleCopyClick(event: React.MouseEvent) {
-        event.stopPropagation();
-
-        if (copied) {
-            return;
-        }
-
-        navigator.clipboard.writeText(`${props.caseId}`);
-        setCopied(true);
-    }
-
-    function handleMouseLeave() {
-        setCopied(false);
+    function handleCopyRequested() {
+        return props.caseId;
     }
 
     return (
-        <div
-            className="group relative flex items-center min-w-0"
-            title={`${props.caseName} - ${props.caseId}`}
-            onMouseLeave={handleMouseLeave}
-        >
-            {/* Text */}
-            <div className="overflow-hidden text-ellipsis whitespace-nowrap">
-                {props.caseName}
-                <span className={resolveClassNames("text-xs text-slate-500", { "text-white": props.cellRowSelected })}>
-                    {" "}
-                    - {props.caseId}
-                </span>
-            </div>
-
-            {/* Copy (or Done) button, hidden until hover */}
-            <button
-                className={resolveClassNames(
-                    `absolute right-1 px-1 w-6 h-6 text-slate-400 hover:text-slate-600
-                     group-hover:bg-slate-100 rounded-full opacity-0 group-hover:opacity-100 
-                    transition-opacity duration-200`,
-                    { "active:bg-slate-400": !copied },
-                )}
-                title={copied ? "Copied!" : "Copy case uuid to clipboard"}
-                onClick={handleCopyClick}
+        <CopyCellValue onCopyRequested={handleCopyRequested}>
+            <div
+                className="h-full group relative flex items-center min-w-0"
+                title={`${props.caseName} - ${props.caseId}`}
             >
-                {!copied ? <ContentCopy fontSize="inherit" /> : <Done fontSize="inherit" />}
-            </button>
+                <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                    {props.caseName}
+                    <span
+                        className={resolveClassNames("text-xs text-slate-500", { "text-white": props.cellRowSelected })}
+                    >
+                        {" "}
+                        - {props.caseId}
+                    </span>
+                </div>
+            </div>
+        </CopyCellValue>
+    );
+}
+
+/**
+ * Component to render the description cell with copy functionality
+ */
+type DescriptionCellProps = {
+    description: string;
+};
+export function DescriptionCell(props: DescriptionCellProps): React.ReactNode {
+    function handleCopyRequested() {
+        return props.description;
+    }
+
+    return (
+        <CopyCellValue onCopyRequested={handleCopyRequested}>
+            <div className="flex h-full items-center min-w-0" title={props.description}>
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap">{props.description}</span>
+            </div>
+        </CopyCellValue>
+    );
+}
+
+/**
+ * Component to render the author cell with user avatar and name
+ */
+type AuthorCellProps = {
+    author: string;
+    key?: React.Key | null;
+};
+export function AuthorCell(props: AuthorCellProps): React.ReactNode {
+    return (
+        <div className="flex justify-center gap-1">
+            <UserAvatar key={props.key} userIdOrEmail={`${props.author}@equinor.com`} />
+            <span className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block" title={props.author}>
+                {props.author}
+            </span>
         </div>
     );
 }

@@ -91,6 +91,9 @@ export type TableProps<T extends Record<string, any>> = {
     // TODO: Other QoL things to add?
     // * Specify height with row count instead?
     // numVisibleRows?: number;
+
+    /** Rendered when no data is available */
+    noDataMessage?: React.ReactNode;
 };
 
 function validateProps<T extends Record<string, any>>(props: TableProps<T>) {
@@ -233,6 +236,16 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
         });
     }, [props.controlledCollation, rowsWithKey, selectedRows, tableFilterState, colDataDefLookup]);
 
+    React.useEffect(
+        function ensureValidSelectedRowsAfterFiltering() {
+            const validSelectedRows = selectedRows.filter((selKey) => filteredRows.some((row) => row._key === selKey));
+            if (validSelectedRows.length !== selectedRows.length) {
+                setSelectedRows(validSelectedRows);
+            }
+        },
+        [filteredRows, selectedRows, setSelectedRows],
+    );
+
     // After filtering, sort remaining data according to tableSortState
     const sortedRows = React.useMemo(() => {
         if (props.controlledCollation) return filteredRows;
@@ -313,6 +326,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                         onSelectedRowsChange={setSelectedRows}
                         onRowHover={handleRowHover}
                         onVisibleRowRangeChange={props.onVisibleRowRangeChange}
+                        noDataMessage={props.noDataMessage}
                     />
                 </table>
 

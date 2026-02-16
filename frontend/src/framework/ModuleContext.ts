@@ -22,9 +22,9 @@ import type { InterfaceBaseType } from "./UniDirectionalModuleComponentsInterfac
 import { useInterfaceValue } from "./UniDirectionalModuleComponentsInterface";
 
 export class ModuleContext<TInterfaceTypes extends ModuleInterfaceTypes> {
-    protected _moduleInstance: ModuleInstance<TInterfaceTypes>;
+    protected _moduleInstance: ModuleInstance<TInterfaceTypes, any>;
 
-    constructor(moduleInstance: ModuleInstance<TInterfaceTypes>) {
+    constructor(moduleInstance: ModuleInstance<TInterfaceTypes, any>) {
         this._moduleInstance = moduleInstance;
     }
 

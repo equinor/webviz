@@ -3,15 +3,15 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { type PvtData_api, getTableDataOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import type { CombinedPvtDataResult } from "../../typesAndEnums";
 
-import { selectedEnsembleIdentsAtom, selectedRealizationsAtom } from "./derivedAtoms";
-
+import { selectedEnsembleIdentsAtom, selectedRealizationNumbersAtom } from "./persistableFixableAtoms";
 
 export const pvtDataQueriesAtom = atomWithQueries((get) => {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
-    const selectedRealizations = get(selectedRealizationsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const selectedRealizations = get(selectedRealizationNumbersAtom).value;
 
     const ensembleIdentsAndRealizations: { ensembleIdent: RegularEnsembleIdent; realization: number }[] = [];
     for (const ensembleIdent of selectedEnsembleIdents) {
@@ -22,14 +22,16 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
 
     const queries = ensembleIdentsAndRealizations
         .map((el) => {
+            const options = getTableDataOptions({
+                query: {
+                    case_uuid: el.ensembleIdent.getCaseUuid(),
+                    ensemble_name: el.ensembleIdent.getEnsembleName(),
+                    realization: el.realization,
+                    ...makeCacheBustingQueryParam(el.ensembleIdent),
+                },
+            });
             return () => ({
-                ...getTableDataOptions({
-                    query: {
-                        case_uuid: el.ensembleIdent.getCaseUuid(),
-                        ensemble_name: el.ensembleIdent.getEnsembleName(),
-                        realization: el.realization,
-                    },
-                }),
+                ...options,
                 enabled: Boolean(el.ensembleIdent && el.realization !== null),
             });
         })
@@ -46,7 +48,6 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
             }),
             errors: results.map((result) => result.error).filter((err) => err !== null) as Error[],
             isFetching: results.some((result) => result.isFetching),
-            someQueriesFailed: results.some((result) => result.isError),
             allQueriesFailed: results.every((result) => result.isError),
         };
     }

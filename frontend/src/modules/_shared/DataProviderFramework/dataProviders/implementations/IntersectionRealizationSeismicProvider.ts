@@ -3,6 +3,7 @@ import { isEqual } from "lodash";
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
@@ -11,7 +12,6 @@ import type { SeismicFenceData_trans } from "@modules/_shared/Intersection/seism
 import { transformSeismicFenceData } from "@modules/_shared/Intersection/seismicIntersectionTransform";
 import { createSeismicFencePolylineFromPolylineXy } from "@modules/_shared/Intersection/seismicIntersectionUtils";
 
-import type { MakeSettingTypesMap } from "../../../DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "../../../DataProviderFramework/settings/settingsDefinitions";
 import type {
     CustomDataProviderImplementation,
@@ -19,6 +19,7 @@ import type {
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -36,7 +37,6 @@ const intersectionRealizationSeismicSettings = [
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
     Setting.TIME_OR_INTERVAL,
-    Setting.SAMPLE_RESOLUTION_IN_METERS,
     Setting.COLOR_SCALE,
     Setting.OPACITY_PERCENT,
 ] as const;
@@ -89,7 +89,6 @@ export class IntersectionRealizationSeismicProvider
 
         return {
             [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-            [Setting.SAMPLE_RESOLUTION_IN_METERS]: 25.0,
             [Setting.COLOR_SCALE]: {
                 colorScale: defaultColorScale,
                 areBoundariesUserDefined: false,
@@ -100,7 +99,7 @@ export class IntersectionRealizationSeismicProvider
 
     getDefaultName(): string {
         const dataSourceString = SeismicDataSourceEnumToStringMapping[this._dataSource];
-        return `Intersection Realization ${dataSourceString} Seismic`;
+        return `Seismic fence (${dataSourceString}`;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -111,8 +110,7 @@ export class IntersectionRealizationSeismicProvider
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.realization, newSettings.realization) ||
             !isEqual(prevSettings.attribute, newSettings.attribute) ||
-            !isEqual(prevSettings.timeOrInterval, newSettings.timeOrInterval) ||
-            !isEqual(prevSettings.sampleResolutionInMeters, newSettings.sampleResolutionInMeters)
+            !isEqual(prevSettings.timeOrInterval, newSettings.timeOrInterval)
         );
     }
 
@@ -157,14 +155,13 @@ export class IntersectionRealizationSeismicProvider
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
-            getSetting(Setting.TIME_OR_INTERVAL) !== null &&
-            getSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) !== null
+            getSetting(Setting.TIME_OR_INTERVAL) !== null
         );
     }
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueConstraintsUpdater,
         settingAttributesUpdater,
         queryClient,
         workbenchSession,
@@ -177,13 +174,13 @@ export class IntersectionRealizationSeismicProvider
             return { enabled: isEnabled };
         });
 
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
             return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
         });
 
-        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
@@ -201,6 +198,7 @@ export class IntersectionRealizationSeismicProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid() ?? "",
                         ensemble_name: ensembleIdent.getEnsembleName() ?? "",
+                        ...makeCacheBustingQueryParam(ensembleIdent ?? null),
                     },
 
                     signal: abortSignal,
@@ -208,7 +206,7 @@ export class IntersectionRealizationSeismicProvider
             });
         });
 
-        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const seismicCubeMetaList = getHelperDependency(ensembleSeismicCubeMetaListDep);
 
             if (!seismicCubeMetaList) {
@@ -233,7 +231,7 @@ export class IntersectionRealizationSeismicProvider
             return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
-        availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -245,7 +243,7 @@ export class IntersectionRealizationSeismicProvider
             return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
-        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const seismicCubeMetaList = getHelperDependency(ensembleSeismicCubeMetaListDep);
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
 
@@ -301,7 +299,10 @@ export class IntersectionRealizationSeismicProvider
             const intersectionPolylineWithSectionLengths = getHelperDependency(
                 intersectionPolylineWithSectionLengthsDep,
             );
-            const sampleResolutionInMeters = getLocalSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) ?? 1;
+
+            const seismicCubeMetaList = getHelperDependency(ensembleSeismicCubeMetaListDep);
+            const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
+            const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
 
             // If no intersection is selected, or polyline is empty, cancel update
             if (
@@ -309,6 +310,19 @@ export class IntersectionRealizationSeismicProvider
                 intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
             ) {
                 return { polylineUtmXy: [], actualSectionLengths: [] };
+            }
+
+            // Find step size for resampling
+            let sampleResolutionInMeters = 25.0; // Default value
+            const matchingSeismicCubeMeta = seismicCubeMetaList?.find(
+                (meta) => meta.seismicAttribute === seismicAttribute && meta.isoDateOrInterval === timeOrInterval,
+            );
+            if (matchingSeismicCubeMeta) {
+                // Use the smallest increment in x- and y-direction from seismic cube spec, and divide by 2.0 as sample
+                // resolution for resampling the polyline.
+                sampleResolutionInMeters =
+                    Math.min(Math.abs(matchingSeismicCubeMeta.spec.xInc), Math.abs(matchingSeismicCubeMeta.spec.yInc)) /
+                    2.0;
             }
 
             // Resample the polyline, as seismic fence is created by one trace per (x,y) point in the polyline
@@ -352,6 +366,7 @@ export class IntersectionRealizationSeismicProvider
                 seismic_attribute: attribute,
                 time_or_interval_str: timeOrInterval ?? "",
                 observed: this._dataSource === SeismicDataSource.OBSERVED,
+                ...makeCacheBustingQueryParam(ensembleIdent),
             },
             body: {
                 polyline: apiSeismicFencePolyline,

@@ -1,25 +1,41 @@
 import type React from "react";
 
+import { useAtom } from "jotai";
+
 import type { ModuleViewProps } from "@framework/Module";
 
 import type { Interfaces } from "../interfaces";
 
-import { LayersWrapper } from "./components/LayersWrapper";
-
+import { viewStateAtom } from "./atoms/baseAtoms";
+import { VisualizationAssemblerWrapper } from "./components/VisualizationAssemblerWrapper";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
-    const layerManager = props.viewContext.useSettingsToViewInterfaceValue("layerManager");
+    const dataProviderManager = props.viewContext.useSettingsToViewInterfaceValue("dataProviderManager");
+    const fieldId = props.viewContext.useSettingsToViewInterfaceValue("fieldId");
+    const [viewState, setViewState] = useAtom(viewStateAtom);
 
-    if (!layerManager) {
+    if (!dataProviderManager) {
+        return null;
+    }
+
+    if (!fieldId) {
         return null;
     }
 
     return (
-        <LayersWrapper
-            layerManager={layerManager}
-            preferredViewLayout={preferredViewLayout}
+        <VisualizationAssemblerWrapper
+            fieldId={fieldId}
             viewContext={props.viewContext}
+            preferredViewLayout={preferredViewLayout}
+            dataProviderManager={dataProviderManager}
+            hoverService={props.hoverService}
+            onViewStateChange={setViewState}
+            viewState={viewState ?? undefined}
+            workbenchSession={props.workbenchSession}
+            workbenchSettings={props.workbenchSettings}
+            workbenchServices={props.workbenchServices}
+            initialVerticalScale={1}
         />
     );
 }

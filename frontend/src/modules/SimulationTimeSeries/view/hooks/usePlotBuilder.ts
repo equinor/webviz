@@ -3,17 +3,18 @@ import { useAtomValue } from "jotai";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import { isInvalidStatisticsResampleFrequency } from "@modules/SimulationTimeSeries/utils/resamplingFrequencyUtils";
 
 import type { VectorHexColorMap } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
 import {
-    activeTimestampUtcMsAtom,
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     loadedVectorSpecificationsAndObservationDataAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
+import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
 import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { PlotBuilder } from "../utils/PlotBuilder";
 import type { SubplotOwner } from "../utils/PlotBuilder";
@@ -30,7 +31,7 @@ export function usePlotBuilder(
     vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null,
-): PlotBuilder {
+): PlotBuilder | null {
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
     const vectorSpecifications = viewContext.useSettingsToViewInterfaceValue("vectorSpecifications");
@@ -46,9 +47,14 @@ export function usePlotBuilder(
         loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
+    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
+
+    // Do not assemble plot for invalid statistical resampling frequency
+    if (isInvalidStatisticsResampleFrequency(resampleFrequency, visualizationMode)) {
+        return null;
+    }
 
     const scatterType =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||

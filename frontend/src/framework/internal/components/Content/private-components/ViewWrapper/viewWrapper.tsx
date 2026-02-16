@@ -1,8 +1,8 @@
 import React from "react";
 
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import { DashboardTopic } from "@framework/internal/Dashboard";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { pointRelativeToDomRect } from "@lib/utils/geometry";
@@ -20,7 +20,7 @@ import { ViewContent } from "./private-components/viewContent";
 type ViewWrapperProps = {
     isMaximized?: boolean;
     isMinimized?: boolean;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
     width: number;
     height: number;
@@ -32,16 +32,13 @@ type ViewWrapperProps = {
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = useActiveDashboard();
     const [prevWidth, setPrevWidth] = React.useState<number>(props.width);
     const [prevHeight, setPrevHeight] = React.useState<number>(props.height);
     const [prevX, setPrevX] = React.useState<number>(props.x);
     const [prevY, setPrevY] = React.useState<number>(props.y);
 
-    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
     const isActive = props.moduleInstance.getId() === activeModuleInstanceId;
 
     const ref = React.useRef<HTMLDivElement>(null);

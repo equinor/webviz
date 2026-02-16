@@ -1,14 +1,16 @@
 import { isEqual } from "lodash";
 
 import type { PolygonData_api } from "@api";
-import { getPolygonsDataOptions, getPolygonsDirectoryOptions } from "@api";
+import { getPolygonsDataOptions, getPolygonsDirectoryOptions, PolygonsAttributeType_api } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     CustomDataProviderImplementation,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+
+import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const realizationPolygonsSettings = [
     Setting.ENSEMBLE,
@@ -17,6 +19,7 @@ const realizationPolygonsSettings = [
     Setting.POLYGONS_NAME,
     Setting.POLYGON_VISUALIZATION,
 ] as const;
+const DISALLOWED_SURFACE_TYPES_FROM_API = [PolygonsAttributeType_api.FAULT_LINES];
 export type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;
 
@@ -27,7 +30,7 @@ export class RealizationPolygonsProvider
     settings = realizationPolygonsSettings;
 
     getDefaultName(): string {
-        return "Realization Polygons";
+        return "Polygons";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -36,10 +39,10 @@ export class RealizationPolygonsProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueConstraintsUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationPolygonsSettings>) {
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -50,7 +53,7 @@ export class RealizationPolygonsProvider
             return ensembleIdents;
         });
 
-        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
@@ -75,27 +78,30 @@ export class RealizationPolygonsProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
             });
         });
 
-        availableSettingsUpdater(Setting.POLYGONS_ATTRIBUTE, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.POLYGONS_ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationPolygonsMetadataDep);
 
             if (!data) {
                 return [];
             }
+            const filteredPolygonsMeta = data.filter(
+                (polygonsMeta) => !DISALLOWED_SURFACE_TYPES_FROM_API.includes(polygonsMeta.attribute_type),
+            );
 
             const availableAttributes = [
-                ...Array.from(new Set(data.map((polygonsMeta) => polygonsMeta.attribute_name))),
+                ...Array.from(new Set(filteredPolygonsMeta.map((polygonsMeta) => polygonsMeta.attribute_name))),
             ];
-
             return availableAttributes;
         });
 
-        availableSettingsUpdater(Setting.POLYGONS_NAME, ({ getHelperDependency, getLocalSetting }) => {
+        valueConstraintsUpdater(Setting.POLYGONS_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(Setting.POLYGONS_ATTRIBUTE);
             const data = getHelperDependency(realizationPolygonsMetadataDep);
 
@@ -131,6 +137,7 @@ export class RealizationPolygonsProvider
                 realization_num: realizationNum ?? 0,
                 name: polygonsName ?? "",
                 attribute: polygonsAttribute ?? "",
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 

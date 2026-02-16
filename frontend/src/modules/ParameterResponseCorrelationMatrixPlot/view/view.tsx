@@ -3,11 +3,9 @@ import React from "react";
 import { Input, Warning } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { KeyKind } from "@framework/types/dataChannnel";
 import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
@@ -27,7 +25,7 @@ import {
 } from "@modules/_shared/utils/math/correlationMatrix";
 
 import type { Interfaces } from "../interfaces";
-import { PlotType, type CorrelationSettings } from "../typesAndEnums";
+import { MAX_NUMBER_OF_PARAMETERS_IN_MATRIX, PlotType } from "../typesAndEnums";
 
 import { ParameterCorrelationMatrixFigure } from "./utils/parameterCorrelationMatrixFigure";
 import { createResponseParameterCorrelationMatrix } from "./utils/parameterCorrelationMatrixUtils";
@@ -54,18 +52,19 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const [prevUseFixedColorRange, setPrevUseFixedColorRange] = React.useState<boolean>(true);
     const [prevColorScaleWithGradient, setPrevColorScaleWithGradient] = React.useState<[number, string][]>([]);
     const [prevPlotType, setPrevPlotType] = React.useState<PlotType>(PlotType.ParameterResponseMatrix);
-    const [prevCorrelationSettings, setPrevCorrelationSettings] = React.useState<CorrelationSettings>({
-        threshold: null as number | null,
-        hideIndividualCells: true,
-        filterColumns: true,
-        filterRows: true,
-    });
+    const [prevCorrelationThreshold, setPrevCorrelationThreshold] = React.useState<number | null>(null);
+    const [prevHideIndividualCells, setPrevHideIndividualCells] = React.useState<boolean>(true);
+    const [prevFilterColumns, setPrevFilterColumns] = React.useState<boolean>(true);
+    const [prevFilterRows, setPrevFilterRows] = React.useState<boolean>(true);
 
     const parameterIdents = viewContext.useSettingsToViewInterfaceValue("parameterIdents");
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
     const useFixedColorRange = viewContext.useSettingsToViewInterfaceValue("useFixedColorRange");
-    const correlationSettings = viewContext.useSettingsToViewInterfaceValue("correlationSettings");
+    const correlationThreshold = viewContext.useSettingsToViewInterfaceValue("correlationThreshold");
+    const hideIndividualCells = viewContext.useSettingsToViewInterfaceValue("hideIndividualCells");
+    const filterColumns = viewContext.useSettingsToViewInterfaceValue("filterColumns");
+    const filterRows = viewContext.useSettingsToViewInterfaceValue("filterRows");
     const ensembleSet = workbenchSession.getEnsembleSet();
 
     const statusWriter = useViewStatusWriter(viewContext);
@@ -93,6 +92,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     statusWriter.setLoading(isPending || receiverResponses.some((r) => r.isPending));
     const receiverResponseRevisionNumbers = receiverResponses.map((response) => response.revisionNumber);
+
     const hasParameterIdentsChanged =
         parameterIdents.length !== prevParameterIdents.length ||
         !parameterIdents.every((ident, index) => ident.equals(prevParameterIdents[index]));
@@ -104,7 +104,10 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         useFixedColorRange !== prevUseFixedColorRange ||
         !isEqual(colorScaleWithGradient, prevColorScaleWithGradient) ||
         plotType !== prevPlotType ||
-        !isEqual(correlationSettings, prevCorrelationSettings)
+        correlationThreshold !== prevCorrelationThreshold ||
+        hideIndividualCells !== prevHideIndividualCells ||
+        filterColumns !== prevFilterColumns ||
+        filterRows !== prevFilterRows
     ) {
         setRevNumberResponses(receiverResponseRevisionNumbers);
 
@@ -114,28 +117,56 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         setPrevUseFixedColorRange(useFixedColorRange);
         setPrevColorScaleWithGradient(colorScaleWithGradient);
         setPrevPlotType(plotType);
-        setPrevCorrelationSettings(correlationSettings);
+        setPrevCorrelationThreshold(correlationThreshold);
+        setPrevHideIndividualCells(hideIndividualCells);
+        setPrevFilterColumns(filterColumns);
+        setPrevFilterRows(filterRows);
 
         startTransition(function makeContent() {
             // Content when no data channels are defined
+
             if (receiverResponses.every((response) => !response.channel)) {
                 setContent(
                     <ContentWarning>
-                        <span>
-                            Data channel required for use. Add a main module to the workbench and use the data channels
-                            <Input fontSize="small" />
-                        </span>{" "}
-                        Up to 3 modules can be connected.
-                        <span>
-                            <Tag label="Response" />
-                            <Tag label="Response" />
-                            <Tag label="Response" />
-                        </span>
+                        <div className="space-y-3 text-sm">
+                            <p className="font-medium">Data channel required for use.</p>
+                            <p>Add a module supporting data channels to the dashboard and connect it to this module.</p>
+                            <p>
+                                Modules supporting data channels have an <Input fontSize="small" /> icon on their
+                                toolbar.
+                            </p>
+                            <p>Drag from this icon to a response below:</p>
+                            <div className="flex gap-2 flex-wrap">
+                                <Tag label="Response" />
+                                <Tag label="Response" />
+                                <Tag label="Response" />
+                            </div>
+                        </div>
                     </ContentWarning>,
                 );
                 return;
             }
-
+            if (parameterIdents.length === 0) {
+                setContent(
+                    <ContentWarning>
+                        <Warning fontSize="large" className="mb-2" />
+                        No parameters selected or available. Please select parameters in the settings pane. If no
+                        parameters are available, ensure that the connected ensembles have continuous and varying
+                        parameters.
+                    </ContentWarning>,
+                );
+                return;
+            }
+            if (parameterIdents.length > MAX_NUMBER_OF_PARAMETERS_IN_MATRIX) {
+                setContent(
+                    <ContentWarning>
+                        <Warning fontSize="large" className="mb-2" />
+                        {`Too many parameters selected. Please select ${MAX_NUMBER_OF_PARAMETERS_IN_MATRIX} or fewer parameters to display the correlation
+                        matrix.`}
+                    </ContentWarning>,
+                );
+                return;
+            }
             const usedChannels = receiverResponses.filter((response) => response.channel);
             const usedChannelsWithoutData = receiverResponses.filter(
                 (response) => response.channel && response.channel.contents.length === 0,
@@ -173,6 +204,19 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 });
             });
 
+            // Content when no parameters are selected
+            if (parameterIdents.length === 0) {
+                setContent(
+                    <ContentWarning>
+                        <Warning fontSize="large" className="mb-2" />
+                        No parameters selected or available. Please select parameters in the settings pane. If
+                        parameters are selected but not available, ensure that the connected ensembles have continuous
+                        and varying parameters.
+                    </ContentWarning>,
+                );
+                return;
+            }
+
             const numContents = receiveResponsesPerEnsembleIdent.size;
 
             if (numContents > MAX_NUM_PLOTS) {
@@ -191,11 +235,10 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             });
             for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
                 const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-                if (!ensemble || ensemble instanceof DeltaEnsemble) {
-                    const ensembleType = !ensemble ? "Invalid" : "Delta";
+                if (!ensemble) {
                     setContent(
                         <ContentWarning>
-                            <p>{ensembleType} ensemble detected in the data channel.</p>
+                            <p>Invalid ensemble detected in the data channel.</p>
                             <p>Unable to compute parameter correlations.</p>
                         </ContentWarning>,
                     );
@@ -210,7 +253,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 ensembleSet,
                 receiveResponsesPerEnsembleIdent,
                 plotType,
-                correlationSettings,
+                { threshold: correlationThreshold, hideIndividualCells, filterColumns, filterRows },
             );
             setContent(
                 <>
@@ -227,6 +270,12 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         </div>
     );
 }
+type CorrelationSettings = {
+    threshold: number | null;
+    hideIndividualCells: boolean;
+    filterColumns: boolean;
+    filterRows: boolean;
+};
 
 function fillParameterCorrelationMatrixFigure(
     figure: ParameterCorrelationMatrixFigure,
@@ -255,7 +304,7 @@ function fillParameterCorrelationMatrixFigure(
             const ensembleIdentString = Array.from(receiveResponsesPerEnsembleIdent.keys())[cellIndex];
 
             const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-            if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
+            if (!ensemble) {
                 continue;
             }
             const fullParameterArr = getVaryingContinuousParameters(ensemble);

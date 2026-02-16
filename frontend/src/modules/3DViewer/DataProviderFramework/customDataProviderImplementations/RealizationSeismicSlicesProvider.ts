@@ -2,6 +2,7 @@ import { isEqual } from "lodash";
 
 import { type SeismicCubeMeta_api, getSeismicCubeMetaListOptions, getSeismicSlicesOptions } from "@api";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
@@ -12,9 +13,11 @@ import type {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { NullableStoredData } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/sharedTypes";
-import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { type SeismicSliceData_trans, transformSeismicSlice } from "../utils/transformSeismicSlice";
+
 
 const realizationSeismicSlicesSettings = [
     Setting.ENSEMBLE,
@@ -155,6 +158,7 @@ export class RealizationSeismicSlicesProvider
                 inline_number: slices?.[0] ?? 0,
                 crossline_number: slices?.[1] ?? 0,
                 depth_slice_number: slices?.[2] ?? 0,
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 
@@ -169,11 +173,11 @@ export class RealizationSeismicSlicesProvider
 
     defineDependencies({
         helperDependency,
-        availableSettingsUpdater,
+        valueConstraintsUpdater,
         storedDataUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationSeismicSlicesSettings, RealizationSeismicSlicesStoredData>): void {
-        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -184,7 +188,7 @@ export class RealizationSeismicSlicesProvider
             return ensembleIdents;
         });
 
-        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
@@ -210,6 +214,7 @@ export class RealizationSeismicSlicesProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
@@ -234,7 +239,7 @@ export class RealizationSeismicSlicesProvider
             );
         });
 
-        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);
 
             if (!data) {
@@ -248,7 +253,7 @@ export class RealizationSeismicSlicesProvider
             return availableSeismicAttributes;
         });
 
-        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
 
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);
@@ -270,7 +275,7 @@ export class RealizationSeismicSlicesProvider
             return availableTimeOrIntervals;
         });
 
-        availableSettingsUpdater(Setting.SEISMIC_SLICES, ({ getLocalSetting, getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.SEISMIC_SLICES, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);

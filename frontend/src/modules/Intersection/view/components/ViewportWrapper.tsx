@@ -3,8 +3,9 @@ import React from "react";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { cloneDeep, isEqual } from "lodash";
 
+import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -33,6 +34,7 @@ export type ViewportWrapperProps = {
     doRefocus: boolean;
     colorScales: ColorScaleWithId[];
     workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
     onViewportRefocused?: () => void;
 };
@@ -55,8 +57,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     const [showGrid, setShowGrid] = React.useState<boolean>(true);
 
-    const syncedSettingKeys = props.viewContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices, props.viewContext);
+    const syncHelper = useRefStableSyncSettingsHelper({
+        workbenchServices: props.workbenchServices,
+        moduleContext: props.viewContext,
+    });
 
     const syncedCameraPosition = syncHelper.useValue(
         SyncSettingKey.CAMERA_POSITION_INTERSECTION,
@@ -235,7 +239,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     bounds={props.layerItemsBounds}
                     viewport={viewport ?? undefined}
                     onViewportChange={handleViewportChange}
-                    workbenchServices={props.workbenchServices}
+                    hoverService={props.hoverService}
                     viewContext={props.viewContext}
                 />
                 <Toolbar
