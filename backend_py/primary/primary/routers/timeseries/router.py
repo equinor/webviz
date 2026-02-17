@@ -396,6 +396,7 @@ async def get_statistical_vector_data(
 
 
 @router.get("/delta_ensemble_statistical_vector_data/")
+# pylint: disable=too-many-arguments
 async def get_delta_ensemble_statistical_vector_data(
     # fmt:off
     response: Response,
