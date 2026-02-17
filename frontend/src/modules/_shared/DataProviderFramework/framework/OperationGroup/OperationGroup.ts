@@ -10,6 +10,7 @@ import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegateTopic, SettingsContextStatus } from "../../delegates/SettingsContextDelegate";
 import { SharedSettingsDelegate, SharedSettingsDelegateTopic } from "../../delegates/SharedSettingsDelegate";
+import type { DataProviderMeta, ProviderSnapshot } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type {
     ChildSettingsUnion,
     CustomOperationGroupImplementation,
@@ -19,6 +20,7 @@ import type {
     OperationGroupInformationAccessors,
 } from "../../interfacesAndTypes/customOperationGroupImplementation";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
+import type { ItemView, StateSnapshot } from "../../interfacesAndTypes/ItemView";
 import {
     SerializedType,
     type SerializedOperationGroup,
@@ -28,17 +30,15 @@ import type { OperationGroupType } from "../../operationGroups/operationGroupTyp
 import type { Setting } from "../../settings/settingsDefinitions";
 import type { DataProvider } from "../DataProvider/DataProvider";
 import { isDataProvider } from "../DataProvider/DataProvider";
-import { DataProviderManagerTopic, type DataProviderManager } from "../DataProviderManager/DataProviderManager";
+import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
-import { ItemView, StateSnapshot } from "../../interfacesAndTypes/ItemView";
-import { DataProviderMeta, ProviderSnapshot } from "../../interfacesAndTypes/customDataProviderImplementation";
 
 export enum OperationGroupTopic {
     OPERATION = "operation",
     STATUS = "status",
+    ERROR_MESSAGE = "error-message",
     PROGRESS_MESSAGE = "progress-message",
-    REVISION_NUMBER = "revision-number",
 }
 
 export enum OperationGroupStatus {
@@ -56,8 +56,8 @@ export enum OperationGroupStatus {
 export type OperationGroupPayloads = {
     [OperationGroupTopic.OPERATION]: Operation;
     [OperationGroupTopic.STATUS]: OperationGroupStatus;
+    [OperationGroupTopic.ERROR_MESSAGE]: StatusMessage | string | null;
     [OperationGroupTopic.PROGRESS_MESSAGE]: string | null;
-    [OperationGroupTopic.REVISION_NUMBER]: number;
 };
 
 export function isOperationGroup(obj: any): obj is OperationGroup<any, any> {
@@ -118,7 +118,6 @@ export class OperationGroup<
     private _status: OperationGroupStatus = OperationGroupStatus.IDLE;
 
     private _error: StatusMessage | string | null = null;
-    private _revisionNumber: number = 0;
     private _currentTransactionId: number = 0;
     private _data: TData | null = null;
     private _progressMessage: string | null = null;
@@ -194,7 +193,7 @@ export class OperationGroup<
     }
 
     getRevisionNumber(): number {
-        return this._revisionNumber;
+        return this._itemDelegate.getRevisionNumber();
     }
 
     private makeAccessors(): OperationGroupInformationAccessors<TData, TSupportedDataProviderImplementations> {
@@ -237,7 +236,7 @@ export class OperationGroup<
     }
 
     getStateSnapshot(): StateSnapshot<TData, TMeta> | null {
-        if (this._cachedStateSnapshot && this._cachedStateSnapshotRevision === this._revisionNumber) {
+        if (this._cachedStateSnapshot && this._cachedStateSnapshotRevision === this.getRevisionNumber()) {
             return this._cachedStateSnapshot;
         }
 
@@ -259,7 +258,7 @@ export class OperationGroup<
         };
 
         this._cachedStateSnapshot = snapshot;
-        this._cachedStateSnapshotRevision = this._revisionNumber;
+        this._cachedStateSnapshotRevision = this.getRevisionNumber();
         return snapshot;
     }
 
@@ -312,6 +311,10 @@ export class OperationGroup<
         return this._type;
     }
 
+    getSupportedDataProviderImplementations(): DataProviderImplementation[] {
+        return this._customOperationGroupImplementation.supportedDataProviderImplementations;
+    }
+
     getSharedSettingsDelegate(): SharedSettingsDelegate<any, any, any> | null {
         return this._sharedSettingsDelegate;
     }
@@ -331,8 +334,8 @@ export class OperationGroup<
             if (topic === OperationGroupTopic.PROGRESS_MESSAGE) {
                 return this._progressMessage;
             }
-            if (topic === OperationGroupTopic.REVISION_NUMBER) {
-                return this._revisionNumber;
+            if (topic === OperationGroupTopic.ERROR_MESSAGE) {
+                return this.getError();
             }
             throw new Error(`Unknown topic: ${topic}`);
         };
@@ -367,15 +370,13 @@ export class OperationGroup<
             return null;
         }
 
-        const name = this.getItemDelegate().getName();
-
         if (typeof this._error === "string") {
-            return `${name}: ${this._error}`;
+            return `${this._error}`;
         }
 
         return {
             ...this._error,
-            message: `${name}: ${this._error.message}`,
+            message: `${this._error.message}`,
         };
     }
 
@@ -397,23 +398,33 @@ export class OperationGroup<
         this._publishSubscribeDelegate.notifySubscribers(OperationGroupTopic.STATUS);
     }
 
-    private incrementRevisionNumber(): void {
-        this._revisionNumber += 1;
-        this._publishSubscribeDelegate.notifySubscribers(OperationGroupTopic.REVISION_NUMBER);
-        this._itemDelegate.getDataProviderManager().publishTopic(DataProviderManagerTopic.DATA_REVISION);
+    private setError(error: StatusMessage | string | null): void {
+        if (this._error === error) {
+            return;
+        }
+        this._error = error;
+        this._publishSubscribeDelegate.notifySubscribers(OperationGroupTopic.ERROR_MESSAGE);
     }
 
-    private validateChildren(): OperationGroupStatus | null {
+    private incrementRevisionNumber(): void {
+        this._itemDelegate.incrementRevisionNumber();
+    }
+
+    private hasInvalidChildren(): boolean {
         const children = [...this._childrenDataProviderSet];
 
         const minChildren = this._customOperationGroupImplementation.minChildrenCount ?? 2;
         if (children.length < minChildren) {
-            return OperationGroupStatus.INSUFFICIENT_CHILDREN;
+            this.setError(`At least ${minChildren} children are required.`);
+            this.setStatus(OperationGroupStatus.INSUFFICIENT_CHILDREN);
+            return true;
         }
 
         const maxChildren = this._customOperationGroupImplementation.maxChildrenCount;
         if (maxChildren != null && children.length > maxChildren) {
-            return OperationGroupStatus.TOO_MANY_CHILDREN;
+            this.setError(`At most ${maxChildren} children are allowed.`);
+            this.setStatus(OperationGroupStatus.TOO_MANY_CHILDREN);
+            return true;
         }
 
         const supportedImplementations = this._customOperationGroupImplementation.supportedDataProviderImplementations;
@@ -421,18 +432,24 @@ export class OperationGroup<
         let firstType: string | null = null;
         for (const child of children) {
             if (!supportedImplementations.includes(child.getProviderImplementation().constructor as any)) {
-                return OperationGroupStatus.UNSUPPORTED_CHILDREN;
+                this.setError(`Child '${child.getName()}' is not supported.`);
+                this.setStatus(OperationGroupStatus.UNSUPPORTED_CHILDREN);
+                return true;
             }
 
             const childType = child.getType();
             if (!firstType) {
                 firstType = childType;
             } else if (childType !== firstType) {
-                return OperationGroupStatus.CHILDREN_OF_DIFFERENT_TYPES;
+                this.setError(
+                    `Child '${child.getName()}' has to be of same type as first child '${children[0].getName()}'.`,
+                );
+                this.setStatus(OperationGroupStatus.CHILDREN_OF_DIFFERENT_TYPES);
+                return true;
             }
         }
 
-        return null;
+        return false;
     }
 
     private handleChildrenChange(): void {
@@ -440,7 +457,9 @@ export class OperationGroup<
 
         for (const [index, child] of this._groupDelegate.getChildren().entries()) {
             if (!isDataProvider(child)) {
-                throw new Error("OperationGroup can only have DataProvider children.");
+                this.setError("Operation group can only have data providers as children.");
+                this.setStatus(OperationGroupStatus.ERROR);
+                return;
             }
 
             child.setIsSubordinated(true);
@@ -503,9 +522,8 @@ export class OperationGroup<
     }
 
     private handleSettingsAndStoredDataChange(): void {
-        const childrenValidationError = this.validateChildren();
-        if (childrenValidationError) {
-            this.setStatus(childrenValidationError);
+        const hasInvalidChildren = this.hasInvalidChildren();
+        if (hasInvalidChildren) {
             return;
         }
 
@@ -531,6 +549,7 @@ export class OperationGroup<
         }
 
         if (anyInvalidSettings) {
+            this.setError("One or more children have invalid settings.");
             this.setStatus(OperationGroupStatus.INVALID_SETTINGS);
             return;
         }
@@ -633,5 +652,6 @@ export class OperationGroup<
         this._childrenDataProviderSet.clear();
         this._data = null;
         this._error = null;
+        this._status = OperationGroupStatus.IDLE;
     }
 }

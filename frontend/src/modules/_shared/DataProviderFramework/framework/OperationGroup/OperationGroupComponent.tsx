@@ -18,13 +18,15 @@ import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { isDataProvider } from "../DataProvider/DataProvider";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
+import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
-import { OperationGroupStatus, OperationGroupTopic, type OperationGroup } from "./OperationGroup";
+import type { OperationGroup } from "./OperationGroup";
+import { OperationGroupStatus, OperationGroupTopic } from "./OperationGroup";
 
 export type OperationGroupComponentProps = {
     operationGroup: OperationGroup<any, any>;
@@ -46,8 +48,21 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
     const operation = usePublishSubscribeTopicValue(props.operationGroup, OperationGroupTopic.OPERATION);
     const status = usePublishSubscribeTopicValue(props.operationGroup, OperationGroupTopic.STATUS);
     const progressMessage = usePublishSubscribeTopicValue(props.operationGroup, OperationGroupTopic.PROGRESS_MESSAGE);
+    const errorMessage = usePublishSubscribeTopicValue(props.operationGroup, OperationGroupTopic.ERROR_MESSAGE);
 
-    const color = props.operationGroup.getGroupDelegate().getColor();
+    let color = props.operationGroup.getGroupDelegate().getColor();
+    if (status === OperationGroupStatus.ERROR) {
+        color = "rgba(255, 0, 0, 0.1)";
+    } else if (status === OperationGroupStatus.INSUFFICIENT_CHILDREN) {
+        color = "rgba(255, 165, 0, 0.1)";
+    } else if (
+        status === OperationGroupStatus.CHILDREN_OF_DIFFERENT_TYPES ||
+        status === OperationGroupStatus.UNSUPPORTED_CHILDREN ||
+        status === OperationGroupStatus.TOO_MANY_CHILDREN ||
+        status === OperationGroupStatus.INVALID_SETTINGS
+    ) {
+        color = "rgba(255, 0, 0, 0.1)";
+    }
 
     const actions = React.useMemo(() => {
         return makeActionsForGroup(props.operationGroup);
@@ -100,46 +115,36 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
             }
         }
         if (status === OperationGroupStatus.CHILDREN_OF_DIFFERENT_TYPES) {
-            const errorMessage = "Children are of different types, cannot perform operation.";
-
             return (
-                <Tooltip title={errorMessage}>
+                <Tooltip title={errorMessage?.toString()}>
                     <Rule className="text-red-700 p-0.5" fontSize="small" />
                 </Tooltip>
             );
         }
         if (status === OperationGroupStatus.UNSUPPORTED_CHILDREN) {
-            const errorMessage = "One or more children are not supported by this operation.";
-
             return (
-                <Tooltip title={errorMessage}>
+                <Tooltip title={errorMessage?.toString()}>
                     <Block className="text-red-700 p-0.5" fontSize="small" />
                 </Tooltip>
             );
         }
         if (status === OperationGroupStatus.INSUFFICIENT_CHILDREN) {
-            const errorMessage = "Not enough children to perform operation.";
-
             return (
-                <Tooltip title={errorMessage}>
+                <Tooltip title={errorMessage?.toString()}>
                     <Rule className="text-orange-500 p-0.5" fontSize="small" />
                 </Tooltip>
             );
         }
         if (status === OperationGroupStatus.TOO_MANY_CHILDREN) {
-            const errorMessage = "Too many children for this operation.";
-
             return (
-                <Tooltip title={errorMessage}>
+                <Tooltip title={errorMessage?.toString()}>
                     <Block className="text-red-700 p-0.5" fontSize="small" />
                 </Tooltip>
             );
         }
         if (status === OperationGroupStatus.INVALID_SETTINGS) {
-            const errorMessage = "Invalid settings";
-
             return (
-                <Tooltip title={errorMessage}>
+                <Tooltip title={errorMessage?.toString()}>
                     <Block className="text-red-700 p-0.5" fontSize="small" />
                 </Tooltip>
             );
@@ -198,7 +203,7 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
         <SortableListGroup
             key={props.operationGroup.getItemDelegate().getId()}
             id={props.operationGroup.getItemDelegate().getId()}
-            title={props.operationGroup.getItemDelegate().getName()}
+            title={<EditName item={props.operationGroup} />}
             contentStyle={{
                 backgroundColor: color ?? undefined,
             }}

@@ -16,12 +16,14 @@ export enum ItemDelegateTopic {
     NAME = "NAME",
     VISIBILITY = "VISIBILITY",
     EXPANDED = "EXPANDED",
+    REVISION_NUMBER = "REVISION_NUMBER",
 }
 
 export type ItemDelegatePayloads = {
     [ItemDelegateTopic.NAME]: string;
     [ItemDelegateTopic.VISIBILITY]: boolean;
     [ItemDelegateTopic.EXPANDED]: boolean;
+    [ItemDelegateTopic.REVISION_NUMBER]: number;
 };
 
 /*
@@ -33,6 +35,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     private _name: string;
     private _visible: boolean = true;
     private _expanded: boolean = true;
+    private _revisionNumber: number = 0;
     private _order: number = 0;
     private _parentGroup: GroupDelegate | null = null;
     private _dataProviderManager: DataProviderManager;
@@ -64,9 +67,17 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
 
         this._name = name;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.NAME);
-        if (this._dataProviderManager) {
-            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
-        }
+        this.incrementRevisionNumber();
+    }
+
+    getRevisionNumber(): number {
+        return this._revisionNumber;
+    }
+
+    incrementRevisionNumber(): void {
+        this._revisionNumber += 1;
+        this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.REVISION_NUMBER);
+        this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
     }
 
     getOrder(): number {
@@ -124,6 +135,9 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
             }
             if (topic === ItemDelegateTopic.EXPANDED) {
                 return this._expanded;
+            }
+            if (topic === ItemDelegateTopic.REVISION_NUMBER) {
+                return this._revisionNumber;
             }
         };
         return snapshotGetter;

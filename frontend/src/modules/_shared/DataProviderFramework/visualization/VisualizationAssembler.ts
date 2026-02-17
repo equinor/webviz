@@ -11,22 +11,18 @@ import type { TemplatePlot } from "@modules/_shared/types/wellLogTemplates";
 import type { WellPickDataCollection } from "@modules/_shared/types/wellpicks";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
-import type { ItemDelegate } from "../delegates/ItemDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
 import { Group } from "../framework/Group/Group";
 import { OperationGroup } from "../framework/OperationGroup/OperationGroup";
 import type { GroupType } from "../groups/groupTypes";
-import type {
-    DataProviderMeta,
-    ProviderSnapshot,
-} from "../interfacesAndTypes/customDataProviderImplementation";
+import type { DataProviderMeta, ProviderSnapshot } from "../interfacesAndTypes/customDataProviderImplementation";
 import type {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
 } from "../interfacesAndTypes/customGroupImplementation";
 import { instanceofItemGroup, type ItemGroup } from "../interfacesAndTypes/entities";
-import type { StateSnapshot } from "../interfacesAndTypes/ItemView";
+import type { ItemView, StateSnapshot } from "../interfacesAndTypes/ItemView";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
@@ -191,22 +187,12 @@ export type AssemblerProduct<
 
 export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>>;
 
-type DataProviderObjects<TTarget extends VisualizationTarget, TAccumulatedData extends Record<string, any>> = {
+type ItemViewObjects<TTarget extends VisualizationTarget, TAccumulatedData extends Record<string, any>> = {
     visualization: DataProviderVisualization<TTarget> | null;
     hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget>;
     annotations: Annotation[];
     boundingBox: bbox.BBox | null;
     accumulatedData: TAccumulatedData | null;
-};
-
-type DataProviderLike = {
-    getItemDelegate(): ItemDelegate;
-    getType(): string;
-    getRevisionNumber(): number;
-    getStateSnapshot(): StateSnapshot | null;
-    getStatus(): string;
-    getData(): unknown;
-    getError(): StatusMessage | string | null;
 };
 
 export class VisualizationAssembler<
@@ -225,11 +211,11 @@ export class VisualizationAssembler<
         GroupCustomPropsCollector<any, any, TCustomGroupProps>
     > = new Map();
 
-    private _cachedDataProviderVisualizationsMap: Map<
+    private _cachedItemViewVisualizationsMap: Map<
         string,
         {
             revisionNumber: number;
-            objects: DataProviderObjects<TTarget, TAccumulatedData>;
+            objects: ItemViewObjects<TTarget, TAccumulatedData>;
         }
     > = new Map();
 
@@ -281,7 +267,7 @@ export class VisualizationAssembler<
 
     private makeRecursively(
         groupDelegate: GroupDelegate,
-        inheritedDataProviders: DataProviderLike[],
+        inheritedItemViews: ItemView[],
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
         /**
@@ -301,7 +287,7 @@ export class VisualizationAssembler<
         let combinedBoundingBox: bbox.BBox | null = null;
 
         const itemGroups: ItemGroup[] = [];
-        const dataProviders: DataProviderLike[] = [];
+        const itemViews: ItemView[] = [];
 
         const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
             if (boundingBox) {
@@ -316,7 +302,7 @@ export class VisualizationAssembler<
             }
 
             if (child instanceof OperationGroup) {
-                dataProviders.push(child);
+                itemViews.push(child);
                 continue;
             }
 
@@ -325,14 +311,14 @@ export class VisualizationAssembler<
             }
 
             if (child instanceof DataProvider) {
-                dataProviders.push(child);
+                itemViews.push(child);
             }
         }
 
         for (const itemGroup of itemGroups) {
             const product = this.makeRecursively(
                 itemGroup.getGroupDelegate(),
-                [...inheritedDataProviders, ...dataProviders],
+                [...inheritedItemViews, ...itemViews],
                 accumulatedData,
                 injectedData,
                 disableCache,
@@ -360,8 +346,8 @@ export class VisualizationAssembler<
             children.push(...product.children);
         }
 
-        for (const child of [...inheritedDataProviders, ...dataProviders]) {
-            if (children.some((el) => el.id === child.getItemDelegate().getId())) {
+        for (const child of [...inheritedItemViews, ...itemViews]) {
+            if (children.some((el) => el.id === child.getId())) {
                 continue;
             }
 
@@ -383,24 +369,24 @@ export class VisualizationAssembler<
                 continue;
             }
 
-            if (child.getData() === null) {
+            if (child.getStateSnapshot() === null) {
                 continue;
             }
 
-            const dataProviderObjects = this.makeDataProviderObjects(child, accumulatedData, injectedData);
+            const itemViewObjects = this.makeItemViewObjects(child, accumulatedData, injectedData);
 
-            if (!dataProviderObjects.visualization) {
+            if (!itemViewObjects.visualization) {
                 continue;
             }
 
-            maybeApplyBoundingBox(dataProviderObjects.boundingBox);
-            children.push(dataProviderObjects.visualization);
-            annotations.push(...dataProviderObjects.annotations);
+            maybeApplyBoundingBox(itemViewObjects.boundingBox);
+            children.push(itemViewObjects.visualization);
+            annotations.push(...itemViewObjects.annotations);
             hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
                 hoverVisualizationFunctions,
-                dataProviderObjects.hoverVisualizationFunctions,
+                itemViewObjects.hoverVisualizationFunctions,
             );
-            accumulatedData = dataProviderObjects.accumulatedData ?? accumulatedData;
+            accumulatedData = itemViewObjects.accumulatedData ?? accumulatedData;
         }
 
         return {
@@ -421,34 +407,31 @@ export class VisualizationAssembler<
         };
     }
 
-    private makeDataProviderObjects(
-        dataProvider: DataProviderLike,
+    private makeItemViewObjects(
+        itemView: ItemView,
         initialAccumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
         /**
          * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
          */
         disableCache?: boolean,
-    ): DataProviderObjects<TTarget, TAccumulatedData> {
+    ): ItemViewObjects<TTarget, TAccumulatedData> {
         // ! Cache logic returns the wrong accumulated data for WellLogViewer in some cases. As a hot-fix, we'll allow
         // ! the cache to be disabled here, but this should be reverted once the issue has been resolved. See #1272
-        if (!disableCache && this._cachedDataProviderVisualizationsMap.has(dataProvider.getItemDelegate().getId())) {
-            const cached = this._cachedDataProviderVisualizationsMap.get(dataProvider.getItemDelegate().getId());
-            if (cached && cached.revisionNumber === dataProvider.getRevisionNumber()) {
+        if (!disableCache && this._cachedItemViewVisualizationsMap.has(itemView.getId())) {
+            const cached = this._cachedItemViewVisualizationsMap.get(itemView.getId());
+            if (cached && cached.revisionNumber === itemView.getRevisionNumber()) {
                 return cached.objects;
             }
         }
 
-        const visualization = this.makeDataProviderVisualization(dataProvider, injectedData);
-        const hoverVisualizationFunctions = this.makeDataProviderHoverVisualizationFunctions(
-            dataProvider,
-            injectedData,
-        );
-        const annotations = this.makeDataProviderAnnotations(dataProvider, injectedData);
-        const boundingBox = this.makeDataProviderBoundingBox(dataProvider);
-        const accumulatedData = this.accumulateDataProviderData(dataProvider, initialAccumulatedData, injectedData);
+        const visualization = this.makeItemViewVisualization(itemView, injectedData);
+        const hoverVisualizationFunctions = this.makeItemViewHoverVisualizationFunctions(itemView, injectedData);
+        const annotations = this.makeItemViewAnnotations(itemView, injectedData);
+        const boundingBox = this.makeItemViewBoundingBox(itemView);
+        const accumulatedData = this.accumulateItemViewData(itemView, initialAccumulatedData, injectedData);
 
-        const objects: DataProviderObjects<TTarget, TAccumulatedData> = {
+        const objects: ItemViewObjects<TTarget, TAccumulatedData> = {
             visualization,
             hoverVisualizationFunctions,
             annotations,
@@ -456,8 +439,8 @@ export class VisualizationAssembler<
             accumulatedData,
         };
 
-        this._cachedDataProviderVisualizationsMap.set(dataProvider.getItemDelegate().getId(), {
-            revisionNumber: dataProvider.getRevisionNumber(),
+        this._cachedItemViewVisualizationsMap.set(itemView.getId(), {
+            revisionNumber: itemView.getRevisionNumber(),
             objects,
         });
 
@@ -498,7 +481,7 @@ export class VisualizationAssembler<
     }
 
     private makeFactoryFunctionArgs(
-        dataProvider: DataProviderLike,
+        itemView: ItemView,
         injectedData?: TInjectedData,
     ): TransformerArgs<any, any, TInjectedData> {
         function getInjectedData() {
@@ -509,83 +492,80 @@ export class VisualizationAssembler<
         }
 
         return {
-            id: dataProvider.getItemDelegate().getId(),
-            name: dataProvider.getItemDelegate().getName(),
-            isLoading: dataProvider.getStatus() === DataProviderStatus.LOADING,
+            id: itemView.getId(),
+            name: itemView.getName(),
+            isLoading: itemView.getStatus() === DataProviderStatus.LOADING,
             getInjectedData: getInjectedData.bind(this),
-            state: dataProvider.getStateSnapshot(),
+            state: itemView.getStateSnapshot(),
         };
     }
 
-    private makeDataProviderVisualization(
-        dataProvider: DataProviderLike,
+    private makeItemViewVisualization(
+        itemView: ItemView,
         injectedData?: TInjectedData,
     ): DataProviderVisualization<TTarget> | null {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToVisualization;
+        const func = this._dataProviderTransformers.get(itemView.getType())?.transformToVisualization;
         if (!func) {
-            throw new Error(`No visualization transformer found for data provider ${dataProvider.getType()}`);
+            throw new Error(`No visualization transformer found for data provider ${itemView.getType()}`);
         }
 
-        const visualization = func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        const visualization = func(this.makeFactoryFunctionArgs(itemView, injectedData));
         if (!visualization) {
             return null;
         }
 
         const visualizationObj: DataProviderVisualization<TTarget> = {
             itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION,
-            id: dataProvider.getItemDelegate().getId(),
-            name: dataProvider.getItemDelegate().getName(),
-            type: dataProvider.getType(),
+            id: itemView.getId(),
+            name: itemView.getName(),
+            type: itemView.getType(),
             visualization,
         };
 
         return visualizationObj;
     }
 
-    private makeDataProviderHoverVisualizationFunctions(
-        dataProvider: DataProviderLike,
+    private makeItemViewHoverVisualizationFunctions(
+        itemView: ItemView,
         injectedData?: TInjectedData,
     ): HoverVisualizationFunctions<TTarget> {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToHoverVisualization;
+        const func = this._dataProviderTransformers.get(itemView.getType())?.transformToHoverVisualization;
         if (!func) {
             return {};
         }
 
-        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        return func(this.makeFactoryFunctionArgs(itemView, injectedData));
     }
 
-    private makeDataProviderBoundingBox(
-        dataProvider: DataProviderLike,
-        injectedData?: TInjectedData,
-    ): bbox.BBox | null {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToBoundingBox;
+    private makeItemViewBoundingBox(itemView: ItemView, injectedData?: TInjectedData): bbox.BBox | null {
+        const func = this._dataProviderTransformers.get(itemView.getType())?.transformToBoundingBox;
         if (!func) {
             return null;
         }
 
-        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        return func(this.makeFactoryFunctionArgs(itemView, injectedData));
     }
 
-    private makeDataProviderAnnotations(dataProvider: DataProviderLike, injectedData?: TInjectedData): Annotation[] {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToAnnotations;
+    private makeItemViewAnnotations(itemView: ItemView, injectedData?: TInjectedData): Annotation[] {
+        const func = this._dataProviderTransformers.get(itemView.getType())?.transformToAnnotations;
         if (!func) {
             return [];
         }
 
-        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        return func(this.makeFactoryFunctionArgs(itemView, injectedData));
     }
 
-    private accumulateDataProviderData(
-        dataProvider: DataProviderLike,
+    private accumulateItemViewData(
+        itemView: ItemView,
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
     ): TAccumulatedData | null {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.reduceAccumulatedData;
+        const func = this._dataProviderTransformers.get(itemView.getType())?.reduceAccumulatedData;
         if (!func) {
             return null;
         }
 
-        return func(accumulatedData, this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        return func(accumulatedData, this.makeFactoryFunctionArgs(itemView, injectedData));
     }
 
     private mergeHoverVisualizationFunctions(

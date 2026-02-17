@@ -27,7 +27,7 @@ export type DataProviderManagerComponentProps = {
     dataProviderManager: DataProviderManager;
     additionalHeaderComponents: React.ReactNode;
     groupActions: ActionGroup[] | ((group: ItemGroup) => ActionGroup[]);
-    onAction: (identifier: string, groupDelegate: GroupDelegate) => void;
+    onAction: (identifier: string, groupDelegate: GroupDelegate, parent: ItemGroup) => void;
     isMoveAllowed?: (movedItem: Item, destinationGroup: ItemGroup) => boolean;
 };
 
@@ -46,7 +46,7 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
             groupDelegate = group.getGroupDelegate();
         }
 
-        props.onAction(identifier, groupDelegate);
+        props.onAction(identifier, groupDelegate, group ?? props.dataProviderManager);
     }
 
     function checkIfItemMoveAllowed(args: IsMoveAllowedArgs): boolean {

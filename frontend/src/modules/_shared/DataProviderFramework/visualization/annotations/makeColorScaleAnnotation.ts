@@ -25,7 +25,7 @@ export function makeColorScaleAnnotation<TData, TMeta extends ColorScaleMeta>({
     const useCustomColorScaleBoundaries = snapshot.meta?.colorScale?.areBoundariesUserDefined ?? false;
     const valueRange = snapshot.valueRange;
 
-    if (!colorScale || !valueRange || isLoading) {
+    if (!colorScale || !valueRange || isLoading || valueRange[0] === valueRange[1]) {
         return [];
     }
 

@@ -1,5 +1,6 @@
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { ProviderSnapshot } from "./customDataProviderImplementation";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+
+import type { ProviderSnapshot } from "./customDataProviderImplementation";
 
 export interface ItemView {
     getId(): string;
@@ -7,6 +8,10 @@ export interface ItemView {
     getType(): string;
 
     isVisible(): boolean;
+
+    getRevisionNumber(): number;
+    getStatus(): string;
+    getError(): StatusMessage | string | null;
 
     getChildren?(): ItemView[] | undefined;
 

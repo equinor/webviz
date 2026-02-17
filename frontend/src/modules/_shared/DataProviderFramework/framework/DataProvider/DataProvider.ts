@@ -28,14 +28,13 @@ import { type SerializedDataProvider, SerializedType } from "../../interfacesAnd
 import type { NullableStoredData, StoredData } from "../../interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
-import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
+import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export enum DataProviderTopic {
     STATUS = "STATUS",
     DATA = "DATA",
     SUBORDINATED = "SUBORDINATED",
-    REVISION_NUMBER = "REVISION_NUMBER",
     PROGRESS_MESSAGE = "PROGRESS_MESSAGE",
 }
 
@@ -52,7 +51,6 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.STATUS]: DataProviderStatus;
     [DataProviderTopic.DATA]: TData;
     [DataProviderTopic.SUBORDINATED]: boolean;
-    [DataProviderTopic.REVISION_NUMBER]: number;
     [DataProviderTopic.PROGRESS_MESSAGE]: string | null;
 };
 
@@ -141,7 +139,6 @@ export class DataProvider<
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
     private _currentTransactionId: number = 0;
     private _settingsErrorMessages: string[] = [];
-    private _revisionNumber: number = 0;
     private _progressMessage: string | null = null;
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -196,7 +193,7 @@ export class DataProvider<
     }
 
     getRevisionNumber(): number {
-        return this._revisionNumber;
+        return this._itemDelegate.getRevisionNumber();
     }
 
     private mapStatusToStateSnapshotStatus(status: DataProviderStatus): StateSnapshot<TData, TMeta>["status"] {
@@ -227,7 +224,7 @@ export class DataProvider<
     }
 
     getStateSnapshot(): StateSnapshot<TData, TMeta> | null {
-        if (this._cachedStateSnapshot && this._cachedStateSnapshotRevision === this._revisionNumber) {
+        if (this._cachedStateSnapshot && this._cachedStateSnapshotRevision === this.getRevisionNumber()) {
             return this._cachedStateSnapshot;
         }
 
@@ -249,7 +246,7 @@ export class DataProvider<
         };
 
         this._cachedStateSnapshot = snapshot;
-        this._cachedStateSnapshotRevision = this._revisionNumber;
+        this._cachedStateSnapshotRevision = this.getRevisionNumber();
         return snapshot;
     }
 
@@ -311,7 +308,7 @@ export class DataProvider<
             // If the settings have changed but no refetch is required, it might be that the settings changes
             // still require a rerender of the data provider.
             if (this._status === DataProviderStatus.SUCCESS) {
-                this.incrementRevisionNumber();
+                this._itemDelegate.incrementRevisionNumber();
                 return;
             }
             if (this._isSubordinated) {
@@ -416,9 +413,6 @@ export class DataProvider<
             }
             if (topic === DataProviderTopic.SUBORDINATED) {
                 return this._isSubordinated;
-            }
-            if (topic === DataProviderTopic.REVISION_NUMBER) {
-                return this._revisionNumber;
             }
             if (topic === DataProviderTopic.PROGRESS_MESSAGE) {
                 return this._progressMessage;
@@ -567,19 +561,13 @@ export class DataProvider<
         }
     }
 
-    private incrementRevisionNumber(): void {
-        this._revisionNumber += 1;
-        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.REVISION_NUMBER);
-        this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
-    }
-
     private setStatus(status: DataProviderStatus): void {
         if (this._status === status) {
             return;
         }
 
         this._status = status;
-        this.incrementRevisionNumber();
+        this._itemDelegate.incrementRevisionNumber();
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS);
     }
 

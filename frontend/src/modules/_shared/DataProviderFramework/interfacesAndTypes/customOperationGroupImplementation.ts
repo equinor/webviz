@@ -1,5 +1,11 @@
 import type { DefaultError, FetchQueryOptions, QueryKey } from "@tanstack/query-core";
 
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+
+import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
+import type { SettingTypeDefinitions } from "../settings/settingsDefinitions";
+
 import type {
     CustomDataProviderImplementation,
     DataProviderMeta,
@@ -7,10 +13,6 @@ import type {
 } from "./customDataProviderImplementation";
 import type { NullableStoredData } from "./sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "./utils";
-import { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
-import type { SettingTypeDefinitions } from "../settings/settingsDefinitions";
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
 export enum Operation {
     DELTA = "DELTA",
@@ -79,7 +81,9 @@ export type OperationGroupInformationAccessors<
      * @returns A partial record of setting values elevated from child providers.
      */
     getSharedSettings: () => Partial<{
-        [K in ExtractSettingKeys<TSupportedDataProviderImplementations[number]>]: SettingTypeDefinitions[K]["externalValue"];
+        [K in ExtractSettingKeys<
+            TSupportedDataProviderImplementations[number]
+        >]: SettingTypeDefinitions[K]["externalValue"];
     }>;
 
     /**
