@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 from webviz_services.service_exceptions import Service, ServiceRequestError
 
 
@@ -11,9 +11,6 @@ from primary.persistence.cosmosdb.query_collation_options import Filter, QueryCo
 from .documents import SnapshotAccessLogDocument
 
 from .snapshot_store import SnapshotStore
-
-_DATABASE_NAME = "persistence"
-_CONTAINER_NAME = "snapshot_access_logs"
 
 # Pagination limits
 _MAX_PAGE_SIZE = 100
@@ -32,27 +29,11 @@ class SnapshotAccessLogStore:
         self,
         user_id: str,
         access_log_container: CosmosContainer[SnapshotAccessLogDocument],
+        snapshot_store_factory: Callable[[str], SnapshotStore],
     ):
         self._user_id = user_id
         self._access_log_container = access_log_container
-
-    @classmethod
-    def create_instance(cls, user_id: str) -> "SnapshotAccessLogStore":
-        access_log_container = CosmosContainer.create_instance(
-            _DATABASE_NAME, _CONTAINER_NAME, SnapshotAccessLogDocument
-        )
-        return cls(user_id, access_log_container)
-
-    async def __aenter__(self) -> "SnapshotAccessLogStore":
-        return self
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: object | None,
-    ) -> None:
-        await self._access_log_container.close_async()
+        self._snapshot_store_factory = snapshot_store_factory
 
     async def get_for_snapshot_async(self, snapshot_id: str) -> SnapshotAccessLogDocument:
         """
@@ -152,21 +133,22 @@ class SnapshotAccessLogStore:
         """
         try:
             # Use SnapshotStore to get snapshot metadata
-            async with SnapshotStore.create_instance(self._user_id) as snapshot_store:
-                snapshot = await snapshot_store.get_async(snapshot_id)
+            snapshot_store = self._snapshot_store_factory(snapshot_owner_id)
 
-                new_log = SnapshotAccessLogDocument(
-                    id=_make_access_log_item_id(snapshot_id, self._user_id),
-                    visitor_id=self._user_id,
-                    snapshot_id=snapshot_id,
-                    snapshot_owner_id=snapshot_owner_id,
-                    snapshot_metadata=snapshot.metadata,
-                )
+            snapshot = await snapshot_store.get_async(snapshot_id)
 
-                # Persist to database
-                await self._access_log_container.insert_item_async(new_log)
+            new_log = SnapshotAccessLogDocument(
+                id=_make_access_log_item_id(snapshot_id, self._user_id),
+                visitor_id=self._user_id,
+                snapshot_id=snapshot_id,
+                snapshot_owner_id=snapshot_owner_id,
+                snapshot_metadata=snapshot.metadata,
+            )
 
-                return new_log
+            # Persist to database
+            await self._access_log_container.insert_item_async(new_log)
+
+            return new_log
         except DatabaseAccessError as err:
             raise ServiceRequestError(f"Failed to create access log: {str(err)}", Service.DATABASE) from err
 

@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Type
+from typing import List, Optional, Tuple
 from datetime import datetime, timezone
 from nanoid import generate
 from webviz_services.service_exceptions import Service, ServiceRequestError
@@ -37,22 +37,6 @@ class SnapshotStore:
     ):
         self._user_id = user_id
         self._snapshot_container = snapshot_container
-
-    async def __aenter__(self) -> "SnapshotStore":
-        return self
-
-    async def __aexit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[object],
-    ) -> None:
-        await self._snapshot_container.close_async()
-
-    @classmethod
-    def create_instance(cls, user_id: str) -> "SnapshotStore":
-        snapshot_container = CosmosContainer.create_instance(_DATABASE_NAME, _CONTAINER_NAME, SnapshotDocument)
-        return cls(user_id, snapshot_container)
 
     async def create_async(self, title: str, description: Optional[str], content: str) -> str:
         """

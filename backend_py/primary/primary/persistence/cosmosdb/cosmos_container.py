@@ -1,5 +1,4 @@
 import logging
-from types import TracebackType
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 from azure.cosmos.aio import ContainerProxy
 from azure.cosmos import exceptions
@@ -7,7 +6,6 @@ from pydantic import BaseModel, ValidationError
 
 from primary.persistence._utils import query_by_page
 
-from .cosmos_database import CosmosDatabase
 from .exceptions import (
     DatabaseAccessError,
     DatabaseAccessIntegrityError,
@@ -38,33 +36,13 @@ class CosmosContainer(Generic[T]):
         self,
         database_name: str,
         container_name: str,
-        database: CosmosDatabase,
         container: ContainerProxy,
         validation_model: Type[T],
     ):
         self._database_name = database_name
         self._container_name = container_name
-        self._database = database
         self._container = container
         self._validation_model: Type[T] = validation_model
-
-    @classmethod
-    def create_instance(
-        cls, database_name: str, container_name: str, validation_model: Type[T]
-    ) -> "CosmosContainer[T]":
-        """Create a CosmosContainer instance."""
-        database = CosmosDatabase.create_instance(database_name)
-        container = database.get_container(container_name)
-        LOGGER.debug("[CosmosContainer] Created for container '%s' in database '%s'", container_name, database_name)
-        return cls(database_name, container_name, database, container, validation_model)
-
-    async def __aenter__(self) -> "CosmosContainer[T]":
-        return self
-
-    async def __aexit__(
-        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
-    ) -> None:
-        await self.close_async()
 
     def _make_exception(self, op: str, exc: exceptions.CosmosHttpResponseError) -> DatabaseAccessError:
         """Map Cosmos error to a data-access exception with rich context and re-raise."""
@@ -233,11 +211,3 @@ class CosmosContainer(Generic[T]):
             return [item async for item in items_iterable]
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("query_projection_async", error) from error
-
-    async def close_async(self) -> None:
-        """Close the container."""
-        if self._database:
-            LOGGER.debug(
-                "[CosmosContainer] Closing container '%s' in database '%s'", self._container_name, self._database_name
-            )
-            await self._database.close_async()

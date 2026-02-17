@@ -4,6 +4,7 @@ import datetime
 import logging
 import os
 
+from azure.cosmos.aio import CosmosClient
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from fastapi.routing import APIRoute
@@ -22,6 +23,7 @@ from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
 
 from primary.middleware.add_browser_cache import AddBrowserCacheMiddleware
+from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.routers.dev.router import router as dev_router
 from primary.routers.explore.router import router as explore_router
 from primary.routers.general import router as general_router
@@ -106,6 +108,16 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     )
     azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
 
+    if config.COSMOS_DB_PROD_CONNECTION_STRING:
+        cosmos_client = CosmosClient.from_connection_string(config.COSMOS_DB_PROD_CONNECTION_STRING)
+    elif config.COSMOS_DB_EMULATOR_URI and config.COSMOS_DB_EMULATOR_KEY:
+        cosmos_client = CosmosClient(
+            config.COSMOS_DB_EMULATOR_URI, config.COSMOS_DB_EMULATOR_KEY, connection_verify=False
+        )
+    else:
+        cosmos_client = CosmosClient("https://webviz-dev-db.documents.azure.com:443/", azure_services_credential)
+
+    PersistenceStoresSingleton.initialize(cosmos_client)
 
     # Test Cosmos DB connection
     # -----------------------------------------
@@ -117,7 +129,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # LOGGER.info(f"{container=}")
 
     # items_iterable = container.query_items(query="SELECT * FROM c")
-    # items = [item async for item in items_iterable]    
+    # items = [item async for item in items_iterable]
     # LOGGER.info(f"Cosmos DB 'sessions' container has {len(items)} items")
     # -----------------------------------------
 
