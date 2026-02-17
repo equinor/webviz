@@ -6,7 +6,6 @@ import type { InterfaceInitialization } from "@framework/UniDirectionalModuleCom
 
 import {
     colorRealizationsByParameterAtom,
-    csvDownloadRequestCounterAtom,
     groupByAtom,
     resampleFrequencyAtom,
     showHistoricalAtom,
@@ -46,7 +45,6 @@ export type SettingsToViewInterface = {
     selectedRegularEnsembles: RegularEnsemble[];
     selectedDeltaEnsembles: DeltaEnsemble[];
     resampleFrequency: Frequency_api | null;
-    csvDownloadRequestCounter: number;
 };
 
 export type Interfaces = {
@@ -92,8 +90,5 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     resampleFrequency: (get) => {
         return get(resampleFrequencyAtom);
-    },
-    csvDownloadRequestCounter: (get) => {
-        return get(csvDownloadRequestCounterAtom);
     },
 };

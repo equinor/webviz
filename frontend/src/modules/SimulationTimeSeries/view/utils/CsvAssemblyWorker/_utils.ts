@@ -1,21 +1,24 @@
-import type {
-    SummaryVectorObservations_api,
-    VectorHistoricalData_api,
-    VectorRealizationData_api,
-    VectorStatisticData_api,
+import {
+    StatisticFunction_api,
+    type SummaryVectorObservations_api,
+    type VectorHistoricalData_api,
+    type VectorRealizationData_api,
+    type VectorStatisticData_api,
 } from "@api";
-import { StatisticFunction_api } from "@api";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-import { convertRowsToCsvString } from "@lib/utils/csvUtil";
-
-import { FanchartStatisticOption, StatisticFunctionEnumToStringMapping, VisualizationMode } from "../../typesAndEnums";
-import type { StatisticsSelection } from "../../typesAndEnums";
+import { convertRowsToCsvContentString } from "@lib/utils/csvConvertUtils";
+import type { StatisticsSelection } from "@modules/SimulationTimeSeries/typesAndEnums";
+import {
+    FanchartStatisticOption,
+    StatisticFunctionEnumToStringMapping,
+    VisualizationMode,
+} from "@modules/SimulationTimeSeries/typesAndEnums";
 
 function sanitizeFilename(name: string): string {
     return name.replace(/[:/\\]/g, "_");
 }
 
-function getSelectedStatisticFunctions(
+export function getSelectedStatisticFunctions(
     visualizationMode: VisualizationMode,
     statisticsSelection: StatisticsSelection,
 ): StatisticFunction_api[] {
@@ -38,7 +41,7 @@ function getSelectedStatisticFunctions(
     return statisticsSelection.IndividualStatisticsSelection;
 }
 
-function assembleRealizationCsvFiles(
+export function assembleRealizationCsvFiles(
     realizationData: { ensembleDisplayName: string; vectorName: string; data: VectorRealizationData_api[] }[],
 ): { filename: string; csvContent: string }[] {
     const byVector = new Map<string, { ensembleDisplayName: string; data: VectorRealizationData_api[] }[]>();
@@ -67,13 +70,13 @@ function assembleRealizationCsvFiles(
         }
 
         const filename = `${sanitizeFilename(vectorName)}_realizations.csv`;
-        files.push({ filename, csvContent: convertRowsToCsvString(headerRows, dataRows) });
+        files.push({ filename, csvContent: convertRowsToCsvContentString(headerRows, dataRows) });
     }
 
     return files;
 }
 
-function assembleStatisticsCsvFiles(
+export function assembleStatisticsCsvFiles(
     statisticsData: { ensembleDisplayName: string; vectorName: string; data: VectorStatisticData_api }[],
     selectedFunctions: StatisticFunction_api[],
 ): { filename: string; csvContent: string }[] {
@@ -115,13 +118,13 @@ function assembleStatisticsCsvFiles(
         }
 
         const filename = `${sanitizeFilename(vectorName)}_statistics.csv`;
-        files.push({ filename, csvContent: convertRowsToCsvString([headerRow1, headerRow2], dataRows) });
+        files.push({ filename, csvContent: convertRowsToCsvContentString([headerRow1, headerRow2], dataRows) });
     }
 
     return files;
 }
 
-function assembleHistoricalCsvFiles(
+export function assembleHistoricalCsvFiles(
     historicalData: { vectorName: string; data: VectorHistoricalData_api }[],
 ): { filename: string; csvContent: string }[] {
     const byVector = new Map<string, VectorHistoricalData_api>();
@@ -141,13 +144,13 @@ function assembleHistoricalCsvFiles(
         }
 
         const filename = `${sanitizeFilename(vectorName)}_historical.csv`;
-        files.push({ filename, csvContent: convertRowsToCsvString(headerRows, dataRows) });
+        files.push({ filename, csvContent: convertRowsToCsvContentString(headerRows, dataRows) });
     }
 
     return files;
 }
 
-function assembleObservationCsvFiles(
+export function assembleObservationCsvFiles(
     observationData: { vectorName: string; data: SummaryVectorObservations_api }[],
 ): { filename: string; csvContent: string }[] {
     const byVector = new Map<string, SummaryVectorObservations_api>();
@@ -167,74 +170,8 @@ function assembleObservationCsvFiles(
         }
 
         const filename = `${sanitizeFilename(vectorName)}_observations.csv`;
-        files.push({ filename, csvContent: convertRowsToCsvString(headerRows, dataRows) });
+        files.push({ filename, csvContent: convertRowsToCsvContentString(headerRows, dataRows) });
     }
 
     return files;
-}
-
-export async function assembleCsvFiles(
-    visualizationMode: VisualizationMode,
-    realizationData: { ensembleDisplayName: string; vectorName: string; data: VectorRealizationData_api[] }[],
-    statisticsData: { ensembleDisplayName: string; vectorName: string; data: VectorStatisticData_api }[],
-    historicalData: { vectorName: string; data: VectorHistoricalData_api }[],
-    observationData: { vectorName: string; data: SummaryVectorObservations_api }[],
-    statisticsSelection: StatisticsSelection,
-    showHistorical: boolean,
-    showObservations: boolean,
-): Promise<{ filename: string; csvContent: string }[]> {
-    const files: { filename: string; csvContent: string }[] = [];
-
-    // Add sleep to emulate even longer processing time for large datasets, to better test the loading state in the UI
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
-    const includeRealizations =
-        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
-        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS;
-    const includeStatistics =
-        visualizationMode === VisualizationMode.STATISTICAL_LINES ||
-        visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
-        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS;
-
-    if (includeRealizations) {
-        files.push(...assembleRealizationCsvFiles(realizationData));
-    }
-
-    if (includeStatistics) {
-        const selectedFunctions = getSelectedStatisticFunctions(visualizationMode, statisticsSelection);
-        files.push(...assembleStatisticsCsvFiles(statisticsData, selectedFunctions));
-    }
-
-    if (showHistorical) {
-        files.push(...assembleHistoricalCsvFiles(historicalData));
-    }
-
-    if (showObservations) {
-        files.push(...assembleObservationCsvFiles(observationData));
-    }
-
-    return files;
-}
-
-/**
- * Temporary dummy assembler for proof of concept.
- * Will be replaced with real data assembly from loaded atoms.
- */
-export function assembleCsvDummyFiles(): { filename: string; content: string }[] {
-    const headerRows = [["ENSEMBLE", "DATE", "REAL", "FOPT"]];
-    const dataRows: (string | number)[][] = [
-        ["iter-0", "2020-01-01", 0, 100.5],
-        ["iter-0", "2020-01-01", 1, 102.3],
-        ["iter-0", "2020-02-01", 0, 200.1],
-        ["iter-0", "2020-02-01", 1, 198.7],
-        ["iter-1", "2020-01-01", 0, 99.8],
-        ["iter-1", "2020-02-01", 0, 195.2],
-    ];
-
-    return [
-        {
-            filename: "FOPT_realizations.csv",
-            content: convertRowsToCsvString(headerRows, dataRows),
-        },
-    ];
 }
