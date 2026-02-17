@@ -62,6 +62,8 @@ class AuthHelper:
         self.router.add_api_route(path="/login", endpoint=self._login_route, methods=["GET"])
         self.router.add_api_route(path="/auth-callback", endpoint=self._authorized_callback_route, methods=["GET"])
 
+    # pylint: disable=async-suffix
+
     @no_cache
     async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
         await starsessions.load_session(request)
@@ -125,6 +127,8 @@ class AuthHelper:
             return RedirectResponse(target_url_str_after_auth)
 
         return Response("Login OK")
+
+    # pylint: enable=async-suffix
 
     @staticmethod
     def get_authenticated_user(request_with_session: Request) -> Optional[AuthenticatedUser]:
@@ -299,8 +303,7 @@ def _acquire_refreshed_identity_and_tokens(
     # easily check if any of the items in the _UserAuthInfo object needs to be refreshed/updated
     earliest_expiry_time = new_auth_info.user_identity_expires_at
     for token_entry in new_auth_info.access_tokens.values():
-        if token_entry.expires_at < earliest_expiry_time:
-            earliest_expiry_time = token_entry.expires_at
+        earliest_expiry_time = min(earliest_expiry_time, token_entry.expires_at)
 
     new_auth_info.earliest_expiry_time = earliest_expiry_time
 
@@ -329,7 +332,7 @@ def _load_user_auth_info_from_session(request_with_session: Request) -> _UserAut
 
     try:
         user_auth_info = _UserAuthInfo.model_validate_json(serialized_user_auth_info)
-    except ValidationError as exc:
+    except ValidationError as _exc:
         return None
 
     return user_auth_info
