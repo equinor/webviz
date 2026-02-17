@@ -284,7 +284,7 @@ async def get_statistical_surface_data_hybrid(
 
         LOGGER.info(f"Got statistical surface data (hybrid) in: {perf_metrics.to_string()}")
 
-        set_cache_time(CacheTime.DEFAULT)
+        set_cache_time(CacheTime.SHORT)
         return LroSuccessResp(status="success", result=api_surf_data)
 
     except Exception as _exc:

@@ -24,11 +24,11 @@ class StaleTime(Enum):
 class CacheTime(Enum):
     """Browser cache time durations for endpoint responses in seconds.
 
-    DEFAULT: 1 hour max-age
+    SHORT: 1 hour max-age
     LONG: 2 weeks max-age
     """
 
-    DEFAULT = 3600  # 1 hour
+    SHORT = 3600  # 1 hour
     LONG = 3600 * 24 * 14  # 2 weeks
 
 
@@ -40,7 +40,7 @@ class CacheSettings:
     stale_while_revalidate_s: int | None
 
 
-# None means no cache override set (middleware will use no-store default)
+# None means no cache override set (middleware will use no-store by default)
 _cache_context: ContextVar[CacheSettings | None] = ContextVar("_cache_context", default=None)
 
 

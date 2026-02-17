@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("/user_info/{user_id_or_email}")
-@cache_time(CacheTime.DEFAULT)
+@cache_time(CacheTime.SHORT)
 async def get_user_info(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     user_id_or_email: str = Path(description="User email, graph-id or 'me' for the authenticated user"),
@@ -53,7 +53,7 @@ async def get_user_info(
 
 
 @router.get("/user_photo/")
-@cache_time(CacheTime.DEFAULT)
+@cache_time(CacheTime.SHORT)
 async def get_user_photo(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
