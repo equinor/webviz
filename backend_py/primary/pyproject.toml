@@ -38,7 +38,6 @@ types-nanoid = "^2.0.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-
 [tool.pytest.ini_options]
 pythonpath = ["."]
 filterwarnings = "ignore::DeprecationWarning:pkg_resources"

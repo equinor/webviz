@@ -3,7 +3,7 @@ import React from "react";
 import { cloneDeep, isEqual } from "lodash";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
+import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -13,8 +13,10 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { ContextHelp } from "@lib/components/ContextHelp";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -231,79 +233,90 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
     return (
         <>
-            <CollapsibleGroup title="Ensembles" expanded>
-                <EnsembleSelect
-                    ensembles={props.ensembleSet.getRegularEnsembleArray()}
-                    value={ensembleIdents}
-                    size={5}
-                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                    onChange={handleEnsembleIdentsChange}
-                />
+            <CollapsibleGroup contentClassName="flex flex-col gap-2" title="Ensembles and table sources" expanded>
+                <SettingWrapper label="Ensembles">
+                    <EnsemblePicker
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
+                        value={ensembleIdents}
+                        allowDeltaEnsembles={false}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                        onChange={handleEnsembleIdentsChange}
+                    />
+                </SettingWrapper>
+
+                <SettingWrapper
+                    loadingOverlay={props.isPending ?? false}
+                    label="Table sources"
+                    errorOverlay={
+                        !props.isPending && tableSourceOptions.length === 0
+                            ? "No table names. See logs for details."
+                            : undefined
+                    }
+                >
+                    <Select
+                        options={tableSourceOptions}
+                        value={tableNames}
+                        onChange={handleTableNamesChange}
+                        multiple
+                        size={3}
+                    />
+                </SettingWrapper>
+
+                <div className="flex flex-row gap-2">
+                    <Checkbox
+                        label="Allow table intersections"
+                        checked={props.selectedAllowIndicesValuesIntersection}
+                        onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
+                    />
+                    <ContextHelp
+                        title="Allow table intersections"
+                        content={
+                            <>
+                                When active allows comparison of tables where available zones, regions, facies, fluids
+                                or responses differs.
+                                <br />
+                                Only the <b>intersection</b> of options will then be available for filtering. <br />
+                                Identifiers not present in all tables will be <b>filtered out</b>.
+                            </>
+                        }
+                    />
+                </div>
             </CollapsibleGroup>
             <div className="flex flex-col gap-2">{props.additionalSettings}</div>
             <div className="flex flex-col gap-2">
-                <CollapsibleGroup title="Inplace volumes table names" expanded>
+                <CollapsibleGroup title="Index filters" expanded>
                     <PendingWrapper
+                        className="flex flex-col gap-2"
                         isPending={props.isPending ?? false}
                         errorMessage={
-                            !props.isPending && tableSourceOptions.length === 0
-                                ? "No table names. See logs for details."
+                            !props.areCurrentlySelectedTablesComparable
+                                ? "Selected tables are not comparable due to mismatching index columns"
                                 : undefined
                         }
                     >
-                        <Select
-                            options={tableSourceOptions}
-                            value={tableNames}
-                            onChange={handleTableNamesChange}
-                            multiple
-                            size={3}
-                        />
+                        {props.availableIndicesWithValues.map((indexWithValues) => (
+                            <CollapsibleGroup
+                                key={indexWithValues.indexColumn}
+                                title={indexWithValues.indexColumn}
+                                expanded
+                            >
+                                <Select
+                                    options={indexWithValues.values.map((value) => ({
+                                        value: value,
+                                        label: value.toString(),
+                                    }))}
+                                    value={
+                                        indicesWithValues.find((el) => el.indexColumn === indexWithValues.indexColumn)
+                                            ?.values ?? []
+                                    }
+                                    onChange={(value) => handleIndexValuesChange(indexWithValues.indexColumn, value)}
+                                    multiple
+                                    size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
+                                    showQuickSelectButtons={true}
+                                />
+                            </CollapsibleGroup>
+                        ))}
                     </PendingWrapper>
-                </CollapsibleGroup>
-                <CollapsibleGroup title="Index filters" expanded>
-                    <div className="flex flex-col gap-2">
-                        <div className="flex flex-row items-center gap-2">
-                            <div className="grow">Allow intersection of values</div>
-                            <Checkbox
-                                checked={props.selectedAllowIndicesValuesIntersection}
-                                onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
-                            />
-                        </div>
-                        <PendingWrapper
-                            isPending={props.isPending ?? false}
-                            errorMessage={
-                                !props.areCurrentlySelectedTablesComparable
-                                    ? "Selected tables are not comparable due to mismatching index columns"
-                                    : undefined
-                            }
-                        >
-                            {props.availableIndicesWithValues.map((indexWithValues) => (
-                                <CollapsibleGroup
-                                    key={indexWithValues.indexColumn}
-                                    title={indexWithValues.indexColumn}
-                                    expanded
-                                >
-                                    <Select
-                                        options={indexWithValues.values.map((value) => ({
-                                            value: value,
-                                            label: value.toString(),
-                                        }))}
-                                        value={
-                                            indicesWithValues.find(
-                                                (el) => el.indexColumn === indexWithValues.indexColumn,
-                                            )?.values ?? []
-                                        }
-                                        onChange={(value) =>
-                                            handleIndexValuesChange(indexWithValues.indexColumn, value)
-                                        }
-                                        multiple
-                                        size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
-                                        showQuickSelectButtons={true}
-                                    />
-                                </CollapsibleGroup>
-                            ))}
-                        </PendingWrapper>
-                    </div>
                 </CollapsibleGroup>
             </div>
         </>

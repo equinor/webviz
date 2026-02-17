@@ -1,9 +1,10 @@
-import type { FilterContext, LayersList, UpdateParameters } from "@deck.gl/core";
+import type { FilterContext, GetPickingInfoParams, LayersList, UpdateParameters } from "@deck.gl/core";
 import { Layer } from "@deck.gl/core";
 import type { GeoJsonLayerProps } from "@deck.gl/layers";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { BoundingBox3D } from "@webviz/subsurface-viewer";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import { GetBoundingBox } from "@webviz/subsurface-viewer/dist/layers/wells/utils/spline";
 import { SubLayerId } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
 
@@ -78,5 +79,17 @@ export class AdjustedWellsLayer extends WellsLayer {
         );
 
         return [newColorsLayer, ...layers.filter((layer) => layer !== colorsLayer)];
+    }
+
+    // The well's layer modifies the z-coordinate during picking, so we need to scale it back so readouts are correct
+    getPickingInfo(pickParams: GetPickingInfoParams): WellsPickInfo {
+        const info = super.getPickingInfo(pickParams);
+
+        if (info.coordinate && info.coordinate.length === 3) {
+            const zScale = this.props.modelMatrix ? this.props.modelMatrix[10] : 1;
+            info.coordinate[2] *= zScale;
+        }
+
+        return info;
     }
 }

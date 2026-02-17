@@ -11,11 +11,10 @@ import type {
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = ColorScaleSpecification | null;
 
-export class ColorScaleSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
+export class ColorScaleSetting implements CustomSettingImplementation<ValueType, ValueType> {
     defaultValue: ValueType;
 
     constructor(props?: { initialColorScale?: ColorScaleSpecification }) {
@@ -30,8 +29,8 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
         };
     }
 
-    getLabel(): string {
-        return "Coloring";
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
     }
 
     getIsStatic(): boolean {
@@ -51,7 +50,7 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
         return JSON.stringify(serializedValue);
     }
 
-    deserializeValue?(serializedValue: string): ValueType {
+    deserializeValue(serializedValue: string): ValueType {
         const parsedValue = JSON.parse(serializedValue);
 
         return {
@@ -60,8 +59,8 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
         };
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.STATIC>) => React.ReactNode {
-        return function ColorScaleSelectorDialog(props: SettingComponentProps<ValueType, SettingCategory.STATIC>) {
+    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
+        return function ColorScaleSelectorDialog(props: SettingComponentProps<ValueType>) {
             function handleChange(value: ColorScaleSpecification) {
                 props.onValueChange(value);
             }

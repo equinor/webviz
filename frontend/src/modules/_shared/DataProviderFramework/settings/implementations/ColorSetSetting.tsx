@@ -10,15 +10,14 @@ import type {
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = ColorSet | null;
 
-export class ColorSetSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
+export class ColorSetSetting implements CustomSettingImplementation<ValueType, ValueType> {
     defaultValue: ValueType = new ColorSet(defaultColorPalettes[0]);
 
-    getLabel(): string {
-        return "Colors";
+    mapInternalToExternalValue(internalValue: ValueType): ValueType {
+        return internalValue;
     }
 
     getIsStatic(): boolean {
@@ -34,13 +33,13 @@ export class ColorSetSetting implements CustomSettingImplementation<ValueType, S
         return JSON.stringify(serializedValue);
     }
 
-    deserializeValue?(serializedValue: string): ValueType {
+    deserializeValue(serializedValue: string): ValueType {
         const parsedValue = JSON.parse(serializedValue);
         return ColorSet.fromSerialized(parsedValue);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.STATIC>) => React.ReactNode {
-        return function ColorScaleSelectorDialog(props: SettingComponentProps<ValueType, SettingCategory.STATIC>) {
+    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
+        return function ColorScaleSelectorDialog(props: SettingComponentProps<ValueType>) {
             function handleColorPaletteChange(value: ColorPalette) {
                 const newColorSet = new ColorSet(value);
                 props.onValueChange(newColorSet);

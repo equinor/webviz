@@ -47,9 +47,9 @@ export class HoverService {
     // Delegate to handle update notifications
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<HoverData>();
 
-    private _getEnsuredThrottledNotifierFunc(topic: keyof HoverData): ThrottledPublishFunc {
+    private getEnsuredThrottledNotifierFunc(topic: keyof HoverData): ThrottledPublishFunc {
         if (!this._topicThrottleMap.has(topic)) {
-            const throttledMethod = throttle(this._doThrottledHoverDataUpdate.bind(this), this._dataUpdateThrottleMs, {
+            const throttledMethod = throttle(this.doThrottledHoverDataUpdate.bind(this), this._dataUpdateThrottleMs, {
                 // These settings make it so notifications are only pushed *after* the throttle timer elapses
                 leading: false,
                 trailing: true,
@@ -62,7 +62,7 @@ export class HoverService {
         return this._topicThrottleMap.get(topic)!;
     }
 
-    private _doThrottledHoverDataUpdate<T extends keyof HoverData>(topic: T, value: HoverData[T]): void {
+    private doThrottledHoverDataUpdate<T extends keyof HoverData>(topic: T, value: HoverData[T]): void {
         this._throttledHoverData[topic] = value;
         this.getPublishSubscribeDelegate().notifySubscribers(topic);
     }
@@ -105,7 +105,7 @@ export class HoverService {
      * @param newValue The new value for the topic
      */
     updateHoverValue<T extends keyof HoverData>(topic: T, newValue: HoverData[T], moduleInstanceId: string): void {
-        const throttledNotifierFunc = this._getEnsuredThrottledNotifierFunc(topic);
+        const throttledNotifierFunc = this.getEnsuredThrottledNotifierFunc(topic);
 
         this._lastHoveredModule = moduleInstanceId;
         this._hoverData[topic] = newValue;

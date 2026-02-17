@@ -16,7 +16,7 @@ type TagProps = {
     currentTag: boolean;
     frameless: boolean;
     active: boolean;
-    checkIfDuplicate: (nodeSelection: TreeNodeSelection, index: number) => boolean;
+    isDuplicate: boolean;
     inputKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     inputKeyUp: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     inputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -145,12 +145,12 @@ export class Tag extends React.Component<TagProps> {
             ((nodeSelection.isValidUpToFocussedNode() && currentTag) || nodeSelection.isValid()) &&
             !nodeSelection.containsWildcard() &&
             this.displayAsTag() &&
-            nodeSelection.countAvailableChildNodes(nodeSelection.getFocussedLevel() - 1) > 1
+            nodeSelection.countAvailableChildNodes(nodeSelection.getFocusedLevel() - 1) > 1
         ) {
             const subgroups = nodeSelection
-                .availableChildNodes(nodeSelection.getFocussedLevel() - 1)
+                .availableChildNodes(nodeSelection.getFocusedLevel() - 1)
                 .map((data) => data.nodeName);
-            let position = subgroups.indexOf(nodeSelection.getFocussedNodeName());
+            let position = subgroups.indexOf(nodeSelection.getFocusedNodeName());
             if (position === -1) {
                 position = 0;
             }
@@ -209,9 +209,9 @@ export class Tag extends React.Component<TagProps> {
         const inputElement = (nodeSelection.getRef() as React.RefObject<HTMLInputElement>).current as HTMLInputElement;
         const currentSelection = [inputElement.selectionStart, inputElement.selectionEnd];
         const subgroups = nodeSelection
-            .availableChildNodes(nodeSelection.getFocussedLevel() - 1)
+            .availableChildNodes(nodeSelection.getFocusedLevel() - 1)
             .map((el) => el.nodeName);
-        const newPosition = subgroups.indexOf(nodeSelection.getFocussedNodeName()) + (up ? 1 : -1);
+        const newPosition = subgroups.indexOf(nodeSelection.getFocusedNodeName()) + (up ? 1 : -1);
         if (!up && newPosition < 0) return;
         if (up && newPosition >= subgroups.length) return;
         nodeSelection.setNodeName(subgroups[newPosition]);
@@ -227,7 +227,7 @@ export class Tag extends React.Component<TagProps> {
     }
 
     private tagTitle(nodeSelection: TreeNodeSelection, index: number): string {
-        const { countTags, checkIfDuplicate, maxNumSelectedNodes } = this.props;
+        const { countTags, isDuplicate, maxNumSelectedNodes } = this.props;
         if (
             index === countTags - 1 &&
             !nodeSelection.displayAsTag() &&
@@ -237,7 +237,7 @@ export class Tag extends React.Component<TagProps> {
             return "Enter a new name";
         } else if (!nodeSelection.isValid()) {
             return "Invalid";
-        } else if (checkIfDuplicate(nodeSelection, index)) {
+        } else if (isDuplicate) {
             return "Duplicate";
         } else if (!nodeSelection.isComplete()) {
             return "Incomplete";
@@ -286,12 +286,11 @@ export class Tag extends React.Component<TagProps> {
             const splitByDelimiter = value.split(treeNodeSelection.getDelimiter());
             if (splitByDelimiter.length > 1) {
                 const currentText =
-                    splitByDelimiter[treeNodeSelection.getFocussedLevel() - treeNodeSelection.getNumMetaNodes()];
+                    splitByDelimiter[treeNodeSelection.getFocusedLevel() - treeNodeSelection.getNumMetaNodes()];
                 width = this.calculateTextWidth(currentText, 0, 0);
                 const splitByCurrentText = [
                     ...splitByDelimiter.filter(
-                        (_, index) =>
-                            index < treeNodeSelection.getFocussedLevel() - treeNodeSelection.getNumMetaNodes(),
+                        (_, index) => index < treeNodeSelection.getFocusedLevel() - treeNodeSelection.getNumMetaNodes(),
                     ),
                     "",
                 ].join(treeNodeSelection.getDelimiter());
@@ -321,7 +320,7 @@ export class Tag extends React.Component<TagProps> {
         const { treeNodeSelection } = this.props;
         const displayText = treeNodeSelection.displayText();
 
-        if (treeNodeSelection.getFocussedNodeName() === "" && treeNodeSelection.getFocussedLevel() == 0) {
+        if (treeNodeSelection.getFocusedNodeName() === "" && treeNodeSelection.getFocusedLevel() == 0) {
             return this.calculateTextWidth(this.props.placeholder) + "px";
         } else {
             return this.calculateTextWidth(displayText) + "px";
@@ -368,7 +367,7 @@ export class Tag extends React.Component<TagProps> {
             currentTag,
             frameless,
             active,
-            checkIfDuplicate,
+            isDuplicate,
             inputKeyDown,
             inputKeyUp,
             inputChange,
@@ -380,13 +379,17 @@ export class Tag extends React.Component<TagProps> {
         const displayText = treeNodeSelection.displayText();
 
         const valid = treeNodeSelection.isValid();
-        const duplicate = checkIfDuplicate(treeNodeSelection, index);
+
+        let placeholder = "";
+        if (treeNodeSelection.getFocusedNodeName() === "" && treeNodeSelection.getFocusedLevel() === 0 && !active) {
+            placeholder = this.props.placeholder;
+        }
 
         return (
             <li
                 key={"Tag_" + index}
                 title={this.tagTitle(treeNodeSelection, index)}
-                className={this.outerTagClasses(!valid && !currentTag, duplicate, frameless)}
+                className={this.outerTagClasses(!valid && !currentTag, isDuplicate, frameless)}
                 style={this.makeStyle()}
                 onMouseEnter={(): void => this.setState({ hovered: true })}
                 onMouseLeave={(): void => this.setState({ hovered: false })}
@@ -406,9 +409,9 @@ export class Tag extends React.Component<TagProps> {
                 {this.createBrowseButtons(treeNodeSelection, index)}
                 <div
                     key={"InnerTag_" + index}
-                    className={this.innerTagClasses(!valid && !currentTag, duplicate)}
+                    className={this.innerTagClasses(!valid && !currentTag, isDuplicate)}
                     style={
-                        (valid || currentTag) && !duplicate && treeNodeSelection.icons().length === 1
+                        (valid || currentTag) && !isDuplicate && treeNodeSelection.icons().length === 1
                             ? {
                                   backgroundImage: "url(" + treeNodeSelection.icons()[0] + ")",
                                   backgroundRepeat: "no-repeat",
@@ -422,12 +425,12 @@ export class Tag extends React.Component<TagProps> {
                     {this.addAdditionalClasses(!valid) && !valid && !currentTag && (
                         <Error fontSize="small" className="mr-2" />
                     )}
-                    {this.addAdditionalClasses(!valid) && valid && duplicate && (
+                    {this.addAdditionalClasses(!valid) && valid && isDuplicate && (
                         <Warning fontSize="small" className="mr-2" />
                     )}
                     {this.addAdditionalClasses(!valid) &&
                         (valid || currentTag) &&
-                        !duplicate &&
+                        !isDuplicate &&
                         treeNodeSelection.icons().length > 1 && <Help fontSize="small" className="mr-2" />}
                     {this.createMatchesCounter(treeNodeSelection, index)}
                     <div className="flex whitespace-nowrap relative">
@@ -436,14 +439,7 @@ export class Tag extends React.Component<TagProps> {
                             spellCheck="false"
                             key={"TagInput_" + index}
                             type="text"
-                            placeholder={
-                                treeNodeSelection.getFocussedNodeName() === "" &&
-                                treeNodeSelection.getFocussedLevel() == 0
-                                    ? treeNodeSelection.getRef() && active
-                                        ? ""
-                                        : this.props.placeholder
-                                    : ""
-                            }
+                            placeholder={placeholder}
                             value={displayText}
                             style={{
                                 width: this.calculateInputWidth(),

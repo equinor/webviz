@@ -324,7 +324,7 @@ class InplaceVolumesTableAssembler:
 
             # Accumulated fluids
             unique_fluids = sorted(
-                row_filtered_volumes_df[InplaceVolumes.TableIndexColumns.FLUID.value].unique().to_list()
+                row_filtered_volumes_df[InplaceVolumes.TableIndexColumns.FLUID.value].unique().to_numpy().tolist()
             )
 
             if sorted(expected_fluids) != unique_fluids:
@@ -466,7 +466,7 @@ class InplaceVolumesTableAssembler:
         # Add mask for realizations
         if realizations is not None:
             # Check if every element in realizations exists in inplace_volumes_table_df["REAL"]
-            real_values_set = set(inplace_volumes_df["REAL"].to_list())
+            real_values_set = set(inplace_volumes_df["REAL"].to_numpy().tolist())
             missing_realizations_set = set(realizations) - real_values_set
 
             if missing_realizations_set:
