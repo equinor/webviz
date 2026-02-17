@@ -131,6 +131,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(OperationGroupType.DELTA_SURFACE, DeltaSurface, {
     transformToVisualization: makeDepthSurfaceLayer,
     transformToAnnotations: makeColorScaleAnnotation,
+    transformToBoundingBox: makeSurfaceLayerBoundingBox,
 });
 
 export type VisualizationAssemblerWrapperProps = Omit<

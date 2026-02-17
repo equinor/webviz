@@ -25,20 +25,16 @@ import { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewe
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
-import { DepthSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { ContextBoundary } from "@modules/_shared/DataProviderFramework/framework/ContextBoundary/ContextBoundary";
-import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
-import { DeltaSurface } from "@modules/_shared/DataProviderFramework/framework/DeltaSurface/DeltaSurface";
-import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
+import { Group, isGroup } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
-import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
@@ -62,9 +58,6 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 groupDelegate.appendChild(
                     GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor()),
                 );
-                return;
-            case "delta-surface":
-                groupDelegate.prependChild(new DeltaSurface("Delta surface", props.dataProviderManager));
                 return;
             case "context-boundary":
                 groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));
@@ -168,16 +161,9 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
     }
 
     function checkIfItemMoveAllowed(movedItem: Item, destinationItem: ItemGroup): boolean {
-        if (destinationItem instanceof DeltaSurface) {
-            if (movedItem instanceof DataProvider && !(movedItem instanceof DepthSurfaceProvider)) {
-                return false;
-            }
-
-            if (instanceofItemGroup(movedItem)) {
-                return false;
-            }
-
-            if (destinationItem.getGroupDelegate().findChildren((item) => item instanceof DataProvider).length >= 2) {
+        if (isGroup(movedItem) && isGroup(destinationItem)) {
+            // Do not allow moving a view inside another view
+            if (movedItem.getGroupType() === GroupType.VIEW && destinationItem.getGroupType() === GroupType.VIEW) {
                 return false;
             }
         }
