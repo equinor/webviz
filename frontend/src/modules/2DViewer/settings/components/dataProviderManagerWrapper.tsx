@@ -191,8 +191,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             return;
         }
 
-        const parentIsDeltaGroup =
-            isOperationGroup(parent) && parent.getType() === OperationGroupType.DELTA_SURFACE;
+        const parentIsDeltaGroup = isOperationGroup(parent) && parent.getType() === OperationGroupType.DELTA_SURFACE;
 
         if (appendIdentifiers.has(identifier) || parentIsDeltaGroup) {
             groupDelegate.appendChild(item);
@@ -319,11 +318,6 @@ const INITIAL_ACTIONS: ActionGroup[] = [
                 identifier: "view",
                 icon: <Panorama fontSize="small" />,
                 label: "View",
-            },
-            {
-                identifier: "delta",
-                icon: <Difference fontSize="small" />,
-                label: "Delta group",
             },
             {
                 identifier: "context-boundary",
