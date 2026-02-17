@@ -29,7 +29,7 @@ def create_credential_for_azure_services(client_secret_vars_for_local_dev: Clien
     LOGGER.info(f"Environment var: AZURE_CLIENT_SECRET={_show_first_chars_of_secret(os.getenv("AZURE_CLIENT_SECRET"))}")
 
     # Any better way of knowing if we're running in Radix or locally?
-    is_on_radix_platform = True if os.getenv("RADIX_APP") is not None else False
+    is_on_radix_platform = os.getenv("RADIX_APP") is not None
     LOGGER.info(f"{is_on_radix_platform=}")
 
     # Using DefaultAzureCredential it seems that when running locally using docker compose we end up using ClientSecretCredential (via EnvironmentCredential)
