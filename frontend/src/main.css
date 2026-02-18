@@ -103,10 +103,10 @@ body {
     }
 
     & [class*="Toggle__StyledButton"]:focus-visible {
-        @apply outline-indigo-600;
+        @apply outline-indigo-500;
     }
 
     /* outline-width: 1px; */
-    --eds_interactive_primary__resting: var(--color-indigo-600); /* Override eds icon color */
+    --eds_interactive_primary__resting: var(--color-indigo-500); /* Override eds icon color */
     --eds_ui_background__light: white; /* Override eds background color */
 }
