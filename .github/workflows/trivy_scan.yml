@@ -1,0 +1,70 @@
+name: Docker Base Image Scan
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+
+jobs:
+  scan-base-images:
+    runs-on: ubuntu-latest
+    name: Scan base images from Dockerfiles
+
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@v0.2.3
+      
+      - name: Extract and resolve base images from Dockerfiles
+        run: |
+          find . -type f -name '*Dockerfile*' > dockerfiles.txt
+          > base_images.txt
+          
+          echo "Found following Dockerfiles:"
+          cat dockerfiles.txt
+          
+          for file in $(cat dockerfiles.txt); do
+            declare -A args=()
+          
+            # Collect ARG values
+            while IFS= read -r line; do
+              if [[ "$line" =~ ^ARG[[:space:]]+([A-Za-z0-9_]+)=?\"?([^\"]*)\"?$ ]]; then
+                key="${BASH_REMATCH[1]}"
+                value="${BASH_REMATCH[2]}"
+                args[$key]="$value"
+              fi
+            done < "$file"
+          
+            # Resolve FROM lines
+            while IFS= read -r line; do
+              if [[ "$line" =~ ^FROM[[:space:]]+(.+) ]]; then
+                raw="${BASH_REMATCH[1]}"
+                resolved="$raw"
+                for key in "${!args[@]}"; do
+                  resolved="${resolved//\$\{$key\}/${args[$key]}}"
+                  resolved="${resolved//\$$key/${args[$key]}}"
+                done
+                image=$(echo "$resolved" | awk '{print $1}')
+                if [[ -n "$image" && "$image" != *'${'* && "$image" != *'$'* ]]; then
+                  echo "$image" >> base_images.txt
+                fi
+              fi
+            done < "$file"
+          done
+          
+          sort -u base_images.txt > unique_base_images.txt
+          
+          echo "Docker base images to scan:"
+          cat unique_base_images.txt
+
+      - name: Scan base images with Trivy - fail if HIGH or CRITICAL vulnerability found
+        run: |
+          while read image; do
+            echo "🔍 Scanning $image"
+            trivy image --severity HIGH,CRITICAL --exit-code 1 "$image"
+          done < unique_base_images.txt
