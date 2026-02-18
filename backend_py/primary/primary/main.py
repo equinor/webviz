@@ -17,7 +17,6 @@ from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFact
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
 
-from primary.persistence.setup_local_database import maybe_setup_local_database
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
@@ -73,9 +72,6 @@ logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 
-# Setup Cosmos DB emulator database if running locally
-maybe_setup_local_database()
-
 services_config = ServicesConfig(
     sumo_env=config.SUMO_ENV,
     smda_subscription_key=config.SMDA_SUBSCRIPTION_KEY,
@@ -109,29 +105,18 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
 
     if config.COSMOS_DB_PROD_CONNECTION_STRING:
-        cosmos_client = CosmosClient.from_connection_string(config.COSMOS_DB_PROD_CONNECTION_STRING)
-    elif config.COSMOS_DB_EMULATOR_URI and config.COSMOS_DB_EMULATOR_KEY:
-        cosmos_client = CosmosClient(
-            config.COSMOS_DB_EMULATOR_URI, config.COSMOS_DB_EMULATOR_KEY, connection_verify=False
-        )
+        LOGGER.info("Using COSMOS_DB_PROD_CONNECTION_STRING from environment to initialize PersistenceStoresSingleton")
+        PersistenceStoresSingleton.initialize_with_connection_string(config.COSMOS_DB_PROD_CONNECTION_STRING)
     else:
-        cosmos_client = CosmosClient("https://webviz-dev-db.documents.azure.com:443/", azure_services_credential)
+        # If no connection string is provided, we use the dev database with credential authentication.
+        LOGGER.info("Using credential for azure services to initialize PersistenceStoresSingleton")
+        PersistenceStoresSingleton.initialize_with_credentials(
+            "https://webviz-dev-db.documents.azure.com:443/", azure_services_credential
+        )
 
-    PersistenceStoresSingleton.initialize(cosmos_client)
-
-    # Test Cosmos DB connection
-    # -----------------------------------------
-    # cosmos_client = CosmosClient("https://webviz-dev-db.documents.azure.com:443/", azure_services_credential)
-    # LOGGER.info(f"{cosmos_client=}")
-    # db_proxy: DatabaseProxy = cosmos_client.get_database_client("persistence")
-    # LOGGER.info(f"{db_proxy=}")
-    # container = db_proxy.get_container_client("sessions")
-    # LOGGER.info(f"{container=}")
-
-    # items_iterable = container.query_items(query="SELECT * FROM c")
-    # items = [item async for item in items_iterable]
-    # LOGGER.info(f"Cosmos DB 'sessions' container has {len(items)} items")
-    # -----------------------------------------
+    # For local development, you can use the Cosmos DB Emulator. The emulator does not require credentials,
+    # so we can initialize the PersistenceStoresSingleton with the emulator connection settings.
+    # PersistenceStoresSingleton.initialize_with_emulator()
 
     sb_conn_string = os.getenv("SERVICEBUS_CONNECTION_STRING")
     if sb_conn_string:
@@ -147,6 +132,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # This part, after the yield, will be executed after the application has finished.
     yield
 
+    await PersistenceStoresSingleton.shutdown_async()
     await MessageBusSingleton.shutdown_async()
     await azure_services_credential.close()
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()

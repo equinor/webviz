@@ -2,10 +2,12 @@ from typing import Dict, Tuple, Type
 import logging
 
 from pydantic import BaseModel
+from azure.core.credentials_async import AsyncTokenCredential
 from azure.cosmos.aio import CosmosClient, ContainerProxy, DatabaseProxy
 
 from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
 from primary.persistence.session_store import SessionStore, SessionDocument
+from primary.persistence.setup_local_database import maybe_setup_local_database
 from primary.persistence.snapshot_store import (
     SnapshotStore,
     SnapshotDocument,
@@ -38,7 +40,7 @@ class PersistenceStores:
             self._container_proxies[key] = db_proxy.get_container_client(container_name)
         return self._container_proxies[key]
 
-    def _get_container(self, database_name: str, container_name: str, model_cls: Type[BaseModel]) -> CosmosContainer:
+    def get_container(self, database_name: str, container_name: str, model_cls: Type[BaseModel]) -> CosmosContainer:
         key = (database_name, container_name, model_cls)
         if key not in self._containers:
             container_proxy = self._get_container_proxy(database_name, container_name)
@@ -46,16 +48,16 @@ class PersistenceStores:
         return self._containers[key]
 
     def get_session_store_for_user(self, user_id: str) -> SessionStore:
-        container = self._get_container("persistence", "sessions", SessionDocument)
-        return SessionStore(container, user_id)
+        container = self.get_container("persistence", "sessions", SessionDocument)
+        return SessionStore(user_id, container)
 
     def get_snapshot_store_for_user(self, user_id: str) -> SnapshotStore:
-        container = self._get_container("persistence", "snapshots", SnapshotDocument)
-        return SnapshotStore(container, user_id)
+        container = self.get_container("persistence", "snapshots", SnapshotDocument)
+        return SnapshotStore(user_id, container)
 
     def get_snapshot_access_log_store_for_user(self, user_id: str) -> SnapshotAccessLogStore:
-        container = self._get_container("persistence", "snapshot_access_logs", SnapshotAccessLogDocument)
-        return SnapshotAccessLogStore(container, user_id, snapshot_store_factory=self.get_snapshot_store_for_user)
+        container = self.get_container("persistence", "snapshot_access_logs", SnapshotAccessLogDocument)
+        return SnapshotAccessLogStore(user_id, container, snapshot_store_factory=self.get_snapshot_store_for_user)
 
 
 class PersistenceStoresSingleton:
@@ -68,10 +70,31 @@ class PersistenceStoresSingleton:
         return cls._instance
 
     @classmethod
-    def initialize(cls, cosmos_client: CosmosClient) -> None:
+    def initialize_with_credentials(cls, url: str, credential: str | dict[str, str] | AsyncTokenCredential) -> None:
         if cls._instance is not None:
             raise RuntimeError("PersistenceStoresSingleton is already initialized")
 
+        cosmos_client = CosmosClient(url, credential)
+        cls._instance = PersistenceStores(cosmos_client)
+
+    @classmethod
+    def initialize_with_connection_string(cls, connection_str: str) -> None:
+        if cls._instance is not None:
+            raise RuntimeError("PersistenceStoresSingleton is already initialized")
+
+        cosmos_client = CosmosClient.from_connection_string(connection_str)
+        cls._instance = PersistenceStores(cosmos_client)
+
+    @classmethod
+    def initialize_with_emulator(cls) -> None:
+        if cls._instance is not None:
+            raise RuntimeError("PersistenceStoresSingleton is already initialized")
+
+        # Cosmos DB Emulator defaults
+        uri = "https://cosmos-db-emulator:8081"
+        key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+        cosmos_client = CosmosClient(uri, key, connection_verify=False)
+        maybe_setup_local_database(uri, key)
         cls._instance = PersistenceStores(cosmos_client)
 
     @classmethod
