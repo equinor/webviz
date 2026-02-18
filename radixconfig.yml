@@ -172,8 +172,6 @@ spec:
           cpu:
             averageUtilization: 80
 
-
-
     - name: worker-mock
       dockerFileName: ./backend_py/worker_mock/Dockerfile
       identity:
@@ -214,8 +212,6 @@ spec:
                     envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
             OTEL_RESOURCE_ATTRIBUTES: service.name=worker-mock, service.namespace=dev
-
-
 
     - name: redis-user-session
       image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e

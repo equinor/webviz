@@ -62,20 +62,6 @@ class CosmosContainer(Generic[T]):
             f"(status={status}, substatus={substatus}, activity_id={activity_id})"
         )
 
-        # Log with stack trace
-        LOGGER.exception(
-            "[CosmosContainer] %s",
-            msg,
-            extra={
-                "database": self._database_name,
-                "container": self._container_name,
-                "operation": op,
-                "status_code": status,
-                "sub_status": substatus,
-                "activity_id": activity_id,
-            },
-        )
-
         if status == 404:
             return DatabaseAccessNotFoundError(msg, status_code=status, sub_status=substatus, activity_id=activity_id)
         if status == 409:
@@ -133,6 +119,7 @@ class CosmosContainer(Generic[T]):
     async def get_item_async(self, item_id: str, partition_key: str) -> T:
         try:
             item = await self._container.read_item(item=item_id, partition_key=partition_key)
+            LOGGER.debug("[CosmosContainer] Retrieved item '%s' from '%s'", item_id, self._container_name)
             return self._validation_model.model_validate(item)
         except ValidationError as validation_error:
             LOGGER.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
@@ -144,6 +131,7 @@ class CosmosContainer(Generic[T]):
         try:
             body: Dict[str, Any] = self._validation_model.model_validate(item).model_dump(by_alias=True, mode="json")
             result = await self._container.create_item(body)
+            LOGGER.debug("[CosmosContainer] Inserted item '%s' into '%s'", result["id"], self._container_name)
             return result["id"]
         except ValidationError as validation_error:
             LOGGER.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
