@@ -27,6 +27,10 @@ export type DataProviderComponentProps = {
 export function DataProviderComponent(props: DataProviderComponentProps): React.ReactNode {
     const isExpanded = usePublishSubscribeTopicValue(props.dataProvider.getItemDelegate(), ItemDelegateTopic.EXPANDED);
     const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
+    const subordinationPrefix = usePublishSubscribeTopicValue(
+        props.dataProvider,
+        DataProviderTopic.SUBORDINATION_PREFIX,
+    );
 
     function makeSetting(setting: SettingManager<any>) {
         const manager = props.dataProvider.getItemDelegate().getDataProviderManager();
@@ -57,7 +61,12 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
         <SortableListItem
             key={props.dataProvider.getItemDelegate().getId()}
             id={props.dataProvider.getItemDelegate().getId()}
-            title={<EditName item={props.dataProvider} />}
+            title={
+                <div className="flex gap-2">
+                    {subordinationPrefix}
+                    <EditName item={props.dataProvider} />
+                </div>
+            }
             startAdornment={<StartActions dataProvider={props.dataProvider} />}
             endAdornment={<EndActions dataProvider={props.dataProvider} />}
         >

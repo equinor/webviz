@@ -36,6 +36,7 @@ export enum DataProviderTopic {
     DATA = "DATA",
     SUBORDINATED = "SUBORDINATED",
     PROGRESS_MESSAGE = "PROGRESS_MESSAGE",
+    SUBORDINATION_PREFIX = "SUBORDINATION_PREFIX",
 }
 
 export enum DataProviderStatus {
@@ -52,6 +53,7 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.DATA]: TData;
     [DataProviderTopic.SUBORDINATED]: boolean;
     [DataProviderTopic.PROGRESS_MESSAGE]: string | null;
+    [DataProviderTopic.SUBORDINATION_PREFIX]: string;
 };
 
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
@@ -134,6 +136,7 @@ export class DataProvider<
     private _status: DataProviderStatus = DataProviderStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
+    private _subordinationPrefix = "";
     private _isSubordinated: boolean = false;
     private _prevSettings: TSettingTypes | null = null;
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
@@ -391,12 +394,14 @@ export class DataProvider<
         return this.getItemDelegate().isVisible();
     }
 
-    setIsSubordinated(isSubordinated: boolean): void {
-        if (this._isSubordinated === isSubordinated) {
+    setIsSubordinated(isSubordinated: boolean, prefix: string = ""): void {
+        if (this._isSubordinated === isSubordinated && this._subordinationPrefix === prefix) {
             return;
         }
         this._isSubordinated = isSubordinated;
+        this._subordinationPrefix = prefix;
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.SUBORDINATED);
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.SUBORDINATION_PREFIX);
     }
 
     getDataProviderManager(): DataProviderManager {
@@ -416,6 +421,9 @@ export class DataProvider<
             }
             if (topic === DataProviderTopic.PROGRESS_MESSAGE) {
                 return this._progressMessage;
+            }
+            if (topic === DataProviderTopic.SUBORDINATION_PREFIX) {
+                return this._subordinationPrefix;
             }
             throw new Error(`Unknown topic: ${topic}`);
         };

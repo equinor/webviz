@@ -33,6 +33,7 @@ import { isDataProvider } from "../DataProvider/DataProvider";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
+import { isSharedSetting } from "../SharedSetting/SharedSetting";
 
 export enum OperationGroupTopic {
     OPERATION = "operation",
@@ -105,7 +106,7 @@ export class OperationGroup<
 
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
-    private _childrenDataProviderSet: Set<DataProvider<any, any>> = new Set();
+    private _childrenDataProviderArray: DataProvider<any, any>[] = [];
 
     private _customOperationGroupImplementation: CustomOperationGroupImplementation<
         TData,
@@ -199,7 +200,7 @@ export class OperationGroup<
     private makeAccessors(): OperationGroupInformationAccessors<TData, TSupportedDataProviderImplementations> {
         const allSettings: ChildSettingsUnion<TSupportedDataProviderImplementations>[] = [];
 
-        for (const child of this._childrenDataProviderSet) {
+        for (const child of this._childrenDataProviderArray) {
             const settings: ChildSettingsUnion<TSupportedDataProviderImplementations>["settings"] =
                 {} as ChildSettingsUnion<TSupportedDataProviderImplementations>["settings"];
             for (const [settingKey, settingManager] of Object.entries(
@@ -279,7 +280,7 @@ export class OperationGroup<
     }
 
     canAcceptChild(child: Item): boolean {
-        if (!isDataProvider(child)) {
+        if (!isDataProvider(child) && !isSharedSetting(child)) {
             return false;
         }
 
@@ -289,7 +290,10 @@ export class OperationGroup<
         }
 
         const supportedImplementations = this._customOperationGroupImplementation.supportedDataProviderImplementations;
-        if (!supportedImplementations.includes(child.getProviderImplementation().constructor as any)) {
+        if (
+            isDataProvider(child) &&
+            !supportedImplementations.includes(child.getProviderImplementation().constructor as any)
+        ) {
             return false;
         }
 
@@ -411,7 +415,7 @@ export class OperationGroup<
     }
 
     private hasInvalidChildren(): boolean {
-        const children = [...this._childrenDataProviderSet];
+        const children = [...this._childrenDataProviderArray].filter(isDataProvider);
 
         const minChildren = this._customOperationGroupImplementation.minChildrenCount ?? 2;
         if (children.length < minChildren) {
@@ -454,16 +458,23 @@ export class OperationGroup<
 
     private handleChildrenChange(): void {
         this.clear();
+        let index = 0;
 
-        for (const [index, child] of this._groupDelegate.getChildren().entries()) {
-            if (!isDataProvider(child)) {
-                this.setError("Operation group can only have data providers as children.");
+        for (const child of this._groupDelegate.getChildren()) {
+            if (!isDataProvider(child) && !isSharedSetting(child)) {
+                this.setError("Operation group can only have data providers or shared settings as children.");
                 this.setStatus(OperationGroupStatus.ERROR);
                 return;
             }
 
-            child.setIsSubordinated(true);
-            this._childrenDataProviderSet.add(child);
+            if (isSharedSetting(child)) {
+                continue;
+            }
+
+            const prefix = index === 0 ? "(Minuend) " : "(Subtrahend)";
+
+            child.setIsSubordinated(true, prefix);
+            this._childrenDataProviderArray.push(child);
 
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "providers",
@@ -502,13 +513,14 @@ export class OperationGroup<
                     );
                 }
             }
+            index++;
         }
 
         this.handleSettingsAndStoredDataChange();
     }
 
     private handleChildSettingsStatusChange(): void {
-        for (const child of this._childrenDataProviderSet) {
+        for (const child of this._childrenDataProviderArray) {
             const status = child.getSettingsContextDelegate().getStatus();
             if (status === SettingsContextStatus.LOADING) {
                 this.setStatus(OperationGroupStatus.LOADING);
@@ -531,7 +543,7 @@ export class OperationGroup<
         let anyLoading = false;
         let anyInvalidSettings = false;
 
-        for (const child of this._childrenDataProviderSet) {
+        for (const child of this._childrenDataProviderArray) {
             const status = child.getSettingsContextDelegate().getStatus();
             if (status === SettingsContextStatus.LOADING) {
                 anyLoading = true;
@@ -575,7 +587,7 @@ export class OperationGroup<
         // Collect all children settings
         const allSettings: ChildSettingsUnion<TSupportedDataProviderImplementations>[] = [];
 
-        for (const child of this._childrenDataProviderSet) {
+        for (const child of this._childrenDataProviderArray) {
             const settings: ChildSettingsUnion<TSupportedDataProviderImplementations>["settings"] =
                 {} as ChildSettingsUnion<TSupportedDataProviderImplementations>["settings"];
             for (const [settingKey, settingManager] of Object.entries(
@@ -642,14 +654,14 @@ export class OperationGroup<
 
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("providers");
 
-        for (const provider of this._childrenDataProviderSet) {
-            provider.setIsSubordinated(false);
+        for (const provider of this._childrenDataProviderArray) {
+            provider.setIsSubordinated(false, "");
         }
 
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("shared-settings");
         this._sharedSettingsDelegate = null;
 
-        this._childrenDataProviderSet.clear();
+        this._childrenDataProviderArray = [];
         this._data = null;
         this._error = null;
         this._status = OperationGroupStatus.IDLE;

@@ -121,6 +121,8 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
         bottom: 0,
     });
     const [noDropZoneElements, setNoDropZoneElements] = React.useState<Set<HTMLElement>>(new Set());
+    const noDropZoneElementsRef = React.useRef(noDropZoneElements);
+    noDropZoneElementsRef.current = noDropZoneElements;
 
     const registerNoDropZoneElement = React.useCallback(function registerNoDropZoneElement(el: HTMLElement | null) {
         setNoDropZoneElements((prev) => {
@@ -331,7 +333,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             }
 
             function isTargetNoDropZone(e: PointerEvent): boolean {
-                for (const noDropZoneElement of noDropZoneElements) {
+                for (const noDropZoneElement of noDropZoneElementsRef.current) {
                     if (rectContainsPoint(noDropZoneElement.getBoundingClientRect(), vec2FromPointerEvent(e))) {
                         return true;
                     }
@@ -669,7 +671,6 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             isMoveAllowed,
             scrollContainerElement,
             contentContainerElement,
-            noDropZoneElements,
             scrollOverlayMargins.top,
             scrollOverlayMargins.bottom,
         ],
