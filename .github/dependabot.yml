@@ -1,13 +1,12 @@
 version: 2
 updates:
-  # Common settings are anchored on the first entry and reused via YAML merge
-  - &common
-    package-ecosystem: npm
+  # Frontend dependencies (npm)
+  - package-ecosystem: npm
     directory: /frontend
     schedule:
       interval: weekly
-    open-pull-requests-limit: 1  # Max. one open PR at a time per app component
-    ignore:  # Ignore major version updates for all packages in order to prevent breaking changes
+    open-pull-requests-limit: 1  # Max. one open PR at a time per app component 
+    ignore:  # Ignore major version updates to prevent breaking changes
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
@@ -17,34 +16,122 @@ updates:
         patterns:
           - "*"
 
-  - <<: *common
-    package-ecosystem: pip
+  # Python dependencies in primary service
+  - package-ecosystem: pip
     directory: /backend_py/primary
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
 
-  - <<: *common
-    package-ecosystem: pip
+  # Python dependencies in user_grid3d_ri service
+  - package-ecosystem: pip
     directory: /backend_py/user_grid3d_ri
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
 
-  - <<: *common
-    package-ecosystem: pip
+  # Python dependencies in user_mock service
+  - package-ecosystem: pip
     directory: /backend_py/user_mock
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
 
-  - <<: *common
-    package-ecosystem: pip
+  # Python dependencies in core_utils library
+  - package-ecosystem: pip
     directory: /backend_py/libs/core_utils
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
 
-  - <<: *common
-    package-ecosystem: pip
+  # Python dependencies in server_schemas library
+  - package-ecosystem: pip
     directory: /backend_py/libs/server_schemas
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
 
-  - <<: *common
-    package-ecosystem: pip
+  # Python dependencies in services library
+  - package-ecosystem: pip
     directory: /backend_py/libs/services
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
 
-  - <<: *common
-    package-ecosystem: gomod
+  # Go dependencies
+  - package-ecosystem: gomod
     directory: /backend_go/surface_query
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
 
-  - <<: *common
-    package-ecosystem: github-actions
+  # GitHub Actions
+  - package-ecosystem: github-actions
     directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      security-updates:
+        dependency-type: security
+        patterns:
+          - "*"
