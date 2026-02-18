@@ -3,7 +3,9 @@ import logging
 
 from pydantic import BaseModel
 from azure.core.credentials_async import AsyncTokenCredential
+from azure.core.exceptions import ClientAuthenticationError
 from azure.cosmos.aio import CosmosClient, ContainerProxy, DatabaseProxy
+from azure.cosmos.exceptions import CosmosHttpResponseError
 
 from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
 from primary.persistence.session_store import SessionStore, SessionDocument
@@ -16,6 +18,18 @@ from primary.persistence.snapshot_store import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+
+async def _probe_cosmos(cosmos_client: CosmosClient, database: str) -> None:
+    try:
+        database = cosmos_client.get_database_client(database)
+        await database.read()
+    except CosmosHttpResponseError as exc:
+        # 401/403: auth/RBAC; 404: db missing; others: etc.
+        raise RuntimeError(
+            f"Cosmos probe failed (db={database}, status={getattr(exc,'status_code',None)}): "
+            f"{getattr(exc,'message', str(exc))}"
+        ) from exc
 
 
 class PersistenceStores:
@@ -70,19 +84,45 @@ class PersistenceStoresSingleton:
         return cls._instance
 
     @classmethod
-    def initialize_with_credentials(cls, url: str, credential: str | dict[str, str] | AsyncTokenCredential) -> None:
+    async def initialize_with_credential(cls, url: str, credential: AsyncTokenCredential) -> None:
         if cls._instance is not None:
             raise RuntimeError("PersistenceStoresSingleton is already initialized")
 
+        # Creation of the client below doesn't actually establish a connection or validate the credential.
+        # To try and fail fast if the credential is invalid, we try and get a token from the credential immediately.
+        # Note that this check is not exhaustive in the sense that even if it succeeds, there is no guarantee that
+        # RBAC permissions are sufficient. The only way to fully verify that is to actually make a call to CosmosClient,
+        # which is deferred until the first time we try to access the database.
+        try:
+            # Use the scope for Azure Cosmos DB
+            await credential.get_token("https://cosmos.azure.com/.default")
+            LOGGER.info("PersistenceStoresSingleton successfully verified Azure credential for Cosmos DB scope")
+        except ClientAuthenticationError as exc:
+            raise RuntimeError("Azure authentication failed while acquiring token for Cosmos DB scope") from exc
+
         cosmos_client = CosmosClient(url, credential)
+        try:
+            await _probe_cosmos(cosmos_client, "persistence")
+            LOGGER.info("Successfully connected to Cosmos DB and accessed 'persistence' database")
+        except Exception:
+            await cosmos_client.close()
+            raise
+
         cls._instance = PersistenceStores(cosmos_client)
 
     @classmethod
-    def initialize_with_connection_string(cls, connection_str: str) -> None:
+    async def initialize_with_connection_string(cls, connection_str: str) -> None:
         if cls._instance is not None:
             raise RuntimeError("PersistenceStoresSingleton is already initialized")
 
         cosmos_client = CosmosClient.from_connection_string(connection_str)
+        try:
+            await _probe_cosmos(cosmos_client, "persistence")
+            LOGGER.info("Successfully connected to Cosmos DB and accessed 'persistence' database")
+        except Exception:
+            await cosmos_client.close()
+            raise
+
         cls._instance = PersistenceStores(cosmos_client)
 
     @classmethod

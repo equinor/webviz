@@ -106,11 +106,11 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 
     if config.COSMOS_DB_PROD_CONNECTION_STRING:
         LOGGER.info("Using COSMOS_DB_PROD_CONNECTION_STRING from environment to initialize PersistenceStoresSingleton")
-        PersistenceStoresSingleton.initialize_with_connection_string(config.COSMOS_DB_PROD_CONNECTION_STRING)
+        await PersistenceStoresSingleton.initialize_with_connection_string(config.COSMOS_DB_PROD_CONNECTION_STRING)
     else:
         # If no connection string is provided, we use the dev database with credential authentication.
         LOGGER.info("Using credential for azure services to initialize PersistenceStoresSingleton")
-        PersistenceStoresSingleton.initialize_with_credentials(
+        await PersistenceStoresSingleton.initialize_with_credential(
             "https://webviz-dev-db.documents.azure.com:443/", azure_services_credential
         )
 
@@ -124,7 +124,9 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
         MessageBusSingleton.initialize_with_connection_string(sb_conn_string)
     else:
         LOGGER.info("Initializing MessageBusSingleton using credential for azure services")
-        await MessageBusSingleton.initialize_with_credential_async("webviz-test.servicebus.windows.net", azure_services_credential)
+        await MessageBusSingleton.initialize_with_credential_async(
+            "webviz-test.servicebus.windows.net", azure_services_credential
+        )
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
