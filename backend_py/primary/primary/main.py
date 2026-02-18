@@ -135,11 +135,11 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 
     sb_conn_string = os.getenv("SERVICEBUS_CONNECTION_STRING")
     if sb_conn_string:
-        LOGGER.info("Using SERVICEBUS_CONNECTION_STRING from environment to initialize MessageBusSingleton")
+        LOGGER.info("Initializing MessageBusSingleton using SERVICEBUS_CONNECTION_STRING from environment")
         MessageBusSingleton.initialize_with_connection_string(sb_conn_string)
     else:
-        LOGGER.info("Using credential for azure services to initialize MessageBusSingleton")
-        MessageBusSingleton.initialize_with_credential("webviz-test.servicebus.windows.net", azure_services_credential)
+        LOGGER.info("Initializing MessageBusSingleton using credential for azure services")
+        await MessageBusSingleton.initialize_with_credential_async("webviz-test.servicebus.windows.net", azure_services_credential)
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)

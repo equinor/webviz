@@ -1,5 +1,6 @@
 import logging
 
+from azure.core.exceptions import ClientAuthenticationError
 from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus.aio import ServiceBusSender
@@ -32,9 +33,23 @@ class MessageBusSingleton:
     _message_bus_instance: MessageBus | None = None
 
     @classmethod
-    def initialize_with_credential(cls, fully_qualified_sb_namespace: str, credential: DefaultAzureCredential) -> None:
+    async def initialize_with_credential_async(
+        cls, fully_qualified_sb_namespace: str, credential: DefaultAzureCredential
+    ) -> None:
         if cls._message_bus_instance is not None:
             raise RuntimeError("MessageBusSingleton is already initialized")
+
+        # Creation of the client below doesn't actually establish a connection or validate the credential.
+        # To try and fail fast if the credential is invalid, we try and get a token from the credential immediately.
+        # Note that this check is not exhaustive in the sense that even if it succeeds, there is no guarantee that
+        # RBAC permissions are sufficient. The only way to fully verify that is to actually make a call to Service Bus,
+        # which we defer until the first time we try to send/receive a message.
+        try:
+            # Use the scope for Azure Service Bus
+            await credential.get_token("https://servicebus.azure.net/.default")
+            LOGGER.info("MessageBusSingleton successfully verified Azure credential for Service Bus scope")
+        except ClientAuthenticationError as exc:
+            raise RuntimeError("Azure authentication failed while acquiring token for Service Bus scope") from exc
 
         sb_client = ServiceBusClient(fully_qualified_namespace=fully_qualified_sb_namespace, credential=credential)
         cls._message_bus_instance = MessageBus(sb_client)
