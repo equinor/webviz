@@ -62,9 +62,8 @@ class AuthHelper:
         self.router.add_api_route(path="/login", endpoint=self._login_route, methods=["GET"])
         self.router.add_api_route(path="/auth-callback", endpoint=self._authorized_callback_route, methods=["GET"])
 
-    # pylint: disable=async-suffix
-
     @no_cache
+    # pylint: disable-next=async-suffix
     async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
         await starsessions.load_session(request)
         request.session.clear()
@@ -93,6 +92,7 @@ class AuthHelper:
         return RedirectResponse(flow_dict["auth_uri"])
 
     @no_cache
+    # pylint: disable-next=async-suffix
     async def _authorized_callback_route(self, request: Request) -> Response:
         await starsessions.load_session(request)
 
@@ -127,8 +127,6 @@ class AuthHelper:
             return RedirectResponse(target_url_str_after_auth)
 
         return Response("Login OK")
-
-    # pylint: enable=async-suffix
 
     @staticmethod
     def get_authenticated_user(request_with_session: Request) -> Optional[AuthenticatedUser]:
