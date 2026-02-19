@@ -22,7 +22,7 @@ import {
 } from "@modules/_shared/components/SubsurfaceViewer/DpfSubsurfaceViewerWrapper";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
-import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
+import { DrilledWellboreTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
 import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/FaultPolygonsProvider";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
@@ -98,7 +98,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELL_TRAJECTORIES,
-    DrilledWellTrajectoriesProvider,
+    DrilledWellboreTrajectoriesProvider,
     {
         transformToVisualization: makeDrilledWellTrajectoriesLayer,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
