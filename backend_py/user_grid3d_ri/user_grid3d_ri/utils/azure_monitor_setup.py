@@ -21,8 +21,14 @@ def setup_azure_monitor_telemetry(fastapi_app: FastAPI) -> None:
     logging.getLogger("azure.monitor.opentelemetry").setLevel(logging.INFO)
     logging.getLogger("azure.monitor.opentelemetry.exporter").setLevel(logging.WARNING)
 
-    # Us customized log format for the log strings being sent
-    configure_azure_monitor(logging_formatter=logging.Formatter("[%(name)s]: %(message)s"))
+    # Note that this call will throw an exception if the APPLICATIONINSIGHTS_CONNECTION_STRING
+    # environment variable is not set or if it is invalid.
+    # Starting with version 1.8.6, the default sampler is RateLimitedSampler. We restore the old behavior by setting the
+    # sampler to "microsoft.fixed_percentage" with sampler_arg of 1.0, which means that we sample 100% of the traces.
+    configure_azure_monitor(
+        sampler="microsoft.fixed_percentage",
+        sampler_arg=1.0,
+        logging_formatter=logging.Formatter("[%(name)s]: %(message)s"))
 
     FastAPIInstrumentor.instrument_app(fastapi_app)
     HTTPXClientInstrumentor().instrument()
