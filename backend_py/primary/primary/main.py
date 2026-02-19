@@ -99,14 +99,14 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # For local development, you can use the Cosmos DB Emulator. The emulator does not require credentials,
     # so we can initialize the PersistenceStoresSingleton with the emulator connection settings.
     # PersistenceStoresSingleton.initialize_with_emulator()
-    if config.COSMOS_DB_PROD_CONNECTION_STRING:
-        LOGGER.info("Using COSMOS_DB_PROD_CONNECTION_STRING from environment to initialize PersistenceStoresSingleton")
-        await PersistenceStoresSingleton.initialize_with_connection_string_async(
-            config.COSMOS_DB_PROD_CONNECTION_STRING
+    if config.USE_COSMOS_PROD_DB:  # ??? - Some flag to determine whether to use prod or dev database
+        LOGGER.info("Using credential for azure services to initialize PersistenceStoresSingleton with prod database")
+        await PersistenceStoresSingleton.initialize_with_credential_async(
+            "https://webviz-db.documents.azure.com:443/", azure_services_credential
         )
     else:
         # If no connection string is provided, we use the dev database with credential authentication.
-        LOGGER.info("Using credential for azure services to initialize PersistenceStoresSingleton")
+        LOGGER.info("Using credential for azure services to initialize PersistenceStoresSingleton with dev database")
         await PersistenceStoresSingleton.initialize_with_credential_async(
             "https://webviz-dev-db.documents.azure.com:443/", azure_services_credential
         )
