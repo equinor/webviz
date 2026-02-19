@@ -98,53 +98,6 @@ services:
       # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
       - REDIS_EXTRA_FLAGS=--maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel notice
 
-  worker-mock:
-    build:
-      context: .
-      dockerfile: ./backend_py/worker_mock/Dockerfile
-    environment:
-      - AZURE_TENANT_ID
-      - AZURE_CLIENT_ID
-      - AZURE_CLIENT_SECRET
-      - SERVICEBUS_CONNECTION_STRING
-      - APPLICATIONINSIGHTS_CONNECTION_STRING
-      - OTEL_RESOURCE_ATTRIBUTES=service.name=worker-mock, service.namespace=local
-      # For debugging instrumentation
-      - OTEL_LOG_LEVEL=debug
-      - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
-    volumes:
-      - ./backend_py/worker_mock/src:/home/appuser/backend_py/worker_mock/src
-      - ./backend_py/libs:/home/appuser/backend_py/libs
-    command:
-      [
-        "watchfiles",
-        "python -m worker_mock.worker_main",
-        "/home/appuser/backend_py/worker_mock/src",
-      ]
-    #command: ["python", "-m", "worker_mock.worker_main"]
-    #restart: on-failure
-    restart: always
-    # depends_on:
-    #   - sb-emulator
-
-  # sb-emulator:
-  #   image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
-  #   environment:
-  #     ACCEPT_EULA: Y
-  #     SQL_SERVER: sqledge
-  #     MSSQL_SA_PASSWORD: MySecretPassw0rd
-  #   volumes:
-  #     - ./SbEmulatorConfig.json:/ServiceBus_Emulator/ConfigFiles/Config.json
-  #   ports:
-  #     - "5672:5672"      # AMQP TCP
-  #   depends_on:
-  #     - sqledge
-
-  # sqledge:
-  #   image: mcr.microsoft.com/azure-sql-edge:latest
-  #   environment:
-  #     ACCEPT_EULA: Y
-  #     MSSQL_SA_PASSWORD: MySecretPassw0rd
 
 # When using the Cosmos DB Emulator, make sure to uncomment the relevant parts in the backend-primary service as well,
 # to ensure it waits for the emulator to be healthy before starting.

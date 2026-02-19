@@ -20,7 +20,6 @@ from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
-
 from primary.middleware.add_browser_cache import AddBrowserCacheMiddleware
 from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.routers.dev.router import router as dev_router
@@ -44,11 +43,10 @@ from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.router import router as persistence_router
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
+from primary.utils.azure_service_credentials import ClientSecretVars, create_credential_for_azure_services
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
-from primary.utils.azure_service_credentials import ClientSecretVars, create_credential_for_azure_services
-from primary.utils.message_bus import MessageBusSingleton
 
 from . import config
 
@@ -87,11 +85,6 @@ def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.name}"
 
 
-# !!!!!!!!!!!!
-# from azure.cosmos.aio import CosmosClient
-# from azure.cosmos.aio import DatabaseProxy
-
-
 @asynccontextmanager
 async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
@@ -104,6 +97,9 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     )
     azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
 
+    # For local development, you can use the Cosmos DB Emulator. The emulator does not require credentials,
+    # so we can initialize the PersistenceStoresSingleton with the emulator connection settings.
+    # PersistenceStoresSingleton.initialize_with_emulator()
     if config.COSMOS_DB_PROD_CONNECTION_STRING:
         LOGGER.info("Using COSMOS_DB_PROD_CONNECTION_STRING from environment to initialize PersistenceStoresSingleton")
         await PersistenceStoresSingleton.initialize_with_connection_string(config.COSMOS_DB_PROD_CONNECTION_STRING)
@@ -114,20 +110,6 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
             "https://webviz-dev-db.documents.azure.com:443/", azure_services_credential
         )
 
-    # For local development, you can use the Cosmos DB Emulator. The emulator does not require credentials,
-    # so we can initialize the PersistenceStoresSingleton with the emulator connection settings.
-    # PersistenceStoresSingleton.initialize_with_emulator()
-
-    sb_conn_string = os.getenv("SERVICEBUS_CONNECTION_STRING")
-    if sb_conn_string:
-        LOGGER.info("Initializing MessageBusSingleton using SERVICEBUS_CONNECTION_STRING from environment")
-        MessageBusSingleton.initialize_with_connection_string(sb_conn_string)
-    else:
-        LOGGER.info("Initializing MessageBusSingleton using credential for azure services")
-        await MessageBusSingleton.initialize_with_credential_async(
-            "webviz-test.servicebus.windows.net", azure_services_credential
-        )
-
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
 
@@ -135,7 +117,6 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     yield
 
     await PersistenceStoresSingleton.shutdown_async()
-    await MessageBusSingleton.shutdown_async()
     await azure_services_credential.close()
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
