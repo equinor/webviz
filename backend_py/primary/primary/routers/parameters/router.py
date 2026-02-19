@@ -6,6 +6,8 @@ from primary.auth.auth_helper import AuthHelper
 from webviz_services.sumo_access.parameter_access import ParameterAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
+from primary.middleware.add_browser_cache import cache_time, CacheTime
+
 from . import schemas, converters
 
 LOGGER = logging.getLogger(__name__)
@@ -14,6 +16,7 @@ router = APIRouter()
 
 
 @router.get("/parameters_and_sensitivities/")
+@cache_time(CacheTime.LONG)
 async def get_parameters_and_sensitivities(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),

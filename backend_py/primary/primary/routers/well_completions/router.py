@@ -9,6 +9,8 @@ from webviz_services.well_completions_assembler.well_completions_assembler impor
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.query_string_utils import decode_uint_list_str
 
+from primary.middleware.add_browser_cache import cache_time, CacheTime
+
 from . import converters
 from . import schemas
 
@@ -16,6 +18,7 @@ router = APIRouter()
 
 
 @router.get("/well_completions_data/")
+@cache_time(CacheTime.LONG)
 async def get_well_completions_data(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],

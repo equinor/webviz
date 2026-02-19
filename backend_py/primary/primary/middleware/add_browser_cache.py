@@ -1,41 +1,72 @@
+from dataclasses import dataclass
+from enum import Enum
 from functools import wraps
 from contextvars import ContextVar
-from typing import Dict, Any, Callable
+from typing import Any, Callable
 
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Scope, Receive, Send, Message
-from primary.config import DEFAULT_CACHE_MAX_AGE, DEFAULT_STALE_WHILE_REVALIDATE
 
 
-# Initialize with a factory function to ensure a new dict for each context
-def get_default_context() -> Dict[str, Any]:
-    return {"max_age": DEFAULT_CACHE_MAX_AGE, "stale_while_revalidate": DEFAULT_STALE_WHILE_REVALIDATE}
+class StaleTime(Enum):
+    """Browser cache durations for endpoint responses in seconds.
+
+    E.g. stale-while-revalidate
+
+    SHORT: 1 day
+    LONG: 2 weeks
+    """
+
+    SHORT = 3600 * 24  # 1 day
+    LONG = 3600 * 24 * 14  # 2 weeks
 
 
-cache_context: ContextVar[Dict[str, Any]] = ContextVar("cache_context", default=get_default_context())
+class CacheTime(Enum):
+    """Browser cache time durations for endpoint responses in seconds.
+
+    SHORT: 1 hour max-age
+    LONG: 2 weeks max-age
+    """
+
+    SHORT = 3600  # 1 hour
+    LONG = 3600 * 24 * 14  # 2 weeks
 
 
-def add_custom_cache_time(max_age_s: int, stale_while_revalidate_s: int = 0) -> Callable:
+@dataclass
+class CacheSettings:
+    """Cache settings for an endpoint response."""
+
+    max_age_s: int
+    stale_while_revalidate_s: int | None
+
+
+# None means no cache override set (middleware will use no-store by default)
+_cache_context: ContextVar[CacheSettings | None] = ContextVar("_cache_context", default=None)
+
+
+def custom_cache_time(max_age_s: int, stale_while_revalidate_s: int | None) -> Callable:
     """
     Decorator that sets a custom browser cache time for the endpoint response.
 
     Args:
-        max_age_s (int): The maximum age in seconds for the cache
-        stale_while_revalidate_s (int): The stale-while-revalidate time in seconds
+        max_age_s: Cache max-age in seconds (must be positive)
+        stale_while_revalidate_s: Optional stale-while-revalidate in seconds (must be positive)
 
     Example:
-        @add_custom_cache_time(300, 600) # 5 minutes max age, 10 minutes stale-while-revalidate
+        @custom_cache_time(max_age_s=3600 * 24 * 7)  # 1 week
         async def my_endpoint():
             return {"data": "some_data"}
     """
 
+    if max_age_s <= 0:
+        raise ValueError("Cache time must be a positive number of seconds")
+    if stale_while_revalidate_s is not None and stale_while_revalidate_s <= 0:
+        raise ValueError("stale_while_revalidate_s must be a positive number of seconds")
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Callable:
-            context = cache_context.get()
-            context["max_age"] = max_age_s
-            context["stale_while_revalidate"] = stale_while_revalidate_s
-
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            _cache_context.set(CacheSettings(max_age_s=max_age_s, stale_while_revalidate_s=stale_while_revalidate_s))
             return await func(*args, **kwargs)
 
         return wrapper
@@ -43,30 +74,69 @@ def add_custom_cache_time(max_age_s: int, stale_while_revalidate_s: int = 0) -> 
     return decorator
 
 
-def no_cache(func: Callable) -> Callable:
+def cache_time(duration: CacheTime, stale_while_revalidate: StaleTime | None = None) -> Callable:
     """
-    Decorator that explicitly disables browser caching for the endpoint response.
+    Decorator that sets browser cache time for the endpoint response using a preset duration.
 
-    Example:
-        @no_cache
-        async def my_endpoint():
+    Args:
+        duration: CacheTime enum value (DEFAULT or LONG)
+        stale_while_revalidate: Optional StaleTime enum value (SHORT or LONG)
+
+    Examples:
+        @cache_time(CacheTime.LONG)
+        async def my_sumo_endpoint():
             return {"data": "some_data"}
     """
+    stale_while_revalidate_s = stale_while_revalidate.value if stale_while_revalidate is not None else None
 
-    @wraps(func)
-    async def wrapper(*args: Any, **kwargs: Any) -> Callable:
-        context = cache_context.get()
-        context["max_age"] = 0
-        context["stale_while_revalidate"] = 0
+    return custom_cache_time(max_age_s=duration.value, stale_while_revalidate_s=stale_while_revalidate_s)
 
-        return await func(*args, **kwargs)
 
-    return wrapper
+def set_cache_time(duration: CacheTime, stale_while_revalidate: StaleTime | None = None) -> None:
+    """
+    Utility function to opt in to caching from within an endpoint at runtime.
+
+    Use this instead of the @cache_time decorator when caching should be conditional
+    (e.g. only cache successful responses, not errors or in-progress).
+
+    Args:
+        duration: CacheTime enum value (DEFAULT or LONG)
+        stale_while_revalidate: Optional StaleTime enum value (SHORT or LONG)
+
+    Example:
+        async def my_endpoint():
+            result = await compute()
+            if result.is_success:
+                set_cache_time(CacheTime.DEFAULT, StaleTime.SHORT)
+            return result
+    """
+
+    stale_while_revalidate_s = stale_while_revalidate.value if stale_while_revalidate is not None else None
+
+    if stale_while_revalidate_s is not None and stale_while_revalidate_s <= 0:
+        raise ValueError("stale_while_revalidate_s must be a positive number of seconds")
+
+    _cache_context.set(CacheSettings(max_age_s=duration.value, stale_while_revalidate_s=stale_while_revalidate_s))
 
 
 class AddBrowserCacheMiddleware:
     """
-    Adds cache-control to the response headers
+    Adds Cache-Control header to HTTP responses.
+
+    Default: "no-store, private" (no store, more strict than no caching).
+    Opt in: Endpoints opt in to caching via @cache_time(CacheTime.X) or @custom_cache_time
+            decorator.
+
+    Cache-control strings:
+
+    - `no-store`: do not store response, not in browser memory, disk, proxy or temporary.
+    - `no-cache`: can store response but must revalidate with server before using cached response.
+    - `max-age`: browser can store response and use cached version for up to max-age seconds without
+                 revalidating with server. After max-age expires, browser must revalidate with
+                 server before using cached response.
+    - `stale-while-revalidate`: when response is stale (after max-age expires), browser can still
+                                use cached response while it revalidates with server in background,
+                                for up to stale-while-revalidate seconds.
     """
 
     def __init__(self, app: ASGIApp) -> None:
@@ -76,18 +146,30 @@ class AddBrowserCacheMiddleware:
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
 
-        # Set initial context and store token
-        cache_context.set(get_default_context())
+        # Reset context for each request
+        _cache_context.set(None)
 
         async def send_with_cache_header(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
+
                 # Only set cache-control if not already present so we don't overwrite settings done in router
                 if headers.get("cache-control") is None:
-                    context = cache_context.get()
-                    cache_control_str = f"max-age={context['max_age']}, stale-while-revalidate={context['stale_while_revalidate']}, private"
+                    cache_control_str = self._build_cache_control_header()
                     headers.append("cache-control", cache_control_str)
 
             await send(message)
 
         await self.app(scope, receive, send_with_cache_header)
+
+    def _build_cache_control_header(self) -> str:
+        settings = _cache_context.get()
+        if settings is not None and settings.max_age_s > 0:
+            cache_control_str = f"max-age={settings.max_age_s}"
+            if settings.stale_while_revalidate_s is not None and settings.stale_while_revalidate_s > 0:
+                cache_control_str += f", stale-while-revalidate={settings.stale_while_revalidate_s}"
+            cache_control_str += ", private"
+            return cache_control_str
+
+        # No store by default
+        return "no-store, private"

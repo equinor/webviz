@@ -9,6 +9,8 @@ from webviz_services.service_exceptions import Service, AuthorizationError, Serv
 
 from primary.auth.auth_helper import AuthHelper
 
+from primary.middleware.add_browser_cache import cache_time, CacheTime
+
 from . import schemas
 
 LOGGER = logging.getLogger(__name__)
@@ -17,6 +19,7 @@ router = APIRouter()
 
 
 @router.get("/user_info/{user_id_or_email}")
+@cache_time(CacheTime.SHORT)
 async def get_user_info(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     user_id_or_email: str = Path(description="User email, graph-id or 'me' for the authenticated user"),
@@ -50,6 +53,7 @@ async def get_user_info(
 
 
 @router.get("/user_photo/")
+@cache_time(CacheTime.SHORT)
 async def get_user_photo(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
