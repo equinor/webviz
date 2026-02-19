@@ -599,8 +599,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             throw new Error(
                 "Could not load workbench session from data container. This should not happen and indicates a logic error.",
             );
-        } finally {
-            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
         }
     }
 
@@ -840,8 +838,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         if (!unloadSession) {
             return;
         }
-
-        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
 
         if (this._persistenceOrchestrator) {
             this._persistenceOrchestrator.stop();
