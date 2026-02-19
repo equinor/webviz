@@ -20,7 +20,7 @@ from primary.persistence.snapshot_store import (
 LOGGER = logging.getLogger(__name__)
 
 
-async def _probe_cosmos(cosmos_client: CosmosClient, database: str) -> None:
+async def _probe_cosmos_async(cosmos_client: CosmosClient, database: str) -> None:
     try:
         database = cosmos_client.get_database_client(database)
         await database.read()
@@ -84,7 +84,7 @@ class PersistenceStoresSingleton:
         return cls._instance
 
     @classmethod
-    async def initialize_with_credential(cls, url: str, credential: AsyncTokenCredential) -> None:
+    async def initialize_with_credential_async(cls, url: str, credential: AsyncTokenCredential) -> None:
         if cls._instance is not None:
             raise RuntimeError("PersistenceStoresSingleton is already initialized")
 
@@ -102,7 +102,7 @@ class PersistenceStoresSingleton:
 
         cosmos_client = CosmosClient(url, credential)
         try:
-            await _probe_cosmos(cosmos_client, "persistence")
+            await _probe_cosmos_async(cosmos_client, "persistence")
             LOGGER.info("Successfully connected to Cosmos DB and accessed 'persistence' database")
         except Exception:
             await cosmos_client.close()
@@ -111,13 +111,13 @@ class PersistenceStoresSingleton:
         cls._instance = PersistenceStores(cosmos_client)
 
     @classmethod
-    async def initialize_with_connection_string(cls, connection_str: str) -> None:
+    async def initialize_with_connection_string_async(cls, connection_str: str) -> None:
         if cls._instance is not None:
             raise RuntimeError("PersistenceStoresSingleton is already initialized")
 
         cosmos_client = CosmosClient.from_connection_string(connection_str)
         try:
-            await _probe_cosmos(cosmos_client, "persistence")
+            await _probe_cosmos_async(cosmos_client, "persistence")
             LOGGER.info("Successfully connected to Cosmos DB and accessed 'persistence' database")
         except Exception:
             await cosmos_client.close()

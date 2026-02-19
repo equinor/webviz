@@ -12,9 +12,6 @@ from primary.persistence.cosmosdb.error_converter import raise_service_error_fro
 from .documents import SnapshotDocument, SnapshotMetadata
 from .types import SnapshotSortBy
 
-_CONTAINER_NAME = "snapshots"
-_DATABASE_NAME = "persistence"
-
 # CosmosDB has a 2MB document size limit
 # We use 1.5MB to leave room for metadata and safety margin
 _MAX_CONTENT_SIZE_BYTES = 1.5 * 1024 * 1024  # 1.5MB

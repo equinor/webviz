@@ -4,7 +4,6 @@ import datetime
 import logging
 import os
 
-from azure.cosmos.aio import CosmosClient
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from fastapi.routing import APIRoute
@@ -102,11 +101,13 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # PersistenceStoresSingleton.initialize_with_emulator()
     if config.COSMOS_DB_PROD_CONNECTION_STRING:
         LOGGER.info("Using COSMOS_DB_PROD_CONNECTION_STRING from environment to initialize PersistenceStoresSingleton")
-        await PersistenceStoresSingleton.initialize_with_connection_string(config.COSMOS_DB_PROD_CONNECTION_STRING)
+        await PersistenceStoresSingleton.initialize_with_connection_string_async(
+            config.COSMOS_DB_PROD_CONNECTION_STRING
+        )
     else:
         # If no connection string is provided, we use the dev database with credential authentication.
         LOGGER.info("Using credential for azure services to initialize PersistenceStoresSingleton")
-        await PersistenceStoresSingleton.initialize_with_credential(
+        await PersistenceStoresSingleton.initialize_with_credential_async(
             "https://webviz-dev-db.documents.azure.com:443/", azure_services_credential
         )
 
