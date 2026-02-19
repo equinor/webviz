@@ -75,7 +75,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                 props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
                 props.workbench
                     .getSessionManager()
-                    .saveActiveSession()
+                    .saveSession()
                     .then((result) => {
                         if (result) {
                             props.onClose?.();

@@ -73,7 +73,7 @@ export function WorkbenchWrapper() {
                 <ActiveDashboardBoundary>
                     <SelectEnsemblesDialog workbench={workbench} />
                     <InitialEnsemblesLoadingErrorInfoDialog workbench={workbench} />
-                    <SaveSessionDialog workbench={workbench} />
+                    <SaveSessionDialog workbench={workbench} saveAsNew />
                     <CreateSnapshotDialog workbench={workbench} />
                     <ActiveSessionRecoveryDialog workbench={workbench} />
                     <div className="grow min-h-0">
@@ -81,7 +81,7 @@ export function WorkbenchWrapper() {
                             <LeftNavBar workbench={workbench} />
                             <SettingsContentPanels workbench={workbench} />
                             <RightNavBar workbench={workbench} />
-                        </div>               
+                        </div>
                     </div>
                 </ActiveDashboardBoundary>
             </ActiveSessionBoundary>

@@ -540,14 +540,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             }
 
             if (result === "save") {
-                const activeSession = this.getActiveSession();
-                if (!activeSession.getIsPersisted()) {
-                    this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
-                    return false; // Wait for user to save
-                }
-                await this.saveActiveSession(true);
-                this.closeSession();
-                return true;
+                const saveSuccess = await this.maybeSaveSession();
+
+                if (saveSuccess) this.closeSession();
+
+                return saveSuccess;
             }
 
             if (result === "discard") {
@@ -626,57 +623,15 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     }
 
     // ========== Persistence Operations ==========
+    async maybeSaveSession(opts?: { saveAsNew?: boolean }) {
+        if (this._activeSession?.getIsPersisted()) return this.saveSession(opts);
 
-    async saveActiveSession(forceSave = false): Promise<boolean> {
-        if (!this._activeSession) {
-            throw new Error("No active workbench session to save. This should not happen and indicates a logic error.");
-        }
-
-        if (!this._persistenceOrchestrator) {
-            throw new Error("Cannot persist a snapshot. This should not happen and indicates a logic error.");
-        }
-
-        if (this._activeSession.getIsPersisted() || forceSave) {
-            this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
-            const wasPersisted = this._activeSession.getIsPersisted();
-
-            this.createLoadingToast("saveSession", "Saving session...");
-
-            const result = await this._persistenceOrchestrator.persistNow();
-
-            this.dismissToast("saveSession");
-
-            if (result.success) {
-                toast.success("Session saved successfully");
-
-                const id = this._activeSession.getId();
-                if (!wasPersisted && id) {
-                    const url = buildSessionUrl(id);
-                    this._workbench.getNavigationManager().pushState(url);
-                }
-            } else {
-                if (result.reason === PersistFailureReason.ERROR) {
-                    toast.error("Failed to save session");
-                } else if (result.reason === PersistFailureReason.SAVE_IN_PROGRESS) {
-                    toast.error("Save already in progress. Please wait...");
-                } else if (result.reason === PersistFailureReason.NO_CHANGES) {
-                    toast.info("No changes to save");
-                } else if (result.reason === PersistFailureReason.CONTENT_TOO_LARGE) {
-                    toast.error(result.message);
-                }
-            }
-
-            this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
-            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
-            return result.success;
-        }
-
-        // Session is not persisted - show save dialog
+        // The session has never been persisted before: open the metadata dialog to prompt the user to give the session a proper title
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
         return false;
     }
 
-    async saveAsNewSession(title: string, description?: string): Promise<void> {
+    async saveSession(opts?: { forceSave?: boolean; saveAsNew?: boolean }): Promise<boolean> {
         if (!this._activeSession) {
             throw new Error("No active workbench session to save. This should not happen and indicates a logic error.");
         }
@@ -685,55 +640,61 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             throw new Error("Cannot persist a snapshot. This should not happen and indicates a logic error.");
         }
 
+        const progressToastId = "saveSession";
+        const initialActiveSession = this._activeSession;
+
         this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
 
         try {
-            // Create a copy of the current session
-            const newSession = await PrivateWorkbenchSession.createCopy(this._queryClient, this._activeSession);
+            let sessionToSave;
 
-            // Update metadata with new title and description BEFORE setting as active
-            // This prevents the session from being marked dirty
-            newSession.updateMetadata({ title, description }, false);
+            if (opts?.saveAsNew) {
+                this.createLoadingToast(progressToastId, "Saving new session...");
 
-            // Close current session
-            this.unloadSession();
+                // Make the copy the active session
+                sessionToSave = await PrivateWorkbenchSession.createCopy(this._queryClient, this._activeSession);
 
-            // Set new session as active
-            await this.setActiveSession(newSession);
+                // Replace the active session with the new copy, since persistence orchestrator references it
+                this.unloadSession();
+                await this.setActiveSession(sessionToSave);
+            } else {
+                this.createLoadingToast(progressToastId, "Saving session...");
+                sessionToSave = this._activeSession;
+            }
 
-            this.createLoadingToast("saveAsNewSession", "Saving session as new...");
-
-            // Persist the new session
             const result = await this._persistenceOrchestrator.persistNow();
-
-            this.dismissToast("saveAsNewSession");
+            this.dismissToast(progressToastId);
 
             if (result.success) {
                 toast.success("Session saved successfully");
 
-                // Update URL with new session ID
-                const id = newSession.getId();
-                if (id) {
-                    const url = buildSessionUrl(id);
+                const newId = this._activeSession.getId();
+                // Update URL if session id changed. This happens when you save-as
+                if (newId && newId !== initialActiveSession.getId()) {
+                    const url = buildSessionUrl(newId);
                     this._workbench.getNavigationManager().pushState(url);
                 }
+
+                return true;
             } else {
                 if (result.reason === PersistFailureReason.ERROR) {
                     toast.error("Failed to save session");
                 } else if (result.reason === PersistFailureReason.SAVE_IN_PROGRESS) {
                     toast.error("Save already in progress. Please wait...");
                 } else if (result.reason === PersistFailureReason.NO_CHANGES) {
-                    toast.info("No changes to save");
+                    toast.error("No changes to save");
                 } else if (result.reason === PersistFailureReason.CONTENT_TOO_LARGE) {
                     toast.error(result.message);
                 }
-            }
 
-            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
+                return false;
+            }
         } catch (error) {
-            console.error("Failed to save session as new:", error);
-            toast.error("Failed to save session as new");
-            throw error;
+            this.dismissToast(progressToastId);
+            console.error("Failed to save session:", error);
+            toast.error("Failed to save session");
+
+            return false;
         } finally {
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
         }

@@ -14,6 +14,7 @@ import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
 export type SaveSessionDialogProps = {
     workbench: Workbench;
+    saveAsNew?: boolean;
 };
 
 type SaveSessionDialogInputFeedback = {
@@ -25,7 +26,6 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
 
     const originalTitle = activeSession.getMetadata().title;
     const originalDescription = activeSession.getMetadata().description ?? "";
-    const isPersisted = activeSession.getIsPersisted();
 
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
@@ -52,24 +52,11 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             return;
         }
 
-        if (isPersisted) {
-            // Save as new session (dialog opened via "Save As" button)
-            props.workbench
-                .getSessionManager()
-                .saveAsNewSession(title, description)
-                .catch((error) => {
-                    console.error("Failed to save session as new:", error);
-                });
-        } else {
-            // Regular save (first time saving)
-            props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
-            props.workbench
-                .getSessionManager()
-                .saveActiveSession(true)
-                .catch((error) => {
-                    console.error("Failed to save session:", error);
-                });
-        }
+        props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
+        props.workbench
+            .getSessionManager()
+            .saveSession({ saveAsNew: props.saveAsNew })
+            .then((success) => setIsOpen(!success));
     }
 
     function handleCancel() {
