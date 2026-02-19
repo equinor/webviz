@@ -16,7 +16,12 @@ import type {
 } from "@api";
 import { getSessionsMetadata, SessionSortBy_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
-import { edsDateRangeToIsoStringRange, type EdsDateRange, type IsoStringRange } from "@framework/utils/edsDateUtils";
+import {
+    edsDateRangeToIsoStringRange,
+    isoRangeToEdsDateRange,
+    type EdsDateRange,
+    type IsoStringRange,
+} from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -258,7 +263,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         setTableFilter((prev) => {
             return {
                 ...prev,
-                updatedAt: edsDateRangeToIsoStringRange(newRange),
+                updatedAt: edsDateRangeToIsoStringRange(newRange) ?? undefined,
             };
         });
     }
@@ -337,8 +342,9 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                 </Label>
                 <Label text="Updated at" wrapperClassName="min-w-2xs">
                     <DateRangePicker
+                        className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300"
+                        value={isoRangeToEdsDateRange(tableFilter.updatedAt ?? null)}
                         onChange={handleDateFilterRangeChange}
-                        className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300 h-10"
                     />
                 </Label>
             </div>
