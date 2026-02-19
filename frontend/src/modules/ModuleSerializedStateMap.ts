@@ -117,13 +117,6 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-<<<<<<< HEAD
-  "TopographicMap": {
-    settings?: never,
-    view?: never,
-  },
-=======
->>>>>>> b5ae122... Stabilized script
   "Vfp": {
     settings?: never,
     view?: never,
