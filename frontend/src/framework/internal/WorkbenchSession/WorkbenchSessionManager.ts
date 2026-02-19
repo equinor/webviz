@@ -629,7 +629,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         return false;
     }
 
-    async saveSession(opts?: { forceSave?: boolean; saveAsNew?: boolean }): Promise<boolean> {
+    async saveSession(opts?: { saveAsNew?: boolean }): Promise<boolean> {
         if (!this._activeSession) {
             throw new Error("No active workbench session to save. This should not happen and indicates a logic error.");
         }

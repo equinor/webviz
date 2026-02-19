@@ -63,6 +63,8 @@ export enum GuiEvent {
     DataChannelNodeHover = "dataChannelNodeHover",
     DataChannelNodeUnhover = "dataChannelNodeUnhover",
     UnsavedRealizationFilterSettingsAction = "unsavedRealizationFilterSettingsAction",
+    SessionSaveError = "sessionSaveError",
+    SessionLoadError = "sessionLoadError",
 }
 
 export type GuiEventPayloads = {
@@ -97,6 +99,12 @@ export type GuiEventPayloads = {
     };
     [GuiEvent.UnsavedRealizationFilterSettingsAction]: {
         action: UnsavedChangesAction;
+    };
+    [GuiEvent.SessionSaveError]: {
+        error: Error;
+    };
+    [GuiEvent.SessionLoadError]: {
+        error: Error;
     };
 };
 
