@@ -38,7 +38,6 @@ export function createResampledPolylinePointsAndCumulatedLengthArray(
                 { x: polylineUtmXy[i - 2], y: polylineUtmXy[i - 1] },
             );
             const actualDistance = actualSectionLengths[i / 2 - 1];
-            const numPoints = Math.floor(distance / sampledResolution) - 1;
             const scale = actualDistance / distance;
             const scaledStepSize = sampledResolution * scale;
 
@@ -47,26 +46,25 @@ export function createResampledPolylinePointsAndCumulatedLengthArray(
                 y: polylineUtmXy[i + 1] - polylineUtmXy[i - 1],
             };
             const normalizedVector = normalizeVec2(vector);
-            for (let p = 1; p <= numPoints; p++) {
+
+            // Add intermediate points (resampled points between original points)
+            const numIntermediatePoints = Math.max(0, Math.floor(distance / sampledResolution) - 1);
+            for (let p = 1; p <= numIntermediatePoints; p++) {
                 xPoints.push(polylineUtmXy[i - 2] + normalizedVector.x * sampledResolution * p);
                 yPoints.push(polylineUtmXy[i - 1] + normalizedVector.y * sampledResolution * p);
                 cumulatedPolylineLength += scaledStepSize;
                 cumulatedHorizontalPolylineLengthArr.push(cumulatedPolylineLength);
             }
+
+            // Add remaining distance from last intermediate point (or previous point) to this point
+            const distanceByIntermediatePoints = numIntermediatePoints > 0 ? numIntermediatePoints * scaledStepSize : 0;
+            const remainingDistance = actualDistance - distanceByIntermediatePoints;
+            cumulatedPolylineLength += remainingDistance;
         }
 
+        // Add original point and cumulated length for this point
         xPoints.push(polylineUtmXy[i]);
         yPoints.push(polylineUtmXy[i + 1]);
-
-        if (i > 0) {
-            const distance = point2Distance(
-                { x: polylineUtmXy[i], y: polylineUtmXy[i + 1] },
-                { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] },
-            );
-
-            cumulatedPolylineLength += distance;
-        }
-
         cumulatedHorizontalPolylineLengthArr.push(cumulatedPolylineLength);
     }
 

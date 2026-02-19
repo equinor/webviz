@@ -58,6 +58,8 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
         function handleCameraChange(viewport: ViewStateType): void {
             if (props.userCameraInteractionActive || props.userCameraInteractionActive === undefined) {
                 setCameraPosition(viewport);
+            } else {
+                setCameraPosition(undefined);
             }
             getCameraPosition?.(viewport);
         },

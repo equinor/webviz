@@ -8,14 +8,14 @@ export type EpochMsRange = { from?: number; to?: number };
 function convertEdsDateRange<T>(
     edsDateRangeChoice: EdsDateRange | null,
     converter: (date: Date) => T,
-): { from?: T; to?: T } | undefined {
+): { from?: T; to?: T } | null {
     if (edsDateRangeChoice?.from || edsDateRangeChoice?.to) {
         const filterRange: { from?: T; to?: T } = {};
 
         if (edsDateRangeChoice.from) filterRange.from = converter(edsDateRangeChoice.from);
         if (edsDateRangeChoice.to) {
             // The range component always uses hour 0 for the time
-            // We set the time to 23:59:59 to range inclusive
+            // We set the time to 23:59:59 to make the range inclusive
             const toDate = new Date(edsDateRangeChoice.to);
             toDate.setHours(23, 59, 59);
             filterRange.to = converter(toDate);
@@ -24,15 +24,27 @@ function convertEdsDateRange<T>(
         return filterRange;
     }
 
-    return undefined;
+    return null;
 }
 
 // Utility to convert range of Date objects to range of ISO strings
-export function edsDateRangeToIsoStringRange(edsDateRangeChoice: EdsDateRange | null): IsoStringRange | undefined {
+export function edsDateRangeToIsoStringRange(edsDateRangeChoice: EdsDateRange | null): IsoStringRange | null {
     return convertEdsDateRange(edsDateRangeChoice, (date) => date.toISOString());
 }
 
 // Utility to convert range of Date objects to range of time since epoch in milliseconds
-export function edsDateRangeToEpochMsRange(edsDateRangeChoice: EdsDateRange | null): EpochMsRange | undefined {
+export function edsDateRangeToEpochMsRange(edsDateRangeChoice: EdsDateRange | null): EpochMsRange | null {
     return convertEdsDateRange(edsDateRangeChoice, (date) => date.getTime());
+}
+
+export function isoRangeToEdsDateRange(isoRange: IsoStringRange | null): EdsDateRange {
+    if (isoRange === null) return { from: null, to: null };
+
+    let from: Date | null = null;
+    let to: Date | null = null;
+
+    if (isoRange.from) from = new Date(isoRange.from);
+    if (isoRange.to) to = new Date(isoRange.to);
+
+    return { from, to };
 }
