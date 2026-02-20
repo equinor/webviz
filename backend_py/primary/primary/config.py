@@ -33,5 +33,13 @@ RESOURCE_SCOPES_DICT = {
 
 DEFAULT_CACHE_MAX_AGE = 3600  # 1 hour
 DEFAULT_STALE_WHILE_REVALIDATE = 3600 * 24  # 24 hour
+
 REDIS_USER_SESSION_URL = "redis://redis-user-session:6379"
 REDIS_CACHE_URL = "redis://redis-cache:6379"
+
+_is_on_radix_platform = os.getenv("RADIX_APP") is not None
+if _is_on_radix_platform:
+    COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-db.documents.azure.com:443/")
+else:
+    COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-dev-db.documents.azure.com:443/")
+
