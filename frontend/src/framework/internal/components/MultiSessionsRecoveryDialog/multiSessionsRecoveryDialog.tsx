@@ -88,8 +88,13 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                     </tr>
                 </thead>
                 <tbody>
-                    {sessions.map((session) => (
-                        <SessionRow session={session} key={session.id} onOpen={handleOpen} onDiscard={handleDiscard} />
+                    {sessions.map((session, i) => (
+                        <SessionRow
+                            key={session.id ?? `localStore::${i}`}
+                            session={session}
+                            onOpen={handleOpen}
+                            onDiscard={handleDiscard}
+                        />
                     ))}
                 </tbody>
             </table>

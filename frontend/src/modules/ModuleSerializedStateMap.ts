@@ -117,10 +117,13 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+<<<<<<< HEAD
   "TopographicMap": {
     settings?: never,
     view?: never,
   },
+=======
+>>>>>>> main
   "Vfp": {
     settings?: never,
     view?: never,
