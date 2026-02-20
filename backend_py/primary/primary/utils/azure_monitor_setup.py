@@ -17,10 +17,9 @@ def setup_azure_monitor_telemetry(fastapi_app: FastAPI) -> None:
     # Note that this call will throw an exception if the APPLICATIONINSIGHTS_CONNECTION_STRING
     # environment variable is not set or if it is invalid.
     # Starting with version 1.8.6, the default sampler is RateLimitedSampler. We restore the old behavior by setting the
-    # sampler to "microsoft.fixed_percentage" with sampler_arg of 1.0, which means that we sample 100% of the traces.
+    # sampling_ratio to 1.0, which restores classic Application Insights sampler.
     configure_azure_monitor(
-        sampler="microsoft.fixed_percentage",
-        sampler_arg=1.0,
+        sampling_ratio=1.0,
         logging_formatter=logging.Formatter("[%(name)s]: %(message)s"),
         instrumentation_options={
             "django": {"enabled": False},

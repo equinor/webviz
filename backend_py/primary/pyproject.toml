@@ -20,7 +20,7 @@ pyjwt = "^2.6.0"
 pydantic = "^2.3.0"
 orjson = "^3.8.10"
 httpx = "^0.28.1"
-azure-monitor-opentelemetry = "^1.8.6"
+azure-monitor-opentelemetry = "1.8.6"
 opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-redis = "*"
 webviz-core-utils = { path = "../libs/core_utils", develop = true }
