@@ -252,6 +252,7 @@ async def post_get_mapped_grid_properties(
         undefined_int_value=undefined_int_value,
         min_grid_prop_value=prop_extractor.get_min_global_val(),
         max_grid_prop_value=prop_extractor.get_max_global_val(),
+        discrete_codes_map=prop_extractor.get_discrete_codes_map(),
         stats=None,
     )
     perf_metrics.record_lap("make-response")
