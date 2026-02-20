@@ -10,15 +10,15 @@ function sanitize(name) {
 }
 
 export async function generateModuleSerializedStateMap() {
-    const settingsFiles = await glob("src/modules/[^_]*/settings/persistence.ts", { cwd: process.cwd() });
-    const viewFiles = await glob("src/modules/[^_]*/view/persistence.ts", { cwd: process.cwd() });
+    const settingsFiles = (await glob("src/modules/[^_]*/settings/persistence.ts", { cwd: process.cwd() })).sort();
+    const viewFiles = (await glob("src/modules/[^_]*/view/persistence.ts", { cwd: process.cwd() })).sort();
 
     const outputLines = [];
     const viewMap = new Map();
     const settingsMap = new Map();
     const modules = new Set();
 
-    const moduleFolders = await glob("src/modules/!(_*)/", { onlyDirectories: true, cwd: process.cwd() });
+    const moduleFolders = (await glob("src/modules/!(_*)/", { onlyDirectories: true, cwd: process.cwd() })).sort();
 
     for (const folder of moduleFolders) {
         const match = folder.match(/src\/modules\/([^/]+)(\/)?$/);
