@@ -2,7 +2,9 @@ import type { FetchQueryOptions, QueryClient, QueryKey } from "@tanstack/react-q
 import { isCancelledError } from "@tanstack/react-query";
 import { clone, isEqual } from "lodash";
 
+import { GenericPubSubStatusWriter, GenericStatusWriterTopic } from "@framework/GenericPubSubStatusWriter";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { StatusMessage as GenericStatusMessage } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -18,7 +20,7 @@ import {
 } from "../../delegates/SettingsContextDelegate";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { Item } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
@@ -34,6 +36,7 @@ export enum DataProviderTopic {
     SUBORDINATED = "SUBORDINATED",
     REVISION_NUMBER = "REVISION_NUMBER",
     PROGRESS_MESSAGE = "PROGRESS_MESSAGE",
+    STATUS_WRITER_MESSAGES = "STATUS_WRITER_MESSAGES",
 }
 
 export enum DataProviderStatus {
@@ -50,6 +53,7 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.SUBORDINATED]: boolean;
     [DataProviderTopic.REVISION_NUMBER]: number;
     [DataProviderTopic.PROGRESS_MESSAGE]: string | null;
+    [DataProviderTopic.STATUS_WRITER_MESSAGES]: GenericStatusMessage[];
 };
 
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
@@ -125,12 +129,14 @@ export class DataProvider<
     private _prevSettings: TSettingTypes | null = null;
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
     private _currentTransactionId: number = 0;
-    private _settingsErrorMessages: string[] = [];
     private _revisionNumber: number = 0;
     private _progressMessage: string | null = null;
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
+
+    private _statusWriter = new GenericPubSubStatusWriter("DataProvider");
+    private _allStatusMessages: GenericStatusMessage[] = [];
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -155,6 +161,22 @@ export class DataProvider<
             instanceName ?? customDataProviderImplementation.getDefaultName(),
             1,
             dataProviderManager,
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "status-writer",
+            this._statusWriter
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(GenericStatusWriterTopic.UPDATE_MESSAGES)(() => this.syncAllStatusMessages()),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "settings-context",
+            this._settingsContextDelegate
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES)(() => {
+                this.syncAllStatusMessages();
+            }),
         );
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -185,18 +207,12 @@ export class DataProvider<
             return true;
         }
 
-        this._settingsErrorMessages = [];
-        const reportError = (message: string) => {
-            this._settingsErrorMessages.push(message);
-        };
-        return this._customDataProviderImpl.areCurrentSettingsValid({ ...this.makeAccessors(), reportError });
-    }
-
-    getSettingsErrorMessages(): string[] {
-        return this._settingsErrorMessages;
+        return this._customDataProviderImpl.areCurrentSettingsValid(this.makeAccessors());
     }
 
     private handleSettingsAndStoredDataChange(): void {
+        this._statusWriter.clear();
+
         if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
             this.setStatus(DataProviderStatus.LOADING);
             return;
@@ -338,6 +354,9 @@ export class DataProvider<
             if (topic === DataProviderTopic.PROGRESS_MESSAGE) {
                 return this._progressMessage;
             }
+            if (topic === DataProviderTopic.STATUS_WRITER_MESSAGES) {
+                return this._allStatusMessages;
+            }
             throw new Error(`Unknown topic: ${topic}`);
         };
 
@@ -373,7 +392,7 @@ export class DataProvider<
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.PROGRESS_MESSAGE);
     }
 
-    makeAccessors(): DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey> {
+    makeAccessors(): DataProviderAccessors<TSettings, TData, TStoredData, TSettingKey> {
         return {
             getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
             getSettingValueConstraints: (settingName) =>
@@ -383,6 +402,7 @@ export class DataProvider<
             getData: () => this._data,
             getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
             getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
+            getStatusWriter: () => this._statusWriter,
         };
     }
 
@@ -507,5 +527,14 @@ export class DataProvider<
 
     private invalidateValueRange(): void {
         this._valueRange = null;
+    }
+
+    private syncAllStatusMessages(): void {
+        const localMessages = this._statusWriter.getMessages();
+        const settingsContextMessages = this._settingsContextDelegate.getDependencyStatusMessages();
+
+        this._allStatusMessages = [...localMessages, ...settingsContextMessages];
+
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS_WRITER_MESSAGES);
     }
 }

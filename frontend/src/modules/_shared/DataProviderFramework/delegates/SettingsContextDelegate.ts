@@ -1,3 +1,5 @@
+import { GenericStatusWriterTopic } from "@framework/GenericPubSubStatusWriter";
+import type { StatusMessage } from "@framework/types/statusWriter";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -9,7 +11,12 @@ import {
 } from "../framework/DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../framework/SettingManager/SettingManager";
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
-import type { CustomSettingsHandler, SettingAttributes, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
+import type {
+    CustomSettingsHandler,
+    HelperUpdateFunc,
+    SettingAttributes,
+    UpdateFunc,
+} from "../interfacesAndTypes/customSettingsHandler";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
@@ -26,11 +33,13 @@ export enum SettingsContextStatus {
 export enum SettingsContextDelegateTopic {
     SETTINGS_AND_STORED_DATA_CHANGED = "SETTINGS_AND_STORED_DATA_CHANGED",
     STATUS = "STATUS",
+    STATUS_WRITER_MESSAGES = "STATUS_WRITER_MESSAGES",
 }
 
 export type SettingsContextDelegatePayloads = {
     [SettingsContextDelegateTopic.SETTINGS_AND_STORED_DATA_CHANGED]: void;
     [SettingsContextDelegateTopic.STATUS]: SettingsContextStatus;
+    [SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES]: StatusMessage[];
 };
 
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
@@ -79,6 +88,8 @@ export class SettingsContextDelegate<
         [K in TStoredDataKey]: boolean;
     };
     private _dependencies: Dependency<any, TSettings, any, any>[] = [];
+
+    private _dependencyStatusMessages: StatusMessage[] = [];
 
     constructor(
         customSettingsHandler: CustomSettingsHandler<
@@ -131,6 +142,10 @@ export class SettingsContextDelegate<
 
     getStatus(): SettingsContextStatus {
         return this._status;
+    }
+
+    getDependencyStatusMessages(): StatusMessage[] {
+        return this._dependencyStatusMessages;
     }
 
     getValues(): { [K in TSettingKey]?: TSettingTypes[K] } {
@@ -258,6 +273,9 @@ export class SettingsContextDelegate<
             }
             if (topic === SettingsContextDelegateTopic.STATUS) {
                 return this._status;
+            }
+            if (topic === SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES) {
+                return this._dependencyStatusMessages;
             }
         };
 
@@ -411,6 +429,7 @@ export class SettingsContextDelegate<
                 this.handleSettingChanged();
             });
 
+            this.subscribeToDependencyStatusMessages(dependency);
             dependency.initialize();
 
             return dependency;
@@ -441,6 +460,7 @@ export class SettingsContextDelegate<
                 this.handleSettingChanged();
             });
 
+            this.subscribeToDependencyStatusMessages(dependency);
             dependency.initialize();
 
             return dependency;
@@ -477,21 +497,13 @@ export class SettingsContextDelegate<
                 }
             });
 
+            this.subscribeToDependencyStatusMessages(dependency);
             dependency.initialize();
 
             return dependency;
         };
 
-        const helperDependency = <T>(
-            update: (args: {
-                getLocalSetting: <T extends TSettingKey>(settingName: T) => TSettingTypes[T];
-                getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-                getHelperDependency: <TDep>(
-                    dep: Dependency<TDep, TSettings, TSettingTypes, TSettingKey>,
-                ) => Awaited<TDep> | null;
-                abortSignal: AbortSignal;
-            }) => T,
-        ) => {
+        const helperDependency = <T>(update: HelperUpdateFunc<T, TSettings, TSettingTypes, TSettingKey>) => {
             const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
                 localSettingManagerGetter,
                 globalSettingGetter,
@@ -506,6 +518,7 @@ export class SettingsContextDelegate<
                 this.handleSettingChanged();
             });
 
+            this.subscribeToDependencyStatusMessages(dependency);
             dependency.initialize();
 
             return dependency;
@@ -573,5 +586,18 @@ export class SettingsContextDelegate<
         }
 
         this.handleSettingChanged();
+    }
+
+    private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any>): void {
+        dependency
+            .getStatusWriter()
+            .getPublishSubscribeDelegate()
+            .subscribe(GenericStatusWriterTopic.UPDATE_MESSAGES, () => this.syncAllStatusMessages());
+    }
+
+    private syncAllStatusMessages(): void {
+        this._dependencyStatusMessages = this._dependencies.flatMap((d) => d.getStatusMessages());
+
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES);
     }
 }

@@ -3,14 +3,24 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { Sensitivity, SensitivityCase } from "@framework/EnsembleSensitivities";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { UpdateFunc } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type {
+    MakeSettingTypesMap,
+    SettingsKeysFromTuple,
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import type { SensitivityNameCasePair } from "@modules/_shared/DataProviderFramework/settings/implementations/SensitivitySetting";
+import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 /**
  * Creates an valueConstraintsUpdater for Setting.ENSEMBLE that filters ensembles by the current field.
  */
-export function createEnsembleUpdater() {
-    return ({ getGlobalSetting }: any) => {
+export function createEnsembleUpdater<
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>,
+>(): UpdateFunc<RegularEnsembleIdent[], TSettings, TSettingTypes, TKey> {
+    return ({ getGlobalSetting }) => {
         const fieldIdentifier = getGlobalSetting("fieldId");
         const ensembles = getGlobalSetting("ensembles");
 
@@ -26,9 +36,16 @@ export function createEnsembleUpdater() {
  * Creates an valueConstraintsUpdater for Setting.SENSITIVITY that returns sensitivity name/case pairs
  * for the selected ensemble.
  */
-export function createSensitivityUpdater(workbenchSession: WorkbenchSession) {
-    return ({ getLocalSetting }: any) => {
-        const ensembleIdent = getLocalSetting(Setting.ENSEMBLE) as RegularEnsembleIdent | DeltaEnsembleIdent | null;
+export function createSensitivityUpdater<
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>,
+>(workbenchSession: WorkbenchSession): UpdateFunc<SensitivityNameCasePair[], TSettings, TSettingTypes, TKey> {
+    return ({ getLocalSetting }) => {
+        const ensembleIdent = getLocalSetting(Setting.ENSEMBLE as TKey) as
+            | RegularEnsembleIdent
+            | DeltaEnsembleIdent
+            | null;
 
         if (!ensembleIdent) {
             return [];
@@ -57,9 +74,16 @@ export function createSensitivityUpdater(workbenchSession: WorkbenchSession) {
  * Creates an valueConstraintsUpdater for Setting.REALIZATION that returns filtered realizations
  * for the selected ensemble.
  */
-export function createRealizationUpdater() {
-    return ({ getLocalSetting, getGlobalSetting }: any) => {
-        const ensembleIdent = getLocalSetting(Setting.ENSEMBLE) as RegularEnsembleIdent | DeltaEnsembleIdent | null;
+export function createRealizationUpdater<
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>,
+>(): UpdateFunc<number[], TSettings, TSettingTypes, TKey> {
+    return ({ getLocalSetting, getGlobalSetting }) => {
+        const ensembleIdent = getLocalSetting(Setting.ENSEMBLE as TKey) as
+            | RegularEnsembleIdent
+            | DeltaEnsembleIdent
+            | null;
         const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
         if (!ensembleIdent) {

@@ -8,6 +8,8 @@ import { Actions } from "../../Actions";
 import { SortableListGroup } from "../../components/group";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
+import type { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
+import { SharedSettingsDelegateTopic } from "../../delegates/SharedSettingsDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
@@ -15,6 +17,7 @@ import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
+import { StatusMessages } from "../utilityComponents/StatusWriterMessages";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
@@ -32,6 +35,8 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
     const color = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.COLOR);
+
+    const sharedSettingsDelegate = props.group.getSharedSettingsDelegate();
 
     const actions = React.useMemo(() => {
         return makeActionsForGroup(props.group);
@@ -63,6 +68,11 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
 
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
+
+        if (sharedSettingsDelegate) {
+            adornments.push(<StatusMessagesWrapper settingsDelegate={sharedSettingsDelegate} />);
+        }
+
         adornments.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
         adornments.push(<RemoveItemButton key="remove" item={props.group} />);
@@ -107,4 +117,13 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             )}
         </SortableListGroup>
     );
+}
+
+function StatusMessagesWrapper(props: { settingsDelegate: SharedSettingsDelegate<any, any> }) {
+    const dependencyStatusMessages = usePublishSubscribeTopicValue(
+        props.settingsDelegate,
+        SharedSettingsDelegateTopic.STATUS_WRITER_MESSAGES,
+    );
+
+    return <StatusMessages statusMessages={dependencyStatusMessages} />;
 }
