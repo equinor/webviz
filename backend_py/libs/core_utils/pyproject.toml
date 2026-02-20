@@ -10,7 +10,8 @@ packages = [{ include = "webviz_core_utils", from = "src" }]
 
 [tool.poetry.dependencies]
 numpy = "^2.2.3"
-pydantic = "^2.11.0"
+# Pydantic might have small breaking changes in minor releases
+pydantic = "~2.12.0"
 
 [build-system]
 requires = ["poetry-core"]
