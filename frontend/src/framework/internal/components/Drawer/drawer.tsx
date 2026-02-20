@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Dropdown, MenuButton } from "@mui/base";
-import { Check, Close, FilterAlt, Search } from "@mui/icons-material";
+import { Check, Close, MoreVert, Search } from "@mui/icons-material";
 
 import { Badge } from "@lib/components/Badge";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
@@ -103,7 +103,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                                         color="bg-blue-500"
                                         invisible={selectedFilterItems.length === 0}
                                     >
-                                        <FilterAlt fontSize="small" />
+                                        <MoreVert fontSize="small" />
                                     </Badge>
                                 </MenuButton>
                                 <Menu anchorOrigin="bottom-end">
