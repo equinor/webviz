@@ -1,7 +1,9 @@
 import React from "react";
 
+import { Close } from "@mui/icons-material";
 import _ from "lodash";
 
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { useStableProp } from "@lib/hooks/useStableProp";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
@@ -37,6 +39,10 @@ export type ReadoutBoxProps = {
     /** The distance between the box and the edges of the parent container. Give a single number for equal distance on all sides */
     edgeDistanceRem?: number | PartialEdgeDistance;
     compact?: boolean;
+    /** A callback for when the box is closed - this will automatically show a cross */
+    onClose?: () => void;
+    /** Gray out the text to indicate stale data */
+    textGrayedOut?: boolean;
 };
 
 export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
@@ -101,7 +107,8 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
                 "absolute z-9999 grid items-center rounded-sm border border-neutral-300 bg-white/75 backdrop-blur-xs pointer-events-none",
                 {
                     "gap-2 p-2 text-sm w-72": !props.compact,
-                    "gap-y-0.5 gap-x-2 py-1 px-2 text-xs min-w-52": props.compact,
+                    "gap-y-0.5 gap-x-2 py-2 px-2 text-xs min-w-52": props.compact,
+                    "text-neutral-500": props.textGrayedOut,
                 },
             )}
             style={{
@@ -109,6 +116,15 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
                 gridTemplateColumns: "1rem auto 1fr auto",
             }}
         >
+            {props.onClose && (
+                <DenseIconButton
+                    onClick={props.onClose}
+                    className="absolute top-0.5 right-0.5 pointer-events-auto text-xs"
+                    title="Clear readout"
+                >
+                    <Close fontSize="inherit" />
+                </DenseIconButton>
+            )}
             {visibleReadoutItems.map((item, idx) => (
                 <React.Fragment key={idx}>
                     <InfoLabel item={item} noLabelColor={props.noLabelColor} />
