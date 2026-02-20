@@ -371,7 +371,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     function openModulesList() {
         setRightDrawerContent(RightDrawerContent.ModulesList);
         if (rightSettingsPanelWidth <= 5) {
-            setRightSettingsPanelWidth(30);
+            setRightSettingsPanelWidth(15);
         }
     }
 

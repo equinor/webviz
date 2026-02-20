@@ -11,7 +11,7 @@ import {
 } from "@api";
 import { ConfirmationService } from "@framework/ConfirmationService";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
-import { GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
+import { GuiState, RightDrawerContent } from "@framework/GuiMessageBroker";
 import type { Template } from "@framework/TemplateRegistry";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type { Workbench } from "@framework/Workbench";
@@ -278,10 +278,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             await this.setActiveSession(snapshot);
 
-            // Update GUI state for snapshots
-            if (this._guiMessageBroker.getState(GuiState.LeftDrawerContent) !== LeftDrawerContent.ModuleSettings) {
-                this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
-            }
             if (this._guiMessageBroker.getState(GuiState.RightDrawerContent) === RightDrawerContent.ModulesList) {
                 this._guiMessageBroker.setState(
                     GuiState.RightDrawerContent,
@@ -570,8 +566,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             if (session.getEnsembleSet().getEnsembleArray().length === 0) {
                 this._guiMessageBroker.setState(GuiState.EnsembleDialogOpen, true);
             }
-
-            this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
 
             const activeDashboard = session.getActiveDashboard();
             if (activeDashboard && activeDashboard.getLayout().length === 0) {

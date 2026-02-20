@@ -361,6 +361,55 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         }
     }
 
+    function createEnsembleRealizationFilterList() {
+        if (!ensembleSet.hasAnyEnsembles()) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full p-4 text-center text-gray-400">
+                    No ensembles available. Please add ensembles to the session to enable realization filtering.
+                </div>
+            );
+        }
+
+        return (
+            <div className="flex flex-col p-2 gap-2 overflow-y-auto">
+                <div className="grow space-y-4">
+                    {ensembleSet.getEnsembleArray().map((ensemble) => {
+                        const ensembleIdent = ensemble.getIdent();
+                        const isActive =
+                            activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
+                        const isAnotherActive = !isActive && activeFilterEnsembleIdent !== null;
+
+                        const selections =
+                            ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
+                        const currentFilteredRealizations = realizationFilterSet
+                            .getRealizationFilterForEnsembleIdent(ensembleIdent)
+                            .getFilteredRealizations();
+
+                        if (!selections) {
+                            return null;
+                        }
+                        return (
+                            <EnsembleRealizationFilter
+                                key={ensembleIdent.toString()}
+                                ensemble={ensemble}
+                                filteredRealizationNumbers={currentFilteredRealizations}
+                                selections={selections}
+                                hasUnsavedSelections={ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]}
+                                isActive={isActive}
+                                isAnotherFilterActive={isAnotherActive}
+                                onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
+                                onHeaderClick={() => handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent)}
+                                onFilterChange={(newSelections) => handleFilterChange(ensembleIdent, newSelections)}
+                                onApplyClick={() => handleApplyClick(ensembleIdent)}
+                                onDiscardClick={() => handleDiscardClick(ensembleIdent)}
+                            />
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className={`w-full ${drawerContent === RightDrawerContent.RealizationFilterSettings ? "h-full" : "h-0"}`}>
             <Drawer
@@ -369,44 +418,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 visible={drawerContent === RightDrawerContent.RealizationFilterSettings}
                 onClose={handleFilterSettingsClose}
             >
-                <div className="flex flex-col p-2 gap-2 overflow-y-auto">
-                    <div className="grow space-y-4">
-                        {ensembleSet.getEnsembleArray().map((ensemble) => {
-                            const ensembleIdent = ensemble.getIdent();
-                            const isActive =
-                                activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
-                            const isAnotherActive = !isActive && activeFilterEnsembleIdent !== null;
-
-                            const selections =
-                                ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
-                            const currentFilteredRealizations = realizationFilterSet
-                                .getRealizationFilterForEnsembleIdent(ensembleIdent)
-                                .getFilteredRealizations();
-
-                            if (!selections) {
-                                return null;
-                            }
-                            return (
-                                <EnsembleRealizationFilter
-                                    key={ensembleIdent.toString()}
-                                    ensemble={ensemble}
-                                    filteredRealizationNumbers={currentFilteredRealizations}
-                                    selections={selections}
-                                    hasUnsavedSelections={
-                                        ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]
-                                    }
-                                    isActive={isActive}
-                                    isAnotherFilterActive={isAnotherActive}
-                                    onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
-                                    onHeaderClick={() => handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent)}
-                                    onFilterChange={(newSelections) => handleFilterChange(ensembleIdent, newSelections)}
-                                    onApplyClick={() => handleApplyClick(ensembleIdent)}
-                                    onDiscardClick={() => handleDiscardClick(ensembleIdent)}
-                                />
-                            );
-                        })}
-                    </div>
-                </div>
+                {createEnsembleRealizationFilterList()}
             </Drawer>
         </div>
     );
