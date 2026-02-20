@@ -5,6 +5,8 @@ import { Close } from "@mui/icons-material";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+type DialogVariant = "error" | "warning" | "info";
+
 export type DialogDrawerProps = {
     content?: React.ReactNode;
     width?: string | number;
@@ -29,11 +31,14 @@ export type DialogProps = {
     showCloseCross?: boolean;
     drawer?: DialogDrawerProps;
     zIndex?: number;
+    variant?: DialogVariant;
 };
 
 export const Dialog: React.FC<DialogProps> = (props) => {
     const wrapperRef = React.useRef<HTMLDivElement>(null);
     const dialogRef = React.useRef<HTMLDivElement>(null);
+
+    const variantOrDefault = props.variant ?? "info";
 
     const handleClose = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         props.onClose?.(e);
@@ -60,9 +65,10 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             {/* Main dialog */}
             <div
                 ref={dialogRef}
-                className={
-                    "fixed left-1/2 top-1/2 border rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col overflow-hidden"
-                }
+                className={resolveClassNames(
+                    "fixed left-1/2 top-1/2 rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col overflow-hidden",
+                    { border: !props.modal },
+                )}
                 style={{
                     transform: `translate(-50%, -50%)`,
                     height: props.height,
@@ -74,7 +80,11 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                 }}
             >
                 {/* Header */}
-                <div className="flex justify-between p-4 border-b shadow-inner">
+                <div
+                    className={resolveClassNames("flex justify-between p-4 border-b", {
+                        "bg-red-200 border-red-400 ": variantOrDefault === "error",
+                    })}
+                >
                     <h2 className="text-slate-800 font-bold text-lg">{props.title}</h2>
                     {props.showCloseCross && (
                         <div

@@ -5,6 +5,7 @@ import { BugReport, ContentCopy } from "@mui/icons-material";
 import { shouldSymbolicate, symbolicateStackTrace } from "@framework/utils/stackTraceSymbolication";
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
+import { reportErrorToGithub } from "@lib/utils/errors";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type Props = {
@@ -61,36 +62,20 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         freshStartUrl.searchParams.set("cleanStart", "true");
 
         const reportIssue = async (error: Error) => {
-            this.setState({ symbolicatingStack: true });
+            let customStackTrace;
+            if (shouldSymbolicate()) {
+                this.setState({ symbolicatingStack: true });
 
-            let stackToReport = error.stack || "";
-
-            // Symbolicate the stack if in production and source maps are available
-            if (shouldSymbolicate() && error) {
                 try {
-                    stackToReport = await symbolicateStackTrace(error);
+                    customStackTrace = await symbolicateStackTrace(error);
                 } catch (err) {
                     console.error("Failed to symbolicate stack trace:", err);
-                    // Fall back to original stack
-                    stackToReport = error.stack || "";
                 }
+
+                this.setState({ symbolicatingStack: false });
             }
 
-            this.setState({ symbolicatingStack: false });
-
-            const errorMessage = `${error.name}: ${error.message}`;
-            const title = encodeURIComponent(`[USER REPORTED ERROR] ${errorMessage}`);
-            const body = encodeURIComponent(
-                `<!-- ⚠️ DO NOT INCLUDE DATA/SCREENSHOTS THAT CAN'T BE PUBLICLY AVAILABLE.-->\n\n\
-**How to reproduce**\nPlease describe what you were doing when the error occurred.\n\n\
-**Screenshots**\nIf applicable, add screenshots to help explain your problem.\n\n\
-**Error stack**\n\`\`\`\n${stackToReport}\n\`\`\``,
-            );
-            const label = encodeURIComponent("user reported error");
-            window.open(
-                `https://github.com/equinor/webviz/issues/new?title=${title}&body=${body}&labels=${label}`,
-                "_blank",
-            );
+            reportErrorToGithub(error, customStackTrace);
         };
 
         const copyToClipboard = () => {

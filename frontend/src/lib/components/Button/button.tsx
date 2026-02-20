@@ -14,6 +14,7 @@ export type ButtonProps = {
     color?: "primary" | "danger" | "success" | "secondary";
     size?: "small" | "medium" | "large";
     buttonRef?: React.Ref<HTMLButtonElement>;
+    wrapperClassName?: React.HTMLAttributes<HTMLDivElement>["className"];
 } & ButtonUnstyledProps;
 
 function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElement>) {
@@ -73,7 +74,7 @@ function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElem
     classNames.push(props.className ?? "");
 
     return (
-        <BaseComponent disabled={disabled} ref={ref}>
+        <BaseComponent className={props.wrapperClassName} disabled={disabled} ref={ref}>
             <ButtonUnstyled
                 {...rest}
                 ref={buttonRef}
