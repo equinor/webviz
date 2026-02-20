@@ -153,7 +153,7 @@ class UserGrid3dService:
         )
 
         perf_metrics.reset_lap_timer()
-        response = await self._call_service_endpoint_post(
+        response = await self._call_service_endpoint_post_async(
             endpoint="get_grid_geometry",
             body_pydantic_model=request_body,
             operation_descr="getting grid geometry from grid3d user session",
@@ -217,7 +217,7 @@ class UserGrid3dService:
         )
 
         perf_metrics.reset_lap_timer()
-        response = await self._call_service_endpoint_post(
+        response = await self._call_service_endpoint_post_async(
             endpoint="get_mapped_grid_properties",
             body_pydantic_model=request_body,
             operation_descr="getting mapped grid properties from grid3d user session",
@@ -273,7 +273,7 @@ class UserGrid3dService:
             polyline_utm_xy=polyline_utm_xy,
         )
 
-        response = await self._call_service_endpoint_post(
+        response = await self._call_service_endpoint_post_async(
             endpoint="get_polyline_intersection",
             body_pydantic_model=request_body,
             operation_descr="getting polyline intersection from grid3d user session",
@@ -344,10 +344,10 @@ class UserGrid3dService:
 
         LOGGER.debug(f"{prefix} {msg}")
 
-    async def _call_service_endpoint_get(
+    async def _call_service_endpoint_get_async(
         self, endpoint: str, query_params: dict[str, str], operation_descr: str
     ) -> httpx.Response:
-        return await self._make_request_to_service_endpoint(
+        return await self._make_request_to_service_endpoint_async(
             method="GET",
             endpoint=endpoint,
             query_params=query_params,
@@ -355,10 +355,10 @@ class UserGrid3dService:
             operation_descr=operation_descr,
         )
 
-    async def _call_service_endpoint_post(
+    async def _call_service_endpoint_post_async(
         self, endpoint: str, body_pydantic_model: BaseModel, operation_descr: str
     ) -> httpx.Response:
-        return await self._make_request_to_service_endpoint(
+        return await self._make_request_to_service_endpoint_async(
             method="POST",
             endpoint=endpoint,
             query_params=None,
@@ -366,7 +366,7 @@ class UserGrid3dService:
             operation_descr=operation_descr,
         )
 
-    async def _make_request_to_service_endpoint(
+    async def _make_request_to_service_endpoint_async(
         self,
         method: Literal["GET", "POST"],
         endpoint: str,

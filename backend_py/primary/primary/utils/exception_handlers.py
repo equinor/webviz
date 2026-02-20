@@ -67,7 +67,7 @@ def my_request_validation_error_handler(request: Request, exc: RequestValidation
     simplified_err_arr = []
     for err in exc.errors():
         loc = err.get("loc")
-        if type(loc) is list:
+        if isinstance(loc, list):
             loc = ",".join(loc)
 
         # We're seeing some cases where the input is not JSON serializable, so we'll just always convert it to a
