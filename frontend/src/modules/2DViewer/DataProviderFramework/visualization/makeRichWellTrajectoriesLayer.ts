@@ -32,8 +32,8 @@ export function makeRichWellTrajectoriesLayer(
     const { id, isLoading, getData, getSetting } = args;
 
     const wellboreTrajectoriesData = getData();
-    const depthFilterType = getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
-    const pdmFilterType = getSetting(Setting.PDM_FILTER_TYPE);
+    const depthFilterType = getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE) ?? "none";
+    const pdmFilterType = getSetting(Setting.PDM_FILTER_TYPE) ?? "none";
     const pdmFilterSettings = getSetting(Setting.PDM_FILTER);
     const mdRangeSetting = getSetting(Setting.MD_RANGE);
 
