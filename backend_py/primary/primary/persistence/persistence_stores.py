@@ -20,14 +20,14 @@ from primary.persistence.snapshot_store import (
 LOGGER = logging.getLogger(__name__)
 
 
-async def _probe_cosmos_async(cosmos_client: CosmosClient, database: str) -> None:
+async def _probe_cosmos_async(cosmos_client: CosmosClient, databaseName: str) -> None:
     try:
-        database = cosmos_client.get_database_client(database)
+        database = cosmos_client.get_database_client(databaseName)
         await database.read()
     except CosmosHttpResponseError as exc:
         # 401/403: auth/RBAC; 404: db missing; others: etc.
         raise RuntimeError(
-            f"Cosmos probe failed (db={database}, status={getattr(exc,'status_code',None)}): "
+            f"Cosmos probe failed (db={databaseName}, status={getattr(exc,'status_code',None)}): "
             f"{getattr(exc,'message', str(exc))}"
         ) from exc
 
