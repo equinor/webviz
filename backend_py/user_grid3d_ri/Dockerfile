@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Set non-interactive mode to avoid prompts during build
 ARG DEBIAN_FRONTEND=noninteractive
@@ -16,7 +16,8 @@ RUN set -eux; \
     apt-get update; \
     \
     apt-get install -y --no-install-recommends \
-        libgl1-mesa-glx \
+        libgl1 \
+        libglx-mesa0 \
         libglu1-mesa \
         libhdf5-dev \
         libgomp1 \
@@ -46,6 +47,9 @@ ENV RESINSIGHT_EXECUTABLE=/home/appuser/ri_bin/ResInsight
 ENV VIRTUAL_ENV=/home/appuser/venv
 RUN python3.13 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+ENV POETRY_KEYRING_ENABLED=false
+ENV PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
 
 WORKDIR /home/appuser/backend_py/user_grid3d_ri
 COPY --chown=appuser ./backend_py/user_grid3d_ri/pyproject.toml  /home/appuser/backend_py/user_grid3d_ri
