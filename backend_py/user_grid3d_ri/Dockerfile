@@ -3,18 +3,30 @@ FROM ubuntu:22.04
 # Set non-interactive mode to avoid prompts during build
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install --assume-yes \
-    software-properties-common \
- && add-apt-repository ppa:deadsnakes/ppa \
- && apt-get update && apt-get install --assume-yes --no-install-recommends \
-    libgl1-mesa-glx \
-    libglu1-mesa \
-    libhdf5-dev \
-    libgomp1 \
-    unzip \
-    python3.13 \
-    python3.13-venv \
- && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    apt-get update; \
+    apt-get -y upgrade; \
+    \
+    apt-get install -y --no-install-recommends \
+        software-properties-common \
+        ca-certificates \
+        gnupg; \
+    \
+    add-apt-repository -y ppa:deadsnakes/ppa; \
+    apt-get update; \
+    \
+    apt-get install -y --no-install-recommends \
+        libgl1-mesa-glx \
+        libglu1-mesa \
+        libhdf5-dev \
+        libgomp1 \
+        unzip \
+        python3.13 \
+        python3.13-venv; \
+    \
+    apt-get -y autoremove --purge; \
+    apt-get clean; \
+    rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --uid 1234 appuser
 USER 1234
