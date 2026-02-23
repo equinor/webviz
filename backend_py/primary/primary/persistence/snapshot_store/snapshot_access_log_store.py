@@ -181,13 +181,13 @@ class SnapshotAccessLogStore:
         item_id = _make_access_log_item_id(snapshot_id, self._user_id)
 
         # Patch ops that are ALWAYS safe to apply (atomic counter + last visited)
-        base_ops = [
+        base_ops: list[dict] = [
             {"op": "incr", "path": "/visits", "value": 1},
             {"op": "set", "path": "/last_visited_at", "value": timestamp.isoformat()},
         ]
 
         # Patch ops only for the very first visit
-        first_visit_ops = base_ops + [
+        first_visit_ops: list[dict] = base_ops + [
             {"op": "set", "path": "/first_visited_at", "value": timestamp.isoformat()},
         ]
 
