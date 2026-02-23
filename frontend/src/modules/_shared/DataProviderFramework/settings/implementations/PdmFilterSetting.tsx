@@ -36,9 +36,18 @@ export class PdmFilterSetting
             const mergedValueRange: ValueRangeType = accumulator;
 
             mergedValueRange.injection.gas = Math.max(mergedValueRange.injection.gas, valueConstraints.injection.gas);
-            mergedValueRange.injection.water = Math.max(mergedValueRange.injection.water, valueConstraints.injection.water);
-            mergedValueRange.production.oil = Math.max(mergedValueRange.production.oil, valueConstraints.production.oil);
-            mergedValueRange.production.gas = Math.max(mergedValueRange.production.gas, valueConstraints.production.gas);
+            mergedValueRange.injection.water = Math.max(
+                mergedValueRange.injection.water,
+                valueConstraints.injection.water,
+            );
+            mergedValueRange.production.oil = Math.max(
+                mergedValueRange.production.oil,
+                valueConstraints.production.oil,
+            );
+            mergedValueRange.production.gas = Math.max(
+                mergedValueRange.production.gas,
+                valueConstraints.production.gas,
+            );
             mergedValueRange.production.water = Math.max(
                 mergedValueRange.production.water,
                 valueConstraints.production.water,
@@ -113,13 +122,13 @@ export class PdmFilterSetting
         if (currentValue === null) {
             return {
                 production: {
-                    oil: { value: 0, color: "#8B4513" },
-                    gas: { value: 0, color: "#FF0000" },
-                    water: { value: 0, color: "#0000FF" },
+                    oil: { value: 0, color: "#4caf50" },
+                    gas: { value: 0, color: "#d32f2f" },
+                    water: { value: 0, color: "#4285f4" },
                 },
                 injection: {
-                    gas: { value: 0, color: "#FF0000" },
-                    water: { value: 0, color: "#0000FF" },
+                    water: { value: 0, color: "#08dbff" },
+                    gas: { value: 0, color: "#ffc107" },
                 },
             };
         }
@@ -140,13 +149,13 @@ export class PdmFilterSetting
                 },
             },
             injection: {
-                gas: {
-                    value: Math.min(currentValue.injection.gas.value, 0),
-                    color: currentValue.injection.gas.color,
-                },
                 water: {
                     value: Math.min(currentValue.injection.water.value, 0),
                     color: currentValue.injection.water.color,
+                },
+                gas: {
+                    value: Math.min(currentValue.injection.gas.value, 0),
+                    color: currentValue.injection.gas.color,
                 },
             },
         };
@@ -180,8 +189,8 @@ export class PdmFilterSetting
                         water: { value: 0, color: PHASE_COLORS.water },
                     },
                     injection: {
-                        gas: { value: 0, color: PHASE_COLORS.gas },
                         water: { value: 0, color: PHASE_COLORS.water },
+                        gas: { value: 0, color: PHASE_COLORS.gas },
                     },
                 };
             }
@@ -306,21 +315,21 @@ export class PdmFilterSetting
                         Injection
                     </div>
                     <SliderNumberSettingComponent
-                        label="Gas"
-                        maxValue={props.valueConstraints ? props.valueConstraints.injection.gas : 0}
-                        value={props.value ? props.value.injection.gas.value : 0}
-                        color={props.value ? props.value.injection.gas.color : PHASE_COLORS.gas}
-                        onValueChange={(newValue) => handleValueChange("injection", "gas", newValue)}
-                        onColorChange={(newColor) => handleColorChange("injection", "gas", newColor)}
-                        inputVisible={inputVisible}
-                    />
-                    <SliderNumberSettingComponent
                         label="Water"
                         maxValue={props.valueConstraints ? props.valueConstraints.injection.water : 0}
                         value={props.value ? props.value.injection.water.value : 0}
                         color={props.value ? props.value.injection.water.color : PHASE_COLORS.water}
                         onValueChange={(newValue) => handleValueChange("injection", "water", newValue)}
                         onColorChange={(newColor) => handleColorChange("injection", "water", newColor)}
+                        inputVisible={inputVisible}
+                    />
+                    <SliderNumberSettingComponent
+                        label="Gas"
+                        maxValue={props.valueConstraints ? props.valueConstraints.injection.gas : 0}
+                        value={props.value ? props.value.injection.gas.value : 0}
+                        color={props.value ? props.value.injection.gas.color : PHASE_COLORS.gas}
+                        onValueChange={(newValue) => handleValueChange("injection", "gas", newValue)}
+                        onColorChange={(newColor) => handleColorChange("injection", "gas", newColor)}
                         inputVisible={inputVisible}
                     />
                 </div>
