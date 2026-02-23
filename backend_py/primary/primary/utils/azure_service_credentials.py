@@ -74,7 +74,6 @@ def create_credential_for_azure_services(
             client_secret=secret_vars_for_local_dev.client_secret,
         )
         return ChainedTokenCredential(client_secret_credential, DefaultAzureCredential())
-    
 
     # Just rely on the default behavior of DefaultAzureCredential for local dev if explicit secrets are not provided
     LOGGER.info("Creating local development credential for Azure services using DefaultAzureCredential")
