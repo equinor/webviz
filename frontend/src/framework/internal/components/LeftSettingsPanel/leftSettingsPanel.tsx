@@ -23,7 +23,7 @@ type LeftSettingsPanelProps = {
     workbench: Workbench;
 };
 
-export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
+export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNode {
     const [isCollapsed, setIsCollapsed] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelIsCollapsed,
@@ -57,8 +57,8 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
             style={{ boxShadow: "4px 0px 4px 1px rgba(0, 0, 0, 0.05)" }}
         >
             <ModuleSettingsHeader
-                activeSetting={drawerContent}
-                availableSettings={{
+                activeTab={drawerContent}
+                availableTabs={{
                     [DrawerContent.ModuleSettings]: {
                         title: "Module Settings",
                         icon: <Settings fontSize="small" />,
@@ -72,7 +72,7 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
                 isCollapsed={isCollapsed}
                 onExpandClick={handleExpandPanel}
                 onCollapseClick={handleCollapsePanel}
-                onSettingChange={handleSetDrawerContent}
+                onTabChange={handleSetDrawerContent}
             />
             <>
                 <ModuleSyncSettings
@@ -98,4 +98,4 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
             </>
         </div>
     );
-};
+}

@@ -2,7 +2,7 @@ import React from "react";
 
 import { ChevronLeft, ChevronRight, Settings, WarningRounded } from "@mui/icons-material";
 
-import { useModuleWarning } from "@framework/internal/hooks/useModuleWarning";
+import { useModuleWarning } from "@framework/internal/components/LeftSettingsPanel/private-utils/useModuleWarning";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -13,7 +13,7 @@ type WarningBannerProps = {
     onDismiss: () => void;
 };
 
-const WarningBanner: React.FC<WarningBannerProps> = (props) => {
+function WarningBanner(props: WarningBannerProps): React.ReactNode {
     return (
         <div className="m-2 py-2 px-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm shrink-0">
             <div className="flex flex-col">
@@ -26,30 +26,30 @@ const WarningBanner: React.FC<WarningBannerProps> = (props) => {
             </div>
         </div>
     );
-};
+}
 
-type SettingConfig = {
+type TabConfig = {
     title: string;
     icon: React.ReactElement;
 };
 
-type SettingTabDividerProps = {
+type TabDividerProps = {
     visible: boolean;
 };
 
-function SettingTabDivider(props: SettingTabDividerProps): React.ReactNode {
+function TabDivider(props: TabDividerProps): React.ReactNode {
     return <div className={resolveClassNames("w-px h-1/2", props.visible ? "bg-slate-300" : "bg-transparent")} />;
 }
 
-type SettingTabProps = {
-    config: SettingConfig;
+type TabProps = {
+    config: TabConfig;
     isActive: boolean;
     onClick: () => void;
     onMouseEnter: () => void;
     onMouseLeave: () => void;
 };
 
-const SettingTab: React.FC<SettingTabProps> = (props) => {
+function SettingTab(props: TabProps): React.ReactNode {
     return (
         <Tooltip title={props.config.title} placement="bottom">
             <button
@@ -68,23 +68,23 @@ const SettingTab: React.FC<SettingTabProps> = (props) => {
             </button>
         </Tooltip>
     );
-};
+}
 
 type ModuleSettingsHeaderProps = {
     activeModuleInstance: ModuleInstance<any, any> | undefined;
-    activeSetting: string | null;
-    availableSettings: Record<string, SettingConfig>;
+    activeTab: string | null;
+    availableTabs: Record<string, TabConfig>;
     isCollapsed: boolean;
     onExpandClick: () => void;
     onCollapseClick: () => void;
-    onSettingChange: (settingKey: string) => void;
+    onTabChange: (tabKey: string) => void;
 };
 
-export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props) => {
+export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.ReactNode {
     const [hoveredTabIndex, setHoveredTabIndex] = React.useState<number | null>(null);
 
-    const settingKeys = Object.keys(props.availableSettings);
-    const activeSettingConfig = props.activeSetting ? props.availableSettings[props.activeSetting] : undefined;
+    const tabKeys = Object.keys(props.availableTabs);
+    const activeTab = props.activeTab ? props.availableTabs[props.activeTab] : undefined;
 
     const activeModuleTitle = props.activeModuleInstance?.getTitle() ?? null;
 
@@ -97,7 +97,7 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
     }
 
     function makeSettingsTabs() {
-        if (settingKeys.length === 0) {
+        if (tabKeys.length === 0) {
             return (
                 <div className="flex items-center justify-center h-full px-2">
                     <Settings fontSize="small" />
@@ -107,9 +107,9 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
 
         return (
             <div className="flex h-full items-center pl-px" onMouseLeave={() => setHoveredTabIndex(null)}>
-                {settingKeys.map((key, index) => {
-                    const isActive = key === props.activeSetting;
-                    const isNextActive = settingKeys.at(index + 1) === props.activeSetting;
+                {tabKeys.map((key, index) => {
+                    const isActive = key === props.activeTab;
+                    const isNextActive = tabKeys.at(index + 1) === props.activeTab;
                     const isHovered = hoveredTabIndex === index;
                     const isNextHovered = hoveredTabIndex === index + 1;
                     const showDividerAfter = !isActive && !isHovered && !isNextActive && !isNextHovered;
@@ -117,13 +117,13 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
                     return (
                         <React.Fragment key={key}>
                             <SettingTab
-                                config={props.availableSettings[key]}
+                                config={props.availableTabs[key]}
                                 isActive={isActive}
-                                onClick={() => props.onSettingChange(key)}
+                                onClick={() => props.onTabChange(key)}
                                 onMouseEnter={() => setHoveredTabIndex(index)}
                                 onMouseLeave={() => setHoveredTabIndex(null)}
                             />
-                            <SettingTabDivider visible={showDividerAfter} />
+                            <TabDivider visible={showDividerAfter} />
                         </React.Fragment>
                     );
                 })}
@@ -136,7 +136,7 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
             return (
                 <DenseIconButton onClick={props.onExpandClick} title="Expand settings panel">
                     <div className="flex flex-row items-center">
-                        {activeSettingConfig?.icon ?? <Settings fontSize="small" />}
+                        {activeTab?.icon ?? <Settings fontSize="small" />}
                         <ChevronRight fontSize="small" />
                     </div>
                 </DenseIconButton>
@@ -188,4 +188,4 @@ export const ModuleSettingsHeader: React.FC<ModuleSettingsHeaderProps> = (props)
             )}
         </div>
     );
-};
+}

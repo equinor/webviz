@@ -6,56 +6,77 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { loadConfigurationFromLocalStorage, storeConfigurationInLocalStorage } from "./private-utils/localStorage";
-import { pxToPercent } from "./private-utils/sizeUtils";
 
-const COLLAPSE_EXPAND_THRESHOLD_EPSILON = 1e-3;
 const COLLAPSE_EXPAND_THRESHOLD_PX = 50;
+
+export type ResizablePanels = {
+    leftSettings?: React.ReactNode;
+    content: React.ReactNode;
+    rightSettings?: React.ReactNode;
+};
+
+// Define type for setting panels
+type SettingsPanel = "leftSettings" | "rightSettings";
+
+export type SettingsPanelSizes = {
+    [K in SettingsPanel]?: number;
+};
+
+export type SettingsPanelCollapsedStates = {
+    [K in SettingsPanel]?: boolean | null;
+};
+
+export type SettingsPanelVisibleState = {
+    [K in SettingsPanel]?: boolean;
+};
 
 export type ResizableSettingsPanelsProps = {
     id: string;
-    children: React.ReactNode[];
-    minSizes?: number[];
-    sizesInPercent?: number[];
-    collapsedSizes?: number[];
-    collapsedStates?: (boolean | null)[];
-    visible?: boolean[];
-    onSizesChange?: (sizesInPercent: number[]) => void;
-    onCollapsedChange?: (collapsedStates: boolean[]) => void;
+    children: ResizablePanels;
+    minSizes?: SettingsPanelSizes;
+    sizesInPercent?: SettingsPanelSizes;
+    collapsedSizes?: SettingsPanelSizes;
+    collapsedStates?: SettingsPanelCollapsedStates;
+    visible?: SettingsPanelVisibleState;
+    onSizesChange?: (sizes: SettingsPanelSizes) => void;
+    onCollapsedChange?: (states: SettingsPanelCollapsedStates) => void;
 };
 
+/**
+ * Assert consistency of props — if a side panel is provided, and the size and collapse state props are provided,
+ * the relevant entries for that panel must be defined.
+ */
 function assertPropsConsistency(props: ResizableSettingsPanelsProps) {
-    const panelCount = props.children.length;
+    const sidePanels = (["leftSettings", "rightSettings"] as const).filter(
+        (panel) => props.children[panel] !== undefined,
+    );
 
-    const expectedNumberOfSettingsPanels = panelCount - 1;
-
-    if (props.children.length < 1 || props.children.length > 3) {
-        throw new Error("ResizableSettingsPanels requires between 1 and 3 children (left panel, content, right panel)");
-    }
-
-    if (props.minSizes && props.minSizes.length !== expectedNumberOfSettingsPanels) {
-        throw new Error(
-            `minSizes length (${props.minSizes.length}) does not match number of settings panels (${expectedNumberOfSettingsPanels})`,
-        );
-    }
-    if (props.collapsedSizes && props.collapsedSizes.length !== expectedNumberOfSettingsPanels) {
-        throw new Error(
-            `collapsedSizes length (${props.collapsedSizes.length}) does not match number of settings panels (${expectedNumberOfSettingsPanels})`,
-        );
-    }
-    if (props.sizesInPercent && props.sizesInPercent.length !== expectedNumberOfSettingsPanels) {
-        throw new Error(
-            `sizesInPercent length (${props.sizesInPercent.length}) does not match number of settings panels (${expectedNumberOfSettingsPanels})`,
-        );
-    }
-    if (props.collapsedStates && props.collapsedStates.length !== expectedNumberOfSettingsPanels) {
-        throw new Error(
-            `collapsedStates length (${props.collapsedStates.length}) does not match number of settings panels (${expectedNumberOfSettingsPanels})`,
-        );
-    }
-    if (props.visible && props.visible.length !== expectedNumberOfSettingsPanels) {
-        throw new Error(
-            `visible length (${props.visible.length}) does not match number of settings panels (${expectedNumberOfSettingsPanels})`,
-        );
+    for (const panel of sidePanels) {
+        if (props.minSizes !== undefined && props.minSizes[panel] === undefined) {
+            throw new Error(
+                `When minSizes is provided, minSizes.${panel} must be defined when children.${panel} is defined`,
+            );
+        }
+        if (props.sizesInPercent !== undefined && props.sizesInPercent[panel] === undefined) {
+            throw new Error(
+                `When sizesInPercent is provided, sizesInPercent.${panel} must be defined when children.${panel} is defined`,
+            );
+        }
+        if (props.collapsedSizes !== undefined && props.collapsedSizes[panel] === undefined) {
+            throw new Error(
+                `When collapsedSizes is provided, collapsedSizes.${panel} must be defined when children.${panel} is defined`,
+            );
+        }
+        if (props.collapsedStates !== undefined && props.collapsedStates[panel] === undefined) {
+            throw new Error(
+                `When collapsedStates is provided, collapsedStates.${panel} must be defined when children.${panel} is defined`,
+            );
+        }
+        if (props.visible !== undefined && props.visible[panel] === undefined) {
+            throw new Error(
+                `When visible is provided, visible.${panel} must be defined when children.${panel} is defined`,
+            );
+        }
     }
 }
 
@@ -67,45 +88,47 @@ function assertPropsConsistency(props: ResizableSettingsPanelsProps) {
  * as it is the only panel with flex-grow. This avoids the issue of other panels growing when
  * a panel is collapsed.
  *
- * The children prop should contain the panels in the following order:
- * - Left settings panel (optional)
- * - Content area (required)
- * - Right settings panel (optional)
+ * The children prop should contain the panels to render, with the following structure:
+ * - leftSettings (optional)
+ * - content (required)
+ * - rightSettings (optional)
  *
  * 1 panel layout: [Content]
- * 2 panel layout: [Left Settings Panel] [Content]
+ * 2 panel layout: [Left Settings Panel] [Content] or [Content] [Right Settings Panel]
  * 3 panel layout: [Left Settings Panel] [Content] [Right Settings Panel]
  *
- * If sizesInPercent, collapsedSizes, minSizes, collapsedStates, etc are provided, they must match the number
- * of settings panels (i.e. children.length - 1).
+ * Sizing and collapsed-state props use the same { leftSettings?, rightSettings? } shape —
+ * if a prop is provided, the value for the relevant panel(s) must be provided.
  */
-export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps) {
+export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps): React.ReactNode {
     const { onSizesChange, onCollapsedChange } = props;
 
+    // Validate consistency of props
     assertPropsConsistency(props);
 
-    const numSettingsPanels = props.children.length - 1;
-    const contentIndex = props.children.length > 1 ? 1 : 0;
-
-    function getInitialSizes() {
+    function getInitialSizes(): SettingsPanelSizes {
+        const defaultLeft = props.minSizes?.leftSettings ?? 30;
+        const defaultRight = props.minSizes?.rightSettings ?? 30;
         if (props.sizesInPercent) {
-            return props.sizesInPercent;
+            return {
+                leftSettings: props.sizesInPercent.leftSettings ?? defaultLeft,
+                rightSettings: props.sizesInPercent.rightSettings ?? defaultRight,
+            };
         }
         const loadedSizes = loadConfigurationFromLocalStorage(props.id);
-        if (loadedSizes && loadedSizes.length === numSettingsPanels) {
-            return loadedSizes;
+        if (loadedSizes) {
+            return {
+                leftSettings: loadedSizes.leftSettings ?? defaultLeft,
+                rightSettings: loadedSizes.rightSettings ?? defaultRight,
+            };
         }
-        if (numSettingsPanels === 0) {
-            return [];
-        }
-        return Array(numSettingsPanels).fill(100.0 / (numSettingsPanels + 1));
+        return { leftSettings: defaultLeft, rightSettings: defaultRight };
     }
 
     const [isDragging, setIsDragging] = React.useState(false);
-    const [draggingIndex, setDraggingIndex] = React.useState(0);
-    const [sizes, setSizes] = React.useState<number[]>(getInitialSizes);
-    const [prevSizes, setPrevSizes] = React.useState<number[]>(sizes);
-    const [prevNumChildren, setPrevNumChildren] = React.useState(props.children.length);
+    const [draggingPanel, setDraggingPanel] = React.useState<SettingsPanel>("leftSettings");
+    const [sizes, setSizes] = React.useState<SettingsPanelSizes>(getInitialSizes);
+    const [prevSizes, setPrevSizes] = React.useState(props.sizesInPercent);
 
     const containerRef = React.useRef<HTMLDivElement | null>(null);
     const { width: totalWidth } = useElementSize(containerRef);
@@ -113,68 +136,84 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps) {
     const collapsedStatesRef = React.useRef(props.collapsedStates);
     collapsedStatesRef.current = props.collapsedStates;
 
-    const validCollapsedSizes = React.useMemo<number[]>(
+    const sizesRef = React.useRef(sizes);
+    sizesRef.current = sizes;
+
+    const validCollapsedSizes = React.useMemo(
         function calculateValidCollapsedSizes() {
-            return props.collapsedSizes ?? Array(numSettingsPanels).fill(0);
+            return {
+                leftSettings: props.collapsedSizes?.leftSettings ?? 0,
+                rightSettings: props.collapsedSizes?.rightSettings ?? 0,
+            };
         },
-        [props.collapsedSizes, numSettingsPanels],
+        [props.collapsedSizes?.leftSettings, props.collapsedSizes?.rightSettings],
     );
 
     // Sync with controlled sizesInPercent prop
-    if (props.sizesInPercent && !isEqual(props.sizesInPercent, prevSizes)) {
-        setSizes(props.sizesInPercent);
+    if (!isEqual(props.sizesInPercent, prevSizes)) {
+        if (props.sizesInPercent) {
+            setSizes((prev) => ({
+                leftSettings: props.sizesInPercent?.leftSettings ?? prev.leftSettings,
+                rightSettings: props.sizesInPercent?.rightSettings ?? prev.rightSettings,
+            }));
+        }
         setPrevSizes(props.sizesInPercent);
     }
 
-    if (props.children.length !== prevNumChildren) {
-        setPrevNumChildren(props.children.length);
-    }
+    const hasLeftSettings = props.children.leftSettings !== undefined;
+    const hasRightSettings = props.children.rightSettings !== undefined;
+
+    // Sync localStorage when panels are added or removed
+    React.useEffect(
+        function syncLocalStorageWithActivePanels() {
+            storeConfigurationInLocalStorage(props.id, {
+                leftSettings: hasLeftSettings ? sizesRef.current.leftSettings : undefined,
+                rightSettings: hasRightSettings ? sizesRef.current.rightSettings : undefined,
+            });
+        },
+        [props.id, hasLeftSettings, hasRightSettings],
+    );
 
     // Drag handling of dragBars
-    React.useEffect(() => {
-        let changedSizes: number[] = [];
-        let dragging = false;
-        let index = 0;
+    React.useEffect(
+        function setupDragHandlers() {
+            let changedSizes: SettingsPanelSizes | null = null;
+            let dragging = false;
+            let panel: SettingsPanel = "leftSettings";
 
-        function handlePointerDown(e: PointerEvent) {
-            if (e.target instanceof HTMLElement && e.target.dataset.settingsHandle) {
-                index = parseInt(e.target.dataset.settingsHandle, 10);
-                setDraggingIndex(index);
-                dragging = true;
-                setIsDragging(true);
-                e.preventDefault();
-                addEventListeners();
+            function handlePointerDown(e: PointerEvent) {
+                if (e.target instanceof HTMLElement && e.target.dataset.settingsHandle) {
+                    panel = e.target.dataset.settingsHandle as SettingsPanel;
+                    setDraggingPanel(panel);
+                    dragging = true;
+                    setIsDragging(true);
+                    e.preventDefault();
+                    addEventListeners();
+                }
             }
-        }
 
-        function handlePointerMove(e: PointerEvent) {
-            if (!dragging) return;
+            function handlePointerMove(e: PointerEvent) {
+                if (!dragging) return;
 
-            e.preventDefault();
-            e.stopPropagation();
+                e.preventDefault();
+                e.stopPropagation();
 
-            const containerRect = containerRef.current?.getBoundingClientRect();
-            if (!containerRect) return;
+                const containerRect = containerRef.current?.getBoundingClientRect();
+                if (!containerRect) return;
 
-            const totalWidthPx = containerRect.width;
-            if (totalWidthPx === 0) return;
+                const totalWidthPx = containerRect.width;
+                if (totalWidthPx === 0) return;
 
-            // Clamp cursor within container bounds
-            const cursorX = Math.max(containerRect.left, Math.min(e.clientX, containerRect.right));
+                // Clamp cursor within container bounds
+                const cursorX = Math.max(containerRect.left, Math.min(e.clientX, containerRect.right));
 
-            setSizes((prev) => {
-                const epsilon = COLLAPSE_EXPAND_THRESHOLD_EPSILON;
-                const collapseThresholdPercent = pxToPercent(COLLAPSE_EXPAND_THRESHOLD_PX, totalWidthPx, epsilon);
-                const expandThresholdPercent = pxToPercent(
-                    (validCollapsedSizes[index] ?? 0) + COLLAPSE_EXPAND_THRESHOLD_PX,
-                    totalWidthPx,
-                    epsilon,
-                );
+                // Calculate collapse/expand thresholds in percent
+                const collapseThresholdPercent = (COLLAPSE_EXPAND_THRESHOLD_PX / totalWidthPx) * 100;
+                const collapsedSizePx = validCollapsedSizes[panel] ?? 0;
+                const expandThresholdPercent = ((collapsedSizePx + COLLAPSE_EXPAND_THRESHOLD_PX) / totalWidthPx) * 100;
 
                 // Compute raw new width based on cursor position
-                // Left panel (index 0): width from container left edge to cursor
-                // Right panel (index 1): width from cursor to container right edge
-                const isRightPanel = index > 0;
+                const isRightPanel = panel === "rightSettings";
                 const settingsPanelWidthPx = Math.max(
                     isRightPanel ? containerRect.right - cursorX : cursorX - containerRect.left,
                     0,
@@ -182,14 +221,14 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps) {
                 const settingsPanelWidthPercent = (settingsPanelWidthPx / totalWidthPx) * 100;
 
                 // Apply min/collapse thresholds for the dragged panel only
-                const effectiveMinSize = props.minSizes?.at(index) ?? validCollapsedSizes[index] ?? 0;
-                const minSizePercent = (effectiveMinSize / totalWidthPx) * 100;
-                const collapsedSizePercent = ((validCollapsedSizes[index] ?? 0) / totalWidthPx) * 100;
-                const isCurrentlyCollapsed = collapsedStatesRef.current?.[index] ?? false;
+                const effectiveMinSize = props.minSizes?.[panel] ?? collapsedSizePx;
+                const minSizePercent = Math.max((effectiveMinSize / totalWidthPx) * 100, 0);
+                const collapsedSizePercent = Math.max((collapsedSizePx / totalWidthPx) * 100, 0);
+                const isCurrentlyCollapsed = collapsedStatesRef.current?.[panel] ?? false;
 
                 // Adjust width based on thresholds and collapsed state
                 let adjustedWidthPercent = settingsPanelWidthPercent;
-                if (props.visible?.at(index) === false) {
+                if (props.visible?.[panel] === false) {
                     adjustedWidthPercent = 0;
                 } else if (isCurrentlyCollapsed && effectiveMinSize > 0) {
                     // Panel is currently collapsed — use expand threshold (hysteresis)
@@ -206,72 +245,86 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps) {
                     adjustedWidthPercent = minSizePercent;
                 }
 
-                const newSizes = [...prev];
-                newSizes[index] = adjustedWidthPercent;
-                changedSizes = newSizes;
+                setSizes((prev) => {
+                    const newSizes = { ...prev, [panel]: adjustedWidthPercent };
+                    changedSizes = newSizes;
 
-                // Detect collapsed state change for the dragged panel
-                const wasCollapsed = collapsedStatesRef.current?.[index] ?? false;
-                const isNowCollapsed = wasCollapsed
-                    ? settingsPanelWidthPercent < expandThresholdPercent
-                    : settingsPanelWidthPercent < collapseThresholdPercent;
+                    // Detect collapsed state change for the dragged panel
+                    const wasCollapsed = collapsedStatesRef.current?.[panel] ?? false;
+                    const isNowCollapsed = wasCollapsed
+                        ? settingsPanelWidthPercent < expandThresholdPercent
+                        : settingsPanelWidthPercent < collapseThresholdPercent;
 
-                if (isNowCollapsed !== wasCollapsed && onCollapsedChange) {
-                    const newCollapsedStates = (collapsedStatesRef.current ?? []).map((s) => s ?? false);
-                    if (newCollapsedStates.length <= index) {
-                        const missingCollapsedStates = Array(index - newCollapsedStates.length + 1).fill(false);
-                        newCollapsedStates.push(...missingCollapsedStates);
+                    if (isNowCollapsed !== wasCollapsed && onCollapsedChange) {
+                        queueMicrotask(() =>
+                            onCollapsedChange({
+                                leftSettings:
+                                    panel === "leftSettings"
+                                        ? isNowCollapsed
+                                        : !!collapsedStatesRef.current?.leftSettings,
+                                rightSettings:
+                                    panel === "rightSettings"
+                                        ? isNowCollapsed
+                                        : !!collapsedStatesRef.current?.rightSettings,
+                            }),
+                        );
                     }
-                    newCollapsedStates[index] = isNowCollapsed;
-                    queueMicrotask(() => onCollapsedChange(newCollapsedStates));
+
+                    return newSizes;
+                });
+            }
+
+            function handlePointerUp() {
+                if (!dragging) {
+                    return;
                 }
-
-                return newSizes;
-            });
-        }
-
-        function handlePointerUp() {
-            if (!dragging) return;
-            if (changedSizes.length > 0) {
-                storeConfigurationInLocalStorage(props.id, changedSizes);
+                if (changedSizes) {
+                    storeConfigurationInLocalStorage(props.id, changedSizes);
+                }
+                dragging = false;
+                setIsDragging(false);
+                if (changedSizes && onSizesChange) {
+                    onSizesChange(changedSizes);
+                }
+                removeEventListeners();
             }
-            dragging = false;
-            setIsDragging(false);
-            if (onSizesChange) {
-                onSizesChange(changedSizes);
+
+            function addEventListeners() {
+                document.addEventListener("pointermove", handlePointerMove);
+                document.addEventListener("pointerup", handlePointerUp);
+                window.addEventListener("blur", handlePointerUp);
             }
-            removeEventListeners();
+
+            function removeEventListeners() {
+                document.removeEventListener("pointermove", handlePointerMove);
+                document.removeEventListener("pointerup", handlePointerUp);
+                window.removeEventListener("blur", handlePointerUp);
+            }
+
+            document.addEventListener("pointerdown", handlePointerDown);
+
+            return () => {
+                document.removeEventListener("pointerdown", handlePointerDown);
+                removeEventListeners();
+            };
+        },
+        [props.id, props.minSizes, props.visible, totalWidth, validCollapsedSizes, onSizesChange, onCollapsedChange],
+    );
+
+    function makeSettingsPanelStyle(panel: SettingsPanel): React.CSSProperties {
+        const sizePercent = sizes[panel];
+        if (sizePercent === undefined) {
+            throw new Error(`Size for panel "${panel}" is not initialized`);
         }
 
-        function addEventListeners() {
-            document.addEventListener("pointermove", handlePointerMove);
-            document.addEventListener("pointerup", handlePointerUp);
-            window.addEventListener("blur", handlePointerUp);
-        }
-
-        function removeEventListeners() {
-            document.removeEventListener("pointermove", handlePointerMove);
-            document.removeEventListener("pointerup", handlePointerUp);
-            window.removeEventListener("blur", handlePointerUp);
-        }
-
-        document.addEventListener("pointerdown", handlePointerDown);
-
-        return () => {
-            document.removeEventListener("pointerdown", handlePointerDown);
-            removeEventListeners();
-        };
-    }, [props.id, props.minSizes, props.visible, totalWidth, validCollapsedSizes, onSizesChange, onCollapsedChange]);
-
-    function makeSettingsPanelStyle(settingsPanelIndex: number): React.CSSProperties {
         const style: React.CSSProperties = {
             flexGrow: 0,
             flexShrink: 0,
             overflow: "hidden",
         };
 
-        const isCollapsed = props.collapsedStates?.[settingsPanelIndex];
-        const isVisible = props.visible?.at(settingsPanelIndex) !== false;
+        const isCollapsed = props.collapsedStates?.[panel];
+        const isVisible = props.visible?.[panel] !== false;
 
         if (!isVisible) {
             style.width = 0;
@@ -280,20 +333,18 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps) {
         }
 
         if (isCollapsed === true) {
-            const collapsedSize = validCollapsedSizes[settingsPanelIndex] ?? 0;
+            const collapsedSize = validCollapsedSizes[panel];
             style.width = collapsedSize;
             style.minWidth = collapsedSize;
             style.maxWidth = collapsedSize;
             return style;
         }
-
-        const sizePercent = sizes[settingsPanelIndex];
-        const effectiveMinSize = props.minSizes?.at(settingsPanelIndex) ?? validCollapsedSizes[settingsPanelIndex] ?? 0;
+        const effectiveMinSize = props.minSizes?.[panel] ?? validCollapsedSizes[panel];
 
         // For uncontrolled panels (collapsedStates is null/undefined), detect collapse from size
         if (isCollapsed === null || isCollapsed === undefined) {
-            if (totalWidth > 0 && sizePercent < pxToPercent(COLLAPSE_EXPAND_THRESHOLD_PX, totalWidth)) {
-                const collapsedSize = validCollapsedSizes[settingsPanelIndex] ?? 0;
+            if (totalWidth > 0 && sizePercent < (COLLAPSE_EXPAND_THRESHOLD_PX / totalWidth) * 100) {
+                const collapsedSize = validCollapsedSizes[panel];
                 style.width = collapsedSize;
                 style.minWidth = collapsedSize;
                 style.maxWidth = collapsedSize;
@@ -307,13 +358,6 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps) {
         return style;
     }
 
-    function maybeMakeDragBar(childIndex: number) {
-        if (childIndex < props.children.length - 1) {
-            return <SettingsDragBar index={childIndex} isDragging={isDragging && draggingIndex === childIndex} />;
-        }
-        return null;
-    }
-
     return (
         <div className="flex flex-row w-full h-full relative" ref={containerRef}>
             <div
@@ -325,32 +369,36 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps) {
                     height: "100%",
                 }}
             />
-            {props.children.map((el: React.ReactNode, childIndex: number) => {
-                const isContent = childIndex === contentIndex;
-                const settingsPanelIndex = childIndex < contentIndex ? childIndex : childIndex - 1;
-
-                return (
-                    <React.Fragment key={`resizable-settings-panel-element-${childIndex}`}>
-                        <div
-                            className={isContent ? "grow overflow-hidden" : "overflow-hidden"}
-                            style={isContent ? undefined : makeSettingsPanelStyle(settingsPanelIndex)}
-                        >
-                            {el}
-                        </div>
-                        {maybeMakeDragBar(childIndex)}
-                    </React.Fragment>
-                );
-            })}
+            {props.children.leftSettings !== undefined && (
+                <>
+                    <div className="overflow-hidden" style={makeSettingsPanelStyle("leftSettings")}>
+                        {props.children.leftSettings}
+                    </div>
+                    <SettingsDragBar panel="leftSettings" isDragging={isDragging && draggingPanel === "leftSettings"} />
+                </>
+            )}
+            <div className="grow overflow-hidden">{props.children.content}</div>
+            {props.children.rightSettings !== undefined && (
+                <>
+                    <SettingsDragBar
+                        panel="rightSettings"
+                        isDragging={isDragging && draggingPanel === "rightSettings"}
+                    />
+                    <div className="overflow-hidden" style={makeSettingsPanelStyle("rightSettings")}>
+                        {props.children.rightSettings}
+                    </div>
+                </>
+            )}
         </div>
     );
 }
 
 type SettingsDragBarProps = {
-    index: number;
+    panel: "leftSettings" | "rightSettings";
     isDragging: boolean;
 };
 
-function SettingsDragBar(props: SettingsDragBarProps) {
+function SettingsDragBar(props: SettingsDragBarProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
@@ -362,7 +410,7 @@ function SettingsDragBar(props: SettingsDragBarProps) {
             )}
         >
             <div
-                data-settings-handle={props.index}
+                data-settings-handle={props.panel}
                 className="z-40 touch-none absolute bg-transparent cursor-ew-resize w-1 -left-0.25 top-0 h-full"
             />
         </div>

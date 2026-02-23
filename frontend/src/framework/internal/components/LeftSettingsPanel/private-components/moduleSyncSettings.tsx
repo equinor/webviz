@@ -21,7 +21,7 @@ type ModuleSyncSettingProps = {
     visible: boolean;
 };
 
-export const ModuleSyncSettings: React.FC<ModuleSyncSettingProps> = (props) => {
+export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNode {
     const dashboard = useActiveDashboard();
     const workbenchSession = useActiveSession();
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
@@ -140,4 +140,4 @@ export const ModuleSyncSettings: React.FC<ModuleSyncSettingProps> = (props) => {
     }
 
     return <Drawer visible={props.visible}>{makeContent()}</Drawer>;
-};
+}

@@ -35,19 +35,28 @@ export function useModuleWarning(moduleInstance: ModuleInstance<any, any> | unde
         () => !!storageKey && localStorage.getItem(storageKey) === "true",
     );
 
-    React.useEffect(() => {
-        setIsDismissed(!!storageKey && localStorage.getItem(storageKey) === "true");
-    }, [storageKey]);
+    React.useEffect(
+        function initializeDismissedState() {
+            setIsDismissed(!!storageKey && localStorage.getItem(storageKey) === "true");
+        },
+        [storageKey],
+    );
 
-    const dismissWarning = React.useCallback(() => {
-        if (storageKey) localStorage.setItem(storageKey, "true");
-        setIsDismissed(true);
-    }, [storageKey]);
+    const dismissWarning = React.useCallback(
+        function dismissWarning() {
+            if (storageKey) localStorage.setItem(storageKey, "true");
+            setIsDismissed(true);
+        },
+        [storageKey],
+    );
 
-    const showWarning = React.useCallback(() => {
-        if (storageKey) localStorage.removeItem(storageKey);
-        setIsDismissed(false);
-    }, [storageKey]);
+    const showWarning = React.useCallback(
+        function showWarning() {
+            if (storageKey) localStorage.removeItem(storageKey);
+            setIsDismissed(false);
+        },
+        [storageKey],
+    );
 
     return {
         warningText,
