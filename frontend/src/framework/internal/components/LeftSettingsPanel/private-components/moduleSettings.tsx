@@ -5,7 +5,6 @@ import { Provider } from "jotai";
 
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { DashboardTopic } from "@framework/internal/Dashboard";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { ImportStatus } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import {
@@ -20,6 +19,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 import { useActiveSession } from "../../ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
@@ -33,7 +33,7 @@ type ModuleSettingsProps = {
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     const workbenchSession = useActiveSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
-    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+    const dashboard = useActiveDashboard();
 
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
 

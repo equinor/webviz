@@ -3,6 +3,7 @@ import React from "react";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { isEqual } from "lodash";
 
+import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { IntersectionType } from "@framework/types/intersection";
@@ -73,6 +74,7 @@ export type DataProvidersWrapperProps = {
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
 };
 
 export type EsvView = {
@@ -372,6 +374,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
             doRefocus={viewportFocusTarget.requestRefocus}
             colorScales={colorScales}
             workbenchServices={props.workbenchServices}
+            hoverService={props.hoverService}
             viewContext={props.viewContext}
             wellboreHeaderUuid={wellboreUuid}
             onViewportRefocused={handleOnViewportRefocused}

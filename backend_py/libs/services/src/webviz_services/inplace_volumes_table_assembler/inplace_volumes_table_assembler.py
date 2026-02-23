@@ -72,6 +72,7 @@ class InplaceVolumesTableAssembler:
         self._inplace_volumes_table_access = inplace_volumes_access
 
     async def get_inplace_volumes_tables_metadata_async(self) -> list[InplaceVolumesTableDefinition]:
+        # pylint: disable=too-many-locals
         vol_table_names = await self._inplace_volumes_table_access.get_inplace_volumes_table_names_async()
 
         # Get pair of requested table name, paired with its inplace volume columns and index columns with unique values
@@ -324,7 +325,7 @@ class InplaceVolumesTableAssembler:
 
             # Accumulated fluids
             unique_fluids = sorted(
-                row_filtered_volumes_df[InplaceVolumes.TableIndexColumns.FLUID.value].unique().to_list()
+                row_filtered_volumes_df[InplaceVolumes.TableIndexColumns.FLUID.value].unique().to_numpy().tolist()
             )
 
             if sorted(expected_fluids) != unique_fluids:
@@ -466,7 +467,7 @@ class InplaceVolumesTableAssembler:
         # Add mask for realizations
         if realizations is not None:
             # Check if every element in realizations exists in inplace_volumes_table_df["REAL"]
-            real_values_set = set(inplace_volumes_df["REAL"].to_list())
+            real_values_set = set(inplace_volumes_df["REAL"].to_numpy().tolist())
             missing_realizations_set = set(realizations) - real_values_set
 
             if missing_realizations_set:

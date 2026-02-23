@@ -1,62 +1,62 @@
 import React from "react";
 
+import type { PickingInfo } from "@deck.gl/core";
+import type { PropertyDataType } from "@webviz/subsurface-viewer";
 import type { PickingInfoPerView } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
-import { isEqual } from "lodash";
+import { sortBy } from "lodash";
 
-import { ReadoutBox, type ReadoutItem } from "@modules/_shared/components/ReadoutBox";
+import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
+import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
 const READOUT_EDGE_DISTANCE_REM = { left: 6, right: 0 };
 
+// Infering the record type from PickingInfoPerView since it's not exported anywhere
 export type ViewportPickingInfo = PickingInfoPerView extends Record<any, infer V> ? V : never;
 
 export type ReadoutBoxWrapperProps = {
-    viewportPickInfo: ViewportPickingInfo;
-    verticalScale?: number;
+    viewportPicks?: PickingInfo[];
     maxNumItems?: number;
     visible?: boolean;
     compact?: boolean;
+    stale?: boolean;
+    verticalScale?: number;
+    onClose?: () => void;
 };
 
+function makeInfoPickReadout(pick: PickingInfo): ReadoutItem | null {
+    // @ts-expect-error -- name injected by subsurface viewer
+    const label = pick.layer?.props.name;
+    const info: InfoItem[] = [];
+
+    // Subsurface has different fields of layers with singular and multiple properties
+    if ("propertyValue" in pick) {
+        const property = pick.propertyValue as number;
+        info.push({ name: "Value", value: property });
+    } else if ("properties" in pick) {
+        const properties = pick.properties as PropertyDataType[];
+
+        for (const property of properties) {
+            info.push({ name: property.name, value: property.value });
+        }
+    }
+
+    if (!info.length) return null;
+    return { label, info };
+}
 export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNode {
-    const [infoData, setInfoData] = React.useState<ReadoutItem[]>([]);
-    const [prevLayerPickInfo, setPrevLayerPickInfo] = React.useState<ViewportPickingInfo | null>(null);
+    const readoutItems = React.useMemo(() => {
+        if (!props.viewportPicks?.length) return [];
 
-    if (!props.visible) {
-        return null;
-    }
+        const readoutItems: ReadoutItem[] = [];
 
-    if (!isEqual(props.viewportPickInfo, prevLayerPickInfo)) {
-        setPrevLayerPickInfo(props.viewportPickInfo);
-        const newReadoutItems: ReadoutItem[] = [];
-
-        const coordinates = props.viewportPickInfo.coordinates;
-        const layerPickInfoArray = props.viewportPickInfo.layerPickingInfo;
-
-        if (!coordinates || coordinates.length < 2) {
-            setInfoData([]);
-            return;
+        for (const pick of sortBy(props.viewportPicks, "index")) {
+            const readout = makeInfoPickReadout(pick);
+            if (readout) readoutItems.push(readout);
         }
 
-        for (const layerPickInfo of layerPickInfoArray) {
-            const layerName = layerPickInfo.layerName;
-            const layerProps = layerPickInfo.properties;
-
-            let layerReadout = newReadoutItems.find((item) => item.label === layerName);
-
-            if (!layerReadout) {
-                layerReadout = { label: layerName, info: [] };
-                newReadoutItems.push(layerReadout);
-            }
-
-            layerReadout.info = layerProps.map((p) => ({
-                name: p.name,
-                value: p.value,
-            }));
-        }
-
-        setInfoData(newReadoutItems);
-    }
+        return readoutItems;
+    }, [props.viewportPicks]);
 
     if (!props.visible) {
         return null;
@@ -65,9 +65,12 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
     return (
         <ReadoutBox
             noLabelColor
-            readoutItems={infoData}
+            readoutItems={readoutItems}
             edgeDistanceRem={READOUT_EDGE_DISTANCE_REM}
             compact={props.compact}
+            flipDisabled
+            onClose={props.onClose}
+            textGrayedOut={props.stale}
         />
     );
 }

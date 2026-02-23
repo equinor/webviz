@@ -136,6 +136,7 @@ async def get_delta_ensemble_vector_list(
 
 
 @router.get("/realizations_vector_data/")
+# pylint: disable-next=too-many-locals
 async def get_realizations_vector_data(
     # fmt:off
     response: Response,
@@ -197,6 +198,7 @@ async def get_realizations_vector_data(
 
 
 @router.get("/delta_ensemble_realizations_vector_data/")
+# pylint: disable-next=too-many-locals
 async def get_delta_ensemble_realizations_vector_data(
     # fmt:off
     response: Response,
@@ -330,6 +332,7 @@ async def get_historical_vector_data(
 
 
 @router.get("/statistical_vector_data/")
+# pylint: disable-next=too-many-locals
 async def get_statistical_vector_data(
     # fmt:off
     response: Response,
@@ -396,6 +399,8 @@ async def get_statistical_vector_data(
 
 
 @router.get("/delta_ensemble_statistical_vector_data/")
+# pylint: disable=too-many-arguments
+# pylint: disable-next=too-many-locals
 async def get_delta_ensemble_statistical_vector_data(
     # fmt:off
     response: Response,
@@ -486,6 +491,7 @@ async def get_delta_ensemble_statistical_vector_data(
 
 
 @router.get("/statistical_vector_data_per_sensitivity/")
+# pylint: disable-next=too-many-locals
 async def get_statistical_vector_data_per_sensitivity(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -509,7 +515,7 @@ async def get_statistical_vector_data_per_sensitivity(
     parameter_access = ParameterAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    sensitivities = (await parameter_access.get_parameters_and_sensitivities_async()).sensitivities
+    _, sensitivities = await parameter_access.get_parameters_and_sensitivities_async()
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)

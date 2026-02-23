@@ -1,7 +1,6 @@
 import React from "react";
 
 import { DateRangePicker } from "@equinor/eds-core-react";
-import type { Options } from "@hey-api/client-axios";
 import { Add, Close, Delete, Edit, FileOpen, Refresh, Search } from "@mui/icons-material";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { InfiniteData } from "@tanstack/react-query";
@@ -11,11 +10,18 @@ import type {
     GetSessionsMetadataData_api,
     GetSessionsMetadataError_api,
     GetSessionsMetadataResponse_api,
+    Options,
     SessionMetadata_api,
     SortDirection_api,
 } from "@api";
 import { getSessionsMetadata, SessionSortBy_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
+import {
+    edsDateRangeToIsoStringRange,
+    isoRangeToEdsDateRange,
+    type EdsDateRange,
+    type IsoStringRange,
+} from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -31,8 +37,6 @@ import { formatDate } from "@lib/utils/dates";
 
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 
-import { edsRangeChoiceToFilterRange } from "./_utils";
-import type { EdsFilterRange, FilterRange } from "./_utils";
 import {
     QUERY_PAGE_SIZE,
     NEXT_PAGE_THRESHOLD,
@@ -44,7 +48,7 @@ import {
 
 type TableFilter = {
     title?: string;
-    updatedAt?: FilterRange;
+    updatedAt?: IsoStringRange;
 };
 
 const TABLE_COLUMNS: TableColumns<SessionMetadata_api> = [
@@ -255,11 +259,11 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         [sessionsQuery, tableData.length, visibleRowRange],
     );
 
-    function handleDateFilterRangeChange(newRange: null | EdsFilterRange) {
+    function handleDateFilterRangeChange(newRange: null | EdsDateRange) {
         setTableFilter((prev) => {
             return {
                 ...prev,
-                updatedAt: edsRangeChoiceToFilterRange(newRange),
+                updatedAt: edsDateRangeToIsoStringRange(newRange) ?? undefined,
             };
         });
     }
@@ -338,8 +342,9 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                 </Label>
                 <Label text="Updated at" wrapperClassName="min-w-2xs">
                     <DateRangePicker
+                        className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300"
+                        value={isoRangeToEdsDateRange(tableFilter.updatedAt ?? null)}
                         onChange={handleDateFilterRangeChange}
-                        className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300 h-10"
                     />
                 </Label>
             </div>

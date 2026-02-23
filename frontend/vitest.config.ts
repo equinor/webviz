@@ -1,5 +1,6 @@
 // vitest.config.ts
 import path from "path";
+
 import { defineConfig } from "vitest/config";
 
 import aliases from "./aliases.json";
@@ -7,12 +8,10 @@ import aliases from "./aliases.json";
 export default defineConfig({
     test: {
         coverage: {
-            include: ["src/**/*"],
-            extension: [".ts"],
+            include: ["src/**/**.{ts}"],
             provider: "istanbul", // or 'v8'
             reportsDirectory: "./coverage/unit/",
             exclude: ["**/api/**", "**/assets/**", "**/templates/**"],
-            all: true,
         },
         include: ["./tests/unit/**/*.test.ts"],
     },

@@ -5,6 +5,7 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import type { SelectOption, SelectProps } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
@@ -46,7 +47,10 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
             adornment: (
                 <EnsembleColorTile
                     ensemble={ens}
-                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    isRealizationFilterEffective={isEnsembleRealizationFilterEffective(
+                        ens,
+                        ensembleRealizationFilterFunction,
+                    )}
                     wrapperClassName="w-6 h-6"
                 />
             ),

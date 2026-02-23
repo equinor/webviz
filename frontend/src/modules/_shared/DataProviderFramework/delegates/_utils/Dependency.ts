@@ -3,8 +3,8 @@ import { isCancelledError } from "@tanstack/react-query";
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
 import { SettingTopic, type SettingManager } from "../../framework/SettingManager/SettingManager";
 import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
-import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
-import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
+import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { Settings } from "../../settings/settingsDefinitions";
 
 class DependencyLoadingError extends Error {}
 
@@ -117,7 +117,9 @@ export class Dependency<
     }
 
     private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] {
-        if (!this._isInitialized) {
+        const setting = this._localSettingManagerGetter(settingName);
+
+        if (!this._isInitialized && !setting.isStatic()) {
             this._numParentDependencies++;
         }
 
@@ -138,7 +140,6 @@ export class Dependency<
             return this._cachedSettingsMap.get(settingName as string);
         }
 
-        const setting = this._localSettingManagerGetter(settingName);
         const value = setting.getValue();
         this._cachedSettingsMap.set(settingName as string, value);
 
@@ -229,12 +230,16 @@ export class Dependency<
         this._abortController = new AbortController();
 
         // Establishing subscriptions
-        await this._updateFunc({
-            getLocalSetting: this.getLocalSetting,
-            getGlobalSetting: this.getGlobalSetting,
-            getHelperDependency: this.getHelperDependency,
-            abortSignal: this._abortController.signal,
-        });
+        try {
+            await this._updateFunc({
+                getLocalSetting: this.getLocalSetting,
+                getGlobalSetting: this.getGlobalSetting,
+                getHelperDependency: this.getHelperDependency,
+                abortSignal: this._abortController.signal,
+            });
+        } catch (error) {
+            console.error(error);
+        }
 
         // If there are no dependencies, we can call the update function
         if (this._numParentDependencies === 0) {

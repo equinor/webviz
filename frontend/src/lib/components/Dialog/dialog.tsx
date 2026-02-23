@@ -6,7 +6,7 @@ import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type DialogDrawerProps = {
-    content: React.ReactNode;
+    content?: React.ReactNode;
     width?: string | number;
     maxWidth?: string | number;
     open: boolean;

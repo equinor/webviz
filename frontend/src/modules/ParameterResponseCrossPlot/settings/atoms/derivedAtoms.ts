@@ -1,8 +1,7 @@
 import { atom } from "jotai";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { getEnsembleIdentsFromStrings } from "@framework/utils/ensembleIdentUtils";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 
 import { receivedChannelAtom } from "./baseAtoms";
@@ -21,11 +20,8 @@ export const availableParameterIdentsAtom = atom((get) => {
         (content) => content.metaData.ensembleIdentString,
     );
 
-    // Get regular ensemble identifiers
+    // Get parameters that are continuous and non-constant across the identified ensembles
     const ensembleSet = get(EnsembleSetAtom);
-    const regularEnsembleIdents = ensembleIdentStrings
-        .map((id) => ensembleSet.findEnsembleByIdentString(id))
-        .filter((ensemble) => ensemble instanceof RegularEnsemble)
-        .map((ensemble) => RegularEnsembleIdent.fromString(ensemble.getIdent().toString()));
-    return getContinuousAndNonConstantParameterIdentsInEnsembles(ensembleSet, regularEnsembleIdents);
+    const ensembleIdents = getEnsembleIdentsFromStrings(ensembleIdentStrings);
+    return getContinuousAndNonConstantParameterIdentsInEnsembles(ensembleSet, ensembleIdents);
 });
