@@ -115,6 +115,13 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
 
+# Note that if WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY is set to true,
+# we skip the actual initialization of the FastAPI app and just set lifespan_handler_async to None.
+# This allows us to import this module and access the app object without running the lifespan handler,
+# which may be desirable in certain contexts such as API code generation.
+if os.getenv("WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY") is not None:
+    lifespan_handler_async = None  # type: ignore[assignment]
+
 app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
     root_path="/api",
