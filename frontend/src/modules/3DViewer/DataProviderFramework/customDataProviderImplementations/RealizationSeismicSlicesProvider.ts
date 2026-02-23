@@ -18,7 +18,6 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 
 import { type SeismicSliceData_trans, transformSeismicSlice } from "../utils/transformSeismicSlice";
 
-
 const realizationSeismicSlicesSettings = [
     Setting.ENSEMBLE,
     Setting.REALIZATION,
@@ -180,9 +179,11 @@ export class RealizationSeismicSlicesProvider
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
-
+            if (!fieldIdentifier || !ensembles) {
+                return [];
+            }
             const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .filter((ensemble) => ensemble.getFieldIdentifiers().includes(fieldIdentifier))
                 .map((ensemble) => ensemble.getIdent());
 
             return ensembleIdents;
