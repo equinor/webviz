@@ -15,7 +15,6 @@ export type ErrorDialogProps = {
 } & DialogProps;
 
 export function ErrorDialog(props: ErrorDialogProps): React.ReactNode {
-    // function startDiscussion() {}
     const [isSymbolicatingStack, setIsSymbolicatingStack] = React.useState(false);
 
     async function maybeGetSymbolicatedTrace(error: Error) {

@@ -24,6 +24,7 @@ import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
 import { RightNavBar } from "../RightNavBar";
 import { SaveSessionDialog } from "../SaveSessionDialog";
+import { SessionErrorDialog } from "../SessionErrorDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
 
@@ -90,6 +91,7 @@ export function WorkbenchWrapper() {
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
+            <SessionErrorDialog workbench={workbench} />
         </>
     );
 }

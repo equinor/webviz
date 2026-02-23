@@ -11,7 +11,7 @@ import {
 } from "@api";
 import { ConfirmationService } from "@framework/ConfirmationService";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
-import { GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
 import type { Template } from "@framework/TemplateRegistry";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type { Workbench } from "@framework/Workbench";
@@ -44,6 +44,15 @@ import {
     UrlError,
 } from "./utils/url";
 import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
+
+export enum SessionPersistenceAction {
+    SAVE = "save",
+    LOAD = "load",
+}
+
+export class SessionPersistenceError extends Error {
+    name = "SessionPersistenceError";
+}
 
 export enum WorkbenchSessionManagerTopic {
     ACTIVE_SESSION = "activeSession",
@@ -245,21 +254,16 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 errorExplanation = `Server responded with message: ${error.response?.data.error.message}.`;
             }
 
-            const result = await ConfirmationService.confirm({
-                title: "Could not load session",
-                message: `Could not load session with ID '${sessionId}'. ${errorExplanation}`,
-                actions: [
-                    { id: "cancel", label: "Cancel" },
-                    { id: "retry", label: "Retry" },
-                ],
+            // Return to start and register error
+            window.history.pushState({}, "", "/");
+            this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
+                action: SessionPersistenceAction.LOAD,
+                actionOpts: sessionId,
+                error: new SessionPersistenceError(
+                    `Could not load session with ID '${sessionId}'. ${errorExplanation}`,
+                ),
             });
 
-            if (result === "retry") {
-                return await this.openSession(sessionId);
-            }
-            if (result === "cancel") {
-                removeSessionIdFromUrl();
-            }
             return false;
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
@@ -675,22 +679,32 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
                 return true;
             } else {
-                if (result.reason === PersistFailureReason.ERROR) {
-                    toast.error("Failed to save session");
-                } else if (result.reason === PersistFailureReason.SAVE_IN_PROGRESS) {
-                    toast.error("Save already in progress. Please wait...");
+                if (result.reason === PersistFailureReason.SAVE_IN_PROGRESS) {
+                    throw new SessionPersistenceError("Save already in progress. Please wait...");
                 } else if (result.reason === PersistFailureReason.NO_CHANGES) {
-                    toast.error("No changes to save");
+                    throw new SessionPersistenceError("No changes to save");
                 } else if (result.reason === PersistFailureReason.CONTENT_TOO_LARGE) {
-                    toast.error(result.message);
+                    throw new SessionPersistenceError(result.message);
+                } else {
+                    throw new SessionPersistenceError("Unexpected error");
                 }
-
-                return false;
             }
-        } catch (error) {
+        } catch (err) {
+            const error = err as Error;
             this.dismissToast(progressToastId);
             console.error("Failed to save session:", error);
-            toast.error("Failed to save session");
+
+            // Return to the original session
+            if (opts?.saveAsNew) {
+                this.unloadSession();
+                await this.setActiveSession(initialActiveSession);
+            }
+
+            this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
+                action: SessionPersistenceAction.SAVE,
+                actionOpts: opts,
+                error,
+            });
 
             return false;
         } finally {
