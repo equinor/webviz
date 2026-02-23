@@ -8,7 +8,12 @@ import xtgeo
 
 from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, Service
 
-from .surface_helpers import get_surface_picks_for_well_trajectory_from_xtgeo, PickDirection, SurfaceWellPick, WellTrajectory
+from .surface_helpers import (
+    get_surface_picks_for_well_trajectory_from_xtgeo,
+    PickDirection,
+    SurfaceWellPick,
+    WellTrajectory,
+)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -35,29 +40,17 @@ class FormationSegment:
     md_exit: float
 
 
-@dataclass
-class WellTrajectoryFormationSegments:
-    """
-    Segments of a well trajectory that intersects a formation defined by top and bottom surfaces.
-
-    A well can enter and exit a formation multiple times, resulting in multiple segments.
-
-    unique_wellbore_identifier: str
-    formation_segments: list[FormationSegment]
-    """
-
-    unique_wellbore_identifier: str
-    formation_segments: list[FormationSegment]
-
-
 def create_well_trajectory_formation_segments(
     well_trajectory: WellTrajectory,
     top_depth_surface: xtgeo.RegularSurface,
     bottom_depth_surface: xtgeo.RegularSurface | None = None,
     surface_collapse_tolerance: float = 0.01,
-) -> WellTrajectoryFormationSegments:
+) -> list[FormationSegment]:
     """
     Create formation segments for a well trajectory based on top and optional bottom surface.
+
+    Segments of a well trajectory that intersects a formation defined by top and bottom surfaces.
+    A well can enter and exit a formation multiple times, resulting in multiple segments.
 
     **Description:**
     - The formation is defined by a top surface and an optional bottom surface. If bottom surface
@@ -79,8 +72,8 @@ def create_well_trajectory_formation_segments(
         bottom_depth_surface (xtgeo.RegularSurface): The optional bottom bounding depth surface of
                                                      the formation.
     Returns:
-        WellTrajectoryFormationSegments: The segments where the well trajectory is within the
-                                         formation. With measured depth values at entry and exit.
+        list[FormationSegment]: The segments where the well trajectory is within the
+                                formation. With measured depth values at entry and exit.
     """
 
     # Compare topology of top and bottom surfaces (only if both surfaces are provided)
@@ -119,17 +112,12 @@ def create_well_trajectory_formation_segments(
 
     # Allowed with empty bottom picks
     if not top_picks:
-        return WellTrajectoryFormationSegments(
-            unique_wellbore_identifier=well_trajectory.unique_wellbore_identifier, formation_segments=[]
-        )
+        return []
 
-    return WellTrajectoryFormationSegments(
-        unique_wellbore_identifier=well_trajectory.unique_wellbore_identifier,
-        formation_segments=_create_formation_segments_from_well_trajectory_and_picks(
-            well_trajectory=well_trajectory,
-            top_surface_picks=top_picks,
-            bottom_surface_picks=bottom_picks,
-        ),
+    return _create_formation_segments_from_well_trajectory_and_picks(
+        well_trajectory=well_trajectory,
+        top_surface_picks=top_picks,
+        bottom_surface_picks=bottom_picks,
     )
 
 
@@ -182,8 +170,8 @@ def _create_formation_segments_from_well_trajectory_and_picks(
         bottom_surface_picks (list[SurfaceWellPick]): The optional bottom surface well picks relevant
                                                       for the formation.
     Returns:
-        WellTrajectoryFormationSegments: The segments where the well trajectory is within the formation.
-                                         With measured depth values at entry and exit.
+        list[FormationSegment]: The segments where the well trajectory is within the formation.
+                                With measured depth values at entry and exit.
     """
 
     # Combine and categorize picks

@@ -301,13 +301,24 @@ async def post_get_well_trajectories_formation_segments(
 
     per_well_trajectory_formation_segments = []
     for well in well_trajectories:
-        formation_segments = create_well_trajectory_formation_segments(
-            well_trajectory=converters.from_api_well_trajectory(well),
-            top_depth_surface=top_xtgeo_surf,
-            bottom_depth_surface=bottom_xtgeo_surf,
-        )
+        well_trajectory = converters.from_api_well_trajectory(well)
+        formation_segments = None
+        error_message = None
+        try:
+            formation_segments = create_well_trajectory_formation_segments(
+                well_trajectory=well_trajectory,
+                top_depth_surface=top_xtgeo_surf,
+                bottom_depth_surface=bottom_xtgeo_surf,
+            )
+        except ServiceLayerException as exc:
+            error_message = str(exc)
+
         per_well_trajectory_formation_segments.append(
-            converters.to_api_well_trajectory_formation_segments(formation_segments)
+            converters.to_api_well_trajectory_formation_segments(
+                unique_wellbore_identifier=well_trajectory.unique_wellbore_identifier,
+                well_trajectory_formation_segments=formation_segments,
+                error_message=error_message,
+            )
         )
 
     perf_metrics.record_lap("Create segments for all wells")

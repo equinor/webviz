@@ -17,7 +17,7 @@ from webviz_services.utils.surface_helpers import (
 )
 from webviz_services.utils.surface_to_png import surface_to_png_bytes_optimized
 from webviz_services.smda_access import StratigraphicUnit
-from webviz_services.utils.surfaces_well_trajectory_formation_segments import WellTrajectoryFormationSegments
+from webviz_services.utils.surfaces_well_trajectory_formation_segments import FormationSegment
 
 from . import schemas
 
@@ -226,18 +226,29 @@ def from_api_well_trajectory(
 
 
 def to_api_well_trajectory_formation_segments(
-    well_trajectory_formation_segments: WellTrajectoryFormationSegments,
-) -> schemas.WellTrajectoryFormationSegments:
+    unique_wellbore_identifier: str,
+    well_trajectory_formation_segments: list[FormationSegment] | None,
+    error_message: str | None,
+) -> schemas.WellTrajectoryFormationSegmentsSuccess | schemas.WellTrajectoryFormationSegmentsError:
     """
     Convert service layer well trajectory formation segments to API well trajectory
     formation segments
     """
-    return schemas.WellTrajectoryFormationSegments(
-        uwi=well_trajectory_formation_segments.unique_wellbore_identifier,
-        formationSegments=[
-            schemas.FormationSegment(mdEnter=fs.md_enter, mdExit=fs.md_exit)
-            for fs in well_trajectory_formation_segments.formation_segments
-        ],
+
+    if error_message is not None:
+        return schemas.WellTrajectoryFormationSegmentsError(
+            uwi=unique_wellbore_identifier,
+            errorMessage=error_message,
+        )
+
+    formation_segments = (
+        [schemas.FormationSegment(mdEnter=fs.md_enter, mdExit=fs.md_exit) for fs in well_trajectory_formation_segments]
+        if well_trajectory_formation_segments is not None
+        else []
+    )
+    return schemas.WellTrajectoryFormationSegmentsSuccess(
+        uwi=unique_wellbore_identifier,
+        formationSegments=formation_segments,
     )
 
 

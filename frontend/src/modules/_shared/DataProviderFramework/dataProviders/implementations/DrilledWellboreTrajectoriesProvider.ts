@@ -9,7 +9,8 @@ import type {
     WellInjectionData_api,
     WellProductionData_api,
     WellTrajectory_api,
-    WellTrajectoryFormationSegments_api,
+    WellTrajectoryFormationSegmentsError_api,
+    WellTrajectoryFormationSegmentsSuccess_api,
 } from "@api";
 import {
     getDrilledWellboreHeadersOptions,
@@ -187,7 +188,8 @@ export class DrilledWellboreTrajectoriesProvider
 
             const formationFilter = getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER);
             const surfaceAttribute = getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE);
-            const formationSegments: WellTrajectoryFormationSegments_api[] = [];
+            const successfulFormationSegments: WellTrajectoryFormationSegmentsSuccess_api[] = [];
+            const errorFormationSegments: WellTrajectoryFormationSegmentsError_api[] = [];
             if (
                 depthFilterType === "surface_based" &&
                 ensembleIdent &&
@@ -232,11 +234,16 @@ export class DrilledWellboreTrajectoriesProvider
                     },
                 });
 
-                formationSegments.push(
-                    ...(await fetchQuery({
-                        ...formationSegmentsOptions,
-                    })),
-                );
+                const perWellFormationSegmentsResult = await fetchQuery({
+                    ...formationSegmentsOptions,
+                });
+                for (const result of perWellFormationSegmentsResult) {
+                    if (result.status === "success") {
+                        successfulFormationSegments.push(result);
+                    } else if (result.status === "error") {
+                        errorFormationSegments.push(result);
+                    }
+                }
             }
 
             const result: DrilledWellboreTrajectoriesData = [];
@@ -253,8 +260,8 @@ export class DrilledWellboreTrajectoriesProvider
                     ...traj,
                     ...wellboreHeader,
                     formationSegments:
-                        formationSegments.find((fs) => fs.uwi === traj.uniqueWellboreIdentifier)?.formationSegments ??
-                        [],
+                        successfulFormationSegments.find((fs) => fs.uwi === traj.uniqueWellboreIdentifier)
+                            ?.formationSegments ?? [],
                     productionData: productionData?.find((pd) => pd.wellboreUuid === traj.wellboreUuid) ?? null,
                     injectionData: injectionData?.find((id) => id.wellboreUuid === traj.wellboreUuid) ?? null,
                     perforations:

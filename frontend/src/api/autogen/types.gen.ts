@@ -2884,16 +2884,45 @@ export type WellTrajectory_api = {
 };
 
 /**
- * WellTrajectoryFormationSegments
+ * WellTrajectoryFormationSegmentsError
+ *
+ * Error response when retrieving well trajectory formation segments.
+ *
+ * status: "error"
+ * uwi: str
+ * errorMessage: str
+ */
+export type WellTrajectoryFormationSegmentsError_api = {
+    /**
+     * Status
+     */
+    status?: "error";
+    /**
+     * Uwi
+     */
+    uwi: string;
+    /**
+     * Errormessage
+     */
+    errorMessage: string;
+};
+
+/**
+ * WellTrajectoryFormationSegmentsSuccess
  *
  * Segments of a well trajectory that intersects a formation defined by top and bottom surfaces.
  *
  * A wellbore can enter and exit a formation multiple times, resulting in multiple segments.
  *
- * uniqueWellboreIdentifier: str
+ * status: "success"
+ * uwi: str
  * formationSegments: List[FormationSegment]
  */
-export type WellTrajectoryFormationSegments_api = {
+export type WellTrajectoryFormationSegmentsSuccess_api = {
+    /**
+     * Status
+     */
+    status?: "success";
     /**
      * Uwi
      */
@@ -4420,7 +4449,14 @@ export type PostGetWellTrajectoriesFormationSegmentsResponses_api = {
      *
      * Successful Response
      */
-    200: Array<WellTrajectoryFormationSegments_api>;
+    200: Array<
+        | ({
+              status: "success";
+          } & WellTrajectoryFormationSegmentsSuccess_api)
+        | ({
+              status: "error";
+          } & WellTrajectoryFormationSegmentsError_api)
+    >;
 };
 
 export type PostGetWellTrajectoriesFormationSegmentsResponse_api =

@@ -1,7 +1,7 @@
 from enum import Enum, StrEnum
-from typing import List, Literal
+from typing import Annotated, List, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from webviz_core_utils.b64 import B64FloatArray
 
 from webviz_services.sumo_access.generic_types import SumoContent
@@ -206,18 +206,40 @@ class FormationSegment(BaseModel):
     mdExit: float
 
 
-class WellTrajectoryFormationSegments(BaseModel):
+class WellTrajectoryFormationSegmentsSuccess(BaseModel):
     """
     Segments of a well trajectory that intersects a formation defined by top and bottom surfaces.
 
     A wellbore can enter and exit a formation multiple times, resulting in multiple segments.
 
-    uniqueWellboreIdentifier: str
+    status: "success"
+    uwi: str
     formationSegments: List[FormationSegment]
     """
 
+    status: Literal["success"] = "success"
     uwi: str
-    formationSegments: List[FormationSegment]
+    formationSegments: list[FormationSegment]
+
+
+class WellTrajectoryFormationSegmentsError(BaseModel):
+    """
+    Error response when retrieving well trajectory formation segments.
+
+    status: "error"
+    uwi: str
+    errorMessage: str
+    """
+
+    status: Literal["error"] = "error"
+    uwi: str
+    errorMessage: str
+
+
+WellTrajectoryFormationSegments = Annotated[
+    WellTrajectoryFormationSegmentsSuccess | WellTrajectoryFormationSegmentsError,
+    Field(discriminator="status"),
+]
 
 
 class WellTrajectory(BaseModel):
