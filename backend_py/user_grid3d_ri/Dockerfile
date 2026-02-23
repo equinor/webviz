@@ -5,27 +5,26 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -eux; \
     apt-get update; \
-    apt-get -y upgrade; \
-    \
     apt-get install -y --no-install-recommends \
-        software-properties-common \
         ca-certificates \
+        software-properties-common \
         gnupg; \
-    \
     add-apt-repository -y ppa:deadsnakes/ppa; \
     apt-get update; \
-    \
     apt-get install -y --no-install-recommends \
         libgl1 \
         libglx-mesa0 \
         libglu1-mesa \
-        libhdf5-dev \
+        libhdf5-103-1t64 \
+        libhdf5-cpp-103-1t64 \
+        libglib2.0-0t64 \
         libgomp1 \
-        unzip \
         python3.13 \
         python3.13-venv; \
     \
-    apt-get -y autoremove --purge; \
+    apt-get purge -y --auto-remove \
+        software-properties-common \
+        gnupg; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
