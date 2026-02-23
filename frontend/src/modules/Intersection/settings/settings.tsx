@@ -3,7 +3,7 @@ import React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 
-import { AssetDropdown } from "@framework/components/AssetDropdown";
+import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
@@ -82,7 +82,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         <div className="h-full flex flex-col gap-1">
             <CollapsibleGroup title="Field" expanded>
                 <SettingWrapper annotations={selectedFieldIdentifierAnnotations}>
-                    <AssetDropdown
+                    <FieldDropdown
                         ensembleSet={ensembleSet}
                         value={selectedFieldIdentifier.value}
                         onChange={handleFieldIdentifierChange}

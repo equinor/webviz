@@ -4,7 +4,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
 import type { WellboreHeader_api } from "@api";
-import { AssetDropdown } from "@framework/components/AssetDropdown";
+import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { SyncSettingsHelper } from "@framework/SyncSettings";
@@ -101,7 +101,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
         <div className="flex flex-col h-full gap-1">
             <CollapsibleGroup title="Wellbore" expanded contentClassName="flex flex-col gap-3">
                 <SettingWrapper annotations={fieldSettingAnnotations}>
-                    <AssetDropdown value={selectedField.value} ensembleSet={ensembleSet} onChange={setSelectedField} />
+                    <FieldDropdown value={selectedField.value} ensembleSet={ensembleSet} onChange={setSelectedField} />
                 </SettingWrapper>
                 <SettingWrapper
                     label="Wellbore"

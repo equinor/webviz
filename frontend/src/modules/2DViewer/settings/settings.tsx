@@ -3,7 +3,7 @@ import React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 
-import { AssetDropdown } from "@framework/components/AssetDropdown";
+import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -54,7 +54,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         <div className="h-full flex flex-col gap-1">
             <CollapsibleGroup title="Field" expanded>
                 <SettingWrapper annotations={fieldIdentifierAnnotations}>
-                    <AssetDropdown
+                    <FieldDropdown
                         ensembleSet={ensembleSet}
                         onChange={handleFieldChange}
                         value={fieldIdentifier.value}
