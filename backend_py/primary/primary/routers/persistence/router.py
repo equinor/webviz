@@ -394,7 +394,7 @@ async def create_snapshot(
         title=snapshot.title, description=snapshot.description, content=snapshot.content
     )
 
-    # We count snapshot creation as implicit visit. This also makes it so we can get recently created ones alongside other shared screenshots
+    # We count snapshot creation as implicit visit. This also makes it so we can get recently created ones alongside other shared snapshots
     await log_store.log_snapshot_visit_async(
         snapshot_id=snapshot_id, snapshot_owner_id=authenticated_user.get_user_id()
     )
