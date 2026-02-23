@@ -2,28 +2,28 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 
-type FieldDropdownProps = {
+type AssetDropdownProps = {
     ensembleSet: EnsembleSet;
     value: string | null;
-    onChange: (fieldIdentifier: string | null) => void;
+    onChange: (assetName: string | null) => void;
 } & Omit<DropdownProps, "options" | "value" | "onChange">;
 
-export function FieldDropdown(props: FieldDropdownProps): JSX.Element {
+export function AssetDropdown(props: AssetDropdownProps): JSX.Element {
     const { ensembleSet, value, onChange, ...rest } = props;
 
-    function handleSelectionChanged(fieldIdentifier: string) {
-        onChange(fieldIdentifier);
+    function handleSelectionChanged(assetName: string) {
+        onChange(assetName);
     }
 
     const optionsArray: DropdownOption[] = [];
     for (const ens of ensembleSet.getRegularEnsembleArray()) {
-        const fieldIdentifier = ens.getFieldIdentifier();
-        if (optionsArray.some((option) => option.value === fieldIdentifier.toString())) {
+        const assetName = ens.getAssetName();
+        if (optionsArray.some((option) => option.value === assetName.toString())) {
             continue;
         }
         optionsArray.push({
-            value: fieldIdentifier.toString(),
-            label: fieldIdentifier.toString(),
+            value: assetName.toString(),
+            label: assetName.toString(),
         });
     }
 

@@ -3,7 +3,7 @@ import React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 
-import { FieldDropdown } from "@framework/components/FieldDropdown";
+import { FieldDropdown } from "@framework/components/AssetDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";

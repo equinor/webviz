@@ -11,8 +11,8 @@ from .sumo_client_factory import create_sumo_client
 LOGGER = logging.getLogger(__name__)
 
 
-class FieldInfo(BaseModel):
-    identifier: str
+class SumoAsset(BaseModel):
+    asset_name: str
 
 
 class EnsembleInfo(BaseModel):
@@ -35,17 +35,17 @@ class SumoInspector:
     def __init__(self, access_token: str):
         self._sumo_client: SumoClient = create_sumo_client(access_token)
 
-    async def get_fields_async(self) -> List[FieldInfo]:
-        """Get list of fields"""
+    async def get_asset_names_async(self) -> List[SumoAsset]:
+        """Get list of assets"""
         timer = PerfMetrics()
         search_context = SearchContext(self._sumo_client)
-        field_names = await search_context.fieldidentifiers_async
-        timer.record_lap("get_fields")
-        field_idents = sorted(list(set(field_names)))
+        asset_names = await search_context.asset_names_async
+        timer.record_lap("get_assets")
+        asset_names = sorted(list(set(asset_names)))
         LOGGER.debug(timer.to_string())
-        return [FieldInfo(identifier=field_ident) for field_ident in field_idents]
+        return [SumoAsset(asset_name=asset_name) for asset_name in asset_names]
 
-    async def get_cases_async(self, field_identifier: str) -> list[CaseInfo]:
+    async def get_cases_async(self, asset_name: str) -> list[CaseInfo]:
         """
         Get all cases with available result types from SUMO using aggregations and filters.
 
@@ -58,7 +58,7 @@ class SumoInspector:
             "query": {
                 "bool": {
                     "must": [
-                        {"match": {"masterdata.smda.field.identifier.keyword": field_identifier}},
+                        {"match": {"access.asset.name.keyword": asset_name}},
                     ],
                     "must_not": [{"exists": {"field": "fmu.aggregation"}}],
                 },

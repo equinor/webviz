@@ -7,7 +7,8 @@ import { createRegularEnsembleDisplayName } from "./utils/ensembleUiHelpers";
 
 export class RegularEnsemble {
     private _ensembleIdent: RegularEnsembleIdent;
-    private _fieldIdentifier: string;
+    private _assetName: string;
+    private _fieldIdentifiers: string[];
     private _caseName: string;
     private _stratigraphicColumnIdentifier: string;
     private _realizationsArray: number[];
@@ -17,7 +18,8 @@ export class RegularEnsemble {
     private _customName: string | null;
 
     constructor(
-        fieldIdentifier: string,
+        assetName: string,
+        fieldIdentifiers: string[],
         caseUuid: string,
         caseName: string,
         ensembleName: string,
@@ -29,7 +31,8 @@ export class RegularEnsemble {
         customName: string | null = null,
     ) {
         this._ensembleIdent = new RegularEnsembleIdent(caseUuid, ensembleName);
-        this._fieldIdentifier = fieldIdentifier;
+        this._assetName = assetName;
+        this._fieldIdentifiers = fieldIdentifiers;
         this._caseName = caseName;
         this._stratigraphicColumnIdentifier = stratigraphicColumnIdentifier;
         this._realizationsArray = Array.from(realizationsArray).sort((a, b) => a - b);
@@ -47,8 +50,11 @@ export class RegularEnsemble {
         return this._ensembleIdent;
     }
 
-    getFieldIdentifier(): string {
-        return this._fieldIdentifier;
+    getAssetName(): string {
+        return this._assetName;
+    }
+    getFieldIdentifiers(): string[] {
+        return this._fieldIdentifiers;
     }
 
     getStratigraphicColumnIdentifier(): string {

@@ -867,14 +867,14 @@ docs = ["pydocstyle"]
 
 [[package]]
 name = "fmu-sumo"
-version = "2.10.0"
+version = "2.12.0"
 description = "Python package for interacting with Sumo in an FMU setting"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "fmu_sumo-2.10.0-py3-none-any.whl", hash = "sha256:dd6ab13130aac8989f60d82ad973d6581c2ed325683a3384b0f0469b3b4e4992"},
-    {file = "fmu_sumo-2.10.0.tar.gz", hash = "sha256:3ab107e5cfc5b65952406b146385b26e23ac015a6edb3cdeca77004dc1cb1dfb"},
+    {file = "fmu_sumo-2.12.0-py3-none-any.whl", hash = "sha256:9b5f8cd07dff64926cbabfb8e347431bdfadcdc75a9d804e4936bed0a14d5b4e"},
+    {file = "fmu_sumo-2.12.0.tar.gz", hash = "sha256:e03f26a4eebc87259ef08f3c5b8d5bf2f83e0f26ec24d42848573f84bccfada4"},
 ]
 
 [package.dependencies]
@@ -4012,7 +4012,7 @@ develop = true
 
 [package.dependencies]
 fmu-datamodels = "0.14.0"
-fmu-sumo = "2.10.0"
+fmu-sumo = "^2.12.0"
 httpx = "^0.28.1"
 numpy = "^2.2.0"
 polars = "~1.33.0"
@@ -4022,7 +4022,7 @@ pyarrow-stubs = "^20.0.0.20250825"
 pydantic = "^2.11.0"
 redis = "^5.3.1"
 requests-toolbelt = "^1.0.0"
-sumo-wrapper-python = "1.3.0"
+sumo-wrapper-python = "^1.3.0"
 types-redis = "^4.6.0"
 webviz-core-utils = {path = "../core_utils", develop = true}
 webviz-server-schemas = {path = "../server_schemas", develop = true}
