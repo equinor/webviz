@@ -40,10 +40,52 @@ class FormationSegment:
     md_exit: float
 
 
+def validate_depth_surfaces_for_formation_segments(
+    top_depth_surface: xtgeo.RegularSurface,
+    bottom_depth_surface: xtgeo.RegularSurface,
+    surface_collapse_tolerance: float = 0.01,
+) -> None:
+    """
+    Validate that the provided depth surfaces are suitable for computing formation segments.
+
+    Checks performed:
+    - If both surfaces are provided, their topology must match.
+    - If both surfaces are provided, the top surface should be above the bottom surface within a specified tolerance.
+
+    Args:
+        top_depth_surface (xtgeo.RegularSurface): The top bounding depth surface of the formation.
+        bottom_depth_surface (xtgeo.RegularSurface): The optional bottom bounding depth surface of the formation.
+        surface_collapse_tolerance (float): Tolerance to determine if surfaces are effectively at the same depth or interleaved.
+    Raises:
+        InvalidParameterError: If validation fails due to topology mismatch or depth issues.
+    """
+
+    # Compare topology of top and bottom surfaces (only if both surfaces are provided)
+    if top_depth_surface.compare_topology(bottom_depth_surface) is False:
+        message = "Top and bottom surfaces have different topology. Cannot compute formation segments."
+        LOGGER.warning(message)
+        raise InvalidParameterError(message, Service.GENERAL)
+
+    # With equal topology, we can do a quick check to see if surfaces are interleaved
+    # or if top is actually above bottom
+    top_z_value = top_depth_surface.get_values1d()
+    bottom_z_value = bottom_depth_surface.get_values1d()
+    diff = bottom_z_value - top_z_value
+    if np.any(diff < -abs(surface_collapse_tolerance)):
+        message = (
+            f"Surface depth validation failed: computed depth difference is below the collapse tolerance ({surface_collapse_tolerance}). "
+            "This suggests interleaved surfaces or a top surface located below the bottom. "
+            "Review the surface inputs."
+        )
+        LOGGER.warning(message)
+        raise InvalidParameterError(message, Service.GENERAL)
+
+
 def create_well_trajectory_formation_segments(
     well_trajectory: WellTrajectory,
     top_depth_surface: xtgeo.RegularSurface,
     bottom_depth_surface: xtgeo.RegularSurface | None = None,
+    are_depth_surfaces_validated: bool = False,
     surface_collapse_tolerance: float = 0.01,
 ) -> list[FormationSegment]:
     """
@@ -76,27 +118,14 @@ def create_well_trajectory_formation_segments(
                                 formation. With measured depth values at entry and exit.
     """
 
-    # Compare topology of top and bottom surfaces (only if both surfaces are provided)
-    if bottom_depth_surface is not None:
-        if top_depth_surface.compare_topology(bottom_depth_surface) is False:
-            message = f"Top and bottom surfaces have different topology. Cannot compute formation segments for well {well_trajectory.unique_wellbore_identifier}."
-            LOGGER.warning(message)
-            raise InvalidParameterError(message, Service.GENERAL)
-
-        # With equal topology, we can do a quick check to see if surfaces are interleaved
-        # or if top is actually above bottom
-        top_z_value = top_depth_surface.get_values1d()
-        bottom_z_value = bottom_depth_surface.get_values1d()
-        diff = bottom_z_value - top_z_value
-        if np.any(diff < -abs(surface_collapse_tolerance)):
-            message = (
-                f"Surface depth validation failed when computing formation segments for well {well_trajectory.unique_wellbore_identifier}: "
-                f"computed depth difference is below the collapse tolerance ({surface_collapse_tolerance}). "
-                "This suggests interleaved surfaces or a top surface located below the bottom. "
-                "Review the surface inputs."
-            )
-            LOGGER.warning(message)
-            raise InvalidParameterError(message, Service.GENERAL)
+    # Run depth surface validation if flag is set, otherwise it is assumed that the caller has
+    # already validated the surfaces or that validation is not needed
+    if not are_depth_surfaces_validated and bottom_depth_surface is not None:
+        validate_depth_surfaces_for_formation_segments(
+            top_depth_surface=top_depth_surface,
+            bottom_depth_surface=bottom_depth_surface,
+            surface_collapse_tolerance=surface_collapse_tolerance,
+        )
 
     top_picks = get_surface_picks_for_well_trajectory_from_xtgeo(
         surf=top_depth_surface,

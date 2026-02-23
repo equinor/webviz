@@ -20,7 +20,10 @@ from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_us
 from webviz_services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from webviz_services.surface_query_service.surface_query_service import RealizationSampleResult
 from webviz_services.service_exceptions import ServiceLayerException
-from webviz_services.utils.surfaces_well_trajectory_formation_segments import create_well_trajectory_formation_segments
+from webviz_services.utils.surfaces_well_trajectory_formation_segments import (
+    create_well_trajectory_formation_segments,
+    validate_depth_surfaces_for_formation_segments,
+)
 from webviz_services.utils.surface_helpers import get_surface_picks_for_well_trajectory_from_xtgeo
 
 from primary.auth.auth_helper import AuthHelper
@@ -300,6 +303,18 @@ async def post_get_well_trajectories_formation_segments(
     perf_metrics.record_lap("get-bottom-surf")
 
     per_well_trajectory_formation_segments = []
+
+    # Validate surfaces
+    # - Tolerance for considering top and bottom surfaces to be "collapsed" (i.e. formation is too thin).
+    #   Unit is in the same unit as the depth values on the surfaces, typically meters.
+    if bottom_xtgeo_surf is not None:
+        surface_collapse_tolerance = 0.01
+        validate_depth_surfaces_for_formation_segments(
+            top_depth_surface=top_xtgeo_surf,
+            bottom_depth_surface=bottom_xtgeo_surf,
+            surface_collapse_tolerance=surface_collapse_tolerance,
+        )
+
     for well in well_trajectories:
         well_trajectory = converters.from_api_well_trajectory(well)
         formation_segments = None
@@ -309,6 +324,7 @@ async def post_get_well_trajectories_formation_segments(
                 well_trajectory=well_trajectory,
                 top_depth_surface=top_xtgeo_surf,
                 bottom_depth_surface=bottom_xtgeo_surf,
+                are_depth_surfaces_validated=True,
             )
         except ServiceLayerException as exc:
             error_message = str(exc)
