@@ -5,7 +5,7 @@ import { Close } from "@mui/icons-material";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-type DialogVariant = "error" | "warning" | "info";
+export type DialogVariant = "error" | "warning" | "info";
 
 export type DialogDrawerProps = {
     content?: React.ReactNode;

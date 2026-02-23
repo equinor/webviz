@@ -5,48 +5,48 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getAliveOptions } from "@api";
 import { GuiEvent, useGuiEventListener, type GuiEventPayloads } from "@framework/GuiMessageBroker";
-import { SessionPersistenceAction } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
+import { SnapshotPersistenceAction } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ErrorDialog } from "@lib/components/Dialog";
 
-export type SessionErrorDialogProps = {
+export type SnapshotErrorDialogProps = {
     workbench: Workbench;
 };
 
-function makeModalText(failingAction: SessionPersistenceAction | undefined): { title: string; body: string } {
+function makeModalText(failingAction: SnapshotPersistenceAction | undefined): { title: string; body: string } {
     if (!failingAction) return { title: "", body: "" };
 
     switch (failingAction) {
-        case SessionPersistenceAction.LOAD:
-            return { title: "Unable to load session", body: "Could not load the session due to the following error:" };
-        case SessionPersistenceAction.SAVE:
-            return { title: "Unable to save session", body: "Could not save the session due to the following error:" };
-        // ! Ended up this one being handled by the confirmation service dialog, so this shouldn't happen. Just keeping it here for brevity
-        case SessionPersistenceAction.LOCAL_LOAD:
+        case SnapshotPersistenceAction.OPEN:
             return {
-                title: "Unable to load session backup",
-                body: "Could not load the local session backup due to the following error:",
+                title: "Unable to open snapshot",
+                body: "Could not open the snapshot due to the following error:",
+            };
+        case SnapshotPersistenceAction.CREATE:
+            return {
+                title: "Unable to create snapshot",
+                body: "Could not create a snapshot from the session due to the following error:",
             };
         default:
-            console.warn(`Unknown session persistence action: ${failingAction}`);
+            console.warn(`Unknown snapshot persistence action: ${failingAction}`);
             return { title: "Something went wrong", body: "The session service failed due to the following error:" };
     }
 }
 
-export function SessionErrorDialog(props: SessionErrorDialogProps): React.ReactNode {
+export function SnapshotErrorDialog(props: SnapshotErrorDialogProps): React.ReactNode {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const [isOpen, setIsOpen] = React.useState(false);
     const [errorEventPayload, setErrorEventPayload] = React.useState<
-        GuiEventPayloads[GuiEvent.SessionPersistenceError] | null
+        GuiEventPayloads[GuiEvent.SnapshotPersistenceError] | null
     >(null);
 
     const { title, body } = makeModalText(errorEventPayload?.action);
 
-    const handleSessionSaveError = React.useCallback(function sessionErrorCallback(
-        payload: GuiEventPayloads[GuiEvent.SessionPersistenceError],
+    const handleErrorCallback = React.useCallback(function handleErrorCallback(
+        payload: GuiEventPayloads[GuiEvent.SnapshotPersistenceError],
     ) {
         setErrorEventPayload(payload);
         setIsOpen(true);
@@ -64,8 +64,8 @@ export function SessionErrorDialog(props: SessionErrorDialogProps): React.ReactN
         errorEventPayload.retry();
     }
 
-    // Subscribe to the session error gui-event
-    useGuiEventListener(guiMessageBroker, GuiEvent.SessionPersistenceError, handleSessionSaveError);
+    // Subscribe to the snapshot error gui-event
+    useGuiEventListener(guiMessageBroker, GuiEvent.SnapshotPersistenceError, handleErrorCallback);
 
     return (
         <ErrorDialog

@@ -48,10 +48,20 @@ import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionData
 export enum SessionPersistenceAction {
     SAVE = "save",
     LOAD = "load",
+    LOCAL_LOAD = "local_load",
+}
+
+export enum SnapshotPersistenceAction {
+    CREATE = "create",
+    OPEN = "open",
 }
 
 export class SessionPersistenceError extends Error {
     name = "SessionPersistenceError";
+}
+
+export class SnapshotPersistenceError extends Error {
+    name = "SnapshotPersistenceError";
 }
 
 export enum WorkbenchSessionManagerTopic {
@@ -258,10 +268,10 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             window.history.pushState({}, "", "/");
             this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
                 action: SessionPersistenceAction.LOAD,
-                actionOpts: sessionId,
                 error: new SessionPersistenceError(
                     `Could not load session with ID '${sessionId}'. ${errorExplanation}`,
                 ),
+                retry: () => this.openSession(sessionId),
             });
 
             return false;
@@ -298,9 +308,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         } catch (error: any) {
             console.error("Failed to load snapshot from backend:", error);
 
-            let errorExplanation = "The session might not exist or you might not have access to it.";
+            let errorExplanation = "The snapshot might not exist or you might not have access to it.";
             if (error instanceof SessionValidationError) {
-                errorExplanation = "The session data is invalid, corrupted or outdated.";
+                errorExplanation = "The snapshot data is invalid, corrupted or outdated.";
             }
 
             if (isAxiosError(error)) {
@@ -308,18 +318,16 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 errorExplanation = `Server responded with message: ${error.response?.data.error.message}.`;
             }
 
-            const result = await ConfirmationService.confirm({
-                title: "Could not load snapshot",
-                message: `Could not load snapshot with ID '${snapshotId}'. ${errorExplanation}`,
-                actions: [
-                    { id: "cancel", label: "Cancel" },
-                    { id: "retry", label: "Retry" },
-                ],
+            // Return to start and register error
+            window.history.pushState({}, "", "/");
+            this._guiMessageBroker.publishEvent(GuiEvent.SnapshotPersistenceError, {
+                action: SnapshotPersistenceAction.OPEN,
+                error: new SnapshotPersistenceError(
+                    `Could not load snapshot with ID '${snapshotId}'. ${errorExplanation}`,
+                ),
+                retry: () => this.openSnapshot(snapshotId),
             });
 
-            if (result === "retry") {
-                return await this.openSnapshot(snapshotId);
-            }
             return false;
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSnapshot, false);
@@ -337,6 +345,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
 
             const localStorageSessionData = loadWorkbenchSessionFromLocalStorage(sessionId);
+
             if (!localStorageSessionData) {
                 throw new Error(
                     "No workbench session found in local storage. This should not happen and indicates a logic error.",
@@ -396,6 +405,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             }
 
             const result = await ConfirmationService.confirm({
+                variant: "error",
                 title: "Could not load session from local storage",
                 message: `Could not load session from local storage. ${errorExplanation} Do you want to discard the possibly corrupted local storage session ${additionalMessage}`,
                 actions: [
@@ -702,8 +712,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
                 action: SessionPersistenceAction.SAVE,
-                actionOpts: opts,
                 error,
+                retry: () => this.saveSession(opts),
             });
 
             return false;
@@ -736,7 +746,15 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         if (result.success) {
             toast.success("Snapshot created successfully");
         } else {
-            toast.error(result.message ? `Failed to create snapshot: ${result.message}` : "Failed to create snapshot");
+            const errorMsg = result.message
+                ? `Failed to create snapshot: ${result.message}`
+                : "Failed to create snapshot";
+
+            this._guiMessageBroker.publishEvent(GuiEvent.SnapshotPersistenceError, {
+                action: SnapshotPersistenceAction.CREATE,
+                error: new SnapshotPersistenceError(errorMsg),
+                retry: () => this.createSnapshot(title, description),
+            });
         }
 
         this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, false);
@@ -832,13 +850,31 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             // Update GUI states based on possible loading errors
             this.applyActiveSessionEnsembleLoadErrorsToGuiState();
-
             this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
         } catch (error) {
             console.error("Failed to load workbench session from local storage:", error);
-            if (confirm("Could not load workbench session from local storage. Discard corrupted session?")) {
+
+            const result = await ConfirmationService.confirm({
+                variant: "error",
+                title: "Could not load session from local storage",
+                message: `Could not load workbench session from local storage. Discard corrupted session?`,
+                actions: [
+                    { id: "retry", label: "Retry" },
+                    { id: "cancel", label: "No, cancel" },
+                    { id: "discard", label: "Yes, discard", color: "danger" },
+                ],
+            });
+
+            if (result === "discard") {
+                this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
                 this.discardLocalStorageSession(sessionId, false);
-                await this.startNewSession();
+
+                if (!sessionId) {
+                    await this.startNewSession();
+                }
+            }
+            if (result === "retry") {
+                return await this.updateFromLocalStorage();
             }
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
