@@ -74,10 +74,11 @@ def create_credential_for_azure_services(
             client_secret=secret_vars_for_local_dev.client_secret,
         )
         return ChainedTokenCredential(client_secret_credential, DefaultAzureCredential())
-    else:
-        # Just rely on the default behavior of DefaultAzureCredential for local dev if explicit secrets are not provided
-        LOGGER.info("Creating local development credential for Azure services using DefaultAzureCredential")
-        return DefaultAzureCredential()
+    
+
+    # Just rely on the default behavior of DefaultAzureCredential for local dev if explicit secrets are not provided
+    LOGGER.info("Creating local development credential for Azure services using DefaultAzureCredential")
+    return DefaultAzureCredential()
 
 
 def _show_start_of_secret(secret: str | None, num_chars: int = 4) -> str | None:
