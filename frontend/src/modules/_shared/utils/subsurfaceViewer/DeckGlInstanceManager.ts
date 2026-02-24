@@ -1,7 +1,7 @@
 /*
 This manager is responsible for managing plugins for DeckGL, forwarding events to them, and adding/adjusting layers based on the plugins' responses.
 */
-import type { Layer, PickingInfo } from "@deck.gl/core";
+import type { Layer, PickingInfo, View } from "@deck.gl/core";
 import type { DeckGLProps, DeckGLRef } from "@deck.gl/react";
 import type { MapMouseEvent } from "@webviz/subsurface-viewer";
 import { v4 } from "uuid";
@@ -57,6 +57,10 @@ export class DeckGlPlugin {
         return `${this._id}-${layerId}`;
     }
 
+    protected getDeck() {
+        return this._manager.getDeck();
+    }
+
     handleDrag?(pickingInfo: PickingInfo): void;
     handleLayerHover?(pickingInfo: PickingInfo): void;
     handleLayerClick?(pickingInfo: PickingInfo): void;
@@ -94,6 +98,10 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     private _eventListeners: KeyboardEventListener[] = [];
     private _contextMenu: ContextMenu | null = null;
     private _verticalScale: number = 1;
+
+    private _hiddenViews: View[] = []; // plugin registered
+    private _hiddenViewStatePatch: Record<string, any> = {};
+    private _layerFilterWrappers: ((prev?: any) => any)[] = [];
 
     constructor(ref: DeckGLRef | null) {
         this._ref = ref;
@@ -165,6 +173,32 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                 dragPan: true,
             },
         });
+    }
+
+    getDeck() {
+        return this._ref?.deck ?? null;
+    }
+
+    /**
+     * Temporarily set deck props, run a synchronous function, then restore.
+     * IMPORTANT: fn must be synchronous (no await), or you may see visual flicker.
+     */
+    runWithTemporaryDeckProps<T>(tempProps: Partial<DeckGLProps>, fn: () => T): T | undefined {
+        const deck = this._ref?.deck;
+        if (!deck) return undefined;
+
+        const prev = {
+            views: deck.props.views,
+            viewState: deck.props.viewState,
+            layerFilter: deck.props.layerFilter,
+        };
+
+        deck.setProps(tempProps as any);
+        try {
+            return fn();
+        } finally {
+            deck.setProps(prev as any);
+        }
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<DeckGlInstanceManagerPayloads> {
