@@ -35,8 +35,8 @@ def create_credential_for_azure_services(
 
     LOGGER.info(f"Creating credential for use with Azure services ({is_on_radix_platform=})...")
 
-    LOGGER.info(f"Env.AZURE_TENANT_ID={os.getenv("AZURE_TENANT_ID")}")
-    LOGGER.info(f"Env.AZURE_CLIENT_ID={os.getenv("AZURE_CLIENT_ID")}")
+    LOGGER.info(f"Env.AZURE_TENANT_ID={_show_start_of_secret(os.getenv("AZURE_TENANT_ID"))}")
+    LOGGER.info(f"Env.AZURE_CLIENT_ID={_show_start_of_secret(os.getenv("AZURE_CLIENT_ID"))}")
     LOGGER.info(f"Env.AZURE_FEDERATED_TOKEN_FILE={_show_start_of_secret(os.getenv("AZURE_FEDERATED_TOKEN_FILE"))}")
     LOGGER.info(f"Env.AZURE_CLIENT_SECRET={_show_start_of_secret(os.getenv("AZURE_CLIENT_SECRET"))}")
 
