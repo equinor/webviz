@@ -14,7 +14,6 @@ import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
 import { Group } from "../framework/Group/Group";
-import { OperationGroup } from "../framework/OperationGroup/OperationGroup";
 import type { GroupType } from "../groups/groupTypes";
 import type { DataProviderMeta, ProviderSnapshot } from "../interfacesAndTypes/customDataProviderImplementation";
 import type {
@@ -298,11 +297,6 @@ export class VisualizationAssembler<
 
         for (const child of groupDelegate.getChildren()) {
             if (!child.getItemDelegate().isVisible()) {
-                continue;
-            }
-
-            if (child instanceof OperationGroup) {
-                itemViews.push(child);
                 continue;
             }
 

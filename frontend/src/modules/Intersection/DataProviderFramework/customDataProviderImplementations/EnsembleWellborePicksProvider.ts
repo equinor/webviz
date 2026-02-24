@@ -10,7 +10,6 @@ import {
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
-    DataProviderMeta,
     FetchDataParams,
     ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";

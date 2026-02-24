@@ -2,9 +2,9 @@ import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import type { RealizationGridProviderMeta } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
+import type { RealizationGridProviderMeta } from "../sharedMetaTypes/realizationGrid";
 import { makeColorMapFunctionFromColorScale } from "../utils/colors";
 import type { RealizationGridData } from "../utils/types";
 

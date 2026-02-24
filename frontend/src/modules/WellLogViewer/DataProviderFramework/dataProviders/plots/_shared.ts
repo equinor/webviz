@@ -1,3 +1,4 @@
+import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import { isEqual } from "lodash";
 
 import type { WellboreLogCurveData_api } from "@api";
@@ -7,8 +8,6 @@ import {
     getLogCurveDataOptions,
     getWellboreLogCurveHeadersOptions,
 } from "@api";
-import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
-
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type {
     DataProviderInformationAccessors,

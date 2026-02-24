@@ -15,8 +15,7 @@ import { Actions } from "../../Actions";
 import { View } from "../../groups/implementations/View";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { instanceofItemGroup } from "../../interfacesAndTypes/entities";
-import { isOperationGroup } from "../OperationGroup/OperationGroup";
-import { isSharedSetting, SharedSetting } from "../SharedSetting/SharedSetting";
+import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
@@ -32,7 +31,7 @@ export type DataProviderManagerComponentProps = {
 };
 
 export function DataProviderManagerComponent(props: DataProviderManagerComponentProps): React.ReactNode {
-    const { groupActions } = props;
+    const { groupActions, isMoveAllowed } = props;
 
     const listRef = React.useRef<HTMLDivElement>(null);
     const listSize = useElementSize(listRef);
@@ -68,16 +67,8 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                 return false;
             }
 
-            if (
-                isOperationGroup(destinationItem) &&
-                !destinationItem.canAcceptChild(movedItem) &&
-                !isSharedSetting(movedItem)
-            ) {
-                return false;
-            }
-
-            if (props.isMoveAllowed) {
-                if (!props.isMoveAllowed(movedItem, destinationItem)) {
+            if (isMoveAllowed) {
+                if (!isMoveAllowed(movedItem, destinationItem)) {
                     return false;
                 }
             }
@@ -105,7 +96,7 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
 
             return true;
         },
-        [groupDelegate, props.dataProviderManager, props.isMoveAllowed],
+        [groupDelegate, props.dataProviderManager, isMoveAllowed],
     );
 
     const handleItemMoved = React.useCallback(

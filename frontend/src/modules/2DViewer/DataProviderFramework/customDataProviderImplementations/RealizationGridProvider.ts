@@ -2,7 +2,6 @@ import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
-import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type {
     AreSettingsValidArgs,
     CustomDataProviderImplementation,
@@ -13,6 +12,7 @@ import type {
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { RealizationGridProviderMeta } from "@modules/_shared/DataProviderFramework/visualization/sharedMetaTypes/realizationGrid";
 import type { RealizationGridData } from "@modules/_shared/DataProviderFramework/visualization/utils/types";
 import {
     transformGridMappedProperty,
@@ -43,15 +43,14 @@ type StoredData = {
     };
 };
 
-export type RealizationGridProviderMeta = {
-    colorScale: ColorScaleSpecification | null;
-    showGridLines: boolean;
-    opacityPercent: number;
-};
-
 export class RealizationGridProvider
     implements
-        CustomDataProviderImplementation<RealizationGridSettings, RealizationGridData, StoredData, RealizationGridProviderMeta>
+        CustomDataProviderImplementation<
+            RealizationGridSettings,
+            RealizationGridData,
+            StoredData,
+            RealizationGridProviderMeta
+        >
 {
     settings = realizationGridSettings;
 

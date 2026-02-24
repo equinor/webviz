@@ -42,8 +42,6 @@ import { makeDrilledWellborePicksLayer2D } from "../../DataProviderFramework/vis
 import { makeDrilledWellTrajectoriesLayer2D } from "../../DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
-import { OperationGroupType } from "@modules/_shared/DataProviderFramework/operationGroups/operationGroupTypes";
-import { DeltaSurface } from "@modules/_shared/DataProviderFramework/operationGroups/implementations/DeltaSurface";
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(DataProviderType.DEPTH_SURFACE, DepthSurfaceProvider, {

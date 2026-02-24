@@ -5,7 +5,6 @@ import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } f
 import { Dropdown } from "@mui/base";
 import {
     Check,
-    Difference,
     Panorama,
     SettingsApplications,
     Settings as SettingsIcon,
@@ -32,14 +31,10 @@ import { ContextBoundary } from "@modules/_shared/DataProviderFramework/framewor
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { Group, isGroup } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
-import { isOperationGroup } from "@modules/_shared/DataProviderFramework/framework/OperationGroup/OperationGroup";
 import { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import { Operation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customOperationGroupImplementation";
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
-import { OperationGroupRegistry } from "@modules/_shared/DataProviderFramework/operationGroups/OperationGroupRegistry";
-import { OperationGroupType } from "@modules/_shared/DataProviderFramework/operationGroups/operationGroupTypes";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
@@ -70,14 +65,12 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
         "time-interval",
     ]);
 
-    function handleProviderAction(identifier: string, groupDelegate: GroupDelegate, parent: ItemGroup) {
+    function handleProviderAction(identifier: string, groupDelegate: GroupDelegate) {
         let item: Item | null = null;
         switch (identifier) {
             case "view":
                 item = GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor());
                 break;
-                );
-                return;
             case "context-boundary":
                 item = new ContextBoundary("Context boundary", props.dataProviderManager);
                 break;
@@ -186,8 +179,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             return;
         }
 
-
-        if (appendIdentifiers.has(identifier) || parentIsDeltaGroup) {
+        if (appendIdentifiers.has(identifier)) {
             groupDelegate.appendChild(item);
         } else {
             groupDelegate.prependChild(item);
