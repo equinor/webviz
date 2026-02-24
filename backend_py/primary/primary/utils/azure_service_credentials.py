@@ -88,6 +88,7 @@ def _secret_status(secret: str | None) -> str:
 
     return "present"
 
+
 def _show_start_of_secret(secret: str | None, num_chars: int = 4) -> str | None:
     if secret is None:
         return None
