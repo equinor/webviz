@@ -2756,4 +2756,4 @@ tests = ["coverage (>=4.1)", "mypy", "pylint", "pytest", "pytest-cov", "pytest-m
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "f8563d225761e743cf5513da6dcd3c94dd172215b6dcc94ec7066eea30286aca"
+content-hash = "3aaeb2df495c256102bad5f84c2ef757f38adf2dd39f6f664cf0799683a3361d"

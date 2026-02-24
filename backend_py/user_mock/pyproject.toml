@@ -1,6 +1,6 @@
 [project]
 name = "user-mock"
-requires-python = "^3.11"
+requires-python = "^3.13"
 dynamic = ["dependencies"]
 
 [tool.poetry]
