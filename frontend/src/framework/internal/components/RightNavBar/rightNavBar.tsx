@@ -19,6 +19,11 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const [drawerContent, setDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
+
+    const [rightSettingsPanelIsCollapsed, setRightSettingsPanelIsCollapsed] = useGuiState(
+        guiMessageBroker,
+        GuiState.RightSettingsPanelIsCollapsed,
+    );
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
@@ -31,9 +36,14 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         GuiState.NumberOfEffectiveRealizationFilters,
     );
 
+    function forceSettingsPanelVisible() {
+        setRightSettingsPanelWidth(15);
+        setRightSettingsPanelIsCollapsed(false);
+    }
+
     function ensureSettingsPanelIsVisible() {
         if (rightSettingsPanelWidth <= 5) {
-            setRightSettingsPanelWidth(15);
+            forceSettingsPanelVisible();
         }
     }
 
@@ -42,30 +52,36 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         setDrawerContent(undefined);
     }
 
-    function togglePanelContent(targetContent: RightDrawerContent) {
-        if (targetContent === drawerContent) {
+    function handleSelectPanelContent(targetContent: RightDrawerContent) {
+        const isSameContent = targetContent === drawerContent;
+        if (isSameContent && rightSettingsPanelIsCollapsed) {
+            forceSettingsPanelVisible();
+            return;
+        }
+        if (isSameContent) {
             hideSettingsPanel();
             return;
         }
 
+        // Switch content
         setDrawerContent(targetContent);
         ensureSettingsPanelIsVisible();
     }
 
     function handleModulesListClick() {
-        togglePanelContent(RightDrawerContent.ModulesList);
+        handleSelectPanelContent(RightDrawerContent.ModulesList);
     }
 
     function handleRealizationFilterClick() {
-        togglePanelContent(RightDrawerContent.RealizationFilterSettings);
+        handleSelectPanelContent(RightDrawerContent.RealizationFilterSettings);
     }
 
     function handleModuleInstanceLogClick() {
-        togglePanelContent(RightDrawerContent.ModuleInstanceLog);
+        handleSelectPanelContent(RightDrawerContent.ModuleInstanceLog);
     }
 
     function handleColorPaletteSettingsClick() {
-        togglePanelContent(RightDrawerContent.ColorPaletteSettings);
+        handleSelectPanelContent(RightDrawerContent.ColorPaletteSettings);
     }
 
     return (

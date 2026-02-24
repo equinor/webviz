@@ -38,6 +38,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
         });
         setDialogOpen(false);
         setRightSettingsPanelWidth(0);
+        setRightDrawerContent(undefined);
     }
 
     function handleDialogDiscardClick() {
@@ -46,6 +47,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
         });
         setDialogOpen(false);
         setRightSettingsPanelWidth(0);
+        setRightDrawerContent(undefined);
     }
 
     function handleDialogCloseClick() {

@@ -34,6 +34,10 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelIsCollapsed,
     );
+    const [rightSettingsPanelIsCollapsed, setRightSettingsPanelIsCollapsed] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.RightSettingsPanelIsCollapsed,
+    );
 
     const rightDrawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
 
@@ -54,8 +58,11 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             if (states.leftSettingsPanel !== undefined && states.leftSettingsPanel !== null) {
                 setLeftSettingsPanelIsCollapsed(states.leftSettingsPanel);
             }
+            if (states.rightSettingsPanel !== undefined && states.rightSettingsPanel !== null) {
+                setRightSettingsPanelIsCollapsed(states.rightSettingsPanel);
+            }
         },
-        [setLeftSettingsPanelIsCollapsed],
+        [setLeftSettingsPanelIsCollapsed, setRightSettingsPanelIsCollapsed],
     );
 
     const minWidths = React.useMemo<SettingsPanelsWidth>(() => {
@@ -74,10 +81,13 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
 
     const collapsedStates = React.useMemo<SettingsPanelsCollapsedState>(() => {
         if (rightDrawerContent) {
-            return { leftSettingsPanel: leftSettingsPanelIsCollapsed, rightSettingsPanel: null };
+            return {
+                leftSettingsPanel: leftSettingsPanelIsCollapsed,
+                rightSettingsPanel: rightSettingsPanelIsCollapsed,
+            };
         }
         return { leftSettingsPanel: leftSettingsPanelIsCollapsed };
-    }, [leftSettingsPanelIsCollapsed, rightDrawerContent]);
+    }, [leftSettingsPanelIsCollapsed, rightSettingsPanelIsCollapsed, rightDrawerContent]);
 
     const widthsInPercent = React.useMemo<SettingsPanelsWidth>(() => {
         if (rightDrawerContent) {

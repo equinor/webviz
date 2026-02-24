@@ -190,7 +190,11 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
             setEnsembleIdentStringHasUnsavedChangesMap(resetHasUnsavedChangesMap);
             setNumberOfUnsavedRealizationFilters(0);
-            setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
+            setNumberOfUnsavedRealizationFiltersGuiState(0);
+
+            const effectiveCount = countEffectiveFilters();
+            setNumberOfEffectiveRealizationFilters(effectiveCount);
+            setNumberOfEffectiveRealizationFiltersGuiState(effectiveCount);
 
             // Notify subscribers of change.
             props.workbench.getSessionManager().getActiveSession().notifyAboutEnsembleRealizationFilterChange();
@@ -199,7 +203,9 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             ensembleIdentStringToRealizationFilterSelectionsMap,
             realizationFilterSet,
             setNumberOfUnsavedRealizationFilters,
+            setNumberOfUnsavedRealizationFiltersGuiState,
             setNumberOfEffectiveRealizationFilters,
+            setNumberOfEffectiveRealizationFiltersGuiState,
             countEffectiveFilters,
             props.workbench,
         ],
@@ -232,13 +238,19 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             setEnsembleIdentStringToRealizationFilterSelectionsMap(resetSelectionsMap);
             setEnsembleIdentStringHasUnsavedChangesMap(resetHasUnsavedChangesMap);
             setNumberOfUnsavedRealizationFilters(0);
-            setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
+            setNumberOfUnsavedRealizationFiltersGuiState(0);
+
+            const effectiveCount = countEffectiveFilters();
+            setNumberOfEffectiveRealizationFilters(effectiveCount);
+            setNumberOfEffectiveRealizationFiltersGuiState(effectiveCount);
         },
         [
             ensembleIdentStringToRealizationFilterSelectionsMap,
             realizationFilterSet,
             setNumberOfUnsavedRealizationFilters,
+            setNumberOfUnsavedRealizationFiltersGuiState,
             setNumberOfEffectiveRealizationFilters,
+            setNumberOfEffectiveRealizationFiltersGuiState,
             countEffectiveFilters,
         ],
     );

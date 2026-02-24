@@ -22,6 +22,7 @@ export enum GuiState {
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
     DevToolsVisible = "devToolsVisible",
     EditDataChannelConnections = "editDataChannelConnections",
+    RightSettingsPanelIsCollapsed = "rightSettingsPanelIsCollapsed",
     RightSettingsPanelWidthInPercent = "rightSettingsPanelWidthInPercent",
     AppInitialized = "appInitialized",
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
@@ -102,6 +103,7 @@ type GuiStateValueTypes = {
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
     [GuiState.DevToolsVisible]: boolean;
     [GuiState.EditDataChannelConnections]: boolean;
+    [GuiState.RightSettingsPanelIsCollapsed]: boolean;
     [GuiState.RightSettingsPanelWidthInPercent]: number;
     [GuiState.AppInitialized]: boolean;
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
@@ -129,6 +131,7 @@ defaultStates.set(GuiState.LeftSettingsPanelIsCollapsed, false);
 defaultStates.set(GuiState.LeftSettingsPanelWidthInPercent, 30);
 defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
 defaultStates.set(GuiState.DevToolsVisible, isDevMode());
+defaultStates.set(GuiState.RightSettingsPanelIsCollapsed, false);
 defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);
 defaultStates.set(GuiState.AppInitialized, false);
 defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
@@ -153,6 +156,7 @@ const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelIsCollapsed,
     GuiState.LeftSettingsPanelWidthInPercent,
     GuiState.DevToolsVisible,
+    GuiState.RightSettingsPanelIsCollapsed,
     GuiState.RightSettingsPanelWidthInPercent,
     GuiState.RightDrawerContent,
     GuiState.NumberOfUnsavedRealizationFilters,
