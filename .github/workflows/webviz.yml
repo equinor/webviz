@@ -95,7 +95,7 @@ jobs:
           python-version: "3.13"
           cache: pip
 
-      - name: 📦 Install poetry and dependencies
+      - name: 📦 Install poetry and check dependency locks
         working-directory: ./backend_py
         run: |
           set -x
@@ -126,8 +126,8 @@ jobs:
         run: |
           set -x
           (cd primary && poetry install)
-          scripts/pylint-all.sh
-          scripts/mypy-all.sh
+          scripts/pylint-primaryall.sh
+          scripts/mypy-primary-all.sh
 
       - name: 🤖 Run tests for primary
         working-directory: ./backend_py/primary
