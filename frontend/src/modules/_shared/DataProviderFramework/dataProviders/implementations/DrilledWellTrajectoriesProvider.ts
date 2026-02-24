@@ -6,6 +6,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 
 import type {
     CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
@@ -106,5 +107,18 @@ export class DrilledWellTrajectoriesProvider
 
             return wellboreHeaders;
         });
+    }
+
+    makeProviderSnapshot(
+        accessors: DataProviderInformationAccessors<DrilledWellTrajectoriesSettings, DrilledWellTrajectoriesData>,
+    ) {
+        const data = accessors.getData();
+
+        return {
+            data,
+            valueRange: null,
+            meta: null,
+            dataLabel: "Well Trajectories",
+        };
     }
 }

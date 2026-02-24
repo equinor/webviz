@@ -6,14 +6,12 @@ import {
 } from "@modules/3DViewer/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 import type {
     IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicStoredData,
+    IntersectionRealizationSeismicProviderMeta,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-function makeTraceXYZPointsArrayFromPolyline(polylineUtmXy: number[], z: number): Float32Array {
+function makeTraceXYZPointsArrayFromPolyline(polylineUtmXy: readonly number[], z: number): Float32Array {
     if (polylineUtmXy.length % 2 !== 0) {
         throw new Error("Polyline UTM XY coordinates must be in pairs (x, y).");
     }
@@ -28,33 +26,34 @@ function makeTraceXYZPointsArrayFromPolyline(polylineUtmXy: number[], z: number)
 }
 
 export function makeSeismicIntersectionMeshLayer(
-    args: TransformerArgs<
-        IntersectionRealizationSeismicSettings,
-        IntersectionRealizationSeismicData,
-        IntersectionRealizationSeismicStoredData
-    >,
+    args: TransformerArgs<IntersectionRealizationSeismicData, IntersectionRealizationSeismicProviderMeta>,
 ): Layer<any> | null {
-    const { id, name, getData, getSetting, getStoredData, getDataValueRange } = args;
-    const fenceData = getData();
-    const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
-    const opacityPercent = (getSetting(Setting.OPACITY_PERCENT) ?? 100) / 100;
-    const valueRange = getDataValueRange();
-    const polyline = getStoredData("seismicFencePolylineWithSectionLengths");
+    const { id, name, state } = args;
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
 
-    if (!fenceData || !polyline) {
+    const fenceData = snapshot.data;
+    const colorScaleSpec = snapshot.meta.colorScale;
+    const opacityPercent = snapshot.meta.opacityPercent / 100;
+    const valueRange = snapshot.valueRange;
+    const polylineUtmXy = snapshot.meta.seismicFencePolylineUtmXy;
+
+    if (!fenceData || !polylineUtmXy.length) {
         return null;
     }
 
     // Ensure consistency between fetched data and requested polyline
-    if (fenceData.num_traces !== polyline.polylineUtmXy.length / 2) {
+    if (fenceData.num_traces !== polylineUtmXy.length / 2) {
         throw new Error(
-            `Number of traces (${fenceData.num_traces}) does not match number of polyline points (${polyline.polylineUtmXy.length / 2}) for requested polyline`,
+            `Number of traces (${fenceData.num_traces}) does not match number of polyline points (${polylineUtmXy.length / 2}) for requested polyline`,
         );
     }
 
     const fence: SeismicFence = {
         traceXYZPointsArray: new Float32Array(
-            makeTraceXYZPointsArrayFromPolyline(polyline.polylineUtmXy, fenceData.min_fence_depth),
+            makeTraceXYZPointsArrayFromPolyline(polylineUtmXy, fenceData.min_fence_depth),
         ),
         vVector: [0, 0, fenceData.max_fence_depth - fenceData.min_fence_depth],
         numSamples: fenceData.num_samples_per_trace,

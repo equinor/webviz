@@ -3,7 +3,6 @@ import type { IntersectionReferenceSystem, SurfaceLine } from "@equinor/esv-inte
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import type { SurfaceStatisticalFanchart } from "@modules/_shared/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
 import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@modules/_shared/components/EsvIntersection/utils/surfaceStatisticalFancharts";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
@@ -11,35 +10,28 @@ import type {
 
 import type {
     SurfacesPerRealizationValuesData,
-    SurfacesPerRealizationValuesSettings,
-    SurfacesPerRealizationValuesStoredData,
+    SurfacesPerRealizationValuesProviderMeta,
 } from "../customDataProviderImplementations/SurfacesPerRealizationValuesProvider";
 
 export function createSurfacesUncertaintiesLayerItemsMaker({
     id,
     name,
     isLoading,
-    getData,
-    getSetting,
-    getStoredData,
+    state,
 }: TransformerArgs<
-    SurfacesPerRealizationValuesSettings,
     SurfacesPerRealizationValuesData,
-    SurfacesPerRealizationValuesStoredData,
-    any
+    SurfacesPerRealizationValuesProviderMeta
 >): EsvLayerItemsMaker | null {
-    const data = getData();
-    const colorSet = getSetting(Setting.COLOR_SET);
+    const snapshot = state?.snapshot;
 
-    const requestedPolylineWithCumulatedLengths = getStoredData("requestedPolylineWithCumulatedLengths");
-
-    if (!data || !colorSet || !requestedPolylineWithCumulatedLengths || isLoading) {
+    if (!snapshot || !snapshot.data || !snapshot.meta.colorSet || isLoading) {
         return null;
     }
 
-    const requestedPolylineLength = requestedPolylineWithCumulatedLengths.xUtmPoints.length;
-    const cumulatedHorizontalPolylineLengths =
-        requestedPolylineWithCumulatedLengths.cumulatedHorizontalPolylineLengthArr;
+    const data = snapshot.data;
+    const colorSet = snapshot.meta.colorSet;
+    const requestedPolylineLength = snapshot.meta.polylineLength;
+    const cumulatedHorizontalPolylineLengths = snapshot.meta.cumulatedHorizontalPolylineLengthArr;
 
     const labelData: SurfaceLine[] = [];
     const fancharts: SurfaceStatisticalFanchart[] = [];

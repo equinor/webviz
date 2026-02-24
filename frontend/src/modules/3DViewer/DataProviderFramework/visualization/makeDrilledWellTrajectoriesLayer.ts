@@ -7,11 +7,11 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
 export function makeDrilledWellTrajectoriesLayer(
-    args: TransformerArgs<any, WellboreTrajectory_api[], any>,
+    args: TransformerArgs<WellboreTrajectory_api[], never>,
 ): AdjustedWellsLayer | null {
-    const { id, getData, name } = args;
+    const { id, state, name } = args;
 
-    const fieldWellboreTrajectoriesData = getData();
+    const fieldWellboreTrajectoriesData = state?.snapshot?.data;
 
     if (!fieldWellboreTrajectoriesData) {
         return null;

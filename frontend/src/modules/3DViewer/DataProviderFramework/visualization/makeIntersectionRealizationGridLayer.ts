@@ -1,14 +1,13 @@
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import type { IntersectionRealizationGridSettings } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type {
+    IntersectionRealizationGridData,
+    IntersectionRealizationGridProviderMeta,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type {
-    FenceMeshSection_trans,
-    PolylineIntersection_trans,
-} from "@modules/_shared/Intersection/gridIntersectionTransform";
+import type { FenceMeshSection_trans } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
 interface PolyDataVtk {
     points: Float32Array;
@@ -81,13 +80,17 @@ function buildVtkStylePolyDataFromFenceSections(fenceSections: FenceMeshSection_
 export function makeIntersectionRealizationGridLayer({
     id,
     name,
-    getData,
-    getSetting,
-}: TransformerArgs<IntersectionRealizationGridSettings, PolylineIntersection_trans>): Grid3DLayer | null {
-    const data = getData();
-    const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
-    const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
-    const opacity = getSetting(Setting.OPACITY_PERCENT) ?? 100;
+    state,
+}: TransformerArgs<IntersectionRealizationGridData, IntersectionRealizationGridProviderMeta>): Grid3DLayer | null {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
+
+    const data = snapshot.data;
+    const colorScaleSpec = snapshot.meta.colorScale;
+    const showGridLines = snapshot.meta.showGridLines;
+    const opacity = snapshot.meta.opacityPercent;
 
     if (!data) {
         return null;

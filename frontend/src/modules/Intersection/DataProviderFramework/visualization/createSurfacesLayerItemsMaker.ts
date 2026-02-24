@@ -1,7 +1,6 @@
 import type { IntersectionReferenceSystem, SurfaceData } from "@equinor/esv-intersection";
 
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
@@ -9,18 +8,17 @@ import type {
 
 import type {
     RealizationSurfacesData,
-    RealizationSurfacesSettings,
+    RealizationSurfacesProviderMeta,
 } from "../customDataProviderImplementations/RealizationSurfacesProvider";
 
 export function createSurfacesLayerItemsMaker({
     id,
     name,
     isLoading,
-    getData,
-    getSetting,
-}: TransformerArgs<RealizationSurfacesSettings, RealizationSurfacesData, any, any>): EsvLayerItemsMaker | null {
-    const data = getData();
-    const colorSet = getSetting(Setting.COLOR_SET);
+    state,
+}: TransformerArgs<RealizationSurfacesData, RealizationSurfacesProviderMeta>): EsvLayerItemsMaker | null {
+    const data = state?.snapshot?.data;
+    const colorSet = state?.snapshot?.meta.colorSet;
 
     if (!data || !colorSet || isLoading) {
         return null;

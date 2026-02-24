@@ -12,6 +12,7 @@ import {
     getStatisticalSurfaceDataHybridQueryKey,
     getSurfaceDataOptions,
 } from "@api";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
@@ -20,6 +21,7 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
@@ -27,7 +29,6 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 
@@ -60,16 +61,27 @@ export enum SeismicSurfaceType {
     SEISMIC_SURVEY = "seismic_survey",
     SEISMIC_TIME_LAPSE = "seismic_time_lapse",
 }
+
 const SeismicSurfaceTypeToNameMap = {
     [SeismicSurfaceType.SEISMIC_SURVEY]: "Seismic 3D Surface",
     [SeismicSurfaceType.SEISMIC_TIME_LAPSE]: "Seismic 4D Surface",
 };
+
 export type SurfaceProviderArgs = {
     surfaceType: SeismicSurfaceType;
 };
 
+export type SurfaceProviderMeta = {
+    showContours: {
+        enabled: boolean;
+        value: number;
+    } | null;
+    colorScale: ColorScaleSpecification | null;
+};
+
 export class SeismicSurfaceProvider
-    implements CustomDataProviderImplementation<SeismicSurfaceSettings, SurfaceData, SurfaceStoredData>
+    implements
+        CustomDataProviderImplementation<SeismicSurfaceSettings, SurfaceData, SurfaceStoredData, SurfaceProviderMeta>
 {
     settings = surfaceSettings;
 
@@ -92,6 +104,27 @@ export class SeismicSurfaceProvider
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<SeismicSurfaceSettings, SurfaceData, SurfaceStoredData>,
+    ): ProviderSnapshot<SurfaceData, SurfaceProviderMeta> {
+        const { getSetting, getData } = args;
+        const data = getData();
+        const surfaceData = data?.surfaceData;
+        const colorScale = getSetting(Setting.SEISMIC_COLOR_SCALE);
+        const showContours = getSetting(Setting.CONTOURS);
+        const attributeName = getSetting(Setting.SEISMIC_ATTRIBUTE);
+
+        return {
+            data,
+            valueRange: surfaceData ? [surfaceData.value_min, surfaceData.value_max] : null,
+            dataLabel: attributeName,
+            meta: {
+                colorScale: colorScale,
+                showContours: showContours,
+            },
+        };
     }
 
     makeValueRange({

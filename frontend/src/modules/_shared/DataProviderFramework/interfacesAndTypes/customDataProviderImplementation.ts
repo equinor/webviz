@@ -10,6 +10,8 @@ import type { CustomSettingsHandler } from "./customSettingsHandler";
 import type { NullableStoredData, StoredData } from "./sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "./utils";
 
+export type DataProviderMeta = Record<string, unknown>;
+
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
  * It contains accessors to the data and settings of the provider and other useful information.
@@ -100,6 +102,20 @@ export type AreSettingsValidArgs<
     reportError: (error: string) => void;
 };
 
+export type MetaField<TMeta> = [TMeta] extends [never]
+    ? {
+          meta: null;
+      }
+    : {
+          meta: TMeta;
+      };
+
+export type ProviderSnapshot<TData, TMeta extends Record<string, unknown> = Record<string, unknown>> = {
+    data: TData | null;
+    valueRange: readonly [number, number] | null;
+    dataLabel: string | null;
+} & MetaField<TMeta>;
+
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
  * It contains accessors to the data and settings of the provider and other useful information.
@@ -143,6 +159,7 @@ export interface CustomDataProviderImplementation<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
+    TMeta extends DataProviderMeta = never,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
@@ -191,15 +208,6 @@ export interface CustomDataProviderImplementation<
     fetchData(params: FetchDataParams<TSettings, TData, TStoredData>): Promise<TData>;
 
     /**
-     * Used to determine the value range of the data in the provider. This is used for coloring the provider.
-     *
-     * @param accessors Accessors to the data and settings of the provider.
-     */
-    makeValueRange?(
-        accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>,
-    ): readonly [number, number] | null;
-
-    /**
      * This method is called to check if the current settings are valid. It should return true if the settings are valid
      * and false if they are not.
      * As long as the settings are not valid, the provider will not fetch data.
@@ -209,4 +217,12 @@ export interface CustomDataProviderImplementation<
      * @returns true if the settings are valid, false otherwise.
      */
     areCurrentSettingsValid?: (args: AreSettingsValidArgs<TSettings, TData, TStoredData>) => boolean;
+
+    /**
+     * Produce a minimal snapshot for downstream consumers (e.g. visualization).
+     * Must NOT expose settings/storedData directly unless intentionally included in meta.
+     */
+    makeProviderSnapshot: (
+        accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey>,
+    ) => ProviderSnapshot<TData, TMeta>;
 }

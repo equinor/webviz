@@ -1,13 +1,9 @@
 import { fromNumArray, type BBox } from "@lib/utils/bbox";
 import type {
     IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicStoredData,
+    IntersectionRealizationSeismicProviderMeta,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 /**
  * Build a bounding box for the intersection seismic data.
@@ -16,22 +12,17 @@ import { createValidExtensionLength } from "../utils/extensionLengthUtils";
  * as they are to be visualized in a 2D view.
  */
 export function makeSeismicBoundingBox({
-    getData,
-    getSetting,
-    getStoredData,
+    state,
     isLoading,
-}: TransformerArgs<
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicStoredData,
-    any
->): BBox | null {
-    const data = getData();
-    const polylineActualSectionLengths = getStoredData("sourcePolylineWithSectionLengths")?.actualSectionLengths;
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
+}: TransformerArgs<IntersectionRealizationSeismicData, IntersectionRealizationSeismicProviderMeta>): BBox | null {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
+
+    const data = snapshot.data;
+    const polylineActualSectionLengths = snapshot.meta.sourcePolylineActualSectionLengths;
+    const extensionLength = snapshot.meta.extensionLength;
 
     if (!data || !polylineActualSectionLengths || isLoading) {
         return null;

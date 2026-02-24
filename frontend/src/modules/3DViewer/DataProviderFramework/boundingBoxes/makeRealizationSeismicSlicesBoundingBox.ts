@@ -3,13 +3,13 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 
 import type {
     RealizationSeismicSlicesData,
-    RealizationSeismicSlicesStoredData,
+    RealizationSeismicSlicesProviderMeta,
 } from "../customDataProviderImplementations/RealizationSeismicSlicesProvider";
 
 export function makeRealizationSeismicSlicesBoundingBox({
-    getStoredData,
-}: TransformerArgs<any, RealizationSeismicSlicesData, RealizationSeismicSlicesStoredData>): BBox | null {
-    const seismicCubeMeta = getStoredData("seismicCubeMeta");
+    state,
+}: TransformerArgs<RealizationSeismicSlicesData, RealizationSeismicSlicesProviderMeta>): BBox | null {
+    const seismicCubeMeta = state?.snapshot?.meta.seismicCubeMeta;
     if (!seismicCubeMeta) {
         return null;
     }

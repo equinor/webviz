@@ -27,14 +27,7 @@ import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/da
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
-import {
-    DepthSurfaceProvider,
-    type DepthSurfaceSettings,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
-import type {
-    SurfaceData,
-    SurfaceStoredData,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
+import { DepthSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
@@ -58,7 +51,7 @@ const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     AccumulatedData
 >();
 
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>(
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DEPTH_SURFACE,
     DepthSurfaceProvider,
     {

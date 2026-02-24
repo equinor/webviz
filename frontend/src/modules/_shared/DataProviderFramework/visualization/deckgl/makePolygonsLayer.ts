@@ -3,24 +3,27 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 
 import type {
     RealizationPolygonsData,
-    RealizationPolygonsSettings,
+    RealizationPolygonsProviderMeta,
 } from "../../dataProviders/implementations/RealizationPolygonsProvider";
-import { Setting } from "../../settings/settingsDefinitions";
 
 import type { PolygonVisualizationSettings } from "./polygonUtils";
 
 export function makePolygonsLayer({
     id,
-    getData,
-    getSetting,
-}: TransformerArgs<RealizationPolygonsSettings, RealizationPolygonsData>): PolygonsLayer | null {
-    const polygonsData = getData();
+    state,
+}: TransformerArgs<RealizationPolygonsData, RealizationPolygonsProviderMeta>): PolygonsLayer | null {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
+
+    const polygonsData = snapshot.data;
 
     if (!polygonsData) {
         return null;
     }
 
-    const visualizationSettings = getSetting(Setting.POLYGON_VISUALIZATION);
+    const visualizationSettings = snapshot.meta.polygonVisualization;
 
     // Convert the setting to the layer format
     const layerVisualizationSettings: PolygonVisualizationSettings | null = visualizationSettings

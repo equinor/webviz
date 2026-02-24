@@ -1,11 +1,13 @@
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type {
     AreSettingsValidArgs,
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
@@ -32,8 +34,15 @@ const realizationGridSettings = [
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
 
+export type RealizationGridProviderMeta = {
+    colorScale: ColorScaleSpecification | null;
+    showGridLines: boolean;
+    opacityPercent: number;
+};
+
 export class RealizationGridProvider
-    implements CustomDataProviderImplementation<RealizationGridSettings, RealizationGridData>
+    implements
+        CustomDataProviderImplementation<RealizationGridSettings, RealizationGridData, Record<string, never>, RealizationGridProviderMeta>
 {
     settings = realizationGridSettings;
 
@@ -66,6 +75,31 @@ export class RealizationGridProvider
             return true;
         }
         return false;
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<RealizationGridSettings, RealizationGridData>,
+    ): ProviderSnapshot<RealizationGridData, RealizationGridProviderMeta> {
+        const { getSetting, getData } = args;
+        const data = getData();
+        const colorScale = getSetting(Setting.COLOR_SCALE);
+        const showGridLines = getSetting(Setting.SHOW_GRID_LINES) ?? false;
+        const opacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
+
+        const valueRange: readonly [number, number] | null = data
+            ? [data.gridParameterData.min_grid_prop_value, data.gridParameterData.max_grid_prop_value]
+            : null;
+
+        return {
+            data,
+            valueRange,
+            dataLabel: getSetting(Setting.ATTRIBUTE) ?? "Grid",
+            meta: {
+                colorScale,
+                showGridLines,
+                opacityPercent,
+            },
+        };
     }
 
     makeValueRange({

@@ -1,5 +1,4 @@
 import type { WellborePick_api } from "@api";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import {
     type DataProviderVisualization,
     type TransformerArgs,
@@ -9,15 +8,16 @@ import {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { WellPickDataCollection } from "@modules/_shared/types/wellpicks";
 
-import type { WellPickSettingTypes } from "../dataProviders/wellpicks/WellPicksProvider";
+import type { WellPicksProviderMeta } from "../dataProviders/wellpicks/WellPicksProvider";
 import { CustomDataProviderType } from "../dataProviderTypes";
 
-type WellpickTransformerArgs = TransformerArgs<WellPickSettingTypes, WellborePick_api[]>;
+type WellpickTransformerArgs = TransformerArgs<WellborePick_api[], WellPicksProviderMeta>;
 
 export function makeWellPickCollections(args: WellpickTransformerArgs): WellPickDataCollection | null {
-    const data = args.getData();
-    const stratColumn = args.getSetting(Setting.STRAT_COLUMN);
-    const interpreter = args.getSetting(Setting.SMDA_INTERPRETER);
+    const snapshot = args.state?.snapshot;
+    const data = snapshot?.data;
+    const stratColumn = snapshot?.meta.stratColumn;
+    const interpreter = snapshot?.meta.interpreter;
 
     if (!data || !stratColumn || !interpreter) return null;
 

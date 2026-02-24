@@ -24,7 +24,7 @@ export interface CustomGroupImplementationWithSettings<
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
 > extends CustomGroupImplementation {
     /**
-     * The settings that this handler is using/providing.
+     * The settings that this group is using/providing.
      */
     settings: TSettings;
 

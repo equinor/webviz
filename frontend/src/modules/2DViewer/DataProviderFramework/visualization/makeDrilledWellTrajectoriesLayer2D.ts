@@ -6,7 +6,7 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 // The shared visualizer function has all the general settings we want, so
 // we just inject an extra prop to disable the depth test.
 export function makeDrilledWellTrajectoriesLayer2D(
-    args: TransformerArgs<any, WellboreTrajectory_api[], any>,
+    args: TransformerArgs<WellboreTrajectory_api[], never>,
 ): ReturnType<typeof makeDrilledWellTrajectoriesLayer> {
     const layer = makeDrilledWellTrajectoriesLayer(args);
 

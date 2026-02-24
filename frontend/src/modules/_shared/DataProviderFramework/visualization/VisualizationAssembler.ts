@@ -13,19 +13,16 @@ import type { WellPickDataCollection } from "@modules/_shared/types/wellpicks";
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
-import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
 import { Group } from "../framework/Group/Group";
+import { OperationGroup } from "../framework/OperationGroup/OperationGroup";
 import type { GroupType } from "../groups/groupTypes";
-import type {
-    CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
-} from "../interfacesAndTypes/customDataProviderImplementation";
+import type { DataProviderMeta, ProviderSnapshot } from "../interfacesAndTypes/customDataProviderImplementation";
 import type {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
 } from "../interfacesAndTypes/customGroupImplementation";
 import { instanceofItemGroup, type ItemGroup } from "../interfacesAndTypes/entities";
-import type { StoredData } from "../interfacesAndTypes/sharedTypes";
+import type { ItemView, StateSnapshot } from "../interfacesAndTypes/ItemView";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
@@ -70,16 +67,15 @@ export type DataProviderVisualization<
 };
 
 export type TransformerArgs<
-    TSettings extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = Record<string, never>,
-> = DataProviderInformationAccessors<TSettings, TData, TStoredData> & {
+    TMeta extends DataProviderMeta,
+    TInjectedData extends Record<string, any> = Record<string, any>,
+> = {
     id: string;
     name: string;
     isLoading: boolean;
     getInjectedData: () => TInjectedData;
-    getDataValueRange: () => Readonly<[number, number]> | null;
+    state: StateSnapshot<TData, TMeta> | null;
 };
 
 export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
@@ -128,30 +124,17 @@ export interface GroupCustomPropsCollector<
 export type Annotation = ColorScaleWithId; // Add more possible annotation types here, e.g. ColorSets etc.
 
 export type DataProviderTransformers<
-    TSettings extends Settings,
-    TData,
     TTarget extends VisualizationTarget,
-    TStoredData extends StoredData = Record<string, never>,
+    TData,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
     TAccumulatedData extends Record<string, any> = Record<string, never>,
 > = {
-    transformToVisualization: VisualizationTransformer<TSettings, TData, TTarget, TStoredData, TInjectedData>;
-    transformToBoundingBox?: BoundingBoxTransformer<TSettings, TData, TStoredData, TInjectedData>;
-    transformToAnnotations?: AnnotationsTransformer<TSettings, TData, TStoredData, TInjectedData>;
-    transformToHoverVisualization?: HoverVisualizationTransformer<
-        TSettings,
-        TData,
-        TTarget,
-        TStoredData,
-        TInjectedData
-    >;
-    reduceAccumulatedData?: ReduceAccumulatedDataFunction<
-        TSettings,
-        TData,
-        TAccumulatedData,
-        TStoredData,
-        TInjectedData
-    >;
+    transformToVisualization: VisualizationTransformer<TTarget, TData, TMeta, TInjectedData>;
+    transformToBoundingBox?: BoundingBoxTransformer<TData, TMeta, TInjectedData>;
+    transformToAnnotations?: AnnotationsTransformer<TData, TMeta, TInjectedData>;
+    transformToHoverVisualization?: HoverVisualizationTransformer<TTarget, TData, TMeta, TInjectedData>;
+    reduceAccumulatedData?: ReduceAccumulatedDataFunction<TData, TMeta, TAccumulatedData, TInjectedData>;
 };
 
 export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = {
@@ -163,48 +146,38 @@ export type HoverVisualizationFunction<TTarget extends VisualizationTarget, TTop
 ) => DataProviderHoverVisualizationTargetTypes[TTarget][];
 
 export type VisualizationTransformer<
-    TSettings extends Settings,
-    TData,
     TTarget extends VisualizationTarget,
-    TStoredData extends StoredData = Record<string, never>,
+    TData,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = (
-    args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
-) => DataProviderVisualizationTargetTypes[TTarget] | null;
+> = (args: TransformerArgs<TData, TMeta, TInjectedData>) => DataProviderVisualizationTargetTypes[TTarget] | null;
 
 // This does likely require a refactor as soon as we have tested against a use case
 export type HoverVisualizationTransformer<
-    TSettings extends Settings,
-    TData,
     TTarget extends VisualizationTarget,
-    TStoredData extends StoredData = Record<string, never>,
+    TData,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => HoverVisualizationFunctions<TTarget>;
+> = (args: TransformerArgs<TData, TMeta, TInjectedData>) => HoverVisualizationFunctions<TTarget>;
 
 export type BoundingBoxTransformer<
-    TSettings extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, never>,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => bbox.BBox | null;
+> = (args: TransformerArgs<TData, TMeta, TInjectedData>) => bbox.BBox | null;
 
 export type AnnotationsTransformer<
-    TSettings extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, never>,
+    TMeta extends DataProviderMeta,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => Annotation[];
+> = (args: TransformerArgs<TData, TMeta, TInjectedData>) => Annotation[];
 
 export type ReduceAccumulatedDataFunction<
-    TSettings extends Settings,
     TData,
+    TMeta extends DataProviderMeta,
     TAccumulatedData,
-    TStoredData extends StoredData = Record<string, never>,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = (
-    accumulatedData: TAccumulatedData,
-    args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
-) => TAccumulatedData;
+> = (accumulatedData: TAccumulatedData, args: TransformerArgs<TData, TMeta, TInjectedData>) => TAccumulatedData;
 
 export type AssemblerProduct<
     TTarget extends VisualizationTarget,
@@ -214,7 +187,7 @@ export type AssemblerProduct<
 
 export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>>;
 
-type DataProviderObjects<TTarget extends VisualizationTarget, TAccumulatedData extends Record<string, any>> = {
+type ItemViewObjects<TTarget extends VisualizationTarget, TAccumulatedData extends Record<string, any>> = {
     visualization: DataProviderVisualization<TTarget> | null;
     hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget>;
     annotations: Annotation[];
@@ -230,7 +203,7 @@ export class VisualizationAssembler<
 > {
     private _dataProviderTransformers: Map<
         string,
-        DataProviderTransformers<any, any, TTarget, any, TInjectedData, TAccumulatedData>
+        DataProviderTransformers<TTarget, any, any, TInjectedData, TAccumulatedData>
     > = new Map();
 
     private _groupCustomPropsCollectors: Map<
@@ -238,24 +211,20 @@ export class VisualizationAssembler<
         GroupCustomPropsCollector<any, any, TCustomGroupProps>
     > = new Map();
 
-    private _cachedDataProviderVisualizationsMap: Map<
+    private _cachedItemViewVisualizationsMap: Map<
         string,
         {
             revisionNumber: number;
-            objects: DataProviderObjects<TTarget, TAccumulatedData>;
+            objects: ItemViewObjects<TTarget, TAccumulatedData>;
         }
     > = new Map();
 
-    registerDataProviderTransformers<
-        TSettings extends Settings,
-        TData,
-        TStoredData extends StoredData = Record<string, never>,
-    >(
+    registerDataProviderTransformers<TData, TMeta extends DataProviderMeta>(
         dataProviderName: string,
         dataProviderCtor: {
-            new (...params: any[]): CustomDataProviderImplementation<TSettings, TData, TStoredData>;
+            new (...params: any[]): { makeProviderSnapshot: (...args: any[]) => ProviderSnapshot<TData, TMeta> };
         },
-        transformers: DataProviderTransformers<TSettings, TData, TTarget, TStoredData, TInjectedData, TAccumulatedData>,
+        transformers: DataProviderTransformers<TTarget, TData, TMeta, TInjectedData, TAccumulatedData>,
     ): void {
         if (this._dataProviderTransformers.has(dataProviderCtor.name)) {
             throw new Error(`Transformer function for data provider ${dataProviderCtor.name} already registered`);
@@ -298,7 +267,7 @@ export class VisualizationAssembler<
 
     private makeRecursively(
         groupDelegate: GroupDelegate,
-        inheritedDataProviders: DataProvider<any, any, any>[],
+        inheritedItemViews: ItemView[],
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
         /**
@@ -318,7 +287,7 @@ export class VisualizationAssembler<
         let combinedBoundingBox: bbox.BBox | null = null;
 
         const itemGroups: ItemGroup[] = [];
-        const dataProviders: DataProvider<any, any, any>[] = [];
+        const itemViews: ItemView[] = [];
 
         const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
             if (boundingBox) {
@@ -332,8 +301,8 @@ export class VisualizationAssembler<
                 continue;
             }
 
-            // Skip DeltaSurface for now
-            if (child instanceof DeltaSurface) {
+            if (child instanceof OperationGroup) {
+                itemViews.push(child);
                 continue;
             }
 
@@ -342,14 +311,14 @@ export class VisualizationAssembler<
             }
 
             if (child instanceof DataProvider) {
-                dataProviders.push(child);
+                itemViews.push(child);
             }
         }
 
         for (const itemGroup of itemGroups) {
             const product = this.makeRecursively(
                 itemGroup.getGroupDelegate(),
-                [...inheritedDataProviders, ...dataProviders],
+                [...inheritedItemViews, ...itemViews],
                 accumulatedData,
                 injectedData,
                 disableCache,
@@ -377,8 +346,8 @@ export class VisualizationAssembler<
             children.push(...product.children);
         }
 
-        for (const child of [...inheritedDataProviders, ...dataProviders]) {
-            if (children.some((el) => el.id === child.getItemDelegate().getId())) {
+        for (const child of [...inheritedItemViews, ...itemViews]) {
+            if (children.some((el) => el.id === child.getId())) {
                 continue;
             }
 
@@ -400,24 +369,24 @@ export class VisualizationAssembler<
                 continue;
             }
 
-            if (child.getData() === null) {
+            if (child.getStateSnapshot() === null) {
                 continue;
             }
 
-            const dataProviderObjects = this.makeDataProviderObjects(child, accumulatedData, injectedData);
+            const itemViewObjects = this.makeItemViewObjects(child, accumulatedData, injectedData);
 
-            if (!dataProviderObjects.visualization) {
+            if (!itemViewObjects.visualization) {
                 continue;
             }
 
-            maybeApplyBoundingBox(dataProviderObjects.boundingBox);
-            children.push(dataProviderObjects.visualization);
-            annotations.push(...dataProviderObjects.annotations);
+            maybeApplyBoundingBox(itemViewObjects.boundingBox);
+            children.push(itemViewObjects.visualization);
+            annotations.push(...itemViewObjects.annotations);
             hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
                 hoverVisualizationFunctions,
-                dataProviderObjects.hoverVisualizationFunctions,
+                itemViewObjects.hoverVisualizationFunctions,
             );
-            accumulatedData = dataProviderObjects.accumulatedData ?? accumulatedData;
+            accumulatedData = itemViewObjects.accumulatedData ?? accumulatedData;
         }
 
         return {
@@ -438,34 +407,31 @@ export class VisualizationAssembler<
         };
     }
 
-    private makeDataProviderObjects(
-        dataProvider: DataProvider<any, any, any>,
+    private makeItemViewObjects(
+        itemView: ItemView,
         initialAccumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
         /**
          * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
          */
         disableCache?: boolean,
-    ): DataProviderObjects<TTarget, TAccumulatedData> {
+    ): ItemViewObjects<TTarget, TAccumulatedData> {
         // ! Cache logic returns the wrong accumulated data for WellLogViewer in some cases. As a hot-fix, we'll allow
         // ! the cache to be disabled here, but this should be reverted once the issue has been resolved. See #1272
-        if (!disableCache && this._cachedDataProviderVisualizationsMap.has(dataProvider.getItemDelegate().getId())) {
-            const cached = this._cachedDataProviderVisualizationsMap.get(dataProvider.getItemDelegate().getId());
-            if (cached && cached.revisionNumber === dataProvider.getRevisionNumber()) {
+        if (!disableCache && this._cachedItemViewVisualizationsMap.has(itemView.getId())) {
+            const cached = this._cachedItemViewVisualizationsMap.get(itemView.getId());
+            if (cached && cached.revisionNumber === itemView.getRevisionNumber()) {
                 return cached.objects;
             }
         }
 
-        const visualization = this.makeDataProviderVisualization(dataProvider, injectedData);
-        const hoverVisualizationFunctions = this.makeDataProviderHoverVisualizationFunctions(
-            dataProvider,
-            injectedData,
-        );
-        const annotations = this.makeDataProviderAnnotations(dataProvider, injectedData);
-        const boundingBox = this.makeDataProviderBoundingBox(dataProvider);
-        const accumulatedData = this.accumulateDataProviderData(dataProvider, initialAccumulatedData, injectedData);
+        const visualization = this.makeItemViewVisualization(itemView, injectedData);
+        const hoverVisualizationFunctions = this.makeItemViewHoverVisualizationFunctions(itemView, injectedData);
+        const annotations = this.makeItemViewAnnotations(itemView, injectedData);
+        const boundingBox = this.makeItemViewBoundingBox(itemView);
+        const accumulatedData = this.accumulateItemViewData(itemView, initialAccumulatedData, injectedData);
 
-        const objects: DataProviderObjects<TTarget, TAccumulatedData> = {
+        const objects: ItemViewObjects<TTarget, TAccumulatedData> = {
             visualization,
             hoverVisualizationFunctions,
             annotations,
@@ -473,8 +439,8 @@ export class VisualizationAssembler<
             accumulatedData,
         };
 
-        this._cachedDataProviderVisualizationsMap.set(dataProvider.getItemDelegate().getId(), {
-            revisionNumber: dataProvider.getRevisionNumber(),
+        this._cachedItemViewVisualizationsMap.set(itemView.getId(), {
+            revisionNumber: itemView.getRevisionNumber(),
             objects,
         });
 
@@ -514,14 +480,10 @@ export class VisualizationAssembler<
         };
     }
 
-    private makeFactoryFunctionArgs<
-        TSettings extends Settings,
-        TData,
-        TStoredData extends StoredData = Record<string, never>,
-    >(
-        dataProvider: DataProvider<TSettings, TData, any>,
+    private makeFactoryFunctionArgs(
+        itemView: ItemView,
         injectedData?: TInjectedData,
-    ): TransformerArgs<TSettings, TData, TStoredData, TInjectedData> {
+    ): TransformerArgs<any, any, TInjectedData> {
         function getInjectedData() {
             if (!injectedData) {
                 throw new Error("No injected data provided. Did you forget to pass it to the factory?");
@@ -530,87 +492,80 @@ export class VisualizationAssembler<
         }
 
         return {
-            id: dataProvider.getItemDelegate().getId(),
-            name: dataProvider.getItemDelegate().getName(),
-            isLoading: dataProvider.getStatus() === DataProviderStatus.LOADING,
+            id: itemView.getId(),
+            name: itemView.getName(),
+            isLoading: itemView.getStatus() === DataProviderStatus.LOADING,
             getInjectedData: getInjectedData.bind(this),
-            getDataValueRange: dataProvider.getDataValueRange.bind(dataProvider),
-            ...dataProvider.makeAccessors(),
+            state: itemView.getStateSnapshot(),
         };
     }
 
-    private makeDataProviderVisualization(
-        dataProvider: DataProvider<any, any, any>,
+    private makeItemViewVisualization(
+        itemView: ItemView,
         injectedData?: TInjectedData,
     ): DataProviderVisualization<TTarget> | null {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToVisualization;
+        const func = this._dataProviderTransformers.get(itemView.getType())?.transformToVisualization;
         if (!func) {
-            throw new Error(`No visualization transformer found for data provider ${dataProvider.getType()}`);
+            throw new Error(`No visualization transformer found for data provider ${itemView.getType()}`);
         }
 
-        const visualization = func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        const visualization = func(this.makeFactoryFunctionArgs(itemView, injectedData));
         if (!visualization) {
             return null;
         }
 
         const visualizationObj: DataProviderVisualization<TTarget> = {
             itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION,
-            id: dataProvider.getItemDelegate().getId(),
-            name: dataProvider.getItemDelegate().getName(),
-            type: dataProvider.getType(),
+            id: itemView.getId(),
+            name: itemView.getName(),
+            type: itemView.getType(),
             visualization,
         };
 
         return visualizationObj;
     }
 
-    private makeDataProviderHoverVisualizationFunctions(
-        dataProvider: DataProvider<any, any, any>,
+    private makeItemViewHoverVisualizationFunctions(
+        itemView: ItemView,
         injectedData?: TInjectedData,
     ): HoverVisualizationFunctions<TTarget> {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToHoverVisualization;
+        const func = this._dataProviderTransformers.get(itemView.getType())?.transformToHoverVisualization;
         if (!func) {
             return {};
         }
 
-        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        return func(this.makeFactoryFunctionArgs(itemView, injectedData));
     }
 
-    private makeDataProviderBoundingBox(
-        dataProvider: DataProvider<any, any, any>,
-        injectedData?: TInjectedData,
-    ): bbox.BBox | null {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToBoundingBox;
+    private makeItemViewBoundingBox(itemView: ItemView, injectedData?: TInjectedData): bbox.BBox | null {
+        const func = this._dataProviderTransformers.get(itemView.getType())?.transformToBoundingBox;
         if (!func) {
             return null;
         }
 
-        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        return func(this.makeFactoryFunctionArgs(itemView, injectedData));
     }
 
-    private makeDataProviderAnnotations(
-        dataProvider: DataProvider<any, any, any>,
-        injectedData?: TInjectedData,
-    ): Annotation[] {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToAnnotations;
+    private makeItemViewAnnotations(itemView: ItemView, injectedData?: TInjectedData): Annotation[] {
+        const func = this._dataProviderTransformers.get(itemView.getType())?.transformToAnnotations;
         if (!func) {
             return [];
         }
 
-        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        return func(this.makeFactoryFunctionArgs(itemView, injectedData));
     }
 
-    private accumulateDataProviderData(
-        dataProvider: DataProvider<any, any, any>,
+    private accumulateItemViewData(
+        itemView: ItemView,
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
     ): TAccumulatedData | null {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.reduceAccumulatedData;
+        const func = this._dataProviderTransformers.get(itemView.getType())?.reduceAccumulatedData;
         if (!func) {
             return null;
         }
 
-        return func(accumulatedData, this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        return func(accumulatedData, this.makeFactoryFunctionArgs(itemView, injectedData));
     }
 
     private mergeHoverVisualizationFunctions(
