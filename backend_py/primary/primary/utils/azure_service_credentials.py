@@ -35,10 +35,10 @@ def create_credential_for_azure_services(
 
     LOGGER.info(f"Creating credential for use with Azure services ({is_on_radix_platform=})...")
 
-    LOGGER.info(f"Env.AZURE_TENANT_ID={_show_start_of_secret(os.getenv("AZURE_TENANT_ID"))}")
-    LOGGER.info(f"Env.AZURE_CLIENT_ID={_show_start_of_secret(os.getenv("AZURE_CLIENT_ID"))}")
-    LOGGER.info(f"Env.AZURE_FEDERATED_TOKEN_FILE={_show_start_of_secret(os.getenv("AZURE_FEDERATED_TOKEN_FILE"))}")
-    LOGGER.info(f"Env.AZURE_CLIENT_SECRET={_show_start_of_secret(os.getenv("AZURE_CLIENT_SECRET"))}")
+    LOGGER.info(f"Env.AZURE_TENANT_ID: {_secret_status(os.getenv("AZURE_TENANT_ID"))}")
+    LOGGER.info(f"Env.AZURE_CLIENT_ID: {_secret_status(os.getenv("AZURE_CLIENT_ID"))}")
+    LOGGER.info(f"Env.AZURE_FEDERATED_TOKEN_FILE: {_secret_status(os.getenv("AZURE_FEDERATED_TOKEN_FILE"))}")
+    LOGGER.info(f"Env.AZURE_CLIENT_SECRET: {_secret_status(os.getenv("AZURE_CLIENT_SECRET"))}")
 
     # DefaultAzureCredential performs implicit credential discovery and may select different authentication mechanisms
     # depending on the runtime environment. This is convenient but can obscure which credential is actually being used
@@ -64,9 +64,9 @@ def create_credential_for_azure_services(
     # we insert an explicitly created ClientSecretCredential first in a ChainedTokenCredential.
     if secret_vars_for_local_dev is not None:
         LOGGER.info("Creating local development credential for Azure services using ChainedTokenCredential")
-        LOGGER.info(f"ClientSecretVars.tenant_id={secret_vars_for_local_dev.tenant_id}")
-        LOGGER.info(f"ClientSecretVars.client_id={secret_vars_for_local_dev.client_id}")
-        LOGGER.info(f"ClientSecretVars.client_secret={_show_start_of_secret(secret_vars_for_local_dev.client_secret)}")
+        LOGGER.info(f"ClientSecretVars.tenant_id: {_secret_status(secret_vars_for_local_dev.tenant_id)}")
+        LOGGER.info(f"ClientSecretVars.client_id: {_secret_status(secret_vars_for_local_dev.client_id)}")
+        LOGGER.info(f"ClientSecretVars.client_secret: {_secret_status(secret_vars_for_local_dev.client_secret)}")
 
         client_secret_credential = ClientSecretCredential(
             tenant_id=secret_vars_for_local_dev.tenant_id,
@@ -78,6 +78,15 @@ def create_credential_for_azure_services(
     # Just rely on the default behavior of DefaultAzureCredential for local dev if explicit secrets are not provided
     LOGGER.info("Creating local development credential for Azure services using DefaultAzureCredential")
     return DefaultAzureCredential()
+
+
+def _secret_status(secret: str | None) -> str:
+    if secret is None:
+        return "missing"
+    if not secret:
+        return "empty"
+
+    return "present"
 
 
 def _show_start_of_secret(secret: str | None, num_chars: int = 4) -> str | None:
