@@ -11,12 +11,6 @@ from urllib.error import URLError
 
 from azure.cosmos import CosmosClient, PartitionKey, DatabaseProxy
 
-from primary.config import (
-    COSMOS_DB_PROD_CONNECTION_STRING,
-    COSMOS_DB_EMULATOR_URI,
-    COSMOS_DB_EMULATOR_KEY,
-)
-
 LOGGER = logging.getLogger(__name__)
 
 # Declarative schema definition
@@ -71,15 +65,8 @@ def create_database_with_retry(client: CosmosClient, db_def: Dict[str, Any], max
     raise RuntimeError(f"Failed to create database '{db_name}' after {max_attempts} attempts.")
 
 
-def maybe_setup_local_database() -> None:
-    if COSMOS_DB_PROD_CONNECTION_STRING:
-        LOGGER.info("Using production Cosmos DB - skipping local setup.")
-        return
-
-    if COSMOS_DB_EMULATOR_URI is None or COSMOS_DB_EMULATOR_KEY is None:
-        raise ValueError("No Cosmos DB production connection string or emulator URI/key provided.")
-
-    client: CosmosClient = wait_for_emulator(COSMOS_DB_EMULATOR_URI, COSMOS_DB_EMULATOR_KEY)
+def maybe_setup_local_database(uri: str, key: str) -> None:
+    client: CosmosClient = wait_for_emulator(uri, key)
 
     total_containers = 0
 
