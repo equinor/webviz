@@ -9,7 +9,7 @@ requires-poetry = ">=2.1"
 packages = [{ include = "webviz_services", from = "src" }]
 
 [tool.poetry.dependencies]
-redis = "^5.3.1"
+redis = "7.1.1"
 pyarrow = "^21.0.0"
 pydantic = "^2.11.0"
 numpy = "^2.2.0"
