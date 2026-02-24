@@ -1,8 +1,10 @@
 import type { ColorScaleSerialization } from "@lib/utils/ColorScale";
 
 import type { GroupType } from "../groups/groupTypes";
+import type { OperationGroupType } from "../operationGroups/operationGroupTypes";
 import type { Setting, Settings } from "../settings/settingsDefinitions";
 
+import type { Operation } from "./customOperationGroupImplementation";
 import type { SettingsKeysFromTuple } from "./utils";
 
 // The following interfaces/types are used to define the structure of the serialized state of the respective items in the data provider framework.
@@ -14,6 +16,7 @@ export enum SerializedType {
     CONTEXT_BOUNDARY = "context-boundary",
     COLOR_SCALE = "color-scale",
     DELTA_SURFACE = "delta-surface",
+    OPERATION_GROUP = "operation-group",
     SHARED_SETTING = "shared-setting",
 }
 
@@ -76,5 +79,16 @@ export interface SerializedDataProviderManager extends SerializedItem {
 
 export interface SerializedDeltaSurface extends SerializedItem {
     type: SerializedType.DELTA_SURFACE;
+    children: SerializedItem[];
+}
+
+export interface SerializedOperationGroup<
+    TSettings extends Settings,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+> extends SerializedItem {
+    type: SerializedType.OPERATION_GROUP;
+    operationGroupType: OperationGroupType;
+    operation: Operation;
+    settings: SerializedSettingsState<TSettings, TSettingKey>;
     children: SerializedItem[];
 }

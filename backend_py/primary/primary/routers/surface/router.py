@@ -32,7 +32,12 @@ from . import schemas
 from . import dependencies
 from . import task_helpers
 
-from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
+from .surface_address import (
+    RealizationSurfaceAddress,
+    ObservedSurfaceAddress,
+    StatisticalSurfaceAddress,
+    PartialSurfaceAddress,
+)
 from .surface_address import decode_surf_addr_str
 
 
@@ -368,8 +373,47 @@ async def get_delta_surface_data(
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
     # fmt:on
-) -> list[schemas.SurfaceDataFloat]:
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
+) -> schemas.SurfaceDataFloat | schemas.SurfaceDataPng:
+    perf_metrics = ResponsePerfMetrics(response)
+
+    access_token = authenticated_user.get_sumo_access_token()
+
+    addr_a = decode_surf_addr_str(surf_a_addr_str)
+    addr_b = decode_surf_addr_str(surf_b_addr_str)
+
+    # Fetch both surfaces in parallel
+    async with asyncio.TaskGroup() as tg:
+        surf_a_task = tg.create_task(
+            _fetch_surface_from_address_async(
+                addr=addr_a,
+                access_token=access_token,
+                perf_metrics=perf_metrics,
+                supported_types=(RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress),
+            )
+        )
+        surf_b_task = tg.create_task(
+            _fetch_surface_from_address_async(
+                addr=addr_b,
+                access_token=access_token,
+                perf_metrics=perf_metrics,
+                supported_types=(RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress),
+            )
+        )
+
+    xtgeo_surf_a = surf_a_task.result()
+    xtgeo_surf_b = surf_b_task.result()
+    perf_metrics.record_lap("get-surfs")
+
+    # TODO: Validation
+    xtgeo_surf_a.subtract(xtgeo_surf_b)
+
+    surf_data_response = _resample_and_convert_to_surface_data_response(
+        xtgeo_surf=xtgeo_surf_a, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
+    )
+
+    LOGGER.info(f"Got delta surface in: {perf_metrics.to_string()}")
+
+    return surf_data_response
 
 
 @router.get("/misfit_surface_data")
@@ -429,6 +473,64 @@ async def get_stratigraphic_units_for_strat_column(
     LOGGER.info(f"Got stratigraphic units in: {perf_metrics.to_string()}")
 
     return api_strat_units
+
+
+async def _fetch_surface_from_address_async(
+    addr: RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress | PartialSurfaceAddress,
+    access_token: str,
+    perf_metrics: ResponsePerfMetrics,
+    supported_types: tuple[type, ...],
+) -> xtgeo.RegularSurface:
+    """Fetch a surface from Sumo based on the provided address."""
+    if not isinstance(addr, supported_types):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Endpoint only supports address types: {', '.join(t.__name__.replace('SurfaceAddress', '').upper() for t in supported_types)}",
+        )
+
+    xtgeo_surf: xtgeo.RegularSurface | None = None
+
+    if addr.address_type == "PARTIAL":
+        raise HTTPException(
+            status_code=404,
+            detail="Endpoint does not support address type PARTIAL",
+        )
+    if addr.address_type == "REAL":
+        access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
+        xtgeo_surf = await access.get_realization_surface_data_async(
+            real_num=addr.realization,
+            name=addr.name,
+            attribute=addr.attribute,
+            time_or_interval_str=addr.iso_time_or_interval,
+        )
+        perf_metrics.record_lap("get-surf")
+
+    elif addr.address_type == "STAT":
+        service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
+        if service_stat_func_to_compute is None:
+            raise HTTPException(status_code=404, detail="Invalid statistic requested")
+
+        access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
+        xtgeo_surf = await access.get_statistical_surface_data_async(
+            statistic_function=service_stat_func_to_compute,
+            name=addr.name,
+            attribute=addr.attribute,
+            realizations=addr.stat_realizations,
+            time_or_interval_str=addr.iso_time_or_interval,
+        )
+        perf_metrics.record_lap("sumo-calc")
+
+    elif addr.address_type == "OBS":
+        access = SurfaceAccess.from_case_uuid_no_ensemble(access_token, addr.case_uuid)
+        xtgeo_surf = await access.get_observed_surface_data_async(
+            name=addr.name, attribute=addr.attribute, time_or_interval_str=addr.iso_time_or_interval
+        )
+        perf_metrics.record_lap("get-surf")
+
+    if not xtgeo_surf:
+        raise HTTPException(status_code=500, detail="Did not get a valid xtgeo surface from Sumo")
+
+    return xtgeo_surf
 
 
 async def _get_stratigraphic_units_for_strat_column_async(

@@ -1,7 +1,6 @@
 import { isEqual } from "lodash";
 
 import type { SurfaceRealizationSampleValues_api } from "@api";
-import type { ColorSet } from "@lib/utils/ColorSet";
 import {
     SurfaceAttributeType_api,
     getRealizationSurfacesMetadataOptions,
@@ -11,6 +10,7 @@ import { IntersectionType } from "@framework/types/intersection";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,

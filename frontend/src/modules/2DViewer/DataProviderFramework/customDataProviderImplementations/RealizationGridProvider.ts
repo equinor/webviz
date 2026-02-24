@@ -1,8 +1,8 @@
 import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
-import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     AreSettingsValidArgs,
     CustomDataProviderImplementation,

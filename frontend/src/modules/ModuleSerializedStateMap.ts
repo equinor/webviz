@@ -73,6 +73,10 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "ParameterDistributionMatrix": {
+    settings?: never,
+    view?: never,
+  },
   "ParameterDistributions": {
     settings?: Partial<ParameterDistributionsSettings>,
     view?: never,

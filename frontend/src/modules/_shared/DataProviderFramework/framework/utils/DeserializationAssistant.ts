@@ -7,8 +7,10 @@ import type {
     SerializedItem,
     SerializedContextBoundary,
     SerializedSharedSetting,
+    SerializedOperationGroup,
 } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
+import { OperationGroupRegistry } from "../../operationGroups/OperationGroupRegistry/_OperationGroupRegistry";
 import { ContextBoundary } from "../ContextBoundary/ContextBoundary";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
@@ -63,6 +65,17 @@ export class DeserializationAssistant {
             );
             setting.deserializeState(serializedSharedSetting);
             return setting;
+        }
+
+        if (serialized.type === SerializedType.OPERATION_GROUP) {
+            const serializedOperationGroup = serialized as SerializedOperationGroup<any, any>;
+            const deltaGroup = OperationGroupRegistry.makeGroup(
+                serializedOperationGroup.operationGroupType,
+                serializedOperationGroup.operation,
+                this._dataProviderManager,
+            );
+            deltaGroup.deserializeState(serializedOperationGroup);
+            return deltaGroup;
         }
 
         throw new Error(`Unhandled serialized item type: ${serialized.type}`);

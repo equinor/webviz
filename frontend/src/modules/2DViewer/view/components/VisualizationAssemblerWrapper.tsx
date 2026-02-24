@@ -18,6 +18,8 @@ import {
     DataProviderManagerTopic,
     type DataProviderManager,
 } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { DeltaSurface } from "@modules/_shared/DataProviderFramework/operationGroups/implementations/DeltaSurface";
+import { OperationGroupType } from "@modules/_shared/DataProviderFramework/operationGroups/operationGroupTypes";
 import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
 import { makeDepthColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeDepthColorScaleAnnotation";
 import { makeSeismicColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeSeismicColorScaleAnnotation";
@@ -42,8 +44,7 @@ import { makeDrilledWellborePicksLayer2D } from "../../DataProviderFramework/vis
 import { makeDrilledWellTrajectoriesLayer2D } from "../../DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
-import { OperationGroupType } from "@modules/_shared/DataProviderFramework/operationGroups/operationGroupTypes";
-import { DeltaSurface } from "@modules/_shared/DataProviderFramework/operationGroups/implementations/DeltaSurface";
+
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(DataProviderType.DEPTH_SURFACE, DepthSurfaceProvider, {
@@ -128,6 +129,11 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
     },
 );
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(OperationGroupType.DELTA_SURFACE, DeltaSurface, {
+    transformToVisualization: makeDepthSurfaceLayer,
+    transformToAnnotations: makeColorScaleAnnotation,
+    transformToBoundingBox: makeSurfaceLayerBoundingBox,
+});
 
 export type VisualizationAssemblerWrapperProps = Omit<
     DpfSubsurfaceViewerWrapperProps,

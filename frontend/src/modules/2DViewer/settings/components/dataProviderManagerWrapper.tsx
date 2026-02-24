@@ -76,8 +76,13 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "view":
                 item = GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor());
                 break;
+            case "delta":
+                item = OperationGroupRegistry.makeGroup(
+                    OperationGroupType.DELTA_SURFACE,
+                    Operation.DELTA,
+                    props.dataProviderManager,
                 );
-                return;
+                break;
             case "context-boundary":
                 item = new ContextBoundary("Context boundary", props.dataProviderManager);
                 break;
@@ -186,6 +191,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             return;
         }
 
+        const parentIsDeltaGroup = isOperationGroup(parent) && parent.getType() === OperationGroupType.DELTA_SURFACE;
 
         if (appendIdentifiers.has(identifier) || parentIsDeltaGroup) {
             groupDelegate.appendChild(item);
@@ -205,6 +211,10 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
     }
 
     function makeActionsForGroup(group: ItemGroup): ActionGroup[] {
+        if (isOperationGroup(group) && group.getType() === OperationGroupType.DELTA_SURFACE) {
+            return [SURFACES];
+        }
+
         const hasView =
             groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW)
                 .length > 0;
@@ -231,6 +241,12 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 label: "View",
             });
         }
+
+        groupActions.children.push({
+            identifier: "delta",
+            icon: <Difference fontSize="small" />,
+            label: "Delta group",
+        });
 
         groupActions.children.push({
             identifier: "context-boundary",
