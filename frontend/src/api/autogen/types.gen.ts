@@ -113,13 +113,6 @@ export type BodyPostGetWellTrajectoriesFormationSegments_api = {
 };
 
 /**
- * Body_post_get_well_trajectory_picks_per_surface
- */
-export type BodyPostGetWellTrajectoryPicksPerSurface_api = {
-    well_trajectory: WellTrajectory_api;
-};
-
-/**
  * BoundingBox2d
  */
 export type BoundingBox2d_api = {
@@ -1112,16 +1105,6 @@ export type PageSnapshotMetadata_api = {
      */
     pageToken?: string | null;
 };
-
-/**
- * PickDirection
- *
- * Direction of the pick relative to the surface
- */
-export enum PickDirection_api {
-    UPWARD = "UPWARD",
-    DOWNWARD = "DOWNWARD",
-}
 
 /**
  * PointSetXY
@@ -2285,36 +2268,6 @@ export enum SurfaceTimeType_api {
 }
 
 /**
- * SurfaceWellPick
- *
- * Surface pick data along a well trajectory
- *
- * md: Measured depth value at the pick point.
- * direction: Direction of the pick relative to the surface.
- */
-export type SurfaceWellPick_api = {
-    /**
-     * Md
-     */
-    md: number;
-    direction: PickDirection_api;
-};
-
-/**
- * SurfaceWellPicks
- *
- * Surface picks along a well trajectory for a specific surface.
- *
- * Each pick contains the measured depth and direction.
- */
-export type SurfaceWellPicks_api = {
-    /**
-     * Picks
-     */
-    picks: Array<SurfaceWellPick_api>;
-};
-
-/**
  * THP
  */
 export enum THP_api {
@@ -2883,6 +2836,14 @@ export type WellTrajectory_api = {
     uwi: string;
 };
 
+export type WellTrajectoryFormationSegments_api =
+    | ({
+          status: "success";
+      } & WellTrajectoryFormationSegmentsSuccess_api)
+    | ({
+          status: "error";
+      } & WellTrajectoryFormationSegmentsError_api);
+
 /**
  * WellTrajectoryFormationSegmentsError
  *
@@ -2916,7 +2877,7 @@ export type WellTrajectoryFormationSegmentsError_api = {
  *
  * status: "success"
  * uwi: str
- * formationSegments: List[FormationSegment]
+ * formationSegments: list[FormationSegment]
  */
 export type WellTrajectoryFormationSegmentsSuccess_api = {
     /**
@@ -4375,43 +4336,6 @@ export type GetSurfaceDataResponses_api = {
 
 export type GetSurfaceDataResponse_api = GetSurfaceDataResponses_api[keyof GetSurfaceDataResponses_api];
 
-export type PostGetWellTrajectoryPicksPerSurfaceData_api = {
-    body: BodyPostGetWellTrajectoryPicksPerSurface_api;
-    path?: never;
-    query: {
-        /**
-         * Depth Surface Addr Str List
-         *
-         * List of surface address strings for depth surfaces. Supported address types are *REAL*, *OBS* and *STAT*
-         */
-        depth_surface_addr_str_list: Array<string>;
-        zCacheBust?: string;
-    };
-    url: "/surface/get_well_trajectory_picks_per_surface";
-};
-
-export type PostGetWellTrajectoryPicksPerSurfaceErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type PostGetWellTrajectoryPicksPerSurfaceError_api =
-    PostGetWellTrajectoryPicksPerSurfaceErrors_api[keyof PostGetWellTrajectoryPicksPerSurfaceErrors_api];
-
-export type PostGetWellTrajectoryPicksPerSurfaceResponses_api = {
-    /**
-     * Response Post Get Well Trajectory Picks Per Surface
-     *
-     * Successful Response
-     */
-    200: Array<SurfaceWellPicks_api>;
-};
-
-export type PostGetWellTrajectoryPicksPerSurfaceResponse_api =
-    PostGetWellTrajectoryPicksPerSurfaceResponses_api[keyof PostGetWellTrajectoryPicksPerSurfaceResponses_api];
-
 export type PostGetWellTrajectoriesFormationSegmentsData_api = {
     body: BodyPostGetWellTrajectoriesFormationSegments_api;
     path?: never;
@@ -4449,14 +4373,7 @@ export type PostGetWellTrajectoriesFormationSegmentsResponses_api = {
      *
      * Successful Response
      */
-    200: Array<
-        | ({
-              status: "success";
-          } & WellTrajectoryFormationSegmentsSuccess_api)
-        | ({
-              status: "error";
-          } & WellTrajectoryFormationSegmentsError_api)
-    >;
+    200: Array<WellTrajectoryFormationSegments_api>;
 };
 
 export type PostGetWellTrajectoriesFormationSegmentsResponse_api =

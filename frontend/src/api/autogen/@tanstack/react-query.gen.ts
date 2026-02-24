@@ -93,7 +93,6 @@ import {
     postGetSeismicFence,
     postGetSurfaceIntersection,
     postGetWellTrajectoriesFormationSegments,
-    postGetWellTrajectoryPicksPerSurface,
     postLogout,
     postRefreshFingerprintsForEnsembles,
     root,
@@ -208,9 +207,6 @@ import type {
     PostGetWellTrajectoriesFormationSegmentsData_api,
     PostGetWellTrajectoriesFormationSegmentsError_api,
     PostGetWellTrajectoriesFormationSegmentsResponse_api,
-    PostGetWellTrajectoryPicksPerSurfaceData_api,
-    PostGetWellTrajectoryPicksPerSurfaceError_api,
-    PostGetWellTrajectoryPicksPerSurfaceResponse_api,
     PostLogoutData_api,
     PostLogoutResponse_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -869,73 +865,6 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
         },
         queryKey: getSurfaceDataQueryKey(options),
     });
-};
-
-export const postGetWellTrajectoryPicksPerSurfaceQueryKey = (
-    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api>,
-) => createQueryKey("postGetWellTrajectoryPicksPerSurface", options);
-
-/**
- * Post Get Well Trajectory Picks Per Surface
- *
- * Get surface picks along a well trajectory for multiple depth surfaces.
- *
- * For each provided depth surface address, the intersections (picks) between the surface and the
- * well trajectory are calculated and returned.
- *
- * Returns a list of surface picks per depth surface, in the same order as the provided list of
- * depth surface address strings.
- */
-export const postGetWellTrajectoryPicksPerSurfaceOptions = (
-    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api>,
-) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGetWellTrajectoryPicksPerSurface({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: postGetWellTrajectoryPicksPerSurfaceQueryKey(options),
-    });
-};
-
-/**
- * Post Get Well Trajectory Picks Per Surface
- *
- * Get surface picks along a well trajectory for multiple depth surfaces.
- *
- * For each provided depth surface address, the intersections (picks) between the surface and the
- * well trajectory are calculated and returned.
- *
- * Returns a list of surface picks per depth surface, in the same order as the provided list of
- * depth surface address strings.
- */
-export const postGetWellTrajectoryPicksPerSurfaceMutation = (
-    options?: Partial<Options<PostGetWellTrajectoryPicksPerSurfaceData_api>>,
-): UseMutationOptions<
-    PostGetWellTrajectoryPicksPerSurfaceResponse_api,
-    AxiosError<PostGetWellTrajectoryPicksPerSurfaceError_api>,
-    Options<PostGetWellTrajectoryPicksPerSurfaceData_api>
-> => {
-    const mutationOptions: UseMutationOptions<
-        PostGetWellTrajectoryPicksPerSurfaceResponse_api,
-        AxiosError<PostGetWellTrajectoryPicksPerSurfaceError_api>,
-        Options<PostGetWellTrajectoryPicksPerSurfaceData_api>
-    > = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await postGetWellTrajectoryPicksPerSurface({
-                ...options,
-                ...fnOptions,
-                throwOnError: true,
-            });
-            return data;
-        },
-    };
-    return mutationOptions;
 };
 
 export const postGetWellTrajectoriesFormationSegmentsQueryKey = (

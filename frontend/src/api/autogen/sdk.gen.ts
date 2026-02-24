@@ -242,9 +242,6 @@ import type {
     PostGetWellTrajectoriesFormationSegmentsData_api,
     PostGetWellTrajectoriesFormationSegmentsErrors_api,
     PostGetWellTrajectoriesFormationSegmentsResponses_api,
-    PostGetWellTrajectoryPicksPerSurfaceData_api,
-    PostGetWellTrajectoryPicksPerSurfaceErrors_api,
-    PostGetWellTrajectoryPicksPerSurfaceResponses_api,
     PostLogoutData_api,
     PostLogoutResponses_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -676,35 +673,6 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/surface/surface_data",
         ...options,
-    });
-};
-
-/**
- * Post Get Well Trajectory Picks Per Surface
- *
- * Get surface picks along a well trajectory for multiple depth surfaces.
- *
- * For each provided depth surface address, the intersections (picks) between the surface and the
- * well trajectory are calculated and returned.
- *
- * Returns a list of surface picks per depth surface, in the same order as the provided list of
- * depth surface address strings.
- */
-export const postGetWellTrajectoryPicksPerSurface = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetWellTrajectoryPicksPerSurfaceData_api, ThrowOnError>,
-) => {
-    return (options.client ?? client).post<
-        PostGetWellTrajectoryPicksPerSurfaceResponses_api,
-        PostGetWellTrajectoryPicksPerSurfaceErrors_api,
-        ThrowOnError
-    >({
-        responseType: "json",
-        url: "/surface/get_well_trajectory_picks_per_surface",
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-        },
     });
 };
 

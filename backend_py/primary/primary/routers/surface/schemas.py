@@ -1,4 +1,4 @@
-from enum import Enum, StrEnum
+from enum import Enum
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -164,34 +164,6 @@ class SurfaceRealizationSampleValues(BaseModel):
 class PointSetXY(BaseModel):
     x_points: list[float]
     y_points: list[float]
-
-
-class PickDirection(StrEnum):
-    """Direction of the pick relative to the surface"""
-
-    UPWARD = "UPWARD"
-    DOWNWARD = "DOWNWARD"
-
-
-class SurfaceWellPick(BaseModel):
-    """Surface pick data along a well trajectory
-
-    md: Measured depth value at the pick point.
-    direction: Direction of the pick relative to the surface.
-    """
-
-    md: float
-    direction: PickDirection
-
-
-class SurfaceWellPicks(BaseModel):
-    """Surface picks along a well trajectory for a specific surface.
-
-    Each pick contains the measured depth and direction.
-
-    """
-
-    picks: list[SurfaceWellPick]
 
 
 class FormationSegment(BaseModel):

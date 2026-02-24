@@ -24,7 +24,6 @@ from webviz_services.utils.surfaces_well_trajectory_formation_segments import (
     create_well_trajectory_formation_segments,
     validate_depth_surfaces_for_formation_segments,
 )
-from webviz_services.utils.surface_helpers import get_surface_picks_for_well_trajectory_from_xtgeo
 
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
@@ -188,68 +187,6 @@ async def get_surface_data(
     LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
-
-
-@router.post("/get_well_trajectory_picks_per_surface")
-async def post_get_well_trajectory_picks_per_surface(
-    response: Response,
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    well_trajectory: Annotated[schemas.WellTrajectory, Body(embed=True)],
-    depth_surface_addr_str_list: Annotated[
-        list[str],
-        Query(
-            description="List of surface address strings for depth surfaces. Supported address types are *REAL*, *OBS* and *STAT*"
-        ),
-    ],
-) -> list[schemas.SurfaceWellPicks]:
-    """
-    Get surface picks along a well trajectory for multiple depth surfaces.
-
-    For each provided depth surface address, the intersections (picks) between the surface and the
-    well trajectory are calculated and returned.
-
-    Returns a list of surface picks per depth surface, in the same order as the provided list of
-    depth surface address strings.
-    """
-    if not depth_surface_addr_str_list:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="At least one depth surface address string must be provided",
-        )
-
-    perf_metrics = ResponsePerfMetrics(response)
-    access_token = authenticated_user.get_sumo_access_token()
-
-    try:
-        async with asyncio.TaskGroup() as tg:
-            xtgeo_surface_tasks = [
-                tg.create_task(_get_xtgeo_surface_from_sumo_async(access_token, surf_addr_str, perf_metrics))
-                for surf_addr_str in depth_surface_addr_str_list
-            ]
-
-        xtgeo_surfaces = [task.result() for task in xtgeo_surface_tasks]
-    except* ServiceLayerException as exc_group:
-        for exc in exc_group.exceptions:
-            raise exc from exc_group  # Reraise the first exception
-
-    perf_metrics.record_lap("get-surfaces")
-
-    well_traj = converters.from_api_well_trajectory(well_trajectory)
-    well_picks_per_surface = []
-    for xtgeo_surf in xtgeo_surfaces:
-        surface_picks = get_surface_picks_for_well_trajectory_from_xtgeo(
-            surf=xtgeo_surf,
-            well_trajectory=well_traj,
-        )
-
-        valid_picks = surface_picks if surface_picks is not None else []
-        well_picks_per_surface.append(valid_picks)
-    perf_metrics.record_lap("sample-picks")
-
-    result = [converters.to_api_surface_well_picks(surface_picks) for surface_picks in well_picks_per_surface]
-
-    LOGGER.info(f"Got well trajectory surface picks in: {perf_metrics.to_string()}")
-    return result
 
 
 @router.post("/get_well_trajectories_formation_segments")

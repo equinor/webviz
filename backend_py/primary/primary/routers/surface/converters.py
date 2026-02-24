@@ -12,7 +12,6 @@ from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIn
 from webviz_services.utils.surface_helpers import (
     surface_to_float32_numpy_array,
     get_min_max_surface_values,
-    SurfaceWellPick,
     WellTrajectory,
 )
 from webviz_services.utils.surface_to_png import surface_to_png_bytes_optimized
@@ -249,25 +248,4 @@ def to_api_well_trajectory_formation_segments(
     return schemas.WellTrajectoryFormationSegmentsSuccess(
         uwi=unique_wellbore_identifier,
         formationSegments=formation_segments,
-    )
-
-
-def to_api_surface_well_picks(
-    surface_well_picks: list[SurfaceWellPick],
-) -> schemas.SurfaceWellPicks:
-    """
-    Convert list of service layer surface well pick to list of API surface well pick
-    """
-
-    return schemas.SurfaceWellPicks(
-        picks=[
-            schemas.SurfaceWellPick(
-                x=pick.x,
-                y=pick.y,
-                z=pick.z,
-                md=pick.md,
-                direction=schemas.PickDirection(pick.direction.value),
-            )
-            for pick in surface_well_picks
-        ]
     )
