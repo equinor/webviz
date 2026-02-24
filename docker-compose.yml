@@ -83,14 +83,14 @@ services:
       - ./backend_py/libs:/home/appuser/backend_py/libs
 
   redis-user-session:
-    image: redis:7.2.12
+    image: redis:7.2
     expose:
       - 6379
     user: "999:999"
     command: ["redis-server",  "--loglevel", "notice"]
 
   redis-cache:
-    image: redis:7.2.12
+    image: redis:7.2
     expose:
       - 6379
     user: "999:999"

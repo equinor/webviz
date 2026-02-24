@@ -169,7 +169,7 @@ spec:
             averageUtilization: 80
 
     - name: redis-user-session
-      image: redis:7.2.12
+      image: redis:7.2
       runAsUser: 999
       command: ["redis-server",  "--loglevel", "notice"]
       ports:
@@ -177,7 +177,7 @@ spec:
           port: 6379
 
     - name: redis-cache
-      image: redis:7.2.12
+      image: redis:7.2
       runAsUser: 999
       # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
       # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
