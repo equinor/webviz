@@ -34,6 +34,9 @@ spec:
       ports:
         - name: http
           port: 5000
+      identity:
+        azure:
+          clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
       secretRefs:
         azureKeyVaults:
           - name: webviz
