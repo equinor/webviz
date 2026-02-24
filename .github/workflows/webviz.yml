@@ -82,7 +82,7 @@ jobs:
           docker stop $CONTAINER_ID
           git diff --exit-code ./frontend/src/api || exit 1
 
-  backend:
+  backend_py:
     runs-on: ubuntu-latest
 
     steps:
@@ -109,24 +109,27 @@ jobs:
           poetry check --lock --directory=./libs/server_schemas
           poetry check --lock --directory=./libs/services
           poetry check --lock --directory=./primary
+          poetry check --lock --directory=./user_grid3d_ri
 
           # Install our repo tooling (mypy, pylint, etc.)
           poetry install
 
-          # Then the dependencies for primary
-          cd primary
-          poetry install
-
-      - name: 🕵️ Check code style & linting
+      - name: 🕵️ Check formatting and security
         working-directory: ./backend_py
         run: |
           set -x
           black --check .
+          bandit --recursive primary/ libs/ user_grid3d_ri/ --exclude tests
+
+      - name: 🕵️ Check linting & typing for primary
+        working-directory: ./backend_py
+        run: |
+          set -x
+          (cd primary && poetry install)
           scripts/pylint-all.sh
           scripts/mypy-all.sh
-          bandit --recursive primary/ libs/ --exclude tests
 
-      - name: 🤖 Run tests
+      - name: 🤖 Run tests for primary
         working-directory: ./backend_py/primary
         env:
           WEBVIZ_CLIENT_SECRET: 0
@@ -138,7 +141,15 @@ jobs:
         run: |
           pytest ./tests/unit
 
-  go:
+      - name: 🕵️ Check linting & typing for user_grid3d_ri
+        working-directory: ./backend_py
+        run: |
+          set -x
+          (cd user_grid3d_ri && poetry install)
+          scripts/pylint-user-grid3d-ri-all.sh
+          scripts/mypy-user-grid3d-ri-all.sh
+
+  backend_go:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
