@@ -83,11 +83,10 @@ def create_credential_for_azure_services(
 def _secret_status(secret: str | None) -> str:
     if secret is None:
         return "missing"
-    if secret == "":
+    if not secret:
         return "empty"
 
     return "present"
-
 
 def _show_start_of_secret(secret: str | None, num_chars: int = 4) -> str | None:
     if secret is None:
