@@ -136,9 +136,9 @@ export class SurfacesPerRealizationValuesProvider
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
         });
 
-        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+        const wellboreHeadersDep = helperDependency(({ getGlobalSetting, abortSignal }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
         });
 
         valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {

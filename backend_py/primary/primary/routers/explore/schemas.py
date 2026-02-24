@@ -3,6 +3,10 @@ from typing import Sequence
 from pydantic import BaseModel
 
 
+class AssetInfo(BaseModel):
+    name: str
+
+
 class FieldInfo(BaseModel):
     fieldIdentifier: str
 
@@ -35,7 +39,8 @@ class EnsembleTimestamps(BaseModel):
 
 class EnsembleDetails(BaseModel):
     name: str
-    fieldIdentifier: str
+    assetName: str
+    fieldIdentifiers: list[str]
     caseName: str
     caseUuid: str
     realizations: Sequence[int]

@@ -43,7 +43,6 @@ export class EnsembleWellborePicksProvider
         helperDependency,
         valueConstraintsUpdater,
         queryClient,
-        workbenchSession,
     }: DefineDependenciesArgs<EnsembleWellborePicksSettings>): void {
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -51,9 +50,12 @@ export class EnsembleWellborePicksProvider
             return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
         });
 
-        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+        const wellboreHeadersDep = helperDependency(({ getGlobalSetting, abortSignal }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            if (!fieldIdentifier) {
+                return null;
+            }
+            return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
         });
 
         valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {

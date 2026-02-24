@@ -13,9 +13,11 @@ export function createEnsembleUpdater() {
     return ({ getGlobalSetting }: any) => {
         const fieldIdentifier = getGlobalSetting("fieldId");
         const ensembles = getGlobalSetting("ensembles");
-
+        if (!fieldIdentifier) {
+            return [];
+        }
         const ensembleIdents = ensembles
-            .filter((ensemble: any) => ensemble.getFieldIdentifier() === fieldIdentifier)
+            .filter((ensemble: any) => ensemble.getFieldIdentifiers().includes(fieldIdentifier))
             .map((ensemble: any) => ensemble.getIdent());
 
         return ensembleIdents;

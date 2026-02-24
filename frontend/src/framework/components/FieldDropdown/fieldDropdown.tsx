@@ -17,14 +17,16 @@ export function FieldDropdown(props: FieldDropdownProps): JSX.Element {
 
     const optionsArray: DropdownOption[] = [];
     for (const ens of ensembleSet.getRegularEnsembleArray()) {
-        const fieldIdentifier = ens.getFieldIdentifier();
-        if (optionsArray.some((option) => option.value === fieldIdentifier.toString())) {
-            continue;
+        const fieldIdentifiers = ens.getFieldIdentifiers();
+        for (const fieldIdentifier of fieldIdentifiers) {
+            if (optionsArray.some((option) => option.value === fieldIdentifier.toString())) {
+                continue;
+            }
+            optionsArray.push({
+                value: fieldIdentifier.toString(),
+                label: fieldIdentifier.toString(),
+            });
         }
-        optionsArray.push({
-            value: fieldIdentifier.toString(),
-            label: fieldIdentifier.toString(),
-        });
     }
 
     return <Dropdown options={optionsArray} value={value?.toString()} onChange={handleSelectionChanged} {...rest} />;

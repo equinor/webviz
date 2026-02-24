@@ -6,11 +6,12 @@ export const selectedFieldIdentifierAtom = persistableFixableAtom<string | null>
     isValidFunction: ({ get, value }) => {
         const ensembleSet = get(EnsembleSetAtom);
         return (
-            value !== null && ensembleSet.getRegularEnsembleArray().some((ens) => ens.getFieldIdentifier() === value)
+            value !== null &&
+            ensembleSet.getRegularEnsembleArray().some((ens) => ens.getFieldIdentifiers().includes(value))
         );
     },
     fixupFunction: ({ get }) => {
         const ensembleSet = get(EnsembleSetAtom);
-        return ensembleSet.getRegularEnsembleArray().at(0)?.getFieldIdentifier() ?? null;
+        return ensembleSet.getRegularEnsembleArray().at(0)?.getFieldIdentifiers().at(0) ?? null;
     },
 });
