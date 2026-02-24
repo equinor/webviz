@@ -19,9 +19,18 @@ function calcPercentile(values: readonly number[], percentile: number): number {
 }
 
 function mergeXAndYArrays(arrayX: readonly number[], arrayY: number[]): number[][] {
+    if (arrayX.length !== arrayY.length) {
+        throw new Error("X and Y arrays must have the same length");
+    }
     return arrayX.map((x, i) => [x, arrayY[i]]);
 }
 
+/**
+ * Create statistical data for surface across realizations.
+ *
+ * Note: If any of the realizations has a `null` value for a given point, the statistical values for that point will be set to `null`.
+ * This is to reflect potential discontinuities in the surface across realizations.
+ */
 export function makeSurfaceStatisticalFanchartFromRealizationSurface(
     realizationSamplePoints: readonly number[][],
     cumulatedLength: readonly number[],
@@ -36,12 +45,14 @@ export function makeSurfaceStatisticalFanchartFromRealizationSurface(
 ): SurfaceStatisticalFanchart {
     const numPoints = realizationSamplePoints[0]?.length || 0;
 
-    const mean = new Array(numPoints).fill(undefined);
-    const min = new Array(numPoints).fill(Infinity);
-    const max = new Array(numPoints).fill(-Infinity);
-    const p10 = new Array(numPoints).fill(undefined);
-    const p50 = new Array(numPoints).fill(undefined);
-    const p90 = new Array(numPoints).fill(undefined);
+    // Initialize arrays to hold the calculated statistics for each point along the surface
+    // - Value of `null` means value is not present, e.g. discontinuity in the surface
+    const mean = new Array(numPoints).fill(null);
+    const min = new Array(numPoints).fill(null);
+    const max = new Array(numPoints).fill(null);
+    const p10 = new Array(numPoints).fill(null);
+    const p50 = new Array(numPoints).fill(null);
+    const p90 = new Array(numPoints).fill(null);
 
     for (let i = 0; i < numPoints; i++) {
         const values = realizationSamplePoints.map((el) => el[i]);
