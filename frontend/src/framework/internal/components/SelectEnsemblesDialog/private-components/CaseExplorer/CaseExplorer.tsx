@@ -7,7 +7,7 @@ import { isEqual } from "lodash";
 import { getCasesOptions, getFieldsOptions, type EnsembleInfo_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
+import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
