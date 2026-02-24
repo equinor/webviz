@@ -5,8 +5,8 @@ import type { Workbench } from "@framework/Workbench";
 import {
     ResizableSettingsPanels,
     type ResizablePanels,
-    type SettingsPanelCollapsedStates,
-    type SettingsPanelSizes,
+    type SettingsPanelsCollapsedState,
+    type SettingsPanelsWidth,
 } from "@lib/components/ResizableSettingsPanels";
 
 import { Content } from "../Content";
@@ -38,72 +38,71 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
     const rightDrawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
 
     const handleResizablePanelsChange = React.useCallback(
-        function handleResizablePanelsChange(sizes: SettingsPanelSizes) {
-            if (sizes.leftSettings !== undefined) {
-                setLeftSettingsPanelWidth(sizes.leftSettings);
+        function handleResizablePanelsChange(widths: SettingsPanelsWidth) {
+            if (widths.leftSettingsPanel !== undefined) {
+                setLeftSettingsPanelWidth(widths.leftSettingsPanel);
             }
-            if (sizes.rightSettings !== undefined) {
-                setRightSettingsPanelWidth(sizes.rightSettings);
+            if (widths.rightSettingsPanel !== undefined) {
+                setRightSettingsPanelWidth(widths.rightSettingsPanel);
             }
         },
         [setLeftSettingsPanelWidth, setRightSettingsPanelWidth],
     );
 
     const handleCollapsedPanelsChange = React.useCallback(
-        function handleCollapsedPanelsChange(states: SettingsPanelCollapsedStates) {
-            if (states.leftSettings !== undefined && states.leftSettings !== null) {
-                setLeftSettingsPanelIsCollapsed(states.leftSettings);
+        function handleCollapsedPanelsChange(states: SettingsPanelsCollapsedState) {
+            if (states.leftSettingsPanel !== undefined && states.leftSettingsPanel !== null) {
+                setLeftSettingsPanelIsCollapsed(states.leftSettingsPanel);
             }
         },
         [setLeftSettingsPanelIsCollapsed],
     );
 
-    const minSizes = React.useMemo<SettingsPanelSizes>(() => {
+    const minWidths = React.useMemo<SettingsPanelsWidth>(() => {
         if (rightDrawerContent) {
-            return { leftSettings: LEFT_PANEL_MIN_WIDTH_PX, rightSettings: RIGHT_PANEL_MIN_WIDTH_PX };
+            return { leftSettingsPanel: LEFT_PANEL_MIN_WIDTH_PX, rightSettingsPanel: RIGHT_PANEL_MIN_WIDTH_PX };
         }
-        return { leftSettings: LEFT_PANEL_MIN_WIDTH_PX };
+        return { leftSettingsPanel: LEFT_PANEL_MIN_WIDTH_PX };
     }, [rightDrawerContent]);
 
-    const collapsedSizes = React.useMemo<SettingsPanelSizes>(() => {
+    const collapsedWidths = React.useMemo<SettingsPanelsWidth>(() => {
         if (rightDrawerContent) {
-            return { leftSettings: LEFT_PANEL_COLLAPSED_WIDTH_PX, rightSettings: 0 };
+            return { leftSettingsPanel: LEFT_PANEL_COLLAPSED_WIDTH_PX, rightSettingsPanel: 0 };
         }
-        return { leftSettings: LEFT_PANEL_COLLAPSED_WIDTH_PX };
+        return { leftSettingsPanel: LEFT_PANEL_COLLAPSED_WIDTH_PX };
     }, [rightDrawerContent]);
 
-    const collapsedStates = React.useMemo<SettingsPanelCollapsedStates>(() => {
+    const collapsedStates = React.useMemo<SettingsPanelsCollapsedState>(() => {
         if (rightDrawerContent) {
-            return { leftSettings: leftSettingsPanelIsCollapsed, rightSettings: null };
+            return { leftSettingsPanel: leftSettingsPanelIsCollapsed, rightSettingsPanel: null };
         }
-        return { leftSettings: leftSettingsPanelIsCollapsed };
+        return { leftSettingsPanel: leftSettingsPanelIsCollapsed };
     }, [leftSettingsPanelIsCollapsed, rightDrawerContent]);
 
-    const sizesInPercent = React.useMemo<SettingsPanelSizes>(() => {
+    const widthsInPercent = React.useMemo<SettingsPanelsWidth>(() => {
         if (rightDrawerContent) {
-            return { leftSettings: leftSettingsPanelWidth, rightSettings: rightSettingsPanelWidth };
+            return { leftSettingsPanel: leftSettingsPanelWidth, rightSettingsPanel: rightSettingsPanelWidth };
         }
-        return { leftSettings: leftSettingsPanelWidth };
+        return { leftSettingsPanel: leftSettingsPanelWidth };
     }, [leftSettingsPanelWidth, rightSettingsPanelWidth, rightDrawerContent]);
 
     const panels: ResizablePanels = {
-        leftSettings: <LeftSettingsPanel workbench={props.workbench} />,
+        leftSettingsPanel: <LeftSettingsPanel workbench={props.workbench} />,
         content: (
             <div className="flex flex-col grow h-full">
                 <Content workbench={props.workbench} />
             </div>
         ),
-        rightSettings: rightDrawerContent ? <RightSettingsPanel workbench={props.workbench} /> : undefined,
+        rightSettingsPanel: rightDrawerContent ? <RightSettingsPanel workbench={props.workbench} /> : undefined,
     };
 
     return (
         <ResizableSettingsPanels
-            id="settings-content"
-            sizesInPercent={sizesInPercent}
-            minSizes={minSizes}
+            widthsInPercent={widthsInPercent}
+            minWidths={minWidths}
             collapsedStates={collapsedStates}
-            collapsedSizes={collapsedSizes}
-            onSizesChange={handleResizablePanelsChange}
+            collapsedWidths={collapsedWidths}
+            onWidthsChange={handleResizablePanelsChange}
             onCollapsedChange={handleCollapsedPanelsChange}
         >
             {panels}

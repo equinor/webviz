@@ -2,7 +2,7 @@ export { ResizableSettingsPanels } from "./resizableSettingsPanels";
 export type {
     ResizableSettingsPanelsProps,
     ResizablePanels,
-    SettingsPanelSizes,
-    SettingsPanelCollapsedStates,
-    SettingsPanelVisibleState,
+    SettingsPanelsWidth,
+    SettingsPanelsCollapsedState,
+    SettingsPanelsVisibleState,
 } from "./resizableSettingsPanels";
