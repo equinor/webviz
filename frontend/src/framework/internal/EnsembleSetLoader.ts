@@ -10,8 +10,8 @@ import { SensitivityType_api, getEnsembleDetailsOptions, getParametersAndSensiti
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
+import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
 import { createDeltaEnsembleDisplayName, createRegularEnsembleDisplayName } from "@framework/utils/ensembleUiHelpers";
-import { tanstackDebugTimeOverride } from "@lib/utils/debug";
 import { calcFnv1aHash } from "@lib/utils/hashUtils";
 
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";

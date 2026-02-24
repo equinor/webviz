@@ -7,6 +7,7 @@ import { isEqual } from "lodash";
 import { getCasesOptions, getFieldsOptions, type EnsembleInfo_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -21,7 +22,6 @@ import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
-import { tanstackDebugTimeOverride } from "@lib/utils/debug";
 
 import {
     makeCaseRowData,

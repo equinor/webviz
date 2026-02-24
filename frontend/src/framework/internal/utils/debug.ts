@@ -10,7 +10,7 @@ export const SHOW_DEBUG_MODULES_FLAG = "showDebugModules";
  * @param flag a debug flag key
  * @returns true if the debug flag is enabled
  */
-export function debugFlagIsEnabled(flag: string) {
+export function debugFlagIsEnabled(flag: string): boolean {
     const storedFlag = localStorage.getItem(DEBUG_FLAG_PREFIX + flag);
 
     if (!storedFlag) return false;
@@ -33,7 +33,7 @@ export function getDebugSetting(setting: string): string | null {
  * @param setting a debug setting key
  * @param value the value to set, or null to remove the setting
  */
-export function setDebugSetting(setting: string, value: string | null) {
+export function setDebugSetting(setting: string, value: string | null): void {
     if (value === null) {
         localStorage.removeItem(DEBUG_FLAG_PREFIX + setting);
     } else {
@@ -46,7 +46,7 @@ export function setDebugSetting(setting: string, value: string | null) {
  * @param time time (ms) that the cache is valid for
  * @returns the given time, or 0 if the debug flag is enabled
  */
-export function tanstackDebugTimeOverride(time: number) {
+export function tanstackDebugTimeOverride(time: number): number {
     if (debugFlagIsEnabled("disableTanstackCache")) return 0;
     return time;
 }

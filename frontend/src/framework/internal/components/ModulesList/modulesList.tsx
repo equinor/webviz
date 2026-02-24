@@ -15,6 +15,7 @@ import {
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
+import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/internal/utils/debug";
 import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
@@ -23,7 +24,6 @@ import type { DrawPreviewFunc } from "@framework/Preview";
 import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
-import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@lib/utils/debug";
 import { isDevMode } from "@lib/utils/devMode";
 import type { Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, pointRelativeToDomRect } from "@lib/utils/geometry";
@@ -403,10 +403,12 @@ const MODULE_CATEGORIES: { category: ModuleCategory; label: string }[] = [
 ];
 
 // Opt-in dev and deprecated modules (included by default in dev mode)
-const INITIAL_ADDITIONAL_DEV_STATES: (ModuleDevState.DEV | ModuleDevState.DEPRECATED)[] = [];
+type RequiredModuleDevState = ModuleDevState.PROD;
+type OptionalModuleDevState = Exclude<ModuleDevState, RequiredModuleDevState>;
+const INITIAL_OPTIONAL_DEV_STATES: OptionalModuleDevState[] = [];
 if (isDevMode()) {
-    INITIAL_ADDITIONAL_DEV_STATES.push(ModuleDevState.DEV);
-    INITIAL_ADDITIONAL_DEV_STATES.push(ModuleDevState.DEPRECATED);
+    INITIAL_OPTIONAL_DEV_STATES.push(ModuleDevState.DEV);
+    INITIAL_OPTIONAL_DEV_STATES.push(ModuleDevState.DEPRECATED);
 }
 
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
@@ -416,8 +418,8 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const boundingClientRect = useElementBoundingRect(ref);
 
     const [searchQuery, setSearchQuery] = React.useState("");
-    const [additionalDevStates, setAdditionalDevStates] =
-        React.useState<(ModuleDevState.DEV | ModuleDevState.DEPRECATED)[]>(INITIAL_ADDITIONAL_DEV_STATES);
+    const [optionalDevStates, setOptionalDevStates] =
+        React.useState<OptionalModuleDevState[]>(INITIAL_OPTIONAL_DEV_STATES);
     const [showDetailsForModule, setShowDetailsForModule] = React.useState<string | null>(null);
     const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
 
@@ -456,8 +458,9 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     }
 
     // Always include PROD modules
+    const validModuleDevStates: ModuleDevState[] = [ModuleDevState.PROD, ...optionalDevStates];
     const filteredModules = Object.values(ModuleRegistry.getRegisteredModules())
-        .filter((mod) => [ModuleDevState.PROD, ...additionalDevStates].includes(mod.getDevState()))
+        .filter((mod) => validModuleDevStates.includes(mod.getDevState()))
         .filter((mod) => mod.getDefaultTitle().toLowerCase().includes(searchQuery.toLowerCase()));
     const showDebugModules = isDevMode() || debugFlagIsEnabled(SHOW_DEBUG_MODULES_FLAG);
 
@@ -474,7 +477,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     return (
         <div ref={ref} className={resolveClassNames("w-full h-full relative", { hidden: !isVisible })}>
             <Drawer
-                visible={isVisible}
+                visible={true}
                 onClose={handleClose}
                 title="Add modules"
                 icon={<WebAsset />}
@@ -492,7 +495,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                                 <span className="mt-[0.2rem]">Show deprecated</span>
                             </>
                         ),
-                        initiallySelected: additionalDevStates.includes(ModuleDevState.DEPRECATED),
+                        initiallySelected: optionalDevStates.includes(ModuleDevState.DEPRECATED),
                     },
                     {
                         value: ModuleDevState.DEV,
@@ -504,10 +507,10 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                                 <span className="mt-[0.2rem]">Show experimental</span>
                             </>
                         ),
-                        initiallySelected: additionalDevStates.includes(ModuleDevState.DEV),
+                        initiallySelected: optionalDevStates.includes(ModuleDevState.DEV),
                     },
                 ]}
-                onFilterItemSelectionChange={(selectedItems) => setAdditionalDevStates(selectedItems)}
+                onFilterItemSelectionChange={setOptionalDevStates}
             >
                 <>
                     {visibleModuleCategories.map((el) => (
