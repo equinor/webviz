@@ -14,8 +14,7 @@ for path in \
     libs/server_schemas/src/webviz_server_schemas \
     libs/services/src/webviz_services \
     primary/primary \
-    primary/tests \
-    user_grid3d_ri/user_grid3d_ri
+    primary/tests
 do
     echo
     echo "Running pylint on: $path"

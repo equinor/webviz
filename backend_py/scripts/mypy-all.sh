@@ -13,8 +13,7 @@ for path in \
     libs/core_utils/src/webviz_core_utils \
     libs/server_schemas/src/webviz_server_schemas \
     libs/services/src/webviz_services \
-    primary/primary \
-    user_grid3d_ri/user_grid3d_ri
+    primary/primary
 do
     echo
     echo "Running mypy on: $path"
