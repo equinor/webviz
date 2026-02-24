@@ -85,7 +85,7 @@ def create_well_trajectory_formation_segments(
     well_trajectory: WellTrajectory,
     top_depth_surface: xtgeo.RegularSurface,
     bottom_depth_surface: xtgeo.RegularSurface | None = None,
-    are_depth_surfaces_validated: bool = False,
+    skip_depth_surfaces_validation: bool = False,
     surface_collapse_tolerance: float = 0.01,
 ) -> list[FormationSegment]:
     """
@@ -113,14 +113,20 @@ def create_well_trajectory_formation_segments(
         top_depth_surface (xtgeo.RegularSurface): The top bounding depth surface of the formation.
         bottom_depth_surface (xtgeo.RegularSurface): The optional bottom bounding depth surface of
                                                      the formation.
+        skip_depth_surfaces_validation (bool): Flag to skip depth surface validation. If False,
+                                               validation is performed.
+        surface_collapse_tolerance (float): Tolerance for considering top and bottom surfaces to be
+                                            "collapsed" (i.e. formation is too thin) - if validation
+                                            is performed. Unit is in the same unit as the depth
+                                            values on the surfaces, typically meters.
     Returns:
         list[FormationSegment]: The segments where the well trajectory is within the
                                 formation. With measured depth values at entry and exit.
     """
 
-    # Run depth surface validation if flag is set, otherwise it is assumed that the caller has
+    # Run depth surface validation if flag is set False, otherwise it is assumed that the caller has
     # already validated the surfaces or that validation is not needed
-    if not are_depth_surfaces_validated and bottom_depth_surface is not None:
+    if not skip_depth_surfaces_validation and bottom_depth_surface is not None:
         validate_depth_surfaces_for_formation_segments(
             top_depth_surface=top_depth_surface,
             bottom_depth_surface=bottom_depth_surface,
@@ -269,9 +275,9 @@ def _create_formation_segments_from_well_trajectory_and_picks(
                 )
                 LOGGER.warning(message)
                 raise InvalidDataError(message, Service.GENERAL)
-            else:
-                formation_segments.append(FormationSegment(md_enter=md_enter, md_exit=pick.md))
-                md_enter = None
+
+            formation_segments.append(FormationSegment(md_enter=md_enter, md_exit=pick.md))
+            md_enter = None
 
     # If md_enter is still set, well ends inside formation
     if md_enter is not None:

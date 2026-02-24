@@ -305,10 +305,11 @@ async def post_get_well_trajectories_formation_segments(
     per_well_trajectory_formation_segments = []
 
     # Validate surfaces
-    # - Tolerance for considering top and bottom surfaces to be "collapsed" (i.e. formation is too thin).
-    #   Unit is in the same unit as the depth values on the surfaces, typically meters.
+    # - Tolerance for considering top and bottom surfaces to be "collapsed" (i.e. formation is too
+    #   thin). Unit is in the same unit as the depth values on the surfaces, typically meters.
+    skip_depth_surfaces_validation = True
     if bottom_xtgeo_surf is not None:
-        surface_collapse_tolerance = 0.01
+        surface_collapse_tolerance = 0.1
         validate_depth_surfaces_for_formation_segments(
             top_depth_surface=top_xtgeo_surf,
             bottom_depth_surface=bottom_xtgeo_surf,
@@ -324,7 +325,7 @@ async def post_get_well_trajectories_formation_segments(
                 well_trajectory=well_trajectory,
                 top_depth_surface=top_xtgeo_surf,
                 bottom_depth_surface=bottom_xtgeo_surf,
-                are_depth_surfaces_validated=True,
+                skip_depth_surfaces_validation=skip_depth_surfaces_validation,
             )
         except ServiceLayerException as exc:
             error_message = str(exc)

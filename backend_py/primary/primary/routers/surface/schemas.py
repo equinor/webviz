@@ -1,5 +1,5 @@
 from enum import Enum, StrEnum
-from typing import Annotated, List, Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 from webviz_core_utils.b64 import B64FloatArray
@@ -129,8 +129,8 @@ class SurfaceIntersectionData(BaseModel):
     """
 
     name: str
-    z_points: List[float]
-    cum_lengths: List[float]
+    z_points: list[float]
+    cum_lengths: list[float]
 
 
 class SurfaceIntersectionCumulativeLengthPolyline(BaseModel):
@@ -151,9 +151,9 @@ class SurfaceIntersectionCumulativeLengthPolyline(BaseModel):
     Note: Verify if cum_lengths is necessary with respect to xtgeo
     """
 
-    x_points: List[float]
-    y_points: List[float]
-    cum_lengths: List[float]
+    x_points: list[float]
+    y_points: list[float]
+    cum_lengths: list[float]
 
 
 class SurfaceRealizationSampleValues(BaseModel):
@@ -191,7 +191,7 @@ class SurfaceWellPicks(BaseModel):
 
     """
 
-    picks: List[SurfaceWellPick]
+    picks: list[SurfaceWellPick]
 
 
 class FormationSegment(BaseModel):
@@ -214,7 +214,7 @@ class WellTrajectoryFormationSegmentsSuccess(BaseModel):
 
     status: "success"
     uwi: str
-    formationSegments: List[FormationSegment]
+    formationSegments: list[FormationSegment]
     """
 
     status: Literal["success"] = "success"
@@ -236,7 +236,7 @@ class WellTrajectoryFormationSegmentsError(BaseModel):
     errorMessage: str
 
 
-WellTrajectoryFormationSegments = Annotated[
+type WellTrajectoryFormationSegments = Annotated[
     WellTrajectoryFormationSegmentsSuccess | WellTrajectoryFormationSegmentsError,
     Field(discriminator="status"),
 ]
@@ -254,10 +254,10 @@ class WellTrajectory(BaseModel):
 
     """
 
-    xPoints: List[float]
-    yPoints: List[float]
-    zPoints: List[float]
-    mdPoints: List[float]
+    xPoints: list[float]
+    yPoints: list[float]
+    zPoints: list[float]
+    mdPoints: list[float]
     uwi: str
 
 
