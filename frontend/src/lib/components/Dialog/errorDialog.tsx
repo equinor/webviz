@@ -2,8 +2,8 @@ import React from "react";
 
 import { BugReport, Error } from "@mui/icons-material";
 
-import { shouldSymbolicate, symbolicateStackTrace } from "@framework/utils/stackTraceSymbolication";
 import { reportErrorToGithub } from "@lib/utils/errors";
+import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
 
 import { Button } from "../Button";
 

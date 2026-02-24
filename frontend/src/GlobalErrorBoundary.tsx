@@ -2,11 +2,11 @@ import React from "react";
 
 import { BugReport, ContentCopy } from "@mui/icons-material";
 
-import { shouldSymbolicate, symbolicateStackTrace } from "@framework/utils/stackTraceSymbolication";
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
 import { reportErrorToGithub } from "@lib/utils/errors";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
 
 type Props = {
     children?: React.ReactNode;
