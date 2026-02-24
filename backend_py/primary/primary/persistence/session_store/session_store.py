@@ -12,9 +12,6 @@ from primary.persistence.cosmosdb.error_converter import raise_service_error_fro
 
 from .documents import SessionDocument, SessionMetadata
 
-_CONTAINER_NAME = "sessions"
-_DATABASE_NAME = "persistence"
-
 # CosmosDB has a 2MB document size limit
 # We use 1.5MB to leave room for metadata and safety margin
 _MAX_CONTENT_SIZE_BYTES = 1.5 * 1024 * 1024  # 1.5MB
@@ -33,22 +30,6 @@ class SessionStore:
     def __init__(self, user_id: str, session_container: CosmosContainer[SessionDocument]):
         self._user_id = user_id
         self._session_container = session_container
-
-    async def __aenter__(self) -> "SessionStore":
-        return self
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: object | None,
-    ) -> None:
-        await self._session_container.close_async()
-
-    @classmethod
-    def create_instance(cls, user_id: str) -> "SessionStore":
-        session_container = CosmosContainer.create_instance(_DATABASE_NAME, _CONTAINER_NAME, SessionDocument)
-        return cls(user_id=user_id, session_container=session_container)
 
     async def create_async(self, title: str, description: Optional[str], content: str) -> str:
         """
