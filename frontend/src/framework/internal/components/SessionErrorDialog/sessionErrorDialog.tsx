@@ -29,6 +29,17 @@ function makeModalText(failingAction: SessionPersistenceAction | undefined): { t
                 title: "Unable to load session backup",
                 body: "Could not load the local session backup due to the following error:",
             };
+
+        case SessionPersistenceAction.OPEN_SNAPSHOT:
+            return {
+                title: "Unable to open snapshot",
+                body: "Could not open the snapshot due to the following error:",
+            };
+        case SessionPersistenceAction.CREATE_SNAPSHOT:
+            return {
+                title: "Unable to create snapshot",
+                body: "Could not create a snapshot from the session due to the following error:",
+            };
         default:
             console.warn(`Unknown session persistence action: ${failingAction}`);
             return { title: "Something went wrong", body: "The session service failed due to the following error:" };
@@ -149,8 +160,8 @@ function BackendAliveChecker(): React.ReactNode {
     } else if (aliveQuery.isError) {
         return (
             <li>
-                <Close className="inline-block sizeClass text-red-700" fontSize="inherit" /> Unable to the Webviz
-                backend
+                <Close className="inline-block sizeClass text-red-700" fontSize="inherit" /> Unable to connect to the
+                Webviz backend
             </li>
         );
     } else if (isAlive) {

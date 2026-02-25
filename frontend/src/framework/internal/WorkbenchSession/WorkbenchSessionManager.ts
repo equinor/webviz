@@ -49,19 +49,12 @@ export enum SessionPersistenceAction {
     SAVE = "save",
     LOAD = "load",
     LOCAL_LOAD = "local_load",
-}
-
-export enum SnapshotPersistenceAction {
-    CREATE = "create",
-    OPEN = "open",
+    CREATE_SNAPSHOT = "create_snapshot",
+    OPEN_SNAPSHOT = "open_snapshot",
 }
 
 export class SessionPersistenceError extends Error {
     name = "SessionPersistenceError";
-}
-
-export class SnapshotPersistenceError extends Error {
-    name = "SnapshotPersistenceError";
 }
 
 export enum WorkbenchSessionManagerTopic {
@@ -265,7 +258,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             }
 
             // Return to start and register error
-            window.history.pushState({}, "", "/");
+            this._workbench.getNavigationManager().pushState("/");
             this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
                 action: SessionPersistenceAction.LOAD,
                 error: new SessionPersistenceError(
@@ -319,10 +312,10 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             }
 
             // Return to start and register error
-            window.history.pushState({}, "", "/");
-            this._guiMessageBroker.publishEvent(GuiEvent.SnapshotPersistenceError, {
-                action: SnapshotPersistenceAction.OPEN,
-                error: new SnapshotPersistenceError(
+            this._workbench.getNavigationManager().pushState("/");
+            this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
+                action: SessionPersistenceAction.OPEN_SNAPSHOT,
+                error: new SessionPersistenceError(
                     `Could not load snapshot with ID '${snapshotId}'. ${errorExplanation}`,
                 ),
                 retry: () => this.openSnapshot(snapshotId),
@@ -750,9 +743,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 ? `Failed to create snapshot: ${result.message}`
                 : "Failed to create snapshot";
 
-            this._guiMessageBroker.publishEvent(GuiEvent.SnapshotPersistenceError, {
-                action: SnapshotPersistenceAction.CREATE,
-                error: new SnapshotPersistenceError(errorMsg),
+            this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
+                action: SessionPersistenceAction.CREATE_SNAPSHOT,
+                error: new SessionPersistenceError(errorMsg),
                 retry: () => this.createSnapshot(title, description),
             });
         }

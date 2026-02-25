@@ -5,10 +5,7 @@ import type { Size2D } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 
 import type { EnsembleLoadingErrorInfoMap } from "./internal/EnsembleSetLoader";
-import type {
-    SessionPersistenceAction,
-    SnapshotPersistenceAction,
-} from "./internal/WorkbenchSession/WorkbenchSessionManager";
+import type { SessionPersistenceAction } from "./internal/WorkbenchSession/WorkbenchSessionManager";
 import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
 export enum LeftDrawerContent {
@@ -68,7 +65,6 @@ export enum GuiEvent {
     DataChannelNodeUnhover = "dataChannelNodeUnhover",
     UnsavedRealizationFilterSettingsAction = "unsavedRealizationFilterSettingsAction",
     SessionPersistenceError = "sessionPersistenceError",
-    SnapshotPersistenceError = "snapshotPersistenceError",
 }
 
 export type GuiEventPayloads = {
@@ -114,14 +110,7 @@ export type GuiEventPayloads = {
         /** Callback for when user wants to retry the failed action */
         retry: () => void;
     };
-    [GuiEvent.SnapshotPersistenceError]: {
-        /** The persistence lifecycle action that failed (saving, loading) */
-        action: SnapshotPersistenceAction;
-        /** The raised error */
-        error: Error;
-        /** Callback for when user wants to retry the failed action */
-        retry: () => void;
-    };
+
 };
 
 type GuiStateValueTypes = {
