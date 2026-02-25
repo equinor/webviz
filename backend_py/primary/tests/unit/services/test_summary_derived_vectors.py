@@ -8,6 +8,7 @@ from webviz_services.service_exceptions import InvalidDataError
 from webviz_services.summary_derived_vectors import (
     DerivedRealizationVector,
     DerivedVectorType,
+    DerivedVectorMetadata,
     create_derived_realization_vector_list,
     create_derived_vector_unit,
     create_per_day_vector_table_pa,
@@ -279,6 +280,12 @@ def test_create_per_day_vector_table_pa_invalid_column_type() -> None:
 
 
 def test_create_derived_realization_vector_list() -> None:
+    derived_vector_metadata = DerivedVectorMetadata(
+        name="DERIVED_VECTOR",
+        unit="unit",
+        is_rate=False,
+    )
+
     # Create a sample derived vector table
     derived_vector_table = pa.table(
         {
@@ -287,7 +294,9 @@ def test_create_derived_realization_vector_list() -> None:
                 type=pa.timestamp("ms"),
             ),
             "REAL": pa.array([1, 1, 1, 2, 2, 2, 4, 4, 4], type=pa.int16()),
-            "DERIVED_VECTOR": pa.array([10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0], type=pa.float32()),
+            derived_vector_metadata.name: pa.array(
+                [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0], type=pa.float32()
+            ),
         }
     )
 
@@ -316,16 +325,20 @@ def test_create_derived_realization_vector_list() -> None:
         ),
     ]
 
-    is_rate = False
-
     # Call the function
-    result_list = create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", is_rate, "unit")
+    result_list = create_derived_realization_vector_list(derived_vector_table, derived_vector_metadata)
 
     # Assert the result
     assert result_list == expected_list
 
 
 def test_create_derived_realization_vector_list_invalid_column_name() -> None:
+    derived_vector_metadata = DerivedVectorMetadata(
+        name="DERIVED_VECTOR",
+        unit="unit",
+        is_rate=False,
+    )
+
     # Create a sample derived vector table with invalid column name
     derived_vector_table = pa.table(
         {
@@ -334,32 +347,36 @@ def test_create_derived_realization_vector_list_invalid_column_name() -> None:
                 type=pa.timestamp("ms"),
             ),
             "REAL": pa.array([1, 1, 1, 2, 2, 2, 4, 4, 4], type=pa.int16()),
-            "DERIVED_VECTOR": pa.array([10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0], type=pa.float32()),
+            derived_vector_metadata.name: pa.array(
+                [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0], type=pa.float32()
+            ),
         }
     )
 
-    is_rate = False
-
     # Call the function and expect an InvalidDataError
     with pytest.raises(InvalidDataError):
-        create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", is_rate, "unit")
+        create_derived_realization_vector_list(derived_vector_table, derived_vector_metadata)
 
 
 def test_create_derived_realization_vector_list_invalid_column_type() -> None:
+    derived_vector_metadata = DerivedVectorMetadata(
+        name="DERIVED_VECTOR",
+        unit="unit",
+        is_rate=False,
+    )
+
     # Create a sample derived vector table with invalid column type
     derived_vector_table = pa.table(
         {
             "DATE": pa.array([1, 2, 3, 4], type=pa.int32()),
             "REAL": pa.array([1, 1, 1, 1], type=pa.int16()),
-            "DERIVED_VECTOR": pa.array([10.0, 20.0, 30.0, 40.0], type=pa.float32()),
+            derived_vector_metadata.name: pa.array([10.0, 20.0, 30.0, 40.0], type=pa.float32()),
         }
     )
 
-    is_rate = False
-
     # Call the function and expect an InvalidDataError
     with pytest.raises(InvalidDataError):
-        create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", is_rate, "unit")
+        create_derived_realization_vector_list(derived_vector_table, derived_vector_metadata)
 
 
 def test_get_total_vector_name_per_day() -> None:

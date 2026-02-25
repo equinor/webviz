@@ -70,7 +70,7 @@ async def get_vector_tables_and_create_delta_vector_table_and_metadata_async(
 
     # Create metadata from reference vector
     delta_vector_metadata = DeltaVectorMetadata(
-        name=reference_metadata.name, unit=reference_metadata.unit, is_rate=reference_metadata.is_rate
+        name=vector_name, unit=reference_metadata.unit, is_rate=reference_metadata.is_rate
     )
 
     # Create delta ensemble table

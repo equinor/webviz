@@ -244,12 +244,7 @@ async def get_delta_ensemble_realizations_vector_data(
         service_freq,
         perf_metrics,
     )
-    realization_delta_vector_list = create_realization_delta_vector_list(
-        delta_vector_table_pa,
-        vector_name,
-        delta_vector_metadata.is_rate,
-        delta_vector_metadata.unit,
-    )
+    realization_delta_vector_list = create_realization_delta_vector_list(delta_vector_table_pa, delta_vector_metadata)
     perf_metrics.record_lap("create-realization-delta-vector-list")
 
     LOGGER.info(f"Loaded realization delta ensemble summary data in: {perf_metrics.to_string()}")
