@@ -15,7 +15,7 @@ class GraphApiAccess:
     def _make_headers(self) -> Mapping[str, str]:
         return {"Authorization": f"Bearer {self._access_token}"}
 
-    async def _request(self, url: str) -> httpx.Response:
+    async def _request_async(self, url: str) -> httpx.Response:
         response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.get(
             url,
             headers=self._make_headers(),
@@ -23,25 +23,25 @@ class GraphApiAccess:
 
         return response
 
-    async def get_user_profile_photo(self, user_id_or_email: str) -> str | None:
+    async def get_user_profile_photo_async(self, user_id_or_email: str) -> str | None:
         request_url = urljoin(
             self.base_url,
             "me/photo/$value" if user_id_or_email == "me" else f"users/{user_id_or_email}/photo/$value",
         )
 
-        response = await self._request(request_url)
+        response = await self._request_async(request_url)
 
         if response.status_code == 200:
             return base64.b64encode(response.content).decode("utf-8")
-        else:
-            return None
 
-    async def get_user_info(self, user_id_or_email: str) -> Mapping[str, str] | None:
+        return None
+
+    async def get_user_info_async(self, user_id_or_email: str) -> Mapping[str, str] | None:
         request_url = urljoin(self.base_url, "me" if user_id_or_email == "me" else f"users/{user_id_or_email}")
 
-        response = await self._request(request_url)
+        response = await self._request_async(request_url)
 
         if response.status_code == 200:
             return response.json()
-        else:
-            return None
+
+        return None

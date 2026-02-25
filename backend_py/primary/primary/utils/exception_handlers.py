@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.utils import is_body_allowed_for_status_code
 from opentelemetry import trace
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 
 from webviz_services.service_exceptions import ServiceLayerException
 
@@ -67,7 +67,7 @@ def my_request_validation_error_handler(request: Request, exc: RequestValidation
     simplified_err_arr = []
     for err in exc.errors():
         loc = err.get("loc")
-        if type(loc) is list:
+        if isinstance(loc, list):
             loc = ",".join(loc)
 
         # We're seeing some cases where the input is not JSON serializable, so we'll just always convert it to a
@@ -96,7 +96,7 @@ def my_request_validation_error_handler(request: Request, exc: RequestValidation
     curr_span.record_exception(exc)
 
     return JSONResponse(
-        status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=HTTP_422_UNPROCESSABLE_CONTENT,
         content={
             "error": {
                 "type": "RequestValidationError",

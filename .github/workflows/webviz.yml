@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
@@ -76,7 +76,7 @@ jobs:
       - name: 🕵️ Check auto-generated frontend code is in sync with backend
         run: |
           docker build -f ./backend_py/primary/Dockerfile -t backend:latest .
-          CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env WEBVIZ_CLIENT_SECRET=0 --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 --env WEBVIZ_SMDA_RESOURCE_SCOPE=0 --env WEBVIZ_VDS_HOST_ADDRESS=0 --env WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0 --env WEBVIZ_SSDL_RESOURCE_SCOPE=0 --env WEBVIZ_DB_CONNECTION_STRING=0 backend:latest)
+          CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY=true --env WEBVIZ_CLIENT_SECRET=0 --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 --env WEBVIZ_SMDA_RESOURCE_SCOPE=0 --env WEBVIZ_VDS_HOST_ADDRESS=0 --env WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0 --env WEBVIZ_SSDL_RESOURCE_SCOPE=0 backend:latest)
           sleep 10  # Ensure the backend server is up and running exposing /openapi.json
           npm run generate:api --prefix ./frontend
           docker stop $CONTAINER_ID
@@ -164,7 +164,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 24
 
       - name: 🐳 Verify Docker images build
         run: |

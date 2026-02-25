@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, Query, Response, HTTPException
+from fastapi import APIRouter, Depends, Query, Response
 
 from webviz_services.sumo_access.vfp_access import VfpAccess
 from webviz_services.sumo_access.vfp_types import VfpProdTable, VfpInjTable

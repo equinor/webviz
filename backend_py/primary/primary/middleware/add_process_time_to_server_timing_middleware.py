@@ -29,4 +29,3 @@ class AddProcessTimeToServerTimingMiddleware:
             await send(message)
 
         await self._app(scope, receive, send_with_server_timing_header_async)
-

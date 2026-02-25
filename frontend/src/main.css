@@ -91,8 +91,22 @@ body {
         @apply h-3.5;
     }
     & [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply shadow-none!;
+        @apply shadow-none! rounded;
     }
-    --eds_interactive_primary__resting: var(--color-gray-600); /* Override eds icon color */
+
+    & [class*="FieldWrapper__StyledInputFieldWrapper"]:focus-within {
+        @apply outline-1!;
+    }
+
+    & [class*="Segment"]:focus-visible {
+        @apply outline-1! rounded-xs;
+    }
+
+    & [class*="Toggle__StyledButton"]:focus-visible {
+        @apply outline-indigo-500;
+    }
+
+    /* outline-width: 1px; */
+    --eds_interactive_primary__resting: var(--color-indigo-500); /* Override eds icon color */
     --eds_ui_background__light: white; /* Override eds background color */
 }
