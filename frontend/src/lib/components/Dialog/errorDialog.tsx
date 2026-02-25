@@ -14,21 +14,43 @@ export type ErrorDialogProps = {
     error: Error | null;
 } & DialogProps;
 
+function useIsMountedRef() {
+    const isMountedRef = React.useRef(true);
+    React.useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
+    return isMountedRef;
+}
+
 export function ErrorDialog(props: ErrorDialogProps): React.ReactNode {
+    const isMountedRef = useIsMountedRef();
+    const runIdRef = React.useRef(0);
+
     const [isSymbolicatingStack, setIsSymbolicatingStack] = React.useState(false);
 
     async function maybeGetSymbolicatedTrace(error: Error) {
         if (!shouldSymbolicate()) return undefined;
 
         setIsSymbolicatingStack(true);
+        const runId = ++runIdRef.current;
 
         try {
-            return await symbolicateStackTrace(error);
+            const trace = await symbolicateStackTrace(error);
+
+            // If another run started since we began, ignore this result
+            if (runId !== runIdRef.current) return undefined;
+
+            return trace;
         } catch (err) {
-            console.error("Failed to symbolicate stack trace:", err);
+            console.error(`Failed to symbolicate stack trace (run ${runId}): ${err}`);
             return undefined;
         } finally {
-            setIsSymbolicatingStack(false);
+            if (runId === runIdRef.current && isMountedRef.current) {
+                setIsSymbolicatingStack(false);
+            }
         }
     }
 
@@ -37,7 +59,9 @@ export function ErrorDialog(props: ErrorDialogProps): React.ReactNode {
 
         const symoblicatedTrace = await maybeGetSymbolicatedTrace(props.error);
 
-        reportErrorToGithub(props.error, symoblicatedTrace);
+        if (isMountedRef.current) {
+            reportErrorToGithub(props.error, symoblicatedTrace);
+        }
     }
 
     return (
