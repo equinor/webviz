@@ -1,23 +1,34 @@
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 
-import { drilledWellboreHeadersQueryAtom } from "./queryAtoms";
+import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./queryAtoms";
 
 export const selectedFieldIdentAtom = persistableFixableAtom<string | null>({
     initialValue: null,
     isValidFunction: ({ get, value }) => {
+        const allFields = get(availableFieldsQueryAtom)?.data ?? [];
         const ensembleSet = get(EnsembleSetAtom);
         const regularEnsembles = ensembleSet.getRegularEnsembleArray();
 
         if (value === null) return false;
 
-        return regularEnsembles.some((ens) => ens.getFieldIdentifier() === value);
+        if (ensembleSet.getEnsembleArray().length) {
+            return regularEnsembles.some((ens) => ens.getFieldIdentifier() === value);
+        }
+
+        return allFields.some((field) => field.fieldIdentifier === value);
     },
     fixupFunction: ({ get }) => {
         const ensembleSet = get(EnsembleSetAtom);
+        const allFields = get(availableFieldsQueryAtom)?.data ?? [];
+
         const regularEnsembles = ensembleSet.getRegularEnsembleArray();
 
-        return regularEnsembles[0]?.getFieldIdentifier() ?? null;
+        if (ensembleSet.getEnsembleArray().length) {
+            return regularEnsembles[0]?.getFieldIdentifier() ?? null;
+        }
+
+        return allFields[0]?.fieldIdentifier ?? null;
     },
 });
 

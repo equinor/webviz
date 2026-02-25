@@ -1,8 +1,12 @@
 import { atomWithQuery } from "jotai-tanstack-query";
 
-import { getDrilledWellboreHeadersOptions } from "@api";
+import { getDrilledWellboreHeadersOptions, getFieldsOptions } from "@api";
 
 import { selectedFieldIdentAtom } from "./persistableFixableAtoms";
+
+export const availableFieldsQueryAtom = atomWithQuery(() => {
+    return getFieldsOptions();
+});
 
 export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
     const fieldId = get(selectedFieldIdentAtom).value ?? "";

@@ -25,7 +25,7 @@ import type { InterfaceTypes } from "../interfaces";
 import { dataProviderManagerAtom } from "./atoms/baseAtoms";
 import { selectedWellboreHeaderAtom } from "./atoms/derivedAtoms";
 import { selectedFieldIdentAtom, selectedWellboreUuidAtom } from "./atoms/persistableFixableAtoms";
-import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
+import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { ProviderManagerComponentWrapper } from "./components/ProviderManagerComponentWrapper";
 import { ViewerSettings } from "./components/ViewerSettings";
 
@@ -67,6 +67,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     });
     const providerManager = useAtomValue(dataProviderManagerAtom);
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
+    const allFields = useAtomValue(availableFieldsQueryAtom).data ?? [];
 
     // Field selection
     const [selectedField, setSelectedField] = useAtom(selectedFieldIdentAtom);
@@ -101,7 +102,12 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
         <div className="flex flex-col h-full gap-1">
             <CollapsibleGroup title="Wellbore" expanded contentClassName="flex flex-col gap-3">
                 <SettingWrapper label="Field" annotations={fieldSettingAnnotations}>
-                    <FieldDropdown value={selectedField.value} ensembleSet={ensembleSet} onChange={setSelectedField} />
+                    <FieldDropdown
+                        value={selectedField.value}
+                        ensembleSet={ensembleSet}
+                        fallbackFieldList={allFields.map((f) => f.fieldIdentifier)}
+                        onChange={setSelectedField}
+                    />
                 </SettingWrapper>
 
                 <SettingWrapper
