@@ -1,5 +1,3 @@
-import type { ButtonProps } from "@lib/components/Button/button";
-
 export type ConfirmationVariant = "error" | "info";
 export type ConfirmActioncolor = "primary" | "danger" | "success" | "secondary";
 
