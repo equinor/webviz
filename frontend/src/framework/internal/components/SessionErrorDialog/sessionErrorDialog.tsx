@@ -4,7 +4,7 @@ import { Check, Close, Error, Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { getAliveOptions } from "@api";
-import { GuiEvent, useGuiEventListener, type GuiEventPayloads } from "@framework/GuiMessageBroker";
+import { GuiEvent, useGuiEventSubscriber, type GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { SessionPersistenceAction } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
@@ -74,7 +74,7 @@ export function SessionErrorDialog(props: SessionErrorDialogProps): React.ReactN
     }
 
     // Subscribe to the session error gui-event
-    useGuiEventListener(guiMessageBroker, GuiEvent.SessionPersistenceError, handleSessionSaveError);
+    useGuiEventSubscriber(guiMessageBroker, GuiEvent.SessionPersistenceError, handleSessionSaveError);
 
     return (
         <ErrorDialog

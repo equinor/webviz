@@ -110,7 +110,6 @@ export type GuiEventPayloads = {
         /** Callback for when user wants to retry the failed action */
         retry: () => void;
     };
-
 };
 
 type GuiStateValueTypes = {
@@ -292,19 +291,19 @@ export class GuiMessageBroker {
  * @param topic The GUI event topic to listen to
  * @param callback The listener event callback
  */
-export function useGuiEventListener<T extends Exclude<GuiEvent, keyof GuiEventPayloads>>(
+export function useGuiEventSubscriber<T extends Exclude<GuiEvent, keyof GuiEventPayloads>>(
     guiMessageBroker: GuiMessageBroker,
     topic: T,
     callback: () => void,
 ): void;
 
-export function useGuiEventListener<T extends keyof GuiEventPayloads>(
+export function useGuiEventSubscriber<T extends keyof GuiEventPayloads>(
     guiMessageBroker: GuiMessageBroker,
     topic: T,
     callback: (payload: GuiEventPayloads[T]) => void,
 ): void;
 
-export function useGuiEventListener<T extends GuiEvent>(
+export function useGuiEventSubscriber<T extends GuiEvent>(
     guiMessageBroker: GuiMessageBroker,
     topic: T,
     callback: (payload?: any) => void,
