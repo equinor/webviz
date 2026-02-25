@@ -65,11 +65,11 @@ def custom_cache_time(max_age_s: int, stale_while_revalidate_s: int | None) -> C
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        async def wrapper_async(*args: Any, **kwargs: Any) -> Any:
             _cache_context.set(CacheSettings(max_age_s=max_age_s, stale_while_revalidate_s=stale_while_revalidate_s))
             return await func(*args, **kwargs)
 
-        return wrapper
+        return wrapper_async
 
     return decorator
 
@@ -149,7 +149,7 @@ class AddBrowserCacheMiddleware:
         # Reset context for each request
         _cache_context.set(None)
 
-        async def send_with_cache_header(message: Message) -> None:
+        async def send_with_cache_header_async(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
 
@@ -160,7 +160,7 @@ class AddBrowserCacheMiddleware:
 
             await send(message)
 
-        await self.app(scope, receive, send_with_cache_header)
+        await self.app(scope, receive, send_with_cache_header_async)
 
     def _build_cache_control_header(self) -> str:
         settings = _cache_context.get()
