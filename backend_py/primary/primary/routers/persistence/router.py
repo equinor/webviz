@@ -3,14 +3,12 @@ from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
 
+from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.persistence.session_store.documents import SessionDocument
 from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument, SnapshotDocument
 from primary.persistence.cosmosdb.filter_factory import FilterFactory
-from primary.persistence.session_store.session_store import SessionStore
 from primary.persistence.session_store.types import SessionSortBy
 from primary.persistence.tasks.mark_logs_deleted_task import mark_logs_deleted_task
-from primary.persistence.snapshot_store.snapshot_store import SnapshotStore
-from primary.persistence.snapshot_store.snapshot_access_log_store import SnapshotAccessLogStore
 from primary.persistence.cosmosdb.query_collation_options import SortDirection
 from primary.persistence.snapshot_store.types import (
     SnapshotAccessLogSortBy,
@@ -59,27 +57,28 @@ async def get_sessions_metadata(
 
     The response includes a continuation token for fetching the next page of results.
     """
-    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
-    async with session_store:
-        filter_factory = FilterFactory(SessionDocument)
-        filters = []
-        if filter_title:
-            filters.append(filter_factory.create("metadata.title__lower", filter_title.lower(), "CONTAINS"))
-        if filter_updated_from:
-            filters.append(filter_factory.create("metadata.updated_at", filter_updated_from, "MORE", "_from"))
-        if filter_updated_to:
-            filters.append(filter_factory.create("metadata.updated_at", filter_updated_to, "LESS", "_to"))
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    session_store = persistence_stores.get_session_store_for_user(authenticated_user.get_user_id())
 
-        items, token = await session_store.get_many_async(
-            page_token=cursor,
-            page_size=page_size,
-            sort_by=sort_by,
-            sort_direction=sort_direction,
-            sort_lowercase=sort_lowercase,
-            filters=filters if filters else None,
-        )
+    filter_factory = FilterFactory(SessionDocument)
+    filters = []
+    if filter_title:
+        filters.append(filter_factory.create("metadata.title__lower", filter_title.lower(), "CONTAINS"))
+    if filter_updated_from:
+        filters.append(filter_factory.create("metadata.updated_at", filter_updated_from, "MORE", "_from"))
+    if filter_updated_to:
+        filters.append(filter_factory.create("metadata.updated_at", filter_updated_to, "LESS", "_to"))
 
-        return schemas.Page(items=[to_api_session_metadata(item) for item in items], pageToken=token)
+    items, token = await session_store.get_many_async(
+        page_token=cursor,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        sort_lowercase=sort_lowercase,
+        filters=filters if filters else None,
+    )
+
+    return schemas.Page(items=[to_api_session_metadata(item) for item in items], pageToken=token)
 
 
 @router.get("/sessions/{session_id}")
@@ -96,10 +95,11 @@ async def get_session(
 
     Only the session owner can access this endpoint.
     """
-    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
-    async with session_store:
-        session = await session_store.get_async(session_id)
-        return to_api_session(session)
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    session_store = persistence_stores.get_session_store_for_user(authenticated_user.get_user_id())
+
+    session = await session_store.get_async(session_id)
+    return to_api_session(session)
 
 
 @router.get("/sessions/metadata/{session_id}")
@@ -117,10 +117,11 @@ async def get_session_metadata(
 
     Only the session owner can access this endpoint.
     """
-    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
-    async with session_store:
-        session = await session_store.get_async(session_id)
-        return to_api_session_metadata(session)
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    session_store = persistence_stores.get_session_store_for_user(authenticated_user.get_user_id())
+
+    session = await session_store.get_async(session_id)
+    return to_api_session_metadata(session)
 
 
 @router.post("/sessions")
@@ -143,12 +144,13 @@ async def create_session(
 
     Returns the ID of the newly created session.
     """
-    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
-    async with session_store:
-        session_id = await session_store.create_async(
-            title=session.title, description=session.description, content=session.content
-        )
-        return session_id
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    session_store = persistence_stores.get_session_store_for_user(authenticated_user.get_user_id())
+
+    session_id = await session_store.create_async(
+        title=session.title, description=session.description, content=session.content
+    )
+    return session_id
 
 
 @router.put("/sessions/{session_id}")
@@ -177,15 +179,16 @@ async def update_session(
 
     Only the session owner can update their sessions.
     """
-    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
-    async with session_store:
-        updated_session = await session_store.update_async(
-            session_id,
-            title=session_update.title,
-            description=session_update.description,
-            content=session_update.content,
-        )
-        return to_api_session(updated_session)
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    session_store = persistence_stores.get_session_store_for_user(authenticated_user.get_user_id())
+
+    updated_session = await session_store.update_async(
+        session_id,
+        title=session_update.title,
+        description=session_update.description,
+        content=session_update.content,
+    )
+    return to_api_session(updated_session)
 
 
 @router.delete("/sessions/{session_id}")
@@ -202,9 +205,10 @@ async def delete_session(
 
     Only the session owner can delete their sessions.
     """
-    session_store = SessionStore.create_instance(authenticated_user.get_user_id())
-    async with session_store:
-        await session_store.delete_async(session_id)
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    session_store = persistence_stores.get_session_store_for_user(authenticated_user.get_user_id())
+
+    await session_store.delete_async(session_id)
 
 
 @router.get("/snapshot_access_logs")
@@ -247,36 +251,36 @@ async def get_snapshot_access_logs(
     - Creation date range
     - Last visited date range
     """
-    log_store = SnapshotAccessLogStore.create_instance(authenticated_user.get_user_id())
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    log_store = persistence_stores.get_snapshot_access_log_store_for_user(authenticated_user.get_user_id())
 
-    async with log_store:
-        filter_factory = FilterFactory(SnapshotAccessLogDocument)
-        filters = []
-        if filter_title:
-            filters.append(filter_factory.create("snapshot_metadata.title__lower", filter_title.lower(), "CONTAINS"))
-        if filter_created_from:
-            filters.append(filter_factory.create("snapshot_metadata.created_at", filter_created_from, "MORE", "_from"))
-        if filter_created_to:
-            filters.append(filter_factory.create("snapshot_metadata.created_at", filter_created_to, "LESS", "_to"))
-        if filter_last_visited_from:
-            filters.append(filter_factory.create("last_visited_at", filter_last_visited_from, "MORE", "_from"))
-        if filter_last_visited_to:
-            filters.append(filter_factory.create("last_visited_at", filter_last_visited_to, "LESS", "_to"))
-        if filter_owner_id:
-            filters.append(filter_factory.create("snapshot_owner_id", filter_owner_id, "EQUAL"))
-        if filter_snapshot_deleted is not None:
-            filters.append(filter_factory.create("snapshot_deleted", filter_snapshot_deleted, "EQUAL"))
+    filter_factory = FilterFactory(SnapshotAccessLogDocument)
+    filters = []
+    if filter_title:
+        filters.append(filter_factory.create("snapshot_metadata.title__lower", filter_title.lower(), "CONTAINS"))
+    if filter_created_from:
+        filters.append(filter_factory.create("snapshot_metadata.created_at", filter_created_from, "MORE", "_from"))
+    if filter_created_to:
+        filters.append(filter_factory.create("snapshot_metadata.created_at", filter_created_to, "LESS", "_to"))
+    if filter_last_visited_from:
+        filters.append(filter_factory.create("last_visited_at", filter_last_visited_from, "MORE", "_from"))
+    if filter_last_visited_to:
+        filters.append(filter_factory.create("last_visited_at", filter_last_visited_to, "LESS", "_to"))
+    if filter_owner_id:
+        filters.append(filter_factory.create("snapshot_owner_id", filter_owner_id, "EQUAL"))
+    if filter_snapshot_deleted is not None:
+        filters.append(filter_factory.create("snapshot_deleted", filter_snapshot_deleted, "EQUAL"))
 
-        (items, cont_token) = await log_store.get_many_for_user_async(
-            page_token=cursor,
-            page_size=page_size,
-            sort_by=sort_by,
-            sort_direction=sort_direction,
-            sort_lowercase=sort_lowercase,
-            filters=filters if filters else None,
-        )
+    (items, cont_token) = await log_store.get_many_for_user_async(
+        page_token=cursor,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        sort_lowercase=sort_lowercase,
+        filters=filters if filters else None,
+    )
 
-        return schemas.Page(items=[to_api_snapshot_access_log(item) for item in items], pageToken=cont_token)
+    return schemas.Page(items=[to_api_snapshot_access_log(item) for item in items], pageToken=cont_token)
 
 
 @router.get("/snapshots")
@@ -305,26 +309,27 @@ async def get_snapshots_metadata(
 
     Note: Consider using `/persistence/snapshot_access_logs` to see both your snapshots and ones shared with you.
     """
-    snapshot_store = SnapshotStore.create_instance(authenticated_user.get_user_id())
-    async with snapshot_store:
-        filter_factory = FilterFactory(SnapshotDocument)
-        filters = []
-        if filter_title:
-            filters.append(filter_factory.create("metadata.title__lower", filter_title.lower(), "CONTAINS"))
-        if filter_created_from:
-            filters.append(filter_factory.create("metadata.created_at", filter_created_from, "MORE", "_from"))
-        if filter_created_to:
-            filters.append(filter_factory.create("metadata.created_at", filter_created_to, "LESS", "_to"))
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    snapshot_store = persistence_stores.get_snapshot_store_for_user(authenticated_user.get_user_id())
 
-        items, cont_token = await snapshot_store.get_many_async(
-            page_token=cursor,
-            page_size=page_size,
-            sort_by=sort_by,
-            sort_direction=sort_direction,
-            sort_lowercase=sort_lowercase,
-            filters=filters if filters else None,
-        )
-        return schemas.Page(items=[to_api_snapshot_metadata(item) for item in items], pageToken=cont_token)
+    filter_factory = FilterFactory(SnapshotDocument)
+    filters = []
+    if filter_title:
+        filters.append(filter_factory.create("metadata.title__lower", filter_title.lower(), "CONTAINS"))
+    if filter_created_from:
+        filters.append(filter_factory.create("metadata.created_at", filter_created_from, "MORE", "_from"))
+    if filter_created_to:
+        filters.append(filter_factory.create("metadata.created_at", filter_created_to, "LESS", "_to"))
+
+    items, cont_token = await snapshot_store.get_many_async(
+        page_token=cursor,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+        sort_lowercase=sort_lowercase,
+        filters=filters if filters else None,
+    )
+    return schemas.Page(items=[to_api_snapshot_metadata(item) for item in items], pageToken=cont_token)
 
 
 @router.get("/snapshots/{snapshot_id}")
@@ -348,15 +353,15 @@ async def get_snapshot(
 
     Any user with the snapshot ID can access snapshots (they are shareable).
     """
-    snapshot_store = SnapshotStore.create_instance(authenticated_user.get_user_id())
-    log_store = SnapshotAccessLogStore.create_instance(user_id=authenticated_user.get_user_id())
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    snapshot_store = persistence_stores.get_snapshot_store_for_user(authenticated_user.get_user_id())
+    log_store = persistence_stores.get_snapshot_access_log_store_for_user(authenticated_user.get_user_id())
 
-    async with snapshot_store, log_store:
-        snapshot = await snapshot_store.get_async(snapshot_id)
-        # Should we clear the log if a snapshot was not found? This could mean that the snapshot was
-        # deleted but deletion of logs has failed
-        await log_store.log_snapshot_visit_async(snapshot_id, snapshot.owner_id)
-        return to_api_snapshot(snapshot)
+    snapshot = await snapshot_store.get_async(snapshot_id)
+    # Should we clear the log if a snapshot was not found? This could mean that the snapshot was
+    # deleted but deletion of logs has failed
+    await log_store.log_snapshot_visit_async(snapshot_id, snapshot.owner_id)
+    return to_api_snapshot(snapshot)
 
 
 @router.post("/snapshots")
@@ -381,19 +386,19 @@ async def create_snapshot(
 
     Returns the ID of the newly created snapshot.
     """
-    snapshot_access = SnapshotStore.create_instance(authenticated_user.get_user_id())
-    log_store = SnapshotAccessLogStore.create_instance(authenticated_user.get_user_id())
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    snapshot_store = persistence_stores.get_snapshot_store_for_user(authenticated_user.get_user_id())
+    log_store = persistence_stores.get_snapshot_access_log_store_for_user(authenticated_user.get_user_id())
 
-    async with snapshot_access, log_store:
-        snapshot_id = await snapshot_access.create_async(
-            title=snapshot.title, description=snapshot.description, content=snapshot.content
-        )
+    snapshot_id = await snapshot_store.create_async(
+        title=snapshot.title, description=snapshot.description, content=snapshot.content
+    )
 
-        # We count snapshot creation as implicit visit. This also makes it so we can get recently created ones alongside other shared screenshots
-        await log_store.log_snapshot_visit_async(
-            snapshot_id=snapshot_id, snapshot_owner_id=authenticated_user.get_user_id()
-        )
-        return snapshot_id
+    # We count snapshot creation as implicit visit. This also makes it so we can get recently created ones alongside other shared snapshots
+    await log_store.log_snapshot_visit_async(
+        snapshot_id=snapshot_id, snapshot_owner_id=authenticated_user.get_user_id()
+    )
+    return snapshot_id
 
 
 @router.delete("/snapshots/{snapshot_id}")
@@ -417,12 +422,12 @@ async def delete_snapshot(
 
     Only the snapshot owner can delete their snapshots.
     """
-    snapshot_store = SnapshotStore.create_instance(authenticated_user.get_user_id())
-    log_store = SnapshotAccessLogStore.create_instance(authenticated_user.get_user_id())
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    snapshot_store = persistence_stores.get_snapshot_store_for_user(authenticated_user.get_user_id())
+    log_store = persistence_stores.get_snapshot_access_log_store_for_user(authenticated_user.get_user_id())
 
-    async with snapshot_store, log_store:
-        await snapshot_store.delete_async(snapshot_id)
-        await log_store.delete_user_log_for_snapshot_async(snapshot_id)
+    await snapshot_store.delete_async(snapshot_id)
+    await log_store.delete_user_log_for_snapshot_async(snapshot_id)
 
     # This is the fastest solution for the moment. As we are expecting <= 150 logs per snapshot
     # and consistency is not critical, we can afford to do this in the background and without
@@ -445,7 +450,7 @@ async def delete_snapshot_access_log(
     Use this endpoint to clear your visit history for a snapshot
     without deleting the snapshot or impacting other users.
     """
-    log_store = SnapshotAccessLogStore.create_instance(authenticated_user.get_user_id())
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    log_store = persistence_stores.get_snapshot_access_log_store_for_user(authenticated_user.get_user_id())
 
-    async with log_store:
-        await log_store.delete_user_log_for_snapshot_async(snapshot_id)
+    await log_store.delete_user_log_for_snapshot_async(snapshot_id)
