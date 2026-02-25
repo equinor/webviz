@@ -79,7 +79,7 @@ def cache_time(duration: CacheTime, stale_while_revalidate: StaleTime | None = N
     Decorator that sets browser cache time for the endpoint response using a preset duration.
 
     Args:
-        duration: CacheTime enum value (DEFAULT or LONG)
+        duration: CacheTime enum value (SHORT or LONG)
         stale_while_revalidate: Optional StaleTime enum value (SHORT or LONG)
 
     Examples:
@@ -100,14 +100,14 @@ def set_cache_time(duration: CacheTime, stale_while_revalidate: StaleTime | None
     (e.g. only cache successful responses, not errors or in-progress).
 
     Args:
-        duration: CacheTime enum value (DEFAULT or LONG)
+        duration: CacheTime enum value (SHORT or LONG)
         stale_while_revalidate: Optional StaleTime enum value (SHORT or LONG)
 
     Example:
         async def my_endpoint():
             result = await compute()
             if result.is_success:
-                set_cache_time(CacheTime.DEFAULT, StaleTime.SHORT)
+                set_cache_time(CacheTime.SHORT, StaleTime.SHORT)
             return result
     """
 
