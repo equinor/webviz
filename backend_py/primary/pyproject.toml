@@ -10,19 +10,17 @@ requires-poetry = ">=2.1"
 package-mode = false
 
 [tool.poetry.dependencies]
-fastapi = "^0.116.1"
-uvicorn = "^0.35.0"
 msal = "^1.32.0"
 starsessions = "^2.2.1"
 redis = "^5.3.1"
 python-dotenv = "^1.1.0"
 pyjwt = "^2.6.0"
-pydantic = "^2.3.0"
+
+# orjson is installed to allow the use of ORJSONResponse from fastapi
 orjson = "^3.8.10"
 httpx = "^0.28.1"
 azure-monitor-opentelemetry = "^1.6.13"
-opentelemetry-instrumentation-httpx = "*"
-opentelemetry-instrumentation-redis = "*"
+
 aiohttp = "^3.11.18"
 azure-cosmos = "^4.9.0"
 nanoid = "^2.0.0"
@@ -30,6 +28,16 @@ nanoid = "^2.0.0"
 webviz-core-utils = { path = "../libs/core_utils", develop = true }
 webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
 webviz-services = { path = "../libs/services", develop = true }
+
+# Special cases
+### These might have breaking changes in minor version
+pydantic = "~2.12.0"
+fastapi = "~0.129.0"
+uvicorn = "~0.41.0"
+
+### Telemetry version will be pinned by `azure-monitor-opentelemetry` 
+opentelemetry-instrumentation-httpx = "*"
+opentelemetry-instrumentation-redis = "*"
 
 [tool.poetry.group.dev.dependencies]
 types-nanoid = "^2.0.0"
