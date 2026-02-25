@@ -30,7 +30,7 @@ def create_derived_vector_realization_data_list(
         )
     )
     derived_realization_vector_list = create_derived_realization_vector_list(
-        derived_vector_table_pa, derived_vector_name, source_vector_metadata.is_rate, derived_vector_metadata.unit
+        derived_vector_table_pa, derived_vector_metadata
     )
 
     return converters.derived_realization_vector_list_and_info_to_api_vector_realization_data_list(
