@@ -83,20 +83,19 @@ services:
       - ./backend_py/libs:/home/appuser/backend_py/libs
 
   redis-user-session:
-    image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+    image: redis:7.2
     expose:
       - 6379
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
+    user: "999:999"
+    command: ["redis-server",  "--loglevel", "notice"]
 
   redis-cache:
-    image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+    image: redis:7.2
     expose:
       - 6379
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
-      - REDIS_EXTRA_FLAGS=--maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel notice
+    user: "999:999"
+    # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
+    command: ["redis-server",  "--maxmemory", "1gb",  "--maxmemory-policy", "allkeys-lru",  "--save", "''",  "--appendonly", "no",  "--logfile", "''",  "--loglevel", "notice"]
 
 
 # When using the Cosmos DB Emulator, make sure to uncomment the relevant parts in the backend-primary service as well,
