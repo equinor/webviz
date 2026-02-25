@@ -49,23 +49,21 @@ function makeModalText(failingAction: SessionPersistenceAction | undefined): { t
 export function SessionErrorDialog(props: SessionErrorDialogProps): React.ReactNode {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
-    const [isOpen, setIsOpen] = React.useState(false);
     const [errorEventPayload, setErrorEventPayload] = React.useState<
         GuiEventPayloads[GuiEvent.SessionPersistenceError] | null
     >(null);
 
+    const isOpen = errorEventPayload !== null;
     const { title, body } = makeModalText(errorEventPayload?.action);
 
     const handleSessionSaveError = React.useCallback(function sessionErrorCallback(
         payload: GuiEventPayloads[GuiEvent.SessionPersistenceError],
     ) {
         setErrorEventPayload(payload);
-        setIsOpen(true);
     }, []);
 
     const onCloseModal = React.useCallback(function onCloseModal() {
         setErrorEventPayload(null);
-        setIsOpen(false);
     }, []);
 
     function onTryAgain() {

@@ -1,17 +1,19 @@
 import type { ButtonProps } from "@lib/components/Button/button";
-import type { DialogVariant } from "@lib/components/Dialog/dialog";
+
+export type ConfirmationVariant = "error" | "info";
+export type ConfirmActioncolor = "primary" | "danger" | "success" | "secondary";
 
 export type ConfirmAction<T = string> = {
     id: T;
     label: string;
-    color?: ButtonProps["color"];
+    color?: ConfirmActioncolor;
 };
 
 export type ConfirmOptions<T = string> = {
     title: string;
     message: string;
     actions: ConfirmAction<T>[];
-    variant?: DialogVariant;
+    variant?: ConfirmationVariant;
 };
 
 class ConfirmationServiceImpl<T = string> {

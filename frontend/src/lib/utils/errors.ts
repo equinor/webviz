@@ -1,6 +1,7 @@
 const REPO_URL = "https://github.com/equinor/webviz";
 
 export function reportErrorToGithub(error: Error, customStackReport?: string): void {
+    // Explicitly using OR operatior here to avoid empty strings
     const stackToReport = customStackReport || error.stack || "";
 
     const errorMessage = `${error.name}: ${error.message}`;
