@@ -9,7 +9,8 @@ requires-poetry = ">=2.1"
 packages = [{ include = "webviz_server_schemas", from = "src" }]
 
 [tool.poetry.dependencies]
-pydantic = "^2.11.0"
+# Pydantic might have small breaking changes in minor releases
+pydantic = "~2.12.0"
 webviz-core-utils = { path = "../core_utils", develop = true }
 
 [build-system]
