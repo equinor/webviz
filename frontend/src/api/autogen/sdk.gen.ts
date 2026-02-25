@@ -729,40 +729,6 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Deprecated Get Stratigraphic Units
- *
- * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
- */
-export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = false>(
-    options: Options<DeprecatedGetStratigraphicUnitsData_api, ThrowOnError>,
-) =>
-    (options.client ?? client).get<
-        DeprecatedGetStratigraphicUnitsResponses_api,
-        DeprecatedGetStratigraphicUnitsErrors_api,
-        ThrowOnError
-    >({
-        responseType: "json",
-        url: "/surface/deprecated_stratigraphic_units",
-        ...options,
-    });
-
-/**
- * Get Stratigraphic Units For Strat Column
- */
-export const getStratigraphicUnitsForStratColumn = <ThrowOnError extends boolean = false>(
-    options: Options<GetStratigraphicUnitsForStratColumnData_api, ThrowOnError>,
-) =>
-    (options.client ?? client).get<
-        GetStratigraphicUnitsForStratColumnResponses_api,
-        GetStratigraphicUnitsForStratColumnErrors_api,
-        ThrowOnError
-    >({
-        responseType: "json",
-        url: "/surface/stratigraphic_units_for_strat_column",
-        ...options,
-    });
-
-/**
  * Get Parameters And Sensitivities
  */
 export const getParametersAndSensitivities = <ThrowOnError extends boolean = false>(
