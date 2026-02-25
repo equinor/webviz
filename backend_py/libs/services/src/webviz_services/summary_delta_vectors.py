@@ -9,6 +9,7 @@ from webviz_services.utils.arrow_helpers import validate_summary_vector_table_pa
 
 @dataclass
 class DeltaVectorMetadata:
+    name: str
     is_rate: bool
     unit: str
 

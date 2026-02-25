@@ -2,8 +2,6 @@ import asyncio
 import logging
 from typing import Annotated
 
-import pyarrow as pa
-import pyarrow.compute as pc
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from webviz_services.summary_vector_statistics import compute_vector_statistics
@@ -12,17 +10,9 @@ from webviz_services.sumo_access.parameter_access import ParameterAccess
 from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.summary_delta_vectors import (
-    DeltaVectorMetadata,
-    create_delta_vector_table,
     create_realization_delta_vector_list,
 )
 from webviz_services.summary_derived_vectors import (
-    create_derived_vector_table_for_type,
-    create_per_day_vector_name,
-    create_per_interval_vector_name,
-    create_derived_vector_unit,
-    create_derived_realization_vector_list,
-    get_derived_vector_type,
     get_total_vector_name,
     is_derived_vector,
     is_total_vector,
@@ -32,7 +22,7 @@ from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str
 
-from . import converters, schemas
+from . import _sensitivity_case_utils, converters, schemas, _derived_vector_utils, _delta_ensemble_utils
 
 
 LOGGER = logging.getLogger(__name__)
@@ -74,7 +64,7 @@ async def get_vector_list(
     # Create derived vectors if requested
     if include_derived_vectors:
         total_vectors = {vector for vector in vector_names if is_total_vector(vector)}
-        ret_arr.extend(_create_vector_descriptions_for_derived_vectors(total_vectors))
+        ret_arr.extend(_derived_vector_utils.create_vector_descriptions_for_derived_vectors(total_vectors))
 
     LOGGER.info(f"Got vector list in: {perf_metrics.to_string()}")
     return ret_arr
@@ -129,14 +119,13 @@ async def get_delta_ensemble_vector_list(
     # Create derived vectors if requested
     if include_derived_vectors:
         total_vectors = {vector for vector in vector_names if is_total_vector(vector)}
-        ret_arr.extend(_create_vector_descriptions_for_derived_vectors(total_vectors))
+        ret_arr.extend(_derived_vector_utils.create_vector_descriptions_for_derived_vectors(total_vectors))
 
     LOGGER.info(f"Got delta ensemble vector list in: {perf_metrics.to_string()}")
     return ret_arr
 
 
 @router.get("/realizations_vector_data/")
-# pylint: disable-next=too-many-locals
 async def get_realizations_vector_data(
     # fmt:off
     response: Response,
@@ -159,46 +148,30 @@ async def get_realizations_vector_data(
     access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
 
-    is_vector_derived = is_derived_vector(vector_name)
-    vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
-
-    ret_arr: list[schemas.VectorRealizationData] = []
-    if not is_vector_derived:
-        sumo_vec_arr = await access.get_vector_async(
-            vector_name=vector_name_to_fetch,
-            resampling_frequency=sumo_freq,
-            realizations=realizations,
-        )
-        perf_metrics.record_lap("get-vector")
-
-        ret_arr = converters.realization_vector_list_to_api_vector_realization_data_list(sumo_vec_arr)
-    else:
-        # Handle derived vectors
-        vector_table_pa, vector_metadata = await access.get_vector_table_async(
-            vector_name=vector_name_to_fetch,
-            resampling_frequency=sumo_freq,
+    if is_derived_vector(vector_name):
+        source_vector_name = get_total_vector_name(vector_name)
+        source_vector_table_pa, source_vector_metadata = await access.get_vector_table_async(
+            vector_name=source_vector_name,
+            resampling_frequency=resampling_frequency,
             realizations=realizations,
         )
 
-        derived_vector_type = get_derived_vector_type(vector_name)
-        derived_vector_unit = create_derived_vector_unit(vector_metadata.unit, derived_vector_type)
-        derived_vector_info = converters.to_api_derived_vector_info(derived_vector_type, vector_name_to_fetch)
-
-        derived_vector_table_pa = create_derived_vector_table_for_type(vector_table_pa, derived_vector_type)
-        derived_realization_vector_list = create_derived_realization_vector_list(
-            derived_vector_table_pa, vector_name, vector_metadata.is_rate, derived_vector_unit
+        return _derived_vector_utils.create_derived_vector_realization_data_list(
+            vector_name, source_vector_table_pa, source_vector_metadata
         )
 
-        ret_arr = converters.derived_vector_realizations_to_api_vector_realization_data_list(
-            derived_realization_vector_list, derived_vector_info
-        )
-
+    sumo_vec_arr = await access.get_vector_async(
+        vector_name=vector_name,
+        resampling_frequency=sumo_freq,
+        realizations=realizations,
+    )
+    perf_metrics.record_lap("get-vector")
     LOGGER.info(f"Loaded realization summary data in: {perf_metrics.to_string()}")
-    return ret_arr
+
+    return converters.realization_vector_list_to_api_vector_realization_data_list(sumo_vec_arr)
 
 
 @router.get("/delta_ensemble_realizations_vector_data/")
-# pylint: disable-next=too-many-locals
 async def get_delta_ensemble_realizations_vector_data(
     # fmt:off
     response: Response,
@@ -232,57 +205,55 @@ async def get_delta_ensemble_realizations_vector_data(
             status_code=400, detail="Resampling frequency must be specified to create delta ensemble vector"
         )
 
-    is_vector_derived = is_derived_vector(vector_name)
-    vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
+    if is_derived_vector(vector_name):
+        source_vector_name = get_total_vector_name(vector_name)
+
+        # Create delta ensemble vector table and metadata for source vector:
+        (
+            source_delta_vector_table_pa,
+            source_delta_vector_metadata,
+        ) = await _delta_ensemble_utils.get_vector_tables_and_create_delta_vector_table_and_metadata_async(
+            authenticated_user,
+            comparison_case_uuid,
+            comparison_ensemble_name,
+            reference_case_uuid,
+            reference_ensemble_name,
+            source_vector_name,
+            realizations,
+            service_freq,
+            perf_metrics,
+        )
+
+        # Create derived vector realization data and convert to API format:
+        return _derived_vector_utils.create_derived_vector_realization_data_list(
+            vector_name, source_delta_vector_table_pa, source_delta_vector_metadata
+        )
 
     # Create delta ensemble table and metadata:
     (
         delta_vector_table_pa,
         delta_vector_metadata,
-    ) = await _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
+    ) = await _delta_ensemble_utils.get_vector_tables_and_create_delta_vector_table_and_metadata_async(
         authenticated_user,
         comparison_case_uuid,
         comparison_ensemble_name,
         reference_case_uuid,
         reference_ensemble_name,
-        vector_name_to_fetch,
+        vector_name,
         realizations,
         service_freq,
         perf_metrics,
     )
-
-    # Create realization delta vectors
-    ret_arr: list[schemas.VectorRealizationData] = []
-    if not is_vector_derived:
-        realization_delta_vector_list = create_realization_delta_vector_list(
-            delta_vector_table_pa,
-            vector_name_to_fetch,
-            delta_vector_metadata.is_rate,
-            delta_vector_metadata.unit,
-        )
-        perf_metrics.record_lap("create-realization-delta-vector-list")
-
-        ret_arr = converters.realization_delta_vector_list_to_api_vector_realization_data_list(
-            realization_delta_vector_list
-        )
-    else:
-        derived_vector_type = get_derived_vector_type(vector_name)
-        derived_vector_unit = create_derived_vector_unit(delta_vector_metadata.unit, derived_vector_type)
-        derived_vector_info = converters.to_api_derived_vector_info(derived_vector_type, vector_name_to_fetch)
-
-        # Create derived vectors if requested
-        delta_derived_vector_table_pa = create_derived_vector_table_for_type(delta_vector_table_pa, derived_vector_type)
-        realization_delta_vector_list = create_realization_delta_vector_list(
-            delta_derived_vector_table_pa, vector_name, delta_vector_metadata.is_rate, derived_vector_unit
-        )
-        perf_metrics.record_lap("create-realization-delta-derived-vector-list")
-
-        ret_arr = converters.realization_delta_vector_list_to_api_vector_realization_data_list(
-            realization_delta_vector_list, derived_vector_info
-        )
+    realization_delta_vector_list = create_realization_delta_vector_list(
+        delta_vector_table_pa,
+        vector_name,
+        delta_vector_metadata.is_rate,
+        delta_vector_metadata.unit,
+    )
+    perf_metrics.record_lap("create-realization-delta-vector-list")
 
     LOGGER.info(f"Loaded realization delta ensemble summary data in: {perf_metrics.to_string()}")
-    return ret_arr
+    return converters.realization_delta_vector_list_to_api_vector_realization_data_list(realization_delta_vector_list)
 
 
 @router.get("/timestamps_list/")
@@ -332,7 +303,6 @@ async def get_historical_vector_data(
 
 
 @router.get("/statistical_vector_data/")
-# pylint: disable-next=too-many-locals
 async def get_statistical_vector_data(
     # fmt:off
     response: Response,
@@ -358,49 +328,37 @@ async def get_statistical_vector_data(
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
 
-    is_vector_derived = is_derived_vector(vector_name)
-    vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
+    if is_derived_vector(vector_name):
+        source_vector_name = get_total_vector_name(vector_name)
+        source_vector_table_pa, source_vector_metadata = await access.get_vector_table_async(
+            vector_name=source_vector_name,
+            resampling_frequency=service_freq,
+            realizations=realizations,
+        )
+
+        return _derived_vector_utils.create_derived_statistics_vector_data(
+            vector_name, source_vector_table_pa, source_vector_metadata, service_stat_funcs_to_compute
+        )
 
     # Get vector table
-    vector_table, vector_metadata = await access.get_vector_table_async(
-        vector_name=vector_name_to_fetch,
+    vector_table_pa, vector_metadata = await access.get_vector_table_async(
+        vector_name=vector_name,
         resampling_frequency=service_freq,
         realizations=realizations,
     )
-    perf_metrics.record_lap("get-table")
 
-    # Calculate statistics
-    ret_data: schemas.VectorStatisticData | None = None
-    if not is_vector_derived:
-        statistics = compute_vector_statistics(vector_table, vector_name, service_stat_funcs_to_compute)
-        if not statistics:
-            raise HTTPException(status_code=404, detail="Could not compute statistics")
-
-        ret_data = converters.to_api_vector_statistic_data(statistics, vector_metadata.is_rate, vector_metadata.unit)
-    else:
-        derived_vector_type = get_derived_vector_type(vector_name)
-        derived_vector_unit = create_derived_vector_unit(vector_metadata.unit, derived_vector_type)
-        derived_vector_info = converters.to_api_derived_vector_info(derived_vector_type, vector_name_to_fetch)
-
-        derived_vector_table_pa = create_derived_vector_table_for_type(vector_table, derived_vector_type)
-        statistics = compute_vector_statistics(derived_vector_table_pa, vector_name, service_stat_funcs_to_compute)
-
-        if not statistics:
-            raise HTTPException(status_code=404, detail="Could not compute statistics")
-
-        ret_data = converters.to_api_vector_statistic_data(
-            statistics, vector_metadata.is_rate, derived_vector_unit, derived_vector_info
-        )
+    vector_statistics = compute_vector_statistics(vector_table_pa, vector_name, service_stat_funcs_to_compute)
+    if not vector_statistics:
+        raise HTTPException(status_code=404, detail="Could not compute statistics")
 
     perf_metrics.record_lap("calc-stat")
     LOGGER.info(f"Loaded and computed statistical summary data in: {perf_metrics.to_string()}")
 
-    return ret_data
+    return converters.to_api_vector_statistic_data(vector_statistics, vector_metadata.is_rate, vector_metadata.unit)
 
 
 @router.get("/delta_ensemble_statistical_vector_data/")
 # pylint: disable=too-many-arguments
-# pylint: disable-next=too-many-locals
 async def get_delta_ensemble_statistical_vector_data(
     # fmt:off
     response: Response,
@@ -437,61 +395,62 @@ async def get_delta_ensemble_statistical_vector_data(
             status_code=400, detail="Resampling frequency must be specified to create delta ensemble vector"
         )
 
-    is_vector_derived = is_derived_vector(vector_name)
-    vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
+    if is_derived_vector(vector_name):
+        source_vector_name = get_total_vector_name(vector_name)
+
+        # Create delta ensemble table and metadata:
+        (
+            source_delta_vector_table_pa,
+            source_delta_vector_metadata,
+        ) = await _delta_ensemble_utils.get_vector_tables_and_create_delta_vector_table_and_metadata_async(
+            authenticated_user,
+            comparison_case_uuid,
+            comparison_ensemble_name,
+            reference_case_uuid,
+            reference_ensemble_name,
+            source_vector_name,
+            realizations,
+            service_freq,
+            perf_metrics,
+        )
+
+        return _derived_vector_utils.create_derived_statistics_vector_data(
+            vector_name,
+            source_delta_vector_table_pa,
+            source_delta_vector_metadata,
+            service_stat_funcs_to_compute,
+        )
 
     # Create delta ensemble table and metadata:
     (
-        delta_vector_table_pa,
-        delta_vector_metadata,
-    ) = await _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
+        source_delta_vector_table_pa,
+        source_delta_vector_metadata,
+    ) = await _delta_ensemble_utils.get_vector_tables_and_create_delta_vector_table_and_metadata_async(
         authenticated_user,
         comparison_case_uuid,
         comparison_ensemble_name,
         reference_case_uuid,
         reference_ensemble_name,
-        vector_name_to_fetch,
+        vector_name,
         realizations,
         service_freq,
         perf_metrics,
     )
 
-    # Calculate statistics
-    ret_data: schemas.VectorStatisticData | None = None
-    if not is_vector_derived:
-        statistics = compute_vector_statistics(delta_vector_table_pa, vector_name, service_stat_funcs_to_compute)
+    statistics = compute_vector_statistics(source_delta_vector_table_pa, vector_name, service_stat_funcs_to_compute)
 
-        if not statistics:
-            raise HTTPException(status_code=404, detail="Could not compute statistics")
-
-        ret_data = converters.to_api_delta_ensemble_vector_statistic_data(
-            statistics, delta_vector_metadata.is_rate, delta_vector_metadata.unit
-        )
-    else:
-        derived_vector_type = get_derived_vector_type(vector_name)
-        derived_vector_unit = create_derived_vector_unit(delta_vector_metadata.unit, derived_vector_type)
-        derived_vector_info = converters.to_api_derived_vector_info(derived_vector_type, vector_name_to_fetch)
-
-        delta_derived_vector_table_pa = create_derived_vector_table_for_type(delta_vector_table_pa, derived_vector_type)
-        statistics = compute_vector_statistics(
-            delta_derived_vector_table_pa, vector_name, service_stat_funcs_to_compute
-        )
-
-        if not statistics:
-            raise HTTPException(status_code=404, detail="Could not compute statistics")
-
-        ret_data = converters.to_api_delta_ensemble_vector_statistic_data(
-            statistics, delta_vector_metadata.is_rate, derived_vector_unit, derived_vector_info
-        )
+    if not statistics:
+        raise HTTPException(status_code=404, detail="Could not compute statistics")
 
     perf_metrics.record_lap("calc-delta-vector-stat")
     LOGGER.info(f"Loaded and computed statistical delta ensemble summary data in: {perf_metrics.to_string()}")
 
-    return ret_data
+    return converters.to_api_vector_statistic_data(
+        statistics, source_delta_vector_metadata.is_rate, source_delta_vector_metadata.unit
+    )
 
 
 @router.get("/statistical_vector_data_per_sensitivity/")
-# pylint: disable-next=too-many-locals
 async def get_statistical_vector_data_per_sensitivity(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -526,39 +485,16 @@ async def get_statistical_vector_data_per_sensitivity(
     if not sensitivities:
         return ret_data
 
-    requested_realizations_mask = (
-        pc.is_in(vector_table["REAL"], value_set=pa.array(realizations)) if realizations else None
-    )
     for sensitivity in sensitivities:
         for case in sensitivity.cases:
-            sens_case_realization_mask = pc.is_in(vector_table["REAL"], value_set=pa.array(case.realizations))
-            if requested_realizations_mask is not None:
-                sens_case_realization_mask = pc.and_(requested_realizations_mask, sens_case_realization_mask)
-            table = vector_table.filter(sens_case_realization_mask)
-
-            if table.num_rows == 0 and requested_realizations_mask is not None:
-                raise HTTPException(
-                    status_code=404,
-                    detail="The combination of realizations to include and sensitivity case realizations results in no valid realizations",
+            vector_statistics = _sensitivity_case_utils.compute_sensitivity_case_vector_statistics(
+                vector_table, vector_name, case.realizations, realizations, service_stat_funcs_to_compute
+            )
+            ret_data.append(
+                converters.to_api_vector_statistic_sensitivity_data(
+                    vector_statistics, vector_metadata.is_rate, vector_metadata.unit, sensitivity.name, case.name
                 )
-
-            statistics = compute_vector_statistics(table, vector_name, service_stat_funcs_to_compute)
-            if not statistics:
-                raise HTTPException(status_code=404, detail="Could not compute statistics")
-
-            statistic_data: schemas.VectorStatisticData = converters.to_api_vector_statistic_data(
-                statistics, vector_metadata.is_rate, vector_metadata.unit, None
             )
-            sensitivity_statistic_data = schemas.VectorStatisticSensitivityData(
-                sensitivityName=sensitivity.name,
-                sensitivityCase=case.name,
-                realizations=statistic_data.realizations,
-                timestampsUtcMs=statistic_data.timestampsUtcMs,
-                valueObjects=statistic_data.valueObjects,
-                unit=statistic_data.unit,
-                isRate=statistic_data.isRate,
-            )
-            ret_data.append(sensitivity_statistic_data)
     return ret_data
 
 
@@ -579,106 +515,3 @@ async def get_realization_vector_at_timestamp(
         vector_name=vector_name, timestamp_utc_ms=timestamp_utc_ms, realizations=None
     )
     return ensemble_response
-
-
-def _create_vector_descriptions_for_derived_vectors(
-    vector_names: list[str] | set[str],
-) -> list[schemas.VectorDescription]:
-    """
-    Create vector descriptions for derived vectors from list of vector names
-    """
-    ret_arr: list[schemas.VectorDescription] = []
-    for vector_name in vector_names:
-        if not is_total_vector(vector_name):
-            continue
-
-        per_day_vector_name = create_per_day_vector_name(vector_name)
-        per_interval_vector_name = create_per_interval_vector_name(vector_name)
-        ret_arr.extend(
-            [
-                schemas.VectorDescription(
-                    name=per_day_vector_name,
-                    descriptiveName=per_day_vector_name,
-                    hasHistorical=False,
-                    derivedVectorInfo=schemas.DerivedVectorInfo(
-                        type=schemas.DerivedVectorType.PER_DAY, sourceVector=vector_name
-                    ),
-                ),
-                schemas.VectorDescription(
-                    name=per_interval_vector_name,
-                    descriptiveName=per_interval_vector_name,
-                    hasHistorical=False,
-                    derivedVectorInfo=schemas.DerivedVectorInfo(
-                        type=schemas.DerivedVectorType.PER_INTVL, sourceVector=vector_name
-                    ),
-                ),
-            ]
-        )
-    return ret_arr
-
-
-async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
-    authenticated_user: AuthenticatedUser,
-    comparison_case_uuid: str,
-    comparison_ensemble_name: str,
-    reference_case_uuid: str,
-    reference_ensemble_name: str,
-    vector_name: str,
-    realizations: list[int] | None,
-    resampling_frequency: Frequency,
-    perf_metrics: ResponsePerfMetrics | None,
-) -> tuple[pa.Table, DeltaVectorMetadata]:
-    """
-    Get vector tables for comparison and reference ensembles and create delta ensemble vector table and metadata
-    """
-    # Separate summary access to comparison and reference ensemble
-    comparison_ensemble_access = SummaryAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), comparison_case_uuid, comparison_ensemble_name
-    )
-    reference_ensemble_access = SummaryAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), reference_case_uuid, reference_ensemble_name
-    )
-
-    # Get tables parallel
-    # - Resampled data is assumed to be such that dates/timestamps are comparable between ensembles and cases, i.e. timestamps
-    #   for a resampling of a daily vector in both ensembles should be the same
-    (comparison_vector_table_pa, comparison_metadata), (
-        reference_vector_table_pa,
-        reference_metadata,
-    ) = await asyncio.gather(
-        comparison_ensemble_access.get_vector_table_async(
-            vector_name=vector_name,
-            resampling_frequency=resampling_frequency,
-            realizations=realizations,
-        ),
-        reference_ensemble_access.get_vector_table_async(
-            vector_name=vector_name,
-            resampling_frequency=resampling_frequency,
-            realizations=realizations,
-        ),
-    )
-
-    if perf_metrics:
-        perf_metrics.record_lap("get-vector-tables-to-create-delta-vector-table")
-
-    # Check for mismatching metadata
-    if comparison_metadata.is_rate != reference_metadata.is_rate:
-        raise HTTPException(
-            status_code=400, detail="Rate mismatch between ensembles for delta ensemble statistical vector data"
-        )
-    if comparison_metadata.unit != reference_metadata.unit:
-        raise HTTPException(
-            status_code=400, detail="Unit mismatch between ensembles for delta ensemble statistical vector data"
-        )
-
-    delta_vector_metadata = DeltaVectorMetadata(unit=reference_metadata.unit, is_rate=reference_metadata.is_rate)
-
-    # Create delta ensemble table
-    delta_vector_table_pa = create_delta_vector_table(
-        comparison_vector_table_pa, reference_vector_table_pa, vector_name
-    )
-
-    if perf_metrics:
-        perf_metrics.record_lap("create-delta-vector-table")
-
-    return delta_vector_table_pa, delta_vector_metadata
