@@ -31,8 +31,6 @@ RESOURCE_SCOPES_DICT = {
     "pdm": [PDM_RESOURCE_SCOPE],
 }
 
-DEFAULT_CACHE_MAX_AGE = 3600  # 1 hour
-DEFAULT_STALE_WHILE_REVALIDATE = 3600 * 24  # 24 hour
 REDIS_USER_SESSION_URL = "redis://redis-user-session:6379"
 REDIS_CACHE_URL = "redis://redis-cache:6379"
 

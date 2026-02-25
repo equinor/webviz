@@ -32,6 +32,8 @@ from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str
 
+from primary.middleware.add_browser_cache import cache_time, CacheTime
+
 from . import converters, schemas
 
 
@@ -41,6 +43,7 @@ router = APIRouter()
 
 
 @router.get("/vector_list/")
+@cache_time(CacheTime.LONG)
 async def get_vector_list(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -81,6 +84,7 @@ async def get_vector_list(
 
 
 @router.get("/delta_ensemble_vector_list/")
+@cache_time(CacheTime.LONG)
 async def get_delta_ensemble_vector_list(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -136,6 +140,7 @@ async def get_delta_ensemble_vector_list(
 
 
 @router.get("/realizations_vector_data/")
+@cache_time(CacheTime.LONG)
 async def get_realizations_vector_data(
     # fmt:off
     response: Response,
@@ -197,6 +202,7 @@ async def get_realizations_vector_data(
 
 
 @router.get("/delta_ensemble_realizations_vector_data/")
+@cache_time(CacheTime.LONG)
 async def get_delta_ensemble_realizations_vector_data(
     # fmt:off
     response: Response,
@@ -283,7 +289,9 @@ async def get_delta_ensemble_realizations_vector_data(
     return ret_arr
 
 
+# TODO: This is unused, should it be removed?
 @router.get("/timestamps_list/")
+@cache_time(CacheTime.LONG)
 async def get_timestamps_list(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -303,6 +311,7 @@ async def get_timestamps_list(
 
 
 @router.get("/historical_vector_data/")
+@cache_time(CacheTime.LONG)
 # type: ignore [empty-body]
 async def get_historical_vector_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -330,6 +339,7 @@ async def get_historical_vector_data(
 
 
 @router.get("/statistical_vector_data/")
+@cache_time(CacheTime.LONG)
 async def get_statistical_vector_data(
     # fmt:off
     response: Response,
@@ -396,6 +406,7 @@ async def get_statistical_vector_data(
 
 
 @router.get("/delta_ensemble_statistical_vector_data/")
+@cache_time(CacheTime.LONG)
 async def get_delta_ensemble_statistical_vector_data(
     # fmt:off
     response: Response,
@@ -486,6 +497,7 @@ async def get_delta_ensemble_statistical_vector_data(
 
 
 @router.get("/statistical_vector_data_per_sensitivity/")
+@cache_time(CacheTime.LONG)
 async def get_statistical_vector_data_per_sensitivity(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -556,7 +568,9 @@ async def get_statistical_vector_data_per_sensitivity(
     return ret_data
 
 
+# TODO: Remove? Seems unused?
 @router.get("/realization_vector_at_timestamp/")
+@cache_time(CacheTime.LONG)
 async def get_realization_vector_at_timestamp(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],

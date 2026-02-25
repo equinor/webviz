@@ -17,7 +17,6 @@ import {
     deleteSession,
     deleteSnapshot,
     deleteSnapshotAccessLog,
-    deprecatedGetStratigraphicUnits,
     getAlive,
     getAliveProtected,
     getCases,
@@ -63,7 +62,6 @@ import {
     getStatisticalSurfaceDataHybrid,
     getStatisticalVectorData,
     getStatisticalVectorDataPerSensitivity,
-    getStratigraphicUnitsForStratColumn,
     getSurfaceData,
     getTableData,
     getTableDefinition,
@@ -111,7 +109,6 @@ import type {
     DeleteSnapshotAccessLogError_api,
     DeleteSnapshotData_api,
     DeleteSnapshotError_api,
-    DeprecatedGetStratigraphicUnitsData_api,
     GetAliveData_api,
     GetAliveProtectedData_api,
     GetCasesData_api,
@@ -163,7 +160,6 @@ import type {
     GetStatisticalSurfaceDataHybridData_api,
     GetStatisticalVectorDataData_api,
     GetStatisticalVectorDataPerSensitivityData_api,
-    GetStratigraphicUnitsForStratColumnData_api,
     GetSurfaceDataData_api,
     GetTableDataData_api,
     GetTableDefinitionData_api,
@@ -1032,53 +1028,6 @@ export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDat
     });
 };
 
-export const deprecatedGetStratigraphicUnitsQueryKey = (options: Options<DeprecatedGetStratigraphicUnitsData_api>) =>
-    createQueryKey("deprecatedGetStratigraphicUnits", options);
-
-/**
- * Deprecated Get Stratigraphic Units
- *
- * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
- */
-export const deprecatedGetStratigraphicUnitsOptions = (options: Options<DeprecatedGetStratigraphicUnitsData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await deprecatedGetStratigraphicUnits({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: deprecatedGetStratigraphicUnitsQueryKey(options),
-    });
-};
-
-export const getStratigraphicUnitsForStratColumnQueryKey = (
-    options: Options<GetStratigraphicUnitsForStratColumnData_api>,
-) => createQueryKey("getStratigraphicUnitsForStratColumn", options);
-
-/**
- * Get Stratigraphic Units For Strat Column
- */
-export const getStratigraphicUnitsForStratColumnOptions = (
-    options: Options<GetStratigraphicUnitsForStratColumnData_api>,
-) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getStratigraphicUnitsForStratColumn({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getStratigraphicUnitsForStratColumnQueryKey(options),
-    });
-};
-
 export const getParametersAndSensitivitiesQueryKey = (options: Options<GetParametersAndSensitivitiesData_api>) =>
     createQueryKey("getParametersAndSensitivities", options);
 
@@ -1174,6 +1123,8 @@ export const postGetPolylineIntersectionQueryKey = (options: Options<PostGetPoly
 
 /**
  * Post Get Polyline Intersection
+ *
+ * Get the intersection of a polyline with the grid, including intersected cells and interpolated parameter values at intersection points
  */
 export const postGetPolylineIntersectionOptions = (options: Options<PostGetPolylineIntersectionData_api>) => {
     return queryOptions({
@@ -1192,6 +1143,8 @@ export const postGetPolylineIntersectionOptions = (options: Options<PostGetPolyl
 
 /**
  * Post Get Polyline Intersection
+ *
+ * Get the intersection of a polyline with the grid, including intersected cells and interpolated parameter values at intersection points
  */
 export const postGetPolylineIntersectionMutation = (
     options?: Partial<Options<PostGetPolylineIntersectionData_api>>,
@@ -1222,6 +1175,8 @@ export const getRealizationFlowNetworkQueryKey = (options: Options<GetRealizatio
 
 /**
  * Get Realization Flow Network
+ *
+ * Get flow network data for single realization
  */
 export const getRealizationFlowNetworkOptions = (options: Options<GetRealizationFlowNetworkData_api>) => {
     return queryOptions({
