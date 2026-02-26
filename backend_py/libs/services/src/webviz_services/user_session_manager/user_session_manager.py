@@ -10,13 +10,15 @@ from pottery import Redlock
 from webviz_core_utils.background_tasks import run_in_background_task
 from webviz_core_utils.perf_timer import PerfTimer
 from webviz_core_utils.time_countdown import TimeCountdown
+from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
-from ._radix_helpers import IS_ON_RADIX_PLATFORM, RadixResourceRequests, RadixJobApi
+from ._radix_helpers import RadixResourceRequests, RadixJobApi
 from ._redlock_releasing_context import RedlockReleasingContext
 from ._user_session_directory import SessionInfo, SessionRunState, UserSessionDirectory
 
 LOGGER = logging.getLogger(__name__)
 
+_IS_ON_RADIX_PLATFORM = is_running_on_radix_platform()
 
 class UserComponent(str, Enum):
     GRID3D_RI = "GRID3D_RI"
@@ -189,7 +191,7 @@ async def _get_info_for_running_session(
     if not session_info or not session_info.radix_job_name:
         return None
 
-    if IS_ON_RADIX_PLATFORM:
+    if _IS_ON_RADIX_PLATFORM:
         LOGGER.debug("Found user session, verifying its existence against radix job manager")
         radix_job_api = RadixJobApi(job_component_name, job_scheduler_port)
         radix_job_is_running = await radix_job_api.is_radix_job_running(session_info.radix_job_name)
@@ -253,7 +255,7 @@ async def _create_new_session(
         session_info_updater.delete_all_state()
         session_info_updater.set_state_creating()
 
-        if IS_ON_RADIX_PLATFORM:
+        if _IS_ON_RADIX_PLATFORM:
             radix_job_api = RadixJobApi(job_component_name, job_scheduler_port)
 
             if old_session_info and old_session_info.radix_job_name:

@@ -6,6 +6,7 @@ from azure.identity.aio import DefaultAzureCredential
 from azure.identity.aio import ChainedTokenCredential
 from azure.identity.aio import ClientSecretCredential
 from azure.identity.aio import WorkloadIdentityCredential
+from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
 
 LOGGER = logging.getLogger(__name__)
@@ -30,8 +31,7 @@ def create_credential_for_azure_services(
 
     Note that secret_vars_for_local_dev will only be used when running locally (i.e. not on Radix).
     """
-    # Any better way of knowing if we're running in Radix or locally?
-    is_on_radix_platform = os.getenv("RADIX_APP") is not None
+    is_on_radix_platform = is_running_on_radix_platform()
 
     LOGGER.info(f"Creating credential for use with Azure services ({is_on_radix_platform=})...")
 
