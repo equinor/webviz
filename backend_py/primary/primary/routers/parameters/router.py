@@ -2,11 +2,11 @@ import logging
 
 from fastapi import APIRouter, Depends, Query
 
-from primary.auth.auth_helper import AuthHelper
 from webviz_services.sumo_access.parameter_access import ParameterAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
-from primary.middleware.add_browser_cache import cache_time, CacheTime
+from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 
 from . import schemas, converters
 

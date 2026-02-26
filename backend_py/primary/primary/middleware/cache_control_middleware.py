@@ -13,22 +13,22 @@ class StaleTime(Enum):
 
     E.g. stale-while-revalidate
 
-    SHORT: 1 day
+    NORMAL: 1 day
     LONG: 2 weeks
     """
 
-    SHORT = 3600 * 24  # 1 day
+    NORMAL = 3600 * 24  # 1 day
     LONG = 3600 * 24 * 14  # 2 weeks
 
 
 class CacheTime(Enum):
     """Browser cache time durations for endpoint responses in seconds.
 
-    SHORT: 1 hour max-age
+    NORMAL: 1 hour max-age
     LONG: 2 weeks max-age
     """
 
-    SHORT = 3600  # 1 hour
+    NORMAL = 3600  # 1 hour
     LONG = 3600 * 24 * 14  # 2 weeks
 
 
@@ -79,8 +79,8 @@ def cache_time(duration: CacheTime, stale_while_revalidate: StaleTime | None = N
     Decorator that sets browser cache time for the endpoint response using a preset duration.
 
     Args:
-        duration: CacheTime enum value (SHORT or LONG)
-        stale_while_revalidate: Optional StaleTime enum value (SHORT or LONG)
+        duration: CacheTime enum value
+        stale_while_revalidate: Optional StaleTime enum value
 
     Examples:
         @cache_time(CacheTime.LONG)
@@ -100,14 +100,14 @@ def set_cache_time(duration: CacheTime, stale_while_revalidate: StaleTime | None
     (e.g. only cache successful responses, not errors or in-progress).
 
     Args:
-        duration: CacheTime enum value (SHORT or LONG)
-        stale_while_revalidate: Optional StaleTime enum value (SHORT or LONG)
+        duration: CacheTime enum value
+        stale_while_revalidate: Optional StaleTime enum value
 
     Example:
         async def my_endpoint():
             result = await compute()
             if result.is_success:
-                set_cache_time(CacheTime.SHORT, StaleTime.SHORT)
+                set_cache_time(CacheTime.NORMAL, StaleTime.LONG)
             return result
     """
 
@@ -119,7 +119,7 @@ def set_cache_time(duration: CacheTime, stale_while_revalidate: StaleTime | None
     _cache_context.set(CacheSettings(max_age_s=duration.value, stale_while_revalidate_s=stale_while_revalidate_s))
 
 
-class AddBrowserCacheMiddleware:
+class CacheControlMiddleware:
     """
     Adds Cache-Control header to HTTP responses.
 

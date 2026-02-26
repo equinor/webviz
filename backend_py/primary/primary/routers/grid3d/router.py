@@ -16,8 +16,7 @@ from webviz_services.user_grid3d_service.user_grid3d_service import (
 )
 
 from primary.auth.auth_helper import AuthHelper
-
-from primary.middleware.add_browser_cache import cache_time, CacheTime
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 
 from . import schemas
 
@@ -161,7 +160,6 @@ async def get_grid_parameter(
 
 
 @router.post("/get_polyline_intersection")
-@cache_time(CacheTime.LONG)
 async def post_get_polyline_intersection(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],

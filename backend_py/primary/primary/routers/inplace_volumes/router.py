@@ -9,7 +9,7 @@ from webviz_services.inplace_volumes_table_assembler.inplace_volumes_table_assem
 from webviz_services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_browser_cache import cache_time, CacheTime
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.routers.inplace_volumes.converters import (
     convert_schema_to_indices,
     convert_schema_to_indices_with_values,
@@ -57,7 +57,6 @@ async def get_table_definitions(
 
 
 @router.post("/get_aggregated_per_realization_table_data/", tags=["inplace_volumes"])
-@cache_time(CacheTime.LONG)
 # pylint: disable=too-many-arguments
 async def post_get_aggregated_per_realization_table_data(
     response: Response,
@@ -128,7 +127,6 @@ async def post_get_aggregated_per_realization_table_data(
 
 
 @router.post("/get_aggregated_statistical_table_data/", tags=["inplace_volumes"])
-@cache_time(CacheTime.LONG)
 # pylint: disable=too-many-arguments
 async def post_get_aggregated_statistical_table_data(
     response: Response,

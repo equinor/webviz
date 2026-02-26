@@ -10,8 +10,7 @@ from webviz_services.vds_access.response_types import VdsMetadata
 from webviz_services.vds_access.vds_access import VdsAccess
 
 from primary.auth.auth_helper import AuthHelper
-
-from primary.middleware.add_browser_cache import cache_time, CacheTime
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 
 from . import schemas
 from . import converters
@@ -207,7 +206,6 @@ async def get_seismic_slices(
 
 
 @router.post("/get_seismic_fence/")
-@cache_time(CacheTime.LONG)
 async def post_get_seismic_fence(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),

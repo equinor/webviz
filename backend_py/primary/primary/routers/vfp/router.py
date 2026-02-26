@@ -7,9 +7,9 @@ from webviz_services.sumo_access.vfp_types import VfpProdTable, VfpInjTable
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
-from primary.middleware.add_browser_cache import cache_time, CacheTime
 
 from . import schemas
 from . import converters

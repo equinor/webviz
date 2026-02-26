@@ -12,9 +12,8 @@ from webviz_services.sumo_access.polygons_access import PolygonsAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.drogon import is_drogon_identifier
-
-from primary.middleware.add_browser_cache import cache_time, CacheTime
 
 from . import converters, schemas
 

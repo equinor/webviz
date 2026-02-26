@@ -7,9 +7,8 @@ from webviz_services.sumo_access.rft_access import RftAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.query_string_utils import decode_uint_list_str
-
-from primary.middleware.add_browser_cache import cache_time, CacheTime
 
 from . import schemas
 from . import converters

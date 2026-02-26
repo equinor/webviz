@@ -22,7 +22,7 @@ from webviz_services.surface_query_service.surface_query_service import Realizat
 from webviz_services.service_exceptions import ServiceLayerException
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_browser_cache import cache_time, set_cache_time, CacheTime
+from primary.middleware.cache_control_middleware import cache_time, set_cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
 
@@ -284,7 +284,7 @@ async def get_statistical_surface_data_hybrid(
 
         LOGGER.info(f"Got statistical surface data (hybrid) in: {perf_metrics.to_string()}")
 
-        set_cache_time(CacheTime.SHORT)
+        set_cache_time(CacheTime.NORMAL)
         return LroSuccessResp(status="success", result=api_surf_data)
 
     except Exception as _exc:
@@ -295,7 +295,6 @@ async def get_statistical_surface_data_hybrid(
 
 
 @router.post("/get_surface_intersection")
-@cache_time(CacheTime.LONG)
 async def post_get_surface_intersection(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -329,7 +328,6 @@ async def post_get_surface_intersection(
 
 
 @router.post("/get_sample_surface_in_points")
-@cache_time(CacheTime.LONG)
 async def post_get_sample_surface_in_points(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
