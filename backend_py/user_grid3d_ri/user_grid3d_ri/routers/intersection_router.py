@@ -85,7 +85,7 @@ async def post_get_polyline_intersection(
     ret_sections: list[api_schemas.FenceMeshSection] = []
     tot_num_vertices: int = 0
     tot_num_polys: int = 0
-    for fence_idx, grpc_section in enumerate(grpc_response.fenceMeshSections):
+    for _fence_idx, grpc_section in enumerate(grpc_response.fenceMeshSections):
         poly_props_b64arr: B64FloatArray | B64IntArray
         if prop_extractor.is_discrete():
             int_prop_arr_np = prop_extractor.get_discrete_prop_values_for_cells(grpc_section.sourceCellIndicesArr)
@@ -131,12 +131,12 @@ async def post_get_polyline_intersection(
     )
     perf_metrics.record_lap("make-response")
 
-    grpc_timeElapsedInfo = grpc_response.timeElapsedInfo
+    grpc_time_elapsed_info = grpc_response.timeElapsedInfo
     ret_obj.stats = api_schemas.Stats(
         total_time=perf_metrics.get_elapsed_ms(),
         perf_metrics=perf_metrics.to_dict(),
-        ri_total_time=grpc_timeElapsedInfo.totalTimeElapsedMs,
-        ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
+        ri_total_time=grpc_time_elapsed_info.totalTimeElapsedMs,
+        ri_perf_metrics=dict(grpc_time_elapsed_info.namedEventsAndTimeElapsedMs),
         vertex_count=tot_num_vertices,
         poly_count=tot_num_polys,
     )

@@ -62,13 +62,13 @@ class ResInsightManager:
 
             # Either we don't have a process or the process is dead, so we'll clean up and try to launch a new one
             if self._ri_info and self._ri_info.channel:
-                LOGGER.debug(f"_get_or_create_ri_instance_async() - trying to close existing grpc channel")
+                LOGGER.debug("_get_or_create_ri_instance_async() - trying to close existing grpc channel")
                 await self._ri_info.channel.close()
 
             self._ri_info = None
             _kill_competing_ri_processes()
 
-            LOGGER.debug(f"_get_or_create_ri_instance_async() - launching new ResInsight process")
+            LOGGER.debug("_get_or_create_ri_instance_async() - launching new ResInsight process")
             new_pid = await _launch_ri_instance_async()
             if new_pid < 0:
                 LOGGER.error("Failed to launch ResInsight process")
@@ -166,13 +166,12 @@ async def _probe_grpc_alive_async(channel: grpc.aio.Channel) -> bool:
     app_stub = App_pb2_grpc.AppStub(channel)
 
     try:
-        LOGGER.debug(f"_probe_grpc_alive_async() - probing ...")
+        LOGGER.debug("_probe_grpc_alive_async() - probing ...")
         grpc_response = await app_stub.GetVersion(Definitions_pb2.Empty(), timeout=4.0, wait_for_ready=True)
         LOGGER.debug(f"_probe_grpc_alive_async() - {str(grpc_response)=}")
         return True
     except grpc.aio.AioRpcError as exception:
         LOGGER.error(f"_probe_grpc_alive_async() - probe failed!!!  {exception=}")
-        pass
 
     return False
 

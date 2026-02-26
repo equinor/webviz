@@ -110,7 +110,7 @@ async def post_get_grid_geometry(
     data_cache_key = _make_grid_geo_key(
         grid_blob_object_uuid=req_body.grid_blob_object_uuid,
         include_inactive_cells=req_body.include_inactive_cells,
-        filter=req_body.ijk_index_filter,
+        filt=req_body.ijk_index_filter,
     )
     LOGGER.debug(f"{myfunc} - {data_cache_key=}")
     DATA_CACHE.set_uint32_numpy_arr(data_cache_key, source_cell_indices_np)
@@ -139,12 +139,12 @@ async def post_get_grid_geometry(
     )
     perf_metrics.record_lap("make-response")
 
-    grpc_timeElapsedInfo = grpc_response.timeElapsedInfo
+    grpc_time_elapsed_info = grpc_response.timeElapsedInfo
     ret_obj.stats = api_schemas.Stats(
         total_time=perf_metrics.get_elapsed_ms(),
         perf_metrics=perf_metrics.to_dict(),
-        ri_total_time=grpc_timeElapsedInfo.totalTimeElapsedMs,
-        ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
+        ri_total_time=grpc_time_elapsed_info.totalTimeElapsedMs,
+        ri_perf_metrics=dict(grpc_time_elapsed_info.namedEventsAndTimeElapsedMs),
         vertex_count=int(len(vertices_np) / 3),
         poly_count=int(len(source_cell_indices_np)),
     )
@@ -189,7 +189,7 @@ async def post_get_mapped_grid_properties(
     data_cache_key = _make_grid_geo_key(
         grid_blob_object_uuid=req_body.grid_blob_object_uuid,
         include_inactive_cells=req_body.include_inactive_cells,
-        filter=req_body.ijk_index_filter,
+        filt=req_body.ijk_index_filter,
     )
     LOGGER.debug(f"{myfunc} - {data_cache_key=}")
     source_cell_indices_np = DATA_CACHE.get_uint32_numpy_arr(data_cache_key)
@@ -272,12 +272,12 @@ async def post_get_mapped_grid_properties(
 
 
 def _make_grid_geo_key(
-    grid_blob_object_uuid: str, include_inactive_cells: bool, filter: api_schemas.IJKIndexFilter | None
+    grid_blob_object_uuid: str, include_inactive_cells: bool, filt: api_schemas.IJKIndexFilter | None
 ) -> str:
     filter_str = "NoFilter"
-    if filter:
+    if filt:
         filter_str = (
-            f"I[{filter.min_i},{filter.max_i}]-J[{filter.min_j},{filter.max_j}]-K[{filter.min_k},{filter.max_k}]"
+            f"I[{filt.min_i},{filt.max_i}]-J[{filt.min_j},{filt.max_j}]-K[{filt.min_k},{filt.max_k}]"
         )
 
     return f"{grid_blob_object_uuid}--IncludeInactive{include_inactive_cells}--{filter_str}"
