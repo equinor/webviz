@@ -44,18 +44,18 @@ class LocalBlobCache:
         os.makedirs(self._cache_root_dir, exist_ok=True)
 
     async def ensure_grid_blob_downloaded_async(self, object_uuid: str) -> str | None:
-        return await self._ensure_blob_downloaded(object_uuid, "GRID", ".roff")
+        return await self._ensure_blob_downloaded_async(object_uuid, "GRID", ".roff")
 
     async def ensure_property_blob_downloaded_async(self, object_uuid: str) -> str | None:
-        return await self._ensure_blob_downloaded(object_uuid, "PROPERTY", ".roff")
+        return await self._ensure_blob_downloaded_async(object_uuid, "PROPERTY", ".roff")
 
-    async def _ensure_blob_downloaded(self, object_uuid: str, blob_kind: str, file_suffix: str) -> str | None:
+    async def _ensure_blob_downloaded_async(self, object_uuid: str, blob_kind: str, file_suffix: str) -> str | None:
         blob_item = _BlobItem(object_uuid=object_uuid, blob_kind=blob_kind, file_suffix=file_suffix)
         blob_key = _make_local_blob_filename(blob_item)
         local_blob_path = self._make_local_blob_path(blob_item)
 
         # If the blob is already in the cache, we can return immediately
-        if await self._is_blob_in_cache(blob_item):
+        if await self._is_blob_in_cache_async(blob_item):
             LOGGER.debug(f"Found {blob_kind} blob in cache, returning immediately: {local_blob_path}")
             return local_blob_path
 
@@ -66,7 +66,7 @@ class LocalBlobCache:
             _blob_keys_in_flight.add(blob_key)
             try:
                 # dl_res = await self._download_blob_simple(blob_item)
-                dl_res = await self._download_blob_using_ms_client_lib(blob_item)
+                dl_res = await self._download_blob_using_ms_client_lib_async(blob_item)
             finally:
                 _blob_keys_in_flight.discard(blob_key)
 
@@ -90,7 +90,7 @@ class LocalBlobCache:
                 )
 
             await asyncio.sleep(0.2)
-            if await self._is_blob_in_cache(blob_item):
+            if await self._is_blob_in_cache_async(blob_item):
                 LOGGER.debug(f"While waiting for {blob_kind} blob it appeared in cache, returning: {local_blob_path}")
                 return local_blob_path
 
@@ -101,7 +101,7 @@ class LocalBlobCache:
         LOGGER.error(f"Timed out while waiting for {blob_kind} blob to appear in cache")
         return None
 
-    async def _download_blob_simple(self, blob_item: _BlobItem) -> DownloadResult:
+    async def _download_blob_simple_async(self, blob_item: _BlobItem) -> DownloadResult:
         object_uuid = blob_item.object_uuid
         blob_kind = blob_item.blob_kind
         local_blob_filename = _make_local_blob_filename(blob_item)
@@ -147,9 +147,9 @@ class LocalBlobCache:
         core_download_time_s = timer.elapsed_s()
 
         # Has the finished product appeared in the meantime?
-        if await self._is_blob_in_cache(blob_item):
+        if await self._is_blob_in_cache_async(blob_item):
             LOGGER.debug(f"SUDDENLY found {blob_kind} blob in cache, stopping")
-            run_in_background_task(_try_delete_temp_file(tmp_blob_path))
+            run_in_background_task(_try_delete_temp_file_async(tmp_blob_path))
             return DownloadResult.ABANDONED
 
         try:
@@ -157,7 +157,7 @@ class LocalBlobCache:
             await aiofiles.os.rename(tmp_blob_path, local_blob_path)
         except Exception as exception:
             LOGGER.error(f"Failed to move temp {blob_kind} blob into cache {object_uuid=} {exception=}")
-            run_in_background_task(_try_delete_temp_file(tmp_blob_path))
+            run_in_background_task(_try_delete_temp_file_async(tmp_blob_path))
             return DownloadResult.FAILED
 
         dl_size_mb = num_bytes_downloaded / (1024 * 1024)
@@ -168,7 +168,7 @@ class LocalBlobCache:
 
         return DownloadResult.SUCCEEDED
 
-    async def _download_blob_using_ms_client_lib(self, blob_item: _BlobItem) -> DownloadResult:
+    async def _download_blob_using_ms_client_lib_async(self, blob_item: _BlobItem) -> DownloadResult:
         object_uuid = blob_item.object_uuid
         blob_kind = blob_item.blob_kind
         local_blob_filename = _make_local_blob_filename(blob_item)
@@ -184,7 +184,7 @@ class LocalBlobCache:
             tmp_blob_path: str = os.fsdecode(tmp_file.name)
             LOGGER.debug(f"Downloading {blob_kind} blob into temp file: {tmp_blob_path}")
 
-            async def progress_hook(current: int, total: int) -> None:
+            async def progress_hook_async(current: int, total: int) -> None:
                 num_mb_downloaded = current / (1024 * 1024)
                 total_size_mb = total / (1024 * 1024)
                 LOGGER.debug(
@@ -192,16 +192,16 @@ class LocalBlobCache:
                 )
 
             async with BlobClient.from_blob_url(blob_url=full_blob_url) as blob_client:
-                stream_downloader = await blob_client.download_blob(max_concurrency=16, progress_hook=progress_hook)
+                stream_downloader = await blob_client.download_blob(max_concurrency=16, progress_hook=progress_hook_async)
                 the_bytes = await stream_downloader.readall()
                 await tmp_file.write(the_bytes)
                 num_bytes_downloaded = len(the_bytes)
 
         core_download_time_s = timer.elapsed_s()
 
-        if await self._is_blob_in_cache(blob_item):
+        if await self._is_blob_in_cache_async(blob_item):
             LOGGER.debug(f"SUDDENLY found {blob_kind} blob in cache, stopping")
-            run_in_background_task(_try_delete_temp_file(tmp_blob_path))
+            run_in_background_task(_try_delete_temp_file_async(tmp_blob_path))
             return DownloadResult.ABANDONED
 
         try:
@@ -209,7 +209,7 @@ class LocalBlobCache:
             await aiofiles.os.rename(tmp_blob_path, local_blob_path)
         except Exception as exception:
             LOGGER.error(f"Failed to move temp {blob_kind} blob into cache {object_uuid=} {exception=}")
-            run_in_background_task(_try_delete_temp_file(tmp_blob_path))
+            run_in_background_task(_try_delete_temp_file_async(tmp_blob_path))
             return DownloadResult.FAILED
 
         dl_size_mb = num_bytes_downloaded / (1024 * 1024)
@@ -220,9 +220,9 @@ class LocalBlobCache:
 
         return DownloadResult.SUCCEEDED
 
-    async def _is_blob_in_cache(self, blob_item: _BlobItem) -> bool:
+    async def _is_blob_in_cache_async(self, blob_item: _BlobItem) -> bool:
         local_blob_path = self._make_local_blob_path(blob_item)
-        return await _does_file_exist(local_blob_path)
+        return await _does_file_exist_async(local_blob_path)
 
     def _make_local_blob_path(self, blob_item: _BlobItem) -> str:
         local_blob_filename = _make_local_blob_filename(blob_item)
@@ -234,11 +234,11 @@ def _make_local_blob_filename(blob_item: _BlobItem) -> str:
     return f"{blob_item.blob_kind}__{blob_item.object_uuid}{blob_item.file_suffix}"
 
 
-async def _does_file_exist(file_name: str) -> bool:
+async def _does_file_exist_async(file_name: str) -> bool:
     return await aiofiles.os.path.isfile(file_name)
 
 
-async def _try_delete_temp_file(temp_filename: str) -> None:
+async def _try_delete_temp_file_async(temp_filename: str) -> None:
     try:
         await aiofiles.os.remove(temp_filename)
     except FileNotFoundError:
