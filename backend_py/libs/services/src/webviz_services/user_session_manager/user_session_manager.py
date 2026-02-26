@@ -20,6 +20,7 @@ LOGGER = logging.getLogger(__name__)
 
 _IS_ON_RADIX_PLATFORM = is_running_on_radix_platform()
 
+
 class UserComponent(str, Enum):
     GRID3D_RI = "GRID3D_RI"
     MOCK = "MOCK"

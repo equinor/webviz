@@ -44,6 +44,7 @@ async def root() -> str:
     LOGGER.debug(f"Sending: {ret_str}")
     return ret_str
 
+
 is_on_radix_platform = is_running_on_radix_platform()
 LOGGER.debug(f"{is_on_radix_platform=}")
 if is_on_radix_platform:
