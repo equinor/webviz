@@ -6,9 +6,9 @@ import type { TransformerArgs } from "../VisualizationAssembler";
 
 export function makeDrilledWellborePicksLayer({
     id,
-    getData,
-}: TransformerArgs<any, WellborePick_api[], any>): WellborePicksLayer | null {
-    const data = getData();
+    state,
+}: TransformerArgs<WellborePick_api[], never>): WellborePicksLayer | null {
+    const data = state?.snapshot?.data;
 
     if (!data) {
         return null;

@@ -1,6 +1,7 @@
 import { isEqual } from "lodash";
 
 import { type SeismicCubeMeta_api, getSeismicCubeMetaListOptions, getSeismicSlicesOptions } from "@api";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
@@ -10,6 +11,7 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { NullableStoredData } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/sharedTypes";
@@ -42,12 +44,27 @@ export type RealizationSeismicSlicesStoredData = {
     seismicSlices: [number, number, number];
 };
 
+export type SeismicSlicesSettings = {
+    value: [number, number, number];
+    visible: [boolean, boolean, boolean];
+    applied: boolean;
+} | null;
+
+export type RealizationSeismicSlicesProviderMeta = {
+    colorScale: ColorScaleSpecification | null;
+    opacityPercent: number;
+    slicesSettings: SeismicSlicesSettings;
+    seismicCubeMeta: SeismicCubeMeta_api | null;
+    seismicSlices: [number, number, number] | null;
+};
+
 export class RealizationSeismicSlicesProvider
     implements
         CustomDataProviderImplementation<
             RealizationSeismicSlicesSettings,
             RealizationSeismicSlicesData,
-            RealizationSeismicSlicesStoredData
+            RealizationSeismicSlicesStoredData,
+            RealizationSeismicSlicesProviderMeta
         >
 {
     settings = realizationSeismicSlicesSettings;
@@ -75,6 +92,28 @@ export class RealizationSeismicSlicesProvider
 
     getDefaultName(): string {
         return "Seismic Slices (realization)";
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<
+            RealizationSeismicSlicesSettings,
+            RealizationSeismicSlicesData,
+            RealizationSeismicSlicesStoredData
+        >,
+    ): ProviderSnapshot<RealizationSeismicSlicesData, RealizationSeismicSlicesProviderMeta> {
+        const { getSetting, getData, getStoredData } = args;
+        return {
+            data: getData(),
+            valueRange: null,
+            dataLabel: getSetting(Setting.ATTRIBUTE) ?? "Seismic Slices",
+            meta: {
+                colorScale: getSetting(Setting.COLOR_SCALE),
+                opacityPercent: getSetting(Setting.OPACITY_PERCENT) ?? 100,
+                slicesSettings: getSetting(Setting.SEISMIC_SLICES),
+                seismicCubeMeta: getStoredData("seismicCubeMeta") ?? null,
+                seismicSlices: getStoredData("seismicSlices") ?? null,
+            },
+        };
     }
 
     doSettingsChangesRequireDataRefetch(

@@ -1,17 +1,14 @@
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import type {
     IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicStoredData,
+    IntersectionRealizationSeismicProviderMeta,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import { createSeismicColorScaleValues } from "../utils/colorScaleUtils";
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 /**
  * Make a trajectory in the uz-plane of a fence made from a polyline in the xy-plane of a
@@ -45,33 +42,33 @@ function makeTrajectoryFenceProjectionFromFenceActualSectionLengths(
 
 export function createSeismicLayerItemsMaker({
     id,
-    getData,
-    getSetting,
-    getStoredData,
-    getDataValueRange,
     isLoading,
     name,
-}: TransformerArgs<
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicStoredData,
-    any
->): EsvLayerItemsMaker | null {
-    const fenceData = getData();
-    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
-    const colorOpacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
-    const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
-    const attribute = getSetting(Setting.ATTRIBUTE);
-    const valueRange = getDataValueRange();
+    state,
+}: TransformerArgs<IntersectionRealizationSeismicData, IntersectionRealizationSeismicProviderMeta>):
+    | EsvLayerItemsMaker
+    | null {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
 
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
+    const fenceData = snapshot.data;
+    const colorScale = snapshot.meta.colorScale?.colorScale;
+    const colorOpacityPercent = snapshot.meta.opacityPercent ?? 100;
+    const useCustomColorScaleBoundaries = snapshot.meta.colorScale?.areBoundariesUserDefined ?? false;
+    const attribute = snapshot.dataLabel;
+    const valueRange = snapshot.valueRange;
+    const extensionLength = snapshot.meta.extensionLength;
+    const seismicFenceSectionLengths = snapshot.meta.seismicFenceSectionLengths;
 
-    const seismicFenceSectionLengths = getStoredData("seismicFencePolylineWithSectionLengths")?.actualSectionLengths;
-
-    if (!fenceData || !seismicFenceSectionLengths || !colorScale || isLoading || !valueRange) {
+    if (
+        !fenceData ||
+        seismicFenceSectionLengths.length === 0 ||
+        !colorScale ||
+        isLoading ||
+        !valueRange
+    ) {
         return null;
     }
 

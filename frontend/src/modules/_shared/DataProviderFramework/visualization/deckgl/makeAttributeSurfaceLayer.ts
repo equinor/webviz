@@ -1,28 +1,28 @@
 import { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { SurfaceProviderMeta } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/AttributeSurfaceProvider";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import { type AttributeSurfaceSettings } from "../../dataProviders/implementations/surfaceProviders/AttributeSurfaceProvider";
 import { SurfaceDataFormat, type SurfaceData } from "../../dataProviders/implementations/surfaceProviders/types";
 
 export function makeAttributeSurfaceLayer({
     id,
     name,
-    getData,
-    getSetting,
-}: TransformerArgs<AttributeSurfaceSettings, SurfaceData>): MapLayer | null {
-    const data = getData();
-    const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
+    state,
+}: TransformerArgs<SurfaceData, SurfaceProviderMeta>): MapLayer | null {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
+
+    const data = snapshot.data;
+    const colorScaleSpec = snapshot.meta.colorScale;
+    const showContours = snapshot.meta.showContours;
 
     let contours: [number, number] = [-1, -1];
-    const { enabled: contourEnabled, value: contourValue } = getSetting(Setting.CONTOURS) ?? {
-        enabled: false,
-        value: 0,
-    };
-    if (contourEnabled && contourValue !== null) {
-        contours = [0, contourValue];
+    if (showContours?.enabled && showContours.value !== null) {
+        contours = [0, showContours.value];
     }
 
     if (!data) {

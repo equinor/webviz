@@ -11,22 +11,9 @@ import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFrame
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
 import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/FaultPolygonsProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
-import {
-    AttributeSurfaceProvider,
-    type AttributeSurfaceSettings,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/AttributeSurfaceProvider";
-import {
-    DepthSurfaceProvider,
-    type DepthSurfaceSettings,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
-import {
-    SeismicSurfaceProvider,
-    type SeismicSurfaceSettings,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/SeismicSurfaceProvider";
-import type {
-    SurfaceData,
-    SurfaceStoredData,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
+import { AttributeSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/AttributeSurfaceProvider";
+import { DepthSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
+import { SeismicSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/SeismicSurfaceProvider";
 import {
     DataProviderManagerTopic,
     type DataProviderManager,
@@ -57,44 +44,32 @@ import { makeDrilledWellTrajectoriesLayer2D } from "../../DataProviderFramework/
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>(
-    DataProviderType.DEPTH_SURFACE,
-    DepthSurfaceProvider,
-    {
-        transformToVisualization: makeDepthSurfaceLayer,
-        transformToBoundingBox: makeSurfaceLayerBoundingBox,
-        transformToAnnotations: makeDepthColorScaleAnnotation,
-    },
-);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(DataProviderType.DEPTH_SURFACE, DepthSurfaceProvider, {
+    transformToVisualization: makeDepthSurfaceLayer,
+    transformToBoundingBox: makeSurfaceLayerBoundingBox,
+    transformToAnnotations: makeDepthColorScaleAnnotation,
+});
 
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<SeismicSurfaceSettings, SurfaceData, SurfaceStoredData>(
-    DataProviderType.SEISMIC_3D_SURFACE,
-    SeismicSurfaceProvider,
-    {
-        transformToVisualization: makeSeismicSurfaceLayer,
-        transformToBoundingBox: makeSurfaceLayerBoundingBox,
-        transformToAnnotations: makeSeismicColorScaleAnnotation,
-    },
-);
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<SeismicSurfaceSettings, SurfaceData, SurfaceStoredData>(
-    DataProviderType.SEISMIC_4D_SURFACE,
-    SeismicSurfaceProvider,
-    {
-        transformToVisualization: makeSeismicSurfaceLayer,
-        transformToBoundingBox: makeSurfaceLayerBoundingBox,
-        transformToAnnotations: makeSeismicColorScaleAnnotation,
-    },
-);
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<AttributeSurfaceSettings, SurfaceData, SurfaceStoredData>(
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(DataProviderType.SEISMIC_3D_SURFACE, SeismicSurfaceProvider, {
+    transformToVisualization: makeSeismicSurfaceLayer,
+    transformToBoundingBox: makeSurfaceLayerBoundingBox,
+    transformToAnnotations: makeSeismicColorScaleAnnotation,
+});
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(DataProviderType.SEISMIC_4D_SURFACE, SeismicSurfaceProvider, {
+    transformToVisualization: makeSeismicSurfaceLayer,
+    transformToBoundingBox: makeSurfaceLayerBoundingBox,
+    transformToAnnotations: makeSeismicColorScaleAnnotation,
+});
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.ATTRIBUTE_STATIC_SURFACE,
     AttributeSurfaceProvider,
     {
-        transformToVisualization: makeAttributeSurfaceLayer,
+        transformToVisualization: makeSeismicSurfaceLayer,
         transformToBoundingBox: makeSurfaceLayerBoundingBox,
         transformToAnnotations: makeColorScaleAnnotation,
     },
 );
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<AttributeSurfaceSettings, SurfaceData, SurfaceStoredData>(
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.ATTRIBUTE_TIME_STEP_SURFACE,
     AttributeSurfaceProvider,
     {
@@ -103,7 +78,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<AttributeSurfaceSetting
         transformToAnnotations: makeColorScaleAnnotation,
     },
 );
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<AttributeSurfaceSettings, SurfaceData, SurfaceStoredData>(
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.ATTRIBUTE_INTERVAL_SURFACE,
     AttributeSurfaceProvider,
     {

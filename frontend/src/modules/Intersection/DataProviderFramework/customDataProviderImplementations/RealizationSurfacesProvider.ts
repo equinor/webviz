@@ -10,6 +10,7 @@ import { IntersectionType } from "@framework/types/intersection";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -23,6 +24,7 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
@@ -51,18 +53,46 @@ export type RealizationSurfacesStoredData = {
 
 export type RealizationSurfacesData = SurfaceIntersectionData_api[];
 
+export type RealizationSurfacesProviderMeta = {
+    polylineActualSectionLengths: readonly number[];
+    colorSet: ColorSet | null;
+};
+
 export class RealizationSurfacesProvider
     implements
         CustomDataProviderImplementation<
             RealizationSurfacesSettings,
             RealizationSurfacesData,
-            RealizationSurfacesStoredData
+            RealizationSurfacesStoredData,
+            RealizationSurfacesProviderMeta
         >
 {
     settings = realizationSurfacesSettings;
 
     getDefaultName() {
         return "Realization Surfaces";
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<
+            RealizationSurfacesSettings,
+            RealizationSurfacesData,
+            RealizationSurfacesStoredData
+        >,
+    ): ProviderSnapshot<RealizationSurfacesData, RealizationSurfacesProviderMeta> {
+        const { getData, getStoredData, getSetting } = args;
+        const data = getData();
+        const polylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
+
+        return {
+            data,
+            valueRange: null,
+            dataLabel: "Realization Surfaces",
+            meta: {
+                polylineActualSectionLengths: polylineWithSectionLengths?.actualSectionLengths ?? [],
+                colorSet: getSetting(Setting.COLOR_SET),
+            },
+        };
     }
 
     getDefaultSettingsValues() {

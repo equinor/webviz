@@ -1,22 +1,31 @@
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import type { DataProviderMeta } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type {
     Annotation,
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
-export function makeColorScaleAnnotation({
-    getSetting,
-    getDataValueRange,
+type ColorScaleMeta = DataProviderMeta & {
+    colorScale: ColorScaleSpecification | null;
+};
+
+export function makeColorScaleAnnotation<TData, TMeta extends ColorScaleMeta>({
     id,
     name,
     isLoading,
-}: TransformerArgs<[Setting.COLOR_SCALE], any>): Annotation[] {
-    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
-    const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
-    const valueRange = getDataValueRange();
+    state,
+}: TransformerArgs<TData, TMeta>): Annotation[] {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return [];
+    }
 
-    if (!colorScale || !valueRange || isLoading) {
+    const colorScale = snapshot.meta?.colorScale?.colorScale;
+    const useCustomColorScaleBoundaries = snapshot.meta?.colorScale?.areBoundariesUserDefined ?? false;
+    const valueRange = snapshot.valueRange;
+
+    if (!colorScale || !valueRange || isLoading || valueRange[0] === valueRange[1]) {
         return [];
     }
 

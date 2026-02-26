@@ -9,7 +9,9 @@ import {
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type {
     CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
@@ -33,6 +35,17 @@ export class EnsembleWellborePicksProvider
 
     getDefaultName() {
         return "Wellbore Picks";
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<EnsembleWellborePicksSettings, EnsembleWellborePicksData>,
+    ): ProviderSnapshot<EnsembleWellborePicksData, never> {
+        return {
+            data: args.getData(),
+            valueRange: null,
+            dataLabel: null,
+            meta: null,
+        };
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

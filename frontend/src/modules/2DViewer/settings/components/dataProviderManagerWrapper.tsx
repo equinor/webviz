@@ -25,22 +25,16 @@ import { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewe
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
-import { AttributeSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/AttributeSurfaceProvider";
-import { DepthSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
-import { SeismicSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/SeismicSurfaceProvider";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { ContextBoundary } from "@modules/_shared/DataProviderFramework/framework/ContextBoundary/ContextBoundary";
-import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
-import { DeltaSurface } from "@modules/_shared/DataProviderFramework/framework/DeltaSurface/DeltaSurface";
-import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
+import { Group, isGroup } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
-import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
@@ -58,169 +52,147 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
-    function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
+    const appendIdentifiers = new Set([
+        "view",
+        "ensemble",
+        "realization",
+        "surface-name",
+        "formation-name",
+        "attribute",
+        "seismic-attribute",
+        "depth-attribute",
+        "time-point",
+        "time-interval",
+    ]);
+
+    function handleProviderAction(identifier: string, groupDelegate: GroupDelegate) {
+        let item: Item | null = null;
         switch (identifier) {
             case "view":
-                groupDelegate.appendChild(
-                    GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor()),
-                );
-                return;
-            case "delta-surface":
-                groupDelegate.prependChild(new DeltaSurface("Delta surface", props.dataProviderManager));
-                return;
+                item = GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor());
+                break;
             case "context-boundary":
-                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));
-                return;
-
+                item = new ContextBoundary("Context boundary", props.dataProviderManager);
+                break;
             case "depth-surface":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(DataProviderType.DEPTH_SURFACE, props.dataProviderManager),
-                );
-                return;
-
+                item = DataProviderRegistry.makeDataProvider(DataProviderType.DEPTH_SURFACE, props.dataProviderManager);
+                break;
             case "seismic-3d-surface":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.SEISMIC_3D_SURFACE,
-                        props.dataProviderManager,
-                    ),
+                item = DataProviderRegistry.makeDataProvider(
+                    DataProviderType.SEISMIC_3D_SURFACE,
+                    props.dataProviderManager,
                 );
-                return;
+                break;
             case "seismic-4d-surface":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.SEISMIC_4D_SURFACE,
-                        props.dataProviderManager,
-                    ),
+                item = DataProviderRegistry.makeDataProvider(
+                    DataProviderType.SEISMIC_4D_SURFACE,
+                    props.dataProviderManager,
                 );
-                return;
+                break;
             case "attribute-static-surface":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.ATTRIBUTE_STATIC_SURFACE,
-                        props.dataProviderManager,
-                    ),
+                item = DataProviderRegistry.makeDataProvider(
+                    DataProviderType.ATTRIBUTE_STATIC_SURFACE,
+                    props.dataProviderManager,
                 );
-                return;
+                break;
             case "attribute-time-step-surface":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.ATTRIBUTE_TIME_STEP_SURFACE,
-                        props.dataProviderManager,
-                    ),
+                item = DataProviderRegistry.makeDataProvider(
+                    DataProviderType.ATTRIBUTE_TIME_STEP_SURFACE,
+                    props.dataProviderManager,
                 );
-                return;
+                break;
             case "attribute-interval-surface":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.ATTRIBUTE_INTERVAL_SURFACE,
-                        props.dataProviderManager,
-                    ),
+                item = DataProviderRegistry.makeDataProvider(
+                    DataProviderType.ATTRIBUTE_INTERVAL_SURFACE,
+                    props.dataProviderManager,
                 );
-                return;
-
+                break;
             case "fault-polygons":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(DataProviderType.FAULT_POLYGONS, props.dataProviderManager),
+                item = DataProviderRegistry.makeDataProvider(
+                    DataProviderType.FAULT_POLYGONS,
+                    props.dataProviderManager,
                 );
-                return;
+                break;
             case "unsorted-polygons":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.REALIZATION_POLYGONS,
-                        props.dataProviderManager,
-                    ),
+                item = DataProviderRegistry.makeDataProvider(
+                    DataProviderType.REALIZATION_POLYGONS,
+                    props.dataProviderManager,
                 );
-                return;
+                break;
             case "drilled-wellbore-trajectories":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.DRILLED_WELL_TRAJECTORIES,
-                        props.dataProviderManager,
-                    ),
+                item = DataProviderRegistry.makeDataProvider(
+                    DataProviderType.DRILLED_WELL_TRAJECTORIES,
+                    props.dataProviderManager,
                 );
-                return;
+                break;
             case "drilled-wellbore-picks":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.DRILLED_WELLBORE_PICKS,
-                        props.dataProviderManager,
-                    ),
+                item = DataProviderRegistry.makeDataProvider(
+                    DataProviderType.DRILLED_WELLBORE_PICKS,
+                    props.dataProviderManager,
                 );
-                return;
+                break;
             case "realization-grid":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.REALIZATION_GRID_2D,
-                        props.dataProviderManager,
-                    ),
+                item = DataProviderRegistry.makeDataProvider(
+                    CustomDataProviderType.REALIZATION_GRID_2D,
+                    props.dataProviderManager,
                 );
-                return;
+                break;
             case "ensemble":
-                groupDelegate.appendChild(new SharedSetting(Setting.ENSEMBLE, null, props.dataProviderManager));
-                return;
+                item = new SharedSetting(Setting.ENSEMBLE, null, props.dataProviderManager);
+                break;
             case "realization":
-                groupDelegate.appendChild(new SharedSetting(Setting.REALIZATION, null, props.dataProviderManager));
-                return;
+                item = new SharedSetting(Setting.REALIZATION, null, props.dataProviderManager);
+                break;
             case "surface-name":
-                groupDelegate.appendChild(new SharedSetting(Setting.SURFACE_NAME, null, props.dataProviderManager));
-                return;
+                item = new SharedSetting(Setting.SURFACE_NAME, null, props.dataProviderManager);
+                break;
             case "formation-name":
-                groupDelegate.appendChild(new SharedSetting(Setting.FORMATION_NAME, null, props.dataProviderManager));
-                return;
+                item = new SharedSetting(Setting.FORMATION_NAME, null, props.dataProviderManager);
+                break;
             case "attribute":
-                groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
-                return;
+                item = new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager);
+                break;
             case "seismic-attribute":
-                groupDelegate.appendChild(
-                    new SharedSetting(Setting.SEISMIC_ATTRIBUTE, null, props.dataProviderManager),
-                );
-                return;
+                item = new SharedSetting(Setting.SEISMIC_ATTRIBUTE, null, props.dataProviderManager);
+                break;
             case "depth-attribute":
-                groupDelegate.appendChild(new SharedSetting(Setting.DEPTH_ATTRIBUTE, null, props.dataProviderManager));
-                return;
+                item = new SharedSetting(Setting.DEPTH_ATTRIBUTE, null, props.dataProviderManager);
+                break;
             case "time-point":
-                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT, null, props.dataProviderManager));
-                return;
+                item = new SharedSetting(Setting.TIME_POINT, null, props.dataProviderManager);
+                break;
             case "time-interval":
-                groupDelegate.appendChild(new SharedSetting(Setting.TIME_INTERVAL, null, props.dataProviderManager));
-                return;
+                item = new SharedSetting(Setting.TIME_INTERVAL, null, props.dataProviderManager);
+                break;
             case "color-scale":
-                groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
-                return;
+                item = new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager);
+                break;
             case "seismic-color-scale":
-                groupDelegate.prependChild(
-                    new SharedSetting(Setting.SEISMIC_COLOR_SCALE, null, props.dataProviderManager),
-                );
-                return;
+                item = new SharedSetting(Setting.SEISMIC_COLOR_SCALE, null, props.dataProviderManager);
+                break;
             case "depth-color-scale":
-                groupDelegate.prependChild(
-                    new SharedSetting(Setting.DEPTH_COLOR_SCALE, null, props.dataProviderManager),
-                );
-                return;
+                item = new SharedSetting(Setting.DEPTH_COLOR_SCALE, null, props.dataProviderManager);
+                break;
+        }
+
+        if (!item) {
+            return;
+        }
+
+        if (appendIdentifiers.has(identifier)) {
+            groupDelegate.appendChild(item);
+        } else {
+            groupDelegate.prependChild(item);
         }
     }
 
     function checkIfItemMoveAllowed(movedItem: Item, destinationItem: ItemGroup): boolean {
-        if (destinationItem instanceof DeltaSurface) {
-            if (
-                movedItem instanceof DataProvider &&
-                !(movedItem instanceof AttributeSurfaceProvider) &&
-                !(movedItem instanceof SeismicSurfaceProvider) &&
-                !(movedItem instanceof DepthSurfaceProvider)
-            ) {
-                return false;
-            }
-
-            if (instanceofItemGroup(movedItem)) {
-                return false;
-            }
-
-            if (destinationItem.getGroupDelegate().findChildren((item) => item instanceof DataProvider).length >= 2) {
+        if (isGroup(movedItem) && isGroup(destinationItem)) {
+            // Do not allow moving a view inside another view
+            if (movedItem.getGroupType() === GroupType.VIEW && destinationItem.getGroupType() === GroupType.VIEW) {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -291,7 +263,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 </Dropdown>
             }
             groupActions={makeActionsForGroup}
-            onAction={handleLayerAction}
+            onAction={handleProviderAction}
             isMoveAllowed={checkIfItemMoveAllowed}
         />
     );
@@ -332,45 +304,47 @@ const INITIAL_ACTIONS: ActionGroup[] = [
     },
 ];
 
+const SURFACES = {
+    label: "Surfaces",
+    children: [
+        {
+            identifier: "depth-surface",
+            icon: <Icon data={surface_layer} fontSize="small" />,
+            label: "Depth",
+        },
+        {
+            identifier: "seismic-3d-surface",
+            icon: <Icon data={surface_layer} fontSize="small" />,
+            label: "Seismic 3D",
+        },
+        {
+            identifier: "seismic-4d-surface",
+            icon: <Icon data={surface_layer} fontSize="small" />,
+            label: "Seismic 4D",
+        },
+        {
+            identifier: "attribute-static-surface",
+            icon: <Icon data={surface_layer} fontSize="small" />,
+            label: "Uncategorized (Static)",
+        },
+        {
+            identifier: "attribute-time-step-surface",
+            icon: <Icon data={surface_layer} fontSize="small" />,
+            label: "Uncategorized (Time Step)",
+        },
+        {
+            identifier: "attribute-interval-surface",
+            icon: <Icon data={surface_layer} fontSize="small" />,
+            label: "Uncategorized (Time Interval)",
+        },
+    ],
+};
+
 const ACTIONS: ActionGroup[] = [
     {
         label: "Layers",
         children: [
-            {
-                label: "Surfaces",
-                children: [
-                    {
-                        identifier: "depth-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Depth",
-                    },
-                    {
-                        identifier: "seismic-3d-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Seismic 3D",
-                    },
-                    {
-                        identifier: "seismic-4d-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Seismic 4D",
-                    },
-                    {
-                        identifier: "attribute-static-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Uncategorized (Static)",
-                    },
-                    {
-                        identifier: "attribute-time-step-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Uncategorized (Time Step)",
-                    },
-                    {
-                        identifier: "attribute-interval-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Uncategorized (Time Interval)",
-                    },
-                ],
-            },
+            SURFACES,
             {
                 label: "Wells",
                 children: [

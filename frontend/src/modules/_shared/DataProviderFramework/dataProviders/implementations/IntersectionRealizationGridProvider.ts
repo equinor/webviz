@@ -1,6 +1,7 @@
 import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, postGetPolylineIntersectionOptions } from "@api";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { IntersectionType } from "@framework/types/intersection";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { assertNonNull } from "@lib/utils/assertNonNull";
@@ -13,6 +14,7 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
@@ -51,12 +53,22 @@ export type IntersectionRealizationGridProviderArgs = {
     enableWellboreExtensionLength: boolean;
 };
 
+export type IntersectionRealizationGridProviderMeta = {
+    showGridLines: boolean;
+    colorScale: ColorScaleSpecification;
+    opacityPercent: number;
+    extensionLength: number;
+    polylineActualSectionLengths: readonly number[];
+    customPolylineId: string | null;
+};
+
 export class IntersectionRealizationGridProvider
     implements
         CustomDataProviderImplementation<
             IntersectionRealizationGridSettings,
             IntersectionRealizationGridData,
-            IntersectionRealizationGridStoredData
+            IntersectionRealizationGridStoredData,
+            IntersectionRealizationGridProviderMeta
         >
 {
     settings = intersectionRealizationGridSettings;
@@ -65,6 +77,50 @@ export class IntersectionRealizationGridProvider
 
     constructor(args: IntersectionRealizationGridProviderArgs) {
         this._isWellboreExtensionLengthEnabled = args.enableWellboreExtensionLength;
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<
+            IntersectionRealizationGridSettings,
+            IntersectionRealizationGridData,
+            IntersectionRealizationGridStoredData
+        >,
+    ): ProviderSnapshot<IntersectionRealizationGridData, IntersectionRealizationGridProviderMeta> {
+        const { getSetting, getData, getStoredData } = args;
+        const data = getData();
+        const colorScale = getSetting(Setting.COLOR_SCALE);
+        const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
+        const opacityPercent = getSetting(Setting.OPACITY_PERCENT);
+        const attributeName = getSetting(Setting.ATTRIBUTE);
+        const intersection = getSetting(Setting.INTERSECTION);
+        const wellboreExtensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH);
+        const polylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
+
+        // Compute extension length based on intersection type
+        const extensionLength =
+            intersection?.type === IntersectionType.WELLBORE ? (wellboreExtensionLength ?? 0) : 0;
+
+        // Compute value range from data
+        const valueRange: readonly [number, number] | null = data
+            ? [data.min_grid_prop_value, data.max_grid_prop_value]
+            : null;
+
+        const customPolylineId =
+            intersection?.type === IntersectionType.CUSTOM_POLYLINE ? intersection.uuid : null;
+
+        return {
+            data,
+            valueRange,
+            dataLabel: attributeName,
+            meta: {
+                colorScale: colorScale!,
+                showGridLines: showGridLines!,
+                opacityPercent: opacityPercent!,
+                extensionLength,
+                polylineActualSectionLengths: polylineWithSectionLengths?.actualSectionLengths ?? [],
+                customPolylineId,
+            },
+        };
     }
 
     getDefaultSettingsValues() {

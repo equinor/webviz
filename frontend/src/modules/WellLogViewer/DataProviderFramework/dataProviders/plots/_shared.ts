@@ -1,3 +1,4 @@
+import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import { isEqual } from "lodash";
 
 import type { WellboreLogCurveData_api } from "@api";
@@ -7,14 +8,27 @@ import {
     getLogCurveDataOptions,
     getWellboreLogCurveHeadersOptions,
 } from "@api";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type {
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+
+export type WellLogPlotProviderMeta = {
+    color: string | null;
+    plotVariant: TemplatePlotType | null;
+    showLabels: boolean | null;
+    showLines: boolean | null;
+    labelRotation: number | null;
+    colorScale: ColorScaleSpecification | null;
+};
+
+export type WellLogPlotProviderSnapshot = ProviderSnapshot<WellboreLogCurveData_api, WellLogPlotProviderMeta>;
 
 export const baseSettings = [Setting.LOG_CURVE] as const;
 export type BaseSettingsTypeMap = MakeSettingTypesMap<typeof baseSettings>;

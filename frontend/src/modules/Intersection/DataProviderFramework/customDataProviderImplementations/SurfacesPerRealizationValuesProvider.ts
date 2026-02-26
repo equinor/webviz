@@ -10,6 +10,7 @@ import { IntersectionType } from "@framework/types/intersection";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -23,6 +24,7 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
@@ -55,18 +57,49 @@ export type SurfacesPerRealizationValuesStoredData = {
 // Key is surface name, value is surface sample values per selected realization
 export type SurfacesPerRealizationValuesData = Record<string, SurfaceRealizationSampleValues_api[]>;
 
+export type SurfacesPerRealizationValuesProviderMeta = {
+    cumulatedHorizontalPolylineLengthArr: readonly number[];
+    polylineLength: number;
+    colorSet: ColorSet | null;
+};
+
 export class SurfacesPerRealizationValuesProvider
     implements
         CustomDataProviderImplementation<
             SurfacesPerRealizationValuesSettings,
             SurfacesPerRealizationValuesData,
-            SurfacesPerRealizationValuesStoredData
+            SurfacesPerRealizationValuesStoredData,
+            SurfacesPerRealizationValuesProviderMeta
         >
 {
     settings = surfacesPerRealizationValuesSettings;
 
     getDefaultName() {
         return "Surfaces Per Realization Values";
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<
+            SurfacesPerRealizationValuesSettings,
+            SurfacesPerRealizationValuesData,
+            SurfacesPerRealizationValuesStoredData
+        >,
+    ): ProviderSnapshot<SurfacesPerRealizationValuesData, SurfacesPerRealizationValuesProviderMeta> {
+        const { getData, getStoredData, getSetting } = args;
+        const data = getData();
+        const requestedPolyline = getStoredData("requestedPolylineWithCumulatedLengths");
+
+        return {
+            data,
+            valueRange: null,
+            dataLabel: "Surfaces Per Realization",
+            meta: {
+                cumulatedHorizontalPolylineLengthArr:
+                    requestedPolyline?.cumulatedHorizontalPolylineLengthArr ?? [],
+                polylineLength: requestedPolyline?.xUtmPoints.length ?? 0,
+                colorSet: getSetting(Setting.COLOR_SET),
+            },
+        };
     }
 
     getDefaultSettingsValues() {

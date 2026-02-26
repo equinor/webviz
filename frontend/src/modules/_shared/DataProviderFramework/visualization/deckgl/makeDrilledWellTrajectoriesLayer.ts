@@ -22,9 +22,9 @@ export type GeoWellFeature = BaseWellFeature & { properties: GeoWellProperties }
 
 export function makeDrilledWellTrajectoriesLayer({
     id,
-    getData,
-}: TransformerArgs<any, WellboreTrajectory_api[], any>): WellsLayer | null {
-    const fieldWellboreTrajectoriesData = getData();
+    state,
+}: TransformerArgs<WellboreTrajectory_api[], never>): WellsLayer | null {
+    const fieldWellboreTrajectoriesData = state?.snapshot?.data;
 
     if (!fieldWellboreTrajectoriesData) {
         return null;

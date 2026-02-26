@@ -7,10 +7,12 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { RealizationGridProviderMeta } from "@modules/_shared/DataProviderFramework/visualization/sharedMetaTypes/realizationGrid";
 import type { RealizationGridData } from "@modules/_shared/DataProviderFramework/visualization/utils/types";
 import {
     transformGridMappedProperty,
@@ -42,7 +44,13 @@ type StoredData = {
 };
 
 export class RealizationGridProvider
-    implements CustomDataProviderImplementation<RealizationGridSettings, RealizationGridData, StoredData>
+    implements
+        CustomDataProviderImplementation<
+            RealizationGridSettings,
+            RealizationGridData,
+            StoredData,
+            RealizationGridProviderMeta
+        >
 {
     settings = realizationGridSettings;
 
@@ -55,6 +63,31 @@ export class RealizationGridProvider
 
     getDefaultName() {
         return "Grid Model Layer";
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>,
+    ): ProviderSnapshot<RealizationGridData, RealizationGridProviderMeta> {
+        const { getSetting, getData } = args;
+        const data = getData();
+        const colorScale = getSetting(Setting.COLOR_SCALE);
+        const showGridLines = getSetting(Setting.SHOW_GRID_LINES) ?? false;
+        const opacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
+
+        const valueRange: readonly [number, number] | null = data
+            ? [data.gridParameterData.min_grid_prop_value, data.gridParameterData.max_grid_prop_value]
+            : null;
+
+        return {
+            data,
+            valueRange,
+            dataLabel: getSetting(Setting.ATTRIBUTE) ?? "Grid",
+            meta: {
+                colorScale,
+                showGridLines,
+                opacityPercent,
+            },
+        };
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

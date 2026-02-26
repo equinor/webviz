@@ -19,21 +19,24 @@ import {
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
+    DataProviderMeta,
+    ProviderSnapshot,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { Item } from "../../interfacesAndTypes/entities";
+import type { ItemView, StateSnapshot } from "../../interfacesAndTypes/ItemView";
 import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../../interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
-import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
+import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export enum DataProviderTopic {
     STATUS = "STATUS",
     DATA = "DATA",
     SUBORDINATED = "SUBORDINATED",
-    REVISION_NUMBER = "REVISION_NUMBER",
     PROGRESS_MESSAGE = "PROGRESS_MESSAGE",
+    SUBORDINATION_PREFIX = "SUBORDINATION_PREFIX",
 }
 
 export enum DataProviderStatus {
@@ -42,14 +45,15 @@ export enum DataProviderStatus {
     ERROR = "ERROR",
     INVALID_SETTINGS = "INVALID_SETTINGS",
     SUCCESS = "SUCCESS",
+    AWAITING_OPERATION = "AWAITING_OPERATION",
 }
 
 export type DataProviderPayloads<TData> = {
     [DataProviderTopic.STATUS]: DataProviderStatus;
     [DataProviderTopic.DATA]: TData;
     [DataProviderTopic.SUBORDINATED]: boolean;
-    [DataProviderTopic.REVISION_NUMBER]: number;
     [DataProviderTopic.PROGRESS_MESSAGE]: string | null;
+    [DataProviderTopic.SUBORDINATION_PREFIX]: string;
 };
 
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
@@ -74,6 +78,7 @@ export type DataProviderParams<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
+    TMeta extends Record<string, unknown> = Record<string, never>,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > = {
@@ -84,6 +89,7 @@ export type DataProviderParams<
         TSettings,
         TData,
         TStoredData,
+        TMeta,
         TSettingTypes,
         TSettingKey
     >;
@@ -98,16 +104,26 @@ export class DataProvider<
         TSettings extends Settings,
         TData,
         TStoredData extends StoredData = Record<string, never>,
+        TMeta extends DataProviderMeta = Record<string, never>,
         TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
         TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     >
-    implements Item, PublishSubscribe<DataProviderPayloads<TData>>
+    implements Item, PublishSubscribe<DataProviderPayloads<TData>>, ItemView
 {
     private _type: string;
     private _customDataProviderImpl: CustomDataProviderImplementation<
         TSettings,
         TData,
         TStoredData,
+        TMeta,
+        TSettingTypes,
+        TSettingKey
+    >;
+    private _customDataProviderImplementation: CustomDataProviderImplementation<
+        TSettings,
+        TData,
+        TStoredData,
+        TMeta,
         TSettingTypes,
         TSettingKey
     >;
@@ -120,19 +136,21 @@ export class DataProvider<
     private _status: DataProviderStatus = DataProviderStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
-    private _valueRange: readonly [number, number] | null = null;
+    private _subordinationPrefix = "";
     private _isSubordinated: boolean = false;
     private _prevSettings: TSettingTypes | null = null;
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
     private _currentTransactionId: number = 0;
     private _settingsErrorMessages: string[] = [];
-    private _revisionNumber: number = 0;
     private _progressMessage: string | null = null;
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
 
-    constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
+    private _cachedStateSnapshot: StateSnapshot<TData, TMeta> | null = null;
+    private _cachedStateSnapshotRevision: number = -1;
+
+    constructor(params: DataProviderParams<TSettings, TData, TStoredData, TMeta, TSettingTypes, TSettingKey>) {
         const {
             dataProviderManager: dataProviderManager,
             type,
@@ -141,6 +159,7 @@ export class DataProvider<
         } = params;
         this._type = type;
         this._dataProviderManager = dataProviderManager;
+        this._customDataProviderImplementation = customDataProviderImplementation;
         this._settingsContextDelegate = new SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>(
             customDataProviderImplementation,
             dataProviderManager,
@@ -177,7 +196,61 @@ export class DataProvider<
     }
 
     getRevisionNumber(): number {
-        return this._revisionNumber;
+        return this._itemDelegate.getRevisionNumber();
+    }
+
+    private mapStatusToStateSnapshotStatus(status: DataProviderStatus): StateSnapshot<TData, TMeta>["status"] {
+        switch (status) {
+            case DataProviderStatus.LOADING:
+            case DataProviderStatus.AWAITING_OPERATION:
+                return "loading";
+            case DataProviderStatus.SUCCESS:
+                return "ready";
+            case DataProviderStatus.ERROR:
+            case DataProviderStatus.INVALID_SETTINGS:
+                return "error";
+            case DataProviderStatus.IDLE:
+            default:
+                return "loading";
+        }
+    }
+
+    getProviderImplementation(): CustomDataProviderImplementation<
+        TSettings,
+        TData,
+        TStoredData,
+        TMeta,
+        TSettingTypes,
+        TSettingKey
+    > {
+        return this._customDataProviderImplementation;
+    }
+
+    getStateSnapshot(): StateSnapshot<TData, TMeta> | null {
+        if (this._cachedStateSnapshot && this._cachedStateSnapshotRevision === this.getRevisionNumber()) {
+            return this._cachedStateSnapshot;
+        }
+
+        let providerSnapshot: ProviderSnapshot<TData, TMeta> | null = null;
+
+        if (this._data !== null && this._status === DataProviderStatus.SUCCESS) {
+            providerSnapshot = this._customDataProviderImplementation.makeProviderSnapshot(this.makeAccessors());
+        }
+
+        const snapshot = {
+            id: this.getId(),
+            name: this.getName(),
+            type: this.getType(),
+            visible: this.isVisible(),
+            status: this.mapStatusToStateSnapshotStatus(this._status),
+            error: this.getError(),
+            revision: this.getRevisionNumber(),
+            snapshot: providerSnapshot,
+        };
+
+        this._cachedStateSnapshot = snapshot;
+        this._cachedStateSnapshotRevision = this.getRevisionNumber();
+        return snapshot;
     }
 
     areCurrentSettingsValid(): boolean {
@@ -238,7 +311,11 @@ export class DataProvider<
             // If the settings have changed but no refetch is required, it might be that the settings changes
             // still require a rerender of the data provider.
             if (this._status === DataProviderStatus.SUCCESS) {
-                this.incrementRevisionNumber();
+                this._itemDelegate.incrementRevisionNumber();
+                return;
+            }
+            if (this._isSubordinated) {
+                this.setStatus(DataProviderStatus.AWAITING_OPERATION);
                 return;
             }
             this.setStatus(DataProviderStatus.SUCCESS);
@@ -281,6 +358,14 @@ export class DataProvider<
         }
     }
 
+    getId(): string {
+        return this._itemDelegate.getId();
+    }
+
+    getName(): string {
+        return this._itemDelegate.getName();
+    }
+
     getStatus(): DataProviderStatus {
         return this._status;
     }
@@ -305,16 +390,18 @@ export class DataProvider<
         return this._isSubordinated;
     }
 
-    setIsSubordinated(isSubordinated: boolean): void {
-        if (this._isSubordinated === isSubordinated) {
+    isVisible(): boolean {
+        return this.getItemDelegate().isVisible();
+    }
+
+    setIsSubordinated(isSubordinated: boolean, prefix: string = ""): void {
+        if (this._isSubordinated === isSubordinated && this._subordinationPrefix === prefix) {
             return;
         }
         this._isSubordinated = isSubordinated;
+        this._subordinationPrefix = prefix;
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.SUBORDINATED);
-    }
-
-    getDataValueRange(): readonly [number, number] | null {
-        return this._valueRange;
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.SUBORDINATION_PREFIX);
     }
 
     getDataProviderManager(): DataProviderManager {
@@ -332,11 +419,11 @@ export class DataProvider<
             if (topic === DataProviderTopic.SUBORDINATED) {
                 return this._isSubordinated;
             }
-            if (topic === DataProviderTopic.REVISION_NUMBER) {
-                return this._revisionNumber;
-            }
             if (topic === DataProviderTopic.PROGRESS_MESSAGE) {
                 return this._progressMessage;
+            }
+            if (topic === DataProviderTopic.SUBORDINATION_PREFIX) {
+                return this._subordinationPrefix;
             }
             throw new Error(`Unknown topic: ${topic}`);
         };
@@ -403,12 +490,12 @@ export class DataProvider<
         }
 
         if (this._isSubordinated) {
+            this.setStatus(DataProviderStatus.AWAITING_OPERATION);
             return;
         }
 
         const accessors = this.makeAccessors();
 
-        this.invalidateValueRange();
         this.setProgressMessage(null);
         this.setStatus(DataProviderStatus.LOADING);
 
@@ -434,9 +521,6 @@ export class DataProvider<
                 return;
             }
 
-            if (this._customDataProviderImpl.makeValueRange) {
-                this._valueRange = this._customDataProviderImpl.makeValueRange(accessors);
-            }
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
             this.setStatus(DataProviderStatus.SUCCESS);
         } catch (error: any) {
@@ -485,27 +569,17 @@ export class DataProvider<
         }
     }
 
-    private incrementRevisionNumber(): void {
-        this._revisionNumber += 1;
-        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.REVISION_NUMBER);
-        this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
-    }
-
     private setStatus(status: DataProviderStatus): void {
         if (this._status === status) {
             return;
         }
 
         this._status = status;
-        this.incrementRevisionNumber();
+        this._itemDelegate.incrementRevisionNumber();
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS);
     }
 
     private getQueryClient(): QueryClient | null {
         return this._dataProviderManager?.getQueryClient() ?? null;
-    }
-
-    private invalidateValueRange(): void {
-        this._valueRange = null;
     }
 }

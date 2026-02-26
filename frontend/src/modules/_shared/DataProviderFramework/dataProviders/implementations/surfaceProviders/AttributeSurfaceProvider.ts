@@ -11,6 +11,7 @@ import {
     getStatisticalSurfaceDataHybridQueryKey,
     getSurfaceDataOptions,
 } from "@api";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
@@ -19,6 +20,7 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
@@ -50,6 +52,7 @@ const surfaceSettings = [
     Setting.COLOR_SCALE,
     Setting.CONTOURS,
 ] as const;
+
 export type AttributeSurfaceSettings = typeof surfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<AttributeSurfaceSettings>;
 
@@ -58,6 +61,7 @@ export enum AttributeSurfaceType {
     ATTRIBUTE_TIME_STEP = "attribute_time_step",
     ATTRIBUTE_INTERVAL = "attribute_interval",
 }
+
 const ALLOWED_SURFACE_TYPES_FROM_API = [
     SurfaceAttributeType_api.UNKNOWN,
     SurfaceAttributeType_api.PROPERTY,
@@ -71,17 +75,28 @@ const ALLOWED_SURFACE_TYPES_FROM_API = [
     SurfaceAttributeType_api.VELOCITY,
     SurfaceAttributeType_api.VOLUMES,
 ];
+
 const AttributeSurfaceTypeToNameMap = {
     [AttributeSurfaceType.ATTRIBUTE_STATIC]: "Static Surface",
     [AttributeSurfaceType.ATTRIBUTE_TIME_STEP]: "Time Step Surface",
     [AttributeSurfaceType.ATTRIBUTE_INTERVAL]: "Interval Surface",
 };
+
 export type SurfaceProviderArgs = {
     surfaceType: AttributeSurfaceType;
 };
 
+export type SurfaceProviderMeta = {
+    showContours: {
+        enabled: boolean;
+        value: number;
+    } | null;
+    colorScale: ColorScaleSpecification | null;
+};
+
 export class AttributeSurfaceProvider
-    implements CustomDataProviderImplementation<AttributeSurfaceSettings, SurfaceData, SurfaceStoredData>
+    implements
+        CustomDataProviderImplementation<AttributeSurfaceSettings, SurfaceData, SurfaceStoredData, SurfaceProviderMeta>
 {
     settings = surfaceSettings;
 
@@ -90,6 +105,27 @@ export class AttributeSurfaceProvider
 
     constructor(...params: [SurfaceProviderArgs]) {
         this._surfaceType = params[0].surfaceType;
+    }
+
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<AttributeSurfaceSettings, SurfaceData, SurfaceStoredData>,
+    ): ProviderSnapshot<SurfaceData, SurfaceProviderMeta> {
+        const { getSetting, getData } = args;
+        const data = getData();
+        const surfaceData = data?.surfaceData;
+        const colorScale = getSetting(Setting.COLOR_SCALE);
+        const showContours = getSetting(Setting.CONTOURS);
+        const attributeName = getSetting(Setting.ATTRIBUTE);
+
+        return {
+            data,
+            valueRange: surfaceData ? [surfaceData.value_min, surfaceData.value_max] : null,
+            dataLabel: attributeName,
+            meta: {
+                colorScale: colorScale,
+                showContours: showContours,
+            },
+        };
     }
 
     getDefaultSettingsValues() {

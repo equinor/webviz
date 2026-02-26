@@ -26,6 +26,11 @@ export type DataProviderComponentProps = {
 
 export function DataProviderComponent(props: DataProviderComponentProps): React.ReactNode {
     const isExpanded = usePublishSubscribeTopicValue(props.dataProvider.getItemDelegate(), ItemDelegateTopic.EXPANDED);
+    const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
+    const subordinationPrefix = usePublishSubscribeTopicValue(
+        props.dataProvider,
+        DataProviderTopic.SUBORDINATION_PREFIX,
+    );
 
     function makeSetting(setting: SettingManager<any>) {
         const manager = props.dataProvider.getItemDelegate().getDataProviderManager();
@@ -38,8 +43,15 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
     }
 
     function makeSettings(settings: Record<string, SettingManager<any>>): React.ReactNode[] {
+        const elevatedSettingKeys = isSubordinated
+            ? new Set(props.dataProvider.getSettingsContextDelegate().getElevatableSettings() as string[])
+            : null;
+
         const settingNodes: React.ReactNode[] = [];
         for (const key of Object.keys(settings)) {
+            if (elevatedSettingKeys?.has(key)) {
+                continue;
+            }
             settingNodes.push(makeSetting(settings[key]));
         }
         return settingNodes;
@@ -49,7 +61,12 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
         <SortableListItem
             key={props.dataProvider.getItemDelegate().getId()}
             id={props.dataProvider.getItemDelegate().getId()}
-            title={<EditName item={props.dataProvider} />}
+            title={
+                <div className="flex gap-2 items-center">
+                    {subordinationPrefix}
+                    <EditName item={props.dataProvider} />
+                </div>
+            }
             startAdornment={<StartActions dataProvider={props.dataProvider} />}
             endAdornment={<EndActions dataProvider={props.dataProvider} />}
         >
@@ -73,6 +90,7 @@ type StartActionProps = {
 
 function StartActions(props: StartActionProps): React.ReactNode {
     const isExpanded = usePublishSubscribeTopicValue(props.dataProvider.getItemDelegate(), ItemDelegateTopic.EXPANDED);
+    const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
 
     function handleToggleExpanded() {
         props.dataProvider.getItemDelegate().setExpanded(!isExpanded);
@@ -82,7 +100,7 @@ function StartActions(props: StartActionProps): React.ReactNode {
             <DenseIconButton onClick={handleToggleExpanded} title={isExpanded ? "Hide settings" : "Show settings"}>
                 {isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </DenseIconButton>
-            <VisibilityToggle item={props.dataProvider} />
+            {!isSubordinated && <VisibilityToggle item={props.dataProvider} />}
         </div>
     );
 }

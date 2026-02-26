@@ -1,6 +1,7 @@
 import { isEqual } from "lodash";
 
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { IntersectionType } from "@framework/types/intersection";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
@@ -17,6 +18,7 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
+    ProviderSnapshot,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
@@ -60,12 +62,22 @@ const SeismicDataSourceEnumToStringMapping = {
 
 export type IntersectionRealizationSeismicData = SeismicFenceData_trans;
 
+export type IntersectionRealizationSeismicProviderMeta = {
+    colorScale: ColorScaleSpecification;
+    opacityPercent: number;
+    extensionLength: number;
+    seismicFenceSectionLengths: readonly number[];
+    seismicFencePolylineUtmXy: readonly number[];
+    sourcePolylineActualSectionLengths: readonly number[];
+};
+
 export class IntersectionRealizationSeismicProvider
     implements
         CustomDataProviderImplementation<
             IntersectionRealizationSeismicSettings,
             IntersectionRealizationSeismicData,
-            IntersectionRealizationSeismicStoredData
+            IntersectionRealizationSeismicStoredData,
+            IntersectionRealizationSeismicProviderMeta
         >
 {
     settings = intersectionRealizationSeismicSettings;
@@ -114,27 +126,52 @@ export class IntersectionRealizationSeismicProvider
         );
     }
 
-    makeValueRange({
-        getData,
-    }: DataProviderInformationAccessors<
-        IntersectionRealizationSeismicSettings,
-        IntersectionRealizationSeismicData,
-        IntersectionRealizationSeismicStoredData
-    >): [number, number] | null {
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<
+            IntersectionRealizationSeismicSettings,
+            IntersectionRealizationSeismicData,
+            IntersectionRealizationSeismicStoredData
+        >,
+    ): ProviderSnapshot<IntersectionRealizationSeismicData, IntersectionRealizationSeismicProviderMeta> {
+        const { getSetting, getData, getStoredData } = args;
         const data = getData();
-        if (!data) {
-            return null;
+        const colorScale = getSetting(Setting.COLOR_SCALE);
+        const opacityPercent = getSetting(Setting.OPACITY_PERCENT);
+        const attributeName = getSetting(Setting.ATTRIBUTE);
+        const intersection = getSetting(Setting.INTERSECTION);
+        const wellboreExtensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH);
+        const seismicFencePolyline = getStoredData("seismicFencePolylineWithSectionLengths");
+        const sourcePolyline = getStoredData("sourcePolylineWithSectionLengths");
+
+        // Compute extension length based on intersection type
+        const extensionLength =
+            intersection?.type === IntersectionType.WELLBORE ? (wellboreExtensionLength ?? 0) : 0;
+
+        let valueRange: readonly [number, number] | null = null;
+        if (data) {
+            // Fill value is NaN
+            const minValue = data.fenceTracesFloat32Arr
+                .filter((value) => !Number.isNaN(value))
+                .reduce((acc, value) => Math.min(acc, value), Infinity);
+            const maxValue = data.fenceTracesFloat32Arr
+                .filter((value) => !Number.isNaN(value))
+                .reduce((acc, value) => Math.max(acc, value), -Infinity);
+            valueRange = [minValue, maxValue];
         }
 
-        // Fill value is NaN
-        const minValue = data.fenceTracesFloat32Arr
-            .filter((value) => !Number.isNaN(value))
-            .reduce((acc, value) => Math.min(acc, value), Infinity);
-        const maxValue = data.fenceTracesFloat32Arr
-            .filter((value) => !Number.isNaN(value))
-            .reduce((acc, value) => Math.max(acc, value), -Infinity);
-
-        return [minValue, maxValue];
+        return {
+            data,
+            valueRange,
+            dataLabel: attributeName,
+            meta: {
+                colorScale: colorScale!,
+                opacityPercent: opacityPercent!,
+                extensionLength,
+                seismicFenceSectionLengths: seismicFencePolyline?.actualSectionLengths ?? [],
+                seismicFencePolylineUtmXy: seismicFencePolyline?.polylineUtmXy ?? [],
+                sourcePolylineActualSectionLengths: sourcePolyline?.actualSectionLengths ?? [],
+            },
+        };
     }
 
     areCurrentSettingsValid({

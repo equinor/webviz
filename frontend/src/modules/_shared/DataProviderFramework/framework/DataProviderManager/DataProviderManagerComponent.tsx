@@ -26,12 +26,12 @@ export type DataProviderManagerComponentProps = {
     dataProviderManager: DataProviderManager;
     additionalHeaderComponents: React.ReactNode;
     groupActions: ActionGroup[] | ((group: ItemGroup) => ActionGroup[]);
-    onAction: (identifier: string, groupDelegate: GroupDelegate) => void;
+    onAction: (identifier: string, groupDelegate: GroupDelegate, parent: ItemGroup) => void;
     isMoveAllowed?: (movedItem: Item, destinationGroup: ItemGroup) => boolean;
 };
 
 export function DataProviderManagerComponent(props: DataProviderManagerComponentProps): React.ReactNode {
-    const { groupActions } = props;
+    const { groupActions, isMoveAllowed } = props;
 
     const listRef = React.useRef<HTMLDivElement>(null);
     const listSize = useElementSize(listRef);
@@ -45,92 +45,98 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
             groupDelegate = group.getGroupDelegate();
         }
 
-        props.onAction(identifier, groupDelegate);
+        props.onAction(identifier, groupDelegate, group ?? props.dataProviderManager);
     }
 
-    function checkIfItemMoveAllowed(args: IsMoveAllowedArgs): boolean {
-        const movedItem = groupDelegate.findDescendantById(args.movedItemId);
-        if (!movedItem) {
-            return false;
-        }
-
-        const destinationItem = args.destinationId
-            ? groupDelegate.findDescendantById(args.destinationId)
-            : props.dataProviderManager;
-
-        if (!destinationItem || !instanceofItemGroup(destinationItem)) {
-            return false;
-        }
-
-        if (movedItem instanceof View && destinationItem instanceof View) {
-            return false;
-        }
-
-        if (props.isMoveAllowed) {
-            if (!props.isMoveAllowed(movedItem, destinationItem)) {
+    const checkIfItemMoveAllowed = React.useCallback(
+        function checkIfItemMoveAllowed(args: IsMoveAllowedArgs): boolean {
+            const movedItem = groupDelegate.findDescendantById(args.movedItemId);
+            if (!movedItem) {
                 return false;
             }
-        }
 
-        const numSharedSettings =
-            destinationItem.getGroupDelegate().findChildren((item) => {
-                return item instanceof SharedSetting;
-            }).length ?? 0;
+            const destinationItem = args.destinationId
+                ? groupDelegate.findDescendantById(args.destinationId)
+                : props.dataProviderManager;
 
-        if (!(movedItem instanceof SharedSetting)) {
-            if (args.position < numSharedSettings) {
+            if (!destinationItem || !instanceofItemGroup(destinationItem)) {
                 return false;
             }
-        } else {
-            if (args.originId === args.destinationId) {
-                if (args.position >= numSharedSettings) {
+
+            if (movedItem instanceof View && destinationItem instanceof View) {
+                return false;
+            }
+
+            if (isMoveAllowed) {
+                if (!isMoveAllowed(movedItem, destinationItem)) {
+                    return false;
+                }
+            }
+
+            const numSharedSettings =
+                destinationItem.getGroupDelegate().findChildren((item) => {
+                    return item instanceof SharedSetting;
+                }).length ?? 0;
+
+            if (!(movedItem instanceof SharedSetting)) {
+                if (args.position < numSharedSettings) {
                     return false;
                 }
             } else {
-                if (args.position > numSharedSettings) {
-                    return false;
+                if (args.originId === args.destinationId) {
+                    if (args.position >= numSharedSettings) {
+                        return false;
+                    }
+                } else {
+                    if (args.position > numSharedSettings) {
+                        return false;
+                    }
                 }
             }
-        }
 
-        return true;
-    }
+            return true;
+        },
+        [groupDelegate, props.dataProviderManager, isMoveAllowed],
+    );
 
-    function handleItemMoved(
-        movedItemId: string,
-        originId: string | null,
-        destinationId: string | null,
-        position: number,
-    ) {
-        const movedItem = groupDelegate.findDescendantById(movedItemId);
-        if (!movedItem) {
-            return;
-        }
-
-        let origin = props.dataProviderManager.getGroupDelegate();
-        if (originId) {
-            const candidate = groupDelegate.findDescendantById(originId);
-            if (candidate && instanceofItemGroup(candidate)) {
-                origin = candidate.getGroupDelegate();
+    const handleItemMoved = React.useCallback(
+        function handleItemMoved(
+            movedItemId: string,
+            originId: string | null,
+            destinationId: string | null,
+            position: number,
+        ) {
+            const movedItem = groupDelegate.findDescendantById(movedItemId);
+            if (!movedItem) {
+                return;
             }
-        }
 
-        let destination = props.dataProviderManager.getGroupDelegate();
-        if (destinationId) {
-            const candidate = groupDelegate.findDescendantById(destinationId);
-            if (candidate && instanceofItemGroup(candidate)) {
-                destination = candidate.getGroupDelegate();
+            let origin = props.dataProviderManager.getGroupDelegate();
+            if (originId) {
+                const candidate = groupDelegate.findDescendantById(originId);
+                if (candidate && instanceofItemGroup(candidate)) {
+                    origin = candidate.getGroupDelegate();
+                }
             }
-        }
 
-        if (origin === destination) {
-            origin.moveChild(movedItem, position);
-            return;
-        }
+            let destination = props.dataProviderManager.getGroupDelegate();
+            if (destinationId) {
+                const candidate = groupDelegate.findDescendantById(destinationId);
+                if (candidate && instanceofItemGroup(candidate)) {
+                    destination = candidate.getGroupDelegate();
+                }
+            }
 
-        origin.removeChild(movedItem);
-        destination.insertChild(movedItem, position);
-    }
+            if (origin === destination) {
+                origin.moveChild(movedItem, position);
+                return;
+            }
+
+            origin.removeChild(movedItem);
+            destination.insertChild(movedItem, position);
+        },
+        [groupDelegate, props.dataProviderManager],
+    );
 
     const actions = React.useMemo(() => {
         if (typeof groupActions === "function") {

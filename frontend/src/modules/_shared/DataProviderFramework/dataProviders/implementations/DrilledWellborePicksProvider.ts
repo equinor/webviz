@@ -157,4 +157,17 @@ export class DrilledWellborePicksProvider
             return pickIdentifiers;
         });
     }
+
+    makeProviderSnapshot(
+        accessors: DataProviderInformationAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>,
+    ) {
+        const data = accessors.getData();
+
+        return {
+            data,
+            valueRange: null,
+            meta: null,
+            dataLabel: "Wellbore Picks",
+        };
+    }
 }

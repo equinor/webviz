@@ -6,15 +6,15 @@ import type {
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import type { EnsembleWellborePicksSettings } from "../customDataProviderImplementations/EnsembleWellborePicksProvider";
+import type { EnsembleWellborePicksData } from "../customDataProviderImplementations/EnsembleWellborePicksProvider";
 
 export function createWellborePicksLayerItemsMaker({
     id,
     name,
     isLoading,
-    getData,
-}: TransformerArgs<EnsembleWellborePicksSettings, any, any, any>): EsvLayerItemsMaker | null {
-    const selectedWellborePicks = getData();
+    state,
+}: TransformerArgs<EnsembleWellborePicksData, never>): EsvLayerItemsMaker | null {
+    const selectedWellborePicks = state?.snapshot?.data;
     if (!selectedWellborePicks || isLoading) {
         return null;
     }
@@ -22,7 +22,9 @@ export function createWellborePicksLayerItemsMaker({
     // Convert Picks from api to esv-intersection format
     // Picks can be transformed into unit and non-unit picks, we are placing all in non-unit picks for now
     const emptyUnitList: any[] = [];
-    const pickData = transformFormationData(selectedWellborePicks, emptyUnitList);
+    // WellborePick_api.confidence is optional (undefined | null | string), but ESV Pick requires null | string
+    const picksForTransform = selectedWellborePicks.map((p) => ({ ...p, confidence: p.confidence ?? null }));
+    const pickData = transformFormationData(picksForTransform, emptyUnitList);
 
     const wellborePicksLayerItemsMaker: EsvLayerItemsMaker = {
         makeLayerItems: (intersectionReferenceSystem) => {

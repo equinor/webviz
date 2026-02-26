@@ -1,14 +1,10 @@
 import { fromNumArray, type BBox } from "@lib/utils/bbox";
 import type {
     IntersectionRealizationGridData,
-    IntersectionRealizationGridSettings,
-    IntersectionRealizationGridStoredData,
+    IntersectionRealizationGridProviderMeta,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
-
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 /**
  * Build a bounding box for the intersection grid data.
@@ -18,21 +14,16 @@ import { createValidExtensionLength } from "../utils/extensionLengthUtils";
  */
 export function makeGridBoundingBox({
     isLoading,
-    getData,
-    getStoredData,
-    getSetting,
-}: TransformerArgs<
-    IntersectionRealizationGridSettings,
-    IntersectionRealizationGridData,
-    IntersectionRealizationGridStoredData,
-    any
->): BBox | null {
-    const polylineIntersectionData = getData();
-    const polylineActualSectionLengths = getStoredData("polylineWithSectionLengths")?.actualSectionLengths;
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
+    state,
+}: TransformerArgs<IntersectionRealizationGridData, IntersectionRealizationGridProviderMeta>): BBox | null {
+    const snapshot = state?.snapshot;
+    if (!snapshot) {
+        return null;
+    }
+
+    const polylineIntersectionData = snapshot.data;
+    const polylineActualSectionLengths = snapshot.meta.polylineActualSectionLengths;
+    const extensionLength = snapshot.meta.extensionLength;
 
     if (!polylineIntersectionData || !polylineActualSectionLengths || isLoading) {
         return null;

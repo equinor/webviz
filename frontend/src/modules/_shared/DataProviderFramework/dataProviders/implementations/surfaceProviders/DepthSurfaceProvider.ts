@@ -10,11 +10,13 @@ import {
     getSurfaceDataOptions,
 } from "@api";
 import type { GetStatisticalSurfaceDataHybridData_api, Options } from "@api";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import type {
+    ProviderSnapshot,
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
@@ -25,7 +27,6 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 
@@ -59,10 +60,20 @@ export type SurfaceProviderArgs = {
     surfaceType: SurfaceType;
 };
 
+export type SurfaceProviderMeta = {
+    showContours: {
+        enabled: boolean;
+        value: number;
+    } | null;
+    colorScale: ColorScaleSpecification | null;
+};
+
 export class DepthSurfaceProvider
-    implements CustomDataProviderImplementation<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>
+    implements
+        CustomDataProviderImplementation<DepthSurfaceSettings, SurfaceData, SurfaceStoredData, SurfaceProviderMeta>
 {
     settings = surfaceSettings;
+    elevatableSettings = [Setting.DEPTH_COLOR_SCALE, Setting.CONTOURS] as const;
 
     private _dataFormat: SurfaceDataFormat = SurfaceDataFormat.FLOAT;
 
@@ -72,25 +83,33 @@ export class DepthSurfaceProvider
         };
     }
 
+    makeProviderSnapshot(
+        args: DataProviderInformationAccessors<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>,
+    ): ProviderSnapshot<SurfaceData, SurfaceProviderMeta> {
+        const { getSetting, getData } = args;
+        const data = getData();
+        const surfaceData = data?.surfaceData;
+        const colorScale = getSetting(Setting.DEPTH_COLOR_SCALE);
+        const showContours = getSetting(Setting.CONTOURS);
+        const attributeName = getSetting(Setting.DEPTH_ATTRIBUTE);
+
+        return {
+            data,
+            valueRange: surfaceData ? [surfaceData.value_min, surfaceData.value_max] : null,
+            dataLabel: attributeName,
+            meta: {
+                colorScale: colorScale,
+                showContours: showContours,
+            },
+        };
+    }
+
     getDefaultName(): string {
         return "Depth Surface";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
-    }
-
-    makeValueRange({
-        getData,
-    }: DataProviderInformationAccessors<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>):
-        | [number, number]
-        | null {
-        const data = getData()?.surfaceData;
-        if (!data) {
-            return null;
-        }
-
-        return [data.value_min, data.value_max];
     }
 
     defineDependencies({
