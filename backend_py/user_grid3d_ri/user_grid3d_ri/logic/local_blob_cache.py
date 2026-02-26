@@ -140,7 +140,7 @@ class LocalBlobCache:
                         num_bytes_downloaded = response.num_bytes_downloaded
 
                 # Need to refine exceptions here
-                except Exception as exception:
+                except Exception as exception:  # pylint: disable=broad-exception-caught
                     LOGGER.error(f"Failed to download {blob_kind} blob {object_uuid=} {exception=}")
                     return DownloadResult.FAILED
 
@@ -155,7 +155,7 @@ class LocalBlobCache:
         try:
             LOGGER.debug(f"Rename/move tmp file; {tmp_blob_path=} {local_blob_path=}")
             await aiofiles.os.rename(tmp_blob_path, local_blob_path)
-        except Exception as exception:
+        except Exception as exception:  # pylint: disable=broad-exception-caught
             LOGGER.error(f"Failed to move temp {blob_kind} blob into cache {object_uuid=} {exception=}")
             run_in_background_task(_try_delete_temp_file_async(tmp_blob_path))
             return DownloadResult.FAILED
@@ -207,7 +207,7 @@ class LocalBlobCache:
         try:
             LOGGER.debug(f"Rename/move tmp file; {tmp_blob_path=} {local_blob_path=}")
             await aiofiles.os.rename(tmp_blob_path, local_blob_path)
-        except Exception as exception:
+        except Exception as exception:  # pylint: disable=broad-exception-caught
             LOGGER.error(f"Failed to move temp {blob_kind} blob into cache {object_uuid=} {exception=}")
             run_in_background_task(_try_delete_temp_file_async(tmp_blob_path))
             return DownloadResult.FAILED
