@@ -64,9 +64,9 @@ def create_credential_for_azure_services(
     # we insert an explicitly created ClientSecretCredential first in a ChainedTokenCredential.
     if secret_vars_for_local_dev is not None:
         LOGGER.info("Creating local development credential for Azure services using ChainedTokenCredential")
-        LOGGER.info(f"ClientSecretVars.tenant_id present: {secret_vars_for_local_dev.tenant_id is not None}")
-        LOGGER.info(f"ClientSecretVars.client_id present: {secret_vars_for_local_dev.client_id is not None}")
-        LOGGER.info(f"ClientSecretVars.client_secret present: {secret_vars_for_local_dev.client_secret is not None}")
+        LOGGER.info(f"ClientSecretVars.tenant_id present: {bool(secret_vars_for_local_dev.tenant_id)}")
+        LOGGER.info(f"ClientSecretVars.client_id present: {bool(secret_vars_for_local_dev.client_id)}")
+        LOGGER.info(f"ClientSecretVars.client_secret present: {bool(secret_vars_for_local_dev.client_secret)}")
 
         client_secret_credential = ClientSecretCredential(
             tenant_id=secret_vars_for_local_dev.tenant_id,
