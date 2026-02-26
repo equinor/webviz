@@ -73,7 +73,7 @@ class LocalBlobCache:
             if dl_res == DownloadResult.FAILED:
                 LOGGER.error(f"Failed to download {blob_kind} blob {object_uuid=}")
                 return None
-            elif dl_res == DownloadResult.ABANDONED:
+            if dl_res == DownloadResult.ABANDONED:
                 LOGGER.debug(f"Download of {blob_kind} blob was abandoned, returning from cache: {local_blob_path}")
                 return local_blob_path
 
@@ -96,9 +96,9 @@ class LocalBlobCache:
 
         if not blob_key in _blob_keys_in_flight:
             LOGGER.error(f"The {blob_kind} blob download we were waiting finished but no data is visible in cache")
-            return None
+        else:
+            LOGGER.error(f"Timed out while waiting for {blob_kind} blob to appear in cache")
 
-        LOGGER.error(f"Timed out while waiting for {blob_kind} blob to appear in cache")
         return None
 
     async def _download_blob_simple_async(self, blob_item: _BlobItem) -> DownloadResult:
