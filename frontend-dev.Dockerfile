@@ -1,17 +1,18 @@
-ARG NODE_TAG="18.20.8-alpine@sha256:929b04d7c782f04f615cf785488fed452b6569f87c73ff666ad553a7554f0006"
+ARG NODE_TAG="24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b181aa49e22c14383e"
 
 FROM node:${NODE_TAG}
 
 USER node
 
 
-COPY --chown=node:node . /usr/src/app
-
 WORKDIR /usr/src/app/frontend
 
 RUN npm config set fetch-retry-mintimeout 100000
 RUN npm config set fetch-retry-maxtimeout 600000
 
+COPY --chown=node:node frontend/package.json frontend/package-lock.json ./
 RUN npm ci --ignore-scripts
+
+COPY --chown=node:node frontend/ ./
 
 CMD ["npm", "run", "dev"]

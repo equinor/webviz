@@ -34,6 +34,9 @@ spec:
       ports:
         - name: http
           port: 5000
+      identity:
+        azure:
+          clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
       secretRefs:
         azureKeyVaults:
           - name: webviz
@@ -50,8 +53,6 @@ spec:
                 envVar: WEBVIZ_SSDL_RESOURCE_SCOPE
               - name: WEBVIZ-ENTERPRISE-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
-              - name: WEBVIZ-DB-CONN-STRING
-                envVar: WEBVIZ_DB_CONNECTION_STRING
       variables:
         UVICORN_PORT: 5000
       environmentConfig:
@@ -168,23 +169,22 @@ spec:
             averageUtilization: 80
 
     - name: redis-user-session
-      image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+      image: redis:7.2
+      runAsUser: 999
+      command: ["redis-server",  "--loglevel", "notice"]
       ports:
         - name: http
           port: 6379
-      variables:
-        ALLOW_EMPTY_PASSWORD: yes
 
     - name: redis-cache
-      image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+      image: redis:7.2
+      runAsUser: 999
+      # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
+      # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
+      command: ["redis-server",  "--maxmemory", "3gb",  "--maxmemory-policy", "allkeys-lru",  "--save", "''",  "--appendonly", "no",  "--loglevel", "notice"]
       ports:
         - name: http
           port: 6379
-      variables:
-        ALLOW_EMPTY_PASSWORD: yes
-        # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
-        # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
-        REDIS_EXTRA_FLAGS: --maxmemory 3gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel verbose
       resources:
         requests:
           memory: 4Gi
