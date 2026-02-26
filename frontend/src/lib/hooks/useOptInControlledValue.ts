@@ -2,7 +2,7 @@ import React from "react";
 
 /**
  * Creates a stateful value that becomes controlled/uncontrolled, similar to how React handles values for native inputs. In short,
- * @param initialValue Initial value for the state. Overriden if `controlledValue` is defined, but still required for clarity
+ * @param initialValue Initial value for the state. Overridden if `controlledValue` is defined, but we have it as a required prop for clarity
  * @param controlledValue An externally controlled value. If this is `undefined`, we consider the state "uncontrolled".
  * @param onValueChange Callback that is called any time the value is set
  * @returns A tuple with the current state value and setter function
@@ -20,10 +20,10 @@ export function useOptInControlledValue<TValue>(
 
     const setValue = React.useCallback(
         function setValue(newValue: TValue) {
-            if (isControlled) onValueChange?.(newValue);
             setLocalValue(newValue);
+            onValueChange?.(newValue);
         },
-        [isControlled, onValueChange],
+        [onValueChange],
     );
 
     return [value, setValue];
