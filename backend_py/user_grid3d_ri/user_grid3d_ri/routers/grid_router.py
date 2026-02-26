@@ -155,6 +155,7 @@ async def post_get_grid_geometry(
 
 
 @router.post("/get_mapped_grid_properties")
+# pylint: disable-next=too-many-locals, too-many-statements
 async def post_get_mapped_grid_properties(
     req_body: api_schemas.MappedGridPropertiesRequest,
 ) -> api_schemas.MappedGridPropertiesResponse:

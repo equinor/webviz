@@ -140,6 +140,7 @@ async def _launch_ri_instance() -> int:
 
     LOGGER.debug(f"_launch_ri_instance() - {env_dict=}")
 
+    # pylint: disable-next=no-member
     proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(
         _RI_EXECUTABLE,
         "--console",

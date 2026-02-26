@@ -23,6 +23,7 @@ router = APIRouter()
 
 
 @router.post("/get_polyline_intersection")
+# pylint: disable-next=too-many-locals, too-many-statements
 async def post_get_polyline_intersection(
     req_body: api_schemas.PolylineIntersectionRequest,
 ) -> api_schemas.PolylineIntersectionResponse:
