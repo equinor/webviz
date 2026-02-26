@@ -28,6 +28,8 @@ class CaseInfo(BaseModel):
     user: str
     updated_at_utc_ms: int
     description: str
+    model_name: str
+    model_revision: str
     ensembles: list[EnsembleInfo]
 
 
@@ -99,6 +101,18 @@ class SumoInspector:
                                 "size": 100,
                             }
                         },
+                        "model_name": {
+                            "terms": {
+                                "field": "fmu.model.name.keyword",
+                                "size": 10,
+                            }
+                        },
+                        "model_revision": {
+                            "terms": {
+                                "field": "fmu.model.revision.keyword",
+                                "size": 10,
+                            }
+                        },
                         "ensemble_names": {
                             "terms": {
                                 "field": "fmu.ensemble.name.keyword",
@@ -145,6 +159,18 @@ def _create_case_info_from_case_bucket(case_bucket: dict) -> CaseInfo:
     user = _get_single_bucket_key_as_str(case_bucket, "user")
     case_name = _get_single_bucket_key_as_str(case_bucket, "name")
 
+    # Populate model name and revision.
+    # The assumption here is that a case should only have one model name and revision.
+    # If there are multiple or none, we will default to empty string.
+    try:
+        model_name_str = _get_single_bucket_key_as_str(case_bucket, "model_name")
+    except ValueError:
+        model_name_str = "No model name"
+    try:
+        model_revision_str = _get_single_bucket_key_as_str(case_bucket, "model_revision")
+    except ValueError:
+        model_revision_str = "No revision"
+
     ensemble_buckets = case_bucket.get("ensemble_names", {}).get("buckets", [])
 
     ensemble_info_arr: list[EnsembleInfo] = []
@@ -160,6 +186,8 @@ def _create_case_info_from_case_bucket(case_bucket: dict) -> CaseInfo:
         user=user,
         updated_at_utc_ms=case_timestamp_max,
         description=description[0] if description else "",
+        model_name=model_name_str,
+        model_revision=model_revision_str,
         ensembles=ensemble_info_arr,
     )
 

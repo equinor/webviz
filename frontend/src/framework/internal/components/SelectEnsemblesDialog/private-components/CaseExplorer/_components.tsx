@@ -74,3 +74,32 @@ export function AuthorCell(props: AuthorCellProps): React.ReactNode {
         </div>
     );
 }
+
+type modelNameCellProps = {
+    modelName: string;
+};
+export function ModelNameCell(props: modelNameCellProps): React.ReactNode {
+    return (
+        <div className="flex justify-center gap-1">
+            <span className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block" title={props.modelName}>
+                {props.modelName}
+            </span>
+        </div>
+    );
+}
+
+type modelRevisionCellProps = {
+    modelRevision: string;
+};
+export function ModelRevisionCell(props: modelRevisionCellProps): React.ReactNode {
+    return (
+        <div className="flex justify-center gap-1">
+            <span
+                className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block"
+                title={props.modelRevision}
+            >
+                {props.modelRevision}
+            </span>
+        </div>
+    );
+}

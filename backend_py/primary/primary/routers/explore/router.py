@@ -53,6 +53,8 @@ async def get_cases(
             user=ci.user,
             updatedAtUtcMs=ci.updated_at_utc_ms,
             description=ci.description,
+            modelName=ci.model_name,
+            modelRevision=ci.model_revision,
             ensembles=[
                 schemas.EnsembleInfo(
                     name=ei.name,

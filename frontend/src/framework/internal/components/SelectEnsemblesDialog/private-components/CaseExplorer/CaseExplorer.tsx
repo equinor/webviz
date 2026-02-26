@@ -181,6 +181,45 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         keepStateWhenInvalid: !sortedCasesQueryData, // Requires valid state when data is available, allows invalid while data is fetching
     });
 
+    const casesModelNames = React.useMemo(() => {
+        if (!sortedCasesQueryData) {
+            return [];
+        }
+
+        const modelNames = new Set<string>();
+        for (const c of sortedCasesQueryData) {
+            modelNames.add(c.modelName);
+        }
+
+        return Array.from(modelNames).sort();
+    }, [sortedCasesQueryData]);
+
+    const [selectedModelNames, setSelectedModelNames] = useValidArrayState<string>({
+        initialState: [],
+        validStateArray: casesModelNames,
+        keepStateWhenInvalid: !sortedCasesQueryData, // Requires valid state when data is available, allows invalid while data is fetching
+    });
+    const casesModelRevisions = React.useMemo(() => {
+        if (!sortedCasesQueryData) {
+            return [];
+        }
+
+        const modelRevisions = new Set<string>();
+        for (const c of sortedCasesQueryData) {
+            if (selectedModelNames.length > 0 && !selectedModelNames.includes(c.modelName)) {
+                continue;
+            }
+            modelRevisions.add(c.modelRevision);
+        }
+
+        return Array.from(modelRevisions).sort();
+    }, [sortedCasesQueryData, selectedModelNames]);
+
+    const [selectedModelRevisions, setSelectedModelRevisions] = useValidArrayState<string>({
+        initialState: [],
+        validStateArray: casesModelRevisions,
+        keepStateWhenInvalid: !sortedCasesQueryData, // Requires valid state when data is available, allows invalid while data is fetching
+    });
     const caseRowData = React.useMemo(() => {
         if (!sortedCasesQueryData) {
             return [];
@@ -192,9 +231,15 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                 c.ensembles.some((ens) => ens.standardResults.some((res) => selectedStandardResults.includes(res))),
             );
         }
+        if (selectedModelNames.length > 0) {
+            cases = cases.filter((c) => selectedModelNames.includes(c.modelName));
+        }
+        if (selectedModelRevisions.length > 0) {
+            cases = cases.filter((c) => selectedModelRevisions.includes(c.modelRevision));
+        }
 
         return makeCaseRowData(cases);
-    }, [sortedCasesQueryData, selectedStandardResults]);
+    }, [sortedCasesQueryData, selectedStandardResults, selectedModelNames, selectedModelRevisions]);
 
     const currentCaseSelection: CaseSelection | null = React.useMemo(() => {
         if (!selectedCaseUuid) {
@@ -297,22 +342,50 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
                         </Tooltip>
                     </Label>
-                    <PendingWrapper
-                        isPending={casesQuery.isFetching && !casesQuery.isRefetching}
-                        errorMessage={casesQuery.error ? "Error loading cases" : undefined}
-                        className="h-full flex-1 min-h-0 min-w-56"
-                    >
-                        <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
-                            <TagPicker
-                                className="bg-white"
-                                placeholder="Filter cases by Standard Results..."
-                                selection={selectedStandardResults}
-                                tagOptions={casesStandardResults.map((elm) => ({ label: elm, value: elm }))}
-                                onChange={(value) => setSelectedStandardResults([...value])}
-                            />
-                        </Tooltip>
-                    </PendingWrapper>
                 </div>
+            </div>
+            <div className="flex flex-row gap-4">
+                <PendingWrapper
+                    isPending={casesQuery.isFetching && !casesQuery.isRefetching}
+                    errorMessage={casesQuery.error ? "Error loading cases" : undefined}
+                    className="h-full w-full"
+                >
+                    <div className="grow flex w-full flex-row gap-4 items-center">
+                        <div className="grow min-w-0">
+                            <Tooltip title="Filter cases by selected model names" enterDelay="medium">
+                                <TagPicker
+                                    className="bg-white"
+                                    placeholder="Model name"
+                                    selection={selectedModelNames}
+                                    tagOptions={casesModelNames.map((elm) => ({ label: elm, value: elm }))}
+                                    onChange={(value) => setSelectedModelNames([...value])}
+                                />
+                            </Tooltip>
+                        </div>
+                        <div className="grow min-w-0">
+                            <Tooltip title="Filter cases by selected model revision" enterDelay="medium">
+                                <TagPicker
+                                    className="bg-white"
+                                    placeholder="Revision"
+                                    selection={selectedModelRevisions}
+                                    tagOptions={casesModelRevisions.map((elm) => ({ label: elm, value: elm }))}
+                                    onChange={(value) => setSelectedModelRevisions([...value])}
+                                />
+                            </Tooltip>
+                        </div>
+                        <div className="grow min-w-0">
+                            <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
+                                <TagPicker
+                                    className="bg-white"
+                                    placeholder="Standard Results"
+                                    selection={selectedStandardResults}
+                                    tagOptions={casesStandardResults.map((elm) => ({ label: elm, value: elm }))}
+                                    onChange={(value) => setSelectedStandardResults([...value])}
+                                />
+                            </Tooltip>
+                        </div>
+                    </div>
+                </PendingWrapper>
             </div>
             <StatusWrapper
                 className="grow min-h-0"
