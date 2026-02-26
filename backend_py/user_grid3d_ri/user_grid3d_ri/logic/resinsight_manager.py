@@ -32,44 +32,44 @@ class ResInsightManager:
         self._mutex_lock = asyncio.Lock()
 
     async def get_channel_for_running_ri_instance_async(self) -> grpc.aio.Channel | None:
-        instance = await self._get_or_create_ri_instance()
+        instance = await self._get_or_create_ri_instance_async()
         if not instance:
             return None
 
         return instance.channel
 
     async def get_port_of_running_ri_instance_async(self) -> int | None:
-        instance = await self._get_or_create_ri_instance()
+        instance = await self._get_or_create_ri_instance_async()
         if not instance:
             return None
 
         return _RI_PORT
 
-    async def _get_or_create_ri_instance(self) -> _RiInstanceInfo | None:
+    async def _get_or_create_ri_instance_async(self) -> _RiInstanceInfo | None:
         async with self._mutex_lock:
-            LOGGER.debug(f"_get_or_create_ri_instance() - has registered instance: {'YES' if self._ri_info else 'NO'}")
+            LOGGER.debug(f"_get_or_create_ri_instance_async() - has registered instance: {'YES' if self._ri_info else 'NO'}")
             if self._ri_info:
                 try:
                     process = psutil.Process(self._ri_info.pid)
-                    LOGGER.debug(f"_get_or_create_ri_instance() - {process=}")
+                    LOGGER.debug(f"_get_or_create_ri_instance_async() - {process=}")
                     if process.is_running() and process.status() != psutil.STATUS_ZOMBIE:
-                        LOGGER.debug(f"_get_or_create_ri_instance() - process already running, pid={self._ri_info.pid}")
+                        LOGGER.debug(f"_get_or_create_ri_instance_async() - process already running, pid={self._ri_info.pid}")
                         return self._ri_info
                 except psutil.NoSuchProcess:
                     pass
 
-                LOGGER.debug(f"_get_or_create_ri_instance() - process is NOT running, pid={self._ri_info.pid}")
+                LOGGER.debug(f"_get_or_create_ri_instance_async() - process is NOT running, pid={self._ri_info.pid}")
 
             # Either we don't have a process or the process is dead, so we'll clean up and try to launch a new one
             if self._ri_info and self._ri_info.channel:
-                LOGGER.debug(f"_get_or_create_ri_instance() - trying to close existing grpc channel")
+                LOGGER.debug("_get_or_create_ri_instance_async() - trying to close existing grpc channel")
                 await self._ri_info.channel.close()
 
             self._ri_info = None
             _kill_competing_ri_processes()
 
-            LOGGER.debug(f"_get_or_create_ri_instance() - launching new ResInsight process")
-            new_pid = await _launch_ri_instance()
+            LOGGER.debug("_get_or_create_ri_instance_async() - launching new ResInsight process")
+            new_pid = await _launch_ri_instance_async()
             if new_pid < 0:
                 LOGGER.error("Failed to launch ResInsight process")
                 return None
@@ -78,13 +78,13 @@ class ResInsightManager:
                 f"localhost:{_RI_PORT}",
                 options=[("grpc.enable_http_proxy", False), ("grpc.max_receive_message_length", 512 * 1024 * 1024)],
             )
-            if not await _probe_grpc_alive(new_channel):
+            if not await _probe_grpc_alive_async(new_channel):
                 LOGGER.error("Probe against newly launched ResInsight process failed")
                 return None
 
             self._ri_info = _RiInstanceInfo(pid=new_pid, channel=new_channel)
             LOGGER.debug(
-                f"_get_or_create_ri_instance() - successfully launched new ResInsight process, pid={self._ri_info.pid}"
+                f"_get_or_create_ri_instance_async() - successfully launched new ResInsight process, pid={self._ri_info.pid}"
             )
 
             return self._ri_info
@@ -116,15 +116,15 @@ def _on_terminate(proc: psutil.Process) -> None:
     LOGGER.debug(f"process {proc} terminated with exit code {proc.returncode}")  # type: ignore[attr-defined]
 
 
-async def _stream_watcher(stream: asyncio.streams.StreamReader, stream_name: str) -> None:
+async def _stream_watcher_async(stream: asyncio.streams.StreamReader, stream_name: str) -> None:
     async for data in stream:
         line = data.decode("ascii").rstrip()
         LOGGER.debug(f"ResInsight({stream_name})--{line}")
 
-    LOGGER.debug(f"_stream_watcher() for {stream_name=} exiting")
+    LOGGER.debug(f"_stream_watcher_async() for {stream_name=} exiting")
 
 
-async def _launch_ri_instance() -> int:
+async def _launch_ri_instance_async() -> int:
 
     # Quick and dirty, redirect to our own stdout
     # proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(_RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}", stdout=sys.stdout, stderr=sys.stderr)
@@ -132,14 +132,15 @@ async def _launch_ri_instance() -> int:
     env_dict = None
     if IS_ON_RADIX_PLATFORM:
         job_payload_dict = read_radix_job_payload_as_json()
-        LOGGER.debug(f"_launch_ri_instance() - {job_payload_dict=}")
+        LOGGER.debug(f"_launch_ri_instance_async() - {job_payload_dict=}")
 
         if job_payload_dict and "ri_omp_num_treads" in job_payload_dict:
             ri_omp_num_treads = job_payload_dict["ri_omp_num_treads"]
             env_dict = {"OMP_NUM_THREADS": str(ri_omp_num_treads)}
 
-    LOGGER.debug(f"_launch_ri_instance() - {env_dict=}")
+    LOGGER.debug(f"_launch_ri_instance_async() - {env_dict=}")
 
+    # pylint: disable-next=no-member
     proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(
         _RI_EXECUTABLE,
         "--console",
@@ -151,9 +152,9 @@ async def _launch_ri_instance() -> int:
     )
 
     if proc.stdout is not None:
-        _stdout_task = run_in_background_task(_stream_watcher(proc.stdout, "stdout"))
+        _stdout_task = run_in_background_task(_stream_watcher_async(proc.stdout, "stdout"))
     if proc.stderr is not None:
-        _stderr_task = run_in_background_task(_stream_watcher(proc.stderr, "stderr"))
+        _stderr_task = run_in_background_task(_stream_watcher_async(proc.stderr, "stderr"))
 
     if not proc:
         return -1
@@ -161,17 +162,16 @@ async def _launch_ri_instance() -> int:
     return proc.pid
 
 
-async def _probe_grpc_alive(channel: grpc.aio.Channel) -> bool:
+async def _probe_grpc_alive_async(channel: grpc.aio.Channel) -> bool:
     app_stub = App_pb2_grpc.AppStub(channel)
 
     try:
-        LOGGER.debug(f"_probe_grpc_alive() - probing ...")
+        LOGGER.debug("_probe_grpc_alive_async() - probing ...")
         grpc_response = await app_stub.GetVersion(Definitions_pb2.Empty(), timeout=4.0, wait_for_ready=True)
-        LOGGER.debug(f"_probe_grpc_alive() - {str(grpc_response)=}")
+        LOGGER.debug(f"_probe_grpc_alive_async() - {str(grpc_response)=}")
         return True
     except grpc.aio.AioRpcError as exception:
-        LOGGER.error(f"_probe_grpc_alive() - probe failed!!!  {exception=}")
-        pass
+        LOGGER.error(f"_probe_grpc_alive_async() - probe failed!!!  {exception=}")
 
     return False
 

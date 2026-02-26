@@ -5,7 +5,6 @@ import grpc
 import numpy as np
 from fastapi import APIRouter, HTTPException
 
-import rips
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 
 from webviz_core_utils.b64 import B64FloatArray, B64IntArray
@@ -53,7 +52,9 @@ async def post_get_grid_geometry(
     LOGGER.debug(f"{myfunc} - {grid_path_name=}")
     perf_metrics.record_lap("get-blob")
 
-    grpc_channel: grpc.aio.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+    grpc_channel: grpc.aio.Channel | None = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+    if grpc_channel is None:
+        raise HTTPException(500, detail="Failed to get gRPC channel for ResInsight instance")
     perf_metrics.record_lap("get-ri")
 
     grpc_ijk_index_filter = None
@@ -110,7 +111,7 @@ async def post_get_grid_geometry(
     data_cache_key = _make_grid_geo_key(
         grid_blob_object_uuid=req_body.grid_blob_object_uuid,
         include_inactive_cells=req_body.include_inactive_cells,
-        filter=req_body.ijk_index_filter,
+        filt=req_body.ijk_index_filter,
     )
     LOGGER.debug(f"{myfunc} - {data_cache_key=}")
     DATA_CACHE.set_uint32_numpy_arr(data_cache_key, source_cell_indices_np)
@@ -139,12 +140,12 @@ async def post_get_grid_geometry(
     )
     perf_metrics.record_lap("make-response")
 
-    grpc_timeElapsedInfo = grpc_response.timeElapsedInfo
+    grpc_time_elapsed_info = grpc_response.timeElapsedInfo
     ret_obj.stats = api_schemas.Stats(
         total_time=perf_metrics.get_elapsed_ms(),
         perf_metrics=perf_metrics.to_dict(),
-        ri_total_time=grpc_timeElapsedInfo.totalTimeElapsedMs,
-        ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
+        ri_total_time=grpc_time_elapsed_info.totalTimeElapsedMs,
+        ri_perf_metrics=dict(grpc_time_elapsed_info.namedEventsAndTimeElapsedMs),
         vertex_count=int(len(vertices_np) / 3),
         poly_count=int(len(source_cell_indices_np)),
     )
@@ -155,6 +156,7 @@ async def post_get_grid_geometry(
 
 
 @router.post("/get_mapped_grid_properties")
+# pylint: disable-next=too-many-locals, too-many-statements
 async def post_get_mapped_grid_properties(
     req_body: api_schemas.MappedGridPropertiesRequest,
 ) -> api_schemas.MappedGridPropertiesResponse:
@@ -188,7 +190,7 @@ async def post_get_mapped_grid_properties(
     data_cache_key = _make_grid_geo_key(
         grid_blob_object_uuid=req_body.grid_blob_object_uuid,
         include_inactive_cells=req_body.include_inactive_cells,
-        filter=req_body.ijk_index_filter,
+        filt=req_body.ijk_index_filter,
     )
     LOGGER.debug(f"{myfunc} - {data_cache_key=}")
     source_cell_indices_np = DATA_CACHE.get_uint32_numpy_arr(data_cache_key)
@@ -198,7 +200,9 @@ async def post_get_mapped_grid_properties(
     ri_perf_metrics: dict[str, int] | None = None
 
     if source_cell_indices_np is None:
-        grpc_channel: grpc.aio.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+        grpc_channel: grpc.aio.Channel | None = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+        if grpc_channel is None:
+            raise HTTPException(500, detail="Failed to get gRPC channel for ResInsight instance")
         perf_metrics.record_lap("get-ri")
 
         grpc_ijk_index_filter = None
@@ -271,12 +275,10 @@ async def post_get_mapped_grid_properties(
 
 
 def _make_grid_geo_key(
-    grid_blob_object_uuid: str, include_inactive_cells: bool, filter: api_schemas.IJKIndexFilter | None
+    grid_blob_object_uuid: str, include_inactive_cells: bool, filt: api_schemas.IJKIndexFilter | None
 ) -> str:
     filter_str = "NoFilter"
-    if filter:
-        filter_str = (
-            f"I[{filter.min_i},{filter.max_i}]-J[{filter.min_j},{filter.max_j}]-K[{filter.min_k},{filter.max_k}]"
-        )
+    if filt:
+        filter_str = f"I[{filt.min_i},{filt.max_i}]-J[{filt.min_j},{filt.max_j}]-K[{filt.min_k},{filt.max_k}]"
 
     return f"{grid_blob_object_uuid}--IncludeInactive{include_inactive_cells}--{filter_str}"

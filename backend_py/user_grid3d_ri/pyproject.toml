@@ -15,15 +15,14 @@ build-backend = "poetry.core.masonry.api"
 fastapi = "~0.129.0"
 uvicorn = "~0.41.0"
 httpx = "^0.28.1"
-psutil = "^5.9.5"
+psutil = "^7.2.2"
 pydantic = "~2.12.0"
 numpy = "^2.2.0"
 xtgeo = "^4.18.0"
 diskcache = "^5.6.3"
-aiofiles = "^23.2.1"
-azure-storage-blob = { version = "12.19.1", extras = ["aio"] }
-python-dotenv = "^1.1.0"
-azure-monitor-opentelemetry = "^1.6.8"
+aiofiles = "^25.1.0"
+azure-storage-blob = { version = "12.28.0", extras = ["aio"] }
+azure-monitor-opentelemetry = "1.8.6"
 opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-grpc = "*"
 
@@ -35,21 +34,7 @@ webviz-core-utils = { path = "../libs/core_utils", develop = true }
 webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
 
 [tool.poetry.group.dev.dependencies]
-types-aiofiles = "^23.2.0"
-types-psutil = "^5.9.5"
+types-aiofiles = "^25.1.0.20251011"
+types-psutil = "^7.2.2.20260130"
+types-grpcio = "^1.0.0.20251009"
 
-
-[tool.black]
-line-length = 120
-
-[tool.pylint]
-disable = [
-    "missing-docstring",
-    "line-too-long",
-    "logging-fstring-interpolation",
-    "duplicate-code",
-]
-
-[tool.mypy]
-ignore_missing_imports = true
-disallow_untyped_defs = true

@@ -2,7 +2,6 @@ import datetime
 import logging
 import os
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from .utils.inactivity_shutdown import InactivityShutdown
@@ -12,11 +11,6 @@ from .routers import health_router
 from .routers import grid_router
 from .routers import intersection_router
 from .routers import dev_router
-
-
-# Load environment variables from .env file,
-# Note that values set in the system environment will override those in the .env file
-load_dotenv()
 
 
 logging.basicConfig(format="%(asctime)s %(levelname)-7s [%(name)s]: %(message)s", datefmt="%H:%M:%S")

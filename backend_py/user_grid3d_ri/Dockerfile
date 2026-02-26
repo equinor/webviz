@@ -47,6 +47,9 @@ ENV VIRTUAL_ENV=/home/appuser/venv
 RUN python3.13 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+ENV POETRY_KEYRING_ENABLED=false
+ENV PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+
 WORKDIR /home/appuser/backend_py/user_grid3d_ri
 COPY --chown=appuser ./backend_py/user_grid3d_ri/pyproject.toml  /home/appuser/backend_py/user_grid3d_ri
 COPY --chown=appuser ./backend_py/user_grid3d_ri/poetry.lock     /home/appuser/backend_py/user_grid3d_ri
