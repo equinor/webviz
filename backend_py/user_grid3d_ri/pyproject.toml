@@ -22,7 +22,6 @@ xtgeo = "^4.18.0"
 diskcache = "^5.6.3"
 aiofiles = "^25.1.0"
 azure-storage-blob = { version = "12.28.0", extras = ["aio"] }
-python-dotenv = "^1.1.0"
 azure-monitor-opentelemetry = "1.8.6"
 opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-grpc = "*"
