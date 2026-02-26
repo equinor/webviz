@@ -18,20 +18,17 @@ import {
     getSelectedStatisticFunctions,
 } from "./_utils";
 
-export async function assembleCsvFiles(
-    visualizationMode: VisualizationMode,
+export function assembleCsvFiles(
     realizationData: { ensembleDisplayName: string; vectorName: string; data: VectorRealizationData_api[] }[],
     statisticsData: { ensembleDisplayName: string; vectorName: string; data: VectorStatisticData_api }[],
     historicalData: { vectorName: string; data: VectorHistoricalData_api }[],
     observationData: { vectorName: string; data: SummaryVectorObservations_api }[],
+    visualizationMode: VisualizationMode,
     statisticsSelection: StatisticsSelection,
     showHistorical: boolean,
     showObservations: boolean,
-): Promise<CsvFile[]> {
+): CsvFile[] {
     const files: CsvFile[] = [];
-
-    // Add sleep to emulate even longer processing time for large datasets, to better test the loading state in the UI
-    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const includeRealizations =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||

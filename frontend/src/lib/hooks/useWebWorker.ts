@@ -32,17 +32,11 @@ export function useWebWorkerProxy<WorkerApi>(WorkerCtor: WorkerConstructor): Rem
 
 /**
  * Exposes a worker API object for use with Comlink.
+ *
+ * Mainly used as wrapper, and avoid import of comlink in worker files
+ *
  * Call this at the bottom of a file that will be imported with Vite's `?worker` suffix.
- * Returns the API object so the caller can derive the type with `typeof`.
  */
-export function exposeAndGetWorkerApi<T extends Record<string, (...args: any[]) => any>>(api: T): T {
-    expose(api);
-    return api;
-}
-
-/**
- * Exposes a worker API object for use with Comlink.
- */
-export function exposeWorkerApi<WorkerApi>(api: WorkerApi): void {
+export function exposeWorkerApi<T extends Record<string, (...args: any[]) => any>>(api: T): void {
     expose(api);
 }

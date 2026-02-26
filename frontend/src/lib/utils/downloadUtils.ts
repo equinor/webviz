@@ -1,5 +1,9 @@
 import { strToU8, zip } from "fflate";
 
+type StringFile = { filename: string; content: string };
+type BinaryFile = { filename: string; content: Uint8Array };
+type DownloadFile = StringFile | BinaryFile;
+
 /**
  * Trigger a browser file download from a Blob.
  * Creates a temporary object URL, clicks a hidden anchor element, and cleans up.
@@ -17,21 +21,13 @@ export function downloadBlobFile(blob: Blob, filename: string): void {
 }
 
 /**
- * Trigger a browser file download from a string content.
- */
-export function downloadTextFile(content: string, filename: string, mimeType: string = "text/csv"): void {
-    const blob = new Blob([content], { type: `${mimeType};charset=utf-8;` });
-    downloadBlobFile(blob, filename);
-}
-
-/**
- * Create a zip Blob from an array of named string files.
+ * Create a zip Blob from an array of named files.
  * Uses fflate's async zip() which offloads compression to Web Workers internally.
  */
-export function createZipBlobAsync(files: { filename: string; content: string }[]): Promise<Blob> {
+export async function createZipBlobAsync(files: DownloadFile[]): Promise<Blob> {
     const zipInput: Record<string, Uint8Array> = {};
     for (const file of files) {
-        zipInput[file.filename] = strToU8(file.content);
+        zipInput[file.filename] = typeof file.content === "string" ? strToU8(file.content) : file.content;
     }
 
     return new Promise<Blob>((resolve, reject) => {
@@ -46,10 +42,10 @@ export function createZipBlobAsync(files: { filename: string; content: string }[
 }
 
 /**
- * Create a zip from named string files and trigger a browser download.
+ * Create a zip from named files and trigger a browser download.
  * Zip compression runs off the main thread via fflate's built-in async workers.
  */
-export async function downloadZip(files: { filename: string; content: string }[], zipFilename: string): Promise<void> {
+export async function downloadFilesZip(files: DownloadFile[], zipFilename: string): Promise<void> {
     const blob = await createZipBlobAsync(files);
     downloadBlobFile(blob, zipFilename);
 }

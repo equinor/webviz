@@ -112,13 +112,6 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     const hasQueryErrors = hasRealizationsQueryError || hasStatisticsQueryError;
 
-    const handleDownloadClick = React.useCallback(
-        function handleDownloadClick() {
-            assembleCsvAndDownload();
-        },
-        [assembleCsvAndDownload],
-    );
-
     const viewContent = React.useMemo(
         function createViewContent(): React.ReactNode {
             if (resampleFrequencyWarningMessage !== null) {
@@ -136,20 +129,13 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
             }
 
             return (
-                <>
-                    <Plot
-                        plotUpdateReady={!isAnyQueryLoading}
-                        onClick={handleClickInChart}
-                        data={plotBuilder.makePlotData()}
-                        layout={plotBuilder.makePlotLayout()}
-                    />
-                    <button
-                        onClick={handleDownloadClick}
-                        className="absolute top-2 right-2 px-3 py-1 text-sm bg-blue-600 text-white rounded"
-                    >
-                        Download CSV
-                    </button>
-                </>
+                <Plot
+                    plotUpdateReady={!isAnyQueryLoading}
+                    onClick={handleClickInChart}
+                    onDownloadClick={assembleCsvAndDownload}
+                    data={plotBuilder.makePlotData()}
+                    layout={plotBuilder.makePlotLayout()}
+                />
             );
         },
         [
@@ -157,7 +143,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
             hasQueryErrors,
             isAnyQueryLoading,
             resampleFrequencyWarningMessage,
-            handleDownloadClick,
+            assembleCsvAndDownload,
             handleClickInChart,
         ],
     );
