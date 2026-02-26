@@ -39,6 +39,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
     const color = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.COLOR);
 
     const sharedSettingsDelegate = props.group.getSharedSettingsDelegate();
+    const startOpen = props.group.getItemDelegate().getInitializeWithOpenMenu();
 
     const actions = React.useMemo(() => {
         return makeActionsForGroup(props.group);
@@ -83,7 +84,9 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             adornments.push(<StatusMessagesWrapper settingsDelegate={sharedSettingsDelegate} />);
         }
 
-        adornments.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
+        adornments.push(
+            <Actions key="actions" startOpen={startOpen} actionGroups={actions} onActionClick={handleActionClick} />,
+        );
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
         adornments.push(<RemoveItemButton key="remove" item={props.group} />);
         return adornments;
@@ -119,7 +122,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
                 sharedSettingsDelegate ? (
                     <div className="relative">
                         <ErrorOverlay itemDelegate={props.group.getItemDelegate()} isExpanded={isExpanded} />
-                        <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
+                        <div className="bg-slate-100! border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
                             {makeSettings(Object.values(props.group.getWrappedSettings()))}
                         </div>
                     </div>

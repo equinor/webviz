@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { Dropdown } from "@mui/base";
 import { Add, ArrowDropDown } from "@mui/icons-material";
@@ -27,10 +27,25 @@ function isActionGroup(action: Action | ActionGroup): action is ActionGroup {
 
 export type ActionsProps = {
     actionGroups: ActionGroup[];
+    startOpen?: boolean;
     onActionClick: (actionIdentifier: string) => void;
 };
 
 export function Actions(props: ActionsProps): React.ReactNode {
+    // ! Terribly hacky stuff going on here to make `startOpen` work...
+    // ! The dropdown comp *has* props that should've been able to manage this (defaultOpen, open, and onOpenChange), but for some reason, if I include any of these props, the dropdown wont accept keyboard navigation, and clicking outside wont close it. I have not been able to verify if the problem persist in Base-UI, but I'll keep it dirty since an update might solve stuff
+    const hasFired = React.useRef(false);
+    const buttonRef = React.useRef<HTMLButtonElement>(null);
+
+    React.useEffect(() => {
+        if (props.startOpen && !hasFired.current) {
+            hasFired.current = true;
+            buttonRef.current?.focus();
+            buttonRef.current?.click();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     function makeContent(actionGroups: (ActionGroup | Action)[], indentLevel: number = 0): React.ReactNode[] {
         const content: React.ReactNode[] = [];
         for (const [index, item] of actionGroups.entries()) {
@@ -68,7 +83,7 @@ export function Actions(props: ActionsProps): React.ReactNode {
 
     return (
         <Dropdown>
-            <MenuButton label="Add items" disabled={!props.actionGroups.length}>
+            <MenuButton ref={buttonRef} label="Add items" disabled={!props.actionGroups.length}>
                 <Add fontSize="inherit" />
                 <span>Add</span>
                 <ArrowDropDown fontSize="inherit" />
