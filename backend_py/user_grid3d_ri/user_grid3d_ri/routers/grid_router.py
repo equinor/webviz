@@ -5,7 +5,6 @@ import grpc
 import numpy as np
 from fastapi import APIRouter, HTTPException
 
-import rips
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 
 from webviz_core_utils.b64 import B64FloatArray, B64IntArray
@@ -276,8 +275,6 @@ def _make_grid_geo_key(
 ) -> str:
     filter_str = "NoFilter"
     if filt:
-        filter_str = (
-            f"I[{filt.min_i},{filt.max_i}]-J[{filt.min_j},{filt.max_j}]-K[{filt.min_k},{filt.max_k}]"
-        )
+        filter_str = f"I[{filt.min_i},{filt.max_i}]-J[{filt.min_j},{filt.max_j}]-K[{filt.min_k},{filt.max_k}]"
 
     return f"{grid_blob_object_uuid}--IncludeInactive{include_inactive_cells}--{filter_str}"

@@ -4,7 +4,6 @@ import grpc
 from fastapi import APIRouter, HTTPException
 
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
-from rips.instance import *
 
 from webviz_core_utils.b64 import B64FloatArray, B64IntArray
 from webviz_core_utils.b64 import b64_encode_float_array_as_float32
