@@ -15,9 +15,6 @@ services:
       - ./frontend/index.html:/usr/src/app/frontend/index.html
 
   backend-primary:
-    depends_on:
-      cosmos-db-emulator:
-        condition: service_healthy
     build:
       context: .
       dockerfile: ./backend_py/primary/Dockerfile
@@ -29,13 +26,10 @@ services:
       - UVICORN_RELOAD=true
       - UVICORN_RELOAD_DIRS=/home/appuser/backend_py
       - WEBVIZ_CLIENT_SECRET
-      - WEBVIZ_SMDA_RESOURCE_SCOPE
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
       - WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
-      - WEBVIZ_SSDL_RESOURCE_SCOPE
       - WEBVIZ_SUMO_ENV
       - WEBVIZ_VDS_HOST_ADDRESS
-      - WEBVIZ_DB_CONNECTION_STRING
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - OTEL_RESOURCE_ATTRIBUTES=service.name=primary-backend, service.namespace=local
       - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
@@ -86,40 +80,48 @@ services:
       - ./backend_py/libs:/home/appuser/backend_py/libs
 
   redis-user-session:
-    image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+    image: redis:7.2
     expose:
       - 6379
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
+    user: "999:999"
+    command: ["redis-server",  "--loglevel", "notice"]
 
   redis-cache:
-    image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+    image: redis:7.2
     expose:
       - 6379
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
-      - REDIS_EXTRA_FLAGS=--maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel notice
+    user: "999:999"
+    # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
+    command: ["redis-server",  "--maxmemory", "1gb",  "--maxmemory-policy", "allkeys-lru",  "--save", "''",  "--appendonly", "no",  "--logfile", "''",  "--loglevel", "notice"]
 
-  cosmos-db-emulator:
-    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
-    platform: linux/amd64
-    tty: true
-    mem_limit: 4GB
-    ports:
-      - "8081:8081" # HTTPS endpoint
-      - "10250-10255:10250-10255" # Internal emulator ports (needed)
-    environment:
-      - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=1
-      - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
-    healthcheck:
-      test: curl -k https://127.0.0.1:8081/_explorer/emulator.pem || exit 1
-      interval: 10s
-      retries: 12 # 2 minutes
-      start_period: 30s
-      timeout: 5s
-    volumes:
-      - cosmosdrive:/var/lib/cosmosdb/emulator
 
-volumes:
-  cosmosdrive:
+# When using the Cosmos DB Emulator, make sure to uncomment the relevant parts in the backend-primary service as well,
+# to ensure it waits for the emulator to be healthy before starting.
+#
+# depends_on:
+#   cosmos-db-emulator:
+#     condition: service_healthy
+#
+# Also make sure to comment / uncomment the relevant parts in the backend_py code to use the emulator (main.py).
+#   cosmos-db-emulator:
+#     image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+#     platform: linux/amd64
+#     tty: true
+#     mem_limit: 4GB
+#     ports:
+#       - "8081:8081" # HTTPS endpoint
+#       - "10250-10255:10250-10255" # Internal emulator ports (needed)
+#     environment:
+#       - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=1
+#       - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
+#     healthcheck:
+#       test: curl -k https://127.0.0.1:8081/_explorer/emulator.pem || exit 1
+#       interval: 10s
+#       retries: 12 # 2 minutes
+#       start_period: 30s
+#       timeout: 5s
+#     volumes:
+#       - cosmosdrive:/var/lib/cosmosdb/emulator
+
+# volumes:
+#   cosmosdrive:

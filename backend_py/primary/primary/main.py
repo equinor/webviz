@@ -16,12 +16,11 @@ from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFact
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
 
-from primary.persistence.setup_local_database import maybe_setup_local_database
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
-
 from primary.middleware.add_browser_cache import AddBrowserCacheMiddleware
+from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.routers.dev.router import router as dev_router
 from primary.routers.explore.router import router as explore_router
 from primary.routers.general import router as general_router
@@ -43,6 +42,7 @@ from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.router import router as persistence_router
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
+from primary.utils.azure_service_credentials import ClientSecretVars, create_credential_for_azure_services
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
@@ -69,9 +69,6 @@ logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 
-# Setup Cosmos DB emulator database if running locally
-maybe_setup_local_database()
-
 services_config = ServicesConfig(
     sumo_env=config.SUMO_ENV,
     smda_subscription_key=config.SMDA_SUBSCRIPTION_KEY,
@@ -92,14 +89,38 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
+    client_secret_vars_for_dev = ClientSecretVars(
+        tenant_id=config.TENANT_ID,
+        client_id=config.CLIENT_ID,
+        client_secret=config.CLIENT_SECRET,
+    )
+    azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
+
+    # For local development, you can use the Cosmos DB Emulator. The emulator does not require credentials,
+    # so we can initialize the PersistenceStoresSingleton with the emulator connection settings.
+    # PersistenceStoresSingleton.initialize_with_emulator()
+    LOGGER.info(
+        f"Using credential for azure services to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}"
+    )
+    await PersistenceStoresSingleton.initialize_with_credential_async(config.COSMOS_DB_URL, azure_services_credential)
+
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
 
+    # This part, after the yield, will be executed after the application has finished.
     yield
 
-    # This part, after the yield, will be executed after the application has finished.
+    await PersistenceStoresSingleton.shutdown_async()
+    await azure_services_credential.close()
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
+
+# Note that if WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY is set to true,
+# we skip the actual initialization of the FastAPI app and just set lifespan_handler_async to None.
+# This allows us to import this module and access the app object without running the lifespan handler,
+# which may be desirable in certain contexts such as API code generation.
+if os.getenv("WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY") is not None:
+    lifespan_handler_async = None  # type: ignore[assignment]
 
 app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
