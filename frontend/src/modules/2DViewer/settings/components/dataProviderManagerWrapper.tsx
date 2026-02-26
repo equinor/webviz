@@ -60,11 +60,18 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
 
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
-            case "view":
-                groupDelegate.appendChild(
-                    GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor()),
+            case "view": {
+                const newView = GroupRegistry.makeGroup(
+                    GroupType.VIEW,
+                    props.dataProviderManager,
+                    colorSet.getNextColor(),
                 );
+
+                newView.getItemDelegate().setInitializeWithOpenMenu(true);
+
+                groupDelegate.appendChild(newView);
                 return;
+            }
             case "delta-surface":
                 groupDelegate.prependChild(new DeltaSurface("Delta surface", props.dataProviderManager));
                 return;

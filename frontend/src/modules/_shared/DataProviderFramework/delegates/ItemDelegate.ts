@@ -37,6 +37,8 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     private _parentGroup: GroupDelegate | null = null;
     private _dataProviderManager: DataProviderManager;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<ItemDelegatePayloads>();
+    // If true, the item should open its menu as it enters
+    private _mountWithOpenMenu = false;
 
     constructor(name: string, order: number, dataProviderManager: DataProviderManager) {
         this._id = v4();
@@ -112,6 +114,14 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
 
         this._expanded = expanded;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.EXPANDED);
+    }
+
+    setInitializeWithOpenMenu(initializeWithOpenMenu: boolean) {
+        this._mountWithOpenMenu = initializeWithOpenMenu;
+    }
+
+    getInitializeWithOpenMenu(): boolean {
+        return this._mountWithOpenMenu;
     }
 
     makeSnapshotGetter<T extends ItemDelegateTopic>(topic: T): () => ItemDelegatePayloads[T] {
