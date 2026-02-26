@@ -52,7 +52,9 @@ async def post_get_grid_geometry(
     LOGGER.debug(f"{myfunc} - {grid_path_name=}")
     perf_metrics.record_lap("get-blob")
 
-    grpc_channel: grpc.aio.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+    grpc_channel: grpc.aio.Channel | None = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+    if grpc_channel is None:
+        raise HTTPException(500, detail="Failed to get gRPC channel for ResInsight instance")
     perf_metrics.record_lap("get-ri")
 
     grpc_ijk_index_filter = None
@@ -198,7 +200,9 @@ async def post_get_mapped_grid_properties(
     ri_perf_metrics: dict[str, int] | None = None
 
     if source_cell_indices_np is None:
-        grpc_channel: grpc.aio.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+        grpc_channel: grpc.aio.Channel | None = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+        if grpc_channel is None:
+            raise HTTPException(500, detail="Failed to get gRPC channel for ResInsight instance")
         perf_metrics.record_lap("get-ri")
 
         grpc_ijk_index_filter = None

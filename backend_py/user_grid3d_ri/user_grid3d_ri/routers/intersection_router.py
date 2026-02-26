@@ -52,7 +52,9 @@ async def post_get_polyline_intersection(
         raise HTTPException(500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
     perf_metrics.record_lap("get-prop-blob")
 
-    grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+    grpc_channel: grpc.aio.Channel | None = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+    if grpc_channel is None:
+        raise HTTPException(500, detail="Failed to get gRPC channel for ResInsight instance")
     perf_metrics.record_lap("get-ri")
 
     grpc_request = GridGeometryExtraction_pb2.CutAlongPolylineRequest(
