@@ -21,8 +21,8 @@ import {
 export function assembleCsvFiles(
     realizationData: { ensembleDisplayName: string; vectorName: string; data: VectorRealizationData_api[] }[],
     statisticsData: { ensembleDisplayName: string; vectorName: string; data: VectorStatisticData_api }[],
-    historicalData: { vectorName: string; data: VectorHistoricalData_api }[],
-    observationData: { vectorName: string; data: SummaryVectorObservations_api }[],
+    historicalData: { ensembleDisplayName: string; vectorName: string; data: VectorHistoricalData_api }[],
+    observationData: { ensembleDisplayName: string; vectorName: string; data: SummaryVectorObservations_api }[],
     visualizationMode: VisualizationMode,
     statisticsSelection: StatisticsSelection,
     showHistorical: boolean,

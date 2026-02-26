@@ -125,22 +125,28 @@ export function assembleStatisticsCsvFiles(
 }
 
 export function assembleHistoricalCsvFiles(
-    historicalData: { vectorName: string; data: VectorHistoricalData_api }[],
+    historicalData: { ensembleDisplayName: string; vectorName: string; data: VectorHistoricalData_api }[],
 ): { filename: string; csvContent: string }[] {
-    const byVector = new Map<string, VectorHistoricalData_api>();
+    const byVector = new Map<string, { ensembleDisplayName: string; data: VectorHistoricalData_api }[]>();
     for (const entry of historicalData) {
-        if (!byVector.has(entry.vectorName)) {
-            byVector.set(entry.vectorName, entry.data);
-        }
+        const existing = byVector.get(entry.vectorName) ?? [];
+        existing.push({ ensembleDisplayName: entry.ensembleDisplayName, data: entry.data });
+        byVector.set(entry.vectorName, existing);
     }
 
     const files: { filename: string; csvContent: string }[] = [];
-    for (const [vectorName, data] of byVector) {
-        const headerRows = [["DATE", vectorName]];
+    for (const [vectorName, entries] of byVector) {
+        const headerRows = [["ENSEMBLE", "DATE", vectorName]];
         const dataRows: (string | number)[][] = [];
 
-        for (let i = 0; i < data.timestampsUtcMs.length; i++) {
-            dataRows.push([timestampUtcMsToCompactIsoString(data.timestampsUtcMs[i]), data.values[i]]);
+        for (const entry of entries) {
+            for (let i = 0; i < entry.data.timestampsUtcMs.length; i++) {
+                dataRows.push([
+                    entry.ensembleDisplayName,
+                    timestampUtcMsToCompactIsoString(entry.data.timestampsUtcMs[i]),
+                    entry.data.values[i],
+                ]);
+            }
         }
 
         const filename = `${sanitizeFilename(vectorName)}_historical.csv`;
@@ -151,22 +157,24 @@ export function assembleHistoricalCsvFiles(
 }
 
 export function assembleObservationCsvFiles(
-    observationData: { vectorName: string; data: SummaryVectorObservations_api }[],
+    observationData: { ensembleDisplayName: string; vectorName: string; data: SummaryVectorObservations_api }[],
 ): { filename: string; csvContent: string }[] {
-    const byVector = new Map<string, SummaryVectorObservations_api>();
+    const byVector = new Map<string, { ensembleDisplayName: string; data: SummaryVectorObservations_api }[]>();
     for (const entry of observationData) {
-        if (!byVector.has(entry.vectorName)) {
-            byVector.set(entry.vectorName, entry.data);
-        }
+        const existing = byVector.get(entry.vectorName) ?? [];
+        existing.push({ ensembleDisplayName: entry.ensembleDisplayName, data: entry.data });
+        byVector.set(entry.vectorName, existing);
     }
 
     const files: { filename: string; csvContent: string }[] = [];
-    for (const [vectorName, data] of byVector) {
-        const headerRows = [["DATE", vectorName, "ERROR", "LABEL"]];
+    for (const [vectorName, entries] of byVector) {
+        const headerRows = [["ENSEMBLE", "DATE", vectorName, "ERROR", "LABEL"]];
         const dataRows: (string | number)[][] = [];
 
-        for (const obs of data.observations) {
-            dataRows.push([obs.date, obs.value, obs.error, obs.label]);
+        for (const entry of entries) {
+            for (const obs of entry.data.observations) {
+                dataRows.push([entry.ensembleDisplayName, obs.date, obs.value, obs.error, obs.label]);
+            }
         }
 
         const filename = `${sanitizeFilename(vectorName)}_observations.csv`;

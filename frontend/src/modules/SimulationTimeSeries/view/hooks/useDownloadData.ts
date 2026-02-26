@@ -52,11 +52,13 @@ export function useDownloadData(viewContext: ViewContext<Interfaces>): { assembl
                 }));
 
                 const historicalData = loadedHistoricalData.map((entry) => ({
+                    ensembleDisplayName: makeEnsembleDisplayName(entry.vectorSpecification.ensembleIdent),
                     vectorName: entry.vectorSpecification.vectorName,
                     data: entry.data,
                 }));
 
                 const observationData = loadedObservationData.map((entry) => ({
+                    ensembleDisplayName: makeEnsembleDisplayName(entry.vectorSpecification.ensembleIdent),
                     vectorName: entry.vectorSpecification.vectorName,
                     data: entry.data,
                 }));
