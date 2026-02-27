@@ -4,8 +4,9 @@ import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-qu
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider } from "jotai";
 
+import { tanstackDebugTimeOverride } from "@framework/utils/debug";
+
 import { HydrateQueryClientAtom } from "../components/HydrateQueryClientAtom";
-import { tanstackDebugTimeOverride } from "../utils/debug";
 
 import { AuthState, useAuthProvider } from "./AuthProvider";
 
