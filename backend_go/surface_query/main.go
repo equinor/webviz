@@ -21,6 +21,9 @@ func main() {
 
 	logger.Info("Starting surface query server...")
 
+	goRuntimeVersion := runtime.Version()
+	logger.Info(fmt.Sprintf("Go runtime version: %v", goRuntimeVersion))
+
 	// Can be used to force the number of CPUs that can be executing simultaneously
 	// Should not be needed as long as automaxprocs does its job
 	//runtime.GOMAXPROCS(4)
