@@ -114,29 +114,20 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     ),
                 );
                 return;
-            case "realization-seismic-slices":
+            case "seismic-slices":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.REALIZATION_SEISMIC_SLICES,
+                        CustomDataProviderType.SEISMIC_SLICES,
                         props.dataProviderManager,
                     ),
                 );
                 return;
-            case "simulated-seismic-fence":
+            case "seismic-fence":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        DataProviderType.INTERSECTION_REALIZATION_SIMULATED_SEISMIC,
+                        DataProviderType.INTERSECTION_SEISMIC,
                         props.dataProviderManager,
-                        "Seismic fence (simulated)",
-                    ),
-                );
-                return;
-            case "observed-seismic-fence":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.INTERSECTION_REALIZATION_OBSERVED_SEISMIC,
-                        props.dataProviderManager,
-                        "Seismic fence (observed)",
+                        "Seismic fence",
                     ),
                 );
                 return;
@@ -357,19 +348,14 @@ const ACTIONS: ActionGroup[] = [
                 label: "Seismic",
                 children: [
                     {
-                        identifier: "realization-seismic-slices",
+                        identifier: "seismic-slices",
                         icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Seismic IJK Slices (Simulated)",
+                        label: "Seismic IJK Slices",
                     },
                     {
-                        identifier: "simulated-seismic-fence",
+                        identifier: "seismic-fence",
                         icon: <Icon data={timeline} fontSize="small" />,
-                        label: "Seismic Fence (Simulated)",
-                    },
-                    {
-                        identifier: "observed-seismic-fence",
-                        icon: <Icon data={timeline} fontSize="small" />,
-                        label: "Seismic Fence (Observed)",
+                        label: "Seismic Fence",
                     },
                 ],
             },

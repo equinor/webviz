@@ -1,3 +1,5 @@
+from enum import StrEnum
+
 from pydantic import BaseModel
 
 
@@ -25,11 +27,17 @@ class SeismicCubeBoundingBox(BaseModel):
     zmax: float
 
 
+class SeismicRepresentation(StrEnum):
+    OBSERVED_IN_CASE = "observed_case"
+    OBSERVED_IN_REALIZATION = "observed_realization"
+    MODELLED = "modelled"
+
+
 class SeismicCubeMeta(BaseModel):
     seismic_attribute: str
     unit: str
     iso_date_or_interval: str
-    is_observation: bool
+    representation: SeismicRepresentation
     is_depth: bool
     bbox: SeismicCubeBoundingBox
     spec: SeismicCubeSpec

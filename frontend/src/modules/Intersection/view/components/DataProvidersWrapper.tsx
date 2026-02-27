@@ -17,7 +17,7 @@ import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersect
 import { isValidBounds } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
-import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
+import { IntersectionSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
 import { type DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import { IntersectionView } from "@modules/_shared/DataProviderFramework/groups/implementations/IntersectionView";
@@ -115,18 +115,8 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 );
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.INTERSECTION_REALIZATION_SIMULATED_SEISMIC,
-    IntersectionRealizationSeismicProvider,
-    {
-        transformToVisualization: createSeismicLayerItemsMaker,
-        transformToBoundingBox: makeSeismicBoundingBox,
-        transformToAnnotations: makeSeismicColorScaleAnnotation,
-    },
-);
-
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.INTERSECTION_REALIZATION_OBSERVED_SEISMIC,
-    IntersectionRealizationSeismicProvider,
+    DataProviderType.INTERSECTION_SEISMIC,
+    IntersectionSeismicProvider,
     {
         transformToVisualization: createSeismicLayerItemsMaker,
         transformToBoundingBox: makeSeismicBoundingBox,

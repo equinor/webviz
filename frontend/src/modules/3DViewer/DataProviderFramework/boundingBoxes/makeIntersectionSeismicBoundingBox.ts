@@ -1,14 +1,14 @@
 import type { BBox } from "@lib/utils/bbox";
 import type {
-    IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicStoredData,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
+    IntersectionSeismicData,
+    IntersectionSeismicStoredData,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-export function makeIntersectionRealizationSeismicBoundingBox({
+export function makeIntersectionSeismicBoundingBox({
     getData,
     getStoredData,
-}: TransformerArgs<any, IntersectionRealizationSeismicData, IntersectionRealizationSeismicStoredData>): BBox | null {
+}: TransformerArgs<any, IntersectionSeismicData, IntersectionSeismicStoredData>): BBox | null {
     const data = getData();
     const polyline = getStoredData("seismicFencePolylineWithSectionLengths");
     if (!polyline || !data) {

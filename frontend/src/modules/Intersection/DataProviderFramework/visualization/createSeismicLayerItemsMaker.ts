@@ -1,9 +1,9 @@
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import type {
-    IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicStoredData,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
+    IntersectionSeismicData,
+    IntersectionSeismicSettings,
+    IntersectionSeismicStoredData,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
     EsvLayerItemsMaker,
@@ -52,9 +52,9 @@ export function createSeismicLayerItemsMaker({
     isLoading,
     name,
 }: TransformerArgs<
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicStoredData,
+    IntersectionSeismicSettings,
+    IntersectionSeismicData,
+    IntersectionSeismicStoredData,
     any
 >): EsvLayerItemsMaker | null {
     const fenceData = getData();

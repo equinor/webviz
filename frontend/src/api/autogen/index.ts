@@ -749,6 +749,7 @@ export {
     type SeismicCubeSpec_api,
     type SeismicFenceData_api,
     type SeismicFencePolyline_api,
+    SeismicRepresentation_api,
     type SeismicSliceData_api,
     SensitivityType_api,
     type Session_api,
