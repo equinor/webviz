@@ -30,6 +30,7 @@ export function GlobalConfirmationDialog(): React.ReactNode {
             modal
             showCloseCross={false}
             title={options.title}
+            variant={options.variant}
             actions={
                 <>
                     {options.actions.map((action) => (

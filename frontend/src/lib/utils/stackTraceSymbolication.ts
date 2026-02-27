@@ -5,9 +5,9 @@
  * back to readable source locations by fetching and parsing source maps.
  */
 
-import ErrorStackParser from 'error-stack-parser';
-import { SourceMapConsumer } from 'source-map-js';
-import type { RawSourceMap } from 'source-map-js';
+import ErrorStackParser from "error-stack-parser";
+import { SourceMapConsumer } from "source-map-js";
+import type { RawSourceMap } from "source-map-js";
 
 // Cache for loaded source maps to avoid redundant fetches
 const sourceMapCache = new Map<string, Promise<SourceMapConsumer | null>>();
@@ -18,7 +18,7 @@ const sourceMapCache = new Map<string, Promise<SourceMapConsumer | null>>();
 async function fetchSourceMap(sourceMapUrl: string): Promise<SourceMapConsumer | null> {
     try {
         const response = await fetch(sourceMapUrl, {
-            credentials: 'same-origin',
+            credentials: "same-origin",
         });
 
         if (!response.ok) {
@@ -40,7 +40,7 @@ async function fetchSourceMap(sourceMapUrl: string): Promise<SourceMapConsumer |
  */
 function getSourceMapUrl(jsFileUrl: string): string {
     // Remove any query parameters or hash
-    const cleanUrl = jsFileUrl.split('?')[0].split('#')[0];
+    const cleanUrl = jsFileUrl.split("?")[0].split("#")[0];
     return `${cleanUrl}.map`;
 }
 
@@ -64,10 +64,7 @@ async function getSourceMap(fileName: string): Promise<SourceMapConsumer | null>
  * @param onProgress - Optional callback to report progress (0-1)
  * @returns Promise resolving to symbolicated stack trace string
  */
-export async function symbolicateStackTrace(
-    error: Error,
-    onProgress?: (progress: number) => void
-): Promise<string> {
+export async function symbolicateStackTrace(error: Error, onProgress?: (progress: number) => void): Promise<string> {
     try {
         if (!error.stack) {
             return error.toString();
@@ -85,19 +82,18 @@ export async function symbolicateStackTrace(
         for (let i = 0; i < frames.length; i++) {
             const frame = frames[i];
 
-            if (!frame.fileName || typeof frame.lineNumber !== 'number' || typeof frame.columnNumber !== 'number') {
+            if (!frame.fileName || typeof frame.lineNumber !== "number" || typeof frame.columnNumber !== "number") {
                 // Can't symbolicate without location info
-                symbolicatedLines.push(`    at ${frame.functionName || 'unknown'}`);
+                symbolicatedLines.push(`    at ${frame.functionName || "unknown"}`);
                 continue;
             }
 
             // Only try to symbolicate bundled files (skip external URLs, node_modules, etc.)
-            const isLocalFile =
-                frame.fileName.startsWith(window.location.origin) || !frame.fileName.startsWith('http');
+            const isLocalFile = frame.fileName.startsWith(window.location.origin) || !frame.fileName.startsWith("http");
 
             if (!isLocalFile) {
                 symbolicatedLines.push(
-                    `    at ${frame.functionName || 'unknown'} (${frame.fileName}:${frame.lineNumber}:${frame.columnNumber})`
+                    `    at ${frame.functionName || "unknown"} (${frame.fileName}:${frame.lineNumber}:${frame.columnNumber})`,
                 );
                 continue;
             }
@@ -114,31 +110,31 @@ export async function symbolicateStackTrace(
                     if (original.source && original.line) {
                         // Successfully symbolicated
                         const cleanSource = original.source
-                            .replace(/^webpack:\/\/\//, '')
-                            .replace(/^\//, '')
-                            .replace(/^\.\//, '');
-                        const name = original.name || frame.functionName || 'unknown';
+                            .replace(/^webpack:\/\/\//, "")
+                            .replace(/^\//, "")
+                            .replace(/^\.\//, "");
+                        const name = original.name || frame.functionName || "unknown";
 
                         symbolicatedLines.push(
-                            `    at ${name} (${cleanSource}:${original.line}:${original.column ?? 0})`
+                            `    at ${name} (${cleanSource}:${original.line}:${original.column ?? 0})`,
                         );
                     } else {
                         // Source map exists but couldn't resolve position
                         symbolicatedLines.push(
-                            `    at ${frame.functionName || 'unknown'} (${frame.fileName}:${frame.lineNumber}:${frame.columnNumber})`
+                            `    at ${frame.functionName || "unknown"} (${frame.fileName}:${frame.lineNumber}:${frame.columnNumber})`,
                         );
                     }
                 } else {
                     // No source map available, use original minified location
                     symbolicatedLines.push(
-                        `    at ${frame.functionName || 'unknown'} (${frame.fileName}:${frame.lineNumber}:${frame.columnNumber})`
+                        `    at ${frame.functionName || "unknown"} (${frame.fileName}:${frame.lineNumber}:${frame.columnNumber})`,
                     );
                 }
             } catch (err) {
-                console.warn('Error symbolicating frame:', err);
+                console.warn("Error symbolicating frame:", err);
                 // On error, include original minified frame
                 symbolicatedLines.push(
-                    `    at ${frame.functionName || 'unknown'} (${frame.fileName}:${frame.lineNumber}:${frame.columnNumber})`
+                    `    at ${frame.functionName || "unknown"} (${frame.fileName}:${frame.lineNumber}:${frame.columnNumber})`,
                 );
             }
 
@@ -147,9 +143,9 @@ export async function symbolicateStackTrace(
             }
         }
 
-        return symbolicatedLines.join('\n');
+        return symbolicatedLines.join("\n");
     } catch (err) {
-        console.error('Failed to symbolicate stack trace:', err);
+        console.error("Failed to symbolicate stack trace:", err);
         // Return original stack on error
         return error.stack || error.toString();
     }
@@ -164,7 +160,7 @@ export async function symbolicateStackTrace(
  */
 export async function symbolicateStackString(
     stackString: string,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
 ): Promise<string> {
     // Create a temporary error object to parse
     const tempError = new Error();

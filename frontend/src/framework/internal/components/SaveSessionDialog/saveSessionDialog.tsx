@@ -14,6 +14,7 @@ import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
 export type SaveSessionDialogProps = {
     workbench: Workbench;
+    saveAsNew?: boolean;
 };
 
 type SaveSessionDialogInputFeedback = {
@@ -25,7 +26,6 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
 
     const originalTitle = activeSession.getMetadata().title;
     const originalDescription = activeSession.getMetadata().description ?? "";
-    const isPersisted = activeSession.getIsPersisted();
 
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
@@ -45,31 +45,21 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.SaveSessionDialogOpen);
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const formId = React.useId();
 
-    function handleSave() {
+    function handleSave(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+
         if (title.trim() === "") {
             inputRef.current?.focus();
             return;
         }
 
-        if (isPersisted) {
-            // Save as new session (dialog opened via "Save As" button)
-            props.workbench
-                .getSessionManager()
-                .saveAsNewSession(title, description)
-                .catch((error) => {
-                    console.error("Failed to save session as new:", error);
-                });
-        } else {
-            // Regular save (first time saving)
-            props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
-            props.workbench
-                .getSessionManager()
-                .saveActiveSession(true)
-                .catch((error) => {
-                    console.error("Failed to save session:", error);
-                });
-        }
+        props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
+        props.workbench
+            .getSessionManager()
+            .saveSession({ saveAsNew: props.saveAsNew })
+            .then((success) => setIsOpen(!success));
     }
 
     function handleCancel() {
@@ -109,7 +99,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                     <Button variant="text" disabled={isSaving} onClick={handleCancel}>
                         Cancel
                     </Button>
-                    <Button variant="text" color="success" disabled={isSaving} onClick={handleSave}>
+                    <Button variant="text" color="success" disabled={isSaving} type="submit" form={formId}>
                         {isSaving && <CircularProgress size="small" />} Save
                     </Button>
                 </>
@@ -118,7 +108,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
                 Sessions are not guaranteed to persist, as underlying data or module states may change.
             </div>
-            <div className="flex gap-4 items-center">
+            <form id={formId} className="flex gap-4 items-center" onSubmit={handleSave}>
                 <DashboardPreview height={100} width={100} layout={layout} />
                 <div className="flex flex-col gap-2 grow min-w-0">
                     <CharLimitedInput
@@ -131,6 +121,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                         maxLength={MAX_TITLE_LENGTH}
                         error={!!inputFeedback.title}
                         autoFocus
+                        required
                     />
                     <div className="text-red-600 text-sm mb-1 h-4">{inputFeedback.title}</div>
                     <CharLimitedInput
@@ -142,7 +133,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                         multiline
                     />
                 </div>
-            </div>
+            </form>
         </Dialog>
     );
 }

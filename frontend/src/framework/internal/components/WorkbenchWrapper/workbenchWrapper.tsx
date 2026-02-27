@@ -24,6 +24,7 @@ import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
 import { RightNavBar } from "../RightNavBar";
 import { SaveSessionDialog } from "../SaveSessionDialog";
+import { SessionErrorDialog } from "../SessionErrorDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
 
@@ -73,7 +74,7 @@ export function WorkbenchWrapper() {
                 <ActiveDashboardBoundary>
                     <SelectEnsemblesDialog workbench={workbench} />
                     <InitialEnsemblesLoadingErrorInfoDialog workbench={workbench} />
-                    <SaveSessionDialog workbench={workbench} />
+                    <SaveSessionDialog workbench={workbench} saveAsNew />
                     <CreateSnapshotDialog workbench={workbench} />
                     <ActiveSessionRecoveryDialog workbench={workbench} />
                     <div className="grow min-h-0">
@@ -81,7 +82,7 @@ export function WorkbenchWrapper() {
                             <LeftNavBar workbench={workbench} />
                             <SettingsContentPanels workbench={workbench} />
                             <RightNavBar workbench={workbench} />
-                        </div>               
+                        </div>
                     </div>
                 </ActiveDashboardBoundary>
             </ActiveSessionBoundary>
@@ -90,6 +91,7 @@ export function WorkbenchWrapper() {
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
+            <SessionErrorDialog workbench={workbench} />
         </>
     );
 }

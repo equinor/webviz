@@ -49,6 +49,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         setDescription(`${truncateString(props.description ?? "", MAX_DESCRIPTION_LENGTH)}`);
     }
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const formId = React.useId();
 
     const [prevTitle, setPrevTitle] = React.useState<string>(props.title);
     const [prevDescription, setPrevDescription] = React.useState<string>(props.description ?? "");
@@ -63,7 +64,8 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         setDescription(props.description ?? "");
     }
 
-    function handleSave() {
+    function handleSave(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
         if (title.trim() === "") {
             inputRef.current?.focus();
             return;
@@ -75,7 +77,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                 props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
                 props.workbench
                     .getSessionManager()
-                    .saveActiveSession()
+                    .saveSession()
                     .then((result) => {
                         if (result) {
                             props.onClose?.();
@@ -145,14 +147,14 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                     <Button variant="text" disabled={isSaving} onClick={handleCancel}>
                         Cancel
                     </Button>
-                    <Button variant="text" color="success" disabled={isSaving} onClick={handleSave}>
+                    <Button variant="text" color="success" disabled={isSaving} type="submit" form={formId}>
                         {isSaving && <CircularProgress size="small" />} Save
                     </Button>
                 </>
             }
             zIndex={60}
         >
-            <div className="flex gap-4 items-center">
+            <form id={formId} className="flex gap-4 items-center" onSubmit={handleSave}>
                 <DashboardPreview height={100} width={100} layout={layout} />
                 <div className="flex flex-col gap-2 grow min-w-0">
                     <CharLimitedInput
@@ -165,6 +167,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                         value={title}
                         error={!!inputFeedback.title}
                         autoFocus
+                        required
                     />
                     <div className="text-red-600 text-sm mb-1 h-4">{inputFeedback.title}</div>
                     <CharLimitedInput
@@ -176,7 +179,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                         multiline
                     />
                 </div>
-            </div>
+            </form>
         </Dialog>
     );
 }

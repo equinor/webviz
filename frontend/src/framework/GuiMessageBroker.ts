@@ -5,6 +5,7 @@ import type { Size2D } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 
 import type { EnsembleLoadingErrorInfoMap } from "./internal/EnsembleSetLoader";
+import type { SessionPersistenceAction } from "./internal/WorkbenchSession/WorkbenchSessionManager";
 import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
 export enum LeftDrawerContent {
@@ -63,6 +64,7 @@ export enum GuiEvent {
     DataChannelNodeHover = "dataChannelNodeHover",
     DataChannelNodeUnhover = "dataChannelNodeUnhover",
     UnsavedRealizationFilterSettingsAction = "unsavedRealizationFilterSettingsAction",
+    SessionPersistenceError = "sessionPersistenceError",
 }
 
 export type GuiEventPayloads = {
@@ -97,6 +99,16 @@ export type GuiEventPayloads = {
     };
     [GuiEvent.UnsavedRealizationFilterSettingsAction]: {
         action: UnsavedChangesAction;
+    };
+    [GuiEvent.SessionPersistenceError]: {
+        /** The persistence lifecycle action that failed (saving, loading) */
+        action: SessionPersistenceAction;
+
+        /** The raised error */
+        error: Error;
+
+        /** Callback for when user wants to retry the failed action */
+        retry: () => void;
     };
 };
 
@@ -273,6 +285,45 @@ export class GuiMessageBroker {
     }
 }
 
+/**
+ * Registers a listener attached to a GUI event topic
+ * @param guiMessageBroker The GuiMessageBroker instance to register the listener on
+ * @param topic The GUI event topic to listen to
+ * @param callback The listener event callback
+ */
+export function useGuiEventSubscriber<T extends Exclude<GuiEvent, keyof GuiEventPayloads>>(
+    guiMessageBroker: GuiMessageBroker,
+    topic: T,
+    callback: () => void,
+): void;
+
+export function useGuiEventSubscriber<T extends keyof GuiEventPayloads>(
+    guiMessageBroker: GuiMessageBroker,
+    topic: T,
+    callback: (payload: GuiEventPayloads[T]) => void,
+): void;
+
+export function useGuiEventSubscriber<T extends GuiEvent>(
+    guiMessageBroker: GuiMessageBroker,
+    topic: T,
+    callback: (payload?: any) => void,
+): void {
+    React.useEffect(
+        function registerGuiEventListener() {
+            // Typescript can't make use of the function override T here, so we need to use any
+            const unsubscribe = guiMessageBroker.subscribeToEvent(topic as any, callback);
+            return unsubscribe;
+        },
+        [callback, guiMessageBroker, topic],
+    );
+}
+
+/**
+ * Provides a globally synced React stateful value and setter for a GUI state value.
+ * @param guiMessageBroker The GuiMessageBroker instance to use for syncing the state
+ * @param state The GUI state value to synchronize to
+ * @returns A tuple of the current state value and a setter function to update the state value
+ */
 export function useGuiState<T extends GuiState>(
     guiMessageBroker: GuiMessageBroker,
     state: T,
@@ -302,6 +353,12 @@ export function useGuiState<T extends GuiState>(
     return [stateValue, stateSetter];
 }
 
+/**
+ * Gets a synchronized GUI state value.
+ * @param guiMessageBroker The GuiMessageBroker instance to use for syncing the state
+ * @param state The GUI state value to synchronize to
+ * @returns The current state value
+ */
 export function useGuiValue<T extends GuiState>(guiMessageBroker: GuiMessageBroker, state: T): GuiStateValueTypes[T] {
     const [stateValue] = useGuiState(guiMessageBroker, state);
     return stateValue;

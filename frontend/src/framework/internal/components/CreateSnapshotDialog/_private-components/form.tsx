@@ -12,12 +12,14 @@ import { useActiveSession } from "../../ActiveSessionBoundary";
 import { DashboardPreview } from "../../DashboardPreview/dashboardPreview";
 
 export type FormProps = {
+    id: string;
     workbench: Workbench;
     title: string;
     description: string;
     setTitle: (title: string) => void;
     setDescription: (description: string) => void;
     titleInputRef: React.ForwardedRef<HTMLInputElement>;
+    onSubmit: React.FormEventHandler<HTMLFormElement>;
 };
 
 type MakeSnapshotDialogInputFeedback = {
@@ -93,7 +95,7 @@ export function Form(props: FormProps): React.ReactNode {
                     There are unsaved changes in the current session. These changes will be included in the snapshot.
                 </div>
             )}
-            <div className="flex gap-4 items-center">
+            <form id={props.id} className="flex gap-4 items-center" onSubmit={props.onSubmit}>
                 <DashboardPreview height={100} width={100} layout={layout} />
                 <div className="flex flex-col gap-2 grow min-w-0">
                     <CharLimitedInput
@@ -106,6 +108,7 @@ export function Form(props: FormProps): React.ReactNode {
                         value={props.title}
                         error={!!inputFeedback.title}
                         autoFocus
+                        required
                     />
                     <div className="text-red-600 text-sm mb-1 h-4">{inputFeedback.title}</div>
                     <CharLimitedInput
@@ -117,7 +120,7 @@ export function Form(props: FormProps): React.ReactNode {
                         multiline
                     />
                 </div>
-            </div>
+            </form>
         </>
     );
 }
