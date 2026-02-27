@@ -2,6 +2,7 @@ import os
 
 # Import these from sumo wrapper package in order to grab the resource scopes
 from sumo.wrapper.config import APP_REGISTRATION as sumo_app_reg
+from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
 
 TENANT_ID = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
@@ -29,7 +30,7 @@ DEFAULT_STALE_WHILE_REVALIDATE = 3600 * 24  # 24 hour
 REDIS_USER_SESSION_URL = "redis://redis-user-session:6379"
 REDIS_CACHE_URL = "redis://redis-cache:6379"
 
-_is_on_radix_platform = os.getenv("RADIX_APP") is not None
+_is_on_radix_platform = is_running_on_radix_platform()
 if _is_on_radix_platform:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-db.documents.azure.com:443/")
 else:
