@@ -37,7 +37,6 @@ async def get_seismic_cube_meta_list(
 
 
 @router.get("/get_inline_slice/")
-@cache_time(CacheTime.LONG)
 async def get_inline_slice(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -77,7 +76,6 @@ async def get_inline_slice(
 
 
 @router.get("/get_crossline_slice/")
-@cache_time(CacheTime.LONG)
 async def get_crossline_slice(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -117,7 +115,6 @@ async def get_crossline_slice(
 
 
 @router.get("/get_depth_slice/")
-@cache_time(CacheTime.LONG)
 async def get_depth_slice(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
