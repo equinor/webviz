@@ -103,6 +103,16 @@ export type BodyPostGetSurfaceIntersection_api = {
 };
 
 /**
+ * Body_post_get_well_trajectories_formation_segments
+ */
+export type BodyPostGetWellTrajectoriesFormationSegments_api = {
+    /**
+     * Well Trajectories
+     */
+    well_trajectories: Array<WellTrajectory_api>;
+};
+
+/**
  * BoundingBox2d
  */
 export type BoundingBox2d_api = {
@@ -545,6 +555,25 @@ export enum FlowRateType_api {
     TM = "TM",
     WAT = "WAT",
 }
+
+/**
+ * FormationSegment
+ *
+ * Segment of a formation defined by top and bottom surface.
+ *
+ * The formation segment is defined by the md (measured depth) value along the well trajectory,
+ * at enter and exit of the formation.
+ */
+export type FormationSegment_api = {
+    /**
+     * Mdenter
+     */
+    mdEnter: number;
+    /**
+     * Mdexit
+     */
+    mdExit: number;
+};
 
 /**
  * Frequency
@@ -2784,6 +2813,98 @@ export type WellProductionData_api = {
 };
 
 /**
+ * WellTrajectory
+ *
+ * Well trajectory defined by a set of (x, y, z) coordinates and measured depths (md).
+ *
+ * uwi: Unique wellbore identifier.
+ * xPoints: X-coordinates of well trajectory points.
+ * yPoints: Y-coordinates of well trajectory points.
+ * zPoints: Z-coordinates (depth values) of well trajectory points.
+ * mdPoints: Measured depth values at each well trajectory point.
+ */
+export type WellTrajectory_api = {
+    /**
+     * Xpoints
+     */
+    xPoints: Array<number>;
+    /**
+     * Ypoints
+     */
+    yPoints: Array<number>;
+    /**
+     * Zpoints
+     */
+    zPoints: Array<number>;
+    /**
+     * Mdpoints
+     */
+    mdPoints: Array<number>;
+    /**
+     * Uwi
+     */
+    uwi: string;
+};
+
+export type WellTrajectoryFormationSegments_api =
+    | ({
+          status: "success";
+      } & WellTrajectoryFormationSegmentsSuccess_api)
+    | ({
+          status: "error";
+      } & WellTrajectoryFormationSegmentsError_api);
+
+/**
+ * WellTrajectoryFormationSegmentsError
+ *
+ * Error response when retrieving well trajectory formation segments.
+ *
+ * status: "error"
+ * uwi: str
+ * errorMessage: str
+ */
+export type WellTrajectoryFormationSegmentsError_api = {
+    /**
+     * Status
+     */
+    status?: "error";
+    /**
+     * Uwi
+     */
+    uwi: string;
+    /**
+     * Errormessage
+     */
+    errorMessage: string;
+};
+
+/**
+ * WellTrajectoryFormationSegmentsSuccess
+ *
+ * Segments of a well trajectory that intersects a formation defined by top and bottom surfaces.
+ *
+ * A wellbore can enter and exit a formation multiple times, resulting in multiple segments.
+ *
+ * status: "success"
+ * uwi: str
+ * formationSegments: list[FormationSegment]
+ */
+export type WellTrajectoryFormationSegmentsSuccess_api = {
+    /**
+     * Status
+     */
+    status?: "success";
+    /**
+     * Uwi
+     */
+    uwi: string;
+    /**
+     * Formationsegments
+     */
+    formationSegments: Array<FormationSegment_api>;
+};
+
+/**
  * WellboreCasing
  *
  * Single casing for a wellbore
@@ -2932,14 +3053,6 @@ export type WellboreHeader_api = {
      */
     currentTrack: number;
     /**
-     * Tvdmax
-     */
-    tvdMax: number;
-    /**
-     * Mdmax
-     */
-    mdMax: number;
-    /**
      * Kickoffdepthmd
      */
     kickoffDepthMd: number | null;
@@ -2951,6 +3064,30 @@ export type WellboreHeader_api = {
      * Parentwellbore
      */
     parentWellbore: string | null;
+    /**
+     * Mdmin
+     */
+    mdMin?: number | null;
+    /**
+     * Mdmax
+     */
+    mdMax?: number | null;
+    /**
+     * Mdunit
+     */
+    mdUnit?: string | null;
+    /**
+     * Tvdmin
+     */
+    tvdMin?: number | null;
+    /**
+     * Tvdmax
+     */
+    tvdMax?: number | null;
+    /**
+     * Tvdunit
+     */
+    tvdUnit?: string | null;
 };
 
 /**
@@ -4208,6 +4345,49 @@ export type GetSurfaceDataResponses_api = {
 };
 
 export type GetSurfaceDataResponse_api = GetSurfaceDataResponses_api[keyof GetSurfaceDataResponses_api];
+
+export type PostGetWellTrajectoriesFormationSegmentsData_api = {
+    body: BodyPostGetWellTrajectoriesFormationSegments_api;
+    path?: never;
+    query: {
+        /**
+         * Top Depth Surf Addr Str
+         *
+         * Surface address string for top bounding depth surface. Supported address types are *REAL*, *OBS* and *STAT*
+         */
+        top_depth_surf_addr_str: string;
+        /**
+         * Bottom Depth Surf Addr Str
+         *
+         * Optional surface address string for bottom bounding depth surface. If not provided end of well trajectory is used as lower bound for formation. Supported address types are *REAL*, *OBS* and *STAT*
+         */
+        bottom_depth_surf_addr_str?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/surface/get_well_trajectories_formation_segments";
+};
+
+export type PostGetWellTrajectoriesFormationSegmentsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type PostGetWellTrajectoriesFormationSegmentsError_api =
+    PostGetWellTrajectoriesFormationSegmentsErrors_api[keyof PostGetWellTrajectoriesFormationSegmentsErrors_api];
+
+export type PostGetWellTrajectoriesFormationSegmentsResponses_api = {
+    /**
+     * Response Post Get Well Trajectories Formation Segments
+     *
+     * Successful Response
+     */
+    200: Array<WellTrajectoryFormationSegments_api>;
+};
+
+export type PostGetWellTrajectoriesFormationSegmentsResponse_api =
+    PostGetWellTrajectoriesFormationSegmentsResponses_api[keyof PostGetWellTrajectoriesFormationSegmentsResponses_api];
 
 export type GetStatisticalSurfaceDataHybridData_api = {
     body?: never;

@@ -4,7 +4,7 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 
 export function makeDrilledWellTrajectoriesBoundingBox({
     getData,
-}: TransformerArgs<any, WellboreTrajectory_api[]>): BBox | null {
+}: TransformerArgs<any, WellboreTrajectory_api[], any>): BBox | null {
     const data = getData();
     if (!data) {
         return null;

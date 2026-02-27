@@ -24,6 +24,15 @@ export class ColorSetSetting implements CustomSettingImplementation<ValueType, V
         return true;
     }
 
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        // ColorSet is a class instance, check if it has the expected methods
+        return typeof value === "object" && value !== null && "getColorPalette" in value;
+    }
+
     isValueValid(): boolean {
         return true;
     }
