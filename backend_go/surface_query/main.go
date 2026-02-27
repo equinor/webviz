@@ -7,8 +7,6 @@ import (
 	"runtime"
 	"time"
 
-	_ "go.uber.org/automaxprocs"
-
 	"surface_query/handlers"
 
 	"github.com/gin-gonic/gin"
