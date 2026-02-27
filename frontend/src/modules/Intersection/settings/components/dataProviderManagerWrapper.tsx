@@ -65,12 +65,13 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                             props.dataProviderManager,
                             colorSet.getNextColor(),
                         ),
+                        true,
                     );
                 }
                 return;
             }
             case "context-boundary":
-                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));
+                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager), true);
                 return;
             case "color-scale":
                 groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
@@ -219,6 +220,7 @@ const INITIAL_ACTIONS: ActionGroup[] = [
                 identifier: "intersection-view",
                 icon: <Panorama fontSize="small" />,
                 label: "Intersection View",
+                description: "Visualize data along a trajectory or polyline",
             },
         ],
     },
@@ -232,6 +234,7 @@ const ACTIONS: ActionGroup[] = [
                 identifier: "context-boundary",
                 icon: <SettingsApplications fontSize="small" />,
                 label: "Context Boundary",
+                description: "Share settings between a set of items",
             },
         ],
     },

@@ -198,11 +198,13 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
                 case RootActionIdents.CONTINUOUS_TRACK:
                     return groupDelegate.appendChild(
                         GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_CONT, dataProviderManager),
+                        true,
                     );
 
                 case RootActionIdents.DISCRETE_TRACK:
                     return groupDelegate.appendChild(
                         GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_DISC, dataProviderManager),
+                        true,
                     );
 
                 case PlotActionIdents.DIFF_GROUP: {
