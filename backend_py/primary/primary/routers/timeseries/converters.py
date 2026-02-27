@@ -4,7 +4,13 @@ from webviz_services.summary_vector_statistics import VectorStatistics
 from webviz_services.sumo_access.summary_access import RealizationVector
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.summary_delta_vectors import RealizationDeltaVector
-from webviz_services.summary_derived_vectors import DerivedVectorType, DerivedRealizationVector
+from webviz_services.summary_derived_vectors import (
+    DerivedVectorType,
+    DerivedVectorInfo,
+    DerivedVectorMetadata,
+    DerivedRealizationVector,
+)
+
 from . import schemas
 
 
@@ -43,12 +49,18 @@ def realization_vector_list_to_api_vector_realization_data_list(
     ]
 
 
-def derived_vector_realizations_to_api_vector_realization_data_list(
-    derived_realization_vector_list: list[DerivedRealizationVector], derived_vector_info: schemas.DerivedVectorInfo
+def derived_realization_vector_list_and_info_to_api_vector_realization_data_list(
+    derived_realization_vector_list: list[DerivedRealizationVector], derived_vector_info: DerivedVectorInfo
 ) -> list[schemas.VectorRealizationData]:
     """
-    Create API VectorRealizationData list from service layer DerivedRealizationVector list and derived vector info
+    Create API VectorRealizationData list from service layer DerivedRealizationVector list and derived
+    vector info
     """
+    converted_info = schemas.DerivedVectorInfo(
+        type=to_api_derived_vector_type(derived_vector_info.type),
+        sourceVector=derived_vector_info.source_vector,
+    )
+
     return [
         schemas.VectorRealizationData(
             realization=real_vec.realization,
@@ -56,7 +68,7 @@ def derived_vector_realizations_to_api_vector_realization_data_list(
             values=real_vec.values,
             unit=real_vec.unit,
             isRate=real_vec.is_rate,
-            derivedVectorInfo=derived_vector_info,
+            derivedVectorInfo=converted_info,
         )
         for real_vec in derived_realization_vector_list
     ]
@@ -103,6 +115,28 @@ def to_service_statistic_functions(
     return service_stat_funcs
 
 
+def derived_vector_statistics_data_to_api_vector_statistic_data(
+    derived_vector_statistics: VectorStatistics,
+    derived_vector_metadata: DerivedVectorMetadata,
+    derived_vector_info: DerivedVectorInfo,
+) -> schemas.VectorStatisticData:
+    """Create API VectorStatisticData from service layer derived vector data objects"""
+    value_objects = _create_statistic_value_object_list(derived_vector_statistics)
+    ret_data = schemas.VectorStatisticData(
+        realizations=derived_vector_statistics.realizations,
+        timestampsUtcMs=derived_vector_statistics.timestamps_utc_ms,
+        valueObjects=value_objects,
+        unit=derived_vector_metadata.unit,
+        isRate=derived_vector_metadata.is_rate,
+        derivedVectorInfo=schemas.DerivedVectorInfo(
+            type=to_api_derived_vector_type(derived_vector_info.type),
+            sourceVector=derived_vector_info.source_vector,
+        ),
+    )
+
+    return ret_data
+
+
 def to_api_vector_statistic_data(
     vector_statistics: VectorStatistics,
     is_rate: bool,
@@ -125,26 +159,24 @@ def to_api_vector_statistic_data(
     return ret_data
 
 
-def to_api_delta_ensemble_vector_statistic_data(
+def to_api_vector_statistic_sensitivity_data(
     vector_statistics: VectorStatistics,
     is_rate: bool,
     unit: str,
-    derived_vector_info: schemas.DerivedVectorInfo | None = None,
-) -> schemas.VectorStatisticData:
-    """
-    Create API VectorStatisticData from service layer VectorStatistics
-    """
+    sensitivity_name: str,
+    case_name: str,
+) -> schemas.VectorStatisticSensitivityData:
+    """Create API VectorStatisticSensitivityData from service layer VectorStatistics"""
     value_objects = _create_statistic_value_object_list(vector_statistics)
-    ret_data = schemas.VectorStatisticData(
+    return schemas.VectorStatisticSensitivityData(
+        sensitivityName=sensitivity_name,
+        sensitivityCase=case_name,
         realizations=vector_statistics.realizations,
         timestampsUtcMs=vector_statistics.timestamps_utc_ms,
         valueObjects=value_objects,
         unit=unit,
         isRate=is_rate,
-        derivedVectorInfo=derived_vector_info,
     )
-
-    return ret_data
 
 
 def _create_statistic_value_object_list(vector_statistics: VectorStatistics) -> list[schemas.StatisticValueObject]:

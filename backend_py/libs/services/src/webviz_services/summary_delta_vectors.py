@@ -9,6 +9,7 @@ from webviz_services.utils.arrow_helpers import validate_summary_vector_table_pa
 
 @dataclass
 class DeltaVectorMetadata:
+    name: str
     is_rate: bool
     unit: str
 
@@ -61,18 +62,18 @@ def create_delta_vector_table(
 
 
 def create_realization_delta_vector_list(
-    delta_vector_table: pa.Table, vector_name: str, is_rate: bool, unit: str
+    delta_vector_table: pa.Table, delta_vector_metadata: DeltaVectorMetadata
 ) -> list[RealizationDeltaVector]:
     """
     Create a list of RealizationDeltaVector from the delta vector table.
     """
-    validate_summary_vector_table_pa(delta_vector_table, vector_name)
+    validate_summary_vector_table_pa(delta_vector_table, delta_vector_metadata.name)
 
     real_arr_np = delta_vector_table.column("REAL").to_numpy()
     unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
 
     whole_date_np_arr = delta_vector_table.column("DATE").to_numpy()
-    whole_value_np_arr = delta_vector_table.column(vector_name).to_numpy()
+    whole_value_np_arr = delta_vector_table.column(delta_vector_metadata.name).to_numpy()
 
     ret_arr: list[RealizationDeltaVector] = []
     for i, real in enumerate(unique_reals):
@@ -86,8 +87,8 @@ def create_realization_delta_vector_list(
                 realization=real,
                 timestamps_utc_ms=date_np_arr.astype(int).tolist(),
                 values=value_np_arr.tolist(),
-                is_rate=is_rate,
-                unit=unit,
+                is_rate=delta_vector_metadata.is_rate,
+                unit=delta_vector_metadata.unit,
             )
         )
 

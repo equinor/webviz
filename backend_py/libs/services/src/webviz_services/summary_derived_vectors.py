@@ -7,19 +7,42 @@ import pyarrow as pa
 import polars as pl
 
 from webviz_services.service_exceptions import InvalidDataError, Service
+from webviz_services.sumo_access.summary_types import VectorMetadata
+from webviz_services.summary_delta_vectors import DeltaVectorMetadata
 from webviz_services.utils.arrow_helpers import validate_summary_vector_table_pa
 
 
 class DerivedVectorType(StrEnum):
+    """Enum for defined types of derived vector"""
+
     PER_DAY = "PER_DAY"
     PER_INTERVAL = "PER_INTVL"
 
 
 @dataclass
 class DerivedRealizationVector:
+    """Data class for derived realization vector"""
+
     realization: int
     timestamps_utc_ms: list[int]
     values: list[float]
+    is_rate: bool
+    unit: str
+
+
+@dataclass
+class DerivedVectorInfo:
+    """Info of derived vector"""
+
+    type: DerivedVectorType
+    source_vector: str
+
+
+@dataclass
+class DerivedVectorMetadata:
+    """Metadata of derived vector"""
+
+    name: str
     is_rate: bool
     unit: str
 
@@ -275,18 +298,19 @@ def create_per_day_vector_table_pa(total_vector_table_pa: pa.Table) -> pa.Table:
 
 
 def create_derived_realization_vector_list(
-    derived_vector_table: pa.Table, vector_name: str, is_rate: bool, unit: str
+    derived_vector_table: pa.Table,
+    derived_vector_metadata: DerivedVectorMetadata,
 ) -> list[DerivedRealizationVector]:
     """
     Create a list of DerivedRealizationVector from the derived vector table.
     """
-    validate_summary_vector_table_pa(derived_vector_table, vector_name)
+    validate_summary_vector_table_pa(derived_vector_table, derived_vector_metadata.name)
 
     real_arr_np = derived_vector_table.column("REAL").to_numpy()
     unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
 
     whole_date_np_arr = derived_vector_table.column("DATE").to_numpy()
-    whole_value_np_arr = derived_vector_table.column(vector_name).to_numpy()
+    whole_value_np_arr = derived_vector_table.column(derived_vector_metadata.name).to_numpy()
 
     ret_arr: list[DerivedRealizationVector] = []
     for i, real in enumerate(unique_reals):
@@ -295,15 +319,57 @@ def create_derived_realization_vector_list(
         date_np_arr = whole_date_np_arr[start_row_idx : start_row_idx + row_count]
         value_np_arr = whole_value_np_arr[start_row_idx : start_row_idx + row_count]
 
-        # Create RealizationDeltaVector
         ret_arr.append(
             DerivedRealizationVector(
                 realization=real,
                 timestamps_utc_ms=date_np_arr.astype(int).tolist(),
                 values=value_np_arr.tolist(),
-                is_rate=is_rate,
-                unit=unit,
+                is_rate=derived_vector_metadata.is_rate,
+                unit=derived_vector_metadata.unit,
             )
         )
 
     return ret_arr
+
+
+def create_derived_vector_table_and_metadata_and_info(
+    derived_vector_name: str,
+    source_vector_table_pa: pa.Table,
+    source_vector_metadata: VectorMetadata | DeltaVectorMetadata,
+) -> tuple[pa.Table, DerivedVectorMetadata, DerivedVectorInfo]:
+    """Create derived vector pa.Table, its metadata and info.
+
+    This function is used to create derived vectors of both regular and delta ensembles.
+
+    Args:
+    - derived_vector_name: name of the derived vector to create data for
+    - source_vector_table_pa: pyarrow table for the vector to derive from
+    - source_vector_metadata: metadata for the vector to derive from
+    """
+    derived_vector_metadata, derived_vector_info = _create_derived_vector_metadata_and_info(
+        derived_vector_name, source_vector_metadata
+    )
+
+    derived_vector_table_pa = create_derived_vector_table_for_type(source_vector_table_pa, derived_vector_info.type)
+
+    return derived_vector_table_pa, derived_vector_metadata, derived_vector_info
+
+
+def _create_derived_vector_metadata_and_info(
+    derived_vector_name: str, source_vector_metadata: VectorMetadata | DeltaVectorMetadata
+) -> tuple[DerivedVectorMetadata, DerivedVectorInfo]:
+    """Create metadata for derived vectors
+
+    If source vector is a rate vector, the derived vector is also considered a rate vector.
+
+    Returns:
+        tuple: (derived_vector_metadata, derived_vector_info)
+    """
+    derived_vector_type = get_derived_vector_type(derived_vector_name)
+    derived_vector_unit = create_derived_vector_unit(source_vector_metadata.unit, derived_vector_type)
+    derived_vector_info = DerivedVectorInfo(type=derived_vector_type, source_vector=source_vector_metadata.name)
+    derived_vector_metadata = DerivedVectorMetadata(
+        name=derived_vector_name, is_rate=source_vector_metadata.is_rate, unit=derived_vector_unit
+    )
+
+    return derived_vector_metadata, derived_vector_info

@@ -4,6 +4,7 @@ import pyarrow as pa
 from webviz_services.summary_delta_vectors import (
     create_delta_vector_table,
     create_realization_delta_vector_list,
+    DeltaVectorMetadata,
     RealizationDeltaVector,
 )
 
@@ -79,6 +80,7 @@ def test_create_delta_vector_table_with_different_reals() -> None:
 
 def test_create_realization_delta_vector_list() -> None:
     # Create sample data for delta_vector_table
+    delta_vector_metadata = DeltaVectorMetadata(name="vector", unit="unit", is_rate=True)
     delta_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 2, 2], "vector": [5.0, 10.0, 15.0, 20.0]}
     delta_vector_table = pa.table(delta_data, schema=VECTOR_TABLE_SCHEMA)
 
@@ -89,7 +91,7 @@ def test_create_realization_delta_vector_list() -> None:
     ]
 
     # Call the function
-    result = create_realization_delta_vector_list(delta_vector_table, "vector", is_rate=True, unit="unit")
+    result = create_realization_delta_vector_list(delta_vector_table, delta_vector_metadata)
 
     # Validate the result
     assert result == expected_result
@@ -97,6 +99,7 @@ def test_create_realization_delta_vector_list() -> None:
 
 def test_create_realization_delta_vector_list_with_single_real() -> None:
     # Create sample data for delta_vector_table
+    delta_vector_metadata = DeltaVectorMetadata(name="vector", unit="unit", is_rate=False)
     delta_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 1, 1], "vector": [5.0, 10.0, 15.0, 20.0]}
     delta_vector_table = pa.table(delta_data, schema=VECTOR_TABLE_SCHEMA)
 
@@ -108,7 +111,7 @@ def test_create_realization_delta_vector_list_with_single_real() -> None:
     ]
 
     # Call the function
-    result = create_realization_delta_vector_list(delta_vector_table, "vector", is_rate=False, unit="unit")
+    result = create_realization_delta_vector_list(delta_vector_table, delta_vector_metadata)
 
     # Validate the result
     assert result == expected_result
@@ -116,13 +119,14 @@ def test_create_realization_delta_vector_list_with_single_real() -> None:
 
 def test_create_realization_delta_vector_list_with_empty_table() -> None:
     # Create an empty delta_vector_table
+    delta_vector_metadata = DeltaVectorMetadata(name="vector", unit="unit", is_rate=True)
     delta_vector_table = pa.table({"DATE": [], "REAL": [], "vector": []}, schema=VECTOR_TABLE_SCHEMA)
 
     # Expected result
     expected_result: list[RealizationDeltaVector] = []
 
     # Call the function
-    result = create_realization_delta_vector_list(delta_vector_table, "vector", is_rate=True, unit="unit")
+    result = create_realization_delta_vector_list(delta_vector_table, delta_vector_metadata)
 
     # Validate the result
     assert result == expected_result
