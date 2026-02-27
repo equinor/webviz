@@ -1,7 +1,7 @@
 import { Icon, Typography } from "@equinor/eds-core-react";
 import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
 
-import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -16,16 +16,16 @@ export type StartPageProps = {
 };
 
 export function StartPage(props: StartPageProps) {
-    const [, setShowOverviewDialog] = useGuiState(
+    const setShowOverviewDialog = useSetGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogOpen,
     );
-    const [, setOverviewContentMode] = useGuiState(
+    const setOverviewContentMode = useSetGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogMode,
     );
 
-    const [, setIsOpenTemplatesDialog] = useGuiState(
+    const setIsOpenTemplatesDialog = useSetGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.TemplatesDialogOpen,
     );

@@ -3,11 +3,25 @@ import React from "react";
 import { Icon, Typography } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
 import { Dropdown, MenuButton } from "@mui/base";
-import { AddLink, ArrowDropDown, Category, Close, Edit, Link, Lock, Refresh, Save, SaveAs } from "@mui/icons-material";
+import {
+    AddLink,
+    ArrowDropDown,
+    Category,
+    Close,
+    Edit,
+    Fullscreen,
+    FullscreenExit,
+    Link,
+    Lock,
+    Refresh,
+    Save,
+    SaveAs,
+} from "@mui/icons-material";
 
 import FmuLogo from "@assets/fmu.svg";
 
-import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
+import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
 import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
@@ -85,6 +99,7 @@ type TopBarButtonsProps = {
 };
 
 function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
+    const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
     const isSnapshot = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
@@ -94,6 +109,7 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
         props.workbench.getSessionManager().maybeCloseCurrentSession();
     }
 
+    const fullscreenButtonTitle = isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
     const closeButtonTitle = isSnapshot ? "Close snapshot" : "Close session";
 
     return (
@@ -110,9 +126,14 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
                     <TopBarDivider />
                 </>
             )}
+            <Tooltip title={fullscreenButtonTitle} placement="bottom">
+                <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullScreen}>
+                    {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
+                </TopBarButton>
+            </Tooltip>
             <Tooltip title={closeButtonTitle} placement="bottom">
                 <TopBarButton onClick={handleCloseSessionClick} title={closeButtonTitle}>
-                    <Close fontSize="inherit" />
+                    <Close fontSize="small" />
                 </TopBarButton>
             </Tooltip>
         </>
@@ -296,7 +317,7 @@ type SnapshotButtonProps = {
 };
 
 function SnapshotButton(props: SnapshotButtonProps): React.ReactNode {
-    const [, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.MakeSnapshotDialogOpen);
+    const setIsOpen = useSetGuiState(props.workbench.getGuiMessageBroker(), GuiState.MakeSnapshotDialogOpen);
 
     const handleClick = () => {
         setIsOpen(true);
@@ -321,7 +342,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
         WorkbenchSessionManagerTopic.ACTIVE_SESSION,
     );
 
-    const [, setSaveSessionDialogOpen] = useGuiState(
+    const setSaveSessionDialogOpen = useSetGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SaveSessionDialogOpen,
     );

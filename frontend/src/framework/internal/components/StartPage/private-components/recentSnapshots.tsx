@@ -6,7 +6,7 @@ import {
     SortDirection_api,
     type SnapshotAccessLog_api,
 } from "@api";
-import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { timeAgo } from "@lib/utils/dates";
 
@@ -18,11 +18,11 @@ export type RecentSnapshotsProps = {
 };
 
 export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
-    const [, setShowOverviewDialog] = useGuiState(
+    const setShowOverviewDialog = useSetGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogOpen,
     );
-    const [, setOverviewContentMode] = useGuiState(
+    const setOverviewContentMode = useSetGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogMode,
     );

@@ -37,14 +37,11 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
 
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
+    const moduleInstance = activeModuleInstanceId ? dashboard.getModuleInstance(activeModuleInstanceId) : null;
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(ref);
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const moduleInstance = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES).find(
-        (instance) => instance.getId() === activeModuleInstanceId,
-    );
 
     React.useEffect(function handleMount() {
         const currentTimeoutRef = timeoutRef.current;

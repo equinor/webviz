@@ -251,8 +251,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.MODULE_INSTANCES);
     }
 
-    getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
-        return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
+    getModuleInstance(id: string): ModuleInstance<any, any> | null {
+        return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id) ?? null;
     }
 
     setActiveModuleInstanceId(moduleInstanceId: string | null): void {

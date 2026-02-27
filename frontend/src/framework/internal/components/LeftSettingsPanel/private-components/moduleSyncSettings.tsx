@@ -1,34 +1,39 @@
 import React from "react";
 
-import { Link, PinDrop, Public } from "@mui/icons-material";
+import { Tooltip } from "@equinor/eds-core-react";
+import { PinDrop, Public } from "@mui/icons-material";
 
-import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { DashboardTopic } from "@framework/internal/Dashboard";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { SyncSettingKey } from "@framework/SyncSettings";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
 import { Checkbox } from "@lib/components/Checkbox";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useActiveDashboard } from "../../ActiveDashboardBoundary";
+import { useActiveSession } from "../../ActiveSessionBoundary";
 
-type ModulesListProps = {
+type ModuleSyncSettingProps = {
     workbench: Workbench;
+    visible: boolean;
 };
 
-export const SyncSettings: React.FC<ModulesListProps> = (props) => {
+export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNode {
     const dashboard = useActiveDashboard();
-    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
+    const workbenchSession = useActiveSession();
+    const moduleInstances = dashboard.getModuleInstances();
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
+    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     const forceRerender = React.useReducer((x) => x + 1, 0)[1];
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
 
-    const activeModuleInstance = moduleInstances.find((instance) => instance.getId() === activeModuleInstanceId);
+    const activeModuleInstance = activeModuleInstanceId ? dashboard.getModuleInstance(activeModuleInstanceId) : null;
 
     function handleSyncSettingChange(setting: SyncSettingKey, value: boolean) {
-        if (activeModuleInstance === undefined) {
+        if (!activeModuleInstance) {
             return;
         }
 
@@ -76,13 +81,15 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     function makeContent() {
         const syncableSettingKeys = activeModuleInstance?.getModule().getSyncableSettingKeys() ?? [];
 
-        if (activeModuleInstanceId === "" || activeModuleInstance === undefined) {
+        if (activeModuleInstanceId === "" || !activeModuleInstance) {
             return <div className="text-gray-500 m-2">No module selected</div>;
         }
 
         if (syncableSettingKeys.length === 0) {
             return <div className="text-gray-500 m-2">No syncable settings</div>;
         }
+
+        const disabledReason = isSnapshot ? "Sync settings cannot be changed in snapshot mode" : undefined;
 
         return (
             <table className="w-full m-2">
@@ -102,19 +109,28 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
                         const globallySynced = isGlobalSyncSetting(setting);
                         return (
                             <tr key={setting} className="hover:bg-blue-50">
-                                <td className="border-r p-2">
-                                    <Checkbox
-                                        checked={globallySynced}
-                                        onChange={(e) => handleGlobalSyncSettingChange(setting, e.target.checked)}
-                                    />
+                                <Tooltip title={disabledReason} disabled={!isSnapshot}>
+                                    <td className="border-r p-2">
+                                        <Checkbox
+                                            checked={globallySynced}
+                                            onChange={(e) => handleGlobalSyncSettingChange(setting, e.target.checked)}
+                                            disabled={isSnapshot}
+                                        />
+                                    </td>
+                                </Tooltip>
+                                <Tooltip title={disabledReason} disabled={!isSnapshot}>
+                                    <td className="border-r p-2">
+                                        <Checkbox
+                                            checked={globallySynced || activeModuleInstance.isSyncedSetting(setting)}
+                                            onChange={(e) => handleSyncSettingChange(setting, e.target.checked)}
+                                            disabled={isSnapshot}
+                                        />
+                                    </td>
+                                </Tooltip>
+
+                                <td className={resolveClassNames("p-2", { "opacity-50": isSnapshot })}>
+                                    {SyncSettingsMeta[setting].name}
                                 </td>
-                                <td className="border-r p-2">
-                                    <Checkbox
-                                        checked={globallySynced || activeModuleInstance.isSyncedSetting(setting)}
-                                        onChange={(e) => handleSyncSettingChange(setting, e.target.checked)}
-                                    />
-                                </td>
-                                <td className="p-2">{SyncSettingsMeta[setting].name}</td>
                             </tr>
                         );
                     })}
@@ -123,9 +139,5 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
         );
     }
 
-    return (
-        <Drawer title="Sync settings" icon={<Link />} visible={drawerContent === LeftDrawerContent.SyncSettings}>
-            {makeContent()}
-        </Drawer>
-    );
-};
+    return <Drawer visible={props.visible}>{makeContent()}</Drawer>;
+}

@@ -1,15 +1,19 @@
 import type React from "react";
 
-import { FilterAlt, Fullscreen, FullscreenExit, GridView, History, WebAsset } from "@mui/icons-material";
+import { FilterAlt, History, Palette, WebAsset } from "@mui/icons-material";
 
 import { GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import {
+    SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
+    SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
+} from "../SettingsContentPanels";
 
 type RightNavBarProps = {
     workbench: Workbench;
@@ -19,26 +23,32 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
-    const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
     const [drawerContent, setDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
+
+    const [rightSettingsPanelIsCollapsed, setRightSettingsPanelIsCollapsed] = useGuiState(
+        guiMessageBroker,
+        GuiState.RightSettingsPanelIsCollapsed,
+    );
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
     );
     const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
-    const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.TemplatesDialogOpen,
-    );
+
     const numberOfUnsavedRealizationFilters = useGuiValue(guiMessageBroker, GuiState.NumberOfUnsavedRealizationFilters);
     const numberOfEffectiveRealizationFilters = useGuiValue(
         guiMessageBroker,
         GuiState.NumberOfEffectiveRealizationFilters,
     );
 
+    function forceSettingsPanelVisible() {
+        setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
+        setRightSettingsPanelIsCollapsed(false);
+    }
+
     function ensureSettingsPanelIsVisible() {
-        if (rightSettingsPanelWidth <= 5) {
-            setRightSettingsPanelWidth(30);
+        if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+            forceSettingsPanelVisible();
         }
     }
 
@@ -47,30 +57,35 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         setDrawerContent(undefined);
     }
 
-    function togglePanelContent(targetContent: RightDrawerContent) {
-        if (targetContent === drawerContent) {
+    function handleSelectPanelContent(targetContent: RightDrawerContent) {
+        const isSameContent = targetContent === drawerContent;
+        if (isSameContent && rightSettingsPanelIsCollapsed) {
+            forceSettingsPanelVisible();
+            return;
+        }
+        if (isSameContent) {
             hideSettingsPanel();
             return;
         }
-
+        // Switch content
         setDrawerContent(targetContent);
         ensureSettingsPanelIsVisible();
     }
 
     function handleModulesListClick() {
-        togglePanelContent(RightDrawerContent.ModulesList);
-    }
-
-    function handleTemplatesListClick() {
-        setIsTemplatesDialogOpen(true);
+        handleSelectPanelContent(RightDrawerContent.ModulesList);
     }
 
     function handleRealizationFilterClick() {
-        togglePanelContent(RightDrawerContent.RealizationFilterSettings);
+        handleSelectPanelContent(RightDrawerContent.RealizationFilterSettings);
     }
 
     function handleModuleInstanceLogClick() {
-        togglePanelContent(RightDrawerContent.ModuleInstanceLog);
+        handleSelectPanelContent(RightDrawerContent.ModuleInstanceLog);
+    }
+
+    function handleColorPaletteSettingsClick() {
+        handleSelectPanelContent(RightDrawerContent.ColorPaletteSettings);
     }
 
     return (
@@ -86,14 +101,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     disabled={isSnapshot}
                     disabledTooltip="Modules cannot be changed in snapshot mode"
                 />
-                <NavBarButton
-                    active={isTemplatesDialogOpen}
-                    tooltip="Show templates dialog"
-                    icon={<GridView fontSize="small" className="size-5" />}
-                    onClick={handleTemplatesListClick}
-                    disabled={isSnapshot}
-                    disabledTooltip="Templates cannot be applied in snapshot mode"
-                />
+
                 <NavBarDivider />
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.RealizationFilterSettings}
@@ -117,11 +125,10 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                 />
                 <NavBarDivider />
                 <NavBarButton
-                    active={isFullscreen}
-                    icon={<Fullscreen fontSize="small" className="size-5 mr-2" />}
-                    activeIcon={<FullscreenExit fontSize="small" className="size-5 mr-2" />}
-                    tooltip="Fullscreen application (F11)"
-                    onClick={toggleFullScreen}
+                    active={drawerContent === RightDrawerContent.ColorPaletteSettings}
+                    tooltip="Show color settings"
+                    icon={<Palette fontSize="small" className="size-5" />}
+                    onClick={handleColorPaletteSettingsClick}
                 />
             </div>
         </div>
