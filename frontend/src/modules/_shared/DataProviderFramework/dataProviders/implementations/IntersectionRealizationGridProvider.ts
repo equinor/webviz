@@ -51,14 +51,11 @@ export type IntersectionRealizationGridProviderArgs = {
     enableWellboreExtensionLength: boolean;
 };
 
-export class IntersectionRealizationGridProvider
-    implements
-        CustomDataProviderImplementation<
-            IntersectionRealizationGridSettings,
-            IntersectionRealizationGridData,
-            IntersectionRealizationGridStoredData
-        >
-{
+export class IntersectionRealizationGridProvider implements CustomDataProviderImplementation<
+    IntersectionRealizationGridSettings,
+    IntersectionRealizationGridData,
+    IntersectionRealizationGridStoredData
+> {
     settings = intersectionRealizationGridSettings;
 
     private _isWellboreExtensionLengthEnabled = false;
@@ -333,7 +330,6 @@ export class IntersectionRealizationGridProvider
                 parameter_name: parameterName,
                 parameter_time_or_interval_str: timeOrInterval,
                 realization_num: realizationNum,
-                ...makeCacheBustingQueryParam(ensembleIdent),
             },
             body: { polyline_utm_xy: polylineWithSectionLengths.polylineUtmXy },
         });

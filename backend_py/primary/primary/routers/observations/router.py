@@ -6,6 +6,7 @@ from webviz_services.sumo_access.observation_access import ObservationAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 
 from . import schemas
 
@@ -15,6 +16,7 @@ router = APIRouter()
 
 
 @router.get("/observations/")
+@cache_time(CacheTime.LONG)
 async def get_observations(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),

@@ -51,14 +51,11 @@ export type RealizationSurfacesStoredData = {
 
 export type RealizationSurfacesData = SurfaceIntersectionData_api[];
 
-export class RealizationSurfacesProvider
-    implements
-        CustomDataProviderImplementation<
-            RealizationSurfacesSettings,
-            RealizationSurfacesData,
-            RealizationSurfacesStoredData
-        >
-{
+export class RealizationSurfacesProvider implements CustomDataProviderImplementation<
+    RealizationSurfacesSettings,
+    RealizationSurfacesData,
+    RealizationSurfacesStoredData
+> {
     settings = realizationSurfacesSettings;
 
     getDefaultName() {
@@ -283,7 +280,6 @@ export class RealizationSurfacesProvider
                         realization_num: realization,
                         name: surfaceName,
                         attribute: attribute,
-                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     body: {
                         cumulative_length_polyline: {

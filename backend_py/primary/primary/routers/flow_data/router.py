@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from webviz_services.pdm_access.pdm_access import PDMAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 
 from . import schemas
 from . import converters
@@ -15,6 +16,7 @@ router = APIRouter()
 
 
 @router.get("/production_data/")
+@cache_time(CacheTime.NORMAL)
 async def get_production_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -33,6 +35,7 @@ async def get_production_data(
 
 # Injection Endpoint
 @router.get("/injection_data/")
+@cache_time(CacheTime.NORMAL)
 async def get_injection_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
