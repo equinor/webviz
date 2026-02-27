@@ -4,7 +4,7 @@ import type { WellborePick_api } from "@api";
 import { getWellborePicksInStratColumnOptions, getWellboreStratigraphicColumnsOptions } from "@api";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -92,7 +92,7 @@ export class WellborePicksProvider
         return "Wellbore picks";
     }
 
-    areCurrentSettingsValid(accessor: DataProviderInformationAccessors<WellPickSettingTypes, WellborePick_api[]>) {
+    areCurrentSettingsValid(accessor: DataProviderAccessors<WellPickSettingTypes, WellborePick_api[]>) {
         return accessor.getSetting(Setting.STRAT_COLUMN) != null;
     }
 

@@ -1,3 +1,5 @@
+import { GenericStatusWriterTopic } from "@framework/GenericPubSubStatusWriter";
+import type { StatusMessage } from "@framework/types/statusWriter";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
@@ -6,6 +8,7 @@ import { ExternalSettingController } from "../framework/ExternalSettingControlle
 import { SettingTopic, type SettingManager } from "../framework/SettingManager/SettingManager";
 import type {
     DefineBasicDependenciesArgs,
+    HelperUpdateFunc,
     SettingAttributes,
     UpdateFunc,
 } from "../interfacesAndTypes/customSettingsHandler";
@@ -19,10 +22,12 @@ import { Dependency } from "./_utils/Dependency";
 
 export enum SharedSettingsDelegateTopic {
     SETTINGS_CHANGED = "SHARED_SETTINGS_DELEGATE_SETTINGS_CHANGED",
+    STATUS_WRITER_MESSAGES = "DEPENDENCY_STATUS_MESSAGES",
 }
 
 export type SharedSettingsDelegatePayloads = {
     [SharedSettingsDelegateTopic.SETTINGS_CHANGED]: void;
+    [SharedSettingsDelegateTopic.STATUS_WRITER_MESSAGES]: StatusMessage[];
 };
 
 export class SharedSettingsDelegate<
@@ -47,6 +52,8 @@ export class SharedSettingsDelegate<
     private _customDependenciesDefinition:
         | ((args: DefineBasicDependenciesArgs<TSettings, TSettingTypes, TSettingKey>) => void)
         | null = null;
+
+    private _dependencyStatusMessages: StatusMessage[] = [];
 
     constructor(
         parentItem: Item,
@@ -91,12 +98,17 @@ export class SharedSettingsDelegate<
         return this._publishSubscribeDelegate;
     }
 
-    makeSnapshotGetter<T extends SharedSettingsDelegateTopic.SETTINGS_CHANGED>(
-        topic: T,
-    ): () => SharedSettingsDelegatePayloads[T] {
+    getDependencyStatusMessages(): StatusMessage[] {
+        return this._dependencyStatusMessages;
+    }
+
+    makeSnapshotGetter<T extends SharedSettingsDelegateTopic>(topic: T): () => SharedSettingsDelegatePayloads[T] {
         const snapshotGetter = (): any => {
             if (topic === SharedSettingsDelegateTopic.SETTINGS_CHANGED) {
                 return;
+            }
+            if (topic === SharedSettingsDelegateTopic.STATUS_WRITER_MESSAGES) {
+                return this._dependencyStatusMessages;
             }
         };
 
@@ -283,6 +295,7 @@ export class SharedSettingsDelegate<
                 }
             });
 
+            this.subscribeToDependencyStatusMessages(dependency);
             dependency.initialize();
 
             return dependency;
@@ -309,21 +322,13 @@ export class SharedSettingsDelegate<
                 this._wrappedSettings[settingKey].updateAttributes(attributes);
             });
 
+            this.subscribeToDependencyStatusMessages(dependency);
             dependency.initialize();
 
             return dependency;
         };
 
-        const helperDependency = <T>(
-            update: (args: {
-                getLocalSetting: <T extends TSettingKey>(settingName: T) => TSettingTypes[T];
-                getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-                getHelperDependency: <TDep>(
-                    dep: Dependency<TDep, TSettings, TSettingTypes, TSettingKey>,
-                ) => Awaited<TDep> | null;
-                abortSignal: AbortSignal;
-            }) => T,
-        ) => {
+        const helperDependency = <T>(update: HelperUpdateFunc<T, TSettings, TSettingTypes, TSettingKey>) => {
             const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
                 localSettingManagerGetter.bind(this),
                 globalSettingGetter.bind(this),
@@ -334,6 +339,7 @@ export class SharedSettingsDelegate<
             );
             this._dependencies.push(dependency);
 
+            this.subscribeToDependencyStatusMessages(dependency);
             dependency.initialize();
 
             return dependency;
@@ -351,5 +357,18 @@ export class SharedSettingsDelegate<
                 queryClient: dataProviderManager.getQueryClient(),
             });
         }
+    }
+
+    private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any>): void {
+        dependency
+            .getStatusWriter()
+            .getPublishSubscribeDelegate()
+            .subscribe(GenericStatusWriterTopic.UPDATE_MESSAGES, () => this.syncAllStatusMessages());
+    }
+
+    private syncAllStatusMessages(): void {
+        this._dependencyStatusMessages = this._dependencies.flatMap((d) => d.getStatusMessages());
+
+        this._publishSubscribeDelegate.notifySubscribers(SharedSettingsDelegateTopic.STATUS_WRITER_MESSAGES);
     }
 }

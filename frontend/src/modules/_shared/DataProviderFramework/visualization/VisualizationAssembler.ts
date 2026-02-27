@@ -18,7 +18,7 @@ import { Group } from "../framework/Group/Group";
 import type { GroupType } from "../groups/groupTypes";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
 } from "../interfacesAndTypes/customDataProviderImplementation";
 import type {
     CustomGroupImplementation,
@@ -74,7 +74,7 @@ export type TransformerArgs<
     TData,
     TStoredData extends StoredData = Record<string, never>,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = DataProviderInformationAccessors<TSettings, TData, TStoredData> & {
+> = DataProviderAccessors<TSettings, TData, TStoredData> & {
     id: string;
     name: string;
     isLoading: boolean;

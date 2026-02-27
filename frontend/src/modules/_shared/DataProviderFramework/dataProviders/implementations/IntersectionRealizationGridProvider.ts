@@ -11,7 +11,7 @@ import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/i
 
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
@@ -94,7 +94,7 @@ export class IntersectionRealizationGridProvider
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<
+    }: DataProviderAccessors<
         IntersectionRealizationGridSettings,
         IntersectionRealizationGridData,
         IntersectionRealizationGridStoredData
@@ -114,7 +114,7 @@ export class IntersectionRealizationGridProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataProviderInformationAccessors<
+    }: DataProviderAccessors<
         IntersectionRealizationGridSettings,
         IntersectionRealizationGridData,
         IntersectionRealizationGridStoredData

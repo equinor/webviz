@@ -15,7 +15,7 @@ import { createSeismicFencePolylineFromPolylineXy } from "@modules/_shared/Inter
 import { Setting } from "../../../DataProviderFramework/settings/settingsDefinitions";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
@@ -116,7 +116,7 @@ export class IntersectionRealizationSeismicProvider
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<
+    }: DataProviderAccessors<
         IntersectionRealizationSeismicSettings,
         IntersectionRealizationSeismicData,
         IntersectionRealizationSeismicStoredData
@@ -139,7 +139,7 @@ export class IntersectionRealizationSeismicProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataProviderInformationAccessors<
+    }: DataProviderAccessors<
         IntersectionRealizationSeismicSettings,
         IntersectionRealizationSeismicData,
         IntersectionRealizationSeismicStoredData
