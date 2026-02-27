@@ -7,6 +7,7 @@ from webviz_services.sumo_access.rft_access import RftAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import schemas
@@ -18,6 +19,7 @@ router = APIRouter()
 
 
 @router.get("/table_definition")
+@cache_time(CacheTime.LONG)
 async def get_table_definition(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -30,6 +32,7 @@ async def get_table_definition(
 
 
 @router.get("/realization_data")
+@cache_time(CacheTime.LONG)
 async def get_realization_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],

@@ -10,7 +10,7 @@ from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinte
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_browser_cache import no_cache
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 from . import schemas
@@ -21,7 +21,6 @@ router = APIRouter()
 
 
 @router.get("/fields")
-@no_cache
 async def get_fields(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.FieldInfo]:
@@ -36,7 +35,6 @@ async def get_fields(
 
 
 @router.get("/cases")
-@no_cache
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
@@ -71,6 +69,7 @@ async def get_cases(
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
+@cache_time(CacheTime.NORMAL)
 async def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),

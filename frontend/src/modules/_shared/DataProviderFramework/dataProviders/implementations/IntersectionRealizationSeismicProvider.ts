@@ -60,14 +60,11 @@ const SeismicDataSourceEnumToStringMapping = {
 
 export type IntersectionRealizationSeismicData = SeismicFenceData_trans;
 
-export class IntersectionRealizationSeismicProvider
-    implements
-        CustomDataProviderImplementation<
-            IntersectionRealizationSeismicSettings,
-            IntersectionRealizationSeismicData,
-            IntersectionRealizationSeismicStoredData
-        >
-{
+export class IntersectionRealizationSeismicProvider implements CustomDataProviderImplementation<
+    IntersectionRealizationSeismicSettings,
+    IntersectionRealizationSeismicData,
+    IntersectionRealizationSeismicStoredData
+> {
     settings = intersectionRealizationSeismicSettings;
 
     private _dataSource: SeismicDataSource;
@@ -366,7 +363,6 @@ export class IntersectionRealizationSeismicProvider
                 seismic_attribute: attribute,
                 time_or_interval_str: timeOrInterval ?? "",
                 observed: this._dataSource === SeismicDataSource.OBSERVED,
-                ...makeCacheBustingQueryParam(ensembleIdent),
             },
             body: {
                 polyline: apiSeismicFencePolyline,

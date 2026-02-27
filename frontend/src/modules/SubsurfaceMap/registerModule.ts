@@ -10,7 +10,7 @@ const description = "Visualizes surfaces in a 3D view.";
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: "SubsurfaceMap",
     defaultTitle: "Subsurface Map",
-    category: ModuleCategory.MAIN,
+    category: ModuleCategory.DEBUG,
     devState: ModuleDevState.DEPRECATED,
     dataTagIds: [ModuleDataTagId.SURFACE],
     syncableSettingKeys: [
