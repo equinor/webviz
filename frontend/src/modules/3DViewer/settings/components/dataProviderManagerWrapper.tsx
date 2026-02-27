@@ -61,13 +61,14 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "view":
                 groupDelegate.appendChild(
                     GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor()),
+                    true,
                 );
                 return;
             case "delta-surface":
                 groupDelegate.prependChild(new DeltaSurface("Delta surface", props.dataProviderManager));
                 return;
             case "context-boundary":
-                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));
+                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager), true);
                 return;
             case "color-scale":
                 groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
@@ -283,11 +284,13 @@ const INITIAL_ACTIONS: ActionGroup[] = [
                 identifier: "view",
                 icon: <Panorama fontSize="small" />,
                 label: "View",
+                description: "Visualizes one or more layers",
             },
             {
                 identifier: "context-boundary",
                 icon: <SettingsApplications fontSize="small" />,
                 label: "Context Boundary",
+                description: "Share settings between a set of items",
             },
         ],
     },
