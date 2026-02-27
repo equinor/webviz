@@ -1,10 +1,10 @@
 import React from "react";
 
 import { useAtomValue } from "jotai";
+import { toast } from "react-toastify";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import { useWebWorkerProxy } from "@lib/hooks/useWebWorker";
-import type { CsvFile } from "@lib/utils/csvConvertUtils";
 import { createZipFilename, downloadFilesZip } from "@lib/utils/downloadUtils";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
@@ -20,7 +20,9 @@ import CsvAssemblyWorker from "../utils/CsvAssemblyWorker/csvAssembly.worker?wor
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
-export function useDownloadData(viewContext: ViewContext<Interfaces>): { assembleCsvAndDownload: () => void } {
+export function useDownloadData(viewContext: ViewContext<Interfaces>): {
+    assembleCsvAndDownload: () => void;
+} {
     const statisticsSelection = viewContext.useSettingsToViewInterfaceValue("statisticsSelection");
     const visualizationMode = useAtomValue(visualizationModeAtom);
     const showHistorical = useAtomValue(showHistoricalAtom);
@@ -37,6 +39,12 @@ export function useDownloadData(viewContext: ViewContext<Interfaces>): { assembl
 
     const assembleCsvAndDownload = React.useCallback(
         async function assembleCsvAndDownload() {
+            const zipFilename = createZipFilename("SimulationTimeSeries");
+            const toastId = toast.loading(`Preparing Simulation Time Series Download`, {
+                autoClose: false,
+                closeButton: true,
+            });
+
             try {
                 // Map data before sending to worker, as the worker cannot receive functions (like makeEnsembleDisplayName)
                 const realizationData = loadedRealizationData.map((entry) => ({
@@ -75,18 +83,22 @@ export function useDownloadData(viewContext: ViewContext<Interfaces>): { assembl
                     showObservations,
                 );
 
-                if (files.length === 0) {
-                    return;
+                if (files.length > 0) {
+                    await downloadFilesZip(
+                        files.map((e) => ({ filename: e.filename, content: e.csvContent })),
+                        zipFilename,
+                    );
                 }
 
-                const zipFilename = createZipFilename("SimulationTimeSeries");
-
-                await downloadFilesZip(
-                    files.map((e: CsvFile) => ({ filename: e.filename, content: e.csvContent })),
-                    zipFilename,
-                );
+                toast.update(toastId, { render: zipFilename, type: "success", isLoading: false, autoClose: 3000 });
             } catch (error) {
                 console.error("Error assembling or downloading CSV files:", error);
+                toast.update(toastId, {
+                    render: `Failed Simulation Time Series Download`,
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 5000,
+                });
             }
         },
         [
