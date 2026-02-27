@@ -62,12 +62,11 @@ export function DescriptionCell(props: DescriptionCellProps): React.ReactNode {
  */
 type AuthorCellProps = {
     author: string;
-    key?: React.Key | null;
 };
 export function AuthorCell(props: AuthorCellProps): React.ReactNode {
     return (
         <div className="flex justify-center gap-1">
-            <UserAvatar key={props.key} userIdOrEmail={`${props.author}@equinor.com`} />
+            <UserAvatar userIdOrEmail={`${props.author}@equinor.com`} />
             <span className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block" title={props.author}>
                 {props.author}
             </span>
