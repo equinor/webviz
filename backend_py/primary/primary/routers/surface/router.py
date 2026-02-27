@@ -364,7 +364,6 @@ async def post_get_sample_surface_in_points(
 
 
 @router.get("/delta_surface_data")
-@cache_time(CacheTime.LONG)
 async def get_delta_surface_data(
     # fmt:off
     response: Response,
@@ -379,7 +378,6 @@ async def get_delta_surface_data(
 
 
 @router.get("/misfit_surface_data")
-@cache_time(CacheTime.LONG)
 async def get_misfit_surface_data(
     # fmt:off
     response: Response,

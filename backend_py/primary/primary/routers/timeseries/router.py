@@ -291,9 +291,7 @@ async def get_delta_ensemble_realizations_vector_data(
     return ret_arr
 
 
-# TODO: This is unused, should it be removed?
 @router.get("/timestamps_list/")
-@cache_time(CacheTime.LONG)
 async def get_timestamps_list(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -574,9 +572,7 @@ async def get_statistical_vector_data_per_sensitivity(
     return ret_data
 
 
-# TODO: Remove? Seems unused?
 @router.get("/realization_vector_at_timestamp/")
-@cache_time(CacheTime.LONG)
 async def get_realization_vector_at_timestamp(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
