@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from webviz_services.graph_access.graph_access import GraphApiAccess
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_browser_cache import no_cache
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,13 +27,11 @@ router = APIRouter()
 
 
 @router.get("/alive")
-@no_cache
 async def get_alive() -> str:
     return f"ALIVE: Backend is alive at this time: {datetime.datetime.now()}"
 
 
 @router.get("/alive_protected")
-@no_cache
 async def get_alive_protected() -> str:
     return f"ALIVE_PROTECTED: Backend is alive at this time: {datetime.datetime.now()}"
 
@@ -48,7 +45,6 @@ async def post_logout(request: Request) -> str:
 
 
 @router.get("/logged_in_user", response_model=UserInfo)
-@no_cache
 async def get_logged_in_user(
     request: Request,
     includeGraphApiInfo: bool = Query(  # pylint: disable=invalid-name

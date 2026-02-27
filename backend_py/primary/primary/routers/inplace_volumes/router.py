@@ -3,16 +3,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Body, Response
 
-
 from webviz_services.inplace_volumes_table_assembler.inplace_volumes_table_assembler import (
     InplaceVolumesTableAssembler,
 )
 from webviz_services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
-from primary.utils.response_perf_metrics import ResponsePerfMetrics
-from primary.utils.query_string_utils import decode_uint_list_str
-
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.routers.inplace_volumes.converters import (
     convert_schema_to_indices,
     convert_schema_to_indices_with_values,
@@ -20,12 +17,15 @@ from primary.routers.inplace_volumes.converters import (
     convert_table_data_per_fluid_selection_to_schema,
     to_api_volumes_table_definitions,
 )
+from primary.utils.response_perf_metrics import ResponsePerfMetrics
+from primary.utils.query_string_utils import decode_uint_list_str
 
 from ._deprecated_format.route_handlers import (
     handle_table_definitions_for_deprecated_format_async,
     handle_aggregated_per_realization_table_data_for_deprecated_format_async,
     handle_aggregated_statistical_table_data_for_deprecated_format_async,
 )
+
 
 from . import schemas
 
@@ -35,6 +35,7 @@ router = APIRouter()
 
 
 @router.get("/table_definitions/", tags=["inplace_volumes"])
+@cache_time(CacheTime.LONG)
 async def get_table_definitions(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],

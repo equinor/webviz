@@ -7,6 +7,7 @@ from webviz_services.sumo_access.table_access import TableAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 
 from .converters import pvt_dataframe_to_api_data
 from .schemas import PvtData
@@ -17,6 +18,7 @@ router = APIRouter()
 
 
 @router.get("/table_data/")
+@cache_time(CacheTime.LONG)
 async def get_table_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),

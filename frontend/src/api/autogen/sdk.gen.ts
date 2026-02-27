@@ -20,9 +20,6 @@ import type {
     DeleteSnapshotData_api,
     DeleteSnapshotErrors_api,
     DeleteSnapshotResponses_api,
-    DeprecatedGetStratigraphicUnitsData_api,
-    DeprecatedGetStratigraphicUnitsErrors_api,
-    DeprecatedGetStratigraphicUnitsResponses_api,
     GetAliveData_api,
     GetAliveProtectedData_api,
     GetAliveProtectedResponses_api,
@@ -155,9 +152,6 @@ import type {
     GetStatisticalVectorDataPerSensitivityErrors_api,
     GetStatisticalVectorDataPerSensitivityResponses_api,
     GetStatisticalVectorDataResponses_api,
-    GetStratigraphicUnitsForStratColumnData_api,
-    GetStratigraphicUnitsForStratColumnErrors_api,
-    GetStratigraphicUnitsForStratColumnResponses_api,
     GetSurfaceDataData_api,
     GetSurfaceDataErrors_api,
     GetSurfaceDataResponses_api,
@@ -735,40 +729,6 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Deprecated Get Stratigraphic Units
- *
- * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
- */
-export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = false>(
-    options: Options<DeprecatedGetStratigraphicUnitsData_api, ThrowOnError>,
-) =>
-    (options.client ?? client).get<
-        DeprecatedGetStratigraphicUnitsResponses_api,
-        DeprecatedGetStratigraphicUnitsErrors_api,
-        ThrowOnError
-    >({
-        responseType: "json",
-        url: "/surface/deprecated_stratigraphic_units",
-        ...options,
-    });
-
-/**
- * Get Stratigraphic Units For Strat Column
- */
-export const getStratigraphicUnitsForStratColumn = <ThrowOnError extends boolean = false>(
-    options: Options<GetStratigraphicUnitsForStratColumnData_api, ThrowOnError>,
-) =>
-    (options.client ?? client).get<
-        GetStratigraphicUnitsForStratColumnResponses_api,
-        GetStratigraphicUnitsForStratColumnErrors_api,
-        ThrowOnError
-    >({
-        responseType: "json",
-        url: "/surface/stratigraphic_units_for_strat_column",
-        ...options,
-    });
-
-/**
  * Get Parameters And Sensitivities
  */
 export const getParametersAndSensitivities = <ThrowOnError extends boolean = false>(
@@ -828,6 +788,8 @@ export const getGridParameter = <ThrowOnError extends boolean = false>(
 
 /**
  * Post Get Polyline Intersection
+ *
+ * Get the intersection of a polyline with the grid, including intersected cells and interpolated parameter values at intersection points
  */
 export const postGetPolylineIntersection = <ThrowOnError extends boolean = false>(
     options: Options<PostGetPolylineIntersectionData_api, ThrowOnError>,
@@ -848,6 +810,8 @@ export const postGetPolylineIntersection = <ThrowOnError extends boolean = false
 
 /**
  * Get Realization Flow Network
+ *
+ * Get flow network data for single realization
  */
 export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
     options: Options<GetRealizationFlowNetworkData_api, ThrowOnError>,

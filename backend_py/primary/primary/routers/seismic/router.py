@@ -10,6 +10,7 @@ from webviz_services.vds_access.response_types import VdsMetadata
 from webviz_services.vds_access.vds_access import VdsAccess
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 
 from . import schemas
 from . import converters
@@ -18,6 +19,7 @@ router = APIRouter()
 
 
 @router.get("/seismic_cube_meta_list/")
+@cache_time(CacheTime.LONG)
 async def get_seismic_cube_meta_list(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -152,6 +154,7 @@ async def get_depth_slice(
 
 
 @router.get("/get_seismic_slices/")
+@cache_time(CacheTime.LONG)
 # pylint: disable=too-many-arguments
 async def get_seismic_slices(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),

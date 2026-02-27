@@ -11,7 +11,7 @@ const description = "Plotting of surfaces in a 2D top view.";
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: "Map",
     defaultTitle: "Map",
-    category: ModuleCategory.MAIN,
+    category: ModuleCategory.DEBUG,
     devState: ModuleDevState.DEPRECATED,
     dataTagIds: [ModuleDataTagId.SURFACE],
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.SURFACE, SyncSettingKey.DATE],
