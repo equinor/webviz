@@ -12,8 +12,8 @@ from webviz_services.ssdl_access.drogon import DrogonWellAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, custom_cache_time, CacheTime
 from primary.utils.drogon import is_drogon_identifier
-from primary.middleware.add_browser_cache import add_custom_cache_time
 
 from . import schemas
 from . import converters
@@ -24,6 +24,7 @@ router = APIRouter()
 
 
 @router.get("/drilled_wellbore_headers/")
+@cache_time(CacheTime.NORMAL)
 async def get_drilled_wellbore_headers(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -45,6 +46,7 @@ async def get_drilled_wellbore_headers(
 
 
 @router.get("/field_perforations")
+@cache_time(CacheTime.NORMAL)
 async def get_field_perforations(
     field_identifier: str = Query(description="Official field identifier"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -67,6 +69,7 @@ async def get_field_perforations(
 
 
 @router.get("/field_screens")
+@cache_time(CacheTime.NORMAL)
 async def get_field_screens(
     field_identifier: str = Query(description="Official field identifier"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -89,7 +92,7 @@ async def get_field_screens(
 
 
 @router.get("/well_trajectories/")
-@add_custom_cache_time(3600 * 24 * 7, 3600 * 24 * 7 * 10)  # 1 week cache, 10 week stale-while-revalidate
+@custom_cache_time(max_age_s=3600 * 24 * 7, stale_while_revalidate_s=3600 * 24 * 7 * 10)
 async def get_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -118,6 +121,7 @@ async def get_well_trajectories(
 
 
 @router.get("/wellbore_pick_identifiers/")
+@cache_time(CacheTime.NORMAL)
 async def get_wellbore_pick_identifiers(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -141,6 +145,7 @@ async def get_wellbore_pick_identifiers(
 
 
 @router.get("/wellbore_picks_for_pick_identifier/")
+@cache_time(CacheTime.NORMAL)
 async def get_wellbore_picks_for_pick_identifier(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -169,6 +174,7 @@ async def get_wellbore_picks_for_pick_identifier(
 
 
 @router.get("/wellbore_picks_in_strat_column")
+@cache_time(CacheTime.NORMAL)
 async def get_wellbore_picks_in_strat_column(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
@@ -192,6 +198,7 @@ async def get_wellbore_picks_in_strat_column(
 
 
 @router.get("/wellbore_stratigraphic_columns/")
+@cache_time(CacheTime.NORMAL)
 async def get_wellbore_stratigraphic_columns(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
@@ -211,6 +218,7 @@ async def get_wellbore_stratigraphic_columns(
 
 
 @router.get("/wellbore_completions/")
+@cache_time(CacheTime.NORMAL)
 async def get_wellbore_completions(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -233,6 +241,7 @@ async def get_wellbore_completions(
 
 
 @router.get("/wellbore_casings/")
+@cache_time(CacheTime.NORMAL)
 async def get_wellbore_casings(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -253,6 +262,7 @@ async def get_wellbore_casings(
 
 
 @router.get("/wellbore_perforations/")
+@cache_time(CacheTime.NORMAL)
 async def get_wellbore_perforations(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -276,6 +286,7 @@ async def get_wellbore_perforations(
 
 
 @router.get("/wellbore_log_curve_headers/")
+@cache_time(CacheTime.NORMAL)
 async def get_wellbore_log_curve_headers(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -364,6 +375,7 @@ async def _get_headers_from_smda_survey_async(
 
 
 @router.get("/log_curve_data/")
+@cache_time(CacheTime.NORMAL)
 async def get_log_curve_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),

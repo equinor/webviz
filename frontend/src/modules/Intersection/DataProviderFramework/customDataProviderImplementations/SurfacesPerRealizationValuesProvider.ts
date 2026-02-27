@@ -55,14 +55,11 @@ export type SurfacesPerRealizationValuesStoredData = {
 // Key is surface name, value is surface sample values per selected realization
 export type SurfacesPerRealizationValuesData = Record<string, SurfaceRealizationSampleValues_api[]>;
 
-export class SurfacesPerRealizationValuesProvider
-    implements
-        CustomDataProviderImplementation<
-            SurfacesPerRealizationValuesSettings,
-            SurfacesPerRealizationValuesData,
-            SurfacesPerRealizationValuesStoredData
-        >
-{
+export class SurfacesPerRealizationValuesProvider implements CustomDataProviderImplementation<
+    SurfacesPerRealizationValuesSettings,
+    SurfacesPerRealizationValuesData,
+    SurfacesPerRealizationValuesStoredData
+> {
     settings = surfacesPerRealizationValuesSettings;
 
     getDefaultName() {
@@ -295,7 +292,6 @@ export class SurfacesPerRealizationValuesProvider
                     surface_name: surfaceName,
                     surface_attribute: attribute,
                     realization_nums: realizations ?? [],
-                    ...makeCacheBustingQueryParam(ensembleIdent),
                 },
                 body: {
                     sample_points: {
