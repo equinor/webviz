@@ -1,30 +1,41 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Set non-interactive mode to avoid prompts during build
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt update && apt install --assume-yes \
-    software-properties-common \
- && add-apt-repository ppa:deadsnakes/ppa \
- && apt update && apt install --assume-yes --no-install-recommends \
-    libgl1-mesa-glx \
-    libglu1-mesa \
-    libhdf5-dev \
-    libgomp1 \
-    unzip \
-    python3.11 \
-    python3-pip \
-    python3.11-venv \
- && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        software-properties-common \
+        gnupg; \
+    add-apt-repository -y ppa:deadsnakes/ppa; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        libgl1 \
+        libglx-mesa0 \
+        libglu1-mesa \
+        libhdf5-103-1t64 \
+        libhdf5-cpp-103-1t64 \
+        libglib2.0-0t64 \
+        libgomp1 \
+        python3.13 \
+        python3.13-venv; \
+    \
+    apt-get purge -y --auto-remove \
+        software-properties-common \
+        gnupg; \
+    apt-get clean; \
+    rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --uid 1234 appuser
 USER 1234
 
 ENV PATH="${PATH}:/home/appuser/.local/bin"
 
-RUN python3.11 -m pip install --user pipx
-RUN python3.11 -m pipx ensurepath
-RUN pipx install poetry==2.1.4
+RUN python3.13 -m ensurepip --upgrade
+RUN python3.13 -m pip install --upgrade pip setuptools wheel
+RUN python3.13 -m pip install --upgrade poetry==2.1.4
 
 # This can probably be optimized wrt space usage by fetching and preparing Resinsight using a multi-stage build
 ADD --chown=appuser https://github.com/CeetronSolutions/ResInsight/releases/download/webviz.test.0.0.2/ResInsight-Ubuntu_20.04_gcc.tar.gz /home/appuser/ri_bin/dist_archive/
@@ -33,7 +44,7 @@ RUN tar xvf ./dist_archive/ResInsight*.tar.gz
 ENV RESINSIGHT_EXECUTABLE=/home/appuser/ri_bin/ResInsight
 
 ENV VIRTUAL_ENV=/home/appuser/venv
-RUN python3.11 -m venv $VIRTUAL_ENV
+RUN python3.13 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 WORKDIR /home/appuser/backend_py/user_grid3d_ri
