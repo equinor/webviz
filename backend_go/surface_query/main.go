@@ -19,16 +19,19 @@ func main() {
 
 	logger.Info("Starting surface query server...")
 
-	goRuntimeVersion := runtime.Version()
-	logger.Info(fmt.Sprintf("Go runtime version: %v", goRuntimeVersion))
-
 	// Can be used to force the number of CPUs that can be executing simultaneously
-	// Should not be needed as long as automaxprocs does its job
+	// Should only be needed for testing/debugging as long as Go's CPU quota awareness is working as expected (Go 1.25+).
 	//runtime.GOMAXPROCS(4)
 
-	numCpus := runtime.NumCPU()
-	goMaxProcs := runtime.GOMAXPROCS(0)
-	logger.Info(fmt.Sprintf("Num logical CPUs=%v, GOMAXPROCS=%v", numCpus, goMaxProcs))
+	// osVisibleCPUCount: Number of logical CPUs visible to the process (not CPU quota aware; for us typically the Kubernetes node CPU count).
+	// goMaxParallelism: Current Go scheduler parallelism limit (GOMAXPROCS); CPU quota aware in Go 1.25+.
+	// Note: If these values differ, a container CPU quota or explicit GOMAXPROCS override is likely in effect.
+	osVisibleCPUCount := runtime.NumCPU()
+	goMaxParallelism := runtime.GOMAXPROCS(0)
+	logger.Info(fmt.Sprintf("Go CPU configuration: osVisibleCPUCount=%v, goMaxParallelism=%v (GOMAXPROCS)", osVisibleCPUCount, goMaxParallelism))
+
+	goRuntimeVersion := runtime.Version()
+	logger.Info(fmt.Sprintf("Go runtime version: %v", goRuntimeVersion))
 
 	router := gin.Default()
 
