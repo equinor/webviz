@@ -12,6 +12,10 @@ import {
     useSetGuiState,
 } from "@framework/GuiMessageBroker";
 import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import {
+    SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
+    SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
+} from "@framework/internal/components/SettingsContentPanels";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -287,8 +291,8 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         e.preventDefault();
         e.stopPropagation();
 
-        if (rightSettingsPanelWidth <= 5) {
-            setRightSettingsPanelWidth(15);
+        if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+            setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
         }
 
         dashboard.setActiveModuleInstanceId(props.moduleInstance.getId());

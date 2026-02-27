@@ -2,76 +2,14 @@ import React from "react";
 
 import { ChevronLeft, ChevronRight, Settings, WarningRounded } from "@mui/icons-material";
 
-import { useModuleWarning } from "@framework/internal/components/LeftSettingsPanel/private-utils/useModuleWarning";
+import { useModuleWarning } from "@framework/internal/components/LeftSettingsPanel/_hooks";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-type WarningBannerProps = {
-    text: string;
-    onDismiss: () => void;
-};
-
-function WarningBanner(props: WarningBannerProps): React.ReactNode {
-    return (
-        <div className="m-2 py-2 px-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm shrink-0">
-            <div className="flex flex-col">
-                <span>
-                    <strong>Note:</strong> {props.text}
-                </span>
-                <strong className="cursor-pointer self-end" onClick={props.onDismiss}>
-                    Close [X]
-                </strong>
-            </div>
-        </div>
-    );
-}
-
-type TabConfig = {
-    title: string;
-    icon: React.ReactElement;
-};
-
-type TabDividerProps = {
-    visible: boolean;
-};
-
-function TabDivider(props: TabDividerProps): React.ReactNode {
-    return <div className={resolveClassNames("w-px h-1/2", props.visible ? "bg-slate-300" : "bg-transparent")} />;
-}
-
-type TabProps = {
-    config: TabConfig;
-    isActive: boolean;
-    onClick: () => void;
-    onMouseEnter: () => void;
-    onMouseLeave: () => void;
-};
-
-function SettingTab(props: TabProps): React.ReactNode {
-    return (
-        <Tooltip title={props.config.title} placement="bottom">
-            <button
-                onClick={props.onClick}
-                onMouseEnter={props.onMouseEnter}
-                onMouseLeave={props.onMouseLeave}
-                className={resolveClassNames(
-                    "relative flex items-center justify-center h-full px-2 transition-colors",
-                    {
-                        "bg-white rounded-t pb-2 pt-2 shadow-[0_-1px_2px_rgba(0,0,0,0.1)]": props.isActive,
-                        "hover:bg-blue-100 hover:rounded-t cursor-pointer": !props.isActive,
-                    },
-                )}
-            >
-                {props.config.icon}
-            </button>
-        </Tooltip>
-    );
-}
-
 type ModuleSettingsHeaderProps = {
-    activeModuleInstance: ModuleInstance<any, any> | undefined;
+    activeModuleInstance: ModuleInstance<any, any> | null;
     activeTab: string | null;
     availableTabs: Record<string, TabConfig>;
     isCollapsed: boolean;
@@ -187,5 +125,67 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                 <WarningBanner text={warningText} onDismiss={dismissWarning} />
             )}
         </div>
+    );
+}
+
+type WarningBannerProps = {
+    text: string;
+    onDismiss: () => void;
+};
+
+function WarningBanner(props: WarningBannerProps): React.ReactNode {
+    return (
+        <div className="m-2 py-2 px-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm shrink-0">
+            <div className="flex flex-col">
+                <span>
+                    <strong>Note:</strong> {props.text}
+                </span>
+                <strong className="cursor-pointer self-end" onClick={props.onDismiss}>
+                    Close [X]
+                </strong>
+            </div>
+        </div>
+    );
+}
+
+type TabConfig = {
+    title: string;
+    icon: React.ReactElement;
+};
+
+type TabDividerProps = {
+    visible: boolean;
+};
+
+function TabDivider(props: TabDividerProps): React.ReactNode {
+    return <div className={resolveClassNames("w-px h-1/2", props.visible ? "bg-slate-300" : "bg-transparent")} />;
+}
+
+type TabProps = {
+    config: TabConfig;
+    isActive: boolean;
+    onClick: () => void;
+    onMouseEnter: () => void;
+    onMouseLeave: () => void;
+};
+
+function SettingTab(props: TabProps): React.ReactNode {
+    return (
+        <Tooltip title={props.config.title} placement="bottom">
+            <button
+                onClick={props.onClick}
+                onMouseEnter={props.onMouseEnter}
+                onMouseLeave={props.onMouseLeave}
+                className={resolveClassNames(
+                    "relative flex items-center justify-center h-full px-2 transition-colors",
+                    {
+                        "bg-white rounded-t pb-2 pt-2 shadow-[0_-1px_2px_rgba(0,0,0,0.1)]": props.isActive,
+                        "hover:bg-blue-100 hover:rounded-t cursor-pointer": !props.isActive,
+                    },
+                )}
+            >
+                {props.config.icon}
+            </button>
+        </Tooltip>
     );
 }

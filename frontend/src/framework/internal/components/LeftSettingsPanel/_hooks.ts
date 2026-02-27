@@ -6,7 +6,7 @@ import type { ModuleInstance } from "@framework/ModuleInstance";
 /**
  * Local hook to get warning text for a module instance.
  */
-function useModuleWarningText(moduleInstance: ModuleInstance<any, any> | undefined): string | null {
+function useModuleWarningText(moduleInstance: ModuleInstance<any, any> | null): string | null {
     return React.useMemo(() => {
         if (!moduleInstance) return null;
 
@@ -27,13 +27,11 @@ function useModuleWarningText(moduleInstance: ModuleInstance<any, any> | undefin
 /**
  * Hook to manage module warning visibility and dismissal.
  */
-export function useModuleWarning(moduleInstance: ModuleInstance<any, any> | undefined) {
+export function useModuleWarning(moduleInstance: ModuleInstance<any, any> | null) {
     const storageKey = moduleInstance ? `module-warning-dismissed-${moduleInstance.getId()}` : null;
     const warningText = useModuleWarningText(moduleInstance);
 
-    const [isDismissed, setIsDismissed] = React.useState(
-        () => !!storageKey && localStorage.getItem(storageKey) === "true",
-    );
+    const [isDismissed, setIsDismissed] = React.useState(!!storageKey && localStorage.getItem(storageKey) === "true");
 
     React.useEffect(
         function initializeDismissedState() {

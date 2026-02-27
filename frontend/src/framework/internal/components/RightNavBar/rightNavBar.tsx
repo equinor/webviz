@@ -10,6 +10,11 @@ import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import {
+    SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
+    SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
+} from "../SettingsContentPanels";
+
 type RightNavBarProps = {
     workbench: Workbench;
 };
@@ -37,12 +42,12 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     );
 
     function forceSettingsPanelVisible() {
-        setRightSettingsPanelWidth(15);
+        setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
         setRightSettingsPanelIsCollapsed(false);
     }
 
     function ensureSettingsPanelIsVisible() {
-        if (rightSettingsPanelWidth <= 5) {
+        if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
             forceSettingsPanelVisible();
         }
     }
@@ -62,7 +67,6 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
             hideSettingsPanel();
             return;
         }
-
         // Switch content
         setDrawerContent(targetContent);
         ensureSettingsPanelIsVisible();

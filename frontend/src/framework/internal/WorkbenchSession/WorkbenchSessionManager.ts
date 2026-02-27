@@ -45,6 +45,8 @@ import {
 } from "./utils/url";
 import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
 
+const SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT = 15;
+
 export enum WorkbenchSessionManagerTopic {
     ACTIVE_SESSION = "activeSession",
     HAS_ACTIVE_SESSION = "hasActiveSession",
@@ -571,7 +573,10 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             if (activeDashboard && activeDashboard.getLayout().length === 0) {
                 this._guiMessageBroker.setState(GuiState.RightDrawerContent, RightDrawerContent.ModulesList);
                 if (this._guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) === 0) {
-                    this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 20);
+                    this._guiMessageBroker.setState(
+                        GuiState.RightSettingsPanelWidthInPercent,
+                        SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
+                    );
                 }
             }
 

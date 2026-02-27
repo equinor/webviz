@@ -24,16 +24,16 @@ type ModuleSyncSettingProps = {
 export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNode {
     const dashboard = useActiveDashboard();
     const workbenchSession = useActiveSession();
-    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
+    const moduleInstances = dashboard.getModuleInstances();
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
     const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     const forceRerender = React.useReducer((x) => x + 1, 0)[1];
 
-    const activeModuleInstance = moduleInstances.find((instance) => instance.getId() === activeModuleInstanceId);
+    const activeModuleInstance = activeModuleInstanceId ? dashboard.getModuleInstance(activeModuleInstanceId) : null;
 
     function handleSyncSettingChange(setting: SyncSettingKey, value: boolean) {
-        if (activeModuleInstance === undefined) {
+        if (!activeModuleInstance) {
             return;
         }
 
@@ -81,7 +81,7 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
     function makeContent() {
         const syncableSettingKeys = activeModuleInstance?.getModule().getSyncableSettingKeys() ?? [];
 
-        if (activeModuleInstanceId === "" || activeModuleInstance === undefined) {
+        if (activeModuleInstanceId === "" || !activeModuleInstance) {
             return <div className="text-gray-500 m-2">No module selected</div>;
         }
 
