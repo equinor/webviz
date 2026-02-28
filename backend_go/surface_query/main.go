@@ -5,11 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"runtime"
+	"surface_query/legacyserver"
 	"time"
 
-	"surface_query/handlers"
-
-	"github.com/gin-gonic/gin"
 	"github.com/lmittmann/tint"
 )
 
@@ -17,7 +15,12 @@ func main() {
 	logger := slog.New(tint.NewHandler(os.Stdout, &tint.Options{Level: slog.LevelDebug, TimeFormat: time.TimeOnly}))
 	slog.SetDefault(logger)
 
-	logger.Info("Starting surface query server...")
+	serverMode := os.Getenv("SURFACE_QUERY_SERVER_MODE")
+	if serverMode == "" {
+		serverMode = "legacyserver"
+	}
+
+	logger.Info(fmt.Sprintf("Launching surface query service in serverMode: %v", serverMode))
 
 	// Can be used to force the number of CPUs that can be executing simultaneously
 	// Should only be needed for testing/debugging as long as Go's CPU quota awareness is working as expected (Go 1.25+).
@@ -33,12 +36,11 @@ func main() {
 	goRuntimeVersion := runtime.Version()
 	logger.Info(fmt.Sprintf("Go runtime version: %v", goRuntimeVersion))
 
-	router := gin.Default()
-
-	router.GET("/", handlers.HandleRoot)
-	router.POST("/sample_in_points", handlers.HandleSampleInPoints)
-
-	address := "0.0.0.0:5001"
-	logger.Info(fmt.Sprintf("Surface query server listening on: %v", address))
-	router.Run(address)
+	switch serverMode {
+	case "legacyserver":
+		legacyserver.Run()
+		os.Exit(0)
+	default:
+		panic("SURFACE_QUERY_SERVER_MODE must be one: legacyserver")
+	}
 }
