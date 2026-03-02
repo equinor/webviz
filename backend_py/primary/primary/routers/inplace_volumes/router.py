@@ -34,7 +34,7 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/table_definitions/", tags=["inplace_volumes"])
+@router.get("/table_definitions/")
 @cache_time(CacheTime.LONG)
 async def get_table_definitions(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -56,7 +56,7 @@ async def get_table_definitions(
     return to_api_volumes_table_definitions(tables)
 
 
-@router.post("/get_aggregated_per_realization_table_data/", tags=["inplace_volumes"])
+@router.post("/get_aggregated_per_realization_table_data/")
 # pylint: disable=too-many-arguments
 async def post_get_aggregated_per_realization_table_data(
     response: Response,
@@ -126,7 +126,7 @@ async def post_get_aggregated_per_realization_table_data(
     return convert_table_data_per_fluid_selection_to_schema(data)
 
 
-@router.post("/get_aggregated_statistical_table_data/", tags=["inplace_volumes"])
+@router.post("/get_aggregated_statistical_table_data/")
 # pylint: disable=too-many-arguments
 async def post_get_aggregated_statistical_table_data(
     response: Response,
