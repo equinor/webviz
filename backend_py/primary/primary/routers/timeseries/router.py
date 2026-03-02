@@ -29,8 +29,10 @@ from webviz_services.summary_derived_vectors import (
 )
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str
+
 
 from . import converters, schemas
 
@@ -41,6 +43,7 @@ router = APIRouter()
 
 
 @router.get("/vector_list/")
+@cache_time(CacheTime.LONG)
 async def get_vector_list(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -81,6 +84,7 @@ async def get_vector_list(
 
 
 @router.get("/delta_ensemble_vector_list/")
+@cache_time(CacheTime.LONG)
 async def get_delta_ensemble_vector_list(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -136,6 +140,7 @@ async def get_delta_ensemble_vector_list(
 
 
 @router.get("/realizations_vector_data/")
+@cache_time(CacheTime.LONG)
 # pylint: disable-next=too-many-locals
 async def get_realizations_vector_data(
     # fmt:off
@@ -198,6 +203,7 @@ async def get_realizations_vector_data(
 
 
 @router.get("/delta_ensemble_realizations_vector_data/")
+@cache_time(CacheTime.LONG)
 # pylint: disable-next=too-many-locals
 async def get_delta_ensemble_realizations_vector_data(
     # fmt:off
@@ -305,6 +311,7 @@ async def get_timestamps_list(
 
 
 @router.get("/historical_vector_data/")
+@cache_time(CacheTime.LONG)
 # type: ignore [empty-body]
 async def get_historical_vector_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -332,6 +339,7 @@ async def get_historical_vector_data(
 
 
 @router.get("/statistical_vector_data/")
+@cache_time(CacheTime.LONG)
 # pylint: disable-next=too-many-locals
 async def get_statistical_vector_data(
     # fmt:off
@@ -399,6 +407,7 @@ async def get_statistical_vector_data(
 
 
 @router.get("/delta_ensemble_statistical_vector_data/")
+@cache_time(CacheTime.LONG)
 # pylint: disable=too-many-arguments
 # pylint: disable-next=too-many-locals
 async def get_delta_ensemble_statistical_vector_data(
@@ -491,6 +500,7 @@ async def get_delta_ensemble_statistical_vector_data(
 
 
 @router.get("/statistical_vector_data_per_sensitivity/")
+@cache_time(CacheTime.LONG)
 # pylint: disable-next=too-many-locals
 async def get_statistical_vector_data_per_sensitivity(
     # fmt:off

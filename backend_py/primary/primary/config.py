@@ -22,10 +22,6 @@ RESOURCE_SCOPES_DICT = {
     "ssdl": ["8b6e5eb9-edc8-4086-83cb-afa5cc185b23/user_impersonation"],
     "pdm": ["f2e415dc-d400-4cd4-a801-fa707138a49c/user_impersonation"],
 }
-
-DEFAULT_CACHE_MAX_AGE = 3600  # 1 hour
-DEFAULT_STALE_WHILE_REVALIDATE = 3600 * 24  # 24 hour
-
 REDIS_USER_SESSION_URL = "redis://redis-user-session:6379"
 REDIS_CACHE_URL = "redis://redis-cache:6379"
 

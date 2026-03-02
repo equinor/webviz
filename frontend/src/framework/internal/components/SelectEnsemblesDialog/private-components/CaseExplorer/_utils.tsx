@@ -67,7 +67,7 @@ export function makeCaseTableColumns(
             filter: {
                 render: (props) => filterInput(props, disabledFilterComponents.disableAuthorComponent),
             },
-            renderData: (value, context) => <AuthorCell author={value} key={context.entry.caseId} />,
+            renderData: (value) => <AuthorCell author={value} />,
         },
         {
             label: "Status",
