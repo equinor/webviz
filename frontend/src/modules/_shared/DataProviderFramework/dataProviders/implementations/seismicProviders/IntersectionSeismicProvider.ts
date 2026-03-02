@@ -55,14 +55,11 @@ export type IntersectionSeismicStoredData = {
 
 export type IntersectionSeismicData = SeismicFenceData_trans;
 
-export class IntersectionSeismicProvider
-    implements
-        CustomDataProviderImplementation<
-            IntersectionSeismicSettings,
-            IntersectionSeismicData,
-            IntersectionSeismicStoredData
-        >
-{
+export class IntersectionSeismicProvider implements CustomDataProviderImplementation<
+    IntersectionSeismicSettings,
+    IntersectionSeismicData,
+    IntersectionSeismicStoredData
+> {
     settings = intersectionSeismicSettings;
 
     getDefaultSettingsValues() {
@@ -211,7 +208,7 @@ export class IntersectionSeismicProvider
             }
 
             const representation = getLocalSetting(Setting.REPRESENTATION);
-            const apiRepresentation = representationToApiRepresentation(representation);
+            const apiRepresentation = representationToApiRepresentation(representation ?? Representation.REALIZATION);
 
             return Array.from(
                 new Set(
@@ -362,7 +359,7 @@ export class IntersectionSeismicProvider
                 realization_num: realization,
                 seismic_attribute: attribute,
                 time_or_interval_str: timeOrInterval ?? "",
-                representation: representationToApiRepresentation(representation),
+                representation: representationToApiRepresentation(representation ?? Representation.REALIZATION),
             },
             body: {
                 polyline: apiSeismicFencePolyline,

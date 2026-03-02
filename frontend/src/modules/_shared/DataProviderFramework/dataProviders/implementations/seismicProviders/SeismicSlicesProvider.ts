@@ -44,9 +44,11 @@ export type SeismicSlicesStoredData = {
     seismicSlices: [number, number, number];
 };
 
-export class SeismicSlicesProvider
-    implements CustomDataProviderImplementation<SeismicSlicesSettings, SeismicSlicesData, SeismicSlicesStoredData>
-{
+export class SeismicSlicesProvider implements CustomDataProviderImplementation<
+    SeismicSlicesSettings,
+    SeismicSlicesData,
+    SeismicSlicesStoredData
+> {
     settings = seismicSlicesSettings;
 
     getDefaultSettingsValues() {
@@ -143,7 +145,7 @@ export class SeismicSlicesProvider
                 realization_num: realizationNum ?? 0,
                 seismic_attribute: attribute ?? "",
                 time_or_interval_str: timeOrInterval ?? "",
-                representation: representationToApiRepresentation(representation),
+                representation: representationToApiRepresentation(representation ?? Representation.REALIZATION),
                 inline_number: slices?.[0] ?? 0,
                 crossline_number: slices?.[1] ?? 0,
                 depth_slice_number: slices?.[2] ?? 0,
@@ -228,7 +230,7 @@ export class SeismicSlicesProvider
             }
 
             const representation = getLocalSetting(Setting.REPRESENTATION);
-            const apiRepresentation = representationToApiRepresentation(representation);
+            const apiRepresentation = representationToApiRepresentation(representation ?? Representation.REALIZATION);
 
             return Array.from(
                 new Set(
