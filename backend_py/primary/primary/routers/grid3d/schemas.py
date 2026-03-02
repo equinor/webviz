@@ -26,6 +26,7 @@ class Grid3dMappedProperty(BaseModel):
     poly_props_b64arr: B64FloatArray
     min_grid_prop_value: float
     max_grid_prop_value: float
+    discrete_codes_map: Optional[dict[int, str]] = None
 
 
 class Grid3dZone(BaseModel):
