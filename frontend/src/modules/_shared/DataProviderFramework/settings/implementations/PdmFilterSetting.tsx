@@ -7,7 +7,7 @@ import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { PHASE_COLORS } from "@modules/_shared/constants/colors";
+import { FLOW_COLORS } from "@modules/_shared/constants/colors";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type {
@@ -20,9 +20,11 @@ type InternalValueType = SettingTypeDefinitions[Setting.PDM_FILTER]["internalVal
 type ExternalValueType = SettingTypeDefinitions[Setting.PDM_FILTER]["externalValue"];
 type ValueRangeType = SettingTypeDefinitions[Setting.PDM_FILTER]["valueConstraints"];
 
-export class PdmFilterSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
-{
+export class PdmFilterSetting implements CustomSettingImplementation<
+    InternalValueType,
+    ExternalValueType,
+    ValueRangeType
+> {
     valueConstraintsIntersectionReducerDefinition = {
         reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType, index: number) => {
             if (index === 0) {
@@ -122,13 +124,13 @@ export class PdmFilterSetting
         if (currentValue === null) {
             return {
                 production: {
-                    oil: { value: 0, color: "#4caf50" },
-                    gas: { value: 0, color: "#d32f2f" },
-                    water: { value: 0, color: "#4285f4" },
+                    oil: { value: 0, color: FLOW_COLORS.oil_production },
+                    gas: { value: 0, color: FLOW_COLORS.gas_production },
+                    water: { value: 0, color: FLOW_COLORS.water_production },
                 },
                 injection: {
-                    water: { value: 0, color: "#08dbff" },
-                    gas: { value: 0, color: "#ffc107" },
+                    water: { value: 0, color: FLOW_COLORS.water_injection },
+                    gas: { value: 0, color: FLOW_COLORS.gas_injection },
                 },
             };
         }
@@ -184,13 +186,13 @@ export class PdmFilterSetting
             function makeDefaultValue() {
                 return {
                     production: {
-                        oil: { value: 0, color: PHASE_COLORS.oil },
-                        gas: { value: 0, color: PHASE_COLORS.gas },
-                        water: { value: 0, color: PHASE_COLORS.water },
+                        oil: { value: 0, color: FLOW_COLORS.oil_production },
+                        gas: { value: 0, color: FLOW_COLORS.gas_production },
+                        water: { value: 0, color: FLOW_COLORS.water_production },
                     },
                     injection: {
-                        water: { value: 0, color: PHASE_COLORS.water },
-                        gas: { value: 0, color: PHASE_COLORS.gas },
+                        water: { value: 0, color: FLOW_COLORS.water_injection },
+                        gas: { value: 0, color: FLOW_COLORS.gas_injection },
                     },
                 };
             }
@@ -283,7 +285,7 @@ export class PdmFilterSetting
                         label="Oil"
                         maxValue={props.valueConstraints ? props.valueConstraints.production.oil : 0}
                         value={props.value ? props.value.production.oil.value : 0}
-                        color={props.value ? props.value.production.oil.color : PHASE_COLORS.oil}
+                        color={props.value ? props.value.production.oil.color : FLOW_COLORS.oil_production}
                         onValueChange={(newValue) => handleValueChange("production", "oil", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "oil", newColor)}
                         inputVisible={inputVisible}
@@ -292,7 +294,7 @@ export class PdmFilterSetting
                         label="Gas"
                         maxValue={props.valueConstraints ? props.valueConstraints.production.gas : 0}
                         value={props.value ? props.value.production.gas.value : 0}
-                        color={props.value ? props.value.production.gas.color : PHASE_COLORS.gas}
+                        color={props.value ? props.value.production.gas.color : FLOW_COLORS.gas_production}
                         onValueChange={(newValue) => handleValueChange("production", "gas", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "gas", newColor)}
                         inputVisible={inputVisible}
@@ -301,7 +303,7 @@ export class PdmFilterSetting
                         label="Water"
                         maxValue={props.valueConstraints ? props.valueConstraints.production.water : 0}
                         value={props.value ? props.value.production.water.value : 0}
-                        color={props.value ? props.value.production.water.color : PHASE_COLORS.water}
+                        color={props.value ? props.value.production.water.color : FLOW_COLORS.water_production}
                         onValueChange={(newValue) => handleValueChange("production", "water", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "water", newColor)}
                         inputVisible={inputVisible}
@@ -318,7 +320,7 @@ export class PdmFilterSetting
                         label="Water"
                         maxValue={props.valueConstraints ? props.valueConstraints.injection.water : 0}
                         value={props.value ? props.value.injection.water.value : 0}
-                        color={props.value ? props.value.injection.water.color : PHASE_COLORS.water}
+                        color={props.value ? props.value.injection.water.color : FLOW_COLORS.water_injection}
                         onValueChange={(newValue) => handleValueChange("injection", "water", newValue)}
                         onColorChange={(newColor) => handleColorChange("injection", "water", newColor)}
                         inputVisible={inputVisible}
@@ -327,7 +329,7 @@ export class PdmFilterSetting
                         label="Gas"
                         maxValue={props.valueConstraints ? props.valueConstraints.injection.gas : 0}
                         value={props.value ? props.value.injection.gas.value : 0}
-                        color={props.value ? props.value.injection.gas.color : PHASE_COLORS.gas}
+                        color={props.value ? props.value.injection.gas.color : FLOW_COLORS.gas_injection}
                         onValueChange={(newValue) => handleValueChange("injection", "gas", newValue)}
                         onColorChange={(newColor) => handleColorChange("injection", "gas", newColor)}
                         inputVisible={inputVisible}

@@ -220,22 +220,22 @@ function getApplicableFlowDataSetting(
     const { production, injection } = pdmFilterSettings;
 
     if (productionData) {
-        if (productionData.oilProductionSm3 >= pdmFilterSettings.production.oil.value) {
+        if (productionData.oilProductionSm3 > pdmFilterSettings.production.oil.value) {
             return production.oil;
         }
-        if (productionData.gasProductionSm3 >= pdmFilterSettings.production.gas.value) {
+        if (productionData.gasProductionSm3 > pdmFilterSettings.production.gas.value) {
             return production.gas;
         }
-        if (productionData.waterProductionM3 >= pdmFilterSettings.production.water.value) {
+        if (productionData.waterProductionM3 > pdmFilterSettings.production.water.value) {
             return production.water;
         }
     }
 
     if (injectionData) {
-        if (injectionData.waterInjection >= pdmFilterSettings.injection.water.value) {
+        if (injectionData.waterInjection > pdmFilterSettings.injection.water.value) {
             return injection.water;
         }
-        if (injectionData.gasInjection >= pdmFilterSettings.injection.gas.value) {
+        if (injectionData.gasInjection > pdmFilterSettings.injection.gas.value) {
             return injection.gas;
         }
     }
