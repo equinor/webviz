@@ -2,30 +2,36 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 
-type FieldDropdownProps = {
+export type FieldDropdownProps = {
     ensembleSet: EnsembleSet;
     value: string | null;
+    fallbackFieldList?: string[];
     onChange: (fieldIdentifier: string | null) => void;
 } & Omit<DropdownProps, "options" | "value" | "onChange">;
 
 export function FieldDropdown(props: FieldDropdownProps): JSX.Element {
-    const { ensembleSet, value, onChange, ...rest } = props;
+    const { ensembleSet, value, fallbackFieldList, onChange, ...rest } = props;
 
     function handleSelectionChanged(fieldIdentifier: string) {
         onChange(fieldIdentifier);
     }
 
-    const optionsArray: DropdownOption[] = [];
-    for (const ens of ensembleSet.getRegularEnsembleArray()) {
-        const fieldIdentifier = ens.getFieldIdentifier();
-        if (optionsArray.some((option) => option.value === fieldIdentifier.toString())) {
-            continue;
+    const fieldIdents = new Set<string>();
+
+    if (ensembleSet.getRegularEnsembleArray().length) {
+        for (const ens of ensembleSet.getRegularEnsembleArray()) {
+            fieldIdents.add(ens.getFieldIdentifier());
         }
-        optionsArray.push({
-            value: fieldIdentifier.toString(),
-            label: fieldIdentifier.toString(),
-        });
+    } else if (fallbackFieldList) {
+        for (const field of fallbackFieldList) {
+            fieldIdents.add(field);
+        }
     }
+
+    const optionsArray: DropdownOption[] = [...fieldIdents].map((id) => ({
+        value: id,
+        label: id,
+    }));
 
     return <Dropdown options={optionsArray} value={value?.toString()} onChange={handleSelectionChanged} {...rest} />;
 }

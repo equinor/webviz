@@ -363,7 +363,6 @@ export class IntersectionSeismicProvider
                 seismic_attribute: attribute,
                 time_or_interval_str: timeOrInterval ?? "",
                 representation: representationToApiRepresentation(representation),
-                ...makeCacheBustingQueryParam(ensembleIdent),
             },
             body: {
                 polyline: apiSeismicFencePolyline,
