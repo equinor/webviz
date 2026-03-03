@@ -4,18 +4,19 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
 import type { WellboreHeader_api } from "@api";
+import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { SyncSettingsHelper } from "@framework/SyncSettings";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -65,16 +66,11 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
         moduleContext: props.settingsContext,
     });
     const providerManager = useAtomValue(dataProviderManagerAtom);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
+    const allFields = useAtomValue(availableFieldsQueryAtom).data ?? [];
 
     // Field selection
     const [selectedField, setSelectedField] = useAtom(selectedFieldIdentAtom);
-    const availableFieldsQuery = useAtomValue(availableFieldsQueryAtom);
-    const availableFields = availableFieldsQuery?.data ?? [];
-
-    const fieldOptions = availableFields.map<DropdownOption>((f) => ({
-        value: f.fieldIdentifier,
-        label: f.fieldIdentifier,
-    }));
 
     // Wellbore selection
     const wellboreHeadersQuery = useAtomValue(drilledWellboreHeadersQueryAtom);
@@ -89,7 +85,6 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
 
     // Error messages
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-    const availableFieldsErrorMessage = usePropagateQueryErrorToStatusWriter(availableFieldsQuery, statusWriter) ?? "";
     const wellboreHeadersErrorMessage = usePropagateQueryErrorToStatusWriter(wellboreHeadersQuery, statusWriter) ?? "";
 
     React.useEffect(() => {
@@ -106,18 +101,15 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     return (
         <div className="flex flex-col h-full gap-1">
             <CollapsibleGroup title="Wellbore" expanded contentClassName="flex flex-col gap-3">
-                <SettingWrapper
-                    label="Field"
-                    annotations={fieldSettingAnnotations}
-                    errorOverlay={availableFieldsErrorMessage}
-                >
-                    <Dropdown
+                <SettingWrapper label="Field" annotations={fieldSettingAnnotations}>
+                    <FieldDropdown
                         value={selectedField.value}
-                        options={fieldOptions}
-                        disabled={fieldOptions.length === 0}
+                        ensembleSet={ensembleSet}
+                        fallbackFieldList={allFields.map((f) => f.fieldIdentifier)}
                         onChange={setSelectedField}
                     />
                 </SettingWrapper>
+
                 <SettingWrapper
                     label="Wellbore"
                     annotations={wellboreSettingAnnotations}

@@ -13,7 +13,6 @@ package-mode = false
 msal = "^1.32.0"
 starsessions = "^2.2.1"
 redis = "7.1.1"
-python-dotenv = "^1.1.0"
 pyjwt = "^2.6.0"
 
 # orjson is installed to allow the use of ORJSONResponse from fastapi
