@@ -19,7 +19,7 @@ function DebouncedSlider(
         value,
         onValueChange,
     );
-    const [internalValue, setValue, debounceMng] = useDebouncedOnChange(
+    const [immediateValue, setValue, commitController] = useDebouncedOnChange(
         controlledValue,
         setControlledValue,
         debounceTimeMs,
@@ -32,16 +32,16 @@ function DebouncedSlider(
                 <Slider
                     {...other}
                     className="w-full grow"
-                    value={internalValue}
+                    value={immediateValue}
                     onBlur={() => {
-                        debounceMng.flush();
+                        commitController.flush();
                     }}
                     onChange={(e, val) => {
                         setValue(val);
                     }}
                 />
             </div>
-            <p className="w-8">{internalValue}</p>
+            <p className="w-8">{immediateValue}</p>
         </div>
     );
 }
