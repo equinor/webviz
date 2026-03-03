@@ -3,7 +3,7 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { Sensitivity, SensitivityCase } from "@framework/EnsembleSensitivities";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
-import type { UpdateFunc } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { UpdatedFuncWithNoUpdate } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type {
     MakeSettingTypesMap,
     SettingsKeysFromTuple,
@@ -19,7 +19,7 @@ export function createEnsembleUpdater<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings>,
->(): UpdateFunc<RegularEnsembleIdent[], TSettings, TSettingTypes, TKey> {
+>(): UpdatedFuncWithNoUpdate<RegularEnsembleIdent[], TSettings, TSettingTypes, TKey> {
     return ({ getGlobalSetting }) => {
         const fieldIdentifier = getGlobalSetting("fieldId");
         const ensembles = getGlobalSetting("ensembles");
@@ -40,7 +40,9 @@ export function createSensitivityUpdater<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings>,
->(workbenchSession: WorkbenchSession): UpdateFunc<SensitivityNameCasePair[], TSettings, TSettingTypes, TKey> {
+>(
+    workbenchSession: WorkbenchSession,
+): UpdatedFuncWithNoUpdate<SensitivityNameCasePair[], TSettings, TSettingTypes, TKey> {
     return ({ getLocalSetting }) => {
         const ensembleIdent = getLocalSetting(Setting.ENSEMBLE as TKey) as
             | RegularEnsembleIdent
@@ -78,7 +80,7 @@ export function createRealizationUpdater<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings>,
->(): UpdateFunc<number[], TSettings, TSettingTypes, TKey> {
+>(): UpdatedFuncWithNoUpdate<number[], TSettings, TSettingTypes, TKey> {
     return ({ getLocalSetting, getGlobalSetting }) => {
         const ensembleIdent = getLocalSetting(Setting.ENSEMBLE as TKey) as
             | RegularEnsembleIdent

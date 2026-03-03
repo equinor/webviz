@@ -5,7 +5,7 @@ import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
 import { SettingTopic, type SettingManager } from "../../framework/SettingManager/SettingManager";
-import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
+import type { UpdatedFuncWithNoUpdate } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
 
@@ -31,7 +31,7 @@ export class Dependency<
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings>,
 > {
-    private _updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>;
+    private _updateFunc: UpdatedFuncWithNoUpdate<TReturnValue, TSettings, TSettingTypes, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
     private _isLoading = false;
@@ -59,7 +59,7 @@ export class Dependency<
     constructor(
         localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>,
         globalSettingGetter: <K extends keyof GlobalSettings>(key: K) => GlobalSettings[K] | null,
-        updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>,
+        updateFunc: UpdatedFuncWithNoUpdate<TReturnValue, TSettings, TSettingTypes, TKey>,
         makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void,
         localSettingLoadingStateGetter: <K extends TKey>(key: K) => boolean,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(

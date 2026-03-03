@@ -24,7 +24,7 @@ export type SettingAttributes = {
     enabled: boolean;
 };
 
-export interface HelperUpdateFunc<
+export interface UpdateFunc<
     TReturnValue,
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
@@ -39,12 +39,12 @@ export interface HelperUpdateFunc<
     }): TReturnValue;
 }
 
-export type UpdateFunc<
+export type UpdatedFuncWithNoUpdate<
     TReturnValue,
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings>,
-> = HelperUpdateFunc<TReturnValue | NoUpdate, TSettings, TSettingTypes, TKey>;
+> = UpdateFunc<TReturnValue | NoUpdate, TSettings, TSettingTypes, TKey>;
 
 export interface DefineBasicDependenciesArgs<
     TSettings extends Settings,
@@ -53,14 +53,19 @@ export interface DefineBasicDependenciesArgs<
 > {
     settingAttributesUpdater: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
-        update: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
+        update: UpdatedFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
     ) => Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>;
     valueConstraintsUpdater: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
-        update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>,
+        update: UpdatedFuncWithNoUpdate<
+            SettingTypeDefinitions[TSettingKey]["valueConstraints"],
+            TSettings,
+            TSettingTypes,
+            TKey
+        >,
     ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>;
     helperDependency: <T>(
-        update: HelperUpdateFunc<T, TSettings, TSettingTypes, TKey>,
+        update: UpdateFunc<T, TSettings, TSettingTypes, TKey>,
     ) => Dependency<T, TSettings, TSettingTypes, TKey>;
 
     workbenchSession: WorkbenchSession;
@@ -77,7 +82,12 @@ export interface DefineDependenciesArgs<
 > extends DefineBasicDependenciesArgs<TSettings, TSettingTypes, TKey> {
     storedDataUpdater: <K extends TStoredDataKey>(
         key: K,
-        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
+        update: UpdatedFuncWithNoUpdate<
+            NullableStoredData<TStoredData>[TStoredDataKey],
+            TSettings,
+            TSettingTypes,
+            TKey
+        >,
     ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>;
 }
 

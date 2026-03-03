@@ -8,9 +8,9 @@ import { ExternalSettingController } from "../framework/ExternalSettingControlle
 import { SettingTopic, type SettingManager } from "../framework/SettingManager/SettingManager";
 import type {
     DefineBasicDependenciesArgs,
-    HelperUpdateFunc,
-    SettingAttributes,
     UpdateFunc,
+    SettingAttributes,
+    UpdatedFuncWithNoUpdate,
 } from "../interfacesAndTypes/customSettingsHandler";
 import type { Item } from "../interfacesAndTypes/entities";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
@@ -34,8 +34,7 @@ export class SharedSettingsDelegate<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> implements PublishSubscribe<SharedSettingsDelegatePayloads>
-{
+> implements PublishSubscribe<SharedSettingsDelegatePayloads> {
     private _publishSubscribeDelegate: PublishSubscribeDelegate<SharedSettingsDelegatePayloads> =
         new PublishSubscribeDelegate<SharedSettingsDelegatePayloads>();
     private _externalSettingControllers: { [K in TSettingKey]: ExternalSettingController<K> } = {} as {
@@ -247,7 +246,7 @@ export class SharedSettingsDelegate<
 
         const valueConstraintsUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<
+            updateFunc: UpdatedFuncWithNoUpdate<
                 SettingTypeDefinitions[K]["valueConstraints"],
                 TSettings,
                 TSettingTypes,
@@ -303,7 +302,7 @@ export class SharedSettingsDelegate<
 
         const settingAttributesUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
+            updateFunc: UpdatedFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
         ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>(
                 localSettingManagerGetter.bind(this),
@@ -328,7 +327,7 @@ export class SharedSettingsDelegate<
             return dependency;
         };
 
-        const helperDependency = <T>(update: HelperUpdateFunc<T, TSettings, TSettingTypes, TSettingKey>) => {
+        const helperDependency = <T>(update: UpdateFunc<T, TSettings, TSettingTypes, TSettingKey>) => {
             const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
                 localSettingManagerGetter.bind(this),
                 globalSettingGetter.bind(this),

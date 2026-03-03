@@ -13,9 +13,9 @@ import type { SettingManager } from "../framework/SettingManager/SettingManager"
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
 import type {
     CustomSettingsHandler,
-    HelperUpdateFunc,
-    SettingAttributes,
     UpdateFunc,
+    SettingAttributes,
+    UpdatedFuncWithNoUpdate,
 } from "../interfacesAndTypes/customSettingsHandler";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
@@ -64,8 +64,7 @@ export class SettingsContextDelegate<
     TStoredData extends StoredData = Record<string, never>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
-> implements PublishSubscribe<SettingsContextDelegatePayloads>
-{
+> implements PublishSubscribe<SettingsContextDelegatePayloads> {
     private _customSettingsHandler: CustomSettingsHandler<
         TSettings,
         TStoredData,
@@ -391,7 +390,7 @@ export class SettingsContextDelegate<
 
         const valueConstraintsUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<
+            updateFunc: UpdatedFuncWithNoUpdate<
                 SettingTypeDefinitions[K]["valueConstraints"],
                 TSettings,
                 TSettingTypes,
@@ -437,7 +436,7 @@ export class SettingsContextDelegate<
 
         const settingAttributesUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
+            updateFunc: UpdatedFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
         ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>(
                 localSettingManagerGetter,
@@ -468,7 +467,12 @@ export class SettingsContextDelegate<
 
         const storedDataUpdater = <K extends TStoredDataKey>(
             key: K,
-            updateFunc: UpdateFunc<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TSettingKey>,
+            updateFunc: UpdatedFuncWithNoUpdate<
+                NullableStoredData<TStoredData>[K],
+                TSettings,
+                TSettingTypes,
+                TSettingKey
+            >,
         ): Dependency<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<
                 NullableStoredData<TStoredData>[K],
@@ -503,7 +507,7 @@ export class SettingsContextDelegate<
             return dependency;
         };
 
-        const helperDependency = <T>(update: HelperUpdateFunc<T, TSettings, TSettingTypes, TSettingKey>) => {
+        const helperDependency = <T>(update: UpdateFunc<T, TSettings, TSettingTypes, TSettingKey>) => {
             const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
                 localSettingManagerGetter,
                 globalSettingGetter,
