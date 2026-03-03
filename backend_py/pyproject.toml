@@ -16,11 +16,11 @@ build-backend = "poetry.core.masonry.api"
 bandit = "^1.8.6"
 black = "^25.9.0"
 mypy = "^1.18.2"
-pylint = "^4.0.2"
+pylint = "^4.0.4"
 pytest = "^8.4.2"
 pytest-timeout = "^2.4.0"
 pytest-asyncio = "^1.2.0"
-astroid = "^4.0.1"
+astroid = "^4.0.4"
 
 
 [tool.black]
@@ -41,10 +41,14 @@ module = ["xtgeo.*"]
 ignore_missing_imports = true
 
 
-[tool.pylint]
+[tool.pylint.main]
 init-hook = 'import sys; sys.path.append("./pylint/plugins")'
-load-plugins = "async_suffix_checker"
+load-plugins = ["async_suffix_checker"]
 
+# Reverts fixme to previous behavior (allowing TODO)
+notes = ["FIXME", "XXX"]
+
+[tool.pylint.messages_control]
 disable = [
     "missing-docstring",
     "line-too-long",
@@ -52,12 +56,14 @@ disable = [
     "duplicate-code",
     "too-many-positional-arguments",
 ]
-extension-pkg-whitelist = "pydantic"
+
+[tool.pylint.typecheck]
+extension-pkg-allow-list = ["pydantic"]
 ignored-modules = ["pyarrow.compute"]
+
+[tool.pylint.design]
 min-public-methods = 0
 max-args = 9
 max-locals = 20
 max-branches = 14
-
-# Reverts fixme to previous behavior (allowing TODO)
-notes = ["FIXME", "XXX"]
+max-attributes = 10

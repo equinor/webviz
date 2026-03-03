@@ -3,7 +3,8 @@ import React from "react";
 import { Icon, Typography } from "@equinor/eds-core-react";
 import { folder_open } from "@equinor/eds-icons";
 import { Refresh } from "@mui/icons-material";
-import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+import type { UseQueryOptions } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -13,9 +14,9 @@ import { Tooltip } from "@lib/components/Tooltip";
 
 Icon.add({ folder_open });
 
-export type RecentListProps<TItemType, TQueryData = unknown, TError = Error> = {
+export type RecentListProps<TItemType, TQueryData = unknown> = {
     title: string;
-    useQueryOptions: Omit<UseQueryOptions<TQueryData, TError, TQueryData, any>, "refetchInterval">;
+    useQueryOptions: UseQueryOptions<TQueryData, any, any, any>;
     transformData: (data: TQueryData) => TItemType[];
     refetchIntervalMs?: number;
     renderItem: (item: TItemType) => React.ReactNode;
@@ -28,7 +29,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
 ): React.ReactNode {
     const [lastUpdatedMs, setLastUpdatedMs] = React.useState<number | null>(null);
 
-    const itemsQuery = useQuery<TQueryData>({
+    const itemsQuery = useQuery<TQueryData, any, any, any>({
         ...props.useQueryOptions,
         refetchInterval: props.refetchIntervalMs ?? 60000,
     });

@@ -1,19 +1,21 @@
 from datetime import datetime, timezone
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 from webviz_services.service_exceptions import Service, ServiceRequestError
 
 
 from primary.persistence.snapshot_store.types import SnapshotAccessLogSortBy
 from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
-from primary.persistence.cosmosdb.exceptions import DatabaseAccessError, DatabaseAccessNotFoundError
+from primary.persistence.cosmosdb.exceptions import (
+    DatabaseAccessConflictError,
+    DatabaseAccessError,
+    DatabaseAccessNotFoundError,
+    DatabaseAccessPreconditionFailedError,
+)
 
 from primary.persistence.cosmosdb.query_collation_options import Filter, QueryCollationOptions, SortDirection
 from .documents import SnapshotAccessLogDocument
 
 from .snapshot_store import SnapshotStore
-
-_DATABASE_NAME = "persistence"
-_CONTAINER_NAME = "snapshot_access_logs"
 
 # Pagination limits
 _MAX_PAGE_SIZE = 100
@@ -32,27 +34,11 @@ class SnapshotAccessLogStore:
         self,
         user_id: str,
         access_log_container: CosmosContainer[SnapshotAccessLogDocument],
+        snapshot_store_factory: Callable[[str], SnapshotStore],
     ):
         self._user_id = user_id
         self._access_log_container = access_log_container
-
-    @classmethod
-    def create_instance(cls, user_id: str) -> "SnapshotAccessLogStore":
-        access_log_container = CosmosContainer.create_instance(
-            _DATABASE_NAME, _CONTAINER_NAME, SnapshotAccessLogDocument
-        )
-        return cls(user_id, access_log_container)
-
-    async def __aenter__(self) -> "SnapshotAccessLogStore":
-        return self
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: object | None,
-    ) -> None:
-        await self._access_log_container.close_async()
+        self._snapshot_store_factory = snapshot_store_factory
 
     async def get_for_snapshot_async(self, snapshot_id: str) -> SnapshotAccessLogDocument:
         """
@@ -107,8 +93,7 @@ class SnapshotAccessLogStore:
 
         try:
             # Always filter by visitor_id (current user)
-            filter_list = filters or []
-            filter_list.insert(0, Filter("visitor_id", self._user_id))
+            filter_list = [Filter("visitor_id", self._user_id)] + (filters or [])
 
             # Build query with collation options
             collation_options = QueryCollationOptions(
@@ -152,48 +137,26 @@ class SnapshotAccessLogStore:
         """
         try:
             # Use SnapshotStore to get snapshot metadata
-            async with SnapshotStore.create_instance(self._user_id) as snapshot_store:
-                snapshot = await snapshot_store.get_async(snapshot_id)
+            snapshot_store = self._snapshot_store_factory(snapshot_owner_id)
 
-                new_log = SnapshotAccessLogDocument(
-                    id=_make_access_log_item_id(snapshot_id, self._user_id),
-                    visitor_id=self._user_id,
-                    snapshot_id=snapshot_id,
-                    snapshot_owner_id=snapshot_owner_id,
-                    snapshot_metadata=snapshot.metadata,
-                )
+            snapshot = await snapshot_store.get_async(snapshot_id)
 
-                # Persist to database
-                await self._access_log_container.insert_item_async(new_log)
+            new_log = SnapshotAccessLogDocument(
+                id=_make_access_log_item_id(snapshot_id, self._user_id),
+                visitor_id=self._user_id,
+                snapshot_id=snapshot_id,
+                snapshot_owner_id=snapshot_owner_id,
+                snapshot_metadata=snapshot.metadata,
+            )
 
-                return new_log
+            # Persist to database
+            await self._access_log_container.insert_item_async(new_log)
+
+            return new_log
         except DatabaseAccessError as err:
             raise ServiceRequestError(f"Failed to create access log: {str(err)}", Service.DATABASE) from err
 
-    async def _get_existing_or_new_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
-        """
-        Get an existing access log or create a new one if it doesn't exist.
-
-        Note: This DOES persist a new log to the database if one doesn't exist.
-
-        Args:
-            snapshot_id: The ID of the snapshot
-            snapshot_owner_id: The owner ID of the snapshot
-
-        Returns:
-            Existing or newly created access log document
-
-        Raises:
-            ServiceRequestError: If the database operation fails
-        """
-        try:
-            return await self.get_for_snapshot_async(snapshot_id)
-        except DatabaseAccessNotFoundError:
-            return await self._create_async(snapshot_id=snapshot_id, snapshot_owner_id=snapshot_owner_id)
-        except DatabaseAccessError as err:
-            raise ServiceRequestError(f"Failed to get or create access log: {str(err)}", Service.DATABASE) from err
-
-    async def log_snapshot_visit_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
+    async def log_snapshot_visit_async(self, snapshot_id: str, snapshot_owner_id: str) -> None:
         """
         Log a visit to a snapshot, creating or updating the access log.
 
@@ -215,20 +178,64 @@ class SnapshotAccessLogStore:
             ServiceRequestError: If the database operation fails
         """
         timestamp = datetime.now(timezone.utc)
+        item_id = _make_access_log_item_id(snapshot_id, self._user_id)
+
+        # Patch ops that are ALWAYS safe to apply (atomic counter + last visited)
+        base_ops: list[dict] = [
+            {"op": "incr", "path": "/visits", "value": 1},
+            {"op": "set", "path": "/last_visited_at", "value": timestamp.isoformat()},
+        ]
+
+        # Patch ops only for the very first visit
+        first_visit_ops: list[dict] = base_ops + [
+            {"op": "set", "path": "/first_visited_at", "value": timestamp.isoformat()},
+        ]
+
+        # Cosmos filter predicate syntax: depends on SDK version; commonly:
+        # "FROM c WHERE NOT IS_DEFINED(c.first_visited_at)"
+        first_visit_filter = "FROM c WHERE NOT IS_DEFINED(c.first_visited_at)"
+
         try:
-            log = await self._get_existing_or_new_async(snapshot_id, snapshot_owner_id)
+            # 1) Fast path: try "first-visit" patch (only succeeds if first_visited_at is missing)
+            try:
+                await self._access_log_container.patch_item_async(
+                    item_id=item_id,
+                    partition_key=self._user_id,
+                    patch_operations=first_visit_ops,
+                    filter_predicate=first_visit_filter,
+                )
+            except DatabaseAccessPreconditionFailedError:
+                # 2) Not first visit: apply base patch (always succeeds if item exists)
+                await self._access_log_container.patch_item_async(
+                    item_id=item_id,
+                    partition_key=self._user_id,
+                    patch_operations=base_ops,
+                )
 
-            # Update visit tracking
-            log.visits += 1
-            log.last_visited_at = timestamp
+        except DatabaseAccessNotFoundError:
+            # 3) Item doesn't exist yet -> create it, then patch.
+            #    Handle the race where another request created it first.
+            try:
+                await self._create_async(snapshot_id=snapshot_id, snapshot_owner_id=snapshot_owner_id)
+            except DatabaseAccessConflictError:
+                # Someone else created it between our 404 and create attempt -> continue to patch
+                pass
 
-            if not log.first_visited_at:
-                log.first_visited_at = timestamp
+            # Now apply the "first visit" attempt; if it fails, fallback to base patch.
+            try:
+                await self._access_log_container.patch_item_async(
+                    item_id=item_id,
+                    partition_key=self._user_id,
+                    patch_operations=first_visit_ops,
+                    filter_predicate=first_visit_filter,
+                )
+            except DatabaseAccessPreconditionFailedError:
+                await self._access_log_container.patch_item_async(
+                    item_id=item_id,
+                    partition_key=self._user_id,
+                    patch_operations=base_ops,
+                )
 
-            # Persist to database
-            await self._access_log_container.update_item_async(item_id=log.id, updated_item=log)
-
-            return log
         except DatabaseAccessError as err:
             raise ServiceRequestError(f"Failed to log snapshot visit: {str(err)}", Service.DATABASE) from err
 

@@ -1,6 +1,6 @@
 [project]
 name = "user-mock"
-requires-python = "^3.11"
+requires-python = "^3.13"
 dynamic = ["dependencies"]
 
 [tool.poetry]
@@ -12,5 +12,5 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
-fastapi = "^0.116.0"
-uvicorn = "^0.35.0"
+fastapi = "~0.129.0"
+uvicorn = "~0.41.0"

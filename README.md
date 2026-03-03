@@ -56,14 +56,14 @@ as stated above).
 ### Radix applications
 
 The production application is located at https://webviz.fmu.equinor.com
-(which is an alias for https://frontend-webviz-prod.c2.radix.equinor.com/,
+(which is an alias for https://frontend-webviz-prod.c3.radix.equinor.com/,
 which again is promoted manually from the pre-prod application mentioned below).
 
 We have three applications in Radix built automatically and redeployed when pushing commits to the respective branch:
 
-- [Pre-prod application](https://frontend-webviz-preprod.c2.radix.equinor.com/) built from the `main` branch.
-- [Review application](https://frontend-webviz-review.c2.radix.equinor.com/) built from the `review` branch.
-- [Dev application](https://frontend-webviz-dev.c2.radix.equinor.com/) built from the `dev` branch.
+- [Pre-prod application](https://frontend-webviz-preprod.c3.radix.equinor.com/) built from the `main` branch.
+- [Review application](https://frontend-webviz-review.c3.radix.equinor.com/) built from the `review` branch.
+- [Dev application](https://frontend-webviz-dev.c3.radix.equinor.com/) built from the `dev` branch.
 
 You can push/update the `review` branch with state of another feature branch with e.g.:
 

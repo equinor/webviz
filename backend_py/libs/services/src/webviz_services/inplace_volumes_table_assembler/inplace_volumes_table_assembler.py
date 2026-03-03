@@ -72,6 +72,7 @@ class InplaceVolumesTableAssembler:
         self._inplace_volumes_table_access = inplace_volumes_access
 
     async def get_inplace_volumes_tables_metadata_async(self) -> list[InplaceVolumesTableDefinition]:
+        # pylint: disable=too-many-locals
         vol_table_names = await self._inplace_volumes_table_access.get_inplace_volumes_table_names_async()
 
         # Get pair of requested table name, paired with its inplace volume columns and index columns with unique values

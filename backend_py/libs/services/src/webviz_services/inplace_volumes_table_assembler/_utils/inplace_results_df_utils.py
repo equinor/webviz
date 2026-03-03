@@ -131,8 +131,7 @@ def create_statistical_result_table_data_from_df(
     existing_result_names = [col for col in columns if col not in InplaceVolumes.selector_columns()]
 
     # Define statistical aggregation expressions
-    requested_statistics = [stat for stat in Statistic]
-
+    requested_statistics = list(Statistic)
     statistic_aggregation_expressions = _create_statistic_aggregation_expressions(
         existing_result_names, requested_statistics
     )

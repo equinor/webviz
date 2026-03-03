@@ -1,13 +1,15 @@
 import logging
 
-from fastapi import APIRouter, Depends, Query, Response, HTTPException
+from fastapi import APIRouter, Depends, Query, Response
 
 from webviz_services.sumo_access.vfp_access import VfpAccess
 from webviz_services.sumo_access.vfp_types import VfpProdTable, VfpInjTable
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
+
 
 from . import schemas
 from . import converters
@@ -18,6 +20,7 @@ router = APIRouter()
 
 
 @router.get("/vfp_table_names/")
+@cache_time(CacheTime.LONG)
 async def get_vfp_table_names(
     # fmt:off
     response: Response,
@@ -39,6 +42,7 @@ async def get_vfp_table_names(
 
 
 @router.get("/vfp_table/")
+@cache_time(CacheTime.LONG)
 async def get_vfp_table(
     # fmt:off
     response: Response,

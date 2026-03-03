@@ -13,7 +13,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 # This is a bit of a hack, but it's one way to know if we're running in Radix or locally
-IS_ON_RADIX_PLATFORM = True if os.getenv("RADIX_APP") is not None else False
+IS_ON_RADIX_PLATFORM = os.getenv("RADIX_APP") is not None
 
 
 # Notes on RadixResourceRequests:
@@ -220,7 +220,7 @@ class RadixJobApi:
 
         job_list = await self.get_all_jobs()
         if not job_list:
-            LOGGER.debug(f".delete_all_jobs() - found no jobs to delete")
+            LOGGER.debug(".delete_all_jobs() - found no jobs to delete")
             return
 
         delete_coros_arr = []
@@ -232,10 +232,10 @@ class RadixJobApi:
                 del_coro = self._delete_named_job_using_client(client=client, radix_job_name=radix_job_name)
                 delete_coros_arr.append(del_coro)
 
-            result_arr = await asyncio.gather(*delete_coros_arr)
+            _result_arr = await asyncio.gather(*delete_coros_arr)
 
         # LOGGER.debug("------")
         # LOGGER.debug(f"{result_arr=}")
         # LOGGER.debug("------")
 
-        LOGGER.debug(f".delete_all_jobs() - finished")
+        LOGGER.debug(".delete_all_jobs() - finished")

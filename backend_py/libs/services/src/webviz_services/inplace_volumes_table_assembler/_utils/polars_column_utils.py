@@ -1,9 +1,8 @@
-import polars as pl
-
-
 """
 This file contains general utility functions for polars column
 """
+
+import polars as pl
 
 
 def is_invalid_column(col: pl.Series) -> bool:

@@ -24,8 +24,7 @@ function addSuffix(name: string, categoricalSuffix = "", coreSuffix = "_api"): s
 export default defineConfig({
     input: "http://localhost:5000/openapi.json",
     output: {
-        format: "prettier",
-        lint: "eslint",
+        postProcess: ["eslint", "prettier"],
         path: "./src/api/autogen/",
         // (Revert v0.67) Don't append js to relative paths
         tsConfigPath: null,

@@ -12,7 +12,7 @@ class ServicesConfig:
 
 
 # Process-wide state (private to package)
-_global_config: ServicesConfig | None = None
+_global_config: ServicesConfig | None = None  # pylint: disable=invalid-name
 
 
 def init_services_config(config: ServicesConfig) -> None:

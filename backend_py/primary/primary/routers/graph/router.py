@@ -8,6 +8,7 @@ from webviz_services.graph_access.graph_access import GraphApiAccess
 from webviz_services.service_exceptions import Service, AuthorizationError, ServiceRequestError
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 
 from . import schemas
 
@@ -17,6 +18,7 @@ router = APIRouter()
 
 
 @router.get("/user_info/{user_id_or_email}")
+@cache_time(CacheTime.NORMAL)
 async def get_user_info(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     user_id_or_email: str = Path(description="User email, graph-id or 'me' for the authenticated user"),
@@ -27,7 +29,7 @@ async def get_user_info(
     graph_api_access = GraphApiAccess(authenticated_user.get_graph_access_token())
 
     try:
-        user_info = await graph_api_access.get_user_info(user_id_or_email)
+        user_info = await graph_api_access.get_user_info_async(user_id_or_email)
 
         if not user_info:
             return None
@@ -50,6 +52,7 @@ async def get_user_info(
 
 
 @router.get("/user_photo/")
+@cache_time(CacheTime.NORMAL)
 async def get_user_photo(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -65,7 +68,7 @@ async def get_user_photo(
     if authenticated_user.has_graph_access_token():
         graph_api_access = GraphApiAccess(authenticated_user.get_graph_access_token())
         try:
-            avatar_b64str = await graph_api_access.get_user_profile_photo(user_id_or_email)
+            avatar_b64str = await graph_api_access.get_user_profile_photo_async(user_id_or_email)
 
             user_photo.avatar_b64str = avatar_b64str
         except httpx.HTTPError as exc:

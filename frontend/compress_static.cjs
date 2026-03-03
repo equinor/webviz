@@ -15,7 +15,7 @@ const settings = {
 };
 
 const compressFile = (filePath) => {
-    return new Promise(async (resolve, reject) => {
+    return (async (resolve, reject) => {
         try {
             const compFilePath = `${filePath}.br`;
 

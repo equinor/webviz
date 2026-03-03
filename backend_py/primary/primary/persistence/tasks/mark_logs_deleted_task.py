@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 
 from webviz_services.service_exceptions import ServiceRequestError
 
+from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
 from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument
 
@@ -28,7 +29,8 @@ async def mark_logs_deleted_task(snapshot_id: str, retry_count: int = 0, max_ret
         retry_count: Current retry attempt (for internal use)
         max_retries: Maximum number of retry attempts
     """
-    container: CosmosContainer[SnapshotAccessLogDocument] = CosmosContainer.create_instance(
+    persistence_stores = PersistenceStoresSingleton.get_instance()
+    container: CosmosContainer[SnapshotAccessLogDocument] = persistence_stores.get_container(
         _DATABASE_NAME, _CONTAINER_NAME, SnapshotAccessLogDocument
     )
 
@@ -122,5 +124,3 @@ async def mark_logs_deleted_task(snapshot_id: str, retry_count: int = 0, max_ret
                 max_retries,
             )
             raise
-    finally:
-        await container.close_async()
