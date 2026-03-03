@@ -53,9 +53,8 @@ export class LocalBackupManager {
      */
     remove(): void {
         const sessionId = this._session.getId();
-        if (!sessionId) return;
-
         const key = localStorageKeyForSessionId(sessionId);
+
         try {
             localStorage.removeItem(key);
         } catch (err) {
