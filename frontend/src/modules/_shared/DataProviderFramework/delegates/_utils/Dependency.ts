@@ -6,10 +6,11 @@ import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler"
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
 
-class DependencyLoadingError extends Error {}
-
 export const NO_UPDATE = Symbol("NO_UPDATE");
 export type NoUpdate = typeof NO_UPDATE;
+
+const PENDING = Symbol("PENDING");
+export type Pending = typeof PENDING;
 
 /*
  * Dependency class is used to represent a node in the dependency graph of a data provider settings context.
@@ -48,8 +49,12 @@ export class Dependency<
     private _cachedValue: Awaited<TReturnValue> | null = null;
     private _abortController: AbortController | null = null;
     private _isInitialized = false;
-    private _numParentDependencies = 0;
+    private _hasParentDependencies = false;
     private _numChildDependencies = 0;
+    private _updatePromise: Promise<void> | null = null;
+    private _queued = false;
+    private _unsubscribers: (() => void)[] = [];
+    private _isProbing = false;
 
     constructor(
         localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>,
@@ -77,6 +82,12 @@ export class Dependency<
     beforeDestroy() {
         this._abortController?.abort();
         this._abortController = null;
+
+        for (const unsubscribe of this._unsubscribers) {
+            unsubscribe();
+        }
+        this._unsubscribers = [];
+
         this._dependencies.clear();
         this._loadingDependencies.clear();
     }
@@ -116,14 +127,16 @@ export class Dependency<
         };
     }
 
-    private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] {
+    private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] | Pending {
         const setting = this._localSettingManagerGetter(settingName);
 
         if (!this._isInitialized && !setting.isStatic()) {
-            this._numParentDependencies++;
+            this._hasParentDependencies = true;
         }
 
         if (!this._cachedSettingsMap.has(settingName as string)) {
+            // Subscribing to the setting changes so that we can update our value and invalidate
+            // the result of the update function when any of the dependencies change
             this._makeLocalSettingGetter(settingName, (value) => {
                 this._cachedSettingsMap.set(settingName as string, value);
                 this.invalidate();
@@ -131,7 +144,7 @@ export class Dependency<
         }
 
         if (this._localSettingLoadingStateGetter(settingName) && this._isInitialized) {
-            throw new DependencyLoadingError("Setting is loading");
+            return PENDING;
         }
 
         // If the dependency has already subscribed to this setting, return the cached value
@@ -173,8 +186,10 @@ export class Dependency<
         }
     }
 
-    private getGlobalSetting<K extends keyof GlobalSettings>(settingName: K): GlobalSettings[K] {
+    private getGlobalSetting<K extends keyof GlobalSettings>(settingName: K): GlobalSettings[K] | Pending {
         if (!this._cachedGlobalSettingsMap.has(settingName as string)) {
+            // Subscribing to the global setting changes so that we can update our value and invalidate
+            // the result of the update function when any of the dependencies change
             this._makeGlobalSettingGetter(settingName, (value) => {
                 this._cachedGlobalSettingsMap.set(settingName as string, value);
                 this.invalidate();
@@ -182,7 +197,7 @@ export class Dependency<
         }
 
         if (this._globalSettingGetter(settingName) === null && this._isInitialized) {
-            throw new DependencyLoadingError("Setting is not yet set");
+            return PENDING;
         }
 
         if (this._cachedGlobalSettingsMap.has(settingName as string)) {
@@ -193,13 +208,15 @@ export class Dependency<
         return this._cachedGlobalSettingsMap.get(settingName as string);
     }
 
-    private getHelperDependency<TDep>(dep: Dependency<TDep, TSettings, TSettingTypes, TKey>): Awaited<TDep> | null {
+    private getHelperDependency<TDep>(
+        dep: Dependency<TDep, TSettings, TSettingTypes, TKey>,
+    ): Awaited<TDep> | Pending | null {
         if (!this._isInitialized) {
-            this._numParentDependencies++;
+            this._hasParentDependencies = true;
         }
 
         if (dep.getIsLoading() && this._isInitialized) {
-            throw new DependencyLoadingError("Dependency is loading");
+            return PENDING;
         }
 
         if (this._cachedDependenciesMap.has(dep)) {
@@ -209,10 +226,13 @@ export class Dependency<
         const value = dep.getValue();
         this._cachedDependenciesMap.set(dep, value);
 
-        dep.subscribe((newValue) => {
+        // Subscribing to the dependency changes so that we can update our value and invalidate
+        // the result of the update function when any of the dependencies change
+        const unsubscribe = dep.subscribe((newValue) => {
             this._cachedDependenciesMap.set(dep, newValue);
             this.invalidate();
         }, true);
+        this._unsubscribers.push(unsubscribe);
 
         dep.subscribeLoading((loading) => {
             if (loading) {
@@ -230,19 +250,18 @@ export class Dependency<
         this._abortController = new AbortController();
 
         // Establishing subscriptions
+        this._isProbing = true;
         try {
             await this._updateFunc({
-                getLocalSetting: this.getLocalSetting,
-                getGlobalSetting: this.getGlobalSetting,
-                getHelperDependency: this.getHelperDependency,
+                whenReady: this.makeReadyComputation.bind(this),
                 abortSignal: this._abortController.signal,
             });
-        } catch (error) {
-            console.error(error);
+        } finally {
+            this._isProbing = false;
         }
 
         // If there are no dependencies, we can call the update function
-        if (this._numParentDependencies === 0) {
+        if (!this._hasParentDependencies) {
             await this.callUpdateFunc();
         }
 
@@ -253,7 +272,19 @@ export class Dependency<
         if (!this._isLoading) {
             this.setLoadingState(true);
         }
-        this.callUpdateFunc();
+
+        if (this._updatePromise) {
+            this._queued = true;
+            return;
+        }
+
+        this._updatePromise = this.callUpdateFunc().finally(() => {
+            this._updatePromise = null;
+            if (this._queued) {
+                this._queued = false;
+                this.invalidate();
+            }
+        });
     }
 
     private async callUpdateFunc() {
@@ -264,31 +295,35 @@ export class Dependency<
 
         this._abortController = new AbortController();
 
-        let newValue: Awaited<TReturnValue> | null | NoUpdate = null;
+        let newValue: Awaited<TReturnValue> | null | NoUpdate | Pending = null;
         try {
             newValue = await this._updateFunc({
-                getLocalSetting: this.getLocalSetting,
-                getGlobalSetting: this.getGlobalSetting,
-                getHelperDependency: this.getHelperDependency,
+                whenReady: this.makeReadyComputation.bind(this),
                 abortSignal: this._abortController.signal,
             });
+
+            // If any of the dependencies are still loading, we don't want to update the value or notify subscribers yet
+            if (newValue === PENDING) {
+                return;
+            }
         } catch (e: any) {
-            if (e instanceof DependencyLoadingError) {
+            // Any abort or cancellation error should not be propagated,
+            // as they are expected to happen during the lifecycle of the dependency
+            // and are handled by not updating the value or notifying subscribers
+            const aborted = this._abortController?.signal.aborted || isAbortLike(e);
+            if (aborted || isCancelledError(e)) return;
+
+            // If this dependency is not initialized yet and is not a root node, we don't want to update the value or notify subscribers
+            // as it might be a dependency that is still being established
+            if (!this._isInitialized && this._hasParentDependencies) {
                 return;
             }
 
-            if (!this._isInitialized && this._numParentDependencies > 0) {
-                return;
-            }
-
-            if (!isCancelledError(e)) {
-                this.applyNewValue(null);
-                return;
-            }
+            this.applyNewValue(null);
             return;
         }
 
-        if (!this._isInitialized && this._numParentDependencies > 0) {
+        if (!this._isInitialized && this._hasParentDependencies) {
             return;
         }
 
@@ -305,5 +340,88 @@ export class Dependency<
         for (const callback of this._dependencies) {
             callback(newValue);
         }
+    }
+
+    private makeReadyComputation<TReads extends Record<string, Read<any>>>(
+        readFn: (a: Accessors<TSettings, TSettingTypes, TKey>) => TReads,
+    ): ReadyComputation<TReads, TReturnValue> {
+        const accessors: Accessors<TSettings, TSettingTypes, TKey> = {
+            localSetting: (key) => {
+                const value = this.getLocalSetting(key);
+                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
+            },
+            globalSetting: (key) => {
+                const value = this.getGlobalSetting(key);
+                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
+            },
+            dependency: (dep) => {
+                const value = this.getHelperDependency(dep);
+                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
+            },
+        };
+
+        const reads = readFn(accessors);
+        return new ReadyComputation<TReads, TReturnValue>(reads, this._isProbing);
+    }
+}
+
+function isAbortLike(e: any) {
+    return (
+        e?.name === "AbortError" ||
+        e?.code === 20 || // some browsers
+        e?.message?.toLowerCase?.().includes("aborted")
+    );
+}
+
+type Ready<T> = { readonly __ready: true; readonly value: T };
+type NotReady = { readonly __ready: false; readonly value?: never };
+
+export type Read<T> = Ready<T> | NotReady;
+
+function isReady<T>(read: Read<T>): read is Ready<T> {
+    return read.__ready;
+}
+
+export type Accessors<
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>,
+> = {
+    localSetting: <K extends TKey>(settingName: K) => Read<TSettingTypes[K]>;
+    globalSetting: <T extends keyof GlobalSettings>(settingName: T) => Read<GlobalSettings[T]>;
+    dependency: <TDep>(helper: Dependency<TDep, TSettings, TSettingTypes, TKey>) => Read<Awaited<TDep> | null>;
+};
+
+type UnwrapRead<R> = R extends Ready<infer V> ? V : never;
+type NonPending<T> = Exclude<T, Pending>;
+
+export class ReadyComputation<TReads extends Record<string, Read<any>>, TResult> {
+    private _reads: TReads;
+    private _probeOnly: boolean;
+
+    constructor(reads: TReads, probeOnly: boolean) {
+        this._reads = reads;
+        this._probeOnly = probeOnly;
+    }
+
+    async thenCompute(
+        func: (values: { [K in keyof TReads]: UnwrapRead<TReads[K]> }) =>
+            | NonPending<TResult>
+            | Promise<NonPending<TResult>>
+            | NoUpdate,
+    ): Promise<NonPending<TResult> | NoUpdate | Pending> {
+        if (this._probeOnly) {
+            return PENDING;
+        }
+        for (const read of Object.values(this._reads)) {
+            if (!isReady(read)) {
+                return PENDING;
+            }
+        }
+        const values: any = {};
+        for (const [key, read] of Object.entries(this._reads)) {
+            values[key] = (read as any).value;
+        }
+        return await func(values);
     }
 }

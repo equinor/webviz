@@ -3,8 +3,7 @@ import type { QueryClient } from "@tanstack/query-core";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
-import type { Dependency, NoUpdate } from "../delegates/_utils/Dependency";
-import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
+import type { Accessors, Dependency, NoUpdate, Pending, Read, ReadyComputation } from "../delegates/_utils/Dependency";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 import type { NullableStoredData, StoredData } from "./sharedTypes";
@@ -23,6 +22,9 @@ export type SettingAttributes = {
     enabled: boolean;
 };
 
+type UpdateResult<T> = Awaited<T> | NoUpdate | Pending;
+type MaybePromise<T> = T | Promise<T>;
+
 export interface UpdateFunc<
     TReturnValue,
     TSettings extends Settings,
@@ -30,11 +32,11 @@ export interface UpdateFunc<
     TKey extends SettingsKeysFromTuple<TSettings>,
 > {
     (args: {
-        getLocalSetting: <K extends TKey>(settingName: K) => TSettingTypes[K];
-        getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-        getHelperDependency: GetHelperDependency<TSettings, TSettingTypes, TKey>;
+        whenReady: <TReads extends Record<string, Read<any>>>(
+            readFn: (a: Accessors<TSettings, TSettingTypes, TKey>) => TReads,
+        ) => ReadyComputation<TReads, TReturnValue>;
         abortSignal: AbortSignal;
-    }): TReturnValue | NoUpdate;
+    }): MaybePromise<UpdateResult<TReturnValue>>;
 }
 
 export interface DefineBasicDependenciesArgs<
@@ -51,14 +53,7 @@ export interface DefineBasicDependenciesArgs<
         update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>,
     ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>;
     helperDependency: <T>(
-        update: (args: {
-            getLocalSetting: <T extends TKey>(settingName: T) => TSettingTypes[T];
-            getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-            getHelperDependency: <TDep>(
-                helperDependency: Dependency<TDep, TSettings, TSettingTypes, TKey>,
-            ) => Awaited<TDep> | null;
-            abortSignal: AbortSignal;
-        }) => T,
+        update: UpdateFunc<T, TSettings, TSettingTypes, TKey>,
     ) => Dependency<T, TSettings, TSettingTypes, TKey>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
@@ -74,8 +69,8 @@ export interface DefineDependenciesArgs<
 > extends DefineBasicDependenciesArgs<TSettings, TSettingTypes, TKey> {
     storedDataUpdater: <K extends TStoredDataKey>(
         key: K,
-        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
-    ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>;
+        update: UpdateFunc<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TKey>,
+    ) => Dependency<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TKey>;
 }
 
 /**
@@ -105,51 +100,6 @@ export interface CustomSettingsHandler<
      * A dependency can either be an updater for the value constraints of a setting or a stored data object, or a helper dependency (e.g. a fetching operation).
      *
      * @param args An object containing the functions for defining the different dependencies.
-     *
-     * @example
-     * ```typescript
-     * defineDependencies({
-     *    valueConstraintsUpdater,
-     *    storedDataUpdater,
-     *    helperDependency,
-     *    queryClient
-     * }: DefineDependenciesArgs<TSettings, SettingsWithTypes>) {
-     *   valueConstraintsUpdater(SettingType.REALIZATION, ({ getGlobalSetting, getLocalSetting, getHelperDependency }) => {
-     *       // Get global settings
-     *       const fieldIdentifier = getGlobalSetting("fieldId");
-     *
-     *       // Or local settings
-     *       const ensembles = getLocalSetting(SettingType.ENSEMBLE);
-     *
-     *       // Or a helper dependency - note: defined within the same defineDependencies call
-     *       const data = getHelperDependency(dataDependency);
-     *
-     *       // Do something with the settings and data
-     *       ...
-     *
-     *       // Return the value constraints for the setting
-     *       return valueConstraints;
-     *     });
-     *
-     *     // The same can be done with stored data
-     *     storedDataUpdater("key", ({ getGlobalSetting, getLocalSetting, getHelperDependency }) => {
-     *         ...
-     *     });
-     *
-     *     // A helper dependency can be defined like this
-     *     const dataDependency = helperDependency(async ({ getLocalSetting, getGlobalSetting, abortSignal }) => {
-     *         // Get local or global settings
-     *         ...
-     *
-     *         // Use them to fetch data
-     *         const data = await queryClient.fetchQuery({
-     *             ...
-     *             // Use the abort signal to cancel the request if needed - this is automatically handled by the framework
-     *             signal: abortSignal,
-     *         });
-     *     });
-     * }
-     *
      */
     defineDependencies(
         args: DefineDependenciesArgs<TSettings, TStoredData, TSettingTypes, TSettingKey, TStoredDataKey>,

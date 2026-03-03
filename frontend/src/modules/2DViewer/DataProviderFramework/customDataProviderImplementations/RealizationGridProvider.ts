@@ -162,16 +162,17 @@ export class RealizationGridProvider
         storedDataUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationGridSettings, StoredData>) {
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-
-            const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent());
-
-            return ensembleIdents;
-        });
+        valueConstraintsUpdater(Setting.ENSEMBLE, ({ whenReady }) =>
+            whenReady((read) => ({
+                fieldIdentifier: read.globalSetting("fieldId"),
+                ensembles: read.globalSetting("ensembles"),
+            })).thenCompute(({ fieldIdentifier, ensembles }) => {
+                const ensembleIdents = ensembles
+                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                    .map((ensemble) => ensemble.getIdent());
+                return ensembleIdents;
+            }),
+        );
 
         valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
