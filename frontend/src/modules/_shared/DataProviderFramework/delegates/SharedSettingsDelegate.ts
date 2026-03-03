@@ -96,7 +96,7 @@ export class SharedSettingsDelegate<
         return this._publishSubscribeDelegate;
     }
 
-    getDependencyStatusMessages(): StatusMessage[] {
+    getStatusMessages(): readonly StatusMessage[] {
         return this._dependencyStatusMessages;
     }
 

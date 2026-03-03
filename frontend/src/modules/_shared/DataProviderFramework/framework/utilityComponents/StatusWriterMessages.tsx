@@ -6,7 +6,7 @@ import type { StatusMessage } from "@framework/types/statusWriter";
 import { StatusMessageType } from "@framework/types/statusWriter";
 import { Tooltip } from "@lib/components/Tooltip";
 
-export type StatusMessagesProps = { statusMessages: StatusMessage[] };
+export type StatusMessagesProps = { statusMessages: readonly StatusMessage[] };
 
 export function StatusMessages(props: StatusMessagesProps) {
     const categorizedMessages = {
