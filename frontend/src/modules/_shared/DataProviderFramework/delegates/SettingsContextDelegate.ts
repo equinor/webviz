@@ -1,5 +1,4 @@
-import { GenericStatusWriterTopic } from "@framework/GenericPubSubStatusWriter";
-import type { StatusMessage } from "@framework/types/statusWriter";
+import { StatusMessageStoreTopic, type StatusMessage } from "@framework/types/statusWriter";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -594,9 +593,9 @@ export class SettingsContextDelegate<
 
     private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any>): void {
         dependency
-            .getStatusWriter()
+            .getStatusMessageStore()
             .getPublishSubscribeDelegate()
-            .subscribe(GenericStatusWriterTopic.STATUS_MESSAGES, () => this.syncAllStatusMessages());
+            .subscribe(StatusMessageStoreTopic.STATUS_MESSAGES, () => this.syncAllStatusMessages());
     }
 
     private syncAllStatusMessages(): void {

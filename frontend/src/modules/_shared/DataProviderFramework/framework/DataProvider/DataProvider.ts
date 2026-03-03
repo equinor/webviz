@@ -2,9 +2,9 @@ import type { FetchQueryOptions, QueryClient, QueryKey } from "@tanstack/react-q
 import { isCancelledError } from "@tanstack/react-query";
 import { clone, isEqual } from "lodash";
 
-import { GenericPubSubStatusWriter, GenericStatusWriterTopic } from "@framework/GenericPubSubStatusWriter";
+import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import type { StatusMessage as GenericStatusMessage } from "@framework/types/statusWriter";
+import { StatusMessageStoreTopic, type StatusMessage as GenericStatusMessage } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -135,7 +135,7 @@ export class DataProvider<
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
 
-    private _statusWriter = new GenericPubSubStatusWriter("DataProvider");
+    private _statusWriter = new GenericStatusMessageStore("DataProvider");
     private _allStatusMessages: GenericStatusMessage[] = [];
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
@@ -167,7 +167,7 @@ export class DataProvider<
             "status-writer",
             this._statusWriter
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(GenericStatusWriterTopic.STATUS_MESSAGES)(() => this.syncAllStatusMessages()),
+                .makeSubscriberFunction(StatusMessageStoreTopic.STATUS_MESSAGES)(() => this.syncAllStatusMessages()),
         );
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(

@@ -1,20 +1,17 @@
-import { type PublishSubscribe, PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
-import type { StatusMessage, StatusWriter } from "./types/statusWriter";
-import { StatusMessageType } from "./types/statusWriter";
+import type {
+    PublishSubScribeStatusMessageStore,
+    StatusMessage,
+    StatusMessageStoreTopicPayload,
+    StatusWriter,
+} from "./types/statusWriter";
+import { StatusMessageType, StatusMessageStoreTopic } from "./types/statusWriter";
 
-export enum GenericStatusWriterTopic {
-    STATUS_MESSAGES = "status_messages",
-}
-
-export type GenericStatusWriterTopicPayload = {
-    [GenericStatusWriterTopic.STATUS_MESSAGES]: readonly StatusMessage[];
-};
-
-export class GenericPubSubStatusWriter implements StatusWriter, PublishSubscribe<GenericStatusWriterTopicPayload> {
+export class GenericStatusMessageStore implements StatusWriter, PublishSubScribeStatusMessageStore {
     private readonly _source: string;
 
-    private _pubSubDelegate = new PublishSubscribeDelegate<GenericStatusWriterTopicPayload>();
+    private _pubSubDelegate = new PublishSubscribeDelegate<StatusMessageStoreTopicPayload>();
     private _messages: StatusMessage[] = [];
 
     constructor(source: string) {
@@ -24,13 +21,13 @@ export class GenericPubSubStatusWriter implements StatusWriter, PublishSubscribe
     private addMessage(message: StatusMessage) {
         this._messages.push(message);
 
-        this._pubSubDelegate.notifySubscribers(GenericStatusWriterTopic.STATUS_MESSAGES);
+        this._pubSubDelegate.notifySubscribers(StatusMessageStoreTopic.STATUS_MESSAGES);
     }
 
     clear(): void {
         this._messages = [];
 
-        this._pubSubDelegate.notifySubscribers(GenericStatusWriterTopic.STATUS_MESSAGES);
+        this._pubSubDelegate.notifySubscribers(StatusMessageStoreTopic.STATUS_MESSAGES);
     }
     getMessages(): readonly StatusMessage[] {
         return this._messages;
@@ -58,18 +55,18 @@ export class GenericPubSubStatusWriter implements StatusWriter, PublishSubscribe
         this.addMessage(errorMessage);
     }
 
-    makeSnapshotGetter<T extends GenericStatusWriterTopic.STATUS_MESSAGES>(
+    makeSnapshotGetter<T extends StatusMessageStoreTopic.STATUS_MESSAGES>(
         topic: T,
-    ): () => GenericStatusWriterTopicPayload[T] {
+    ): () => StatusMessageStoreTopicPayload[T] {
         return () => {
-            if (topic === GenericStatusWriterTopic.STATUS_MESSAGES) {
+            if (topic === StatusMessageStoreTopic.STATUS_MESSAGES) {
                 return this._messages;
             }
 
             throw new Error(`Unknown topic : ${topic}`);
         };
     }
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<GenericStatusWriterTopicPayload> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<StatusMessageStoreTopicPayload> {
         return this._pubSubDelegate;
     }
 }

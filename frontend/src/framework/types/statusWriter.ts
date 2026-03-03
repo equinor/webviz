@@ -1,3 +1,5 @@
+import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+
 /**
  * Different levels of status-messages
  */
@@ -37,3 +39,13 @@ export interface StatusWriter<MessageType = string> {
      */
     addWarning(warning: MessageType): void;
 }
+
+export enum StatusMessageStoreTopic {
+    STATUS_MESSAGES = "status_messages",
+}
+
+export type StatusMessageStoreTopicPayload = {
+    [StatusMessageStoreTopic.STATUS_MESSAGES]: readonly StatusMessage[];
+};
+
+export type PublishSubScribeStatusMessageStore = PublishSubscribe<StatusMessageStoreTopicPayload>;

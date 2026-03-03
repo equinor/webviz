@@ -1,6 +1,7 @@
 import { isCancelledError } from "@tanstack/react-query";
 
-import { GenericPubSubStatusWriter } from "@framework/GenericPubSubStatusWriter";
+import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore";
+import type { PublishSubScribeStatusMessageStore, StatusWriter } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
@@ -54,7 +55,7 @@ export class Dependency<
     private _numParentDependencies = 0;
     private _numChildDependencies = 0;
 
-    private _statusWriter = new GenericPubSubStatusWriter("Dependency");
+    private _statusStore = new GenericStatusMessageStore("Dependency");
 
     constructor(
         localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>,
@@ -83,7 +84,7 @@ export class Dependency<
     beforeDestroy() {
         this._abortController?.abort();
         this._abortController = null;
-        this._statusWriter.clear();
+        this._statusStore.clear();
         this._dependencies.clear();
         this._loadingDependencies.clear();
     }
@@ -124,11 +125,15 @@ export class Dependency<
     }
 
     getStatusMessages() {
-        return this._statusWriter.getMessages();
+        return this._statusStore.getMessages();
     }
 
-    getStatusWriter(): GenericPubSubStatusWriter {
-        return this._statusWriter;
+    getStatusWriter(): StatusWriter {
+        return this._statusStore;
+    }
+
+    getStatusMessageStore(): PublishSubScribeStatusMessageStore {
+        return this._statusStore;
     }
 
     private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] {
@@ -258,7 +263,7 @@ export class Dependency<
 
             const errorHelper = ApiErrorHelper.fromError(error);
             if (errorHelper) {
-                this._statusWriter.addError(errorHelper?.makeFullErrorMessage());
+                this._statusStore.addError(errorHelper?.makeFullErrorMessage());
             }
         }
 
@@ -285,7 +290,7 @@ export class Dependency<
         }
 
         this._abortController = new AbortController();
-        this._statusWriter.clear();
+        this._statusStore.clear();
 
         let newValue: Awaited<TReturnValue> | null | NoUpdate = null;
         try {
@@ -313,7 +318,7 @@ export class Dependency<
 
             const errorHelper = ApiErrorHelper.fromError(e);
             if (errorHelper) {
-                this._statusWriter.addError(errorHelper?.makeFullErrorMessage());
+                this._statusStore.addError(errorHelper?.makeFullErrorMessage());
             }
 
             return;
