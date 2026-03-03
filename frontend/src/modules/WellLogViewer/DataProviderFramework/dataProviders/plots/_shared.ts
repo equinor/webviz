@@ -50,11 +50,13 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
             });
         } catch (error: any) {
             const errorHelper = ApiErrorHelper.fromError(error);
-            if (errorHelper && errorHelper.getType() === "AuthorizationError") {
-                getStatusWriter().addError(
-                    `Unable to get log curves from service: no access (${errorHelper.getService()?.toUpperCase()})`,
-                );
+            if (errorHelper?.getType() !== "AuthorizationError") {
+                throw error;
             }
+
+            getStatusWriter().addError(
+                `Unable to get log curves from service: no access (${errorHelper.getService()?.toUpperCase()})`,
+            );
 
             return null;
         }
