@@ -2870,10 +2870,6 @@ export type WellboreHeader_api = {
      */
     wellboreStatus: string;
     /**
-     * Currenttrack
-     */
-    currentTrack: number;
-    /**
      * Tvdmax
      */
     tvdMax: number;
