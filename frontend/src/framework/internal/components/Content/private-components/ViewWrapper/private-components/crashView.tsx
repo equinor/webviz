@@ -2,9 +2,9 @@ import React from "react";
 
 import { BugReport, Info, MoodBad, Refresh } from "@mui/icons-material";
 
-import { shouldSymbolicate, symbolicateStackTrace } from "@framework/utils/stackTraceSymbolication";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
+import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
 
 export type FormattedErrorProps = {
     moduleName: string;
