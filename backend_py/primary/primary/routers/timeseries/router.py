@@ -2,6 +2,7 @@ import asyncio
 import logging
 from typing import Annotated
 
+import polars as pl
 import pyarrow as pa
 import pyarrow.compute as pc
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -204,20 +205,24 @@ async def get_realizations_vector_data(
 
 @router.get("/realizations_vectors_data/")
 @cache_time(CacheTime.LONG)
-# pylint: disable-next=too-many-locals
 async def get_realizations_vectors_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name:  Annotated[str, Query(description="Ensemble name")],
-    vector_names:  Annotated[list[str], Query(description="Comma-separated list of vector names")],
-    resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, raw data without resampling wil be returned.")] = None,
+    vector_names:  Annotated[list[str], Query(description="List of vector names, e.g. ROIP:1, ROIP:2")],
+    resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, raw data without resampling will be returned.")] = None,
     realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
     # fmt:on
-) -> list:
-    """Get vector data per realization"""
-    print(vector_names)
+) -> list[schemas.VectorRealizationsData]:
+    """Get vector data per realization for multiple vectors.
+
+    Returns one entry per requested vector, each containing the shared
+    timestamp grid and a value array per realization.  The frontend can
+    then aggregate (e.g. sum across FIPNUM regions) as needed.
+    """
+
     perf_metrics = ResponsePerfMetrics(response)
 
     realizations: list[int] | None = None
@@ -227,18 +232,43 @@ async def get_realizations_vectors_data(
     access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
 
-    #  if not is_vector_derived else get_total_vector_name(vector_name)
-
-    ret_arr: list[schemas.VectorRealizationData] = []
-
-    sumo_vec_arr = await access.get_vectors_table_async(
+    df = await access.get_vectors_table_async(
         vector_names=vector_names,
         resampling_frequency=sumo_freq,
         realizations=realizations,
     )
-    perf_metrics.record_lap("get-vector")
-    print(sumo_vec_arr)
-    return []
+    perf_metrics.record_lap("get-vectors")
+
+    # The DataFrame has columns: DATE, REAL, <vector_name_1>, <vector_name_2>, ...
+    # After resampling all realizations share the same date grid.
+    # The table is already sorted by REAL then DATE from the access layer.
+    ret_arr: list[schemas.VectorRealizationsData] = []
+
+    # Group once by realization — the df is sorted by REAL then DATE already
+    grouped = df.sort(["REAL", "DATE"]).group_by("REAL", maintain_order=True)
+    groups = grouped.agg(pl.all())  # columns: REAL, DATE (list), vec1 (list), vec2 (list), ...
+
+    unique_reals: list[int] = groups["REAL"].to_list()
+    timestamps: list[int] = groups["DATE"][0].cast(int).to_list()
+
+    for vec_name in vector_names:
+        if vec_name not in groups.columns:
+            continue
+
+        values_per_real: list[list[float]] = groups[vec_name].to_list()
+
+        ret_arr.append(
+            schemas.VectorRealizationsData(
+                vectorName=vec_name,
+                realizations=unique_reals,
+                timestampsUtcMs=timestamps,
+                valuesPerRealization=values_per_real,
+            )
+        )
+
+    perf_metrics.record_lap("convert-data")
+    LOGGER.info(f"Loaded multi-vector realization data in: {perf_metrics.to_string()}")
+    return ret_arr
 
 
 @router.get("/delta_ensemble_realizations_vector_data/")

@@ -37,18 +37,6 @@ class VectorDescription(BaseModel):
     derivedVectorInfo: DerivedVectorInfo | None = None
 
 
-class RegionVolumeVector(StrEnum):
-    ROIPL = "ROIPL"
-    ROIPG = "ROIPG"
-    RGIPL = "RGIPL"
-    RGIPG = "RGIPG"
-
-
-class RegionVolumeVectorsInfo(BaseModel):
-    regionVolumeVectorNames: list[RegionVolumeVector]
-    fipnums: list[int]
-
-
 class VectorHistoricalData(BaseModel):
     timestampsUtcMs: list[int]
     values: list[float]
@@ -63,6 +51,20 @@ class VectorRealizationData(BaseModel):
     unit: str
     isRate: bool
     derivedVectorInfo: DerivedVectorInfo | None = None
+
+
+class VectorRealizationsData(BaseModel):
+    """Compact representation of multiple vectors across realizations.
+
+    All realizations share the same resampled timestamp grid.
+    ``valuesPerRealization`` is indexed as ``[real_idx][timestep_idx]``
+    where ``real_idx`` corresponds to ``realizations[real_idx]``.
+    """
+
+    vectorName: str
+    realizations: list[int]
+    timestampsUtcMs: list[int]
+    valuesPerRealization: list[list[float]]
 
 
 class StatisticValueObject(BaseModel):

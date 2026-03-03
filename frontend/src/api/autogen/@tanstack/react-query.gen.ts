@@ -607,7 +607,11 @@ export const getRealizationsVectorsDataQueryKey = (options: Options<GetRealizati
 /**
  * Get Realizations Vectors Data
  *
- * Get vector data per realization
+ * Get vector data per realization for multiple vectors.
+ *
+ * Returns one entry per requested vector, each containing the shared
+ * timestamp grid and a value array per realization.  The frontend can
+ * then aggregate (e.g. sum across FIPNUM regions) as needed.
  */
 export const getRealizationsVectorsDataOptions = (options: Options<GetRealizationsVectorsDataData_api>) =>
     queryOptions<

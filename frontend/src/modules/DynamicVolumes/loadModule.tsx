@@ -5,10 +5,12 @@ import { settingsToViewInterfaceInitialization } from "./interfaces";
 import { serializeStateFunctions, type SerializedState } from "./persistence";
 import { MODULE_NAME } from "./registerModule";
 import { Settings } from "./settings/settings";
-import { View } from "./view";
+import { settingsToViewInterfaceEffects } from "./view/atoms/interfaceEffects";
+import { View } from "./view/view";
 
 const module = ModuleRegistry.initModule<Interfaces, SerializedState>(MODULE_NAME, {
     settingsToViewInterfaceInitialization,
+    settingsToViewInterfaceEffects,
     ...serializeStateFunctions,
 });
 

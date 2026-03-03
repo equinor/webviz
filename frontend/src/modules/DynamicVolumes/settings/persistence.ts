@@ -2,10 +2,10 @@ import type { DeserializeStateFunction, SerializeStateFunction } from "@framewor
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { GroupBy, StatisticsType, VisualizationMode } from "../typesAndEnums";
+import { ColorBy, StatisticsType, VisualizationMode } from "../typesAndEnums";
 
 import {
-    groupByAtom,
+    colorByAtom,
     selectedStatisticsAtom,
     showHistogramAtom,
     visualizationModeAtom,
@@ -13,7 +13,7 @@ import {
 
 export type SerializedSettings = {
     visualizationMode: VisualizationMode;
-    groupBy: GroupBy;
+    colorBy: ColorBy;
     selectedStatistics: StatisticsType[];
     showHistogram: boolean;
 };
@@ -23,8 +23,8 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         visualizationMode: {
             enum: Object.values(VisualizationMode),
         },
-        groupBy: {
-            enum: Object.values(GroupBy),
+        colorBy: {
+            enum: Object.values(ColorBy),
         },
         selectedStatistics: {
             elements: {
@@ -40,7 +40,7 @@ export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
     return {
         visualizationMode: get(visualizationModeAtom),
-        groupBy: get(groupByAtom),
+        colorBy: get(colorByAtom),
         selectedStatistics: get(selectedStatisticsAtom),
         showHistogram: get(showHistogramAtom),
     };
@@ -48,7 +48,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     setIfDefined(set, visualizationModeAtom, raw.visualizationMode);
-    setIfDefined(set, groupByAtom, raw.groupBy);
+    setIfDefined(set, colorByAtom, raw.colorBy);
     setIfDefined(set, selectedStatisticsAtom, raw.selectedStatistics);
     setIfDefined(set, showHistogramAtom, raw.showHistogram);
 };

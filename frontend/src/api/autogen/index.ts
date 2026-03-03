@@ -784,6 +784,7 @@ export {
     type VectorDescription_api,
     type VectorHistoricalData_api,
     type VectorRealizationData_api,
+    type VectorRealizationsData_api,
     type VectorStatisticData_api,
     type VectorStatisticSensitivityData_api,
     type VfpInjTable_api,

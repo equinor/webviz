@@ -1,18 +1,30 @@
+import type { Frequency_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
-    groupByAtom,
+    colorByAtom,
+    resampleFrequencyAtom,
+    selectedEnsembleIdentsAtom,
+    selectedRegionsAtom,
     selectedStatisticsAtom,
+    selectedVectorBaseNameAtom,
     showHistogramAtom,
     visualizationModeAtom,
 } from "./settings/atoms/baseAtoms";
-import type { GroupBy, StatisticsType, VisualizationMode } from "./typesAndEnums";
+import { selectedVectorNamesToFetchAtom } from "./settings/atoms/derivedAtoms";
+import type { ColorBy, StatisticsType, VisualizationMode } from "./typesAndEnums";
 
-type SettingsToViewInterface = {
+export type SettingsToViewInterface = {
     visualizationMode: VisualizationMode;
-    groupBy: GroupBy;
+    colorBy: ColorBy;
     selectedStatistics: StatisticsType[];
     showHistogram: boolean;
+    resampleFrequency: Frequency_api;
+    ensembleIdents: RegularEnsembleIdent[];
+    vectorNamesToFetch: string[];
+    selectedRegions: number[];
+    selectedVectorBaseName: string | null;
 };
 
 export type Interfaces = {
@@ -21,7 +33,12 @@ export type Interfaces = {
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     visualizationMode: (get) => get(visualizationModeAtom),
-    groupBy: (get) => get(groupByAtom),
+    colorBy: (get) => get(colorByAtom),
     selectedStatistics: (get) => get(selectedStatisticsAtom),
     showHistogram: (get) => get(showHistogramAtom),
+    resampleFrequency: (get) => get(resampleFrequencyAtom),
+    ensembleIdents: (get) => get(selectedEnsembleIdentsAtom).value ?? [],
+    vectorNamesToFetch: (get) => get(selectedVectorNamesToFetchAtom),
+    selectedRegions: (get) => get(selectedRegionsAtom),
+    selectedVectorBaseName: (get) => get(selectedVectorBaseNameAtom),
 };

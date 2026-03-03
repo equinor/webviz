@@ -2371,6 +2371,34 @@ export type VectorRealizationData_api = {
 };
 
 /**
+ * VectorRealizationsData
+ *
+ * Compact representation of multiple vectors across realizations.
+ *
+ * All realizations share the same resampled timestamp grid.
+ * ``valuesPerRealization`` is indexed as ``[real_idx][timestep_idx]``
+ * where ``real_idx`` corresponds to ``realizations[real_idx]``.
+ */
+export type VectorRealizationsData_api = {
+    /**
+     * Vectorname
+     */
+    vectorName: string;
+    /**
+     * Realizations
+     */
+    realizations: Array<number>;
+    /**
+     * Timestampsutcms
+     */
+    timestampsUtcMs: Array<number>;
+    /**
+     * Valuesperrealization
+     */
+    valuesPerRealization: Array<Array<number>>;
+};
+
+/**
  * VectorStatisticData
  */
 export type VectorStatisticData_api = {
@@ -3449,13 +3477,13 @@ export type GetRealizationsVectorsDataData_api = {
         /**
          * Vector Names
          *
-         * Comma-separated list of vector names
+         * List of vector names, e.g. ROIP:1, ROIP:2
          */
         vector_names: Array<string>;
         /**
          * Resampling Frequency
          *
-         * Resampling frequency. If not specified, raw data without resampling wil be returned.
+         * Resampling frequency. If not specified, raw data without resampling will be returned.
          */
         resampling_frequency?: Frequency_api | null;
         /**
@@ -3485,7 +3513,7 @@ export type GetRealizationsVectorsDataResponses_api = {
      *
      * Successful Response
      */
-    200: Array<unknown>;
+    200: Array<VectorRealizationsData_api>;
 };
 
 export type GetRealizationsVectorsDataResponse_api =

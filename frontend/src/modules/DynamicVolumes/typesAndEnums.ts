@@ -13,7 +13,27 @@ export enum StatisticsType {
     Max = "max",
 }
 
-export enum GroupBy {
+/**
+ * Controls how lines/areas are colored in the timeseries chart.
+ *
+ *   - `Ensemble` — one color per ensemble (regions are summed to a single trace per ensemble).
+ *   - `Region`   — one color per FIPNUM region (ensembles are shown as separate subplots or
+ *                   distinguished by dash pattern).
+ */
+export enum ColorBy {
     Ensemble = "ensemble",
-    Response = "response",
+    Region = "region",
 }
+
+/**
+ * Computed statistics for a single timeseries.
+ * Each array is aligned with the shared timestamp grid.
+ */
+export type TimeseriesStatistics = {
+    mean: number[];
+    p10: number[];
+    p50: number[];
+    p90: number[];
+    min: number[];
+    max: number[];
+};
