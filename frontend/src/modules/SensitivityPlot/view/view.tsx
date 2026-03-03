@@ -5,8 +5,10 @@ import { useColorSet } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
-import { computeSensitivitiesForResponse } from "@modules/_shared/SensitivityProcessing/sensitivityProcessing";
-import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing/types";
+import {
+    computeSensitivitiesForResponse,
+    type SensitivityResponseDataset,
+} from "@modules/_shared/SensitivityProcessing";
 
 import { createSensitivityColorMap } from "../../_shared/sensitivityColors";
 import type { Interfaces } from "../interfaces";
@@ -37,10 +39,10 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     );
 
     let computedSensitivityResponseDataset: SensitivityResponseDataset | null = null;
-    if (referenceSensitivityName && sensitivities && responseChannelData.ensembleResponse) {
+    if (referenceSensitivityName && sensitivities && responseChannelData.ensemblePerRealResponse) {
         computedSensitivityResponseDataset = computeSensitivitiesForResponse(
             sensitivities,
-            responseChannelData.ensembleResponse,
+            responseChannelData.ensemblePerRealResponse,
             referenceSensitivityName,
             sensitivitySortBy,
             hideZeroY,

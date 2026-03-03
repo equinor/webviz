@@ -18,9 +18,9 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/table_definition")
+@router.get("/rft_table_definition")
 @cache_time(CacheTime.LONG)
-async def get_table_definition(
+async def get_rft_table_definition(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
@@ -31,9 +31,9 @@ async def get_table_definition(
     return converters.to_api_table_definition(rft_table_def)
 
 
-@router.get("/realization_data")
+@router.get("/rft_realization_data")
 @cache_time(CacheTime.LONG)
-async def get_realization_data(
+async def get_rft_realization_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
