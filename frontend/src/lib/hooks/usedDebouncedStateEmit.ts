@@ -52,7 +52,7 @@ export function useDebouncedFunction<TArgs extends any[]>(
     callback: (...args: TArgs) => void,
     waitMs: number,
 ): DebouncedFunc<typeof callback> {
-    // Wrap the actual debouncer to get a stable refference. Only recreated if delay changes
+    // Wrap the actual debouncer to get a stable reference. Only recreated if delay changes
     const debouncedCallback = React.useMemo(
         () =>
             debounce((...args: TArgs) => callback(...args), waitMs, {
