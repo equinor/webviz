@@ -1,7 +1,6 @@
 import React from "react";
 
 import {
-    Attribution,
     Close,
     CloudDone,
     CloudOff,
@@ -21,6 +20,7 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import type { DrawPreviewFunc } from "@framework/Preview";
+import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/utils/debug";
 import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
@@ -210,21 +210,21 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     <div className="h-12 w-12 min-w-12 overflow-hidden p-1 shrink-0">{makePreviewImage()}</div>
                     <span className="grow text-ellipsis whitespace-nowrap overflow-hidden">{props.displayName}</span>
                     <span
-                        className={resolveClassNames("text-gray-400", {
-                            "opacity-30": !props.isSerializable,
-                        })}
-                        title={props.isSerializable ? "This module is persistable" : "This module is not persistable"}
-                    >
-                        {props.isSerializable ? <CloudDone fontSize="inherit" /> : <CloudOff fontSize="inherit" />}
-                    </span>
-                    <span
                         className={resolveClassNames({
-                            "text-green-600": props.devState === ModuleDevState.PROD,
-                            "text-teal-600": props.devState === ModuleDevState.DEV,
+                            "text-yellow-500": props.devState === ModuleDevState.DEV,
                             "text-orange-600": props.devState === ModuleDevState.DEPRECATED,
                         })}
                     >
                         {makeDevStateIcon(props.devState)}
+                    </span>
+                    <span
+                        className={resolveClassNames({
+                            "text-green-600": props.isSerializable,
+                            "text-gray-400": !props.isSerializable,
+                        })}
+                        title={props.isSerializable ? "This module is persistable" : "This module is not persistable"}
+                    >
+                        {props.isSerializable ? <CloudDone fontSize="inherit" /> : <CloudOff fontSize="inherit" />}
                     </span>
                     <span className="cursor-pointer text-blue-800" title="Show details" onClick={handleShowDetails}>
                         <Help fontSize="inherit" />
@@ -276,13 +276,6 @@ function ModulesListCategory(props: ModulesListCategoryProps): React.ReactNode {
 }
 
 function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
-    if (devState === ModuleDevState.PROD) {
-        return (
-            <span title="Ready for user testing" className="inline-block align-middle text-base">
-                <Attribution fontSize="inherit" />
-            </span>
-        );
-    }
     if (devState === ModuleDevState.DEPRECATED) {
         return (
             <span title="Deprecated" className="inline-block align-middle text-base">
@@ -292,7 +285,7 @@ function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
     }
     if (devState === ModuleDevState.DEV) {
         return (
-            <span title="Under development" className="inline-block align-middle text-base">
+            <span title="Experimental" className="inline-block align-middle text-base">
                 <Science fontSize="inherit" />
             </span>
         );
@@ -310,14 +303,6 @@ type DetailsPopupProps = {
 
 function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makeDevState(devState: ModuleDevState): React.ReactNode {
-        if (devState === ModuleDevState.PROD) {
-            return (
-                <div className="flex gap-2 text-green-600 text-xs items-center">
-                    {makeDevStateIcon(devState)}
-                    <span className="mt-[0.2rem]">Ready for user testing</span>
-                </div>
-            );
-        }
         if (devState === ModuleDevState.DEPRECATED) {
             return (
                 <div className="flex gap-2 text-orange-600 text-xs items-center">
@@ -328,14 +313,30 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         }
         if (devState === ModuleDevState.DEV) {
             return (
-                <div className="flex items-center gap-2 text-teal-600 text-xs">
+                <div className="flex items-center gap-2 text-yellow-500 text-xs">
                     {makeDevStateIcon(devState)}
-                    <span className="mt-[0.2rem]">Under development</span>
+                    <span className="mt-[0.2rem]">Experimental</span>
                 </div>
             );
         }
     }
 
+    function makePersistenceState(isSerializable: boolean): React.ReactNode {
+        if (isSerializable) {
+            return (
+                <div className="flex gap-2 text-green-600 text-xs items-center">
+                    <CloudDone fontSize="inherit" />
+                    <span className="mt-[0.2rem]">Module is persistable</span>
+                </div>
+            );
+        }
+        return (
+            <div className="flex gap-2 text-gray-400 text-xs items-center">
+                <CloudOff fontSize="inherit" />
+                <span className="mt-[0.2rem]">Module is not persistable</span>
+            </div>
+        );
+    }
     function makeDataTags(): React.ReactNode[] {
         const tags: React.ReactNode[] = [];
         for (const tag of props.module.getDataTagIds()) {
@@ -376,7 +377,10 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
                         <Close fontSize="inherit" />
                     </div>
                 </div>
-                {makeDevState(props.module.getDevState())}
+                <span className="flex flex-row gap-4">
+                    {makeDevState(props.module.getDevState())}
+                    {makePersistenceState(props.module.canBeSerialized())}
+                </span>
                 <div className="text-xs mt-2">{props.module.getDescription()}</div>
                 <div className="text-xs mt-2 flex gap-2 text-bold flex-wrap">{makeDataTags()}</div>
             </div>
@@ -398,10 +402,13 @@ const MODULE_CATEGORIES: { category: ModuleCategory; label: string }[] = [
     { category: ModuleCategory.DEBUG, label: "Debug modules" },
 ];
 
-const INITIAL_DEV_STATES = [ModuleDevState.PROD];
+// Opt-in dev and deprecated modules (included by default in dev mode)
+type RequiredModuleDevState = ModuleDevState.PROD;
+type OptionalModuleDevState = Exclude<ModuleDevState, RequiredModuleDevState>;
+const INITIAL_OPTIONAL_DEV_STATES: OptionalModuleDevState[] = [];
 if (isDevMode()) {
-    INITIAL_DEV_STATES.push(ModuleDevState.DEV);
-    INITIAL_DEV_STATES.push(ModuleDevState.DEPRECATED);
+    INITIAL_OPTIONAL_DEV_STATES.push(ModuleDevState.DEV);
+    INITIAL_OPTIONAL_DEV_STATES.push(ModuleDevState.DEPRECATED);
 }
 
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
@@ -411,7 +418,8 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const boundingClientRect = useElementBoundingRect(ref);
 
     const [searchQuery, setSearchQuery] = React.useState("");
-    const [devStates, setDevStates] = React.useState<ModuleDevState[]>(INITIAL_DEV_STATES);
+    const [optionalDevStates, setOptionalDevStates] =
+        React.useState<OptionalModuleDevState[]>(INITIAL_OPTIONAL_DEV_STATES);
     const [showDetailsForModule, setShowDetailsForModule] = React.useState<string | null>(null);
     const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
 
@@ -449,21 +457,27 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         props.onClose();
     }
 
+    // Always include PROD modules
+    const validModuleDevStates: ModuleDevState[] = [ModuleDevState.PROD, ...optionalDevStates];
     const filteredModules = Object.values(ModuleRegistry.getRegisteredModules())
-        .filter((mod) => devStates.includes(mod.getDevState()))
+        .filter((mod) => validModuleDevStates.includes(mod.getDevState()))
         .filter((mod) => mod.getDefaultTitle().toLowerCase().includes(searchQuery.toLowerCase()));
+    const showDebugModules = isDevMode() || debugFlagIsEnabled(SHOW_DEBUG_MODULES_FLAG);
 
     let right = 0;
     if (boundingClientRect) {
         right = window.innerWidth - boundingClientRect.left + 10;
     }
 
-    const visible = drawerContent === RightDrawerContent.ModulesList;
+    const isVisible = drawerContent === RightDrawerContent.ModulesList;
+    const visibleModuleCategories = MODULE_CATEGORIES.filter(
+        (el) => el.category !== ModuleCategory.DEBUG || showDebugModules,
+    );
 
     return (
-        <div ref={ref} className={resolveClassNames("w-full h-full relative", { hidden: !visible })}>
+        <div ref={ref} className={resolveClassNames("w-full h-full relative", { hidden: !isVisible })}>
             <Drawer
-                visible
+                visible={true}
                 onClose={handleClose}
                 title="Add modules"
                 icon={<WebAsset />}
@@ -472,44 +486,34 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 onSearchQueryChange={handleSearchQueryChange}
                 filterItems={[
                     {
-                        value: ModuleDevState.PROD,
-                        label: (
-                            <>
-                                <span className="text-green-600 flex items-center">
-                                    {makeDevStateIcon(ModuleDevState.PROD)}
-                                </span>
-                                <span className="mt-[0.2rem]">Ready for user testing</span>
-                            </>
-                        ),
-                        initiallySelected: devStates.includes(ModuleDevState.PROD),
-                    },
-                    {
                         value: ModuleDevState.DEPRECATED,
                         label: (
                             <>
-                                <span className="text-orange-600">{makeDevStateIcon(ModuleDevState.DEPRECATED)}</span>
-                                <span className="mt-[0.2rem]">Deprecated</span>
+                                <span className="text-orange-600 inline-block align-middle">
+                                    {makeDevStateIcon(ModuleDevState.DEPRECATED)}
+                                </span>
+                                <span className="mt-[0.2rem]">Show deprecated</span>
                             </>
                         ),
-                        initiallySelected: devStates.includes(ModuleDevState.DEPRECATED),
+                        initiallySelected: optionalDevStates.includes(ModuleDevState.DEPRECATED),
                     },
                     {
                         value: ModuleDevState.DEV,
                         label: (
                             <>
-                                <span className="text-teal-600 inline-block align-middle">
+                                <span className="text-yellow-500 inline-block align-middle">
                                     {makeDevStateIcon(ModuleDevState.DEV)}
                                 </span>
-                                <span className="mt-[0.2rem]">Under development</span>
+                                <span className="mt-[0.2rem]">Show experimental</span>
                             </>
                         ),
-                        initiallySelected: devStates.includes(ModuleDevState.DEV),
+                        initiallySelected: optionalDevStates.includes(ModuleDevState.DEV),
                     },
                 ]}
-                onFilterItemSelectionChange={(selectedItems) => setDevStates(selectedItems)}
+                onFilterItemSelectionChange={setOptionalDevStates}
             >
                 <>
-                    {MODULE_CATEGORIES.map((el) => (
+                    {visibleModuleCategories.map((el) => (
                         <ModulesListCategory key={el.category} title={el.label}>
                             {filteredModules
                                 .filter((mod) => mod.getCategory() === el.category)
@@ -533,7 +537,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 </>
             </Drawer>
             {showDetailsForModule &&
-                visible &&
+                isVisible &&
                 createPortal(
                     <DetailsPopup
                         module={ModuleRegistry.getModule(showDetailsForModule)}

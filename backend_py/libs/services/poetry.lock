@@ -2161,22 +2161,21 @@ files = [
 
 [[package]]
 name = "redis"
-version = "5.3.1"
+version = "7.1.1"
 description = "Python client for Redis database and key-value store"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "redis-5.3.1-py3-none-any.whl", hash = "sha256:dc1909bd24669cc31b5f67a039700b16ec30571096c5f1f0d9d2324bff31af97"},
-    {file = "redis-5.3.1.tar.gz", hash = "sha256:ca49577a531ea64039b5a36db3d6cd1a0c7a60c34124d46924a45b956e8cf14c"},
+    {file = "redis-7.1.1-py3-none-any.whl", hash = "sha256:f77817f16071c2950492c67d40b771fa493eb3fccc630a424a10976dbb794b7a"},
+    {file = "redis-7.1.1.tar.gz", hash = "sha256:a2814b2bda15b39dad11391cc48edac4697214a8a5a4bd10abe936ab4892eb43"},
 ]
 
-[package.dependencies]
-PyJWT = ">=2.9.0"
-
 [package.extras]
-hiredis = ["hiredis (>=3.0.0)"]
-ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==23.2.1)", "requests (>=2.31.0)"]
+circuit-breaker = ["pybreaker (>=1.4.0)"]
+hiredis = ["hiredis (>=3.2.0)"]
+jwt = ["pyjwt (>=2.9.0)"]
+ocsp = ["cryptography (>=36.0.1)", "pyopenssl (>=20.0.1)", "requests (>=2.31.0)"]
 
 [[package]]
 name = "requests"
@@ -2756,4 +2755,4 @@ tests = ["coverage (>=4.1)", "mypy", "pylint", "pytest", "pytest-cov", "pytest-m
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "3aaeb2df495c256102bad5f84c2ef757f38adf2dd39f6f664cf0799683a3361d"
+content-hash = "adeeadbb31aa8ca42b0a6d5cbfd9320b5fa0561b5ea4aa3abe1f514ff3f70e0b"

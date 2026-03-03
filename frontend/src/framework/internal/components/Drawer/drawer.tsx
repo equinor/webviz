@@ -1,9 +1,8 @@
 import React from "react";
 
 import { Dropdown, MenuButton } from "@mui/base";
-import { Check, Close, FilterAlt, Search } from "@mui/icons-material";
+import { Check, Close, MoreVert, Search } from "@mui/icons-material";
 
-import { Badge } from "@lib/components/Badge";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Menu } from "@lib/components/Menu";
@@ -98,13 +97,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                         {showFilter && (
                             <Dropdown open={open} onOpenChange={handleOpenChange}>
                                 <MenuButton className="p-1 rounded-sm hover:bg-blue-200 focus:outline-blue-600">
-                                    <Badge
-                                        badgeContent={selectedFilterItems.length}
-                                        color="bg-blue-500"
-                                        invisible={selectedFilterItems.length === 0}
-                                    >
-                                        <FilterAlt fontSize="small" />
-                                    </Badge>
+                                    <MoreVert fontSize="small" />
                                 </MenuButton>
                                 <Menu anchorOrigin="bottom-end">
                                     {props.filterItems?.map((item) => (
