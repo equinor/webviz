@@ -16,6 +16,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 import { useActiveSession } from "../../ActiveSessionBoundary";
 
+import { EmptySettingsPlaceholder } from "./emptySettingsPlaceholder";
+
 type ModuleSyncSettingProps = {
     workbench: Workbench;
     visible: boolean;
@@ -82,11 +84,11 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
         const syncableSettingKeys = activeModuleInstance?.getModule().getSyncableSettingKeys() ?? [];
 
         if (activeModuleInstanceId === "" || !activeModuleInstance) {
-            return <div className="text-gray-500 m-2">No module selected</div>;
+            return <EmptySettingsPlaceholder text="No module selected" />;
         }
 
         if (syncableSettingKeys.length === 0) {
-            return <div className="text-gray-500 m-2">No syncable settings</div>;
+            return <EmptySettingsPlaceholder text="No syncable settings" />;
         }
 
         const disabledReason = isSnapshot ? "Sync settings cannot be changed in snapshot mode" : undefined;

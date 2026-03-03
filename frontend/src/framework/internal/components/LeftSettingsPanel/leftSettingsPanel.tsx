@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Tune, Settings, Link } from "@mui/icons-material";
+import { Settings, Link } from "@mui/icons-material";
 
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { DashboardTopic } from "@framework/internal/Dashboard";
@@ -10,6 +10,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useActiveDashboard } from "../ActiveDashboardBoundary";
 
+import { EmptySettingsPlaceholder } from "./private-components/emptySettingsPlaceholder";
 import { ModuleSettings } from "./private-components/moduleSettings";
 import { ModuleSettingsHeader } from "./private-components/moduleSettingsHeader";
 import { ModuleSyncSettings } from "./private-components/moduleSyncSettings";
@@ -89,11 +90,7 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
                     {moduleInstances.map((instance) => (
                         <ModuleSettings key={instance.getId()} workbench={props.workbench} moduleInstance={instance} />
                     ))}
-                    {moduleInstances.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-full">
-                            <Tune fontSize="large" className="text-slate-200" />
-                        </div>
-                    )}
+                    {!activeModuleInstanceId && <EmptySettingsPlaceholder text="No module selected" />}
                 </div>
             </>
         </div>
