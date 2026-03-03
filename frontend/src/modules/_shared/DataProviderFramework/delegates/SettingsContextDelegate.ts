@@ -33,13 +33,13 @@ export enum SettingsContextStatus {
 export enum SettingsContextDelegateTopic {
     SETTINGS_AND_STORED_DATA_CHANGED = "SETTINGS_AND_STORED_DATA_CHANGED",
     STATUS = "STATUS",
-    STATUS_WRITER_MESSAGES = "STATUS_WRITER_MESSAGES",
+    STATUS_MESSAGES = "STATUS_MESSAGES",
 }
 
 export type SettingsContextDelegatePayloads = {
     [SettingsContextDelegateTopic.SETTINGS_AND_STORED_DATA_CHANGED]: void;
     [SettingsContextDelegateTopic.STATUS]: SettingsContextStatus;
-    [SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES]: StatusMessage[];
+    [SettingsContextDelegateTopic.STATUS_MESSAGES]: readonly StatusMessage[];
 };
 
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
@@ -273,7 +273,7 @@ export class SettingsContextDelegate<
             if (topic === SettingsContextDelegateTopic.STATUS) {
                 return this._status;
             }
-            if (topic === SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES) {
+            if (topic === SettingsContextDelegateTopic.STATUS_MESSAGES) {
                 return this._dependencyStatusMessages;
             }
         };
@@ -596,12 +596,12 @@ export class SettingsContextDelegate<
         dependency
             .getStatusWriter()
             .getPublishSubscribeDelegate()
-            .subscribe(GenericStatusWriterTopic.UPDATE_MESSAGES, () => this.syncAllStatusMessages());
+            .subscribe(GenericStatusWriterTopic.STATUS_MESSAGES, () => this.syncAllStatusMessages());
     }
 
     private syncAllStatusMessages(): void {
         this._dependencyStatusMessages = this._dependencies.flatMap((d) => d.getStatusMessages());
 
-        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES);
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.STATUS_MESSAGES);
     }
 }

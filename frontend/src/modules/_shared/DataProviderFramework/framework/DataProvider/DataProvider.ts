@@ -36,7 +36,7 @@ export enum DataProviderTopic {
     SUBORDINATED = "SUBORDINATED",
     REVISION_NUMBER = "REVISION_NUMBER",
     PROGRESS_MESSAGE = "PROGRESS_MESSAGE",
-    STATUS_WRITER_MESSAGES = "STATUS_WRITER_MESSAGES",
+    STATUS_MESSAGES = "STATUS_MESSAGES",
 }
 
 export enum DataProviderStatus {
@@ -53,7 +53,7 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.SUBORDINATED]: boolean;
     [DataProviderTopic.REVISION_NUMBER]: number;
     [DataProviderTopic.PROGRESS_MESSAGE]: string | null;
-    [DataProviderTopic.STATUS_WRITER_MESSAGES]: GenericStatusMessage[];
+    [DataProviderTopic.STATUS_MESSAGES]: readonly GenericStatusMessage[];
 };
 
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
@@ -99,12 +99,12 @@ export type DataProviderParams<
  * It also manages the status of the provider (loading, success, error).
  */
 export class DataProvider<
-        TSettings extends Settings,
-        TData,
-        TStoredData extends StoredData = Record<string, never>,
-        TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-        TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    >
+    TSettings extends Settings,
+    TData,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+>
     implements Item, PublishSubscribe<DataProviderPayloads<TData>>
 {
     private _type: string;
@@ -167,14 +167,14 @@ export class DataProvider<
             "status-writer",
             this._statusWriter
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(GenericStatusWriterTopic.UPDATE_MESSAGES)(() => this.syncAllStatusMessages()),
+                .makeSubscriberFunction(GenericStatusWriterTopic.STATUS_MESSAGES)(() => this.syncAllStatusMessages()),
         );
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "settings-context",
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(SettingsContextDelegateTopic.STATUS_WRITER_MESSAGES)(() => {
+                .makeSubscriberFunction(SettingsContextDelegateTopic.STATUS_MESSAGES)(() => {
                 this.syncAllStatusMessages();
             }),
         );
@@ -354,7 +354,7 @@ export class DataProvider<
             if (topic === DataProviderTopic.PROGRESS_MESSAGE) {
                 return this._progressMessage;
             }
-            if (topic === DataProviderTopic.STATUS_WRITER_MESSAGES) {
+            if (topic === DataProviderTopic.STATUS_MESSAGES) {
                 return this._allStatusMessages;
             }
             throw new Error(`Unknown topic: ${topic}`);
@@ -535,6 +535,6 @@ export class DataProvider<
 
         this._allStatusMessages = [...localMessages, ...settingsContextMessages];
 
-        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS_WRITER_MESSAGES);
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS_MESSAGES);
     }
 }

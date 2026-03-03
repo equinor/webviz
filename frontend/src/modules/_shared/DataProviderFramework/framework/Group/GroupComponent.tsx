@@ -122,7 +122,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
 function StatusMessagesWrapper(props: { settingsDelegate: SharedSettingsDelegate<any, any> }) {
     const dependencyStatusMessages = usePublishSubscribeTopicValue(
         props.settingsDelegate,
-        SharedSettingsDelegateTopic.STATUS_WRITER_MESSAGES,
+        SharedSettingsDelegateTopic.STATUS_MESSAGES,
     );
 
     return <StatusMessages statusMessages={dependencyStatusMessages} />;

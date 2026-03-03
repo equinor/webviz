@@ -95,7 +95,7 @@ type EndActionProps = {
 
 function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS);
-    const statusMessages = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS_WRITER_MESSAGES);
+    const statusMessages = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS_MESSAGES);
     const progressMessage = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.PROGRESS_MESSAGE);
     const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
 

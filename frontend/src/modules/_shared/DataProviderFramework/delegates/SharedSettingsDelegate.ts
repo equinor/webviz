@@ -21,13 +21,13 @@ import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefin
 import { Dependency } from "./_utils/Dependency";
 
 export enum SharedSettingsDelegateTopic {
-    SETTINGS_CHANGED = "SHARED_SETTINGS_DELEGATE_SETTINGS_CHANGED",
-    STATUS_WRITER_MESSAGES = "DEPENDENCY_STATUS_MESSAGES",
+    SETTINGS_CHANGED = "SETTINGS_CHANGED",
+    STATUS_MESSAGES = "STATUS_MESSAGES",
 }
 
 export type SharedSettingsDelegatePayloads = {
     [SharedSettingsDelegateTopic.SETTINGS_CHANGED]: void;
-    [SharedSettingsDelegateTopic.STATUS_WRITER_MESSAGES]: StatusMessage[];
+    [SharedSettingsDelegateTopic.STATUS_MESSAGES]: readonly StatusMessage[];
 };
 
 export class SharedSettingsDelegate<
@@ -106,7 +106,7 @@ export class SharedSettingsDelegate<
             if (topic === SharedSettingsDelegateTopic.SETTINGS_CHANGED) {
                 return;
             }
-            if (topic === SharedSettingsDelegateTopic.STATUS_WRITER_MESSAGES) {
+            if (topic === SharedSettingsDelegateTopic.STATUS_MESSAGES) {
                 return this._dependencyStatusMessages;
             }
         };
@@ -362,12 +362,12 @@ export class SharedSettingsDelegate<
         dependency
             .getStatusWriter()
             .getPublishSubscribeDelegate()
-            .subscribe(GenericStatusWriterTopic.UPDATE_MESSAGES, () => this.syncAllStatusMessages());
+            .subscribe(GenericStatusWriterTopic.STATUS_MESSAGES, () => this.syncAllStatusMessages());
     }
 
     private syncAllStatusMessages(): void {
         this._dependencyStatusMessages = this._dependencies.flatMap((d) => d.getStatusMessages());
 
-        this._publishSubscribeDelegate.notifySubscribers(SharedSettingsDelegateTopic.STATUS_WRITER_MESSAGES);
+        this._publishSubscribeDelegate.notifySubscribers(SharedSettingsDelegateTopic.STATUS_MESSAGES);
     }
 }

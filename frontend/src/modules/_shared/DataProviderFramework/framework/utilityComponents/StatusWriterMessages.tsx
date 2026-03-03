@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { Error, Info, Warning } from "@mui/icons-material";
 
@@ -9,14 +9,12 @@ import { Tooltip } from "@lib/components/Tooltip";
 export type StatusMessagesProps = { statusMessages: StatusMessage[] };
 
 export function StatusMessages(props: StatusMessagesProps) {
-    const categorizedMessages = React.useMemo(
-        () => ({
-            warning: props.statusMessages.filter((m) => m.type === StatusMessageType.Warning),
-            error: props.statusMessages.filter((m) => m.type === StatusMessageType.Error),
-            info: props.statusMessages.filter((m) => m.type === StatusMessageType.Info),
-        }),
-        [props.statusMessages],
-    );
+    const categorizedMessages = {
+        warning: props.statusMessages.filter((m) => m.type === StatusMessageType.Warning),
+        error: props.statusMessages.filter((m) => m.type === StatusMessageType.Error),
+        info: props.statusMessages.filter((m) => m.type === StatusMessageType.Info),
+    };
+
     return (
         <>
             <StatusMessage messages={categorizedMessages.info}>

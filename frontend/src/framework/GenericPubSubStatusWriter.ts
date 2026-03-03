@@ -4,17 +4,18 @@ import type { StatusMessage, StatusWriter } from "./types/statusWriter";
 import { StatusMessageType } from "./types/statusWriter";
 
 export enum GenericStatusWriterTopic {
-    UPDATE_MESSAGES = "update_messages",
+    STATUS_MESSAGES = "status_messages",
 }
 
 export type GenericStatusWriterTopicPayload = {
-    [GenericStatusWriterTopic.UPDATE_MESSAGES]: StatusMessage[];
+    [GenericStatusWriterTopic.STATUS_MESSAGES]: readonly StatusMessage[];
 };
 
 export class GenericPubSubStatusWriter implements StatusWriter, PublishSubscribe<GenericStatusWriterTopicPayload> {
+    private readonly _source: string;
+
     private _pubSubDelegate = new PublishSubscribeDelegate<GenericStatusWriterTopicPayload>();
     private _messages: StatusMessage[] = [];
-    private _source: string | null = null;
 
     constructor(source: string) {
         this._source = source;
@@ -23,15 +24,15 @@ export class GenericPubSubStatusWriter implements StatusWriter, PublishSubscribe
     private addMessage(message: StatusMessage) {
         this._messages.push(message);
 
-        this._pubSubDelegate.notifySubscribers(GenericStatusWriterTopic.UPDATE_MESSAGES);
+        this._pubSubDelegate.notifySubscribers(GenericStatusWriterTopic.STATUS_MESSAGES);
     }
 
     clear(): void {
         this._messages = [];
 
-        this._pubSubDelegate.notifySubscribers(GenericStatusWriterTopic.UPDATE_MESSAGES);
+        this._pubSubDelegate.notifySubscribers(GenericStatusWriterTopic.STATUS_MESSAGES);
     }
-    getMessages(): StatusMessage[] {
+    getMessages(): readonly StatusMessage[] {
         return this._messages;
     }
 
@@ -57,11 +58,11 @@ export class GenericPubSubStatusWriter implements StatusWriter, PublishSubscribe
         this.addMessage(errorMessage);
     }
 
-    makeSnapshotGetter<T extends GenericStatusWriterTopic.UPDATE_MESSAGES>(
+    makeSnapshotGetter<T extends GenericStatusWriterTopic.STATUS_MESSAGES>(
         topic: T,
     ): () => GenericStatusWriterTopicPayload[T] {
         return () => {
-            if (topic === GenericStatusWriterTopic.UPDATE_MESSAGES) {
+            if (topic === GenericStatusWriterTopic.STATUS_MESSAGES) {
                 return this._messages;
             }
 
