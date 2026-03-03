@@ -37,6 +37,18 @@ class VectorDescription(BaseModel):
     derivedVectorInfo: DerivedVectorInfo | None = None
 
 
+class RegionVolumeVector(StrEnum):
+    ROIPL = "ROIPL"
+    ROIPG = "ROIPG"
+    RGIPL = "RGIPL"
+    RGIPG = "RGIPG"
+
+
+class RegionVolumeVectorsInfo(BaseModel):
+    regionVolumeVectorNames: list[RegionVolumeVector]
+    fipnums: list[int]
+
+
 class VectorHistoricalData(BaseModel):
     timestampsUtcMs: list[int]
     values: list[float]

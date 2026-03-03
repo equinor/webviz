@@ -3430,6 +3430,67 @@ export type GetRealizationsVectorDataResponses_api = {
 export type GetRealizationsVectorDataResponse_api =
     GetRealizationsVectorDataResponses_api[keyof GetRealizationsVectorDataResponses_api];
 
+export type GetRealizationsVectorsDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Vector Names
+         *
+         * Comma-separated list of vector names
+         */
+        vector_names: Array<string>;
+        /**
+         * Resampling Frequency
+         *
+         * Resampling frequency. If not specified, raw data without resampling wil be returned.
+         */
+        resampling_frequency?: Frequency_api | null;
+        /**
+         * Realizations Encoded As Uint List Str
+         *
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/timeseries/realizations_vectors_data/";
+};
+
+export type GetRealizationsVectorsDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetRealizationsVectorsDataError_api =
+    GetRealizationsVectorsDataErrors_api[keyof GetRealizationsVectorsDataErrors_api];
+
+export type GetRealizationsVectorsDataResponses_api = {
+    /**
+     * Response Get Realizations Vectors Data
+     *
+     * Successful Response
+     */
+    200: Array<unknown>;
+};
+
+export type GetRealizationsVectorsDataResponse_api =
+    GetRealizationsVectorsDataResponses_api[keyof GetRealizationsVectorsDataResponses_api];
+
 export type GetDeltaEnsembleRealizationsVectorDataData_api = {
     body?: never;
     path?: never;

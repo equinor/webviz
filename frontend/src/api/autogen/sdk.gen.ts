@@ -116,6 +116,9 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataErrors_api,
     GetRealizationsVectorDataResponses_api,
+    GetRealizationsVectorsDataData_api,
+    GetRealizationsVectorsDataErrors_api,
+    GetRealizationsVectorsDataResponses_api,
     GetRealizationVectorAtTimestampData_api,
     GetRealizationVectorAtTimestampErrors_api,
     GetRealizationVectorAtTimestampResponses_api,
@@ -375,6 +378,24 @@ export const getRealizationsVectorData = <ThrowOnError extends boolean = false>(
     >({
         responseType: "json",
         url: "/timeseries/realizations_vector_data/",
+        ...options,
+    });
+
+/**
+ * Get Realizations Vectors Data
+ *
+ * Get vector data per realization
+ */
+export const getRealizationsVectorsData = <ThrowOnError extends boolean = false>(
+    options: Options<GetRealizationsVectorsDataData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<
+        GetRealizationsVectorsDataResponses_api,
+        GetRealizationsVectorsDataErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/timeseries/realizations_vectors_data/",
         ...options,
     });
 

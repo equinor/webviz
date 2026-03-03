@@ -4,6 +4,7 @@ from typing import List, Optional, Sequence, Tuple, Set
 import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
+import polars as pl
 from webviz_core_utils.perf_timer import PerfTimer
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
@@ -90,6 +91,59 @@ class SummaryAccess:
         )
 
         return ret_info_arr
+
+    @otel_span_decorator()
+    async def get_vectors_table_async(
+        self,
+        vector_names: list[str],
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
+    ) -> pl.DataFrame:
+        """
+        Get pyarrow.Table containing values for the specified vector and the specified realizations.
+        If realizations is None, data for all available realizations will be returned.
+        The returned table will always contain a 'DATE' and 'REAL' column in addition to the requested vector.
+        The 'DATE' column will be of type timestamp[ms] and the 'REAL' column will be of type int16.
+        The vector column will be of type float32.
+        If `resampling_frequency` is None, the data will be returned with full/raw resolution.
+        """
+        timer = PerfTimer()
+
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
+        # New metadata uses simulationtimeseries, but most existing cases use timeseries
+        table_loader.require_content_type(["timeseries", "simulationtimeseries"])
+        table = await table_loader.get_aggregated_multiple_columns_async(vector_names)
+        # _validate_single_vector_table(table, vector_name)
+        et_loading_ms = timer.lap_ms()
+
+        if realizations is not None:
+            requested_reals_arr = pa.array(realizations)
+            mask = pc.is_in(table["REAL"], value_set=requested_reals_arr)
+            table = table.filter(mask)
+        table = sort_table_on_real_then_date(table)
+
+        # The resampling algorithm below uses the field metadata to determine if the vector is a rate or not.
+        # For now, fail hard if metadata is not present. This test could be refined, but should suffice now.
+        # vector_metadata = create_vector_metadata_from_field_meta(table.schema.field(vector_name))
+        # if not vector_metadata:
+        #     raise InvalidDataError(f"Did not find valid metadata for vector {vector_name}", Service.SUMO)
+
+        # Do the actual resampling
+        timer.lap_ms()
+        if resampling_frequency is not None:
+            table = resample_segmented_multi_real_table(table, resampling_frequency)
+        et_resampling_ms = timer.lap_ms()
+
+        # Should we always combine the chunks?
+        table = table.combine_chunks()
+
+        # LOGGER.debug(
+        #     f"Got summary vector data from Sumo in: {timer.elapsed_ms()}ms "
+        #     f"(loading={et_loading_ms}ms, resampling={et_resampling_ms}ms) "
+        #     f"({vector_name=} {resampling_frequency=} {table.shape=})"
+        # )
+
+        return pl.from_arrow(table)
 
     @otel_span_decorator()
     async def get_vector_table_async(

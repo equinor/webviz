@@ -50,6 +50,7 @@ import {
     getRealizationFlowNetwork,
     getRealizationSurfacesMetadata,
     getRealizationsVectorData,
+    getRealizationsVectorsData,
     getRealizationVectorAtTimestamp,
     getSeismicCubeMetaList,
     getSeismicSlices,
@@ -205,6 +206,9 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataError_api,
     GetRealizationsVectorDataResponse_api,
+    GetRealizationsVectorsDataData_api,
+    GetRealizationsVectorsDataError_api,
+    GetRealizationsVectorsDataResponse_api,
     GetRealizationVectorAtTimestampData_api,
     GetRealizationVectorAtTimestampError_api,
     GetRealizationVectorAtTimestampResponse_api,
@@ -595,6 +599,33 @@ export const getRealizationsVectorDataOptions = (options: Options<GetRealization
             return data;
         },
         queryKey: getRealizationsVectorDataQueryKey(options),
+    });
+
+export const getRealizationsVectorsDataQueryKey = (options: Options<GetRealizationsVectorsDataData_api>) =>
+    createQueryKey("getRealizationsVectorsData", options);
+
+/**
+ * Get Realizations Vectors Data
+ *
+ * Get vector data per realization
+ */
+export const getRealizationsVectorsDataOptions = (options: Options<GetRealizationsVectorsDataData_api>) =>
+    queryOptions<
+        GetRealizationsVectorsDataResponse_api,
+        AxiosError<GetRealizationsVectorsDataError_api>,
+        GetRealizationsVectorsDataResponse_api,
+        ReturnType<typeof getRealizationsVectorsDataQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRealizationsVectorsData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRealizationsVectorsDataQueryKey(options),
     });
 
 export const getDeltaEnsembleRealizationsVectorDataQueryKey = (
