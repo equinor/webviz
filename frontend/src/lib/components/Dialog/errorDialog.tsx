@@ -33,6 +33,7 @@ export function ErrorDialog(props: ErrorDialogProps): React.ReactNode {
 
     async function maybeGetSymbolicatedTrace(error: Error) {
         if (!shouldSymbolicate()) return undefined;
+        if (!isMountedRef.current) return undefined;
 
         setIsSymbolicatingStack(true);
         const runId = ++runIdRef.current;

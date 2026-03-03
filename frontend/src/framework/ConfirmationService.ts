@@ -1,10 +1,10 @@
 export type ConfirmationVariant = "error" | "info";
-export type ConfirmActioncolor = "primary" | "danger" | "success" | "secondary";
+export type ConfirmActionColor = "primary" | "danger" | "success" | "secondary";
 
 export type ConfirmAction<T = string> = {
     id: T;
     label: string;
-    color?: ConfirmActioncolor;
+    color?: ConfirmActionColor;
 };
 
 export type ConfirmOptions<T = string> = {

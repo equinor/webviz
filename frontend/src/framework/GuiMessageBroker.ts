@@ -291,19 +291,19 @@ export class GuiMessageBroker {
  * @param topic The GUI event topic to listen to
  * @param callback The listener event callback
  */
-export function useGuiEventSubscriber<T extends Exclude<GuiEvent, keyof GuiEventPayloads>>(
+export function useRegisterGuiEventSubscriber<T extends Exclude<GuiEvent, keyof GuiEventPayloads>>(
     guiMessageBroker: GuiMessageBroker,
     topic: T,
     callback: () => void,
 ): void;
 
-export function useGuiEventSubscriber<T extends keyof GuiEventPayloads>(
+export function useRegisterGuiEventSubscriber<T extends keyof GuiEventPayloads>(
     guiMessageBroker: GuiMessageBroker,
     topic: T,
     callback: (payload: GuiEventPayloads[T]) => void,
 ): void;
 
-export function useGuiEventSubscriber<T extends GuiEvent>(
+export function useRegisterGuiEventSubscriber<T extends GuiEvent>(
     guiMessageBroker: GuiMessageBroker,
     topic: T,
     callback: (payload?: any) => void,
