@@ -101,8 +101,7 @@ export const subplotGroupsAtom = atom<SubplotGroup[]>((get) => {
                     ? ensembleName
                     : groupMeta.subplotKey
                 : "_all";
-            const colorKey =
-                colorBy === PlotDimension.Ensemble ? ensembleName : groupMeta.colorKey;
+            const colorKey = colorBy === PlotDimension.Ensemble ? ensembleName : groupMeta.colorKey;
 
             // Apply recovery factor if needed
             let values = entry.valuesPerRealization;
@@ -141,8 +140,7 @@ export const subplotGroupsAtom = atom<SubplotGroup[]>((get) => {
     }
 
     for (const te of traceEntries) {
-        const ensembleColor =
-            colorBy === PlotDimension.Ensemble ? ensembleColorMap.get(te.colorKey) : undefined;
+        const ensembleColor = colorBy === PlotDimension.Ensemble ? ensembleColorMap.get(te.colorKey) : undefined;
         const colorIdx = allColorKeys.indexOf(te.colorKey);
         te.trace.color = ensembleColor ?? DIMENSION_COLORS[colorIdx % DIMENSION_COLORS.length];
     }
