@@ -23,7 +23,7 @@ import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { Interfaces } from "./interfaces";
-import { BarSortBy, PlotType } from "./typesAndEnums";
+import { BarSortBy, PlotType, PLOT_TYPE_LABELS } from "./typesAndEnums";
 import { buildStatisticsTableData, makeStatisticsTableColumns } from "./utils/statisticsTable";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
@@ -62,6 +62,32 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     });
 
     statusWriter.setLoading(receiverX.isPending || receiverY.isPending || receiverColorMapping.isPending);
+
+    // Set instance title based on plot type and channel info
+    React.useEffect(() => {
+        if (!plotType) return;
+
+        const plotTypeLabel = PLOT_TYPE_LABELS[plotType];
+        const numXContents = receiverX.channel?.contents.length ?? 0;
+        const numYContents = receiverY.channel?.contents.length ?? 0;
+        const totalContents = numXContents + numYContents;
+
+        let title = plotTypeLabel;
+        if (totalContents > 2 || numXContents > 1 || numYContents > 1) {
+            title = `${plotTypeLabel} — Multiple series`;
+        } else if (numXContents === 1 && numYContents === 1) {
+            const xName = receiverX.channel?.contents[0].displayName;
+            const yName = receiverY.channel?.contents[0].displayName;
+            title = `${plotTypeLabel} — ${xName} and ${yName}`;
+        } else if (numXContents === 1) {
+            const xName = receiverX.channel?.contents[0].displayName;
+            if (xName) {
+                title = `${plotTypeLabel} — ${xName}`;
+            }
+        }
+
+        viewContext.setInstanceTitle(title);
+    }, [viewContext, plotType, receiverX.channel, receiverY.channel]);
 
     const content = React.useMemo(() => {
         // Validate X channel (required for all plot types)

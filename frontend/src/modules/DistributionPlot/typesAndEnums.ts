@@ -5,6 +5,15 @@ export enum PlotType {
     ScatterWithColorMapping = "scatterWithColor",
     StatisticsTable = "statisticsTable",
 }
+
+export const PLOT_TYPE_LABELS: Record<PlotType, string> = {
+    [PlotType.Histogram]: "Histogram",
+    [PlotType.BarChart]: "Bar chart",
+    [PlotType.Scatter]: "Scatter 2D",
+    [PlotType.ScatterWithColorMapping]: "Scatter 2D with color mapping",
+    [PlotType.StatisticsTable]: "Statistics table",
+};
+
 export enum BarSortBy {
     Value = "value",
     Key = "key",

@@ -89,7 +89,8 @@ export function makeStatisticsTableColumns(selectedColumns: StatisticsColumn[]):
     const visibleStats = statColumnDefs.filter((def) => selectedColumns.includes(def.statisticsColumn));
     const channelColumnPercent = 20;
     const remainingPercent = 100 - channelColumnPercent;
-    const perStatPercent = visibleStats.length > 0 ? remainingPercent / visibleStats.length : 0;
+    const perStatPercent =
+        visibleStats.length > 0 ? Math.floor((remainingPercent / visibleStats.length) * 100) / 100 : 0;
 
     const columns: TableColumns<StatisticsTableRowData> = [
         {
@@ -100,12 +101,15 @@ export function makeStatisticsTableColumns(selectedColumns: StatisticsColumn[]):
         },
     ];
 
-    for (const def of visibleStats) {
+    for (let i = 0; i < visibleStats.length; i++) {
+        const def = visibleStats[i];
+        const isLast = i === visibleStats.length - 1;
+        const width = isLast ? remainingPercent - perStatPercent * (visibleStats.length - 1) : perStatPercent;
         columns.push({
             _type: "data",
             columnId: def.columnId,
             label: STATISTICS_COLUMN_LABELS[def.statisticsColumn],
-            sizeInPercent: perStatPercent,
+            sizeInPercent: width,
         });
     }
 
