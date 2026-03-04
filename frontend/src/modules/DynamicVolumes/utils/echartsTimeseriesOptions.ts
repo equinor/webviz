@@ -21,6 +21,7 @@ export function buildTimeseriesOptions(
     showFanchart: boolean,
     selectedStatistics: StatisticsType[],
     yAxisLabel: string,
+    activeTimestampUtcMs: number | null = null,
 ): TimeseriesEchartsResult {
     if (subplotGroups.length === 0) return { echartsOptions: {}, timeseriesChartData: [] };
 
@@ -65,6 +66,35 @@ export function buildTimeseriesOptions(
                     seenLegend.add(legendEntry);
                 }
             }
+        }
+    }
+
+    // ── Active timestamp marker line ──
+    // Add a vertical markLine on the first series of each grid so the
+    // selected timestep is visible across all subplots.
+    if (activeTimestampUtcMs != null) {
+        const activeDate = formatDate(activeTimestampUtcMs);
+        const seenGrids = new Set<number>();
+        for (const s of allSeries) {
+            const gridIdx = s.xAxisIndex ?? 0;
+            if (seenGrids.has(gridIdx)) continue;
+            // Skip fanchart helper series (they are custom type, not ideal for markLine)
+            if (typeof s.name === "string" && s.name.includes("_fan_")) continue;
+            seenGrids.add(gridIdx);
+            s.markLine = {
+                silent: true,
+                symbol: "none",
+                animation: false,
+                lineStyle: { type: "solid", color: "#333", width: 1.5 },
+                label: {
+                    show: true,
+                    formatter: activeDate,
+                    position: "insideEndTop",
+                    fontSize: 10,
+                    color: "#333",
+                },
+                data: [{ xAxis: activeDate }],
+            };
         }
     }
 

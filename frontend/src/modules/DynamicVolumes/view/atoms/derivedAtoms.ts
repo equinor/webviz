@@ -155,6 +155,8 @@ export type ChartTrace = {
     stats: TimeseriesStatistics | null;
     realizations: number[];
     aggregatedValues: number[][] | null;
+    /** Ensemble ident string — always set since colorBy/subplotBy enforces one ensemble per trace */
+    ensembleIdentString: string;
 };
 
 export type SubplotGroup = {
@@ -288,6 +290,7 @@ export const subplotGroupsAtom = atom<SubplotGroup[]>((get) => {
         valuesArrays: number[][][];
         timestamps: number[];
         realizations: number[];
+        ensembleIdentString: string;
     };
     const grouped = new Map<string, Map<string, GroupedEntry>>();
     // Track insertion order for stable iteration
@@ -311,6 +314,7 @@ export const subplotGroupsAtom = atom<SubplotGroup[]>((get) => {
                 valuesArrays: [],
                 timestamps: dp.timestamps,
                 realizations: dp.realizations,
+                ensembleIdentString: ensembleIdents[dp.ensembleIdx].toString(),
             });
             colorKeyOrderPerSubplot.get(subplotKey)!.push(colorKey);
         }
@@ -339,8 +343,7 @@ export const subplotGroupsAtom = atom<SubplotGroup[]>((get) => {
             const stats = summed ? computeStatistics(summed) : null;
 
             const colorIdx = globalColorKeys.indexOf(colorKey);
-            const ensembleColor =
-                colorBy === PlotDimension.Ensemble ? ensembleColorMap.get(colorKey) : undefined;
+            const ensembleColor = colorBy === PlotDimension.Ensemble ? ensembleColorMap.get(colorKey) : undefined;
 
             traces.push({
                 label: getDimensionLabel(colorBy, colorKey),
@@ -349,6 +352,7 @@ export const subplotGroupsAtom = atom<SubplotGroup[]>((get) => {
                 stats,
                 realizations: entry.realizations,
                 aggregatedValues: summed,
+                ensembleIdentString: entry.ensembleIdentString,
             });
         }
 

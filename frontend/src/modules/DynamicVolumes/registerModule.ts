@@ -3,6 +3,7 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
+import { channelDefs } from "./channelDefs";
 import type { Interfaces } from "./interfaces";
 import { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";
 import { preview } from "./preview";
@@ -19,6 +20,7 @@ ModuleRegistry.registerModule<Interfaces, SerializedState>({
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
     dataTagIds: [ModuleDataTagId.INPLACE_VOLUMES, ModuleDataTagId.SUMMARY],
+    channelDefinitions: channelDefs,
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.DATE],
     preview,
     description,

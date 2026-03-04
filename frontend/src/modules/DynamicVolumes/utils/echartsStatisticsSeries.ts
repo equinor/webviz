@@ -105,11 +105,7 @@ function createBandSeries(
 /** Build the fanchart band series using custom polygons.
  *  When min/max are available, renders an outer min–max band (lighter) around the P10–P90 band.
  */
-export function buildFanchartSeries(
-    trace: ChartTrace,
-    selectedStatistics: StatisticsType[],
-    axisIndex = 0,
-): any[] {
+export function buildFanchartSeries(trace: ChartTrace, selectedStatistics: StatisticsType[], axisIndex = 0): any[] {
     if (!trace.stats) return [];
 
     const { p10, p90, min, max } = trace.stats;

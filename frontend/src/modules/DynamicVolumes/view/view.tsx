@@ -7,11 +7,11 @@ import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 
 import type { Interfaces } from "../interfaces";
-import { VisualizationMode } from "../typesAndEnums";
-import { buildTimeseriesOptions } from "../utils/echartsTimeseriesOptions";
 
 import { visualizationModeAtom } from "./atoms/baseAtoms";
 import { allQueriesFailedAtom, isDataFetchingAtom, subplotGroupsAtom } from "./atoms/derivedAtoms";
+import { useEchartsOptions } from "./hooks/useEchartsOptions";
+import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 
 // ────────── View ──────────
 
@@ -35,62 +35,26 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const vectorNamesToFetch = viewContext.useSettingsToViewInterfaceValue("vectorNamesToFetch");
     const showRecoveryFactor = viewContext.useSettingsToViewInterfaceValue("showRecoveryFactor");
 
-    // Local view state
-    const chartRef = React.useRef<ReactECharts>(null);
-
     // Status writer
     statusWriter.setLoading(isFetching);
 
     // ── Derived rendering data ──
 
-    const showStatLines = visualizationMode !== VisualizationMode.IndividualRealizations;
-    const showFanchart = visualizationMode === VisualizationMode.StatisticalFanchart;
     const yAxisLabel = showRecoveryFactor ? "Recovery Factor" : (selectedVectorBaseName ?? "Value");
     const queryEnabled = ensembleIdents.length > 0 && vectorNamesToFetch.length > 0;
 
-    // ── Build echarts data from subplot groups ──
+    // ── ECharts options & event handlers (extracted hook) ──
 
-    const { echartsOptions, timeseriesChartData } = React.useMemo(() => {
-        return buildTimeseriesOptions(subplotGroups, showStatLines, showFanchart, selectedStatistics, yAxisLabel);
-    }, [subplotGroups, showStatLines, showFanchart, selectedStatistics, yAxisLabel]);
-
-    // ── Handlers ──
-
-    const highlightedSeriesRef = React.useRef<string | null>(null);
-
-    const onChartEvents = React.useMemo(
-        () => ({
-            mouseover: (e: any) => {
-                if (!showStatLines && e.seriesName && chartRef.current) {
-                    const instance = chartRef.current.getEchartsInstance();
-                    // Dim all, then brighten the hovered one
-                    if (highlightedSeriesRef.current !== e.seriesName) {
-                        instance.dispatchAction({ type: "downplay" });
-                        instance.dispatchAction({
-                            type: "highlight",
-                            seriesName: e.seriesName,
-                        });
-                        highlightedSeriesRef.current = e.seriesName;
-                    }
-                }
-            },
-            mouseout: () => {
-                if (!showStatLines && chartRef.current) {
-                    const instance = chartRef.current.getEchartsInstance();
-                    instance.dispatchAction({ type: "downplay" });
-                    highlightedSeriesRef.current = null;
-                }
-            },
-            globalout: () => {
-                if (!showStatLines && chartRef.current) {
-                    const instance = chartRef.current.getEchartsInstance();
-                    instance.dispatchAction({ type: "downplay" });
-                    highlightedSeriesRef.current = null;
-                }
-            },
-        }),
-        [showStatLines],
+    const { chartRef, echartsOptions, timeseriesChartData, onChartEvents } = useEchartsOptions(
+        subplotGroups,
+        visualizationMode,
+        selectedStatistics,
+        yAxisLabel,
     );
+
+    // ── Publish data channels ──
+
+    usePublishToDataChannels(viewContext, subplotGroups, yAxisLabel);
 
     // ── Loading / empty states ──
 
