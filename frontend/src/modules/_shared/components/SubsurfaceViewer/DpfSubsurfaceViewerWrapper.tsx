@@ -16,12 +16,12 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { ViewLayout } from "@modules/_shared/enums/viewLayout";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 
 import { PlaceholderLayer } from "../../customDeckGlLayers/PlaceholderLayer";
 
 import { InteractionWrapper } from "./_components/InteractionWrapper";
-import { PreferredViewLayout } from "./typesAndEnums";
 
 export type DpfSubsurfaceViewerContextType = {
     visualizationMode: "2D" | "3D";
@@ -30,7 +30,7 @@ export type DpfSubsurfaceViewerContextType = {
     onViewStateChange?: (viewState: ViewStateType) => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
     visualizationAssemblerProduct: AssemblerProduct<any>;
-    preferredViewLayout: PreferredViewLayout;
+    preferredViewLayout: ViewLayout;
     bounds: BoundingBox2D | undefined;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
@@ -61,7 +61,7 @@ export type DpfSubsurfaceViewerWrapperProps = {
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     workbenchServices: WorkbenchServices;
-    preferredViewLayout: PreferredViewLayout;
+    preferredViewLayout: ViewLayout;
     hoverService: HoverService;
     moduleInstanceId: string;
 };
@@ -123,7 +123,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         views.layout = [numCols, numRows];
     }
 
-    if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
+    if (props.preferredViewLayout === ViewLayout.HORIZONTAL) {
         views.layout = [views.layout[1], views.layout[0]];
     }
 

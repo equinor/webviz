@@ -1,5 +1,5 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import type { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewer/typesAndEnums";
+import type { ViewLayout } from "@modules/_shared/enums/viewLayout";
 
 import type { DataProviderManager } from "../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
@@ -8,7 +8,7 @@ import { fieldIdentifierAtom } from "./settings/atoms/persistableFixableAtoms";
 
 export type SettingsToViewInterface = {
     dataProviderManager: DataProviderManager | null;
-    preferredViewLayout: PreferredViewLayout;
+    preferredViewLayout: ViewLayout;
     fieldId: string | null;
 };
 

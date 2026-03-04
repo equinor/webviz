@@ -2,26 +2,13 @@ import type React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
-import { Dropdown } from "@mui/base";
-import {
-    Check,
-    Panorama,
-    SettingsApplications,
-    Settings as SettingsIcon,
-    TableRowsOutlined,
-    ViewColumnOutlined,
-} from "@mui/icons-material";
+import { Panorama, SettingsApplications } from "@mui/icons-material";
 import { useAtom } from "jotai";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useColorSet, type WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { Menu } from "@lib/components/Menu";
-import { MenuButton } from "@lib/components/MenuButton";
-import { MenuHeading } from "@lib/components/MenuHeading";
-import { MenuItem } from "@lib/components/MenuItem";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
-import { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewer/typesAndEnums";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
@@ -42,6 +29,7 @@ import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTy
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { ViewportLayoutMenu } from "@modules/_shared/DataProviderFramework/ViewLayoutMenu";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
@@ -271,49 +259,13 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
         <DataProviderManagerComponent
             title={"Layers"}
             dataProviderManager={props.dataProviderManager}
-            additionalHeaderComponents={
-                <Dropdown>
-                    <MenuButton label="Settings">
-                        <SettingsIcon fontSize="inherit" />
-                    </MenuButton>
-                    <Menu>
-                        <MenuHeading>Preferred view layout</MenuHeading>
-                        <ViewLayoutMenuItem
-                            checked={preferredViewLayout === PreferredViewLayout.HORIZONTAL}
-                            onClick={() => setPreferredViewLayout(PreferredViewLayout.HORIZONTAL)}
-                        >
-                            <ViewColumnOutlined fontSize="inherit" /> Horizontal
-                        </ViewLayoutMenuItem>
-                        <ViewLayoutMenuItem
-                            checked={preferredViewLayout === PreferredViewLayout.VERTICAL}
-                            onClick={() => setPreferredViewLayout(PreferredViewLayout.VERTICAL)}
-                        >
-                            <TableRowsOutlined fontSize="inherit" /> Vertical
-                        </ViewLayoutMenuItem>
-                    </Menu>
-                </Dropdown>
-            }
             groupActions={makeActionsForGroup}
             onAction={handleLayerAction}
             isMoveAllowed={checkIfItemMoveAllowed}
+            additionalHeaderComponents={
+                <ViewportLayoutMenu value={preferredViewLayout} onValueChange={setPreferredViewLayout} />
+            }
         />
-    );
-}
-
-type ViewLayoutMenuItemProps = {
-    checked: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-};
-
-function ViewLayoutMenuItem(props: ViewLayoutMenuItemProps): React.ReactNode {
-    return (
-        <MenuItem onClick={props.onClick}>
-            <div className="flex items-center gap-4">
-                <div className="w-4">{props.checked && <Check fontSize="small" />}</div>
-                <div className="flex gap-2 items-center">{props.children}</div>
-            </div>
-        </MenuItem>
     );
 }
 
