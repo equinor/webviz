@@ -7,7 +7,7 @@ import type {
     DataProviderInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { RealizationGridData } from "@modules/_shared/DataProviderFramework/visualization/utils/types";
@@ -154,131 +154,167 @@ export class RealizationGridProvider
         );
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
+    setupBindings({
+        setting,
+        makeSharedResult,
         queryClient,
-    }: DefineDependenciesArgs<RealizationGridSettings>) {
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
+    }: SetupBindingsContext<RealizationGridSettings>) {
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read({ read }) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                const ensembleIdents = ensembles
+                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                    .map((ensemble) => ensemble.getIdent());
 
-            const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent());
-
-            return ensembleIdents;
+                return ensembleIdents;
+            },
         });
 
-        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
-
-            if (!ensembleIdent) {
-                return [];
-            }
-
-            const realizations = realizationFilterFunc(ensembleIdent);
-
-            return [...realizations];
+        setting(Setting.REALIZATION).bindValueConstraints({
+            read({ read }) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunction }) {
+                if (!ensembleIdent) {
+                    return [];
+                }
+                const realizations = realizationFilterFunction(ensembleIdent);
+                return [...realizations];
+            },
         });
-        const realizationGridDataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realization = getLocalSetting(Setting.REALIZATION);
 
-            if (!ensembleIdent || realization === null) {
-                return null;
-            }
+        const gridData = makeSharedResult({
+            debugName: "RealizationGridData",
+            read({ read }) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realization: read.localSetting(Setting.REALIZATION),
+                };
+            },
+            async resolve({ ensembleIdent, realization }, abortSignal) {
+                if (!ensembleIdent || realization === null) {
+                    return null;
+                }
 
-            return await queryClient.fetchQuery({
-                ...getGridModelsInfoOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                        realization_num: realization,
-                        ...makeCacheBustingQueryParam(ensembleIdent),
+                return await queryClient.fetchQuery({
+                    ...getGridModelsInfoOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
+                            realization_num: realization,
+                            ...makeCacheBustingQueryParam(ensembleIdent),
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
+        });
+
+        setting(Setting.GRID_NAME).bindValueConstraints({
+            read({ read }) {
+                return {
+                    gridData: read.sharedResult(gridData),
+                };
+            },
+            resolve({ gridData }) {
+                if (!gridData) {
+                    return [];
+                }
+
+                const availableGridNames = [...Array.from(new Set(gridData.map((gridModelInfo) => gridModelInfo.grid_name)))];
+
+                return availableGridNames;
+            },
+        });
+
+        setting(Setting.ATTRIBUTE).bindValueConstraints({
+            read({ read }) {
+                return {
+                    gridName: read.localSetting(Setting.GRID_NAME),
+                    gridData: read.sharedResult(gridData),
+                };
+            },
+            resolve({ gridName, gridData }) {
+                if (!gridName || !gridData) {
+                    return [];
+                }
+
+                const gridAttributeArr =
+                    gridData.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
+
+                const availableGridAttributes = [
+                    ...Array.from(new Set(gridAttributeArr.map((gridAttribute) => gridAttribute.property_name))),
+                ];
+
+                return availableGridAttributes;
+            },
+        });
+
+        setting(Setting.GRID_LAYER_RANGE).bindValueConstraints({
+            read({ read }) {
+                return {
+                    gridName: read.localSetting(Setting.GRID_NAME),
+                    gridData: read.sharedResult(gridData),
+                };
+            },
+            resolve({ gridName, gridData }) {
+                if (!gridName || !gridData) {
+                    return NO_UPDATE;
+                }
+
+                const gridDimensions =
+                    gridData.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
+                if (!gridDimensions) {
+                    return NO_UPDATE;
+                }
+
+                return {
+                    range: {
+                        i: [0, gridDimensions.i_count - 1, 1],
+                        j: [0, gridDimensions.j_count - 1, 1],
+                        k: [0, gridDimensions.k_count - 1, 1],
                     },
-                    signal: abortSignal,
-                }),
-            });
+                    zones: gridDimensions.subgrids,
+                };
+            },
         });
 
-        valueConstraintsUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
-            const data = getHelperDependency(realizationGridDataDep);
+        setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
+            read({ read }) {
+                return {
+                    gridName: read.localSetting(Setting.GRID_NAME),
+                    gridAttribute: read.localSetting(Setting.ATTRIBUTE),
+                    gridData: read.sharedResult(gridData),
+                };
+            },
+            resolve({ gridName, gridAttribute, gridData }) {
+                if (!gridName || !gridAttribute || !gridData) {
+                    return [];
+                }
 
-            if (!data) {
-                return [];
-            }
+                const gridAttributeArr =
+                    gridData.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
 
-            const availableGridNames = [...Array.from(new Set(data.map((gridModelInfo) => gridModelInfo.grid_name)))];
-
-            return availableGridNames;
-        });
-
-        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(Setting.GRID_NAME);
-            const data = getHelperDependency(realizationGridDataDep);
-
-            if (!gridName || !data) {
-                return [];
-            }
-
-            const gridAttributeArr =
-                data.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
-
-            const availableGridAttributes = [
-                ...Array.from(new Set(gridAttributeArr.map((gridAttribute) => gridAttribute.property_name))),
-            ];
-
-            return availableGridAttributes;
-        });
-
-        valueConstraintsUpdater(Setting.GRID_LAYER_RANGE, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(Setting.GRID_NAME);
-            const data = getHelperDependency(realizationGridDataDep);
-
-            if (!gridName || !data) {
-                return NO_UPDATE;
-            }
-
-            const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
-            if (!gridDimensions) {
-                return NO_UPDATE;
-            }
-
-            return {
-                range: {
-                    i: [0, gridDimensions.i_count - 1, 1],
-                    j: [0, gridDimensions.j_count - 1, 1],
-                    k: [0, gridDimensions.k_count - 1, 1],
-                },
-                zones: gridDimensions.subgrids,
-            };
-        });
-
-        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(Setting.GRID_NAME);
-            const gridAttribute = getLocalSetting(Setting.ATTRIBUTE);
-            const data = getHelperDependency(realizationGridDataDep);
-
-            if (!gridName || !gridAttribute || !data) {
-                return [];
-            }
-
-            const gridAttributeArr =
-                data.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
-
-            const availableTimeOrIntervals = [
-                ...Array.from(
-                    new Set(
-                        gridAttributeArr
-                            .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                const availableTimeOrIntervals = [
+                    ...Array.from(
+                        new Set(
+                            gridAttributeArr
+                                .filter((attr) => attr.property_name === gridAttribute)
+                                .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                        ),
                     ),
-                ),
-            ];
+                ];
 
-            return availableTimeOrIntervals;
+                return availableTimeOrIntervals;
+            },
         });
     }
 }

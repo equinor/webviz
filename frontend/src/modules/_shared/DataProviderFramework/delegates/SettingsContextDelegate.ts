@@ -9,13 +9,19 @@ import {
 } from "../framework/DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../framework/SettingManager/SettingManager";
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
-import type { CustomSettingsHandler, SettingAttributes, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
+import type {
+    CustomSettingsHandler,
+    ResolverSpec,
+    SettingAttributes,
+    SetupBindingsContext,
+    SharedResult,
+} from "../interfacesAndTypes/customSettingsHandler";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
-import { Dependency } from "./_utils/Dependency";
+import { Dependency, type Read } from "./_utils/Dependency";
 
 export enum SettingsContextStatus {
     VALID_SETTINGS = "VALID_SETTINGS",
@@ -57,13 +63,7 @@ export class SettingsContextDelegate<
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
-    private _customSettingsHandler: CustomSettingsHandler<
-        TSettings,
-        TStoredData,
-        TSettingTypes,
-        TSettingKey,
-        TStoredDataKey
-    >;
+    private _customSettingsHandler: CustomSettingsHandler<TSettings, TStoredData, TSettingTypes, TSettingKey>;
     private _dataProviderManager: DataProviderManager;
     private _settings: {
         [K in TSettingKey]: SettingManager<K>;
@@ -78,16 +78,10 @@ export class SettingsContextDelegate<
     private _storedDataLoadingStatus: { [K in TStoredDataKey]: boolean } = {} as {
         [K in TStoredDataKey]: boolean;
     };
-    private _dependencies: Dependency<any, TSettings, any, any>[] = [];
+    private _dependencies: Dependency<any, TSettings, any, any, any>[] = [];
 
     constructor(
-        customSettingsHandler: CustomSettingsHandler<
-            TSettings,
-            TStoredData,
-            TSettingTypes,
-            TSettingKey,
-            TStoredDataKey
-        >,
+        customSettingsHandler: CustomSettingsHandler<TSettings, TStoredData, TSettingTypes, TSettingKey>,
         dataProviderManager: DataProviderManager,
         settings: { [K in TSettingKey]: SettingManager<K> },
     ) {
@@ -122,7 +116,7 @@ export class SettingsContextDelegate<
             );
         }
 
-        this.createDependencies();
+        this.setupDependencies();
     }
 
     getDataProviderManager(): DataProviderManager {
@@ -297,7 +291,7 @@ export class SettingsContextDelegate<
         }
     }
 
-    createDependencies(): void {
+    setupDependencies(): void {
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("dependencies");
 
         this._dependencies = [];
@@ -371,29 +365,39 @@ export class SettingsContextDelegate<
             return this.getDataProviderManager.bind(this)().getGlobalSetting(key);
         };
 
-        const valueConstraintsUpdater = <K extends TSettingKey>(
-            settingKey: K,
-            updateFunc: UpdateFunc<
-                SettingTypeDefinitions[K]["valueConstraints"],
-                TSettings,
-                TSettingTypes,
-                TSettingKey
-            >,
-        ): Dependency<SettingTypeDefinitions[K]["valueConstraints"], TSettings, TSettingTypes, TSettingKey> => {
-            const dependency = new Dependency<
-                SettingTypeDefinitions[K]["valueConstraints"],
-                TSettings,
-                TSettingTypes,
-                TSettingKey
-            >(
+        const createDependency = <T, TReads extends Record<string, Read<any>> = Record<string, never>>(
+            debugName: string,
+            resolverSpec: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
+        ): Dependency<T, TSettings, TSettingTypes, TSettingKey, TReads> => {
+            const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey, TReads>(
                 localSettingManagerGetter,
                 globalSettingGetter,
-                updateFunc,
+                resolverSpec,
                 makeLocalSettingGetter,
                 loadingStateGetter,
                 makeGlobalSettingGetter,
+                debugName,
             );
             this._dependencies.push(dependency);
+            dependency.initialize();
+            return dependency;
+        };
+
+        const bindValueConstraints = <
+            K extends TSettingKey,
+            TReads extends Record<string, Read<any>> = Record<string, never>,
+        >(
+            settingKey: K,
+            resolverSpec: ResolverSpec<
+                SettingTypeDefinitions[K]["valueConstraints"],
+                TSettings,
+                TSettingTypes,
+                TSettingKey,
+                TReads
+            >,
+        ): Dependency<SettingTypeDefinitions[K]["valueConstraints"], TSettings, TSettingTypes, TSettingKey, TReads> => {
+            const debugName = `ValueConstraintsUpdater_${settingKey}`;
+            const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribe((valueConstraints) => {
                 if (valueConstraints === null) {
@@ -411,24 +415,18 @@ export class SettingsContextDelegate<
                 this.handleSettingChanged();
             });
 
-            dependency.initialize();
-
             return dependency;
         };
 
-        const settingAttributesUpdater = <K extends TSettingKey>(
+        const bindAttributes = <
+            K extends TSettingKey,
+            TReads extends Record<string, Read<any>> = Record<string, never>,
+        >(
             settingKey: K,
-            updateFunc: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
-        ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey> => {
-            const dependency = new Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>(
-                localSettingManagerGetter,
-                globalSettingGetter,
-                updateFunc,
-                makeLocalSettingGetter,
-                loadingStateGetter,
-                makeGlobalSettingGetter,
-            );
-            this._dependencies.push(dependency);
+            resolverSpec: ResolverSpec<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads>,
+        ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads> => {
+            const debugName = `SettingAttributesUpdater_${settingKey}`;
+            const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribe((attributes: Partial<SettingAttributes> | null) => {
                 if (attributes === null) {
@@ -441,29 +439,24 @@ export class SettingsContextDelegate<
                 this.handleSettingChanged();
             });
 
-            dependency.initialize();
-
             return dependency;
         };
 
-        const storedDataUpdater = <K extends TStoredDataKey>(
+        const bindStoredData = <
+            K extends TStoredDataKey,
+            TReads extends Record<string, Read<any>> = Record<string, never>,
+        >(
             key: K,
-            updateFunc: UpdateFunc<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TSettingKey>,
-        ): Dependency<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TSettingKey> => {
-            const dependency = new Dependency<
+            resolverSpec: ResolverSpec<
                 NullableStoredData<TStoredData>[K],
                 TSettings,
                 TSettingTypes,
-                TSettingKey
-            >(
-                localSettingManagerGetter,
-                globalSettingGetter,
-                updateFunc,
-                makeLocalSettingGetter,
-                loadingStateGetter,
-                makeGlobalSettingGetter,
-            );
-            this._dependencies.push(dependency);
+                TSettingKey,
+                TReads
+            >,
+        ): Dependency<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TSettingKey, TReads> => {
+            const debugName = `StoredDataUpdater_${String(key)}`;
+            const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribe((storedData: TStoredData[K] | null) => {
                 this.setStoredData(key, storedData);
@@ -477,41 +470,65 @@ export class SettingsContextDelegate<
                 }
             });
 
-            dependency.initialize();
-
             return dependency;
         };
 
-        const helperDependency = <T>(update: UpdateFunc<T, TSettings, TSettingTypes, TSettingKey>) => {
-            const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
-                localSettingManagerGetter,
-                globalSettingGetter,
-                update,
-                makeLocalSettingGetter,
-                loadingStateGetter,
-                makeGlobalSettingGetter,
-            );
-            this._dependencies.push(dependency);
+        const makeSharedResult = <T, TReads extends Record<string, Read<any>> = Record<string, never>>(
+            args: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads> & { debugName: string },
+        ) => {
+            const { debugName, ...resolverSpec } = args;
+            const dependency = createDependency(debugName, resolverSpec as ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>);
 
             dependency.subscribeLoading(() => {
                 this.handleSettingChanged();
             });
 
-            dependency.initialize();
-
-            return dependency;
+            return dependency as SharedResult<T, TSettings, TSettingTypes, TSettingKey, TReads>;
         };
 
-        if (this._customSettingsHandler.defineDependencies) {
-            this._customSettingsHandler.defineDependencies({
-                valueConstraintsUpdater: valueConstraintsUpdater.bind(this),
-                settingAttributesUpdater: settingAttributesUpdater.bind(this),
-                storedDataUpdater: storedDataUpdater.bind(this),
-                helperDependency: helperDependency.bind(this),
-                workbenchSession: this.getDataProviderManager().getWorkbenchSession(),
-                workbenchSettings: this.getDataProviderManager().getWorkbenchSettings(),
-                queryClient: this.getDataProviderManager().getQueryClient(),
-            });
+        const context: SetupBindingsContext<TSettings, TStoredData, TSettingTypes, TSettingKey, TStoredDataKey> = {
+            setting: <K extends TSettingKey>(settingKey: K) => ({
+                bindValueConstraints: <TReads extends Record<string, Read<any>> = Record<string, never>>(
+                    resolverSpec: ResolverSpec<
+                        SettingTypeDefinitions[K]["valueConstraints"],
+                        TSettings,
+                        TSettingTypes,
+                        TSettingKey,
+                        TReads
+                    >,
+                ) => bindValueConstraints(settingKey, resolverSpec),
+                bindAttributes: <TReads extends Record<string, Read<any>> = Record<string, never>>(
+                    resolverSpec: ResolverSpec<
+                        Partial<SettingAttributes>,
+                        TSettings,
+                        TSettingTypes,
+                        TSettingKey,
+                        TReads
+                    >,
+                ) => bindAttributes(settingKey, resolverSpec),
+            }),
+
+            storedData: <K extends TStoredDataKey>(key: K) => ({
+                bindValue: <TReads extends Record<string, Read<any>> = Record<string, never>>(
+                    resolverSpec: ResolverSpec<
+                        NullableStoredData<TStoredData>[K],
+                        TSettings,
+                        TSettingTypes,
+                        TSettingKey,
+                        TReads
+                    >,
+                ) => bindStoredData(key, resolverSpec),
+            }),
+
+            makeSharedResult,
+
+            workbenchSession: this.getDataProviderManager().getWorkbenchSession(),
+            workbenchSettings: this.getDataProviderManager().getWorkbenchSettings(),
+            queryClient: this.getDataProviderManager().getQueryClient(),
+        };
+
+        if (this._customSettingsHandler.setupBindings) {
+            this._customSettingsHandler.setupBindings(context);
         }
     }
 

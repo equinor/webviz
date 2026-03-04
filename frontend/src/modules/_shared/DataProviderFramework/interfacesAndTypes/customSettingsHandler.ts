@@ -3,79 +3,130 @@ import type { QueryClient } from "@tanstack/query-core";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
-import type { Accessors, Dependency, NoUpdate, Pending, Read, ReadyComputation } from "../delegates/_utils/Dependency";
+import type { Accessors, Dependency, NonPending, NoUpdate, Read, UnwrapRead } from "../delegates/_utils/Dependency";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 import type { NullableStoredData, StoredData } from "./sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "./utils";
-
-export interface GetHelperDependency<
-    TSettings extends Settings,
-    TSettingTypes extends MakeSettingTypesMap<TSettings>,
-    TKey extends SettingsKeysFromTuple<TSettings>,
-> {
-    <TDep>(dep: Dependency<TDep, TSettings, TSettingTypes, TKey>): Awaited<TDep> | null;
-}
 
 export type SettingAttributes = {
     visible: boolean;
     enabled: boolean;
 };
 
-type UpdateResult<T> = Awaited<T> | NoUpdate | Pending;
 type MaybePromise<T> = T | Promise<T>;
 
-export interface UpdateFunc<
+/**
+ * A Resolver produces a (possibly async) value based on reads.
+ * The binding site decides what to do with the resolved value.
+ */
+export type ResolverSpec<
     TReturnValue,
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings>,
+    TReads extends Record<string, Read<any>> = Record<string, never>,
+> = {
+    read?: (readArgs: { read: Accessors<TSettings, TSettingTypes, TKey> }) => TReads;
+    resolve: (
+        values: { [K in keyof TReads]: UnwrapRead<TReads[K]> },
+        abortSignal: AbortSignal,
+    ) => MaybePromise<NonPending<TReturnValue> | NoUpdate>;
+};
+
+/**
+ * Domain-scoped API for a single setting.
+ * Method names include "resolve" so call sites clearly read as dynamic wiring.
+ */
+export interface SettingBindings<
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>,
+    TSettingKey extends TKey,
 > {
-    (args: {
-        whenReady: <TReads extends Record<string, Read<any>>>(
-            readFn: (a: Accessors<TSettings, TSettingTypes, TKey>) => TReads,
-        ) => ReadyComputation<TReads, TReturnValue>;
-        abortSignal: AbortSignal;
-    }): MaybePromise<UpdateResult<TReturnValue>>;
+    bindAttributes<TReads extends Record<string, Read<any>> = Record<string, never>>(
+        args: ResolverSpec<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey, TReads>,
+    ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey, TReads>;
+
+    bindValueConstraints<TReads extends Record<string, Read<any>> = Record<string, never>>(
+        args: ResolverSpec<
+            SettingTypeDefinitions[TSettingKey]["valueConstraints"],
+            TSettings,
+            TSettingTypes,
+            TKey,
+            TReads
+        >,
+    ): Dependency<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey, TReads>;
 }
 
-export interface DefineBasicDependenciesArgs<
+/**
+ * Domain-scoped API for a stored-data key.
+ */
+export interface StoredDataBindings<
+    TSettings extends Settings,
+    TStoredData extends StoredData,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>,
+    K extends keyof TStoredData,
+> {
+    bindValue<TReads extends Record<string, Read<any>> = Record<string, never>>(
+        args: ResolverSpec<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TKey, TReads>,
+    ): Dependency<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TKey, TReads>;
+}
+
+declare const sharedResultBrand: unique symbol;
+
+export type SharedResult<
+    T,
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>,
+    TReads extends Record<string, Read<any>> = Record<string, never>,
+> = {
+    readonly [sharedResultBrand]: true;
+    readonly debugName: string;
+} & Dependency<T, TSettings, TSettingTypes, TKey, TReads>;
+/**
+ * Settings-only context.
+ */
+export interface SetupBasicBindingsContext<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > {
-    settingAttributesUpdater: <TSettingKey extends TKey>(
+    setting: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
-        update: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
-    ) => Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>;
-    valueConstraintsUpdater: <TSettingKey extends TKey>(
-        settingKey: TSettingKey,
-        update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>,
-    ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>;
-    helperDependency: <T>(
-        update: UpdateFunc<T, TSettings, TSettingTypes, TKey>,
-    ) => Dependency<T, TSettings, TSettingTypes, TKey>;
+    ) => SettingBindings<TSettings, TSettingTypes, TKey, TSettingKey>;
+
+    /**
+     * Creates a reusable intermediate result to be consumed via read.dependency(dep).
+     */
+    makeSharedResult: <T, TReads extends Record<string, Read<any>> = Record<string, never>>(
+        args: ResolverSpec<T, TSettings, TSettingTypes, TKey, TReads> & { debugName: string },
+    ) => SharedResult<T, TSettings, TSettingTypes, TKey, TReads>;
+
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     queryClient: QueryClient;
 }
 
-export interface DefineDependenciesArgs<
+/**
+ * Settings + stored-data context.
+ */
+export interface SetupBindingsContext<
     TSettings extends Settings,
     TStoredData extends StoredData = Record<string, never>,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
-> extends DefineBasicDependenciesArgs<TSettings, TSettingTypes, TKey> {
-    storedDataUpdater: <K extends TStoredDataKey>(
+> extends SetupBasicBindingsContext<TSettings, TSettingTypes, TKey> {
+    storedData: <K extends TStoredDataKey>(
         key: K,
-        update: UpdateFunc<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TKey>,
-    ) => Dependency<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TKey>;
+    ) => StoredDataBindings<TSettings, TStoredData, TSettingTypes, TKey, K>;
 }
 
 /**
- * This interface is describing what methods and members a custom settings handler must implement.
- * This can either be used by a data provider or by a group.
+ * Custom settings handler contract.
  */
 export interface CustomSettingsHandler<
     TSettings extends Settings,
@@ -84,24 +135,12 @@ export interface CustomSettingsHandler<
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > {
-    /**
-     * The settings that this handler is using/providing.
-     */
     settings: TSettings;
 
-    /**
-     * A method that returns the default values of the settings.
-     * @returns The default values of the settings.
-     */
     getDefaultSettingsValues?(): Partial<TSettingTypes>;
 
     /**
-     * A method that defines the dependencies of the settings of the data provider.
-     * A dependency can either be an updater for the value constraints of a setting or a stored data object, or a helper dependency (e.g. a fetching operation).
-     *
-     * @param args An object containing the functions for defining the different dependencies.
+     * Called once during initialization to wire up dynamic bindings and shared resolvers.
      */
-    defineDependencies(
-        args: DefineDependenciesArgs<TSettings, TStoredData, TSettingTypes, TSettingKey, TStoredDataKey>,
-    ): void;
+    setupBindings(ctx: SetupBindingsContext<TSettings, TStoredData, TSettingTypes, TSettingKey, TStoredDataKey>): void;
 }

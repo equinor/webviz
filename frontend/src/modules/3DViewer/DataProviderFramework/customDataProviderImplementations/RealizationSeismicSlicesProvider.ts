@@ -11,7 +11,7 @@ import type {
     DataProviderInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { NullableStoredData } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -171,161 +171,201 @@ export class RealizationSeismicSlicesProvider
         }));
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
-        storedDataUpdater,
+    setupBindings({
+        setting,
+        storedData,
+        makeSharedResult,
         queryClient,
-    }: DefineDependenciesArgs<RealizationSeismicSlicesSettings, RealizationSeismicSlicesStoredData>): void {
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
+    }: SetupBindingsContext<RealizationSeismicSlicesSettings, RealizationSeismicSlicesStoredData>): void {
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read({ read }) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                const ensembleIdents = ensembles
+                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                    .map((ensemble) => ensemble.getIdent());
 
-            const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent());
-
-            return ensembleIdents;
+                return ensembleIdents;
+            },
         });
 
-        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
+        setting(Setting.REALIZATION).bindValueConstraints({
+            read({ read }) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunc: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunc }) {
+                if (!ensembleIdent) {
+                    return [];
+                }
 
-            if (!ensembleIdent) {
-                return [];
-            }
+                const realizations = realizationFilterFunc(ensembleIdent);
 
-            const realizations = realizationFilterFunc(ensembleIdent);
-
-            return [...realizations];
+                return [...realizations];
+            },
         });
 
-        const realizationSeismicCrosslineDataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realization = getLocalSetting(Setting.REALIZATION);
+        const realizationSeismicCrosslineDataDep = makeSharedResult({
+            debugName: "RealizationSeismicCrosslineData",
+            read({ read }) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realization: read.localSetting(Setting.REALIZATION),
+                };
+            },
+            async resolve({ ensembleIdent, realization }, abortSignal) {
+                if (!ensembleIdent || realization === null) {
+                    return null;
+                }
 
-            if (!ensembleIdent || realization === null) {
-                return null;
-            }
-
-            return await queryClient.fetchQuery({
-                ...getSeismicCubeMetaListOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                        ...makeCacheBustingQueryParam(ensembleIdent),
-                    },
-                    signal: abortSignal,
-                }),
-            });
+                return await queryClient.fetchQuery({
+                    ...getSeismicCubeMetaListOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
+                            ...makeCacheBustingQueryParam(ensembleIdent),
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        storedDataUpdater("seismicCubeMeta", ({ getHelperDependency, getLocalSetting }) => {
-            const data = getHelperDependency(realizationSeismicCrosslineDataDep);
-            const attribute = getLocalSetting(Setting.ATTRIBUTE);
-            const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
+        storedData("seismicCubeMeta").bindValue({
+            read({ read }) {
+                return {
+                    data: read.sharedResult(realizationSeismicCrosslineDataDep),
+                    attribute: read.localSetting(Setting.ATTRIBUTE),
+                    timeOrInterval: read.localSetting(Setting.TIME_OR_INTERVAL),
+                };
+            },
+            resolve({ data, attribute, timeOrInterval }) {
+                if (!data || !attribute || !timeOrInterval) {
+                    return null;
+                }
 
-            if (!data || !attribute || !timeOrInterval) {
-                return null;
-            }
-
-            return (
-                data.find(
-                    (seismicCubeMeta) =>
-                        seismicCubeMeta.seismicAttribute === attribute &&
-                        seismicCubeMeta.isoDateOrInterval === timeOrInterval,
-                ) ?? null
-            );
+                return (
+                    data.find(
+                        (seismicCubeMeta) =>
+                            seismicCubeMeta.seismicAttribute === attribute &&
+                            seismicCubeMeta.isoDateOrInterval === timeOrInterval,
+                    ) ?? null
+                );
+            },
         });
 
-        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(realizationSeismicCrosslineDataDep);
+        setting(Setting.ATTRIBUTE).bindValueConstraints({
+            read({ read }) {
+                return {
+                    data: read.sharedResult(realizationSeismicCrosslineDataDep),
+                };
+            },
+            resolve({ data }) {
+                if (!data) {
+                    return [];
+                }
 
-            if (!data) {
-                return [];
-            }
+                const availableSeismicAttributes = Array.from(
+                    new Set(data.filter((el) => el.isDepth).map((el) => el.seismicAttribute)),
+                ).sort();
 
-            const availableSeismicAttributes = Array.from(
-                new Set(data.filter((el) => el.isDepth).map((el) => el.seismicAttribute)),
-            ).sort();
-
-            return availableSeismicAttributes;
+                return availableSeismicAttributes;
+            },
         });
 
-        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
+        setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
+            read({ read }) {
+                return {
+                    seismicAttribute: read.localSetting(Setting.ATTRIBUTE),
+                    data: read.sharedResult(realizationSeismicCrosslineDataDep),
+                };
+            },
+            resolve({ seismicAttribute, data }) {
+                if (!seismicAttribute || !data) {
+                    return [];
+                }
 
-            const data = getHelperDependency(realizationSeismicCrosslineDataDep);
-
-            if (!seismicAttribute || !data) {
-                return [];
-            }
-
-            const availableTimeOrIntervals = [
-                ...Array.from(
-                    new Set(
-                        data
-                            .filter((surface) => surface.seismicAttribute === seismicAttribute)
-                            .map((el) => el.isoDateOrInterval),
+                const availableTimeOrIntervals = [
+                    ...Array.from(
+                        new Set(
+                            data
+                                .filter((surface) => surface.seismicAttribute === seismicAttribute)
+                                .map((el) => el.isoDateOrInterval),
+                        ),
                     ),
-                ),
-            ];
-
-            return availableTimeOrIntervals;
-        });
-
-        valueConstraintsUpdater(Setting.SEISMIC_SLICES, ({ getLocalSetting, getHelperDependency }) => {
-            const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
-            const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
-            const data = getHelperDependency(realizationSeismicCrosslineDataDep);
-
-            if (!seismicAttribute || !timeOrInterval || !data) {
-                return [
-                    [0, 0, 1],
-                    [0, 0, 1],
-                    [0, 0, 1],
                 ];
-            }
-            const seismicInfo = data.filter(
-                (seismicInfos) =>
-                    seismicInfos.seismicAttribute === seismicAttribute &&
-                    seismicInfos.isoDateOrInterval === timeOrInterval,
-            )[0];
 
-            const xMin = 0;
-            const xMax = seismicInfo.spec.numCols - 1;
-            const xInc = 1;
-
-            const yMin = 0;
-            const yMax = seismicInfo.spec.numRows - 1;
-            const yInc = 1;
-
-            const zMin = seismicInfo.spec.zOrigin;
-            const zMax =
-                seismicInfo.spec.zOrigin +
-                seismicInfo.spec.zInc * seismicInfo.spec.zFlip * (seismicInfo.spec.numLayers - 1);
-            const zInc = seismicInfo.spec.zInc;
-
-            return [
-                [xMin, xMax, xInc],
-                [yMin, yMax, yInc],
-                [zMin, zMax, zInc],
-            ];
+                return availableTimeOrIntervals;
+            },
         });
 
-        storedDataUpdater("seismicSlices", ({ getLocalSetting }) => {
-            const slices = getLocalSetting(Setting.SEISMIC_SLICES);
+        setting(Setting.SEISMIC_SLICES).bindValueConstraints({
+            read({ read }) {
+                return {
+                    seismicAttribute: read.localSetting(Setting.ATTRIBUTE),
+                    timeOrInterval: read.localSetting(Setting.TIME_OR_INTERVAL),
+                    data: read.sharedResult(realizationSeismicCrosslineDataDep),
+                };
+            },
+            resolve({ seismicAttribute, timeOrInterval, data }) {
+                if (!seismicAttribute || !timeOrInterval || !data) {
+                    return [
+                        [0, 0, 1],
+                        [0, 0, 1],
+                        [0, 0, 1],
+                    ];
+                }
+                const seismicInfo = data.filter(
+                    (seismicInfos) =>
+                        seismicInfos.seismicAttribute === seismicAttribute &&
+                        seismicInfos.isoDateOrInterval === timeOrInterval,
+                )[0];
 
-            if (!slices) {
-                return null;
-            }
+                const xMin = 0;
+                const xMax = seismicInfo.spec.numCols - 1;
+                const xInc = 1;
 
-            if (slices.applied) {
-                return slices.value;
-            }
+                const yMin = 0;
+                const yMax = seismicInfo.spec.numRows - 1;
+                const yInc = 1;
 
-            return NO_UPDATE;
+                const zMin = seismicInfo.spec.zOrigin;
+                const zMax =
+                    seismicInfo.spec.zOrigin +
+                    seismicInfo.spec.zInc * seismicInfo.spec.zFlip * (seismicInfo.spec.numLayers - 1);
+                const zInc = seismicInfo.spec.zInc;
+
+                return [
+                    [xMin, xMax, xInc],
+                    [yMin, yMax, yInc],
+                    [zMin, zMax, zInc],
+                ];
+            },
+        });
+
+        storedData("seismicSlices").bindValue({
+            read({ read }) {
+                return {
+                    slices: read.localSetting(Setting.SEISMIC_SLICES),
+                };
+            },
+            resolve({ slices }) {
+                if (!slices) {
+                    return null;
+                }
+
+                if (slices.applied) {
+                    return slices.value;
+                }
+
+                return NO_UPDATE;
+            },
         });
     }
 }

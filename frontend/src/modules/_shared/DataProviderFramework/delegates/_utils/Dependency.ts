@@ -2,7 +2,7 @@ import { isCancelledError } from "@tanstack/react-query";
 
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
 import { SettingTopic, type SettingManager } from "../../framework/SettingManager/SettingManager";
-import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
+import type { ResolverSpec, SharedResult } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
 
@@ -11,6 +11,18 @@ export type NoUpdate = typeof NO_UPDATE;
 
 const PENDING = Symbol("PENDING");
 export type Pending = typeof PENDING;
+
+export type Accessors<
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>,
+> = {
+    localSetting: <K extends TKey>(settingName: K) => Read<TSettingTypes[K]>;
+    globalSetting: <T extends keyof GlobalSettings>(settingName: T) => Read<GlobalSettings[T]>;
+    sharedResult: <TDep, THandleReads extends Record<string, Read<any>> = Record<string, never>>(
+        handle: SharedResult<TDep, TSettings, TSettingTypes, TKey, THandleReads>,
+    ) => Read<Awaited<TDep> | null>;
+};
 
 /*
  * Dependency class is used to represent a node in the dependency graph of a data provider settings context.
@@ -28,8 +40,9 @@ export class Dependency<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings>,
+    TReads extends Record<string, Read<any>> = Record<string, never>,
 > {
-    private _updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>;
+    private _resolverSpec: ResolverSpec<TReturnValue, TSettings, TSettingTypes, TKey, TReads>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
     private _isLoading = false;
@@ -45,7 +58,7 @@ export class Dependency<
     ) => void;
     private _cachedSettingsMap: Map<string, any> = new Map();
     private _cachedGlobalSettingsMap: Map<string, any> = new Map();
-    private _cachedDependenciesMap: Map<Dependency<any, TSettings, TSettingTypes, any>, any> = new Map();
+    private _cachedDependenciesMap: Map<Dependency<any, TSettings, TSettingTypes, any, any>, any> = new Map();
     private _cachedValue: Awaited<TReturnValue> | null = null;
     private _abortController: AbortController | null = null;
     private _isInitialized = false;
@@ -55,21 +68,25 @@ export class Dependency<
     private _queued = false;
     private _unsubscribers: (() => void)[] = [];
     private _isProbing = false;
+    private _debugName: string;
 
     constructor(
         localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>,
         globalSettingGetter: <K extends keyof GlobalSettings>(key: K) => GlobalSettings[K] | null,
-        updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>,
+        resolverSpec: ResolverSpec<TReturnValue, TSettings, TSettingTypes, TKey, TReads>,
         makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void,
         localSettingLoadingStateGetter: <K extends TKey>(key: K) => boolean,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
             key: K,
             handler: (value: GlobalSettings[K] | null) => void,
         ) => void,
+        debugName: string,
     ) {
+        this._debugName = debugName;
+
         this._localSettingManagerGetter = localSettingManagerGetter;
         this._globalSettingGetter = globalSettingGetter;
-        this._updateFunc = updateFunc;
+        this._resolverSpec = resolverSpec;
         this._makeLocalSettingGetter = makeLocalSettingGetter;
         this._localSettingLoadingStateGetter = localSettingLoadingStateGetter;
         this._makeGlobalSettingGetter = makeGlobalSettingGetter;
@@ -208,8 +225,8 @@ export class Dependency<
         return this._cachedGlobalSettingsMap.get(settingName as string);
     }
 
-    private getHelperDependency<TDep>(
-        dep: Dependency<TDep, TSettings, TSettingTypes, TKey>,
+    private getHelperDependency<TDep, TDepReads extends Record<string, Read<any>> = Record<string, never>>(
+        dep: Dependency<TDep, TSettings, TSettingTypes, TKey, TDepReads>,
     ): Awaited<TDep> | Pending | null {
         if (!this._isInitialized) {
             this._hasParentDependencies = true;
@@ -252,20 +269,64 @@ export class Dependency<
         // Establishing subscriptions
         this._isProbing = true;
         try {
-            await this._updateFunc({
-                whenReady: this.makeReadyComputation.bind(this),
-                abortSignal: this._abortController.signal,
-            });
+            this.runResolverReadOnly();
         } finally {
             this._isProbing = false;
         }
 
         // If there are no dependencies, we can call the update function
         if (!this._hasParentDependencies) {
-            await this.callUpdateFunc();
+            await this.resolve();
         }
 
         this._isInitialized = true;
+    }
+
+    private makeAccessors(): Accessors<TSettings, TSettingTypes, TKey> {
+        return {
+            localSetting: (key) => {
+                const value = this.getLocalSetting(key);
+                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
+            },
+            globalSetting: (key) => {
+                const value = this.getGlobalSetting(key);
+                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
+            },
+            sharedResult: (handle) => {
+                const value = this.getHelperDependency(handle);
+                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
+            },
+        };
+    }
+
+    private runResolverReadOnly(): void {
+        if (!this._resolverSpec.read) return;
+
+        // Calling read establishes subscriptions via the accessors
+        this._resolverSpec.read({ read: this.makeAccessors() });
+    }
+
+    private async runResolver(): Promise<Awaited<TReturnValue> | NoUpdate | Pending> {
+        if (this._isProbing) return PENDING;
+
+        const abortSignal = this._abortController?.signal;
+        if (!abortSignal) {
+            throw new Error("AbortController is not initialized");
+        }
+
+        // No reads: always runnable
+        if (!this._resolverSpec.read) {
+            return (await this._resolverSpec.resolve({} as any, abortSignal)) as any;
+        }
+
+        const reads = this._resolverSpec.read({ read: this.makeAccessors() });
+
+        if (!allReady(reads)) {
+            return PENDING;
+        }
+
+        const values = unwrapReads(reads);
+        return (await this._resolverSpec.resolve(values as any, abortSignal)) as any;
     }
 
     private invalidate(): void {
@@ -278,7 +339,7 @@ export class Dependency<
             return;
         }
 
-        this._updatePromise = this.callUpdateFunc().finally(() => {
+        this._updatePromise = this.resolve().finally(() => {
             this._updatePromise = null;
             if (this._queued) {
                 this._queued = false;
@@ -287,7 +348,7 @@ export class Dependency<
         });
     }
 
-    private async callUpdateFunc() {
+    private async resolve() {
         if (this._abortController) {
             this._abortController.abort();
             this._abortController = null;
@@ -297,10 +358,7 @@ export class Dependency<
 
         let newValue: Awaited<TReturnValue> | null | NoUpdate | Pending = null;
         try {
-            newValue = await this._updateFunc({
-                whenReady: this.makeReadyComputation.bind(this),
-                abortSignal: this._abortController.signal,
-            });
+            newValue = await this.runResolver();
 
             // If any of the dependencies are still loading, we don't want to update the value or notify subscribers yet
             if (newValue === PENDING) {
@@ -341,28 +399,6 @@ export class Dependency<
             callback(newValue);
         }
     }
-
-    private makeReadyComputation<TReads extends Record<string, Read<any>>>(
-        readFn: (a: Accessors<TSettings, TSettingTypes, TKey>) => TReads,
-    ): ReadyComputation<TReads, TReturnValue> {
-        const accessors: Accessors<TSettings, TSettingTypes, TKey> = {
-            localSetting: (key) => {
-                const value = this.getLocalSetting(key);
-                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
-            },
-            globalSetting: (key) => {
-                const value = this.getGlobalSetting(key);
-                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
-            },
-            dependency: (dep) => {
-                const value = this.getHelperDependency(dep);
-                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
-            },
-        };
-
-        const reads = readFn(accessors);
-        return new ReadyComputation<TReads, TReturnValue>(reads, this._isProbing);
-    }
 }
 
 function isAbortLike(e: any) {
@@ -377,51 +413,27 @@ type Ready<T> = { readonly __ready: true; readonly value: T };
 type NotReady = { readonly __ready: false; readonly value?: never };
 
 export type Read<T> = Ready<T> | NotReady;
+export type UnwrapRead<R> = R extends Ready<infer V> ? V : never;
 
 function isReady<T>(read: Read<T>): read is Ready<T> {
     return read.__ready;
 }
 
-export type Accessors<
-    TSettings extends Settings,
-    TSettingTypes extends MakeSettingTypesMap<TSettings>,
-    TKey extends SettingsKeysFromTuple<TSettings>,
-> = {
-    localSetting: <K extends TKey>(settingName: K) => Read<TSettingTypes[K]>;
-    globalSetting: <T extends keyof GlobalSettings>(settingName: T) => Read<GlobalSettings[T]>;
-    dependency: <TDep>(helper: Dependency<TDep, TSettings, TSettingTypes, TKey>) => Read<Awaited<TDep> | null>;
-};
-
-type UnwrapRead<R> = R extends Ready<infer V> ? V : never;
-type NonPending<T> = Exclude<T, Pending>;
-
-export class ReadyComputation<TReads extends Record<string, Read<any>>, TResult> {
-    private _reads: TReads;
-    private _probeOnly: boolean;
-
-    constructor(reads: TReads, probeOnly: boolean) {
-        this._reads = reads;
-        this._probeOnly = probeOnly;
+function allReady(reads: Record<string, Read<any>>): boolean {
+    for (const r of Object.values(reads)) {
+        if (!isReady(r)) return false;
     }
-
-    async thenCompute(
-        func: (values: { [K in keyof TReads]: UnwrapRead<TReads[K]> }) =>
-            | NonPending<TResult>
-            | Promise<NonPending<TResult>>
-            | NoUpdate,
-    ): Promise<NonPending<TResult> | NoUpdate | Pending> {
-        if (this._probeOnly) {
-            return PENDING;
-        }
-        for (const read of Object.values(this._reads)) {
-            if (!isReady(read)) {
-                return PENDING;
-            }
-        }
-        const values: any = {};
-        for (const [key, read] of Object.entries(this._reads)) {
-            values[key] = (read as any).value;
-        }
-        return await func(values);
-    }
+    return true;
 }
+
+function unwrapReads<TReads extends Record<string, Read<any>>>(
+    reads: TReads,
+): { [K in keyof TReads]: UnwrapRead<TReads[K]> } {
+    const out: any = {};
+    for (const [k, r] of Object.entries(reads)) {
+        out[k] = (r as any).value;
+    }
+    return out;
+}
+
+export type NonPending<T> = Exclude<T, Pending>;
