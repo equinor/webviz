@@ -3,7 +3,7 @@ import type { EChartsOption } from "echarts";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import { StatisticsType } from "../typesAndEnums";
-import type { ChartTrace } from "../view/atoms/derivedAtoms";
+import type { SubplotGroup } from "../view/atoms/derivedAtoms";
 import { formatDate } from "../view/atoms/derivedAtoms";
 
 import { buildRealizationsSeries } from "./echartsRealizationsSeries";
@@ -14,47 +14,161 @@ export type TimeseriesEchartsResult = {
     timeseriesChartData: string[];
 };
 
-/** Assemble a full EChartsOption for timeseries (statistics or realizations). */
+/** Assemble a full EChartsOption for timeseries with optional multi-grid subplots. */
 export function buildTimeseriesOptions(
-    chartTraces: ChartTrace[],
+    subplotGroups: SubplotGroup[],
     showStatLines: boolean,
     showFanchart: boolean,
     selectedStatistics: StatisticsType[],
     yAxisLabel: string,
 ): TimeseriesEchartsResult {
-    if (chartTraces.length === 0) return { echartsOptions: {}, timeseriesChartData: [] };
+    if (subplotGroups.length === 0) return { echartsOptions: {}, timeseriesChartData: [] };
 
-    const firstTrace = chartTraces[0];
-    if (!firstTrace.timestamps.length) return { echartsOptions: {}, timeseriesChartData: [] };
+    // Find first valid timestamps from any trace
+    const firstTrace = subplotGroups.flatMap((g) => g.traces).find((t) => t.timestamps.length > 0);
+    if (!firstTrace) return { echartsOptions: {}, timeseriesChartData: [] };
 
     const xAxisData = firstTrace.timestamps.map((ts) => formatDate(ts));
+    const numSubplots = subplotGroups.length;
+    const isMultiGrid = numSubplots > 1;
 
-    // ── Collect series from sub-builders ──
+    // ── Build series for each subplot ──
 
     const allSeries: any[] = [];
     const legendData: string[] = [];
+    const seenLegend = new Set<string>();
 
-    for (const trace of chartTraces) {
-        if (showStatLines && trace.stats) {
-            allSeries.push(...buildStatisticsSeries(trace, selectedStatistics));
-            if (
-                showFanchart &&
-                selectedStatistics.includes(StatisticsType.P10) &&
-                selectedStatistics.includes(StatisticsType.P90)
-            ) {
-                allSeries.push(...buildFanchartSeries(trace));
+    for (let gridIdx = 0; gridIdx < numSubplots; gridIdx++) {
+        const group = subplotGroups[gridIdx];
+        for (const trace of group.traces) {
+            if (showStatLines && trace.stats) {
+                allSeries.push(...buildStatisticsSeries(trace, selectedStatistics, gridIdx));
+                if (
+                    showFanchart &&
+                    ((selectedStatistics.includes(StatisticsType.P10) &&
+                        selectedStatistics.includes(StatisticsType.P90)) ||
+                        (selectedStatistics.includes(StatisticsType.Min) &&
+                            selectedStatistics.includes(StatisticsType.Max)))
+                ) {
+                    allSeries.push(...buildFanchartSeries(trace, selectedStatistics, gridIdx));
+                }
+                // One legend entry per trace label
+                if (!seenLegend.has(trace.label)) {
+                    legendData.push(trace.label);
+                    seenLegend.add(trace.label);
+                }
+            } else if (trace.aggregatedValues) {
+                const { series, legendEntry } = buildRealizationsSeries(trace, gridIdx);
+                allSeries.push(...series);
+                if (legendEntry && !seenLegend.has(legendEntry)) {
+                    legendData.push(legendEntry);
+                    seenLegend.add(legendEntry);
+                }
             }
-        } else if (trace.aggregatedValues) {
-            const { series, legendEntry } = buildRealizationsSeries(trace);
-            allSeries.push(...series);
-            if (legendEntry) legendData.push(legendEntry);
         }
     }
+
+    // ── Grid layout ──
+
+    const MARGIN_LEFT_PCT = 2;
+    const MARGIN_RIGHT_PCT = 2;
+    const BOTTOM_SPACE_PCT = 8; // datazoom + labels
+    const TOP_SPACE_PCT = 4;
+
+    // Determine grid dimensions: prefer roughly square cells, max 4 columns
+    const numCols = isMultiGrid ? Math.min(numSubplots, Math.ceil(Math.sqrt(numSubplots)), 4) : 1;
+    const numRows = Math.ceil(numSubplots / numCols);
+
+    // Scale gaps down as the grid gets denser so margins don't dominate with many plots
+    const GAP_X_PCT = isMultiGrid ? Math.max(2, 6 / Math.sqrt(numCols)) : 0;
+    const GAP_Y_PCT = isMultiGrid ? Math.max(2, 8 / Math.sqrt(numRows)) : 0;
+    const TITLE_HEIGHT_PCT = isMultiGrid ? Math.max(1, 3 / Math.sqrt(numRows)) : 0;
+
+    const availableWidth = 100 - MARGIN_LEFT_PCT - MARGIN_RIGHT_PCT - (numCols - 1) * GAP_X_PCT;
+    const availableHeight =
+        100 - TOP_SPACE_PCT - BOTTOM_SPACE_PCT - (numRows - 1) * GAP_Y_PCT - numRows * TITLE_HEIGHT_PCT;
+    const cellWidth = availableWidth / numCols;
+    const cellHeight = availableHeight / numRows;
+
+    const grids: any[] = [];
+    const xAxes: any[] = [];
+    const yAxes: any[] = [];
+    const titles: any[] = [];
+
+    for (let i = 0; i < numSubplots; i++) {
+        const row = Math.floor(i / numCols);
+        const col = i % numCols;
+
+        const leftPct = MARGIN_LEFT_PCT + col * (cellWidth + GAP_X_PCT);
+        const topPct = TOP_SPACE_PCT + row * (cellHeight + GAP_Y_PCT + TITLE_HEIGHT_PCT) + TITLE_HEIGHT_PCT;
+
+        grids.push({
+            top: `${topPct}%`,
+            left: `${leftPct}%`,
+            width: `${cellWidth}%`,
+            height: `${cellHeight}%`,
+            containLabel: true,
+        });
+
+        xAxes.push({
+            type: "category",
+            gridIndex: i,
+            boundaryGap: false,
+            data: xAxisData,
+            axisLabel: { show: true, fontSize: 11 },
+            axisTick: { show: true },
+            ...(showStatLines
+                ? {}
+                : {
+                      axisPointer: {
+                          show: true,
+                          type: "line" as const,
+                          triggerTooltip: false,
+                          label: { show: true },
+                      },
+                  }),
+        });
+
+        yAxes.push({
+            type: "value",
+            gridIndex: i,
+            name: !isMultiGrid ? yAxisLabel : "",
+            nameLocation: "middle" as const,
+            nameGap: 40,
+            axisLabel: { show: true, fontSize: 11, formatter: (v: number) => formatNumber(v) },
+            ...(showStatLines
+                ? {}
+                : {
+                      axisPointer: {
+                          show: true,
+                          type: "line" as const,
+                          triggerTooltip: false,
+                          label: { show: true },
+                      },
+                  }),
+        });
+
+        if (isMultiGrid && subplotGroups[i].title) {
+            titles.push({
+                text: subplotGroups[i].title,
+                left: `${leftPct + cellWidth / 2}%`,
+                top: `${topPct - TITLE_HEIGHT_PCT}%`,
+                textAlign: "center" as const,
+                textStyle: { fontSize: 12, fontWeight: "normal" as const, color: "#555" },
+            });
+        }
+    }
+
+    // ── DataZoom — link all x-axes ──
+
+    const allXAxisIndices = Array.from({ length: numSubplots }, (_, i) => i);
+    const allYAxisIndices = Array.from({ length: numSubplots }, (_, i) => i);
 
     // ── Compose option ──
 
     const echartsOptions: EChartsOption = {
         animation: false,
+        title: titles.length > 0 ? titles : undefined,
         tooltip: showStatLines
             ? {
                   trigger: "axis" as const,
@@ -65,7 +179,7 @@ export function buildTimeseriesOptions(
                   trigger: "item" as const,
                   formatter: formatRealizationItemTooltip,
               },
-        // Show crosshair independently of tooltip for realizations mode
+        // Show crosshair independently of tooltip for realizations mode + link axes
         ...(showStatLines
             ? {}
             : {
@@ -78,29 +192,47 @@ export function buildTimeseriesOptions(
                       link: [{ xAxisIndex: "all" as any }],
                   },
               }),
-        legend: { show: true, data: showStatLines ? undefined : legendData },
-        grid: { top: 30, right: 60, bottom: 50, left: 60, containLabel: true },
-        xAxis: {
-            type: "category",
-            boundaryGap: false,
-            data: xAxisData,
-            axisLabel: { fontSize: 11 },
-            ...(showStatLines ? {} : { axisPointer: { show: true, type: "line" as const, triggerTooltip: false, label: { show: true } } }),
-        },
-        yAxis: {
-            type: "value",
-            name: yAxisLabel,
-            nameLocation: "middle",
-            nameGap: 40,
-            axisLabel: { fontSize: 11, formatter: (v: number) => formatNumber(v) },
-            ...(showStatLines ? {} : { axisPointer: { show: true, type: "line" as const, triggerTooltip: false, label: { show: true } } }),
-        },
+        legend: { show: true, data: legendData },
+        grid: isMultiGrid
+            ? grids
+            : {
+                  top: `${TOP_SPACE_PCT}%`,
+                  right: `${MARGIN_RIGHT_PCT}%`,
+                  bottom: `${BOTTOM_SPACE_PCT}%`,
+                  left: `${MARGIN_LEFT_PCT}%`,
+                  containLabel: true,
+              },
+        xAxis: isMultiGrid ? xAxes : xAxes[0],
+        yAxis: isMultiGrid ? yAxes : yAxes[0],
         series: allSeries,
         dataZoom: [
-            { type: "slider", show: true, xAxisIndex: [0], start: 0, end: 100, bottom: 0, height: 20, filterMode: "none" },
-            { type: "slider", show: true, yAxisIndex: [0], start: 0, end: 100, right: 10, width: 20, filterMode: "none" },
-            { type: "inside", xAxisIndex: [0], filterMode: "none" },
-            { type: "inside", yAxisIndex: [0], filterMode: "none" },
+            // Slider controls only shown for single subplot — they don't map well to multi-grid
+            ...(isMultiGrid
+                ? []
+                : [
+                      {
+                          type: "slider" as const,
+                          show: true,
+                          xAxisIndex: allXAxisIndices,
+                          start: 0,
+                          end: 100,
+                          bottom: 0,
+                          height: 20,
+                          filterMode: "none" as const,
+                      },
+                      {
+                          type: "slider" as const,
+                          show: true,
+                          yAxisIndex: allYAxisIndices,
+                          start: 0,
+                          end: 100,
+                          right: 10,
+                          width: 20,
+                          filterMode: "none" as const,
+                      },
+                  ]),
+            { type: "inside", xAxisIndex: allXAxisIndices, filterMode: "none" },
+            { type: "inside", yAxisIndex: allYAxisIndices, filterMode: "none" },
         ],
         toolbox: {
             feature: {
@@ -122,10 +254,20 @@ function formatStatisticsTooltip(params: any): string {
     const date = params[0].axisValue;
     let out = `<div style="font-size:12px;font-weight:500;margin-bottom:4px">${date}</div>`;
     for (const p of params) {
-        if (p.seriesName.includes("Base") || p.seriesName.includes("P10-P90")) continue;
+        // Skip fanchart helper series
+        if (typeof p.seriesName === "string" && p.seriesName.includes("_fan_")) continue;
+        // Extract stat type from series id (format: "label_StatType_gridIdx")
+        let statSuffix = "";
+        if (typeof p.seriesId === "string") {
+            const idParts = p.seriesId.split("_");
+            // stat type is the second-to-last part (before gridIdx)
+            if (idParts.length >= 3) {
+                statSuffix = ` (${idParts[idParts.length - 2]})`;
+            }
+        }
         out +=
             `<div style="display:flex;justify-content:space-between;gap:12px">` +
-            `<span style="color:${p.color}">${p.seriesName}</span>` +
+            `<span style="color:${p.color}">${p.seriesName}${statSuffix}</span>` +
             `<span style="font-family:monospace">${formatNumber(p.value as number)}</span></div>`;
     }
     return out;

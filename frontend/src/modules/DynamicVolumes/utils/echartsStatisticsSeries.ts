@@ -23,6 +23,7 @@ const STAT_SERIES_DEFS: StatSeriesEntry[] = [
 export function buildStatisticsSeries(
     trace: ChartTrace,
     selectedStatistics: StatisticsType[],
+    axisIndex = 0,
 ): LineSeriesOption[] {
     if (!trace.stats) return [];
 
@@ -31,9 +32,12 @@ export function buildStatisticsSeries(
     for (const def of STAT_SERIES_DEFS) {
         if (selectedStatistics.includes(def.statType)) {
             series.push({
-                name: `${trace.label} ${def.statType}`,
+                id: `${trace.label}_${def.statType}_${axisIndex}`,
+                name: trace.label,
                 type: "line",
                 data: trace.stats[def.key],
+                xAxisIndex: axisIndex,
+                yAxisIndex: axisIndex,
                 itemStyle: { color: trace.color },
                 lineStyle: { width: def.width, type: def.dash },
                 symbol: "none",
@@ -44,33 +48,90 @@ export function buildStatisticsSeries(
     return series;
 }
 
-/** Build the stacked P10-base + P90-P10 band area series for a fanchart. */
-export function buildFanchartSeries(trace: ChartTrace): LineSeriesOption[] {
-    if (!trace.stats) return [];
-    const { p10, p90 } = trace.stats;
+/**
+ * Create a filled polygon band between two y-value arrays.
+ * Uses a custom series to draw the polygon directly, which handles negative
+ * values correctly (unlike the stacked-area approach that mis-renders when
+ * the baseline is below zero).
+ */
+function createBandSeries(
+    upperValues: number[],
+    lowerValues: number[],
+    fillColor: string,
+    fillOpacity: number,
+    name: string,
+    axisIndex: number,
+): any {
+    return {
+        type: "custom",
+        name,
+        xAxisIndex: axisIndex,
+        yAxisIndex: axisIndex,
+        // Carry [categoryIndex, lower, upper] so ECharts can derive the y-range
+        data: upperValues.map((u, i) => [i, lowerValues[i], u]),
+        encode: { x: 0, y: [1, 2] },
+        tooltip: { show: false },
+        silent: true,
+        z: 1,
+        renderItem(params: any, api: any) {
+            // Only render the full polygon from the first visible data point
+            if (params.dataIndexInside !== 0) {
+                return { type: "group", children: [] };
+            }
+            const count: number = params.dataInsideLength ?? 0;
+            const startIdx: number = params.dataIndex ?? 0;
+            if (count === 0) return { type: "group", children: [] };
 
-    // P10 <= P90 (standard percentile convention: p10 = 10th percentile = low).
-    // Invisible base at P10, colored band of height (P90 - P10) stacked on top.
-    return [
-        {
-            name: `${trace.label} P10 Base`,
-            type: "line",
-            data: p10,
-            lineStyle: { opacity: 0 },
-            areaStyle: { color: "transparent" },
-            stack: `stack_${trace.label}`,
-            symbol: "none",
-            tooltip: { show: false },
+            const points: number[][] = [];
+
+            // Upper boundary left → right
+            for (let d = 0; d < count; d++) {
+                points.push(api.coord([startIdx + d, upperValues[startIdx + d]]));
+            }
+            // Lower boundary right → left
+            for (let d = count - 1; d >= 0; d--) {
+                points.push(api.coord([startIdx + d, lowerValues[startIdx + d]]));
+            }
+
+            return {
+                type: "polygon",
+                shape: { points },
+                style: { fill: fillColor, opacity: fillOpacity },
+            };
         },
-        {
-            name: `${trace.label} P10-P90`,
-            type: "line",
-            data: p90.map((v, i) => v - p10[i]),
-            lineStyle: { opacity: 0 },
-            areaStyle: { color: trace.color, opacity: 0.15 },
-            stack: `stack_${trace.label}`,
-            symbol: "none",
-            tooltip: { show: false },
-        },
-    ];
+    };
+}
+
+/** Build the fanchart band series using custom polygons.
+ *  When min/max are available, renders an outer min–max band (lighter) around the P10–P90 band.
+ */
+export function buildFanchartSeries(
+    trace: ChartTrace,
+    selectedStatistics: StatisticsType[],
+    axisIndex = 0,
+): any[] {
+    if (!trace.stats) return [];
+
+    const { p10, p90, min, max } = trace.stats;
+    const series: any[] = [];
+
+    const hasPercentiles =
+        selectedStatistics.includes(StatisticsType.P10) && selectedStatistics.includes(StatisticsType.P90);
+    const hasMinMax =
+        selectedStatistics.includes(StatisticsType.Min) && selectedStatistics.includes(StatisticsType.Max);
+
+    if (hasMinMax && hasPercentiles) {
+        // Full fanchart: three bands min→p10, p10→p90, p90→max
+        series.push(
+            createBandSeries(p10, min, trace.color, 0.08, `${trace.label} _fan_low`, axisIndex),
+            createBandSeries(p90, p10, trace.color, 0.3, `${trace.label} _fan_mid`, axisIndex),
+            createBandSeries(max, p90, trace.color, 0.08, `${trace.label} _fan_high`, axisIndex),
+        );
+    } else if (hasMinMax) {
+        series.push(createBandSeries(max, min, trace.color, 0.1, `${trace.label} _fan_band`, axisIndex));
+    } else if (hasPercentiles) {
+        series.push(createBandSeries(p90, p10, trace.color, 0.3, `${trace.label} _fan_band`, axisIndex));
+    }
+
+    return series;
 }

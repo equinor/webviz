@@ -41,6 +41,7 @@ const FIRST_ENSEMBLE = new RegularEnsemble(
     FIRST_ENSEMBLE_REALIZATIONS,
     [FIRST_PARAMETER, SECOND_PARAMETER],
     null,
+    [],
     "",
 );
 

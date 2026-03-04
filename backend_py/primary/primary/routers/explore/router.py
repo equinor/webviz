@@ -87,6 +87,12 @@ async def get_ensemble_details(
     if len(field_identifiers) != 1:
         raise NotImplementedError("Multiple field identifiers not supported")
 
+    fip_regions: List[schemas.FipRegion] = []
+    # TMP FIX
+    if "DROGON" in field_identifiers:
+        fip_mapping = await case_inspector.get_fip_mapping(ensemble_name)
+        for mapping in fip_mapping.root:
+            fip_regions.append(schemas.FipRegion(fipNumber=mapping.FIPNUM, zone=mapping.ZONE, region=mapping.REGION))
     return schemas.EnsembleDetails(
         name=ensemble_name,
         caseName=case_name,
@@ -95,6 +101,7 @@ async def get_ensemble_details(
         fieldIdentifier=field_identifiers[0],
         stratigraphicColumnIdentifier=stratigraphic_column_identifier,
         standardResults=standard_results,
+        fipRegions=fip_regions,
     )
 
 

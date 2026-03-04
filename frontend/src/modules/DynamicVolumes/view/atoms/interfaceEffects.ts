@@ -4,11 +4,14 @@ import type { SettingsToViewInterface } from "@modules/DynamicVolumes/interfaces
 import {
     colorByAtom,
     ensembleIdentsAtom,
+    fipRegionLabelsAtom,
+    regionSelectionModeAtom,
     resampleFrequencyAtom,
     selectedRegionsAtom,
     selectedStatisticsAtom,
     selectedVectorBaseNameAtom,
-    showHistogramAtom,
+    showRecoveryFactorAtom,
+    subplotByAtom,
     vectorNamesToFetchAtom,
     visualizationModeAtom,
 } from "./baseAtoms";
@@ -23,12 +26,16 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(colorByAtom, colorBy);
     },
     (getInterfaceValue, setAtomValue) => {
-        const selectedStatistics = getInterfaceValue("selectedStatistics");
-        setAtomValue(selectedStatisticsAtom, selectedStatistics);
+        const subplotBy = getInterfaceValue("subplotBy");
+        setAtomValue(subplotByAtom, subplotBy);
     },
     (getInterfaceValue, setAtomValue) => {
-        const showHistogram = getInterfaceValue("showHistogram");
-        setAtomValue(showHistogramAtom, showHistogram);
+        const regionSelectionMode = getInterfaceValue("regionSelectionMode");
+        setAtomValue(regionSelectionModeAtom, regionSelectionMode);
+    },
+    (getInterfaceValue, setAtomValue) => {
+        const selectedStatistics = getInterfaceValue("selectedStatistics");
+        setAtomValue(selectedStatisticsAtom, selectedStatistics);
     },
     (getInterfaceValue, setAtomValue) => {
         const resampleFrequency = getInterfaceValue("resampleFrequency");
@@ -49,5 +56,13 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     (getInterfaceValue, setAtomValue) => {
         const selectedVectorBaseName = getInterfaceValue("selectedVectorBaseName");
         setAtomValue(selectedVectorBaseNameAtom, selectedVectorBaseName);
+    },
+    (getInterfaceValue, setAtomValue) => {
+        const fipRegionLabels = getInterfaceValue("fipRegionLabels");
+        setAtomValue(fipRegionLabelsAtom, fipRegionLabels);
+    },
+    (getInterfaceValue, setAtomValue) => {
+        const showRecoveryFactor = getInterfaceValue("showRecoveryFactor");
+        setAtomValue(showRecoveryFactorAtom, showRecoveryFactor);
     },
 ];

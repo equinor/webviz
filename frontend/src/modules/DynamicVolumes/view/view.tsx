@@ -1,30 +1,17 @@
 import React from "react";
 
 import ReactECharts from "echarts-for-react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import type { Interfaces } from "../interfaces";
 import { VisualizationMode } from "../typesAndEnums";
-import { buildHistogramData } from "../utils/aggregation";
-import { buildHistogramOptions } from "../utils/echartsHistogramOptions";
 import { buildTimeseriesOptions } from "../utils/echartsTimeseriesOptions";
 
-import { selectedTimestepIdxAtom, showRecoveryFactorAtom, visualizationModeAtom } from "./atoms/baseAtoms";
-import {
-    allQueriesFailedAtom,
-    chartTracesAtom,
-    formatDate,
-    isDataFetchingAtom,
-    isInPlaceVector,
-} from "./atoms/derivedAtoms";
-
-// ────────── Constants ──────────
-
-const HISTOGRAM_COLOR = "#42a5f5";
+import { visualizationModeAtom } from "./atoms/baseAtoms";
+import { allQueriesFailedAtom, isDataFetchingAtom, subplotGroupsAtom } from "./atoms/derivedAtoms";
 
 // ────────── View ──────────
 
@@ -36,24 +23,19 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const visualizationMode = useAtomValue(visualizationModeAtom);
     const isFetching = useAtomValue(isDataFetchingAtom);
     const allFailed = useAtomValue(allQueriesFailedAtom);
-    const chartTraces = useAtomValue(chartTracesAtom);
+    const subplotGroups = useAtomValue(subplotGroupsAtom);
 
-    const divRef = React.useRef<HTMLDivElement>(null);
-    const divBoundingRect = useElementBoundingRect(divRef);
+    // Flatten traces across all subplot groups for empty-state checks
+    const allTraces = React.useMemo(() => subplotGroups.flatMap((g) => g.traces), [subplotGroups]);
 
     // Settings interface values that are only needed for rendering
-    const showHistogram = viewContext.useSettingsToViewInterfaceValue("showHistogram");
     const selectedStatistics = viewContext.useSettingsToViewInterfaceValue("selectedStatistics");
     const selectedVectorBaseName = viewContext.useSettingsToViewInterfaceValue("selectedVectorBaseName");
     const ensembleIdents = viewContext.useSettingsToViewInterfaceValue("ensembleIdents");
     const vectorNamesToFetch = viewContext.useSettingsToViewInterfaceValue("vectorNamesToFetch");
+    const showRecoveryFactor = viewContext.useSettingsToViewInterfaceValue("showRecoveryFactor");
 
     // Local view state
-    const selectedTimestepIdx = useAtomValue(selectedTimestepIdxAtom);
-    const setSelectedTimestepIdx = useSetAtom(selectedTimestepIdxAtom);
-    const showRecoveryFactor = useAtomValue(showRecoveryFactorAtom);
-    const setShowRecoveryFactor = useSetAtom(showRecoveryFactorAtom);
-
     const chartRef = React.useRef<ReactECharts>(null);
 
     // Status writer
@@ -66,27 +48,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const yAxisLabel = showRecoveryFactor ? "Recovery Factor" : (selectedVectorBaseName ?? "Value");
     const queryEnabled = ensembleIdents.length > 0 && vectorNamesToFetch.length > 0;
 
-    // ── Build echarts data from traces ──
+    // ── Build echarts data from subplot groups ──
 
     const { echartsOptions, timeseriesChartData } = React.useMemo(() => {
-        return buildTimeseriesOptions(chartTraces, showStatLines, showFanchart, selectedStatistics, yAxisLabel);
-    }, [chartTraces, showStatLines, showFanchart, selectedStatistics, yAxisLabel]);
-
-    // ── Histogram data (first trace, aggregated values at selected timestep) ──
-
-    const histogramData = React.useMemo(() => {
-        if (selectedTimestepIdx === null || chartTraces.length === 0) return [];
-
-        const firstTrace = chartTraces[0];
-        if (!firstTrace.aggregatedValues || selectedTimestepIdx >= firstTrace.timestamps.length) return [];
-
-        const valuesAtTimestep = firstTrace.aggregatedValues.map((realVals) => realVals[selectedTimestepIdx]);
-        return buildHistogramData(valuesAtTimestep);
-    }, [selectedTimestepIdx, chartTraces]);
-
-    const echartsHistogramOptions = React.useMemo(() => {
-        return buildHistogramOptions(histogramData, HISTOGRAM_COLOR);
-    }, [histogramData]);
+        return buildTimeseriesOptions(subplotGroups, showStatLines, showFanchart, selectedStatistics, yAxisLabel);
+    }, [subplotGroups, showStatLines, showFanchart, selectedStatistics, yAxisLabel]);
 
     // ── Handlers ──
 
@@ -94,11 +60,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const onChartEvents = React.useMemo(
         () => ({
-            click: (e: any) => {
-                if (e && e.dataIndex !== undefined) {
-                    setSelectedTimestepIdx(e.dataIndex);
-                }
-            },
             mouseover: (e: any) => {
                 if (!showStatLines && e.seriesName && chartRef.current) {
                     const instance = chartRef.current.getEchartsInstance();
@@ -128,7 +89,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 }
             },
         }),
-        [setSelectedTimestepIdx, showStatLines],
+        [showStatLines],
     );
 
     // ── Loading / empty states ──
@@ -141,7 +102,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         );
     }
 
-    if (isFetching && chartTraces.length === 0) {
+    if (isFetching && allTraces.length === 0) {
         return <div className="flex items-center justify-center w-full h-full text-gray-400">Loading data...</div>;
     }
 
@@ -158,63 +119,17 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     }
 
     return (
-        <div ref={divRef} className="flex flex-col w-full h-full p-2 gap-2">
-            {/* Recovery factor toggle for in-place vectors */}
-            {isInPlaceVector(selectedVectorBaseName) && (
-                <div className="flex items-center gap-2 text-sm px-1">
-                    <label className="flex items-center gap-1 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={showRecoveryFactor}
-                            onChange={(e) => setShowRecoveryFactor(e.target.checked)}
-                        />
-                        Show recovery factor
-                    </label>
-                    {selectedTimestepIdx !== null && chartTraces[0] && (
-                        <span className="text-gray-500 ml-auto">
-                            Histogram at: {formatDate(chartTraces[0].timestamps[selectedTimestepIdx])}
-                        </span>
-                    )}
-                </div>
-            )}
-
+        <div className="flex flex-col w-full h-full p-2 gap-2 overflow-hidden">
             {/* Timeseries chart */}
-            <div
-                style={{
-                    height: showHistogram ? divBoundingRect.height * 0.666 : divBoundingRect.height,
-                    width: divBoundingRect.width,
-                }}
-            >
-                {divBoundingRect.width > 0 && divBoundingRect.height > 0 && (
-                    <ReactECharts
-                        ref={chartRef}
-                        option={echartsOptions}
-                        style={{ height: "100%", width: "100%" }}
-                        onEvents={onChartEvents}
-                        notMerge={true}
-                    />
-                )}
+            <div className="w-full flex-1 min-h-0">
+                <ReactECharts
+                    ref={chartRef}
+                    option={echartsOptions}
+                    style={{ height: "100%", width: "100%" }}
+                    onEvents={onChartEvents}
+                    notMerge={true}
+                />
             </div>
-
-            {/* Linked histogram */}
-            {showHistogram && (
-                <div style={{ height: divBoundingRect.height * 0.333, width: divBoundingRect.width }}>
-                    {histogramData.length > 0 ? (
-                        divBoundingRect.width > 0 &&
-                        divBoundingRect.height > 0 && (
-                            <ReactECharts
-                                option={echartsHistogramOptions}
-                                style={{ height: "100%", width: "100%" }}
-                                notMerge={true}
-                            />
-                        )
-                    ) : (
-                        <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                            Click on a timestep in the chart above to show distribution
-                        </div>
-                    )}
-                </div>
-            )}
         </div>
     );
 }

@@ -1,37 +1,69 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { ColorBy, StatisticsType, VisualizationMode } from "../typesAndEnums";
+import { PlotDimension, RegionSelectionMode, StatisticsType, VisualizationMode } from "../typesAndEnums";
 
 import {
     colorByAtom,
+    regionSelectionModeAtom,
     selectedStatisticsAtom,
-    showHistogramAtom,
+    subplotByAtom,
     visualizationModeAtom,
 } from "./atoms/baseAtoms";
+import {
+    selectedEnsembleIdentsAtom,
+    selectedFipArrayAtom,
+    selectedRegionNamesAtom,
+    selectedRegionsAtom,
+    selectedVectorBaseNameAtom,
+    selectedZoneNamesAtom,
+} from "./atoms/persistableFixableAtoms";
 
 export type SerializedSettings = {
+    ensembleIdentStrings: string[];
+    vectorBaseName: string | null;
+    fipArray: string | null;
+    selectedRegions: number[];
+    regionSelectionMode: RegionSelectionMode;
+    selectedZoneNames: string[];
+    selectedRegionNames: string[];
     visualizationMode: VisualizationMode;
-    colorBy: ColorBy;
+    colorBy: string; // PlotDimension value, kept as string for backward compat
+    subplotBy: string | null; // PlotDimension value or null
     selectedStatistics: StatisticsType[];
-    showHistogram: boolean;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
     properties: {
+        ensembleIdentStrings: {
+            elements: { type: "string" },
+        },
+        vectorBaseName: { type: "string", nullable: true },
+        fipArray: { type: "string", nullable: true },
+        selectedRegions: {
+            elements: { type: "int32" },
+        },
+        regionSelectionMode: {
+            enum: Object.values(RegionSelectionMode),
+        },
+        selectedZoneNames: {
+            elements: { type: "string" },
+        },
+        selectedRegionNames: {
+            elements: { type: "string" },
+        },
         visualizationMode: {
             enum: Object.values(VisualizationMode),
         },
-        colorBy: {
-            enum: Object.values(ColorBy),
-        },
+        colorBy: { type: "string" },
+        subplotBy: { type: "string", nullable: true },
         selectedStatistics: {
             elements: {
                 enum: Object.values(StatisticsType),
             },
         },
-        showHistogram: { type: "boolean" },
     },
 }));
 
@@ -39,16 +71,46 @@ export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
     return {
+        ensembleIdentStrings: get(selectedEnsembleIdentsAtom).value.map((ident) => ident.toString()),
+        vectorBaseName: get(selectedVectorBaseNameAtom).value,
+        fipArray: get(selectedFipArrayAtom).value,
+        selectedRegions: get(selectedRegionsAtom).value,
+        regionSelectionMode: get(regionSelectionModeAtom),
+        selectedZoneNames: get(selectedZoneNamesAtom).value,
+        selectedRegionNames: get(selectedRegionNamesAtom).value,
         visualizationMode: get(visualizationModeAtom),
         colorBy: get(colorByAtom),
+        subplotBy: get(subplotByAtom),
         selectedStatistics: get(selectedStatisticsAtom),
-        showHistogram: get(showHistogramAtom),
     };
 };
 
+/** Map old ColorBy values to new PlotDimension values for backward compat. */
+function migrateColorBy(raw: string): PlotDimension {
+    if (raw === "region") return PlotDimension.FipRegion; // old ColorBy.Region
+    if (Object.values(PlotDimension).includes(raw as PlotDimension)) return raw as PlotDimension;
+    return PlotDimension.Ensemble;
+}
+
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
+    const ensembleIdents = raw.ensembleIdentStrings
+        ? raw.ensembleIdentStrings.map((id) => RegularEnsembleIdent.fromString(id))
+        : undefined;
+    setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
+    setIfDefined(set, selectedVectorBaseNameAtom, raw.vectorBaseName);
+    setIfDefined(set, selectedFipArrayAtom, raw.fipArray);
+    setIfDefined(set, selectedRegionsAtom, raw.selectedRegions);
+    setIfDefined(set, regionSelectionModeAtom, raw.regionSelectionMode);
+    setIfDefined(set, selectedZoneNamesAtom, raw.selectedZoneNames);
+    setIfDefined(set, selectedRegionNamesAtom, raw.selectedRegionNames);
     setIfDefined(set, visualizationModeAtom, raw.visualizationMode);
-    setIfDefined(set, colorByAtom, raw.colorBy);
+
+    if (raw.colorBy !== undefined) {
+        set(colorByAtom, migrateColorBy(raw.colorBy));
+    }
+    if (raw.subplotBy !== undefined) {
+        set(subplotByAtom, raw.subplotBy ? migrateColorBy(raw.subplotBy) : null);
+    }
+
     setIfDefined(set, selectedStatisticsAtom, raw.selectedStatistics);
-    setIfDefined(set, showHistogramAtom, raw.showHistogram);
 };

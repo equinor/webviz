@@ -70,6 +70,12 @@ export function parseRegionalVector(vectorName: string): RegionalVectorInfo | nu
  *   // info.vectorNames === ["RGIP", "ROIP"]
  *   // info.fipArrays === { FIPNUM: [1, 2] }
  */
+/** Check if a base vector name is an in-place volume (ROIP, RGIP, RWIP, etc.) */
+export function isInPlaceVector(baseName: string | null): boolean {
+    if (!baseName) return false;
+    return /^R[OGW]IP/.test(baseName);
+}
+
 export function extractRegionalVectorsInfo(vectorNames: string[]): RegionalVectorsInfo {
     const vectorBases = new Set<string>();
     const fipArrays = new Map<string, Set<number>>();

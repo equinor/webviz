@@ -14,15 +14,29 @@ export enum StatisticsType {
 }
 
 /**
- * Controls how lines/areas are colored in the timeseries chart.
+ * Controls how the user selects regions.
  *
- *   - `Ensemble` — one color per ensemble (regions are summed to a single trace per ensemble).
- *   - `Region`   — one color per FIPNUM region (ensembles are shown as separate subplots or
- *                   distinguished by dash pattern).
+ *   - `FipNumber`   — direct selection of FIPNUM region numbers.
+ *   - `ZoneRegion`  — selection via zone / region names, translated to FIPNUM for queries.
  */
-export enum ColorBy {
+export enum RegionSelectionMode {
+    FipNumber = "fip_number",
+    ZoneRegion = "zone_region",
+}
+
+/**
+ * Dimensions that can be used for coloring or creating subplots.
+ *
+ *   - `Ensemble`  — one per selected ensemble.
+ *   - `FipRegion` — one per FIPNUM region number (FipNumber selection mode).
+ *   - `Zone`      — one per zone name (ZoneRegion selection mode).
+ *   - `GeoRegion` — one per geo-region name (ZoneRegion selection mode).
+ */
+export enum PlotDimension {
     Ensemble = "ensemble",
-    Region = "region",
+    FipRegion = "fip_region",
+    Zone = "zone",
+    GeoRegion = "geo_region",
 }
 
 /**

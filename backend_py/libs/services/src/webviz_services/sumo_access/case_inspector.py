@@ -13,7 +13,8 @@ from webviz_services.service_exceptions import (
 
 from ._helpers import create_sumo_case_async
 from .sumo_client_factory import create_sumo_client
-
+from .dev._tmp_create_fipmapper import create_fip_mapping_table
+from fmu.datamodels.standard_results.simulator_fipregions_mapping import SimulatorFipregionsMappingResult
 
 LOGGER = logging.getLogger(__name__)
 
@@ -111,3 +112,13 @@ class CaseInspector:
         ensemble = case.filter(ensemble=ensemble_name)
         standard_results = await ensemble.standard_results_async
         return standard_results
+
+    async def get_fip_mapping(self, ensemble_name: str) -> SimulatorFipregionsMappingResult:
+        """Get mapping of FIPNUM to REGION and ZONE for the specified ensemble"""
+        # TODO get mapping standard result from Sumo
+        table = create_fip_mapping_table()
+        raw_data = table.to_pylist()
+
+        validated_data = SimulatorFipregionsMappingResult.model_validate(raw_data)
+
+        return validated_data

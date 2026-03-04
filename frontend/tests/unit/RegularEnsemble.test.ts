@@ -38,6 +38,7 @@ describe("RegularEnsemble", () => {
         realizationsArray,
         parameterArray,
         sensitivityArray,
+        [],
         color,
         customName,
     );
@@ -115,6 +116,7 @@ describe("RegularEnsemble", () => {
             realizationsArray,
             parameterArray,
             sensitivityArray,
+            [],
             color,
         );
         expect(ensemble.getDisplayName()).toBe(`${ensembleName} (${caseName})`);

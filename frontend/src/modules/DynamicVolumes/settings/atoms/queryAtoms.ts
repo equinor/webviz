@@ -2,7 +2,7 @@ import { getVectorListOptions } from "@api";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
-import { selectedEnsembleIdentsAtom } from "./baseAtoms";
+import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
 
 /**
  * Query atom that fetches the vector list for **each** selected ensemble.

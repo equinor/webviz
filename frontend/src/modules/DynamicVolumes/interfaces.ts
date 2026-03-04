@@ -3,28 +3,35 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
-    colorByAtom,
     resampleFrequencyAtom,
-    selectedEnsembleIdentsAtom,
-    selectedRegionsAtom,
     selectedStatisticsAtom,
-    selectedVectorBaseNameAtom,
-    showHistogramAtom,
+    showRecoveryFactorAtom,
     visualizationModeAtom,
+    colorByAtom,
+    subplotByAtom,
+    regionSelectionModeAtom,
 } from "./settings/atoms/baseAtoms";
-import { selectedVectorNamesToFetchAtom } from "./settings/atoms/derivedAtoms";
-import type { ColorBy, StatisticsType, VisualizationMode } from "./typesAndEnums";
+import {
+    effectiveSelectedRegionsAtom,
+    fipRegionLabelsAtom,
+    selectedVectorNamesToFetchAtom,
+} from "./settings/atoms/derivedAtoms";
+import { selectedEnsembleIdentsAtom, selectedVectorBaseNameAtom } from "./settings/atoms/persistableFixableAtoms";
+import type { PlotDimension, RegionSelectionMode, StatisticsType, VisualizationMode } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     visualizationMode: VisualizationMode;
-    colorBy: ColorBy;
+    colorBy: PlotDimension;
+    subplotBy: PlotDimension | null;
+    regionSelectionMode: RegionSelectionMode;
     selectedStatistics: StatisticsType[];
-    showHistogram: boolean;
     resampleFrequency: Frequency_api;
     ensembleIdents: RegularEnsembleIdent[];
     vectorNamesToFetch: string[];
     selectedRegions: number[];
     selectedVectorBaseName: string | null;
+    fipRegionLabels: Record<number, { zone: string; region: string }>;
+    showRecoveryFactor: boolean;
 };
 
 export type Interfaces = {
@@ -34,11 +41,14 @@ export type Interfaces = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     visualizationMode: (get) => get(visualizationModeAtom),
     colorBy: (get) => get(colorByAtom),
+    subplotBy: (get) => get(subplotByAtom),
+    regionSelectionMode: (get) => get(regionSelectionModeAtom),
     selectedStatistics: (get) => get(selectedStatisticsAtom),
-    showHistogram: (get) => get(showHistogramAtom),
     resampleFrequency: (get) => get(resampleFrequencyAtom),
     ensembleIdents: (get) => get(selectedEnsembleIdentsAtom).value ?? [],
     vectorNamesToFetch: (get) => get(selectedVectorNamesToFetchAtom),
-    selectedRegions: (get) => get(selectedRegionsAtom),
-    selectedVectorBaseName: (get) => get(selectedVectorBaseNameAtom),
+    selectedRegions: (get) => get(effectiveSelectedRegionsAtom),
+    selectedVectorBaseName: (get) => get(selectedVectorBaseNameAtom).value,
+    fipRegionLabels: (get) => get(fipRegionLabelsAtom),
+    showRecoveryFactor: (get) => get(showRecoveryFactorAtom),
 };

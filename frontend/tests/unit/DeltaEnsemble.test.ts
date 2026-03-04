@@ -27,6 +27,7 @@ describe("DeltaEnsemble", () => {
             },
         ],
         [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }],
+        [],
         "blue",
         "Custom Name First Ensemble",
     );
@@ -51,6 +52,7 @@ describe("DeltaEnsemble", () => {
             },
         ],
         [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }],
+        [],
         "green",
         "Custom Name Second Ensemble",
     );

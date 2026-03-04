@@ -5,6 +5,7 @@ import type {
     EnsembleParameter_api,
     EnsembleParametersAndSensitivities_api,
     EnsembleSensitivity_api,
+    FipRegion_api,
 } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersAndSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
@@ -14,6 +15,7 @@ import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { createDeltaEnsembleDisplayName, createRegularEnsembleDisplayName } from "@framework/utils/ensembleUiHelpers";
 import { calcFnv1aHash } from "@lib/utils/hashUtils";
 
+import type { FipMapping } from "../EnsembleFipRegions";
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
 import { ParameterType } from "../EnsembleParameters";
 import type { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
@@ -133,6 +135,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 
         const parameterArray = buildParameterArrFromApiResponse(ensembleApiData.parameters);
         const sensitivityArray = buildSensitivityArrFromApiResponse(ensembleApiData.sensitivities);
+        const fipMappingArray = buildFipMappingArrFromApiResponse(ensembleApiData.ensembleDetails.fipRegions);
         outEnsembleArray.push(
             new RegularEnsemble(
                 ensembleApiData.ensembleDetails.fieldIdentifier,
@@ -143,6 +146,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                 ensembleApiData.ensembleDetails.realizations,
                 parameterArray,
                 sensitivityArray,
+                fipMappingArray,
                 ensembleSetting.color,
                 ensembleSetting.customName,
             ),
@@ -150,10 +154,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     }
 
     // Create delta ensembles
-    // - Delta ensembles does not support parameters and sensitivities yet
+    // - Delta ensembles does not support parameters, sensitivities, and fip regions yet
     const outDeltaEnsembleArray: DeltaEnsemble[] = [];
     const emptyParameterArray: Parameter[] = [];
     const nullSensitivityArray = null;
+    const emptyFipMappingArray: FipMapping[] = [];
     const emptyColor = "";
     for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
         const comparisonEnsembleIdentString = deltaEnsembleSetting.comparisonEnsembleIdent.toString();
@@ -212,6 +217,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   comparisonEnsembleApiData.ensembleDetails.realizations,
                   emptyParameterArray,
                   nullSensitivityArray,
+                  emptyFipMappingArray,
                   emptyColor,
                   comparisonEnsembleCustomName,
               );
@@ -227,6 +233,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   referenceEnsembleApiData.ensembleDetails.realizations,
                   emptyParameterArray,
                   nullSensitivityArray,
+                  emptyFipMappingArray,
                   emptyColor,
                   referenceEnsembleCustomName,
               );
@@ -438,4 +445,12 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
     }
 
     return retParameterArray;
+}
+
+function buildFipMappingArrFromApiResponse(apiFipRegionArray: FipRegion_api[]): FipMapping[] {
+    return apiFipRegionArray.map((apiItem) => ({
+        fipNumber: apiItem.fipNumber,
+        zone: apiItem.zone,
+        region: apiItem.region,
+    }));
 }

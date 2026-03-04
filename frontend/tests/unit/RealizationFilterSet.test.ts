@@ -5,12 +5,44 @@ import { EnsembleSet } from "@framework/EnsembleSet";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
-
 describe("RealizationFilterSet tests", () => {
     const regularEnsembleArray = [
-        new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", "sc1", [], [], null, ""),
-        new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", "sc2", [], [], null, ""),
-        new RegularEnsemble("DROGON", "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", "sc3", [], [], null, ""),
+        new RegularEnsemble(
+            "DROGON",
+            "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
+            "case1",
+            "ens1",
+            "sc1",
+            [],
+            [],
+            null,
+            [],
+            "",
+        ),
+        new RegularEnsemble(
+            "DROGON",
+            "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
+            "case1",
+            "ens2",
+            "sc2",
+            [],
+            [],
+            null,
+            [],
+            "",
+        ),
+        new RegularEnsemble(
+            "DROGON",
+            "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa",
+            "case2",
+            "ens1",
+            "sc3",
+            [],
+            [],
+            null,
+            [],
+            "",
+        ),
     ];
 
     const deltaEnsembleArray = [
@@ -27,6 +59,7 @@ describe("RealizationFilterSet tests", () => {
         [],
         [],
         null,
+        [],
         "",
     );
     const nonExistingDeltaEnsemble = new DeltaEnsemble(regularEnsembleArray[1], regularEnsembleArray[2], "", null);

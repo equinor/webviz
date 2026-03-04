@@ -1,3 +1,5 @@
+import type { FipMapping } from "./EnsembleFipRegions";
+import { EnsembleFipRegions } from "./EnsembleFipRegions";
 import type { Parameter } from "./EnsembleParameters";
 import { EnsembleParameters } from "./EnsembleParameters";
 import type { Sensitivity } from "./EnsembleSensitivities";
@@ -13,6 +15,7 @@ export class RegularEnsemble {
     private _realizationsArray: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
+    private _fipRegions: EnsembleFipRegions | null;
     private _color: string;
     private _customName: string | null;
 
@@ -25,6 +28,7 @@ export class RegularEnsemble {
         realizationsArray: number[],
         parameterArray: Parameter[],
         sensitivityArray: Sensitivity[] | null,
+        fipMappingArray: FipMapping[],
         color: string,
         customName: string | null = null,
     ) {
@@ -40,6 +44,11 @@ export class RegularEnsemble {
         this._sensitivities = null;
         if (sensitivityArray && sensitivityArray.length > 0) {
             this._sensitivities = new EnsembleSensitivities(sensitivityArray);
+        }
+
+        this._fipRegions = null;
+        if (fipMappingArray.length > 0) {
+            this._fipRegions = new EnsembleFipRegions(fipMappingArray);
         }
     }
 
@@ -93,6 +102,10 @@ export class RegularEnsemble {
 
     getSensitivities(): EnsembleSensitivities | null {
         return this._sensitivities;
+    }
+
+    getFipRegions(): EnsembleFipRegions | null {
+        return this._fipRegions;
     }
 
     getColor(): string {
