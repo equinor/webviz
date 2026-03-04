@@ -1,4 +1,5 @@
 export type CsvFile = { filename: string; csvContent: string };
+export type CsvRows = { headerRows: string[][]; dataRows: (string | number)[][] };
 
 /**
  * Escape a CSV value: wrap in double quotes if it contains commas, quotes, or newlines.
@@ -19,10 +20,10 @@ export function escapeCsvValue(value: string | number): string {
  * Each row is joined with commas, rows are joined with newlines.
  * Values are escaped as needed.
  */
-export function convertRowsToCsvContentString(headerRows: string[][], dataRows: (string | number)[][]): string {
+export function convertRowsToCsvContentString(rows: CsvRows): string {
     const allRows = [
-        ...headerRows.map((row) => row.map(escapeCsvValue).join(",")),
-        ...dataRows.map((row) => row.map(escapeCsvValue).join(",")),
+        ...rows.headerRows.map((row) => row.map(escapeCsvValue).join(",")),
+        ...rows.dataRows.map((row) => row.map(escapeCsvValue).join(",")),
     ];
     return allRows.join("\n");
 }

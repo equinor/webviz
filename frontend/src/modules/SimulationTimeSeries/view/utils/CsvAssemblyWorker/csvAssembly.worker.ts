@@ -16,13 +16,14 @@ import {
     assembleRealizationCsvFiles,
     assembleStatisticsCsvFiles,
     getSelectedStatisticFunctions,
+    type VectorEnsemblesData,
 } from "./_utils";
 
 export function assembleCsvFiles(
-    realizationData: { ensembleDisplayName: string; vectorName: string; data: VectorRealizationData_api[] }[],
-    statisticsData: { ensembleDisplayName: string; vectorName: string; data: VectorStatisticData_api }[],
-    historicalData: { ensembleDisplayName: string; vectorName: string; data: VectorHistoricalData_api }[],
-    observationData: { ensembleDisplayName: string; vectorName: string; data: SummaryVectorObservations_api }[],
+    realizationData: VectorEnsemblesData<VectorRealizationData_api[]>[],
+    statisticsData: VectorEnsemblesData<VectorStatisticData_api>[],
+    historicalData: VectorEnsemblesData<VectorHistoricalData_api>[],
+    observationData: VectorEnsemblesData<SummaryVectorObservations_api>[],
     visualizationMode: VisualizationMode,
     statisticsSelection: StatisticsSelection,
     showHistorical: boolean,

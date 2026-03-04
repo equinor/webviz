@@ -6,7 +6,7 @@ import {
     type VectorStatisticData_api,
 } from "@api";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-import { convertRowsToCsvContentString } from "@lib/utils/csvConvertUtils";
+import { convertRowsToCsvContentString, type CsvFile, type CsvRows } from "@lib/utils/csvConvertUtils";
 import type { StatisticsSelection } from "@modules/SimulationTimeSeries/typesAndEnums";
 import {
     FanchartStatisticOption,
@@ -14,32 +14,33 @@ import {
     VisualizationMode,
 } from "@modules/SimulationTimeSeries/typesAndEnums";
 
+// Vector data per ensemble
+type PerEnsembleVectorData<T> = {
+    ensembleDisplayName: string;
+    data: T;
+};
+
+// Vector name and its data, categorized per ensemble
+export type VectorEnsemblesData<T> = {
+    vectorName: string;
+    perEnsembleData: PerEnsembleVectorData<T>[];
+};
+
 function sanitizeFilename(name: string): string {
     return name.replace(/[:/\\]/g, "_");
 }
 
 function assembleCsvFilesPerVector<T>(
-    inputData: { ensembleDisplayName: string; vectorName: string; data: T }[],
+    inputData: VectorEnsemblesData<T>[],
     filenameSuffix: string,
-    buildCsvRows: (
-        vectorName: string,
-        entries: { ensembleDisplayName: string; data: T }[],
-    ) => { headerRows: string[][]; dataRows: (string | number)[][] },
-): { filename: string; csvContent: string }[] {
-    const byVector = new Map<string, { ensembleDisplayName: string; data: T }[]>();
-    for (const entry of inputData) {
-        const existing = byVector.get(entry.vectorName) ?? [];
-        existing.push({ ensembleDisplayName: entry.ensembleDisplayName, data: entry.data });
-        byVector.set(entry.vectorName, existing);
-    }
-
-    const files: { filename: string; csvContent: string }[] = [];
-    for (const [vectorName, entries] of byVector) {
-        const { headerRows, dataRows } = buildCsvRows(vectorName, entries);
+    buildCsvRows: (vectorName: string, perEnsembleData: PerEnsembleVectorData<T>[]) => CsvRows,
+): CsvFile[] {
+    const files: CsvFile[] = [];
+    for (const { vectorName, perEnsembleData } of inputData) {
+        const csvRows = buildCsvRows(vectorName, perEnsembleData);
         const filename = `${sanitizeFilename(vectorName)}_${filenameSuffix}.csv`;
-        files.push({ filename, csvContent: convertRowsToCsvContentString(headerRows, dataRows) });
+        files.push({ filename, csvContent: convertRowsToCsvContentString(csvRows) });
     }
-
     return files;
 }
 
@@ -67,23 +68,23 @@ export function getSelectedStatisticFunctions(
 }
 
 export function assembleRealizationCsvFiles(
-    realizationData: { ensembleDisplayName: string; vectorName: string; data: VectorRealizationData_api[] }[],
-): { filename: string; csvContent: string }[] {
+    realizationData: VectorEnsemblesData<VectorRealizationData_api[]>[],
+): CsvFile[] {
     return assembleCsvFilesPerVector(realizationData, "realizations", buildRealizationCsvRows);
 }
 
 function buildRealizationCsvRows(
     vectorName: string,
-    entries: { ensembleDisplayName: string; data: VectorRealizationData_api[] }[],
-): { headerRows: string[][]; dataRows: (string | number)[][] } {
+    perEnsembleData: PerEnsembleVectorData<VectorRealizationData_api[]>[],
+): CsvRows {
     const headerRows: string[][] = [["ENSEMBLE", "DATE", "REAL", vectorName]];
     const dataRows: (string | number)[][] = [];
 
-    for (const entry of entries) {
-        for (const realization of entry.data) {
+    for (const vecEnsData of perEnsembleData) {
+        for (const realization of vecEnsData.data) {
             for (let i = 0; i < realization.timestampsUtcMs.length; i++) {
                 dataRows.push([
-                    entry.ensembleDisplayName,
+                    vecEnsData.ensembleDisplayName,
                     timestampUtcMsToCompactIsoString(realization.timestampsUtcMs[i]),
                     realization.realization,
                     realization.values[i],
@@ -96,40 +97,40 @@ function buildRealizationCsvRows(
 }
 
 export function assembleStatisticsCsvFiles(
-    statisticsData: { ensembleDisplayName: string; vectorName: string; data: VectorStatisticData_api }[],
+    statisticsData: VectorEnsemblesData<VectorStatisticData_api>[],
     statisticFunctions: StatisticFunction_api[],
-): { filename: string; csvContent: string }[] {
+): CsvFile[] {
     if (statisticFunctions.length === 0) return [];
 
     // Use arrow function for calling buildStatisticsCsvRows to capture statisticFunctions
-    return assembleCsvFilesPerVector(statisticsData, "statistics", (vectorName, entries) =>
-        buildStatisticsCsvRows(vectorName, entries, statisticFunctions),
+    return assembleCsvFilesPerVector(statisticsData, "statistics", (vectorName, perEnsembleData) =>
+        buildStatisticsCsvRows(vectorName, perEnsembleData, statisticFunctions),
     );
 }
 
 function buildStatisticsCsvRows(
     vectorName: string,
-    entries: { ensembleDisplayName: string; data: VectorStatisticData_api }[],
+    perEnsembleData: PerEnsembleVectorData<VectorStatisticData_api>[],
     statisticFunctions: StatisticFunction_api[],
-): { headerRows: string[][]; dataRows: (string | number)[][] } {
+): CsvRows {
     const headerRows: string[][] = [
         ["ENSEMBLE", "DATE", ...statisticFunctions.map(() => vectorName)],
         ["", "", ...statisticFunctions.map((fn) => StatisticFunctionEnumToStringMapping[fn])],
     ];
     const dataRows: (string | number)[][] = [];
 
-    for (const entry of entries) {
+    for (const vecEnsData of perEnsembleData) {
         const statValueMap = new Map<StatisticFunction_api, number[]>();
-        for (const vo of entry.data.valueObjects) {
+        for (const vo of vecEnsData.data.valueObjects) {
             if (statisticFunctions.includes(vo.statisticFunction)) {
                 statValueMap.set(vo.statisticFunction, vo.values);
             }
         }
 
-        for (let i = 0; i < entry.data.timestampsUtcMs.length; i++) {
+        for (let i = 0; i < vecEnsData.data.timestampsUtcMs.length; i++) {
             const row: (string | number)[] = [
-                entry.ensembleDisplayName,
-                timestampUtcMsToCompactIsoString(entry.data.timestampsUtcMs[i]),
+                vecEnsData.ensembleDisplayName,
+                timestampUtcMsToCompactIsoString(vecEnsData.data.timestampsUtcMs[i]),
             ];
             for (const fn of statisticFunctions) {
                 const values = statValueMap.get(fn);
@@ -142,25 +143,23 @@ function buildStatisticsCsvRows(
     return { headerRows, dataRows };
 }
 
-export function assembleHistoricalCsvFiles(
-    historicalData: { ensembleDisplayName: string; vectorName: string; data: VectorHistoricalData_api }[],
-): { filename: string; csvContent: string }[] {
+export function assembleHistoricalCsvFiles(historicalData: VectorEnsemblesData<VectorHistoricalData_api>[]): CsvFile[] {
     return assembleCsvFilesPerVector(historicalData, "historical", buildHistoricalCsvRows);
 }
 
 function buildHistoricalCsvRows(
     vectorName: string,
-    entries: { ensembleDisplayName: string; data: VectorHistoricalData_api }[],
-): { headerRows: string[][]; dataRows: (string | number)[][] } {
+    perEnsembleData: PerEnsembleVectorData<VectorHistoricalData_api>[],
+): CsvRows {
     const headerRows: string[][] = [["ENSEMBLE", "DATE", vectorName]];
     const dataRows: (string | number)[][] = [];
 
-    for (const entry of entries) {
-        for (let i = 0; i < entry.data.timestampsUtcMs.length; i++) {
+    for (const vecEnsData of perEnsembleData) {
+        for (let i = 0; i < vecEnsData.data.timestampsUtcMs.length; i++) {
             dataRows.push([
-                entry.ensembleDisplayName,
-                timestampUtcMsToCompactIsoString(entry.data.timestampsUtcMs[i]),
-                entry.data.values[i],
+                vecEnsData.ensembleDisplayName,
+                timestampUtcMsToCompactIsoString(vecEnsData.data.timestampsUtcMs[i]),
+                vecEnsData.data.values[i],
             ]);
         }
     }
@@ -169,21 +168,21 @@ function buildHistoricalCsvRows(
 }
 
 export function assembleObservationCsvFiles(
-    observationData: { ensembleDisplayName: string; vectorName: string; data: SummaryVectorObservations_api }[],
-): { filename: string; csvContent: string }[] {
+    observationData: VectorEnsemblesData<SummaryVectorObservations_api>[],
+): CsvFile[] {
     return assembleCsvFilesPerVector(observationData, "observations", buildObservationCsvRows);
 }
 
 function buildObservationCsvRows(
     vectorName: string,
-    entries: { ensembleDisplayName: string; data: SummaryVectorObservations_api }[],
-): { headerRows: string[][]; dataRows: (string | number)[][] } {
+    perEnsembleData: PerEnsembleVectorData<SummaryVectorObservations_api>[],
+): CsvRows {
     const headerRows: string[][] = [["ENSEMBLE", "DATE", vectorName, "ERROR", "LABEL"]];
     const dataRows: (string | number)[][] = [];
 
-    for (const entry of entries) {
-        for (const obs of entry.data.observations) {
-            dataRows.push([entry.ensembleDisplayName, obs.date, obs.value, obs.error, obs.label]);
+    for (const vecEnsData of perEnsembleData) {
+        for (const obs of vecEnsData.data.observations) {
+            dataRows.push([vecEnsData.ensembleDisplayName, obs.date, obs.value, obs.error, obs.label]);
         }
     }
 

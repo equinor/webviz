@@ -17,6 +17,7 @@ import {
 } from "../atoms/derivedAtoms";
 import { type CsvAssemblyWorkerApi } from "../utils/CsvAssemblyWorker/csvAssembly.worker";
 import CsvAssemblyWorker from "../utils/CsvAssemblyWorker/csvAssembly.worker?worker";
+import { toVectorEnsemblesDataArray } from "../utils/CsvAssemblyWorker/mappers";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
@@ -39,7 +40,6 @@ export function useDownloadData(viewContext: ViewContext<Interfaces>): {
 
     const assembleCsvAndDownload = React.useCallback(
         async function assembleCsvAndDownload() {
-            const zipFilename = createZipFilename("SimulationTimeSeries");
             const toastId = toast.loading(`Preparing Simulation Time Series Download`, {
                 autoClose: false,
                 closeButton: true,
@@ -47,29 +47,10 @@ export function useDownloadData(viewContext: ViewContext<Interfaces>): {
 
             try {
                 // Map data before sending to worker, as the worker cannot receive functions (like makeEnsembleDisplayName)
-                const realizationData = loadedRealizationData.map((entry) => ({
-                    ensembleDisplayName: makeEnsembleDisplayName(entry.vectorSpecification.ensembleIdent),
-                    vectorName: entry.vectorSpecification.vectorName,
-                    data: entry.data,
-                }));
-
-                const statisticsData = loadedStatisticsData.map((entry) => ({
-                    ensembleDisplayName: makeEnsembleDisplayName(entry.vectorSpecification.ensembleIdent),
-                    vectorName: entry.vectorSpecification.vectorName,
-                    data: entry.data,
-                }));
-
-                const historicalData = loadedHistoricalData.map((entry) => ({
-                    ensembleDisplayName: makeEnsembleDisplayName(entry.vectorSpecification.ensembleIdent),
-                    vectorName: entry.vectorSpecification.vectorName,
-                    data: entry.data,
-                }));
-
-                const observationData = loadedObservationData.map((entry) => ({
-                    ensembleDisplayName: makeEnsembleDisplayName(entry.vectorSpecification.ensembleIdent),
-                    vectorName: entry.vectorSpecification.vectorName,
-                    data: entry.data,
-                }));
+                const realizationData = toVectorEnsemblesDataArray(loadedRealizationData, makeEnsembleDisplayName);
+                const statisticsData = toVectorEnsemblesDataArray(loadedStatisticsData, makeEnsembleDisplayName);
+                const historicalData = toVectorEnsemblesDataArray(loadedHistoricalData, makeEnsembleDisplayName);
+                const observationData = toVectorEnsemblesDataArray(loadedObservationData, makeEnsembleDisplayName);
 
                 // Assemble csv files in web worker to avoid blocking the main thread.
                 const files = await csvAssemblyWorker.assembleCsvFiles(
@@ -83,12 +64,21 @@ export function useDownloadData(viewContext: ViewContext<Interfaces>): {
                     showObservations,
                 );
 
-                if (files.length > 0) {
-                    await downloadFilesZip(
-                        files.map((e) => ({ filename: e.filename, content: e.csvContent })),
-                        zipFilename,
-                    );
+                if (files.length === 0) {
+                    toast.update(toastId, {
+                        render: `No data available for download`,
+                        type: "info",
+                        isLoading: false,
+                        autoClose: 3000,
+                    });
+                    return;
                 }
+
+                const zipFilename = createZipFilename("SimulationTimeSeries");
+                await downloadFilesZip(
+                    files.map((e) => ({ filename: e.filename, content: e.csvContent })),
+                    zipFilename,
+                );
 
                 toast.update(toastId, { render: zipFilename, type: "success", isLoading: false, autoClose: 3000 });
             } catch (error) {
