@@ -8,6 +8,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { ChannelReceiverChannelContent, ChannelReceiverReturnData } from "@framework/types/dataChannnel";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
+import { Table as TableComponent } from "@lib/components/Table";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -23,6 +24,7 @@ import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { Interfaces } from "./interfaces";
 import { BarSortBy, PlotType } from "./typesAndEnums";
+import { buildStatisticsTableData, makeStatisticsTableColumns } from "./utils/statisticsTable";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
@@ -91,6 +93,23 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         }
 
         const channelX = receiverX.channel;
+
+        if (plotType === PlotType.StatisticsTable) {
+            const channels = [channelX];
+            if (receiverY.channel && receiverY.channel.contents.length > 0) {
+                channels.push(receiverY.channel);
+            }
+            const tableData = buildStatisticsTableData(...channels);
+            const tableColumns = makeStatisticsTableColumns();
+            return (
+                <TableComponent
+                    columns={tableColumns}
+                    rows={tableData.rows}
+                    rowIdentifier="id"
+                    height={wrapperDivSize.height}
+                />
+            );
+        }
 
         if (plotType === PlotType.Histogram) {
             return renderHistogramPlot({

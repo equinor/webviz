@@ -3,6 +3,7 @@ export enum PlotType {
     BarChart = "barchart",
     Scatter = "scatter",
     ScatterWithColorMapping = "scatterWithColor",
+    StatisticsTable = "statisticsTable",
 }
 export enum BarSortBy {
     Value = "value",

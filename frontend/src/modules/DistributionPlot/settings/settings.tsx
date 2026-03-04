@@ -40,6 +40,10 @@ const plotTypes = [
         value: PlotType.ScatterWithColorMapping,
         label: "Scatter 2D with color mapping",
     },
+    {
+        value: PlotType.StatisticsTable,
+        label: "Statistics table",
+    },
 ];
 
 //-----------------------------------------------------------------------------------------------------------
