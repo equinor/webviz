@@ -67,6 +67,18 @@ class VectorRealizationsData(BaseModel):
     valuesPerRealization: list[list[float]]
 
 
+class VectorGroupInput(BaseModel):
+    """A named group of vector names to be summed element-wise on the server.
+
+    The server will fetch all ``vectorNames``, sum their
+    ``valuesPerRealization`` arrays element-wise per realization, and
+    return the result under ``groupLabel``.
+    """
+
+    groupLabel: str
+    vectorNames: list[str]
+
+
 class StatisticValueObject(BaseModel):
     statisticFunction: StatisticFunction
     values: list[float]

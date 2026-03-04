@@ -103,6 +103,18 @@ export type BodyPostGetSurfaceIntersection_api = {
 };
 
 /**
+ * Body_post_grouped_realizations_vectors_data
+ */
+export type BodyPostGroupedRealizationsVectorsData_api = {
+    /**
+     * Groups
+     *
+     * Groups of vector names to sum
+     */
+    groups: Array<VectorGroupInput_api>;
+};
+
+/**
  * BoundingBox2d
  */
 export type BoundingBox2d_api = {
@@ -2344,6 +2356,26 @@ export type VectorDescription_api = {
 };
 
 /**
+ * VectorGroupInput
+ *
+ * A named group of vector names to be summed element-wise on the server.
+ *
+ * The server will fetch all ``vectorNames``, sum their
+ * ``valuesPerRealization`` arrays element-wise per realization, and
+ * return the result under ``groupLabel``.
+ */
+export type VectorGroupInput_api = {
+    /**
+     * Grouplabel
+     */
+    groupLabel: string;
+    /**
+     * Vectornames
+     */
+    vectorNames: Array<string>;
+};
+
+/**
  * VectorHistoricalData
  */
 export type VectorHistoricalData_api = {
@@ -3540,6 +3572,61 @@ export type GetRealizationsVectorsDataResponses_api = {
 
 export type GetRealizationsVectorsDataResponse_api =
     GetRealizationsVectorsDataResponses_api[keyof GetRealizationsVectorsDataResponses_api];
+
+export type PostGroupedRealizationsVectorsDataData_api = {
+    body: BodyPostGroupedRealizationsVectorsData_api;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Resampling Frequency
+         *
+         * Resampling frequency. If not specified, raw data without resampling will be returned.
+         */
+        resampling_frequency?: Frequency_api | null;
+        /**
+         * Realizations Encoded As Uint List Str
+         *
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/timeseries/grouped_realizations_vectors_data/";
+};
+
+export type PostGroupedRealizationsVectorsDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type PostGroupedRealizationsVectorsDataError_api =
+    PostGroupedRealizationsVectorsDataErrors_api[keyof PostGroupedRealizationsVectorsDataErrors_api];
+
+export type PostGroupedRealizationsVectorsDataResponses_api = {
+    /**
+     * Response Post Grouped Realizations Vectors Data
+     *
+     * Successful Response
+     */
+    200: Array<VectorRealizationsData_api>;
+};
+
+export type PostGroupedRealizationsVectorsDataResponse_api =
+    PostGroupedRealizationsVectorsDataResponses_api[keyof PostGroupedRealizationsVectorsDataResponses_api];
 
 export type GetDeltaEnsembleRealizationsVectorDataData_api = {
     body?: never;

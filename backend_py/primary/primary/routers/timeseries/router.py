@@ -5,7 +5,7 @@ from typing import Annotated
 import polars as pl
 import pyarrow as pa
 import pyarrow.compute as pc
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
 
 from webviz_services.summary_vector_statistics import compute_vector_statistics
 from webviz_services.sumo_access.generic_types import EnsembleScalarResponse
@@ -268,6 +268,100 @@ async def get_realizations_vectors_data(
 
     perf_metrics.record_lap("convert-data")
     LOGGER.info(f"Loaded multi-vector realization data in: {perf_metrics.to_string()}")
+    return ret_arr
+
+
+@router.post("/grouped_realizations_vectors_data/")
+@cache_time(CacheTime.LONG)
+async def post_grouped_realizations_vectors_data(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    groups: Annotated[list[schemas.VectorGroupInput], Body(embed=True, description="Groups of vector names to sum")],
+    resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, raw data without resampling will be returned.")] = None,
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
+    # fmt:on
+) -> list[schemas.VectorRealizationsData]:
+    """Get summed vector data per realization for named groups.
+
+    Each group specifies a label and a list of vector names.  The server
+    fetches all vectors, sums per-realization values within each group, and
+    returns one VectorRealizationsData entry per group (using the group
+    label as ``vectorName``).  This dramatically reduces payload size when
+    the client would otherwise sum regions client-side.
+    """
+
+    perf_metrics = ResponsePerfMetrics(response)
+
+    realizations: list[int] | None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
+
+    # Collect all unique vector names across all groups
+    all_vector_names: list[str] = []
+    seen: set[str] = set()
+    for group in groups:
+        for vn in group.vectorNames:
+            if vn not in seen:
+                all_vector_names.append(vn)
+                seen.add(vn)
+
+    access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
+
+    df = await access.get_vectors_table_async(
+        vector_names=all_vector_names,
+        resampling_frequency=sumo_freq,
+        realizations=realizations,
+    )
+    perf_metrics.record_lap("get-vectors")
+
+    grouped = df.sort(["REAL", "DATE"]).group_by("REAL", maintain_order=True)
+    agg_groups = grouped.agg(pl.all())
+
+    unique_reals: list[int] = agg_groups["REAL"].to_list()
+    timestamps: list[int] = agg_groups["DATE"][0].cast(int).to_list()
+    num_reals = len(unique_reals)
+
+    ret_arr: list[schemas.VectorRealizationsData] = []
+
+    for group in groups:
+        # Collect columns that exist in the data
+        cols = [vn for vn in group.vectorNames if vn in agg_groups.columns]
+        if len(cols) == 0:
+            # All-zero group — omit from response to save payload
+            continue
+        elif len(cols) == 1:
+            values_per_real = agg_groups[cols[0]].to_list()
+        else:
+            # Sum columns element-wise across all vectors in the group
+            list_arrays = [agg_groups[c].to_list() for c in cols]
+            values_per_real = []
+            for r in range(num_reals):
+                row: list[float] = [0.0] * len(timestamps)
+                for la in list_arrays:
+                    for t in range(len(timestamps)):
+                        row[t] += la[r][t]
+                values_per_real.append(row)
+
+        # Skip groups where all values are zero (no production/injection)
+        is_all_zero = all(v == 0.0 for row in values_per_real for v in row)
+        if is_all_zero:
+            continue
+
+        ret_arr.append(
+            schemas.VectorRealizationsData(
+                vectorName=group.groupLabel,
+                realizations=unique_reals,
+                timestampsUtcMs=timestamps,
+                valuesPerRealization=values_per_real,
+            )
+        )
+
+    perf_metrics.record_lap("sum-groups")
+    LOGGER.info(f"Loaded grouped realization data ({len(groups)} groups) in: {perf_metrics.to_string()}")
     return ret_arr
 
 

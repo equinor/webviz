@@ -236,6 +236,9 @@ import type {
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionErrors_api,
     PostGetSurfaceIntersectionResponses_api,
+    PostGroupedRealizationsVectorsDataData_api,
+    PostGroupedRealizationsVectorsDataErrors_api,
+    PostGroupedRealizationsVectorsDataResponses_api,
     PostLogoutData_api,
     PostLogoutResponses_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -401,6 +404,34 @@ export const getRealizationsVectorsData = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/timeseries/realizations_vectors_data/",
         ...options,
+    });
+
+/**
+ * Post Grouped Realizations Vectors Data
+ *
+ * Get summed vector data per realization for named groups.
+ *
+ * Each group specifies a label and a list of vector names.  The server
+ * fetches all vectors, sums per-realization values within each group, and
+ * returns one VectorRealizationsData entry per group (using the group
+ * label as ``vectorName``).  This dramatically reduces payload size when
+ * the client would otherwise sum regions client-side.
+ */
+export const postGroupedRealizationsVectorsData = <ThrowOnError extends boolean = false>(
+    options: Options<PostGroupedRealizationsVectorsDataData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).post<
+        PostGroupedRealizationsVectorsDataResponses_api,
+        PostGroupedRealizationsVectorsDataErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/timeseries/grouped_realizations_vectors_data/",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
     });
 
 /**

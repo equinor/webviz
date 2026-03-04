@@ -389,14 +389,31 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 )}
             </CollapsibleGroup>
 
-            <CollapsibleGroup title="Visualization" expanded>
+            <CollapsibleGroup title="Visualization" contentClassName="flex flex-col gap-2" expanded>
                 <Label text="Mode">
                     <RadioGroup
                         options={visualizationModes}
                         value={visualizationMode}
                         onChange={handleVisualizationModeChange}
                     />
-                </Label>
+                </Label>{" "}
+                <div className="flex flex-row items-center gap-2 text-sm text-gray-500">
+                    <span>Data aggregation</span>
+                    <ContextHelp
+                        title="Grouping & aggregation"
+                        content={
+                            <>
+                                Regions are grouped based on the <b>Color by</b> and <b>Subplot by</b> dimensions.
+                                Within each group, regional volumes are summed on the server before being sent to the
+                                client.
+                                <br />
+                                <br />
+                                Groups where all values are zero across all realizations and timesteps are automatically
+                                omitted from the visualization.
+                            </>
+                        }
+                    />
+                </div>
                 <Label text="Color by">
                     <Dropdown
                         options={colorByDropdownOptions}

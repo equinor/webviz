@@ -1,32 +1,73 @@
-import { getRealizationsVectorsDataOptions } from "@api";
+import { atom } from "jotai";
+
+import { postGroupedRealizationsVectorsDataOptions } from "@api";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
-import { ensembleIdentsAtom, resampleFrequencyAtom, vectorNamesToFetchAtom } from "./baseAtoms";
+import type { VectorGroupDef } from "../../utils/vectorGroups";
+import { computeVectorGroupDefs, toApiGroups } from "../../utils/vectorGroups";
+
+import {
+    colorByAtom,
+    ensembleIdentsAtom,
+    fipRegionLabelsAtom,
+    resampleFrequencyAtom,
+    selectedRegionsAtom,
+    subplotByAtom,
+    vectorNamesToFetchAtom,
+} from "./baseAtoms";
+
+// ────────── Vector group definitions ──────────
 
 /**
- * Per-ensemble realization vector data queries.
+ * Derived atom that computes the vector groups to request from the backend
+ * based on the current colorBy/subplotBy dimension configuration.
  *
- * Fires one query per selected ensemble, each fetching the same set of
- * regional vector names. Produces an array of query results aligned with
- * `ensembleIdentsAtom`.
+ * These groups determine how FIP region vectors are summed server-side.
+ * The groups are identical for every ensemble.
  */
-export const realizationVectorDataQueriesAtom = atomWithQueries((get) => {
+export const vectorGroupDefsAtom = atom<VectorGroupDef[]>((get) => {
+    const selectedRegions = get(selectedRegionsAtom);
+    const fipRegionLabels = get(fipRegionLabelsAtom);
+    const colorBy = get(colorByAtom);
+    const subplotBy = get(subplotByAtom);
+    const vectorNamesToFetch = get(vectorNamesToFetchAtom);
+
+    if (!colorBy) return [];
+
+    return computeVectorGroupDefs(selectedRegions, fipRegionLabels, colorBy, subplotBy, vectorNamesToFetch);
+});
+
+// ────────── Per-ensemble grouped queries ──────────
+
+/**
+ * Per-ensemble grouped realization vector data queries.
+ *
+ * Fires one POST query per selected ensemble, sending the vector groups
+ * computed from colorBy/subplotBy.  The backend sums vectors within each
+ * group and returns one VectorRealizationsData per group, dramatically
+ * reducing payload size compared to fetching individual regional vectors.
+ */
+export const groupedVectorDataQueriesAtom = atomWithQueries((get) => {
     const ensembleIdents = get(ensembleIdentsAtom);
-    const vectorNames = get(vectorNamesToFetchAtom);
     const resampleFrequency = get(resampleFrequencyAtom);
+    const groupDefs = get(vectorGroupDefsAtom);
+
+    const apiGroups = toApiGroups(groupDefs);
 
     const queries = ensembleIdents.map((ensembleIdent) => {
-        const enabled = vectorNames.length > 0 && resampleFrequency !== null;
+        const enabled = groupDefs.length > 0 && resampleFrequency !== null;
 
         return () => ({
-            ...getRealizationsVectorsDataOptions({
+            ...postGroupedRealizationsVectorsDataOptions({
                 query: {
                     case_uuid: ensembleIdent.getCaseUuid(),
                     ensemble_name: ensembleIdent.getEnsembleName(),
-                    vector_names: vectorNames,
                     resampling_frequency: resampleFrequency!,
                     ...makeCacheBustingQueryParam(ensembleIdent),
+                },
+                body: {
+                    groups: apiGroups,
                 },
             }),
             enabled,
