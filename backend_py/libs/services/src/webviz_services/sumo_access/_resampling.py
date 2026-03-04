@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List, Optional
 
 import numpy as np
 import pyarrow as pa
@@ -215,6 +215,118 @@ def resample_segmented_multi_real_table(table: pa.Table, freq: Frequency) -> pa.
         rii = real_interpolation_info_dict[real]
         arr_length = len(rii.sample_dates_np)
         date_arr_list.append(rii.sample_dates_np)
+        real_arr_list.append(np.full(arr_length, real))
+
+    output_columns_dict["DATE"] = pa.chunked_array(date_arr_list)
+    output_columns_dict["REAL"] = pa.chunked_array(real_arr_list)
+
+    ret_table = pa.table(output_columns_dict, schema=table.schema)
+
+    return ret_table
+
+
+def compute_global_min_max_dates(tables: List[pa.Table]) -> tuple[np.datetime64, np.datetime64]:
+    """
+    Compute the global min and max DATE across multiple tables.
+
+    Returns the overall (min_date, max_date) pair that spans all tables,
+    suitable for generating a shared resampling date grid.
+    """
+    global_min: Optional[np.datetime64] = None
+    global_max: Optional[np.datetime64] = None
+
+    for table in tables:
+        date_col = table.column("DATE").to_numpy()
+        tmin = np.min(date_col)
+        tmax = np.max(date_col)
+        if global_min is None or tmin < global_min:
+            global_min = tmin
+        if global_max is None or tmax > global_max:
+            global_max = tmax
+
+    if global_min is None or global_max is None:
+        raise ValueError("Cannot compute date range from empty table list")
+
+    return global_min, global_max
+
+
+def resample_segmented_multi_real_table_with_shared_dates(
+    table: pa.Table,
+    shared_sample_dates: np.ndarray,
+) -> pa.Table:
+    """
+    Resample a multi-realization table using a pre-computed shared sample
+    date grid.
+
+    This variant is used when multiple single-vector tables need to be
+    resampled onto the same date grid before merging, even if the raw
+    date grids of the individual tables differ.
+
+    Parameters
+    ----------
+    table
+        Arrow table segmented on REAL with DATE sorted within each segment.
+    shared_sample_dates
+        The target sample dates (dtype datetime64[ms]), typically produced by
+        ``generate_normalized_sample_dates`` on a global min/max range.
+
+    Returns
+    -------
+    pa.Table
+        Resampled table with the shared date grid.
+    """
+    # pylint: disable=too-many-locals
+
+    real_arr_np = table.column("REAL").to_numpy()
+    unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
+
+    shared_sample_dates_as_uint = shared_sample_dates.astype(np.uint64)
+
+    output_columns_dict: Dict[str, pa.ChunkedArray] = {}
+
+    # Cache the raw dates per realization (extracted once, reused across columns)
+    raw_dates_cache: Dict[int, tuple[np.ndarray, np.ndarray]] = {}
+
+    for colname in table.schema.names:
+        if colname in ["DATE", "REAL"]:
+            continue
+
+        is_rate = is_rate_from_field_meta(table.field(colname))
+        raw_whole_numpy_arr = table.column(colname).to_numpy()
+
+        vec_arr_list = []
+        for i, real in enumerate(unique_reals):
+            start_row_idx = first_occurrence_idx[i]
+            row_count = real_counts[i]
+
+            if real not in raw_dates_cache:
+                real_dates = table["DATE"].slice(start_row_idx, row_count).to_numpy()
+                raw_dates_cache[real] = (real_dates, real_dates.astype(np.uint64))
+
+            _, raw_dates_as_uint = raw_dates_cache[real]
+            raw_numpy_arr = raw_whole_numpy_arr[start_row_idx : start_row_idx + row_count]
+
+            if is_rate:
+                inter = interpolate_backfill(
+                    shared_sample_dates_as_uint,
+                    raw_dates_as_uint,
+                    raw_numpy_arr,
+                    0,
+                    0,
+                )
+            else:
+                inter = np.interp(shared_sample_dates_as_uint, raw_dates_as_uint, raw_numpy_arr)
+
+            vec_arr_list.append(inter)
+
+        output_columns_dict[colname] = pa.chunked_array(vec_arr_list)
+
+    # Build DATE and REAL columns using the shared date grid
+    date_arr_list = []
+    real_arr_list = []
+    for real in unique_reals:
+        arr_length = len(shared_sample_dates)
+        date_arr_list.append(shared_sample_dates)
         real_arr_list.append(np.full(arr_length, real))
 
     output_columns_dict["DATE"] = pa.chunked_array(date_arr_list)

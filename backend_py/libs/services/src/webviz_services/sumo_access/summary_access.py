@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import List, Optional, Sequence, Tuple, Set
 
@@ -24,7 +25,13 @@ from webviz_services.service_exceptions import (
 
 
 from ._field_metadata import create_vector_metadata_from_field_meta
-from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
+from ._resampling import (
+    resample_segmented_multi_real_table,
+    resample_single_real_table,
+    compute_global_min_max_dates,
+    generate_normalized_sample_dates,
+    resample_segmented_multi_real_table_with_shared_dates,
+)
 from .generic_types import EnsembleScalarResponse
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
 from ._arrow_table_loader import ArrowTableLoader
@@ -100,50 +107,75 @@ class SummaryAccess:
         realizations: Optional[Sequence[int]],
     ) -> pl.DataFrame:
         """
-        Get pyarrow.Table containing values for the specified vector and the specified realizations.
+        Get data for the specified vectors and the specified realizations.
+        Each vector is fetched individually to avoid failures when vectors
+        have different DATE grids.  When *resampling_frequency* is given the
+        individual tables are resampled onto a shared date grid before being
+        merged, guaranteeing identical DATE/REAL columns across all vectors.
+
         If realizations is None, data for all available realizations will be returned.
-        The returned table will always contain a 'DATE' and 'REAL' column in addition to the requested vector.
-        The 'DATE' column will be of type timestamp[ms] and the 'REAL' column will be of type int16.
-        The vector column will be of type float32.
-        If `resampling_frequency` is None, the data will be returned with full/raw resolution.
+        The returned DataFrame will always contain a 'DATE' and 'REAL' column in
+        addition to the requested vectors.
+        If `resampling_frequency` is None, the data will be returned with full/raw
+        resolution (merged via an outer join on DATE + REAL).
         """
         timer = PerfTimer()
 
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         # New metadata uses simulationtimeseries, but most existing cases use timeseries
         table_loader.require_content_type(["timeseries", "simulationtimeseries"])
-        table = await table_loader.get_aggregated_multiple_columns_async(vector_names)
-        # _validate_single_vector_table(table, vector_name)
+
+        # Fetch each vector individually to handle differing DATE grids
+        async with asyncio.TaskGroup() as tg:
+            tasks = {vn: tg.create_task(table_loader.get_aggregated_single_column_async(vn)) for vn in vector_names}
+        per_vector_tables = {vn: task.result() for vn, task in tasks.items()}
         et_loading_ms = timer.lap_ms()
 
-        if realizations is not None:
-            requested_reals_arr = pa.array(realizations)
-            mask = pc.is_in(table["REAL"], value_set=requested_reals_arr)
-            table = table.filter(mask)
-        table = sort_table_on_real_then_date(table)
+        # Filter realizations and sort each table
+        requested_reals_arr = pa.array(realizations) if realizations is not None else None
+        sorted_tables: List[Tuple[str, pa.Table]] = []
+        for vn, tbl in per_vector_tables.items():
+            if requested_reals_arr is not None:
+                mask = pc.is_in(tbl["REAL"], value_set=requested_reals_arr)
+                tbl = tbl.filter(mask)
+            tbl = sort_table_on_real_then_date(tbl)
+            sorted_tables.append((vn, tbl))
 
-        # The resampling algorithm below uses the field metadata to determine if the vector is a rate or not.
-        # For now, fail hard if metadata is not present. This test could be refined, but should suffice now.
-        # vector_metadata = create_vector_metadata_from_field_meta(table.schema.field(vector_name))
-        # if not vector_metadata:
-        #     raise InvalidDataError(f"Did not find valid metadata for vector {vector_name}", Service.SUMO)
-
-        # Do the actual resampling
-        timer.lap_ms()
         if resampling_frequency is not None:
-            table = resample_segmented_multi_real_table(table, resampling_frequency)
-        et_resampling_ms = timer.lap_ms()
+            # Compute a shared date grid that spans all vectors
+            all_tables = [tbl for _, tbl in sorted_tables]
+            global_min, global_max = compute_global_min_max_dates(all_tables)
+            shared_sample_dates = generate_normalized_sample_dates(global_min, global_max, resampling_frequency)
 
-        # Should we always combine the chunks?
-        table = table.combine_chunks()
+            # Resample each vector onto the shared grid
+            resampled_tables: List[Tuple[str, pa.Table]] = []
+            for vn, tbl in sorted_tables:
+                resampled = resample_segmented_multi_real_table_with_shared_dates(tbl, shared_sample_dates)
+                resampled_tables.append((vn, resampled))
 
-        # LOGGER.debug(
-        #     f"Got summary vector data from Sumo in: {timer.elapsed_ms()}ms "
-        #     f"(loading={et_loading_ms}ms, resampling={et_resampling_ms}ms) "
-        #     f"({vector_name=} {resampling_frequency=} {table.shape=})"
-        # )
+            # Merge: first table has DATE + REAL + first vector; append remaining vector columns
+            merged_table = resampled_tables[0][1]
+            for vn, tbl in resampled_tables[1:]:
+                merged_table = merged_table.append_column(vn, tbl.column(vn))
 
-        return pl.from_arrow(table)
+            et_resampling_ms = timer.lap_ms()
+            table = merged_table.combine_chunks()
+
+            LOGGER.debug(
+                f"Got vectors table in: {timer.elapsed_ms()}ms "
+                f"(loading={et_loading_ms}ms, resampling={et_resampling_ms}ms) "
+                f"({len(vector_names)} vectors, {resampling_frequency=}, {table.shape=})"
+            )
+
+            return pl.from_arrow(table)
+
+        # No resampling – merge via polars join on REAL + DATE
+        frames = [pl.from_arrow(tbl) for _, tbl in sorted_tables]
+        merged_df = frames[0]
+        for frame in frames[1:]:
+            merged_df = merged_df.join(frame, on=["DATE", "REAL"], how="full", coalesce=True)
+
+        return merged_df
 
     @otel_span_decorator()
     async def get_vector_table_async(
