@@ -30,8 +30,8 @@ export type SerializedSettings = {
     selectedZoneNames: string[];
     selectedRegionNames: string[];
     visualizationMode: VisualizationMode;
-    colorBy: string; // PlotDimension value, kept as string for backward compat
-    subplotBy: string | null; // PlotDimension value or null
+    colorBy: PlotDimension;
+    subplotBy: PlotDimension | null;
     selectedStatistics: StatisticsType[];
 };
 
@@ -57,8 +57,13 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         visualizationMode: {
             enum: Object.values(VisualizationMode),
         },
-        colorBy: { type: "string" },
-        subplotBy: { type: "string", nullable: true },
+        colorBy: {
+            enum: Object.values(PlotDimension),
+        },
+        subplotBy: {
+            enum: Object.values(PlotDimension),
+            nullable: true,
+        },
         selectedStatistics: {
             elements: {
                 enum: Object.values(StatisticsType),
@@ -85,13 +90,6 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     };
 };
 
-/** Map old ColorBy values to new PlotDimension values for backward compat. */
-function migrateColorBy(raw: string): PlotDimension {
-    if (raw === "region") return PlotDimension.FipRegion; // old ColorBy.Region
-    if (Object.values(PlotDimension).includes(raw as PlotDimension)) return raw as PlotDimension;
-    return PlotDimension.Ensemble;
-}
-
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     const ensembleIdents = raw.ensembleIdentStrings
         ? raw.ensembleIdentStrings.map((id) => RegularEnsembleIdent.fromString(id))
@@ -104,13 +102,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedZoneNamesAtom, raw.selectedZoneNames);
     setIfDefined(set, selectedRegionNamesAtom, raw.selectedRegionNames);
     setIfDefined(set, visualizationModeAtom, raw.visualizationMode);
-
-    if (raw.colorBy !== undefined) {
-        set(colorByAtom, migrateColorBy(raw.colorBy));
-    }
-    if (raw.subplotBy !== undefined) {
-        set(subplotByAtom, raw.subplotBy ? migrateColorBy(raw.subplotBy) : null);
-    }
-
+    setIfDefined(set, colorByAtom, raw.colorBy);
+    setIfDefined(set, subplotByAtom, raw.subplotBy);
     setIfDefined(set, selectedStatisticsAtom, raw.selectedStatistics);
 };
