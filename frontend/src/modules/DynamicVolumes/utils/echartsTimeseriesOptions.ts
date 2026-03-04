@@ -101,7 +101,7 @@ export function buildTimeseriesOptions(
     // ── Grid layout ──
 
     const MARGIN_LEFT_PCT = 2;
-    const MARGIN_RIGHT_PCT = 2;
+    const MARGIN_RIGHT_PCT = 5;
     const BOTTOM_SPACE_PCT = 8; // datazoom + labels
     const TOP_SPACE_PCT = 4;
 
@@ -165,6 +165,7 @@ export function buildTimeseriesOptions(
             name: !isMultiGrid ? yAxisLabel : "",
             nameLocation: "middle" as const,
             nameGap: 40,
+            splitLine: { show: false },
             axisLabel: { show: true, fontSize: 11, formatter: (v: number) => formatNumber(v) },
             ...(showStatLines
                 ? {}
@@ -198,6 +199,7 @@ export function buildTimeseriesOptions(
 
     const echartsOptions: EChartsOption = {
         animation: false,
+
         title: titles.length > 0 ? titles : undefined,
         tooltip: showStatLines
             ? {
@@ -236,7 +238,7 @@ export function buildTimeseriesOptions(
         yAxis: isMultiGrid ? yAxes : yAxes[0],
         series: allSeries,
         dataZoom: [
-            // Slider controls only shown for single subplot — they don't map well to multi-grid
+            // Slider controls only shown for single subplot —  don't map well to multi-grid
             ...(isMultiGrid
                 ? []
                 : [
@@ -256,7 +258,7 @@ export function buildTimeseriesOptions(
                           yAxisIndex: allYAxisIndices,
                           start: 0,
                           end: 100,
-                          right: 10,
+                          right: -10,
                           width: 20,
                           filterMode: "none" as const,
                       },

@@ -18,7 +18,7 @@ export type ButtonProps = {
 } & ButtonUnstyledProps;
 
 function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElement>) {
-    const { disabled, variant, children, startIcon, endIcon, color, buttonRef, ...rest } = props;
+    const { disabled, variant, children, startIcon, endIcon, color, buttonRef, wrapperClassName, size, ...rest } = props;
 
     const internalRef = React.useRef<HTMLButtonElement>(null);
     React.useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(buttonRef, () => internalRef.current);

@@ -2,6 +2,8 @@ import type React from "react";
 
 import { useAtom, useAtomValue } from "jotai";
 
+import { vectorDefinitions } from "@assets/vectorDefinitions";
+
 import { Frequency_api } from "@api";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -9,6 +11,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { ContextHelp } from "@lib/components/ContextHelp";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
@@ -285,23 +288,48 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 <Dropdown options={frequencyOptions} value={resampleFrequency} onChange={handleFrequencyChange} />
             </CollapsibleGroup>
 
-            <CollapsibleGroup title="Vector selection" expanded>
-                <Label text="Response">
+            <CollapsibleGroup title="Vector selection" contentClassName="flex flex-col gap-2" expanded>
+                <Label text="Time series">
                     <Dropdown
-                        options={regionalInfo.vectorNames.map((v) => ({ value: v, label: v }))}
+                        options={regionalInfo.vectorNames.map((v) => {
+                            const desc = vectorDefinitions[v]?.description;
+                            return { value: v, label: desc ? `${desc} (${v})` : v };
+                        })}
                         value={selectedVectorBaseName.value ?? ""}
                         onChange={handleVectorBaseNameChange}
                         disabled={isVectorListFetching || regionalInfo.vectorNames.length === 0}
                     />
                 </Label>
 
-                {isInPlaceVector(selectedVectorBaseName.value) && (
+                <div className="flex flex-row gap-2">
                     <Checkbox
                         label="Show recovery factor"
                         checked={showRecoveryFactor}
+                        disabled={!isInPlaceVector(selectedVectorBaseName.value)}
                         onChange={(_e, checked) => setShowRecoveryFactor(checked)}
                     />
-                )}
+                    <ContextHelp
+                        title="Recovery factor"
+                        content={
+                            <>
+                                Recovery factor is calculated per realization on the aggregated (summed) in-place
+                                volumes across the selected regions:
+                                <br />
+                                <br />
+                                <b>RF(t) = (V_initial - V(t)) / V_initial</b>
+                                <br />
+                                <br />
+                                Where <b>V_initial</b> is the in-place volume at the first timestep and <b>V(t)</b> is
+                                the volume at timestep t.
+                                <br />
+                                Regions are summed first, then recovery is computed on the total.
+                                <br />
+                                <br />
+                                Only available for in-place vectors (ROIP, RGIP, RWIP).
+                            </>
+                        }
+                    />
+                </div>
 
                 {Object.keys(regionalInfo.fipArrays).length > 1 && (
                     <Label text="FIP array">

@@ -5,8 +5,9 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { PlotDimension } from "../../typesAndEnums";
-import type { TimeseriesStatistics } from "../../typesAndEnums";
-import { computeRecoveryFactor, computeStatistics, sumAcrossVectors } from "../../utils/aggregation";
+import type { ChartTrace, SubplotGroup, TimeseriesStatistics } from "../../typesAndEnums";
+import { computeRecoveryFactor, computeStatistics, sumAcrossVectors, sumValuesArrays } from "../../utils/aggregation";
+import { DIMENSION_COLORS, getDimensionKey, getDimensionLabel } from "../../utils/plotDimensions";
 import { isInPlaceVector, parseRegionalVector } from "../../utils/regionalVectors";
 
 import {
@@ -20,13 +21,9 @@ import {
 } from "./baseAtoms";
 import { realizationVectorDataQueriesAtom } from "./queryAtoms";
 
-// ────────── Helpers ──────────
-
-export { isInPlaceVector } from "../../utils/regionalVectors";
-
-export function formatDate(utcMs: number): string {
-    return new Date(utcMs).toISOString().slice(0, 10);
-}
+// Re-export types so existing consumers don't break
+export type { ChartTrace, SubplotGroup } from "../../typesAndEnums";
+export { formatDate } from "../../utils/formatting";
 
 // ────────── Types ──────────
 
@@ -117,18 +114,17 @@ export const aggregatedEnsembleDataArrayAtom = atom<AggregatedEnsembleData[]>((g
             }
         }
 
-        // Apply recovery factor if applicable
+        // Apply recovery factor to the full aggregate (sum of all regions).
+        // Per-region values are kept RAW so that subplotGroupsAtom can sum
+        // them first and then compute recovery on the summed result.
         if (applyRecovery && aggregatedValues) {
             aggregatedValues = computeRecoveryFactor(aggregatedValues);
-            for (const [region, vals] of perRegionValues) {
-                perRegionValues.set(region, computeRecoveryFactor(vals));
-            }
         }
 
         // Compute statistics
         const stats = aggregatedValues ? computeStatistics(aggregatedValues) : null;
 
-        // Per-region statistics
+        // Per-region statistics (computed on raw values, not recovery-transformed)
         const perRegionStats = new Map<number, TimeseriesStatistics>();
         for (const [region, vals] of perRegionValues) {
             perRegionStats.set(region, computeStatistics(vals));
@@ -148,85 +144,6 @@ export const aggregatedEnsembleDataArrayAtom = atom<AggregatedEnsembleData[]>((g
 
 // ────────── Chart data atoms ──────────
 
-export type ChartTrace = {
-    label: string;
-    color: string;
-    timestamps: number[];
-    stats: TimeseriesStatistics | null;
-    realizations: number[];
-    aggregatedValues: number[][] | null;
-    /** Ensemble ident string — always set since colorBy/subplotBy enforces one ensemble per trace */
-    ensembleIdentString: string;
-};
-
-export type SubplotGroup = {
-    title: string;
-    traces: ChartTrace[];
-};
-
-// ────────── Helpers for dimension-based grouping ──────────
-
-/**
- * Get the dimension key for a given data point (ensemble index + FIP number).
- */
-function getDimensionKey(
-    dim: PlotDimension,
-    ensembleIdx: number,
-    ensembleIdents: RegularEnsembleIdent[],
-    fipNumber: number,
-    fipRegionLabels: Record<number, { zone: string; region: string }>,
-): string {
-    switch (dim) {
-        case PlotDimension.Ensemble:
-            return ensembleIdents[ensembleIdx].getEnsembleName();
-        case PlotDimension.FipRegion:
-            return String(fipNumber);
-        case PlotDimension.Zone:
-            return fipRegionLabels[fipNumber]?.zone ?? `FIP ${fipNumber}`;
-        case PlotDimension.GeoRegion:
-            return fipRegionLabels[fipNumber]?.region ?? `FIP ${fipNumber}`;
-    }
-}
-
-/**
- * Get a human-readable label for a dimension key.
- */
-function getDimensionLabel(dim: PlotDimension, key: string): string {
-    switch (dim) {
-        case PlotDimension.Ensemble:
-            return key;
-        case PlotDimension.FipRegion:
-            return `Region ${key}`;
-        case PlotDimension.Zone:
-            return key;
-        case PlotDimension.GeoRegion:
-            return key;
-    }
-}
-
-/**
- * Sum multiple `number[][]` arrays element-wise.
- */
-function sumValuesArrays(arrays: number[][][]): number[][] | null {
-    if (arrays.length === 0) return null;
-    if (arrays.length === 1) return arrays[0];
-
-    const numReals = arrays[0].length;
-    const numTimesteps = numReals > 0 ? arrays[0][0].length : 0;
-
-    const result: number[][] = Array.from({ length: numReals }, () => new Array(numTimesteps).fill(0));
-
-    for (const arr of arrays) {
-        for (let r = 0; r < numReals; r++) {
-            for (let t = 0; t < numTimesteps; t++) {
-                result[r][t] += arr[r][t];
-            }
-        }
-    }
-
-    return result;
-}
-
 /**
  * Build subplot groups based on the colorBy and subplotBy dimensions.
  *
@@ -242,6 +159,9 @@ export const subplotGroupsAtom = atom<SubplotGroup[]>((get) => {
     const ensembleIdents = get(ensembleIdentsAtom);
     const ensembleSet = get(EnsembleSetAtom);
     const fipRegionLabels = get(fipRegionLabelsAtom);
+    const showRecoveryFactor = get(showRecoveryFactorAtom);
+    const selectedVectorBaseName = get(selectedVectorBaseNameAtom);
+    const applyRecovery = showRecoveryFactor && isInPlaceVector(selectedVectorBaseName);
 
     // Build ensemble name → color map for when colorBy is Ensemble
     const ensembleColorMap = new Map<string, string>();
@@ -339,7 +259,14 @@ export const subplotGroupsAtom = atom<SubplotGroup[]>((get) => {
 
         for (const colorKey of colorKeyOrder) {
             const entry = subplotMap.get(colorKey)!;
-            const summed = sumValuesArrays(entry.valuesArrays);
+            let summed = sumValuesArrays(entry.valuesArrays);
+
+            // Apply recovery factor AFTER summing raw per-region values.
+            // Recovery = (initial - current) / initial on the summed aggregate.
+            if (applyRecovery && summed) {
+                summed = computeRecoveryFactor(summed);
+            }
+
             const stats = summed ? computeStatistics(summed) : null;
 
             const colorIdx = globalColorKeys.indexOf(colorKey);
@@ -362,18 +289,3 @@ export const subplotGroupsAtom = atom<SubplotGroup[]>((get) => {
 
     return groups;
 });
-
-// ────────── Color palettes ──────────
-
-const DIMENSION_COLORS = [
-    "#1976d2",
-    "#e53935",
-    "#43a047",
-    "#fb8c00",
-    "#8e24aa",
-    "#00897b",
-    "#d81b60",
-    "#5e35b1",
-    "#00acc1",
-    "#7cb342",
-];

@@ -51,3 +51,29 @@ export type TimeseriesStatistics = {
     min: number[];
     max: number[];
 };
+
+// ────────── Chart data types ──────────
+
+/**
+ * A single trace in the timeseries chart.
+ * Represents one colored line (or fanchart band) within a subplot.
+ */
+export type ChartTrace = {
+    label: string;
+    color: string;
+    timestamps: number[];
+    stats: TimeseriesStatistics | null;
+    realizations: number[];
+    aggregatedValues: number[][] | null;
+    /** Ensemble ident string — always set since colorBy/subplotBy enforces one ensemble per trace */
+    ensembleIdentString: string;
+};
+
+/**
+ * A subplot in the chart, containing one or more traces.
+ * When subplotBy is active, each group becomes a separate grid.
+ */
+export type SubplotGroup = {
+    title: string;
+    traces: ChartTrace[];
+};

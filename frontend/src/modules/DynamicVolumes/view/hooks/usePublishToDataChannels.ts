@@ -81,7 +81,13 @@ export function usePublishToDataChannels(
                 contents.push({
                     contentIdString: contentId,
                     displayName: makeDisplayString(vectorName, trace.label, group.title, dateLabel),
-                    dataGenerator: makeTraceDataGenerator(trace, activeTimestampUtcMs, vectorName, group.title, dateLabel),
+                    dataGenerator: makeTraceDataGenerator(
+                        trace,
+                        activeTimestampUtcMs,
+                        vectorName,
+                        group.title,
+                        dateLabel,
+                    ),
                 });
             }
         }

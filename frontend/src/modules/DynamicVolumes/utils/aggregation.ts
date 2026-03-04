@@ -32,6 +32,33 @@ export function sumAcrossVectors(vectors: VectorRealizationsData_api[]): number[
 }
 
 /**
+ * Sum multiple `number[][]` (valuesPerRealization) arrays element-wise.
+ * Used to combine per-region values when grouping by zone/ensemble etc.
+ *
+ * @param arrays - Array of shape [N][numReals][numTimesteps]
+ * @returns Single array of shape [numReals][numTimesteps], or null if empty.
+ */
+export function sumValuesArrays(arrays: number[][][]): number[][] | null {
+    if (arrays.length === 0) return null;
+    if (arrays.length === 1) return arrays[0];
+
+    const numReals = arrays[0].length;
+    const numTimesteps = numReals > 0 ? arrays[0][0].length : 0;
+
+    const result: number[][] = Array.from({ length: numReals }, () => new Array(numTimesteps).fill(0));
+
+    for (const arr of arrays) {
+        for (let r = 0; r < numReals; r++) {
+            for (let t = 0; t < numTimesteps; t++) {
+                result[r][t] += arr[r][t];
+            }
+        }
+    }
+
+    return result;
+}
+
+/**
  * Compute percentile using the linear interpolation method (same as numpy default).
  * `sortedArr` must already be sorted ascending.
  */
