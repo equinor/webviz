@@ -8,11 +8,11 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 
 import type { Interfaces } from "../interfaces";
 
-import { visualizationModeAtom } from "./atoms/baseAtoms";
-import { allQueriesFailedAtom, isDataFetchingAtom, subplotGroupsAtom } from "./atoms/derivedAtoms";
+import { allQueriesFailedAtom, isDataFetchingAtom } from "./atoms/derivedAtoms";
 import { useEchartsOptions } from "./hooks/useEchartsOptions";
 import { useInstanceTitle } from "./hooks/useInstanceTitle";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
+import { useSubplotGroups } from "./hooks/useSubplotGroups";
 
 // ────────── View ──────────
 
@@ -20,20 +20,22 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const { viewContext } = props;
     const statusWriter = useViewStatusWriter(viewContext);
 
-    // View-side atoms
-    const visualizationMode = useAtomValue(visualizationModeAtom);
+    // Fetching state atoms
     const isFetching = useAtomValue(isDataFetchingAtom);
     const allFailed = useAtomValue(allQueriesFailedAtom);
-    const subplotGroups = useAtomValue(subplotGroupsAtom);
 
-    // Flatten traces across all subplot groups for empty-state checks
-    const allTraces = React.useMemo(() => subplotGroups.flatMap((g) => g.traces), [subplotGroups]);
-
+    // Settings values read directly from the interface
+    const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const selectedStatistics = viewContext.useSettingsToViewInterfaceValue("selectedStatistics");
     const selectedVectorBaseName = viewContext.useSettingsToViewInterfaceValue("selectedVectorBaseName");
     const ensembleIdents = viewContext.useSettingsToViewInterfaceValue("ensembleIdents");
     const vectorNamesToFetch = viewContext.useSettingsToViewInterfaceValue("vectorNamesToFetch");
     const showRecoveryFactor = viewContext.useSettingsToViewInterfaceValue("showRecoveryFactor");
+
+    const subplotGroups = useSubplotGroups(selectedVectorBaseName, showRecoveryFactor);
+
+    // Flatten traces across all subplot groups for empty-state checks
+    const allTraces = React.useMemo(() => subplotGroups.flatMap((g) => g.traces), [subplotGroups]);
 
     statusWriter.setLoading(isFetching);
 

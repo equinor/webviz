@@ -786,6 +786,46 @@ export type GridDimensions_api = {
 };
 
 /**
+ * GroupedRealizationsVectorData
+ *
+ * Compact response for grouped realization vector data.
+ *
+ * ``realizations`` and ``timestampsUtcMs`` are shared across all groups
+ * and appear only once at the top level.  Each ``GroupedVectorEntry``
+ * carries the group label and the per-realization value arrays.
+ */
+export type GroupedRealizationsVectorData_api = {
+    /**
+     * Realizations
+     */
+    realizations: Array<number>;
+    /**
+     * Timestampsutcms
+     */
+    timestampsUtcMs: Array<number>;
+    /**
+     * Groups
+     */
+    groups: Array<GroupedVectorEntry_api>;
+};
+
+/**
+ * GroupedVectorEntry
+ *
+ * One group's summed values, without repeating realizations/timestamps.
+ */
+export type GroupedVectorEntry_api = {
+    /**
+     * Grouplabel
+     */
+    groupLabel: string;
+    /**
+     * Valuesperrealization
+     */
+    valuesPerRealization: Array<Array<number>>;
+};
+
+/**
  * HTTPValidationError
  */
 export type HTTPValidationError_api = {
@@ -3595,12 +3635,6 @@ export type PostGroupedRealizationsVectorsDataData_api = {
          * Resampling frequency. If not specified, raw data without resampling will be returned.
          */
         resampling_frequency?: Frequency_api | null;
-        /**
-         * Realizations Encoded As Uint List Str
-         *
-         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
-         */
-        realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
     url: "/timeseries/grouped_realizations_vectors_data/";
@@ -3618,11 +3652,9 @@ export type PostGroupedRealizationsVectorsDataError_api =
 
 export type PostGroupedRealizationsVectorsDataResponses_api = {
     /**
-     * Response Post Grouped Realizations Vectors Data
-     *
      * Successful Response
      */
-    200: Array<VectorRealizationsData_api>;
+    200: GroupedRealizationsVectorData_api;
 };
 
 export type PostGroupedRealizationsVectorsDataResponse_api =

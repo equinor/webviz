@@ -6,20 +6,25 @@ import {
     serializeSettings,
     type SerializedSettings,
 } from "./settings/persistence";
+import { deserializeView, SERIALIZED_VIEW_SCHEMA, serializeView, type SerializedView } from "./view/persistence";
 
 export type SerializedState = {
     settings: SerializedSettings;
+    view: SerializedView;
 };
 
 export const SERIALIZED_STATE_SCHEMA: ModuleStateSchema<SerializedState> = {
     settings: SERIALIZED_SETTINGS_SCHEMA,
+    view: SERIALIZED_VIEW_SCHEMA,
 } as const;
 
 export const serializeStateFunctions: ModuleComponentSerializationFunctions<SerializedState> = {
     serializeStateFunctions: {
         settings: serializeSettings,
+        view: serializeView,
     },
     deserializeStateFunctions: {
         settings: deserializeSettings,
+        view: deserializeView,
     },
 };

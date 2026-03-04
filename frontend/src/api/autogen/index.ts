@@ -666,6 +666,8 @@ export {
     type Grid3dPropertyInfo_api,
     type Grid3dZone_api,
     type GridDimensions_api,
+    type GroupedRealizationsVectorData_api,
+    type GroupedVectorEntry_api,
     type HTTPValidationError_api,
     type InplaceVolumesIndexWithValues_api,
     InplaceVolumesStatistic_api,

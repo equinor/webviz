@@ -281,23 +281,17 @@ async def post_grouped_realizations_vectors_data(
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     groups: Annotated[list[schemas.VectorGroupInput], Body(embed=True, description="Groups of vector names to sum")],
     resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, raw data without resampling will be returned.")] = None,
-    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
     # fmt:on
-) -> list[schemas.VectorRealizationsData]:
+) -> schemas.GroupedRealizationsVectorData:
     """Get summed vector data per realization for named groups.
 
     Each group specifies a label and a list of vector names.  The server
     fetches all vectors, sums per-realization values within each group, and
-    returns one VectorRealizationsData entry per group (using the group
-    label as ``vectorName``).  This dramatically reduces payload size when
-    the client would otherwise sum regions client-side.
+    returns a compact response with shared ``realizations`` and
+    ``timestampsUtcMs`` at the top level, plus one entry per group.
     """
 
     perf_metrics = ResponsePerfMetrics(response)
-
-    realizations: list[int] | None = None
-    if realizations_encoded_as_uint_list_str:
-        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
     # Collect all unique vector names across all groups
     all_vector_names: list[str] = []
@@ -314,7 +308,7 @@ async def post_grouped_realizations_vectors_data(
     df = await access.get_vectors_table_async(
         vector_names=all_vector_names,
         resampling_frequency=sumo_freq,
-        realizations=realizations,
+        realizations=None,
     )
     perf_metrics.record_lap("get-vectors")
 
@@ -325,7 +319,7 @@ async def post_grouped_realizations_vectors_data(
     timestamps: list[int] = agg_groups["DATE"][0].cast(int).to_list()
     num_reals = len(unique_reals)
 
-    ret_arr: list[schemas.VectorRealizationsData] = []
+    ret_entries: list[schemas.GroupedVectorEntry] = []
 
     for group in groups:
         # Collect columns that exist in the data
@@ -351,18 +345,20 @@ async def post_grouped_realizations_vectors_data(
         if is_all_zero:
             continue
 
-        ret_arr.append(
-            schemas.VectorRealizationsData(
-                vectorName=group.groupLabel,
-                realizations=unique_reals,
-                timestampsUtcMs=timestamps,
+        ret_entries.append(
+            schemas.GroupedVectorEntry(
+                groupLabel=group.groupLabel,
                 valuesPerRealization=values_per_real,
             )
         )
 
     perf_metrics.record_lap("sum-groups")
     LOGGER.info(f"Loaded grouped realization data ({len(groups)} groups) in: {perf_metrics.to_string()}")
-    return ret_arr
+    return schemas.GroupedRealizationsVectorData(
+        realizations=unique_reals,
+        timestampsUtcMs=timestamps,
+        groups=ret_entries,
+    )
 
 
 @router.get("/delta_ensemble_realizations_vector_data/")

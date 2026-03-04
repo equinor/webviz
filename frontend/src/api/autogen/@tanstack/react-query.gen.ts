@@ -647,9 +647,8 @@ export const postGroupedRealizationsVectorsDataQueryKey = (
  *
  * Each group specifies a label and a list of vector names.  The server
  * fetches all vectors, sums per-realization values within each group, and
- * returns one VectorRealizationsData entry per group (using the group
- * label as ``vectorName``).  This dramatically reduces payload size when
- * the client would otherwise sum regions client-side.
+ * returns a compact response with shared ``realizations`` and
+ * ``timestampsUtcMs`` at the top level, plus one entry per group.
  */
 export const postGroupedRealizationsVectorsDataOptions = (
     options: Options<PostGroupedRealizationsVectorsDataData_api>,
@@ -679,9 +678,8 @@ export const postGroupedRealizationsVectorsDataOptions = (
  *
  * Each group specifies a label and a list of vector names.  The server
  * fetches all vectors, sums per-realization values within each group, and
- * returns one VectorRealizationsData entry per group (using the group
- * label as ``vectorName``).  This dramatically reduces payload size when
- * the client would otherwise sum regions client-side.
+ * returns a compact response with shared ``realizations`` and
+ * ``timestampsUtcMs`` at the top level, plus one entry per group.
  */
 export const postGroupedRealizationsVectorsDataMutation = (
     options?: Partial<Options<PostGroupedRealizationsVectorsDataData_api>>,

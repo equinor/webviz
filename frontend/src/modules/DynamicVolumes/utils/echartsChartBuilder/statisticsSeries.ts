@@ -1,7 +1,7 @@
 import type { LineSeriesOption } from "echarts/charts";
 
-import { StatisticsType } from "../typesAndEnums";
-import type { ChartTrace } from "../view/atoms/derivedAtoms";
+import { StatisticsType } from "../../typesAndEnums";
+import type { ChartTrace } from "../../typesAndEnums";
 
 type StatSeriesEntry = {
     statType: StatisticsType;

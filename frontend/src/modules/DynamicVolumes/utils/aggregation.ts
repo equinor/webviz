@@ -1,35 +1,6 @@
-import type { VectorRealizationsData_api } from "@api";
+import { computeP50, computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
 
 import type { TimeseriesStatistics } from "../typesAndEnums";
-
-/**
- * Sum `valuesPerRealization` across multiple VectorRealizationsData entries
- * (i.e. across FIPNUM regions).  All entries must share the same timestamp grid
- * and the same realization list.
- *
- * @returns A single `valuesPerRealization` array of shape [numReals][numTimesteps].
- */
-export function sumAcrossVectors(vectors: VectorRealizationsData_api[]): number[][] | null {
-    if (vectors.length === 0) return null;
-
-    const numReals = vectors[0].realizations.length;
-    const numTimesteps = vectors[0].timestampsUtcMs.length;
-
-    // Initialize with zeros
-    const summed: number[][] = Array.from({ length: numReals }, () => new Array<number>(numTimesteps).fill(0));
-
-    for (const vec of vectors) {
-        for (let r = 0; r < numReals; r++) {
-            const vals = vec.valuesPerRealization[r];
-            if (!vals) continue;
-            for (let t = 0; t < numTimesteps; t++) {
-                summed[r][t] += vals[t];
-            }
-        }
-    }
-
-    return summed;
-}
 
 /**
  * Sum multiple `number[][]` (valuesPerRealization) arrays element-wise.
@@ -59,24 +30,8 @@ export function sumValuesArrays(arrays: number[][][]): number[][] | null {
 }
 
 /**
- * Compute percentile using the linear interpolation method (same as numpy default).
- * `sortedArr` must already be sorted ascending.
- */
-function percentile(sortedArr: number[], p: number): number {
-    if (sortedArr.length === 0) return NaN;
-    if (sortedArr.length === 1) return sortedArr[0];
-
-    const index = (p / 100) * (sortedArr.length - 1);
-    const lower = Math.floor(index);
-    const upper = Math.ceil(index);
-    const weight = index - lower;
-
-    return sortedArr[lower] * (1 - weight) + sortedArr[upper] * weight;
-}
-
-/**
  * Compute statistics (mean, P10, P50, P90, min, max) across realizations
- * for each timestep.
+ * for each timestep.  P10/P90 use the reserves/exceedance convention.
  *
  * @param valuesPerRealization - Shape [numReals][numTimesteps]
  * @returns TimeseriesStatistics with arrays of length numTimesteps
@@ -104,14 +59,13 @@ export function computeStatistics(valuesPerRealization: number[][]): TimeseriesS
             col.push(v);
             sum += v;
         }
-        col.sort((a, b) => a - b);
 
         mean[t] = sum / numReals;
-        min[t] = col[0];
-        max[t] = col[col.length - 1];
-        p10[t] = percentile(col, 10);
-        p50[t] = percentile(col, 50);
-        p90[t] = percentile(col, 90);
+        min[t] = Math.min(...col);
+        max[t] = Math.max(...col);
+        p10[t] = computeReservesP10(col);
+        p50[t] = computeP50(col);
+        p90[t] = computeReservesP90(col);
     }
 
     return { mean, p10, p50, p90, min, max };

@@ -5,10 +5,9 @@ import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } 
 
 import { ChannelIds } from "../../channelDefs";
 import type { Interfaces } from "../../interfaces";
-import { formatDate } from "../atoms/derivedAtoms";
-import type { ChartTrace, SubplotGroup } from "../atoms/derivedAtoms";
-
-import { activeTimestampUtcMsAtom } from "./useActiveTimestamp";
+import type { ChartTrace, SubplotGroup } from "../../typesAndEnums";
+import { formatDate } from "../../utils/formatting";
+import { activeTimestampUtcMsAtom } from "../atoms/baseAtoms";
 
 /**
  * Build a lazy data generator for a single trace at a given timestamp.

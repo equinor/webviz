@@ -1,6 +1,6 @@
 import type { LineSeriesOption } from "echarts/charts";
 
-import type { ChartTrace } from "../view/atoms/derivedAtoms";
+import type { ChartTrace } from "../../typesAndEnums";
 
 /** Build one line series per realization, with bump-chart hover emphasis. */
 export function buildRealizationsSeries(

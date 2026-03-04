@@ -67,6 +67,26 @@ class VectorRealizationsData(BaseModel):
     valuesPerRealization: list[list[float]]
 
 
+class GroupedVectorEntry(BaseModel):
+    """One group's summed values, without repeating realizations/timestamps."""
+
+    groupLabel: str
+    valuesPerRealization: list[list[float]]
+
+
+class GroupedRealizationsVectorData(BaseModel):
+    """Compact response for grouped realization vector data.
+
+    ``realizations`` and ``timestampsUtcMs`` are shared across all groups
+    and appear only once at the top level.  Each ``GroupedVectorEntry``
+    carries the group label and the per-realization value arrays.
+    """
+
+    realizations: list[int]
+    timestampsUtcMs: list[int]
+    groups: list[GroupedVectorEntry]
+
+
 class VectorGroupInput(BaseModel):
     """A named group of vector names to be summed element-wise on the server.
 
