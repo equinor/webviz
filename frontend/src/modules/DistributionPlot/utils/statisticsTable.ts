@@ -3,6 +3,8 @@ import type { TableColumns } from "@lib/components/Table/types";
 import { computeP50, computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
+import { type StatisticsColumn, STATISTICS_COLUMN_LABELS } from "../typesAndEnums";
+
 import { makeTitleFromChannelContent } from "./stringUtils";
 
 export type StatisticsTableRowData = {
@@ -70,62 +72,42 @@ export function buildStatisticsTableData(
 
 /**
  * Creates the table column definitions for the statistics table.
+ * Only includes columns present in selectedColumns, and distributes widths so they sum to 100%.
  */
-export function makeStatisticsTableColumns(): TableColumns<StatisticsTableRowData> {
-    return [
+export function makeStatisticsTableColumns(selectedColumns: StatisticsColumn[]): TableColumns<StatisticsTableRowData> {
+    const statColumnDefs: { columnId: keyof StatisticsTableRowData; statisticsColumn: StatisticsColumn }[] = [
+        { columnId: "mean", statisticsColumn: "mean" as StatisticsColumn },
+        { columnId: "stdDev", statisticsColumn: "stdDev" as StatisticsColumn },
+        { columnId: "min", statisticsColumn: "min" as StatisticsColumn },
+        { columnId: "max", statisticsColumn: "max" as StatisticsColumn },
+        { columnId: "p10", statisticsColumn: "p10" as StatisticsColumn },
+        { columnId: "p50", statisticsColumn: "p50" as StatisticsColumn },
+        { columnId: "p90", statisticsColumn: "p90" as StatisticsColumn },
+        { columnId: "count", statisticsColumn: "count" as StatisticsColumn },
+    ];
+
+    const visibleStats = statColumnDefs.filter((def) => selectedColumns.includes(def.statisticsColumn));
+    const channelColumnPercent = 20;
+    const remainingPercent = 100 - channelColumnPercent;
+    const perStatPercent = visibleStats.length > 0 ? remainingPercent / visibleStats.length : 0;
+
+    const columns: TableColumns<StatisticsTableRowData> = [
         {
             _type: "data",
             columnId: "channelContent",
             label: "Channel",
-            sizeInPercent: 19,
-        },
-        {
-            _type: "data",
-            columnId: "mean",
-            label: "Mean",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "stdDev",
-            label: "Std Dev",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "min",
-            label: "Min",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "p10",
-            label: "P10",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "p50",
-            label: "P50",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "p90",
-            label: "P90",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "max",
-            label: "Max",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "count",
-            label: "Count",
-            sizeInPercent: 7,
+            sizeInPercent: channelColumnPercent,
         },
     ];
+
+    for (const def of visibleStats) {
+        columns.push({
+            _type: "data",
+            columnId: def.columnId,
+            label: STATISTICS_COLUMN_LABELS[def.statisticsColumn],
+            sizeInPercent: perStatPercent,
+        });
+    }
+
+    return columns;
 }

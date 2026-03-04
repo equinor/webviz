@@ -7,8 +7,9 @@ import {
     plotTypeAtom,
     sharedXAxesAtom,
     sharedYAxesAtom,
+    statisticsColumnsAtom,
 } from "./settings/atoms/baseAtoms";
-import type { BarSortBy, PlotType } from "./typesAndEnums";
+import type { BarSortBy, PlotType, StatisticsColumn } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     plotType: PlotType | null;
@@ -17,6 +18,7 @@ type SettingsToViewInterface = {
     sharedXAxes: boolean;
     sharedYAxes: boolean;
     barSortBy: BarSortBy;
+    statisticsColumns: StatisticsColumn[];
 };
 
 export type Interfaces = {
@@ -30,4 +32,5 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     sharedXAxes: (get) => get(sharedXAxesAtom),
     sharedYAxes: (get) => get(sharedYAxesAtom),
     barSortBy: (get) => get(barSortByAtom),
+    statisticsColumns: (get) => get(statisticsColumnsAtom),
 };

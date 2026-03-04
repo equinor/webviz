@@ -2,7 +2,7 @@ import type { DeserializeStateFunction, SerializeStateFunction } from "@framewor
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { PlotType, BarSortBy } from "../typesAndEnums";
+import { PlotType, BarSortBy, StatisticsColumn } from "../typesAndEnums";
 
 import {
     plotTypeAtom,
@@ -11,6 +11,7 @@ import {
     sharedXAxesAtom,
     sharedYAxesAtom,
     barSortByAtom,
+    statisticsColumnsAtom,
 } from "./atoms/baseAtoms";
 
 export type SerializedSettings = {
@@ -20,6 +21,7 @@ export type SerializedSettings = {
     sharedXAxes: boolean;
     sharedYAxes: boolean;
     barSortBy: BarSortBy;
+    statisticsColumns: StatisticsColumn[];
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
@@ -36,6 +38,11 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         barSortBy: {
             enum: Object.values(BarSortBy),
         },
+        statisticsColumns: {
+            elements: {
+                enum: Object.values(StatisticsColumn),
+            },
+        },
     },
 }));
 
@@ -49,6 +56,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         sharedXAxes: get(sharedXAxesAtom),
         sharedYAxes: get(sharedYAxesAtom),
         barSortBy: get(barSortByAtom),
+        statisticsColumns: get(statisticsColumnsAtom),
     };
 };
 
@@ -59,4 +67,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, sharedXAxesAtom, raw.sharedXAxes);
     setIfDefined(set, sharedYAxesAtom, raw.sharedYAxes);
     setIfDefined(set, barSortByAtom, raw.barSortBy);
+    setIfDefined(set, statisticsColumnsAtom, raw.statisticsColumns);
 };

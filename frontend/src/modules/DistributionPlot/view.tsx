@@ -40,6 +40,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const numBins = viewContext.useSettingsToViewInterfaceValue("numBins");
     const orientation = viewContext.useSettingsToViewInterfaceValue("orientation");
     const barSortBy = viewContext.useSettingsToViewInterfaceValue("barSortBy");
+    const statisticsColumns = viewContext.useSettingsToViewInterfaceValue("statisticsColumns");
 
     const statusWriter = useViewStatusWriter(viewContext);
     const colorSet = useColorSet(workbenchSettings);
@@ -100,7 +101,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 channels.push(receiverY.channel);
             }
             const tableData = buildStatisticsTableData(...channels);
-            const tableColumns = makeStatisticsTableColumns();
+            const tableColumns = makeStatisticsTableColumns(statisticsColumns);
             return (
                 <TableComponent
                     columns={tableColumns}
@@ -167,6 +168,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         wrapperDivSize,
         colorSet,
         seqColorScale,
+        statisticsColumns,
     ]);
 
     // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)

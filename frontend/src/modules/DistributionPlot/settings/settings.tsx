@@ -12,7 +12,7 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
 import type { Interfaces } from "../interfaces";
-import { BarSortBy, PlotType } from "../typesAndEnums";
+import { BarSortBy, PlotType, STATISTICS_COLUMN_LABELS, ALL_STATISTICS_COLUMNS } from "../typesAndEnums";
 
 import {
     barSortByAtom,
@@ -21,6 +21,7 @@ import {
     plotTypeAtom,
     sharedXAxesAtom,
     sharedYAxesAtom,
+    statisticsColumnsAtom,
 } from "./atoms/baseAtoms";
 
 const plotTypes = [
@@ -54,6 +55,7 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     const [sharedXAxes, setSharedXAxes] = useAtom(sharedXAxesAtom);
     const [sharedYAxes, setSharedYAxes] = useAtom(sharedYAxesAtom);
     const [barSortBy, setBarSortBy] = useAtom(barSortByAtom);
+    const [statisticsColumns, setStatisticsColumns] = useAtom(statisticsColumnsAtom);
 
     useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
@@ -155,6 +157,27 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                             value={barSortBy}
                         />
                     </Label>
+                </CollapsibleGroup>,
+            );
+        }
+
+        if (plotType === PlotType.StatisticsTable) {
+            content.push(
+                <CollapsibleGroup title="Table columns" expanded key="statistics-columns">
+                    {ALL_STATISTICS_COLUMNS.map((col) => (
+                        <Checkbox
+                            key={col}
+                            label={STATISTICS_COLUMN_LABELS[col]}
+                            checked={statisticsColumns.includes(col)}
+                            onChange={(_, checked) => {
+                                if (checked) {
+                                    setStatisticsColumns([...statisticsColumns, col]);
+                                } else {
+                                    setStatisticsColumns(statisticsColumns.filter((c) => c !== col));
+                                }
+                            }}
+                        />
+                    ))}
                 </CollapsibleGroup>,
             );
         }
