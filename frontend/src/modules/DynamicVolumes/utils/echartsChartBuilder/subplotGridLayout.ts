@@ -4,10 +4,6 @@
  * Given the number of subplots and optional margin/gap configuration, this
  * module computes grid, x-axis, y-axis, and title positioning arrays that
  * ECharts can consume directly.
- *
- * It is intentionally free of any timeseries- or domain-specific knowledge
- * so that it can be reused by any module that needs a multi-subplot ECharts
- * layout.
  */
 
 // ── Layout configuration ──

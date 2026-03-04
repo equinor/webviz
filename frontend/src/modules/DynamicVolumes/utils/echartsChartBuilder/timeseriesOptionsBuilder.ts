@@ -1,14 +1,15 @@
 import type { EChartsOption } from "echarts";
 
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import { StatisticsType } from "../../typesAndEnums";
 import type { SubplotGroup } from "../../typesAndEnums";
-import { formatDate } from "../formatting";
 
 import { applyActiveTimestampMarker } from "./activeTimestampMarker";
 import { buildRealizationsSeries } from "./realizationsSeries";
 import { buildFanchartSeries, buildStatisticsSeries } from "./statisticsSeries";
+import type { SubplotCell, SubplotLayoutResult } from "./subplotGridLayout";
 import { computeSubplotGridLayout } from "./subplotGridLayout";
 import { formatRealizationItemTooltip, formatStatisticsTooltip } from "./tooltipFormatters";
 
@@ -17,32 +18,26 @@ export type TimeseriesEchartsResult = {
     timeseriesChartData: string[];
 };
 
-/** Assemble a full EChartsOption for timeseries with optional multi-grid subplots. */
-export function buildTimeseriesOptions(
+// ── Constants ──
+
+const MARGIN_LEFT_PCT = 2;
+const MARGIN_RIGHT_PCT = 5;
+const BOTTOM_SPACE_PCT = 8;
+const TOP_SPACE_PCT = 4;
+
+// ── Helper: Build all series + legend for every subplot group ──
+
+function buildSubplotSeries(
     subplotGroups: SubplotGroup[],
     showStatLines: boolean,
     showFanchart: boolean,
     selectedStatistics: StatisticsType[],
-    yAxisLabel: string,
-    activeTimestampUtcMs: number | null = null,
-): TimeseriesEchartsResult {
-    if (subplotGroups.length === 0) return { echartsOptions: {}, timeseriesChartData: [] };
-
-    // Find first valid timestamps from any trace
-    const firstTrace = subplotGroups.flatMap((g) => g.traces).find((t) => t.timestamps.length > 0);
-    if (!firstTrace) return { echartsOptions: {}, timeseriesChartData: [] };
-
-    const xAxisData = firstTrace.timestamps.map((ts) => formatDate(ts));
-    const numSubplots = subplotGroups.length;
-    const isMultiGrid = numSubplots > 1;
-
-    // ── Build series for each subplot ──
-
+): { allSeries: any[]; legendData: string[] } {
     const allSeries: any[] = [];
     const legendData: string[] = [];
     const seenLegend = new Set<string>();
 
-    for (let gridIdx = 0; gridIdx < numSubplots; gridIdx++) {
+    for (let gridIdx = 0; gridIdx < subplotGroups.length; gridIdx++) {
         const group = subplotGroups[gridIdx];
         for (const trace of group.traces) {
             if (showStatLines && trace.stats) {
@@ -71,26 +66,35 @@ export function buildTimeseriesOptions(
         }
     }
 
-    // ── Active timestamp marker line ──
+    return { allSeries, legendData };
+}
 
-    if (activeTimestampUtcMs != null) {
-        applyActiveTimestampMarker(allSeries, formatDate(activeTimestampUtcMs));
-    }
+// ── Helper: Build x/y axes and subplot titles from layout cells ──
 
-    // ── Grid layout (via general-purpose calculator) ──
-
-    const layout = computeSubplotGridLayout(numSubplots);
-    const MARGIN_LEFT_PCT = 2;
-    const MARGIN_RIGHT_PCT = 5;
-    const BOTTOM_SPACE_PCT = 8;
-    const TOP_SPACE_PCT = 4;
-
-    // Build axes and titles from the layout cells
+function buildAxesAndTitles(
+    cells: SubplotCell[],
+    subplotGroups: SubplotGroup[],
+    xAxisData: string[],
+    yAxisLabel: string,
+    isMultiGrid: boolean,
+    showStatLines: boolean,
+): { xAxes: any[]; yAxes: any[]; titles: any[] } {
     const xAxes: any[] = [];
     const yAxes: any[] = [];
     const titles: any[] = [];
 
-    for (const cell of layout.cells) {
+    const realtimePointer = showStatLines
+        ? {}
+        : {
+              axisPointer: {
+                  show: true,
+                  type: "line" as const,
+                  triggerTooltip: false,
+                  label: { show: true },
+              },
+          };
+
+    for (const cell of cells) {
         const i = cell.gridIndex;
 
         xAxes.push({
@@ -100,36 +104,19 @@ export function buildTimeseriesOptions(
             data: xAxisData,
             axisLabel: { show: true, fontSize: 11 },
             axisTick: { show: true },
-            ...(showStatLines
-                ? {}
-                : {
-                      axisPointer: {
-                          show: true,
-                          type: "line" as const,
-                          triggerTooltip: false,
-                          label: { show: true },
-                      },
-                  }),
+            ...realtimePointer,
         });
 
         yAxes.push({
             type: "value",
             gridIndex: i,
+            scale: true,
             name: !isMultiGrid ? yAxisLabel : "",
             nameLocation: "middle" as const,
             nameGap: 40,
             splitLine: { show: false },
             axisLabel: { show: true, fontSize: 11, formatter: (v: number) => formatNumber(v) },
-            ...(showStatLines
-                ? {}
-                : {
-                      axisPointer: {
-                          show: true,
-                          type: "line" as const,
-                          triggerTooltip: false,
-                          label: { show: true },
-                      },
-                  }),
+            ...realtimePointer,
         });
 
         if (isMultiGrid && subplotGroups[i].title) {
@@ -143,14 +130,26 @@ export function buildTimeseriesOptions(
         }
     }
 
-    // ── DataZoom — link all x-axes ──
+    return { xAxes, yAxes, titles };
+}
 
+// ── Helper: Compose final ECharts option object ──
+
+function composeEchartsOption(
+    allSeries: any[],
+    legendData: string[],
+    xAxes: any[],
+    yAxes: any[],
+    titles: any[],
+    layout: SubplotLayoutResult,
+    numSubplots: number,
+    showStatLines: boolean,
+): EChartsOption {
+    const isMultiGrid = numSubplots > 1;
     const allXAxisIndices = Array.from({ length: numSubplots }, (_, i) => i);
     const allYAxisIndices = Array.from({ length: numSubplots }, (_, i) => i);
 
-    // ── Compose option ──
-
-    const echartsOptions: EChartsOption = {
+    return {
         animation: false,
 
         title: titles.length > 0 ? titles : undefined,
@@ -227,6 +226,61 @@ export function buildTimeseriesOptions(
             top: 4,
         },
     };
+}
+
+/** Assemble a full EChartsOption for timeseries with optional multi-grid subplots. */
+export function buildTimeseriesOptions(
+    subplotGroups: SubplotGroup[],
+    showStatLines: boolean,
+    showFanchart: boolean,
+    selectedStatistics: StatisticsType[],
+    yAxisLabel: string,
+    activeTimestampUtcMs: number | null = null,
+): TimeseriesEchartsResult {
+    if (subplotGroups.length === 0) return { echartsOptions: {}, timeseriesChartData: [] };
+
+    const firstTrace = subplotGroups.flatMap((g) => g.traces).find((t) => t.timestamps.length > 0);
+    if (!firstTrace) return { echartsOptions: {}, timeseriesChartData: [] };
+
+    const xAxisData = firstTrace.timestamps.map((ts) => timestampUtcMsToCompactIsoString(ts));
+    const numSubplots = subplotGroups.length;
+    const isMultiGrid = numSubplots > 1;
+
+    // 1. Series + legend
+    const { allSeries, legendData } = buildSubplotSeries(
+        subplotGroups,
+        showStatLines,
+        showFanchart,
+        selectedStatistics,
+    );
+
+    // 2. Active timestamp marker
+    if (activeTimestampUtcMs != null) {
+        applyActiveTimestampMarker(allSeries, timestampUtcMsToCompactIsoString(activeTimestampUtcMs));
+    }
+
+    // 3. Layout, axes, titles
+    const layout = computeSubplotGridLayout(numSubplots);
+    const { xAxes, yAxes, titles } = buildAxesAndTitles(
+        layout.cells,
+        subplotGroups,
+        xAxisData,
+        yAxisLabel,
+        isMultiGrid,
+        showStatLines,
+    );
+
+    // 4. Final option
+    const echartsOptions = composeEchartsOption(
+        allSeries,
+        legendData,
+        xAxes,
+        yAxes,
+        titles,
+        layout,
+        numSubplots,
+        showStatLines,
+    );
 
     return { echartsOptions, timeseriesChartData: xAxisData };
 }

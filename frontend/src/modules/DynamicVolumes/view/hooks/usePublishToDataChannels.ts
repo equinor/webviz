@@ -2,11 +2,11 @@ import { useAtomValue } from "jotai";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } from "@framework/types/dataChannnel";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
 import { ChannelIds } from "../../channelDefs";
 import type { Interfaces } from "../../interfaces";
 import type { ChartTrace, SubplotGroup } from "../../typesAndEnums";
-import { formatDate } from "../../utils/formatting";
 import { activeTimestampUtcMsAtom } from "../atoms/baseAtoms";
 
 /**
@@ -69,7 +69,7 @@ export function usePublishToDataChannels(
     const contents: ChannelContentDefinition[] = [];
 
     if (activeTimestampUtcMs != null) {
-        const dateLabel = formatDate(activeTimestampUtcMs);
+        const dateLabel = timestampUtcMsToCompactIsoString(activeTimestampUtcMs);
 
         for (const group of subplotGroups) {
             for (const trace of group.traces) {

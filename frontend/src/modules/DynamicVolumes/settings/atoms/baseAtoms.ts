@@ -6,7 +6,7 @@ import { PlotDimension, RegionSelectionMode, StatisticsType, VisualizationMode }
 
 export const resampleFrequencyAtom = atom<Frequency_api>(Frequency_api.MONTHLY);
 
-export const visualizationModeAtom = atom<VisualizationMode>(VisualizationMode.StatisticalLines);
+export const visualizationModeAtom = atom<VisualizationMode>(VisualizationMode.StatisticalFanchart);
 
 export const colorByAtom = atom<PlotDimension>(PlotDimension.Ensemble);
 
@@ -15,7 +15,7 @@ export const subplotByAtom = atom<PlotDimension | null>(null);
 export const regionSelectionModeAtom = atom<RegionSelectionMode>(RegionSelectionMode.FipNumber);
 
 export const selectedStatisticsAtom = atom<StatisticsType[]>([
-    StatisticsType.Mean,
+    StatisticsType.P50,
     StatisticsType.P10,
     StatisticsType.P90,
 ]);
