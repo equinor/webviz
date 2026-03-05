@@ -1,19 +1,30 @@
 import type React from "react";
 
-import type { PopoverRootProps } from "@base-ui/react/popover";
+import type { PopoverRootProps, PopoverTriggerProps } from "@base-ui/react/popover";
 import { Popover as BasePopover } from "@base-ui/react/popover";
 
 import { DenseIconButton } from "../DenseIconButton";
 
 export type PopoverProps = {
-    children: React.ReactNode;
-    content: React.ReactNode;
+    /** Controls the popover open/close state */
+    open?: boolean;
+    /** The content of the popover */
+    content?: React.ReactNode;
+    /** Utility ref that can be used to programmatically control the popover */
     actionsRef?: PopoverRootProps["actionsRef"];
+    /** Overrides the triggers default rendering. If a node is given, props will be merged  */
+    renderTrigger?: PopoverTriggerProps["render"];
+
+    /** Callback for open/close control state */
+    onOpenChange?: (isOpen: boolean) => void;
+
+    children?: React.ReactNode;
 };
 
+/** Show a rich Popover element attached to a trigger element. For simple string tooltips, use Tooltip instead. For larger interactive menus, use Menu */
 export function Popover(props: PopoverProps): React.ReactNode {
     return (
-        <BasePopover.Root actionsRef={props.actionsRef}>
+        <BasePopover.Root open={props.open} onOpenChange={props.onOpenChange} actionsRef={props.actionsRef}>
             <BasePopover.Trigger render={<DenseIconButton>{props.children}</DenseIconButton>} />
 
             <BasePopover.Portal>

@@ -20,21 +20,32 @@ const RootPropsContext = React.createContext<(NonNullable<typeof DEFAULT_PROPS> 
 const GroupDepthContext = React.createContext(0);
 
 export type ComposedMenuProps = {
-    open?: boolean;
-    flat?: boolean;
+    /** The list of items displayed in the menu */
     items: MenuItem[];
-
-    side?: MenuPositionerProps["side"];
-    align?: MenuPositionerProps["align"];
+    /** Controls the menu open/close state */
+    open?: boolean;
+    /** Flattens the list, instead of using sub-menus */
+    flat?: boolean;
+    /** Closes the menu when an action item is clicked */
     closeOnClick?: boolean;
 
+    /** Sets the size of the menu items. @default "medium" */
     itemSize?: SizeName;
+    /** Sets the size of the menu trigger button @default "medium" */
     triggerSize?: SizeName;
 
+    /** Sets the menu alignment to the trigger element */
+    align?: MenuPositionerProps["align"];
+    /** Sets which side of the trigger element the menu appears */
+    side?: MenuPositionerProps["side"];
+    /** Overrides the triggers default rendering. If a node is given, props will be merged  */
     renderTrigger?: MenuTriggerProps["render"];
 
+    /** Callback for open/close control state */
     onOpenChange?: (isOpen: boolean) => void;
+    /** Callback whenever an *action* is clicked */
     onActionClicked?: (id: string) => void;
+
     children?: React.ReactNode;
 };
 
@@ -206,4 +217,7 @@ function isText(item: MenuItem): item is Text {
     return (item as Text).type === "text";
 }
 
+/**
+ * Display a dropdown menu containing one or more actions
+ */
 export const ComposedMenu = React.forwardRef(ComposedMenuComponent);
