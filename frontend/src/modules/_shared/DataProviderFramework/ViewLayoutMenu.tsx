@@ -2,7 +2,8 @@ import type React from "react";
 
 import { Settings, TableRowsOutlined, ViewColumnOutlined } from "@mui/icons-material";
 
-import { Menu } from "@lib/components/Menu/next/composedMenu";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { Menu } from "@lib/components/Menu";
 
 import { ViewLayout } from "../enums/viewLayout";
 
@@ -24,6 +25,8 @@ export function ViewportLayoutMenu(props: ViewportLayoutMenuProps): React.ReactN
 
     return (
         <Menu
+            itemSize="small"
+            triggerSize="small"
             side="bottom"
             align="center"
             flat
@@ -49,10 +52,11 @@ export function ViewportLayoutMenu(props: ViewportLayoutMenuProps): React.ReactN
                     ],
                 },
             ]}
-        >
-            <span title="Settings">
-                <Settings fontSize="inherit" />
-            </span>
-        </Menu>
+            renderTrigger={
+                <DenseIconButton title="Settings">
+                    <Settings fontSize="inherit" />
+                </DenseIconButton>
+            }
+        />
     );
 }

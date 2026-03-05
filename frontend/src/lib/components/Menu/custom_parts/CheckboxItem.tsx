@@ -12,7 +12,7 @@ function MenuCheckBoxItemComponent(
 ): React.ReactNode {
     const baseClassName = resolveClassNames(
         "flex gap-2 items-center",
-        "px-4 py-2 text-sm rounded cursor-pointer",
+        "px-4 py-2 rounded cursor-pointer",
         "disabled:opacity-30 disabled:pointer-events-none",
         "hover:bg-blue-100",
         "focus:outline focus:outline-blue-600",

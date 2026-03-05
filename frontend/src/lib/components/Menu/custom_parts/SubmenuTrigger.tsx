@@ -11,7 +11,7 @@ function SubmenuTriggerComponent(
 ): React.ReactNode {
     const baseClassName = resolveClassNames(
         "flex gap-2 items-center",
-        "px-4 py-2 text-sm rounded",
+        "px-4 py-2 rounded",
         "disabled:pointer-events-none",
         "text-gray-700 disabled:text-gray-400 hover:text-gray-900 ",
         "hover:bg-blue-200 data-popup-open:bg-blue-200",
