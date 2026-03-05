@@ -6,10 +6,10 @@ import { DataProviderManagerTopic, type GlobalSettings } from "../framework/Data
 import { ExternalSettingController } from "../framework/ExternalSettingController/ExternalSettingController";
 import { SettingTopic, type SettingManager } from "../framework/SettingManager/SettingManager";
 import type {
-    DefineBasicDependenciesArgs,
-    UpdateFunc,
+    ResolverSpec,
     SettingAttributes,
-    UpdateFuncWithNoUpdate,
+    SetupBasicBindingsContext,
+    SharedResult,
 } from "../interfacesAndTypes/customSettingsHandler";
 import type { Item } from "../interfacesAndTypes/entities";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
@@ -17,7 +17,7 @@ import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAn
 import { SettingRegistry } from "../settings/SettingRegistry";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
-import { Dependency } from "./_utils/Dependency";
+import { Dependency, type Read } from "./_utils/Dependency";
 
 export enum SharedSettingsDelegateTopic {
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
@@ -45,10 +45,10 @@ export class SharedSettingsDelegate<
     private _internalSettings: Map<TSettingKey, SettingManager<any>> = new Map();
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
-    private _dependencies: Dependency<any, TSettings, any, any>[] = [];
+    private _dependencies: Dependency<any, TSettings, any, any, any>[] = [];
     private _parentItem: Item;
-    private _customDependenciesDefinition:
-        | ((args: DefineBasicDependenciesArgs<TSettings, TSettingTypes, TSettingKey>) => void)
+    private _setupBasicBindingsContext:
+        | ((args: SetupBasicBindingsContext<TSettings, TSettingTypes, TSettingKey>) => void)
         | null = null;
 
     private _dependencyStatusMessages: StatusMessage[] = [];
@@ -56,13 +56,11 @@ export class SharedSettingsDelegate<
     constructor(
         parentItem: Item,
         wrappedSettings: { [K in TSettingKey]: SettingManager<K> },
-        customDependenciesDefinition?: (
-            args: DefineBasicDependenciesArgs<TSettings, TSettingTypes, TSettingKey>,
-        ) => void,
+        setupBasicBindingsContext?: (args: SetupBasicBindingsContext<TSettings, TSettingTypes, TSettingKey>) => void,
     ) {
         this._wrappedSettings = wrappedSettings;
         this._parentItem = parentItem;
-        this._customDependenciesDefinition = customDependenciesDefinition ?? null;
+        this._setupBasicBindingsContext = setupBasicBindingsContext ?? null;
 
         const dataProviderManager = parentItem.getItemDelegate().getDataProviderManager();
         if (!dataProviderManager) {
@@ -243,17 +241,37 @@ export class SharedSettingsDelegate<
             return this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key);
         };
 
-        const valueConstraintsUpdater = <K extends TSettingKey>(
+        const createDependency = <T, TReads extends Record<string, Read<any>> = Record<string, never>>(
+            debugName: string,
+            resolverSpec: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
+        ): Dependency<T, TSettings, TSettingTypes, TSettingKey, TReads> => {
+            const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey, TReads>(
+                localSettingManagerGetter,
+                globalSettingGetter,
+                resolverSpec,
+                makeLocalSettingGetter,
+                loadingStateGetter,
+                makeGlobalSettingGetter,
+                debugName,
+            );
+            this._dependencies.push(dependency);
+            dependency.initialize();
+            return dependency;
+        };
+
+        const bindValueConstraints = <
+            K extends TSettingKey,
+            TReads extends Record<string, Read<any>> = Record<string, never>,
+        >(
             settingKey: K,
-            updateFunc: UpdateFuncWithNoUpdate<
+            resolverSpec: ResolverSpec<
                 SettingTypeDefinitions[K]["valueConstraints"],
                 TSettings,
                 TSettingTypes,
-                TSettingKey
+                TSettingKey,
+                TReads
             >,
-        ): Dependency<SettingTypeDefinitions[K]["valueConstraints"], TSettings, TSettingTypes, TSettingKey> => {
-            // Create an internal setting for this key if it doesn't exist yet
-            // This setting will hold the group's own value constraints
+        ): Dependency<SettingTypeDefinitions[K]["valueConstraints"], TSettings, TSettingTypes, TSettingKey, TReads> => {
             if (!this._internalSettings.has(settingKey)) {
                 const internalSetting = SettingRegistry.makeSetting(settingKey, null);
                 // Mark as loading initially so the intersection waits for the value constraints to be computed
@@ -263,28 +281,16 @@ export class SharedSettingsDelegate<
 
             const internalSetting = this._internalSettings.get(settingKey)!;
 
-            const dependency = new Dependency<
-                SettingTypeDefinitions[K]["valueConstraints"],
-                TSettings,
-                TSettingTypes,
-                TSettingKey
-            >(
-                localSettingManagerGetter.bind(this),
-                globalSettingGetter.bind(this),
-                updateFunc,
-                makeLocalSettingGetter,
-                loadingStateGetter,
-                makeGlobalSettingGetter,
-            );
-            this._dependencies.push(dependency);
+            const debugName = `ValueConstraintsUpdater_${settingKey}`;
+            const dependency = createDependency(debugName, resolverSpec);
 
-            dependency.subscribe((valueRange) => {
+            dependency.subscribe((valueConstraints) => {
                 // Set the value constraints on the internal setting, not the wrapped setting
-                if (valueRange === null) {
+                if (valueConstraints === null) {
                     internalSetting.setValueConstraints(null as SettingTypeDefinitions[K]["valueConstraints"]);
                     return;
                 }
-                internalSetting.setValueConstraints(valueRange);
+                internalSetting.setValueConstraints(valueConstraints);
             });
 
             dependency.subscribeLoading((loading: boolean) => {
@@ -294,24 +300,19 @@ export class SharedSettingsDelegate<
             });
 
             this.subscribeToDependencyStatusMessages(dependency);
-            dependency.initialize();
 
             return dependency;
         };
 
-        const settingAttributesUpdater = <K extends TSettingKey>(
+        const bindAttributes = <
+            K extends TSettingKey,
+            TReads extends Record<string, Read<any>> = Record<string, never>,
+        >(
             settingKey: K,
-            updateFunc: UpdateFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
-        ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey> => {
-            const dependency = new Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>(
-                localSettingManagerGetter.bind(this),
-                globalSettingGetter.bind(this),
-                updateFunc,
-                makeLocalSettingGetter,
-                loadingStateGetter,
-                makeGlobalSettingGetter,
-            );
-            this._dependencies.push(dependency);
+            resolverSpec: ResolverSpec<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads>,
+        ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads> => {
+            const debugName = `SettingAttributesUpdater_${settingKey}`;
+            const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribe((attributes: Partial<SettingAttributes> | null) => {
                 if (attributes === null) {
@@ -320,40 +321,64 @@ export class SharedSettingsDelegate<
                 this._wrappedSettings[settingKey].updateAttributes(attributes);
             });
 
+            dependency.subscribeLoading(() => {
+                this.handleSettingChanged();
+            });
             this.subscribeToDependencyStatusMessages(dependency);
-            dependency.initialize();
 
             return dependency;
         };
 
-        const helperDependency = <T>(update: UpdateFunc<T, TSettings, TSettingTypes, TSettingKey>) => {
-            const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
-                localSettingManagerGetter.bind(this),
-                globalSettingGetter.bind(this),
-                update,
-                makeLocalSettingGetter,
-                loadingStateGetter,
-                makeGlobalSettingGetter,
+        const makeSharedResult = <T, TReads extends Record<string, Read<any>> = Record<string, never>>(
+            args: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads> & { debugName: string },
+        ) => {
+            const { debugName, ...resolverSpec } = args;
+            const dependency = createDependency(
+                debugName,
+                resolverSpec as ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
             );
-            this._dependencies.push(dependency);
 
+            dependency.subscribeLoading(() => {
+                this.handleSettingChanged();
+            });
             this.subscribeToDependencyStatusMessages(dependency);
-            dependency.initialize();
 
-            return dependency;
+            return dependency as SharedResult<T, TSettings, TSettingTypes, TSettingKey, TReads>;
         };
 
         const dataProviderManager = this._parentItem.getItemDelegate().getDataProviderManager();
 
-        if (this._customDependenciesDefinition) {
-            this._customDependenciesDefinition({
-                settingAttributesUpdater: settingAttributesUpdater.bind(this),
-                valueConstraintsUpdater: valueConstraintsUpdater.bind(this),
-                helperDependency: helperDependency.bind(this),
-                workbenchSession: dataProviderManager.getWorkbenchSession(),
-                workbenchSettings: dataProviderManager.getWorkbenchSettings(),
-                queryClient: dataProviderManager.getQueryClient(),
-            });
+        const context: SetupBasicBindingsContext<TSettings, TSettingTypes, TSettingKey> = {
+            setting: <K extends TSettingKey>(settingKey: K) => ({
+                bindValueConstraints: <TReads extends Record<string, Read<any>> = Record<string, never>>(
+                    resolverSpec: ResolverSpec<
+                        SettingTypeDefinitions[K]["valueConstraints"],
+                        TSettings,
+                        TSettingTypes,
+                        TSettingKey,
+                        TReads
+                    >,
+                ) => bindValueConstraints(settingKey, resolverSpec),
+                bindAttributes: <TReads extends Record<string, Read<any>> = Record<string, never>>(
+                    resolverSpec: ResolverSpec<
+                        Partial<SettingAttributes>,
+                        TSettings,
+                        TSettingTypes,
+                        TSettingKey,
+                        TReads
+                    >,
+                ) => bindAttributes(settingKey, resolverSpec),
+            }),
+
+            makeSharedResult,
+
+            workbenchSession: dataProviderManager.getWorkbenchSession(),
+            workbenchSettings: dataProviderManager.getWorkbenchSettings(),
+            queryClient: dataProviderManager.getQueryClient(),
+        };
+
+        if (this._setupBasicBindingsContext) {
+            this._setupBasicBindingsContext(context);
         }
     }
 

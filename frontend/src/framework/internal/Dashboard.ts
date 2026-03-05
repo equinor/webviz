@@ -229,10 +229,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     makeAndAddModuleInstance(moduleName: string): ModuleInstance<any, any> {
         const moduleInstance = this.makeAndRegisterModuleInstance(moduleName);
 
-        if (this._moduleInstances.length === 1) {
-            this._activeModuleInstanceId = moduleInstance.getId();
-        }
-        this._activeModuleInstanceId = moduleInstance.getId();
+        this.setActiveModuleInstanceId(moduleInstance.getId());
 
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.MODULE_INSTANCES);
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);

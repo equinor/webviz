@@ -12,7 +12,7 @@ import type {
     DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBasicBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -30,45 +30,55 @@ export const baseDiscreteSettings = [
     Setting.LABEL_ROTATION,
 ] as const;
 
-export function defineBaseContinuousDependencies<T extends readonly Setting[]>(args: DefineDependenciesArgs<T>) {
-    const { valueConstraintsUpdater, helperDependency } = args;
+export function setupBaseContinuousBindings<T extends readonly Setting[]>({
+    setting,
+    makeSharedResult,
+    queryClient,
+}: SetupBasicBindingsContext<T>) {
+    const curveHeaders = makeSharedResult({
+        debugName: "CurveHeaders",
+        read({ read }) {
+            return { wellboreId: read.globalSetting("wellboreUuid") };
+        },
+        async resolve({ wellboreId }, { abortSignal, statusWriter }) {
+            if (!wellboreId) return null;
 
-    const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal, getStatusWriter }) => {
-        const wellboreId = getGlobalSetting("wellboreUuid");
+            try {
+                return await queryClient.fetchQuery({
+                    ...getWellboreLogCurveHeadersOptions({
+                        query: {
+                            wellbore_uuid: wellboreId,
+                            sources: [WellLogCurveSourceEnum_api.SSDL_WELL_LOG, WellLogCurveSourceEnum_api.SMDA_SURVEY],
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            } catch (error: any) {
+                const errorHelper = ApiErrorHelper.fromError(error);
+                if (errorHelper?.getType() !== "AuthorizationError") {
+                    throw error;
+                }
 
-        if (!wellboreId) return null;
+                statusWriter.addError(
+                    `Unable to get log curves from service: no access (${errorHelper.getService()?.toUpperCase()})`,
+                );
 
-        try {
-            return await args.queryClient.fetchQuery({
-                ...getWellboreLogCurveHeadersOptions({
-                    query: {
-                        wellbore_uuid: wellboreId,
-                        sources: [WellLogCurveSourceEnum_api.SSDL_WELL_LOG, WellLogCurveSourceEnum_api.SMDA_SURVEY],
-                    },
-                    signal: abortSignal,
-                }),
-            });
-        } catch (error: any) {
-            const errorHelper = ApiErrorHelper.fromError(error);
-            if (errorHelper?.getType() !== "AuthorizationError") {
-                throw error;
+                return null;
             }
-
-            getStatusWriter().addError(
-                `Unable to get log curves from service: no access (${errorHelper.getService()?.toUpperCase()})`,
-            );
-
-            return null;
-        }
+        },
     });
 
-    valueConstraintsUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
-        const wellboreId = getGlobalSetting("wellboreUuid");
-        const headerData = getHelperDependency(curveHeaderQueryDep);
-
-        if (!wellboreId || !headerData) return [];
-
-        return headerData.filter((curve) => curve.curveType !== WellLogCurveTypeEnum_api.DISCRETE);
+    setting(Setting.LOG_CURVE).bindValueConstraints({
+        read({ read }) {
+            return {
+                wellboreId: read.globalSetting("wellboreUuid"),
+                headerData: read.sharedResult(curveHeaders),
+            };
+        },
+        resolve({ wellboreId, headerData }) {
+            if (!wellboreId || !headerData) return [];
+            return headerData.filter((curve) => curve.curveType !== WellLogCurveTypeEnum_api.DISCRETE);
+        },
     });
 }
 

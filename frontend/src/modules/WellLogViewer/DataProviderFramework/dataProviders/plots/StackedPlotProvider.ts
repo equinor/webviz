@@ -1,7 +1,7 @@
 import type { WellboreLogCurveData_api, WellboreLogCurveHeader_api } from "@api";
 import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api, getWellboreLogCurveHeadersOptions } from "@api";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBasicBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
@@ -32,40 +32,49 @@ export class StackedPlotProvider
         };
     }
 
-    // Uses the same external things as the other types
-    defineDependencies(args: DefineDependenciesArgs<StackedPlotSettingTypes>) {
-        const { valueConstraintsUpdater, helperDependency } = args;
+    setupBindings({ setting, makeSharedResult, queryClient }: SetupBasicBindingsContext<StackedPlotSettingTypes>) {
+        const makeCurveHeaderDep = (source: WellLogCurveSourceEnum_api) =>
+            makeSharedResult({
+                debugName: `CurveHeaders_${source}`,
+                read({ read }) {
+                    return { wellboreId: read.globalSetting("wellboreUuid") };
+                },
+                async resolve({ wellboreId }, abortSignal) {
+                    if (!wellboreId) return null;
 
-        const headerQueryDeps = [
-            WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
-            WellLogCurveSourceEnum_api.SMDA_GEOLOGY,
-            WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY,
-        ].map((source) =>
-            helperDependency(async ({ getGlobalSetting, abortSignal }) => {
-                const wellboreId = getGlobalSetting("wellboreUuid");
+                    return await queryClient.fetchQuery({
+                        ...getWellboreLogCurveHeadersOptions({
+                            query: { wellbore_uuid: wellboreId, sources: [source] },
+                            signal: abortSignal,
+                        }),
+                    });
+                },
+            });
 
-                if (!wellboreId) return null;
+        const ssdlDep = makeCurveHeaderDep(WellLogCurveSourceEnum_api.SSDL_WELL_LOG);
+        const geologyDep = makeCurveHeaderDep(WellLogCurveSourceEnum_api.SMDA_GEOLOGY);
+        const stratigraphyDep = makeCurveHeaderDep(WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY);
 
-                return await args.queryClient.fetchQuery({
-                    ...getWellboreLogCurveHeadersOptions({
-                        query: { wellbore_uuid: wellboreId, sources: [source] },
-                        signal: abortSignal,
-                    }),
-                });
-            }),
-        );
+        setting(Setting.LOG_CURVE).bindValueConstraints({
+            read({ read }) {
+                return {
+                    wellboreId: read.globalSetting("wellboreUuid"),
+                    ssdlHeaders: read.sharedResult(ssdlDep),
+                    geologyHeaders: read.sharedResult(geologyDep),
+                    stratigraphyHeaders: read.sharedResult(stratigraphyDep),
+                };
+            },
+            resolve({ wellboreId, ssdlHeaders, geologyHeaders, stratigraphyHeaders }) {
+                const headerData = [
+                    ...(ssdlHeaders ?? []),
+                    ...(geologyHeaders ?? []),
+                    ...(stratigraphyHeaders ?? []),
+                ].filter((datum) => datum.curveType !== WellLogCurveTypeEnum_api.CONTINUOUS);
 
-        valueConstraintsUpdater(Setting.LOG_CURVE, ({ getHelperDependency, getGlobalSetting }) => {
-            const wellboreId = getGlobalSetting("wellboreUuid");
-            const allHeaderData = headerQueryDeps.flatMap((dep) => getHelperDependency(dep));
+                if (!wellboreId || !headerData.length) return [];
 
-            const headerData = allHeaderData.filter(
-                (datum) => datum && datum.curveType !== WellLogCurveTypeEnum_api.CONTINUOUS,
-            );
-
-            if (!wellboreId || !headerData.length) return [];
-
-            return headerData as WellboreLogCurveHeader_api[];
+                return headerData as WellboreLogCurveHeader_api[];
+            },
         });
     }
 

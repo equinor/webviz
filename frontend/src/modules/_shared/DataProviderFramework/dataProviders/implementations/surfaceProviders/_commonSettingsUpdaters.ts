@@ -1,9 +1,11 @@
 import { SurfaceStatisticFunction_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import type { Sensitivity, SensitivityCase } from "@framework/EnsembleSensitivities";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
-import type { UpdateFuncWithNoUpdate } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import { Read } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
+import { GlobalSettings } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { ResolverSpec } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type {
     MakeSettingTypesMap,
     SettingsKeysFromTuple,
@@ -13,28 +15,35 @@ import type { Settings } from "@modules/_shared/DataProviderFramework/settings/s
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 /**
- * Creates an valueConstraintsUpdater for Setting.ENSEMBLE that filters ensembles by the current field.
+ * Returns ensemble idents filtered by the given field identifier.
  */
 export function createEnsembleUpdater<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings>,
->(): UpdateFuncWithNoUpdate<RegularEnsembleIdent[], TSettings, TSettingTypes, TKey> {
-    return ({ getGlobalSetting }) => {
-        const fieldIdentifier = getGlobalSetting("fieldId");
-        const ensembles = getGlobalSetting("ensembles");
+>(): ResolverSpec<RegularEnsembleIdent[], TSettings, TSettingTypes, TKey, {
+        fieldId: Read<GlobalSettings["fieldId"]>;
+        ensembles: Read<GlobalSettings["ensembles"]>;
+    }> {
+    return {
+        read({ read }) {
+            return {
+                fieldId: read.globalSetting("fieldId"),
+                ensembles: read.globalSetting("ensembles"),
+            };
+        },
+        resolve({ fieldId, ensembles }) {
+             const ensembleIdents = ensembles
+                .filter((ensemble: RegularEnsemble) => ensemble.getFieldIdentifier() === fieldId)
+                .map((ensemble: RegularEnsemble) => ensemble.getIdent());
 
-        const ensembleIdents = ensembles
-            .filter((ensemble: any) => ensemble.getFieldIdentifier() === fieldIdentifier)
-            .map((ensemble: any) => ensemble.getIdent());
-
-        return ensembleIdents;
+            return ensembleIdents;
+        },
     };
 }
 
 /**
- * Creates an valueConstraintsUpdater for Setting.SENSITIVITY that returns sensitivity name/case pairs
- * for the selected ensemble.
+ * Returns sensitivity name/case pairs for the selected ensemble.
  */
 export function createSensitivityUpdater<
     TSettings extends Settings,
@@ -49,32 +58,22 @@ export function createSensitivityUpdater<
             | DeltaEnsembleIdent
             | null;
 
-        if (!ensembleIdent) {
-            return [];
-        }
+    const currentEnsemble = workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent);
+    const sensitivities = currentEnsemble?.getSensitivities()?.getSensitivityArr() ?? [];
+    if (sensitivities.length === 0) {
+        return [];
+    }
 
-        const ensembleSet = workbenchSession.getEnsembleSet();
-        const currentEnsemble = ensembleSet.findEnsemble(ensembleIdent);
-        const sensitivities = currentEnsemble?.getSensitivities()?.getSensitivityArr() ?? [];
-        if (sensitivities.length === 0) {
-            return [];
-        }
-        const availableSensitivityPairs: SensitivityNameCasePair[] = [];
-        sensitivities.map((sensitivity: Sensitivity) =>
-            sensitivity.cases.map((sensitivityCase: SensitivityCase) => {
-                availableSensitivityPairs.push({
-                    sensitivityName: sensitivity.name,
-                    sensitivityCase: sensitivityCase.name,
-                });
-            }),
-        );
-        return availableSensitivityPairs;
-    };
+    return sensitivities.flatMap((sensitivity) =>
+        sensitivity.cases.map((sensitivityCase) => ({
+            sensitivityName: sensitivity.name,
+            sensitivityCase: sensitivityCase.name,
+        })),
+    );
 }
 
 /**
- * Creates an valueConstraintsUpdater for Setting.REALIZATION that returns filtered realizations
- * for the selected ensemble.
+ * Returns filtered realizations for the selected ensemble.
  */
 export function createRealizationUpdater<
     TSettings extends Settings,
@@ -88,20 +87,12 @@ export function createRealizationUpdater<
             | null;
         const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
-        if (!ensembleIdent) {
-            return [];
-        }
-
-        const realizations = realizationFilterFunc(ensembleIdent);
-
-        return [...realizations];
-    };
+    return [...realizationFilterFunction(ensembleIdent)];
 }
 
 /**
- * Creates an valueConstraintsUpdater for Setting.STATISTIC_FUNCTION that returns all available
- * surface statistic functions.
+ * Returns all available surface statistic functions.
  */
-export function createStatisticFunctionUpdater() {
-    return () => Object.values(SurfaceStatisticFunction_api);
+export function resolveStatisticFunctionConstraints(): SurfaceStatisticFunction_api[] {
+    return Object.values(SurfaceStatisticFunction_api);
 }
