@@ -336,7 +336,10 @@ export class Dependency<
 
         // No reads: always runnable
         if (!this._resolverSpec.read) {
-            return (await this._resolverSpec.resolve({} as any, abortSignal)) as any;
+            return (await this._resolverSpec.resolve({} as any, {
+                abortSignal,
+                statusWriter: this._statusStore,
+            })) as any;
         }
 
         const reads = this._resolverSpec.read({ read: this.makeAccessors() });
@@ -346,7 +349,10 @@ export class Dependency<
         }
 
         const values = unwrapReads(reads);
-        return (await this._resolverSpec.resolve(values as any, abortSignal)) as any;
+        return (await this._resolverSpec.resolve(values as any, {
+            abortSignal,
+            statusWriter: this._statusStore,
+        })) as any;
     }
 
     private invalidate(): void {

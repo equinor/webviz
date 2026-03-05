@@ -35,48 +35,44 @@ export function setupBaseContinuousBindings<T extends readonly Setting[]>({
     makeSharedResult,
     queryClient,
 }: SetupBasicBindingsContext<T>) {
-    const curveHeaderQueryDep = makeSharedResult({
+    const curveHeaders = makeSharedResult({
         debugName: "CurveHeaders",
         read({ read }) {
             return { wellboreId: read.globalSetting("wellboreUuid") };
         },
-        async resolve({ wellboreId }, abortSignal) {
+        async resolve({ wellboreId }, { abortSignal, statusWriter }) {
             if (!wellboreId) return null;
 
-    const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal, getStatusWriter }) => {
-        const wellboreId = getGlobalSetting("wellboreUuid");
+            try {
+                return await queryClient.fetchQuery({
+                    ...getWellboreLogCurveHeadersOptions({
+                        query: {
+                            wellbore_uuid: wellboreId,
+                            sources: [WellLogCurveSourceEnum_api.SSDL_WELL_LOG, WellLogCurveSourceEnum_api.SMDA_SURVEY],
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            } catch (error: any) {
+                const errorHelper = ApiErrorHelper.fromError(error);
+                if (errorHelper?.getType() !== "AuthorizationError") {
+                    throw error;
+                }
 
-        if (!wellboreId) return null;
+                statusWriter.addError(
+                    `Unable to get log curves from service: no access (${errorHelper.getService()?.toUpperCase()})`,
+                );
 
-        try {
-            return await args.queryClient.fetchQuery({
-                ...getWellboreLogCurveHeadersOptions({
-                    query: {
-                        wellbore_uuid: wellboreId,
-                        sources: [WellLogCurveSourceEnum_api.SSDL_WELL_LOG, WellLogCurveSourceEnum_api.SMDA_SURVEY],
-                    },
-                    signal: abortSignal,
-                }),
-            });
-        } catch (error: any) {
-            const errorHelper = ApiErrorHelper.fromError(error);
-            if (errorHelper?.getType() !== "AuthorizationError") {
-                throw error;
+                return null;
             }
-
-            getStatusWriter().addError(
-                `Unable to get log curves from service: no access (${errorHelper.getService()?.toUpperCase()})`,
-            );
-
-            return null;
-        }
+        },
     });
 
     setting(Setting.LOG_CURVE).bindValueConstraints({
         read({ read }) {
             return {
                 wellboreId: read.globalSetting("wellboreUuid"),
-                headerData: read.sharedResult(curveHeaderQueryDep),
+                headerData: read.sharedResult(curveHeaders),
             };
         },
         resolve({ wellboreId, headerData }) {

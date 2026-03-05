@@ -3,7 +3,9 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
-import type { UpdateFuncWithNoUpdate } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import { Read } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
+import { GlobalSettings } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { ResolverSpec } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type {
     MakeSettingTypesMap,
     SettingsKeysFromTuple,
@@ -19,16 +21,24 @@ export function createEnsembleUpdater<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings>,
->(): UpdateFuncWithNoUpdate<RegularEnsembleIdent[], TSettings, TSettingTypes, TKey> {
-    return ({ getGlobalSetting }) => {
-        const fieldIdentifier = getGlobalSetting("fieldId");
-        const ensembles = getGlobalSetting("ensembles");
+>(): ResolverSpec<RegularEnsembleIdent[], TSettings, TSettingTypes, TKey, {
+        fieldId: Read<GlobalSettings["fieldId"]>;
+        ensembles: Read<GlobalSettings["ensembles"]>;
+    }> {
+    return {
+        read({ read }) {
+            return {
+                fieldId: read.globalSetting("fieldId"),
+                ensembles: read.globalSetting("ensembles"),
+            };
+        },
+        resolve({ fieldId, ensembles }) {
+             const ensembleIdents = ensembles
+                .filter((ensemble: RegularEnsemble) => ensemble.getFieldIdentifier() === fieldId)
+                .map((ensemble: RegularEnsemble) => ensemble.getIdent());
 
-        const ensembleIdents = ensembles
-            .filter((ensemble: any) => ensemble.getFieldIdentifier() === fieldIdentifier)
-            .map((ensemble: any) => ensemble.getIdent());
-
-        return ensembleIdents;
+            return ensembleIdents;
+        },
     };
 }
 

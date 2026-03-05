@@ -31,7 +31,10 @@ export type ResolverSpec<
     read?: (readArgs: { read: Accessors<TSettings, TSettingTypes, TKey> }) => TReads;
     resolve: (
         values: { [K in keyof TReads]: UnwrapRead<TReads[K]> },
-        abortSignal: AbortSignal,
+        utils: {
+            abortSignal: AbortSignal;
+            statusWriter: StatusWriter;
+        },
     ) => MaybePromise<NonPending<TReturnValue> | NoUpdate>;
 };
 
