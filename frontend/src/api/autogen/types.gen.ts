@@ -1422,10 +1422,7 @@ export type SeismicCubeMeta_api = {
      * Isodateorinterval
      */
     isoDateOrInterval: string;
-    /**
-     * Isobservation
-     */
-    isObservation: boolean;
+    representation: SeismicRepresentation_api;
     /**
      * Isdepth
      */
@@ -1574,6 +1571,15 @@ export type SeismicFencePolyline_api = {
      */
     y_points: Array<number>;
 };
+
+/**
+ * SeismicRepresentation
+ */
+export enum SeismicRepresentation_api {
+    OBSERVED_CASE = "observed_case",
+    OBSERVED_REALIZATION = "observed_realization",
+    MODELLED = "modelled",
+}
 
 /**
  * SeismicSliceData
@@ -5614,11 +5620,9 @@ export type GetInlineSliceData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         /**
          * Inline Number
          *
@@ -5683,11 +5687,9 @@ export type GetCrosslineSliceData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         /**
          * Crossline Num
          *
@@ -5752,11 +5754,9 @@ export type GetDepthSliceData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         /**
          * Depth Slice Num
          *
@@ -5821,11 +5821,9 @@ export type GetSeismicSlicesData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         /**
          * Inline Number
          *
@@ -5904,11 +5902,9 @@ export type PostGetSeismicFenceData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         zCacheBust?: string;
     };
     url: "/seismic/get_seismic_fence/";

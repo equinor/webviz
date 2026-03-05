@@ -7,8 +7,9 @@ import {
     getLogCurveDataOptions,
     getWellboreLogCurveHeadersOptions,
 } from "@api";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type {
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBasicBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -42,7 +43,13 @@ export function setupBaseContinuousBindings<T extends readonly Setting[]>({
         async resolve({ wellboreId }, abortSignal) {
             if (!wellboreId) return null;
 
-            return await queryClient.fetchQuery({
+    const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal, getStatusWriter }) => {
+        const wellboreId = getGlobalSetting("wellboreUuid");
+
+        if (!wellboreId) return null;
+
+        try {
+            return await args.queryClient.fetchQuery({
                 ...getWellboreLogCurveHeadersOptions({
                     query: {
                         wellbore_uuid: wellboreId,
@@ -51,7 +58,18 @@ export function setupBaseContinuousBindings<T extends readonly Setting[]>({
                     signal: abortSignal,
                 }),
             });
-        },
+        } catch (error: any) {
+            const errorHelper = ApiErrorHelper.fromError(error);
+            if (errorHelper?.getType() !== "AuthorizationError") {
+                throw error;
+            }
+
+            getStatusWriter().addError(
+                `Unable to get log curves from service: no access (${errorHelper.getService()?.toUpperCase()})`,
+            );
+
+            return null;
+        }
     });
 
     setting(Setting.LOG_CURVE).bindValueConstraints({
@@ -69,7 +87,7 @@ export function setupBaseContinuousBindings<T extends readonly Setting[]>({
 }
 
 export function verifyBasePlotSettings<T extends readonly Setting[]>(
-    accessor: DataProviderInformationAccessors<T, WellboreLogCurveData_api>,
+    accessor: DataProviderAccessors<T, WellboreLogCurveData_api>,
 ): boolean {
     const availableCurves = accessor.getSettingValueConstraints(Setting.LOG_CURVE) ?? [];
     const selectedCurve = accessor.getSetting(Setting.LOG_CURVE);

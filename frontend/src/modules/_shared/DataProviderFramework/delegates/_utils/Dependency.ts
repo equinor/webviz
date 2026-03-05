@@ -1,5 +1,9 @@
 import { isCancelledError } from "@tanstack/react-query";
 
+import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore";
+import type { PublishSubscribeStatusMessageStore, StatusWriter } from "@framework/types/statusWriter";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
+
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
 import { SettingTopic, type SettingManager } from "../../framework/SettingManager/SettingManager";
 import type { ResolverSpec, SharedResult } from "../../interfacesAndTypes/customSettingsHandler";
@@ -70,6 +74,8 @@ export class Dependency<
     private _isProbing = false;
     private _debugName: string;
 
+    private _statusStore = new GenericStatusMessageStore("Dependency");
+
     constructor(
         localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>,
         globalSettingGetter: <K extends keyof GlobalSettings>(key: K) => GlobalSettings[K] | null,
@@ -94,6 +100,7 @@ export class Dependency<
         this.getGlobalSetting = this.getGlobalSetting.bind(this);
         this.getLocalSetting = this.getLocalSetting.bind(this);
         this.getHelperDependency = this.getHelperDependency.bind(this);
+        this.getStatusWriter = this.getStatusWriter.bind(this);
     }
 
     beforeDestroy() {
@@ -105,6 +112,7 @@ export class Dependency<
         }
         this._unsubscribers = [];
 
+        this._statusStore.clear();
         this._dependencies.clear();
         this._loadingDependencies.clear();
     }
@@ -142,6 +150,18 @@ export class Dependency<
         return () => {
             this._loadingDependencies.delete(callback);
         };
+    }
+
+    getStatusMessages() {
+        return this._statusStore.getMessages();
+    }
+
+    getStatusWriter(): StatusWriter {
+        return this._statusStore;
+    }
+
+    getStatusMessageStore(): PublishSubscribeStatusMessageStore {
+        return this._statusStore;
     }
 
     private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] | Pending {
@@ -355,6 +375,7 @@ export class Dependency<
         }
 
         this._abortController = new AbortController();
+        this._statusStore.clear();
 
         let newValue: Awaited<TReturnValue> | null | NoUpdate | Pending = null;
         try {
@@ -378,6 +399,12 @@ export class Dependency<
             }
 
             this.applyNewValue(null);
+
+            const errorHelper = ApiErrorHelper.fromError(e);
+            if (errorHelper) {
+                this._statusStore.addError(errorHelper?.makeFullErrorMessage());
+            }
+
             return;
         }
 

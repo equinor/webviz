@@ -4,9 +4,9 @@ import { isEmpty, orderBy, range } from "lodash";
 import { v4 } from "uuid";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
 
 import { HEADER_HEIGHT_PX, ROW_HEIGHT_PX } from "./constants";
-import { useOptInControlledValue } from "./hooks";
 import { TableBody } from "./private-components/tableBody";
 import { TableColGroups } from "./private-components/tableColGroups";
 import { TableHead } from "./private-components/tableHead";

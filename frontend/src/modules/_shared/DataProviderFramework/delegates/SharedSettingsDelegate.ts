@@ -1,3 +1,4 @@
+import { StatusMessageStoreTopic, type StatusMessage } from "@framework/types/statusWriter";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
@@ -19,19 +20,20 @@ import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefin
 import { Dependency, type Read } from "./_utils/Dependency";
 
 export enum SharedSettingsDelegateTopic {
-    SETTINGS_CHANGED = "SHARED_SETTINGS_DELEGATE_SETTINGS_CHANGED",
+    SETTINGS_CHANGED = "SETTINGS_CHANGED",
+    STATUS_MESSAGES = "STATUS_MESSAGES",
 }
 
 export type SharedSettingsDelegatePayloads = {
     [SharedSettingsDelegateTopic.SETTINGS_CHANGED]: void;
+    [SharedSettingsDelegateTopic.STATUS_MESSAGES]: readonly StatusMessage[];
 };
 
 export class SharedSettingsDelegate<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> implements PublishSubscribe<SharedSettingsDelegatePayloads>
-{
+> implements PublishSubscribe<SharedSettingsDelegatePayloads> {
     private _publishSubscribeDelegate: PublishSubscribeDelegate<SharedSettingsDelegatePayloads> =
         new PublishSubscribeDelegate<SharedSettingsDelegatePayloads>();
     private _externalSettingControllers: { [K in TSettingKey]: ExternalSettingController<K> } = {} as {
@@ -48,6 +50,8 @@ export class SharedSettingsDelegate<
     private _setupBasicBindingsContext:
         | ((args: SetupBasicBindingsContext<TSettings, TSettingTypes, TSettingKey>) => void)
         | null = null;
+
+    private _dependencyStatusMessages: StatusMessage[] = [];
 
     constructor(
         parentItem: Item,
@@ -90,12 +94,17 @@ export class SharedSettingsDelegate<
         return this._publishSubscribeDelegate;
     }
 
-    makeSnapshotGetter<T extends SharedSettingsDelegateTopic.SETTINGS_CHANGED>(
-        topic: T,
-    ): () => SharedSettingsDelegatePayloads[T] {
+    getStatusMessages(): readonly StatusMessage[] {
+        return this._dependencyStatusMessages;
+    }
+
+    makeSnapshotGetter<T extends SharedSettingsDelegateTopic>(topic: T): () => SharedSettingsDelegatePayloads[T] {
         const snapshotGetter = (): any => {
             if (topic === SharedSettingsDelegateTopic.SETTINGS_CHANGED) {
                 return;
+            }
+            if (topic === SharedSettingsDelegateTopic.STATUS_MESSAGES) {
+                return this._dependencyStatusMessages;
             }
         };
 
@@ -290,6 +299,8 @@ export class SharedSettingsDelegate<
                 }
             });
 
+            this.subscribeToDependencyStatusMessages(dependency);
+
             return dependency;
         };
 
@@ -313,6 +324,7 @@ export class SharedSettingsDelegate<
             dependency.subscribeLoading(() => {
                 this.handleSettingChanged();
             });
+            this.subscribeToDependencyStatusMessages(dependency);
 
             return dependency;
         };
@@ -329,6 +341,7 @@ export class SharedSettingsDelegate<
             dependency.subscribeLoading(() => {
                 this.handleSettingChanged();
             });
+            this.subscribeToDependencyStatusMessages(dependency);
 
             return dependency as SharedResult<T, TSettings, TSettingTypes, TSettingKey, TReads>;
         };
@@ -367,5 +380,18 @@ export class SharedSettingsDelegate<
         if (this._setupBasicBindingsContext) {
             this._setupBasicBindingsContext(context);
         }
+    }
+
+    private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any>): void {
+        dependency
+            .getStatusMessageStore()
+            .getPublishSubscribeDelegate()
+            .subscribe(StatusMessageStoreTopic.STATUS_MESSAGES, () => this.syncAllStatusMessages());
+    }
+
+    private syncAllStatusMessages(): void {
+        this._dependencyStatusMessages = this._dependencies.flatMap((d) => d.getStatusMessages());
+
+        this._publishSubscribeDelegate.notifySubscribers(SharedSettingsDelegateTopic.STATUS_MESSAGES);
     }
 }

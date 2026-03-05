@@ -16,7 +16,7 @@ import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -81,9 +81,7 @@ export class DepthSurfaceProvider
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>):
-        | [number, number]
-        | null {
+    }: DataProviderAccessors<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>): [number, number] | null {
         const data = getData()?.surfaceData;
         if (!data) {
             return null;

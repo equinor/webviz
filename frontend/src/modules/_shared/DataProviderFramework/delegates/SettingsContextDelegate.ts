@@ -1,3 +1,4 @@
+import { StatusMessageStoreTopic, type StatusMessage } from "@framework/types/statusWriter";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -32,11 +33,13 @@ export enum SettingsContextStatus {
 export enum SettingsContextDelegateTopic {
     SETTINGS_AND_STORED_DATA_CHANGED = "SETTINGS_AND_STORED_DATA_CHANGED",
     STATUS = "STATUS",
+    STATUS_MESSAGES = "STATUS_MESSAGES",
 }
 
 export type SettingsContextDelegatePayloads = {
     [SettingsContextDelegateTopic.SETTINGS_AND_STORED_DATA_CHANGED]: void;
     [SettingsContextDelegateTopic.STATUS]: SettingsContextStatus;
+    [SettingsContextDelegateTopic.STATUS_MESSAGES]: readonly StatusMessage[];
 };
 
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
@@ -79,6 +82,8 @@ export class SettingsContextDelegate<
         [K in TStoredDataKey]: boolean;
     };
     private _dependencies: Dependency<any, TSettings, any, any, any>[] = [];
+
+    private _dependencyStatusMessages: StatusMessage[] = [];
 
     constructor(
         customSettingsHandler: CustomSettingsHandler<TSettings, TStoredData, TSettingTypes, TSettingKey>,
@@ -125,6 +130,10 @@ export class SettingsContextDelegate<
 
     getStatus(): SettingsContextStatus {
         return this._status;
+    }
+
+    getStatusMessages(): readonly StatusMessage[] {
+        return this._dependencyStatusMessages;
     }
 
     getValues(): { [K in TSettingKey]?: TSettingTypes[K] } {
@@ -252,6 +261,9 @@ export class SettingsContextDelegate<
             }
             if (topic === SettingsContextDelegateTopic.STATUS) {
                 return this._status;
+            }
+            if (topic === SettingsContextDelegateTopic.STATUS_MESSAGES) {
+                return this._dependencyStatusMessages;
             }
         };
 
@@ -415,6 +427,8 @@ export class SettingsContextDelegate<
                 this.handleSettingChanged();
             });
 
+            this.subscribeToDependencyStatusMessages(dependency);
+
             return dependency;
         };
 
@@ -438,6 +452,8 @@ export class SettingsContextDelegate<
             dependency.subscribeLoading(() => {
                 this.handleSettingChanged();
             });
+
+            this.subscribeToDependencyStatusMessages(dependency);
 
             return dependency;
         };
@@ -470,6 +486,8 @@ export class SettingsContextDelegate<
                 }
             });
 
+            this.subscribeToDependencyStatusMessages(dependency);
+
             return dependency;
         };
 
@@ -483,6 +501,7 @@ export class SettingsContextDelegate<
                 this.handleSettingChanged();
             });
 
+            this.subscribeToDependencyStatusMessages(dependency);
             return dependency as SharedResult<T, TSettings, TSettingTypes, TSettingKey, TReads>;
         };
 
@@ -581,5 +600,18 @@ export class SettingsContextDelegate<
         }
 
         this.handleSettingChanged();
+    }
+
+    private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any>): void {
+        dependency
+            .getStatusMessageStore()
+            .getPublishSubscribeDelegate()
+            .subscribe(StatusMessageStoreTopic.STATUS_MESSAGES, () => this.syncAllStatusMessages());
+    }
+
+    private syncAllStatusMessages(): void {
+        this._dependencyStatusMessages = this._dependencies.flatMap((d) => d.getStatusMessages());
+
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.STATUS_MESSAGES);
     }
 }

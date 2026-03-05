@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
+import type { StatusWriter } from "@framework/types/statusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
