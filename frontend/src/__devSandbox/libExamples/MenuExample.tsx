@@ -1,17 +1,6 @@
 import type React from "react";
 
-import {
-    Add,
-    FolderOpen,
-    Save,
-    Download,
-    Settings,
-    Help,
-    MenuOpen,
-    MoreVert,
-    MoreVertOutlined,
-    MoreVertRounded,
-} from "@mui/icons-material";
+import { Add, FolderOpen, Save, Download, Settings, Help, MoreVert } from "@mui/icons-material";
 
 import { Menu } from "@lib/components/Menu";
 import type { MenuItem, MenuProps } from "@lib/components/Menu";
