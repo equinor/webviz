@@ -39,7 +39,7 @@ export interface UpdateFunc<
     }): TReturnValue;
 }
 
-export type UpdatedFuncWithNoUpdate<
+export type UpdateFuncWithNoUpdate<
     TReturnValue,
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
@@ -53,11 +53,11 @@ export interface DefineBasicDependenciesArgs<
 > {
     settingAttributesUpdater: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
-        update: UpdatedFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
+        update: UpdateFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
     ) => Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>;
     valueConstraintsUpdater: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
-        update: UpdatedFuncWithNoUpdate<
+        update: UpdateFuncWithNoUpdate<
             SettingTypeDefinitions[TSettingKey]["valueConstraints"],
             TSettings,
             TSettingTypes,
@@ -82,12 +82,7 @@ export interface DefineDependenciesArgs<
 > extends DefineBasicDependenciesArgs<TSettings, TSettingTypes, TKey> {
     storedDataUpdater: <K extends TStoredDataKey>(
         key: K,
-        update: UpdatedFuncWithNoUpdate<
-            NullableStoredData<TStoredData>[TStoredDataKey],
-            TSettings,
-            TSettingTypes,
-            TKey
-        >,
+        update: UpdateFuncWithNoUpdate<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
     ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>;
 }
 

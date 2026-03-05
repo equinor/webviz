@@ -14,7 +14,7 @@ import type {
     CustomSettingsHandler,
     UpdateFunc,
     SettingAttributes,
-    UpdatedFuncWithNoUpdate,
+    UpdateFuncWithNoUpdate,
 } from "../interfacesAndTypes/customSettingsHandler";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
@@ -142,7 +142,7 @@ export class SettingsContextDelegate<
         return this._status;
     }
 
-    getDependencyStatusMessages(): StatusMessage[] {
+    getStatusMessages(): readonly StatusMessage[] {
         return this._dependencyStatusMessages;
     }
 
@@ -389,7 +389,7 @@ export class SettingsContextDelegate<
 
         const valueConstraintsUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdatedFuncWithNoUpdate<
+            updateFunc: UpdateFuncWithNoUpdate<
                 SettingTypeDefinitions[K]["valueConstraints"],
                 TSettings,
                 TSettingTypes,
@@ -435,7 +435,7 @@ export class SettingsContextDelegate<
 
         const settingAttributesUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdatedFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
+            updateFunc: UpdateFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
         ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>(
                 localSettingManagerGetter,
@@ -466,7 +466,7 @@ export class SettingsContextDelegate<
 
         const storedDataUpdater = <K extends TStoredDataKey>(
             key: K,
-            updateFunc: UpdatedFuncWithNoUpdate<
+            updateFunc: UpdateFuncWithNoUpdate<
                 NullableStoredData<TStoredData>[K],
                 TSettings,
                 TSettingTypes,

@@ -531,7 +531,7 @@ export class DataProvider<
 
     private syncAllStatusMessages(): void {
         const localMessages = this._statusWriter.getMessages();
-        const settingsContextMessages = this._settingsContextDelegate.getDependencyStatusMessages();
+        const settingsContextMessages = this._settingsContextDelegate.getStatusMessages();
 
         this._allStatusMessages = [...localMessages, ...settingsContextMessages];
 

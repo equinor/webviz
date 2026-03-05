@@ -9,7 +9,7 @@ import type {
     DefineBasicDependenciesArgs,
     UpdateFunc,
     SettingAttributes,
-    UpdatedFuncWithNoUpdate,
+    UpdateFuncWithNoUpdate,
 } from "../interfacesAndTypes/customSettingsHandler";
 import type { Item } from "../interfacesAndTypes/entities";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
@@ -245,7 +245,7 @@ export class SharedSettingsDelegate<
 
         const valueConstraintsUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdatedFuncWithNoUpdate<
+            updateFunc: UpdateFuncWithNoUpdate<
                 SettingTypeDefinitions[K]["valueConstraints"],
                 TSettings,
                 TSettingTypes,
@@ -301,7 +301,7 @@ export class SharedSettingsDelegate<
 
         const settingAttributesUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdatedFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
+            updateFunc: UpdateFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
         ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>(
                 localSettingManagerGetter.bind(this),

@@ -48,4 +48,4 @@ export type StatusMessageStoreTopicPayload = {
     [StatusMessageStoreTopic.STATUS_MESSAGES]: readonly StatusMessage[];
 };
 
-export type PublishSubScribeStatusMessageStore = PublishSubscribe<StatusMessageStoreTopicPayload>;
+export type PublishSubscribeStatusMessageStore = PublishSubscribe<StatusMessageStoreTopicPayload>;
