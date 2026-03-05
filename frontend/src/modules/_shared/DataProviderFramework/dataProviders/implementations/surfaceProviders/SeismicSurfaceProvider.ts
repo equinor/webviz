@@ -21,7 +21,7 @@ import type {
     DataProviderInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
@@ -32,10 +32,10 @@ import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 
 import {
-    createEnsembleUpdater,
-    createRealizationUpdater,
-    createSensitivityUpdater,
-    createStatisticFunctionUpdater,
+    resolveEnsembleConstraints,
+    resolveRealizationConstraints,
+    resolveSensitivityConstraints,
+    resolveStatisticFunctionConstraints,
 } from "./_commonSettingsUpdaters";
 import type { SurfaceData, SurfaceStoredData } from "./types";
 import { SurfaceDataFormat } from "./types";
@@ -112,177 +112,265 @@ export class SeismicSurfaceProvider
     isTimeIntervalSurface(): boolean {
         return this._surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE;
     }
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
-        settingAttributesUpdater,
-        storedDataUpdater,
-        workbenchSession,
+    setupBindings({
+        setting,
+        storedData,
+        makeSharedResult,
         queryClient,
-    }: DefineDependenciesArgs<SeismicSurfaceSettings, SurfaceStoredData>) {
-        settingAttributesUpdater(Setting.REALIZATION, ({ getLocalSetting }) => {
-            const realizationOrStatistics = getLocalSetting(Setting.REPRESENTATION);
-            const enabled = realizationOrStatistics === Representation.REALIZATION;
-            return { enabled, visible: enabled };
-        });
-        settingAttributesUpdater(Setting.SENSITIVITY, ({ getLocalSetting }) => {
-            const realizationOrStatistics = getLocalSetting(Setting.REPRESENTATION);
-            const enabled = realizationOrStatistics === Representation.ENSEMBLE_STATISTICS;
-            return { enabled, visible: enabled };
-        });
-        settingAttributesUpdater(Setting.STATISTIC_FUNCTION, ({ getLocalSetting }) => {
-            const realizationOrStatistics = getLocalSetting(Setting.REPRESENTATION);
-            const enabled = realizationOrStatistics === Representation.ENSEMBLE_STATISTICS;
-            return { enabled, visible: enabled };
-        });
-        settingAttributesUpdater(Setting.TIME_POINT, () => {
-            if (this.isTimePointSurface()) {
-                return { enabled: true, visible: true };
-            }
-            return { enabled: false, visible: false };
-        });
-        settingAttributesUpdater(Setting.TIME_INTERVAL, () => {
-            if (this.isTimeIntervalSurface()) {
-                return { enabled: true, visible: true };
-            }
-            return { enabled: false, visible: false };
-        });
-        valueConstraintsUpdater(Setting.REPRESENTATION, () => {
-            if (
-                this._surfaceType === SeismicSurfaceType.SEISMIC_SURVEY ||
-                this._surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE
-            ) {
-                return [Representation.OBSERVATION, Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
-            }
-            return [Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
-        });
-        valueConstraintsUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
-        valueConstraintsUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
-        valueConstraintsUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
+        workbenchSession,
+    }: SetupBindingsContext<SeismicSurfaceSettings, SurfaceStoredData>) {
+        // Capture class field for use in resolve closures (resolve shorthand methods don't bind class `this`)
+        const surfaceType = this._surfaceType;
 
-        const surfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const representation = getLocalSetting(Setting.REPRESENTATION);
-            if (!ensembleIdent) {
-                return null;
-            }
-            if (
-                (this._surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE ||
-                    this._surfaceType === SeismicSurfaceType.SEISMIC_SURVEY) &&
-                representation === Representation.OBSERVATION
-            ) {
+        setting(Setting.REALIZATION).bindAttributes({
+            read({ read }) {
+                return { representation: read.localSetting(Setting.REPRESENTATION) };
+            },
+            resolve({ representation }) {
+                const enabled = representation === Representation.REALIZATION;
+                return { enabled, visible: enabled };
+            },
+        });
+
+        setting(Setting.SENSITIVITY).bindAttributes({
+            read({ read }) {
+                return { representation: read.localSetting(Setting.REPRESENTATION) };
+            },
+            resolve({ representation }) {
+                const enabled = representation === Representation.ENSEMBLE_STATISTICS;
+                return { enabled, visible: enabled };
+            },
+        });
+
+        setting(Setting.STATISTIC_FUNCTION).bindAttributes({
+            read({ read }) {
+                return { representation: read.localSetting(Setting.REPRESENTATION) };
+            },
+            resolve({ representation }) {
+                const enabled = representation === Representation.ENSEMBLE_STATISTICS;
+                return { enabled, visible: enabled };
+            },
+        });
+
+        // Equivalent to this.isTimePointSurface() / this.isTimeIntervalSurface() — those methods remain available in fetchData
+        setting(Setting.TIME_POINT).bindAttributes({
+            resolve() {
+                return surfaceType === SeismicSurfaceType.SEISMIC_SURVEY
+                    ? { enabled: true, visible: true }
+                    : { enabled: false, visible: false };
+            },
+        });
+
+        setting(Setting.TIME_INTERVAL).bindAttributes({
+            resolve() {
+                return surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE
+                    ? { enabled: true, visible: true }
+                    : { enabled: false, visible: false };
+            },
+        });
+
+        setting(Setting.REPRESENTATION).bindValueConstraints({
+            resolve() {
+                if (
+                    surfaceType === SeismicSurfaceType.SEISMIC_SURVEY ||
+                    surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE
+                ) {
+                    return [Representation.OBSERVATION, Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
+                }
+                return [Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
+            },
+        });
+
+        setting(Setting.STATISTIC_FUNCTION).bindValueConstraints({
+            resolve() {
+                return resolveStatisticFunctionConstraints();
+            },
+        });
+
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read({ read }) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                return resolveEnsembleConstraints(fieldIdentifier, ensembles);
+            },
+        });
+
+        setting(Setting.SENSITIVITY).bindValueConstraints({
+            read({ read }) {
+                return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
+            },
+            resolve({ ensembleIdent }) {
+                return resolveSensitivityConstraints(ensembleIdent, workbenchSession);
+            },
+        });
+
+        const surfaceMetadataDep = makeSharedResult({
+            debugName: "SurfaceMetadata",
+            read({ read }) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    representation: read.localSetting(Setting.REPRESENTATION),
+                };
+            },
+            async resolve({ ensembleIdent, representation }, abortSignal) {
+                if (!ensembleIdent) {
+                    return null;
+                }
+                if (
+                    (surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE ||
+                        surfaceType === SeismicSurfaceType.SEISMIC_SURVEY) &&
+                    representation === Representation.OBSERVATION
+                ) {
+                    return await queryClient.fetchQuery({
+                        ...getObservedSurfacesMetadataOptions({
+                            query: {
+                                case_uuid: ensembleIdent.getCaseUuid(),
+                                ...makeCacheBustingQueryParam(ensembleIdent),
+                            },
+                            signal: abortSignal,
+                        }),
+                    });
+                }
                 return await queryClient.fetchQuery({
-                    ...getObservedSurfacesMetadataOptions({
+                    ...getRealizationSurfacesMetadataOptions({
                         query: {
                             case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
                             ...makeCacheBustingQueryParam(ensembleIdent),
                         },
                         signal: abortSignal,
                     }),
                 });
-            }
-            return await queryClient.fetchQuery({
-                ...getRealizationSurfacesMetadataOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                        ...makeCacheBustingQueryParam(ensembleIdent),
-                    },
-                    signal: abortSignal,
-                }),
-            });
+            },
         });
-        valueConstraintsUpdater(Setting.REALIZATION, createRealizationUpdater());
-        valueConstraintsUpdater(Setting.SEISMIC_ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(surfaceMetadataDep);
 
-            if (!data) {
-                return [];
-            }
-
-            let filteredSurfaceMetadata = data.surfaces;
-            if (this._surfaceType === SeismicSurfaceType.SEISMIC_SURVEY) {
-                filteredSurfaceMetadata = data.surfaces.filter(
-                    (surface) =>
-                        surface.attribute_type === SurfaceAttributeType_api.SEISMIC &&
-                        surface.time_type === SurfaceTimeType_api.TIME_POINT,
-                );
-            } else if (this._surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE) {
-                filteredSurfaceMetadata = data.surfaces.filter(
-                    (surface) =>
-                        surface.attribute_type === SurfaceAttributeType_api.SEISMIC &&
-                        surface.time_type === SurfaceTimeType_api.INTERVAL,
-                );
-            }
-
-            const availableAttributes = [
-                ...Array.from(new Set(filteredSurfaceMetadata.map((surface) => surface.attribute_name))),
-            ];
-
-            return availableAttributes;
+        setting(Setting.REALIZATION).bindValueConstraints({
+            read({ read }) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunction }) {
+                return resolveRealizationConstraints(ensembleIdent, realizationFilterFunction);
+            },
         });
-        valueConstraintsUpdater(Setting.FORMATION_NAME, ({ getHelperDependency, getLocalSetting }) => {
-            const attribute = getLocalSetting(Setting.SEISMIC_ATTRIBUTE);
-            const data = getHelperDependency(surfaceMetadataDep);
 
-            if (!attribute || !data) {
-                return [];
-            }
+        setting(Setting.SEISMIC_ATTRIBUTE).bindValueConstraints({
+            read({ read }) {
+                return { data: read.sharedResult(surfaceMetadataDep) };
+            },
+            resolve({ data }) {
+                if (!data) {
+                    return [];
+                }
 
-            const availableSurfaceNames = [
-                ...Array.from(
-                    new Set(
+                let filteredSurfaceMetadata = data.surfaces;
+                if (surfaceType === SeismicSurfaceType.SEISMIC_SURVEY) {
+                    filteredSurfaceMetadata = data.surfaces.filter(
+                        (surface) =>
+                            surface.attribute_type === SurfaceAttributeType_api.SEISMIC &&
+                            surface.time_type === SurfaceTimeType_api.TIME_POINT,
+                    );
+                } else if (surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE) {
+                    filteredSurfaceMetadata = data.surfaces.filter(
+                        (surface) =>
+                            surface.attribute_type === SurfaceAttributeType_api.SEISMIC &&
+                            surface.time_type === SurfaceTimeType_api.INTERVAL,
+                    );
+                }
+
+                return [...new Set(filteredSurfaceMetadata.map((surface) => surface.attribute_name))];
+            },
+        });
+
+        setting(Setting.FORMATION_NAME).bindValueConstraints({
+            read({ read }) {
+                return {
+                    attribute: read.localSetting(Setting.SEISMIC_ATTRIBUTE),
+                    data: read.sharedResult(surfaceMetadataDep),
+                };
+            },
+            resolve({ attribute, data }) {
+                if (!attribute || !data) {
+                    return [];
+                }
+
+                const availableSurfaceNames = [
+                    ...new Set(
                         data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
                     ),
-                ),
-            ];
-            return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
+                ];
+                return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
+            },
         });
 
-        valueConstraintsUpdater(Setting.TIME_POINT, ({ getLocalSetting, getHelperDependency }) => {
-            const attribute = getLocalSetting(Setting.SEISMIC_ATTRIBUTE);
-            const surfaceName = getLocalSetting(Setting.FORMATION_NAME);
-            const data = getHelperDependency(surfaceMetadataDep);
+        setting(Setting.TIME_POINT).bindValueConstraints({
+            read({ read }) {
+                return {
+                    attribute: read.localSetting(Setting.SEISMIC_ATTRIBUTE),
+                    surfaceName: read.localSetting(Setting.FORMATION_NAME),
+                    data: read.sharedResult(surfaceMetadataDep),
+                };
+            },
+            resolve({ attribute, surfaceName, data }) {
+                if (!attribute || !surfaceName || !data) {
+                    return [];
+                }
 
-            if (!attribute || !surfaceName || !data) {
-                return [];
-            }
+                if (surfaceType === SeismicSurfaceType.SEISMIC_SURVEY) {
+                    return data.time_points_iso_str;
+                }
 
-            if (this._surfaceType === SeismicSurfaceType.SEISMIC_SURVEY) {
-                return data.time_points_iso_str;
-            }
-
-            return [SurfaceTimeType_api.NO_TIME];
-        });
-        valueConstraintsUpdater(Setting.TIME_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const attribute = getLocalSetting(Setting.SEISMIC_ATTRIBUTE);
-            const surfaceName = getLocalSetting(Setting.FORMATION_NAME);
-            const data = getHelperDependency(surfaceMetadataDep);
-
-            if (!attribute || !surfaceName || !data) {
-                return [];
-            }
-
-            if (this._surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE) {
-                return data.time_intervals_iso_str;
-            }
-
-            return [SurfaceTimeType_api.NO_TIME];
+                return [SurfaceTimeType_api.NO_TIME];
+            },
         });
 
-        storedDataUpdater("realizations", ({ getGlobalSetting, getLocalSetting }) => {
-            const filterFunction = getGlobalSetting("realizationFilterFunction");
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+        setting(Setting.TIME_INTERVAL).bindValueConstraints({
+            read({ read }) {
+                return {
+                    attribute: read.localSetting(Setting.SEISMIC_ATTRIBUTE),
+                    surfaceName: read.localSetting(Setting.FORMATION_NAME),
+                    data: read.sharedResult(surfaceMetadataDep),
+                };
+            },
+            resolve({ attribute, surfaceName, data }) {
+                if (!attribute || !surfaceName || !data) {
+                    return [];
+                }
 
-            if (!ensembleIdent) {
-                return [];
-            }
+                if (surfaceType === SeismicSurfaceType.SEISMIC_TIME_LAPSE) {
+                    return data.time_intervals_iso_str;
+                }
 
-            return filterFunction(ensembleIdent);
+                return [SurfaceTimeType_api.NO_TIME];
+            },
         });
+
+        storedData("realizations").bindValue({
+            read({ read }) {
+                return {
+                    filterFunction: read.globalSetting("realizationFilterFunction"),
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            resolve({ filterFunction, ensembleIdent }) {
+                return resolveRealizationConstraints(ensembleIdent, filterFunction);
+            },
+        });
+
         //Needed to trigger updates when switching between realization and ensemble statistics
-        storedDataUpdater("realizationMode", ({ getLocalSetting }) => {
-            return getLocalSetting(Setting.REPRESENTATION) ?? Representation.REALIZATION;
+        storedData("realizationMode").bindValue({
+            read({ read }) {
+                return { representation: read.localSetting(Setting.REPRESENTATION) };
+            },
+            resolve({ representation }) {
+                return representation ?? Representation.REALIZATION;
+            },
         });
     }
 

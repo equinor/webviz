@@ -167,7 +167,6 @@ export class RealizationGridProvider
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
-                    gridData: read.sharedResult(gridData),
                 };
             },
             resolve({ ensembles, fieldIdentifier }) {

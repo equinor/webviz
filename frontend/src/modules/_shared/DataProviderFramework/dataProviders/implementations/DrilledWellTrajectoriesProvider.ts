@@ -8,7 +8,7 @@ import type {
     CustomDataProviderImplementation,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const drilledWellTrajectoriesSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS] as const;
@@ -57,54 +57,68 @@ export class DrilledWellTrajectoriesProvider
         return promise;
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
-        workbenchSession,
+    setupBindings({
+        setting,
+        makeSharedResult,
         queryClient,
-    }: DefineDependenciesArgs<DrilledWellTrajectoriesSettings>) {
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-
-            const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent());
-
-            return ensembleIdents;
+        workbenchSession,
+    }: SetupBindingsContext<DrilledWellTrajectoriesSettings>) {
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read({ read }) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                return ensembles
+                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                    .map((ensemble) => ensemble.getIdent());
+            },
         });
 
-        const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+        const wellboreHeadersDep = makeSharedResult({
+            debugName: "WellboreHeaders",
+            read({ read }) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            async resolve({ ensembleIdent }, abortSignal) {
+                if (!ensembleIdent) {
+                    return null;
+                }
 
-            if (!ensembleIdent) {
-                return null;
-            }
+                const ensembleSet = workbenchSession.getEnsembleSet();
+                const ensemble = ensembleSet.findEnsemble(ensembleIdent);
 
-            const ensembleSet = workbenchSession.getEnsembleSet();
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+                if (!ensemble) {
+                    return null;
+                }
 
-            if (!ensemble) {
-                return null;
-            }
+                const fieldIdentifier = ensemble.getFieldIdentifier();
 
-            const fieldIdentifier = ensemble.getFieldIdentifier();
-
-            return await queryClient.fetchQuery({
-                ...getDrilledWellboreHeadersOptions({
-                    query: { field_identifier: fieldIdentifier },
-                    signal: abortSignal,
-                }),
-            });
+                return await queryClient.fetchQuery({
+                    ...getDrilledWellboreHeadersOptions({
+                        query: { field_identifier: fieldIdentifier },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
-        valueConstraintsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
-            if (!wellboreHeaders) {
-                return [];
-            }
-
-            return wellboreHeaders;
+        setting(Setting.SMDA_WELLBORE_HEADERS).bindValueConstraints({
+            read({ read }) {
+                return {
+                    wellboreHeaders: read.sharedResult(wellboreHeadersDep),
+                };
+            },
+            resolve({ wellboreHeaders }) {
+                if (!wellboreHeaders) {
+                    return [];
+                }
+                return wellboreHeaders;
+            },
         });
     }
 }

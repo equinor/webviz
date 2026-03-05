@@ -1,12 +1,12 @@
 import type { WellboreLogCurveData_api } from "@api";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBasicBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
     doSettingsChangesRequireDataRefetch,
     baseContinuousSettings,
-    defineBaseContinuousDependencies,
+    setupBaseContinuousBindings,
     fetchLogCurveData,
     verifyBasePlotSettings,
 } from "./_shared";
@@ -22,11 +22,13 @@ export class AreaPlotProvider
     fetchData = fetchLogCurveData<AreaPlotSettingTypes>;
     settings = AreaPlotSettings;
 
-    defineDependencies(args: DefineDependenciesArgs<AreaPlotSettingTypes>) {
-        defineBaseContinuousDependencies(args);
+    setupBindings(ctx: SetupBasicBindingsContext<AreaPlotSettingTypes>) {
+        setupBaseContinuousBindings(ctx);
 
-        args.valueConstraintsUpdater(Setting.PLOT_VARIANT, () => {
-            return ["area", "gradientfill"];
+        ctx.setting(Setting.PLOT_VARIANT).bindValueConstraints({
+            resolve() {
+                return ["area", "gradientfill"];
+            },
         });
     }
 

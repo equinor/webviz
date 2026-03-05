@@ -60,11 +60,14 @@ const SeismicDataSourceEnumToStringMapping = {
 
 export type IntersectionRealizationSeismicData = SeismicFenceData_trans;
 
-export class IntersectionRealizationSeismicProvider implements CustomDataProviderImplementation<
-    IntersectionRealizationSeismicSettings,
-    IntersectionRealizationSeismicData,
-    IntersectionRealizationSeismicStoredData
-> {
+export class IntersectionRealizationSeismicProvider
+    implements
+        CustomDataProviderImplementation<
+            IntersectionRealizationSeismicSettings,
+            IntersectionRealizationSeismicData,
+            IntersectionRealizationSeismicStoredData
+        >
+{
     settings = intersectionRealizationSeismicSettings;
 
     private _dataSource: SeismicDataSource;
@@ -163,6 +166,8 @@ export class IntersectionRealizationSeismicProvider implements CustomDataProvide
         queryClient,
         workbenchSession,
     }: SetupBindingsContext<IntersectionRealizationSeismicSettings, IntersectionRealizationSeismicStoredData>): void {
+        const dataSource = this._dataSource;
+
         setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
             read({ read }) {
                 return {
@@ -237,7 +242,7 @@ export class IntersectionRealizationSeismicProvider implements CustomDataProvide
                 }
 
                 // Get seismic attributes that are depth of correct data source
-                const doRequestObservation = this._dataSource === SeismicDataSource.OBSERVED;
+                const doRequestObservation = dataSource === SeismicDataSource.OBSERVED;
                 const availableAttributes = Array.from(
                     new Set(
                         seismicCubeMetaList
@@ -329,7 +334,9 @@ export class IntersectionRealizationSeismicProvider implements CustomDataProvide
         storedData("sourcePolylineWithSectionLengths").bindValue({
             read({ read }) {
                 return {
-                    intersectionPolylineWithSectionLengths: read.sharedResult(intersectionPolylineWithSectionLengthsDep),
+                    intersectionPolylineWithSectionLengths: read.sharedResult(
+                        intersectionPolylineWithSectionLengthsDep,
+                    ),
                 };
             },
             resolve({ intersectionPolylineWithSectionLengths }) {
@@ -348,7 +355,9 @@ export class IntersectionRealizationSeismicProvider implements CustomDataProvide
         storedData("seismicFencePolylineWithSectionLengths").bindValue({
             read({ read }) {
                 return {
-                    intersectionPolylineWithSectionLengths: read.sharedResult(intersectionPolylineWithSectionLengthsDep),
+                    intersectionPolylineWithSectionLengths: read.sharedResult(
+                        intersectionPolylineWithSectionLengthsDep,
+                    ),
                     seismicCubeMetaList: read.sharedResult(ensembleSeismicCubeMetaListDep),
                     seismicAttribute: read.localSetting(Setting.ATTRIBUTE),
                     timeOrInterval: read.localSetting(Setting.TIME_OR_INTERVAL),
@@ -372,8 +381,10 @@ export class IntersectionRealizationSeismicProvider implements CustomDataProvide
                     // Use the smallest increment in x- and y-direction from seismic cube spec, and divide by 2.0 as sample
                     // resolution for resampling the polyline.
                     sampleResolutionInMeters =
-                        Math.min(Math.abs(matchingSeismicCubeMeta.spec.xInc), Math.abs(matchingSeismicCubeMeta.spec.yInc)) /
-                        2.0;
+                        Math.min(
+                            Math.abs(matchingSeismicCubeMeta.spec.xInc),
+                            Math.abs(matchingSeismicCubeMeta.spec.yInc),
+                        ) / 2.0;
                 }
 
                 // Resample the polyline, as seismic fence is created by one trace per (x,y) point in the polyline

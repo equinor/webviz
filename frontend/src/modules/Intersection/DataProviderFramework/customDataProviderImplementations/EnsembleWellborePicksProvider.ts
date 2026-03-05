@@ -11,7 +11,7 @@ import type {
     CustomDataProviderImplementation,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
@@ -39,77 +39,103 @@ export class EnsembleWellborePicksProvider
         return !isEqual(prevSettings, newSettings);
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
+    setupBindings({
+        setting,
+        makeSharedResult,
         queryClient,
         workbenchSession,
-    }: DefineDependenciesArgs<EnsembleWellborePicksSettings>): void {
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-            return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
+    }: SetupBindingsContext<EnsembleWellborePicksSettings>) {
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read({ read }) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
+            },
         });
 
-        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+        const wellboreHeadersDep = makeSharedResult({
+            debugName: "WellboreHeaders",
+            read({ read }) {
+                return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
+            },
+            async resolve({ ensembleIdent }, abortSignal) {
+                return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+            },
         });
 
-        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
-            const intersectionPolylines = getGlobalSetting("intersectionPolylines");
-            const fieldIdentifier = getGlobalSetting("fieldId");
-
-            const fieldIntersectionPolylines = intersectionPolylines.filter(
-                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
-            );
-
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+        setting(Setting.INTERSECTION).bindValueConstraints({
+            read({ read }) {
+                return {
+                    wellboreHeaders: read.sharedResult(wellboreHeadersDep),
+                    intersectionPolylines: read.globalSetting("intersectionPolylines"),
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                };
+            },
+            resolve({ wellboreHeaders, intersectionPolylines, fieldIdentifier }) {
+                const fieldIntersectionPolylines = intersectionPolylines.filter(
+                    (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
+                );
+                return getAvailableIntersectionOptions(wellboreHeaders ?? [], fieldIntersectionPolylines);
+            },
         });
 
-        const wellborePicksDep = helperDependency(({ getGlobalSetting, getLocalSetting, abortSignal }) => {
-            const ensembles = getGlobalSetting("ensembles");
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const intersection = getLocalSetting(Setting.INTERSECTION);
+        const wellborePicksDep = makeSharedResult({
+            debugName: "WellborePicks",
+            read({ read }) {
+                return {
+                    ensembles: read.globalSetting("ensembles"),
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    intersection: read.localSetting(Setting.INTERSECTION),
+                };
+            },
+            async resolve({ ensembles, ensembleIdent, intersection }, abortSignal) {
+                const wellboreUuid = intersection?.type === IntersectionType.WELLBORE ? intersection.uuid : null;
+                const stratColumn = ensembles
+                    .find((ensemble) => ensemble.getIdent().equals(ensembleIdent))
+                    ?.getStratigraphicColumnIdentifier();
 
-            const wellboreUuid = intersection?.type === IntersectionType.WELLBORE ? intersection.uuid : null;
-            const stratColumn = ensembles
-                .find((ensemble) => ensemble.getIdent().equals(ensembleIdent))
-                ?.getStratigraphicColumnIdentifier();
+                if (!wellboreUuid || !stratColumn) {
+                    return null;
+                }
 
-            if (!wellboreUuid || !stratColumn) {
-                return null;
-            }
-
-            return queryClient.fetchQuery({
-                ...getWellborePicksInStratColumnOptions({
-                    query: { wellbore_uuid: wellboreUuid, strat_column_identifier: stratColumn },
-                    signal: abortSignal,
-                }),
-            });
+                return queryClient.fetchQuery({
+                    ...getWellborePicksInStratColumnOptions({
+                        query: { wellbore_uuid: wellboreUuid, strat_column_identifier: stratColumn },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        valueConstraintsUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
-            const wellborePicks = getHelperDependency(wellborePicksDep);
+        setting(Setting.SMDA_INTERPRETER).bindValueConstraints({
+            read({ read }) {
+                return { wellborePicks: read.sharedResult(wellborePicksDep) };
+            },
+            resolve({ wellborePicks }) {
+                if (!wellborePicks) return [];
 
-            if (!wellborePicks) return [];
-
-            const picksByInterpreter = groupBy(wellborePicks, "interpreter");
-            const interpreters = Array.from(keys(picksByInterpreter)).sort();
-
-            return interpreters;
+                const picksByInterpreter = groupBy(wellborePicks, "interpreter");
+                return Array.from(keys(picksByInterpreter)).sort();
+            },
         });
 
-        valueConstraintsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
-            const wellborePicks = getHelperDependency(wellborePicksDep);
-            const selectedInterpreter = getLocalSetting(Setting.SMDA_INTERPRETER);
-
-            if (!wellborePicks || !selectedInterpreter) {
-                return [];
-            }
-
-            return wellborePicks.filter((elm) => elm.interpreter === selectedInterpreter);
+        setting(Setting.WELLBORE_PICKS).bindValueConstraints({
+            read({ read }) {
+                return {
+                    wellborePicks: read.sharedResult(wellborePicksDep),
+                    selectedInterpreter: read.localSetting(Setting.SMDA_INTERPRETER),
+                };
+            },
+            resolve({ wellborePicks, selectedInterpreter }) {
+                if (!wellborePicks || !selectedInterpreter) {
+                    return [];
+                }
+                return wellborePicks.filter((elm) => elm.interpreter === selectedInterpreter);
+            },
         });
     }
 

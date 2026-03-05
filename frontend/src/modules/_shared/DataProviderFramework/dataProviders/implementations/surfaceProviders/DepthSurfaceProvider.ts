@@ -19,21 +19,20 @@ import type {
     DataProviderInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
-
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 
 import {
-    createEnsembleUpdater,
-    createRealizationUpdater,
-    createSensitivityUpdater,
-    createStatisticFunctionUpdater,
+    resolveEnsembleConstraints,
+    resolveRealizationConstraints,
+    resolveSensitivityConstraints,
+    resolveStatisticFunctionConstraints,
 } from "./_commonSettingsUpdaters";
 import { SurfaceDataFormat, type SurfaceData, type SurfaceStoredData } from "./types";
 
@@ -93,105 +92,169 @@ export class DepthSurfaceProvider
         return [data.value_min, data.value_max];
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
-        settingAttributesUpdater,
-        storedDataUpdater,
-        workbenchSession,
+    setupBindings({
+        setting,
+        storedData,
+        makeSharedResult,
         queryClient,
-    }: DefineDependenciesArgs<DepthSurfaceSettings, SurfaceStoredData>) {
-        settingAttributesUpdater(Setting.REALIZATION, ({ getLocalSetting }) => {
-            const realizationOrStatistics = getLocalSetting(Setting.REPRESENTATION);
-            const enabled = realizationOrStatistics === Representation.REALIZATION;
-            return { enabled, visible: enabled };
-        });
-        settingAttributesUpdater(Setting.SENSITIVITY, ({ getLocalSetting }) => {
-            const realizationOrStatistics = getLocalSetting(Setting.REPRESENTATION);
-            const enabled = realizationOrStatistics === Representation.ENSEMBLE_STATISTICS;
-            return { enabled, visible: enabled };
-        });
-        settingAttributesUpdater(Setting.STATISTIC_FUNCTION, ({ getLocalSetting }) => {
-            const realizationOrStatistics = getLocalSetting(Setting.REPRESENTATION);
-            const enabled = realizationOrStatistics === Representation.ENSEMBLE_STATISTICS;
-            return { enabled, visible: enabled };
+        workbenchSession,
+    }: SetupBindingsContext<DepthSurfaceSettings, SurfaceStoredData>) {
+        setting(Setting.REALIZATION).bindAttributes({
+            read({ read }) {
+                return { representation: read.localSetting(Setting.REPRESENTATION) };
+            },
+            resolve({ representation }) {
+                const enabled = representation === Representation.REALIZATION;
+                return { enabled, visible: enabled };
+            },
         });
 
-        valueConstraintsUpdater(Setting.REPRESENTATION, () => {
-            return [Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
+        setting(Setting.SENSITIVITY).bindAttributes({
+            read({ read }) {
+                return { representation: read.localSetting(Setting.REPRESENTATION) };
+            },
+            resolve({ representation }) {
+                const enabled = representation === Representation.ENSEMBLE_STATISTICS;
+                return { enabled, visible: enabled };
+            },
         });
-        valueConstraintsUpdater(Setting.STATISTIC_FUNCTION, createStatisticFunctionUpdater());
-        valueConstraintsUpdater(Setting.ENSEMBLE, createEnsembleUpdater());
-        valueConstraintsUpdater(Setting.SENSITIVITY, createSensitivityUpdater(workbenchSession));
 
-        const surfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            return await queryClient.fetchQuery({
-                ...getRealizationSurfacesMetadataOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                        ...makeCacheBustingQueryParam(ensembleIdent),
-                    },
-                    signal: abortSignal,
-                }),
-            });
+        setting(Setting.STATISTIC_FUNCTION).bindAttributes({
+            read({ read }) {
+                return { representation: read.localSetting(Setting.REPRESENTATION) };
+            },
+            resolve({ representation }) {
+                const enabled = representation === Representation.ENSEMBLE_STATISTICS;
+                return { enabled, visible: enabled };
+            },
         });
-        valueConstraintsUpdater(Setting.REALIZATION, createRealizationUpdater());
-        valueConstraintsUpdater(Setting.DEPTH_ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(surfaceMetadataDep);
 
-            if (!data) {
-                return [];
-            }
-
-            let filteredSurfaceMetadata = data.surfaces;
-
-            filteredSurfaceMetadata = data.surfaces.filter(
-                (surface) => surface.attribute_type === SurfaceAttributeType_api.DEPTH,
-            );
-            const availableAttributes = [
-                ...Array.from(new Set(filteredSurfaceMetadata.map((surface) => surface.attribute_name))),
-            ];
-
-            return availableAttributes;
+        setting(Setting.REPRESENTATION).bindValueConstraints({
+            resolve() {
+                return [Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
+            },
         });
-        valueConstraintsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
-            const attribute = getLocalSetting(Setting.DEPTH_ATTRIBUTE);
-            const data = getHelperDependency(surfaceMetadataDep);
 
-            if (!attribute || !data) {
-                return [];
-            }
+        setting(Setting.STATISTIC_FUNCTION).bindValueConstraints({
+            resolve() {
+                return resolveStatisticFunctionConstraints();
+            },
+        });
 
-            const availableSurfaceNames = [
-                ...Array.from(
-                    new Set(
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read({ read }) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                return resolveEnsembleConstraints(fieldIdentifier, ensembles);
+            },
+        });
+
+        setting(Setting.SENSITIVITY).bindValueConstraints({
+            read({ read }) {
+                return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
+            },
+            resolve({ ensembleIdent }) {
+                return resolveSensitivityConstraints(ensembleIdent, workbenchSession);
+            },
+        });
+
+        const surfaceMetadataDep = makeSharedResult({
+            debugName: "SurfaceMetadata",
+            read({ read }) {
+                return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
+            },
+            async resolve({ ensembleIdent }, abortSignal) {
+                if (!ensembleIdent) {
+                    return null;
+                }
+
+                return await queryClient.fetchQuery({
+                    ...getRealizationSurfacesMetadataOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
+                            ...makeCacheBustingQueryParam(ensembleIdent),
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
+        });
+
+        setting(Setting.REALIZATION).bindValueConstraints({
+            read({ read }) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunction }) {
+                return resolveRealizationConstraints(ensembleIdent, realizationFilterFunction);
+            },
+        });
+
+        setting(Setting.DEPTH_ATTRIBUTE).bindValueConstraints({
+            read({ read }) {
+                return { data: read.sharedResult(surfaceMetadataDep) };
+            },
+            resolve({ data }) {
+                if (!data) {
+                    return [];
+                }
+
+                const filteredSurfaceMetadata = data.surfaces.filter(
+                    (surface) => surface.attribute_type === SurfaceAttributeType_api.DEPTH,
+                );
+
+                return [...new Set(filteredSurfaceMetadata.map((surface) => surface.attribute_name))];
+            },
+        });
+
+        setting(Setting.SURFACE_NAME).bindValueConstraints({
+            read({ read }) {
+                return {
+                    attribute: read.localSetting(Setting.DEPTH_ATTRIBUTE),
+                    data: read.sharedResult(surfaceMetadataDep),
+                };
+            },
+            resolve({ attribute, data }) {
+                if (!attribute || !data) {
+                    return [];
+                }
+
+                const availableSurfaceNames = [
+                    ...new Set(
                         data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
                     ),
-                ),
-            ];
-            return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
+                ];
+                return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
+            },
         });
 
-        storedDataUpdater("realizations", ({ getGlobalSetting, getLocalSetting }) => {
-            const filterFunction = getGlobalSetting("realizationFilterFunction");
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
-                return [];
-            }
-
-            return filterFunction(ensembleIdent);
+        storedData("realizations").bindValue({
+            read({ read }) {
+                return {
+                    filterFunction: read.globalSetting("realizationFilterFunction"),
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            resolve({ filterFunction, ensembleIdent }) {
+                return resolveRealizationConstraints(ensembleIdent, filterFunction);
+            },
         });
+
         //Needed to trigger updates when switching between realization and ensemble statistics
-        storedDataUpdater("realizationMode", ({ getLocalSetting }) => {
-            return getLocalSetting(Setting.REPRESENTATION) ?? Representation.REALIZATION;
+        storedData("realizationMode").bindValue({
+            read({ read }) {
+                return { representation: read.localSetting(Setting.REPRESENTATION) };
+            },
+            resolve({ representation }) {
+                return representation ?? Representation.REALIZATION;
+            },
         });
     }
 
