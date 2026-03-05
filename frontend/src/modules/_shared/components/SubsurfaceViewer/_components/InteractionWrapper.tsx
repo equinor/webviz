@@ -200,6 +200,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             deckGlManager={deckGlManagerRef.current}
             verticalScale={verticalScale}
             triggerHome={triggerHomeCounter}
+            polylinesPlugin={polylinesPluginRef.current}
         >
             <Toolbar
                 hideVerticalScaleControls={context.visualizationMode === "2D"}

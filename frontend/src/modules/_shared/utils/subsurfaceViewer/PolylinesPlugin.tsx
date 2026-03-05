@@ -15,6 +15,7 @@ import {
     isEditablePolylineLayerPickingInfo,
 } from "../../customDeckGlLayers/EditablePolylineLayer";
 import { PolylinesLayer, isPolylinesLayerPickingInfo } from "../../customDeckGlLayers/PolylinesLayer";
+import { lengthAlongAtPosition } from "../polylineHoverUtils";
 
 import { type ContextMenuItem, type DeckGlInstanceManager, DeckGlPlugin } from "./DeckGlInstanceManager";
 
@@ -38,12 +39,14 @@ export enum PolylinesPluginTopic {
     EDITING_POLYLINE_ID = "editing_polyline_id",
     EDITING_MODE = "editing_mode",
     POLYLINES = "polylines",
+    POLYLINE_HOVER = "polyline_hover",
 }
 
 export type PolylinesPluginTopicPayloads = {
     [PolylinesPluginTopic.EDITING_MODE]: PolylineEditingMode;
     [PolylinesPluginTopic.EDITING_POLYLINE_ID]: string | null;
     [PolylinesPluginTopic.POLYLINES]: Polyline[];
+    [PolylinesPluginTopic.POLYLINE_HOVER]: { polylineId: string; lengthAlong: number } | null;
 };
 
 enum AppendToPathLocation {
@@ -77,6 +80,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     private _appendToPathLocation: AppendToPathLocation = AppendToPathLocation.END;
     private _selectedPolylineId: string | null = null;
     private _hoverPoint: number[] | null = null;
+    private _polylineHoverData: { polylineId: string; lengthAlong: number } | null = null;
     private _visiblePolylineIds: string[] = [];
     private _colorGenerator: Generator<[number, number, number]>;
 
@@ -142,6 +146,10 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     setEditingMode(mode: PolylineEditingMode): void {
         this._editingMode = mode;
         this._hoverPoint = null;
+        if (this._polylineHoverData !== null) {
+            this._polylineHoverData = null;
+            this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINE_HOVER);
+        }
         if (mode === PolylineEditingMode.NONE) {
             this._currentEditingPolylinePathReferencePointIndex = null;
             this.setCurrentEditingPolylineId(null);
@@ -155,6 +163,10 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
     getEditingMode(): PolylineEditingMode {
         return this._editingMode;
+    }
+
+    getPolylineHoverData(): { polylineId: string; lengthAlong: number } | null {
+        return this._polylineHoverData;
     }
 
     getCurrentEditingPolylineId(): string | null {
@@ -321,16 +333,34 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     }
 
     handleGlobalMouseHover(pickingInfo: PickingInfo): void {
-        if (this._editingMode !== PolylineEditingMode.DRAW) {
+        if (this._editingMode === PolylineEditingMode.DRAW) {
+            if (!pickingInfo.coordinate) {
+                return;
+            }
+            this._hoverPoint = pickingInfo.coordinate;
+            this.requireRedraw();
             return;
         }
 
-        if (!pickingInfo.coordinate) {
-            return;
+        if (this._editingMode === PolylineEditingMode.IDLE) {
+            if (isPolylinesLayerPickingInfo(pickingInfo) && pickingInfo.polylineId && pickingInfo.coordinate) {
+                const polyline = this._polylines.find((p) => p.id === pickingInfo.polylineId);
+                if (polyline && polyline.path.length >= 2) {
+                    const [x, y] = pickingInfo.coordinate;
+                    const lengthAlong = lengthAlongAtPosition(polyline.path, x, y);
+                    const newHoverData = { polylineId: polyline.id, lengthAlong };
+                    if (!isEqual(this._polylineHoverData, newHoverData)) {
+                        this._polylineHoverData = newHoverData;
+                        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINE_HOVER);
+                    }
+                    return;
+                }
+            }
+            if (this._polylineHoverData !== null) {
+                this._polylineHoverData = null;
+                this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINE_HOVER);
+            }
         }
-
-        this._hoverPoint = pickingInfo.coordinate;
-        this.requireRedraw();
     }
 
     private makeNewPolylineName(): string {
@@ -581,6 +611,9 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             }
             if (topic === PolylinesPluginTopic.POLYLINES) {
                 return this._polylines;
+            }
+            if (topic === PolylinesPluginTopic.POLYLINE_HOVER) {
+                return this._polylineHoverData;
             }
 
             throw new Error(`Unknown topic ${topic}`);
