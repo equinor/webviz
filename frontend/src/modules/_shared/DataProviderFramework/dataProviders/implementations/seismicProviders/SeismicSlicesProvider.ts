@@ -6,9 +6,8 @@ import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
-    AreSettingsValidArgs,
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -93,7 +92,7 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
     areCurrentSettingsValid({
         getStoredData,
         getSetting,
-    }: AreSettingsValidArgs<SeismicSlicesSettings, SeismicSlicesData, SeismicSlicesStoredData>): boolean {
+    }: DataProviderAccessors<SeismicSlicesSettings, SeismicSlicesData, SeismicSlicesStoredData>): boolean {
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
@@ -113,7 +112,7 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
     }
 
     makeValueRange(
-        accessors: DataProviderInformationAccessors<SeismicSlicesSettings, SeismicSlicesData, SeismicSlicesStoredData>,
+        accessors: DataProviderAccessors<SeismicSlicesSettings, SeismicSlicesData, SeismicSlicesStoredData>,
     ): [number, number] | null {
         const data = accessors.getData();
         if (!data) {

@@ -18,7 +18,7 @@ import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -95,9 +95,7 @@ export class SeismicSurfaceProvider
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<SeismicSurfaceSettings, SurfaceData, SurfaceStoredData>):
-        | [number, number]
-        | null {
+    }: DataProviderAccessors<SeismicSurfaceSettings, SurfaceData, SurfaceStoredData>): [number, number] | null {
         const data = getData()?.surfaceData;
         if (!data) {
             return null;
