@@ -81,8 +81,8 @@ export function computeStatistics(valuesPerRealization: number[][]): TimeseriesS
 export function computeRecoveryFactor(valuesPerRealization: number[][]): number[][] {
     return valuesPerRealization.map((realValues) => {
         const initial = realValues[0];
-        if (initial === 0 || initial == null) {
-            // Avoid division by zero
+        if (initial == null || Math.abs(initial) < 1e-6) {
+            // Avoid division by zero or near-zero initial values
             return realValues.map(() => 0);
         }
         return realValues.map((v) => (initial - v) / initial);

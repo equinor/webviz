@@ -7,6 +7,7 @@ import type { SerializedSettings as M_3DViewerSettings } from "@modules/3DViewer
 import type { SerializedView as M_3DViewerView } from "@modules/3DViewer/view/persistence";
 import type { SerializedSettings as DistributionPlotSettings } from "@modules/DistributionPlot/settings/persistence";
 import type { SerializedSettings as DynamicVolumesSettings } from "@modules/DynamicVolumes/settings/persistence";
+import type { SerializedView as DynamicVolumesView } from "@modules/DynamicVolumes/view/persistence";
 import type { SerializedSettings as FlowNetworkSettings } from "@modules/FlowNetwork/settings/persistence";
 import type { SerializedSettings as InplaceVolumesNewSettings } from "@modules/InplaceVolumesNew/settings/persistence";
 import type { SerializedSettings as InplaceVolumesPlotSettings } from "@modules/InplaceVolumesPlot/settings/persistence";
@@ -44,7 +45,7 @@ export type ModuleSerializedStateMap = {
   },
   "DynamicVolumes": {
     settings?: Partial<DynamicVolumesSettings>,
-    view?: never,
+    view?: Partial<DynamicVolumesView>,
   },
   "FlowNetwork": {
     settings?: Partial<FlowNetworkSettings>,

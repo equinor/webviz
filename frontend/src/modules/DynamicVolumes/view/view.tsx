@@ -7,9 +7,11 @@ import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 
 import type { Interfaces } from "../interfaces";
+import { VisualizationMode } from "../typesAndEnums";
 
 import { allQueriesFailedAtom, isDataFetchingAtom } from "./atoms/derivedAtoms";
 import { useEchartsOptions } from "./hooks/useEchartsOptions";
+import { useHeatmapDatasets } from "./hooks/useHeatmapDatasets";
 import { useInstanceTitle } from "./hooks/useInstanceTitle";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useSubplotGroups } from "./hooks/useSubplotGroups";
@@ -32,7 +34,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const vectorNamesToFetch = viewContext.useSettingsToViewInterfaceValue("vectorNamesToFetch");
     const showRecoveryFactor = viewContext.useSettingsToViewInterfaceValue("showRecoveryFactor");
 
+    const isHeatmap = visualizationMode === VisualizationMode.DrainageHeatmap;
+
     const subplotGroups = useSubplotGroups(selectedVectorBaseName, showRecoveryFactor);
+    const heatmapDatasets = useHeatmapDatasets(selectedVectorBaseName, showRecoveryFactor);
 
     // Flatten traces across all subplot groups for empty-state checks
     const allTraces = React.useMemo(() => subplotGroups.flatMap((g) => g.traces), [subplotGroups]);
@@ -48,6 +53,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const { chartRef, echartsOptions, timeseriesChartData, onChartEvents } = useEchartsOptions(
         subplotGroups,
+        heatmapDatasets,
         visualizationMode,
         selectedStatistics,
         yAxisLabel,
@@ -63,7 +69,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         );
     }
 
-    if (isFetching && allTraces.length === 0) {
+    if (isFetching && allTraces.length === 0 && heatmapDatasets.length === 0) {
         return <div className="flex items-center justify-center w-full h-full text-gray-400">Loading data...</div>;
     }
 
@@ -75,7 +81,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         );
     }
 
-    if (!timeseriesChartData.length) {
+    const hasData = isHeatmap ? heatmapDatasets.length > 0 : timeseriesChartData.length > 0;
+    if (!hasData) {
         return <div className="flex items-center justify-center w-full h-full text-gray-400">No data available</div>;
     }
 

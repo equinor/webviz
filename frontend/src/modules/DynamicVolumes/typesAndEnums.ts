@@ -2,6 +2,7 @@ export enum VisualizationMode {
     IndividualRealizations = "individual_realizations",
     StatisticalLines = "statistical_lines",
     StatisticalFanchart = "statistical_fanchart",
+    DrainageHeatmap = "drainage_heatmap",
 }
 
 export enum StatisticsType {
@@ -76,4 +77,26 @@ export type ChartTrace = {
 export type SubplotGroup = {
     title: string;
     traces: ChartTrace[];
+};
+
+// ────────── Heatmap data types ──────────
+
+/**
+ * Data for the drainage heatmap visualization.
+ * One HeatmapDataset per ensemble (one heatmap subplot per ensemble).
+ */
+export type HeatmapDataset = {
+    ensembleTitle: string;
+    /** Y-axis labels (region/zone/geo-region names). */
+    yLabels: string[];
+    /** X-axis labels (formatted dates). */
+    xLabels: string[];
+    /** Raw UTC-ms timestamps matching xLabels 1-to-1. */
+    timestampsUtcMs: number[];
+    /** Flat array of [xIndex, yIndex, value] triples for ECharts heatmap. */
+    data: [number, number, number][];
+    /** Min value across all cells (for visualMap range). */
+    minValue: number;
+    /** Max value across all cells (for visualMap range). */
+    maxValue: number;
 };

@@ -51,6 +51,7 @@ const visualizationModes = [
     { value: VisualizationMode.IndividualRealizations, label: "Individual realizations" },
     { value: VisualizationMode.StatisticalLines, label: "Statistical lines" },
     { value: VisualizationMode.StatisticalFanchart, label: "Statistical lines with fill" },
+    { value: VisualizationMode.DrainageHeatmap, label: "Drainage heatmap" },
 ];
 
 const PLOT_DIMENSION_LABELS: Record<PlotDimension, string> = {
@@ -414,7 +415,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         }
                     />
                 </div>
-                <Label text="Color by">
+                <Label
+                    text={visualizationMode === VisualizationMode.DrainageHeatmap ? "Y-axis (group by)" : "Color by"}
+                >
                     <Dropdown
                         options={colorByDropdownOptions}
                         value={effectiveColorBy}
@@ -430,18 +433,19 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 </Label>
             </CollapsibleGroup>
 
-            {visualizationMode !== VisualizationMode.IndividualRealizations && (
-                <CollapsibleGroup title="Statistics" expanded>
-                    {statisticsOptions.map((opt) => (
-                        <Checkbox
-                            key={opt.value}
-                            label={opt.label}
-                            checked={selectedStatistics.includes(opt.value)}
-                            onChange={() => handleStatisticToggle(opt.value)}
-                        />
-                    ))}
-                </CollapsibleGroup>
-            )}
+            {visualizationMode !== VisualizationMode.IndividualRealizations &&
+                visualizationMode !== VisualizationMode.DrainageHeatmap && (
+                    <CollapsibleGroup title="Statistics" expanded>
+                        {statisticsOptions.map((opt) => (
+                            <Checkbox
+                                key={opt.value}
+                                label={opt.label}
+                                checked={selectedStatistics.includes(opt.value)}
+                                onChange={() => handleStatisticToggle(opt.value)}
+                            />
+                        ))}
+                    </CollapsibleGroup>
+                )}
         </div>
     );
 }
