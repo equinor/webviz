@@ -1,7 +1,7 @@
 import React from "react";
 
 import ReactECharts from "echarts-for-react";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -9,12 +9,14 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { Interfaces } from "../interfaces";
 import { VisualizationMode } from "../typesAndEnums";
 
+import { activeTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { allQueriesFailedAtom, isDataFetchingAtom } from "./atoms/derivedAtoms";
 import { useEchartsOptions } from "./hooks/useEchartsOptions";
 import { useHeatmapDatasets } from "./hooks/useHeatmapDatasets";
 import { useInstanceTitle } from "./hooks/useInstanceTitle";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useSubplotGroups } from "./hooks/useSubplotGroups";
+import { useSyncDateTimestamp } from "./hooks/useSyncDateTimestamp";
 
 // ────────── View ──────────
 
@@ -51,13 +53,18 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     useInstanceTitle(viewContext);
 
-    const { chartRef, echartsOptions, timeseriesChartData, onChartEvents } = useEchartsOptions(
+    const { chartRef, echartsOptions, timeseriesChartData, availableTimestamps, onChartEvents } = useEchartsOptions(
         subplotGroups,
         heatmapDatasets,
         visualizationMode,
         selectedStatistics,
         yAxisLabel,
     );
+
+    // ── Sync active timestamp with other modules via SyncSettingKey.DATE ──
+    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
+    const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
+    useSyncDateTimestamp(viewContext, props.workbenchServices, activeTimestampUtcMs, setActiveTimestampUtcMs, availableTimestamps);
 
     usePublishToDataChannels(viewContext, subplotGroups, yAxisLabel);
 

@@ -85,6 +85,7 @@ export function useEchartsOptions(
         chartRef,
         echartsOptions,
         timeseriesChartData,
+        availableTimestamps: timestamps,
         onChartEvents,
     };
 }

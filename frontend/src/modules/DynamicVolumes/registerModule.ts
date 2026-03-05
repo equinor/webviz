@@ -21,7 +21,7 @@ ModuleRegistry.registerModule<Interfaces, SerializedState>({
     devState: ModuleDevState.DEV,
     dataTagIds: [ModuleDataTagId.INPLACE_VOLUMES, ModuleDataTagId.SUMMARY],
     channelDefinitions: channelDefs,
-    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.DATE],
+    syncableSettingKeys: [SyncSettingKey.DATE],
     preview,
     description,
     serializedStateSchema: SERIALIZED_STATE_SCHEMA,
