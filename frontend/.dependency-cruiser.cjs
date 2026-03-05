@@ -2,18 +2,6 @@
 module.exports = {
     forbidden: [
         {
-            name: "dev-sandbox-imported-to-project",
-            comment:
-                "Anything in the sand-box folder is intended for dev-only examples, and should never be imported to other parts of the code",
-            severity: "error",
-            from: {
-                pathNot: "^src/__devSandbox",
-            },
-            to: {
-                path: "^src/__devSandbox",
-            },
-        },
-        {
             name: "framework-internals-used",
             comment:
                 "You are trying to import from a file that is supposed to be an internal implementation detail of the framework from outside the framework folder. This is not allowed.",
