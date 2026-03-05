@@ -1,8 +1,7 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { setIfDefined } from "@framework/utils/atomUtils";
+import { ViewLayout } from "@modules/_shared/enums/viewLayout";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
-
-import { PreferredViewLayout } from "../typesAndEnums";
 
 import { dataProviderSerializedStateAtom, preferredViewLayoutAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/persistableFixableAtoms";
@@ -10,7 +9,7 @@ import { selectedFieldIdentifierAtom } from "./atoms/persistableFixableAtoms";
 export type SerializedSettings = {
     dataProviderSerializedState: string;
     fieldIdentifier: string | null;
-    preferredViewLayout: PreferredViewLayout;
+    preferredViewLayout: ViewLayout;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
@@ -23,7 +22,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
             nullable: true,
         },
         preferredViewLayout: {
-            enum: [PreferredViewLayout.VERTICAL, PreferredViewLayout.HORIZONTAL],
+            enum: [ViewLayout.VERTICAL, ViewLayout.HORIZONTAL],
         },
     },
 }));

@@ -1,4 +1,4 @@
-export enum PreferredViewLayout {
+export enum ViewLayout {
     HORIZONTAL = "horizontal",
     VERTICAL = "vertical",
 }
