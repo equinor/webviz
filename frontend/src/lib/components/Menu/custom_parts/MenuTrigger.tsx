@@ -11,7 +11,7 @@ function MenuTriggerComponent(
 ): React.ReactNode {
     const baseClassName = resolveClassNames(
         "flex gap-1 items-center",
-        "p-1 text-sm rounded",
+        "p-1 rounded",
         "disabled:pointer-events-none",
         "text-gray-600 disabled:text-gray-400 hover:text-gray-900 ",
         "hover:bg-blue-200 data-popup-open:bg-blue-100",
