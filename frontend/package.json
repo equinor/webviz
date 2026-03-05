@@ -63,7 +63,6 @@
         "react-dom": "^18.3.0",
         "react-plotly.js": "^2.6.0",
         "react-toastify": "^11.0.5",
-        "recharts": "^3.7.0",
         "simplify-js": "^1.2.4",
         "source-map-js": "^1.2.1",
         "ts-key-enum": "^2.0.13",
