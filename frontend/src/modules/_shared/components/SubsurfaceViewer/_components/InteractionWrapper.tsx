@@ -5,6 +5,7 @@ import type { DeckGLRef } from "@deck.gl/react";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { converter, formatHex } from "culori";
 
+import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
@@ -71,6 +72,21 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
 
     const colorSet = useColorSet(context.workbenchSettings);
 
+    const publishHoveredPolylineLengthAlong = usePublishHoverValue(
+        HoverTopic.POLYLINE_LENGTH_ALONG,
+        context.hoverService,
+        context.moduleInstanceId,
+    );
+    const externalPolylineHoverData = useHoverValue(
+        HoverTopic.POLYLINE_LENGTH_ALONG,
+        context.hoverService,
+        context.moduleInstanceId,
+    );
+
+    // Use a ref so the subscription closure in useLayoutEffect always calls the latest publish fn
+    const publishHoveredPolylineLengthAlongRef = React.useRef(publishHoveredPolylineLengthAlong);
+    publishHoveredPolylineLengthAlongRef.current = publishHoveredPolylineLengthAlong;
+
     const colorArray = React.useMemo((): [number, number, number][] => {
         return colorSet.getColorArray().map((c) => {
             const rgb = converter("rgb")(c);
@@ -122,6 +138,12 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             manager.addPlugin(polylinesPlugin);
             polylinesPluginRef.current = polylinesPlugin;
 
+            const unsubscribePolylineHover = polylinesPlugin
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PolylinesPluginTopic.POLYLINE_HOVER)(() => {
+                publishHoveredPolylineLengthAlongRef.current(polylinesPlugin.getPolylineHoverData());
+            });
+
             const unsubscribeFromPolylinesPlugin = polylinesPlugin
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PolylinesPluginTopic.EDITING_POLYLINE_ID)(() => {
@@ -151,11 +173,19 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
 
             return function cleanupDeckGlManager() {
                 manager.beforeDestroy();
+                unsubscribePolylineHover();
                 unsubscribeFromPolylinesPlugin();
                 unsubscribeFromIntersectionPolylines();
             };
         },
         [intersectionPolylines, colorGenerator, props.fieldId],
+    );
+
+    React.useEffect(
+        function setExternalPolylineHoverEffect() {
+            polylinesPluginRef.current?.setExternalHoverData(externalPolylineHoverData ?? null);
+        },
+        [externalPolylineHoverData],
     );
 
     function handleFitInViewClick() {
@@ -200,7 +230,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             deckGlManager={deckGlManagerRef.current}
             verticalScale={verticalScale}
             triggerHome={triggerHomeCounter}
-            polylinesPlugin={polylinesPluginRef.current}
         >
             <Toolbar
                 hideVerticalScaleControls={context.visualizationMode === "2D"}

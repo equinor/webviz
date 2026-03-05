@@ -1,4 +1,5 @@
 import type { Layer, PickingInfo } from "@deck.gl/core";
+import { ScatterplotLayer } from "@deck.gl/layers";
 import { Edit, Remove } from "@mui/icons-material";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
@@ -15,7 +16,7 @@ import {
     isEditablePolylineLayerPickingInfo,
 } from "../../customDeckGlLayers/EditablePolylineLayer";
 import { PolylinesLayer, isPolylinesLayerPickingInfo } from "../../customDeckGlLayers/PolylinesLayer";
-import { lengthAlongAtPosition } from "../polylineHoverUtils";
+import { lengthAlongAtPosition, positionAtLengthAlong } from "../polylineHoverUtils";
 
 import { type ContextMenuItem, type DeckGlInstanceManager, DeckGlPlugin } from "./DeckGlInstanceManager";
 
@@ -81,6 +82,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     private _selectedPolylineId: string | null = null;
     private _hoverPoint: number[] | null = null;
     private _polylineHoverData: { polylineId: string; lengthAlong: number } | null = null;
+    private _externalHoverData: { polylineId: string; lengthAlong: number } | null = null;
     private _visiblePolylineIds: string[] = [];
     private _colorGenerator: Generator<[number, number, number]>;
 
@@ -167,6 +169,14 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
     getPolylineHoverData(): { polylineId: string; lengthAlong: number } | null {
         return this._polylineHoverData;
+    }
+
+    setExternalHoverData(data: { polylineId: string; lengthAlong: number } | null): void {
+        if (isEqual(this._externalHoverData, data)) {
+            return;
+        }
+        this._externalHoverData = data;
+        this.requireRedraw();
     }
 
     getCurrentEditingPolylineId(): string | null {
@@ -597,6 +607,32 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 },
             }),
         );
+
+        if (this._externalHoverData !== null && this._editingMode !== PolylineEditingMode.NONE) {
+            const polyline = this._polylines.find((p) => p.id === this._externalHoverData!.polylineId);
+            if (polyline) {
+                const pos = positionAtLengthAlong(polyline.path, this._externalHoverData.lengthAlong);
+                if (pos) {
+                    layers.push(
+                        new ScatterplotLayer({
+                            id: super.makeLayerId("polyline-hover-marker"),
+                            data: [{ position: [pos[0], pos[1], 0] as [number, number, number] }],
+                            getPosition: (d: { position: [number, number, number] }) => d.position,
+                            getRadius: 8,
+                            radiusUnits: "pixels",
+                            getFillColor: [255, 0, 0, 180],
+                            stroked: true,
+                            getLineWidth: 1,
+                            lineWidthMinPixels: 1,
+                            getLineColor: [255, 255, 255, 255],
+                            pickable: false,
+                            billboard: true,
+                            parameters: { depthTest: false },
+                        }),
+                    );
+                }
+            }
+        }
 
         return layers;
     }
