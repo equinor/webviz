@@ -10,9 +10,7 @@ import { preview } from "./preview";
 
 export const MODULE_NAME = "DynamicVolumes";
 
-const description =
-    "Timeseries and linked distribution plots for dynamic volumetric data, using recharts for improved " +
-    "interactivity and cross-chart linking without WebGL context limitations.";
+const description = "Analysis of dynamic volumes and recovery factors.";
 
 ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,

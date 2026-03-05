@@ -64,7 +64,13 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     // ── Sync active timestamp with other modules via SyncSettingKey.DATE ──
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
     const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
-    useSyncDateTimestamp(viewContext, props.workbenchServices, activeTimestampUtcMs, setActiveTimestampUtcMs, availableTimestamps);
+    useSyncDateTimestamp(
+        viewContext,
+        props.workbenchServices,
+        activeTimestampUtcMs,
+        setActiveTimestampUtcMs,
+        availableTimestamps,
+    );
 
     usePublishToDataChannels(viewContext, subplotGroups, yAxisLabel);
 
