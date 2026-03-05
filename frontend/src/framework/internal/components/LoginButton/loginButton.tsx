@@ -1,18 +1,14 @@
 import React from "react";
 
-import { Dropdown, MenuButton } from "@mui/base";
 import { AccountCircle, Login, Logout } from "@mui/icons-material";
 
 import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
-import { MenuDivider } from "@lib/components/MenuDivider";
-import { MenuItem } from "@lib/components/MenuItem";
-import { MenuText } from "@lib/components/MenuText/menuText";
-import { Tooltip } from "@lib/components/Tooltip";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
+
+import { TopBarButton } from "../TopBar/topBar";
 
 function makeInitials(name: string): string | null {
     const regExp = new RegExp(/([^()]+)(\([\w ]+\))/);
@@ -52,7 +48,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
                     <img
                         src={`data:image/png;base64,${userInfo.avatar_b64str}`}
                         alt="Avatar"
-                        className="w-5 h-5 rounded-full mr-1"
+                        className="w-5 h-5 rounded-full"
                     />
                 );
             }
@@ -60,17 +56,17 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
                 const initials = makeInitials(userInfo.display_name);
                 if (initials) {
                     return (
-                        <div className="w-5 h-5 rounded-full bg-slate-300 text-[0.5em] flex items-center justify-center mr-1">
+                        <div className="w-5 h-5 rounded-full bg-slate-300 text-[0.5em] flex items-center justify-center">
                             {initials}
                         </div>
                     );
                 }
             }
-            return <AccountCircle className="w-5 h-5 mr-1" />;
+            return <AccountCircle className="w-5 h-5" />;
         } else if (authState === AuthState.NotLoggedIn) {
-            return <Login fontSize="small" className=" mr-1" />;
+            return <Login fontSize="small" />;
         } else {
-            return <CircularProgress size="medium-small" className="mr-1" />;
+            return <CircularProgress size="medium-small" />;
         }
     }
 
@@ -99,25 +95,16 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
     }
 
     return (
-        <Dropdown>
-            <Tooltip title={makeText()} placement="bottom">
-                <MenuButton
-                    className={resolveClassNames(
-                        props.className ?? "",
-                        "items-center p-2 font-medium rounded-md hover:bg-indigo-100",
-                    )}
-                >
-                    {makeIcon()}
-                </MenuButton>
-            </Tooltip>
-            <Menu anchorOrigin="bottom-start">
-                <MenuText>{text}</MenuText>
-                <MenuDivider />
-                <MenuItem onClick={handleLogout}>
-                    <Logout fontSize="small" className="mr-2" />
-                    Sign out
-                </MenuItem>
-            </Menu>
-        </Dropdown>
+        <Menu
+            onActionClicked={(id) => id === "logout" && handleLogout()}
+            renderTrigger={<TopBarButton title={text} />}
+            items={[
+                { type: "text", text: text, size: "extra-small" },
+                { type: "divider" },
+                { id: "logout", label: "Sign out", icon: <Logout fontSize="small" /> },
+            ]}
+        >
+            {makeIcon()}
+        </Menu>
     );
 };

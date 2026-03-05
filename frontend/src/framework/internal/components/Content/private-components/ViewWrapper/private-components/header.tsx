@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Dropdown, MenuButton } from "@mui/base";
+import type { PopoverRootActions } from "@base-ui/react";
 import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warning } from "@mui/icons-material";
 
 import {
@@ -23,9 +23,7 @@ import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
-import { Menu } from "@lib/components/Menu";
-import { MenuItem } from "@lib/components/MenuItem";
-import { MenuText } from "@lib/components/MenuText/menuText";
+import { Popover } from "@lib/components/Popover";
 import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -269,6 +267,8 @@ type StatusIndicatorProps = {
 };
 
 function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
+    const popoverActionRef = React.useRef<PopoverRootActions | null>(null);
+
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const dashboard = useActiveDashboard();
 
@@ -284,9 +284,11 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         GuiState.RightSettingsPanelWidthInPercent,
     );
 
-    function handleShowLogClick(e: React.PointerEvent<HTMLDivElement> | React.PointerEvent<HTMLButtonElement>) {
+    function handleShowLogClick(e: React.PointerEvent<HTMLButtonElement>) {
         e.preventDefault();
         e.stopPropagation();
+
+        popoverActionRef.current?.close();
 
         if (rightSettingsPanelWidth <= 5) {
             setRightSettingsPanelWidth(15);
@@ -300,7 +302,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         return (
             <div className="flex flex-col p-2 gap-2">
                 {hotStatusMessages.map((entry, i) => (
-                    <MenuText key={`${entry.message}-${i}`}>
+                    <li key={`${entry.message}-${i}`} className="text-xs text-gray-500 tracking-wider px-3 py-1">
                         {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
                         {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}
                         <span
@@ -309,7 +311,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
                         >
                             {entry.message}
                         </span>
-                    </MenuText>
+                    </li>
                 ))}
             </div>
         );
@@ -340,45 +342,46 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (numErrors > 0 || numWarnings > 0) {
         stateIndicators.push(
-            <Dropdown key="header-status-messages">
-                <Tooltip title="Show status messages" placement="bottom">
-                    <MenuButton className="flex items-center rounded-sm justify-center p-1 hover:bg-blue-200 text-sm">
-                        <Badge
-                            badgeContent={numErrors + numWarnings}
-                            className="flex p-0.5"
-                            invisible={props.isMinimized}
-                            title={badgeTitle}
-                        >
-                            <Error
-                                fontSize="inherit"
-                                color="error"
-                                style={{ display: numErrors === 0 ? "none" : "block" }}
-                            />
-                            <div className="overflow-hidden">
-                                <Warning
-                                    fontSize="inherit"
-                                    color="warning"
-                                    style={{ display: numWarnings === 0 ? "none" : "block" }}
-                                    className={resolveClassNames({
-                                        "-ml-3": numErrors > 0,
-                                    })}
-                                />
-                            </div>
-                        </Badge>
-                    </MenuButton>
-                </Tooltip>
-                <Menu anchorOrigin="bottom-end">
-                    {makeHotStatusMessages()}
-                    {log.length > 0 && (
-                        <>
-                            <div className="bg-gray-300 h-0.5 w-full my-1" />
-                            <MenuItem onClick={handleShowLogClick} className="text-sm">
-                                <History fontSize="inherit" /> Show complete log
-                            </MenuItem>
-                        </>
-                    )}
-                </Menu>
-            </Dropdown>,
+            <Popover
+                actionsRef={popoverActionRef}
+                content={
+                    <>
+                        {makeHotStatusMessages()}
+                        {log.length > 0 && (
+                            <>
+                                <div className="bg-gray-300 h-0.5 w-full my-1" />
+                                <li>
+                                    <button
+                                        className="text-sm w-full text-left hover:bg-blue-100 cursor-pointer flex items-center gap-2 py-2 px-4"
+                                        onClick={handleShowLogClick}
+                                    >
+                                        <History fontSize="inherit" /> Show complete log
+                                    </button>
+                                </li>
+                            </>
+                        )}
+                    </>
+                }
+            >
+                <Badge
+                    badgeContent={numErrors + numWarnings}
+                    className="flex p-0.5"
+                    invisible={props.isMinimized}
+                    title={badgeTitle}
+                >
+                    <Error fontSize="inherit" color="error" style={{ display: numErrors === 0 ? "none" : "block" }} />
+                    <div className="overflow-hidden">
+                        <Warning
+                            fontSize="inherit"
+                            color="warning"
+                            style={{ display: numWarnings === 0 ? "none" : "block" }}
+                            className={resolveClassNames({
+                                "-ml-3": numErrors > 0,
+                            })}
+                        />
+                    </div>
+                </Badge>
+            </Popover>,
         );
     }
 
