@@ -13,6 +13,9 @@ import type { SubplotCell, SubplotLayoutResult } from "./subplotGridLayout";
 import { DEFAULT_LAYOUT_CONFIG, computeSubplotGridLayout } from "./subplotGridLayout";
 import { formatRealizationItemTooltip, formatStatisticsTooltip } from "./tooltipFormatters";
 
+import type { ContainerSize } from ".";
+import { MIN_HEIGHT_FOR_LEGEND, MIN_HEIGHT_FOR_SLIDERS, MIN_HEIGHT_FOR_TOOLBOX, MIN_WIDTH_FOR_SLIDERS } from ".";
+
 export type TimeseriesEchartsResult = {
     echartsOptions: EChartsOption;
     timeseriesChartData: string[];
@@ -95,7 +98,7 @@ function buildAxesAndTitles(
             gridIndex: i,
             boundaryGap: false,
             data: xAxisData,
-            axisLabel: { show: true, fontSize: 11 },
+            axisLabel: { show: true, fontSize: 11, hideOverlap: true },
             axisTick: { show: true },
             ...realtimePointer,
         });
@@ -108,7 +111,7 @@ function buildAxesAndTitles(
             nameLocation: "middle" as const,
             nameGap: 40,
             splitLine: { show: false },
-            axisLabel: { show: true, fontSize: 11, formatter: (v: number) => formatNumber(v) },
+            axisLabel: { show: true, fontSize: 11, hideOverlap: true, formatter: (v: number) => formatNumber(v) },
             ...realtimePointer,
         });
 
@@ -137,10 +140,17 @@ function composeEchartsOption(
     layout: SubplotLayoutResult,
     numSubplots: number,
     showStatLines: boolean,
+    containerSize?: ContainerSize,
 ): EChartsOption {
     const isMultiGrid = numSubplots > 1;
     const allXAxisIndices = Array.from({ length: numSubplots }, (_, i) => i);
     const allYAxisIndices = Array.from({ length: numSubplots }, (_, i) => i);
+
+    const showSliders =
+        !containerSize ||
+        (containerSize.height >= MIN_HEIGHT_FOR_SLIDERS && containerSize.width >= MIN_WIDTH_FOR_SLIDERS);
+    const showToolbox = !containerSize || containerSize.height >= MIN_HEIGHT_FOR_TOOLBOX;
+    const showLegend = !containerSize || containerSize.height >= MIN_HEIGHT_FOR_LEGEND;
 
     return {
         animation: false,
@@ -169,7 +179,7 @@ function composeEchartsOption(
                       link: [{ xAxisIndex: "all" as any }],
                   },
               }),
-        legend: { show: true, data: legendData },
+        legend: { show: showLegend, data: legendData },
         grid: isMultiGrid
             ? layout.grids
             : {
@@ -183,7 +193,7 @@ function composeEchartsOption(
         yAxis: isMultiGrid ? yAxes : yAxes[0],
         series: allSeries,
         dataZoom: [
-            ...(isMultiGrid
+            ...(isMultiGrid || !showSliders
                 ? []
                 : [
                       {
@@ -210,14 +220,21 @@ function composeEchartsOption(
             { type: "inside", xAxisIndex: allXAxisIndices, filterMode: "none" },
             { type: "inside", yAxisIndex: allYAxisIndices, filterMode: "none" },
         ],
-        toolbox: {
-            feature: {
-                dataZoom: { yAxisIndex: "none" as any, title: { zoom: "Box zoom", back: "Reset zoom" } },
-                restore: { title: "Reset" },
-            },
-            right: 16,
-            top: 4,
-        },
+        ...(showToolbox
+            ? {
+                  toolbox: {
+                      feature: {
+                          dataZoom: {
+                              yAxisIndex: "none" as any,
+                              title: { zoom: "Box zoom", back: "Reset zoom" },
+                          },
+                          restore: { title: "Reset" },
+                      },
+                      right: 16,
+                      top: 4,
+                  },
+              }
+            : {}),
     };
 }
 
@@ -229,6 +246,7 @@ export function buildTimeseriesOptions(
     selectedStatistics: StatisticsType[],
     yAxisLabel: string,
     activeTimestampUtcMs: number | null = null,
+    containerSize?: ContainerSize,
 ): TimeseriesEchartsResult {
     if (subplotGroups.length === 0) return { echartsOptions: {}, timeseriesChartData: [] };
 
@@ -273,6 +291,7 @@ export function buildTimeseriesOptions(
         layout,
         numSubplots,
         showStatLines,
+        containerSize,
     );
 
     return { echartsOptions, timeseriesChartData: xAxisData };

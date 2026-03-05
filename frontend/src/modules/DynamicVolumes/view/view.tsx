@@ -5,6 +5,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useElementSize } from "@lib/hooks/useElementSize";
 
 import type { Interfaces } from "../interfaces";
 import { VisualizationMode } from "../typesAndEnums";
@@ -38,6 +39,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const isHeatmap = visualizationMode === VisualizationMode.DrainageHeatmap;
 
+    // ── Track container size for responsive decluttering ──
+    const chartContainerRef = React.useRef<HTMLDivElement>(null);
+    const containerSize = useElementSize(chartContainerRef);
+
     const subplotGroups = useSubplotGroups(selectedVectorBaseName, showRecoveryFactor);
     const heatmapDatasets = useHeatmapDatasets(selectedVectorBaseName, showRecoveryFactor);
 
@@ -59,6 +64,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         visualizationMode,
         selectedStatistics,
         yAxisLabel,
+        containerSize.width > 0 && containerSize.height > 0 ? containerSize : undefined,
     );
 
     // ── Sync active timestamp with other modules via SyncSettingKey.DATE ──
@@ -101,7 +107,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <div className="flex flex-col w-full h-full p-2 gap-2 overflow-hidden">
-            <div className="w-full flex-1 min-h-0">
+            <div ref={chartContainerRef} className="w-full flex-1 min-h-0">
                 <ReactECharts
                     ref={chartRef}
                     option={echartsOptions}

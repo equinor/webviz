@@ -7,6 +7,9 @@ import type { HeatmapDataset } from "../../typesAndEnums";
 import { createTimestampMarkLine } from "./activeTimestampMarker";
 import { DEFAULT_LAYOUT_CONFIG, computeSubplotGridLayout } from "./subplotGridLayout";
 
+import type { ContainerSize } from ".";
+import { MIN_HEIGHT_FOR_TOOLBOX } from ".";
+
 // ── Constants ──
 
 // Heatmap needs extra right margin for the visualMap control
@@ -22,6 +25,7 @@ export function buildHeatmapOptions(
     datasets: HeatmapDataset[],
     valueLabel: string,
     activeTimestampUtcMs: number | null = null,
+    containerSize?: ContainerSize,
 ): EChartsOption {
     if (datasets.length === 0) return {};
 
@@ -59,7 +63,7 @@ export function buildHeatmapOptions(
             gridIndex: i,
             data: ds.xLabels,
             splitArea: { show: true },
-            axisLabel: { show: true, fontSize: 10 },
+            axisLabel: { show: true, fontSize: 10, hideOverlap: true },
             axisTick: { show: true },
         });
 
@@ -68,7 +72,7 @@ export function buildHeatmapOptions(
             gridIndex: i,
             data: ds.yLabels,
             splitArea: { show: true },
-            axisLabel: { show: true, fontSize: 11 },
+            axisLabel: { show: true, fontSize: 11, hideOverlap: true },
         });
 
         // Resolve active timestamp marker for this dataset
@@ -155,12 +159,16 @@ export function buildHeatmapOptions(
             formatter: (value: unknown) => formatNumber(Number(value), 3),
         },
         series: isMultiGrid ? series : series[0] ? [series[0]] : [],
-        toolbox: {
-            feature: {
-                restore: { title: "Reset" },
-            },
-            right: 16,
-            top: 4,
-        },
+        ...(!containerSize || containerSize.height >= MIN_HEIGHT_FOR_TOOLBOX
+            ? {
+                  toolbox: {
+                      feature: {
+                          restore: { title: "Reset" },
+                      },
+                      right: 16,
+                      top: 4,
+                  },
+              }
+            : {}),
     };
 }

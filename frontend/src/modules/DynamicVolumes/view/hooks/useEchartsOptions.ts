@@ -5,6 +5,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 
 import type { HeatmapDataset, StatisticsType, SubplotGroup } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
+import type { ContainerSize } from "../../utils/echartsChartBuilder";
 import { buildHeatmapOptions, buildTimeseriesOptions } from "../../utils/echartsChartBuilder";
 import { activeTimestampUtcMsAtom } from "../atoms/baseAtoms";
 
@@ -24,6 +25,7 @@ export function useEchartsOptions(
     visualizationMode: VisualizationMode | null,
     selectedStatistics: StatisticsType[],
     yAxisLabel: string,
+    containerSize?: ContainerSize,
 ) {
     const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
@@ -39,7 +41,7 @@ export function useEchartsOptions(
     const { echartsOptions, timeseriesChartData } = React.useMemo(() => {
         if (isHeatmap) {
             return {
-                echartsOptions: buildHeatmapOptions(heatmapDatasets, yAxisLabel, activeTimestampUtcMs),
+                echartsOptions: buildHeatmapOptions(heatmapDatasets, yAxisLabel, activeTimestampUtcMs, containerSize),
                 timeseriesChartData: heatmapDatasets.length > 0 ? heatmapDatasets[0].xLabels : [],
             };
         }
@@ -51,6 +53,7 @@ export function useEchartsOptions(
             selectedStatistics,
             yAxisLabel,
             activeTimestampUtcMs,
+            containerSize,
         );
     }, [
         isHeatmap,
@@ -61,6 +64,7 @@ export function useEchartsOptions(
         selectedStatistics,
         yAxisLabel,
         activeTimestampUtcMs,
+        containerSize,
     ]);
 
     // ── Resolve timestamps for click-to-publish ──
