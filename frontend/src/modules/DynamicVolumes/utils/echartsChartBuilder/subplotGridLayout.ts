@@ -21,7 +21,7 @@ export type SubplotLayoutConfig = {
     maxCols?: number;
 };
 
-const DEFAULT_CONFIG: Required<SubplotLayoutConfig> = {
+export const DEFAULT_LAYOUT_CONFIG: Required<SubplotLayoutConfig> = {
     marginLeftPct: 2,
     marginRightPct: 5,
     bottomSpacePct: 8,
@@ -67,7 +67,7 @@ export type SubplotCell = {
  * can add axes and titles at the correct coordinates.
  */
 export function computeSubplotGridLayout(numSubplots: number, config?: SubplotLayoutConfig): SubplotLayoutResult {
-    const cfg = { ...DEFAULT_CONFIG, ...config };
+    const cfg = { ...DEFAULT_LAYOUT_CONFIG, ...config };
 
     const isMultiGrid = numSubplots > 1;
     const numCols = isMultiGrid ? Math.min(numSubplots, Math.ceil(Math.sqrt(numSubplots)), cfg.maxCols) : 1;

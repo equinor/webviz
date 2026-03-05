@@ -51,7 +51,7 @@ const visualizationModes = [
     { value: VisualizationMode.IndividualRealizations, label: "Individual realizations" },
     { value: VisualizationMode.StatisticalLines, label: "Statistical lines" },
     { value: VisualizationMode.StatisticalFanchart, label: "Statistical lines with fill" },
-    { value: VisualizationMode.DrainageHeatmap, label: "Drainage heatmap" },
+    { value: VisualizationMode.DrainageHeatmap, label: "Drainage heatmap (ensemble mean)" },
 ];
 
 const PLOT_DIMENSION_LABELS: Record<PlotDimension, string> = {

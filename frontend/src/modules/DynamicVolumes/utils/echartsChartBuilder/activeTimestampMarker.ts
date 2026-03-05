@@ -1,3 +1,21 @@
+/** Create a markLine definition that draws a vertical marker at the given date label. */
+export function createTimestampMarkLine(dateLabel: string): Record<string, unknown> {
+    return {
+        silent: true,
+        symbol: "none",
+        animation: false,
+        lineStyle: { type: "solid", color: "#333", width: 1.5 },
+        label: {
+            show: true,
+            formatter: dateLabel,
+            position: "insideEndTop",
+            fontSize: 10,
+            color: "#333",
+        },
+        data: [{ xAxis: dateLabel }],
+    };
+}
+
 /**
  * Add a vertical marker line at the active timestamp on every subplot.
  *
@@ -13,19 +31,6 @@ export function applyActiveTimestampMarker(allSeries: any[], activeDate: string)
         // Skip fanchart helper series (custom type, not ideal for markLine)
         if (typeof s.name === "string" && s.name.includes("_fan_")) continue;
         seenGrids.add(gridIdx);
-        s.markLine = {
-            silent: true,
-            symbol: "none",
-            animation: false,
-            lineStyle: { type: "solid", color: "#333", width: 1.5 },
-            label: {
-                show: true,
-                formatter: activeDate,
-                position: "insideEndTop",
-                fontSize: 10,
-                color: "#333",
-            },
-            data: [{ xAxis: activeDate }],
-        };
+        s.markLine = createTimestampMarkLine(activeDate);
     }
 }

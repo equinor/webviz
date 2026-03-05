@@ -4,13 +4,13 @@ import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { HeatmapDataset } from "../../typesAndEnums";
 
-import { computeSubplotGridLayout } from "./subplotGridLayout";
+import { createTimestampMarkLine } from "./activeTimestampMarker";
+import { DEFAULT_LAYOUT_CONFIG, computeSubplotGridLayout } from "./subplotGridLayout";
 
 // ── Constants ──
 
+// Heatmap needs extra right margin for the visualMap control
 const MARGIN_RIGHT_PCT = 8;
-const BOTTOM_SPACE_PCT = 8;
-const TOP_SPACE_PCT = 4;
 
 /**
  * Build a full EChartsOption for the drainage heatmap.
@@ -74,7 +74,7 @@ export function buildHeatmapOptions(
         // Resolve active timestamp marker for this dataset
         const activeDate =
             activeTimestampUtcMs != null
-                ? ds.xLabels[ds.timestampsUtcMs.indexOf(activeTimestampUtcMs)] ?? null
+                ? (ds.xLabels[ds.timestampsUtcMs.indexOf(activeTimestampUtcMs)] ?? null)
                 : null;
 
         series.push({
@@ -89,20 +89,7 @@ export function buildHeatmapOptions(
                 },
             },
             ...(activeDate != null && {
-                markLine: {
-                    silent: true,
-                    symbol: "none",
-                    animation: false,
-                    lineStyle: { type: "solid", color: "#333", width: 1.5 },
-                    label: {
-                        show: true,
-                        formatter: activeDate,
-                        position: "insideEndTop",
-                        fontSize: 10,
-                        color: "#333",
-                    },
-                    data: [{ xAxis: activeDate }],
-                },
+                markLine: createTimestampMarkLine(activeDate),
             }),
         });
 
@@ -135,9 +122,9 @@ export function buildHeatmapOptions(
         grid: isMultiGrid
             ? grids
             : {
-                  top: `${TOP_SPACE_PCT}%`,
+                  top: `${DEFAULT_LAYOUT_CONFIG.topSpacePct}%`,
                   right: `${MARGIN_RIGHT_PCT}%`,
-                  bottom: `${BOTTOM_SPACE_PCT}%`,
+                  bottom: `${DEFAULT_LAYOUT_CONFIG.bottomSpacePct}%`,
                   left: "2%",
                   containLabel: true,
               },

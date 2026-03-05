@@ -10,20 +10,13 @@ import { applyActiveTimestampMarker } from "./activeTimestampMarker";
 import { buildRealizationsSeries } from "./realizationsSeries";
 import { buildFanchartSeries, buildStatisticsSeries } from "./statisticsSeries";
 import type { SubplotCell, SubplotLayoutResult } from "./subplotGridLayout";
-import { computeSubplotGridLayout } from "./subplotGridLayout";
+import { DEFAULT_LAYOUT_CONFIG, computeSubplotGridLayout } from "./subplotGridLayout";
 import { formatRealizationItemTooltip, formatStatisticsTooltip } from "./tooltipFormatters";
 
 export type TimeseriesEchartsResult = {
     echartsOptions: EChartsOption;
     timeseriesChartData: string[];
 };
-
-// ── Constants ──
-
-const MARGIN_LEFT_PCT = 2;
-const MARGIN_RIGHT_PCT = 5;
-const BOTTOM_SPACE_PCT = 8;
-const TOP_SPACE_PCT = 4;
 
 // ── Helper: Build all series + legend for every subplot group ──
 
@@ -180,10 +173,10 @@ function composeEchartsOption(
         grid: isMultiGrid
             ? layout.grids
             : {
-                  top: `${TOP_SPACE_PCT}%`,
-                  right: `${MARGIN_RIGHT_PCT}%`,
-                  bottom: `${BOTTOM_SPACE_PCT}%`,
-                  left: `${MARGIN_LEFT_PCT}%`,
+                  top: `${DEFAULT_LAYOUT_CONFIG.topSpacePct}%`,
+                  right: `${DEFAULT_LAYOUT_CONFIG.marginRightPct}%`,
+                  bottom: `${DEFAULT_LAYOUT_CONFIG.bottomSpacePct}%`,
+                  left: `${DEFAULT_LAYOUT_CONFIG.marginLeftPct}%`,
                   containLabel: true,
               },
         xAxis: isMultiGrid ? xAxes : xAxes[0],
