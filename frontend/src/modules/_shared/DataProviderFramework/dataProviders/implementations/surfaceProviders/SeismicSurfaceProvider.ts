@@ -28,7 +28,6 @@ import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
-
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 
 import {
