@@ -35,6 +35,7 @@ async def get_seismic_cube_meta_list(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+
 @router.get("/get_seismic_slices/")
 @cache_time(CacheTime.LONG)
 # pylint: disable=too-many-arguments
