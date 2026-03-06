@@ -1422,10 +1422,7 @@ export type SeismicCubeMeta_api = {
      * Isodateorinterval
      */
     isoDateOrInterval: string;
-    /**
-     * Isobservation
-     */
-    isObservation: boolean;
+    representation: SeismicRepresentation_api;
     /**
      * Isdepth
      */
@@ -1574,6 +1571,15 @@ export type SeismicFencePolyline_api = {
      */
     y_points: Array<number>;
 };
+
+/**
+ * SeismicRepresentation
+ */
+export enum SeismicRepresentation_api {
+    OBSERVED_CASE = "observed_case",
+    OBSERVED_REALIZATION = "observed_realization",
+    MODELLED = "modelled",
+}
 
 /**
  * SeismicSliceData
@@ -1877,64 +1883,6 @@ export type StratigraphicColumn_api = {
      * Type
      */
     type: string | null;
-};
-
-/**
- * StratigraphicUnit
- *
- * Stratigraphic unit from SMDA
- *
- * Camel case attributes needed for esvIntersection component in front-end
- */
-export type StratigraphicUnit_api = {
-    /**
-     * Identifier
-     */
-    identifier: string;
-    /**
-     * Top
-     */
-    top: string;
-    /**
-     * Base
-     */
-    base: string;
-    /**
-     * Stratunitlevel
-     */
-    stratUnitLevel: number;
-    /**
-     * Stratunittype
-     */
-    stratUnitType: string;
-    /**
-     * Topage
-     */
-    topAge: number | number;
-    /**
-     * Baseage
-     */
-    baseAge: number | number;
-    /**
-     * Stratunitparent
-     */
-    stratUnitParent: string | null;
-    /**
-     * Colorr
-     */
-    colorR: number;
-    /**
-     * Colorg
-     */
-    colorG: number;
-    /**
-     * Colorb
-     */
-    colorB: number;
-    /**
-     * Lithologytype
-     */
-    lithologyType?: number | number | string;
 };
 
 /**
@@ -4503,80 +4451,6 @@ export type GetMisfitSurfaceDataResponses_api = {
 export type GetMisfitSurfaceDataResponse_api =
     GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
 
-export type DeprecatedGetStratigraphicUnitsData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        zCacheBust?: string;
-    };
-    url: "/surface/deprecated_stratigraphic_units";
-};
-
-export type DeprecatedGetStratigraphicUnitsErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type DeprecatedGetStratigraphicUnitsError_api =
-    DeprecatedGetStratigraphicUnitsErrors_api[keyof DeprecatedGetStratigraphicUnitsErrors_api];
-
-export type DeprecatedGetStratigraphicUnitsResponses_api = {
-    /**
-     * Response Deprecated Get Stratigraphic Units
-     *
-     * Successful Response
-     */
-    200: Array<StratigraphicUnit_api>;
-};
-
-export type DeprecatedGetStratigraphicUnitsResponse_api =
-    DeprecatedGetStratigraphicUnitsResponses_api[keyof DeprecatedGetStratigraphicUnitsResponses_api];
-
-export type GetStratigraphicUnitsForStratColumnData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Strat Column
-         *
-         * SMDA stratigraphic column identifier
-         */
-        strat_column: string;
-        zCacheBust?: string;
-    };
-    url: "/surface/stratigraphic_units_for_strat_column";
-};
-
-export type GetStratigraphicUnitsForStratColumnErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetStratigraphicUnitsForStratColumnError_api =
-    GetStratigraphicUnitsForStratColumnErrors_api[keyof GetStratigraphicUnitsForStratColumnErrors_api];
-
-export type GetStratigraphicUnitsForStratColumnResponses_api = {
-    /**
-     * Response Get Stratigraphic Units For Strat Column
-     *
-     * Successful Response
-     */
-    200: Array<StratigraphicUnit_api>;
-};
-
-export type GetStratigraphicUnitsForStratColumnResponse_api =
-    GetStratigraphicUnitsForStratColumnResponses_api[keyof GetStratigraphicUnitsForStratColumnResponses_api];
-
 export type GetParametersAndSensitivitiesData_api = {
     body?: never;
     path?: never;
@@ -5746,11 +5620,9 @@ export type GetInlineSliceData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         /**
          * Inline Number
          *
@@ -5815,11 +5687,9 @@ export type GetCrosslineSliceData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         /**
          * Crossline Num
          *
@@ -5884,11 +5754,9 @@ export type GetDepthSliceData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         /**
          * Depth Slice Num
          *
@@ -5953,11 +5821,9 @@ export type GetSeismicSlicesData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         /**
          * Inline Number
          *
@@ -6036,11 +5902,9 @@ export type PostGetSeismicFenceData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         zCacheBust?: string;
     };
     url: "/seismic/get_seismic_fence/";

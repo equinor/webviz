@@ -19,7 +19,7 @@ from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
-from primary.middleware.add_browser_cache import AddBrowserCacheMiddleware
+from primary.middleware.cache_control_middleware import CacheControlMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAddressEnrichmentMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
 from primary.persistence.persistence_stores import PersistenceStoresSingleton
@@ -192,7 +192,7 @@ app.add_middleware(OtelSpanClientAddressEnrichmentMiddleware)
 # As of mypy 1.16 and Starlette 47, the ProxyHeadersMiddleware gives an incorrect type error here
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")  # type: ignore[arg-type]
 
-app.add_middleware(AddBrowserCacheMiddleware)
+app.add_middleware(CacheControlMiddleware)
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")

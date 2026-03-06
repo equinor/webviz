@@ -26,7 +26,7 @@ class AzureMonitorDestination:
 
         service_version = get_radix_short_commit_sha() or "NA"
 
-        # The service_name retrieved from radix will typically be lowercase prod, preprod, dev or review.
+        # The service_namespace retrieved from radix will typically be lowercase prod, preprod, dev or review.
         # Convert to uppercase and construct the expected environment variable name for the connection string
         # on the form "WEBVIZ_INSIGHTS_CONNECTIONSTRING_<NAMESPACE>"", e.g. "WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD"
         env_var_name = f"WEBVIZ_INSIGHTS_CONNECTIONSTRING_{service_namespace.upper()}"
