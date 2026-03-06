@@ -2082,6 +2082,8 @@ export const getRftTableDefinitionQueryKey = (options: Options<GetRftTableDefini
 
 /**
  * Get Rft Table Definition
+ *
+ * Get the RFT table definition for a given ensemble.
  */
 export const getRftTableDefinitionOptions = (options: Options<GetRftTableDefinitionData_api>) =>
     queryOptions<
@@ -2107,6 +2109,8 @@ export const getRftRealizationDataQueryKey = (options: Options<GetRftRealization
 
 /**
  * Get Rft Realization Data
+ *
+ * Get a list of RFT data per realization, for a given well and response.
  */
 export const getRftRealizationDataOptions = (options: Options<GetRftRealizationDataData_api>) =>
     queryOptions<
@@ -2132,6 +2136,8 @@ export const getVfpTableNamesQueryKey = (options: Options<GetVfpTableNamesData_a
 
 /**
  * Get Vfp Table Names
+ *
+ * Get the available VFP table names for a given ensemble and realization.
  */
 export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData_api>) =>
     queryOptions<
@@ -2156,6 +2162,8 @@ export const getVfpTableQueryKey = (options: Options<GetVfpTableData_api>) => cr
 
 /**
  * Get Vfp Table
+ *
+ * Get the VFP table for a given ensemble, realization and table name.
  */
 export const getVfpTableOptions = (options: Options<GetVfpTableData_api>) =>
     queryOptions<

@@ -1175,6 +1175,8 @@ export const getObservations = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Rft Table Definition
+ *
+ * Get the RFT table definition for a given ensemble.
  */
 export const getRftTableDefinition = <ThrowOnError extends boolean = false>(
     options: Options<GetRftTableDefinitionData_api, ThrowOnError>,
@@ -1187,6 +1189,8 @@ export const getRftTableDefinition = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Rft Realization Data
+ *
+ * Get a list of RFT data per realization, for a given well and response.
  */
 export const getRftRealizationData = <ThrowOnError extends boolean = false>(
     options: Options<GetRftRealizationDataData_api, ThrowOnError>,
@@ -1199,6 +1203,8 @@ export const getRftRealizationData = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Vfp Table Names
+ *
+ * Get the available VFP table names for a given ensemble and realization.
  */
 export const getVfpTableNames = <ThrowOnError extends boolean = false>(
     options: Options<GetVfpTableNamesData_api, ThrowOnError>,
@@ -1211,6 +1217,8 @@ export const getVfpTableNames = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Vfp Table
+ *
+ * Get the VFP table for a given ensemble, realization and table name.
  */
 export const getVfpTable = <ThrowOnError extends boolean = false>(
     options: Options<GetVfpTableData_api, ThrowOnError>,

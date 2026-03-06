@@ -25,6 +25,7 @@ async def get_rft_table_definition(
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> schemas.RftTableDefinition:
+    """Get the RFT table definition for a given ensemble."""
     access = RftAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     rft_table_def = await access.get_rft_info_async()
 
@@ -47,6 +48,7 @@ async def get_rft_realization_data(
         ),
     ] = None,
 ) -> list[schemas.RftRealizationData]:
+    """Get a list of RFT data per realization, for a given well and response."""
     realizations: list[int] | None = None
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
