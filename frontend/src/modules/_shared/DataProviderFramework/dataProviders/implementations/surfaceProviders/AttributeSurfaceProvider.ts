@@ -31,7 +31,6 @@ import { Representation } from "../../../settings/implementations/Representation
 
 import {
     resolveEnsembleConstraints,
-    resolveRealizationConstraints,
     resolveSensitivityConstraints,
     resolveStatisticFunctionConstraints,
 } from "./_commonSettingsUpdaters";
@@ -215,7 +214,7 @@ export class AttributeSurfaceProvider
             read({ read }) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, abortSignal) {
+            async resolve({ ensembleIdent }, { abortSignal }) {
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -241,7 +240,10 @@ export class AttributeSurfaceProvider
                 };
             },
             resolve({ ensembleIdent, realizationFilterFunction }) {
-                return resolveRealizationConstraints(ensembleIdent, realizationFilterFunction);
+                if (!ensembleIdent) {
+                    return [];
+                }
+                return [...realizationFilterFunction(ensembleIdent)];
             },
         });
 
@@ -350,7 +352,10 @@ export class AttributeSurfaceProvider
                 };
             },
             resolve({ filterFunction, ensembleIdent }) {
-                return resolveRealizationConstraints(ensembleIdent, filterFunction);
+                if (!ensembleIdent) {
+                    return [];
+                }
+                return [...filterFunction(ensembleIdent)];
             },
         });
 

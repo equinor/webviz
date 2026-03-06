@@ -37,11 +37,7 @@ export class RealizationPolygonsProvider
         return !isEqual(prevSettings, newSettings);
     }
 
-    setupBindings({
-        setting,
-        makeSharedResult,
-        queryClient,
-    }: SetupBindingsContext<RealizationPolygonsSettings>) {
+    setupBindings({ setting, makeSharedResult, queryClient }: SetupBindingsContext<RealizationPolygonsSettings>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read({ read }) {
                 return {
@@ -78,7 +74,7 @@ export class RealizationPolygonsProvider
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, abortSignal) {
+            async resolve({ ensembleIdent }, { abortSignal }) {
                 if (!ensembleIdent) {
                     return null;
                 }

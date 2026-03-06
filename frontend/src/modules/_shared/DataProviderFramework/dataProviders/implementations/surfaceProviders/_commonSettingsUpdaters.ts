@@ -6,7 +6,7 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 /**
  * Returns ensemble idents filtered by the given field identifier.
  */
-export function resolveEnsembleConstraints(fieldId: string, ensembles: readonly RegularEnsemble[]) {
+export function resolveEnsembleConstraints(fieldId: string | null, ensembles: readonly RegularEnsemble[]) {
     const ensembleIdents = ensembles
         .filter((ensemble: RegularEnsemble) => ensemble.getFieldIdentifier() === fieldId)
         .map((ensemble: RegularEnsemble) => ensemble.getIdent());

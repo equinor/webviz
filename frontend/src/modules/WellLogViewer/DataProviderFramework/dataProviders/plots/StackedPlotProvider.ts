@@ -39,7 +39,7 @@ export class StackedPlotProvider
                 read({ read }) {
                     return { wellboreId: read.globalSetting("wellboreUuid") };
                 },
-                async resolve({ wellboreId }, abortSignal) {
+                async resolve({ wellboreId }, { abortSignal }) {
                     if (!wellboreId) return null;
 
                     return await queryClient.fetchQuery({

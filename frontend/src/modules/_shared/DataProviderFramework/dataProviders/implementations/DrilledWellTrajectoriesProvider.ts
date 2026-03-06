@@ -84,7 +84,7 @@ export class DrilledWellTrajectoriesProvider
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, abortSignal) {
+            async resolve({ ensembleIdent }, { abortSignal }) {
                 if (!ensembleIdent) {
                     return null;
                 }

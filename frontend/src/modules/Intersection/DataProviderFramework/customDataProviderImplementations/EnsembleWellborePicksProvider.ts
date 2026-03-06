@@ -62,7 +62,7 @@ export class EnsembleWellborePicksProvider
             read({ read }) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, abortSignal) {
+            async resolve({ ensembleIdent }, { abortSignal }) {
                 return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
             },
         });
@@ -92,7 +92,7 @@ export class EnsembleWellborePicksProvider
                     intersection: read.localSetting(Setting.INTERSECTION),
                 };
             },
-            async resolve({ ensembles, ensembleIdent, intersection }, abortSignal) {
+            async resolve({ ensembles, ensembleIdent, intersection }, { abortSignal }) {
                 const wellboreUuid = intersection?.type === IntersectionType.WELLBORE ? intersection.uuid : null;
                 const stratColumn = ensembles
                     .find((ensemble) => ensemble.getIdent().equals(ensembleIdent))

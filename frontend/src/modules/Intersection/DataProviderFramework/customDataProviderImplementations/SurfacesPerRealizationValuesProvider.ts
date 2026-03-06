@@ -55,11 +55,14 @@ export type SurfacesPerRealizationValuesStoredData = {
 // Key is surface name, value is surface sample values per selected realization
 export type SurfacesPerRealizationValuesData = Record<string, SurfaceRealizationSampleValues_api[]>;
 
-export class SurfacesPerRealizationValuesProvider implements CustomDataProviderImplementation<
-    SurfacesPerRealizationValuesSettings,
-    SurfacesPerRealizationValuesData,
-    SurfacesPerRealizationValuesStoredData
-> {
+export class SurfacesPerRealizationValuesProvider
+    implements
+        CustomDataProviderImplementation<
+            SurfacesPerRealizationValuesSettings,
+            SurfacesPerRealizationValuesData,
+            SurfacesPerRealizationValuesStoredData
+        >
+{
     settings = surfacesPerRealizationValuesSettings;
 
     getDefaultName() {
@@ -151,7 +154,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
             read({ read }) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, abortSignal) {
+            async resolve({ ensembleIdent }, { abortSignal }) {
                 return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
             },
         });
@@ -177,7 +180,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
             read({ read }) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, abortSignal) {
+            async resolve({ ensembleIdent }, { abortSignal }) {
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -226,9 +229,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
                 );
                 const filteredSurfaceNames = Array.from(
                     new Set(
-                        depthSurfacesMetadata
-                            .filter((elm) => elm.attribute_name === attribute)
-                            .map((elm) => elm.name),
+                        depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name),
                     ),
                 );
                 return sortStringArray(filteredSurfaceNames, surfaceMetadataSet.surface_names_in_strat_order);
@@ -245,13 +246,14 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
                     wellboreExtensionLength: read.localSetting(Setting.WELLBORE_EXTENSION_LENGTH),
                 };
             },
-            async resolve({ fieldIdentifier, intersection, wellboreExtensionLength }) {
+            async resolve({ fieldIdentifier, intersection, wellboreExtensionLength }, { abortSignal }) {
                 return createIntersectionPolylineWithSectionLengthsForField(
                     fieldIdentifier,
                     intersection,
                     wellboreExtensionLength ?? 0,
                     workbenchSession,
                     queryClient,
+                    abortSignal,
                 );
             },
         });

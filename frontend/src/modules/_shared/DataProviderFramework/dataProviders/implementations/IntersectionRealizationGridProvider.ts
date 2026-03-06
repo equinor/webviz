@@ -51,11 +51,14 @@ export type IntersectionRealizationGridProviderArgs = {
     enableWellboreExtensionLength: boolean;
 };
 
-export class IntersectionRealizationGridProvider implements CustomDataProviderImplementation<
-    IntersectionRealizationGridSettings,
-    IntersectionRealizationGridData,
-    IntersectionRealizationGridStoredData
-> {
+export class IntersectionRealizationGridProvider
+    implements
+        CustomDataProviderImplementation<
+            IntersectionRealizationGridSettings,
+            IntersectionRealizationGridData,
+            IntersectionRealizationGridStoredData
+        >
+{
     settings = intersectionRealizationGridSettings;
 
     private _isWellboreExtensionLengthEnabled = false;
@@ -194,7 +197,7 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                     realization: read.localSetting(Setting.REALIZATION),
                 };
             },
-            async resolve({ ensembleIdent, realization }, abortSignal) {
+            async resolve({ ensembleIdent, realization }, { abortSignal }) {
                 if (!ensembleIdent || realization === null) {
                     return null;
                 }
@@ -224,7 +227,9 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                     return [];
                 }
 
-                const availableGridNames = Array.from(new Set(data.map((gridModelInfo) => gridModelInfo.grid_name))).sort();
+                const availableGridNames = Array.from(
+                    new Set(data.map((gridModelInfo) => gridModelInfo.grid_name)),
+                ).sort();
 
                 return availableGridNames;
             },
@@ -260,7 +265,7 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            resolve({ ensembleIdent }, abortSignal) {
+            resolve({ ensembleIdent }, { abortSignal }) {
                 return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
             },
         });
@@ -326,13 +331,14 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                     wellboreExtensionLength: read.localSetting(Setting.WELLBORE_EXTENSION_LENGTH),
                 };
             },
-            resolve({ fieldIdentifier, intersection, wellboreExtensionLength }) {
+            resolve({ fieldIdentifier, intersection, wellboreExtensionLength }, { abortSignal }) {
                 return createIntersectionPolylineWithSectionLengthsForField(
                     fieldIdentifier,
                     intersection,
                     wellboreExtensionLength ?? 0,
                     workbenchSession,
                     queryClient,
+                    abortSignal,
                 );
             },
         });
@@ -340,7 +346,9 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
         storedData("polylineWithSectionLengths").bindValue({
             read({ read }) {
                 return {
-                    intersectionPolylineWithSectionLengths: read.sharedResult(intersectionPolylineWithSectionLengthsDep),
+                    intersectionPolylineWithSectionLengths: read.sharedResult(
+                        intersectionPolylineWithSectionLengthsDep,
+                    ),
                 };
             },
             resolve({ intersectionPolylineWithSectionLengths }) {

@@ -495,7 +495,10 @@ export class SettingsContextDelegate<
             args: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads> & { debugName: string },
         ) => {
             const { debugName, ...resolverSpec } = args;
-            const dependency = createDependency(debugName, resolverSpec as ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>);
+            const dependency = createDependency(
+                debugName,
+                resolverSpec as ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
+            );
 
             dependency.subscribeLoading(() => {
                 this.handleSettingChanged();
@@ -602,7 +605,7 @@ export class SettingsContextDelegate<
         this.handleSettingChanged();
     }
 
-    private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any>): void {
+    private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any, any>): void {
         dependency
             .getStatusMessageStore()
             .getPublishSubscribeDelegate()

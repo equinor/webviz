@@ -32,7 +32,6 @@ import { Representation } from "../../../settings/implementations/Representation
 
 import {
     resolveEnsembleConstraints,
-    resolveRealizationConstraints,
     resolveSensitivityConstraints,
     resolveStatisticFunctionConstraints,
 } from "./_commonSettingsUpdaters";
@@ -213,7 +212,7 @@ export class SeismicSurfaceProvider
                     representation: read.localSetting(Setting.REPRESENTATION),
                 };
             },
-            async resolve({ ensembleIdent, representation }, abortSignal) {
+            async resolve({ ensembleIdent, representation }, { abortSignal }) {
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -253,7 +252,10 @@ export class SeismicSurfaceProvider
                 };
             },
             resolve({ ensembleIdent, realizationFilterFunction }) {
-                return resolveRealizationConstraints(ensembleIdent, realizationFilterFunction);
+                if (!ensembleIdent) {
+                    return [];
+                }
+                return [...realizationFilterFunction(ensembleIdent)];
             },
         });
 
@@ -356,7 +358,10 @@ export class SeismicSurfaceProvider
                 };
             },
             resolve({ filterFunction, ensembleIdent }) {
-                return resolveRealizationConstraints(ensembleIdent, filterFunction);
+                if (!ensembleIdent) {
+                    return [];
+                }
+                return [...filterFunction(ensembleIdent)];
             },
         });
 

@@ -4,9 +4,8 @@ import { IntersectionType } from "@framework/types/intersection";
 import { Setting } from "../..//settings/settingsDefinitions";
 import { getAvailableIntersectionOptions } from "../../dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type { CustomGroupImplementationWithSettings } from "../../interfacesAndTypes/customGroupImplementation";
+import type { SetupBasicBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
-import { SetupBasicBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
-import { intersection } from "lodash";
 
 const intersectionViewSettings = [Setting.INTERSECTION, Setting.WELLBORE_EXTENSION_LENGTH] as const;
 export type IntersectionViewSettings = typeof intersectionViewSettings;
@@ -43,7 +42,7 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
                     fieldIdentifier: read.globalSetting("fieldId"),
                 };
             },
-            async resolve({ fieldIdentifier }, abortSignal) {
+            async resolve({ fieldIdentifier }, { abortSignal }) {
                 if (!fieldIdentifier) {
                     return null;
                 }

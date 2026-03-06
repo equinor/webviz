@@ -99,7 +99,7 @@ export class DrilledWellborePicksProvider
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, abortSignal) {
+            async resolve({ ensembleIdent }, { abortSignal }) {
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -129,7 +129,7 @@ export class DrilledWellborePicksProvider
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, abortSignal) {
+            async resolve({ ensembleIdent }, { abortSignal }) {
                 if (!ensembleIdent) {
                     return null;
                 }

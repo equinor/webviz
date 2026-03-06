@@ -33,7 +33,8 @@ export class SharedSettingsDelegate<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> implements PublishSubscribe<SharedSettingsDelegatePayloads> {
+> implements PublishSubscribe<SharedSettingsDelegatePayloads>
+{
     private _publishSubscribeDelegate: PublishSubscribeDelegate<SharedSettingsDelegatePayloads> =
         new PublishSubscribeDelegate<SharedSettingsDelegatePayloads>();
     private _externalSettingControllers: { [K in TSettingKey]: ExternalSettingController<K> } = {} as {
@@ -382,7 +383,7 @@ export class SharedSettingsDelegate<
         }
     }
 
-    private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any>): void {
+    private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any, any>): void {
         dependency
             .getStatusMessageStore()
             .getPublishSubscribeDelegate()

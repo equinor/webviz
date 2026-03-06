@@ -10,6 +10,7 @@ import type {
     CustomGroupImplementationWithSettings,
 } from "../../interfacesAndTypes/customGroupImplementation";
 import { includesSettings } from "../../interfacesAndTypes/customGroupImplementation";
+import type { SetupBasicBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 import type { SerializedGroup, SerializedSettingsState } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
@@ -18,7 +19,6 @@ import type { Settings } from "../../settings/settingsDefinitions";
 import { DataProviderManagerTopic, type DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
-import { SetupBasicBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 
 export function isGroup(obj: any): obj is Group {
     if (!isDevMode()) {

@@ -26,7 +26,7 @@ export class WellborePicksProvider
             read({ read }) {
                 return { wellboreUuid: read.globalSetting("wellboreUuid") };
             },
-            async resolve({ wellboreUuid }, abortSignal) {
+            async resolve({ wellboreUuid }, { abortSignal }) {
                 if (!wellboreUuid) return null;
 
                 return queryClient.fetchQuery({
@@ -46,7 +46,7 @@ export class WellborePicksProvider
                     stratColumn: read.localSetting(Setting.STRAT_COLUMN),
                 };
             },
-            async resolve({ wellboreUuid, stratColumn }, abortSignal) {
+            async resolve({ wellboreUuid, stratColumn }, { abortSignal }) {
                 if (!wellboreUuid || !stratColumn) return null;
 
                 return queryClient.fetchQuery({

@@ -37,11 +37,7 @@ export class FaultPolygonsProvider
         return !isEqual(prevSettings, newSettings);
     }
 
-    setupBindings({
-        setting,
-        makeSharedResult,
-        queryClient,
-    }: SetupBindingsContext<FaultPolygonsSettings>) {
+    setupBindings({ setting, makeSharedResult, queryClient }: SetupBindingsContext<FaultPolygonsSettings>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read({ read }) {
                 return {
@@ -78,7 +74,7 @@ export class FaultPolygonsProvider
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, abortSignal) {
+            async resolve({ ensembleIdent }, { abortSignal }) {
                 if (!ensembleIdent) {
                     return null;
                 }

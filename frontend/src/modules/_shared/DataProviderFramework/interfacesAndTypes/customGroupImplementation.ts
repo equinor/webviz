@@ -1,5 +1,6 @@
 import type { Settings } from "../settings/settingsDefinitions";
-import { SetupBasicBindingsContext } from "./customSettingsHandler";
+
+import type { SetupBasicBindingsContext } from "./customSettingsHandler";
 import type { MakeSettingTypesMap } from "./utils";
 
 /**

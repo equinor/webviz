@@ -153,11 +153,7 @@ export class RealizationGridProvider
         );
     }
 
-    setupBindings({
-        setting,
-        makeSharedResult,
-        queryClient,
-    }: SetupBindingsContext<RealizationGridSettings>) {
+    setupBindings({ setting, makeSharedResult, queryClient }: SetupBindingsContext<RealizationGridSettings>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read({ read }) {
                 return {
@@ -198,7 +194,7 @@ export class RealizationGridProvider
                     realization: read.localSetting(Setting.REALIZATION),
                 };
             },
-            async resolve({ ensembleIdent, realization }, abortSignal) {
+            async resolve({ ensembleIdent, realization }, { abortSignal }) {
                 if (!ensembleIdent || realization === null) {
                     return null;
                 }
@@ -228,7 +224,9 @@ export class RealizationGridProvider
                     return [];
                 }
 
-                const availableGridNames = [...Array.from(new Set(gridData.map((gridModelInfo) => gridModelInfo.grid_name)))];
+                const availableGridNames = [
+                    ...Array.from(new Set(gridData.map((gridModelInfo) => gridModelInfo.grid_name))),
+                ];
 
                 return availableGridNames;
             },
