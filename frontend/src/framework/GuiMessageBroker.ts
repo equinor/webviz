@@ -8,26 +8,22 @@ import type { EnsembleLoadingErrorInfoMap } from "./internal/EnsembleSetLoader";
 import type { SessionPersistenceAction } from "./internal/WorkbenchSession/WorkbenchSessionManager";
 import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
-export enum LeftDrawerContent {
-    ModuleSettings = "ModuleSettings",
-    SyncSettings = "SyncSettings",
-    ColorPaletteSettings = "ColorPaletteSettings",
-}
-
 export enum RightDrawerContent {
     RealizationFilterSettings = "RealizationFilterSettings",
     ModuleInstanceLog = "ModuleInstanceLog",
     ModulesList = "ModulesList",
     TemplatesList = "TemplatesList",
+    ColorPaletteSettings = "ColorPaletteSettings",
 }
 
 export enum GuiState {
-    LeftDrawerContent = "leftDrawerContent",
     RightDrawerContent = "rightDrawerContent",
+    LeftSettingsPanelIsCollapsed = "leftSettingsPanelIsCollapsed",
     LeftSettingsPanelWidthInPercent = "leftSettingsPanelWidthInPercent",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
     DevToolsVisible = "devToolsVisible",
     EditDataChannelConnections = "editDataChannelConnections",
+    RightSettingsPanelIsCollapsed = "rightSettingsPanelIsCollapsed",
     RightSettingsPanelWidthInPercent = "rightSettingsPanelWidthInPercent",
     AppInitialized = "appInitialized",
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
@@ -64,6 +60,7 @@ export enum GuiEvent {
     DataChannelNodeHover = "dataChannelNodeHover",
     DataChannelNodeUnhover = "dataChannelNodeUnhover",
     UnsavedRealizationFilterSettingsAction = "unsavedRealizationFilterSettingsAction",
+    RequestRightSettingsPanelClose = "requestRightSettingsPanelClose",
     SessionPersistenceError = "sessionPersistenceError",
 }
 
@@ -113,12 +110,13 @@ export type GuiEventPayloads = {
 };
 
 type GuiStateValueTypes = {
-    [GuiState.LeftDrawerContent]: LeftDrawerContent;
     [GuiState.RightDrawerContent]: RightDrawerContent | undefined;
+    [GuiState.LeftSettingsPanelIsCollapsed]: boolean;
     [GuiState.LeftSettingsPanelWidthInPercent]: number;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
     [GuiState.DevToolsVisible]: boolean;
     [GuiState.EditDataChannelConnections]: boolean;
+    [GuiState.RightSettingsPanelIsCollapsed]: boolean;
     [GuiState.RightSettingsPanelWidthInPercent]: number;
     [GuiState.AppInitialized]: boolean;
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
@@ -141,11 +139,12 @@ type GuiStateValueTypes = {
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
-defaultStates.set(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
 defaultStates.set(GuiState.RightDrawerContent, undefined);
+defaultStates.set(GuiState.LeftSettingsPanelIsCollapsed, false);
 defaultStates.set(GuiState.LeftSettingsPanelWidthInPercent, 30);
 defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
 defaultStates.set(GuiState.DevToolsVisible, isDevMode());
+defaultStates.set(GuiState.RightSettingsPanelIsCollapsed, false);
 defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);
 defaultStates.set(GuiState.AppInitialized, false);
 defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
@@ -167,12 +166,12 @@ defaultStates.set(GuiState.EnsemblesLoadingErrorInfoMap, {});
 defaultStates.set(GuiState.EnsembleLoadingErrorInfoDialogOpen, false);
 
 const persistentStates: GuiState[] = [
+    GuiState.LeftSettingsPanelIsCollapsed,
     GuiState.LeftSettingsPanelWidthInPercent,
     GuiState.DevToolsVisible,
+    GuiState.RightSettingsPanelIsCollapsed,
     GuiState.RightSettingsPanelWidthInPercent,
     GuiState.RightDrawerContent,
-    GuiState.NumberOfUnsavedRealizationFilters,
-    GuiState.NumberOfEffectiveRealizationFilters,
 ];
 
 export class GuiMessageBroker {
@@ -362,4 +361,12 @@ export function useGuiState<T extends GuiState>(
 export function useGuiValue<T extends GuiState>(guiMessageBroker: GuiMessageBroker, state: T): GuiStateValueTypes[T] {
     const [stateValue] = useGuiState(guiMessageBroker, state);
     return stateValue;
+}
+
+export function useSetGuiState<T extends GuiState>(
+    guiMessageBroker: GuiMessageBroker,
+    state: T,
+): (value: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])) => void {
+    const [, stateSetter] = useGuiState(guiMessageBroker, state);
+    return stateSetter;
 }

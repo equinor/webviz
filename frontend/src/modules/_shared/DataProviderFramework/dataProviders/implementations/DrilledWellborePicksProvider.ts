@@ -10,7 +10,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
@@ -62,7 +62,7 @@ export class DrilledWellborePicksProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataProviderInformationAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>): boolean {
+    }: DataProviderAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>): boolean {
         const smdaWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
