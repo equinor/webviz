@@ -152,7 +152,8 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps): Re
     // Drag handling of dragBars
     React.useEffect(
         function setupDragHandlers() {
-            const currentContainerRef = containerRef.current;
+            // Capture ref in case it changes during the component lifecycle - needed for unmount cleanup
+            const container = containerRef.current;
             let changedWidths: SettingsPanelsWidth | null = null;
             let dragging = false;
             let panelBeingDragged: SettingsPanel = "leftSettingsPanel";
@@ -174,19 +175,20 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps): Re
                 e.preventDefault();
                 e.stopPropagation();
 
-                const containerRect = currentContainerRef?.getBoundingClientRect();
+                const containerRect = container?.getBoundingClientRect();
                 if (!containerRect) return;
 
-                const totalWidthPx = containerRect.width;
-                if (totalWidthPx === 0) return;
+                const containerTotalWidthPx = containerRect.width;
+                if (containerTotalWidthPx === 0) return;
 
                 // Clamp cursor within container bounds
                 const cursorX = Math.max(containerRect.left, Math.min(e.clientX, containerRect.right));
 
                 // Calculate collapse/expand thresholds in percent
-                const collapseThresholdPercent = (COLLAPSE_EXPAND_THRESHOLD_PX / totalWidthPx) * 100;
+                const collapseThresholdPercent = (COLLAPSE_EXPAND_THRESHOLD_PX / containerTotalWidthPx) * 100;
                 const collapsedWidthPx = validCollapsedPanelWidthsPx[panelBeingDragged] ?? 0;
-                const expandThresholdPercent = ((collapsedWidthPx + COLLAPSE_EXPAND_THRESHOLD_PX) / totalWidthPx) * 100;
+                const expandThresholdPercent =
+                    ((collapsedWidthPx + COLLAPSE_EXPAND_THRESHOLD_PX) / containerTotalWidthPx) * 100;
 
                 // Compute raw new width based on cursor position
                 const isRightPanel = panelBeingDragged === "rightSettingsPanel";
@@ -194,20 +196,22 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps): Re
                     isRightPanel ? containerRect.right - cursorX : cursorX - containerRect.left,
                     0,
                 );
-                const settingsPanelWidthPercent = (settingsPanelWidthPx / totalWidthPx) * 100;
+                const settingsPanelWidthPercent = (settingsPanelWidthPx / containerTotalWidthPx) * 100;
 
                 // Apply min/collapse thresholds for the dragged panel only
                 const effectiveMinWidthPx = props.minWidthsPx?.[panelBeingDragged] ?? collapsedWidthPx;
-                const minWidthPercent = Math.max((effectiveMinWidthPx / totalWidthPx) * 100, 0);
-                const collapsedWidthPercent = Math.max((collapsedWidthPx / totalWidthPx) * 100, 0);
-                const isCurrentlyCollapsed = collapsedStatesRef.current?.[panelBeingDragged] ?? false;
+                const minWidthPercent = Math.max((effectiveMinWidthPx / containerTotalWidthPx) * 100, 0);
+                const collapsedWidthPercent = Math.max((collapsedWidthPx / containerTotalWidthPx) * 100, 0);
+
+                // Was collapsed before drag started
+                const wasCollapsed = collapsedStatesRef.current?.[panelBeingDragged] ?? false;
 
                 // Adjust width based on thresholds and collapsed state
                 let adjustedWidthPercent = settingsPanelWidthPercent;
                 if (props.visible?.[panelBeingDragged] === false) {
                     adjustedWidthPercent = 0;
-                } else if (isCurrentlyCollapsed && effectiveMinWidthPx > 0) {
-                    // Panel is currently collapsed — use expand threshold (hysteresis)
+                } else if (wasCollapsed && effectiveMinWidthPx > 0) {
+                    // Panel was collapsed before drag — use expand threshold (hysteresis)
                     if (settingsPanelWidthPercent < expandThresholdPercent) {
                         adjustedWidthPercent = collapsedWidthPercent;
                     } else if (settingsPanelWidthPercent < minWidthPercent) {
@@ -223,7 +227,6 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps): Re
 
                 // Detect collapsed state change for the dragged panel and
                 // emit onCollapsedChange if it changed
-                const wasCollapsed = collapsedStatesRef.current?.[panelBeingDragged] ?? false;
                 const isNowCollapsed = wasCollapsed
                     ? settingsPanelWidthPercent < expandThresholdPercent
                     : settingsPanelWidthPercent < collapseThresholdPercent;
@@ -274,25 +277,18 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps): Re
                 window.removeEventListener("blur", handlePointerUp);
             }
 
-            if (currentContainerRef) {
-                currentContainerRef.addEventListener("pointerdown", handlePointerDown);
+            if (container) {
+                container.addEventListener("pointerdown", handlePointerDown);
             }
 
             return () => {
-                if (currentContainerRef) {
-                    currentContainerRef.removeEventListener("pointerdown", handlePointerDown);
+                if (container) {
+                    container.removeEventListener("pointerdown", handlePointerDown);
                 }
                 removeEventListeners();
             };
         },
-        [
-            props.minWidthsPx,
-            props.visible,
-            totalWidthPx,
-            validCollapsedPanelWidthsPx,
-            onCollapsedChange,
-            onWidthsChange,
-        ],
+        [props.minWidthsPx, props.visible, validCollapsedPanelWidthsPx, onCollapsedChange, onWidthsChange],
     );
 
     function makeSettingsPanelStyle(panel: SettingsPanel): React.CSSProperties {

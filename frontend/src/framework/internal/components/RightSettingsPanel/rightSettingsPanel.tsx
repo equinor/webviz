@@ -1,6 +1,12 @@
 import React from "react";
 
-import { GuiEvent, GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
+import {
+    GuiEvent,
+    GuiState,
+    useGuiValue,
+    useRegisterGuiEventSubscriber,
+    useSetGuiState,
+} from "@framework/GuiMessageBroker";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
@@ -22,27 +28,21 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
     const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const numberOfUnsavedRealizationFilters = useGuiValue(guiMessageBroker, GuiState.NumberOfUnsavedRealizationFilters);
 
-    function handleOnClose() {
-        if (numberOfUnsavedRealizationFilters !== 0) {
-            setDialogOpen(true);
-            return;
-        }
+    const handleOnClose = React.useCallback(
+        function handleOnClose() {
+            if (numberOfUnsavedRealizationFilters !== 0) {
+                setDialogOpen(true);
+                return;
+            }
 
-        setRightSettingsPanelWidth(0);
-        setRightDrawerContent(undefined);
-    }
-
-    const handleOnCloseRef = React.useRef(handleOnClose);
-    handleOnCloseRef.current = handleOnClose;
-
-    React.useEffect(
-        function subscribeToSettingsPanelCloseEvent() {
-            return guiMessageBroker.subscribeToEvent(GuiEvent.RequestRightSettingsPanelClose, () => {
-                handleOnCloseRef.current();
-            });
+            setRightSettingsPanelWidth(0);
+            setRightDrawerContent(undefined);
         },
-        [guiMessageBroker],
+        [numberOfUnsavedRealizationFilters, setRightSettingsPanelWidth, setRightDrawerContent],
     );
+
+    // Register onClose handler to GuiEvent
+    useRegisterGuiEventSubscriber(guiMessageBroker, GuiEvent.RequestRightSettingsPanelClose, handleOnClose);
 
     function handleDialogSaveClick() {
         guiMessageBroker.publishEvent(GuiEvent.UnsavedRealizationFilterSettingsAction, {
