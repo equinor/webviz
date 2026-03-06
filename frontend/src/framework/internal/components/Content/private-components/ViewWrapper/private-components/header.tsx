@@ -170,7 +170,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 ? "Source module — settings here control connected modules"
                 : info.isSubscriber && !info.isPublisher
                   ? "Receives data from source module"
-                  : "Source & receiver";
+                  : "Connected module";
         const lines = [roleLabel];
         for (const entry of info.connectedModuleTitles) {
             const arrow = entry.role === "source" ? "← from" : "→ to";
@@ -212,12 +212,23 @@ export const Header: React.FC<HeaderProps> = (props) => {
                                 <span
                                     key={i}
                                     className="inline-block rounded-full shrink-0"
-                                    style={{
-                                        width: 10,
-                                        height: 10,
-                                        backgroundColor: color,
-                                        boxShadow: `0 0 0 2px white, 0 0 0 3px ${color}`,
-                                    }}
+                                    style={
+                                        props.connectionInfo!.isPublisher
+                                            ? {
+                                                  width: 10,
+                                                  height: 10,
+                                                  backgroundColor: color,
+                                                  boxShadow: `0 0 0 2px white, 0 0 0 3px ${color}`,
+                                              }
+                                            : {
+                                                  width: 10,
+                                                  height: 10,
+                                                  backgroundColor: "white",
+                                                  border: `2px solid ${color}`,
+                                                  boxSizing: "border-box",
+                                                  boxShadow: "0 0 0 2px white",
+                                              }
+                                    }
                                 />
                             ))}
                         </span>
