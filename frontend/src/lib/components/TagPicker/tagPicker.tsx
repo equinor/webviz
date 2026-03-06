@@ -3,12 +3,14 @@ import React from "react";
 import { clamp, isEqual } from "lodash";
 import { Key } from "ts-key-enum";
 
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
+
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";
 import type { TagInputProps } from "../TagInput";
 import { TagInput } from "../TagInput";
 
-import { useDebouncedStateEmit, useOnScreenChangeHandler } from "./hooks";
+import { useOnScreenChangeHandler } from "./hooks";
 import { DefaultTagOption, type TagOptionProps } from "./private-components/defaultTagOption";
 import type { ItemFocusMode } from "./private-components/dropdownItemList";
 import { DropdownItemList } from "./private-components/dropdownItemList";
@@ -53,7 +55,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
     const [focusedItemIndex, setFocusedItemIndex] = React.useState<number>(-1);
     const [itemFocusMode, setItemFocusMode] = React.useState<ItemFocusMode>("keyboard");
 
-    const [selection, debouncedOnChange, flushDebounce] = useDebouncedStateEmit(
+    const [selection, debouncedOnChange, debounceInteractions] = useDebouncedOnChange(
         props.selection,
         props.onChange,
         props.debounceTimeMs,
@@ -108,10 +110,10 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
             ) {
                 setShowInputAsFocused(false);
                 setDropdownVisible(false);
-                flushDebounce();
+                debounceInteractions.flush();
             }
         },
-        [flushDebounce],
+        [debounceInteractions],
     );
 
     // The dropdown gets remounted on show, so the ref will change every time.
