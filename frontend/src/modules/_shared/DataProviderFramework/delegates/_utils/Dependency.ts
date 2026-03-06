@@ -1,8 +1,12 @@
 import { isCancelledError } from "@tanstack/react-query";
 
+import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore";
+import type { PublishSubscribeStatusMessageStore, StatusWriter } from "@framework/types/statusWriter";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
+
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
 import { SettingTopic, type SettingManager } from "../../framework/SettingManager/SettingManager";
-import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
+import type { UpdateFuncWithNoUpdate } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
 
@@ -28,7 +32,7 @@ export class Dependency<
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings>,
 > {
-    private _updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>;
+    private _updateFunc: UpdateFuncWithNoUpdate<TReturnValue, TSettings, TSettingTypes, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
     private _isLoading = false;
@@ -51,10 +55,12 @@ export class Dependency<
     private _numParentDependencies = 0;
     private _numChildDependencies = 0;
 
+    private _statusStore = new GenericStatusMessageStore("Dependency");
+
     constructor(
         localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>,
         globalSettingGetter: <K extends keyof GlobalSettings>(key: K) => GlobalSettings[K] | null,
-        updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>,
+        updateFunc: UpdateFuncWithNoUpdate<TReturnValue, TSettings, TSettingTypes, TKey>,
         makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void,
         localSettingLoadingStateGetter: <K extends TKey>(key: K) => boolean,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
@@ -72,11 +78,13 @@ export class Dependency<
         this.getGlobalSetting = this.getGlobalSetting.bind(this);
         this.getLocalSetting = this.getLocalSetting.bind(this);
         this.getHelperDependency = this.getHelperDependency.bind(this);
+        this.getStatusWriter = this.getStatusWriter.bind(this);
     }
 
     beforeDestroy() {
         this._abortController?.abort();
         this._abortController = null;
+        this._statusStore.clear();
         this._dependencies.clear();
         this._loadingDependencies.clear();
     }
@@ -114,6 +122,18 @@ export class Dependency<
         return () => {
             this._loadingDependencies.delete(callback);
         };
+    }
+
+    getStatusMessages() {
+        return this._statusStore.getMessages();
+    }
+
+    getStatusWriter(): StatusWriter {
+        return this._statusStore;
+    }
+
+    getStatusMessageStore(): PublishSubscribeStatusMessageStore {
+        return this._statusStore;
     }
 
     private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] {
@@ -235,10 +255,16 @@ export class Dependency<
                 getLocalSetting: this.getLocalSetting,
                 getGlobalSetting: this.getGlobalSetting,
                 getHelperDependency: this.getHelperDependency,
+                getStatusWriter: this.getStatusWriter,
                 abortSignal: this._abortController.signal,
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
+
+            const errorHelper = ApiErrorHelper.fromError(error);
+            if (errorHelper) {
+                this._statusStore.addError(errorHelper?.makeFullErrorMessage());
+            }
         }
 
         // If there are no dependencies, we can call the update function
@@ -253,6 +279,7 @@ export class Dependency<
         if (!this._isLoading) {
             this.setLoadingState(true);
         }
+
         this.callUpdateFunc();
     }
 
@@ -263,6 +290,7 @@ export class Dependency<
         }
 
         this._abortController = new AbortController();
+        this._statusStore.clear();
 
         let newValue: Awaited<TReturnValue> | null | NoUpdate = null;
         try {
@@ -270,6 +298,7 @@ export class Dependency<
                 getLocalSetting: this.getLocalSetting,
                 getGlobalSetting: this.getGlobalSetting,
                 getHelperDependency: this.getHelperDependency,
+                getStatusWriter: this.getStatusWriter,
                 abortSignal: this._abortController.signal,
             });
         } catch (e: any) {
@@ -281,10 +310,17 @@ export class Dependency<
                 return;
             }
 
-            if (!isCancelledError(e)) {
-                this.applyNewValue(null);
+            if (isCancelledError(e)) {
                 return;
             }
+
+            this.applyNewValue(null);
+
+            const errorHelper = ApiErrorHelper.fromError(e);
+            if (errorHelper) {
+                this._statusStore.addError(errorHelper?.makeFullErrorMessage());
+            }
+
             return;
         }
 
