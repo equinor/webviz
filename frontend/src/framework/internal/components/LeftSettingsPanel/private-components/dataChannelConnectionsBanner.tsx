@@ -1,14 +1,11 @@
 import React from "react";
 
-import { CallMade, CallReceived } from "@mui/icons-material";
-
 import { GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
 import { useConnectionGroupColors } from "@framework/internal/components/useConnectionGroupColors";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import { ChannelManagerNotificationTopic } from "@framework/internal/DataChannels/ChannelManager";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
-import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { useActiveDashboard } from "../../ActiveDashboardBoundary";
@@ -32,36 +29,29 @@ type DownstreamInfo = {
 };
 
 /**
- * Shows a persistent banner in the module settings panel indicating:
- * - Which modules this module RECEIVES data from (for submodules/receivers)
- * - Which modules this module SENDS data to (for main/producer modules)
- *
- * Clicking on a module name navigates to that module's settings.
+ * Shows compact colored cards for each data channel connection.
+ * Each card shows a channel name + connected module, colored by connection group.
+ * Hovering highlights the connected module on the dashboard.
+ * Clicking navigates to that module's settings.
  */
 export const DataChannelConnectionsBanner: React.FC<DataChannelConnectionsBannerProps> = (props) => {
     const dashboard = useActiveDashboard();
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const connectionGroupMap = useConnectionGroupColors();
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const [, forceRerender] = React.useReducer((x: number) => x + 1, 0);
 
-    // Subscribe to channel manager state changes to re-render when connections change
     React.useEffect(() => {
         const channelManager = props.moduleInstance.getChannelManager();
-        const unsub = channelManager.subscribe(
-            ChannelManagerNotificationTopic.STATE,
-            forceRerender,
-        );
+        const unsub = channelManager.subscribe(ChannelManagerNotificationTopic.STATE, forceRerender);
         return unsub;
     }, [props.moduleInstance, forceRerender]);
 
-    // Also subscribe to all module instances' channel manager state changes
-    // so we can track downstream connections
     React.useEffect(() => {
         const unsubs: (() => void)[] = [];
         for (const instance of moduleInstances) {
-            const channelManager = instance.getChannelManager();
-            unsubs.push(channelManager.subscribe(ChannelManagerNotificationTopic.STATE, forceRerender));
+            unsubs.push(instance.getChannelManager().subscribe(ChannelManagerNotificationTopic.STATE, forceRerender));
         }
         return () => unsubs.forEach((fn) => fn());
     }, [moduleInstances, forceRerender]);
@@ -73,10 +63,7 @@ export const DataChannelConnectionsBanner: React.FC<DataChannelConnectionsBanner
         return null;
     }
 
-    // Build a lookup: for a given source→receiver channel connection, find the group color.
-    // A group is defined by (publisherInstanceId, channelDisplayName).
     function getColorForConnection(publisherInstanceId: string, channelDisplayName: string): string | null {
-        // Look up the publisher's connection info and find the group matching this channel
         const pubInfo = connectionGroupMap.get(publisherInstanceId);
         if (!pubInfo) return null;
         const group = pubInfo.groups.find(
@@ -87,7 +74,6 @@ export const DataChannelConnectionsBanner: React.FC<DataChannelConnectionsBanner
 
     function handleNavigateToModule(moduleInstanceId: string) {
         dashboard.setActiveModuleInstanceId(moduleInstanceId);
-        const guiMessageBroker = props.workbench.getGuiMessageBroker();
         guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
         const currentWidth = guiMessageBroker.getState(GuiState.LeftSettingsPanelWidthInPercent);
         if (currentWidth <= 5) {
@@ -95,119 +81,108 @@ export const DataChannelConnectionsBanner: React.FC<DataChannelConnectionsBanner
         }
     }
 
+    function handleHighlight(moduleInstanceId: string) {
+        guiMessageBroker.setState(GuiState.HighlightedModuleInstanceId, moduleInstanceId);
+    }
+
+    function handleUnhighlight() {
+        guiMessageBroker.setState(GuiState.HighlightedModuleInstanceId, null);
+    }
+
     return (
-        <div className="flex flex-col gap-1.5 mb-3">
-            {incomingConnections.length > 0 && (
-                <div
-                    className="rounded p-2 text-xs border"
-                    style={makeSectionStyle(incomingConnections.map((c) => getColorForConnection(c.sourceModuleInstanceId, c.channelDisplayName)))}
-                >
-                    <div
-                        className="flex items-center gap-1 mb-1 font-semibold"
-                        style={makeSectionTextStyle(incomingConnections.map((c) => getColorForConnection(c.sourceModuleInstanceId, c.channelDisplayName)))}
-                    >
-                        <CallReceived style={{ fontSize: 14 }} />
-                        <span>Receives data from:</span>
-                    </div>
-                    <div className="flex flex-col gap-1 ml-5">
-                        {incomingConnections.map((conn, idx) => {
-                            const color = getColorForConnection(conn.sourceModuleInstanceId, conn.channelDisplayName);
-                            return (
-                                <Tooltip
-                                    key={idx}
-                                    title={`Click to view settings for "${conn.sourceModuleTitle}". Channel: ${conn.channelDisplayName}`}
-                                >
-                                    <button
-                                        className="text-left rounded px-1.5 py-0.5 transition-colors cursor-pointer font-medium underline decoration-dotted underline-offset-2 flex items-center gap-1.5"
-                                        style={makeItemStyle(color)}
-                                        onClick={() => handleNavigateToModule(conn.sourceModuleInstanceId)}
-                                    >
-                                        {color && (
-                                            <span
-                                                className="inline-block w-2 h-2 rounded-full shrink-0"
-                                                style={{ border: `1.5px solid ${color}`, backgroundColor: "transparent" }}
-                                            />
-                                        )}
-                                        {conn.sourceModuleTitle}
-                                        <span style={{ opacity: 0.7 }} className="font-normal ml-1">
-                                            ({conn.channelDisplayName})
-                                        </span>
-                                    </button>
-                                </Tooltip>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-            {outgoingConnections.length > 0 && (
-                <div
-                    className="rounded p-2 text-xs border"
-                    style={makeSectionStyle(outgoingConnections.map((c) => getColorForConnection(props.moduleInstance.getId(), c.channelDisplayName)))}
-                >
-                    <div
-                        className="flex items-center gap-1 mb-1 font-semibold"
-                        style={makeSectionTextStyle(outgoingConnections.map((c) => getColorForConnection(props.moduleInstance.getId(), c.channelDisplayName)))}
-                    >
-                        <CallMade style={{ fontSize: 14 }} />
-                        <span>Sends data to:</span>
-                    </div>
-                    <div className="flex flex-col gap-1 ml-5">
-                        {outgoingConnections.map((conn, idx) => {
-                            const color = getColorForConnection(props.moduleInstance.getId(), conn.channelDisplayName);
-                            return (
-                                <Tooltip
-                                    key={idx}
-                                    title={`Click to view settings for "${conn.targetModuleTitle}". Channel: ${conn.channelDisplayName}`}
-                                >
-                                    <button
-                                        className="text-left rounded px-1.5 py-0.5 transition-colors cursor-pointer font-medium underline decoration-dotted underline-offset-2 flex items-center gap-1.5"
-                                        style={makeItemStyle(color)}
-                                        onClick={() => handleNavigateToModule(conn.targetModuleInstanceId)}
-                                    >
-                                        {color && (
-                                            <span
-                                                className="inline-block w-2 h-2 rounded-full shrink-0"
-                                                style={{ backgroundColor: color }}
-                                            />
-                                        )}
-                                        {conn.targetModuleTitle}
-                                        <span style={{ opacity: 0.7 }} className="font-normal ml-1">
-                                            ({conn.channelDisplayName})
-                                        </span>
-                                    </button>
-                                </Tooltip>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
+        <div className="flex flex-col gap-1 mb-3">
+            {incomingConnections.map((conn, idx) => {
+                const color = getColorForConnection(conn.sourceModuleInstanceId, conn.channelDisplayName);
+                return (
+                    <ConnectionCard
+                        key={`in-${idx}`}
+                        direction="in"
+                        moduleName={conn.sourceModuleTitle}
+                        channelName={conn.channelDisplayName}
+                        color={color}
+                        onClick={() => handleNavigateToModule(conn.sourceModuleInstanceId)}
+                        onMouseEnter={() => handleHighlight(conn.sourceModuleInstanceId)}
+                        onMouseLeave={handleUnhighlight}
+                    />
+                );
+            })}
+            {outgoingConnections.map((conn, idx) => {
+                const color = getColorForConnection(props.moduleInstance.getId(), conn.channelDisplayName);
+                return (
+                    <ConnectionCard
+                        key={`out-${idx}`}
+                        direction="out"
+                        moduleName={conn.targetModuleTitle}
+                        channelName={conn.channelDisplayName}
+                        color={color}
+                        onClick={() => handleNavigateToModule(conn.targetModuleInstanceId)}
+                        onMouseEnter={() => handleHighlight(conn.targetModuleInstanceId)}
+                        onMouseLeave={handleUnhighlight}
+                    />
+                );
+            })}
         </div>
     );
 };
 
-/**
- * Creates inline styles for a banner section background, using the first available
- * connection group color at low opacity. Falls back to neutral gray.
- */
-function makeSectionStyle(colors: (string | null)[]): React.CSSProperties {
-    const color = colors.find((c) => c != null);
-    if (!color) return { backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }; // slate-50 / slate-200
-    return {
-        backgroundColor: hexToRgba(color, 0.08),
-        borderColor: hexToRgba(color, 0.25),
-    };
+// ---------------------------------------------------------------------------
+// Compact connection card
+// ---------------------------------------------------------------------------
+
+type ConnectionCardProps = {
+    direction: "in" | "out";
+    moduleName: string;
+    channelName: string;
+    color: string | null;
+    onClick: () => void;
+    onMouseEnter: () => void;
+    onMouseLeave: () => void;
+};
+
+function ConnectionCard(props: ConnectionCardProps): React.ReactNode {
+    const color = props.color ?? "#94a3b8"; // slate-400 fallback
+    const isIncoming = props.direction === "in";
+    const arrow = isIncoming ? "←" : "→";
+    const label = isIncoming ? "from" : "to";
+
+    return (
+        <button
+            className="flex items-center gap-1.5 w-full text-left text-xs rounded cursor-pointer transition-all hover:brightness-95 active:scale-[0.99]"
+            style={{
+                backgroundColor: hexToRgba(color, 0.08),
+                border: `1px solid ${hexToRgba(color, 0.25)}`,
+                padding: "4px 8px",
+            }}
+            onClick={props.onClick}
+            onMouseEnter={props.onMouseEnter}
+            onMouseLeave={props.onMouseLeave}
+            title={`Click to open settings. Channel: ${props.channelName}`}
+        >
+            <span
+                className="shrink-0 font-mono text-[0.65rem] leading-none"
+                style={{ color }}
+            >
+                {arrow}
+            </span>
+            <span
+                className="shrink-0 font-medium truncate"
+                style={{ color: darken(color, 0.25), maxWidth: "55%" }}
+            >
+                {props.moduleName}
+            </span>
+            <span
+                className="truncate opacity-60"
+                style={{ color: darken(color, 0.15) }}
+            >
+                {label} {props.channelName}
+            </span>
+        </button>
+    );
 }
 
-function makeSectionTextStyle(colors: (string | null)[]): React.CSSProperties {
-    const color = colors.find((c) => c != null);
-    if (!color) return { color: "#475569" }; // slate-600
-    return { color: darken(color, 0.3) };
-}
-
-function makeItemStyle(color: string | null): React.CSSProperties {
-    if (!color) return { color: "#334155" }; // slate-700
-    return { color: darken(color, 0.25) };
-}
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function hexToRgba(hex: string, alpha: number): string {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -216,7 +191,6 @@ function hexToRgba(hex: string, alpha: number): string {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-/** Darken a hex color by mixing towards black. amount 0 = unchanged, 1 = black. */
 function darken(hex: string, amount: number): string {
     const r = Math.round(parseInt(hex.slice(1, 3), 16) * (1 - amount));
     const g = Math.round(parseInt(hex.slice(3, 5), 16) * (1 - amount));

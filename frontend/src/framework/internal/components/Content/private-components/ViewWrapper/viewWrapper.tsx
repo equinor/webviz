@@ -64,13 +64,17 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const connectionGroupColors = useConnectionGroupColors();
     const connectionInfo = connectionGroupColors.get(props.moduleInstance.getId());
 
+    // Hover-highlight from settings panel connection cards
+    const highlightedModuleInstanceId = useGuiValue(guiMessageBroker, GuiState.HighlightedModuleInstanceId);
+    const isHighlighted = highlightedModuleInstanceId === props.moduleInstance.getId();
+
     const timeRef = React.useRef<number | null>(null);
     const pointerDown = React.useRef<boolean>(false);
 
     // "Active path" flash: when a connected module becomes active, briefly flash this module's border
     const [flashColor, setFlashColor] = React.useState<string | null>(null);
     const [flashPhase, setFlashPhase] = React.useState<"on" | "fading">("on");
-    const prevActiveRef = React.useRef<string | null>(null);
+    const prevActiveRef = React.useRef<string | null>(activeModuleInstanceId);
 
     React.useEffect(() => {
         if (!activeModuleInstanceId || activeModuleInstanceId === prevActiveRef.current) {
@@ -243,11 +247,12 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 >
                     <div
                         className={resolveClassNames(
-                            "absolute w-full h-full z-10 inset-0 bg-transparent box-border border-solid pointer-events-none",
+                            "absolute w-full h-full z-10 inset-0 bg-transparent box-border border-solid pointer-events-none rounded-sm transition-shadow",
                             {
-                                "border-2 border-blue-500": showAsActive && !flashColor,
-                                "border-2 border-transparent": !showAsActive && !flashColor,
+                                "border-[2.5px] border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]": showAsActive && !flashColor && !isHighlighted,
+                                "border-2 border-transparent": !showAsActive && !flashColor && !isHighlighted,
                                 "border-[3px]": !!flashColor,
+                                "border-[2.5px]": isHighlighted && !flashColor,
                             },
                         )}
                         style={
@@ -259,7 +264,12 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                                               ? "border-color 0.05s ease-in"
                                               : "border-color 0.6s ease-out",
                                   }
-                                : undefined
+                                : isHighlighted && connectionInfo?.colors[0]
+                                  ? {
+                                        borderColor: connectionInfo.colors[0],
+                                        boxShadow: `0 0 12px ${hexToRgba(connectionInfo.colors[0], 0.5)}`,
+                                    }
+                                  : undefined
                         }
                     />
                     <div className={resolveClassNames("flex flex-col grow min-w-0 min-h-0", { "p-1": !props.isMinimized })}>
@@ -283,3 +293,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         </>
     );
 };
+
+function hexToRgba(hex: string, alpha: number): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}

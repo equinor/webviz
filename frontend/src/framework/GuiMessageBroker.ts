@@ -47,6 +47,7 @@ export enum GuiState {
     SessionSnapshotOverviewDialogMode = "sessionSnapshotOverviewDialogMode",
     EnsemblesLoadingErrorInfoMap = "ensemblesLoadingErrorInfoMap",
     EnsembleLoadingErrorInfoDialogOpen = "ensembleLoadingErrorInfoDialogOpen",
+    HighlightedModuleInstanceId = "highlightedModuleInstanceId",
 }
 
 export enum GuiEvent {
@@ -138,6 +139,7 @@ type GuiStateValueTypes = {
     [GuiState.SessionSnapshotOverviewDialogMode]: "sessions" | "snapshots";
     [GuiState.EnsemblesLoadingErrorInfoMap]: EnsembleLoadingErrorInfoMap;
     [GuiState.EnsembleLoadingErrorInfoDialogOpen]: boolean;
+    [GuiState.HighlightedModuleInstanceId]: string | null;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -165,6 +167,7 @@ defaultStates.set(GuiState.SessionSnapshotOverviewDialogOpen, false);
 defaultStates.set(GuiState.SessionSnapshotOverviewDialogMode, "sessions");
 defaultStates.set(GuiState.EnsemblesLoadingErrorInfoMap, {});
 defaultStates.set(GuiState.EnsembleLoadingErrorInfoDialogOpen, false);
+defaultStates.set(GuiState.HighlightedModuleInstanceId, null);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,
