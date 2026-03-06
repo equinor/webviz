@@ -30,7 +30,6 @@ import { Representation } from "../../../settings/implementations/Representation
 
 import {
     resolveEnsembleConstraints,
-    resolveRealizationConstraints,
     resolveSensitivityConstraints,
     resolveStatisticFunctionConstraints,
 } from "./_commonSettingsUpdaters";
@@ -141,13 +140,14 @@ export class DepthSurfaceProvider
 
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read({ read }) {
-                return {
-                    fieldIdentifier: read.globalSetting("fieldId"),
-                    ensembles: read.globalSetting("ensembles"),
-                };
+                return { fieldId: read.globalSetting("fieldId"), ensembles: read.globalSetting("ensembles") ?? [] };
             },
-            resolve({ fieldIdentifier, ensembles }) {
-                return resolveEnsembleConstraints(fieldIdentifier, ensembles);
+            resolve({ fieldId, ensembles }) {
+                if (!fieldId || ensembles.length === 0) {
+                    return [];
+                }
+
+                return resolveEnsembleConstraints(fieldId, ensembles);
             },
         });
 
@@ -165,7 +165,7 @@ export class DepthSurfaceProvider
             read({ read }) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, abortSignal) {
+            async resolve({ ensembleIdent }, { abortSignal }) {
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -191,7 +191,10 @@ export class DepthSurfaceProvider
                 };
             },
             resolve({ ensembleIdent, realizationFilterFunction }) {
-                return resolveRealizationConstraints(ensembleIdent, realizationFilterFunction);
+                if (!ensembleIdent || !realizationFilterFunction) {
+                    return [];
+                }
+                return [...realizationFilterFunction(ensembleIdent)];
             },
         });
 
@@ -241,7 +244,10 @@ export class DepthSurfaceProvider
                 };
             },
             resolve({ filterFunction, ensembleIdent }) {
-                return resolveRealizationConstraints(ensembleIdent, filterFunction);
+                if (!ensembleIdent || !filterFunction) {
+                    return [];
+                }
+                return [...filterFunction(ensembleIdent)];
             },
         });
 

@@ -53,6 +53,7 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
     wellboreExtensionLength: number,
     workbenchSession: WorkbenchSession,
     queryClient: QueryClient,
+    abortSignal: AbortSignal,
 ): Promise<PolylineWithSectionLengths | null> {
     if (!intersection) {
         return null;
@@ -70,7 +71,7 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
             type: IntersectionType.CUSTOM_POLYLINE,
             polyline: polyline,
         };
-        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification);
+        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification, queryClient, abortSignal);
     }
     if (intersection.type === IntersectionType.WELLBORE) {
         if (!fieldIdentifier) {
@@ -82,9 +83,8 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
             wellboreUuid: intersection.uuid,
             extensionLength: wellboreExtensionLength,
             fieldIdentifier: fieldIdentifier,
-            queryClient,
         };
-        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification);
+        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification, queryClient, abortSignal);
     }
 
     throw new Error(`Unhandled intersection type ${intersection.type}`);

@@ -199,7 +199,7 @@ export class RealizationGridProvider
                     realization: read.localSetting(Setting.REALIZATION),
                 };
             },
-            async resolve({ ensembleIdent, realization }, abortSignal) {
+            async resolve({ ensembleIdent, realization }, { abortSignal }) {
                 if (!ensembleIdent || realization === null) {
                     return null;
                 }
