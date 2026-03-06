@@ -624,6 +624,13 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this._ensembleUpdateMonitor.stopPolling();
 
         this._activeSession = null;
+
+        this.resetGuiStates();
+    }
+
+    private resetGuiStates(): void {
+        this._guiMessageBroker.setState(GuiState.NumberOfEffectiveRealizationFilters, 0);
+        this._guiMessageBroker.setState(GuiState.NumberOfUnsavedRealizationFilters, 0);
     }
 
     // ========== Persistence Operations ==========
