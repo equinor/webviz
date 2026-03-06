@@ -57,20 +57,22 @@ export function useConnectionGroupColors(): Map<string, ModuleConnectionInfo> {
     const dashboard = useActiveDashboard();
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
 
-    const [, forceRerender] = React.useReducer((x: number) => x + 1, 0);
+    const [, bumpConnectionStateVersion] = React.useReducer((x: number) => x + 1, 0);
 
     // Subscribe to all modules' channel manager state changes
     React.useEffect(() => {
         const unsubs: (() => void)[] = [];
         for (const instance of moduleInstances) {
-            unsubs.push(instance.getChannelManager().subscribe(ChannelManagerNotificationTopic.STATE, forceRerender));
+            unsubs.push(
+                instance
+                    .getChannelManager()
+                    .subscribe(ChannelManagerNotificationTopic.STATE, bumpConnectionStateVersion),
+            );
         }
         return () => unsubs.forEach((fn) => fn());
-    }, [moduleInstances, forceRerender]);
+    }, [moduleInstances, bumpConnectionStateVersion]);
 
-    return React.useMemo(() => {
-        return computeConnectionGroups(moduleInstances);
-    }, [moduleInstances, forceRerender]); // eslint-disable-line react-hooks/exhaustive-deps
+    return computeConnectionGroups(moduleInstances);
 }
 
 function computeConnectionGroups(moduleInstances: ModuleInstance<any, any>[]): Map<string, ModuleConnectionInfo> {

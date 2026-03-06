@@ -71,47 +71,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const timeRef = React.useRef<number | null>(null);
     const pointerDown = React.useRef<boolean>(false);
 
-    // "Active path" flash: when a connected module becomes active, briefly flash this module's border
-    const [flashColor, setFlashColor] = React.useState<string | null>(null);
-    const [flashPhase, setFlashPhase] = React.useState<"on" | "fading">("on");
-    const prevActiveRef = React.useRef<string | null>(activeModuleInstanceId);
-
-    React.useEffect(() => {
-        if (!activeModuleInstanceId || activeModuleInstanceId === prevActiveRef.current) {
-            prevActiveRef.current = activeModuleInstanceId;
-            return;
-        }
-        prevActiveRef.current = activeModuleInstanceId;
-
-        // Don't flash the module that was just clicked (it already gets the blue active border)
-        if (activeModuleInstanceId === props.moduleInstance.getId()) return;
-
-        // Check if the newly-active module is connected to this module
-        const activeInfo = connectionGroupColors.get(activeModuleInstanceId);
-        if (!activeInfo || !connectionInfo) return;
-
-        // Find a shared group between this module and the newly-active module
-        const sharedGroup = connectionInfo.groups.find((g) =>
-            activeInfo.groups.some(
-                (ag) => ag.publisherInstanceId === g.publisherInstanceId && ag.channelDisplayName === g.channelDisplayName,
-            ),
-        );
-        if (!sharedGroup) return;
-
-        // Phase 1: flash ON
-        setFlashColor(sharedGroup.color);
-        setFlashPhase("on");
-
-        // Phase 2: start fading after 400ms
-        const fadeTimer = setTimeout(() => setFlashPhase("fading"), 400);
-        // Phase 3: remove after fade completes
-        const removeTimer = setTimeout(() => setFlashColor(null), 1000);
-        return () => {
-            clearTimeout(fadeTimer);
-            clearTimeout(removeTimer);
-        };
-    }, [activeModuleInstanceId, connectionGroupColors, connectionInfo, props.moduleInstance]);
-
     if (props.width !== prevWidth && !props.changingLayout) {
         setPrevWidth(props.width);
     }
@@ -148,6 +107,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         if (dataChannelConnectionsLayerVisible) {
             return;
         }
+        guiMessageBroker.setState(GuiState.HighlightedModuleInstanceId, null);
         if (leftSettingsPanelWidth <= 5) {
             setLeftSettingsPanelWidth(20);
         }
@@ -249,27 +209,18 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         className={resolveClassNames(
                             "absolute w-full h-full z-10 inset-0 bg-transparent box-border border-solid pointer-events-none rounded-sm transition-shadow",
                             {
-                                "border-[2.5px] border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]": showAsActive && !flashColor && !isHighlighted,
-                                "border-2 border-transparent": !showAsActive && !flashColor && !isHighlighted,
-                                "border-[3px]": !!flashColor,
-                                "border-[2.5px]": isHighlighted && !flashColor,
+                                "border-[2.5px] border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]": showAsActive && !isHighlighted,
+                                "border-2 border-transparent": !showAsActive && !isHighlighted,
+                                "border-[2.5px]": isHighlighted,
                             },
                         )}
                         style={
-                            flashColor
+                            isHighlighted && connectionInfo?.colors[0]
                                 ? {
-                                      borderColor: flashPhase === "on" ? flashColor : "transparent",
-                                      transition:
-                                          flashPhase === "on"
-                                              ? "border-color 0.05s ease-in"
-                                              : "border-color 0.6s ease-out",
+                                      borderColor: connectionInfo.colors[0],
+                                      boxShadow: `0 0 12px ${hexToRgba(connectionInfo.colors[0], 0.5)}`,
                                   }
-                                : isHighlighted && connectionInfo?.colors[0]
-                                  ? {
-                                        borderColor: connectionInfo.colors[0],
-                                        boxShadow: `0 0 12px ${hexToRgba(connectionInfo.colors[0], 0.5)}`,
-                                    }
-                                  : undefined
+                                : undefined
                         }
                     />
                     <div className={resolveClassNames("flex flex-col grow min-w-0 min-h-0", { "p-1": !props.isMinimized })}>

@@ -205,6 +205,24 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 })}
                 onPointerDown={handlePointerDown}
             >
+                {hasConnections && (
+                    <Tooltip title={connectionTooltip}>
+                        <span className="flex items-center gap-1 mr-2 shrink-0 cursor-help">
+                            {props.connectionInfo!.colors.map((color, i) => (
+                                <span
+                                    key={i}
+                                    className="inline-block rounded-full shrink-0"
+                                    style={{
+                                        width: 10,
+                                        height: 10,
+                                        backgroundColor: color,
+                                        boxShadow: `0 0 0 2px white, 0 0 0 3px ${color}`,
+                                    }}
+                                />
+                            ))}
+                        </span>
+                    </Tooltip>
+                )}
                 <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0" title={title}>
                     {title}
                 </span>
@@ -228,24 +246,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
                         </Tooltip>
                     ))}
                 </>
-                {hasConnections && (
-                    <Tooltip title={connectionTooltip}>
-                        <span className="flex items-center gap-1 ml-1.5 shrink-0 cursor-help">
-                            {props.connectionInfo!.colors.map((color, i) => (
-                                <span
-                                    key={i}
-                                    className="inline-block rounded-full shrink-0"
-                                    style={{
-                                        width: 10,
-                                        height: 10,
-                                        backgroundColor: color,
-                                        boxShadow: `0 0 0 2px white, 0 0 0 3px ${color}`,
-                                    }}
-                                />
-                            ))}
-                        </span>
-                    </Tooltip>
-                )}
             </div>
             <StatusIndicator
                 workbench={props.workbench}
@@ -447,5 +447,3 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 function HeaderSeparator(): React.ReactNode {
     return <div className="bg-slate-300 w-px h-1/2 mx-1" />;
 }
-
-

@@ -56,6 +56,12 @@ export const DataChannelConnectionsBanner: React.FC<DataChannelConnectionsBanner
         return () => unsubs.forEach((fn) => fn());
     }, [moduleInstances, forceRerender]);
 
+    React.useEffect(() => {
+        return () => {
+            guiMessageBroker.setState(GuiState.HighlightedModuleInstanceId, null);
+        };
+    }, [guiMessageBroker]);
+
     const incomingConnections = getIncomingConnections(props.moduleInstance, moduleInstances);
     const outgoingConnections = getOutgoingConnections(props.moduleInstance, moduleInstances);
 
@@ -73,6 +79,7 @@ export const DataChannelConnectionsBanner: React.FC<DataChannelConnectionsBanner
     }
 
     function handleNavigateToModule(moduleInstanceId: string) {
+        guiMessageBroker.setState(GuiState.HighlightedModuleInstanceId, null);
         dashboard.setActiveModuleInstanceId(moduleInstanceId);
         guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
         const currentWidth = guiMessageBroker.getState(GuiState.LeftSettingsPanelWidthInPercent);

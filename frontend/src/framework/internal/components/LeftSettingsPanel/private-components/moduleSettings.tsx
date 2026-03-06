@@ -157,10 +157,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
-                <div
-                    className="flex items-center p-2 h-10 shadow-sm shrink-0"
-                    style={{ backgroundColor: "#f1f5f9" }}
-                >
+                <div className="flex items-center p-2 h-10 shadow-sm shrink-0" style={{ backgroundColor: "#f1f5f9" }}>
                     <SettingsIcon fontSize="small" className="mr-2" />{" "}
                     <span
                         title={props.moduleInstance.getTitle()}
@@ -182,4 +179,3 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         </div>
     );
 };
-
