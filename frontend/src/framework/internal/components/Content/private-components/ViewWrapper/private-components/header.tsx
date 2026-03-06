@@ -159,48 +159,18 @@ export const Header: React.FC<HeaderProps> = (props) => {
     const hasDataReceiver = props.moduleInstance.getChannelManager().getReceivers().length > 0;
     const showDataChannelButtons = !props.isMinimized && !props.isMaximized && (hasDataChannel || hasDataReceiver);
 
-    // Connection-aware header background
-    // Publishers get a stronger tint + a solid left border accent in the group color.
-    // Subscribers get a lighter tint only — no border — so the hierarchy is immediately visible.
     const hasConnections = props.connectionInfo != null && props.connectionInfo.colors.length > 0;
-    let headerBgStyle: React.CSSProperties | undefined;
-
-    if (!hasErrors && !invalidPersistedState && hasConnections) {
-        const info = props.connectionInfo!;
-        const opacity = info.isPublisher ? 0.18 : 0.10;
-        const primaryColor = info.colors[0];
-
-        if (info.colors.length === 1) {
-            headerBgStyle = { backgroundColor: hexToRgba(primaryColor, opacity) };
-        } else {
-            const stops = info.colors
-                .map((c, i, arr) => {
-                    const start = (i / arr.length) * 100;
-                    const end = ((i + 1) / arr.length) * 100;
-                    return `${hexToRgba(c, opacity)} ${start}%, ${hexToRgba(c, opacity)} ${end}%`;
-                })
-                .join(", ");
-            headerBgStyle = { background: `linear-gradient(90deg, ${stops})` };
-        }
-
-        // Publisher: solid left border accent
-        if (info.isPublisher) {
-            headerBgStyle = {
-                ...headerBgStyle,
-                borderLeft: `3px solid ${primaryColor}`,
-            };
-        }
-    }
 
     // Connection tooltip
     let connectionTooltip = "";
     if (hasConnections) {
         const info = props.connectionInfo!;
-        const roleLabel = info.isPublisher && !info.isSubscriber
-            ? "Source module — settings here control connected modules"
-            : info.isSubscriber && !info.isPublisher
-              ? "Receives data from source module"
-              : "Source & receiver";
+        const roleLabel =
+            info.isPublisher && !info.isSubscriber
+                ? "Source module — settings here control connected modules"
+                : info.isSubscriber && !info.isPublisher
+                  ? "Receives data from source module"
+                  : "Source & receiver";
         const lines = [roleLabel];
         for (const entry of info.connectedModuleTitles) {
             const arrow = entry.role === "source" ? "← from" : "→ to";
@@ -219,7 +189,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     "bg-slate-100": !hasErrors && !props.isMinimized && !invalidPersistedState && !hasConnections,
                 },
             )}
-            style={headerBgStyle}
             onDoubleClick={handleDoubleClick}
         >
             <div
@@ -236,16 +205,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 })}
                 onPointerDown={handlePointerDown}
             >
-                {hasConnections && !props.connectionInfo!.isPublisher && props.connectionInfo!.isSubscriber && (
-                    <Tooltip title={connectionTooltip}>
-                        <span
-                            className="shrink-0 text-xs mr-1 cursor-help leading-none"
-                            style={{ color: props.connectionInfo!.colors[0], fontSize: "0.7rem" }}
-                        >
-                            ◂
-                        </span>
-                    </Tooltip>
-                )}
                 <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0" title={title}>
                     {title}
                 </span>
@@ -271,19 +230,17 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </>
                 {hasConnections && (
                     <Tooltip title={connectionTooltip}>
-                        <span className="flex items-center gap-0.5 ml-1 shrink-0 cursor-help">
+                        <span className="flex items-center gap-1 ml-1.5 shrink-0 cursor-help">
                             {props.connectionInfo!.colors.map((color, i) => (
                                 <span
                                     key={i}
-                                    className="inline-block w-2 h-2 rounded-full shrink-0"
-                                    style={
-                                        props.connectionInfo!.isPublisher
-                                            ? { backgroundColor: color }
-                                            : {
-                                                  border: `1.5px solid ${color}`,
-                                                  backgroundColor: "transparent",
-                                              }
-                                    }
+                                    className="inline-block rounded-full shrink-0"
+                                    style={{
+                                        width: 10,
+                                        height: 10,
+                                        backgroundColor: color,
+                                        boxShadow: `0 0 0 2px white, 0 0 0 3px ${color}`,
+                                    }}
                                 />
                             ))}
                         </span>
@@ -491,9 +448,4 @@ function HeaderSeparator(): React.ReactNode {
     return <div className="bg-slate-300 w-px h-1/2 mx-1" />;
 }
 
-function hexToRgba(hex: string, alpha: number): string {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
+

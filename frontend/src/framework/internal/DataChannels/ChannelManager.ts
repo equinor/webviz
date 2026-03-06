@@ -157,6 +157,7 @@ export class ChannelManager {
         }
 
         this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
+        this.notifySubscribers(ChannelManagerNotificationTopic.STATE);
     }
 
     private handleStateChange(): void {

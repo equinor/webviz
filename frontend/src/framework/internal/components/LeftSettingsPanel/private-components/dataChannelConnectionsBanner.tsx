@@ -158,22 +158,13 @@ function ConnectionCard(props: ConnectionCardProps): React.ReactNode {
             onMouseLeave={props.onMouseLeave}
             title={`Click to open settings. Channel: ${props.channelName}`}
         >
-            <span
-                className="shrink-0 font-mono text-[0.65rem] leading-none"
-                style={{ color }}
-            >
+            <span className="shrink-0 font-mono text-[0.65rem] leading-none" style={{ color }}>
                 {arrow}
             </span>
-            <span
-                className="shrink-0 font-medium truncate"
-                style={{ color: darken(color, 0.25), maxWidth: "55%" }}
-            >
+            <span className="shrink-0 font-medium truncate" style={{ color: darken(color, 0.25), maxWidth: "55%" }}>
                 {props.moduleName}
             </span>
-            <span
-                className="truncate opacity-60"
-                style={{ color: darken(color, 0.15) }}
-            >
+            <span className="truncate opacity-60" style={{ color: darken(color, 0.15) }}>
                 {label} {props.channelName}
             </span>
         </button>

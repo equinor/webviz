@@ -4,7 +4,6 @@ import { Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
-import { useConnectionGroupColors } from "@framework/internal/components/useConnectionGroupColors";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import { ImportStatus } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -51,9 +50,6 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     );
 
     const isSerializable = props.moduleInstance.getModule().canBeSerialized();
-
-    const connectionGroupMap = useConnectionGroupColors();
-    const connectionInfo = connectionGroupMap.get(props.moduleInstance.getId());
 
     if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;
@@ -151,16 +147,6 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
 
     const Settings = props.moduleInstance.getSettingsFC();
 
-    const primaryColor = connectionInfo?.colors[0];
-    const isPublisher = connectionInfo != null && connectionInfo.isPublisher;
-    const isSubscriber = connectionInfo != null && connectionInfo.isSubscriber;
-    const hasConnectionColors = connectionInfo != null && connectionInfo.colors.length > 0;
-
-    const settingsHeaderStyle: React.CSSProperties | undefined =
-        hasConnectionColors && primaryColor
-            ? { backgroundColor: hexToRgba(primaryColor, isPublisher ? 0.12 : isSubscriber ? 0.07 : 0.07) }
-            : undefined;
-
     return (
         <div
             key={props.moduleInstance.getId()}
@@ -173,7 +159,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             <ErrorBoundary moduleInstance={props.moduleInstance}>
                 <div
                     className="flex items-center p-2 h-10 shadow-sm shrink-0"
-                    style={settingsHeaderStyle ?? { backgroundColor: "#f1f5f9" }}
+                    style={{ backgroundColor: "#f1f5f9" }}
                 >
                     <SettingsIcon fontSize="small" className="mr-2" />{" "}
                     <span
@@ -189,16 +175,11 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                             moduleInstance={props.moduleInstance}
                             workbench={props.workbench}
                         />
-                        {makeContent()}</div>
+                        {makeContent()}
+                    </div>
                 </div>
             </ErrorBoundary>
         </div>
     );
 };
 
-function hexToRgba(hex: string, alpha: number): string {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}

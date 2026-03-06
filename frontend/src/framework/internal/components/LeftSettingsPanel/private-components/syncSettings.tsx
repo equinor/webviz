@@ -129,18 +129,13 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
                     const someModulesSynced = group.modules.some((m) => m.isSynced);
 
                     return (
-                        <div
-                            key={group.setting}
-                            className="border border-slate-200 rounded bg-white"
-                        >
+                        <div key={group.setting} className="border border-slate-200 rounded bg-white">
                             {/* Sync key header with global toggle */}
                             <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border-b border-slate-200 rounded-t">
                                 <Checkbox
                                     checked={globallySynced}
                                     indeterminate={!globallySynced && someModulesSynced}
-                                    onChange={(e) =>
-                                        handleGlobalSyncSettingChange(group.setting, e.target.checked)
-                                    }
+                                    onChange={(e) => handleGlobalSyncSettingChange(group.setting, e.target.checked)}
                                 />
                                 <Tooltip title="Toggle sync for all modules that support this setting">
                                     <div className="flex items-center gap-1.5 cursor-default">
@@ -165,11 +160,7 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
                                             checked={mod.isSynced}
                                             disabled={globallySynced}
                                             onChange={(e) =>
-                                                handleSyncSettingChange(
-                                                    mod.instanceId,
-                                                    group.setting,
-                                                    e.target.checked,
-                                                )
+                                                handleSyncSettingChange(mod.instanceId, group.setting, e.target.checked)
                                             }
                                         />
                                         <Tooltip title={`Click to view settings for "${mod.title}"`}>
@@ -192,7 +183,11 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     }
 
     return (
-        <Drawer title="Sync settings — All modules" icon={<Link />} visible={drawerContent === LeftDrawerContent.SyncSettings}>
+        <Drawer
+            title="Sync settings — All modules"
+            icon={<Link />}
+            visible={drawerContent === LeftDrawerContent.SyncSettings}
+        >
             {makeContent()}
         </Drawer>
     );

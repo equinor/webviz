@@ -63,9 +63,7 @@ export function useConnectionGroupColors(): Map<string, ModuleConnectionInfo> {
     React.useEffect(() => {
         const unsubs: (() => void)[] = [];
         for (const instance of moduleInstances) {
-            unsubs.push(
-                instance.getChannelManager().subscribe(ChannelManagerNotificationTopic.STATE, forceRerender),
-            );
+            unsubs.push(instance.getChannelManager().subscribe(ChannelManagerNotificationTopic.STATE, forceRerender));
         }
         return () => unsubs.forEach((fn) => fn());
     }, [moduleInstances, forceRerender]);
@@ -75,9 +73,7 @@ export function useConnectionGroupColors(): Map<string, ModuleConnectionInfo> {
     }, [moduleInstances, forceRerender]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
-function computeConnectionGroups(
-    moduleInstances: ModuleInstance<any, any>[],
-): Map<string, ModuleConnectionInfo> {
+function computeConnectionGroups(moduleInstances: ModuleInstance<any, any>[]): Map<string, ModuleConnectionInfo> {
     const result = new Map<string, ModuleConnectionInfo>();
 
     // Initialize empty entries for all modules
@@ -148,7 +144,12 @@ function computeConnectionGroups(
             // Add connected module titles for tooltip
             for (const subId of group.subscriberInstanceIds) {
                 const subInstance = moduleInstances.find((inst) => inst.getId() === subId);
-                if (subInstance && !publisherInfo.connectedModuleTitles.some((t) => t.title === subInstance.getTitle() && t.role === "target")) {
+                if (
+                    subInstance &&
+                    !publisherInfo.connectedModuleTitles.some(
+                        (t) => t.title === subInstance.getTitle() && t.role === "target",
+                    )
+                ) {
                     publisherInfo.connectedModuleTitles.push({
                         title: subInstance.getTitle(),
                         role: "target",
@@ -170,7 +171,12 @@ function computeConnectionGroups(
 
                 // Add connected module title for tooltip
                 const pubInstance = moduleInstances.find((inst) => inst.getId() === group.publisherInstanceId);
-                if (pubInstance && !subInfo.connectedModuleTitles.some((t) => t.title === pubInstance.getTitle() && t.role === "source")) {
+                if (
+                    pubInstance &&
+                    !subInfo.connectedModuleTitles.some(
+                        (t) => t.title === pubInstance.getTitle() && t.role === "source",
+                    )
+                ) {
                     subInfo.connectedModuleTitles.push({
                         title: pubInstance.getTitle(),
                         role: "source",
