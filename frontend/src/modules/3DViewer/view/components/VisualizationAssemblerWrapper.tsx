@@ -6,10 +6,9 @@ import {
     type AccumulatedData,
 } from "@modules/3DViewer/DataProviderFramework/accumulators/polylineIdsAccumulator";
 import { makeIntersectionRealizationGridBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeIntersectionRealizationGridBoundingBox";
-import { makeIntersectionRealizationSeismicBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeIntersectionRealizationSeismicBoundingBox";
-import { makeRealizationSeismicSlicesBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeRealizationSeismicSlicesBoundingBox";
+import { makeIntersectionSeismicBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeIntersectionSeismicBoundingBox";
+import { makeSeismicSlicesBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeSeismicSlicesBoundingBox";
 import { RealizationGridProvider } from "@modules/3DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
-import { RealizationSeismicSlicesProvider } from "@modules/3DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSeismicSlicesProvider";
 import { CustomDataProviderType } from "@modules/3DViewer/DataProviderFramework/customDataProviderTypes";
 import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
@@ -25,8 +24,9 @@ import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFrame
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
 import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/FaultPolygonsProvider";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
-import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
+import { IntersectionSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
+import { SeismicSlicesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/SeismicSlicesProvider";
 import {
     DepthSurfaceProvider,
     type DepthSurfaceSettings,
@@ -105,15 +105,11 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
     },
 );
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    CustomDataProviderType.REALIZATION_SEISMIC_SLICES,
-    RealizationSeismicSlicesProvider,
-    {
-        transformToVisualization: makeSeismicSlicesLayer,
-        transformToAnnotations: makeColorScaleAnnotation,
-        transformToBoundingBox: makeRealizationSeismicSlicesBoundingBox,
-    },
-);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomDataProviderType.SEISMIC_SLICES, SeismicSlicesProvider, {
+    transformToVisualization: makeSeismicSlicesLayer,
+    transformToAnnotations: makeColorScaleAnnotation,
+    transformToBoundingBox: makeSeismicSlicesBoundingBox,
+});
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
     IntersectionRealizationGridProvider,
@@ -125,21 +121,12 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.INTERSECTION_REALIZATION_OBSERVED_SEISMIC,
-    IntersectionRealizationSeismicProvider,
+    DataProviderType.INTERSECTION_SEISMIC,
+    IntersectionSeismicProvider,
     {
         transformToVisualization: makeSeismicIntersectionMeshLayer,
         transformToAnnotations: makeColorScaleAnnotation,
-        transformToBoundingBox: makeIntersectionRealizationSeismicBoundingBox,
-    },
-);
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.INTERSECTION_REALIZATION_SIMULATED_SEISMIC,
-    IntersectionRealizationSeismicProvider,
-    {
-        transformToVisualization: makeSeismicIntersectionMeshLayer,
-        transformToAnnotations: makeColorScaleAnnotation,
-        transformToBoundingBox: makeIntersectionRealizationSeismicBoundingBox,
+        transformToBoundingBox: makeIntersectionSeismicBoundingBox,
     },
 );
 

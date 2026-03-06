@@ -336,7 +336,9 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 
     const handleSaveClick = () => {
-        props.workbench.getSessionManager().saveActiveSession(true);
+        // The save button is disabled on new sessions, so the "maybe"
+        // is technically unnecessary, but we'll use it for brevity
+        props.workbench.getSessionManager().maybeSaveSession();
     };
 
     const handleSaveAsClick = () => {
