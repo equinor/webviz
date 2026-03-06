@@ -49,6 +49,10 @@ export class Channel {
         return this._kindOfKey;
     }
 
+    numActiveConnections(): number {
+        return this._subscribersMap.get(ChannelNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE)?.size ?? 0;
+    }
+
     getContents(): ChannelContent[] {
         return this._contents;
     }

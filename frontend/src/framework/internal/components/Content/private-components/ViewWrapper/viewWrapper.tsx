@@ -58,8 +58,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         GuiState.DataChannelConnectionLayerVisible,
     );
 
-    const [, setEditDataChannelConnections] = useGuiState(guiMessageBroker, GuiState.EditDataChannelConnections);
-
     const timeRef = React.useRef<number | null>(null);
     const pointerDown = React.useRef<boolean>(false);
 
@@ -122,14 +120,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         handleModuleClick();
     }
 
-    function handleReceiversClick(e: React.PointerEvent<HTMLButtonElement>): void {
-        guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
-            moduleInstanceId: props.moduleInstance.getId(),
-        });
-        setEditDataChannelConnections(true);
-        e.stopPropagation();
-    }
-
     const showAsActive =
         isActive && [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent);
 
@@ -142,7 +132,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 moduleInstance={props.moduleInstance}
                 isDragged={props.isDragged}
                 onPointerDown={handleHeaderPointerDown}
-                onReceiversClick={handleReceiversClick}
             />
         );
     }
