@@ -2,6 +2,7 @@ import React from "react";
 
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import { useConnectionGroupColors } from "@framework/internal/components/useConnectionGroupColors";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
@@ -60,8 +61,52 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     const [, setEditDataChannelConnections] = useGuiState(guiMessageBroker, GuiState.EditDataChannelConnections);
 
+    const connectionGroupColors = useConnectionGroupColors();
+    const connectionInfo = connectionGroupColors.get(props.moduleInstance.getId());
+
     const timeRef = React.useRef<number | null>(null);
     const pointerDown = React.useRef<boolean>(false);
+
+    // "Active path" flash: when a connected module becomes active, briefly flash this module's border
+    const [flashColor, setFlashColor] = React.useState<string | null>(null);
+    const [flashPhase, setFlashPhase] = React.useState<"on" | "fading">("on");
+    const prevActiveRef = React.useRef<string | null>(null);
+
+    React.useEffect(() => {
+        if (!activeModuleInstanceId || activeModuleInstanceId === prevActiveRef.current) {
+            prevActiveRef.current = activeModuleInstanceId;
+            return;
+        }
+        prevActiveRef.current = activeModuleInstanceId;
+
+        // Don't flash the module that was just clicked (it already gets the blue active border)
+        if (activeModuleInstanceId === props.moduleInstance.getId()) return;
+
+        // Check if the newly-active module is connected to this module
+        const activeInfo = connectionGroupColors.get(activeModuleInstanceId);
+        if (!activeInfo || !connectionInfo) return;
+
+        // Find a shared group between this module and the newly-active module
+        const sharedGroup = connectionInfo.groups.find((g) =>
+            activeInfo.groups.some(
+                (ag) => ag.publisherInstanceId === g.publisherInstanceId && ag.channelDisplayName === g.channelDisplayName,
+            ),
+        );
+        if (!sharedGroup) return;
+
+        // Phase 1: flash ON
+        setFlashColor(sharedGroup.color);
+        setFlashPhase("on");
+
+        // Phase 2: start fading after 400ms
+        const fadeTimer = setTimeout(() => setFlashPhase("fading"), 400);
+        // Phase 3: remove after fade completes
+        const removeTimer = setTimeout(() => setFlashColor(null), 1000);
+        return () => {
+            clearTimeout(fadeTimer);
+            clearTimeout(removeTimer);
+        };
+    }, [activeModuleInstanceId, connectionGroupColors, connectionInfo, props.moduleInstance]);
 
     if (props.width !== prevWidth && !props.changingLayout) {
         setPrevWidth(props.width);
@@ -143,6 +188,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 isDragged={props.isDragged}
                 onPointerDown={handleHeaderPointerDown}
                 onReceiversClick={handleReceiversClick}
+                connectionInfo={connectionInfo}
             />
         );
     }
@@ -190,7 +236,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         "relative bg-white h-full w-full flex flex-col box-border shadow-sm border border-slate-100",
                         {
                             "cursor-grabbing select-none": props.isDragged,
-                            "p-1": !props.isMinimized,
                         },
                     )}
                     onPointerDown={handlePointerDown}
@@ -198,13 +243,26 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 >
                     <div
                         className={resolveClassNames(
-                            "absolute w-full h-full z-10 inset-0 bg-transparent box-border border-solid border-2 pointer-events-none",
+                            "absolute w-full h-full z-10 inset-0 bg-transparent box-border border-solid pointer-events-none",
                             {
-                                "border-blue-500": showAsActive,
-                                "border-transparent": !showAsActive,
+                                "border-2 border-blue-500": showAsActive && !flashColor,
+                                "border-2 border-transparent": !showAsActive && !flashColor,
+                                "border-[3px]": !!flashColor,
                             },
                         )}
+                        style={
+                            flashColor
+                                ? {
+                                      borderColor: flashPhase === "on" ? flashColor : "transparent",
+                                      transition:
+                                          flashPhase === "on"
+                                              ? "border-color 0.05s ease-in"
+                                              : "border-color 0.6s ease-out",
+                                  }
+                                : undefined
+                        }
                     />
+                    <div className={resolveClassNames("flex flex-col grow min-w-0 min-h-0", { "p-1": !props.isMinimized })}>
                     {makeHeader()}
                     <div
                         className={resolveClassNames("grow overflow-auto h-0", {
@@ -218,6 +276,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                             moduleInstance={props.moduleInstance}
                             workbench={props.workbench}
                         />
+                    </div>
                     </div>
                 </div>
             </div>

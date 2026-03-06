@@ -4,6 +4,7 @@ import { Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
+import { useConnectionGroupColors } from "@framework/internal/components/useConnectionGroupColors";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import { ImportStatus } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -24,6 +25,8 @@ import { useActiveSession } from "../../ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
+
+import { DataChannelConnectionsBanner } from "./dataChannelConnectionsBanner";
 
 type ModuleSettingsProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -48,6 +51,9 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     );
 
     const isSerializable = props.moduleInstance.getModule().canBeSerialized();
+
+    const connectionGroupMap = useConnectionGroupColors();
+    const connectionInfo = connectionGroupMap.get(props.moduleInstance.getId());
 
     if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;
@@ -144,6 +150,17 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     }
 
     const Settings = props.moduleInstance.getSettingsFC();
+
+    const primaryColor = connectionInfo?.colors[0];
+    const isPublisher = connectionInfo != null && connectionInfo.isPublisher;
+    const isSubscriber = connectionInfo != null && connectionInfo.isSubscriber;
+    const hasConnectionColors = connectionInfo != null && connectionInfo.colors.length > 0;
+
+    const settingsHeaderStyle: React.CSSProperties | undefined =
+        hasConnectionColors && primaryColor
+            ? { backgroundColor: hexToRgba(primaryColor, isPublisher ? 0.12 : isSubscriber ? 0.07 : 0.07) }
+            : undefined;
+
     return (
         <div
             key={props.moduleInstance.getId()}
@@ -154,7 +171,10 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
-                <div className="flex justify-center items-center p-2 bg-slate-100 h-10 shadow-sm">
+                <div
+                    className="flex items-center p-2 h-10 shadow-sm shrink-0"
+                    style={settingsHeaderStyle ?? { backgroundColor: "#f1f5f9" }}
+                >
                     <SettingsIcon fontSize="small" className="mr-2" />{" "}
                     <span
                         title={props.moduleInstance.getTitle()}
@@ -164,9 +184,21 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                     </span>
                 </div>
                 <div className="flex flex-col gap-4 overflow-auto grow">
-                    <div className="p-2 grow">{makeContent()}</div>
+                    <div className="p-2 grow">
+                        <DataChannelConnectionsBanner
+                            moduleInstance={props.moduleInstance}
+                            workbench={props.workbench}
+                        />
+                        {makeContent()}</div>
                 </div>
             </ErrorBoundary>
         </div>
     );
 };
+
+function hexToRgba(hex: string, alpha: number): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
