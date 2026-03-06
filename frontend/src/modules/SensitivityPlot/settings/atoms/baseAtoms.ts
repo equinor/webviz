@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing/types";
+import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 import { DisplayComponentType, SensitivityScaling } from "@modules/SensitivityPlot/typesAndEnums";
 import { ColorBy } from "@modules/SensitivityPlot/view/components/sensitivityChartFigure";
 
