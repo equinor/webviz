@@ -1,4 +1,4 @@
-package utils
+package middleware
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 // SlogBackedGinLogger returns a Gin middleware that logs requests using the provided slog.Logger.
 func SlogBackedGinLogger(targetSlogLogger *slog.Logger) gin.HandlerFunc {
 
+	// Use Gin's LoggerWithFormatter to create a custom logging middleware
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 
 		msgText := fmt.Sprintf("[GIN] %3d | %-4s %#v", param.StatusCode, param.Method, param.Path)

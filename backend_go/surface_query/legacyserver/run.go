@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"surface_query/legacyserver/handlers"
-	"surface_query/utils"
+	"surface_query/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +16,7 @@ func Run() {
 	logger.Info("Starting surface query legacy http server...")
 
 	router := gin.New()
-	router.Use(utils.SlogBackedGinLogger(logger))
+	router.Use(middleware.SlogBackedGinLogger(logger))
 	router.Use(gin.Recovery())
 
 	router.GET("/", handlers.HandleRoot)
