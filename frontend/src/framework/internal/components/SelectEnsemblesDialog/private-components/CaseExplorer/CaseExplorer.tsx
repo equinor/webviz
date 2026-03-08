@@ -127,15 +127,6 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         return sortedCasesQueryData && casesQuery.dataUpdatedAt ? casesQuery.dataUpdatedAt : null;
     }, [sortedCasesQueryData, casesQuery.dataUpdatedAt]);
 
-    const caseTableColumns = React.useMemo(() => {
-        const disabledFilterComponents = {
-            disableAuthorComponent: showOnlyMyCases,
-            disableStatusComponent: showOnlyOfficialCases,
-        };
-
-        return makeCaseTableColumns(currentStatusOptions, disabledFilterComponents);
-    }, [currentStatusOptions, showOnlyMyCases, showOnlyOfficialCases]);
-
     // Ensure selected status is among options, when not showing only official cases
     const statusFilterState = (tableFiltersState["status"] as string[]) ?? null;
     if (
@@ -194,11 +185,6 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         return Array.from(modelNames).sort();
     }, [sortedCasesQueryData]);
 
-    const [selectedModelNames, setSelectedModelNames] = useValidArrayState<string>({
-        initialState: [],
-        validStateArray: casesModelNames,
-        keepStateWhenInvalid: !sortedCasesQueryData, // Requires valid state when data is available, allows invalid while data is fetching
-    });
     const casesModelRevisions = React.useMemo(() => {
         if (!sortedCasesQueryData) {
             return [];
@@ -206,20 +192,21 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
         const modelRevisions = new Set<string>();
         for (const c of sortedCasesQueryData) {
-            if (selectedModelNames.length > 0 && !selectedModelNames.includes(c.modelName)) {
-                continue;
-            }
             modelRevisions.add(c.modelRevision);
         }
 
         return Array.from(modelRevisions).sort();
-    }, [sortedCasesQueryData, selectedModelNames]);
+    }, [sortedCasesQueryData]);
 
-    const [selectedModelRevisions, setSelectedModelRevisions] = useValidArrayState<string>({
-        initialState: [],
-        validStateArray: casesModelRevisions,
-        keepStateWhenInvalid: !sortedCasesQueryData, // Requires valid state when data is available, allows invalid while data is fetching
-    });
+    const caseTableColumns = React.useMemo(() => {
+        const disabledFilterComponents = {
+            disableAuthorComponent: showOnlyMyCases,
+            disableStatusComponent: showOnlyOfficialCases,
+        };
+
+        return makeCaseTableColumns(currentStatusOptions, casesModelNames, casesModelRevisions, disabledFilterComponents);
+    }, [currentStatusOptions, casesModelNames, casesModelRevisions, showOnlyMyCases, showOnlyOfficialCases]);
+
     const caseRowData = React.useMemo(() => {
         if (!sortedCasesQueryData) {
             return [];
@@ -231,15 +218,9 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                 c.ensembles.some((ens) => ens.standardResults.some((res) => selectedStandardResults.includes(res))),
             );
         }
-        if (selectedModelNames.length > 0) {
-            cases = cases.filter((c) => selectedModelNames.includes(c.modelName));
-        }
-        if (selectedModelRevisions.length > 0) {
-            cases = cases.filter((c) => selectedModelRevisions.includes(c.modelRevision));
-        }
 
         return makeCaseRowData(cases);
-    }, [sortedCasesQueryData, selectedStandardResults, selectedModelNames, selectedModelRevisions]);
+    }, [sortedCasesQueryData, selectedStandardResults]);
 
     const currentCaseSelection: CaseSelection | null = React.useMemo(() => {
         if (!selectedCaseUuid) {
@@ -316,8 +297,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     return (
-        <div className="flex flex-col h-full gap-4 min-h-0">
-            <div className="flex flex-row gap-4">
+        <div className="flex flex-col h-full gap-2 min-h-0">
+            <div className="flex flex-row gap-2 items-center flex-wrap">
                 <Label text="Asset" position="left">
                     <PendingWrapper
                         isPending={assetsQuery.isFetching && !assetsQuery.isRefetching}
@@ -331,48 +312,22 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         />
                     </PendingWrapper>
                 </Label>
-                <div className="grow flex flex-row gap-4 items-center">
-                    <Label position="left" text="Only my cases">
-                        <Tooltip title="Show only cases authored by me" enterDelay="medium">
-                            <Switch checked={showOnlyMyCases} onChange={handleCasesByMeChange} />
-                        </Tooltip>
-                    </Label>
-                    <Label position="left" text="Only official cases">
-                        <Tooltip title="Show only cases marked as official" enterDelay="medium">
-                            <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
-                        </Tooltip>
-                    </Label>
-                </div>
-            </div>
-            <div className="flex flex-row gap-4">
+                <Label position="left" text="My cases">
+                    <Tooltip title="Show only cases authored by me" enterDelay="medium">
+                        <Switch checked={showOnlyMyCases} onChange={handleCasesByMeChange} />
+                    </Tooltip>
+                </Label>
+                <Label position="left" text="Official">
+                    <Tooltip title="Show only cases marked as official" enterDelay="medium">
+                        <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
+                    </Tooltip>
+                </Label>
                 <PendingWrapper
                     isPending={casesQuery.isFetching && !casesQuery.isRefetching}
                     errorMessage={casesQuery.error ? "Error loading cases" : undefined}
-                    className="h-full w-full"
+                    className="grow min-w-0"
                 >
-                    <div className="grow flex w-full flex-row gap-4 items-center">
-                        <div className="grow min-w-0">
-                            <Tooltip title="Filter cases by selected model names" enterDelay="medium">
-                                <TagPicker
-                                    className="bg-white"
-                                    placeholder="Model name"
-                                    selection={selectedModelNames}
-                                    tagOptions={casesModelNames.map((elm) => ({ label: elm, value: elm }))}
-                                    onChange={(value) => setSelectedModelNames([...value])}
-                                />
-                            </Tooltip>
-                        </div>
-                        <div className="grow min-w-0">
-                            <Tooltip title="Filter cases by selected model revision" enterDelay="medium">
-                                <TagPicker
-                                    className="bg-white"
-                                    placeholder="Revision"
-                                    selection={selectedModelRevisions}
-                                    tagOptions={casesModelRevisions.map((elm) => ({ label: elm, value: elm }))}
-                                    onChange={(value) => setSelectedModelRevisions([...value])}
-                                />
-                            </Tooltip>
-                        </div>
+                    <div className="flex flex-row gap-2 items-center">
                         <div className="grow min-w-0">
                             <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
                                 <TagPicker

@@ -41,10 +41,6 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<DistributionPlotSettings>,
     view?: never,
   },
-  "DynamicVolumes": {
-    settings?: never,
-    view?: never,
-  },
   "FlowNetwork": {
     settings?: Partial<FlowNetworkSettings>,
     view?: never,

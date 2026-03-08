@@ -4,5 +4,7 @@ export type CaseRowData = {
     description: string;
     author: string;
     status: string;
+    modelName: string;
+    modelRevision: string;
     dateUtcMs: number;
 };
