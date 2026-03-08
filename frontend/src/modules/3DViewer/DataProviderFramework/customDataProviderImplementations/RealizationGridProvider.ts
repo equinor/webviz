@@ -2,9 +2,8 @@ import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOption
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
-    AreSettingsValidArgs,
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -70,7 +69,7 @@ export class RealizationGridProvider
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<RealizationGridSettings, RealizationGridData>): [number, number] | null {
+    }: DataProviderAccessors<RealizationGridSettings, RealizationGridData>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -143,7 +142,7 @@ export class RealizationGridProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: AreSettingsValidArgs<RealizationGridSettings, RealizationGridData>): boolean {
+    }: DataProviderAccessors<RealizationGridSettings, RealizationGridData>): boolean {
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&

@@ -5,9 +5,11 @@ import type {
     InplaceVolumesIndexWithValues_api,
     InplaceVolumesTableDataPerFluidSelection_api,
 } from "@api";
-import { postGetAggregatedPerRealizationTableDataOptions, postGetAggregatedStatisticalTableDataOptions } from "@api";
+import {
+    postGetAggregatedPerRealizationInplaceTableDataOptions,
+    postGetAggregatedStatisticalInplaceTableDataOptions,
+} from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import type {
     InplaceVolumesStatisticalTableData,
@@ -55,7 +57,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
-        const options = postGetAggregatedStatisticalTableDataOptions({
+        const options = postGetAggregatedStatisticalInplaceTableDataOptions({
             query: {
                 ensemble_name: source.ensembleIdent.getEnsembleName(),
                 case_uuid: source.ensembleIdent.getCaseUuid(),
@@ -63,7 +65,6 @@ export function useGetAggregatedStatisticalTableDataQueries(
                 result_names: resultNames,
                 group_by_indices: validGroupByIndices,
                 realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(source.ensembleIdent),
             },
             body: {
                 indices_with_values: indicesWithValues,
@@ -73,12 +74,12 @@ export function useGetAggregatedStatisticalTableDataQueries(
             ...options,
             enabled: Boolean(
                 allowEnable &&
-                    source.ensembleIdent &&
-                    source.tableName &&
-                    validRealizationsEncodedAsUintListStr &&
-                    validRealizations?.length &&
-                    resultNames.length &&
-                    eachIndexHasValues,
+                source.ensembleIdent &&
+                source.tableName &&
+                validRealizationsEncodedAsUintListStr &&
+                validRealizations?.length &&
+                resultNames.length &&
+                eachIndexHasValues,
             ),
         });
     });
@@ -137,7 +138,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
-        const options = postGetAggregatedPerRealizationTableDataOptions({
+        const options = postGetAggregatedPerRealizationInplaceTableDataOptions({
             query: {
                 ensemble_name: source.ensembleIdent.getEnsembleName(),
                 case_uuid: source.ensembleIdent.getCaseUuid(),
@@ -145,7 +146,6 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                 result_names: resultNames,
                 group_by_indices: validGroupByIndices,
                 realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(source.ensembleIdent),
             },
             body: {
                 indices_with_values: indicesWithValues,
@@ -155,12 +155,12 @@ export function useGetAggregatedPerRealizationTableDataQueries(
             ...options,
             enabled: Boolean(
                 allowEnable &&
-                    source.ensembleIdent &&
-                    source.tableName &&
-                    validRealizationsEncodedAsUintListStr &&
-                    validRealizations?.length &&
-                    resultNames.length &&
-                    eachIndexHasValues,
+                source.ensembleIdent &&
+                source.tableName &&
+                validRealizationsEncodedAsUintListStr &&
+                validRealizations?.length &&
+                resultNames.length &&
+                eachIndexHasValues,
             ),
         });
     });

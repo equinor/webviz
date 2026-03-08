@@ -10,7 +10,7 @@ from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinte
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_browser_cache import no_cache
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 from . import schemas
@@ -21,7 +21,6 @@ router = APIRouter()
 
 
 @router.get("/asset_names")
-@no_cache
 async def get_asset_names(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.AssetInfo]:
@@ -33,8 +32,19 @@ async def get_asset_names(
     return ret_arr
 
 
+@router.get("/field_identifiers")
+async def get_field_identifiers(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> List[schemas.FieldInfo]:
+    """Get list of field identifiers"""
+    sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
+    field_arr = await sumo_inspector.get_field_identifiers_async()
+    ret_arr = [schemas.FieldInfo(fieldIdentifier=field.field_identifier) for field in field_arr]
+
+    return ret_arr
+
+
 @router.get("/cases")
-@no_cache
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     asset_name: str = Query(description="Asset name"),
@@ -71,6 +81,7 @@ async def get_cases(
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
+# @cache_time(CacheTime.NORMAL)
 async def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
@@ -86,10 +97,6 @@ async def get_ensemble_details(
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     standard_results = await case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
 
-    # TODO: Remove
-    if len(field_identifiers) != 1:
-        raise NotImplementedError("Multiple field identifiers not supported")
-
     return schemas.EnsembleDetails(
         name=ensemble_name,
         caseName=case_name,
@@ -97,7 +104,6 @@ async def get_ensemble_details(
         assetName=asset_name,
         realizations=realizations,
         fieldIdentifiers=field_identifiers,
-        # Do we need to check this against smda?
         stratigraphicColumnIdentifier=stratigraphic_column_identifier,
         standardResults=standard_results,
     )

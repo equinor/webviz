@@ -14,7 +14,6 @@ from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary import config
-from primary.middleware.add_browser_cache import no_cache
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,7 +61,6 @@ class AuthHelper:
         self.router.add_api_route(path="/login", endpoint=self._login_route, methods=["GET"])
         self.router.add_api_route(path="/auth-callback", endpoint=self._authorized_callback_route, methods=["GET"])
 
-    @no_cache
     # pylint: disable-next=async-suffix
     async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
         await starsessions.load_session(request)
@@ -91,7 +89,6 @@ class AuthHelper:
 
         return RedirectResponse(flow_dict["auth_uri"])
 
-    @no_cache
     # pylint: disable-next=async-suffix
     async def _authorized_callback_route(self, request: Request) -> Response:
         await starsessions.load_session(request)

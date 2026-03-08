@@ -25,7 +25,7 @@ import type { InterfaceTypes } from "../interfaces";
 import { dataProviderManagerAtom } from "./atoms/baseAtoms";
 import { selectedWellboreHeaderAtom } from "./atoms/derivedAtoms";
 import { selectedFieldIdentAtom, selectedWellboreUuidAtom } from "./atoms/persistableFixableAtoms";
-import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
+import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { ProviderManagerComponentWrapper } from "./components/ProviderManagerComponentWrapper";
 import { ViewerSettings } from "./components/ViewerSettings";
 
@@ -66,10 +66,11 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
         moduleContext: props.settingsContext,
     });
     const providerManager = useAtomValue(dataProviderManagerAtom);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
+    const allFields = useAtomValue(availableFieldsQueryAtom).data ?? [];
 
     // Field selection
     const [selectedField, setSelectedField] = useAtom(selectedFieldIdentAtom);
-    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
 
     // Wellbore selection
     const wellboreHeadersQuery = useAtomValue(drilledWellboreHeadersQueryAtom);
@@ -100,9 +101,15 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     return (
         <div className="flex flex-col h-full gap-1">
             <CollapsibleGroup title="Wellbore" expanded contentClassName="flex flex-col gap-3">
-                <SettingWrapper annotations={fieldSettingAnnotations}>
-                    <FieldDropdown value={selectedField.value} ensembleSet={ensembleSet} onChange={setSelectedField} />
+                <SettingWrapper label="Field" annotations={fieldSettingAnnotations}>
+                    <FieldDropdown
+                        value={selectedField.value}
+                        ensembleSet={ensembleSet}
+                        fallbackFieldList={allFields.map((f) => f.fieldIdentifier)}
+                        onChange={setSelectedField}
+                    />
                 </SettingWrapper>
+
                 <SettingWrapper
                     label="Wellbore"
                     annotations={wellboreSettingAnnotations}

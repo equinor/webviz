@@ -1,6 +1,6 @@
 import type { ViewContext } from "@framework/ModuleContext";
 import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
-import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing/types";
+import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing";
 import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
 import { SensitivityChartFigure } from "../components/sensitivityChartFigure";

@@ -5,14 +5,22 @@ from pydantic import BaseModel
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_core_utils.perf_metrics import PerfMetrics
-
+from webviz_services.service_exceptions import (
+    Service,
+    MultipleDataMatchesError,
+)
 from .sumo_client_factory import create_sumo_client
+
 
 LOGGER = logging.getLogger(__name__)
 
 
 class SumoAsset(BaseModel):
     asset_name: str
+
+
+class FieldIdentifier(BaseModel):
+    field_identifier: str
 
 
 class EnsembleInfo(BaseModel):
@@ -46,6 +54,16 @@ class SumoInspector:
         asset_names = sorted(list(set(asset_names)))
         LOGGER.debug(timer.to_string())
         return [SumoAsset(asset_name=asset_name) for asset_name in asset_names]
+
+    async def get_field_identifiers_async(self) -> List[FieldIdentifier]:
+        """Get list of field identifiers"""
+        timer = PerfMetrics()
+        search_context = SearchContext(self._sumo_client)
+        field_identifiers_arr = await search_context.field_identifiers_async
+        timer.record_lap("get_field_identifiers")
+        field_identifiers = sorted(list(set(field_identifiers_arr)))
+        LOGGER.debug(timer.to_string())
+        return [FieldIdentifier(field_identifier=field_identifier) for field_identifier in field_identifiers]
 
     async def get_cases_async(self, asset_name: str) -> list[CaseInfo]:
         """

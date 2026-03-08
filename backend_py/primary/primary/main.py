@@ -19,7 +19,7 @@ from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
-from primary.middleware.add_browser_cache import AddBrowserCacheMiddleware
+from primary.middleware.cache_control_middleware import CacheControlMiddleware
 from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.routers.dev.router import router as dev_router
 from primary.routers.explore.router import router as explore_router
@@ -41,7 +41,7 @@ from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.router import router as persistence_router
-from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
+from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry_for_primary
 from primary.utils.azure_service_credentials import ClientSecretVars, create_credential_for_azure_services
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
@@ -129,11 +129,8 @@ app = FastAPI(
     lifespan=lifespan_handler_async,
 )
 
-if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
-    LOGGER.info("Configuring Azure Monitor telemetry for primary backend")
-    setup_azure_monitor_telemetry(app)
-else:
-    LOGGER.warning("Skipping telemetry configuration, APPLICATIONINSIGHTS_CONNECTION_STRING env variable not set.")
+# Will setup telemetry when running in Radix, and when running locally if APPLICATIONINSIGHTS_CONNECTION_STRING env variable is set.
+setup_azure_monitor_telemetry_for_primary(app)
 
 
 # The tags we add here will determine the name of the frontend api service for our endpoints as well as
@@ -190,7 +187,7 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")  # type: ignore[ar
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
-app.add_middleware(AddBrowserCacheMiddleware)
+app.add_middleware(CacheControlMiddleware)
 
 
 @app.get("/")

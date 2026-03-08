@@ -7,7 +7,8 @@ import { EnsembleSensitivities, SensitivityType } from "@framework/EnsembleSensi
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
 describe("RegularEnsemble", () => {
-    const fieldIdentifier = "field1";
+    const assetName = "DROGON";
+    const fieldIdentifiers = ["DROGON"];
     const caseUuid = "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa";
     const caseName = "case1";
     const ensembleName = "ensemble1";
@@ -30,7 +31,8 @@ describe("RegularEnsemble", () => {
     const customName = "customName1";
 
     const TEST_ENSEMBLE = new RegularEnsemble(
-        fieldIdentifier,
+        assetName,
+        fieldIdentifiers,
         caseUuid,
         caseName,
         ensembleName,
@@ -46,8 +48,8 @@ describe("RegularEnsemble", () => {
         expect(TEST_ENSEMBLE).toBeInstanceOf(RegularEnsemble);
     });
 
-    test("should return the correct field identifier", () => {
-        expect(TEST_ENSEMBLE.getFieldIdentifier()).toBe(fieldIdentifier);
+    test("should return the correct field identifiers", () => {
+        expect(TEST_ENSEMBLE.getFieldIdentifiers()).toEqual(fieldIdentifiers);
     });
 
     test("should return the correct stratigraphic column identifier", () => {
@@ -107,7 +109,8 @@ describe("RegularEnsemble", () => {
 
     test("should return display name if custom name is not set", () => {
         const ensemble = new RegularEnsemble(
-            fieldIdentifier,
+            assetName,
+            fieldIdentifiers,
             caseUuid,
             caseName,
             ensembleName,
