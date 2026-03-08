@@ -6,17 +6,17 @@ import {
     filterSensitivityResponses,
     sortSensitivityResponses,
     getReferenceSensitivityName,
-} from "./helpers";
-import { processMonteCarloSensitivity } from "./processMontecarlo";
-import { processScenarioSensitivity } from "./processScenario";
-import { type EnsembleScalarResponse, type SensitivityResponseDataset, type SensitivitySortBy } from "./types";
+} from "./_helpers";
+import { processMonteCarloSensitivity } from "./_processMontecarlo";
+import { processScenarioSensitivity } from "./_processScenario";
+import { type EnsemblePerRealizationResponse, type SensitivityResponseDataset, type SensitivitySortBy } from "./types";
 
 // Domain specific thing (Reference realization?). This case name should be ignored.
 const IGNORED_CASE = "ref";
 
 function processSensitivities(
     sensitivities: EnsembleSensitivities,
-    ensembleResponse: EnsembleScalarResponse,
+    ensemblePerRealResponse: EnsemblePerRealizationResponse,
     referenceAverage: number,
 ) {
     return sensitivities
@@ -25,9 +25,9 @@ function processSensitivities(
         .map((sensitivity) => {
             switch (sensitivity.type) {
                 case SensitivityType.SCENARIO:
-                    return processScenarioSensitivity(sensitivity, ensembleResponse, referenceAverage);
+                    return processScenarioSensitivity(sensitivity, ensemblePerRealResponse, referenceAverage);
                 case SensitivityType.MONTECARLO:
-                    return processMonteCarloSensitivity(sensitivity, ensembleResponse, referenceAverage);
+                    return processMonteCarloSensitivity(sensitivity, ensemblePerRealResponse, referenceAverage);
                 default:
                     throw new Error(`Sensitivity type ${sensitivity.type} not supported`);
             }
@@ -36,16 +36,19 @@ function processSensitivities(
 
 export const computeSensitivitiesForResponse = (
     sensitivities: EnsembleSensitivities,
-    ensembleResponse: EnsembleScalarResponse,
+    ensemblePerRealResponse: EnsemblePerRealizationResponse,
     referenceSensitivity: string,
     sensitivitySortBy: SensitivitySortBy,
     hideNoImpactSensitivities: boolean,
 ): SensitivityResponseDataset => {
     const validReferenceSensitivity = getReferenceSensitivityName(sensitivities, referenceSensitivity);
 
-    const referenceAverage = computeReferenceAverage(sensitivities, ensembleResponse, validReferenceSensitivity);
-
-    const processedSensitivityResponses = processSensitivities(sensitivities, ensembleResponse, referenceAverage);
+    const referenceAverage = computeReferenceAverage(sensitivities, ensemblePerRealResponse, validReferenceSensitivity);
+    const processedSensitivityResponses = processSensitivities(
+        sensitivities,
+        ensemblePerRealResponse,
+        referenceAverage,
+    );
 
     const filteredSensitivityResponses = filterSensitivityResponses(
         processedSensitivityResponses,
@@ -60,7 +63,7 @@ export const computeSensitivitiesForResponse = (
         ),
         referenceSensitivity,
         referenceAverage,
-        responseName: ensembleResponse.name,
-        responseUnit: ensembleResponse.unit,
+        responseName: ensemblePerRealResponse.name,
+        responseUnit: ensemblePerRealResponse.unit,
     };
 };

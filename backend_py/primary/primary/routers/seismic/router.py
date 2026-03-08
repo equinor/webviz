@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from webviz_core_utils.b64 import b64_encode_float_array_as_float32
-from webviz_services.sumo_access.seismic_access import SeismicAccess, VdsHandle
+from webviz_services.sumo_access.seismic_access import SeismicAccess, VdsHandle, SeismicRepresentation
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.vds_access.request_types import VdsCoordinates, VdsCoordinateSystem
 from webviz_services.vds_access.response_types import VdsMetadata
@@ -36,123 +36,6 @@ async def get_seismic_cube_meta_list(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@router.get("/get_inline_slice/")
-async def get_inline_slice(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    realization_num: int = Query(description="Realization number"),
-    seismic_attribute: str = Query(description="Seismic cube attribute"),
-    time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    observed: bool = Query(description="Observed or simulated"),
-    inline_number: int = Query(description="Inline number"),
-) -> schemas.SeismicSliceData:
-    """Get a seismic inline from a seismic cube."""
-    seismic_access = SeismicAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-
-    vds_handle: Optional[VdsHandle] = None
-    try:
-        vds_handle = await seismic_access.get_vds_handle_async(
-            realization=realization_num,
-            seismic_attribute=seismic_attribute,
-            time_or_interval_str=time_or_interval_str,
-            observed=observed,
-        )
-    except ValueError as err:
-        raise HTTPException(status_code=404, detail=str(err)) from err
-
-    if vds_handle is None:
-        raise HTTPException(status_code=404, detail="Vds handle not found")
-
-    vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
-
-    flattened_slice_traces_array, metadata = await vds_access.get_inline_slice_async(line_no=inline_number)
-
-    return converters.to_api_vds_slice_data(
-        flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
-    )
-
-
-@router.get("/get_crossline_slice/")
-async def get_crossline_slice(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    realization_num: int = Query(description="Realization number"),
-    seismic_attribute: str = Query(description="Seismic cube attribute"),
-    time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    observed: bool = Query(description="Observed or simulated"),
-    crossline_num: int = Query(description="Crossline number"),
-) -> schemas.SeismicSliceData:
-    """Get a seismic crossline from a seismic cube."""
-    seismic_access = SeismicAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-
-    vds_handle: Optional[VdsHandle] = None
-    try:
-        vds_handle = await seismic_access.get_vds_handle_async(
-            realization=realization_num,
-            seismic_attribute=seismic_attribute,
-            time_or_interval_str=time_or_interval_str,
-            observed=observed,
-        )
-    except ValueError as err:
-        raise HTTPException(status_code=404, detail=str(err)) from err
-
-    if vds_handle is None:
-        raise HTTPException(status_code=404, detail="Vds handle not found")
-
-    vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
-
-    flattened_slice_traces_array, metadata = await vds_access.get_crossline_slice_async(line_no=crossline_num)
-
-    return converters.to_api_vds_slice_data(
-        flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
-    )
-
-
-@router.get("/get_depth_slice/")
-async def get_depth_slice(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    realization_num: int = Query(description="Realization number"),
-    seismic_attribute: str = Query(description="Seismic cube attribute"),
-    time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    observed: bool = Query(description="Observed or simulated"),
-    depth_slice_num: int = Query(description="Depth slice number"),
-) -> schemas.SeismicSliceData:
-    """Get a seismic depth slice from a seismic cube."""
-    seismic_access = SeismicAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-
-    vds_handle: Optional[VdsHandle] = None
-    try:
-        vds_handle = await seismic_access.get_vds_handle_async(
-            realization=realization_num,
-            seismic_attribute=seismic_attribute,
-            time_or_interval_str=time_or_interval_str,
-            observed=observed,
-        )
-    except ValueError as err:
-        raise HTTPException(status_code=404, detail=str(err)) from err
-
-    if vds_handle is None:
-        raise HTTPException(status_code=404, detail="Vds handle not found")
-
-    vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
-
-    flattened_slice_traces_array, metadata = await vds_access.get_depth_slice_async(depth_slice_no=depth_slice_num)
-
-    return converters.to_api_vds_slice_data(
-        flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
-    )
-
-
 @router.get("/get_seismic_slices/")
 @cache_time(CacheTime.LONG)
 # pylint: disable=too-many-arguments
@@ -163,7 +46,7 @@ async def get_seismic_slices(
     realization_num: int = Query(description="Realization number"),
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    observed: bool = Query(description="Observed or simulated"),
+    representation: schemas.SeismicRepresentation = Query(description="Seismic representation"),
     inline_number: int = Query(description="Inline number"),
     crossline_number: int = Query(description="Crossline number"),
     depth_slice_number: int = Query(description="Depth slice number"),
@@ -179,7 +62,7 @@ async def get_seismic_slices(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
-            observed=observed,
+            representation=SeismicRepresentation(representation.value),
         )
     except ValueError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
@@ -210,7 +93,7 @@ async def post_get_seismic_fence(
     realization_num: int = Query(description="Realization number"),
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
-    observed: bool = Query(description="Observed or simulated"),
+    representation: schemas.SeismicRepresentation = Query(description="Seismic representation"),
     polyline: schemas.SeismicFencePolyline = Body(embed=True),
 ) -> schemas.SeismicFenceData:
     """Get a fence of seismic data from a polyline defined by a set of (x, y) coordinates in domain coordinate system.
@@ -231,7 +114,7 @@ async def post_get_seismic_fence(
             realization=realization_num,
             seismic_attribute=seismic_attribute,
             time_or_interval_str=time_or_interval_str,
-            observed=observed,
+            representation=SeismicRepresentation(representation.value),
         )
     except ValueError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err

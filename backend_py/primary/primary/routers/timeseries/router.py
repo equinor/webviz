@@ -7,7 +7,6 @@ import pyarrow.compute as pc
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from webviz_services.summary_vector_statistics import compute_vector_statistics
-from webviz_services.sumo_access.generic_types import EnsembleScalarResponse
 from webviz_services.sumo_access.parameter_access import ParameterAccess
 from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
@@ -291,25 +290,6 @@ async def get_delta_ensemble_realizations_vector_data(
     return ret_arr
 
 
-@router.get("/timestamps_list/")
-async def get_timestamps_list(
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
-    ensemble_name: Annotated[str, Query(description="Ensemble name")],
-    resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency")] = None,
-) -> list[int]:
-    """Get the intersection of available timestamps.
-        Note that when resampling_frequency is None, the pure intersection of the
-    stored raw dates will be returned. Thus the returned list of dates will not include
-    dates from long running realizations.
-    For other resampling frequencies, the date range will be expanded to cover the entire
-    time range of all the requested realizations before computing the resampled dates.
-    """
-    access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    return await access.get_timestamps_async(resampling_frequency=sumo_freq)
-
-
 @router.get("/historical_vector_data/")
 @cache_time(CacheTime.LONG)
 # type: ignore [empty-body]
@@ -570,25 +550,6 @@ async def get_statistical_vector_data_per_sensitivity(
             )
             ret_data.append(sensitivity_statistic_data)
     return ret_data
-
-
-@router.get("/realization_vector_at_timestamp/")
-async def get_realization_vector_at_timestamp(
-    # fmt:off
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
-    ensemble_name:  Annotated[str, Query(description="Ensemble name")],
-    vector_name: Annotated[str, Query(description="Name of the vector")],
-    timestamp_utc_ms: Annotated[int, Query(description= "Timestamp in ms UTC to query vectors at")],
-    # fmt:on
-) -> EnsembleScalarResponse:
-    summary_access = SummaryAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-    ensemble_response = await summary_access.get_vector_values_at_timestamp_async(
-        vector_name=vector_name, timestamp_utc_ms=timestamp_utc_ms, realizations=None
-    )
-    return ensemble_response
 
 
 def _create_vector_descriptions_for_derived_vectors(
