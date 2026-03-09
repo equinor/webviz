@@ -38,7 +38,7 @@ jobs:
         with:
           path: frontend/node_modules
           key: ${{ runner.os }}-npm-${{ hashFiles('frontend/package-lock.json') }}
-        restore-keys: ${{ runner.os }}-npm-
+          restore-keys: ${{ runner.os }}-npm-
 
       - name: 📦 Install build dependencies
         working-directory: ./frontend
