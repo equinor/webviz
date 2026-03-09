@@ -1,6 +1,6 @@
 import { atomWithQuery } from "jotai-tanstack-query";
 
-import { getRealizationDataOptions, getTableDefinitionOptions } from "@api";
+import { getRftRealizationDataOptions, getRftTableDefinitionOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import {
@@ -14,7 +14,7 @@ export const rftTableDefinitionAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
 
     const query = {
-        ...getTableDefinitionOptions({
+        ...getRftTableDefinitionOptions({
             query: {
                 case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
@@ -33,7 +33,7 @@ export const rftRealizationDataQueryAtom = atomWithQuery((get) => {
     const selectedRftTimestampsUtcMs = get(selectedRftTimestampsUtcMsAtom);
 
     const query = {
-        ...getRealizationDataOptions({
+        ...getRftRealizationDataOptions({
             query: {
                 case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
@@ -45,9 +45,9 @@ export const rftRealizationDataQueryAtom = atomWithQuery((get) => {
         }),
         enabled: Boolean(
             selectedEnsembleIdent?.getCaseUuid() &&
-                selectedEnsembleIdent?.getEnsembleName() &&
-                selectedWellName &&
-                selectedResponseName,
+            selectedEnsembleIdent?.getEnsembleName() &&
+            selectedWellName &&
+            selectedResponseName,
         ),
     };
     return query;
