@@ -18,6 +18,7 @@ import {
     isValidNumber,
     isValidViewport,
 } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
+import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
@@ -25,7 +26,7 @@ import { ReadoutWrapper } from "./ReadoutWrapper";
 const DISPLACEMENT_FACTOR = 1.4; // Factor to increase the viewport displacement when fitting in view
 
 export type ViewportWrapperProps = {
-    wellboreHeaderUuid: string | null;
+    intersectionSource: IntersectionSettingValue | null;
     referenceSystem?: IntersectionReferenceSystem;
     layerItems: LayerItem[];
     layerItemIdToNameMap: Record<string, string>;
@@ -230,7 +231,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
             <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
                 <ReadoutWrapper
-                    wellboreHeaderUuid={props.wellboreHeaderUuid}
+                    intersectionSource={props.intersectionSource}
                     showGrid={showGrid}
                     verticalScale={verticalScale}
                     referenceSystem={props.referenceSystem ?? undefined}
