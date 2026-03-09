@@ -1,8 +1,9 @@
 import type { KeyKind } from "@framework/types/dataChannnel";
 
 import type { ChannelContentDefinition } from "./ChannelContent";
-import { ChannelContent, ChannelContentNotificationTopic } from "./ChannelContent";
+import { ChannelContent } from "./ChannelContent";
 import type { ChannelManager } from "./ChannelManager";
+import type { Transmitter, Receiver } from "./types";
 
 export interface ChannelDefinition {
     readonly idString: string;
@@ -11,17 +12,21 @@ export interface ChannelDefinition {
 }
 
 export enum ChannelNotificationTopic {
-    CONTENTS_ARRAY_CHANGE = "contents-array-change",
-    CONTENTS_DATA_ARRAY_CHANGE = "contents-data-arrays-change",
-    CHANNEL_ABOUT_TO_BE_REMOVED = "channel-about-to-be-removed",
+    RECEIVERS_ARRAY_CHANGED = "receivers-array-changed",
 }
 
-export class Channel {
+export type ChannelNotificationTopicPayload = {
+    [ChannelNotificationTopic.RECEIVERS_ARRAY_CHANGED]: Receiver[];
+};
+
+export class Channel implements Transmitter {
     private _idString: string;
     private _displayName: string;
     private _kindOfKey: KeyKind;
     private _manager: ChannelManager;
     private _contents: ChannelContent[] = [];
+
+    private _receivers: Receiver[] = [];
     private _subscribersMap: Map<ChannelNotificationTopic, Set<() => void>> = new Map();
 
     constructor(manager: ChannelManager, def: ChannelDefinition) {
@@ -30,7 +35,7 @@ export class Channel {
         this._displayName = def.displayName;
         this._kindOfKey = def.kindOfKey;
 
-        this.handleContentDataArraysChange = this.handleContentDataArraysChange.bind(this);
+        this.notifyContentDataArraysChange = this.notifyContentDataArraysChange.bind(this);
     }
 
     getIdString(): string {
@@ -49,16 +54,38 @@ export class Channel {
         return this._kindOfKey;
     }
 
-    numActiveConnections(): number {
-        return this._subscribersMap.get(ChannelNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE)?.size ?? 0;
+    numberOfReceivers(): number {
+        return this._receivers.length;
     }
 
     getContents(): ChannelContent[] {
         return this._contents;
     }
 
-    private handleContentDataArraysChange(): void {
-        this.notifySubscribers(ChannelNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE);
+    connectReceiver(receiver: Receiver): void {
+        this._receivers.push(receiver);
+        this.notifySubscribers(ChannelNotificationTopic.RECEIVERS_ARRAY_CHANGED);
+    }
+
+    disconnectReceiver(receiver: Receiver): void {
+        this._receivers = this._receivers.filter((recv) => recv !== receiver);
+        this.notifySubscribers(ChannelNotificationTopic.RECEIVERS_ARRAY_CHANGED);
+    }
+
+    closeChannel() {
+        this.notifyChannelAboutToBeRemoved();
+    }
+
+    private notifyChannelContentsArrayChange(): void {
+        this._receivers.forEach((recv) => recv.onContentsArrayChange());
+    }
+
+    private notifyContentDataArraysChange(): void {
+        this._receivers.forEach((recv) => recv.onContentDataArrayChange());
+    }
+
+    private notifyChannelAboutToBeRemoved(): void {
+        this._receivers.forEach((recv) => recv.onChannelAboutToBeRemoved());
     }
 
     replaceContents(contentDefinitions: ChannelContentDefinition[]): void {
@@ -66,12 +93,11 @@ export class Channel {
 
         for (const contentDefinition of contentDefinitions) {
             const content = new ChannelContent({ ...contentDefinition });
-            content.subscribe(ChannelContentNotificationTopic.DATA_ARRAY_CHANGE, this.handleContentDataArraysChange);
             this._contents.push(content);
         }
 
-        this.notifySubscribers(ChannelNotificationTopic.CONTENTS_ARRAY_CHANGE);
-        this.notifySubscribers(ChannelNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE);
+        this.notifyChannelContentsArrayChange();
+        this.notifyContentDataArraysChange();
     }
 
     subscribe(topic: ChannelNotificationTopic, callback: () => void): void {
@@ -102,9 +128,5 @@ export class Channel {
         for (const subscriber of topicSubscribers) {
             subscriber();
         }
-    }
-
-    notifySubscribersOfChannelAboutToBeRemoved(): void {
-        this.notifySubscribers(ChannelNotificationTopic.CHANNEL_ABOUT_TO_BE_REMOVED);
     }
 }

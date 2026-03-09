@@ -1,8 +1,8 @@
 import type { KeyKind } from "@framework/types/dataChannnel";
 
 import type { Channel } from "./Channel";
-import { ChannelNotificationTopic } from "./Channel";
 import type { ChannelManager } from "./ChannelManager";
+import type { ContentIdStrings, Receiver } from "./types";
 
 export interface ChannelReceiverDefinition {
     readonly idString: string;
@@ -16,7 +16,7 @@ export enum ChannelReceiverNotificationTopic {
     CHANNEL_CHANGE = "channel-change",
 }
 
-export class ChannelReceiver {
+export class ChannelReceiver implements Receiver {
     private readonly _manager: ChannelManager;
     private readonly _idString: string;
     private readonly _displayName: string;
@@ -33,52 +33,10 @@ export class ChannelReceiver {
         this._displayName = def.displayName;
         this._supportedKindsOfKeys = def.supportedKindsOfKeys;
         this._supportsMultiContents = def.supportsMultiContents ?? false;
-
-        this.handleChannelRemove = this.handleChannelRemove.bind(this);
-        this.handleContentsDataArrayChange = this.handleContentsDataArrayChange.bind(this);
-        this.handleContentsArrayChange = this.handleContentsArrayChange.bind(this);
     }
 
     getManager(): ChannelManager {
         return this._manager;
-    }
-
-    subscribeToChannel(channel: Channel, contentIdStrings: string[] | "All"): void {
-        if (this.hasActiveSubscription()) {
-            this.unsubscribeFromCurrentChannel();
-        }
-
-        this._channel = channel;
-        if (contentIdStrings === "All") {
-            if (this._supportsMultiContents) {
-                this._contentIdStrings = channel.getContents().map((p) => p.getIdString());
-            } else {
-                const firstContent = channel.getContents().at(0);
-                if (firstContent) {
-                    this._contentIdStrings = [firstContent.getIdString()];
-                } else {
-                    this._contentIdStrings = [];
-                }
-            }
-            this._subscribedToAllContents = true;
-
-            this._channel.subscribe(ChannelNotificationTopic.CONTENTS_ARRAY_CHANGE, this.handleContentsArrayChange);
-        } else {
-            this._contentIdStrings = contentIdStrings;
-            this._subscribedToAllContents = false;
-
-            this._channel.unsubscribe(ChannelNotificationTopic.CONTENTS_ARRAY_CHANGE, this.handleContentsArrayChange);
-        }
-
-        this._channel.subscribe(ChannelNotificationTopic.CHANNEL_ABOUT_TO_BE_REMOVED, this.handleChannelRemove);
-        this._channel.subscribe(
-            ChannelNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE,
-            this.handleContentsDataArrayChange,
-        );
-        this._channel.subscribe(ChannelNotificationTopic.CONTENTS_ARRAY_CHANGE, this.handleContentsDataArrayChange);
-
-        this.notifySubscribers(ChannelReceiverNotificationTopic.CHANNEL_CHANGE);
-        this.notifySubscribers(ChannelReceiverNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE);
     }
 
     getChannel(): Channel | null {
@@ -97,20 +55,6 @@ export class ChannelReceiver {
         return this._contentIdStrings;
     }
 
-    unsubscribeFromCurrentChannel(): void {
-        if (this._channel) {
-            this._channel.unsubscribe(ChannelNotificationTopic.CHANNEL_ABOUT_TO_BE_REMOVED, this.handleChannelRemove);
-            this._channel.unsubscribe(
-                ChannelNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE,
-                this.handleContentsDataArrayChange,
-            );
-            this._channel.unsubscribe(ChannelNotificationTopic.CONTENTS_ARRAY_CHANGE, this.handleContentsArrayChange);
-            this._channel = null;
-            this._contentIdStrings = [];
-            this.notifySubscribers(ChannelReceiverNotificationTopic.CHANNEL_CHANGE);
-        }
-    }
-
     hasActiveSubscription(): boolean {
         return this._channel !== null;
     }
@@ -125,6 +69,60 @@ export class ChannelReceiver {
 
     getSupportedKindsOfKeys(): readonly KeyKind[] {
         return this._supportedKindsOfKeys;
+    }
+
+    setContentSelection(contentIdStrings: ContentIdStrings): void {
+        if (!this._channel) throw Error("No active channel subscription");
+
+        if (contentIdStrings === "all") {
+            const contents = this._supportsMultiContents
+                ? this._channel.getContents()
+                : this._channel.getContents().slice(0, 1);
+
+            this._contentIdStrings = contents.map((p) => p.getIdString());
+            this._subscribedToAllContents = true;
+        } else {
+            this._contentIdStrings = contentIdStrings;
+            this._subscribedToAllContents = false;
+        }
+    }
+
+    connectToChannel(channel: Channel, contentIdStrings: ContentIdStrings): void {
+        if (this.hasActiveSubscription()) {
+            this.disconnectFromCurrentChannel();
+        }
+
+        this._channel = channel;
+        this._channel.connectReceiver(this);
+        this.setContentSelection(contentIdStrings);
+
+        this.notifySubscribers(ChannelReceiverNotificationTopic.CHANNEL_CHANGE);
+    }
+
+    onContentsArrayChange(): void {
+        if (this._subscribedToAllContents) this.setContentSelection("all");
+        else this.setContentSelection(this._contentIdStrings);
+    }
+
+    onContentDataArrayChange(): void {
+        this.notifySubscribers(ChannelReceiverNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE);
+    }
+
+    onChannelAboutToBeRemoved(): void {
+        this._channel = null;
+        this._contentIdStrings = [];
+        this._subscribedToAllContents = false;
+        this.notifySubscribers(ChannelReceiverNotificationTopic.CHANNEL_CHANGE);
+    }
+
+    disconnectFromCurrentChannel(): void {
+        if (this._channel) {
+            this._channel.disconnectReceiver(this);
+            this._channel = null;
+            this._contentIdStrings = [];
+            this._subscribedToAllContents = false;
+            this.notifySubscribers(ChannelReceiverNotificationTopic.CHANNEL_CHANGE);
+        }
     }
 
     subscribe(topic: ChannelReceiverNotificationTopic, callback: () => void): () => void {
@@ -148,35 +146,6 @@ export class ChannelReceiver {
 
         for (const subscriber of topicSubscribers) {
             subscriber();
-        }
-    }
-
-    private handleChannelRemove(): void {
-        this._channel?.unsubscribe(ChannelNotificationTopic.CHANNEL_ABOUT_TO_BE_REMOVED, this.handleChannelRemove);
-        this._channel?.unsubscribe(
-            ChannelNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE,
-            this.handleContentsDataArrayChange,
-        );
-        this._channel?.unsubscribe(ChannelNotificationTopic.CONTENTS_ARRAY_CHANGE, this.handleContentsArrayChange);
-        this._channel = null;
-        this._contentIdStrings = [];
-        this.notifySubscribers(ChannelReceiverNotificationTopic.CHANNEL_CHANGE);
-    }
-
-    private handleContentsDataArrayChange(): void {
-        this.notifySubscribers(ChannelReceiverNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE);
-    }
-
-    private handleContentsArrayChange(): void {
-        if (this._supportsMultiContents) {
-            this._contentIdStrings = this._channel?.getContents().map((p) => p.getIdString()) ?? [];
-        } else {
-            const firstContent = this._channel?.getContents().at(0);
-            if (firstContent) {
-                this._contentIdStrings = [firstContent.getIdString()];
-            } else {
-                this._contentIdStrings = [];
-            }
         }
     }
 }

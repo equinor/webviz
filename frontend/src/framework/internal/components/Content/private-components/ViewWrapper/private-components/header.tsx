@@ -12,6 +12,7 @@ import {
     useGuiValue,
 } from "@framework/GuiMessageBroker";
 import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import { ChannelManagerNotificationTopic } from "@framework/internal/DataChannels/ChannelManager";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -282,16 +283,29 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
     const dataChannelOriginRef = React.useRef<HTMLButtonElement>(null);
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
+    const channelManager = props.moduleInstance.getChannelManager();
 
-    const dataChannels = props.moduleInstance.getChannelManager().getChannels();
-    const dataReceivers = props.moduleInstance.getChannelManager().getReceivers();
+    const dataChannels = React.useSyncExternalStore(
+        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.CHANNELS_CHANGE, cb),
+        () => channelManager.getChannels(),
+    );
+    const dataReceivers = React.useSyncExternalStore(
+        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.RECEIVERS_CHANGE, cb),
+        () => channelManager.getReceivers(),
+    );
+    const numIncomingConnections = React.useSyncExternalStore(
+        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.CONNECTION_STATE_CHANGE, cb),
+        () => channelManager.getNumberOfIncomingConnections(),
+    );
+
+    const numOutgoingConnections = React.useSyncExternalStore(
+        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.CONNECTION_STATE_CHANGE, cb),
+        () => channelManager.getNumberOfOutgoingConnections(),
+    );
 
     const hasDataChannel = dataChannels.length > 0;
     const hasDataReceiver = dataReceivers.length > 0;
     const showDataChannelButtons = !props.isMinimized && !props.isMaximized && (hasDataChannel || hasDataReceiver);
-
-    const numOutgoingConnections = dataChannels.reduce((acc, channel) => acc + channel.numActiveConnections(), 0);
-    const numIncomingConnections = dataReceivers.filter((receiver) => receiver.hasActiveSubscription()).length;
 
     function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
         if (!dataChannelOriginRef.current) return;
