@@ -204,7 +204,12 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
             disableStatusComponent: showOnlyOfficialCases,
         };
 
-        return makeCaseTableColumns(currentStatusOptions, casesModelNames, casesModelRevisions, disabledFilterComponents);
+        return makeCaseTableColumns(
+            currentStatusOptions,
+            casesModelNames,
+            casesModelRevisions,
+            disabledFilterComponents,
+        );
     }, [currentStatusOptions, casesModelNames, casesModelRevisions, showOnlyMyCases, showOnlyOfficialCases]);
 
     const caseRowData = React.useMemo(() => {

@@ -5,10 +5,7 @@ from pydantic import BaseModel
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_core_utils.perf_metrics import PerfMetrics
-from webviz_services.service_exceptions import (
-    Service,
-    MultipleDataMatchesError,
-)
+
 from .sumo_client_factory import create_sumo_client
 
 
@@ -59,7 +56,7 @@ class SumoInspector:
         """Get list of field identifiers"""
         timer = PerfMetrics()
         search_context = SearchContext(self._sumo_client)
-        field_identifiers_arr = await search_context.field_identifiers_async
+        field_identifiers_arr = await search_context.fieldidentifiers_async
         timer.record_lap("get_field_identifiers")
         field_identifiers = sorted(list(set(field_identifiers_arr)))
         LOGGER.debug(timer.to_string())
