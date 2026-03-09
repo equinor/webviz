@@ -2,7 +2,6 @@ import asyncio
 import logging
 from typing import Annotated
 
-import polars as pl
 import pyarrow as pa
 import pyarrow.compute as pc
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
@@ -26,6 +25,10 @@ from webviz_services.summary_derived_vectors import (
     get_total_vector_name,
     is_derived_vector,
     is_total_vector,
+)
+from webviz_services.summary_grouped_vectors import (
+    VectorGroup,
+    compute_grouped_vector_sums,
 )
 
 from primary.auth.auth_helper import AuthHelper
@@ -202,74 +205,6 @@ async def get_realizations_vector_data(
     return ret_arr
 
 
-@router.get("/realizations_vectors_data/")
-@cache_time(CacheTime.LONG)
-async def get_realizations_vectors_data(
-    # fmt:off
-    response: Response,
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
-    ensemble_name:  Annotated[str, Query(description="Ensemble name")],
-    vector_names:  Annotated[list[str], Query(description="List of vector names, e.g. ROIP:1, ROIP:2")],
-    resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, raw data without resampling will be returned.")] = None,
-    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
-    # fmt:on
-) -> list[schemas.VectorRealizationsData]:
-    """Get vector data per realization for multiple vectors.
-
-    Returns one entry per requested vector, each containing the shared
-    timestamp grid and a value array per realization.  The frontend can
-    then aggregate (e.g. sum across FIPNUM regions) as needed.
-    """
-
-    perf_metrics = ResponsePerfMetrics(response)
-
-    realizations: list[int] | None = None
-    if realizations_encoded_as_uint_list_str:
-        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
-
-    access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-
-    df = await access.get_vectors_table_async(
-        vector_names=vector_names,
-        resampling_frequency=sumo_freq,
-        realizations=realizations,
-    )
-    perf_metrics.record_lap("get-vectors")
-
-    # The DataFrame has columns: DATE, REAL, <vector_name_1>, <vector_name_2>, ...
-    # After resampling all realizations share the same date grid.
-    # The table is already sorted by REAL then DATE from the access layer.
-    ret_arr: list[schemas.VectorRealizationsData] = []
-
-    # Group once by realization — the df is sorted by REAL then DATE already
-    grouped = df.sort(["REAL", "DATE"]).group_by("REAL", maintain_order=True)
-    groups = grouped.agg(pl.all())  # columns: REAL, DATE (list), vec1 (list), vec2 (list), ...
-
-    unique_reals: list[int] = groups["REAL"].to_list()
-    timestamps: list[int] = groups["DATE"][0].cast(int).to_list()
-
-    for vec_name in vector_names:
-        if vec_name not in groups.columns:
-            continue
-
-        values_per_real: list[list[float]] = groups[vec_name].to_list()
-
-        ret_arr.append(
-            schemas.VectorRealizationsData(
-                vectorName=vec_name,
-                realizations=unique_reals,
-                timestampsUtcMs=timestamps,
-                valuesPerRealization=values_per_real,
-            )
-        )
-
-    perf_metrics.record_lap("convert-data")
-    LOGGER.info(f"Loaded multi-vector realization data in: {perf_metrics.to_string()}")
-    return ret_arr
-
-
 @router.post("/grouped_realizations_vectors_data/")
 @cache_time(CacheTime.LONG)
 async def post_grouped_realizations_vectors_data(
@@ -293,13 +228,7 @@ async def post_grouped_realizations_vectors_data(
     perf_metrics = ResponsePerfMetrics(response)
 
     # Collect all unique vector names across all groups
-    all_vector_names: list[str] = []
-    seen: set[str] = set()
-    for group in groups:
-        for vn in group.vectorNames:
-            if vn not in seen:
-                all_vector_names.append(vn)
-                seen.add(vn)
+    all_vector_names: list[str] = list(dict.fromkeys(vn for group in groups for vn in group.vectorNames))
 
     access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
@@ -311,52 +240,21 @@ async def post_grouped_realizations_vectors_data(
     )
     perf_metrics.record_lap("get-vectors")
 
-    grouped = df.sort(["REAL", "DATE"]).group_by("REAL", maintain_order=True)
-    agg_groups = grouped.agg(pl.all())
-
-    unique_reals: list[int] = agg_groups["REAL"].to_list()
-    timestamps: list[int] = agg_groups["DATE"][0].cast(int).to_list()
-    num_reals = len(unique_reals)
-
-    ret_entries: list[schemas.GroupedVectorEntry] = []
-
-    for group in groups:
-        # Collect columns that exist in the data
-        cols = [vn for vn in group.vectorNames if vn in agg_groups.columns]
-        if len(cols) == 0:
-            # All-zero group — omit from response to save payload
-            continue
-        elif len(cols) == 1:
-            values_per_real = agg_groups[cols[0]].to_list()
-        else:
-            # Sum columns element-wise across all vectors in the group
-            list_arrays = [agg_groups[c].to_list() for c in cols]
-            values_per_real = []
-            for r in range(num_reals):
-                row: list[float] = [0.0] * len(timestamps)
-                for la in list_arrays:
-                    for t in range(len(timestamps)):
-                        row[t] += la[r][t]
-                values_per_real.append(row)
-
-        # Skip groups where all values are zero (no production/injection)
-        is_all_zero = all(v == 0.0 for row in values_per_real for v in row)
-        if is_all_zero:
-            continue
-
-        ret_entries.append(
-            schemas.GroupedVectorEntry(
-                groupLabel=group.groupLabel,
-                valuesPerRealization=values_per_real,
-            )
-        )
-
+    service_groups = [VectorGroup(group_label=g.groupLabel, vector_names=g.vectorNames) for g in groups]
+    result = compute_grouped_vector_sums(df, service_groups)
     perf_metrics.record_lap("sum-groups")
+
     LOGGER.info(f"Loaded grouped realization data ({len(groups)} groups) in: {perf_metrics.to_string()}")
     return schemas.GroupedRealizationsVectorData(
-        realizations=unique_reals,
-        timestampsUtcMs=timestamps,
-        groups=ret_entries,
+        realizations=result.realizations,
+        timestampsUtcMs=result.timestamps_utc_ms,
+        groups=[
+            schemas.GroupedVectorEntry(
+                groupLabel=g.group_label,
+                valuesPerRealization=g.values_per_realization,
+            )
+            for g in result.groups
+        ],
     )
 
 
