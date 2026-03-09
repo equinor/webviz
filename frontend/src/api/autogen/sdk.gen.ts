@@ -110,9 +110,6 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataErrors_api,
     GetRealizationsVectorDataResponses_api,
-    GetRealizationsVectorsDataData_api,
-    GetRealizationsVectorsDataErrors_api,
-    GetRealizationsVectorsDataResponses_api,
     GetRftRealizationDataData_api,
     GetRftRealizationDataErrors_api,
     GetRftRealizationDataResponses_api,
@@ -366,28 +363,6 @@ export const getRealizationsVectorData = <ThrowOnError extends boolean = false>(
     >({
         responseType: "json",
         url: "/timeseries/realizations_vector_data/",
-        ...options,
-    });
-
-/**
- * Get Realizations Vectors Data
- *
- * Get vector data per realization for multiple vectors.
- *
- * Returns one entry per requested vector, each containing the shared
- * timestamp grid and a value array per realization.  The frontend can
- * then aggregate (e.g. sum across FIPNUM regions) as needed.
- */
-export const getRealizationsVectorsData = <ThrowOnError extends boolean = false>(
-    options: Options<GetRealizationsVectorsDataData_api, ThrowOnError>,
-) =>
-    (options.client ?? client).get<
-        GetRealizationsVectorsDataResponses_api,
-        GetRealizationsVectorsDataErrors_api,
-        ThrowOnError
-    >({
-        responseType: "json",
-        url: "/timeseries/realizations_vectors_data/",
         ...options,
     });
 

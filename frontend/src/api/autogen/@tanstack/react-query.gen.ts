@@ -48,7 +48,6 @@ import {
     getRealizationFlowNetwork,
     getRealizationSurfacesMetadata,
     getRealizationsVectorData,
-    getRealizationsVectorsData,
     getRftRealizationData,
     getRftTableDefinition,
     getSeismicCubeMetaList,
@@ -196,9 +195,6 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataError_api,
     GetRealizationsVectorDataResponse_api,
-    GetRealizationsVectorsDataData_api,
-    GetRealizationsVectorsDataError_api,
-    GetRealizationsVectorsDataResponse_api,
     GetRftRealizationDataData_api,
     GetRftRealizationDataError_api,
     GetRftRealizationDataResponse_api,
@@ -583,37 +579,6 @@ export const getRealizationsVectorDataOptions = (options: Options<GetRealization
             return data;
         },
         queryKey: getRealizationsVectorDataQueryKey(options),
-    });
-
-export const getRealizationsVectorsDataQueryKey = (options: Options<GetRealizationsVectorsDataData_api>) =>
-    createQueryKey("getRealizationsVectorsData", options);
-
-/**
- * Get Realizations Vectors Data
- *
- * Get vector data per realization for multiple vectors.
- *
- * Returns one entry per requested vector, each containing the shared
- * timestamp grid and a value array per realization.  The frontend can
- * then aggregate (e.g. sum across FIPNUM regions) as needed.
- */
-export const getRealizationsVectorsDataOptions = (options: Options<GetRealizationsVectorsDataData_api>) =>
-    queryOptions<
-        GetRealizationsVectorsDataResponse_api,
-        AxiosError<GetRealizationsVectorsDataError_api>,
-        GetRealizationsVectorsDataResponse_api,
-        ReturnType<typeof getRealizationsVectorsDataQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getRealizationsVectorsData({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getRealizationsVectorsDataQueryKey(options),
     });
 
 export const postGroupedRealizationsVectorsDataQueryKey = (

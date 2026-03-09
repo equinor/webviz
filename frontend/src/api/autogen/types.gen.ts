@@ -2447,34 +2447,6 @@ export type VectorRealizationData_api = {
 };
 
 /**
- * VectorRealizationsData
- *
- * Compact representation of multiple vectors across realizations.
- *
- * All realizations share the same resampled timestamp grid.
- * ``valuesPerRealization`` is indexed as ``[real_idx][timestep_idx]``
- * where ``real_idx`` corresponds to ``realizations[real_idx]``.
- */
-export type VectorRealizationsData_api = {
-    /**
-     * Vectorname
-     */
-    vectorName: string;
-    /**
-     * Realizations
-     */
-    realizations: Array<number>;
-    /**
-     * Timestampsutcms
-     */
-    timestampsUtcMs: Array<number>;
-    /**
-     * Valuesperrealization
-     */
-    valuesPerRealization: Array<Array<number>>;
-};
-
-/**
  * VectorStatisticData
  */
 export type VectorStatisticData_api = {
@@ -3529,67 +3501,6 @@ export type GetRealizationsVectorDataResponses_api = {
 
 export type GetRealizationsVectorDataResponse_api =
     GetRealizationsVectorDataResponses_api[keyof GetRealizationsVectorDataResponses_api];
-
-export type GetRealizationsVectorsDataData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Vector Names
-         *
-         * List of vector names, e.g. ROIP:1, ROIP:2
-         */
-        vector_names: Array<string>;
-        /**
-         * Resampling Frequency
-         *
-         * Resampling frequency. If not specified, raw data without resampling will be returned.
-         */
-        resampling_frequency?: Frequency_api | null;
-        /**
-         * Realizations Encoded As Uint List Str
-         *
-         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
-         */
-        realizations_encoded_as_uint_list_str?: string | null;
-        zCacheBust?: string;
-    };
-    url: "/timeseries/realizations_vectors_data/";
-};
-
-export type GetRealizationsVectorsDataErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetRealizationsVectorsDataError_api =
-    GetRealizationsVectorsDataErrors_api[keyof GetRealizationsVectorsDataErrors_api];
-
-export type GetRealizationsVectorsDataResponses_api = {
-    /**
-     * Response Get Realizations Vectors Data
-     *
-     * Successful Response
-     */
-    200: Array<VectorRealizationsData_api>;
-};
-
-export type GetRealizationsVectorsDataResponse_api =
-    GetRealizationsVectorsDataResponses_api[keyof GetRealizationsVectorsDataResponses_api];
 
 export type PostGroupedRealizationsVectorsDataData_api = {
     body: BodyPostGroupedRealizationsVectorsData_api;
