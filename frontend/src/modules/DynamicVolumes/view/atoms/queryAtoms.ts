@@ -14,8 +14,7 @@ import { vectorGroupDefsAtom } from "./derivedAtoms";
  *
  * Fires one POST query per selected ensemble, sending the vector groups
  * computed from colorBy/subplotBy.  The backend sums vectors within each
- * group and returns one VectorRealizationsData per group, dramatically
- * reducing payload size compared to fetching individual regional vectors.
+ * group and returns one VectorRealizationsData per group.
  */
 export const groupedVectorDataQueriesAtom = atomWithQueries((get) => {
     const ensembleIdents = get(ensembleIdentsAtom);

@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { vectorDefinitions } from "@assets/vectorDefinitions";
 
@@ -33,8 +33,9 @@ import {
 import {
     allRegionNamesAtom,
     allZoneNamesAtom,
+    effectiveRegionSelectionModeAtom,
     ensembleFipRegionsAtom,
-    hasFipRegionsDataAtom,
+    fipRegionsDisabledReasonAtom,
     isVectorListFetchingAtom,
     regionalVectorsInfoAtom,
 } from "./atoms/derivedAtoms";
@@ -128,21 +129,22 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedVectorBaseName, setSelectedVectorBaseName] = useAtom(selectedVectorBaseNameAtom);
     const [selectedFipArray, setSelectedFipArray] = useAtom(selectedFipArrayAtom);
     const [selectedRegions, setSelectedRegions] = useAtom(selectedRegionsAtom);
-    const [regionSelectionMode, setRegionSelectionMode] = useAtom(regionSelectionModeAtom);
+    const setRegionSelectionMode = useSetAtom(regionSelectionModeAtom);
     const [selectedZoneNames, setSelectedZoneNames] = useAtom(selectedZoneNamesAtom);
     const [selectedRegionNames, setSelectedRegionNames] = useAtom(selectedRegionNamesAtom);
 
     const isVectorListFetching = useAtomValue(isVectorListFetchingAtom);
     const regionalInfo = useAtomValue(regionalVectorsInfoAtom);
     const ensembleFipRegions = useAtomValue(ensembleFipRegionsAtom);
-    const hasFipRegionsData = useAtomValue(hasFipRegionsDataAtom);
+    const fipRegionsDisabledReason = useAtomValue(fipRegionsDisabledReasonAtom);
+    const effectiveRegionSelectionMode = useAtomValue(effectiveRegionSelectionModeAtom);
     const allZoneNames = useAtomValue(allZoneNamesAtom);
     const allRegionNames = useAtomValue(allRegionNamesAtom);
 
     // ── Derived dimension options ──
 
     const multipleEnsembles = (selectedEnsembleIdents.value ?? []).length > 1;
-    const availableDims = getAvailableDimensions(regionSelectionMode);
+    const availableDims = getAvailableDimensions(effectiveRegionSelectionMode);
 
     // Auto-fix colorBy if current value is not available
     const effectiveColorBy = availableDims.includes(colorBy) ? colorBy : availableDims[0];
@@ -272,8 +274,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const availableRegions = selectedFipArray.value ? (regionalInfo.fipArrays[selectedFipArray.value] ?? []) : [];
 
-    // Show zone/region mode option only when FIP region mapping data is available
-    const showZoneRegionOption = hasFipRegionsData;
+    const zoneRegionDisabled = fipRegionsDisabledReason !== null;
+
+    // Build radio options with per-option disabled state
+    const regionSelectionModeOptionsWithState = regionSelectionModeOptions.map((opt) => ({
+        ...opt,
+        disabled: opt.value === RegionSelectionMode.ZoneRegion ? zoneRegionDisabled : false,
+    }));
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
@@ -342,18 +349,21 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </Label>
                 )}
 
-                {showZoneRegionOption && (
-                    <Label text="Region selection">
+                <Label text="Region selection">
+                    <div>
                         <RadioGroup
-                            options={regionSelectionModeOptions}
-                            value={regionSelectionMode}
+                            options={regionSelectionModeOptionsWithState}
+                            value={effectiveRegionSelectionMode}
                             onChange={handleRegionSelectionModeChange}
                             direction="horizontal"
                         />
-                    </Label>
-                )}
+                        {zoneRegionDisabled && fipRegionsDisabledReason && (
+                            <span className="text-xs text-gray-400 mt-1">{fipRegionsDisabledReason}</span>
+                        )}
+                    </div>
+                </Label>
 
-                {regionSelectionMode === RegionSelectionMode.FipNumber ? (
+                {effectiveRegionSelectionMode === RegionSelectionMode.FipNumber ? (
                     <Label text="Regions">
                         <Select
                             options={availableRegions.map((r) => ({ value: String(r), label: `Region ${r}` }))}

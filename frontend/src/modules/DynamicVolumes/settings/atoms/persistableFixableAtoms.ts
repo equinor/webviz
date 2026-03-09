@@ -6,6 +6,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 
+import { areFipMappingsCompatible } from "../../utils/fipCompatibility";
 import type { RegionalVectorsInfo } from "../../utils/regionalVectors";
 import { extractRegionalVectorsInfo } from "../../utils/regionalVectors";
 
@@ -46,19 +47,26 @@ function precomputeRegionalVectorsInfo({ get }: { get: (atom: any) => any }): Re
 }
 
 /**
- * Get the first non-null EnsembleFipRegions from selected ensembles.
- * Returns null if no ensemble has FIP region data.
+ * Get the validated cross-ensemble FIP regions (null when missing or incompatible).
+ * Replicates the check in ensembleFipRegionsAtom to avoid circular imports.
  */
-function getFirstFipRegions({ get }: { get: (atom: any) => any }): EnsembleFipRegions | null {
+function getValidatedFipRegions({ get }: { get: (atom: any) => any }): EnsembleFipRegions | null {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedIdents: RegularEnsembleIdent[] = get(selectedEnsembleIdentsAtom).value ?? [];
+    if (selectedIdents.length === 0) return null;
 
+    let reference: EnsembleFipRegions | null = null;
     for (const ident of selectedIdents) {
         const ensemble = ensembleSet.findEnsemble(ident);
-        const fipRegions = ensemble?.getFipRegions?.();
-        if (fipRegions) return fipRegions;
+        const fipRegions = ensemble?.getFipRegions?.() ?? null;
+        if (!fipRegions) return null;
+        if (reference === null) {
+            reference = fipRegions;
+        } else if (!areFipMappingsCompatible(reference, fipRegions)) {
+            return null;
+        }
     }
-    return null;
+    return reference;
 }
 
 // ──────── Persistable / fixable atoms ────────
@@ -131,7 +139,7 @@ export const selectedZoneNamesAtom = persistableFixableAtom<string[], string[]>(
     initialValue: [],
     areEqualFunction: isEqual,
     precomputeFunction: ({ get }) => {
-        const fipRegions = getFirstFipRegions({ get });
+        const fipRegions = getValidatedFipRegions({ get });
         if (!fipRegions) return [];
         return fipRegions.getZones();
     },
@@ -149,7 +157,7 @@ export const selectedRegionNamesAtom = persistableFixableAtom<string[], string[]
     initialValue: [],
     areEqualFunction: isEqual,
     precomputeFunction: ({ get }) => {
-        const fipRegions = getFirstFipRegions({ get });
+        const fipRegions = getValidatedFipRegions({ get });
         if (!fipRegions) return [];
         return fipRegions.getRegions();
     },

@@ -17,6 +17,7 @@ import { groupedVectorDataQueriesAtom } from "../atoms/queryAtoms";
  * per region/zone per timestep for the heatmap cells.
  */
 export function useHeatmapDatasets(
+    enabled: boolean,
     selectedVectorBaseName: string | null,
     showRecoveryFactor: boolean,
 ): HeatmapDataset[] {
@@ -27,7 +28,7 @@ export function useHeatmapDatasets(
     const validEnsembleRealizationsFunction = useAtomValue(ValidEnsembleRealizationsFunctionAtom);
 
     return React.useMemo(() => {
-        if (!colorBy || groupDefs.length === 0) return [];
+        if (!enabled || !colorBy || groupDefs.length === 0) return [];
 
         const groupMetaMap = new Map(groupDefs.map((g) => [g.groupLabel, g]));
 
@@ -41,6 +42,7 @@ export function useHeatmapDatasets(
             validEnsembleRealizationsFunction,
         );
     }, [
+        enabled,
         queries,
         groupDefs,
         colorBy,

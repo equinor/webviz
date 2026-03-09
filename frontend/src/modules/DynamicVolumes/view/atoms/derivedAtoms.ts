@@ -12,8 +12,6 @@ import {
 } from "./baseAtoms";
 import { groupedVectorDataQueriesAtom } from "./queryAtoms";
 
-// ────────── Derived state ──────────
-
 /**
  * Derived atom that computes the vector groups to request from the backend
  * based on the current colorBy/subplotBy dimension configuration.
@@ -32,8 +30,6 @@ export const vectorGroupDefsAtom = atom<VectorGroupDef[]>((get) => {
 
     return computeVectorGroupDefs(selectedRegions, fipRegionLabels, colorBy, subplotBy, vectorNamesToFetch);
 });
-
-// ────────── Fetching state ──────────
 
 export const isDataFetchingAtom = atom<boolean>((get) => {
     const queries = get(groupedVectorDataQueriesAtom);

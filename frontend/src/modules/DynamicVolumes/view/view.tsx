@@ -5,6 +5,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import type { Interfaces } from "../interfaces";
@@ -37,14 +38,14 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const vectorNamesToFetch = viewContext.useSettingsToViewInterfaceValue("vectorNamesToFetch");
     const showRecoveryFactor = viewContext.useSettingsToViewInterfaceValue("showRecoveryFactor");
 
-    const isHeatmap = visualizationMode === VisualizationMode.DrainageHeatmap;
-
     // ── Track container size for responsive decluttering ──
     const chartContainerRef = React.useRef<HTMLDivElement>(null);
     const containerSize = useElementSize(chartContainerRef);
 
     const subplotGroups = useSubplotGroups(selectedVectorBaseName, showRecoveryFactor);
-    const heatmapDatasets = useHeatmapDatasets(selectedVectorBaseName, showRecoveryFactor);
+
+    const isHeatmap = visualizationMode === VisualizationMode.DrainageHeatmap;
+    const heatmapDatasets = useHeatmapDatasets(isHeatmap, selectedVectorBaseName, showRecoveryFactor);
 
     // Flatten traces across all subplot groups for empty-state checks
     const allTraces = React.useMemo(() => subplotGroups.flatMap((g) => g.traces), [subplotGroups]);
@@ -80,42 +81,36 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     usePublishToDataChannels(viewContext, subplotGroups, yAxisLabel);
 
-    if (!queryEnabled) {
-        return (
-            <div className="flex items-center justify-center w-full h-full text-gray-400">
-                Select ensembles, a vector, and regions to begin
-            </div>
-        );
-    }
-
-    if (isFetching && allTraces.length === 0 && heatmapDatasets.length === 0) {
-        return <div className="flex items-center justify-center w-full h-full text-gray-400">Loading data...</div>;
-    }
-
-    if (allFailed) {
-        return (
-            <div className="flex items-center justify-center w-full h-full text-red-500">
-                Error loading data from all ensembles
-            </div>
-        );
-    }
-
     const hasData = isHeatmap ? heatmapDatasets.length > 0 : timeseriesChartData.length > 0;
-    if (!hasData) {
-        return <div className="flex items-center justify-center w-full h-full text-gray-400">No data available</div>;
-    }
+    const isPending = queryEnabled && isFetching && allTraces.length === 0 && heatmapDatasets.length === 0;
+    const errorMessage = allFailed ? "Error loading data from all ensembles" : undefined;
+    const infoMessage = !queryEnabled
+        ? "Select ensembles, a vector, and regions to begin"
+        : !hasData
+          ? "No data available"
+          : undefined;
+    const showChart = queryEnabled && hasData && !allFailed;
 
     return (
         <div className="flex flex-col w-full h-full p-2 gap-2 overflow-hidden">
-            <div ref={chartContainerRef} className="w-full flex-1 min-h-0">
-                <ReactECharts
-                    ref={chartRef}
-                    option={echartsOptions}
-                    style={{ height: "100%", width: "100%" }}
-                    onEvents={onChartEvents}
-                    notMerge={true}
-                />
-            </div>
+            <PendingWrapper
+                isPending={isPending}
+                errorMessage={errorMessage}
+                infoMessage={infoMessage}
+                className="flex-1 min-h-0"
+            >
+                <div ref={chartContainerRef} className="w-full h-full">
+                    {showChart && (
+                        <ReactECharts
+                            ref={chartRef}
+                            option={echartsOptions}
+                            style={{ height: "100%", width: "100%" }}
+                            onEvents={onChartEvents}
+                            notMerge={true}
+                        />
+                    )}
+                </div>
+            </PendingWrapper>
         </div>
     );
 }

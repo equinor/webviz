@@ -4,6 +4,7 @@ import type { EnsembleFipRegions } from "@framework/EnsembleFipRegions";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
 import { RegionSelectionMode } from "../../typesAndEnums";
+import { areFipMappingsCompatible } from "../../utils/fipCompatibility";
 import type { RegionalVectorsInfo } from "../../utils/regionalVectors";
 import { extractRegionalVectorsInfo } from "../../utils/regionalVectors";
 
@@ -59,24 +60,82 @@ export const regionalVectorsInfoAtom = atom<RegionalVectorsInfo>((get) => {
 // ────────── FIP regions from ensemble metadata ──────────
 
 /**
- * The first non-null EnsembleFipRegions from the selected ensembles.
- * Returns null when no selected ensemble has FIP region data.
+ * The shared EnsembleFipRegions when ALL selected ensembles have compatible
+ * FIP region mappings.  Returns null when any ensemble is missing FIP data
+ * or when ensembles have mismatching mappings.
  */
 export const ensembleFipRegionsAtom = atom<EnsembleFipRegions | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedIdents = get(selectedEnsembleIdentsAtom).value ?? [];
+    if (selectedIdents.length === 0) return null;
 
+    let reference: EnsembleFipRegions | null = null;
     for (const ident of selectedIdents) {
         const ensemble = ensembleSet.findEnsemble(ident);
-        const fipRegions = ensemble?.getFipRegions?.();
-        if (fipRegions) return fipRegions;
+        const fipRegions = ensemble?.getFipRegions?.() ?? null;
+        if (!fipRegions) return null; // missing in one ensemble → not available
+        if (reference === null) {
+            reference = fipRegions;
+        } else if (!areFipMappingsCompatible(reference, fipRegions)) {
+            return null; // mismatch → not available
+        }
     }
-    return null;
+    return reference;
 });
 
 /** Whether FIP region mapping data is available for zone/region selection */
 export const hasFipRegionsDataAtom = atom<boolean>((get) => {
     return get(ensembleFipRegionsAtom) !== null;
+});
+
+/**
+ * Human-readable reason why Zone/Region mode is disabled, or null if it is
+ * available.  Used by the settings UI to show a disabled radio with tooltip.
+ */
+export const fipRegionsDisabledReasonAtom = atom<string | null>((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const selectedIdents = get(selectedEnsembleIdentsAtom).value ?? [];
+    if (selectedIdents.length === 0) return "No ensembles selected";
+
+    let reference: EnsembleFipRegions | null = null;
+    const missing: string[] = [];
+    let hasMismatch = false;
+
+    for (const ident of selectedIdents) {
+        const ensemble = ensembleSet.findEnsemble(ident);
+        const fipRegions = ensemble?.getFipRegions?.() ?? null;
+        if (!fipRegions) {
+            missing.push(ident.getEnsembleName());
+            continue;
+        }
+        if (reference === null) {
+            reference = fipRegions;
+        } else if (!areFipMappingsCompatible(reference, fipRegions)) {
+            hasMismatch = true;
+        }
+    }
+
+    if (missing.length > 0) {
+        return `FIP region mapping missing in: ${missing.join(", ")}`;
+    }
+    if (hasMismatch) {
+        return "FIP region mappings differ between selected ensembles";
+    }
+    return null;
+});
+
+// ────────── Effective region selection mode ──────────
+
+/**
+ * The effective region selection mode. Falls back to FipNumber when
+ * zone/region is unavailable (missing or incompatible FIP mappings).
+ */
+export const effectiveRegionSelectionModeAtom = atom<RegionSelectionMode>((get) => {
+    const requested = get(regionSelectionModeAtom);
+    if (requested === RegionSelectionMode.ZoneRegion && get(ensembleFipRegionsAtom) === null) {
+        return RegionSelectionMode.FipNumber;
+    }
+    return requested;
 });
 
 // ────────── Zone / region option lists ──────────
@@ -122,7 +181,7 @@ export const fipRegionLabelsAtom = atom<Record<number, { zone: string; region: s
  *   using the ensemble's FIP region mapping.
  */
 export const effectiveSelectedRegionsAtom = atom<number[]>((get) => {
-    const mode = get(regionSelectionModeAtom);
+    const mode = get(effectiveRegionSelectionModeAtom);
 
     if (mode === RegionSelectionMode.FipNumber) {
         return get(selectedRegionsAtom).value;
