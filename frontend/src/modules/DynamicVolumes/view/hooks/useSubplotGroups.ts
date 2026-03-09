@@ -40,6 +40,7 @@ export function useSubplotGroups(selectedVectorBaseName: string | null, showReco
 
         const traceEntries = buildTraceEntries(
             queries,
+            ensembleSet,
             ensembleIdents,
             groupMetaMap,
             colorBy,

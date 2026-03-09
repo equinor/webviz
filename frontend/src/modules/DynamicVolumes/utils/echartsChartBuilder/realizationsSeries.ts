@@ -11,13 +11,13 @@ export function buildRealizationsSeries(
 
     const series: LineSeriesOption[] = trace.aggregatedValues.map((realValues, r) => ({
         name: r === 0 ? trace.label : `${trace.label}_real_${trace.realizations[r]}`,
-        type: "line" as const,
+        type: "line",
         data: realValues,
         xAxisIndex: axisIndex,
         yAxisIndex: axisIndex,
         itemStyle: { color: trace.color, opacity: 0 },
         lineStyle: { width: 0.8, opacity: 0.4 },
-        symbol: "circle" as const,
+        symbol: "circle",
         symbolSize: 15,
         emphasis: {
             lineStyle: { width: 3, opacity: 1 },

@@ -30,9 +30,11 @@ export function buildEnsembleColorMap(
 ): Map<string, string> {
     const colorMap = new Map<string, string>();
     for (const ident of ensembleIdents) {
-        const color = ensembleSet.findEnsemble(ident)?.getColor();
-        if (color) {
-            colorMap.set(ident.getEnsembleName(), color);
+        const ensemble = ensembleSet.findEnsemble(ident);
+
+        if (ensemble) {
+            const color = ensemble.getColor();
+            colorMap.set(ensemble.getDisplayName(), color);
         }
     }
     return colorMap;
@@ -44,6 +46,7 @@ export function buildEnsembleColorMap(
  */
 export function buildTraceEntries(
     queries: readonly { data?: unknown }[],
+    ensembleSet: EnsembleSet,
     ensembleIdents: RegularEnsembleIdent[],
     groupMetaMap: Map<string, VectorGroupDef>,
     colorBy: PlotDimension,
@@ -60,7 +63,11 @@ export function buildTraceEntries(
         if (!q?.data) continue;
 
         const ensembleIdent = ensembleIdents[eIdx];
-        const ensembleName = ensembleIdent.getEnsembleName();
+        // Find ensemble
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (!ensemble) continue;
+
+        const ensembleName = ensemble.getDisplayName();
         const responseData = q.data as GroupedRealizationsVectorData_api;
 
         // Filter to only valid realizations for this ensemble
