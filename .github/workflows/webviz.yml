@@ -51,6 +51,14 @@ jobs:
         run: |
           npm run validate
 
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Install Playwright Browsers
         working-directory: ./frontend
         run: |
@@ -73,6 +81,19 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
+  check_api_sync:
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: 📖 Checkout commit locally
+        uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      
       - name: 🕵️ Check auto-generated frontend code is in sync with backend
         run: |
           docker build -f ./backend_py/primary/Dockerfile -t backend:latest .
@@ -164,7 +185,22 @@ jobs:
         with:
           node-version: 24
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-buildx-
+
       - name: 🐳 Verify Docker images build
         run: |
-          docker build -f frontend-prod.Dockerfile .
-          docker build -f ./backend_py/primary/Dockerfile .
+          docker buildx build --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max -f frontend-prod.Dockerfile .
+          docker buildx build --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max -f ./backend_py/primary/Dockerfile .
+          
+      - name: Ensuring @actions/cache replace old Docker build cache with new
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
