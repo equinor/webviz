@@ -65,7 +65,6 @@ def convert_wellbore_header_to_schema(
         depthReferenceElevation=drilled_wellbore_header.depth_reference_elevation,
         wellborePurpose=(drilled_wellbore_header.wellbore_purpose if drilled_wellbore_header.wellbore_purpose else ""),
         wellboreStatus=drilled_wellbore_header.wellbore_status if drilled_wellbore_header.wellbore_status else "",
-        currentTrack=drilled_wellbore_header.current_track,
         kickoffDepthMd=drilled_wellbore_header.kickoff_depth_md,
         kickoffDepthTvd=drilled_wellbore_header.kickoff_depth_tvd,
         parentWellbore=drilled_wellbore_header.parent_wellbore,
