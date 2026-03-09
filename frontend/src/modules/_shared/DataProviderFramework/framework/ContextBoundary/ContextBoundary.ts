@@ -7,23 +7,15 @@ import type { SerializedContextBoundary } from "../../interfacesAndTypes/seriali
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 
+const CONTEXT_BOUNDARY_BRAND = Symbol("ContextBoundary");
+
 export function isContextBoundary(obj: any): obj is ContextBoundary {
-    if (!isDevMode()) {
-        return obj instanceof ContextBoundary;
-    }
-
-    if (typeof obj !== "object" || obj === null) {
-        return false;
-    }
-
-    if (obj.constructor.name !== "ContextBoundary") {
-        return false;
-    }
-
-    return Boolean(obj.getGroupDelegate);
+    return typeof obj === "object" && obj !== null && CONTEXT_BOUNDARY_BRAND in obj;
 }
 
 export class ContextBoundary implements ItemGroup {
+    private readonly [CONTEXT_BOUNDARY_BRAND] = true;
+
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
 

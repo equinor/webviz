@@ -19,21 +19,12 @@ import type { Settings } from "../../settings/settingsDefinitions";
 import { DataProviderManagerTopic, type DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
+import { ReportErrorFunction } from "../utils/DeserializationAssistant";
+
+const GROUP_BRAND = Symbol("Group");
 
 export function isGroup(obj: any): obj is Group {
-    if (!isDevMode()) {
-        return obj instanceof Group;
-    }
-
-    if (typeof obj !== "object" || obj === null) {
-        return false;
-    }
-
-    if (obj.constructor.name !== "Group") {
-        return false;
-    }
-
-    return Boolean(obj.getGroupType) && Boolean(obj.getGroupDelegate);
+    return typeof obj === "object" && obj !== null && GROUP_BRAND in obj;
 }
 
 export type GroupParams<
@@ -54,6 +45,8 @@ export class Group<
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > implements ItemGroup
 {
+    private readonly [GROUP_BRAND] = true;
+
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
     private _type: GroupType;
@@ -142,11 +135,11 @@ export class Group<
         };
     }
 
-    deserializeState(serialized: SerializedGroup<TSettings, TSettingKey>) {
+    deserializeState(serialized: SerializedGroup<TSettings, TSettingKey>, reportError: ReportErrorFunction) {
         this._itemDelegate.deserializeState(serialized);
         this._groupDelegate.setColor(serialized.color);
         this._groupDelegate.deserializeChildren(serialized.children);
-        this._sharedSettingsDelegate?.deserializeSettings(serialized.settings);
+        this._sharedSettingsDelegate?.deserializeSettings(serialized.settings, reportError);
     }
 
     beforeDestroy(): void {

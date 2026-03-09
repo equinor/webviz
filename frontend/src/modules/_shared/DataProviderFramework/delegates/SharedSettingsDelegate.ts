@@ -18,6 +18,7 @@ import { SettingRegistry } from "../settings/SettingRegistry";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 import { Dependency } from "./_utils/Dependency";
+import { ReportErrorFunction } from "../framework/utils/DeserializationAssistant";
 
 export enum SharedSettingsDelegateTopic {
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
@@ -33,7 +34,8 @@ export class SharedSettingsDelegate<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> implements PublishSubscribe<SharedSettingsDelegatePayloads> {
+> implements PublishSubscribe<SharedSettingsDelegatePayloads>
+{
     private _publishSubscribeDelegate: PublishSubscribeDelegate<SharedSettingsDelegatePayloads> =
         new PublishSubscribeDelegate<SharedSettingsDelegatePayloads>();
     private _externalSettingControllers: { [K in TSettingKey]: ExternalSettingController<K> } = {} as {
@@ -156,9 +158,22 @@ export class SharedSettingsDelegate<
         return serializedSettings;
     }
 
-    deserializeSettings(serializedSettings: SerializedSettingsState<TSettings, TSettingKey>): void {
+    deserializeSettings(
+        serializedSettings: SerializedSettingsState<TSettings, TSettingKey>,
+        reportError: ReportErrorFunction,
+    ): void {
         for (const [key, value] of Object.entries(serializedSettings)) {
             const settingDelegate = this._wrappedSettings[key as TSettingKey];
+
+            // Temporary skip undefined settingsDelegate (await persistence versioning)
+            // - Setting might have been removed since creation of the serialized state (e.g. session).
+            if (settingDelegate === undefined) {
+                reportError(
+                    `Setting with key ${key} does not exist anymore. Skipping deserialization of this setting.`,
+                );
+                continue;
+            }
+
             settingDelegate.deserializeValue(value as string);
             if (settingDelegate.isStatic()) {
                 settingDelegate.maybeResetPersistedValue();

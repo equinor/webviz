@@ -56,22 +56,10 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.STATUS_MESSAGES]: readonly GenericStatusMessage[];
 };
 
+const DATA_PROVIDER_BRAND = Symbol("DataProvider");
+
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
-    if (!isDevMode()) {
-        return obj instanceof DataProvider;
-    }
-
-    if (typeof obj !== "object" || obj === null) {
-        return false;
-    }
-
-    return (
-        Boolean(obj.getType) &&
-        Boolean(obj.getSettingsContextDelegate) &&
-        Boolean(obj.getStatus) &&
-        Boolean(obj.getData) &&
-        Boolean(obj.getError)
-    );
+    return typeof obj === "object" && obj !== null && DATA_PROVIDER_BRAND in obj;
 }
 
 export type DataProviderParams<
@@ -99,14 +87,16 @@ export type DataProviderParams<
  * It also manages the status of the provider (loading, success, error).
  */
 export class DataProvider<
-    TSettings extends Settings,
-    TData,
-    TStoredData extends StoredData = Record<string, never>,
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
->
+        TSettings extends Settings,
+        TData,
+        TStoredData extends StoredData = Record<string, never>,
+        TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+        TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+    >
     implements Item, PublishSubscribe<DataProviderPayloads<TData>>
 {
+    private readonly [DATA_PROVIDER_BRAND] = true;
+
     private _type: string;
     private _customDataProviderImpl: CustomDataProviderImplementation<
         TSettings,
@@ -491,9 +481,12 @@ export class DataProvider<
         };
     }
 
-    deserializeState(serializedDataProvider: SerializedDataProvider<TSettings, TSettingKey>): void {
+    deserializeState(
+        serializedDataProvider: SerializedDataProvider<TSettings, TSettingKey>,
+        reportError: (errorMsg: string) => void,
+    ): void {
         this.getItemDelegate().deserializeState(serializedDataProvider);
-        this._settingsContextDelegate.deserializeSettings(serializedDataProvider.settings);
+        this._settingsContextDelegate.deserializeSettings(serializedDataProvider.settings, reportError);
     }
 
     beforeDestroy(): void {

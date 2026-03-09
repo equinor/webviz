@@ -12,7 +12,7 @@ import type { SerializedItem } from "./serialization";
 export interface Item {
     getItemDelegate(): ItemDelegate;
     serializeState(): SerializedItem;
-    deserializeState(serialized: SerializedItem): void;
+    deserializeState(serialized: SerializedItem, reportError?: (errorMsg: string) => void): void;
     beforeDestroy?(): void;
 }
 
