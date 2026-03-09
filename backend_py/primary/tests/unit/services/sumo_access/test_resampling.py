@@ -2,11 +2,15 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 
+import pytest
+
 from webviz_services.sumo_access._resampling import (
     Frequency,
+    compute_global_min_max_dates,
     generate_normalized_sample_dates,
     interpolate_backfill,
     resample_segmented_multi_real_table,
+    resample_segmented_multi_real_table_with_shared_dates,
     resample_single_real_table,
 )
 
@@ -225,3 +229,171 @@ def test_resample_segmented_multi_real_table() -> None:
     assert rate_arr_1[3] == rate_arr_2[3] == 4
     assert rate_arr_1[4] == rate_arr_2[4] == 6
     assert rate_arr_1[5] == rate_arr_2[5] == 6
+
+
+# ---------------------------------------------------------------------------
+# compute_global_min_max_dates
+# ---------------------------------------------------------------------------
+
+SINGLE_VEC_SCHEMA = pa.schema(
+    [
+        pa.field("DATE", pa.timestamp("ms")),
+        pa.field("REAL", pa.int64()),
+        pa.field("V", pa.float32(), metadata={b"is_rate": b"False"}),
+    ]
+)
+
+
+def test_compute_global_min_max_dates_single_table() -> None:
+    table = pa.table(
+        {
+            "DATE": pa.array(
+                [np.datetime64("2020-01-01", "ms"), np.datetime64("2020-06-01", "ms")],
+                type=pa.timestamp("ms"),
+            ),
+            "REAL": [0, 0],
+            "V": [1.0, 2.0],
+        },
+        schema=SINGLE_VEC_SCHEMA,
+    )
+    min_d, max_d = compute_global_min_max_dates([table])
+    assert min_d == np.datetime64("2020-01-01", "ms")
+    assert max_d == np.datetime64("2020-06-01", "ms")
+
+
+def test_compute_global_min_max_dates_multiple_tables() -> None:
+    t1 = pa.table(
+        {
+            "DATE": pa.array(
+                [np.datetime64("2020-03-01", "ms"), np.datetime64("2020-06-01", "ms")],
+                type=pa.timestamp("ms"),
+            ),
+            "REAL": [0, 0],
+            "V": [1.0, 2.0],
+        },
+        schema=SINGLE_VEC_SCHEMA,
+    )
+    t2 = pa.table(
+        {
+            "DATE": pa.array(
+                [np.datetime64("2020-01-01", "ms"), np.datetime64("2020-12-01", "ms")],
+                type=pa.timestamp("ms"),
+            ),
+            "REAL": [0, 0],
+            "V": [3.0, 4.0],
+        },
+        schema=SINGLE_VEC_SCHEMA,
+    )
+    min_d, max_d = compute_global_min_max_dates([t1, t2])
+    assert min_d == np.datetime64("2020-01-01", "ms")
+    assert max_d == np.datetime64("2020-12-01", "ms")
+
+
+def test_compute_global_min_max_dates_empty_list_raises() -> None:
+    with pytest.raises(ValueError, match="empty"):
+        compute_global_min_max_dates([])
+
+
+# ---------------------------------------------------------------------------
+# resample_segmented_multi_real_table_with_shared_dates
+# ---------------------------------------------------------------------------
+
+
+def test_resample_with_shared_dates_basic() -> None:
+    """Resample a two-realization table onto a shared daily grid."""
+    # fmt:off
+    input_data = [
+        ["DATE",                            "REAL",  "T",      "R"],
+        [np.datetime64("2020-01-01", "ms"),  1,      10.0,     1.0],
+        [np.datetime64("2020-01-04", "ms"),  1,      40.0,     4.0],
+        [np.datetime64("2020-01-06", "ms"),  1,      60.0,     6.0],
+        [np.datetime64("2020-01-01", "ms"),  2,      100.0,    10.0],
+        [np.datetime64("2020-01-04", "ms"),  2,      400.0,    40.0],
+        [np.datetime64("2020-01-06", "ms"),  2,      600.0,    60.0],
+    ]
+    # fmt:on
+
+    fields: list[pa.Field] = [
+        pa.field("DATE", pa.timestamp("ms")),
+        pa.field("REAL", pa.int64()),
+        pa.field("T", pa.float32(), metadata={b"is_rate": b"False"}),
+        pa.field("R", pa.float32(), metadata={b"is_rate": b"True"}),
+    ]
+    schema = pa.schema(fields)
+    raw_table = _create_table_from_row_data(per_row_input_data=input_data, schema=schema)
+
+    shared_dates = generate_normalized_sample_dates(
+        np.datetime64("2020-01-01"), np.datetime64("2020-01-06"), Frequency.DAILY
+    )
+    res_table = resample_segmented_multi_real_table_with_shared_dates(raw_table, shared_dates)
+
+    res_r1 = res_table.filter(pc.equal(res_table["REAL"], pa.scalar(1)))
+    res_r2 = res_table.filter(pc.equal(res_table["REAL"], pa.scalar(2)))
+
+    # Both realizations should have the same date grid
+    assert res_r1.num_rows == 6
+    assert res_r2.num_rows == 6
+
+    dates_r1 = res_r1["DATE"].to_numpy()
+    dates_r2 = res_r2["DATE"].to_numpy()
+    assert (dates_r1 == dates_r2).all()
+    assert dates_r1[0] == np.datetime64("2020-01-01", "ms")
+    assert dates_r1[-1] == np.datetime64("2020-01-06", "ms")
+
+    # Total column: linear interpolation (same pattern as segmented test)
+    tot_r1 = res_r1["T"].to_numpy()
+    assert tot_r1[0] == 10
+    assert tot_r1[1] == 20
+    assert tot_r1[2] == 30
+    assert tot_r1[3] == 40
+    assert tot_r1[4] == 50
+    assert tot_r1[5] == 60
+
+    # Real 2 is 10x
+    tot_r2 = res_r2["T"].to_numpy()
+    assert tot_r2[0] == 100
+    assert tot_r2[3] == 400
+    assert tot_r2[5] == 600
+
+    # Rate column: backfill
+    rate_r1 = res_r1["R"].to_numpy()
+    assert rate_r1[0] == 1
+    assert rate_r1[1] == 4
+    assert rate_r1[2] == 4
+    assert rate_r1[3] == 4
+    assert rate_r1[4] == 6
+    assert rate_r1[5] == 6
+
+
+def test_resample_with_shared_dates_wider_grid() -> None:
+    """Shared date grid extends beyond the table's own date range."""
+    # fmt:off
+    input_data = [
+        ["DATE",                            "REAL",  "V"],
+        [np.datetime64("2020-01-02", "ms"),  0,      20.0],
+        [np.datetime64("2020-01-04", "ms"),  0,      40.0],
+    ]
+    # fmt:on
+
+    fields: list[pa.Field] = [
+        pa.field("DATE", pa.timestamp("ms")),
+        pa.field("REAL", pa.int64()),
+        pa.field("V", pa.float32(), metadata={b"is_rate": b"False"}),
+    ]
+    schema = pa.schema(fields)
+    raw_table = _create_table_from_row_data(per_row_input_data=input_data, schema=schema)
+
+    # Grid starts before and ends after the table's date range
+    shared_dates = generate_normalized_sample_dates(
+        np.datetime64("2020-01-01"), np.datetime64("2020-01-05"), Frequency.DAILY
+    )
+    res_table = resample_segmented_multi_real_table_with_shared_dates(raw_table, shared_dates)
+
+    assert res_table.num_rows == 5
+    vals = res_table["V"].to_numpy()
+    # np.interp extrapolates as constant beyond bounds
+    assert vals[0] == 20.0  # before first raw date → clamp to first value
+    assert vals[1] == 20.0  # on first raw date
+    assert vals[2] == 30.0  # interpolated midpoint
+    assert vals[3] == 40.0  # on last raw date
+    assert vals[4] == 40.0  # after last raw date → clamp to last value
