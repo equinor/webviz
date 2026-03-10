@@ -17,10 +17,14 @@ export function makeAttributeSurfaceLayer({
     const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
 
     let contours: [number, number] = [-1, -1];
+    /*
     const { enabled: contourEnabled, value: contourValue } = getSetting(Setting.CONTOURS) ?? {
         enabled: false,
         value: 0,
     };
+    */
+    const contourEnabled = false;
+    const contourValue = 0;
     if (contourEnabled && contourValue !== null) {
         contours = [0, contourValue];
     }

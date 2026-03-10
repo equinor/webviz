@@ -1,5 +1,3 @@
-import { isDevMode } from "@lib/utils/devMode";
-
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
@@ -7,7 +5,9 @@ import type { SerializedContextBoundary } from "../../interfacesAndTypes/seriali
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 
-const CONTEXT_BOUNDARY_BRAND = Symbol("ContextBoundary");
+// Using a unique brand to identify ContextBoundary objects, since instanceof checks won't work due to potential multiple versions of the module.
+// Using Symbol.for to ensure that even if there are multiple versions of the module, they will all reference the same symbol for the brand.
+const CONTEXT_BOUNDARY_BRAND = Symbol.for("dpf/context-boundary");
 
 export function isContextBoundary(obj: any): obj is ContextBoundary {
     return typeof obj === "object" && obj !== null && CONTEXT_BOUNDARY_BRAND in obj;

@@ -22,7 +22,6 @@ import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAn
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 import { Dependency } from "./_utils/Dependency";
-import { ReportErrorFunction } from "../framework/utils/DeserializationAssistant";
 
 export enum SettingsContextStatus {
     VALID_SETTINGS = "VALID_SETTINGS",
@@ -299,7 +298,7 @@ export class SettingsContextDelegate<
 
     deserializeSettings(
         serializedSettings: SerializedSettingsState<TSettings, TSettingKey>,
-        reportError: ReportErrorFunction,
+        reportError: (errorMsg: string) => void,
     ): void {
         for (const [key, value] of Object.entries(serializedSettings)) {
             const settingDelegate = this._settings[key as TSettingKey];
@@ -307,9 +306,7 @@ export class SettingsContextDelegate<
             // Temporary skip undefined settingsDelegate (await persistence versioning)
             // - Setting might have been removed since creation of the serialized state (e.g. session).
             if (settingDelegate === undefined) {
-                reportError(
-                    `Setting with key ${key} does not exist anymore. Skipping deserialization of this setting.`,
-                );
+                reportError(`Setting with key '${key}' does not exist anymore. Cannot apply persisted value.`);
                 continue;
             }
 

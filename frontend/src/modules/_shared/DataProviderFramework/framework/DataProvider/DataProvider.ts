@@ -6,7 +6,6 @@ import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore"
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { StatusMessageStoreTopic, type StatusMessage as GenericStatusMessage } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
-import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { ScopedQueryController } from "@lib/utils/ScopedQueryController";
@@ -56,7 +55,9 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.STATUS_MESSAGES]: readonly GenericStatusMessage[];
 };
 
-const DATA_PROVIDER_BRAND = Symbol("DataProvider");
+// Using a unique brand to identify DataProvider objects, since instanceof checks won't work due to potential multiple versions of the module.
+// Using Symbol.for to ensure that even if there are multiple versions of the module, they will all reference the same symbol for the brand.
+const DATA_PROVIDER_BRAND = Symbol.for("dpf/data-provider");
 
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
     return typeof obj === "object" && obj !== null && DATA_PROVIDER_BRAND in obj;
@@ -481,11 +482,11 @@ export class DataProvider<
         };
     }
 
-    deserializeState(
-        serializedDataProvider: SerializedDataProvider<TSettings, TSettingKey>,
-        reportError: (errorMsg: string) => void,
-    ): void {
+    deserializeState(serializedDataProvider: SerializedDataProvider<TSettings, TSettingKey>): void {
         this.getItemDelegate().deserializeState(serializedDataProvider);
+        const reportError = (errorMsg: string) => {
+            this.getItemDelegate().reportDeserializationError(errorMsg);
+        };
         this._settingsContextDelegate.deserializeSettings(serializedDataProvider.settings, reportError);
     }
 

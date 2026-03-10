@@ -16,12 +16,14 @@ export enum ItemDelegateTopic {
     NAME = "NAME",
     VISIBILITY = "VISIBILITY",
     EXPANDED = "EXPANDED",
+    DESERIALIZATION_ERRORS = "DESERIALIZATION_ERRORS",
 }
 
 export type ItemDelegatePayloads = {
     [ItemDelegateTopic.NAME]: string;
     [ItemDelegateTopic.VISIBILITY]: boolean;
     [ItemDelegateTopic.EXPANDED]: boolean;
+    [ItemDelegateTopic.DESERIALIZATION_ERRORS]: readonly string[];
 };
 
 /*
@@ -37,6 +39,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     private _parentGroup: GroupDelegate | null = null;
     private _dataProviderManager: DataProviderManager;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<ItemDelegatePayloads>();
+    private _deserializationErrors: string[] = [];
 
     constructor(name: string, order: number, dataProviderManager: DataProviderManager) {
         this._id = v4();
@@ -125,6 +128,9 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
             if (topic === ItemDelegateTopic.EXPANDED) {
                 return this._expanded;
             }
+            if (topic === ItemDelegateTopic.DESERIALIZATION_ERRORS) {
+                return this._deserializationErrors;
+            }
         };
         return snapshotGetter;
     }
@@ -147,6 +153,16 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._name = state.name;
         this._visible = state.visible;
         this._expanded = state.expanded;
+    }
+
+    reportDeserializationError(errorMsg: string): void {
+        this._deserializationErrors.push(errorMsg);
+        this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.DESERIALIZATION_ERRORS);
+    }
+
+    clearDeserializationErrors(): void {
+        this._deserializationErrors = [];
+        this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.DESERIALIZATION_ERRORS);
     }
 
     private makeUniqueName(candidate: string): string {

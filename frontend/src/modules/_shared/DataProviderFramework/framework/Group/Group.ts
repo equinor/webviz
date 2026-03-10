@@ -1,4 +1,3 @@
-import { isDevMode } from "@lib/utils/devMode";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { GroupDelegate } from "../../delegates/GroupDelegate";
@@ -19,9 +18,10 @@ import type { Settings } from "../../settings/settingsDefinitions";
 import { DataProviderManagerTopic, type DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
-import { ReportErrorFunction } from "../utils/DeserializationAssistant";
 
-const GROUP_BRAND = Symbol("Group");
+// Using a unique brand to identify Group objects, since instanceof checks won't work due to potential multiple versions of the module.
+// Using Symbol.for to ensure that even if there are multiple versions of the module, they will all reference the same symbol for the brand.
+const GROUP_BRAND = Symbol.for("dpf/group");
 
 export function isGroup(obj: any): obj is Group {
     return typeof obj === "object" && obj !== null && GROUP_BRAND in obj;
@@ -135,10 +135,13 @@ export class Group<
         };
     }
 
-    deserializeState(serialized: SerializedGroup<TSettings, TSettingKey>, reportError: ReportErrorFunction) {
+    deserializeState(serialized: SerializedGroup<TSettings, TSettingKey>) {
         this._itemDelegate.deserializeState(serialized);
         this._groupDelegate.setColor(serialized.color);
         this._groupDelegate.deserializeChildren(serialized.children);
+        const reportError = (errorMsg: string) => {
+            this.getItemDelegate().reportDeserializationError(errorMsg);
+        };
         this._sharedSettingsDelegate?.deserializeSettings(serialized.settings, reportError);
     }
 

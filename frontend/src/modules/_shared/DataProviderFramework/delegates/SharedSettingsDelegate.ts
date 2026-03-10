@@ -18,7 +18,6 @@ import { SettingRegistry } from "../settings/SettingRegistry";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
 import { Dependency } from "./_utils/Dependency";
-import { ReportErrorFunction } from "../framework/utils/DeserializationAssistant";
 
 export enum SharedSettingsDelegateTopic {
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
@@ -160,7 +159,7 @@ export class SharedSettingsDelegate<
 
     deserializeSettings(
         serializedSettings: SerializedSettingsState<TSettings, TSettingKey>,
-        reportError: ReportErrorFunction,
+        reportError: (errorMsg: string) => void,
     ): void {
         for (const [key, value] of Object.entries(serializedSettings)) {
             const settingDelegate = this._wrappedSettings[key as TSettingKey];

@@ -14,18 +14,8 @@ import type { DataProviderManager } from "../DataProviderManager/DataProviderMan
 import { ErrorPlaceholder } from "../ErrorPlaceholder/ErrorPlaceholder";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
-export type ErrorMessage = {
-    itemName: string;
-    message: string;
-};
-
-export interface ReportErrorFunction {
-    (errorMsg: string): void;
-}
-
 export class DeserializationAssistant {
     private _dataProviderManager: DataProviderManager;
-    private _collectedErrorMessages: ErrorMessage[] = [];
 
     constructor(dataProviderManager: DataProviderManager) {
         this._dataProviderManager = dataProviderManager;
@@ -38,11 +28,6 @@ export class DeserializationAssistant {
             );
         }
 
-        const reportError = (errorMsg: string) => {
-            const itemName = serialized.name ?? "Unknown item";
-            this._collectedErrorMessages.push({ itemName, message: errorMsg });
-        };
-
         try {
             if (serialized.type === SerializedType.DATA_PROVIDER) {
                 const serializedDataProvider = serialized as SerializedDataProvider<any>;
@@ -51,7 +36,7 @@ export class DeserializationAssistant {
                     this._dataProviderManager,
                     serializedDataProvider.name,
                 );
-                provider.deserializeState(serializedDataProvider, reportError);
+                provider.deserializeState(serializedDataProvider);
                 provider.getItemDelegate().setId(serializedDataProvider.id);
                 provider.getItemDelegate().setName(serializedDataProvider.name);
                 return provider;
@@ -60,7 +45,7 @@ export class DeserializationAssistant {
             if (serialized.type === SerializedType.GROUP) {
                 const serializedGroup = serialized as SerializedGroup<any>;
                 const group = GroupRegistry.makeGroup(serializedGroup.groupType, this._dataProviderManager);
-                group.deserializeState(serializedGroup, reportError);
+                group.deserializeState(serializedGroup);
                 return group;
             }
 
@@ -83,9 +68,10 @@ export class DeserializationAssistant {
             }
         } catch (error) {
             const name = serialized.name ?? "Unknown item";
+            const errorMessage = `Error deserializing item '${name}' - it might have been renamed or removed: ${error instanceof Error ? error.message : String(error)}`;
             const errorPlaceholder = new ErrorPlaceholder(
                 name,
-                error instanceof Error ? error.message : String(error),
+                errorMessage,
                 serialized as any,
                 this._dataProviderManager,
             );
