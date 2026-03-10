@@ -1,5 +1,4 @@
-import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { WellLogCurveSourceEnum_api } from "@api";
@@ -7,21 +6,21 @@ import type { WellPickDataCollection } from "@modules/_shared/types/wellpicks";
 import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "@modules/WellLogViewer/constants";
 import { createLogViewerWellPicks, createWellLogSets } from "@modules/WellLogViewer/utils/queryDataTransform";
 
+vi.mock(import("@equinor/esv-intersection"), () => {
+    return {
+        IntersectionReferenceSystem: class MockRefSystem {
+            project(length: number): number[] {
+                return ["IRRELEVANT" as any, length * 0.1];
+            }
+        } as any,
+    };
+});
+
 describe("QueryDataTransform", () => {
     describe("Well log viewer template test", () => {
-        const mockReferenceSystem = {
-            project: (md: number) => [md, md * 0.1],
-        } as IntersectionReferenceSystem;
-
         const mockTrajectory = {
             mdArr: [0, 500, 1000, 1500, 2000],
-            tvdMslArr: [
-                mockReferenceSystem.project(0)[1],
-                mockReferenceSystem.project(500)[1],
-                mockReferenceSystem.project(1000)[1],
-                mockReferenceSystem.project(1500)[1],
-                mockReferenceSystem.project(2000)[1],
-            ],
+            tvdMslArr: [0, 500, 1000, 1500, 2000].map((v) => v * 0.1),
         } as WellboreTrajectory_api;
 
         const mockDataPoints: WellboreLogCurveData_api["dataPoints"] = [
@@ -53,7 +52,7 @@ describe("QueryDataTransform", () => {
         };
 
         it("should have a axis-only set first", () => {
-            const wellLog = createWellLogSets([], mockTrajectory, mockReferenceSystem)[0];
+            const wellLog = createWellLogSets([], mockTrajectory, undefined)[0];
 
             expect(wellLog.header.startIndex).toBe(0);
             expect(wellLog.header.endIndex).toBe(2000);
@@ -70,7 +69,7 @@ describe("QueryDataTransform", () => {
 
         it("should create a well log with the correct header, curves, and data", () => {
             // First set is always a axis only set
-            const wellLog = createWellLogSets([mockCurveData], mockTrajectory, mockReferenceSystem)[1];
+            const wellLog = createWellLogSets([mockCurveData], mockTrajectory, undefined)[1];
 
             expect(wellLog.header.startIndex).toBe(1000);
             expect(wellLog.header.endIndex).toBe(2000);
@@ -96,7 +95,7 @@ describe("QueryDataTransform", () => {
         it("should handle missing curve data", () => {
             const curveData = { ...mockCurveData, dataPoints: mockDataPointsWithMissing };
 
-            const wellLog = createWellLogSets([curveData], mockTrajectory, mockReferenceSystem)[1];
+            const wellLog = createWellLogSets([curveData], mockTrajectory, undefined)[1];
 
             expect(wellLog.data).toEqual([
                 [1000, 100, 50],
@@ -123,10 +122,10 @@ describe("QueryDataTransform", () => {
                 ],
             } as WellboreLogCurveData_api;
 
-            const wellLog = createWellLogSets([curveDataWithNullIndex], mockTrajectory, mockReferenceSystem)[1];
+            const wellLog = createWellLogSets([curveDataWithNullIndex], mockTrajectory, undefined)[1];
 
             expect(() => {
-                createWellLogSets([mockWithStringIndices], mockTrajectory, mockReferenceSystem);
+                createWellLogSets([mockWithStringIndices], mockTrajectory, undefined);
             }).toThrow("Scale index value cannot be a string");
 
             expect(wellLog.data).toEqual([]);
@@ -153,7 +152,7 @@ describe("QueryDataTransform", () => {
                     [2000, 2.4],
                 ],
             };
-            const wellLog = createWellLogSets([mockCurveData, secondCurveData], mockTrajectory, mockReferenceSystem)[1];
+            const wellLog = createWellLogSets([mockCurveData, secondCurveData], mockTrajectory, undefined)[1];
 
             expect(wellLog.curves).toEqual([
                 MAIN_AXIS_CURVE,
@@ -190,7 +189,7 @@ describe("QueryDataTransform", () => {
                 ],
             } as WellboreLogCurveData_api;
 
-            const wellLog = createWellLogSets([curveData], mockTrajectory, mockReferenceSystem)[1];
+            const wellLog = createWellLogSets([curveData], mockTrajectory, undefined)[1];
 
             expect(wellLog.curves[2].dimensions).toBe(1);
             expect(wellLog.data).toEqual([
@@ -199,23 +198,24 @@ describe("QueryDataTransform", () => {
             ]);
         });
 
-        // Is this test necessary, or is it just an issue types not being strict enough?
-        // - If an mdArr is successfully returned, can it EVER be empty?
-        // - Can intersectionReferenceSystem.project() ever return an empty array?
-        it("should handle missing mdArr and refferenceSystem values", () => {
-            // @ts-expect-error "Only the "project" method is relevant for us
-            const brokenReferenceSystem = {
-                project: () => [] as number[],
-            } as IntersectionReferenceSystem;
+        it("should inject rows to show wellpicks when limiting domain", () => {
+            const mockTrajectoryWithExtraRows = {
+                mdArr: [0, 1000, 2000, 3000, 4000],
+            } as WellboreTrajectory_api;
 
-            const wellLog = createWellLogSets([mockCurveData], mockTrajectory, brokenReferenceSystem)[1];
-
-            expect(wellLog.header.startIndex).toBe(1000);
-            expect(wellLog.header.endIndex).toBe(2000);
+            const wellLog = createWellLogSets(
+                [mockCurveData],
+                mockTrajectoryWithExtraRows,
+                // -- Minimal mock data
+                { wellpick: { header: { startIndex: 500, endIndex: 3500 }, data: ["MOCK", "MOCK"] } } as any,
+                new Set(),
+            )[1];
 
             expect(wellLog.data).toEqual([
-                [1000, null, 50],
-                [2000, null, 60],
+                [490, 49, null],
+                [1000, 100, 50],
+                [2000, 200, 60],
+                [3510, 351, null],
             ]);
         });
 
@@ -227,7 +227,7 @@ describe("QueryDataTransform", () => {
             const wellLog = createWellLogSets(
                 [mockCurveData],
                 mockTrajectoryWithExtraRows,
-                mockReferenceSystem,
+                undefined,
                 new Set(),
                 true,
             )[1];
@@ -236,7 +236,6 @@ describe("QueryDataTransform", () => {
                 [0, 0, null],
                 [1000, 100, 50],
                 [2000, 200, 60],
-                [3000, 300, null],
                 [4000, 400, null],
             ]);
         });
@@ -249,7 +248,7 @@ describe("QueryDataTransform", () => {
                     [2000, "b"],
                 ],
             };
-            const wellLog = createWellLogSets([mockWithStringIndices], mockTrajectory, mockReferenceSystem)[1];
+            const wellLog = createWellLogSets([mockWithStringIndices], mockTrajectory, undefined)[1];
 
             expect(wellLog.data).toEqual([
                 [1000, 100, "a"],
@@ -274,7 +273,7 @@ describe("QueryDataTransform", () => {
                 ],
             };
 
-            const wellLog = createWellLogSets([mockDiscrete], mockTrajectory, mockReferenceSystem)[1];
+            const wellLog = createWellLogSets([mockDiscrete], mockTrajectory, undefined)[1];
 
             expect(wellLog.metadata_discrete).toEqual({
                 DISCRETE: {
@@ -308,11 +307,7 @@ describe("QueryDataTransform", () => {
                 logName: "OTHER_TEST",
             };
 
-            const sets = createWellLogSets(
-                [mockCurveData, otherCurve1, otherCurve2],
-                mockTrajectory,
-                mockReferenceSystem,
-            );
+            const sets = createWellLogSets([mockCurveData, otherCurve1, otherCurve2], mockTrajectory, undefined);
 
             // Should be 3: 1 for the axis set, and one for each curve
             expect(sets).toHaveLength(3); // Axis set + two sets for the different logs
@@ -335,12 +330,7 @@ describe("QueryDataTransform", () => {
 
             const nonUniqueCurveNames = new Set([mockCurveData.name]);
 
-            const sets = createWellLogSets(
-                [mockCurveData, otherCurve],
-                mockTrajectory,
-                mockReferenceSystem,
-                nonUniqueCurveNames,
-            );
+            const sets = createWellLogSets([mockCurveData, otherCurve], mockTrajectory, undefined, nonUniqueCurveNames);
 
             const curve1 = sets[1].curves[2];
             const curve2 = sets[2].curves[2];
@@ -358,7 +348,7 @@ describe("QueryDataTransform", () => {
                 },
             ] as WellboreLogCurveData_api[];
 
-            const result = createWellLogSets(curveData, mockTrajectory, mockReferenceSystem);
+            const result = createWellLogSets(curveData, mockTrajectory, undefined);
 
             expect(result[1].header.name).toBe("log1::curve1");
         });
@@ -373,7 +363,7 @@ describe("QueryDataTransform", () => {
                 },
             ] as WellboreLogCurveData_api[];
 
-            const result = createWellLogSets(curveData, mockTrajectory, mockReferenceSystem);
+            const result = createWellLogSets(curveData, mockTrajectory, undefined);
 
             expect(result[1].header.name).toBe("log1");
         });
