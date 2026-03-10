@@ -88,7 +88,7 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         [props.polylinesPlugin],
     );
 
-    const adjustedLayers = [...props.layers, crossHairLayer, polylineHoverMarkerLayer];
+    const adjustedLayers = [...props.layers];
     const adjustedViews = {
         ...props.views,
         viewports: props.views.viewports.map((viewport) => {
@@ -166,6 +166,7 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
             {...props}
             views={adjustedViews}
             layers={adjustedLayers}
+            overlayLayers={[crossHairLayer, polylineHoverMarkerLayer]}
             onViewerHover={handleViewerHover}
             onViewportHover={handleViewportHover}
             onPickingInfoChange={handlePickingInfoChange}
@@ -214,18 +215,19 @@ function usePolylineHoverMarkerLayer(
         id: POLYLINE_HOVER_MARKER_LAYER_ID,
         data: position ? [{ position: position }] : [],
         getPosition: (d: { position: [number, number, number] }) => d.position,
-        getRadius: 8,
-        radiusUnits: "pixels",
+        radiusUnits: "meters",
+        getRadius: 60,
         radiusMinPixels: 8,
-        radiusMaxPixels: 8,
-        getFillColor: [255, 0, 0, 180],
-        stroked: true,
+        radiusMaxPixels: 20,
         getLineWidth: 1,
         lineWidthMinPixels: 1,
-        getLineColor: [255, 255, 255, 255],
+        getFillColor: [255, 0, 0, 180],
+        stroked: true,
         pickable: false,
         billboard: true,
-        parameters: { depthTest: false },
+        parameters: {
+            depthTest: false,
+        },
     });
 }
 

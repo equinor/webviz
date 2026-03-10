@@ -34,6 +34,7 @@ type PickingInfoWithStaleInfo = PickingInfo & { isStale?: boolean };
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
     layers: DeckGlLayer[];
+    overlayLayers?: DeckGlLayer[];
     deckGlManager: DeckGlInstanceManager;
     verticalScale: number;
     triggerHome: number;
@@ -404,6 +405,11 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         getTooltip: getTooltip,
     });
 
+    // Append overlay layers after main layers so they render on top
+    const layersWithOverlay = props.overlayLayers?.length
+        ? [...(deckGlProps.layers ?? []), ...props.overlayLayers]
+        : deckGlProps.layers;
+
     if (!isEqual(deckGlProps.views, storedDeckGlViews)) {
         setStoredDeckGlViews(deckGlProps.views);
     }
@@ -430,6 +436,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             <PositionReadout coordinate={pickingCoordinate} visible={!hideReadout} />
             <SubsurfaceViewerWithCameraState
                 {...deckGlProps}
+                layers={layersWithOverlay}
                 views={storedDeckGlViews}
                 getCameraPosition={ctx.onViewStateChange}
                 initialCameraPosition={ctx.viewState ?? undefined}
