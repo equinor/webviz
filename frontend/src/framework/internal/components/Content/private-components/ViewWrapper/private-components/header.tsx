@@ -140,6 +140,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 moduleInstance={props.moduleInstance}
                 isDragged={props.isDragged}
                 isSnapshotMode={isSnapshot}
+                onPointerDown={props.onPointerDown}
             />
 
             <SyncedSettingsIndicator moduleInstance={props.moduleInstance} />
