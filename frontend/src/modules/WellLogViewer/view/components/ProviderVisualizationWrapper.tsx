@@ -112,9 +112,7 @@ function createWellLogJsonFromProduct(
     const curveData = accData[DATA_ACC_KEY];
     const duplicatedCurveNames = accData[DUPLICATE_NAMES_ACC_KEY];
 
-    const referenceSystem = trajectoryToIntersectionReference(wellboreTrajectory);
-
-    return createWellLogSets(curveData, wellboreTrajectory, referenceSystem, duplicatedCurveNames, limitDomainToData);
+    return createWellLogSets(curveData, wellboreTrajectory, referenceSystem, duplicatedCurveNames, !limitDomainToData);
 }
 
 function createWellPickPropFromProduct(factoryProduct: WellLogFactoryProduct | null): WellPickProps | undefined {

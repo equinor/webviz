@@ -37,7 +37,7 @@ export function createWellLogSets(
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
     nonUniqueCurveNames?: Set<string>,
-    limitDomainToData = false,
+    padToTrajectoryLength?: boolean,
 ): WellLogSet[] {
     // The well-log viewer always picks the axis from the first log set in the collection.
     // Adding a dedicated set for only the axes, so we always have a full set to show from.
