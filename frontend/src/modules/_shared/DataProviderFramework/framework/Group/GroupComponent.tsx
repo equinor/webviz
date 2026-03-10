@@ -1,6 +1,9 @@
 import React from "react";
 
+import { Warning } from "@mui/icons-material";
+
 import { ColorSelect } from "@lib/components/ColorSelect";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { ActionGroup } from "../../Actions";
@@ -11,6 +14,7 @@ import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
 import { SharedSettingsDelegateTopic } from "../../delegates/SharedSettingsDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
+import { isErrorPlaceholder } from "../ErrorPlaceholder/ErrorPlaceholder";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
@@ -35,6 +39,15 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
     const color = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.COLOR);
+    const treeRevisionNumber = usePublishSubscribeTopicValue(
+        props.group.getGroupDelegate(),
+        GroupDelegateTopic.TREE_REVISION_NUMBER,
+    );
+    const numDescendantErrors = React.useMemo(
+        () => props.group.getGroupDelegate().getDescendantItems(isErrorPlaceholder).length,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [props.group, treeRevisionNumber],
+    );
 
     const sharedSettingsDelegate = props.group.getSharedSettingsDelegate();
 
@@ -68,6 +81,22 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
 
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
+
+        if (numDescendantErrors > 0) {
+            adornments.push(
+                <Tooltip
+                    key="error-tooltip"
+                    title={`${numDescendantErrors}${numDescendantErrors > 1 ? "s" : ""} item in this group could not be recreated from persisted state.`}
+                >
+                    <div className="bg-red-200 rounded px-2 py-1 flex gap-2 items-center text-red-900 h-6 border border-red-400">
+                        <Warning color="error" fontSize="small" />
+                        <span className="pt-1">
+                            {numDescendantErrors > 1 ? `${numDescendantErrors} errors` : "1 error"}
+                        </span>
+                    </div>
+                </Tooltip>,
+            );
+        }
 
         if (sharedSettingsDelegate) {
             adornments.push(<StatusMessagesWrapper settingsDelegate={sharedSettingsDelegate} />);
