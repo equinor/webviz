@@ -419,7 +419,7 @@ class SummaryAccess:
             SummaryExpectedError if the task failed.
         """
         task_state = await poll_sumo_task_until_done_async(self._sumo_client, sumo_task_id, timeout_s)
-
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", task_state)
         if task_state.status == "succeeded":
             return True
 
@@ -446,8 +446,12 @@ class SummaryAccess:
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_content_type(["timeseries", "simulationtimeseries"])
 
-        # Fetch existing aggregations — they should all exist after batch_aggregate completed
-        per_vector_tables = await table_loader.get_aggregated_columns_batched_async(vector_names)
+        # Fetch existing aggregations — they should all exist after batch_aggregate completed.
+        # Pass expect_all_aggregated=True so the discovery query retries if the Sumo index
+        # hasn't caught up yet (Elasticsearch eventual consistency).
+        per_vector_tables = await table_loader.get_aggregated_columns_batched_async(
+            vector_names, expect_all_aggregated=True
+        )
         et_loading_ms = timer.lap_ms()
 
         # Reuse the same merge/resample logic as get_vectors_table_async

@@ -1,8 +1,4 @@
-"""Shared utilities for submitting and polling Sumo aggregation tasks.
-
-Used by both surface_access and summary_access to avoid duplicating the
-task UUID extraction, HTTP timeout detection, and polling loop logic.
-"""
+"""Shared utilities for submitting and polling Sumo aggregation tasks."""
 
 import asyncio
 import logging
@@ -105,7 +101,9 @@ async def submit_sumo_task_async(
         ) from exc
 
     if not isinstance(httpx_resp, httpx.Response):
-        raise TypeError(f"Unexpected response type from Sumo task submission{f' ({context_msg})' if context_msg else ''}")
+        raise TypeError(
+            f"Unexpected response type from Sumo task submission{f' ({context_msg})' if context_msg else ''}"
+        )
 
     return extract_task_uuid_from_response(httpx_resp, context_msg)
 

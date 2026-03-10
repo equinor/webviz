@@ -40,6 +40,8 @@ class ArrowTableLoader:
     def require_standard_result(self, standard_result: str) -> None:
         self._req_standard_result = standard_result
 
+    # ── Per-column aggregation (uses SDK aggregate_async — no ES consistency issues) ──────
+
     async def get_aggregated_single_column_async(
         self,
         column_name: str,
@@ -185,6 +187,8 @@ class ArrowTableLoader:
 
         return merged_aggregated_table
 
+    # ── Batch aggregation (uses SDK batch_aggregate_async — requires ES index fetch with retry) ──
+
     def _make_base_search_context(self) -> SearchContext:
         return SearchContext(sumo=self._sumo_client).tables.filter(
             uuid=self._case_uuid,
@@ -221,8 +225,7 @@ class ArrowTableLoader:
             try:
                 async with asyncio.TaskGroup() as tg:
                     validate_tasks = {
-                        col: tg.create_task(self._check_agg_is_valid_async(col, sc_base))
-                        for col in cols_with_agg
+                        col: tg.create_task(self._check_agg_is_valid_async(col, sc_base)) for col in cols_with_agg
                     }
             except* ServiceLayerException as exc_group:
                 for exc in exc_group.exceptions:
@@ -248,6 +251,7 @@ class ArrowTableLoader:
     async def get_aggregated_columns_batched_async(
         self,
         column_names: list[str],
+        expect_all_aggregated: bool = False,
     ) -> dict[str, pa.Table]:
         """Fetch aggregated tables for multiple columns with optimized batching.
 
@@ -255,20 +259,30 @@ class ArrowTableLoader:
         - Uses a single query to discover which columns already have aggregations
         - Shares the realization count query across all staleness checks
 
+        If expect_all_aggregated is True (e.g. after a batch_aggregate task completed),
+        the discovery and staleness-validation steps are skipped and all columns are
+        fetched directly with retry to handle Elasticsearch eventual consistency.
+
         Returns dict mapping column_name -> pa.Table (each with DATE, REAL, column_name).
         """
         if not column_names:
             raise InvalidParameterError("Empty column list", Service.SUMO)
 
         perf_metrics = PerfMetrics()
-
         sc_base = self._make_base_search_context()
+
+        if expect_all_aggregated:
+            results = await self._fetch_expected_aggregations_async(column_names, sc_base, perf_metrics)
+            LOGGER.debug(
+                f"ArrowTableLoader.get_aggregated_columns_batched_async(expect_all_aggregated) "
+                f"took: {perf_metrics.to_string()}, columns={column_names}, {self._make_req_info_str()}"
+            )
+            return results
 
         # Batch-locate existing aggregations (1 query instead of N)
         sc_all_agg = sc_base.filter(aggregation="collection", realization=False)
 
-        existing_agg_columns_raw = await sc_all_agg.columns_async
-        existing_agg_columns: set[str] = set(existing_agg_columns_raw)
+        existing_agg_columns: set[str] = set(await sc_all_agg.columns_async)
         perf_metrics.record_lap("batch-locate")
 
         cols_with_agg = [c for c in column_names if c in existing_agg_columns]
@@ -298,9 +312,9 @@ class ArrowTableLoader:
 
         # Aggregate columns that are missing or have stale aggregations.
         # Uses batch_aggregate_async to submit a single Sumo request for all
-        # columns instead of N individual aggregate_async calls, avoiding 429s.
+        # columns that need aggregation, instead of one request per column.
         if cols_without_agg:
-            LOGGER.debug(
+            LOGGER.info(
                 f"ArrowTableLoader.get_aggregated_columns_batched_async() aggregating {len(cols_without_agg)} columns: "
                 f"{cols_without_agg}, {self._make_req_info_str()}"
             )
@@ -340,6 +354,101 @@ class ArrowTableLoader:
 
         return results
 
+    async def _fetch_expected_aggregations_async(
+        self,
+        column_names: list[str],
+        sc_base: SearchContext,
+        perf_metrics: PerfMetrics,
+    ) -> dict[str, pa.Table]:
+        """Fetch columns that are expected to already be aggregated (post-LRO).
+
+        Skips the discovery and staleness-validation steps.  Instead, attempts to
+        fetch all columns in parallel and retries any that are not yet visible in
+        the Sumo/ES index.  This handles the eventual-consistency delay that can
+        be significant when many columns are aggregated at once (observed 10-30s+
+        for ~200 columns).
+        """
+        results: dict[str, pa.Table] = {}
+        remaining = list(column_names)
+
+        # First attempt — fetch all in parallel, no sleep
+        retry_delays = [1.0, 2.0, 3.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
+        for attempt_idx in range(len(retry_delays) + 1):
+            fetch_results: dict[str, pa.Table | None] = {}
+            try:
+                async with asyncio.TaskGroup() as tg:
+                    fetch_tasks = {
+                        col: tg.create_task(self._try_fetch_agg_async(col, sc_base)) for col in remaining
+                    }
+            except* ServiceLayerException as exc_group:
+                for exc in exc_group.exceptions:
+                    raise exc from exc_group
+
+            for col, task in fetch_tasks.items():
+                fetch_results[col] = task.result()
+
+            still_missing: list[str] = []
+            for col in remaining:
+                tbl = fetch_results[col]
+                if tbl is not None:
+                    results[col] = tbl
+                else:
+                    still_missing.append(col)
+
+            if not still_missing:
+                perf_metrics.record_lap(f"fetch-expected(attempt={attempt_idx + 1})")
+                break
+
+            if attempt_idx < len(retry_delays):
+                delay = retry_delays[attempt_idx]
+                LOGGER.debug(
+                    f"Post-LRO fetch: {len(still_missing)}/{len(column_names)} columns not yet visible "
+                    f"(attempt {attempt_idx + 1}), retrying in {delay}s"
+                )
+                perf_metrics.record_lap(f"fetch-expected(attempt={attempt_idx + 1})")
+                await asyncio.sleep(delay)
+                remaining = still_missing
+            else:
+                perf_metrics.record_lap(f"fetch-expected(attempt={attempt_idx + 1})")
+
+        if still_missing:
+            raise NoDataError(
+                f"After batch_aggregate, {len(still_missing)}/{len(column_names)} columns never became "
+                f"visible in the Sumo index: {still_missing[:10]}{'...' if len(still_missing) > 10 else ''}, "
+                f"{self._make_req_info_str()}",
+                Service.SUMO,
+            )
+
+        return results
+
+    async def _try_fetch_agg_async(
+        self,
+        column_name: str,
+        sc_base: SearchContext,
+    ) -> pa.Table | None:
+        """Try to fetch an aggregation for a single column. Returns None if not found.
+
+        Handles the case where length_async() reports 1 but getitem_async(0) fails
+        with IndexError due to Elasticsearch eventual consistency (the count query
+        and the item-fetch query may hit different index snapshots).
+        """
+        sc_col_agg = sc_base.filter(column=column_name, aggregation="collection", realization=False)
+        agg_count = await sc_col_agg.length_async()
+
+        if agg_count == 0:
+            return None
+        if agg_count > 1:
+            raise MultipleDataMatchesError(
+                f"Multiple aggregations for {column_name=}, {self._make_req_info_str()}", Service.SUMO
+            )
+
+        try:
+            agg_table_obj: Table = await sc_col_agg.getitem_async(0)
+        except IndexError:
+            # length_async saw the item but getitem_async's internal search didn't — ES consistency lag
+            return None
+        return await agg_table_obj.to_arrow_async()
+
     async def _fetch_and_validate_agg_async(
         self,
         column_name: str,
@@ -378,41 +487,51 @@ class ArrowTableLoader:
         column_name: str,
         sc_base: SearchContext,
     ) -> pa.Table:
-        """Fetch a column aggregation that was just created by batch_aggregate_async."""
-        sc_col_agg = sc_base.filter(column=column_name, aggregation="collection", realization=False)
+        """Fetch a column aggregation that was just created by batch_aggregate_async.
 
-        agg_count = await sc_col_agg.length_async()
-        if agg_count == 0:
-            raise NoDataError(
-                f"Aggregation not found after batch_aggregate for {column_name=}, {self._make_req_info_str()}",
-                Service.SUMO,
-            )
-        if agg_count > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple aggregations for {column_name=}, {self._make_req_info_str()}", Service.SUMO
-            )
+        Sumo uses Elasticsearch which is eventually consistent — newly created
+        aggregations may not be immediately discoverable through search queries.
+        This method retries with short backoff to handle that propagation delay.
+        """
+        retry_delays = [0.5, 1.0, 2.0, 4.0]
+        for attempt in range(len(retry_delays) + 1):
+            sc_col_agg = sc_base.filter(column=column_name, aggregation="collection", realization=False)
+            agg_count = await sc_col_agg.length_async()
 
-        agg_table_obj: Table = await sc_col_agg.getitem_async(0)
-        return await agg_table_obj.to_arrow_async()
+            if agg_count == 1:
+                try:
+                    agg_table_obj: Table = await sc_col_agg.getitem_async(0)
+                except IndexError:
+                    # length_async saw it but getitem_async didn't — treat as not yet visible
+                    pass
+                else:
+                    if attempt > 0:
+                        LOGGER.info(
+                            f"Aggregation for {column_name=} became available after {attempt} retries, "
+                            f"{self._make_req_info_str()}"
+                        )
+                    return await agg_table_obj.to_arrow_async()
 
-    async def _do_aggregate_column_async(
-        self,
-        column_name: str,
-        sc_base: SearchContext,
-    ) -> pa.Table:
-        """Trigger aggregation for a column with no valid existing aggregation."""
-        sc_col_real = sc_base.filter(column=column_name, aggregation=False, realization=True)
+            if agg_count > 1:
+                raise MultipleDataMatchesError(
+                    f"Multiple aggregations for {column_name=}, {self._make_req_info_str()}", Service.SUMO
+                )
 
-        if await sc_col_real.length_async() == 0:
-            raise NoDataError(
-                f"No per-realization tables for {column_name=}, {self._make_req_info_str()}", Service.SUMO
-            )
+            # agg_count == 0: not yet visible in index
+            if attempt < len(retry_delays):
+                LOGGER.debug(
+                    f"Aggregation for {column_name=} not yet visible (attempt {attempt + 1}), "
+                    f"retrying in {retry_delays[attempt]}s"
+                )
+                await asyncio.sleep(retry_delays[attempt])
 
-        new_agg = await sc_col_real.aggregate_async(columns=[column_name], operation="collection")
-        if not isinstance(new_agg, Table):
-            raise InvalidDataError(f"Failed to aggregate {column_name=}, {self._make_req_info_str()}", Service.SUMO)
+        raise NoDataError(
+            f"Aggregation not found after batch_aggregate for {column_name=} "
+            f"(retried {len(retry_delays)} times), {self._make_req_info_str()}",
+            Service.SUMO,
+        )
 
-        return await new_agg.to_arrow_async()
+    # ── Single realization fetch ─────────────────────────────────────────────────
 
     async def get_single_realization_async(self, realization: int) -> pa.Table:
         """Get a pyarrow table for a given realization"""
@@ -448,6 +567,8 @@ class ArrowTableLoader:
         )
 
         return arrow_table
+
+    # ── Helpers ───────────────────────────────────────────────────────────────────
 
     def _make_req_info_str(self) -> str:
         info_str = f"table_name={self._req_table_name}, content_type={self._req_content_types}"
