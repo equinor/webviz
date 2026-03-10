@@ -58,9 +58,11 @@ export type SurfaceProviderArgs = {
     surfaceType: SurfaceType;
 };
 
-export class DepthSurfaceProvider
-    implements CustomDataProviderImplementation<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>
-{
+export class DepthSurfaceProvider implements CustomDataProviderImplementation<
+    DepthSurfaceSettings,
+    SurfaceData,
+    SurfaceStoredData
+> {
     settings = surfaceSettings;
 
     private _dataFormat: SurfaceDataFormat = SurfaceDataFormat.FLOAT;

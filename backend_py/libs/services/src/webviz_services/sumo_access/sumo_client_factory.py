@@ -33,7 +33,7 @@ def create_sumo_client(access_token: str) -> SumoClient:
             env=services_config.sumo_env,
             token=access_token,
             retry_strategy=RetryStrategy(stop_after=1),
-            http_client=_FakeSyncHttpClient(),
+            # http_client=_FakeSyncHttpClient(), //TMPTMPTMPT
             async_http_client=HTTPX_ASYNC_CLIENT_WRAPPER.client,
             timeout=120,
         )

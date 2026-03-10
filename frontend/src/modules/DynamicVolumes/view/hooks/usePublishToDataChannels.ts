@@ -64,7 +64,7 @@ export function usePublishToDataChannels(
     subplotGroups: SubplotGroup[],
     vectorName: string,
 ): void {
-    console.log(vectorName);
+
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
 
     const contents: ChannelContentDefinition[] = [];

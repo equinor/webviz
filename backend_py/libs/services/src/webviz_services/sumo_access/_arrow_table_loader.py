@@ -185,6 +185,235 @@ class ArrowTableLoader:
 
         return merged_aggregated_table
 
+    def _make_base_search_context(self) -> SearchContext:
+        return SearchContext(sumo=self._sumo_client).tables.filter(
+            uuid=self._case_uuid,
+            ensemble=self._ensemble_name,
+            name=self._req_table_name,
+            content=self._req_content_types,
+            tagname=self._req_tagname,
+            standard_result=self._req_standard_result,
+        )
+
+    async def find_columns_needing_aggregation_async(
+        self,
+        column_names: list[str],
+    ) -> list[str]:
+        """Check which columns need aggregation (missing or stale).
+
+        Returns the subset of column_names that do NOT have valid existing
+        aggregations in Sumo.  If the returned list is empty, all columns
+        are already aggregated and can be fetched directly.
+        """
+        if not column_names:
+            return []
+
+        sc_base = self._make_base_search_context()
+        sc_all_agg = sc_base.filter(aggregation="collection", realization=False)
+
+        existing_agg_columns: set[str] = set(await sc_all_agg.columns_async)
+
+        cols_with_agg = [c for c in column_names if c in existing_agg_columns]
+        cols_without_agg = [c for c in column_names if c not in existing_agg_columns]
+
+        # Validate existing aggregations concurrently
+        if cols_with_agg:
+            try:
+                async with asyncio.TaskGroup() as tg:
+                    validate_tasks = {
+                        col: tg.create_task(self._check_agg_is_valid_async(col, sc_base))
+                        for col in cols_with_agg
+                    }
+            except* ServiceLayerException as exc_group:
+                for exc in exc_group.exceptions:
+                    raise exc from exc_group
+
+            for col, task in validate_tasks.items():
+                if not task.result():
+                    cols_without_agg.append(col)
+
+        return cols_without_agg
+
+    async def _check_agg_is_valid_async(self, column_name: str, sc_base: SearchContext) -> bool:
+        """Check if a valid aggregation exists for a column. Does NOT fetch the blob."""
+        sc_col_agg = sc_base.filter(column=column_name, aggregation="collection", realization=False)
+
+        agg_count = await sc_col_agg.length_async()
+        if agg_count != 1:
+            return False
+
+        agg_table_obj: Table = await sc_col_agg.getitem_async(0)
+        return await _is_agg_valid_for_reals_async(agg_table_obj, sc_base.filter(column=column_name))
+
+    async def get_aggregated_columns_batched_async(
+        self,
+        column_names: list[str],
+    ) -> dict[str, pa.Table]:
+        """Fetch aggregated tables for multiple columns with optimized batching.
+
+        Compared to calling get_aggregated_single_column_async per column, this:
+        - Uses a single query to discover which columns already have aggregations
+        - Shares the realization count query across all staleness checks
+
+        Returns dict mapping column_name -> pa.Table (each with DATE, REAL, column_name).
+        """
+        if not column_names:
+            raise InvalidParameterError("Empty column list", Service.SUMO)
+
+        perf_metrics = PerfMetrics()
+
+        sc_base = self._make_base_search_context()
+
+        # Batch-locate existing aggregations (1 query instead of N)
+        sc_all_agg = sc_base.filter(aggregation="collection", realization=False)
+
+        existing_agg_columns_raw = await sc_all_agg.columns_async
+        existing_agg_columns: set[str] = set(existing_agg_columns_raw)
+        perf_metrics.record_lap("batch-locate")
+
+        cols_with_agg = [c for c in column_names if c in existing_agg_columns]
+        cols_without_agg = [c for c in column_names if c not in existing_agg_columns]
+
+        results: dict[str, pa.Table] = {}
+
+        # Fetch and validate existing aggregations concurrently
+        if cols_with_agg:
+            try:
+                async with asyncio.TaskGroup() as tg:
+                    fetch_tasks = {
+                        col: tg.create_task(self._fetch_and_validate_agg_async(col, sc_base)) for col in cols_with_agg
+                    }
+            except* ServiceLayerException as exc_group:
+                for exc in exc_group.exceptions:
+                    raise exc from exc_group
+
+            for col, task in fetch_tasks.items():
+                result = task.result()
+                if result is not None:
+                    results[col] = result
+                else:
+                    cols_without_agg.append(col)
+
+            perf_metrics.record_lap("fetch-validate-existing")
+
+        # Aggregate columns that are missing or have stale aggregations.
+        # Uses batch_aggregate_async to submit a single Sumo request for all
+        # columns instead of N individual aggregate_async calls, avoiding 429s.
+        if cols_without_agg:
+            LOGGER.debug(
+                f"ArrowTableLoader.get_aggregated_columns_batched_async() aggregating {len(cols_without_agg)} columns: "
+                f"{cols_without_agg}, {self._make_req_info_str()}"
+            )
+
+            if self._req_table_name is None:
+                agg_table_names = await sc_all_agg.names_async
+                if len(agg_table_names) > 1:
+                    raise MultipleDataMatchesError(
+                        f"Multiple tables found for {self._make_req_info_str()}", Service.SUMO
+                    )
+
+            # Single POST to Sumo to trigger aggregation for all missing columns
+            sc_for_agg = sc_base.filter(realization=True, aggregation=False)
+            await sc_for_agg.batch_aggregate_async(columns=cols_without_agg, operation="collection", no_wait=False)
+            perf_metrics.record_lap("batch-aggregate")
+
+            # Aggregations now exist in Sumo — fetch them
+            try:
+                async with asyncio.TaskGroup() as tg:
+                    fetch_agg_tasks = {
+                        col: tg.create_task(self._fetch_newly_aggregated_column_async(col, sc_base))
+                        for col in cols_without_agg
+                    }
+            except* ServiceLayerException as exc_group:
+                for exc in exc_group.exceptions:
+                    raise exc from exc_group
+
+            for col, task in fetch_agg_tasks.items():
+                results[col] = task.result()
+
+            perf_metrics.record_lap("fetch-after-batch-agg")
+
+        LOGGER.debug(
+            f"ArrowTableLoader.get_aggregated_columns_batched_async() took: {perf_metrics.to_string()}, "
+            f"columns={column_names}, {self._make_req_info_str()}"
+        )
+
+        return results
+
+    async def _fetch_and_validate_agg_async(
+        self,
+        column_name: str,
+        sc_base: SearchContext,
+    ) -> pa.Table | None:
+        """Fetch an existing aggregation for a single column and validate it.
+        Returns Arrow table if valid, None if stale/invalid.
+        """
+        sc_col_agg = sc_base.filter(column=column_name, aggregation="collection", realization=False)
+
+        agg_count = await sc_col_agg.length_async()
+        if agg_count > 1:
+            raise MultipleDataMatchesError(
+                f"Multiple aggregations for {column_name=}, {self._make_req_info_str()}", Service.SUMO
+            )
+        if agg_count == 0:
+            return None
+
+        agg_table_obj: Table = await sc_col_agg.getitem_async(0)
+
+        # Concurrent: fetch blob + validate staleness (per-column realization check)
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(agg_table_obj.blob_async)
+            validate_task = tg.create_task(
+                _is_agg_valid_for_reals_async(agg_table_obj, sc_base.filter(column=column_name))
+            )
+
+        if not validate_task.result():
+            LOGGER.debug(f"ArrowTableLoader: stale aggregation for {column_name=}, {self._make_req_info_str()}")
+            return None
+
+        return await agg_table_obj.to_arrow_async()
+
+    async def _fetch_newly_aggregated_column_async(
+        self,
+        column_name: str,
+        sc_base: SearchContext,
+    ) -> pa.Table:
+        """Fetch a column aggregation that was just created by batch_aggregate_async."""
+        sc_col_agg = sc_base.filter(column=column_name, aggregation="collection", realization=False)
+
+        agg_count = await sc_col_agg.length_async()
+        if agg_count == 0:
+            raise NoDataError(
+                f"Aggregation not found after batch_aggregate for {column_name=}, {self._make_req_info_str()}",
+                Service.SUMO,
+            )
+        if agg_count > 1:
+            raise MultipleDataMatchesError(
+                f"Multiple aggregations for {column_name=}, {self._make_req_info_str()}", Service.SUMO
+            )
+
+        agg_table_obj: Table = await sc_col_agg.getitem_async(0)
+        return await agg_table_obj.to_arrow_async()
+
+    async def _do_aggregate_column_async(
+        self,
+        column_name: str,
+        sc_base: SearchContext,
+    ) -> pa.Table:
+        """Trigger aggregation for a column with no valid existing aggregation."""
+        sc_col_real = sc_base.filter(column=column_name, aggregation=False, realization=True)
+
+        if await sc_col_real.length_async() == 0:
+            raise NoDataError(
+                f"No per-realization tables for {column_name=}, {self._make_req_info_str()}", Service.SUMO
+            )
+
+        new_agg = await sc_col_real.aggregate_async(columns=[column_name], operation="collection")
+        if not isinstance(new_agg, Table):
+            raise InvalidDataError(f"Failed to aggregate {column_name=}, {self._make_req_info_str()}", Service.SUMO)
+
+        return await new_agg.to_arrow_async()
+
     async def get_single_realization_async(self, realization: int) -> pa.Table:
         """Get a pyarrow table for a given realization"""
 

@@ -12,7 +12,6 @@ import { extractRegionalVectorsInfo } from "../../utils/regionalVectors";
 
 import { vectorListQueriesAtom } from "./queryAtoms";
 
-// ──────── Persistable / fixable atoms ────────
 
 /** Multi-ensemble selection — array of RegularEnsembleIdent */
 export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({

@@ -87,7 +87,7 @@ export function computeVectorGroupDefs(
 
         const subplotKey = subplotBy ? getFipGroupKey(subplotBy, fip, fipRegionLabels) : "_all";
         const colorKey = getFipGroupKey(colorBy, fip, fipRegionLabels);
-        const groupLabel = `${subplotKey}-${colorKey}`;
+        const groupLabel = `${subplotKey}\0${colorKey}`;
 
         if (!groupMap.has(groupLabel)) {
             groupMap.set(groupLabel, { subplotKey, colorKey, vectorNames: [] });

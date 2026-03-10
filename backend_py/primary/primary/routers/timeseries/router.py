@@ -4,12 +4,13 @@ from typing import Annotated
 
 import pyarrow as pa
 import pyarrow.compute as pc
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response, status
 
 from webviz_services.summary_vector_statistics import compute_vector_statistics
 from webviz_services.sumo_access.parameter_access import ParameterAccess
-from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess
+from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess, SummaryInProgress, SummaryExpectedError
 from webviz_services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 from webviz_services.summary_delta_vectors import (
     DeltaVectorMetadata,
     create_delta_vector_table,
@@ -32,12 +33,13 @@ from webviz_services.summary_grouped_vectors import (
 )
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.cache_control_middleware import cache_time, CacheTime
+from primary.middleware.cache_control_middleware import cache_time, set_cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str
 
+from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp
 
-from . import converters, schemas
+from . import converters, schemas, task_helpers
 
 
 LOGGER = logging.getLogger(__name__)
@@ -256,6 +258,143 @@ async def post_grouped_realizations_vectors_data(
             for g in result.groups
         ],
     )
+
+
+@router.post("/grouped_realizations_vectors_data/hybrid")
+async def post_grouped_realizations_vectors_data_hybrid(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    groups: Annotated[list[schemas.VectorGroupInput], Body(embed=True, description="Groups of vector names to sum")],
+    resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, raw data without resampling will be returned.")] = None,
+    # fmt:on
+) -> LroSuccessResp[schemas.GroupedRealizationsVectorData] | LroInProgressResp | LroFailureResp:
+    """Get summed vector data per realization for named groups (hybrid/LRO).
+
+    Same as the non-hybrid endpoint, but uses a long-running task pattern for
+    the Sumo aggregation step.  When aggregations are cold, the first call
+    submits a batch aggregation task and returns HTTP 202.  The client re-polls
+    the same endpoint until the task completes and data is returned.
+    """
+
+    perf_metrics = ResponsePerfMetrics(response)
+
+    all_vector_names: list[str] = list(dict.fromkeys(vn for group in groups for vn in group.vectorNames))
+    access_token = authenticated_user.get_sumo_access_token()
+    access = SummaryAccess.from_ensemble_name(access_token, case_uuid, ensemble_name)
+    perf_metrics.record_lap("init")
+
+    # ── Step 1: Check which columns actually need aggregation ──
+    cols_needing_agg = await access.find_vectors_needing_aggregation_async(all_vector_names)
+    perf_metrics.record_lap("check-agg")
+
+    # ── Hot path: all aggregations already valid — skip task machinery entirely ──
+    if not cols_needing_agg:
+        LOGGER.info(f"All {len(all_vector_names)} vectors have valid aggregations — fetching directly")
+        sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
+        df = await access.get_vectors_table_after_aggregation_async(
+            vector_names=all_vector_names,
+            resampling_frequency=sumo_freq,
+            realizations=None,
+        )
+        perf_metrics.record_lap("get-vectors")
+
+        service_groups = [VectorGroup(group_label=g.groupLabel, vector_names=g.vectorNames) for g in groups]
+        result = compute_grouped_vector_sums(df, service_groups)
+        perf_metrics.record_lap("sum-groups")
+
+        LOGGER.info(f"Got grouped realization data (hybrid/hot) ({len(groups)} groups) in: {perf_metrics.to_string()}")
+
+        set_cache_time(CacheTime.NORMAL)
+        return LroSuccessResp(
+            status="success",
+            result=schemas.GroupedRealizationsVectorData(
+                realizations=result.realizations,
+                timestampsUtcMs=result.timestamps_utc_ms,
+                groups=[
+                    schemas.GroupedVectorEntry(
+                        groupLabel=g.group_label,
+                        valuesPerRealization=g.values_per_realization,
+                    )
+                    for g in result.groups
+                ],
+            ),
+        )
+
+    # ── Cold path: some columns need aggregation — use task submit/poll ──
+    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
+
+    task_fp = await task_helpers.determine_summary_task_fingerprint_async(
+        authenticated_user, case_uuid, ensemble_name, all_vector_names
+    )
+    perf_metrics.record_lap("fingerprint")
+
+    task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
+    perf_metrics.record_lap("task-meta")
+
+    new_task_was_submitted = False
+    if not task_meta:
+        # Only submit for the columns that actually need aggregation
+        task_meta = await task_helpers.submit_and_track_summary_task_async(
+            access, cols_needing_agg, task_tracker, task_fp
+        )
+        LOGGER.info(
+            f"Submitted batch aggregation task for {len(cols_needing_agg)}/{len(all_vector_names)} vectors"
+        )
+        new_task_was_submitted = True
+        perf_metrics.record_lap("submit")
+
+    try:
+        poll_result = await access.poll_batch_aggregation_task_async(
+            sumo_task_id=task_meta.task_id, timeout_s=0
+        )
+        perf_metrics.record_lap("poll")
+
+        if isinstance(poll_result, SummaryExpectedError):
+            await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
+            return task_helpers.make_lro_failure_resp(poll_result)
+
+        if isinstance(poll_result, SummaryInProgress):
+            LOGGER.info(f"Returning in-progress for batch aggregation task (hybrid) in: {perf_metrics.to_string()}")
+            response.status_code = status.HTTP_202_ACCEPTED
+            return task_helpers.make_lro_in_progress_resp(task_meta, new_task_was_submitted, poll_result)
+
+        # Task completed — aggregations now exist in Sumo. Fetch and process them.
+        sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
+        df = await access.get_vectors_table_after_aggregation_async(
+            vector_names=all_vector_names,
+            resampling_frequency=sumo_freq,
+            realizations=None,
+        )
+        perf_metrics.record_lap("get-vectors")
+
+        service_groups = [VectorGroup(group_label=g.groupLabel, vector_names=g.vectorNames) for g in groups]
+        result = compute_grouped_vector_sums(df, service_groups)
+        perf_metrics.record_lap("sum-groups")
+
+        LOGGER.info(f"Got grouped realization data (hybrid/cold) ({len(groups)} groups) in: {perf_metrics.to_string()}")
+
+        set_cache_time(CacheTime.NORMAL)
+        return LroSuccessResp(
+            status="success",
+            result=schemas.GroupedRealizationsVectorData(
+                realizations=result.realizations,
+                timestampsUtcMs=result.timestamps_utc_ms,
+                groups=[
+                    schemas.GroupedVectorEntry(
+                        groupLabel=g.group_label,
+                        valuesPerRealization=g.values_per_realization,
+                    )
+                    for g in result.groups
+                ],
+            ),
+        )
+
+    except Exception:
+        await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
+        raise
 
 
 @router.get("/delta_ensemble_realizations_vector_data/")

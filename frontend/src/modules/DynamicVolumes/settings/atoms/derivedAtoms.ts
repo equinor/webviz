@@ -57,10 +57,9 @@ export const regionalVectorsInfoAtom = atom<RegionalVectorsInfo>((get) => {
     return extractRegionalVectorsInfo(allNames);
 });
 
-// ────────── FIP regions from ensemble metadata ──────────
 
 /**
- * The shared EnsembleFipRegions when ALL selected ensembles have compatible
+ * The shared EnsembleFipRegions when all selected ensembles have compatible
  * FIP region mappings.  Returns null when any ensemble is missing FIP data
  * or when ensembles have mismatching mappings.
  */
@@ -89,7 +88,7 @@ export const hasFipRegionsDataAtom = atom<boolean>((get) => {
 });
 
 /**
- * Human-readable reason why Zone/Region mode is disabled, or null if it is
+ * Reason why Zone/Region mode is disabled, or null if it is
  * available.  Used by the settings UI to show a disabled radio with tooltip.
  */
 export const fipRegionsDisabledReasonAtom = atom<string | null>((get) => {

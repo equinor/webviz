@@ -115,6 +115,18 @@ export type BodyPostGroupedRealizationsVectorsData_api = {
 };
 
 /**
+ * Body_post_grouped_realizations_vectors_data_hybrid
+ */
+export type BodyPostGroupedRealizationsVectorsDataHybrid_api = {
+    /**
+     * Groups
+     *
+     * Groups of vector names to sum
+     */
+    groups: Array<VectorGroupInput_api>;
+};
+
+/**
  * BoundingBox2d
  */
 export type BoundingBox2d_api = {
@@ -974,6 +986,17 @@ export type LroInProgressResp_api = {
      * Progress Message
      */
     progress_message?: string | null;
+};
+
+/**
+ * LroSuccessResp[GroupedRealizationsVectorData]
+ */
+export type LroSuccessRespGroupedRealizationsVectorData_api = {
+    /**
+     * Status
+     */
+    status: "success";
+    result: GroupedRealizationsVectorData_api;
 };
 
 /**
@@ -3548,6 +3571,55 @@ export type PostGroupedRealizationsVectorsDataResponses_api = {
 
 export type PostGroupedRealizationsVectorsDataResponse_api =
     PostGroupedRealizationsVectorsDataResponses_api[keyof PostGroupedRealizationsVectorsDataResponses_api];
+
+export type PostGroupedRealizationsVectorsDataHybridData_api = {
+    body: BodyPostGroupedRealizationsVectorsDataHybrid_api;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Resampling Frequency
+         *
+         * Resampling frequency. If not specified, raw data without resampling will be returned.
+         */
+        resampling_frequency?: Frequency_api | null;
+        zCacheBust?: string;
+    };
+    url: "/timeseries/grouped_realizations_vectors_data/hybrid";
+};
+
+export type PostGroupedRealizationsVectorsDataHybridErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type PostGroupedRealizationsVectorsDataHybridError_api =
+    PostGroupedRealizationsVectorsDataHybridErrors_api[keyof PostGroupedRealizationsVectorsDataHybridErrors_api];
+
+export type PostGroupedRealizationsVectorsDataHybridResponses_api = {
+    /**
+     * Response Post Grouped Realizations Vectors Data Hybrid
+     *
+     * Successful Response
+     */
+    200: LroSuccessRespGroupedRealizationsVectorData_api | LroInProgressResp_api | LroFailureResp_api;
+};
+
+export type PostGroupedRealizationsVectorsDataHybridResponse_api =
+    PostGroupedRealizationsVectorsDataHybridResponses_api[keyof PostGroupedRealizationsVectorsDataHybridResponses_api];
 
 export type GetDeltaEnsembleRealizationsVectorDataData_api = {
     body?: never;

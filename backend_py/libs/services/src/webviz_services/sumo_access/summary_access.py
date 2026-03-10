@@ -1,12 +1,17 @@
 import asyncio
 import logging
+from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple, Set
+from urllib.parse import urlparse
 
+import httpx
 import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 import polars as pl
 from webviz_core_utils.perf_timer import PerfTimer
+from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.exponential_backoff_timer import ExponentialBackoffTimer
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_services.utils.otel_span_tracing import otel_span_decorator
@@ -21,6 +26,8 @@ from webviz_services.service_exceptions import (
     MultipleDataMatchesError,
     InvalidParameterError,
     NoDataError,
+    ServiceRequestError,
+    ServiceTimeoutError,
 )
 
 
@@ -38,6 +45,16 @@ from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class SummaryInProgress:
+    progress_message: str = ""
+
+
+@dataclass(frozen=True)
+class SummaryExpectedError:
+    message: str = ""
 
 
 class SummaryAccess:
@@ -125,57 +142,14 @@ class SummaryAccess:
         # New metadata uses simulationtimeseries, but most existing cases use timeseries
         table_loader.require_content_type(["timeseries", "simulationtimeseries"])
 
-        # Fetch each vector individually to handle differing DATE grids
-        async with asyncio.TaskGroup() as tg:
-            tasks = {vn: tg.create_task(table_loader.get_aggregated_single_column_async(vn)) for vn in vector_names}
-        per_vector_tables = {vn: task.result() for vn, task in tasks.items()}
+        # Fetch each vector individually to handle differing DATE grids.
+        # Uses batched locate + shared staleness check to reduce API round-trips.
+        per_vector_tables = await table_loader.get_aggregated_columns_batched_async(vector_names)
         et_loading_ms = timer.lap_ms()
 
-        # Filter realizations and sort each table
-        requested_reals_arr = pa.array(realizations) if realizations is not None else None
-        sorted_tables: List[Tuple[str, pa.Table]] = []
-        for vn, tbl in per_vector_tables.items():
-            if requested_reals_arr is not None:
-                mask = pc.is_in(tbl["REAL"], value_set=requested_reals_arr)
-                tbl = tbl.filter(mask)
-            tbl = sort_table_on_real_then_date(tbl)
-            sorted_tables.append((vn, tbl))
-
-        if resampling_frequency is not None:
-            # Compute a shared date grid that spans all vectors
-            all_tables = [tbl for _, tbl in sorted_tables]
-            global_min, global_max = compute_global_min_max_dates(all_tables)
-            shared_sample_dates = generate_normalized_sample_dates(global_min, global_max, resampling_frequency)
-
-            # Resample each vector onto the shared grid
-            resampled_tables: List[Tuple[str, pa.Table]] = []
-            for vn, tbl in sorted_tables:
-                resampled = resample_segmented_multi_real_table_with_shared_dates(tbl, shared_sample_dates)
-                resampled_tables.append((vn, resampled))
-
-            # Merge: first table has DATE + REAL + first vector; append remaining vector columns
-            merged_table = resampled_tables[0][1]
-            for vn, tbl in resampled_tables[1:]:
-                merged_table = merged_table.append_column(vn, tbl.column(vn))
-
-            et_resampling_ms = timer.lap_ms()
-            table = merged_table.combine_chunks()
-
-            LOGGER.debug(
-                f"Got vectors table in: {timer.elapsed_ms()}ms "
-                f"(loading={et_loading_ms}ms, resampling={et_resampling_ms}ms) "
-                f"({len(vector_names)} vectors, {resampling_frequency=}, {table.shape=})"
-            )
-
-            return pl.from_arrow(table)
-
-        # No resampling – merge via polars join on REAL + DATE
-        frames = [pl.from_arrow(tbl) for _, tbl in sorted_tables]
-        merged_df = frames[0]
-        for frame in frames[1:]:
-            merged_df = merged_df.join(frame, on=["DATE", "REAL"], how="full", coalesce=True)
-
-        return merged_df
+        return self._merge_and_resample_vector_tables(
+            per_vector_tables, vector_names, resampling_frequency, realizations, timer, et_loading_ms
+        )
 
     @otel_span_decorator()
     async def get_vector_table_async(
@@ -432,6 +406,184 @@ class SummaryAccess:
         )
 
         return pc.unique(table.column("DATE")).to_numpy().astype(int).tolist()
+
+    async def find_vectors_needing_aggregation_async(self, vector_names: list[str]) -> list[str]:
+        """Return the subset of vector_names that need aggregation (missing or stale).
+
+        If the returned list is empty all requested vectors already have valid
+        aggregations in Sumo and data can be fetched directly without submitting
+        a batch aggregation task.
+        """
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
+        table_loader.require_content_type(["timeseries", "simulationtimeseries"])
+        return await table_loader.find_columns_needing_aggregation_async(vector_names)
+
+    async def submit_batch_aggregation_task_async(
+        self,
+        vector_names: list[str],
+    ) -> str:
+        """Submit a batch aggregation task to Sumo for the given vectors and return the task UUID.
+
+        This uses batch_aggregate_async with no_wait=True so the HTTP request returns
+        immediately.  The caller can then poll for completion using
+        poll_batch_aggregation_task_async.
+        """
+        perf_metrics = PerfMetrics()
+
+        sc_base = SearchContext(sumo=self._sumo_client).tables.filter(
+            uuid=self._case_uuid,
+            ensemble=self._ensemble_name,
+            content=["timeseries", "simulationtimeseries"],
+        )
+        sc_real = sc_base.filter(realization=True, aggregation=False)
+
+        try:
+            httpx_resp = await sc_real.batch_aggregate_async(
+                columns=vector_names, operation="collection", no_wait=True
+            )
+        except (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.HTTPStatusError) as exc:
+            if isinstance(exc, (httpx.ConnectTimeout, httpx.ReadTimeout)):
+                raise ServiceTimeoutError(
+                    "Submitting batch aggregation task to Sumo timed out", Service.SUMO
+                ) from exc
+            if isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code == 504:
+                raise ServiceTimeoutError(
+                    "Submitting batch aggregation task to Sumo timed out (504)", Service.SUMO
+                ) from exc
+            raise ServiceRequestError("Error starting Sumo batch aggregation task", Service.SUMO) from exc
+
+        if not isinstance(httpx_resp, httpx.Response):
+            raise TypeError("Unexpected response type from Sumo when submitting batch aggregation task")
+
+        # Extract task UUID from Location header
+        # e.g. https://main-sumo-prod.radix.equinor.com/api/v1/tasks('uuid')/result
+        full_poll_location = httpx_resp.headers.get("location")
+        if not full_poll_location:
+            raise InvalidDataError("No location header in Sumo batch aggregation response", Service.SUMO)
+        start = full_poll_location.find("/tasks('") + 8
+        end = full_poll_location.find("')/result", start)
+        sumo_task_uuid = full_poll_location[start:end]
+
+        perf_metrics.record_lap("submit")
+        LOGGER.debug(
+            f"Submitted batch aggregation task in: {perf_metrics.to_string()} "
+            f"(vectors={vector_names}, task_id={sumo_task_uuid})"
+        )
+
+        return sumo_task_uuid
+
+    async def poll_batch_aggregation_task_async(
+        self,
+        sumo_task_id: str,
+        timeout_s: float,
+    ) -> bool | SummaryInProgress | SummaryExpectedError:
+        """Poll the specified Sumo batch aggregation task.
+
+        Use timeout_s=0 for a single-shot poll (hybrid pattern).
+
+        Returns:
+            True if the task completed successfully (aggregations now exist in Sumo).
+            SummaryInProgress if still running.
+            SummaryExpectedError if the task failed.
+        """
+        backoff_timer = ExponentialBackoffTimer(initial_delay_s=1, max_delay_s=10, max_total_duration_s=timeout_s)
+        while True:
+            poll_path = f"/tasks('{sumo_task_id}')"
+            poll_resp = await self._sumo_client.get_async(poll_path)
+            poll_resp_dict = poll_resp.json()
+
+            status = poll_resp_dict["_source"]["status"]
+
+            next_delay_s = backoff_timer.next_delay_s()
+            if status in ["succeeded", "failed"] or next_delay_s is None:
+                break
+            await asyncio.sleep(next_delay_s)
+
+        if status == "succeeded":
+            return True
+
+        if status == "failed":
+            LOGGER.error(f"Batch aggregation task failed ({sumo_task_id=})")
+            return SummaryExpectedError(message=f"Batch aggregation task failed ({sumo_task_id=})")
+
+        return SummaryInProgress(progress_message=f"{status}")
+
+    async def get_vectors_table_after_aggregation_async(
+        self,
+        vector_names: list[str],
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
+    ) -> pl.DataFrame:
+        """Fetch and process vector data assuming aggregations already exist in Sumo.
+
+        Same logic as get_vectors_table_async but only fetches existing aggregations
+        (no triggering of new aggregations).  Intended for use after a batch aggregation
+        task has completed.
+        """
+        timer = PerfTimer()
+
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
+        table_loader.require_content_type(["timeseries", "simulationtimeseries"])
+
+        # Fetch existing aggregations — they should all exist after batch_aggregate completed
+        per_vector_tables = await table_loader.get_aggregated_columns_batched_async(vector_names)
+        et_loading_ms = timer.lap_ms()
+
+        # Reuse the same merge/resample logic as get_vectors_table_async
+        return self._merge_and_resample_vector_tables(
+            per_vector_tables, vector_names, resampling_frequency, realizations, timer, et_loading_ms
+        )
+
+    def _merge_and_resample_vector_tables(
+        self,
+        per_vector_tables: dict[str, pa.Table],
+        vector_names: list[str],
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
+        timer: PerfTimer,
+        et_loading_ms: float,
+    ) -> pl.DataFrame:
+        """Shared merge/resample logic for vector table endpoints."""
+        requested_reals_arr = pa.array(realizations) if realizations is not None else None
+        sorted_tables: List[Tuple[str, pa.Table]] = []
+        for vn, tbl in per_vector_tables.items():
+            if requested_reals_arr is not None:
+                mask = pc.is_in(tbl["REAL"], value_set=requested_reals_arr)
+                tbl = tbl.filter(mask)
+            tbl = sort_table_on_real_then_date(tbl)
+            sorted_tables.append((vn, tbl))
+
+        if resampling_frequency is not None:
+            all_tables = [tbl for _, tbl in sorted_tables]
+            global_min, global_max = compute_global_min_max_dates(all_tables)
+            shared_sample_dates = generate_normalized_sample_dates(global_min, global_max, resampling_frequency)
+
+            resampled_tables: List[Tuple[str, pa.Table]] = []
+            for vn, tbl in sorted_tables:
+                resampled = resample_segmented_multi_real_table_with_shared_dates(tbl, shared_sample_dates)
+                resampled_tables.append((vn, resampled))
+
+            merged_table = resampled_tables[0][1]
+            for vn, tbl in resampled_tables[1:]:
+                merged_table = merged_table.append_column(vn, tbl.column(vn))
+
+            et_resampling_ms = timer.lap_ms()
+            table = merged_table.combine_chunks()
+
+            LOGGER.debug(
+                f"Got vectors table in: {timer.elapsed_ms()}ms "
+                f"(loading={et_loading_ms}ms, resampling={et_resampling_ms}ms) "
+                f"({len(vector_names)} vectors, {resampling_frequency=}, {table.shape=})"
+            )
+
+            return pl.from_arrow(table)
+
+        frames = [pl.from_arrow(tbl) for _, tbl in sorted_tables]
+        merged_df = frames[0]
+        for frame in frames[1:]:
+            merged_df = merged_df.join(frame, on=["DATE", "REAL"], how="full", coalesce=True)
+
+        return merged_df
 
 
 def _validate_single_vector_table(arrow_table: pa.Table, vector_name: str) -> None:

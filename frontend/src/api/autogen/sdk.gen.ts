@@ -220,6 +220,9 @@ import type {
     PostGetSurfaceIntersectionResponses_api,
     PostGroupedRealizationsVectorsDataData_api,
     PostGroupedRealizationsVectorsDataErrors_api,
+    PostGroupedRealizationsVectorsDataHybridData_api,
+    PostGroupedRealizationsVectorsDataHybridErrors_api,
+    PostGroupedRealizationsVectorsDataHybridResponses_api,
     PostGroupedRealizationsVectorsDataResponses_api,
     PostLogoutData_api,
     PostLogoutResponses_api,
@@ -386,6 +389,33 @@ export const postGroupedRealizationsVectorsData = <ThrowOnError extends boolean 
     >({
         responseType: "json",
         url: "/timeseries/grouped_realizations_vectors_data/",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Post Grouped Realizations Vectors Data Hybrid
+ *
+ * Get summed vector data per realization for named groups (hybrid/LRO).
+ *
+ * Same as the non-hybrid endpoint, but uses a long-running task pattern for
+ * the Sumo aggregation step.  When aggregations are cold, the first call
+ * submits a batch aggregation task and returns HTTP 202.  The client re-polls
+ * the same endpoint until the task completes and data is returned.
+ */
+export const postGroupedRealizationsVectorsDataHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<PostGroupedRealizationsVectorsDataHybridData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).post<
+        PostGroupedRealizationsVectorsDataHybridResponses_api,
+        PostGroupedRealizationsVectorsDataHybridErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/timeseries/grouped_realizations_vectors_data/hybrid",
         ...options,
         headers: {
             "Content-Type": "application/json",

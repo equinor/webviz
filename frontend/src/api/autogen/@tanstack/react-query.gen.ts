@@ -86,6 +86,7 @@ import {
     postGetSeismicFence,
     postGetSurfaceIntersection,
     postGroupedRealizationsVectorsData,
+    postGroupedRealizationsVectorsDataHybrid,
     postLogout,
     postRefreshFingerprintsForEnsembles,
     root,
@@ -304,6 +305,9 @@ import type {
     PostGetSurfaceIntersectionResponse_api,
     PostGroupedRealizationsVectorsDataData_api,
     PostGroupedRealizationsVectorsDataError_api,
+    PostGroupedRealizationsVectorsDataHybridData_api,
+    PostGroupedRealizationsVectorsDataHybridError_api,
+    PostGroupedRealizationsVectorsDataHybridResponse_api,
     PostGroupedRealizationsVectorsDataResponse_api,
     PostLogoutData_api,
     PostLogoutResponse_api,
@@ -640,6 +644,75 @@ export const postGroupedRealizationsVectorsDataMutation = (
     > = {
         mutationFn: async (fnOptions) => {
             const { data } = await postGroupedRealizationsVectorsData({
+                ...options,
+                ...fnOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
+
+export const postGroupedRealizationsVectorsDataHybridQueryKey = (
+    options: Options<PostGroupedRealizationsVectorsDataHybridData_api>,
+) => createQueryKey("postGroupedRealizationsVectorsDataHybrid", options);
+
+/**
+ * Post Grouped Realizations Vectors Data Hybrid
+ *
+ * Get summed vector data per realization for named groups (hybrid/LRO).
+ *
+ * Same as the non-hybrid endpoint, but uses a long-running task pattern for
+ * the Sumo aggregation step.  When aggregations are cold, the first call
+ * submits a batch aggregation task and returns HTTP 202.  The client re-polls
+ * the same endpoint until the task completes and data is returned.
+ */
+export const postGroupedRealizationsVectorsDataHybridOptions = (
+    options: Options<PostGroupedRealizationsVectorsDataHybridData_api>,
+) =>
+    queryOptions<
+        PostGroupedRealizationsVectorsDataHybridResponse_api,
+        AxiosError<PostGroupedRealizationsVectorsDataHybridError_api>,
+        PostGroupedRealizationsVectorsDataHybridResponse_api,
+        ReturnType<typeof postGroupedRealizationsVectorsDataHybridQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postGroupedRealizationsVectorsDataHybrid({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postGroupedRealizationsVectorsDataHybridQueryKey(options),
+    });
+
+/**
+ * Post Grouped Realizations Vectors Data Hybrid
+ *
+ * Get summed vector data per realization for named groups (hybrid/LRO).
+ *
+ * Same as the non-hybrid endpoint, but uses a long-running task pattern for
+ * the Sumo aggregation step.  When aggregations are cold, the first call
+ * submits a batch aggregation task and returns HTTP 202.  The client re-polls
+ * the same endpoint until the task completes and data is returned.
+ */
+export const postGroupedRealizationsVectorsDataHybridMutation = (
+    options?: Partial<Options<PostGroupedRealizationsVectorsDataHybridData_api>>,
+): UseMutationOptions<
+    PostGroupedRealizationsVectorsDataHybridResponse_api,
+    AxiosError<PostGroupedRealizationsVectorsDataHybridError_api>,
+    Options<PostGroupedRealizationsVectorsDataHybridData_api>
+> => {
+    const mutationOptions: UseMutationOptions<
+        PostGroupedRealizationsVectorsDataHybridResponse_api,
+        AxiosError<PostGroupedRealizationsVectorsDataHybridError_api>,
+        Options<PostGroupedRealizationsVectorsDataHybridData_api>
+    > = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postGroupedRealizationsVectorsDataHybrid({
                 ...options,
                 ...fnOptions,
                 throwOnError: true,

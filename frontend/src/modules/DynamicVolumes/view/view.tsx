@@ -13,9 +13,11 @@ import { VisualizationMode } from "../typesAndEnums";
 
 import { activeTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { allQueriesFailedAtom, isDataFetchingAtom } from "./atoms/derivedAtoms";
+import { groupedVectorDataQueryKeysAtom } from "./atoms/queryAtoms";
 import { useEchartsOptions } from "./hooks/useEchartsOptions";
 import { useHeatmapDatasets } from "./hooks/useHeatmapDatasets";
 import { useInstanceTitle } from "./hooks/useInstanceTitle";
+import { useLroProgressMessages } from "./hooks/useLroProgressMessages";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useSubplotGroups } from "./hooks/useSubplotGroups";
 import { useSyncDateTimestamp } from "./hooks/useSyncDateTimestamp";
@@ -29,6 +31,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     // Fetching state atoms
     const isFetching = useAtomValue(isDataFetchingAtom);
     const allFailed = useAtomValue(allQueriesFailedAtom);
+
+    // LRO progress (shows elapsed time during cold aggregation)
+    const queryKeys = useAtomValue(groupedVectorDataQueryKeysAtom);
+    const lroProgressMessage = useLroProgressMessages(queryKeys);
 
     // Settings values read directly from the interface
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
@@ -49,6 +55,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const heatmapDatasets = useHeatmapDatasets(isHeatmap, selectedVectorBaseName, showRecoveryFactor);
 
     statusWriter.setLoading(isFetching);
+
+    const showLroProgress = isFetching && lroProgressMessage !== null;
 
     const yAxisLabel = showRecoveryFactor ? "Recovery Factor" : (selectedVectorBaseName ?? "");
 
@@ -91,6 +99,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <div className="flex flex-col w-full h-full p-2 gap-2 overflow-hidden">
+            {showLroProgress && (
+                <div className="text-xs text-gray-500 animate-pulse">{lroProgressMessage}</div>
+            )}
             <PendingWrapper
                 isPending={isPending}
                 errorMessage={errorMessage}
