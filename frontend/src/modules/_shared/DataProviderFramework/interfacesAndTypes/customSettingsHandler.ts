@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
+import type { StatusWriter } from "@framework/types/statusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
@@ -33,9 +34,17 @@ export interface UpdateFunc<
         getLocalSetting: <K extends TKey>(settingName: K) => TSettingTypes[K];
         getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
         getHelperDependency: GetHelperDependency<TSettings, TSettingTypes, TKey>;
+        getStatusWriter: () => StatusWriter;
         abortSignal: AbortSignal;
-    }): TReturnValue | NoUpdate;
+    }): TReturnValue;
 }
+
+export type UpdateFuncWithNoUpdate<
+    TReturnValue,
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>,
+> = UpdateFunc<TReturnValue | NoUpdate, TSettings, TSettingTypes, TKey>;
 
 export interface DefineBasicDependenciesArgs<
     TSettings extends Settings,
@@ -44,22 +53,21 @@ export interface DefineBasicDependenciesArgs<
 > {
     settingAttributesUpdater: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
-        update: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
+        update: UpdateFuncWithNoUpdate<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
     ) => Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>;
     valueConstraintsUpdater: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
-        update: UpdateFunc<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>,
+        update: UpdateFuncWithNoUpdate<
+            SettingTypeDefinitions[TSettingKey]["valueConstraints"],
+            TSettings,
+            TSettingTypes,
+            TKey
+        >,
     ) => Dependency<SettingTypeDefinitions[TSettingKey]["valueConstraints"], TSettings, TSettingTypes, TKey>;
     helperDependency: <T>(
-        update: (args: {
-            getLocalSetting: <T extends TKey>(settingName: T) => TSettingTypes[T];
-            getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-            getHelperDependency: <TDep>(
-                helperDependency: Dependency<TDep, TSettings, TSettingTypes, TKey>,
-            ) => Awaited<TDep> | null;
-            abortSignal: AbortSignal;
-        }) => T,
+        update: UpdateFunc<T, TSettings, TSettingTypes, TKey>,
     ) => Dependency<T, TSettings, TSettingTypes, TKey>;
+
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     queryClient: QueryClient;
@@ -74,7 +82,7 @@ export interface DefineDependenciesArgs<
 > extends DefineBasicDependenciesArgs<TSettings, TSettingTypes, TKey> {
     storedDataUpdater: <K extends TStoredDataKey>(
         key: K,
-        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
+        update: UpdateFuncWithNoUpdate<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
     ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>;
 }
 

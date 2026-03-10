@@ -31,8 +31,10 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
     const [snapshotUrl, setSnapshotUrl] = React.useState<string | null>(null);
 
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const formId = React.useId();
 
-    function handleCreateSnapshot() {
+    function handleCreateSnapshot(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
         if (title.trim() === "") {
             inputRef.current?.focus();
             return;
@@ -67,12 +69,14 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
     if (!snapshotUrl) {
         content = (
             <Form
+                id={formId}
                 titleInputRef={inputRef}
                 workbench={props.workbench}
                 title={title}
                 description={description}
                 setTitle={setTitle}
                 setDescription={setDescription}
+                onSubmit={handleCreateSnapshot}
             />
         );
 
@@ -81,7 +85,7 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 <Button variant="text" disabled={isSaving} onClick={handleCancel}>
                     Cancel
                 </Button>
-                <Button variant="text" color="success" disabled={isSaving} onClick={handleCreateSnapshot}>
+                <Button variant="text" color="success" disabled={isSaving} type="submit" form={formId}>
                     {isSaving && <CircularProgress size="small" />}
                     <AddLink fontSize="inherit" /> Create snapshot
                 </Button>

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -42,14 +42,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const isActive = props.moduleInstance.getId() === activeModuleInstanceId;
 
     const ref = React.useRef<HTMLDivElement>(null);
-    const [drawerContent, setDrawerContent] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.LeftDrawerContent,
-    );
-    const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.LeftSettingsPanelWidthInPercent,
-    );
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
@@ -58,7 +50,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         GuiState.DataChannelConnectionLayerVisible,
     );
 
-    const [, setEditDataChannelConnections] = useGuiState(guiMessageBroker, GuiState.EditDataChannelConnections);
+    const setEditDataChannelConnections = useSetGuiState(guiMessageBroker, GuiState.EditDataChannelConnections);
 
     const timeRef = React.useRef<number | null>(null);
     const pointerDown = React.useRef<boolean>(false);
@@ -99,12 +91,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         if (dataChannelConnectionsLayerVisible) {
             return;
         }
-        if (leftSettingsPanelWidth <= 5) {
-            setLeftSettingsPanelWidth(20);
-        }
-        if (drawerContent !== LeftDrawerContent.SyncSettings) {
-            setDrawerContent(LeftDrawerContent.ModuleSettings);
-        }
         if (isActive) return;
         dashboard.setActiveModuleInstanceId(props.moduleInstance.getId());
     }
@@ -129,9 +115,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         setEditDataChannelConnections(true);
         e.stopPropagation();
     }
-
-    const showAsActive =
-        isActive && [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent);
 
     function makeHeader() {
         return (
@@ -200,8 +183,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         className={resolveClassNames(
                             "absolute w-full h-full z-10 inset-0 bg-transparent box-border border-solid border-2 pointer-events-none",
                             {
-                                "border-blue-500": showAsActive,
-                                "border-transparent": !showAsActive,
+                                "border-blue-500": isActive,
+                                "border-transparent": !isActive,
                             },
                         )}
                     />

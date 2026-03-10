@@ -48,9 +48,9 @@ export type B64UintArray_api = {
 };
 
 /**
- * Body_post_get_aggregated_per_realization_table_data
+ * Body_post_get_aggregated_per_realization_inplace_table_data
  */
-export type BodyPostGetAggregatedPerRealizationTableData_api = {
+export type BodyPostGetAggregatedPerRealizationInplaceTableData_api = {
     /**
      * Indices With Values
      *
@@ -60,9 +60,9 @@ export type BodyPostGetAggregatedPerRealizationTableData_api = {
 };
 
 /**
- * Body_post_get_aggregated_statistical_table_data
+ * Body_post_get_aggregated_statistical_inplace_table_data
  */
-export type BodyPostGetAggregatedStatisticalTableData_api = {
+export type BodyPostGetAggregatedStatisticalInplaceTableData_api = {
     /**
      * Indices With Values
      *
@@ -400,30 +400,6 @@ export type EnsembleParametersAndSensitivities_api = {
      * Sensitivities
      */
     sensitivities: Array<EnsembleSensitivity_api>;
-};
-
-/**
- * EnsembleScalarResponse
- *
- * A generic type for a scalar response from each of the members of the ensemble.
- */
-export type EnsembleScalarResponse_api = {
-    /**
-     * Realizations
-     */
-    realizations: Array<number>;
-    /**
-     * Values
-     */
-    values: Array<number>;
-    /**
-     * Name
-     */
-    name?: string | null;
-    /**
-     * Unit
-     */
-    unit?: string | null;
 };
 
 /**
@@ -1451,10 +1427,7 @@ export type SeismicCubeMeta_api = {
      * Isodateorinterval
      */
     isoDateOrInterval: string;
-    /**
-     * Isobservation
-     */
-    isObservation: boolean;
+    representation: SeismicRepresentation_api;
     /**
      * Isdepth
      */
@@ -1603,6 +1576,15 @@ export type SeismicFencePolyline_api = {
      */
     y_points: Array<number>;
 };
+
+/**
+ * SeismicRepresentation
+ */
+export enum SeismicRepresentation_api {
+    OBSERVED_CASE = "observed_case",
+    OBSERVED_REALIZATION = "observed_realization",
+    MODELLED = "modelled",
+}
 
 /**
  * SeismicSliceData
@@ -2991,9 +2973,13 @@ export type WellboreHeader_api = {
      */
     wellboreStatus: string;
     /**
-     * Currenttrack
+     * Tvdmax
      */
-    currentTrack: number;
+    tvdMax?: number | null;
+    /**
+     * Mdmax
+     */
+    mdMax?: number | null;
     /**
      * Kickoffdepthmd
      */
@@ -3011,10 +2997,6 @@ export type WellboreHeader_api = {
      */
     mdMin?: number | null;
     /**
-     * Mdmax
-     */
-    mdMax?: number | null;
-    /**
      * Mdunit
      */
     mdUnit?: string | null;
@@ -3022,10 +3004,6 @@ export type WellboreHeader_api = {
      * Tvdmin
      */
     tvdMin?: number | null;
-    /**
-     * Tvdmax
-     */
-    tvdMax?: number | null;
     /**
      * Tvdunit
      */
@@ -3638,53 +3616,6 @@ export type GetDeltaEnsembleRealizationsVectorDataResponses_api = {
 export type GetDeltaEnsembleRealizationsVectorDataResponse_api =
     GetDeltaEnsembleRealizationsVectorDataResponses_api[keyof GetDeltaEnsembleRealizationsVectorDataResponses_api];
 
-export type GetTimestampsListData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Resampling Frequency
-         *
-         * Resampling frequency
-         */
-        resampling_frequency?: Frequency_api | null;
-        zCacheBust?: string;
-    };
-    url: "/timeseries/timestamps_list/";
-};
-
-export type GetTimestampsListErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetTimestampsListError_api = GetTimestampsListErrors_api[keyof GetTimestampsListErrors_api];
-
-export type GetTimestampsListResponses_api = {
-    /**
-     * Response Get Timestamps List
-     *
-     * Successful Response
-     */
-    200: Array<number>;
-};
-
-export type GetTimestampsListResponse_api = GetTimestampsListResponses_api[keyof GetTimestampsListResponses_api];
-
 export type GetHistoricalVectorDataData_api = {
     body?: never;
     path?: never;
@@ -3941,60 +3872,7 @@ export type GetStatisticalVectorDataPerSensitivityResponses_api = {
 export type GetStatisticalVectorDataPerSensitivityResponse_api =
     GetStatisticalVectorDataPerSensitivityResponses_api[keyof GetStatisticalVectorDataPerSensitivityResponses_api];
 
-export type GetRealizationVectorAtTimestampData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Vector Name
-         *
-         * Name of the vector
-         */
-        vector_name: string;
-        /**
-         * Timestamp Utc Ms
-         *
-         * Timestamp in ms UTC to query vectors at
-         */
-        timestamp_utc_ms: number;
-        zCacheBust?: string;
-    };
-    url: "/timeseries/realization_vector_at_timestamp/";
-};
-
-export type GetRealizationVectorAtTimestampErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetRealizationVectorAtTimestampError_api =
-    GetRealizationVectorAtTimestampErrors_api[keyof GetRealizationVectorAtTimestampErrors_api];
-
-export type GetRealizationVectorAtTimestampResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: EnsembleScalarResponse_api;
-};
-
-export type GetRealizationVectorAtTimestampResponse_api =
-    GetRealizationVectorAtTimestampResponses_api[keyof GetRealizationVectorAtTimestampResponses_api];
-
-export type GetTableDefinitionsData_api = {
+export type GetInplaceTableDefinitionsData_api = {
     body?: never;
     path?: never;
     query: {
@@ -4012,31 +3890,33 @@ export type GetTableDefinitionsData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/inplace_volumes/table_definitions/";
+    url: "/inplace_volumes/inplace_table_definitions/";
 };
 
-export type GetTableDefinitionsErrors_api = {
+export type GetInplaceTableDefinitionsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetTableDefinitionsError_api = GetTableDefinitionsErrors_api[keyof GetTableDefinitionsErrors_api];
+export type GetInplaceTableDefinitionsError_api =
+    GetInplaceTableDefinitionsErrors_api[keyof GetInplaceTableDefinitionsErrors_api];
 
-export type GetTableDefinitionsResponses_api = {
+export type GetInplaceTableDefinitionsResponses_api = {
     /**
-     * Response Get Table Definitions
+     * Response Get Inplace Table Definitions
      *
      * Successful Response
      */
     200: Array<InplaceVolumesTableDefinition_api>;
 };
 
-export type GetTableDefinitionsResponse_api = GetTableDefinitionsResponses_api[keyof GetTableDefinitionsResponses_api];
+export type GetInplaceTableDefinitionsResponse_api =
+    GetInplaceTableDefinitionsResponses_api[keyof GetInplaceTableDefinitionsResponses_api];
 
-export type PostGetAggregatedPerRealizationTableDataData_api = {
-    body: BodyPostGetAggregatedPerRealizationTableData_api;
+export type PostGetAggregatedPerRealizationInplaceTableDataData_api = {
+    body: BodyPostGetAggregatedPerRealizationInplaceTableData_api;
     path?: never;
     query: {
         /**
@@ -4077,31 +3957,31 @@ export type PostGetAggregatedPerRealizationTableDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/inplace_volumes/get_aggregated_per_realization_table_data/";
+    url: "/inplace_volumes/get_aggregated_per_realization_inplace_table_data/";
 };
 
-export type PostGetAggregatedPerRealizationTableDataErrors_api = {
+export type PostGetAggregatedPerRealizationInplaceTableDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type PostGetAggregatedPerRealizationTableDataError_api =
-    PostGetAggregatedPerRealizationTableDataErrors_api[keyof PostGetAggregatedPerRealizationTableDataErrors_api];
+export type PostGetAggregatedPerRealizationInplaceTableDataError_api =
+    PostGetAggregatedPerRealizationInplaceTableDataErrors_api[keyof PostGetAggregatedPerRealizationInplaceTableDataErrors_api];
 
-export type PostGetAggregatedPerRealizationTableDataResponses_api = {
+export type PostGetAggregatedPerRealizationInplaceTableDataResponses_api = {
     /**
      * Successful Response
      */
     200: InplaceVolumesTableDataPerFluidSelection_api;
 };
 
-export type PostGetAggregatedPerRealizationTableDataResponse_api =
-    PostGetAggregatedPerRealizationTableDataResponses_api[keyof PostGetAggregatedPerRealizationTableDataResponses_api];
+export type PostGetAggregatedPerRealizationInplaceTableDataResponse_api =
+    PostGetAggregatedPerRealizationInplaceTableDataResponses_api[keyof PostGetAggregatedPerRealizationInplaceTableDataResponses_api];
 
-export type PostGetAggregatedStatisticalTableDataData_api = {
-    body: BodyPostGetAggregatedStatisticalTableData_api;
+export type PostGetAggregatedStatisticalInplaceTableDataData_api = {
+    body: BodyPostGetAggregatedStatisticalInplaceTableData_api;
     path?: never;
     query: {
         /**
@@ -4142,28 +4022,28 @@ export type PostGetAggregatedStatisticalTableDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/inplace_volumes/get_aggregated_statistical_table_data/";
+    url: "/inplace_volumes/get_aggregated_statistical_inplace_table_data/";
 };
 
-export type PostGetAggregatedStatisticalTableDataErrors_api = {
+export type PostGetAggregatedStatisticalInplaceTableDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type PostGetAggregatedStatisticalTableDataError_api =
-    PostGetAggregatedStatisticalTableDataErrors_api[keyof PostGetAggregatedStatisticalTableDataErrors_api];
+export type PostGetAggregatedStatisticalInplaceTableDataError_api =
+    PostGetAggregatedStatisticalInplaceTableDataErrors_api[keyof PostGetAggregatedStatisticalInplaceTableDataErrors_api];
 
-export type PostGetAggregatedStatisticalTableDataResponses_api = {
+export type PostGetAggregatedStatisticalInplaceTableDataResponses_api = {
     /**
      * Successful Response
      */
     200: InplaceVolumesStatisticalTableDataPerFluidSelection_api;
 };
 
-export type PostGetAggregatedStatisticalTableDataResponse_api =
-    PostGetAggregatedStatisticalTableDataResponses_api[keyof PostGetAggregatedStatisticalTableDataResponses_api];
+export type PostGetAggregatedStatisticalInplaceTableDataResponse_api =
+    PostGetAggregatedStatisticalInplaceTableDataResponses_api[keyof PostGetAggregatedStatisticalInplaceTableDataResponses_api];
 
 export type GetRealizationSurfacesMetadataData_api = {
     body?: never;
@@ -5115,7 +4995,7 @@ export type GetInjectionDataResponses_api = {
 
 export type GetInjectionDataResponse_api = GetInjectionDataResponses_api[keyof GetInjectionDataResponses_api];
 
-export type GetTableDataData_api = {
+export type GetPvtTableDataData_api = {
     body?: never;
     path?: never;
     query: {
@@ -5139,28 +5019,28 @@ export type GetTableDataData_api = {
         realization: number;
         zCacheBust?: string;
     };
-    url: "/pvt/table_data/";
+    url: "/pvt/pvt_table_data/";
 };
 
-export type GetTableDataErrors_api = {
+export type GetPvtTableDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetTableDataError_api = GetTableDataErrors_api[keyof GetTableDataErrors_api];
+export type GetPvtTableDataError_api = GetPvtTableDataErrors_api[keyof GetPvtTableDataErrors_api];
 
-export type GetTableDataResponses_api = {
+export type GetPvtTableDataResponses_api = {
     /**
-     * Response Get Table Data
+     * Response Get Pvt Table Data
      *
      * Successful Response
      */
     200: Array<PvtData_api>;
 };
 
-export type GetTableDataResponse_api = GetTableDataResponses_api[keyof GetTableDataResponses_api];
+export type GetPvtTableDataResponse_api = GetPvtTableDataResponses_api[keyof GetPvtTableDataResponses_api];
 
 export type GetWellCompletionsDataData_api = {
     body?: never;
@@ -5759,213 +5639,6 @@ export type GetSeismicCubeMetaListResponses_api = {
 export type GetSeismicCubeMetaListResponse_api =
     GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
 
-export type GetInlineSliceData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Realization Num
-         *
-         * Realization number
-         */
-        realization_num: number;
-        /**
-         * Seismic Attribute
-         *
-         * Seismic cube attribute
-         */
-        seismic_attribute: string;
-        /**
-         * Time Or Interval Str
-         *
-         * Timestamp or timestep
-         */
-        time_or_interval_str: string;
-        /**
-         * Observed
-         *
-         * Observed or simulated
-         */
-        observed: boolean;
-        /**
-         * Inline Number
-         *
-         * Inline number
-         */
-        inline_number: number;
-        zCacheBust?: string;
-    };
-    url: "/seismic/get_inline_slice/";
-};
-
-export type GetInlineSliceErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetInlineSliceError_api = GetInlineSliceErrors_api[keyof GetInlineSliceErrors_api];
-
-export type GetInlineSliceResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: SeismicSliceData_api;
-};
-
-export type GetInlineSliceResponse_api = GetInlineSliceResponses_api[keyof GetInlineSliceResponses_api];
-
-export type GetCrosslineSliceData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Realization Num
-         *
-         * Realization number
-         */
-        realization_num: number;
-        /**
-         * Seismic Attribute
-         *
-         * Seismic cube attribute
-         */
-        seismic_attribute: string;
-        /**
-         * Time Or Interval Str
-         *
-         * Timestamp or timestep
-         */
-        time_or_interval_str: string;
-        /**
-         * Observed
-         *
-         * Observed or simulated
-         */
-        observed: boolean;
-        /**
-         * Crossline Num
-         *
-         * Crossline number
-         */
-        crossline_num: number;
-        zCacheBust?: string;
-    };
-    url: "/seismic/get_crossline_slice/";
-};
-
-export type GetCrosslineSliceErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetCrosslineSliceError_api = GetCrosslineSliceErrors_api[keyof GetCrosslineSliceErrors_api];
-
-export type GetCrosslineSliceResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: SeismicSliceData_api;
-};
-
-export type GetCrosslineSliceResponse_api = GetCrosslineSliceResponses_api[keyof GetCrosslineSliceResponses_api];
-
-export type GetDepthSliceData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Realization Num
-         *
-         * Realization number
-         */
-        realization_num: number;
-        /**
-         * Seismic Attribute
-         *
-         * Seismic cube attribute
-         */
-        seismic_attribute: string;
-        /**
-         * Time Or Interval Str
-         *
-         * Timestamp or timestep
-         */
-        time_or_interval_str: string;
-        /**
-         * Observed
-         *
-         * Observed or simulated
-         */
-        observed: boolean;
-        /**
-         * Depth Slice Num
-         *
-         * Depth slice number
-         */
-        depth_slice_num: number;
-        zCacheBust?: string;
-    };
-    url: "/seismic/get_depth_slice/";
-};
-
-export type GetDepthSliceErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetDepthSliceError_api = GetDepthSliceErrors_api[keyof GetDepthSliceErrors_api];
-
-export type GetDepthSliceResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: SeismicSliceData_api;
-};
-
-export type GetDepthSliceResponse_api = GetDepthSliceResponses_api[keyof GetDepthSliceResponses_api];
-
 export type GetSeismicSlicesData_api = {
     body?: never;
     path?: never;
@@ -6001,11 +5674,9 @@ export type GetSeismicSlicesData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         /**
          * Inline Number
          *
@@ -6084,11 +5755,9 @@ export type PostGetSeismicFenceData_api = {
          */
         time_or_interval_str: string;
         /**
-         * Observed
-         *
-         * Observed or simulated
+         * Seismic representation
          */
-        observed: boolean;
+        representation: SeismicRepresentation_api;
         zCacheBust?: string;
     };
     url: "/seismic/get_seismic_fence/";
@@ -6315,7 +5984,7 @@ export type GetObservationsResponses_api = {
 
 export type GetObservationsResponse_api = GetObservationsResponses_api[keyof GetObservationsResponses_api];
 
-export type GetTableDefinitionData_api = {
+export type GetRftTableDefinitionData_api = {
     body?: never;
     path?: never;
     query: {
@@ -6333,28 +6002,29 @@ export type GetTableDefinitionData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/rft/table_definition";
+    url: "/rft/rft_table_definition";
 };
 
-export type GetTableDefinitionErrors_api = {
+export type GetRftTableDefinitionErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetTableDefinitionError_api = GetTableDefinitionErrors_api[keyof GetTableDefinitionErrors_api];
+export type GetRftTableDefinitionError_api = GetRftTableDefinitionErrors_api[keyof GetRftTableDefinitionErrors_api];
 
-export type GetTableDefinitionResponses_api = {
+export type GetRftTableDefinitionResponses_api = {
     /**
      * Successful Response
      */
     200: RftTableDefinition_api;
 };
 
-export type GetTableDefinitionResponse_api = GetTableDefinitionResponses_api[keyof GetTableDefinitionResponses_api];
+export type GetRftTableDefinitionResponse_api =
+    GetRftTableDefinitionResponses_api[keyof GetRftTableDefinitionResponses_api];
 
-export type GetRealizationDataData_api = {
+export type GetRftRealizationDataData_api = {
     body?: never;
     path?: never;
     query: {
@@ -6396,28 +6066,29 @@ export type GetRealizationDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/rft/realization_data";
+    url: "/rft/rft_realization_data";
 };
 
-export type GetRealizationDataErrors_api = {
+export type GetRftRealizationDataErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetRealizationDataError_api = GetRealizationDataErrors_api[keyof GetRealizationDataErrors_api];
+export type GetRftRealizationDataError_api = GetRftRealizationDataErrors_api[keyof GetRftRealizationDataErrors_api];
 
-export type GetRealizationDataResponses_api = {
+export type GetRftRealizationDataResponses_api = {
     /**
-     * Response Get Realization Data
+     * Response Get Rft Realization Data
      *
      * Successful Response
      */
     200: Array<RftRealizationData_api>;
 };
 
-export type GetRealizationDataResponse_api = GetRealizationDataResponses_api[keyof GetRealizationDataResponses_api];
+export type GetRftRealizationDataResponse_api =
+    GetRftRealizationDataResponses_api[keyof GetRftRealizationDataResponses_api];
 
 export type GetVfpTableNamesData_api = {
     body?: never;

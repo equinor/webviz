@@ -34,8 +34,8 @@ import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
 import { NO_UPDATE } from "../../delegates/_utils/Dependency";
 import type {
-    AreSettingsValidArgs,
     CustomDataProviderImplementation,
+    DataProviderAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
@@ -72,14 +72,11 @@ export type DrilledWellboreTrajectoriesStoredData = {
     injectionData: WellInjectionData_api[];
 };
 
-export class DrilledWellboreTrajectoriesProvider
-    implements
-        CustomDataProviderImplementation<
-            DrilledWellboreTrajectoriesSettings,
-            DrilledWellboreTrajectoriesData,
-            DrilledWellboreTrajectoriesStoredData
-        >
-{
+export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderImplementation<
+    DrilledWellboreTrajectoriesSettings,
+    DrilledWellboreTrajectoriesData,
+    DrilledWellboreTrajectoriesStoredData
+> {
     settings = drilledWellboreTrajectoriesSettings;
 
     getDefaultName() {
@@ -88,7 +85,7 @@ export class DrilledWellboreTrajectoriesProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: AreSettingsValidArgs<
+    }: DataProviderAccessors<
         DrilledWellboreTrajectoriesSettings,
         DrilledWellboreTrajectoriesData,
         DrilledWellboreTrajectoriesStoredData
@@ -502,13 +499,6 @@ export class DrilledWellboreTrajectoriesProvider
             },
         );
 
-        settingAttributesUpdater(Setting.TIME_INTERVAL, ({ getLocalSetting }) => {
-            const pdmFilterType = getLocalSetting(Setting.PDM_FILTER_TYPE);
-            return {
-                visible: pdmFilterType === "production_injection",
-            };
-        });
-
         const observedSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
@@ -526,6 +516,14 @@ export class DrilledWellboreTrajectoriesProvider
             });
         });
 
+        settingAttributesUpdater(Setting.TIME_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+            const pdmFilterType = getLocalSetting(Setting.PDM_FILTER_TYPE);
+            const data = getHelperDependency(observedSurfaceMetadataDep);
+            return {
+                visible: pdmFilterType === "production_injection" && !!data?.time_intervals_iso_str.length,
+            };
+        });
+
         valueConstraintsUpdater(Setting.TIME_INTERVAL, ({ getHelperDependency }) => {
             const data = getHelperDependency(observedSurfaceMetadataDep);
 
@@ -535,10 +533,17 @@ export class DrilledWellboreTrajectoriesProvider
 
             return data.time_intervals_iso_str;
         });
-
-        settingAttributesUpdater(Setting.PDM_FILTER, ({ getLocalSetting }) => {
-            const pdmFilterType = getLocalSetting(Setting.PDM_FILTER_TYPE);
+        settingAttributesUpdater(Setting.PDM_FILTER_TYPE, ({ getHelperDependency }) => {
+            const data = getHelperDependency(observedSurfaceMetadataDep);
             return {
+                enabled: !!data?.time_intervals_iso_str.length,
+            };
+        });
+        settingAttributesUpdater(Setting.PDM_FILTER, ({ getLocalSetting, getHelperDependency }) => {
+            const pdmFilterType = getLocalSetting(Setting.PDM_FILTER_TYPE);
+            const data = getHelperDependency(observedSurfaceMetadataDep);
+            return {
+                enabled: !!data?.time_intervals_iso_str.length,
                 visible: pdmFilterType === "production_injection",
             };
         });

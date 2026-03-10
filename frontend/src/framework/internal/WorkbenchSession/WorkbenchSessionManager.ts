@@ -11,7 +11,7 @@ import {
 } from "@api";
 import { ConfirmationService } from "@framework/ConfirmationService";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
-import { GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, RightDrawerContent } from "@framework/GuiMessageBroker";
 import type { Template } from "@framework/TemplateRegistry";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type { Workbench } from "@framework/Workbench";
@@ -44,6 +44,20 @@ import {
     UrlError,
 } from "./utils/url";
 import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
+
+const SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT = 15;
+
+export enum SessionPersistenceAction {
+    SAVE = "save",
+    LOAD = "load",
+    LOCAL_LOAD = "local_load",
+    CREATE_SNAPSHOT = "create_snapshot",
+    OPEN_SNAPSHOT = "open_snapshot",
+}
+
+export class SessionPersistenceError extends Error {
+    name = "SessionPersistenceError";
+}
 
 export enum WorkbenchSessionManagerTopic {
     ACTIVE_SESSION = "activeSession",
@@ -245,21 +259,16 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 errorExplanation = `Server responded with message: ${error.response?.data.error.message}.`;
             }
 
-            const result = await ConfirmationService.confirm({
-                title: "Could not load session",
-                message: `Could not load session with ID '${sessionId}'. ${errorExplanation}`,
-                actions: [
-                    { id: "cancel", label: "Cancel" },
-                    { id: "retry", label: "Retry" },
-                ],
+            // Return to start and register error
+            this._workbench.getNavigationManager().pushState("/");
+            this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
+                action: SessionPersistenceAction.LOAD,
+                error: new SessionPersistenceError(
+                    `Could not load session with ID '${sessionId}'. ${errorExplanation}`,
+                ),
+                retry: () => this.openSession(sessionId),
             });
 
-            if (result === "retry") {
-                return await this.openSession(sessionId);
-            }
-            if (result === "cancel") {
-                removeSessionIdFromUrl();
-            }
             return false;
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
@@ -278,10 +287,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             await this.setActiveSession(snapshot);
 
-            // Update GUI state for snapshots
-            if (this._guiMessageBroker.getState(GuiState.LeftDrawerContent) !== LeftDrawerContent.ModuleSettings) {
-                this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
-            }
             if (this._guiMessageBroker.getState(GuiState.RightDrawerContent) === RightDrawerContent.ModulesList) {
                 this._guiMessageBroker.setState(
                     GuiState.RightDrawerContent,
@@ -294,9 +299,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         } catch (error: any) {
             console.error("Failed to load snapshot from backend:", error);
 
-            let errorExplanation = "The session might not exist or you might not have access to it.";
+            let errorExplanation = "The snapshot might not exist or you might not have access to it.";
             if (error instanceof SessionValidationError) {
-                errorExplanation = "The session data is invalid, corrupted or outdated.";
+                errorExplanation = "The snapshot data is invalid, corrupted or outdated.";
             }
 
             if (isAxiosError(error)) {
@@ -304,18 +309,16 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 errorExplanation = `Server responded with message: ${error.response?.data.error.message}.`;
             }
 
-            const result = await ConfirmationService.confirm({
-                title: "Could not load snapshot",
-                message: `Could not load snapshot with ID '${snapshotId}'. ${errorExplanation}`,
-                actions: [
-                    { id: "cancel", label: "Cancel" },
-                    { id: "retry", label: "Retry" },
-                ],
+            // Return to start and register error
+            this._workbench.getNavigationManager().pushState("/");
+            this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
+                action: SessionPersistenceAction.OPEN_SNAPSHOT,
+                error: new SessionPersistenceError(
+                    `Could not load snapshot with ID '${snapshotId}'. ${errorExplanation}`,
+                ),
+                retry: () => this.openSnapshot(snapshotId),
             });
 
-            if (result === "retry") {
-                return await this.openSnapshot(snapshotId);
-            }
             return false;
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSnapshot, false);
@@ -333,6 +336,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
 
             const localStorageSessionData = loadWorkbenchSessionFromLocalStorage(sessionId);
+
             if (!localStorageSessionData) {
                 throw new Error(
                     "No workbench session found in local storage. This should not happen and indicates a logic error.",
@@ -392,6 +396,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             }
 
             const result = await ConfirmationService.confirm({
+                variant: "error",
                 title: "Could not load session from local storage",
                 message: `Could not load session from local storage. ${errorExplanation} Do you want to discard the possibly corrupted local storage session ${additionalMessage}`,
                 actions: [
@@ -540,14 +545,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             }
 
             if (result === "save") {
-                const activeSession = this.getActiveSession();
-                if (!activeSession.getIsPersisted()) {
-                    this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
-                    return false; // Wait for user to save
-                }
-                await this.saveActiveSession(true);
-                this.closeSession();
-                return true;
+                const saveSuccess = await this.maybeSaveSession();
+
+                if (saveSuccess) this.closeSession();
+
+                return saveSuccess;
             }
 
             if (result === "discard") {
@@ -571,13 +573,14 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 this._guiMessageBroker.setState(GuiState.EnsembleDialogOpen, true);
             }
 
-            this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
-
             const activeDashboard = session.getActiveDashboard();
             if (activeDashboard && activeDashboard.getLayout().length === 0) {
                 this._guiMessageBroker.setState(GuiState.RightDrawerContent, RightDrawerContent.ModulesList);
                 if (this._guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) === 0) {
-                    this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 20);
+                    this._guiMessageBroker.setState(
+                        GuiState.RightSettingsPanelWidthInPercent,
+                        SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
+                    );
                 }
             }
 
@@ -602,8 +605,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             throw new Error(
                 "Could not load workbench session from data container. This should not happen and indicates a logic error.",
             );
-        } finally {
-            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
         }
     }
 
@@ -623,60 +624,25 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this._ensembleUpdateMonitor.stopPolling();
 
         this._activeSession = null;
+
+        this.resetGuiStates();
+    }
+
+    private resetGuiStates(): void {
+        this._guiMessageBroker.setState(GuiState.NumberOfEffectiveRealizationFilters, 0);
+        this._guiMessageBroker.setState(GuiState.NumberOfUnsavedRealizationFilters, 0);
     }
 
     // ========== Persistence Operations ==========
+    async maybeSaveSession(opts?: { saveAsNew?: boolean }) {
+        if (this._activeSession?.getIsPersisted()) return this.saveSession(opts);
 
-    async saveActiveSession(forceSave = false): Promise<boolean> {
-        if (!this._activeSession) {
-            throw new Error("No active workbench session to save. This should not happen and indicates a logic error.");
-        }
-
-        if (!this._persistenceOrchestrator) {
-            throw new Error("Cannot persist a snapshot. This should not happen and indicates a logic error.");
-        }
-
-        if (this._activeSession.getIsPersisted() || forceSave) {
-            this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
-            const wasPersisted = this._activeSession.getIsPersisted();
-
-            this.createLoadingToast("saveSession", "Saving session...");
-
-            const result = await this._persistenceOrchestrator.persistNow();
-
-            this.dismissToast("saveSession");
-
-            if (result.success) {
-                toast.success("Session saved successfully");
-
-                const id = this._activeSession.getId();
-                if (!wasPersisted && id) {
-                    const url = buildSessionUrl(id);
-                    this._workbench.getNavigationManager().pushState(url);
-                }
-            } else {
-                if (result.reason === PersistFailureReason.ERROR) {
-                    toast.error("Failed to save session");
-                } else if (result.reason === PersistFailureReason.SAVE_IN_PROGRESS) {
-                    toast.error("Save already in progress. Please wait...");
-                } else if (result.reason === PersistFailureReason.NO_CHANGES) {
-                    toast.info("No changes to save");
-                } else if (result.reason === PersistFailureReason.CONTENT_TOO_LARGE) {
-                    toast.error(result.message);
-                }
-            }
-
-            this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
-            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
-            return result.success;
-        }
-
-        // Session is not persisted - show save dialog
+        // The session has never been persisted before: open the metadata dialog to prompt the user to give the session a proper title
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
         return false;
     }
 
-    async saveAsNewSession(title: string, description?: string): Promise<void> {
+    async saveSession(opts?: { saveAsNew?: boolean }): Promise<boolean> {
         if (!this._activeSession) {
             throw new Error("No active workbench session to save. This should not happen and indicates a logic error.");
         }
@@ -685,55 +651,71 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             throw new Error("Cannot persist a snapshot. This should not happen and indicates a logic error.");
         }
 
+        const progressToastId = "saveSession";
+        const initialActiveSession = this._activeSession;
+
         this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
 
         try {
-            // Create a copy of the current session
-            const newSession = await PrivateWorkbenchSession.createCopy(this._queryClient, this._activeSession);
+            let sessionToSave;
 
-            // Update metadata with new title and description BEFORE setting as active
-            // This prevents the session from being marked dirty
-            newSession.updateMetadata({ title, description }, false);
+            if (opts?.saveAsNew) {
+                this.createLoadingToast(progressToastId, "Saving new session...");
 
-            // Close current session
-            this.unloadSession();
+                // Make the copy the active session
+                sessionToSave = await PrivateWorkbenchSession.createCopy(this._queryClient, this._activeSession);
 
-            // Set new session as active
-            await this.setActiveSession(newSession);
+                // Replace the active session with the new copy, since persistence orchestrator references it
+                this.unloadSession();
+                await this.setActiveSession(sessionToSave);
+            } else {
+                this.createLoadingToast(progressToastId, "Saving session...");
+                sessionToSave = this._activeSession;
+            }
 
-            this.createLoadingToast("saveAsNewSession", "Saving session as new...");
-
-            // Persist the new session
             const result = await this._persistenceOrchestrator.persistNow();
-
-            this.dismissToast("saveAsNewSession");
+            this.dismissToast(progressToastId);
 
             if (result.success) {
                 toast.success("Session saved successfully");
 
-                // Update URL with new session ID
-                const id = newSession.getId();
-                if (id) {
-                    const url = buildSessionUrl(id);
+                const newId = this._activeSession.getId();
+                // Update URL if session id changed. This happens when you save-as
+                if (newId && newId !== initialActiveSession.getId()) {
+                    const url = buildSessionUrl(newId);
                     this._workbench.getNavigationManager().pushState(url);
                 }
+
+                return true;
             } else {
-                if (result.reason === PersistFailureReason.ERROR) {
-                    toast.error("Failed to save session");
-                } else if (result.reason === PersistFailureReason.SAVE_IN_PROGRESS) {
-                    toast.error("Save already in progress. Please wait...");
+                if (result.reason === PersistFailureReason.SAVE_IN_PROGRESS) {
+                    throw new SessionPersistenceError("Save already in progress. Please wait...");
                 } else if (result.reason === PersistFailureReason.NO_CHANGES) {
-                    toast.info("No changes to save");
+                    throw new SessionPersistenceError("No changes to save");
                 } else if (result.reason === PersistFailureReason.CONTENT_TOO_LARGE) {
-                    toast.error(result.message);
+                    throw new SessionPersistenceError(result.message);
+                } else {
+                    throw new SessionPersistenceError("Unexpected error");
                 }
             }
+        } catch (err) {
+            const error = err as Error;
+            this.dismissToast(progressToastId);
+            console.error("Failed to save session:", error);
 
-            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
-        } catch (error) {
-            console.error("Failed to save session as new:", error);
-            toast.error("Failed to save session as new");
-            throw error;
+            // Return to the original session
+            if (opts?.saveAsNew) {
+                this.unloadSession();
+                await this.setActiveSession(initialActiveSession);
+            }
+
+            this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
+                action: SessionPersistenceAction.SAVE,
+                error,
+                retry: () => this.saveSession(opts),
+            });
+
+            return false;
         } finally {
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
         }
@@ -763,7 +745,15 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         if (result.success) {
             toast.success("Snapshot created successfully");
         } else {
-            toast.error(result.message ? `Failed to create snapshot: ${result.message}` : "Failed to create snapshot");
+            const errorMsg = result.message
+                ? `Failed to create snapshot: ${result.message}`
+                : "Failed to create snapshot";
+
+            this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
+                action: SessionPersistenceAction.CREATE_SNAPSHOT,
+                error: new SessionPersistenceError(errorMsg),
+                retry: () => this.createSnapshot(title, description),
+            });
         }
 
         this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, false);
@@ -859,13 +849,31 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             // Update GUI states based on possible loading errors
             this.applyActiveSessionEnsembleLoadErrorsToGuiState();
-
             this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
         } catch (error) {
             console.error("Failed to load workbench session from local storage:", error);
-            if (confirm("Could not load workbench session from local storage. Discard corrupted session?")) {
+
+            const result = await ConfirmationService.confirm({
+                variant: "error",
+                title: "Could not load session from local storage",
+                message: `Could not load workbench session from local storage. Discard corrupted session?`,
+                actions: [
+                    { id: "retry", label: "Retry" },
+                    { id: "cancel", label: "No, cancel" },
+                    { id: "discard", label: "Yes, discard", color: "danger" },
+                ],
+            });
+
+            if (result === "discard") {
+                this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
                 this.discardLocalStorageSession(sessionId, false);
-                await this.startNewSession();
+
+                if (!sessionId) {
+                    await this.startNewSession();
+                }
+            }
+            if (result === "retry") {
+                return await this.updateFromLocalStorage();
             }
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
@@ -879,8 +887,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         if (!unloadSession) {
             return;
         }
-
-        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
 
         if (this._persistenceOrchestrator) {
             this._persistenceOrchestrator.stop();

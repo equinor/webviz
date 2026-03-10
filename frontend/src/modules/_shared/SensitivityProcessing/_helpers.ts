@@ -1,12 +1,14 @@
-import type { EnsembleScalarResponse_api } from "@api";
 import type { EnsembleSensitivities, Sensitivity } from "@framework/EnsembleSensitivities";
 
-import { SensitivitySortBy, type EnsembleScalarResponse, type SensitivityResponse } from "./types";
+import { SensitivitySortBy, type EnsemblePerRealizationResponse, type SensitivityResponse } from "./types";
 
 // Extract response values for the relevant realizations
-export function extractResponseValues(ensembleResponse: EnsembleScalarResponse_api, realizations: number[]): number[] {
-    return ensembleResponse.realizations
-        .map((real, idx) => ({ real, value: ensembleResponse.values[idx] }))
+export function extractResponseValues(
+    ensemblePerRealResponse: EnsemblePerRealizationResponse,
+    realizations: number[],
+): number[] {
+    return ensemblePerRealResponse.realizations
+        .map((real, idx) => ({ real, value: ensemblePerRealResponse.values[idx] }))
         .filter(({ real }) => realizations.includes(real))
         .map(({ value }) => value);
 }
@@ -42,12 +44,12 @@ export const sortSensitivityResponses = (
 };
 export function computeReferenceAverage(
     sensitivities: EnsembleSensitivities,
-    ensembleResponse: EnsembleScalarResponse,
+    ensemblePerRealResponse: EnsemblePerRealizationResponse,
     referenceSensitivity: string,
 ): number {
     const refSensitivity = sensitivities.getSensitivityByName(referenceSensitivity);
     const refRealizations = extractSensitivityRealizations(refSensitivity);
-    const refValues = extractResponseValues(ensembleResponse, refRealizations);
+    const refValues = extractResponseValues(ensemblePerRealResponse, refRealizations);
     return computeAverage(refValues);
 }
 export function filterSensitivityResponses(

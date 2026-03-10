@@ -1,13 +1,12 @@
-import type { EnsembleScalarResponse_api } from "@api";
 import { SensitivityType, type Sensitivity } from "@framework/EnsembleSensitivities";
 
-import { computeAverage, extractResponseValues } from "./helpers";
-import type { SensitivityResponse } from "./types";
+import { computeAverage, extractResponseValues } from "./_helpers";
+import type { EnsemblePerRealizationResponse, SensitivityResponse } from "./types";
 
 // Scenario sensitivity processor
 export const processScenarioSensitivity = (
     sensitivity: Sensitivity,
-    ensembleResponse: EnsembleScalarResponse_api,
+    ensemblePerRealResponse: EnsemblePerRealizationResponse,
     referenceAverage: number,
 ): SensitivityResponse => {
     if (sensitivity.cases.length > 2) {
@@ -17,7 +16,7 @@ export const processScenarioSensitivity = (
     // Single case scenario
     if (sensitivity.cases.length === 1) {
         const sensitivityCase = sensitivity.cases[0];
-        const responseValues = extractResponseValues(ensembleResponse, sensitivityCase.realizations);
+        const responseValues = extractResponseValues(ensemblePerRealResponse, sensitivityCase.realizations);
         const average = computeAverage(responseValues);
 
         return {
@@ -38,7 +37,7 @@ export const processScenarioSensitivity = (
 
     // Two case scenario
     const casesWithAverages = sensitivity.cases.map((c) => {
-        const values = extractResponseValues(ensembleResponse, c.realizations);
+        const values = extractResponseValues(ensemblePerRealResponse, c.realizations);
         return {
             case: c,
             average: computeAverage(values),

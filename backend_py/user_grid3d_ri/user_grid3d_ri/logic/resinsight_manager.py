@@ -8,10 +8,10 @@ import grpc
 import psutil
 
 from webviz_core_utils.background_tasks import run_in_background_task
+from webviz_core_utils.radix_utils import is_running_on_radix_platform, read_radix_job_payload_as_json
 
 from rips.generated import App_pb2_grpc, Definitions_pb2
 
-from user_grid3d_ri.utils.radix_utils import IS_ON_RADIX_PLATFORM, read_radix_job_payload_as_json
 
 LOGGER = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ async def _launch_ri_instance() -> int:
     # proc: asyncio.subprocess.Process = await asyncio.create_subprocess_exec(_RI_EXECUTABLE, "--console", "--server", f"{_RI_PORT}", stdout=sys.stdout, stderr=sys.stderr)
 
     env_dict = None
-    if IS_ON_RADIX_PLATFORM:
+    if is_running_on_radix_platform():
         job_payload_dict = read_radix_job_payload_as_json()
         LOGGER.debug(f"_launch_ri_instance() - {job_payload_dict=}")
 

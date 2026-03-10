@@ -1,6 +1,14 @@
 import type { SensitivityType } from "@framework/EnsembleSensitivities";
 
-export type EnsembleScalarResponse = {
+/**
+ * Type to hold an Ensemble per realization response.
+ *
+ * The response is a per realization value, and can come from
+ * time series data, statistics, other intermediate processing, etc.
+ *
+ * The name and unit are optional metadata that can be used for display purposes.
+ */
+export type EnsemblePerRealizationResponse = {
     realizations: number[];
     values: number[];
     name?: string;
@@ -26,8 +34,8 @@ export interface SensitivityResponseDataset {
     sensitivityResponses: SensitivityResponse[];
     referenceSensitivity: string;
     referenceAverage: number;
-    responseName: string | undefined;
-    responseUnit: string | undefined;
+    responseName?: string;
+    responseUnit?: string;
 }
 
 export enum SensitivitySortBy {
