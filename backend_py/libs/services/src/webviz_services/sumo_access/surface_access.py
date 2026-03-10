@@ -1,18 +1,15 @@
 import asyncio
 import logging
-from dataclasses import dataclass
 from io import BytesIO
 from typing import Sequence
 from urllib.parse import urlparse
 
-import httpx
 import xtgeo
 
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import Surface
 
-from webviz_core_utils.exponential_backoff_timer import ExponentialBackoffTimer
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_services.utils.otel_span_tracing import otel_span_decorator, start_otel_span, start_otel_span_async
 from webviz_services.utils.statistic_function import StatisticFunction
@@ -24,7 +21,6 @@ from webviz_services.service_exceptions import (
     InvalidParameterError,
     ServiceRequestError,
     InvalidDataError,
-    ServiceTimeoutError,
 )
 
 from .surface_types import SurfaceMeta, SurfaceMetaSet
@@ -32,19 +28,15 @@ from .generic_types import SumoContent
 from .queries.surface_queries import SurfTimeType, SurfInfo, TimePoint, TimeInterval
 from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
 from .sumo_client_factory import create_sumo_client
+from ._sumo_task_utils import (
+    SumoTaskInProgress as InProgress,
+    SumoTaskError as ExpectedError,
+    submit_sumo_task_async,
+    poll_sumo_task_until_done_async,
+)
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class InProgress:
-    progress_message: str = ""
-
-
-@dataclass(frozen=True)
-class ExpectedError:
-    message: str = ""
 
 
 class SurfaceAccess:
@@ -393,7 +385,10 @@ class SurfaceAccess:
                 )
 
         sumo_stat_op_str = _map_to_sumo_aggregation_operation(statistic_function)
-        sumo_task_uuid = await _start_sumo_aggregation_task_async(search_context, sumo_stat_op_str)
+        sumo_task_uuid = await submit_sumo_task_async(
+            search_context.aggregate_async(operation=sumo_stat_op_str, no_wait=True),
+            context_msg="statistical surface",
+        )
         perf_metrics.record_lap("submit-job")
 
         LOGGER.debug(
@@ -419,18 +414,7 @@ class SurfaceAccess:
 
         perf_metrics = PerfMetrics()
 
-        backoff_timer = ExponentialBackoffTimer(initial_delay_s=1, max_delay_s=10, max_total_duration_s=timeout_s)
-        while True:
-            task_state: _SumoTaskState = await _poll_sumo_aggregation_task_state_async(self._sumo_client, sumo_task_id)
-
-            # Current guesses on possible status string values are: "running" | "succeeded" | "failed"
-            # A waiting state was mentioned by Raymond Wiker, but not yet seen in the wild
-            # Note that the backoff timer will return None when the max_total_duration_s has expired
-            next_delay_s = backoff_timer.next_delay_s()
-            if task_state.status in ["succeeded", "failed"] or next_delay_s is None:
-                break
-
-            await asyncio.sleep(next_delay_s)
+        task_state = await poll_sumo_task_until_done_async(self._sumo_client, sumo_task_id, timeout_s)
 
         perf_metrics.record_lap("polling")
 
@@ -487,86 +471,6 @@ class SurfaceAccess:
     def _make_stat_surf_log_str(self, name: str, attribute: str, date_str: str | None) -> str:
         addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
         return addr_str
-
-
-async def _start_sumo_aggregation_task_async(search_context: SearchContext, sumo_stat_op_str: str) -> str:
-    try:
-        httpx_resp = await search_context.aggregate_async(operation=sumo_stat_op_str, no_wait=True)
-    except (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.HTTPStatusError) as exc:
-        if _should_treat_httpx_exception_as_timeout(exc):
-            raise ServiceTimeoutError("Submitting task to Sumo aggregation service timed out", Service.SUMO) from exc
-        raise ServiceRequestError("Error starting Sumo aggregation task", Service.SUMO) from exc
-
-    # When we call aggregate_async() with no_wait=True, we expect the raw httpx.Response object
-    # from the underlying POST request to be returned.
-    if not isinstance(httpx_resp, httpx.Response):
-        raise TypeError("Unexpected response type from Sumo when submitting statistical surface job")
-
-    # We're not getting a task id back from the POST, but a location header with a URL to poll for the result.
-    # Do a bit of string manipulation to extract the actual task UUID from the location header
-    # The full pull location typically looks something like this:
-    #   https://main-sumo-prod.radix.equinor.com/api/v1/tasks('3de7a932-14de-4873-8389-fe3a83213638')/result
-    full_poll_location = httpx_resp.headers.get("location")
-    start = full_poll_location.find("/tasks('") + 8
-    end = full_poll_location.find("')/result", start)
-    sumo_task_uuid = full_poll_location[start:end]
-
-    return sumo_task_uuid
-
-
-@dataclass(frozen=True)
-class _SumoTaskState:
-    status: str  # The main status of the Sumo task. Observed values: running, succeeded, failed
-    result_url: str | None  # The URL to the result of the task, if available
-
-
-async def _poll_sumo_aggregation_task_state_async(sumo_client: SumoClient, sumo_task_id: str) -> _SumoTaskState:
-    # The poll path (which sumo client adds to its base_url) is: /tasks('{taskUuid}')/result
-    # Initially we used a poll_path on the form: /tasks('{taskUuid}')/result
-    # After slack discussions with R. Wiker, we now try and use the more generic path without /result to try and get richer status information
-    poll_path = f"/tasks('{sumo_task_id}')"
-    poll_resp = await sumo_client.get_async(poll_path)
-    poll_resp_dict = poll_resp.json()
-
-    # LOGGER.debug("-----")
-    # source_dict = poll_resp_dict.get("_source", {})
-    # job_list = source_dict.get("parameters", {}).get("jobStatuses", [])
-    # first_job_dict = job_list[0] if job_list else {}
-    # LOGGER.debug(f"Poll response status: {poll_resp.status_code=}")
-    # LOGGER.debug(f"Poll response:\n--\n{json.dumps(poll_resp.json(), indent=2)}\n--")
-    # LOGGER.debug(f"_source.start: {source_dict.get('start')}")
-    # LOGGER.debug(f"_source.end: {source_dict.get('end')}")
-    # LOGGER.debug(f"_source.status: {source_dict.get('status')}")
-    # LOGGER.debug(f"_source.parameters.entity: {source_dict.get('parameters', {}).get('entity')}")
-    # LOGGER.debug(f"_source.parameters.jobStatuses[0].status: {first_job_dict.get('status')}")
-    # LOGGER.debug(f"_source.result_url: {source_dict.get('result_url')}")
-    # LOGGER.debug("-----")
-
-    status = poll_resp_dict["_source"]["status"]
-    result_url = poll_resp_dict["_source"].get("result_url")
-    return _SumoTaskState(
-        status=status,
-        result_url=result_url,
-    )
-
-
-def _should_treat_httpx_exception_as_timeout(httpx_exception: httpx.HTTPError) -> bool:
-    """
-    Return True if the given httpx exception should be treated as an upstream timeout.
-
-    Covers:
-      * client-side timeouts: httpx.ConnectTimeout, httpx.ReadTimeout
-      * server-side timeout response: httpx.HTTPStatusError with status 504 Gateway Timeout
-
-    Note that for server-side timeouts to work, httpx.raise_for_status() must have been called on the response.
-    """
-    if isinstance(httpx_exception, (httpx.ConnectTimeout, httpx.ReadTimeout)):
-        return True
-
-    if isinstance(httpx_exception, httpx.HTTPStatusError) and httpx_exception.response is not None:
-        return httpx_exception.response.status_code == 504
-
-    return False
 
 
 def filter_search_context_on_attribute(search_context: SearchContext, attribute: str) -> SearchContext:

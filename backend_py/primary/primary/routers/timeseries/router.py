@@ -207,59 +207,6 @@ async def get_realizations_vector_data(
     return ret_arr
 
 
-@router.post("/grouped_realizations_vectors_data/")
-@cache_time(CacheTime.LONG)
-async def post_grouped_realizations_vectors_data(
-    # fmt:off
-    response: Response,
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
-    ensemble_name: Annotated[str, Query(description="Ensemble name")],
-    groups: Annotated[list[schemas.VectorGroupInput], Body(embed=True, description="Groups of vector names to sum")],
-    resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, raw data without resampling will be returned.")] = None,
-    # fmt:on
-) -> schemas.GroupedRealizationsVectorData:
-    """Get summed vector data per realization for named groups.
-
-    Each group specifies a label and a list of vector names.  The server
-    fetches all vectors, sums per-realization values within each group, and
-    returns a compact response with shared ``realizations`` and
-    ``timestampsUtcMs`` at the top level, plus one entry per group.
-    """
-
-    perf_metrics = ResponsePerfMetrics(response)
-
-    # Collect all unique vector names across all groups
-    all_vector_names: list[str] = list(dict.fromkeys(vn for group in groups for vn in group.vectorNames))
-
-    access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-
-    df = await access.get_vectors_table_async(
-        vector_names=all_vector_names,
-        resampling_frequency=sumo_freq,
-        realizations=None,
-    )
-    perf_metrics.record_lap("get-vectors")
-
-    service_groups = [VectorGroup(group_label=g.groupLabel, vector_names=g.vectorNames) for g in groups]
-    result = compute_grouped_vector_sums(df, service_groups)
-    perf_metrics.record_lap("sum-groups")
-
-    LOGGER.info(f"Loaded grouped realization data ({len(groups)} groups) in: {perf_metrics.to_string()}")
-    return schemas.GroupedRealizationsVectorData(
-        realizations=result.realizations,
-        timestampsUtcMs=result.timestamps_utc_ms,
-        groups=[
-            schemas.GroupedVectorEntry(
-                groupLabel=g.group_label,
-                valuesPerRealization=g.values_per_realization,
-            )
-            for g in result.groups
-        ],
-    )
-
-
 @router.post("/grouped_realizations_vectors_data/hybrid")
 async def post_grouped_realizations_vectors_data_hybrid(
     # fmt:off
@@ -340,16 +287,12 @@ async def post_grouped_realizations_vectors_data_hybrid(
         task_meta = await task_helpers.submit_and_track_summary_task_async(
             access, cols_needing_agg, task_tracker, task_fp
         )
-        LOGGER.info(
-            f"Submitted batch aggregation task for {len(cols_needing_agg)}/{len(all_vector_names)} vectors"
-        )
+        LOGGER.info(f"Submitted batch aggregation task for {len(cols_needing_agg)}/{len(all_vector_names)} vectors")
         new_task_was_submitted = True
         perf_metrics.record_lap("submit")
 
     try:
-        poll_result = await access.poll_batch_aggregation_task_async(
-            sumo_task_id=task_meta.task_id, timeout_s=0
-        )
+        poll_result = await access.poll_batch_aggregation_task_async(sumo_task_id=task_meta.task_id, timeout_s=0)
         perf_metrics.record_lap("poll")
 
         if isinstance(poll_result, SummaryExpectedError):

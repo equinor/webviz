@@ -3,12 +3,12 @@ import time
 from hashlib import sha256
 
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
-from webviz_services.sumo_access.surface_access import ExpectedError, InProgress, SurfaceAccess
+from webviz_services.sumo_access.surface_access import SurfaceAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.utils.task_meta_tracker import TaskMeta, TaskMetaTracker
 
-from .._shared.long_running_operations import LroErrorInfo, LroFailureResp, LroInProgressResp
+from .._shared.long_running_operations import make_lro_in_progress_resp, make_lro_failure_resp  # noqa: F401
 from .surface_address import StatisticalSurfaceAddress
 
 LOGGER = logging.getLogger(__name__)
@@ -55,19 +55,3 @@ async def submit_and_track_stat_surf_task_async(
     )
 
     return task_meta
-
-
-def make_lro_in_progress_resp(
-    task_meta: TaskMeta, task_just_submitted: bool, prog_obj_from_access: InProgress
-) -> LroInProgressResp:
-    elapsed_time_s = time.time() - task_meta.start_time_utc_s
-    if task_just_submitted:
-        prog_msg = f"New task submitted: {prog_obj_from_access.progress_message}"
-    else:
-        prog_msg = f"Sumo task status: {prog_obj_from_access.progress_message} ({elapsed_time_s:.1f}s elapsed)"
-
-    return LroInProgressResp(status="in_progress", task_id=task_meta.task_id, progress_message=prog_msg)
-
-
-def make_lro_failure_resp(err_obj_from_access: ExpectedError) -> LroFailureResp:
-    return LroFailureResp(status="failure", error=LroErrorInfo(message=err_obj_from_access.message))

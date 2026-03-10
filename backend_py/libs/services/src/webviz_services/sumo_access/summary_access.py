@@ -1,17 +1,12 @@
-import asyncio
 import logging
-from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple, Set
-from urllib.parse import urlparse
 
-import httpx
 import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 import polars as pl
 from webviz_core_utils.perf_timer import PerfTimer
 from webviz_core_utils.perf_metrics import PerfMetrics
-from webviz_core_utils.exponential_backoff_timer import ExponentialBackoffTimer
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_services.utils.otel_span_tracing import otel_span_decorator
@@ -26,8 +21,6 @@ from webviz_services.service_exceptions import (
     MultipleDataMatchesError,
     InvalidParameterError,
     NoDataError,
-    ServiceRequestError,
-    ServiceTimeoutError,
 )
 
 
@@ -43,18 +36,14 @@ from .generic_types import EnsembleScalarResponse
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
 from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client
+from ._sumo_task_utils import (
+    SumoTaskInProgress as SummaryInProgress,
+    SumoTaskError as SummaryExpectedError,
+    submit_sumo_task_async,
+    poll_sumo_task_until_done_async,
+)
 
 LOGGER = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class SummaryInProgress:
-    progress_message: str = ""
-
-
-@dataclass(frozen=True)
-class SummaryExpectedError:
-    message: str = ""
 
 
 class SummaryAccess:
@@ -115,41 +104,6 @@ class SummaryAccess:
         )
 
         return ret_info_arr
-
-    @otel_span_decorator()
-    async def get_vectors_table_async(
-        self,
-        vector_names: list[str],
-        resampling_frequency: Optional[Frequency],
-        realizations: Optional[Sequence[int]],
-    ) -> pl.DataFrame:
-        """
-        Get data for the specified vectors and the specified realizations.
-        Each vector is fetched individually to avoid failures when vectors
-        have different DATE grids.  When *resampling_frequency* is given the
-        individual tables are resampled onto a shared date grid before being
-        merged, guaranteeing identical DATE/REAL columns across all vectors.
-
-        If realizations is None, data for all available realizations will be returned.
-        The returned DataFrame will always contain a 'DATE' and 'REAL' column in
-        addition to the requested vectors.
-        If `resampling_frequency` is None, the data will be returned with full/raw
-        resolution (merged via an outer join on DATE + REAL).
-        """
-        timer = PerfTimer()
-
-        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
-        # New metadata uses simulationtimeseries, but most existing cases use timeseries
-        table_loader.require_content_type(["timeseries", "simulationtimeseries"])
-
-        # Fetch each vector individually to handle differing DATE grids.
-        # Uses batched locate + shared staleness check to reduce API round-trips.
-        per_vector_tables = await table_loader.get_aggregated_columns_batched_async(vector_names)
-        et_loading_ms = timer.lap_ms()
-
-        return self._merge_and_resample_vector_tables(
-            per_vector_tables, vector_names, resampling_frequency, realizations, timer, et_loading_ms
-        )
 
     @otel_span_decorator()
     async def get_vector_table_async(
@@ -437,32 +391,10 @@ class SummaryAccess:
         )
         sc_real = sc_base.filter(realization=True, aggregation=False)
 
-        try:
-            httpx_resp = await sc_real.batch_aggregate_async(
-                columns=vector_names, operation="collection", no_wait=True
-            )
-        except (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.HTTPStatusError) as exc:
-            if isinstance(exc, (httpx.ConnectTimeout, httpx.ReadTimeout)):
-                raise ServiceTimeoutError(
-                    "Submitting batch aggregation task to Sumo timed out", Service.SUMO
-                ) from exc
-            if isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code == 504:
-                raise ServiceTimeoutError(
-                    "Submitting batch aggregation task to Sumo timed out (504)", Service.SUMO
-                ) from exc
-            raise ServiceRequestError("Error starting Sumo batch aggregation task", Service.SUMO) from exc
-
-        if not isinstance(httpx_resp, httpx.Response):
-            raise TypeError("Unexpected response type from Sumo when submitting batch aggregation task")
-
-        # Extract task UUID from Location header
-        # e.g. https://main-sumo-prod.radix.equinor.com/api/v1/tasks('uuid')/result
-        full_poll_location = httpx_resp.headers.get("location")
-        if not full_poll_location:
-            raise InvalidDataError("No location header in Sumo batch aggregation response", Service.SUMO)
-        start = full_poll_location.find("/tasks('") + 8
-        end = full_poll_location.find("')/result", start)
-        sumo_task_uuid = full_poll_location[start:end]
+        sumo_task_uuid = await submit_sumo_task_async(
+            sc_real.batch_aggregate_async(columns=vector_names, operation="collection", no_wait=True),
+            context_msg="batch aggregation",
+        )
 
         perf_metrics.record_lap("submit")
         LOGGER.debug(
@@ -486,27 +418,16 @@ class SummaryAccess:
             SummaryInProgress if still running.
             SummaryExpectedError if the task failed.
         """
-        backoff_timer = ExponentialBackoffTimer(initial_delay_s=1, max_delay_s=10, max_total_duration_s=timeout_s)
-        while True:
-            poll_path = f"/tasks('{sumo_task_id}')"
-            poll_resp = await self._sumo_client.get_async(poll_path)
-            poll_resp_dict = poll_resp.json()
+        task_state = await poll_sumo_task_until_done_async(self._sumo_client, sumo_task_id, timeout_s)
 
-            status = poll_resp_dict["_source"]["status"]
-
-            next_delay_s = backoff_timer.next_delay_s()
-            if status in ["succeeded", "failed"] or next_delay_s is None:
-                break
-            await asyncio.sleep(next_delay_s)
-
-        if status == "succeeded":
+        if task_state.status == "succeeded":
             return True
 
-        if status == "failed":
+        if task_state.status == "failed":
             LOGGER.error(f"Batch aggregation task failed ({sumo_task_id=})")
             return SummaryExpectedError(message=f"Batch aggregation task failed ({sumo_task_id=})")
 
-        return SummaryInProgress(progress_message=f"{status}")
+        return SummaryInProgress(progress_message=f"{task_state.status}")
 
     async def get_vectors_table_after_aggregation_async(
         self,
