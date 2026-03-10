@@ -14,8 +14,6 @@ class WellboreHeader(BaseModel):
     depthReferenceElevation: float
     wellborePurpose: str
     wellboreStatus: str
-    tvdMax: float
-    mdMax: float
     kickoffDepthMd: float | None
     kickoffDepthTvd: float | None
     parentWellbore: str | None

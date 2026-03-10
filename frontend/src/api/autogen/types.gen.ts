@@ -2973,14 +2973,6 @@ export type WellboreHeader_api = {
      */
     wellboreStatus: string;
     /**
-     * Tvdmax
-     */
-    tvdMax?: number | null;
-    /**
-     * Mdmax
-     */
-    mdMax?: number | null;
-    /**
      * Kickoffdepthmd
      */
     kickoffDepthMd: number | null;
@@ -2997,6 +2989,10 @@ export type WellboreHeader_api = {
      */
     mdMin?: number | null;
     /**
+     * Mdmax
+     */
+    mdMax?: number | null;
+    /**
      * Mdunit
      */
     mdUnit?: string | null;
@@ -3004,6 +3000,10 @@ export type WellboreHeader_api = {
      * Tvdmin
      */
     tvdMin?: number | null;
+    /**
+     * Tvdmax
+     */
+    tvdMax?: number | null;
     /**
      * Tvdunit
      */
