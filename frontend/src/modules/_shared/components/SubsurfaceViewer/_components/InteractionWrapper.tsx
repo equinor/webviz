@@ -120,7 +120,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
         [verticalScale, onVerticalScaleChange],
     );
 
-    React.useEffect(
+    React.useLayoutEffect(
         function setPolylineMarkerPositionEffect() {
             if (!hoveredPolylineLengthAlong) {
                 polylineMarkerStoreRef.current.setPosition(null);
@@ -160,13 +160,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 .makeSubscriberFunction(PolylinesPluginTopic.POLYLINE_HOVER)(() => {
                 const hoverData = polylinesPlugin.getPolylineHoverData();
                 publishHoveredPolylineLengthAlongRef.current(hoverData);
-                if (!hoverData) {
-                    polylineMarkerStore.setPosition(null);
-                    return;
-                }
-                const polyline = polylinesPlugin.getPolylines().find((p) => p.id === hoverData.polylineId);
-                const pos = polyline ? positionAtLengthAlong(polyline.path, hoverData.lengthAlong) : null;
-                polylineMarkerStore.setPosition(pos);
             });
 
             const unsubscribeEditingMode = polylinesPlugin
