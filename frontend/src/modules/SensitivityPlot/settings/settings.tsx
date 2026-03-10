@@ -10,8 +10,8 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
+import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 
-import { SensitivitySortBy } from "../../_shared/SensitivityProcessing/types";
 import type { Interfaces } from "../interfaces";
 import { DisplayComponentType, SensitivityScaling } from "../typesAndEnums";
 import { ColorBy } from "../view/components/sensitivityChartFigure";

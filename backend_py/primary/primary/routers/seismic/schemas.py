@@ -1,4 +1,5 @@
 from typing import List
+from enum import StrEnum
 
 from pydantic import BaseModel
 from webviz_core_utils.b64 import B64FloatArray
@@ -39,6 +40,12 @@ class SeismicCubeSpec(BaseModel):
     rotationDeg: float
 
 
+class SeismicRepresentation(StrEnum):
+    OBSERVED_IN_CASE = "observed_case"
+    OBSERVED_IN_REALIZATION = "observed_realization"
+    MODELLED = "modelled"
+
+
 class SeismicCubeMeta(BaseModel):
     """
     Metadata for a seismic cube.
@@ -47,7 +54,7 @@ class SeismicCubeMeta(BaseModel):
     seismicAttribute: str
     unit: str
     isoDateOrInterval: str
-    isObservation: bool
+    representation: SeismicRepresentation
     isDepth: bool
     bbox: BoundingBox3d
     spec: SeismicCubeSpec

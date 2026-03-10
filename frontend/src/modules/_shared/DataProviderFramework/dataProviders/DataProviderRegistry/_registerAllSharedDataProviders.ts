@@ -3,11 +3,8 @@ import { DrilledWellborePicksProvider } from "../implementations/DrilledWellbore
 import { DrilledWellTrajectoriesProvider } from "../implementations/DrilledWellTrajectoriesProvider";
 import { FaultPolygonsProvider } from "../implementations/FaultPolygonsProvider";
 import { IntersectionRealizationGridProvider } from "../implementations/IntersectionRealizationGridProvider";
-import {
-    IntersectionRealizationSeismicProvider,
-    SeismicDataSource,
-} from "../implementations/IntersectionRealizationSeismicProvider";
 import { RealizationPolygonsProvider } from "../implementations/RealizationPolygonsProvider";
+import { IntersectionSeismicProvider } from "../implementations/seismicProviders/IntersectionSeismicProvider";
 import {
     AttributeSurfaceProvider,
     AttributeSurfaceType,
@@ -24,16 +21,8 @@ DataProviderRegistry.registerDataProvider(
     IntersectionRealizationGridProvider,
     [{ enableWellboreExtensionLength: true }],
 );
-DataProviderRegistry.registerDataProvider(
-    DataProviderType.INTERSECTION_REALIZATION_OBSERVED_SEISMIC,
-    IntersectionRealizationSeismicProvider,
-    [SeismicDataSource.OBSERVED],
-);
-DataProviderRegistry.registerDataProvider(
-    DataProviderType.INTERSECTION_REALIZATION_SIMULATED_SEISMIC,
-    IntersectionRealizationSeismicProvider,
-    [SeismicDataSource.SIMULATED],
-);
+
+DataProviderRegistry.registerDataProvider(DataProviderType.INTERSECTION_SEISMIC, IntersectionSeismicProvider);
 DataProviderRegistry.registerDataProvider(DataProviderType.FAULT_POLYGONS, FaultPolygonsProvider);
 
 DataProviderRegistry.registerDataProvider(DataProviderType.REALIZATION_POLYGONS, RealizationPolygonsProvider);
