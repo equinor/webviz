@@ -19,6 +19,7 @@ import { getUniqueCurveNameForCurveData } from "../../_shared/utils/wellLog";
 import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "../constants";
 
 import { COLOR_TABLES } from "./logViewerColors";
+import { trajectoryToIntersectionReference } from "./trajectory";
 
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 
@@ -35,10 +36,12 @@ const DATA_ROW_PRESICION = 3;
 export function createWellLogSets(
     curveData: WellboreLogCurveData_api[],
     wellboreTrajectory: WellboreTrajectory_api,
-    referenceSystem: IntersectionReferenceSystem,
+    wellPickProps: WellPickProps | undefined,
     nonUniqueCurveNames?: Set<string>,
     padToTrajectoryLength?: boolean,
 ): WellLogSet[] {
+    const referenceSystem = trajectoryToIntersectionReference(wellboreTrajectory);
+
     // The well-log viewer always picks the axis from the first log set in the collection.
     // Adding a dedicated set for only the axes, so we always have a full set to show from.
     const axisOnlyLog = makeAxisOnlyLog(wellboreTrajectory, referenceSystem);
@@ -67,12 +70,20 @@ export function createWellLogSets(
         .groupBy("logName")
         .entries()
         .map(([logName, curveSet]) => {
-            const { curves, data, metadata_discrete } = createLogCurvesAndData(
-                curveSet,
-                wellboreTrajectory,
-                referenceSystem,
-                limitDomainToData,
-            );
+            let domain: [number, number] | undefined;
+
+            if (padToTrajectoryLength) {
+                domain = [wellboreTrajectory.mdArr.at(0)!, wellboreTrajectory.mdArr.at(-1)!];
+            } else if (wellPickProps?.wellpick?.data?.length) {
+                // ! If pick data exists, it implies that start and end indices are set
+                // We add a little offset to make it easier to see the the picks
+                const picksStart = wellPickProps.wellpick.header.startIndex! - 10;
+                const picksEnd = wellPickProps.wellpick.header.endIndex! + 10;
+
+                domain = [picksStart, picksEnd];
+            }
+
+            const { curves, data, metadata_discrete } = createLogCurvesAndData(curveSet, referenceSystem, domain);
 
             const header = createLogHeader(logName, data, wellboreTrajectory);
 
@@ -84,7 +95,10 @@ export function createWellLogSets(
 }
 
 type SafeWellLogDataRow = [number, ...WellLogDataRow];
-type LogCurveAndDataResult = { data: SafeWellLogDataRow[] } & Pick<WellLogSet, "curves" | "metadata_discrete">;
+type LogCurveAndDataResult = { data: SafeWellLogDataRow[]; logDomain: number[] } & Pick<
+    WellLogSet,
+    "curves" | "metadata_discrete"
+>;
 
 function makeAxisOnlyLog(
     wellboreTrajectory: WellboreTrajectory_api,
@@ -103,9 +117,8 @@ function makeAxisOnlyLog(
 
 function createLogCurvesAndData(
     curveData: WellboreLogCurveData_api[],
-    wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
-    limitDomainToData?: boolean,
+    requiredDomain?: [min: number, max: number],
 ): LogCurveAndDataResult {
     const curves: WellLogSet["curves"] = [...DATA_ROW_HEAD];
     const metadataDiscrete: WellLogSet["metadata_discrete"] = {};
@@ -140,7 +153,7 @@ function createLogCurvesAndData(
             if (curve.discreteValueMetadata) entry = curve.dataPoints[idx - 1]?.[1] ?? null;
             else entry = actualEntry;
 
-            if (!scaleIdx) return console.warn("Unexpected null for scale entry");
+            if (scaleIdx === null) return console.warn("Unexpected null for scale entry", curve.dataPoints);
             if (typeof scaleIdx === "string") throw new Error("Scale index value cannot be a string");
             if (restData.length) console.warn("Multi-dimensional data not supported, using first value only");
 
@@ -154,18 +167,20 @@ function createLogCurvesAndData(
         });
     });
 
-    if (limitDomainToData) {
-        wellboreTrajectory.mdArr.forEach((mdValue) => {
-            if (mdValue <= maxCurveMd && mdValue >= minCurveMd) return;
+    if (requiredDomain && requiredDomain[0] < minCurveMd) {
+        maybeInjectDataRow(rowAcc, requiredDomain[0], rowLength, referenceSystem);
+    }
 
-            maybeInjectDataRow(rowAcc, mdValue, rowLength, referenceSystem);
-        });
+    if (requiredDomain && requiredDomain[1] > maxCurveMd) {
+        maybeInjectDataRow(rowAcc, requiredDomain[1], rowLength, referenceSystem);
     }
 
     return {
         data: chain(rowAcc).values().sortBy("0").value(),
+        // data: Object.values(rowAcc),
         metadata_discrete: metadataDiscrete,
         curves,
+        logDomain: [minCurveMd, maxCurveMd],
     };
 }
 
@@ -266,7 +281,10 @@ export function createLogViewerWellPicks(pickCollections: WellPickDataCollection
 
     return {
         wellpick: {
-            header: {},
+            header: {
+                startIndex: (mergerdWellPickData.at(0)?.[0] as number) ?? undefined,
+                endIndex: (mergerdWellPickData.at(-1)?.[0] as number) ?? undefined,
+            },
             curves: [
                 MAIN_AXIS_CURVE,
                 {
@@ -301,7 +319,7 @@ function mergeStackedPicks(wellborePicks: WellLogDataRow[]): WellLogDataRow[] {
         else mergedPicks[md] = mergePicks(mergedPicks[md], pick);
     });
 
-    return Object.values(mergedPicks);
+    return chain(mergedPicks).values().sortBy("0").value();
 }
 
 function mergePicks(pick1: WellLogDataRow, pick2: WellLogDataRow): WellLogDataRow {

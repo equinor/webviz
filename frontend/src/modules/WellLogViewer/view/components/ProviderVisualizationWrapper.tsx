@@ -26,7 +26,6 @@ import { isWellPickVisualization } from "@modules/WellLogViewer/DataProviderFram
 import type { WellLogFactoryProduct } from "@modules/WellLogViewer/hooks/useLogViewerVisualizationProduct";
 import { useLogViewerVisualizationProduct } from "@modules/WellLogViewer/hooks/useLogViewerVisualizationProduct";
 import { createLogViewerWellPicks, createWellLogSets } from "@modules/WellLogViewer/utils/queryDataTransform";
-import { trajectoryToIntersectionReference } from "@modules/WellLogViewer/utils/trajectory";
 
 import type { SubsurfaceLogViewerWrapperProps } from "./SubsurfaceLogViewerWrapper";
 import { SubsurfaceLogViewerWrapper } from "./SubsurfaceLogViewerWrapper";
@@ -103,6 +102,7 @@ function createWellLogTemplateFromProduct(factoryProduct: WellLogFactoryProduct 
 
 function createWellLogJsonFromProduct(
     factoryProduct: WellLogFactoryProduct | null,
+    wellPickProps: WellPickProps | undefined,
     wellboreTrajectory: WellboreTrajectory_api,
     limitDomainToData?: boolean,
 ): WellLogSet[] {
@@ -112,7 +112,7 @@ function createWellLogJsonFromProduct(
     const curveData = accData[DATA_ACC_KEY];
     const duplicatedCurveNames = accData[DUPLICATE_NAMES_ACC_KEY];
 
-    return createWellLogSets(curveData, wellboreTrajectory, referenceSystem, duplicatedCurveNames, !limitDomainToData);
+    return createWellLogSets(curveData, wellboreTrajectory, wellPickProps, duplicatedCurveNames, !limitDomainToData);
 }
 
 function createWellPickPropFromProduct(factoryProduct: WellLogFactoryProduct | null): WellPickProps | undefined {
@@ -149,8 +149,8 @@ export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapper
     const template = React.useMemo(() => createWellLogTemplateFromProduct(factoryProduct), [factoryProduct]);
 
     const wellLogSets = React.useMemo(
-        () => createWellLogJsonFromProduct(factoryProduct, trajectoryData, limitDomainToData),
-        [factoryProduct, trajectoryData, limitDomainToData],
+        () => createWellLogJsonFromProduct(factoryProduct, wellPicks, trajectoryData, limitDomainToData),
+        [factoryProduct, wellPicks, trajectoryData, limitDomainToData],
     );
 
     if (!factoryProduct || factoryProduct.numLoadingDataProviders > 0) {
