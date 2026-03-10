@@ -29,8 +29,12 @@ type ValueConstraintsType = string[];
 export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     defaultValue: ValueType = null;
 
-    valueConstraintsIntersectionReducerDefinition =
-        makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
+    valueConstraintsIntersectionReducerDefinition = {
+        ...makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(),
+        isValid: (): boolean => {
+            return true;
+        },
+    };
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -47,6 +51,9 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
+        if (valueConstraints.length === 0) {
+            return true;
+        }
         return isValueValid<string, string>(value, valueConstraints, (v) => v);
     }
 

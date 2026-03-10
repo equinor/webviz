@@ -533,12 +533,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
             return data.time_intervals_iso_str;
         });
-        settingAttributesUpdater(Setting.PDM_FILTER_TYPE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(observedSurfaceMetadataDep);
-            return {
-                enabled: !!data?.time_intervals_iso_str.length,
-            };
-        });
+
         settingAttributesUpdater(Setting.PDM_FILTER, ({ getLocalSetting, getHelperDependency }) => {
             const pdmFilterType = getLocalSetting(Setting.PDM_FILTER_TYPE);
             const data = getHelperDependency(observedSurfaceMetadataDep);
