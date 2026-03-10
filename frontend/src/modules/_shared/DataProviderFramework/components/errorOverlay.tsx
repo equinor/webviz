@@ -29,20 +29,6 @@ export function ErrorOverlay(props: ErrorOverlayProps) {
                     {deserializationErrors.map((error, index) => (
                         <li key={index}>{error}</li>
                     ))}
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
-                    <li>test</li>
                 </ul>
             </div>
             <Button onClick={acceptDeserializationErrors} variant="contained" size="small">
