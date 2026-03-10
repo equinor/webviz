@@ -48,19 +48,22 @@ spec:
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
               - name: WEBVIZ-ENTERPRISE-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
+              # Inject all app insights connection strings as env vars.
+              # Our azure monitor setup code will pick the right one based on the radix environment
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PREPROD
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PREPROD
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW
+
       variables:
         UVICORN_PORT: 5000
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
       environmentConfig:
         - environment: prod
-          secretRefs:
-            azureKeyVaults:
-              - name: webviz
-                items:
-                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
-                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-          variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=prod, service.version=tbd0.1.2
           resources:
             requests:
               memory: 8Gi
@@ -94,14 +97,6 @@ spec:
                 averageUtilization: 80
 
         - environment: review
-          secretRefs:
-            azureKeyVaults:
-              - name: webviz
-                items:
-                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
-                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-          variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=review
           resources:
             requests:
               memory: 4Gi
@@ -118,14 +113,6 @@ spec:
                 averageUtilization: 80
 
         - environment: dev
-          secretRefs:
-            azureKeyVaults:
-              - name: webviz
-                items:
-                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
-                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-          variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=dev
           resources:
             requests:
               memory: 4Gi
@@ -207,38 +194,25 @@ spec:
       identity:
         azure:
           clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+      secretRefs:
+        azureKeyVaults:
+          - name: webviz
+            useAzureIdentity: true
+            items:
+              # Inject all app insights connection strings as env vars.
+              # Our azure monitor setup code will pick the right one based on the radix environment
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PREPROD
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PREPROD
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW
       variables:
         UVICORN_PORT: 8002
       payload:
         path: /compute/args
-      environmentConfig:
-        - environment: prod
-          secretRefs:
-            azureKeyVaults:
-              - name: webviz
-                items:
-                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
-                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-          variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=user-grid3d-ri, service.namespace=prod
-        - environment: review
-          secretRefs:
-            azureKeyVaults:
-              - name: webviz
-                items:
-                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
-                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-          variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=user-grid3d-ri, service.namespace=review
-        - environment: dev
-          secretRefs:
-            azureKeyVaults:
-              - name: webviz
-                items:
-                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
-                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-          variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=user-grid3d-ri, service.namespace=dev
 
   dnsAppAlias:
     environment: prod

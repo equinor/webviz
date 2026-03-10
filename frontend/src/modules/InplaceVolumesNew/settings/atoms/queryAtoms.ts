@@ -1,7 +1,7 @@
 import type { QueryObserverResult } from "@tanstack/query-core";
 
 import type { InplaceVolumesTableDefinition_api } from "@api";
-import { getTableDefinitionsOptions } from "@api";
+import { getInplaceTableDefinitionsOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
@@ -21,7 +21,7 @@ export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
-        const options = getTableDefinitionsOptions({
+        const options = getInplaceTableDefinitionsOptions({
             query: {
                 case_uuid: ensembleIdent.getCaseUuid(),
                 ensemble_name: ensembleIdent.getEnsembleName(),
