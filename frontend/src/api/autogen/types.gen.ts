@@ -103,18 +103,6 @@ export type BodyPostGetSurfaceIntersection_api = {
 };
 
 /**
- * Body_post_grouped_realizations_vectors_data
- */
-export type BodyPostGroupedRealizationsVectorsData_api = {
-    /**
-     * Groups
-     *
-     * Groups of vector names to sum
-     */
-    groups: Array<VectorGroupInput_api>;
-};
-
-/**
  * Body_post_grouped_realizations_vectors_data_hybrid
  */
 export type BodyPostGroupedRealizationsVectorsDataHybrid_api = {
@@ -3524,53 +3512,6 @@ export type GetRealizationsVectorDataResponses_api = {
 
 export type GetRealizationsVectorDataResponse_api =
     GetRealizationsVectorDataResponses_api[keyof GetRealizationsVectorDataResponses_api];
-
-export type PostGroupedRealizationsVectorsDataData_api = {
-    body: BodyPostGroupedRealizationsVectorsData_api;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Resampling Frequency
-         *
-         * Resampling frequency. If not specified, raw data without resampling will be returned.
-         */
-        resampling_frequency?: Frequency_api | null;
-        zCacheBust?: string;
-    };
-    url: "/timeseries/grouped_realizations_vectors_data/";
-};
-
-export type PostGroupedRealizationsVectorsDataErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type PostGroupedRealizationsVectorsDataError_api =
-    PostGroupedRealizationsVectorsDataErrors_api[keyof PostGroupedRealizationsVectorsDataErrors_api];
-
-export type PostGroupedRealizationsVectorsDataResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: GroupedRealizationsVectorData_api;
-};
-
-export type PostGroupedRealizationsVectorsDataResponse_api =
-    PostGroupedRealizationsVectorsDataResponses_api[keyof PostGroupedRealizationsVectorsDataResponses_api];
 
 export type PostGroupedRealizationsVectorsDataHybridData_api = {
     body: BodyPostGroupedRealizationsVectorsDataHybrid_api;

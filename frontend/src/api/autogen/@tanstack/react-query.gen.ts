@@ -85,7 +85,6 @@ import {
     postGetSampleSurfaceInPoints,
     postGetSeismicFence,
     postGetSurfaceIntersection,
-    postGroupedRealizationsVectorsData,
     postGroupedRealizationsVectorsDataHybrid,
     postLogout,
     postRefreshFingerprintsForEnsembles,
@@ -303,12 +302,9 @@ import type {
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionError_api,
     PostGetSurfaceIntersectionResponse_api,
-    PostGroupedRealizationsVectorsDataData_api,
-    PostGroupedRealizationsVectorsDataError_api,
     PostGroupedRealizationsVectorsDataHybridData_api,
     PostGroupedRealizationsVectorsDataHybridError_api,
     PostGroupedRealizationsVectorsDataHybridResponse_api,
-    PostGroupedRealizationsVectorsDataResponse_api,
     PostLogoutData_api,
     PostLogoutResponse_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -584,75 +580,6 @@ export const getRealizationsVectorDataOptions = (options: Options<GetRealization
         },
         queryKey: getRealizationsVectorDataQueryKey(options),
     });
-
-export const postGroupedRealizationsVectorsDataQueryKey = (
-    options: Options<PostGroupedRealizationsVectorsDataData_api>,
-) => createQueryKey("postGroupedRealizationsVectorsData", options);
-
-/**
- * Post Grouped Realizations Vectors Data
- *
- * Get summed vector data per realization for named groups.
- *
- * Each group specifies a label and a list of vector names.  The server
- * fetches all vectors, sums per-realization values within each group, and
- * returns a compact response with shared ``realizations`` and
- * ``timestampsUtcMs`` at the top level, plus one entry per group.
- */
-export const postGroupedRealizationsVectorsDataOptions = (
-    options: Options<PostGroupedRealizationsVectorsDataData_api>,
-) =>
-    queryOptions<
-        PostGroupedRealizationsVectorsDataResponse_api,
-        AxiosError<PostGroupedRealizationsVectorsDataError_api>,
-        PostGroupedRealizationsVectorsDataResponse_api,
-        ReturnType<typeof postGroupedRealizationsVectorsDataQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGroupedRealizationsVectorsData({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: postGroupedRealizationsVectorsDataQueryKey(options),
-    });
-
-/**
- * Post Grouped Realizations Vectors Data
- *
- * Get summed vector data per realization for named groups.
- *
- * Each group specifies a label and a list of vector names.  The server
- * fetches all vectors, sums per-realization values within each group, and
- * returns a compact response with shared ``realizations`` and
- * ``timestampsUtcMs`` at the top level, plus one entry per group.
- */
-export const postGroupedRealizationsVectorsDataMutation = (
-    options?: Partial<Options<PostGroupedRealizationsVectorsDataData_api>>,
-): UseMutationOptions<
-    PostGroupedRealizationsVectorsDataResponse_api,
-    AxiosError<PostGroupedRealizationsVectorsDataError_api>,
-    Options<PostGroupedRealizationsVectorsDataData_api>
-> => {
-    const mutationOptions: UseMutationOptions<
-        PostGroupedRealizationsVectorsDataResponse_api,
-        AxiosError<PostGroupedRealizationsVectorsDataError_api>,
-        Options<PostGroupedRealizationsVectorsDataData_api>
-    > = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await postGroupedRealizationsVectorsData({
-                ...options,
-                ...fnOptions,
-                throwOnError: true,
-            });
-            return data;
-        },
-    };
-    return mutationOptions;
-};
 
 export const postGroupedRealizationsVectorsDataHybridQueryKey = (
     options: Options<PostGroupedRealizationsVectorsDataHybridData_api>,
