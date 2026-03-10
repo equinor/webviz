@@ -5,13 +5,15 @@ import type { DeckGLRef } from "@deck.gl/react";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { converter, formatHex } from "culori";
 
-import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
+import { HoverTopic, useHover } from "@framework/HoverService";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import { useColorSet } from "@framework/WorkbenchSettings";
+import { positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
 import { DeckGlInstanceManager } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
 import {
+    PolylineEditingMode,
     PolylinesPlugin,
     PolylinesPluginTopic,
     type Polyline,
@@ -21,7 +23,7 @@ import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
 import { ContextMenu } from "./ContextMenu";
 import { ControlsInfoBox } from "./ControlsInfoBox";
-import { HoverVisualizationWrapper } from "./HoverVisualizationWrapper";
+import { HoverVisualizationWrapper, PolylineMarkerStore } from "./HoverVisualizationWrapper";
 import type { ReadoutWrapperProps } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
 
@@ -69,23 +71,19 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
 
     const deckGlManagerRef = React.useRef<DeckGlInstanceManager>(new DeckGlInstanceManager(deckGlRef.current));
     const polylinesPluginRef = React.useRef<PolylinesPlugin>(new PolylinesPlugin(deckGlManagerRef.current));
+    const polylineMarkerStoreRef = React.useRef(new PolylineMarkerStore());
 
     const colorSet = useColorSet(context.workbenchSettings);
 
-    const publishHoveredPolylineLengthAlong = usePublishHoverValue(
-        HoverTopic.POLYLINE_LENGTH_ALONG,
-        context.hoverService,
-        context.moduleInstanceId,
-    );
-    const externalPolylineHoverData = useHoverValue(
+    const [hoveredPolylineLengthAlong, setHoveredPolylineLengthAlong] = useHover(
         HoverTopic.POLYLINE_LENGTH_ALONG,
         context.hoverService,
         context.moduleInstanceId,
     );
 
-    // Use a ref so the subscription closure in useLayoutEffect always calls the latest publish fn
-    const publishHoveredPolylineLengthAlongRef = React.useRef(publishHoveredPolylineLengthAlong);
-    publishHoveredPolylineLengthAlongRef.current = publishHoveredPolylineLengthAlong;
+    // Use a ref so the subscription closure in useLayoutEffect always calls the latest publish function
+    const publishHoveredPolylineLengthAlongRef = React.useRef(setHoveredPolylineLengthAlong);
+    publishHoveredPolylineLengthAlongRef.current = setHoveredPolylineLengthAlong;
 
     const colorArray = React.useMemo((): [number, number, number][] => {
         return colorSet.getColorArray().map((c) => {
@@ -122,10 +120,29 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
         [verticalScale, onVerticalScaleChange],
     );
 
+    React.useEffect(
+        function setPolylineMarkerPositionEffect() {
+            if (!hoveredPolylineLengthAlong) {
+                polylineMarkerStoreRef.current.setPosition(null);
+                return;
+            }
+            const plugin = polylinesPluginRef.current;
+            if (!plugin || plugin.getEditingMode() === PolylineEditingMode.DISABLED) {
+                return;
+            }
+
+            const polyline = plugin.getPolylines().find((p) => p.id === hoveredPolylineLengthAlong.polylineId);
+            const pos = polyline ? positionAtLengthAlong(polyline.path, hoveredPolylineLengthAlong.lengthAlong) : null;
+            polylineMarkerStoreRef.current.setPosition(pos);
+        },
+        [hoveredPolylineLengthAlong],
+    );
+
     React.useLayoutEffect(
         function setupDeckGlManager() {
             // Imperative Deck.gl plugin setup — must happen before paint and before useEffect runs
             // to avoid visual artifacts or plugin timing issues.
+            const polylineMarkerStore = polylineMarkerStoreRef.current;
             const manager = new DeckGlInstanceManager(deckGlRef.current);
             deckGlManagerRef.current = manager;
 
@@ -141,7 +158,23 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             const unsubscribePolylineHover = polylinesPlugin
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PolylinesPluginTopic.POLYLINE_HOVER)(() => {
-                publishHoveredPolylineLengthAlongRef.current(polylinesPlugin.getPolylineHoverData());
+                const hoverData = polylinesPlugin.getPolylineHoverData();
+                publishHoveredPolylineLengthAlongRef.current(hoverData);
+                if (!hoverData) {
+                    polylineMarkerStore.setPosition(null);
+                    return;
+                }
+                const polyline = polylinesPlugin.getPolylines().find((p) => p.id === hoverData.polylineId);
+                const pos = polyline ? positionAtLengthAlong(polyline.path, hoverData.lengthAlong) : null;
+                polylineMarkerStore.setPosition(pos);
+            });
+
+            const unsubscribeEditingMode = polylinesPlugin
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PolylinesPluginTopic.EDITING_MODE)(() => {
+                if (polylinesPlugin.getEditingMode() === PolylineEditingMode.DISABLED) {
+                    polylineMarkerStore.setPosition(null);
+                }
             });
 
             const unsubscribeFromPolylinesPlugin = polylinesPlugin
@@ -173,19 +206,14 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
 
             return function cleanupDeckGlManager() {
                 manager.beforeDestroy();
+                polylineMarkerStore.setPosition(null);
                 unsubscribePolylineHover();
+                unsubscribeEditingMode();
                 unsubscribeFromPolylinesPlugin();
                 unsubscribeFromIntersectionPolylines();
             };
         },
         [intersectionPolylines, colorGenerator, props.fieldId],
-    );
-
-    React.useEffect(
-        function setExternalPolylineHoverEffect() {
-            polylinesPluginRef.current?.setExternalHoverData(externalPolylineHoverData ?? null);
-        },
-        [externalPolylineHoverData],
     );
 
     function handleFitInViewClick() {
@@ -230,6 +258,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             deckGlManager={deckGlManagerRef.current}
             verticalScale={verticalScale}
             triggerHome={triggerHomeCounter}
+            polylineMarkerStore={polylineMarkerStoreRef.current}
         >
             <Toolbar
                 hideVerticalScaleControls={context.visualizationMode === "2D"}

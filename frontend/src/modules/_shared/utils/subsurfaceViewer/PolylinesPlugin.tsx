@@ -1,5 +1,4 @@
 import type { Layer, PickingInfo } from "@deck.gl/core";
-import { ScatterplotLayer } from "@deck.gl/layers";
 import { Edit, Remove } from "@mui/icons-material";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
@@ -16,7 +15,7 @@ import {
     isEditablePolylineLayerPickingInfo,
 } from "../../customDeckGlLayers/EditablePolylineLayer";
 import { PolylinesLayer, isPolylinesLayerPickingInfo } from "../../customDeckGlLayers/PolylinesLayer";
-import { lengthAlongAtPosition, positionAtLengthAlong } from "../polylineHoverUtils";
+import { lengthAlongAtXyPosition } from "../polylineHoverUtils";
 
 import { type ContextMenuItem, type DeckGlInstanceManager, DeckGlPlugin } from "./DeckGlInstanceManager";
 
@@ -32,7 +31,7 @@ export enum PolylineEditingMode {
     DRAW = "draw",
     ADD_POINT = "add_point",
     REMOVE_POINT = "remove_point",
-    NONE = "none",
+    DISABLED = "disabled",
     IDLE = "idle",
 }
 
@@ -76,13 +75,12 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     private _currentEditingPolylineId: string | null = null;
     private _currentEditingPolylinePathReferencePointIndex: number | null = null;
     private _polylines: Polyline[] = [];
-    private _editingMode: PolylineEditingMode = PolylineEditingMode.NONE;
+    private _editingMode: PolylineEditingMode = PolylineEditingMode.DISABLED;
     private _draggedPathPointIndex: number | null = null;
     private _appendToPathLocation: AppendToPathLocation = AppendToPathLocation.END;
     private _selectedPolylineId: string | null = null;
     private _hoverPoint: number[] | null = null;
     private _polylineHoverData: { polylineId: string; lengthAlong: number } | null = null;
-    private _externalHoverData: { polylineId: string; lengthAlong: number } | null = null;
     private _visiblePolylineIds: string[] = [];
     private _colorGenerator: Generator<[number, number, number]>;
 
@@ -152,12 +150,12 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             this._polylineHoverData = null;
             this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINE_HOVER);
         }
-        if (mode === PolylineEditingMode.NONE) {
+        if (mode === PolylineEditingMode.DISABLED) {
             this._currentEditingPolylinePathReferencePointIndex = null;
             this.setCurrentEditingPolylineId(null);
         }
         this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.EDITING_MODE);
-        if (mode === PolylineEditingMode.NONE) {
+        if (mode === PolylineEditingMode.DISABLED) {
             this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
         }
         this.requireRedraw();
@@ -171,21 +169,13 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         return this._polylineHoverData;
     }
 
-    setExternalHoverData(data: { polylineId: string; lengthAlong: number } | null): void {
-        if (isEqual(this._externalHoverData, data)) {
-            return;
-        }
-        this._externalHoverData = data;
-        this.requireRedraw();
-    }
-
     getCurrentEditingPolylineId(): string | null {
         return this._currentEditingPolylineId;
     }
 
     handleKeyUpEvent(key: string): void {
         if (key === "Escape") {
-            if (this._editingMode === PolylineEditingMode.NONE) {
+            if (this._editingMode === PolylineEditingMode.DISABLED) {
                 this._currentEditingPolylinePathReferencePointIndex = null;
                 this.requireRedraw();
                 return;
@@ -214,7 +204,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     }
 
     handleLayerClick(pickingInfo: PickingInfo): void {
-        if (this._editingMode === PolylineEditingMode.NONE || this._editingMode === PolylineEditingMode.IDLE) {
+        if (this._editingMode === PolylineEditingMode.DISABLED || this._editingMode === PolylineEditingMode.IDLE) {
             if (isPolylinesLayerPickingInfo(pickingInfo)) {
                 this._selectedPolylineId = pickingInfo.polylineId ?? null;
                 this.requireRedraw();
@@ -330,7 +320,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     }
 
     handleClickAway(): void {
-        if (this._editingMode === PolylineEditingMode.NONE) {
+        if (this._editingMode === PolylineEditingMode.DISABLED) {
             return;
         }
         this._selectedPolylineId = null;
@@ -342,35 +332,39 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         }
     }
 
-    handleGlobalMouseHover(pickingInfo: PickingInfo): void {
-        if (this._editingMode === PolylineEditingMode.DRAW) {
-            if (!pickingInfo.coordinate) {
-                return;
-            }
-            this._hoverPoint = pickingInfo.coordinate;
-            this.requireRedraw();
+    handleLayerHover(pickingInfo: PickingInfo): void {
+        if (this._editingMode !== PolylineEditingMode.IDLE) {
             return;
         }
 
-        if (this._editingMode === PolylineEditingMode.IDLE) {
-            if (isPolylinesLayerPickingInfo(pickingInfo) && pickingInfo.polylineId && pickingInfo.coordinate) {
-                const polyline = this._polylines.find((p) => p.id === pickingInfo.polylineId);
-                if (polyline && polyline.path.length >= 2) {
-                    const [x, y] = pickingInfo.coordinate;
-                    const lengthAlong = lengthAlongAtPosition(polyline.path, x, y);
-                    const newHoverData = { polylineId: polyline.id, lengthAlong };
-                    if (!isEqual(this._polylineHoverData, newHoverData)) {
-                        this._polylineHoverData = newHoverData;
-                        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINE_HOVER);
-                    }
-                    return;
-                }
+        if (isPolylinesLayerPickingInfo(pickingInfo) && pickingInfo.polylineId && pickingInfo.coordinate) {
+            const polyline = this._polylines.find((p) => p.id === pickingInfo.polylineId);
+            if (!polyline || polyline.path.length < 2) {
+                return;
             }
-            if (this._polylineHoverData !== null) {
-                this._polylineHoverData = null;
+
+            const [x, y] = pickingInfo.coordinate;
+            const lengthAlong = lengthAlongAtXyPosition(polyline.path, x, y);
+            const newHoverData = { polylineId: polyline.id, lengthAlong };
+            if (!isEqual(this._polylineHoverData, newHoverData)) {
+                this._polylineHoverData = newHoverData;
                 this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINE_HOVER);
             }
         }
+    }
+
+    handleGlobalMouseHover(pickingInfo: PickingInfo): void {
+        if (this._editingMode === PolylineEditingMode.IDLE && this._polylineHoverData !== null) {
+            this._polylineHoverData = null;
+            this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINE_HOVER);
+            return;
+        }
+        if (this._editingMode !== PolylineEditingMode.DRAW || !pickingInfo.coordinate) {
+            return;
+        }
+
+        this._hoverPoint = pickingInfo.coordinate;
+        this.requireRedraw();
     }
 
     private makeNewPolylineName(): string {
@@ -392,7 +386,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     }
 
     handleGlobalMouseClick(pickingInfo: PickingInfo): boolean {
-        if (this._editingMode === PolylineEditingMode.NONE) {
+        if (this._editingMode === PolylineEditingMode.DISABLED) {
             return false;
         }
 
@@ -492,7 +486,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     }
 
     getCursor(pickingInfo: PickingInfo): string | null {
-        if (this._editingMode === PolylineEditingMode.NONE) {
+        if (this._editingMode === PolylineEditingMode.DISABLED) {
             return null;
         }
 
@@ -568,14 +562,14 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                     (polyline) =>
                         polyline.id !== this._currentEditingPolylineId &&
                         (this._visiblePolylineIds.includes(polyline.id) ||
-                            this._editingMode !== PolylineEditingMode.NONE),
+                            this._editingMode !== PolylineEditingMode.DISABLED),
                 ),
                 selectedPolylineId:
-                    this._editingMode === PolylineEditingMode.NONE
+                    this._editingMode === PolylineEditingMode.DISABLED
                         ? undefined
                         : (this._selectedPolylineId ?? undefined),
                 hoverable: this._editingMode === PolylineEditingMode.IDLE,
-                visible: this._editingMode !== PolylineEditingMode.NONE,
+                visible: this._editingMode !== PolylineEditingMode.DISABLED,
             }),
         ];
 
@@ -607,32 +601,6 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 },
             }),
         );
-
-        if (this._externalHoverData !== null && this._editingMode !== PolylineEditingMode.NONE) {
-            const polyline = this._polylines.find((p) => p.id === this._externalHoverData!.polylineId);
-            if (polyline) {
-                const pos = positionAtLengthAlong(polyline.path, this._externalHoverData.lengthAlong);
-                if (pos) {
-                    layers.push(
-                        new ScatterplotLayer({
-                            id: super.makeLayerId("polyline-hover-marker"),
-                            data: [{ position: [pos[0], pos[1], 0] as [number, number, number] }],
-                            getPosition: (d: { position: [number, number, number] }) => d.position,
-                            getRadius: 8,
-                            radiusUnits: "pixels",
-                            getFillColor: [255, 0, 0, 180],
-                            stroked: true,
-                            getLineWidth: 1,
-                            lineWidthMinPixels: 1,
-                            getLineColor: [255, 255, 255, 255],
-                            pickable: false,
-                            billboard: true,
-                            parameters: { depthTest: false },
-                        }),
-                    );
-                }
-            }
-        }
 
         return layers;
     }

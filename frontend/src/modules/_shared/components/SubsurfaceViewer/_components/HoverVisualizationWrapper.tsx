@@ -1,6 +1,7 @@
 import React from "react";
 
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
+import { ScatterplotLayer } from "@deck.gl/layers";
 import type { DeckGLRef } from "@deck.gl/react";
 import type { BoundingBox2D, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
 import { CrosshairLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -19,6 +20,30 @@ import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
+/**
+ * Stable pub/sub store for the polyline hover marker position.
+ * Passed as a prop from InteractionWrapper; HoverVisualizationWrapper subscribes via useSyncExternalStore
+ * so only it re-renders on position changes (not the whole InteractionWrapper subtree).
+ */
+export class PolylineMarkerStore {
+    private _position: [number, number, number] | null = null;
+    private _listeners = new Set<() => void>();
+
+    setPosition(position: [number, number, number] | null): void {
+        this._position = position;
+        for (const listener of this._listeners) listener();
+    }
+
+    getPosition(): [number, number, number] | null {
+        return this._position;
+    }
+
+    subscribe(callback: () => void): () => void {
+        this._listeners.add(callback);
+        return () => this._listeners.delete(callback);
+    }
+}
+
 export type HoverVisualizationWrapperProps = {
     views: ViewsTypeExtended;
     layers: DeckGlLayer[];
@@ -26,6 +51,7 @@ export type HoverVisualizationWrapperProps = {
     verticalScale: number;
     triggerHome: number;
     deckGlRef: React.RefObject<DeckGLRef | null>;
+    polylineMarkerStore?: PolylineMarkerStore;
     children?: React.ReactNode;
 };
 
@@ -46,6 +72,7 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     const publishHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
 
     const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
+    const polylineHoverMarkerLayer = usePolylineHoverMarkerLayer(props.polylineMarkerStore);
 
     const pickingRayLayers = usePickingRayLayers(unscaledCoordinatesPerView, false);
 
@@ -55,11 +82,12 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         ctx.moduleInstanceId,
     );
 
-    const adjustedLayers = [...props.layers, crossHairLayer];
+    const adjustedLayers = [...props.layers, crossHairLayer, polylineHoverMarkerLayer];
     const adjustedViews = {
         ...props.views,
         viewports: props.views.viewports.map((viewport) => {
             const viewportLayerIds = viewport.layerIds ? [...viewport.layerIds] : [];
+            viewportLayerIds.push(POLYLINE_HOVER_MARKER_LAYER_ID);
 
             for (const hoverVisualizationGroup of hoverVisualizationGroups) {
                 if (hoverVisualizationGroup.groupId !== viewport.id) continue;
@@ -157,6 +185,33 @@ function useCrosshairLayer(
         sizePx: 40,
         // Hide the crosshair with opacity to keep layer mounted
         color: [...color, xInRange && yInRange ? 225 : 0],
+    });
+}
+
+const POLYLINE_HOVER_MARKER_LAYER_ID = "polyline-hover-marker";
+
+function usePolylineHoverMarkerLayer(markerStore: PolylineMarkerStore | undefined): ScatterplotLayer {
+    const position = React.useSyncExternalStore(
+        (callback) => markerStore?.subscribe(callback) ?? (() => {}),
+        () => markerStore?.getPosition() ?? null,
+    );
+
+    return new ScatterplotLayer({
+        id: POLYLINE_HOVER_MARKER_LAYER_ID,
+        data: position ? [{ position: position }] : [],
+        getPosition: (d: { position: [number, number, number] }) => d.position,
+        getRadius: 8,
+        radiusUnits: "pixels",
+        radiusMinPixels: 8,
+        radiusMaxPixels: 8,
+        getFillColor: [255, 0, 0, 180],
+        stroked: true,
+        getLineWidth: 1,
+        lineWidthMinPixels: 1,
+        getLineColor: [255, 255, 255, 255],
+        pickable: false,
+        billboard: true,
+        parameters: { depthTest: false },
     });
 }
 

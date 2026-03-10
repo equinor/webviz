@@ -1,67 +1,81 @@
 /**
- * Given a polyline path and a cumulative length along it, returns the interpolated [x, y] position.
- * Uses only the x and y components (indices 0 and 1) of each path point.
+ * Given a polyline path and a cumulative length along it, returns the interpolated [x, y, z] position.
  * Clamps to the last point if lengthAlong exceeds the total polyline length.
+ *
+ * The polylinePath is an array of points, where each point is an array of [x, y] or [x, y, z].
+ * If z is not provided, it is handled as 0.
  */
-export function positionAtLengthAlong(path: number[][], lengthAlong: number): [number, number] | null {
-    if (path.length === 0) return null;
-    if (path.length === 1) return [path[0][0], path[0][1]];
+export function positionAtLengthAlong(polylinePath: number[][], lengthAlong: number): [number, number, number] | null {
+    if (polylinePath.length === 0) return null;
+    if (polylinePath.length === 1) return [polylinePath[0][0], polylinePath[0][1], polylinePath[0][2] ?? 0];
 
-    let accumulated = 0;
-    for (let i = 0; i < path.length - 1; i++) {
-        const x0 = path[i][0],
-            y0 = path[i][1];
-        const x1 = path[i + 1][0],
-            y1 = path[i + 1][1];
-        const dx = x1 - x0,
-            dy = y1 - y0;
-        const segLen = Math.sqrt(dx * dx + dy * dy);
+    let accumulatedSegmentLengths = 0;
+    for (let i = 0; i < polylinePath.length - 1; i++) {
+        const { x0, y0, z0 } = { x0: polylinePath[i][0], y0: polylinePath[i][1], z0: polylinePath[i][2] ?? 0 };
+        const { x1, y1, z1 } = {
+            x1: polylinePath[i + 1][0],
+            y1: polylinePath[i + 1][1],
+            z1: polylinePath[i + 1][2] ?? 0,
+        };
+        const { dx, dy, dz } = { dx: x1 - x0, dy: y1 - y0, dz: z1 - z0 };
 
-        if (accumulated + segLen >= lengthAlong) {
-            const t = segLen > 0 ? (lengthAlong - accumulated) / segLen : 0;
-            return [x0 + t * dx, y0 + t * dy];
+        const segLen = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (accumulatedSegmentLengths + segLen >= lengthAlong) {
+            const segFraction = segLen > 0 ? (lengthAlong - accumulatedSegmentLengths) / segLen : 0;
+            return [x0 + segFraction * dx, y0 + segFraction * dy, z0 + segFraction * dz];
         }
-        accumulated += segLen;
+        accumulatedSegmentLengths += segLen;
     }
 
     // Beyond the end: clamp to last point
-    return [path[path.length - 1][0], path[path.length - 1][1]];
+    const last = polylinePath[polylinePath.length - 1];
+    return [last[0], last[1], last[2] ?? 0];
 }
 
 /**
  * Projects the given (x, y) point onto the nearest segment of the polyline and returns
  * the cumulative length along the polyline to that projected point.
- * Uses only the x and y components (indices 0 and 1) of each path point.
+ * Uses the x, y, and z components of each polyline point for segment length calculation,
+ * but projects only in the x/y plane (cursor position has no z).
+ *
+ * The polylinePath is an array of points, where each point is an array of [x, y] or [x, y, z].
+ * If z is not provided, it is handled as 0.
  */
-export function lengthAlongAtPosition(path: number[][], x: number, y: number): number {
-    if (path.length < 2) return 0;
+export function lengthAlongAtXyPosition(polylinePath: number[][], x: number, y: number): number {
+    if (polylinePath.length < 2) return 0;
 
-    let bestLength = 0;
-    let bestDistSq = Infinity;
-    let accumulated = 0;
+    let nearestLengthAlong = 0;
+    let nearestXyProjectionDistSq = Infinity;
+    let accumulatedSegmentLengths = 0;
 
-    for (let i = 0; i < path.length - 1; i++) {
-        const x0 = path[i][0],
-            y0 = path[i][1];
-        const x1 = path[i + 1][0],
-            y1 = path[i + 1][1];
-        const dx = x1 - x0,
-            dy = y1 - y0;
-        const segLenSq = dx * dx + dy * dy;
-        const segLen = Math.sqrt(segLenSq);
+    for (let i = 0; i < polylinePath.length - 1; i++) {
+        const { x0, y0, z0 } = { x0: polylinePath[i][0], y0: polylinePath[i][1], z0: polylinePath[i][2] ?? 0 };
+        const { x1, y1, z1 } = {
+            x1: polylinePath[i + 1][0],
+            y1: polylinePath[i + 1][1],
+            z1: polylinePath[i + 1][2] ?? 0,
+        };
+        const { dx, dy, dz } = { dx: x1 - x0, dy: y1 - y0, dz: z1 - z0 };
 
-        const t = segLenSq > 0 ? Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / segLenSq)) : 0;
+        const segLen = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        const segLenXySq = dx * dx + dy * dy;
 
-        const px = x0 + t * dx,
-            py = y0 + t * dy;
-        const distSq = (x - px) ** 2 + (y - py) ** 2;
+        // Fraction along the segment in the x/y plane
+        const segXyProjectionFraction =
+            segLenXySq > 0 ? Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / segLenXySq)) : 0;
 
-        if (distSq < bestDistSq) {
-            bestDistSq = distSq;
-            bestLength = accumulated + t * segLen;
+        // Projected point in x/y plane
+        const { px, py } = { px: x0 + segXyProjectionFraction * dx, py: y0 + segXyProjectionFraction * dy };
+        const segXyProjectionDistSq = (x - px) ** 2 + (y - py) ** 2;
+
+        // Closest segment projection so far — update nearest result
+        if (segXyProjectionDistSq < nearestXyProjectionDistSq) {
+            nearestXyProjectionDistSq = segXyProjectionDistSq;
+            nearestLengthAlong = accumulatedSegmentLengths + segXyProjectionFraction * segLen;
         }
-        accumulated += segLen;
+        accumulatedSegmentLengths += segLen;
     }
 
-    return bestLength;
+    return nearestLengthAlong;
 }
