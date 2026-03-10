@@ -9,40 +9,20 @@ import { inRange } from "lodash";
 
 import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { PickingRayLayer } from "@modules/_shared/customDeckGlLayers/PickingRayLayer";
 import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
+import { positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
 import type { DeckGlInstanceManager } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
+import type { Polyline, PolylinesPlugin } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
+import { PolylineEditingMode, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { getHoverDataInPicks } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
-
-/**
- * Stable pub/sub store for the polyline hover marker position.
- * Passed as a prop from InteractionWrapper; HoverVisualizationWrapper subscribes via useSyncExternalStore
- * so only it re-renders on position changes (not the whole InteractionWrapper subtree).
- */
-export class PolylineMarkerStore {
-    private _position: [number, number, number] | null = null;
-    private _listeners = new Set<() => void>();
-
-    setPosition(position: [number, number, number] | null): void {
-        this._position = position;
-        for (const listener of this._listeners) listener();
-    }
-
-    getPosition(): [number, number, number] | null {
-        return this._position;
-    }
-
-    subscribe(callback: () => void): () => void {
-        this._listeners.add(callback);
-        return () => this._listeners.delete(callback);
-    }
-}
 
 export type HoverVisualizationWrapperProps = {
     views: ViewsTypeExtended;
@@ -51,7 +31,7 @@ export type HoverVisualizationWrapperProps = {
     verticalScale: number;
     triggerHome: number;
     deckGlRef: React.RefObject<DeckGLRef | null>;
-    polylineMarkerStore?: PolylineMarkerStore;
+    polylinesPlugin: PolylinesPlugin;
     children?: React.ReactNode;
 };
 
@@ -70,16 +50,42 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     );
     const publishHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, ctx.hoverService, ctx.moduleInstanceId);
     const publishHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
+    const publishHoveredPolylineLengthAlong = usePublishHoverValue(
+        HoverTopic.POLYLINE_LENGTH_ALONG,
+        ctx.hoverService,
+        ctx.moduleInstanceId,
+    );
 
     const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
-    const polylineHoverMarkerLayer = usePolylineHoverMarkerLayer(props.polylineMarkerStore);
-
     const pickingRayLayers = usePickingRayLayers(unscaledCoordinatesPerView, false);
+
+    const polylineEditingMode = usePublishSubscribeTopicValue(props.polylinesPlugin, PolylinesPluginTopic.EDITING_MODE);
+    const availablePolylines = usePublishSubscribeTopicValue(props.polylinesPlugin, PolylinesPluginTopic.POLYLINES);
+    const polylineHoverMarkerLayer = usePolylineHoverMarkerLayer(
+        availablePolylines,
+        polylineEditingMode,
+        ctx.hoverService,
+        ctx.moduleInstanceId,
+    );
 
     const hoverVisualizationGroups = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
         ctx.visualizationAssemblerProduct,
         ctx.hoverService,
         ctx.moduleInstanceId,
+    );
+
+    const publishHoveredPolylineLengthAlongRef = React.useRef(publishHoveredPolylineLengthAlong);
+    publishHoveredPolylineLengthAlongRef.current = publishHoveredPolylineLengthAlong;
+
+    React.useEffect(
+        function subscribeToPolylineHover() {
+            return props.polylinesPlugin
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PolylinesPluginTopic.POLYLINE_HOVER)(() => {
+                publishHoveredPolylineLengthAlongRef.current(props.polylinesPlugin.getPolylineHoverData());
+            });
+        },
+        [props.polylinesPlugin],
     );
 
     const adjustedLayers = [...props.layers, crossHairLayer, polylineHoverMarkerLayer];
@@ -190,11 +196,19 @@ function useCrosshairLayer(
 
 const POLYLINE_HOVER_MARKER_LAYER_ID = "polyline-hover-marker";
 
-function usePolylineHoverMarkerLayer(markerStore: PolylineMarkerStore | undefined): ScatterplotLayer {
-    const position = React.useSyncExternalStore(
-        (callback) => markerStore?.subscribe(callback) ?? (() => {}),
-        () => markerStore?.getPosition() ?? null,
-    );
+function usePolylineHoverMarkerLayer(
+    availablePolylines: Polyline[],
+    polylineEditingMode: PolylineEditingMode,
+    hoverService: HoverService,
+    instanceId: string,
+): ScatterplotLayer {
+    const hovered = useHoverValue(HoverTopic.POLYLINE_LENGTH_ALONG, hoverService, instanceId);
+
+    let position: [number, number, number] | null = null;
+    if (polylineEditingMode !== PolylineEditingMode.DISABLED && hovered) {
+        const polyline = availablePolylines.find((p) => p.id === hovered.polylineId);
+        position = polyline ? positionAtLengthAlong(polyline.path, hovered.lengthAlong) : null;
+    }
 
     return new ScatterplotLayer({
         id: POLYLINE_HOVER_MARKER_LAYER_ID,
