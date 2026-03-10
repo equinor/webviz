@@ -12,63 +12,6 @@ import { extractRegionalVectorsInfo } from "../../utils/regionalVectors";
 
 import { vectorListQueriesAtom } from "./queryAtoms";
 
-// ──────── Helpers ────────
-
-/** Compute the dependencies state from the vector list queries atom. */
-function computeVectorListDependenciesState({ get }: { get: (atom: any) => any }): "error" | "loading" | "loaded" {
-    const queries = get(vectorListQueriesAtom);
-    if (queries.some((q: any) => q.isFetching)) return "loading";
-    if (queries.some((q: any) => q.isError)) return "error";
-    return "loaded";
-}
-
-/**
- * Compute the RegionalVectorsInfo directly from the vector list query atom.
- * This avoids a circular dependency with derivedAtoms.ts.
- */
-function precomputeRegionalVectorsInfo({ get }: { get: (atom: any) => any }): RegionalVectorsInfo {
-    const queries = get(vectorListQueriesAtom);
-    const loadedResults = queries.filter((q: any) => q.data != null);
-    if (loadedResults.length === 0) return { vectorNames: [], fipArrays: {} };
-
-    let intersection: Set<string> | null = null;
-    for (const q of loadedResults) {
-        const names = new Set<string>(q.data!.map((v: any) => v.name));
-        if (intersection === null) {
-            intersection = names;
-        } else {
-            for (const n of intersection) {
-                if (!names.has(n)) intersection.delete(n);
-            }
-        }
-    }
-
-    return extractRegionalVectorsInfo(intersection ? [...intersection].sort() : []);
-}
-
-/**
- * Get the validated cross-ensemble FIP regions (null when missing or incompatible).
- * Replicates the check in ensembleFipRegionsAtom to avoid circular imports.
- */
-function getValidatedFipRegions({ get }: { get: (atom: any) => any }): EnsembleFipRegions | null {
-    const ensembleSet = get(EnsembleSetAtom);
-    const selectedIdents: RegularEnsembleIdent[] = get(selectedEnsembleIdentsAtom).value ?? [];
-    if (selectedIdents.length === 0) return null;
-
-    let reference: EnsembleFipRegions | null = null;
-    for (const ident of selectedIdents) {
-        const ensemble = ensembleSet.findEnsemble(ident);
-        const fipRegions = ensemble?.getFipRegions?.() ?? null;
-        if (!fipRegions) return null;
-        if (reference === null) {
-            reference = fipRegions;
-        } else if (!areFipMappingsCompatible(reference, fipRegions)) {
-            return null;
-        }
-    }
-    return reference;
-}
-
 // ──────── Persistable / fixable atoms ────────
 
 /** Multi-ensemble selection — array of RegularEnsembleIdent */
@@ -169,3 +112,58 @@ export const selectedRegionNamesAtom = persistableFixableAtom<string[], string[]
         return filtered.length > 0 ? filtered : availableRegions;
     },
 });
+
+/** Compute the dependencies state from the vector list queries atom. */
+function computeVectorListDependenciesState({ get }: { get: (atom: any) => any }): "error" | "loading" | "loaded" {
+    const queries = get(vectorListQueriesAtom);
+    if (queries.some((q: any) => q.isFetching)) return "loading";
+    if (queries.some((q: any) => q.isError)) return "error";
+    return "loaded";
+}
+
+/**
+ * Compute the RegionalVectorsInfo directly from the vector list query atom.
+ * This avoids a circular dependency with derivedAtoms.ts.
+ */
+function precomputeRegionalVectorsInfo({ get }: { get: (atom: any) => any }): RegionalVectorsInfo {
+    const queries = get(vectorListQueriesAtom);
+    const loadedResults = queries.filter((q: any) => q.data != null);
+    if (loadedResults.length === 0) return { vectorNames: [], fipArrays: {} };
+
+    let intersection: Set<string> | null = null;
+    for (const q of loadedResults) {
+        const names = new Set<string>(q.data!.map((v: any) => v.name));
+        if (intersection === null) {
+            intersection = names;
+        } else {
+            for (const n of intersection) {
+                if (!names.has(n)) intersection.delete(n);
+            }
+        }
+    }
+
+    return extractRegionalVectorsInfo(intersection ? [...intersection].sort() : []);
+}
+
+/**
+ * Get the validated cross-ensemble FIP regions (null when missing or incompatible).
+ * Replicates the check in ensembleFipRegionsAtom to avoid circular imports.
+ */
+function getValidatedFipRegions({ get }: { get: (atom: any) => any }): EnsembleFipRegions | null {
+    const ensembleSet = get(EnsembleSetAtom);
+    const selectedIdents: RegularEnsembleIdent[] = get(selectedEnsembleIdentsAtom).value ?? [];
+    if (selectedIdents.length === 0) return null;
+
+    let reference: EnsembleFipRegions | null = null;
+    for (const ident of selectedIdents) {
+        const ensemble = ensembleSet.findEnsemble(ident);
+        const fipRegions = ensemble?.getFipRegions?.() ?? null;
+        if (!fipRegions) return null;
+        if (reference === null) {
+            reference = fipRegions;
+        } else if (!areFipMappingsCompatible(reference, fipRegions)) {
+            return null;
+        }
+    }
+    return reference;
+}

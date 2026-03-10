@@ -48,8 +48,6 @@ function getFipGroupKey(
     }
 }
 
-// ────────── Main function ──────────
-
 /**
  * Compute vector group definitions based on the current colorBy/subplotBy
  * dimension configuration.
@@ -89,7 +87,7 @@ export function computeVectorGroupDefs(
 
         const subplotKey = subplotBy ? getFipGroupKey(subplotBy, fip, fipRegionLabels) : "_all";
         const colorKey = getFipGroupKey(colorBy, fip, fipRegionLabels);
-        const groupLabel = `${subplotKey}\0${colorKey}`;
+        const groupLabel = `${subplotKey}-${colorKey}`;
 
         if (!groupMap.has(groupLabel)) {
             groupMap.set(groupLabel, { subplotKey, colorKey, vectorNames: [] });

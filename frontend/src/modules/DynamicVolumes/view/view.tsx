@@ -38,7 +38,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const vectorNamesToFetch = viewContext.useSettingsToViewInterfaceValue("vectorNamesToFetch");
     const showRecoveryFactor = viewContext.useSettingsToViewInterfaceValue("showRecoveryFactor");
 
-    // ── Track container size for responsive decluttering ──
+    useInstanceTitle(viewContext);
+
     const chartContainerRef = React.useRef<HTMLDivElement>(null);
     const containerSize = useElementSize(chartContainerRef);
 
@@ -47,17 +48,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const isHeatmap = visualizationMode === VisualizationMode.DrainageHeatmap;
     const heatmapDatasets = useHeatmapDatasets(isHeatmap, selectedVectorBaseName, showRecoveryFactor);
 
-    // Flatten traces across all subplot groups for empty-state checks
-    const allTraces = React.useMemo(() => subplotGroups.flatMap((g) => g.traces), [subplotGroups]);
-
     statusWriter.setLoading(isFetching);
 
-    // ── Derived rendering data ──
-
-    const yAxisLabel = showRecoveryFactor ? "Recovery Factor" : (selectedVectorBaseName ?? "Value");
-    const queryEnabled = ensembleIdents.length > 0 && vectorNamesToFetch.length > 0;
-
-    useInstanceTitle(viewContext);
+    const yAxisLabel = showRecoveryFactor ? "Recovery Factor" : (selectedVectorBaseName ?? "");
 
     const { chartRef, echartsOptions, timeseriesChartData, availableTimestamps, onChartEvents } = useEchartsOptions(
         subplotGroups,
@@ -78,10 +71,15 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         setActiveTimestampUtcMs,
         availableTimestamps,
     );
+    const channelName = showRecoveryFactor ? `${selectedVectorBaseName} (RF)` : (selectedVectorBaseName ?? "");
 
-    usePublishToDataChannels(viewContext, subplotGroups, yAxisLabel);
+    usePublishToDataChannels(viewContext, subplotGroups, channelName);
 
     const hasData = isHeatmap ? heatmapDatasets.length > 0 : timeseriesChartData.length > 0;
+    const queryEnabled = ensembleIdents.length > 0 && vectorNamesToFetch.length > 0;
+    // Flatten traces across all subplot groups for empty-state checks
+    const allTraces = React.useMemo(() => subplotGroups.flatMap((g) => g.traces), [subplotGroups]);
+
     const isPending = queryEnabled && isFetching && allTraces.length === 0 && heatmapDatasets.length === 0;
     const errorMessage = allFailed ? "Error loading data from all ensembles" : undefined;
     const infoMessage = !queryEnabled
