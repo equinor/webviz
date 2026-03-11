@@ -6,6 +6,7 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
+import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { instanceofItemGroup, type Item, type ItemGroup } from "../../interfacesAndTypes/entities";
 import { isErrorPlaceholder } from "../ErrorPlaceholder/ErrorPlaceholder";
 
@@ -19,24 +20,31 @@ export function ErrorBadge(props: ErrorBadgeProps) {
         GroupDelegateTopic.TREE_REVISION_NUMBER,
     );
 
-    const numTotalErrors = React.useMemo(
+    const deserializationErrors = usePublishSubscribeTopicValue(
+        props.group.getItemDelegate(),
+        ItemDelegateTopic.DESERIALIZATION_ERRORS,
+    );
+
+    const numDescendantErrors = React.useMemo(
         () => {
-            let totalErrors = 0;
+            let descendantErrors = 0;
             const descendants = props.group
                 .getGroupDelegate()
                 .getDescendantItems(isErrorPlaceholderOrHasDeserializationErrors);
             for (const descendant of descendants) {
                 if (isErrorPlaceholder(descendant)) {
-                    totalErrors += 1;
+                    descendantErrors += 1;
                 } else {
-                    totalErrors += descendant.getItemDelegate().getDeserializationErrors().length;
+                    descendantErrors += descendant.getItemDelegate().getDeserializationErrors().length;
                 }
             }
-            return totalErrors;
+            return descendantErrors;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [props.group.getGroupDelegate(), treeRevisionNumber],
     );
+
+    const numTotalErrors = deserializationErrors.length + numDescendantErrors;
 
     const handleOpenAllDescendantsWithErrors = React.useCallback(
         function handleOpenAllDescendantsWithErrors() {
@@ -64,12 +72,12 @@ export function ErrorBadge(props: ErrorBadgeProps) {
         [props.group],
     );
 
-    if (numTotalErrors === 0 || props.group.getItemDelegate().isExpanded()) {
+    if (numTotalErrors === 0 || (props.group.getItemDelegate().isExpanded() && deserializationErrors.length === 0)) {
         return null;
     }
 
     return (
-        <Tooltip title={numTotalErrors > 1 ? `${numTotalErrors} errors` : "1 error"}>
+        <Tooltip title={numDescendantErrors > 1 ? `${numDescendantErrors} errors` : "1 error"}>
             <div
                 className="bg-red-200 rounded px-2 py-1 flex gap-2 items-center text-red-900 h-6 border border-red-400 whitespace-nowrap cursor-pointer"
                 onClick={handleOpenAllDescendantsWithErrors}

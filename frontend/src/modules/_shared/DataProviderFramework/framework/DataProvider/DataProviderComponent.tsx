@@ -191,7 +191,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
                         : "1 deserialization error"
                 }
             >
-                <div className="bg-red-200 rounded px-2 py-1 flex gap-2 items-center text-red-900 h-6 border border-red-400 whitespace-nowrap cursor-pointer">
+                <div className="bg-red-200 rounded px-2 py-1 flex gap-2 items-center text-red-900 h-6 border border-red-400 whitespace-nowrap">
                     <Warning color="error" fontSize="small" />
                     <span className="text-xs leading-0">{deserializationErrors.length}</span>
                 </div>

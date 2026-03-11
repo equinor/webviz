@@ -16,6 +16,7 @@ import { SettingManagerComponent } from "../SettingManager/SettingManagerCompone
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ErrorBadge } from "../utilityComponents/ErrorBadge";
+import { ErrorOverlay } from "../utilityComponents/ErrorOverlay";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { StatusMessages } from "../utilityComponents/StatusWriterMessages";
@@ -115,9 +116,12 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             endAdornment={<>{makeEndAdornment()}</>}
             contentWhenEmpty={<EmptyContent>{emptyContentMessage}</EmptyContent>}
             content={
-                props.group.getSharedSettingsDelegate() ? (
-                    <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
-                        {makeSettings(Object.values(props.group.getWrappedSettings()))}
+                sharedSettingsDelegate ? (
+                    <div className="relative">
+                        <ErrorOverlay itemDelegate={props.group.getItemDelegate()} isExpanded={isExpanded} />
+                        <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
+                            {makeSettings(Object.values(props.group.getWrappedSettings()))}
+                        </div>
                     </div>
                 ) : undefined
             }
