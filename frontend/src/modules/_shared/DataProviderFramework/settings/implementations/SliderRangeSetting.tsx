@@ -1,11 +1,13 @@
 import React from "react";
 
 import { Lock, LockOpen } from "@mui/icons-material";
-import { debounce, isEqual } from "lodash";
+import { isEqual } from "lodash";
 
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 import { ToggleButton } from "@lib/components/ToggleButton";
+import { Tooltip } from "@lib/components/Tooltip";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -17,7 +19,7 @@ import { assertNumberOrStringTuple, isNumberOrStringTuple } from "../utils/struc
 
 type InternalValueType = [number | "min", number | "max"] | null;
 type ExternalValueType = [number, number] | null;
-type ValueRangeType = [number, number, number]; // [min, max, step]
+type ValueRangeType = [min: number, max: number, step: number];
 
 export class SliderRangeSetting
     implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
@@ -157,8 +159,10 @@ export class SliderRangeSetting
             const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.valueConstraints?.[1] ?? 0);
             const step = isStatic ? (staticOptions.step ?? 1) : (props.valueConstraints?.[2] ?? 1);
 
-            const [prevValue, setPrevValue] = React.useState(props.value);
-            const [localValue, setLocalValue] = React.useState(props.value ?? [min, max]);
+            const [prevValue, setPrevValue] = React.useState<InternalValueType>(props.value);
+            const [localValue, setLocalValue] = React.useState<NonNullable<InternalValueType>>(
+                props.value ?? [min, max],
+            );
 
             // Update local value when props value changes
             if (!isEqual(props.value, prevValue)) {
@@ -166,19 +170,7 @@ export class SliderRangeSetting
                 setLocalValue(props.value ?? [min, max]);
             }
 
-            // Create debounced update function with useRef to preserve reference
-            const debouncedOnValueChange = React.useRef(
-                debounce((value: [number | "min", number | "max"]) => {
-                    onValueChange(value);
-                }, 500),
-            ).current;
-
-            // Clean up debounce on unmount
-            React.useEffect(() => {
-                return () => {
-                    debouncedOnValueChange.cancel();
-                };
-            }, [debouncedOnValueChange]);
+            const [, debouncedOnValueChange] = useDebouncedOnChange(localValue, onValueChange, 500);
 
             const handleSliderChange = React.useCallback(
                 function handleSliderChange(_: any, value: number | number[]) {
@@ -269,9 +261,11 @@ export class SliderRangeSetting
                             onChange={(event) => handleInputChange(event, 0)}
                         />
                     </div>
-                    <ToggleButton size="small" active={localValue[0] === "min"} onToggle={handleLockMinToggle}>
-                        {localValue[0] === "min" ? <Lock fontSize="inherit" /> : <LockOpen fontSize="inherit" />}
-                    </ToggleButton>
+                    <Tooltip title="Lock min value to the lower limit">
+                        <ToggleButton size="small" active={localValue[0] === "min"} onToggle={handleLockMinToggle}>
+                            {localValue[0] === "min" ? <Lock fontSize="inherit" /> : <LockOpen fontSize="inherit" />}
+                        </ToggleButton>
+                    </Tooltip>
                     <div className="flex-4">
                         <Slider
                             min={min}
@@ -285,9 +279,11 @@ export class SliderRangeSetting
                             step={step}
                         />
                     </div>
-                    <ToggleButton size="small" active={localValue[1] === "max"} onToggle={handleLockMaxToggle}>
-                        {localValue[1] === "max" ? <Lock fontSize="inherit" /> : <LockOpen fontSize="inherit" />}
-                    </ToggleButton>
+                    <Tooltip title="Lock max value to the upper limit">
+                        <ToggleButton size="small" active={localValue[1] === "max"} onToggle={handleLockMaxToggle}>
+                            {localValue[1] === "max" ? <Lock fontSize="inherit" /> : <LockOpen fontSize="inherit" />}
+                        </ToggleButton>
+                    </Tooltip>
                     <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputVisible })}>
                         <Input
                             type="number"

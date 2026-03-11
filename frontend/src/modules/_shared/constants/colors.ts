@@ -8,7 +8,6 @@ export const FLOW_COLORS = {
     oil_production: PHASE_COLORS.oil, // green
     gas_production: PHASE_COLORS.gas, // red
     water_production: PHASE_COLORS.water, // blue
-    gas_injection: "#ff07a0", // red
-    water_injection: "#08dbff", // blue
-}
-
+    gas_injection: "#ff07a0", // pink
+    water_injection: "#08dbff", // cyan
+};

@@ -1,10 +1,11 @@
 import React from "react";
 
-import { debounce } from "lodash";
+import { clamp } from "lodash";
 
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FLOW_COLORS } from "@modules/_shared/constants/colors";
@@ -20,11 +21,9 @@ type InternalValueType = SettingTypeDefinitions[Setting.PDM_FILTER]["internalVal
 type ExternalValueType = SettingTypeDefinitions[Setting.PDM_FILTER]["externalValue"];
 type ValueRangeType = SettingTypeDefinitions[Setting.PDM_FILTER]["valueConstraints"];
 
-export class PdmFilterSetting implements CustomSettingImplementation<
-    InternalValueType,
-    ExternalValueType,
-    ValueRangeType
-> {
+export class PdmFilterSetting
+    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
+{
     valueConstraintsIntersectionReducerDefinition = {
         reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType, index: number) => {
             if (index === 0) {
@@ -113,7 +112,14 @@ export class PdmFilterSetting implements CustomSettingImplementation<
             return false;
         }
 
-        return true;
+        return (
+            value.production.oil.value === clamp(value.production.oil.value, 0, valueConstraints.production.oil) &&
+            value.production.gas.value === clamp(value.production.gas.value, 0, valueConstraints.production.gas) &&
+            value.production.water.value ===
+                clamp(value.production.water.value, 0, valueConstraints.production.water) &&
+            value.injection.gas.value === clamp(value.injection.gas.value, 0, valueConstraints.injection.gas) &&
+            value.injection.water.value === clamp(value.injection.water.value, 0, valueConstraints.injection.water)
+        );
     }
 
     fixupValue(currentValue: InternalValueType, valueConstraints: ValueRangeType): InternalValueType {
@@ -138,25 +144,25 @@ export class PdmFilterSetting implements CustomSettingImplementation<
         return {
             production: {
                 oil: {
-                    value: Math.min(currentValue.production.oil.value, 0),
+                    value: clamp(currentValue.production.oil.value, 0, valueConstraints.production.oil),
                     color: currentValue.production.oil.color,
                 },
                 gas: {
-                    value: Math.min(currentValue.production.gas.value, 0),
+                    value: clamp(currentValue.production.gas.value, 0, valueConstraints.production.gas),
                     color: currentValue.production.gas.color,
                 },
                 water: {
-                    value: Math.min(currentValue.production.water.value, 0),
+                    value: clamp(currentValue.production.water.value, 0, valueConstraints.production.water),
                     color: currentValue.production.water.color,
                 },
             },
             injection: {
                 water: {
-                    value: Math.min(currentValue.injection.water.value, 0),
+                    value: clamp(currentValue.injection.water.value, 0, valueConstraints.injection.water),
                     color: currentValue.injection.water.color,
                 },
                 gas: {
-                    value: Math.min(currentValue.injection.gas.value, 0),
+                    value: clamp(currentValue.injection.gas.value, 0, valueConstraints.injection.gas),
                     color: currentValue.injection.gas.color,
                 },
             },
@@ -366,18 +372,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
         setLocalValue(props.value ?? min);
     }
 
-    const debouncedOnValueChange = React.useRef(
-        debounce((value: number) => {
-            onValueChange(value);
-        }, 500),
-    ).current;
-
-    // Clean up debounce on unmount
-    React.useEffect(() => {
-        return () => {
-            debouncedOnValueChange.cancel();
-        };
-    }, [debouncedOnValueChange]);
+    const [, debouncedOnValueChange] = useDebouncedOnChange(localValue, onValueChange, 500);
 
     const handleSliderChange = React.useCallback(
         function handleSliderChange(_: any, value: number | number[]) {

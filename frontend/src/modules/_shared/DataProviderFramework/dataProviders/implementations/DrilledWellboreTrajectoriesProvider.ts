@@ -72,11 +72,14 @@ export type DrilledWellboreTrajectoriesStoredData = {
     injectionData: WellInjectionData_api[];
 };
 
-export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderImplementation<
-    DrilledWellboreTrajectoriesSettings,
-    DrilledWellboreTrajectoriesData,
-    DrilledWellboreTrajectoriesStoredData
-> {
+export class DrilledWellboreTrajectoriesProvider
+    implements
+        CustomDataProviderImplementation<
+            DrilledWellboreTrajectoriesSettings,
+            DrilledWellboreTrajectoriesData,
+            DrilledWellboreTrajectoriesStoredData
+        >
+{
     settings = drilledWellboreTrajectoriesSettings;
 
     getDefaultName() {
@@ -133,7 +136,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         );
     }
 
-    fetchData({
+    async fetchData({
         getGlobalSetting,
         getSetting,
         getStoredData,
@@ -143,134 +146,128 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         DrilledWellboreTrajectoriesData,
         DrilledWellboreTrajectoriesStoredData
     >): Promise<DrilledWellboreTrajectoriesData> {
-        const promise = (async () => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembleIdent = getSetting(Setting.ENSEMBLE);
-            const selectedWellboreHeaders = getSetting(Setting.WELLBORES);
-            const depthFilterType = getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
-            const productionData = getStoredData("productionData");
-            const injectionData = getStoredData("injectionData");
+        const fieldIdentifier = getGlobalSetting("fieldId");
+        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const selectedWellboreHeaders = getSetting(Setting.WELLBORES);
+        const depthFilterType = getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+        const productionData = getStoredData("productionData");
+        const injectionData = getStoredData("injectionData");
 
-            const selectedWellboreUuids = selectedWellboreHeaders?.map((wb) => wb.wellboreUuid) ?? [];
+        const selectedWellboreUuids = selectedWellboreHeaders?.map((wb) => wb.wellboreUuid) ?? [];
 
-            const wellTrajectoriesQueryOptions = getWellTrajectoriesOptions({
-                query: { field_identifier: fieldIdentifier ?? "" },
-            });
+        const wellTrajectoriesQueryOptions = getWellTrajectoriesOptions({
+            query: { field_identifier: fieldIdentifier ?? "" },
+        });
 
-            const allWellTrajectories = await fetchQuery({
-                ...wellTrajectoriesQueryOptions,
-                staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
-                gcTime: 1800000,
-            });
+        const allWellTrajectories = await fetchQuery({
+            ...wellTrajectoriesQueryOptions,
+            staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
+            gcTime: 1800000,
+        });
 
-            const filteredWellTrajectories = allWellTrajectories.filter((traj) =>
-                selectedWellboreUuids.includes(traj.wellboreUuid),
-            );
+        const filteredWellTrajectories = allWellTrajectories.filter((traj) =>
+            selectedWellboreUuids.includes(traj.wellboreUuid),
+        );
 
-            const perforationsQueryOptions = getFieldPerforationsOptions({
-                query: { field_identifier: fieldIdentifier ?? "" },
-            });
+        const perforationsQueryOptions = getFieldPerforationsOptions({
+            query: { field_identifier: fieldIdentifier ?? "" },
+        });
 
-            const allPerforations = await fetchQuery({
-                ...perforationsQueryOptions,
-            });
+        const allPerforations = await fetchQuery({
+            ...perforationsQueryOptions,
+        });
 
-            const screensQueryOptions = getFieldScreensOptions({
-                query: { field_identifier: fieldIdentifier ?? "" },
-            });
+        const screensQueryOptions = getFieldScreensOptions({
+            query: { field_identifier: fieldIdentifier ?? "" },
+        });
 
-            const allScreens = await fetchQuery({
-                ...screensQueryOptions,
-            });
+        const allScreens = await fetchQuery({
+            ...screensQueryOptions,
+        });
 
-            const formationFilter = getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER);
-            const surfaceAttribute = getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE);
-            const successfulFormationSegments: WellTrajectoryFormationSegmentsSuccess_api[] = [];
-            const errorFormationSegments: WellTrajectoryFormationSegmentsError_api[] = [];
-            if (
-                depthFilterType === "surface_based" &&
-                ensembleIdent &&
-                formationFilter &&
-                formationFilter.topSurfaceName &&
-                formationFilter.realizationNum != null &&
-                surfaceAttribute
-            ) {
-                const addrBuilder = new SurfaceAddressBuilder();
-                const topSurfaceAddress = addrBuilder
-                    .withEnsembleIdent(ensembleIdent)
-                    .withName(formationFilter.topSurfaceName)
-                    .withAttribute(surfaceAttribute)
-                    .withRealization(formationFilter.realizationNum)
+        const formationFilter = getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER);
+        const surfaceAttribute = getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE);
+        const successfulFormationSegments: WellTrajectoryFormationSegmentsSuccess_api[] = [];
+        const errorFormationSegments: WellTrajectoryFormationSegmentsError_api[] = [];
+        if (
+            depthFilterType === "surface_based" &&
+            ensembleIdent &&
+            formationFilter &&
+            formationFilter.topSurfaceName &&
+            formationFilter.realizationNum != null &&
+            surfaceAttribute
+        ) {
+            const addrBuilder = new SurfaceAddressBuilder();
+            const topSurfaceAddress = addrBuilder
+                .withEnsembleIdent(ensembleIdent)
+                .withName(formationFilter.topSurfaceName)
+                .withAttribute(surfaceAttribute)
+                .withRealization(formationFilter.realizationNum)
+                .buildRealizationAddress();
+
+            let bottomSurfaceAddressString: string | null = null;
+            if (formationFilter.baseSurfaceName) {
+                const bottomSurfaceAddress = addrBuilder
+                    .withName(formationFilter.baseSurfaceName)
                     .buildRealizationAddress();
-
-                let bottomSurfaceAddressString: string | null = null;
-                if (formationFilter.baseSurfaceName) {
-                    const bottomSurfaceAddress = addrBuilder
-                        .withName(formationFilter.baseSurfaceName)
-                        .buildRealizationAddress();
-                    bottomSurfaceAddressString = encodeSurfAddrStr(bottomSurfaceAddress);
-                }
-
-                const convertedWellTrajectories: WellTrajectory_api[] = filteredWellTrajectories.map((traj) => {
-                    return {
-                        uwi: traj.uniqueWellboreIdentifier,
-                        xPoints: traj.eastingArr,
-                        yPoints: traj.northingArr,
-                        zPoints: traj.tvdMslArr,
-                        mdPoints: traj.mdArr,
-                    };
-                });
-
-                const formationSegmentsOptions = postGetWellTrajectoriesFormationSegmentsOptions({
-                    query: {
-                        top_depth_surf_addr_str: encodeSurfAddrStr(topSurfaceAddress),
-                        bottom_depth_surf_addr_str: bottomSurfaceAddressString,
-                    },
-                    body: {
-                        well_trajectories: convertedWellTrajectories,
-                    },
-                });
-
-                const perWellFormationSegmentsResult = await fetchQuery({
-                    ...formationSegmentsOptions,
-                });
-                for (const result of perWellFormationSegmentsResult) {
-                    if (result.status === "success") {
-                        successfulFormationSegments.push(result);
-                    } else if (result.status === "error") {
-                        errorFormationSegments.push(result);
-                    }
-                }
+                bottomSurfaceAddressString = encodeSurfAddrStr(bottomSurfaceAddress);
             }
 
-            const result: DrilledWellboreTrajectoriesData = [];
-            for (const traj of filteredWellTrajectories) {
-                const wellboreHeader = selectedWellboreHeaders?.find(
-                    (header) => header.wellboreUuid === traj.wellboreUuid,
-                );
+            const convertedWellTrajectories: WellTrajectory_api[] = filteredWellTrajectories.map((traj) => {
+                return {
+                    uwi: traj.uniqueWellboreIdentifier,
+                    xPoints: traj.eastingArr,
+                    yPoints: traj.northingArr,
+                    zPoints: traj.tvdMslArr,
+                    mdPoints: traj.mdArr,
+                };
+            });
 
-                if (!wellboreHeader) {
-                    continue;
+            const formationSegmentsOptions = postGetWellTrajectoriesFormationSegmentsOptions({
+                query: {
+                    top_depth_surf_addr_str: encodeSurfAddrStr(topSurfaceAddress),
+                    bottom_depth_surf_addr_str: bottomSurfaceAddressString,
+                },
+                body: {
+                    well_trajectories: convertedWellTrajectories,
+                },
+            });
+
+            const perWellFormationSegmentsResult = await fetchQuery({
+                ...formationSegmentsOptions,
+            });
+            for (const result of perWellFormationSegmentsResult) {
+                if (result.status === "success") {
+                    successfulFormationSegments.push(result);
+                } else if (result.status === "error") {
+                    errorFormationSegments.push(result);
                 }
+            }
+        }
 
-                result.push({
-                    ...traj,
-                    ...wellboreHeader,
-                    formationSegments:
-                        successfulFormationSegments.find((fs) => fs.uwi === traj.uniqueWellboreIdentifier)
-                            ?.formationSegments ?? [],
-                    productionData: productionData?.find((pd) => pd.wellboreUuid === traj.wellboreUuid) ?? null,
-                    injectionData: injectionData?.find((id) => id.wellboreUuid === traj.wellboreUuid) ?? null,
-                    perforations:
-                        allPerforations?.find((perf) => perf.wellboreUuid === traj.wellboreUuid)?.perforations ?? [],
-                    screens: allScreens?.find((screen) => screen.wellboreUuid === traj.wellboreUuid)?.completions ?? [],
-                });
+        const result: DrilledWellboreTrajectoriesData = [];
+        for (const traj of filteredWellTrajectories) {
+            const wellboreHeader = selectedWellboreHeaders?.find((header) => header.wellboreUuid === traj.wellboreUuid);
+
+            if (!wellboreHeader) {
+                continue;
             }
 
-            return result;
-        })();
+            result.push({
+                ...traj,
+                ...wellboreHeader,
+                formationSegments:
+                    successfulFormationSegments.find((fs) => fs.uwi === traj.uniqueWellboreIdentifier)
+                        ?.formationSegments ?? [],
+                productionData: productionData?.find((pd) => pd.wellboreUuid === traj.wellboreUuid) ?? null,
+                injectionData: injectionData?.find((id) => id.wellboreUuid === traj.wellboreUuid) ?? null,
+                perforations:
+                    allPerforations?.find((perf) => perf.wellboreUuid === traj.wellboreUuid)?.perforations ?? [],
+                screens: allScreens?.find((screen) => screen.wellboreUuid === traj.wellboreUuid)?.completions ?? [],
+            });
+        }
 
-        return promise;
+        return result;
     }
 
     defineDependencies({

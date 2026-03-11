@@ -175,11 +175,13 @@ export class WellboreDepthFilterSetting
                     props.valueConstraints
                         ? [
                               { value: null, label: "None" },
-                              ...props.valueConstraints.surfaceNamesInStratOrder.map((name) => ({
-                                  value: name,
-                                  label: name,
-                              })),
-                          ].filter((option) => option.value !== props.value?.topSurfaceName)
+                              ...props.valueConstraints.surfaceNamesInStratOrder
+                                  .filter((name) => name !== props.value?.topSurfaceName)
+                                  .map((name) => ({
+                                      value: name,
+                                      label: name,
+                                  })),
+                          ]
                         : [],
                 [props.valueConstraints, props.value?.topSurfaceName],
             );
