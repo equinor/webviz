@@ -44,14 +44,14 @@ export function ErrorOverlay(props: ErrorOverlayProps) {
                 onClose={() => setDialogOpen(false)}
             >
                 <div className="overflow-auto">
-                    <ul className="list-disc pl-4 text-orange-700">
+                    <ul className="list-disc pl-4">
                         {deserializationErrors.map((error, index) => (
                             <li key={index}>{error}</li>
                         ))}
                     </ul>
                 </div>
             </Dialog>
-            <div className="absolute z-20 inset-0 bg-orange-100/80 h-full w-full flex flex-col gap-2 p-4 overflow-hidden items-center justify-center">
+            <div className="absolute z-20 inset-0 bg-red-100/80 h-full w-full flex flex-col gap-2 p-4 overflow-hidden items-center justify-center">
                 <Button onClick={() => setDialogOpen(true)} variant="contained" size="small" color="danger">
                     Error loading - click for details
                 </Button>

@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore, Warning } from "@mui/icons-material";
+import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -14,6 +14,7 @@ import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
+import { ErrorBadge } from "../utilityComponents/ErrorBadge";
 import { ErrorOverlay } from "../utilityComponents/ErrorOverlay";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { StatusMessages } from "../utilityComponents/StatusWriterMessages";
@@ -183,20 +184,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
 
     let deserializationErrorBadge: React.ReactNode = null;
     if (deserializationErrors.length > 0) {
-        deserializationErrorBadge = (
-            <Tooltip
-                title={
-                    deserializationErrors.length > 1
-                        ? `${deserializationErrors.length} deserialization errors`
-                        : "1 deserialization error"
-                }
-            >
-                <div className="bg-red-200 rounded px-2 py-1 flex gap-2 items-center text-red-900 h-6 border border-red-400 whitespace-nowrap">
-                    <Warning color="error" fontSize="small" />
-                    <span className="text-xs leading-0">{deserializationErrors.length}</span>
-                </div>
-            </Tooltip>
-        );
+        deserializationErrorBadge = <ErrorBadge numErrors={deserializationErrors.length} />;
     }
 
     return (

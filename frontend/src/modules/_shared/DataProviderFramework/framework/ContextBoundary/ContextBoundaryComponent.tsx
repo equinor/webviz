@@ -11,8 +11,8 @@ import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
-import { ErrorBadge } from "../utilityComponents/ErrorBadge";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
+import { GroupErrorBadge } from "../utilityComponents/GroupErrorBadge";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
@@ -49,7 +49,7 @@ export function ContextBoundaryComponent(props: ContextBoundaryComponentProps): 
 
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
-        adornments.push(<ErrorBadge key="error-badge" group={props.group} />);
+        adornments.push(<GroupErrorBadge key="error-badge" group={props.group} />);
         adornments.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
         adornments.push(<RemoveItemButton key="remove" item={props.group} />);

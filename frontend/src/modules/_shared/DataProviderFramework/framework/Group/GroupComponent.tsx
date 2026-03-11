@@ -15,9 +15,9 @@ import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
-import { ErrorBadge } from "../utilityComponents/ErrorBadge";
 import { ErrorOverlay } from "../utilityComponents/ErrorOverlay";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
+import { GroupErrorBadge } from "../utilityComponents/GroupErrorBadge";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { StatusMessages } from "../utilityComponents/StatusWriterMessages";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
@@ -77,7 +77,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
 
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
-        adornments.push(<ErrorBadge key="error-badge" group={props.group} />);
+        adornments.push(<GroupErrorBadge key="error-badge" group={props.group} />);
 
         if (sharedSettingsDelegate) {
             adornments.push(<StatusMessagesWrapper settingsDelegate={sharedSettingsDelegate} />);
