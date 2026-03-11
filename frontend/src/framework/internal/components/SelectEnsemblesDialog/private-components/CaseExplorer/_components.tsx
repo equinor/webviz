@@ -74,10 +74,10 @@ export function AuthorCell(props: AuthorCellProps): React.ReactNode {
     );
 }
 
-type modelNameCellProps = {
+type ModelNameCellProps = {
     modelName: string;
 };
-export function ModelNameCell(props: modelNameCellProps): React.ReactNode {
+export function ModelNameCell(props: ModelNameCellProps): React.ReactNode {
     return (
         <div className="flex justify-center gap-1">
             <span
@@ -90,10 +90,10 @@ export function ModelNameCell(props: modelNameCellProps): React.ReactNode {
     );
 }
 
-type modelRevisionCellProps = {
+type ModelRevisionCellProps = {
     modelRevision: string;
 };
-export function ModelRevisionCell(props: modelRevisionCellProps): React.ReactNode {
+export function ModelRevisionCell(props: ModelRevisionCellProps): React.ReactNode {
     return (
         <div className="flex justify-center gap-1">
             <span

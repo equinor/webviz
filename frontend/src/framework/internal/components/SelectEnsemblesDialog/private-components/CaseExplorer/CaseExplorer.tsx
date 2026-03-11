@@ -293,7 +293,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const handleManualRefetch = React.useCallback(
         function handleManualRefetch() {
             // Checking if queries are disabled or already isFetching (covers both fetching and re-fetching state)
-            if (props.disableQueries || (casesQuery.isFetching && assetsQuery.isFetching)) return;
+            if (props.disableQueries || casesQuery.isFetching || assetsQuery.isFetching) return;
 
             refreshAssets();
             refreshCases();
