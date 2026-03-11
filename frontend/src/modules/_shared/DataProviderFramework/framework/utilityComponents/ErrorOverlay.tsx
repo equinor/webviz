@@ -1,10 +1,11 @@
 import { Button } from "@lib/components/Button";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
-import { ItemDelegateTopic, type ItemDelegate } from "../delegates/ItemDelegate";
+import { ItemDelegateTopic, type ItemDelegate } from "../../delegates/ItemDelegate";
 
 export type ErrorOverlayProps = {
     itemDelegate: ItemDelegate;
+    isExpanded: boolean;
 };
 
 export function ErrorOverlay(props: ErrorOverlayProps) {
@@ -13,7 +14,7 @@ export function ErrorOverlay(props: ErrorOverlayProps) {
         ItemDelegateTopic.DESERIALIZATION_ERRORS,
     );
 
-    if (deserializationErrors.length === 0) {
+    if (deserializationErrors.length === 0 || !props.isExpanded) {
         return null;
     }
 
@@ -22,10 +23,10 @@ export function ErrorOverlay(props: ErrorOverlayProps) {
     }
 
     return (
-        <div className="absolute z-20 inset-0 bg-orange-100/80 h-full w-full flex flex-col gap-2 p-4">
+        <div className="absolute z-20 inset-0 bg-orange-100/80 h-full w-full flex flex-col gap-2 p-4 overflow-hidden">
             <div className="text-orange-700 font-bold">Error loading item</div>
             <div className="overflow-auto">
-                <ul className="list-disc list-inside text-orange-700">
+                <ul className="list-disc pl-4 text-orange-700">
                     {deserializationErrors.map((error, index) => (
                         <li key={index}>{error}</li>
                     ))}

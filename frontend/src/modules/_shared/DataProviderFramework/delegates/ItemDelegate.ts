@@ -155,6 +155,10 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._expanded = state.expanded;
     }
 
+    getDeserializationErrors(): readonly string[] {
+        return this._deserializationErrors;
+    }
+
     reportDeserializationError(errorMsg: string): void {
         this._deserializationErrors.push(errorMsg);
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.DESERIALIZATION_ERRORS);

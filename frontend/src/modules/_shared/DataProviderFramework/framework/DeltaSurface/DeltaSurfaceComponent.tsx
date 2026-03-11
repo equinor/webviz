@@ -11,6 +11,7 @@ import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { isDataProvider } from "../DataProvider/DataProvider";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
+import { ErrorBadge } from "../utilityComponents/ErrorBadge";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
@@ -25,7 +26,7 @@ export type DeltaSurfaceComponentProps = {
 };
 
 export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.ReactNode {
-    const { makeActionsForGroup } = props;
+    const { makeActionsForGroup, onActionClick } = props;
 
     const children = usePublishSubscribeTopicValue(props.deltaSurface.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.deltaSurface.getItemDelegate(), ItemDelegateTopic.EXPANDED);
@@ -35,20 +36,29 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
         return makeActionsForGroup(props.deltaSurface);
     }, [props.deltaSurface, makeActionsForGroup]);
 
-    function handleActionClick(actionIdentifier: string) {
-        if (props.onActionClick) {
-            props.onActionClick(actionIdentifier, props.deltaSurface);
-        }
-    }
+    const handleActionClick = React.useCallback(
+        function handleActionClick(actionIdentifier: string) {
+            onActionClick?.(actionIdentifier, props.deltaSurface);
+        },
+        [props.deltaSurface, onActionClick],
+    );
+
+    const handleToggleExpanded = React.useCallback(
+        function handleToggleExpanded(expanded: boolean) {
+            props.deltaSurface.getItemDelegate().setExpanded(expanded);
+        },
+        [props.deltaSurface],
+    );
 
     function makeEndAdornment() {
-        const adornment: React.ReactNode[] = [];
+        const adornments: React.ReactNode[] = [];
+        adornments.push(<ErrorBadge key="error-badge" group={props.deltaSurface} />);
         if (props.deltaSurface.getGroupDelegate().findChildren((item) => isDataProvider(item)).length < 2) {
-            adornment.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
+            adornments.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
         }
-        adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.deltaSurface} />);
-        adornment.push(<RemoveItemButton key="remove" item={props.deltaSurface} />);
-        return adornment;
+        adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.deltaSurface} />);
+        adornments.push(<RemoveItemButton key="remove" item={props.deltaSurface} />);
+        return adornments;
     }
 
     return (
@@ -72,6 +82,7 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
                 <EmptyContent>Drag two surface layers inside to calculate the difference between them.</EmptyContent>
             }
             expanded={isExpanded}
+            onToggleExpanded={handleToggleExpanded}
         >
             {children.map((child: Item) =>
                 makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick),

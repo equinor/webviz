@@ -11,6 +11,7 @@ import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
+import { ErrorBadge } from "../utilityComponents/ErrorBadge";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
@@ -22,7 +23,7 @@ export type ContextBoundaryComponentProps = {
 };
 
 export function ContextBoundaryComponent(props: ContextBoundaryComponentProps): React.ReactNode {
-    const { makeActionsForGroup } = props;
+    const { makeActionsForGroup, onActionClick } = props;
 
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
@@ -32,18 +33,27 @@ export function ContextBoundaryComponent(props: ContextBoundaryComponentProps): 
         return makeActionsForGroup(props.group);
     }, [props.group, makeActionsForGroup]);
 
-    function handleActionClick(actionIdentifier: string) {
-        if (props.onActionClick) {
-            props.onActionClick(actionIdentifier, props.group);
-        }
-    }
+    const handleActionClick = React.useCallback(
+        function handleActionClick(actionIdentifier: string) {
+            onActionClick?.(actionIdentifier, props.group);
+        },
+        [props.group, onActionClick],
+    );
+
+    const handleToggleExpanded = React.useCallback(
+        function handleToggleExpanded(expanded: boolean) {
+            props.group.getItemDelegate().setExpanded(expanded);
+        },
+        [props.group],
+    );
 
     function makeEndAdornment() {
-        const adornment: React.ReactNode[] = [];
-        adornment.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
-        adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
-        adornment.push(<RemoveItemButton key="remove" item={props.group} />);
-        return adornment;
+        const adornments: React.ReactNode[] = [];
+        adornments.push(<ErrorBadge key="error-badge" group={props.group} />);
+        adornments.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
+        adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
+        adornments.push(<RemoveItemButton key="remove" item={props.group} />);
+        return adornments;
     }
 
     return (
@@ -65,6 +75,7 @@ export function ContextBoundaryComponent(props: ContextBoundaryComponentProps): 
             endAdornment={<>{makeEndAdornment()}</>}
             contentWhenEmpty={<EmptyContent>Drag an item inside to add it to this context boundary.</EmptyContent>}
             expanded={isExpanded}
+            onToggleExpanded={handleToggleExpanded}
         >
             {children.map((child: Item) =>
                 makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick),

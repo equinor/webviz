@@ -1,9 +1,6 @@
 import React from "react";
 
-import { Warning } from "@mui/icons-material";
-
 import { ColorSelect } from "@lib/components/ColorSelect";
-import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { ActionGroup } from "../../Actions";
@@ -14,11 +11,11 @@ import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
 import { SharedSettingsDelegateTopic } from "../../delegates/SharedSettingsDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
-import { isErrorPlaceholder } from "../ErrorPlaceholder/ErrorPlaceholder";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
+import { ErrorBadge } from "../utilityComponents/ErrorBadge";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { StatusMessages } from "../utilityComponents/StatusWriterMessages";
@@ -34,20 +31,11 @@ export type GroupComponentProps = {
 };
 
 export function GroupComponent(props: GroupComponentProps): React.ReactNode {
-    const { makeActionsForGroup } = props;
+    const { makeActionsForGroup, onActionClick } = props;
 
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
     const color = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.COLOR);
-    const treeRevisionNumber = usePublishSubscribeTopicValue(
-        props.group.getGroupDelegate(),
-        GroupDelegateTopic.TREE_REVISION_NUMBER,
-    );
-    const numDescendantErrors = React.useMemo(
-        () => props.group.getGroupDelegate().getDescendantItems(isErrorPlaceholder).length,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [props.group, treeRevisionNumber],
-    );
 
     const sharedSettingsDelegate = props.group.getSharedSettingsDelegate();
 
@@ -55,11 +43,18 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
         return makeActionsForGroup(props.group);
     }, [props.group, makeActionsForGroup]);
 
-    function handleActionClick(actionIdentifier: string) {
-        if (props.onActionClick) {
-            props.onActionClick(actionIdentifier, props.group);
-        }
-    }
+    const handleActionClick = React.useCallback(
+        function handleActionClick(actionIdentifier: string) {
+            onActionClick?.(actionIdentifier, props.group);
+        },
+        [props.group, onActionClick],
+    );
+    const handleToggleExpanded = React.useCallback(
+        function handleToggleExpanded(expanded: boolean) {
+            props.group.getItemDelegate().setExpanded(expanded);
+        },
+        [props.group],
+    );
 
     function makeSetting(setting: SettingManager<any>) {
         const manager = props.group.getItemDelegate().getDataProviderManager();
@@ -81,22 +76,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
 
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
-
-        if (numDescendantErrors > 0) {
-            adornments.push(
-                <Tooltip
-                    key="error-tooltip"
-                    title={`${numDescendantErrors} item${numDescendantErrors > 1 ? "s" : ""} in this group could not be recreated from persisted state.`}
-                >
-                    <div className="bg-red-200 rounded px-2 py-1 flex gap-2 items-center text-red-900 h-6 border border-red-400 whitespace-nowrap">
-                        <Warning color="error" fontSize="small" />
-                        <span className="text-xs leading-0">
-                            {numDescendantErrors > 1 ? `${numDescendantErrors} errors` : "1"}
-                        </span>
-                    </div>
-                </Tooltip>,
-            );
-        }
+        adornments.push(<ErrorBadge key="error-badge" group={props.group} />);
 
         if (sharedSettingsDelegate) {
             adornments.push(<StatusMessagesWrapper settingsDelegate={sharedSettingsDelegate} />);
@@ -130,6 +110,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
                 backgroundColor: color ?? undefined,
             }}
             expanded={isExpanded}
+            onToggleExpanded={handleToggleExpanded}
             startAdornment={<VisibilityToggle item={props.group} />}
             endAdornment={<>{makeEndAdornment()}</>}
             contentWhenEmpty={<EmptyContent>{emptyContentMessage}</EmptyContent>}

@@ -1,3 +1,5 @@
+import { Warning } from "@mui/icons-material";
+
 import { SortableListItem } from "../../components/item";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 
@@ -12,7 +14,12 @@ export function ErrorPlaceholderComponent(props: ErrorPlaceholderComponentProps)
         <SortableListItem
             key={props.placeholder.getItemDelegate().getId()}
             id={props.placeholder.getItemDelegate().getId()}
-            title={props.placeholder.getItemDelegate().getName()}
+            title={
+                <div className="flex items-center gap-2 font-bold">
+                    <Warning color="error" fontSize="small" />
+                    {props.placeholder.getItemDelegate().getName()}
+                </div>
+            }
             endAdornment={<RemoveItemButton item={props.placeholder} />}
             headerClassNames="bg-red-100! text-red-800"
         >
