@@ -2,9 +2,9 @@ import React from "react";
 
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
-import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { instanceofItemGroup, type Item, type ItemGroup } from "../../interfacesAndTypes/entities";
+import { DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 import { isErrorPlaceholder } from "../ErrorPlaceholder/ErrorPlaceholder";
 
 import { ErrorBadge } from "./ErrorBadge";
@@ -14,9 +14,9 @@ export type GroupErrorBadgeProps = {
 };
 
 export function GroupErrorBadge(props: GroupErrorBadgeProps) {
-    const treeRevisionNumber = usePublishSubscribeTopicValue(
-        props.group.getGroupDelegate(),
-        GroupDelegateTopic.TREE_REVISION_NUMBER,
+    const revisionNumber = usePublishSubscribeTopicValue(
+        props.group.getItemDelegate().getDataProviderManager(),
+        DataProviderManagerTopic.DATA_REVISION,
     );
 
     const deserializationErrors = usePublishSubscribeTopicValue(
@@ -40,7 +40,7 @@ export function GroupErrorBadge(props: GroupErrorBadgeProps) {
             return descendantErrors;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [props.group.getGroupDelegate(), treeRevisionNumber],
+        [props.group.getGroupDelegate(), revisionNumber],
     );
 
     const numTotalErrors = deserializationErrors.length + numDescendantErrors;
