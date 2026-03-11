@@ -167,6 +167,9 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     clearDeserializationErrors(): void {
         this._deserializationErrors = [];
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.DESERIALIZATION_ERRORS);
+        if (this._dataProviderManager) {
+            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+        }
     }
 
     private makeUniqueName(candidate: string): string {
