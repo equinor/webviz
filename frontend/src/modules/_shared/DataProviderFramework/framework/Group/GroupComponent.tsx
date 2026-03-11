@@ -86,12 +86,12 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             adornments.push(
                 <Tooltip
                     key="error-tooltip"
-                    title={`${numDescendantErrors}${numDescendantErrors > 1 ? "s" : ""} item in this group could not be recreated from persisted state.`}
+                    title={`${numDescendantErrors} item${numDescendantErrors > 1 ? "s" : ""} in this group could not be recreated from persisted state.`}
                 >
-                    <div className="bg-red-200 rounded px-2 py-1 flex gap-2 items-center text-red-900 h-6 border border-red-400">
+                    <div className="bg-red-200 rounded px-2 py-1 flex gap-2 items-center text-red-900 h-6 border border-red-400 whitespace-nowrap">
                         <Warning color="error" fontSize="small" />
-                        <span className="pt-1">
-                            {numDescendantErrors > 1 ? `${numDescendantErrors} errors` : "1 error"}
+                        <span className="text-xs leading-0">
+                            {numDescendantErrors > 1 ? `${numDescendantErrors} errors` : "1"}
                         </span>
                     </div>
                 </Tooltip>,
