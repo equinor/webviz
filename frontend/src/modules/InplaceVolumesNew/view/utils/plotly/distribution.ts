@@ -29,10 +29,6 @@ export function makePlotlyDensityTraces({
 }: PlotlyDensityTracesOptions): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
-    if (showStatisticalMarkers) {
-        data.push(...createStatisticLinesForDistribution(values, title, color, resultName, showStatisticalLabels));
-    }
-
     data.push({
         x: values,
         name: title,
@@ -53,6 +49,10 @@ export function makePlotlyDensityTraces({
         pointpos: -0.3,
         jitter: 0.1,
     });
+
+    if (showStatisticalMarkers) {
+        data.push(...createStatisticLinesForDistribution(values, title, color, resultName, showStatisticalLabels));
+    }
 
     return data;
 }
@@ -84,7 +84,7 @@ function createStatisticLinesForDistribution(
             showlegend: false,
             name: label,
             legendgroup: title,
-            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${value ? formatNumber(value) : ""}<extra></extra>`,
+            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatNumber(value)}<extra></extra>`,
         };
 
         if (showLabels) {

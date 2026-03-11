@@ -200,7 +200,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         checked={plotOptions.showStatisticalMarkers}
                         onChange={handleShowStatisticalMarkersChange}
                     />
-                ) : null}{" "}
+                ) : null}
                 {(selectedPlotType === PlotType.HISTOGRAM || selectedPlotType === PlotType.DISTRIBUTION) && (
                     <Checkbox
                         label="Show statistical marker labels"
