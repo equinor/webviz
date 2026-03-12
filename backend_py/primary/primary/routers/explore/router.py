@@ -47,7 +47,7 @@ async def get_field_identifiers(
 @router.get("/cases")
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    asset_name: str = Query(description="Asset name"),
+    asset_name: str = Query(min_length=1, description="Asset name"),
 ) -> List[schemas.CaseInfo]:
     """Get list of cases for specified asset"""
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())

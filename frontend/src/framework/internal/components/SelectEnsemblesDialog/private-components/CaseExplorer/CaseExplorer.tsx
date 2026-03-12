@@ -91,7 +91,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
     const casesQuery = useQuery({
         ...getCasesOptions({ query: { asset_name: selectedAsset ?? "" } }),
-        enabled: selectedAsset !== null && !props.disableQueries,
+        enabled: !!selectedAsset && !props.disableQueries,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
         refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
