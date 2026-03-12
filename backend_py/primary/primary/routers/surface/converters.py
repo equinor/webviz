@@ -249,3 +249,34 @@ def to_api_well_trajectory_formation_segments(
         uwi=unique_wellbore_identifier,
         formationSegments=formation_segments,
     )
+
+
+def to_api_formation_segments(
+    unique_wellbore_identifier: str,
+    well_trajectory_formation_segments: list[FormationSegment],
+) -> schemas.WellTrajectoryFormationSegmentsSuccess:
+    """
+    Convert service layer well trajectory formation segments to API well trajectory
+    formation segments
+    """
+
+    formation_segments = [
+        schemas.FormationSegment(mdEnter=fs.md_enter, mdExit=fs.md_exit) for fs in well_trajectory_formation_segments
+    ]
+    return schemas.WellTrajectoryFormationSegmentsSuccess(
+        uwi=unique_wellbore_identifier,
+        formationSegments=formation_segments,
+    )
+
+
+def to_api_error_segments(
+    unique_wellbore_identifier: str,
+    error_message: str,
+) -> schemas.WellTrajectoryFormationSegmentsError:
+    """
+    Convert service layer error message to API well trajectory formation segments error
+    """
+    return schemas.WellTrajectoryFormationSegmentsError(
+        uwi=unique_wellbore_identifier,
+        errorMessage=error_message,
+    )
