@@ -27,8 +27,8 @@ export function createEnsembleUpdater<
             return [];
         }
         const ensembleIdents = ensembles
-            .filter((ensemble: any) => ensemble.getFieldIdentifiers().includes(fieldIdentifier))
-            .map((ensemble: any) => ensemble.getIdent());
+            .filter((ensemble) => ensemble.getFieldIdentifiers().includes(fieldIdentifier))
+            .map((ensemble) => ensemble.getIdent());
 
         return ensembleIdents;
     };
@@ -62,8 +62,8 @@ export function createSensitivityUpdater<
             return [];
         }
         const availableSensitivityPairs: SensitivityNameCasePair[] = [];
-        sensitivities.map((sensitivity: Sensitivity) =>
-            sensitivity.cases.map((sensitivityCase: SensitivityCase) => {
+        sensitivities.map((sensitivity) =>
+            sensitivity.cases.map((sensitivityCase) => {
                 availableSensitivityPairs.push({
                     sensitivityName: sensitivity.name,
                     sensitivityCase: sensitivityCase.name,
