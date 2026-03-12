@@ -126,7 +126,7 @@ jobs:
         run: |
           set -x
           (cd primary && poetry install)
-          scripts/pylint-primaryall.sh
+          scripts/pylint-primary-all.sh
           scripts/mypy-primary-all.sh
 
       - name: 🤖 Run tests for primary
