@@ -11,7 +11,7 @@ import type { ColumnFilterImplementationProps, TableColumns } from "@lib/compone
 import { TagPicker } from "@lib/components/TagPicker";
 import { formatDate } from "@lib/utils/dates";
 
-import { AuthorCell, CaseNameAndIdCell, DescriptionCell } from "./_components";
+import { AuthorCell, CaseNameAndIdCell, DescriptionCell, ModelNameCell, ModelRevisionCell } from "./_components";
 import type { CaseRowData } from "./_types";
 
 export function storeStateInLocalStorage(stateName: string, value: string) {
@@ -94,6 +94,7 @@ export function makeCaseTableColumns(
             _type: "data",
             columnId: "modelName",
             sizeInPercent: 12,
+            renderData: (value) => <ModelNameCell modelName={value} />,
             filter: {
                 render: (props) => (
                     <TagPicker
@@ -111,6 +112,7 @@ export function makeCaseTableColumns(
             _type: "data",
             columnId: "modelRevision",
             sizeInPercent: 10,
+            renderData: (value) => <ModelRevisionCell modelRevision={value} />,
             filter: {
                 render: (props) => (
                     <TagPicker

@@ -14,7 +14,7 @@ import type {
 import type { IntersectionSettingValue } from "../../settings/implementations/IntersectionSetting";
 
 /**
- * Fetch wellbore headers for field identifier for the provided ensemble identifier.
+ * Fetch wellbore headers for the provided field identifier.
  */
 export async function fetchWellboreHeaders(
     fieldIdentifier: string | null,
