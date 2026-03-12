@@ -2,9 +2,9 @@ import type React from "react";
 
 import { Table } from "@lib/components/Table";
 import type { TableColumns } from "@lib/components/Table/types";
+import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing";
 import type { SelectedSensitivity } from "@modules/SensitivityPlot/typesAndEnums";
 
-import type { SensitivityResponseDataset } from "../../../_shared/SensitivityProcessing/types";
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 
 export interface SensitivityTableProps {
