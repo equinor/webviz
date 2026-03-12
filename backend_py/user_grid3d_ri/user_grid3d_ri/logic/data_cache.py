@@ -5,8 +5,6 @@ import diskcache
 import numpy as np
 from numpy.typing import NDArray
 
-from rips.generated import GridGeometryExtraction_pb2
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -43,21 +41,3 @@ class DataCache:
         np_arr = np.load(byte_stream)
 
         return np_arr
-
-    """
-    def set_message_GetGridSurfaceResponse(
-        self, key: str, message: GridGeometryExtraction_pb2.GetGridSurfaceResponse
-    ) -> None:
-        self._cache.set(key, message.SerializeToString(), expire=20)
-
-    def get_message_GetGridSurfaceResponse(self, key: str) -> GridGeometryExtraction_pb2.GetGridSurfaceResponse | None:
-        data = self._cache.get(key)
-        LOGGER.debug(f"get_message_GetGridSurfaceResponse() {type(data)=}")
-        if data is None:
-            return None
-
-        message = GridGeometryExtraction_pb2.GetGridSurfaceResponse()
-        message.ParseFromString(data)
-
-        return message
-    """
