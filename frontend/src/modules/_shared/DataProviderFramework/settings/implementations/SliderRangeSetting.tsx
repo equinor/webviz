@@ -7,7 +7,7 @@ import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 import { ToggleButton } from "@lib/components/ToggleButton";
 import { Tooltip } from "@lib/components/Tooltip";
-import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -170,7 +170,7 @@ export class SliderRangeSetting
                 setLocalValue(props.value ?? [min, max]);
             }
 
-            const [, debouncedOnValueChange] = useDebouncedOnChange(localValue, onValueChange, 500);
+            const debouncedOnValueChange = useDebouncedFunction(onValueChange, 500);
 
             const handleSliderChange = React.useCallback(
                 function handleSliderChange(_: any, value: number | number[]) {

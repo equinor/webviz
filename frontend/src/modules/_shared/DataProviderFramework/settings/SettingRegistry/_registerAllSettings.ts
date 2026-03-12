@@ -13,12 +13,12 @@ import { DrilledWellboresSetting } from "../implementations/DrilledWellboresSett
 import { DropdownNumberSetting } from "../implementations/DropdownNumberSetting";
 import { DropdownStringSetting } from "../implementations/DropdownStringSetting";
 import { EnsembleSetting } from "../implementations/EnsembleSetting";
+import { FlowFilterSetting } from "../implementations/FlowFilterSetting";
 import { GridLayerRangeSetting } from "../implementations/GridLayerRangeSetting";
 import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { LogCurveSetting } from "../implementations/LogCurveSetting";
 import { NumberRangeDropdownSetting } from "../implementations/NumberRangeDropdownSetting";
-import { PdmFilterSetting } from "../implementations/PdmFilterSetting";
 import { PolygonVisualizationSetting } from "../implementations/PolygonVisualizationSetting";
 import { RadioGroupSetting } from "../implementations/RadioGroupSetting";
 import { RepresentationSetting } from "../implementations/RepresentationSetting";
@@ -151,8 +151,8 @@ SettingRegistry.registerSetting(
     "Formation Filter",
     WellboreDepthFilterSetting,
 );
-SettingRegistry.registerSetting(Setting.PDM_FILTER, "Flow Data Cut-off", PdmFilterSetting);
-SettingRegistry.registerSetting(Setting.PDM_FILTER_TYPE, "Flow Data Filter", RadioGroupSetting, {
+SettingRegistry.registerSetting(Setting.FLOW_FILTER, "Flow Data Cut-off", FlowFilterSetting);
+SettingRegistry.registerSetting(Setting.FLOW_FILTER_TYPE, "Flow Data Filter", RadioGroupSetting, {
     customConstructorParameters: [
         {
             staticOptions: [

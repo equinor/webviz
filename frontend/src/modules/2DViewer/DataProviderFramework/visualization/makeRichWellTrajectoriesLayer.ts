@@ -33,8 +33,8 @@ export function makeRichWellTrajectoriesLayer(
 
     const wellboreTrajectoriesData = getData();
     const depthFilterType = getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE) ?? "none";
-    const pdmFilterType = getSetting(Setting.PDM_FILTER_TYPE) ?? "none";
-    const pdmFilterSettings = getSetting(Setting.PDM_FILTER);
+    const pdmFilterType = getSetting(Setting.FLOW_FILTER_TYPE) ?? "none";
+    const pdmFilterSettings = getSetting(Setting.FLOW_FILTER);
     const mdRangeSetting = getSetting(Setting.MD_RANGE);
 
     if (isLoading) {
@@ -197,7 +197,7 @@ function hexToRgb(hex: string): [r: number, g: number, b: number] {
 }
 
 function setColorByFlowData(
-    pdmFilterSettings: SettingTypeDefinitions[Setting.PDM_FILTER]["externalValue"],
+    pdmFilterSettings: SettingTypeDefinitions[Setting.FLOW_FILTER]["externalValue"],
     productionData: ExtendedWellFeatureProperties["productionData"],
     injectionData: ExtendedWellFeatureProperties["injectionData"],
 ): [r: number, g: number, b: number] | null {
@@ -211,7 +211,7 @@ function setColorByFlowData(
 }
 
 function getApplicableFlowDataSetting(
-    pdmFilterSettings: SettingTypeDefinitions[Setting.PDM_FILTER]["externalValue"],
+    pdmFilterSettings: SettingTypeDefinitions[Setting.FLOW_FILTER]["externalValue"],
     productionData: ExtendedWellFeatureProperties["productionData"],
     injectionData: ExtendedWellFeatureProperties["injectionData"],
 ) {

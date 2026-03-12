@@ -5,7 +5,7 @@ import { clamp } from "lodash";
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
-import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FLOW_COLORS } from "@modules/_shared/constants/colors";
@@ -17,11 +17,11 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { Setting, SettingTypeDefinitions } from "../settingsDefinitions";
 
-type InternalValueType = SettingTypeDefinitions[Setting.PDM_FILTER]["internalValue"];
-type ExternalValueType = SettingTypeDefinitions[Setting.PDM_FILTER]["externalValue"];
-type ValueRangeType = SettingTypeDefinitions[Setting.PDM_FILTER]["valueConstraints"];
+type InternalValueType = SettingTypeDefinitions[Setting.FLOW_FILTER]["internalValue"];
+type ExternalValueType = SettingTypeDefinitions[Setting.FLOW_FILTER]["externalValue"];
+type ValueRangeType = SettingTypeDefinitions[Setting.FLOW_FILTER]["valueConstraints"];
 
-export class PdmFilterSetting
+export class FlowFilterSetting
     implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
 {
     valueConstraintsIntersectionReducerDefinition = {
@@ -372,7 +372,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
         setLocalValue(props.value ?? min);
     }
 
-    const [, debouncedOnValueChange] = useDebouncedOnChange(localValue, onValueChange, 500);
+    const debouncedOnValueChange = useDebouncedFunction(onValueChange, 500);
 
     const handleSliderChange = React.useCallback(
         function handleSliderChange(_: any, value: number | number[]) {

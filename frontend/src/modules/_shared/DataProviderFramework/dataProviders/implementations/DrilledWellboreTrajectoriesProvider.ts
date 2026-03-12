@@ -49,9 +49,9 @@ const drilledWellboreTrajectoriesSettings = [
     Setting.TVD_RANGE,
     Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE,
     Setting.WELLBORE_DEPTH_FORMATION_FILTER,
-    Setting.PDM_FILTER_TYPE,
+    Setting.FLOW_FILTER_TYPE,
     Setting.TIME_INTERVAL,
-    Setting.PDM_FILTER,
+    Setting.FLOW_FILTER,
 ] as const;
 export type DrilledWellboreTrajectoriesSettings = typeof drilledWellboreTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellboreTrajectoriesSettings>;
@@ -514,10 +514,13 @@ export class DrilledWellboreTrajectoriesProvider
         });
 
         settingAttributesUpdater(Setting.TIME_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const pdmFilterType = getLocalSetting(Setting.PDM_FILTER_TYPE);
+            const pdmFilterType = getLocalSetting(Setting.FLOW_FILTER_TYPE);
             const data = getHelperDependency(observedSurfaceMetadataDep);
             return {
-                visible: pdmFilterType === "production_injection" && !!data?.time_intervals_iso_str.length,
+                enabled: data?.time_intervals_iso_str.length
+                    ? true
+                    : { enabled: false, reason: "No time intervals available" },
+                visible: pdmFilterType === "production_injection",
             };
         });
 
@@ -531,11 +534,13 @@ export class DrilledWellboreTrajectoriesProvider
             return data.time_intervals_iso_str;
         });
 
-        settingAttributesUpdater(Setting.PDM_FILTER, ({ getLocalSetting, getHelperDependency }) => {
-            const pdmFilterType = getLocalSetting(Setting.PDM_FILTER_TYPE);
+        settingAttributesUpdater(Setting.FLOW_FILTER, ({ getLocalSetting, getHelperDependency }) => {
+            const pdmFilterType = getLocalSetting(Setting.FLOW_FILTER_TYPE);
             const data = getHelperDependency(observedSurfaceMetadataDep);
             return {
-                enabled: !!data?.time_intervals_iso_str.length,
+                enabled: data?.time_intervals_iso_str.length
+                    ? true
+                    : { enabled: false, reason: "No time intervals available" },
                 visible: pdmFilterType === "production_injection",
             };
         });
@@ -599,7 +604,7 @@ export class DrilledWellboreTrajectoriesProvider
             return injectionData || [];
         });
 
-        valueConstraintsUpdater(Setting.PDM_FILTER, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.FLOW_FILTER, ({ getHelperDependency }) => {
             const productionData = getHelperDependency(productionDataDep);
             const injectionData = getHelperDependency(injectionDataDep);
 
@@ -624,7 +629,7 @@ export class DrilledWellboreTrajectoriesProvider
                 }
             }
 
-            const valueConstraints: SettingTypeDefinitions[Setting.PDM_FILTER]["valueConstraints"] = {
+            const valueConstraints: SettingTypeDefinitions[Setting.FLOW_FILTER]["valueConstraints"] = {
                 production: {
                     oil: maxOilProduction,
                     gas: maxGasProduction,

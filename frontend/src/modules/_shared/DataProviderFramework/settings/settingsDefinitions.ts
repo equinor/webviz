@@ -70,8 +70,8 @@ export enum Setting {
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
     REPRESENTATION = "representation",
-    PDM_FILTER_TYPE = "pdmFilterType",
-    PDM_FILTER = "pdmFilter",
+    FLOW_FILTER_TYPE = "flowFilterType",
+    FLOW_FILTER = "flowFilter",
 }
 
 /**
@@ -146,7 +146,7 @@ export type SettingTypeDefinitions = {
     // Single select string settings (SINGLE_SELECT category)
     [Setting.SCALE]: {
         internalValue: "linear" | "log" | null;
-        externalValue: "linear" | "log" | null;
+        externalValue: SettingTypeDefinitions[Setting.SCALE]["internalValue"];
         valueConstraints: ("linear" | "log")[];
     };
     [Setting.ATTRIBUTE]: {
@@ -235,7 +235,7 @@ export type SettingTypeDefinitions = {
         externalValue: string | null;
         valueConstraints: { value: string; label: string }[] | null;
     };
-    [Setting.PDM_FILTER_TYPE]: {
+    [Setting.FLOW_FILTER_TYPE]: {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: { value: string; label: string }[] | null;
@@ -346,7 +346,7 @@ export type SettingTypeDefinitions = {
     // Boolean + Number settings (BOOLEAN_NUMBER category)
     [Setting.CONTOURS]: {
         internalValue: { enabled: boolean; value: number } | null;
-        externalValue: { enabled: boolean; value: number } | null;
+        externalValue: SettingTypeDefinitions[Setting.CONTOURS]["internalValue"];
         valueConstraints: [number, number] | null;
     };
 
@@ -371,11 +371,7 @@ export type SettingTypeDefinitions = {
             visible: [boolean, boolean, boolean];
             applied: boolean;
         } | null;
-        externalValue: {
-            value: [number, number, number];
-            visible: [boolean, boolean, boolean];
-            applied: boolean;
-        } | null;
+        externalValue: SettingTypeDefinitions[Setting.SEISMIC_SLICES]["internalValue"];
         valueConstraints: [[number, number, number], [number, number, number], [number, number, number]];
     };
 
@@ -385,70 +381,29 @@ export type SettingTypeDefinitions = {
             topSurfaceName: string | null;
             baseSurfaceName: string | null;
         } | null;
-        externalValue: {
-            realizationNum: number;
-            topSurfaceName: string | null;
-            baseSurfaceName: string | null;
-        } | null;
+        externalValue: SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["internalValue"];
         valueConstraints: {
             realizationNums: number[];
             surfaceNamesInStratOrder: string[];
         } | null;
     };
 
-    [Setting.PDM_FILTER]: {
+    [Setting.FLOW_FILTER]: {
         internalValue: {
             production: {
-                oil: {
-                    value: number;
-                    color: string;
-                };
-                gas: {
-                    value: number;
-                    color: string;
-                };
-                water: {
+                [key in "oil" | "gas" | "water"]: {
                     value: number;
                     color: string;
                 };
             };
             injection: {
-                water: {
-                    value: number;
-                    color: string;
-                };
-                gas: {
+                [key in "water" | "gas"]: {
                     value: number;
                     color: string;
                 };
             };
         } | null;
-        externalValue: {
-            production: {
-                oil: {
-                    value: number;
-                    color: string;
-                };
-                gas: {
-                    value: number;
-                    color: string;
-                };
-                water: {
-                    value: number;
-                    color: string;
-                };
-            };
-            injection: {
-                water: {
-                    value: number;
-                    color: string;
-                };
-                gas: {
-                    value: number;
-                    color: string;
-                };
-            };
-        } | null;
+        externalValue: SettingTypeDefinitions[Setting.FLOW_FILTER]["internalValue"];
         valueConstraints: {
             production: {
                 oil: number;
