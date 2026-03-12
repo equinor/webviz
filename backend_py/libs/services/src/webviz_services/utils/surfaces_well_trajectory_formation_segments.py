@@ -63,7 +63,7 @@ def validate_depth_surfaces_for_formation_segments(
     # Compare topology of top and bottom surfaces (only if both surfaces are provided)
     if top_depth_surface.compare_topology(bottom_depth_surface) is False:
         message = "Top and bottom surfaces have different topology. Cannot compute formation segments."
-        LOGGER.warning(message)
+        LOGGER.error(message)
         raise InvalidParameterError(message, Service.GENERAL)
 
     # With equal topology, we can do a quick check to see if surfaces are interleaved
@@ -77,7 +77,7 @@ def validate_depth_surfaces_for_formation_segments(
             "This suggests interleaved surfaces or a top surface located below the bottom. "
             "Review the surface inputs."
         )
-        LOGGER.warning(message)
+        LOGGER.error(message)
         raise InvalidParameterError(message, Service.GENERAL)
 
 
@@ -194,7 +194,7 @@ def _create_formation_segments_from_well_trajectory_and_picks(
     - Wells starting inside the formation
     - Wells crossing the same surface multiple times (e.g., horizontal wells through folded
       formations)
-    - Unexpected pick sequences are logged as warnings:
+    - Unexpected pick sequences are logged as errors, and raises exceptions:
         - Consecutive entry picks without an exit
         - Consecutive exit picks without a prior entry
 
@@ -262,7 +262,7 @@ def _create_formation_segments_from_well_trajectory_and_picks(
                     f"Unexpected consecutive entry picks for well {well_trajectory.unique_wellbore_identifier} at MD {pick.md}. "
                     "This may indicate data quality issues with the surface picks."
                 )
-                LOGGER.warning(message)
+                LOGGER.error(message)
                 raise InvalidDataError(message, Service.GENERAL)
 
             md_enter = pick.md
@@ -273,7 +273,7 @@ def _create_formation_segments_from_well_trajectory_and_picks(
                     f"Unexpected exit pick without entry for well {well_trajectory.unique_wellbore_identifier} at MD {pick.md}. "
                     "This may indicate data quality issues with the surface picks."
                 )
-                LOGGER.warning(message)
+                LOGGER.error(message)
                 raise InvalidDataError(message, Service.GENERAL)
 
             formation_segments.append(FormationSegment(md_enter=md_enter, md_exit=pick.md))
