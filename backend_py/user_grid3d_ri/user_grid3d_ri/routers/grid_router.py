@@ -101,7 +101,7 @@ async def post_get_grid_geometry(
 
     perf_metrics.record_lap("proc-verts")
 
-    poly_indices_np = np.asarray(grpc_response.quadIndicesArr, dtype=np.int32)
+    poly_indices_np = np.asarray(grpc_response.quadIndicesArr, dtype=np.uint32)
     poly_indices_np = poly_indices_np.reshape(-1, 4)
     poly_indices_np = np.insert(poly_indices_np, 0, 4, axis=1).reshape(-1)
     perf_metrics.record_lap("proc-indices")
