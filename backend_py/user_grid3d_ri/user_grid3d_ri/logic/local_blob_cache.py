@@ -192,7 +192,9 @@ class LocalBlobCache:
                 )
 
             async with BlobClient.from_blob_url(blob_url=full_blob_url) as blob_client:
-                stream_downloader = await blob_client.download_blob(max_concurrency=16, progress_hook=progress_hook_async)
+                stream_downloader = await blob_client.download_blob(
+                    max_concurrency=16, progress_hook=progress_hook_async
+                )
                 the_bytes = await stream_downloader.readall()
                 await tmp_file.write(the_bytes)
                 num_bytes_downloaded = len(the_bytes)

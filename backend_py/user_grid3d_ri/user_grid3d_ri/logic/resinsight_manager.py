@@ -47,13 +47,17 @@ class ResInsightManager:
 
     async def _get_or_create_ri_instance_async(self) -> _RiInstanceInfo | None:
         async with self._mutex_lock:
-            LOGGER.debug(f"_get_or_create_ri_instance_async() - has registered instance: {'YES' if self._ri_info else 'NO'}")
+            LOGGER.debug(
+                f"_get_or_create_ri_instance_async() - has registered instance: {'YES' if self._ri_info else 'NO'}"
+            )
             if self._ri_info:
                 try:
                     process = psutil.Process(self._ri_info.pid)
                     LOGGER.debug(f"_get_or_create_ri_instance_async() - {process=}")
                     if process.is_running() and process.status() != psutil.STATUS_ZOMBIE:
-                        LOGGER.debug(f"_get_or_create_ri_instance_async() - process already running, pid={self._ri_info.pid}")
+                        LOGGER.debug(
+                            f"_get_or_create_ri_instance_async() - process already running, pid={self._ri_info.pid}"
+                        )
                         return self._ri_info
                 except psutil.NoSuchProcess:
                     pass
