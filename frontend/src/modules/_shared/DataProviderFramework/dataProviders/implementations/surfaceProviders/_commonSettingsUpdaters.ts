@@ -1,6 +1,5 @@
 import { SurfaceStatisticFunction_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import type { Sensitivity, SensitivityCase } from "@framework/EnsembleSensitivities";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { UpdateFuncWithNoUpdate } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
