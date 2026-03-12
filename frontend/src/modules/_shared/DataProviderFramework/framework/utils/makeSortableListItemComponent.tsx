@@ -6,6 +6,8 @@ import { isDataProvider } from "../DataProvider/DataProvider";
 import { DataProviderComponent } from "../DataProvider/DataProviderComponent";
 import { DeltaSurface } from "../DeltaSurface/DeltaSurface";
 import { DeltaSurfaceComponent } from "../DeltaSurface/DeltaSurfaceComponent";
+import { isErrorPlaceholder } from "../ErrorPlaceholder/ErrorPlaceholder";
+import { ErrorPlaceholderComponent } from "../ErrorPlaceholder/ErrorPlaceholderComponent";
 import { isGroup } from "../Group/Group";
 import { GroupComponent } from "../Group/GroupComponent";
 import { isSharedSetting } from "../SharedSetting/SharedSetting";
@@ -16,6 +18,9 @@ export function makeSortableListItemComponent(
     makeActionsForGroup: (group: ItemGroup) => ActionGroup[],
     onActionClick?: (identifier: string, group: ItemGroup) => void,
 ): React.ReactElement {
+    if (isErrorPlaceholder(item)) {
+        return <ErrorPlaceholderComponent key={item.getItemDelegate().getId()} placeholder={item} />;
+    }
     if (isDataProvider(item)) {
         return <DataProviderComponent key={item.getItemDelegate().getId()} dataProvider={item} />;
     }

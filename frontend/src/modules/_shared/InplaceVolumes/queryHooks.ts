@@ -5,7 +5,10 @@ import type {
     InplaceVolumesIndexWithValues_api,
     InplaceVolumesTableDataPerFluidSelection_api,
 } from "@api";
-import { postGetAggregatedPerRealizationTableDataOptions, postGetAggregatedStatisticalTableDataOptions } from "@api";
+import {
+    postGetAggregatedPerRealizationInplaceTableDataOptions,
+    postGetAggregatedStatisticalInplaceTableDataOptions,
+} from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import type {
@@ -54,7 +57,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
-        const options = postGetAggregatedStatisticalTableDataOptions({
+        const options = postGetAggregatedStatisticalInplaceTableDataOptions({
             query: {
                 ensemble_name: source.ensembleIdent.getEnsembleName(),
                 case_uuid: source.ensembleIdent.getCaseUuid(),
@@ -135,7 +138,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
-        const options = postGetAggregatedPerRealizationTableDataOptions({
+        const options = postGetAggregatedPerRealizationInplaceTableDataOptions({
             query: {
                 ensemble_name: source.ensembleIdent.getEnsembleName(),
                 case_uuid: source.ensembleIdent.getCaseUuid(),

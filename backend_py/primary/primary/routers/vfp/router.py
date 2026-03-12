@@ -30,6 +30,7 @@ async def get_vfp_table_names(
     realization: int = Query(description="Realization"),
     # fmt:on
 ) -> list[str]:
+    """Get the available VFP table names for a given ensemble and realization."""
     perf_metrics = ResponsePerfMetrics(response)
 
     vfp_access = VfpAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
@@ -53,6 +54,9 @@ async def get_vfp_table(
     vfp_table_name: str = Query(description="VFP table name")
     # fmt:on
 ) -> schemas.VfpProdTable | schemas.VfpInjTable:
+    """
+    Get the VFP table for a given ensemble, realization and table name.
+    """
     perf_metrics = ResponsePerfMetrics(response)
 
     vfp_access = VfpAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
