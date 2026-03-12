@@ -1,13 +1,8 @@
-import type { Dash, PlotData } from "plotly.js";
+import type { PlotData } from "plotly.js";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import { computeStatistics } from "../statistics";
-
-// Explicit width for violin traces. With side="positive" and scalemode="width" (default),
-// the violin's peak extends to VIOLIN_WIDTH / 2 from the baseline (y0).
-const VIOLIN_WIDTH = 0.5;
-const VIOLIN_PEAK_HEIGHT = VIOLIN_WIDTH / 2;
 
 export type PlotlyDensityTracesOptions = {
     title: string;
@@ -37,7 +32,6 @@ export function makePlotlyDensityTraces({
         marker: { color },
         side: "positive",
         y0: 0,
-        width: VIOLIN_WIDTH,
         orientation: "h",
         spanmode: "hard",
         meanline: { visible: !showStatisticalMarkers },
@@ -51,50 +45,44 @@ export function makePlotlyDensityTraces({
     });
 
     if (showStatisticalMarkers) {
-        data.push(...createStatisticLinesForDistribution(values, title, color, resultName, showStatisticalLabels));
+        data.push(createStatisticMarkersForDistribution(values, title, color, resultName, showStatisticalLabels));
     }
 
     return data;
 }
 
 /**
- * Creates vertical lines for P10, Mean, and P90 on distribution plots.
- * Line height is derived from the explicit VIOLIN_WIDTH so lines match the violin peak.
+ * Creates diamond markers at y≈0 for P10, Mean, and P90 on distribution plots.
  */
-function createStatisticLinesForDistribution(
+function createStatisticMarkersForDistribution(
     values: number[],
     title: string,
     color: string,
     resultName: string,
     showLabels: boolean,
-): Partial<PlotData>[] {
+): Partial<PlotData> {
     const stats = computeStatistics(values);
     const { p10, p90, mean } = stats;
 
-    // Extend lines slightly above the violin peak so they're clearly visible
-    const lineHeight = VIOLIN_PEAK_HEIGHT * 1.1;
+    const xValues = [p10, mean, p90];
+    const labels = ["P10", "Mean", "P90"];
+    const yValues = [0, 0, 0];
+    const symbols = ["diamond", "diamond", "diamond"];
 
-    function createLine(value: number, label: string, dash: Dash): Partial<PlotData> {
-        const trace: Partial<PlotData> = {
-            x: [value, value],
-            y: [0, lineHeight],
-            type: "scatter" as const,
-            mode: showLabels ? "text+lines" : "lines",
-            line: { color, width: 2, dash },
-            showlegend: false,
-            name: label,
-            legendgroup: title,
-            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatNumber(value)}<extra></extra>`,
-        };
-
-        if (showLabels) {
-            trace.text = ["", `${label}: ${formatNumber(value)}`];
-            trace.textposition = "top center";
-            trace.textfont = { color: "black", size: 11 };
-        }
-
-        return trace;
-    }
-
-    return [createLine(p10, "P10", "dash"), createLine(mean, "Mean", "solid"), createLine(p90, "P90", "dash")];
+    return {
+        x: xValues,
+        y: yValues,
+        type: "scatter" as const,
+        mode: showLabels ? "text+markers" : "markers",
+        marker: { color, size: 10, symbol: symbols },
+        showlegend: false,
+        legendgroup: title,
+        text: labels.map((label, i) => `${label}: ${formatNumber(xValues[i])}`),
+        textposition: "top center",
+        textfont: showLabels ? { color: "black", size: 11 } : undefined,
+        hovertemplate: xValues.map(
+            (_, i) =>
+                `<b>${title}</b><br><b>${labels[i]}</b><br>${resultName}: ${formatNumber(xValues[i])}<extra></extra>`,
+        ),
+    };
 }
