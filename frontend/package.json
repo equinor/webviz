@@ -4,8 +4,8 @@
     "version": "0.0.0",
     "type": "module",
     "engines": {
-        "node": "^24.13.0",
-        "npm": "^11.6.2"
+        "node": "^24.14.0",
+        "npm": "^11.9.0"
     },
     "scripts": {
         "dev": "npm run generate:module-states-map && vite --host",
@@ -50,6 +50,7 @@
         "comlink": "^4.4.2",
         "culori": "^4.0.2",
         "error-stack-parser": "^2.1.4",
+        "fflate": "^0.8.2",
         "geojson": "^0.5.0",
         "jotai": "^2.6.2",
         "jotai-effect": "^2.0.5",
