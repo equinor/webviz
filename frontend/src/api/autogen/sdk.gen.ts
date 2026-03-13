@@ -24,6 +24,8 @@ import type {
     GetAliveProtectedData_api,
     GetAliveProtectedResponses_api,
     GetAliveResponses_api,
+    GetAssetNamesData_api,
+    GetAssetNamesResponses_api,
     GetCasesData_api,
     GetCasesErrors_api,
     GetCasesResponses_api,
@@ -45,14 +47,14 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsErrors_api,
     GetEnsembleDetailsResponses_api,
+    GetFieldIdentifiersData_api,
+    GetFieldIdentifiersResponses_api,
     GetFieldPerforationsData_api,
     GetFieldPerforationsErrors_api,
     GetFieldPerforationsResponses_api,
     GetFieldScreensData_api,
     GetFieldScreensErrors_api,
     GetFieldScreensResponses_api,
-    GetFieldsData_api,
-    GetFieldsResponses_api,
     GetGridModelsInfoData_api,
     GetGridModelsInfoErrors_api,
     GetGridModelsInfoResponses_api,
@@ -248,21 +250,37 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * Get Fields
+ * Get Asset Names
  *
- * Get list of fields
+ * Get list of asset names
  */
-export const getFields = <ThrowOnError extends boolean = false>(options?: Options<GetFieldsData_api, ThrowOnError>) =>
-    (options?.client ?? client).get<GetFieldsResponses_api, unknown, ThrowOnError>({
+export const getAssetNames = <ThrowOnError extends boolean = false>(
+    options?: Options<GetAssetNamesData_api, ThrowOnError>,
+) =>
+    (options?.client ?? client).get<GetAssetNamesResponses_api, unknown, ThrowOnError>({
         responseType: "json",
-        url: "/fields",
+        url: "/asset_names",
+        ...options,
+    });
+
+/**
+ * Get Field Identifiers
+ *
+ * Get list of field identifiers
+ */
+export const getFieldIdentifiers = <ThrowOnError extends boolean = false>(
+    options?: Options<GetFieldIdentifiersData_api, ThrowOnError>,
+) =>
+    (options?.client ?? client).get<GetFieldIdentifiersResponses_api, unknown, ThrowOnError>({
+        responseType: "json",
+        url: "/field_identifiers",
         ...options,
     });
 
 /**
  * Get Cases
  *
- * Get list of cases for specified field
+ * Get list of cases for specified asset
  */
 export const getCases = <ThrowOnError extends boolean = false>(options: Options<GetCasesData_api, ThrowOnError>) =>
     (options.client ?? client).get<GetCasesResponses_api, GetCasesErrors_api, ThrowOnError>({
