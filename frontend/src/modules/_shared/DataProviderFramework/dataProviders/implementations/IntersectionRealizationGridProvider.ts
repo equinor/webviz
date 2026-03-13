@@ -11,7 +11,7 @@ import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/i
 
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
@@ -51,14 +51,11 @@ export type IntersectionRealizationGridProviderArgs = {
     enableWellboreExtensionLength: boolean;
 };
 
-export class IntersectionRealizationGridProvider
-    implements
-        CustomDataProviderImplementation<
-            IntersectionRealizationGridSettings,
-            IntersectionRealizationGridData,
-            IntersectionRealizationGridStoredData
-        >
-{
+export class IntersectionRealizationGridProvider implements CustomDataProviderImplementation<
+    IntersectionRealizationGridSettings,
+    IntersectionRealizationGridData,
+    IntersectionRealizationGridStoredData
+> {
     settings = intersectionRealizationGridSettings;
 
     private _isWellboreExtensionLengthEnabled = false;
@@ -94,7 +91,7 @@ export class IntersectionRealizationGridProvider
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<
+    }: DataProviderAccessors<
         IntersectionRealizationGridSettings,
         IntersectionRealizationGridData,
         IntersectionRealizationGridStoredData
@@ -114,7 +111,7 @@ export class IntersectionRealizationGridProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataProviderInformationAccessors<
+    }: DataProviderAccessors<
         IntersectionRealizationGridSettings,
         IntersectionRealizationGridData,
         IntersectionRealizationGridStoredData
@@ -333,7 +330,6 @@ export class IntersectionRealizationGridProvider
                 parameter_name: parameterName,
                 parameter_time_or_interval_str: timeOrInterval,
                 realization_num: realizationNum,
-                ...makeCacheBustingQueryParam(ensembleIdent),
             },
             body: { polyline_utm_xy: polylineWithSectionLengths.polylineUtmXy },
         });

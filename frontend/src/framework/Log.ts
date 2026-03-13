@@ -2,7 +2,7 @@
 import { formatHex } from "culori";
 import { isArray } from "lodash";
 
-import { getDebugSetting, setDebugSetting } from "@framework/internal/utils/debug";
+import { getDebugSetting, setDebugSetting } from "@framework/utils/debug";
 
 let colorIndex = 0;
 

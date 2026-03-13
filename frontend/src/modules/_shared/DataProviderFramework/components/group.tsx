@@ -1,7 +1,6 @@
-import React from "react";
+import type React from "react";
 
 import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
-import { isEqual } from "lodash";
 
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { SortableList } from "@lib/components/SortableList";
@@ -10,7 +9,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 export type SortableListGroupProps = {
     id: string;
     title: React.ReactNode;
-    expanded?: boolean;
+    expanded: boolean;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     headerStyle?: React.CSSProperties;
@@ -18,6 +17,7 @@ export type SortableListGroupProps = {
     contentStyle?: React.CSSProperties;
     contentWhenEmpty?: React.ReactNode;
     children?: React.ReactElement[];
+    onToggleExpanded: (expanded: boolean) => void;
 };
 
 /**
@@ -35,18 +35,8 @@ export type SortableListGroupProps = {
  * @returns {React.ReactNode} A sortable list group component.
  */
 export function SortableListGroup(props: SortableListGroupProps): React.ReactNode {
-    const [isExpanded, setIsExpanded] = React.useState<boolean>(props.expanded ?? true);
-    const [prevExpanded, setPrevExpanded] = React.useState<boolean | undefined>(props.expanded);
-
-    if (!isEqual(props.expanded, prevExpanded)) {
-        if (props.expanded !== undefined) {
-            setIsExpanded(props.expanded);
-        }
-        setPrevExpanded(props.expanded);
-    }
-
     function handleToggleExpanded() {
-        setIsExpanded(!isExpanded);
+        props.onToggleExpanded(!props.expanded);
     }
 
     const hasContent = props.children !== undefined && props.children.length > 0;
@@ -54,11 +44,11 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
     return (
         <SortableList.Group id={props.id}>
             <div className={resolveClassNames("bg-gray-200")}>
-                <Header {...props} onToggleExpanded={handleToggleExpanded} expanded={isExpanded} hovered={false} />
+                <Header {...props} onToggleExpanded={handleToggleExpanded} expanded={props.expanded} hovered={false} />
                 <SortableList.GroupContent>
                     <div
                         className={resolveClassNames("pl-1 bg-white shadow-inner border-b border-b-gray-300", {
-                            hidden: !isExpanded,
+                            hidden: !props.expanded,
                         })}
                         style={props.contentStyle}
                     >

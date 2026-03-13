@@ -7,6 +7,7 @@ from webviz_services.sumo_access.rft_access import RftAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import schemas
@@ -17,20 +18,23 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/table_definition")
-async def get_table_definition(
+@router.get("/rft_table_definition")
+@cache_time(CacheTime.LONG)
+async def get_rft_table_definition(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> schemas.RftTableDefinition:
+    """Get the RFT table definition for a given ensemble."""
     access = RftAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     rft_table_def = await access.get_rft_info_async()
 
     return converters.to_api_table_definition(rft_table_def)
 
 
-@router.get("/realization_data")
-async def get_realization_data(
+@router.get("/rft_realization_data")
+@cache_time(CacheTime.LONG)
+async def get_rft_realization_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
@@ -44,6 +48,7 @@ async def get_realization_data(
         ),
     ] = None,
 ) -> list[schemas.RftRealizationData]:
+    """Get a list of RFT data per realization, for a given well and response."""
     realizations: list[int] | None = None
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)

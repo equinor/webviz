@@ -1,9 +1,8 @@
 import React from "react";
 
 import { Dropdown, MenuButton } from "@mui/base";
-import { Check, Close, FilterAlt, Search } from "@mui/icons-material";
+import { Check, Close, MoreVert, Search } from "@mui/icons-material";
 
-import { Badge } from "@lib/components/Badge";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Menu } from "@lib/components/Menu";
@@ -17,7 +16,7 @@ export type DrawerFilterItem<T extends string | number> = {
 };
 
 export type DrawerProps<T extends string | number> = {
-    title: string;
+    title?: string;
     icon?: React.ReactElement;
     visible: boolean;
     showSearch?: boolean;
@@ -68,21 +67,24 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
     );
 
     const showFilter = props.filterItems && props.filterItems.length > 0;
+    const showHeader = props.icon || props.title || props.onClose || props.actions;
 
     return (
         <div className={`flex flex-col bg-white min-h-0 h-full${props.visible ? "" : " hidden"}`}>
-            <div className="flex justify-center items-center p-2 bg-slate-100 h-10 shadow-sm">
-                {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
-                <span className="font-bold grow p-0 text-sm">{props.title}</span>
-                {props.actions}
-                {props.onClose && (
-                    <Tooltip title="Close">
-                        <DenseIconButton onClick={props.onClose}>
-                            <Close fontSize="inherit" />
-                        </DenseIconButton>
-                    </Tooltip>
-                )}
-            </div>
+            {showHeader && (
+                <div className="flex justify-center items-center p-2 bg-slate-100 h-10 shadow-sm">
+                    {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
+                    <span className="font-bold grow p-0 text-sm">{props.title}</span>
+                    {props.actions}
+                    {props.onClose && (
+                        <Tooltip title="Close">
+                            <DenseIconButton onClick={props.onClose}>
+                                <Close fontSize="inherit" />
+                            </DenseIconButton>
+                        </Tooltip>
+                    )}
+                </div>
+            )}
             <div className="grow flex flex-col h-auto">
                 {(props.showSearch || showFilter) && (
                     <div className="flex gap-2 bg-slate-50 p-2">
@@ -98,13 +100,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                         {showFilter && (
                             <Dropdown open={open} onOpenChange={handleOpenChange}>
                                 <MenuButton className="p-1 rounded-sm hover:bg-blue-200 focus:outline-blue-600">
-                                    <Badge
-                                        badgeContent={selectedFilterItems.length}
-                                        color="bg-blue-500"
-                                        invisible={selectedFilterItems.length === 0}
-                                    >
-                                        <FilterAlt fontSize="small" />
-                                    </Badge>
+                                    <MoreVert fontSize="small" />
                                 </MenuButton>
                                 <Menu anchorOrigin="bottom-end">
                                     {props.filterItems?.map((item) => (

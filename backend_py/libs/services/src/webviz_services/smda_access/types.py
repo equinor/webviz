@@ -86,7 +86,6 @@ class WellboreHeader(BaseModel):
     depth_reference_elevation: float
     wellbore_purpose: str | None
     wellbore_status: str | None
-    current_track: int
     tvd_max: float
     md_max: float
     kickoff_depth_md: float | None

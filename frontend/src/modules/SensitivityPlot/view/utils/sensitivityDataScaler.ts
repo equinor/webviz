@@ -1,4 +1,5 @@
-import type { SensitivityResponse } from "../../../_shared/SensitivityProcessing/types";
+import type { SensitivityResponse } from "@modules/_shared/SensitivityProcessing";
+
 import { SensitivityScaling } from "../../typesAndEnums";
 
 export class SensitivityDataScaler {

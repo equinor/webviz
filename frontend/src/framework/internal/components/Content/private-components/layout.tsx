@@ -31,6 +31,10 @@ import {
 } from "@lib/utils/vec2";
 
 import { useActiveDashboard } from "../../ActiveDashboardBoundary";
+import {
+    SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
+    SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
+} from "../../SettingsContentPanels/";
 
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
@@ -370,8 +374,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
 
     function openModulesList() {
         setRightDrawerContent(RightDrawerContent.ModulesList);
-        if (rightSettingsPanelWidth <= 5) {
-            setRightSettingsPanelWidth(30);
+        if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+            setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
         }
     }
 

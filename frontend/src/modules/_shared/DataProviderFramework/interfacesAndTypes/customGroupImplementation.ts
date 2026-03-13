@@ -34,6 +34,9 @@ export interface CustomGroupImplementationWithSettings<
      */
     getDefaultSettingsValues?(): Partial<TSettingTypes>;
 
+    /**
+     * Defines dependencies related to this group's settings
+     */
     defineDependencies?(args: DefineBasicDependenciesArgs<TSettings, TSettingTypes>): void;
 }
 

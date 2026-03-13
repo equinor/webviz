@@ -1,6 +1,5 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-
-import type { SensitivitySortBy } from "../_shared/SensitivityProcessing/types";
+import type { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 
 import {
     sensitivitySortByAtom,

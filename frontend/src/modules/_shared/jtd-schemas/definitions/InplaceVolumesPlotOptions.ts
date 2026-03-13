@@ -14,5 +14,6 @@ export const INPLACE_VOLUMES_PLOT_OPTIONS_SCHEMA: JTDSchemaType<InplaceVolumesPl
         sharedYAxis: { type: "boolean" },
         hideConstants: { type: "boolean" },
         showPercentageInHistogram: { type: "boolean" },
+        showStatisticalLabels: { type: "boolean" },
     },
 } as const;

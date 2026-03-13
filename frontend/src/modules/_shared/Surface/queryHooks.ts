@@ -34,14 +34,17 @@ export function useRealizationSurfacesMetadataQuery(
     });
 }
 
-export function useObservedSurfacesMetadataQuery(caseUuid: string | undefined): UseQueryResult<SurfaceMetaSet_api> {
+export function useObservedSurfacesMetadataQuery(
+    ensembleIdent: RegularEnsembleIdent | null,
+): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
         ...getObservedSurfacesMetadataOptions({
             query: {
-                case_uuid: caseUuid ?? "",
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ...makeCacheBustingQueryParam(ensembleIdent),
             },
         }),
-        enabled: Boolean(caseUuid),
+        enabled: Boolean(ensembleIdent),
     });
 }
 
