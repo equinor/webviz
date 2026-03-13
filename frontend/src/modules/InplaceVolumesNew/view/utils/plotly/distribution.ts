@@ -67,14 +67,13 @@ function createStatisticMarkersForDistribution(
     const xValues = [p10, mean, p90];
     const labels = ["P10", "Mean", "P90"];
     const yValues = [0, 0, 0];
-    const symbols = ["diamond", "diamond", "diamond"];
 
     return {
         x: xValues,
         y: yValues,
         type: "scatter" as const,
         mode: showLabels ? "text+markers" : "markers",
-        marker: { color, size: 10, symbol: symbols },
+        marker: { color, size: 10, symbol: "x" },
         showlegend: false,
         legendgroup: title,
         text: labels.map((label, i) => `${label}: ${formatNumber(xValues[i])}`),
