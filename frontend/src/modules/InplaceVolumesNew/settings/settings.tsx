@@ -220,7 +220,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 ) : null}
                 {selectedPlotType === PlotType.HISTOGRAM && (
                     <Checkbox
-                        label="Show bar labels"
+                        label="Show labels"
                         checked={plotOptions.showPercentageInHistogram}
                         onChange={handleShowPercentageInHistogramChange}
                     />
