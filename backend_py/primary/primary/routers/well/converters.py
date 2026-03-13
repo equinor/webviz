@@ -410,7 +410,7 @@ def convert_survey_sample_to_log_curve_schemas(
     survey_header: WellboreSurveyHeader,
     curve_name: str,
 ) -> schemas.WellboreLogCurveData:
-    (full_name, unit, curve_min, curve_max) = _get_curve_specific_header_values(curve_name, survey_header)
+    full_name, unit, curve_min, curve_max = _get_curve_specific_header_values(curve_name, survey_header)
 
     curve_index_min = float("inf")
     curve_index_max = float("-inf")

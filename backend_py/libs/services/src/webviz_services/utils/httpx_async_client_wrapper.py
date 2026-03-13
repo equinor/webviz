@@ -3,7 +3,6 @@ import logging
 
 import httpx
 
-
 LOGGER = logging.getLogger(__name__)
 
 
