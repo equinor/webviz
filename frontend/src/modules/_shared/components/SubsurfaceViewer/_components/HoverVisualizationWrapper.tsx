@@ -1,6 +1,7 @@
 import React from "react";
 
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
+import { ScatterplotLayer } from "@deck.gl/layers";
 import type { DeckGLRef } from "@deck.gl/react";
 import type { BoundingBox2D, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
 import { CrosshairLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -8,11 +9,15 @@ import { inRange } from "lodash";
 
 import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { PickingRayLayer } from "@modules/_shared/customDeckGlLayers/PickingRayLayer";
 import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
+import { positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
 import type { DeckGlInstanceManager } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
+import type { Polyline, PolylinesPlugin } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
+import { PolylineEditingMode, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { getHoverDataInPicks } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
@@ -26,6 +31,7 @@ export type HoverVisualizationWrapperProps = {
     verticalScale: number;
     triggerHome: number;
     deckGlRef: React.RefObject<DeckGLRef | null>;
+    polylinesPlugin: PolylinesPlugin;
     children?: React.ReactNode;
 };
 
@@ -44,10 +50,23 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     );
     const publishHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, ctx.hoverService, ctx.moduleInstanceId);
     const publishHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
+    const publishHoveredPolylineLengthAlong = usePublishHoverValue(
+        HoverTopic.POLYLINE_LENGTH_ALONG,
+        ctx.hoverService,
+        ctx.moduleInstanceId,
+    );
 
     const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
-
     const pickingRayLayers = usePickingRayLayers(unscaledCoordinatesPerView, false);
+
+    const polylineEditingMode = usePublishSubscribeTopicValue(props.polylinesPlugin, PolylinesPluginTopic.EDITING_MODE);
+    const availablePolylines = usePublishSubscribeTopicValue(props.polylinesPlugin, PolylinesPluginTopic.POLYLINES);
+    const polylineHoverMarkerLayer = usePolylineHoverMarkerLayer(
+        availablePolylines,
+        polylineEditingMode,
+        ctx.hoverService,
+        ctx.moduleInstanceId,
+    );
 
     const hoverVisualizationGroups = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
         ctx.visualizationAssemblerProduct,
@@ -55,11 +74,26 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         ctx.moduleInstanceId,
     );
 
-    const adjustedLayers = [...props.layers, crossHairLayer];
+    const publishHoveredPolylineLengthAlongRef = React.useRef(publishHoveredPolylineLengthAlong);
+    publishHoveredPolylineLengthAlongRef.current = publishHoveredPolylineLengthAlong;
+
+    React.useEffect(
+        function subscribeToPolylineHover() {
+            return props.polylinesPlugin
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PolylinesPluginTopic.POLYLINE_HOVER)(() => {
+                publishHoveredPolylineLengthAlongRef.current(props.polylinesPlugin.getPolylineHoverData());
+            });
+        },
+        [props.polylinesPlugin],
+    );
+
+    const adjustedLayers = [...props.layers];
     const adjustedViews = {
         ...props.views,
         viewports: props.views.viewports.map((viewport) => {
             const viewportLayerIds = viewport.layerIds ? [...viewport.layerIds] : [];
+            viewportLayerIds.push(POLYLINE_HOVER_MARKER_LAYER_ID);
 
             for (const hoverVisualizationGroup of hoverVisualizationGroups) {
                 if (hoverVisualizationGroup.groupId !== viewport.id) continue;
@@ -132,6 +166,7 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
             {...props}
             views={adjustedViews}
             layers={adjustedLayers}
+            overlayLayers={[crossHairLayer, polylineHoverMarkerLayer]}
             onViewerHover={handleViewerHover}
             onViewportHover={handleViewportHover}
             onPickingInfoChange={handlePickingInfoChange}
@@ -157,6 +192,42 @@ function useCrosshairLayer(
         sizePx: 40,
         // Hide the crosshair with opacity to keep layer mounted
         color: [...color, xInRange && yInRange ? 225 : 0],
+    });
+}
+
+const POLYLINE_HOVER_MARKER_LAYER_ID = "polyline-hover-marker";
+
+function usePolylineHoverMarkerLayer(
+    availablePolylines: Polyline[],
+    polylineEditingMode: PolylineEditingMode,
+    hoverService: HoverService,
+    instanceId: string,
+): ScatterplotLayer {
+    const hovered = useHoverValue(HoverTopic.POLYLINE_LENGTH_ALONG, hoverService, instanceId);
+
+    let position: [number, number, number] | null = null;
+    if (polylineEditingMode !== PolylineEditingMode.DISABLED && hovered) {
+        const polyline = availablePolylines.find((p) => p.id === hovered.polylineId);
+        position = polyline ? positionAtLengthAlong(polyline.path, hovered.lengthAlong) : null;
+    }
+
+    return new ScatterplotLayer({
+        id: POLYLINE_HOVER_MARKER_LAYER_ID,
+        data: position ? [{ position: position }] : [],
+        getPosition: (d: { position: [number, number, number] }) => d.position,
+        radiusUnits: "meters",
+        getRadius: 60,
+        radiusMinPixels: 8,
+        radiusMaxPixels: 20,
+        getLineWidth: 1,
+        lineWidthMinPixels: 1,
+        getFillColor: [255, 0, 0, 180],
+        stroked: true,
+        pickable: false,
+        billboard: true,
+        parameters: {
+            depthTest: false,
+        },
     });
 }
 

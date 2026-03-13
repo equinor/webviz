@@ -65,7 +65,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
     const [verticalScale, setVerticalScale] = React.useState<number>(context.initialVerticalScale);
     const [activePolylineName, setActivePolylineName] = React.useState<string | undefined>(undefined);
-
     const deckGlManagerRef = React.useRef<DeckGlInstanceManager>(new DeckGlInstanceManager(deckGlRef.current));
     const polylinesPluginRef = React.useRef<PolylinesPlugin>(new PolylinesPlugin(deckGlManagerRef.current));
 
@@ -200,6 +199,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             deckGlManager={deckGlManagerRef.current}
             verticalScale={verticalScale}
             triggerHome={triggerHomeCounter}
+            polylinesPlugin={polylinesPluginRef.current}
         >
             <Toolbar
                 hideVerticalScaleControls={context.visualizationMode === "2D"}

@@ -94,6 +94,7 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
                             getWidth: 30,
                             widthUnits: "meters",
                             widthMinPixels: 5,
+                            widthMaxPixels: 20,
                             parameters: {
                                 depthTest: false,
                             },
@@ -115,6 +116,7 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
                         getWidth: 30,
                         widthUnits: "meters",
                         widthMinPixels: 6,
+                        widthMaxPixels: 24,
                         parameters: {
                             depthTest: false,
                         },
