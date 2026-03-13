@@ -1,3 +1,4 @@
+import { MinMax } from "@lib/utils/MinMax";
 import { computeP50, computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
 
 import type { PointStatistics, TimeseriesStatistics } from "../types";
@@ -10,13 +11,14 @@ export function computePointStatistics(values: number[]): PointStatistics {
     const count = values.length;
     const mean = values.reduce((a, b) => a + b, 0) / count;
     const variance = count > 1 ? values.reduce((sum, val) => sum + (val - mean) ** 2, 0) / (count - 1) : 0;
+    const minMax = MinMax.fromNumericValues(values);
 
     return {
         count,
         mean,
         stdDev: Math.sqrt(variance),
-        min: Math.min(...values),
-        max: Math.max(...values),
+        min: minMax.min,
+        max: minMax.max,
         p10: computeReservesP10(values),
         p50: computeP50(values),
         p90: computeReservesP90(values),
@@ -46,8 +48,9 @@ export function computeTimeseriesStatistics(valuesPerRealization: number[][]): T
         }
 
         mean[t] = sum / numReals;
-        min[t] = Math.min(...col);
-        max[t] = Math.max(...col);
+        const minMax = MinMax.fromNumericValues(col);
+        min[t] = minMax.min;
+        max[t] = minMax.max;
         p10[t] = computeReservesP10(col);
         p50[t] = computeP50(col);
         p90[t] = computeReservesP90(col);

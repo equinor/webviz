@@ -42,6 +42,15 @@ describe("computePointStatistics", () => {
         expect(stats.min).toBe(-10);
         expect(stats.max).toBe(10);
     });
+
+    it("handles large inputs without spreading into Math.min/Math.max", () => {
+        const values = Array.from({ length: 200_000 }, (_, index) => index - 100_000);
+        const stats = computePointStatistics(values);
+
+        expect(stats.count).toBe(values.length);
+        expect(stats.min).toBe(-100_000);
+        expect(stats.max).toBe(99_999);
+    });
 });
 
 describe("computeTimeseriesStatistics", () => {

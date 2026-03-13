@@ -1,3 +1,5 @@
+import { MinMax } from "@lib/utils/MinMax";
+
 import type { DistributionTrace, PointStatistics } from "../types";
 import { HistogramType } from "../types";
 
@@ -31,6 +33,10 @@ export type HistogramLayoutResult = {
 };
 
 export function computeHistogramTraceData(traces: DistributionTrace[], numBins: number): HistogramTraceData[] {
+    if (traces.length === 0) {
+        return [];
+    }
+
     const binEdges = computeSharedBinEdges(traces, numBins);
 
     return traces.map((trace) => ({
@@ -107,8 +113,9 @@ export function computeHistogramLayout(
 
 function computeSharedBinEdges(traces: DistributionTrace[], numBins: number): number[] {
     const allValues = traces.flatMap((trace) => trace.values);
-    const min = Math.min(...allValues);
-    const max = Math.max(...allValues);
+    const minMax = MinMax.fromNumericValues(allValues);
+    const min = minMax.isValid() ? minMax.min : 0;
+    const max = minMax.isValid() ? minMax.max : numBins;
     const range = max - min || 1;
     const binSize = range / numBins;
     const epsilon = Math.max(binSize * 1e-6, 1e-10);

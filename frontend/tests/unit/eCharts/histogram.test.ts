@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { HistogramType } from "@modules/_shared/eCharts/types";
 import {
     computeHistogramLayout,
     computeHistogramTraceData,
 } from "@modules/_shared/eCharts/utils/histogram";
-import { HistogramType } from "@modules/_shared/eCharts/types";
 
 const makeTrace = (name: string, values: number[]) => ({ name, color: "#000", values });
 
@@ -40,6 +40,19 @@ describe("computeHistogramTraceData", () => {
         expect(result[0].stats.mean).toBe(20);
         expect(result[0].stats.min).toBe(10);
         expect(result[0].stats.max).toBe(30);
+    });
+
+    it("handles large combined inputs without overflowing Math.min/Math.max", () => {
+        const traces = [
+            makeTrace("A", Array.from({ length: 100_000 }, (_, index) => index)),
+            makeTrace("B", Array.from({ length: 100_000 }, (_, index) => index + 100_000)),
+        ];
+
+        const result = computeHistogramTraceData(traces, 10);
+
+        expect(result).toHaveLength(2);
+        expect(result[0].stats.min).toBe(0);
+        expect(result[1].stats.max).toBe(199_999);
     });
 });
 
