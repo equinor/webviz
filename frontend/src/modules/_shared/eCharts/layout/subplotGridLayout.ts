@@ -1,23 +1,8 @@
-/**
- * General-purpose ECharts multi-grid layout calculator.
- *
- * Given the number of subplots and optional margin/gap configuration, this
- * module computes grid, x-axis, y-axis, and title positioning arrays that
- * ECharts can consume directly.
- */
-
-// ── Layout configuration ──
-
 export type SubplotLayoutConfig = {
-    /** Left margin in percent of the container width. Default: 2 */
     marginLeftPct?: number;
-    /** Right margin in percent of the container width. Default: 5 */
     marginRightPct?: number;
-    /** Bottom reserved space in percent (for data-zoom / labels). Default: 8 */
     bottomSpacePct?: number;
-    /** Top reserved space in percent. Default: 4 */
     topSpacePct?: number;
-    /** Maximum number of columns. Default: 4 */
     maxCols?: number;
 };
 
@@ -29,8 +14,6 @@ export const DEFAULT_LAYOUT_CONFIG: Required<SubplotLayoutConfig> = {
     maxCols: 4,
 };
 
-// ── Result types ──
-
 export type GridEntry = {
     top: string;
     left: string;
@@ -41,31 +24,20 @@ export type GridEntry = {
 
 export type SubplotLayoutResult = {
     grids: GridEntry[];
-    /** Per-subplot position info needed to create axes / titles on top. */
     cells: SubplotCell[];
     numCols: number;
     numRows: number;
 };
 
 export type SubplotCell = {
-    /** Grid index (same as the array index). */
     gridIndex: number;
     leftPct: number;
     topPct: number;
     widthPct: number;
     heightPct: number;
-    /** Title top position — slightly above the grid. */
     titleTopPct: number;
 };
 
-// ── Public API ──
-
-/**
- * Compute a multi-grid layout for `numSubplots` subplots.
- *
- * Returns grid definitions plus per-cell positioning metadata so callers
- * can add axes and titles at the correct coordinates.
- */
 export function computeSubplotGridLayout(numSubplots: number, config?: SubplotLayoutConfig): SubplotLayoutResult {
     const cfg = { ...DEFAULT_LAYOUT_CONFIG, ...config };
 

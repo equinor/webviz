@@ -3,22 +3,59 @@ import React from "react";
 import type ReactECharts from "echarts-for-react";
 import { useAtomValue, useSetAtom } from "jotai";
 
-import type { HeatmapDataset, StatisticsType, SubplotGroup } from "../../typesAndEnums";
+import {
+    buildHeatmapChart,
+    buildTimeseriesChart,
+    useClickToTimestamp,
+    useHighlightOnHover,
+} from "@modules/_shared/eCharts";
+import type {
+    ContainerSize,
+    HeatmapTrace,
+    SubplotGroup as SharedSubplotGroup,
+    TimeseriesDisplayConfig,
+    TimeseriesTrace,
+} from "@modules/_shared/eCharts";
+
+import type { ChartTrace, HeatmapDataset, StatisticsType, SubplotGroup } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
-import type { ContainerSize } from "../../utils/echartsChartBuilder";
-import { buildHeatmapOptions, buildTimeseriesOptions } from "../../utils/echartsChartBuilder";
 import { activeTimestampUtcMsAtom } from "../atoms/baseAtoms";
 
-import { useChartClickToTimestamp } from "./useChartClickToTimestamp";
-import { useHighlightOnHover } from "./useHighlightOnHover";
+function toTimeseriesTrace(t: ChartTrace): TimeseriesTrace {
+    return {
+        name: t.label,
+        color: t.color,
+        timestamps: t.timestamps,
+        realizationValues: t.aggregatedValues ?? undefined,
+        realizationIds: t.realizations.length > 0 ? t.realizations : undefined,
+        statistics: t.stats ?? undefined,
+    };
+}
 
-/**
- * Hook that builds ECharts options and event handlers for the timeseries chart
- * or the drainage heatmap, depending on visualization mode.
- *
- * Returns everything the view needs to render the chart, plus a ref for the
- * ECharts instance so event handlers can dispatch highlight/downplay actions.
- */
+function toSharedSubplotGroups(groups: SubplotGroup[]): SharedSubplotGroup<TimeseriesTrace>[] {
+    return groups.map((g) => ({
+        title: g.title,
+        traces: g.traces.map(toTimeseriesTrace),
+    }));
+}
+
+function toHeatmapSubplotGroups(datasets: HeatmapDataset[]): SharedSubplotGroup<HeatmapTrace>[] {
+    return [
+        {
+            title: "",
+            traces: datasets.map((ds) => ({
+                name: ds.ensembleTitle,
+                xLabels: ds.xLabels,
+                yLabels: ds.yLabels,
+                timestampsUtcMs: ds.timestampsUtcMs,
+                data: ds.data,
+                minValue: ds.minValue,
+                maxValue: ds.maxValue,
+            })),
+        },
+    ];
+}
+
 export function useEchartsOptions(
     subplotGroups: SubplotGroup[],
     heatmapDatasets: HeatmapDataset[],
@@ -33,41 +70,42 @@ export function useEchartsOptions(
     const isHeatmap = visualizationMode === VisualizationMode.DrainageHeatmap;
     const showStatLines = !isHeatmap && visualizationMode !== VisualizationMode.IndividualRealizations;
     const showFanchart = visualizationMode === VisualizationMode.StatisticalFanchart;
+    const showRealizations = !isHeatmap && !showStatLines;
 
     const chartRef = React.useRef<ReactECharts>(null);
 
-    // ── Build echarts option object ──
+    const displayConfig: TimeseriesDisplayConfig = React.useMemo(
+        () => ({
+            showRealizations,
+            showStatistics: showStatLines,
+            showFanchart,
+            selectedStatistics: selectedStatistics as unknown as TimeseriesDisplayConfig["selectedStatistics"],
+        }),
+        [showRealizations, showStatLines, showFanchart, selectedStatistics],
+    );
 
     const { echartsOptions, timeseriesChartData } = React.useMemo(() => {
         if (isHeatmap) {
+            const heatmapGroups = toHeatmapSubplotGroups(heatmapDatasets);
             return {
-                echartsOptions: buildHeatmapOptions(heatmapDatasets, yAxisLabel, activeTimestampUtcMs, containerSize),
+                echartsOptions: buildHeatmapChart(heatmapGroups, yAxisLabel, activeTimestampUtcMs, containerSize),
                 timeseriesChartData: heatmapDatasets.length > 0 ? heatmapDatasets[0].xLabels : [],
             };
         }
 
-        return buildTimeseriesOptions(
-            subplotGroups,
-            showStatLines,
-            showFanchart,
-            selectedStatistics,
+        const sharedGroups = toSharedSubplotGroups(subplotGroups);
+        const result = buildTimeseriesChart(
+            sharedGroups,
+            displayConfig,
             yAxisLabel,
             activeTimestampUtcMs,
             containerSize,
         );
-    }, [
-        isHeatmap,
-        heatmapDatasets,
-        subplotGroups,
-        showStatLines,
-        showFanchart,
-        selectedStatistics,
-        yAxisLabel,
-        activeTimestampUtcMs,
-        containerSize,
-    ]);
-
-    // ── Resolve timestamps for click-to-publish ──
+        return {
+            echartsOptions: result.echartsOptions,
+            timeseriesChartData: result.categoryData,
+        };
+    }, [isHeatmap, heatmapDatasets, subplotGroups, displayConfig, yAxisLabel, activeTimestampUtcMs, containerSize]);
 
     const timestamps = React.useMemo(() => {
         if (isHeatmap) {
@@ -77,13 +115,9 @@ export function useEchartsOptions(
         return firstTrace?.timestamps ?? [];
     }, [isHeatmap, heatmapDatasets, subplotGroups]);
 
-    // ── Click-to-snap timestamp selection ──
+    useClickToTimestamp(chartRef, timestamps, activeTimestampUtcMs, setActiveTimestampUtcMs, echartsOptions);
 
-    useChartClickToTimestamp(chartRef, timestamps, activeTimestampUtcMs, setActiveTimestampUtcMs, echartsOptions);
-
-    // ── Highlight-on-hover for individual realizations (timeseries only) ──
-
-    const onChartEvents = useHighlightOnHover(chartRef, !isHeatmap && !showStatLines);
+    const onChartEvents = useHighlightOnHover(chartRef, !isHeatmap && showRealizations);
 
     return {
         chartRef,

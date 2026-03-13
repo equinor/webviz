@@ -47,6 +47,10 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<DynamicVolumesSettings>,
     view?: Partial<DynamicVolumesView>,
   },
+  "EChartsDemo": {
+    settings?: never,
+    view?: never,
+  },
   "FlowNetwork": {
     settings?: Partial<FlowNetworkSettings>,
     view?: never,

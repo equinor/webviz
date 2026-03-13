@@ -3,19 +3,14 @@ import React from "react";
 import type ReactECharts from "echarts-for-react";
 
 /**
- * Attaches a native DOM click handler on the ECharts container that converts
- * a click position → category index → timestamp, then toggles the active
- * timestamp (click again to deselect).
- *
- * Uses a DOM-level listener so it is never invalidated by ECharts internal
- * rebuilds (notMerge / zrender recreation).
+ * Attaches a native DOM click handler that converts click position → category
+ * index → timestamp. Toggles selection (click again to deselect).
  */
-export function useChartClickToTimestamp(
+export function useClickToTimestamp(
     chartRef: React.RefObject<ReactECharts | null>,
     timestamps: number[],
     activeTimestampUtcMs: number | null,
     setActiveTimestampUtcMs: (ts: number | null) => void,
-    /** Pass a value that changes when the grid layout changes (e.g. echartsOptions) so the listener is re-attached. */
     layoutDependency: unknown,
 ): void {
     const activeTimestampRef = React.useRef(activeTimestampUtcMs);
@@ -55,7 +50,6 @@ export function useChartClickToTimestamp(
                         return;
                     }
                 } catch {
-                    // convertFromPixel can throw if pixel is outside this grid's range
                     continue;
                 }
             }
