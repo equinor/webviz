@@ -50,7 +50,14 @@ export function ContextBoundaryComponent(props: ContextBoundaryComponentProps): 
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
         adornments.push(<GroupErrorBadge key="error-badge" group={props.group} />);
-        adornments.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
+        adornments.push(
+            <Actions
+                key="actions"
+                actionGroups={actions}
+                onActionClick={handleActionClick}
+                startOpen={props.group.getItemDelegate().getInitializeWithOpenMenu()}
+            />,
+        );
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
         adornments.push(<RemoveItemButton key="remove" item={props.group} />);
         return adornments;

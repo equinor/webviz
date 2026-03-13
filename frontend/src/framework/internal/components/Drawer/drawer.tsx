@@ -1,12 +1,10 @@
 import React from "react";
 
-import { Dropdown, MenuButton } from "@mui/base";
-import { Check, Close, MoreVert, Search } from "@mui/icons-material";
+import { Close, MoreVert, Search } from "@mui/icons-material";
 
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Menu } from "@lib/components/Menu";
-import { MenuItem } from "@lib/components/MenuItem/menuItem";
 import { Tooltip } from "@lib/components/Tooltip";
 
 export type DrawerFilterItem<T extends string | number> = {
@@ -37,33 +35,27 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
     );
     const [open, setOpen] = React.useState(false);
 
-    const handleOpenChange = (event: React.SyntheticEvent | null, nextOpen: boolean) => {
-        // If the menu is trying to close because a menuitem was clicked, ignore it.
-        const cameFromMenuItemClick =
-            (event as any)?.type === "click" && (event?.target as Element | null)?.closest?.('[role="menuitem"]');
-
-        if (!nextOpen && cameFromMenuItemClick) return; // ignore close
+    const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen); // allow other close reasons (outside click, Escape, etc.)
     };
 
     const handleFilterItemClick = React.useCallback(
-        function handleFilterItemClick(e: React.MouseEvent<HTMLElement, MouseEvent>, item: DrawerFilterItem<T>) {
+        function handleFilterItemClick(itemValue: string) {
             setSelectedFilterItems((prevSelectedItems) => {
                 let newSelectedItems: T[];
-                if (prevSelectedItems.includes(item.value)) {
-                    newSelectedItems = prevSelectedItems.filter((value) => value !== item.value);
+
+                if (prevSelectedItems.some((i) => itemValue === String(i))) {
+                    newSelectedItems = prevSelectedItems.filter((value) => value !== itemValue);
                 } else {
-                    newSelectedItems = [...prevSelectedItems, item.value];
+                    const item = props.filterItems?.find((i) => String(i.value) === itemValue);
+                    newSelectedItems = [...prevSelectedItems, item!.value];
                 }
 
                 onFilterItemSelectionChange?.(newSelectedItems);
                 return newSelectedItems;
             });
-
-            e.preventDefault();
-            e.stopPropagation();
         },
-        [onFilterItemSelectionChange],
+        [onFilterItemSelectionChange, props.filterItems],
     );
 
     const showFilter = props.filterItems && props.filterItems.length > 0;
@@ -97,30 +89,20 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                                 />
                             </div>
                         )}
-                        {showFilter && (
-                            <Dropdown open={open} onOpenChange={handleOpenChange}>
-                                <MenuButton className="p-1 rounded-sm hover:bg-blue-200 focus:outline-blue-600">
-                                    <MoreVert fontSize="small" />
-                                </MenuButton>
-                                <Menu anchorOrigin="bottom-end">
-                                    {props.filterItems?.map((item) => (
-                                        <MenuItem
-                                            key={item.value}
-                                            onClick={(e) => handleFilterItemClick(e, item)}
-                                            className="text-sm"
-                                        >
-                                            <div className="flex gap-2 items-center">
-                                                <span className="w-6">
-                                                    {selectedFilterItems.includes(item.value) && (
-                                                        <Check fontSize="small" />
-                                                    )}
-                                                </span>
-                                                {item.label}
-                                            </div>
-                                        </MenuItem>
-                                    ))}
-                                </Menu>
-                            </Dropdown>
+                        {showFilter && props.filterItems?.length && (
+                            <Menu
+                                open={open}
+                                onOpenChange={handleOpenChange}
+                                closeOnClick={false}
+                                onActionClicked={(id) => handleFilterItemClick(id)}
+                                items={props.filterItems.map((item) => ({
+                                    id: String(item.value),
+                                    checked: selectedFilterItems.includes(item.value),
+                                    label: item.label,
+                                }))}
+                            >
+                                <MoreVert fontSize="small" />
+                            </Menu>
                         )}
                     </div>
                 )}

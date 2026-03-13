@@ -1,22 +1,10 @@
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, grid_layer, settings, surface_layer, timeline, wellbore } from "@equinor/eds-icons";
-import { Dropdown } from "@mui/base";
-import {
-    Check,
-    Panorama,
-    SettingsApplications,
-    Settings as SettingsIcon,
-    TableRowsOutlined,
-    ViewColumnOutlined,
-} from "@mui/icons-material";
+import { Panorama, SettingsApplications } from "@mui/icons-material";
 import { useAtom } from "jotai";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useColorSet, type WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { Menu } from "@lib/components/Menu";
-import { MenuButton } from "@lib/components/MenuButton";
-import { MenuHeading } from "@lib/components/MenuHeading";
-import { MenuItem } from "@lib/components/MenuItem";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
@@ -32,8 +20,8 @@ import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/Gro
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { ViewportLayoutMenu } from "@modules/_shared/DataProviderFramework/ViewLayoutMenu";
 import { CustomDataProviderType } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
-import { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
@@ -65,12 +53,13 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                             props.dataProviderManager,
                             colorSet.getNextColor(),
                         ),
+                        true,
                     );
                 }
                 return;
             }
             case "context-boundary":
-                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));
+                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager), true);
                 return;
             case "color-scale":
                 groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
@@ -166,48 +155,12 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             title={"Views"}
             dataProviderManager={props.dataProviderManager}
             additionalHeaderComponents={
-                <Dropdown>
-                    <MenuButton label="Settings">
-                        <SettingsIcon fontSize="inherit" />
-                    </MenuButton>
-                    <Menu>
-                        <MenuHeading>Preferred view layout</MenuHeading>
-                        <ViewLayoutMenuItem
-                            checked={preferredViewLayout === PreferredViewLayout.HORIZONTAL}
-                            onClick={() => setPreferredViewLayout(PreferredViewLayout.HORIZONTAL)}
-                        >
-                            <ViewColumnOutlined fontSize="inherit" /> Horizontal
-                        </ViewLayoutMenuItem>
-                        <ViewLayoutMenuItem
-                            checked={preferredViewLayout === PreferredViewLayout.VERTICAL}
-                            onClick={() => setPreferredViewLayout(PreferredViewLayout.VERTICAL)}
-                        >
-                            <TableRowsOutlined fontSize="inherit" /> Vertical
-                        </ViewLayoutMenuItem>
-                    </Menu>
-                </Dropdown>
+                <ViewportLayoutMenu value={preferredViewLayout} onValueChange={setPreferredViewLayout} />
             }
             groupActions={makeActionsForGroup}
             onAction={handleAction}
             isMoveAllowed={checkIfItemMoveIsAllowed}
         />
-    );
-}
-
-type ViewLayoutMenuItemProps = {
-    checked: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-};
-
-function ViewLayoutMenuItem(props: ViewLayoutMenuItemProps): React.ReactNode {
-    return (
-        <MenuItem onClick={props.onClick}>
-            <div className="flex items-center gap-4">
-                <div className="w-4">{props.checked && <Check fontSize="small" />}</div>
-                <div className="flex gap-2 items-center">{props.children}</div>
-            </div>
-        </MenuItem>
     );
 }
 
@@ -219,6 +172,7 @@ const INITIAL_ACTIONS: ActionGroup[] = [
                 identifier: "intersection-view",
                 icon: <Panorama fontSize="small" />,
                 label: "Intersection View",
+                description: "Visualize data along a trajectory or polyline",
             },
         ],
     },
@@ -232,6 +186,7 @@ const ACTIONS: ActionGroup[] = [
                 identifier: "context-boundary",
                 icon: <SettingsApplications fontSize="small" />,
                 label: "Context Boundary",
+                description: "Share settings between a set of items",
             },
         ],
     },
