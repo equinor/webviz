@@ -2,7 +2,7 @@ import type { ModuleInstance } from "@framework/ModuleInstance";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import type { ChannelDefinition } from "./Channel";
-import { Channel } from "./Channel";
+import { Channel, ChannelNotificationTopic } from "./Channel";
 import type {
     SerializedDataChannelManagerState,
     SerializedDataChannelReceiverSubscription,
@@ -13,7 +13,7 @@ import { ChannelReceiver, ChannelReceiverNotificationTopic } from "./ChannelRece
 export enum ChannelManagerNotificationTopic {
     CHANNELS_CHANGE = "channels-change",
     RECEIVERS_CHANGE = "receivers-change",
-    STATE = "state",
+    CONNECTION_STATE_CHANGE = "connection_state_change",
 }
 
 export class ChannelManager {
@@ -26,6 +26,8 @@ export class ChannelManager {
 
     constructor(readonly moduleInstanceId: string) {
         this._moduleInstanceId = moduleInstanceId;
+
+        this.notifyConnectionStateChange = this.notifyConnectionStateChange.bind(this);
     }
 
     getChannel(idString: string): Channel | null {
@@ -48,10 +50,20 @@ export class ChannelManager {
         return this._moduleInstanceId;
     }
 
+    getNumberOfOutgoingConnections(): number {
+        return this._channels.reduce((acc, channel) => acc + channel.numberOfReceivers(), 0);
+    }
+
+    getNumberOfIncomingConnections(): number {
+        return this._receivers.filter((receiver) => receiver.hasActiveSubscription()).length;
+    }
+
     registerChannels(channelDefinitions: ChannelDefinition[]): void {
         for (const channelDefinition of channelDefinitions) {
             const channel = new Channel(this, channelDefinition);
             this._channels.push(channel);
+
+            channel.subscribe(ChannelNotificationTopic.RECEIVERS_ARRAY_CHANGED, this.notifyConnectionStateChange);
         }
 
         this.notifySubscribers(ChannelManagerNotificationTopic.CHANNELS_CHANGE);
@@ -64,7 +76,7 @@ export class ChannelManager {
 
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 receiver.getIdString(),
-                receiver.subscribe(ChannelReceiverNotificationTopic.CHANNEL_CHANGE, this.handleStateChange.bind(this)),
+                receiver.subscribe(ChannelReceiverNotificationTopic.CHANNEL_CHANGE, this.notifyConnectionStateChange),
             );
         }
 
@@ -73,7 +85,7 @@ export class ChannelManager {
 
     unregisterAllChannels(): void {
         for (const channel of this._channels) {
-            channel.notifySubscribersOfChannelAboutToBeRemoved();
+            channel.closeChannel();
         }
         this._channels = [];
 
@@ -82,7 +94,7 @@ export class ChannelManager {
 
     unregisterAllReceivers(): void {
         for (const receiver of this._receivers) {
-            receiver.unsubscribeFromCurrentChannel();
+            receiver.disconnectFromCurrentChannel();
         }
         this._receivers = [];
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
@@ -153,14 +165,14 @@ export class ChannelManager {
                 );
                 continue;
             }
-            receiver.subscribeToChannel(channel, subscription.contentIdStrings);
+            receiver.connectToChannel(channel, subscription.contentIdStrings);
         }
 
         this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
     }
 
-    private handleStateChange(): void {
-        this.notifySubscribers(ChannelManagerNotificationTopic.STATE);
+    private notifyConnectionStateChange(): void {
+        this.notifySubscribers(ChannelManagerNotificationTopic.CONNECTION_STATE_CHANGE);
     }
 
     private notifySubscribers(topic: ChannelManagerNotificationTopic): void {

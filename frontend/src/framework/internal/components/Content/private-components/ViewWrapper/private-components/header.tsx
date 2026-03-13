@@ -16,6 +16,7 @@ import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
     SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
 } from "@framework/internal/components/SettingsContentPanels";
+import { ChannelManagerNotificationTopic } from "@framework/internal/DataChannels/ChannelManager";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -41,7 +42,6 @@ export type HeaderProps = {
     moduleInstance: ModuleInstance<any, any>;
     isDragged: boolean;
     onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
-    onReceiversClick?: (event: React.PointerEvent<HTMLButtonElement>) => void;
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
@@ -53,13 +53,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
     const moduleInstanceId = props.moduleInstance.getId();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
-    const dataChannelOriginRef = React.useRef<HTMLButtonElement>(null);
-    const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
     const hotStatusMessages = useStatusControllerStateValue(
         props.moduleInstance.getStatusController(),
         "hotMessageCache",
     );
-    const devToolsVisible = useGuiValue(guiMessageBroker, GuiState.DevToolsVisible);
 
     const persistedSettingsInvalid = useModuleInstanceTopicValue(
         props.moduleInstance,
@@ -113,41 +110,8 @@ export const Header: React.FC<HeaderProps> = (props) => {
         [isSnapshot, guiMessageBroker, moduleInstanceId],
     );
 
-    const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
-    const title = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.TITLE);
-
-    function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
-        if (isSnapshot) {
-            return;
-        }
-        props.onPointerDown?.(e);
-    }
-
     function handleDoubleClick(e: React.PointerEvent<HTMLDivElement>) {
         e.preventDefault();
-        e.stopPropagation();
-    }
-
-    function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
-        if (isSnapshot) {
-            return;
-        }
-        if (!dataChannelOriginRef.current) {
-            return;
-        }
-        guiMessageBroker.publishEvent(GuiEvent.DataChannelOriginPointerDown, {
-            moduleInstanceId: props.moduleInstance.getId(),
-            originElement: dataChannelOriginRef.current,
-        });
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    function handleReceiversPointerUp(e: React.PointerEvent<HTMLButtonElement>) {
-        props.onReceiversClick?.(e);
-    }
-
-    function handleReceiverPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
         e.stopPropagation();
     }
 
@@ -156,9 +120,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }
 
     const hasErrors = hotStatusMessages.some((entry) => entry.type === StatusMessageType.Error);
-    const hasDataChannel = props.moduleInstance.getChannelManager().getChannels().length > 0;
-    const hasDataReceiver = props.moduleInstance.getChannelManager().getReceivers().length > 0;
-    const showDataChannelButtons = !props.isMinimized && !props.isMaximized && (hasDataChannel || hasDataReceiver);
 
     return (
         <div
@@ -172,76 +133,38 @@ export const Header: React.FC<HeaderProps> = (props) => {
             )}
             onDoubleClick={handleDoubleClick}
         >
-            <div
-                className={resolveClassNames("absolute -bottom-0.5 left-0 w-full overflow-hidden", {
-                    hidden: !isLoading,
-                })}
-            >
-                <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
-            </div>
-            <div
-                className={resolveClassNames("grow flex items-center text-sm font-bold min-w-0 p-1.5", {
-                    "cursor-grabbing": props.isDragged,
-                    "cursor-move": !props.isDragged && !isSnapshot,
-                })}
-                onPointerDown={handlePointerDown}
-            >
-                <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0" title={title}>
-                    {title}
-                </span>
-                {devToolsVisible && (
-                    <span
-                        title={props.moduleInstance.getId()}
-                        className="font-light text-xs ml-2 mr-1 text-ellipsis whitespace-nowrap overflow-hidden min-w-0"
-                    >
-                        {props.moduleInstance.getId()}
-                    </span>
-                )}
-                <>
-                    {syncedSettings.map((setting) => (
-                        <Tooltip
-                            title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
-                            key={setting}
-                        >
-                            <span className="flex items-center justify-center rounded-sm p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help">
-                                {SyncSettingsMeta[setting].abbreviation}
-                            </span>
-                        </Tooltip>
-                    ))}
-                </>
-            </div>
+            <ModuleLoadingBar moduleInstance={props.moduleInstance} />
+
+            <ModuleTitle
+                workbench={props.workbench}
+                moduleInstance={props.moduleInstance}
+                isDragged={props.isDragged}
+                isSnapshotMode={isSnapshot}
+                onPointerDown={props.onPointerDown}
+            />
+
+            <SyncedSettingsIndicator moduleInstance={props.moduleInstance} />
+
+            <HeaderSeparator />
+
             <StatusIndicator
                 workbench={props.workbench}
                 moduleInstance={props.moduleInstance}
                 isMinimized={props.isMinimized}
             />
-            {showDataChannelButtons && <HeaderSeparator />}
-            {showDataChannelButtons && hasDataChannel && (
-                <DenseIconButton
-                    id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
-                    ref={dataChannelOriginRef}
-                    className="cursor-grab touch-none"
-                    title={
-                        isSnapshot
-                            ? "Cannot change data channels in snapshot mode"
-                            : "Connect data channels to other module instances"
-                    }
-                    onPointerDown={handleDataChannelOriginPointerDown}
-                    disabled={isSnapshot}
-                >
-                    <Output fontSize="inherit" />
-                </DenseIconButton>
-            )}
-            {showDataChannelButtons && hasDataReceiver && (
-                <DenseIconButton
-                    title={isSnapshot ? "Show input data channels" : "Edit input data channels"}
-                    onPointerUp={handleReceiversPointerUp}
-                    onPointerDown={handleReceiverPointerDown}
-                >
-                    <Input fontSize="inherit" />
-                </DenseIconButton>
-            )}
+
             <HeaderSeparator />
+
+            <DataChannelButtons
+                workbench={props.workbench}
+                moduleInstance={props.moduleInstance}
+                isMinimized={props.isMinimized}
+                isMaximized={props.isMaximized}
+                isSnapshotMode={isSnapshot}
+            />
+
+            <HeaderSeparator />
+
             {props.isMaximized ? (
                 <DenseIconButton onPointerDown={handleRestoreClick} onPointerUp={handlePointerUp} title="Restore">
                     <CloseFullscreen fontSize="inherit" />
@@ -264,6 +187,211 @@ export const Header: React.FC<HeaderProps> = (props) => {
         </div>
     );
 };
+
+function HeaderSeparator(): React.ReactNode {
+    // The funky-looking class selector hides all separators that directly follows another separator
+    return <div className="[:where(&+&)]:hidden bg-slate-300 w-px h-1/2 mx-1" />;
+}
+
+type ModuleLoadingBarProps = {
+    moduleInstance: ModuleInstance<any, any>;
+};
+
+function ModuleLoadingBar(props: ModuleLoadingBarProps) {
+    const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
+
+    return (
+        <div
+            className={resolveClassNames("absolute -bottom-0.5 left-0 w-full overflow-hidden", {
+                hidden: !isLoading,
+            })}
+        >
+            <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
+        </div>
+    );
+}
+
+type ModuleTitleProps = {
+    workbench: Workbench;
+    moduleInstance: ModuleInstance<any, any>;
+    isDragged: boolean;
+    isSnapshotMode?: boolean;
+    onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
+};
+
+function ModuleTitle(props: ModuleTitleProps) {
+    const title = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.TITLE);
+    const devToolsVisible = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DevToolsVisible);
+
+    function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        if (props.isSnapshotMode) return;
+
+        props.onPointerDown?.(e);
+    }
+
+    return (
+        <div
+            className={resolveClassNames("grow flex items-center text-sm font-bold min-w-0 p-1.5", {
+                "cursor-grabbing": props.isDragged,
+                "cursor-move": !props.isDragged && !props.isSnapshotMode,
+            })}
+            onPointerDown={handlePointerDown}
+        >
+            <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0" title={title}>
+                {title}
+            </span>
+            {devToolsVisible && (
+                <span
+                    title={props.moduleInstance.getId()}
+                    className="font-light text-xs ml-2 mr-1 text-ellipsis whitespace-nowrap overflow-hidden min-w-0"
+                >
+                    {props.moduleInstance.getId()}
+                </span>
+            )}
+        </div>
+    );
+}
+
+type SyncedSettingsIndicatorProps = {
+    moduleInstance: ModuleInstance<any, any>;
+};
+
+function SyncedSettingsIndicator(props: SyncedSettingsIndicatorProps) {
+    const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
+
+    return (
+        <>
+            {syncedSettings.map((setting) => (
+                <Tooltip
+                    title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
+                    key={setting}
+                >
+                    <span className="flex items-center justify-center rounded-sm p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help font-bold">
+                        {SyncSettingsMeta[setting].abbreviation}
+                    </span>
+                </Tooltip>
+            ))}
+        </>
+    );
+}
+
+type DataChannelButtonsProps = {
+    workbench: Workbench;
+    moduleInstance: ModuleInstance<any, any>;
+    isMinimized?: boolean;
+    isMaximized?: boolean;
+    isSnapshotMode?: boolean;
+};
+
+function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
+    const dataChannelOriginRef = React.useRef<HTMLButtonElement>(null);
+
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
+    const channelManager = props.moduleInstance.getChannelManager();
+
+    const dataChannels = React.useSyncExternalStore(
+        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.CHANNELS_CHANGE, cb),
+        () => channelManager.getChannels(),
+    );
+    const dataReceivers = React.useSyncExternalStore(
+        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.RECEIVERS_CHANGE, cb),
+        () => channelManager.getReceivers(),
+    );
+    const numIncomingConnections = React.useSyncExternalStore(
+        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.CONNECTION_STATE_CHANGE, cb),
+        () => channelManager.getNumberOfIncomingConnections(),
+    );
+
+    const numOutgoingConnections = React.useSyncExternalStore(
+        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.CONNECTION_STATE_CHANGE, cb),
+        () => channelManager.getNumberOfOutgoingConnections(),
+    );
+
+    const hasDataChannel = dataChannels.length > 0;
+    const hasDataReceiver = dataReceivers.length > 0;
+    const showDataChannelButtons = !props.isMinimized && !props.isMaximized && (hasDataChannel || hasDataReceiver);
+
+    function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+        if (!dataChannelOriginRef.current) return;
+
+        if (props.isSnapshotMode) {
+            return;
+        }
+
+        guiMessageBroker.publishEvent(GuiEvent.DataChannelOriginPointerDown, {
+            moduleInstanceId: props.moduleInstance.getId(),
+            originElement: dataChannelOriginRef.current,
+        });
+
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function handleReceiversPointerUp(e: React.PointerEvent<HTMLButtonElement>) {
+        e.stopPropagation();
+
+        guiMessageBroker.setState(GuiState.EditDataChannelConnections, true);
+        guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
+            moduleInstanceId: props.moduleInstance.getId(),
+        });
+    }
+
+    function handleReceiverPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+        e.stopPropagation();
+    }
+
+    if (!showDataChannelButtons) return null;
+
+    function makeChannelOutButtonTitle(): string {
+        const msg = props.isSnapshotMode
+            ? "Cannot change data channels in snapshot mode"
+            : "Connect data channels to other module instances";
+
+        return prependConnectionCount(msg, numOutgoingConnections);
+    }
+
+    function makeChannelInButtonTitle(): string {
+        const message = props.isSnapshotMode ? "Show input data channels" : "Edit input data channels";
+
+        return prependConnectionCount(message, numIncomingConnections);
+    }
+
+    function prependConnectionCount(title: string, connectionCount: number): string {
+        if (connectionCount === 0) return title;
+
+        return `${title} (${connectionCount} active ${connectionCount === 1 ? "connection" : "connections"})`;
+    }
+
+    return (
+        <>
+            {hasDataChannel && (
+                <DenseIconButton
+                    id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
+                    ref={dataChannelOriginRef}
+                    className="cursor-grab touch-none"
+                    title={makeChannelOutButtonTitle()}
+                    disabled={props.isSnapshotMode}
+                    onPointerDown={handleDataChannelOriginPointerDown}
+                >
+                    <Badge badgeContent={numOutgoingConnections} className="flex p-0.5" invisible={props.isMinimized}>
+                        <Output fontSize="inherit" />
+                    </Badge>
+                </DenseIconButton>
+            )}
+            {hasDataReceiver && (
+                <DenseIconButton
+                    title={makeChannelInButtonTitle()}
+                    onPointerDown={handleReceiverPointerDown}
+                    onPointerUp={handleReceiversPointerUp}
+                >
+                    <Badge badgeContent={numIncomingConnections} className="flex p-0.5" invisible={props.isMinimized}>
+                        <Input fontSize="inherit" />
+                    </Badge>
+                </DenseIconButton>
+            )}
+        </>
+    );
+}
 
 type StatusIndicatorProps = {
     workbench: Workbench;
@@ -397,16 +525,5 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         );
     }
 
-    return (
-        <>
-            <div className="h-full flex items-center justify-center">
-                <HeaderSeparator />
-                {stateIndicators}
-            </div>
-        </>
-    );
-}
-
-function HeaderSeparator(): React.ReactNode {
-    return <div className="bg-slate-300 w-px h-1/2 mx-1" />;
+    return <>{stateIndicators}</>;
 }
