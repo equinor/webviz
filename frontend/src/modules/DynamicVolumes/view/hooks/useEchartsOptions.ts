@@ -26,6 +26,7 @@ function toTimeseriesTrace(t: ChartTrace): TimeseriesTrace {
         name: t.label,
         color: t.color,
         timestamps: t.timestamps,
+        highlightGroupKey: t.ensembleIdentString,
         realizationValues: t.aggregatedValues ?? undefined,
         realizationIds: t.realizations.length > 0 ? t.realizations : undefined,
         statistics: t.stats ?? undefined,

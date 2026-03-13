@@ -195,13 +195,13 @@ function createDistributionSubplotGroups(
 ): SubplotGroup<DistributionTrace>[] {
     return Array.from({ length: numSubplots }, (_, index) => ({
         title: `Subplot ${index + 1}`,
-        traces: generateDistributionTraces(numGroups, numRealizations, index * numGroups),
+        traces: generateDistributionTraces(numGroups, numRealizations, index),
     }));
 }
 
 function createBarSubplotGroups(numSubplots: number, numGroups: number): SubplotGroup<BarTrace>[] {
     return Array.from({ length: numSubplots }, (_, index) => ({
         title: `Subplot ${index + 1}`,
-        traces: generateBarTraces(numGroups, index * numGroups),
+        traces: generateBarTraces(numGroups, index),
     }));
 }

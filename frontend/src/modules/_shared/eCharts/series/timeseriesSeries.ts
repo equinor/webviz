@@ -8,10 +8,12 @@ export function buildRealizationsSeries(
 ): { series: LineSeriesOption[]; legendEntry: string | null } {
     if (!trace.realizationValues) return { series: [], legendEntry: null };
 
+    const highlightGroupKey = trace.highlightGroupKey ?? trace.name;
+
     const series: LineSeriesOption[] = trace.realizationValues.map((realValues, r) => {
         const realId = trace.realizationIds?.[r] ?? r;
         return {
-            id: `${trace.name}_real_${realId}_${axisIndex}`,
+            id: `${highlightGroupKey}_real_${realId}_${axisIndex}`,
             name: trace.name,
             type: "line",
             data: realValues,
@@ -24,7 +26,7 @@ export function buildRealizationsSeries(
             symbolSize: 6,
             showSymbol: false,
             emphasis: {
-                focus: "series",
+                focus: "none",
                 lineStyle: { color: trace.color, width: 3, opacity: 1 },
             },
             blur: {

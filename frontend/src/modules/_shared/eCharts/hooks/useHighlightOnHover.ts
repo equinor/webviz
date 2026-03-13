@@ -4,50 +4,156 @@ import type ReactECharts from "echarts-for-react";
 
 export function useHighlightOnHover(chartRef: React.RefObject<ReactECharts | null>, enabled: boolean) {
     const highlightedSeriesRef = React.useRef<string | null>(null);
+    const clearHighlightTimeoutRef = React.useRef<number | null>(null);
+
+    const cancelScheduledClear = React.useCallback(() => {
+        if (clearHighlightTimeoutRef.current != null) {
+            window.clearTimeout(clearHighlightTimeoutRef.current);
+            clearHighlightTimeoutRef.current = null;
+        }
+    }, []);
+
+    const clearHighlight = React.useCallback(() => {
+        if (!enabled || !chartRef.current) return;
+
+        chartRef.current.getEchartsInstance().dispatchAction({ type: "downplay" });
+        highlightedSeriesRef.current = null;
+    }, [enabled, chartRef]);
+
+    const applyHighlight = React.useCallback(
+        (event: any) => {
+            if (!enabled || !chartRef.current) return;
+
+            cancelScheduledClear();
+
+            const instance = chartRef.current.getEchartsInstance();
+            const highlightTarget = getHighlightTarget(instance, event);
+            if (!highlightTarget) return;
+
+            if (highlightedSeriesRef.current !== highlightTarget.key) {
+                instance.dispatchAction({ type: "downplay" });
+
+                for (const action of highlightTarget.actions) {
+                    instance.dispatchAction({ type: "highlight", ...action });
+                }
+
+                highlightedSeriesRef.current = highlightTarget.key;
+            }
+        },
+        [enabled, chartRef, cancelScheduledClear],
+    );
+
+    React.useEffect(
+        () => () => {
+            cancelScheduledClear();
+        },
+        [cancelScheduledClear],
+    );
 
     return React.useMemo(
         () => ({
-            mouseover: (e: any) => {
-                if (!enabled || !chartRef.current) return;
-                const highlightTarget = getHighlightTarget(e);
-                if (!highlightTarget) return;
-
-                const instance = chartRef.current.getEchartsInstance();
-                if (highlightedSeriesRef.current !== highlightTarget.key) {
-                    instance.dispatchAction({ type: "downplay" });
-                    instance.dispatchAction({ type: "highlight", ...highlightTarget.action });
-                    highlightedSeriesRef.current = highlightTarget.key;
-                }
-            },
+            mousemove: applyHighlight,
+            mouseover: applyHighlight,
             mouseout: () => {
-                if (!enabled || !chartRef.current) return;
-                chartRef.current.getEchartsInstance().dispatchAction({ type: "downplay" });
-                highlightedSeriesRef.current = null;
+                if (!enabled) return;
+
+                cancelScheduledClear();
+                clearHighlightTimeoutRef.current = window.setTimeout(() => {
+                    clearHighlight();
+                    clearHighlightTimeoutRef.current = null;
+                }, 0);
             },
             globalout: () => {
-                if (!enabled || !chartRef.current) return;
-                chartRef.current.getEchartsInstance().dispatchAction({ type: "downplay" });
-                highlightedSeriesRef.current = null;
+                cancelScheduledClear();
+                clearHighlight();
             },
         }),
-        [enabled, chartRef],
+        [enabled, applyHighlight, cancelScheduledClear, clearHighlight],
     );
 }
 
 function getHighlightTarget(
+    instance: any,
     event: any,
-): { key: string; action: { seriesIndex: number } | { seriesId: string } | { seriesName: string } } | null {
-    if (typeof event?.seriesIndex === "number") {
-        return { key: `index:${event.seriesIndex}`, action: { seriesIndex: event.seriesIndex } };
+): {
+    key: string;
+    actions: Array<{ seriesIndex: number } | { seriesId: string } | { seriesName: string }>;
+} | null {
+    const hoveredSeriesId = resolveHoveredSeriesId(instance, event);
+
+    if (hoveredSeriesId) {
+        const linkedSeries = findLinkedRealizationSeries(instance, hoveredSeriesId);
+        if (linkedSeries.length > 0) {
+            return { key: `linked:${hoveredSeriesId}`, actions: linkedSeries };
+        }
     }
 
-    if (typeof event?.seriesId === "string") {
-        return { key: `id:${event.seriesId}`, action: { seriesId: event.seriesId } };
+    if (typeof event?.seriesIndex === "number") {
+        return { key: `index:${event.seriesIndex}`, actions: [{ seriesIndex: event.seriesIndex }] };
+    }
+
+    if (hoveredSeriesId) {
+        return { key: `id:${hoveredSeriesId}`, actions: [{ seriesId: hoveredSeriesId }] };
     }
 
     if (typeof event?.seriesName === "string") {
-        return { key: `name:${event.seriesName}`, action: { seriesName: event.seriesName } };
+        return { key: `name:${event.seriesName}`, actions: [{ seriesName: event.seriesName }] };
     }
 
     return null;
+}
+
+function resolveHoveredSeriesId(instance: any, event: any): string | null {
+    if (typeof event?.seriesId === "string") {
+        return event.seriesId;
+    }
+
+    if (typeof event?.seriesIndex !== "number") {
+        return null;
+    }
+
+    const chartSeries = instance.getOption()?.series;
+    if (!Array.isArray(chartSeries)) {
+        return null;
+    }
+
+    const hoveredSeries = chartSeries[event.seriesIndex];
+    return typeof hoveredSeries?.id === "string" ? hoveredSeries.id : null;
+}
+
+function findLinkedRealizationSeries(instance: any, hoveredSeriesId: string): Array<{ seriesIndex: number }> {
+    const hoveredRealization = parseRealizationSeriesId(hoveredSeriesId);
+    if (!hoveredRealization) return [];
+
+    const chartSeries = instance.getOption()?.series;
+    if (!Array.isArray(chartSeries)) return [];
+
+    const actions: Array<{ seriesIndex: number }> = [];
+
+    chartSeries.forEach((seriesOption: any, seriesIndex: number) => {
+        const seriesId = typeof seriesOption?.id === "string" ? seriesOption.id : null;
+        if (!seriesId) return;
+
+        const candidate = parseRealizationSeriesId(seriesId);
+        if (!candidate) return;
+
+        if (
+            candidate.highlightGroupKey === hoveredRealization.highlightGroupKey &&
+            candidate.realizationId === hoveredRealization.realizationId
+        ) {
+            actions.push({ seriesIndex });
+        }
+    });
+
+    return actions;
+}
+
+function parseRealizationSeriesId(seriesId: string): { highlightGroupKey: string; realizationId: string } | null {
+    const match = seriesId.match(/^(.*)_real_(\d+)_\d+$/);
+    if (!match) return null;
+
+    return {
+        highlightGroupKey: match[1],
+        realizationId: match[2],
+    };
 }

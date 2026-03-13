@@ -18,6 +18,7 @@ export type TimeseriesTrace = {
     name: string;
     color: string;
     timestamps: number[];
+    highlightGroupKey?: string;
     realizationValues?: number[][];
     realizationIds?: number[];
     statistics?: TimeseriesStatistics;
