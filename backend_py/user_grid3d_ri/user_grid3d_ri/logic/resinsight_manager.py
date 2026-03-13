@@ -12,7 +12,6 @@ from webviz_core_utils.radix_utils import is_running_on_radix_platform, read_rad
 
 from rips.generated import App_pb2_grpc, Definitions_pb2
 
-
 LOGGER = logging.getLogger(__name__)
 
 
