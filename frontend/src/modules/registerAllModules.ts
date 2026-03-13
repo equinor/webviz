@@ -23,7 +23,7 @@ import "./SensitivityPlot/registerModule";
 import "./Vfp/registerModule";
 import "./WellCompletions/registerModule";
 import "./WellLogViewer/registerModule";
-
+import "./EChartsDemo/registerModule";
 // IIFE to allow use of await
 (async function registerDebugModules() {
     if (isDevMode() || debugFlagIsEnabled(SHOW_DEBUG_MODULES_FLAG)) {
@@ -32,6 +32,5 @@ import "./WellLogViewer/registerModule";
         await import("./MyModule/registerModule");
         await import("./MyModule2/registerModule");
         await import("./DbgWorkbenchSpy/registerModule");
-        await import("./EChartsDemo/registerModule");
     }
 })();
