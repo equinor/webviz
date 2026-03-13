@@ -1,0 +1,137 @@
+/**
+ * Structured series ID scheme.
+ *
+ * All series in the shared eCharts layer use colon-delimited IDs so that
+ * interaction code (tooltips, hover linking, timestamp markers) can reliably
+ * parse series metadata without fragile regex patterns.
+ *
+ * Format: `<category>:<name>:<qualifier>:<axisIndex>`
+ *
+ * Categories:
+ *   realization  — individual realization line
+ *   statistic    — statistical summary line (mean, p10, …)
+ *   fanchart     — statistical fan/band area
+ *   convergence  — convergence line or band
+ *   histogram    — histogram bar or rug
+ *   distribution — KDE line or scatter
+ *   percentile   — percentile range glyph or scatter
+ *   heatmap      — heatmap series
+ *   bar          — bar chart series
+ */
+
+// ---------------------------------------------------------------------------
+// ID construction
+// ---------------------------------------------------------------------------
+
+export type SeriesCategory =
+    | "realization"
+    | "statistic"
+    | "fanchart"
+    | "convergence"
+    | "histogram"
+    | "distribution"
+    | "percentile"
+    | "heatmap"
+    | "bar";
+
+export function makeSeriesId(category: SeriesCategory, name: string, qualifier: string, axisIndex: number): string {
+    return `${category}:${name}:${qualifier}:${axisIndex}`;
+}
+
+export function makeRealizationSeriesId(
+    highlightGroupKey: string,
+    realizationId: number | string,
+    axisIndex: number,
+): string {
+    return makeSeriesId("realization", highlightGroupKey, String(realizationId), axisIndex);
+}
+
+export function makeStatisticSeriesId(traceName: string, statKey: string, axisIndex: number): string {
+    return makeSeriesId("statistic", traceName, statKey, axisIndex);
+}
+
+export function makeFanchartSeriesId(traceName: string, bandKey: string, axisIndex: number): string {
+    return makeSeriesId("fanchart", traceName, bandKey, axisIndex);
+}
+
+export function makeConvergenceSeriesId(traceName: string, qualifier: string, axisIndex: number): string {
+    return makeSeriesId("convergence", traceName, qualifier, axisIndex);
+}
+
+// ---------------------------------------------------------------------------
+// ID parsing
+// ---------------------------------------------------------------------------
+
+export type ParsedSeriesId = {
+    category: SeriesCategory;
+    name: string;
+    qualifier: string;
+    axisIndex: number;
+};
+
+const VALID_CATEGORIES = new Set<string>([
+    "realization",
+    "statistic",
+    "fanchart",
+    "convergence",
+    "histogram",
+    "distribution",
+    "percentile",
+    "heatmap",
+    "bar",
+]);
+
+export function parseSeriesId(seriesId: string): ParsedSeriesId | null {
+    const parts = seriesId.split(":");
+    if (parts.length < 4) return null;
+
+    const category = parts[0];
+    if (!VALID_CATEGORIES.has(category)) return null;
+
+    // Name may contain colons — everything between category and the last two segments
+    const axisIndex = Number(parts[parts.length - 1]);
+    const qualifier = parts[parts.length - 2];
+    const name = parts.slice(1, -2).join(":");
+
+    if (!name || !qualifier || !Number.isFinite(axisIndex)) return null;
+
+    return { category: category as SeriesCategory, name, qualifier, axisIndex };
+}
+
+// ---------------------------------------------------------------------------
+// Domain-level queries
+// ---------------------------------------------------------------------------
+
+export function isRealizationSeries(seriesId: string): boolean {
+    return seriesId.startsWith("realization:");
+}
+
+export function isStatisticSeries(seriesId: string): boolean {
+    return seriesId.startsWith("statistic:");
+}
+
+export function isFanchartSeries(seriesId: string): boolean {
+    return seriesId.startsWith("fanchart:");
+}
+
+export function isConvergenceSeries(seriesId: string): boolean {
+    return seriesId.startsWith("convergence:");
+}
+
+export function getRealizationId(seriesId: string): string | null {
+    const parsed = parseSeriesId(seriesId);
+    if (!parsed || parsed.category !== "realization") return null;
+    return parsed.qualifier;
+}
+
+export function getHighlightGroupKey(seriesId: string): string | null {
+    const parsed = parseSeriesId(seriesId);
+    if (!parsed || parsed.category !== "realization") return null;
+    return parsed.name;
+}
+
+export function getStatisticKey(seriesId: string): string | null {
+    const parsed = parseSeriesId(seriesId);
+    if (!parsed || (parsed.category !== "statistic" && parsed.category !== "convergence")) return null;
+    return parsed.qualifier;
+}
