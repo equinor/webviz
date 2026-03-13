@@ -9,6 +9,14 @@ import { computeTimeseriesStatistics } from "@modules/_shared/eCharts";
 
 const COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f"];
 
+function getSeriesName(seriesIndex: number): string {
+    return `Series ${seriesIndex + 1}`;
+}
+
+function getSeriesColor(seriesIndex: number): string {
+    return COLORS[seriesIndex % COLORS.length];
+}
+
 function seededRandom(seed: number): () => number {
     let s = seed;
     return () => {
@@ -44,14 +52,15 @@ export function generateTimeseriesGroups(
     for (let s = 0; s < numSubplots; s++) {
         const traces: TimeseriesTrace[] = [];
         for (let g = 0; g < numGroups; g++) {
-            const seed = s * 1000 + g * 100 + 42;
+            const seriesIndex = s * numGroups + g;
+            const seed = seriesIndex * 100 + 42;
             const realizationValues = generateRandomWalk(numTimesteps, numRealizations, seed);
             const realizationIds = Array.from({ length: numRealizations }, (_, i) => i);
             const statistics = computeTimeseriesStatistics(realizationValues);
 
             traces.push({
-                name: `Group ${String.fromCharCode(65 + g)}`,
-                color: COLORS[g % COLORS.length],
+                name: getSeriesName(seriesIndex),
+                color: getSeriesColor(seriesIndex),
                 timestamps,
                 realizationValues,
                 realizationIds,
@@ -67,10 +76,15 @@ export function generateTimeseriesGroups(
     return subplots;
 }
 
-export function generateDistributionTraces(numGroups: number, numRealizations: number): DistributionTrace[] {
+export function generateDistributionTraces(
+    numGroups: number,
+    numRealizations: number,
+    startSeriesIndex = 0,
+): DistributionTrace[] {
     const traces: DistributionTrace[] = [];
     for (let g = 0; g < numGroups; g++) {
-        const rng = seededRandom(g * 100 + 7);
+        const seriesIndex = startSeriesIndex + g;
+        const rng = seededRandom(seriesIndex * 100 + 7);
         const values: number[] = [];
         const realizationIds: number[] = [];
         for (let r = 0; r < numRealizations; r++) {
@@ -78,12 +92,12 @@ export function generateDistributionTraces(numGroups: number, numRealizations: n
             const u1 = rng();
             const u2 = rng();
             const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-            values.push(50 + g * 10 + z * 8);
+            values.push(50 + seriesIndex * 3 + z * 8);
             realizationIds.push(r);
         }
         traces.push({
-            name: `Group ${String.fromCharCode(65 + g)}`,
-            color: COLORS[g % COLORS.length],
+            name: getSeriesName(seriesIndex),
+            color: getSeriesColor(seriesIndex),
             values,
             realizationIds,
         });
@@ -91,14 +105,15 @@ export function generateDistributionTraces(numGroups: number, numRealizations: n
     return traces;
 }
 
-export function generateBarTraces(numGroups: number): BarTrace[] {
+export function generateBarTraces(numGroups: number, startSeriesIndex = 0): BarTrace[] {
     const categories = ["Zone A", "Zone B", "Zone C", "Zone D", "Zone E"];
-    const rng = seededRandom(99);
     const traces: BarTrace[] = [];
     for (let g = 0; g < numGroups; g++) {
+        const seriesIndex = startSeriesIndex + g;
+        const rng = seededRandom(99 + seriesIndex * 37);
         traces.push({
-            name: `Group ${String.fromCharCode(65 + g)}`,
-            color: COLORS[g % COLORS.length],
+            name: getSeriesName(seriesIndex),
+            color: getSeriesColor(seriesIndex),
             categories,
             values: categories.map(() => 20 + rng() * 80),
         });

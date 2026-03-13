@@ -1,6 +1,12 @@
+import type { HeatmapSeriesOption } from "echarts/charts";
+
 import type { HeatmapTrace } from "../types";
 
-export function buildHeatmapSeries(trace: HeatmapTrace, axisIndex = 0, activeDate?: string | null): any {
+export function buildHeatmapSeries(
+    trace: HeatmapTrace,
+    axisIndex = 0,
+    activeDate?: string | null,
+): HeatmapSeriesOption {
     return {
         type: "heatmap",
         xAxisIndex: axisIndex,

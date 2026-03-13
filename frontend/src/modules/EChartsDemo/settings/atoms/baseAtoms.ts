@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 
+import { HistogramType } from "@modules/_shared/histogram";
 import type { StatisticKey } from "@modules/_shared/eCharts";
 
 import { PlotType } from "../../typesAndEnums";
@@ -16,6 +17,8 @@ export const selectedStatisticsAtom = atom<StatisticKey[]>(["mean", "p10", "p90"
 
 export const showStatisticalMarkersAtom = atom<boolean>(true);
 export const showRealizationPointsAtom = atom<boolean>(false);
+export const histogramBinsAtom = atom<number>(10);
+export const histogramTypeAtom = atom<HistogramType>(HistogramType.Overlay);
 
 export const sharedXAxisAtom = atom<boolean>(false);
 export const sharedYAxisAtom = atom<boolean>(false);

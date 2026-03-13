@@ -5,20 +5,25 @@ import ReactECharts from "echarts-for-react";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import type { ContainerSize, SubplotAxisDef, TimeseriesDisplayConfig } from "@modules/_shared/eCharts";
+import type {
+    BarTrace,
+    ContainerSize,
+    DistributionTrace,
+    SubplotGroup,
+    TimeseriesDisplayConfig,
+} from "@modules/_shared/eCharts";
 import {
-    buildBarSeries,
-    buildBoxPlotSeries,
-    buildConvergenceSeries,
-    buildDistributionSeries,
+    buildBarChart,
+    buildConvergenceChart,
+    buildDistributionChart,
     buildHeatmapChart,
-    buildHistogramSeries,
-    buildSubplotAxes,
+    buildHistogramChart,
+    buildPercentileRangeChart,
     buildTimeseriesChart,
-    composeChartOption,
     computeSubplotGridLayout,
     useHighlightOnHover,
 } from "@modules/_shared/eCharts";
+import type { HistogramType } from "@modules/_shared/histogram";
 
 import type { Interfaces } from "./interfaces";
 import { PlotType } from "./typesAndEnums";
@@ -44,6 +49,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const selectedStatistics = viewContext.useSettingsToViewInterfaceValue("selectedStatistics");
     const showStatisticalMarkers = viewContext.useSettingsToViewInterfaceValue("showStatisticalMarkers");
     const showRealizationPoints = viewContext.useSettingsToViewInterfaceValue("showRealizationPoints");
+    const histogramBins = viewContext.useSettingsToViewInterfaceValue("histogramBins");
+    const histogramType = viewContext.useSettingsToViewInterfaceValue("histogramType");
     const scrollMode = viewContext.useSettingsToViewInterfaceValue("scrollMode");
 
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -70,20 +77,36 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     size,
                 );
             case PlotType.Histogram:
-            case PlotType.BoxPlot:
-            case PlotType.Distribution:
-            case PlotType.Convergence:
-                return buildDistributionChart(
-                    plotType,
+                return buildHistogramDemoChart(
                     numSubplots,
                     numGroups,
                     numRealizations,
                     showStatisticalMarkers,
                     showRealizationPoints,
+                    histogramBins,
+                    histogramType,
+                    size,
+                );
+            case PlotType.PercentileRange:
+                return buildPercentileRangeChart(
+                    createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
+                    { showRealizationPoints },
+                    size,
+                );
+            case PlotType.Distribution:
+                return buildDistributionChart(
+                    createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
+                    { showRealizationPoints },
+                    size,
+                );
+            case PlotType.Convergence:
+                return buildConvergenceChart(
+                    createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
+                    undefined,
                     size,
                 );
             case PlotType.Bar:
-                return buildBarChart(numSubplots, numGroups, showStatisticalMarkers, size);
+                return buildBarChart(createBarSubplotGroups(numSubplots, numGroups), { showStatisticalMarkers }, size);
             case PlotType.Heatmap:
                 return buildHeatmapChart(generateHeatmapTraces(numSubplots), "Value");
             default:
@@ -100,6 +123,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         selectedStatistics,
         showStatisticalMarkers,
         showRealizationPoints,
+        histogramBins,
+        histogramType,
         containerSize,
     ]);
 
@@ -141,107 +166,42 @@ function buildTimeseries(
     return buildTimeseriesChart(groups, config, "Value", null, containerSize).echartsOptions;
 }
 
-function buildDistributionChart(
-    plotType: PlotType,
+function buildHistogramDemoChart(
     numSubplots: number,
     numGroups: number,
     numRealizations: number,
     showStatisticalMarkers: boolean,
     showRealizationPoints: boolean,
+    histogramBins: number,
+    histogramType: HistogramType,
     containerSize?: ContainerSize,
 ): EChartsOption {
-    const layout = computeSubplotGridLayout(numSubplots);
-    const allSeries: any[] = [];
-    const legendData: string[] = [];
-    const seenLegend = new Set<string>();
-    const axisDefs: SubplotAxisDef[] = [];
-
-    const yAxisLabel = plotType === PlotType.Histogram ? "Percentage (%)" : "Value";
-    const xAxisLabel = plotType === PlotType.Convergence ? "Realizations" : "Value";
-
-    for (let s = 0; s < numSubplots; s++) {
-        const traces = generateDistributionTraces(numGroups, numRealizations);
-
-        for (const trace of traces) {
-            switch (plotType) {
-                case PlotType.Histogram:
-                    allSeries.push(
-                        ...buildHistogramSeries(
-                            trace,
-                            { showStatisticalMarkers, showRealizationPoints, numBins: 20 },
-                            s,
-                        ),
-                    );
-                    break;
-                case PlotType.BoxPlot:
-                    allSeries.push(...buildBoxPlotSeries(trace, { showStatisticalMarkers, showRealizationPoints }, s));
-                    break;
-                case PlotType.Distribution:
-                    allSeries.push(...buildDistributionSeries(trace, { showRealizationPoints }, s));
-                    break;
-                case PlotType.Convergence:
-                    allSeries.push(...buildConvergenceSeries(trace, s));
-                    break;
-            }
-            if (!seenLegend.has(trace.name)) {
-                legendData.push(trace.name);
-                seenLegend.add(trace.name);
-            }
-        }
-
-        axisDefs.push({
-            xAxis: { type: "value", label: xAxisLabel },
-            yAxis: { type: "value", label: yAxisLabel },
-            title: `Subplot ${s + 1}`,
-        });
-    }
-
-    const axes = buildSubplotAxes(layout, axisDefs);
-    return composeChartOption(layout, axes, { series: allSeries, legendData, containerSize });
+    return buildHistogramChart(
+        createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
+        {
+            numBins: histogramBins,
+            histogramType,
+            showStatisticalMarkers,
+            showRealizationPoints,
+        },
+        containerSize,
+    );
 }
 
-function buildBarChart(
+function createDistributionSubplotGroups(
     numSubplots: number,
     numGroups: number,
-    showStatisticalMarkers: boolean,
-    containerSize?: ContainerSize,
-): EChartsOption {
-    const layout = computeSubplotGridLayout(numSubplots);
-    const allSeries: any[] = [];
-    const legendData: string[] = [];
-    const seenLegend = new Set<string>();
-    const axisDefs: SubplotAxisDef[] = [];
-    let allCategories: (string | number)[] = [];
+    numRealizations: number,
+): SubplotGroup<DistributionTrace>[] {
+    return Array.from({ length: numSubplots }, (_, index) => ({
+        title: `Subplot ${index + 1}`,
+        traces: generateDistributionTraces(numGroups, numRealizations, index * numGroups),
+    }));
+}
 
-    for (let s = 0; s < numSubplots; s++) {
-        const traces = generateBarTraces(numGroups);
-
-        for (const trace of traces) {
-            const series = buildBarSeries(trace, { showStatisticalMarkers });
-            for (const ser of series) {
-                ser.xAxisIndex = s;
-                ser.yAxisIndex = s;
-                allSeries.push(ser);
-            }
-            if (!seenLegend.has(trace.name)) {
-                legendData.push(trace.name);
-                seenLegend.add(trace.name);
-            }
-            if (allCategories.length === 0) allCategories = trace.categories;
-        }
-
-        axisDefs.push({
-            xAxis: { type: "category", data: allCategories },
-            yAxis: { type: "value" },
-            title: `Subplot ${s + 1}`,
-        });
-    }
-
-    const axes = buildSubplotAxes(layout, axisDefs);
-    return composeChartOption(layout, axes, {
-        series: allSeries,
-        legendData,
-        containerSize,
-        tooltip: { trigger: "axis" as const },
-    });
+function createBarSubplotGroups(numSubplots: number, numGroups: number): SubplotGroup<BarTrace>[] {
+    return Array.from({ length: numSubplots }, (_, index) => ({
+        title: `Subplot ${index + 1}`,
+        traces: generateBarTraces(numGroups, index * numGroups),
+    }));
 }

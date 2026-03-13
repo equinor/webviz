@@ -1,4 +1,4 @@
-import type { LineSeriesOption } from "echarts/charts";
+import type { CustomSeriesOption, LineSeriesOption } from "echarts/charts";
 
 import type { StatisticKey, TimeseriesTrace } from "../types";
 
@@ -36,7 +36,7 @@ export function buildStatisticsSeries(
                 xAxisIndex: axisIndex,
                 yAxisIndex: axisIndex,
                 itemStyle: { color: trace.color },
-                lineStyle: { width: def.width, type: def.dash },
+                lineStyle: { color: trace.color, width: def.width, type: def.dash },
                 symbol: "none",
                 emphasis: { disabled: true },
                 blur: { lineStyle: { opacity: 1 } },
@@ -58,7 +58,7 @@ function createBandSeries(
     fillOpacity: number,
     name: string,
     axisIndex: number,
-): any {
+): CustomSeriesOption {
     return {
         type: "custom",
         name,
@@ -69,12 +69,18 @@ function createBandSeries(
         tooltip: { show: false },
         silent: true,
         z: 1,
-        renderItem(params: any, api: any) {
-            if (params.dataIndexInside !== 0) {
+        renderItem(params, api) {
+            const bandParams = params as typeof params & {
+                dataIndexInside?: number;
+                dataInsideLength?: number;
+                dataIndex?: number;
+            };
+
+            if (bandParams.dataIndexInside !== 0) {
                 return { type: "group", children: [] };
             }
-            const count: number = params.dataInsideLength ?? 0;
-            const startIdx: number = params.dataIndex ?? 0;
+            const count = bandParams.dataInsideLength ?? 0;
+            const startIdx = bandParams.dataIndex ?? 0;
             if (count === 0) return { type: "group", children: [] };
 
             const points: number[][] = [];
@@ -95,11 +101,15 @@ function createBandSeries(
     };
 }
 
-export function buildFanchartSeries(trace: TimeseriesTrace, selectedStatistics: StatisticKey[], axisIndex = 0): any[] {
+export function buildFanchartSeries(
+    trace: TimeseriesTrace,
+    selectedStatistics: StatisticKey[],
+    axisIndex = 0,
+): CustomSeriesOption[] {
     if (!trace.statistics) return [];
 
     const { p10, p90, min, max } = trace.statistics;
-    const series: any[] = [];
+    const series: CustomSeriesOption[] = [];
 
     const hasPercentiles = selectedStatistics.includes("p10") && selectedStatistics.includes("p90");
     const hasMinMax = selectedStatistics.includes("min") && selectedStatistics.includes("max");

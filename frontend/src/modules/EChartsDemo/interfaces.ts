@@ -1,7 +1,10 @@
-import type { StatisticKey } from "@modules/_shared/eCharts";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { StatisticKey } from "@modules/_shared/eCharts";
+import type { HistogramType } from "@modules/_shared/histogram";
 
 import {
+    histogramBinsAtom,
+    histogramTypeAtom,
     numGroupsAtom,
     numRealizationsAtom,
     numSubplotsAtom,
@@ -29,6 +32,8 @@ export type SettingsToViewInterface = {
     selectedStatistics: StatisticKey[];
     showStatisticalMarkers: boolean;
     showRealizationPoints: boolean;
+    histogramBins: number;
+    histogramType: HistogramType;
     sharedXAxis: boolean;
     sharedYAxis: boolean;
     scrollMode: boolean;
@@ -49,6 +54,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     selectedStatistics: (get) => get(selectedStatisticsAtom),
     showStatisticalMarkers: (get) => get(showStatisticalMarkersAtom),
     showRealizationPoints: (get) => get(showRealizationPointsAtom),
+    histogramBins: (get) => get(histogramBinsAtom),
+    histogramType: (get) => get(histogramTypeAtom),
     sharedXAxis: (get) => get(sharedXAxisAtom),
     sharedYAxis: (get) => get(sharedYAxisAtom),
     scrollMode: (get) => get(scrollModeAtom),

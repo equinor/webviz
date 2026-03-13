@@ -1,6 +1,9 @@
+import { HistogramType } from "@modules/_shared/histogram";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
+import { formatCompactTooltip } from "../interaction/tooltipFormatters";
 import type { DistributionTrace, PointStatistics } from "../types";
+import { computeHistogramLayout, computeHistogramTraceData } from "../utils/histogram";
 import { computePointStatistics } from "../utils/statistics";
 
 export type HistogramDisplayOptions = {
@@ -9,6 +12,10 @@ export type HistogramDisplayOptions = {
     showStatisticalLabels?: boolean;
     showRealizationPoints?: boolean;
     showPercentageInBar?: boolean;
+    color?: string;
+    opacity?: number;
+    borderColor?: string;
+    borderWidth?: number;
 };
 
 export function buildHistogramSeries(
@@ -19,107 +26,165 @@ export function buildHistogramSeries(
     const {
         numBins = 15,
         showStatisticalMarkers = false,
+        showStatisticalLabels = false,
         showRealizationPoints = false,
         showPercentageInBar = false,
+        color = trace.color,
+        opacity = showStatisticalMarkers ? 0.6 : 1,
+        borderColor = "black",
+        borderWidth = 1,
     } = options;
 
     if (trace.values.length === 0) return [];
 
     const stats = computePointStatistics(trace.values);
-    const { binEdges, percentages } = computeBins(trace.values, numBins);
-
-    const barData = percentages.map((pct, i) => [binEdges[i] + (binEdges[i + 1] - binEdges[i]) / 2, pct]);
+    const traceData = computeHistogramTraceData([trace], numBins);
+    const histogramLayout = computeHistogramLayout(traceData, HistogramType.Overlay);
+    const bars = histogramLayout.barsByTrace[0] ?? [];
+    const maxPercentage = histogramLayout.yMax;
 
     const series: any[] = [];
 
     series.push({
-        type: "bar",
+        type: "custom",
         name: trace.name,
-        data: barData,
+        data: bars.map((bar, index) => ({
+            value: [bar.xStart, bar.xEnd, bar.yStart, bar.yEnd],
+            binIndex: index,
+            count: bar.count,
+            percentage: bar.percentage,
+        })),
         xAxisIndex: axisIndex,
         yAxisIndex: axisIndex,
-        barWidth: `${90 / numBins}%`,
-        itemStyle: {
-            color: trace.color,
-            opacity: showStatisticalMarkers ? 0.6 : 1,
-            borderColor: "black",
-            borderWidth: 1,
+        renderItem(params: any, api: any) {
+            const startValue = api.value(0) as number;
+            const endValue = api.value(1) as number;
+            const yStart = api.value(2) as number;
+            const yEnd = api.value(3) as number;
+            const percentage = yEnd - yStart;
+
+            const bottomLeft = api.coord([startValue, yStart]);
+            const topRight = api.coord([endValue, yEnd]);
+            const rect = {
+                x: bottomLeft[0],
+                y: topRight[1],
+                width: Math.max(topRight[0] - bottomLeft[0], 1),
+                height: Math.max(bottomLeft[1] - topRight[1], 0),
+            };
+
+            const children: any[] = [
+                {
+                    type: "rect",
+                    shape: rect,
+                    style: {
+                        fill: color,
+                        opacity,
+                        stroke: borderColor,
+                        lineWidth: borderWidth,
+                    },
+                },
+            ];
+
+            if (showPercentageInBar && percentage > 0) {
+                children.push({
+                    type: "text",
+                    style: {
+                        text: `${percentage.toFixed(1)}%`,
+                        x: rect.x + rect.width / 2,
+                        y: rect.y - 4,
+                        textAlign: "center",
+                        textVerticalAlign: "bottom",
+                        fontSize: 10,
+                        fill: "#333",
+                    },
+                });
+            }
+
+            return {
+                type: "group",
+                children,
+            };
         },
-        label: showPercentageInBar
-            ? {
-                  show: true,
-                  position: "top",
-                  formatter: (p: any) => `${(p.value[1] as number).toFixed(1)}%`,
-                  fontSize: 10,
-              }
-            : undefined,
+        tooltip: {
+            formatter: (params: any) => {
+                const [startValue, endValue, yStart, yEnd] = params.value as [number, number, number, number];
+                const percentage = yEnd - yStart;
+                return formatCompactTooltip(trace.name, [
+                    { label: "Range", value: `${formatNumber(startValue)} - ${formatNumber(endValue)}` },
+                    { label: "Percentage", value: `${percentage.toFixed(2)}%` },
+                ]);
+            },
+        },
+        z: 2,
     });
 
     if (showStatisticalMarkers) {
-        const maxPct = Math.max(...percentages) * 1.05;
-        series.push(...createHistogramStatLines(stats, maxPct, trace, axisIndex, options.showStatisticalLabels));
+        series.push(
+            ...createHistogramStatLines(
+                stats,
+                maxPercentage * 1.05,
+                trace.name,
+                color,
+                axisIndex,
+                showStatisticalLabels,
+            ),
+        );
     }
 
     if (showRealizationPoints) {
         series.push({
             type: "scatter",
-            name: "Realizations",
-            data: trace.values.map((v) => [v, -2]),
+            name: trace.name,
+            data: trace.values.map((value, index) => ({
+                value: [value, -2],
+                realizationId: trace.realizationIds?.[index] ?? index,
+            })),
             xAxisIndex: axisIndex,
             yAxisIndex: axisIndex,
             symbol: "rect",
-            symbolSize: [2, 10],
-            itemStyle: { color: trace.color, opacity: 0.6 },
-            silent: true,
+            symbolSize: [1.5, 10],
+            itemStyle: { color, opacity: 0.6 },
+            tooltip: {
+                formatter: (params: any) => {
+                    const value = Array.isArray(params.value) ? params.value[0] : params.value;
+                    const realizationId = params.data?.realizationId ?? params.dataIndex;
+                    return formatCompactTooltip(trace.name, [
+                        { label: "Value", value: formatNumber(value) },
+                        { label: "Realization", value: String(realizationId) },
+                    ]);
+                },
+            },
+            z: 3,
         });
     }
 
     return series;
 }
 
-function computeBins(values: number[], numBins: number): { binEdges: number[]; percentages: number[] } {
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const range = max - min || 1;
-    const binSize = range / numBins;
-
-    const binEdges: number[] = [];
-    for (let i = 0; i <= numBins; i++) {
-        binEdges.push(min + i * binSize);
-    }
-
-    const counts = new Array(numBins).fill(0);
-    for (const v of values) {
-        const idx = Math.min(Math.floor((v - min) / binSize), numBins - 1);
-        counts[idx]++;
-    }
-
-    const total = values.length;
-    const percentages = counts.map((c) => (c / total) * 100);
-
-    return { binEdges, percentages };
-}
-
 function createHistogramStatLines(
     stats: PointStatistics,
     maxPct: number,
-    trace: DistributionTrace,
+    traceName: string,
+    color: string,
     axisIndex: number,
     showLabels = false,
 ): any[] {
     function makeLine(value: number, label: string, dash: string): any {
         return {
             type: "line",
-            name: `${trace.name} ${label}`,
+            name: traceName,
             xAxisIndex: axisIndex,
             yAxisIndex: axisIndex,
             data: [
                 [value, 0],
                 [value, maxPct],
             ],
-            lineStyle: { color: trace.color, width: 4, type: dash },
+            lineStyle: { color, width: 4, type: dash },
             symbol: "none",
             silent: true,
+            tooltip: {
+                formatter: formatCompactTooltip(traceName, [{ label, value: formatNumber(value), color }]),
+            },
             label: showLabels
                 ? {
                       show: true,

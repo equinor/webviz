@@ -12,24 +12,23 @@ export function buildRealizationsSeries(
         const realId = trace.realizationIds?.[r] ?? r;
         return {
             id: `${trace.name}_real_${realId}_${axisIndex}`,
-            name: `${trace.name}_real_${realId}`,
+            name: trace.name,
             type: "line",
             data: realValues,
             xAxisIndex: axisIndex,
             yAxisIndex: axisIndex,
             triggerLineEvent: true,
-            itemStyle: { color: trace.color, opacity: 0 },
-            lineStyle: { width: 0.8, opacity: 0.4 },
+            itemStyle: { color: trace.color },
+            lineStyle: { color: trace.color, width: 0.8, opacity: 0.4 },
             symbol: "circle",
             symbolSize: 6,
+            showSymbol: false,
             emphasis: {
                 focus: "series",
-                itemStyle: { opacity: 0 },
-                lineStyle: { width: 3, opacity: 1 },
+                lineStyle: { color: trace.color, width: 3, opacity: 1 },
             },
             blur: {
-                itemStyle: { opacity: 0 },
-                lineStyle: { opacity: 0.5, width: 0.5 },
+                lineStyle: { color: trace.color, opacity: 0.5, width: 0.5 },
             },
         };
     });

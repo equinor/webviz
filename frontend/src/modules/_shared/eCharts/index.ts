@@ -35,15 +35,30 @@ export {
     buildFanchartSeries,
     buildBarSeries,
     buildHistogramSeries,
-    buildBoxPlotSeries,
+    buildPercentileRangeSeries,
     buildDistributionSeries,
     buildConvergenceSeries,
     buildHeatmapSeries,
 } from "./series";
-export type { BarSortBy, HistogramDisplayOptions, BoxPlotDisplayOptions, DistributionDisplayOptions } from "./series";
+export type {
+    BarSortBy,
+    HistogramDisplayOptions,
+    PercentileRangeCenterStatistic,
+    PercentileRangeDisplayOptions,
+    DistributionDisplayOptions,
+} from "./series";
 
 // Chart builders (compose series + layout into final EChartsOption)
-export { buildTimeseriesChart, buildHeatmapChart, composeChartOption } from "./builders";
+export {
+    buildTimeseriesChart,
+    buildHeatmapChart,
+    buildBarChart,
+    buildDistributionChart,
+    buildPercentileRangeChart,
+    buildConvergenceChart,
+    composeChartOption,
+} from "./builders";
+export { buildHistogramChart } from "./builders/histogramChartBuilder";
 export type { TimeseriesChartResult, ComposeChartConfig } from "./builders";
 
 // Interaction helpers
@@ -58,4 +73,9 @@ export {
 export { useHighlightOnHover, useClickToTimestamp } from "./hooks";
 
 // Statistics utilities
-export { computePointStatistics, computeTimeseriesStatistics } from "./utils";
+export {
+    computePointStatistics,
+    computeTimeseriesStatistics,
+    computeHistogramLayout,
+    computeHistogramTraceData,
+} from "./utils";

@@ -1,22 +1,31 @@
-import type { BarSeriesOption } from "echarts/charts";
+import type { BarSeriesOption, LineSeriesOption } from "echarts/charts";
+import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
+import { formatCompactTooltip } from "../interaction/tooltipFormatters";
 import type { BarTrace, PointStatistics } from "../types";
 import { computePointStatistics } from "../utils/statistics";
 
 export type BarSortBy = "categories" | "values";
 
+export type BuildBarSeriesOptions = {
+    sortBy?: BarSortBy;
+    showStatisticalMarkers?: boolean;
+    maxLabelsForText?: number;
+};
+
+export type BarChartSeries = BarSeriesOption | LineSeriesOption;
+
+export type BuildBarSeriesResult = {
+    series: BarChartSeries[];
+    categoryData: (string | number)[];
+    legendEntry: string;
+};
+
 const MAX_LABELS_FOR_BARS = 20;
 
-export function buildBarSeries(
-    trace: BarTrace,
-    options: {
-        sortBy?: BarSortBy;
-        showStatisticalMarkers?: boolean;
-        maxLabelsForText?: number;
-    } = {},
-): any[] {
+export function buildBarSeries(trace: BarTrace, options: BuildBarSeriesOptions = {}): BuildBarSeriesResult {
     const { sortBy = "categories", showStatisticalMarkers = false, maxLabelsForText = MAX_LABELS_FOR_BARS } = options;
 
     const dataPoints = trace.categories.map((cat, i) => ({ x: cat, y: trace.values[i] }));
@@ -30,7 +39,7 @@ export function buildBarSeries(
     const yData = sorted.map((p) => p.y);
     const showText = xData.length <= maxLabelsForText;
 
-    const series: any[] = [];
+    const series: BarChartSeries[] = [];
 
     const barSeries: BarSeriesOption = {
         name: trace.name,
@@ -41,16 +50,13 @@ export function buildBarSeries(
             ? {
                   show: true,
                   position: "inside",
-                  formatter: (params: any) => formatNumber(params.value as number),
+                  formatter: (params: CallbackDataParams) => formatNumber(params.value as number),
                   fontSize: 12,
                   color: "black",
               }
             : undefined,
-        // Store xData for axis consumption
         encode: { x: 0, y: 1 },
     };
-    // Attach category data for builder to use
-    (barSeries as any)._categoryData = xData;
 
     series.push(barSeries);
 
@@ -59,17 +65,21 @@ export function buildBarSeries(
         series.push(...createStatMarkerLines(stats, xData, trace));
     }
 
-    return series;
+    return { series, categoryData: xData, legendEntry: trace.name };
 }
 
-function createStatMarkerLines(stats: PointStatistics, xData: (string | number)[], trace: BarTrace): any[] {
+function createStatMarkerLines(
+    stats: PointStatistics,
+    xData: (string | number)[],
+    trace: BarTrace,
+): LineSeriesOption[] {
     const xStart = xData[0];
     const xEnd = xData[xData.length - 1];
 
-    function makeLine(value: number, label: string, dash: string): any {
+    function makeLine(value: number, label: string, dash: "solid" | "dashed"): LineSeriesOption {
         return {
             type: "line",
-            name: label,
+            name: trace.name,
             data: [
                 [xStart, value],
                 [xEnd, value],
@@ -78,7 +88,8 @@ function createStatMarkerLines(stats: PointStatistics, xData: (string | number)[
             symbol: "none",
             silent: true,
             tooltip: {
-                formatter: () => `<b>${trace.name}</b><br/><b>${label}</b>: ${formatNumber(value)}`,
+                formatter: () =>
+                    formatCompactTooltip(trace.name, [{ label, value: formatNumber(value), color: trace.color }]),
             },
         };
     }

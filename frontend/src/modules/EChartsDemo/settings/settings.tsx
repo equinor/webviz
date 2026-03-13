@@ -1,20 +1,21 @@
 import type React from "react";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 
-import type { ModuleSettingsProps } from "@framework/Module";
-import type { StatisticKey } from "@modules/_shared/eCharts";
-import { ALL_STATISTIC_KEYS } from "@modules/_shared/eCharts";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Slider } from "@lib/components/Slider";
+import type { StatisticKey } from "@modules/_shared/eCharts";
+import { ALL_STATISTIC_KEYS } from "@modules/_shared/eCharts";
+import { HistogramType } from "@modules/_shared/histogram";
 
-import type { Interfaces } from "../interfaces";
 import { PlotType, PLOT_TYPE_LABELS } from "../typesAndEnums";
 
 import {
+    histogramBinsAtom,
+    histogramTypeAtom,
     numGroupsAtom,
     numRealizationsAtom,
     numSubplotsAtom,
@@ -37,7 +38,14 @@ const statisticOptions = ALL_STATISTIC_KEYS.map((k) => ({
     label: k.toUpperCase(),
 }));
 
-export function Settings(_props: ModuleSettingsProps<Interfaces>): React.ReactNode {
+const histogramLayoutOptions = [
+    { value: HistogramType.Overlay, label: "Overlay" },
+    { value: HistogramType.Group, label: "Grouped" },
+    { value: HistogramType.Stack, label: "Stacked" },
+    { value: HistogramType.Relative, label: "Relative" },
+];
+
+export function Settings(): React.ReactNode {
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [numSubplots, setNumSubplots] = useAtom(numSubplotsAtom);
     const [numGroups, setNumGroups] = useAtom(numGroupsAtom);
@@ -48,15 +56,17 @@ export function Settings(_props: ModuleSettingsProps<Interfaces>): React.ReactNo
     const [selectedStatistics, setSelectedStatistics] = useAtom(selectedStatisticsAtom);
     const [showStatisticalMarkers, setShowStatisticalMarkers] = useAtom(showStatisticalMarkersAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
+    const [histogramBins, setHistogramBins] = useAtom(histogramBinsAtom);
+    const [histogramType, setHistogramType] = useAtom(histogramTypeAtom);
     const [sharedXAxis, setSharedXAxis] = useAtom(sharedXAxisAtom);
     const [sharedYAxis, setSharedYAxis] = useAtom(sharedYAxisAtom);
     const [scrollMode, setScrollMode] = useAtom(scrollModeAtom);
 
     const isTimeseries = plotType === PlotType.Timeseries;
-    const isDistribution = [PlotType.Histogram, PlotType.BoxPlot, PlotType.Distribution, PlotType.Convergence].includes(
-        plotType,
-    );
-    const isBar = plotType === PlotType.Bar;
+    const isHistogram = plotType === PlotType.Histogram;
+    const isPercentileRange = plotType === PlotType.PercentileRange;
+    const supportsStatisticalMarkers = plotType === PlotType.Histogram || plotType === PlotType.Bar;
+    const supportsRealizationPoints = isHistogram || isPercentileRange || plotType === PlotType.Distribution;
 
     function handleStatToggle(key: StatisticKey, checked: boolean) {
         if (checked) {
@@ -96,7 +106,30 @@ export function Settings(_props: ModuleSettingsProps<Interfaces>): React.ReactNo
                         onChange={(_, v) => setNumRealizations(v as number)}
                     />
                 </Label>
+                {isHistogram && (
+                    <Label text={`Bins: ${histogramBins}`}>
+                        <Slider
+                            min={5}
+                            max={40}
+                            step={1}
+                            value={histogramBins}
+                            onChange={(_, v) => setHistogramBins(v as number)}
+                        />
+                    </Label>
+                )}
             </CollapsibleGroup>
+
+            {isHistogram && (
+                <CollapsibleGroup title="Histogram" expanded>
+                    <Label text="Layout">
+                        <Dropdown
+                            options={histogramLayoutOptions}
+                            value={histogramType}
+                            onChange={(v) => setHistogramType(v as HistogramType)}
+                        />
+                    </Label>
+                </CollapsibleGroup>
+            )}
 
             {isTimeseries && (
                 <CollapsibleGroup title="Timeseries display" expanded>
@@ -131,14 +164,16 @@ export function Settings(_props: ModuleSettingsProps<Interfaces>): React.ReactNo
                 </CollapsibleGroup>
             )}
 
-            {(isDistribution || isBar) && (
+            {(supportsStatisticalMarkers || supportsRealizationPoints) && (
                 <CollapsibleGroup title="Markers & points" expanded>
-                    <Checkbox
-                        label="Show statistical markers"
-                        checked={showStatisticalMarkers}
-                        onChange={(_, c) => setShowStatisticalMarkers(c)}
-                    />
-                    {isDistribution && (
+                    {supportsStatisticalMarkers && (
+                        <Checkbox
+                            label="Show statistical markers"
+                            checked={showStatisticalMarkers}
+                            onChange={(_, c) => setShowStatisticalMarkers(c)}
+                        />
+                    )}
+                    {supportsRealizationPoints && (
                         <Checkbox
                             label="Show realization points"
                             checked={showRealizationPoints}
