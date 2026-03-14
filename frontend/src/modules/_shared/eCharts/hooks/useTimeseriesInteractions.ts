@@ -4,6 +4,7 @@ import type ReactECharts from "echarts-for-react";
 
 import { useClickToTimestamp } from "./useClickToTimestamp";
 import { useHighlightOnHover } from "./useHighlightOnHover";
+import type { HighlightOnHoverEvents } from "./useHighlightOnHover";
 
 export type TimeseriesInteractionConfig = {
     /** Enable linked-realization hover highlighting across subplots. */
@@ -20,7 +21,7 @@ export type TimeseriesInteractionConfig = {
 
 export type TimeseriesInteractionResult = {
     chartRef: React.RefObject<ReactECharts>;
-    onChartEvents: Record<string, (e: any) => void>;
+    onChartEvents: HighlightOnHoverEvents;
 };
 
 /**

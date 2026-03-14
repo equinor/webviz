@@ -3,6 +3,7 @@ import type { LineSeriesOption, ScatterSeriesOption } from "echarts/charts";
 import type { SeriesBuildResult } from "../builders/composeChartOption";
 import type { DistributionTrace } from "../types";
 import { computeKde } from "../utils/kde";
+import { makeDensitySeriesId } from "../utils/seriesId";
 
 export type DensityDisplayOptions = {
     showRealizationPoints?: boolean;
@@ -29,6 +30,7 @@ export function buildDensitySeries(
 
     // KDE curve as a filled area
     series.push({
+        id: makeDensitySeriesId(trace.name, "kde", axisIndex),
         type: "line",
         name: trace.name,
         xAxisIndex: axisIndex,
@@ -44,6 +46,7 @@ export function buildDensitySeries(
     if (showRealizationPoints) {
         // Jittered scatter at y = 0
         series.push({
+            id: makeDensitySeriesId(trace.name, "points", axisIndex),
             type: "scatter",
             name: `${trace.name} points`,
             xAxisIndex: axisIndex,

@@ -4,7 +4,7 @@ import { formatRealizationScatterTooltip } from "../interaction/tooltipFormatter
 import { buildRealizationScatterSeries } from "../series/realizationScatterSeries";
 import type { ContainerSize, RealizationScatterTrace, SubplotGroup } from "../types";
 
-import { assignSeriesToAxis, buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
+import { buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
 import type { CartesianChartSeries } from "./cartesianSubplotChartBuilder";
 
 export type RealizationScatterChartOptions = {
@@ -30,7 +30,7 @@ export function buildRealizationScatterChart(
 
             for (const trace of group.traces) {
                 const result = buildRealizationScatterSeries(trace, axisIndex);
-                series.push(...assignSeriesToAxis(result.series, axisIndex));
+                series.push(...result.series);
                 for (const name of result.legendData) {
                     if (!seenLegend.has(name)) {
                         legendData.push(name);

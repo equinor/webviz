@@ -6,7 +6,17 @@ import type ReactECharts from "echarts-for-react";
 
 import { getHighlightGroupKey, getRealizationId, isRealizationSeries } from "../utils/seriesId";
 
-export function useHighlightOnHover(chartRef: React.RefObject<ReactECharts | null>, enabled: boolean) {
+export type HighlightOnHoverEvents = {
+    mousemove: (event: ECElementEvent) => void;
+    mouseover: (event: ECElementEvent) => void;
+    mouseout: () => void;
+    globalout: () => void;
+};
+
+export function useHighlightOnHover(
+    chartRef: React.RefObject<ReactECharts | null>,
+    enabled: boolean,
+): HighlightOnHoverEvents {
     const highlightedSeriesRef = React.useRef<string | null>(null);
     const clearHighlightTimeoutRef = React.useRef<number | null>(null);
 

@@ -6,6 +6,11 @@ import {
     makeStatisticSeriesId,
     makeFanchartSeriesId,
     makeConvergenceSeriesId,
+    makeHistogramSeriesId,
+    makeDensitySeriesId,
+    makePercentileSeriesId,
+    makeHeatmapSeriesId,
+    makeBarSeriesId,
     parseSeriesId,
     isRealizationSeries,
     isStatisticSeries,
@@ -41,6 +46,26 @@ describe("factory helpers", () => {
 
     it("makeConvergenceSeriesId", () => {
         expect(makeConvergenceSeriesId("trace", "band", 2)).toBe("convergence:trace:band:2");
+    });
+
+    it("makeHistogramSeriesId", () => {
+        expect(makeHistogramSeriesId("trace", "bars", 1)).toBe("histogram:trace:bars:1");
+    });
+
+    it("makeDensitySeriesId", () => {
+        expect(makeDensitySeriesId("trace", "kde", 0)).toBe("density:trace:kde:0");
+    });
+
+    it("makePercentileSeriesId", () => {
+        expect(makePercentileSeriesId("trace", "glyph", 0)).toBe("percentile:trace:glyph:0");
+    });
+
+    it("makeHeatmapSeriesId", () => {
+        expect(makeHeatmapSeriesId("trace", "cells", 3)).toBe("heatmap:trace:cells:3");
+    });
+
+    it("makeBarSeriesId", () => {
+        expect(makeBarSeriesId("trace", "bars", 4)).toBe("bar:trace:bars:4");
     });
 });
 

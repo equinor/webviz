@@ -5,7 +5,7 @@ import { buildBarSeries } from "../series/barSeries";
 import type { BuildBarSeriesOptions } from "../series/barSeries";
 import type { BarTrace, ContainerSize, SubplotGroup } from "../types";
 
-import { assignSeriesToAxis, buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
+import { buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
 import type { CartesianChartSeries, CartesianSubplotBuildResult } from "./cartesianSubplotChartBuilder";
 
 export type BarChartOptions = BuildBarSeriesOptions & {
@@ -39,9 +39,9 @@ function buildBarSubplot(
     let categoryData: (string | number)[] = [];
 
     for (const trace of group.traces) {
-        const result = buildBarSeries(trace, options);
+        const result = buildBarSeries(trace, axisIndex, options);
         if (categoryData.length === 0) categoryData = result.categoryData;
-        series.push(...assignSeriesToAxis(result.series, axisIndex));
+        series.push(...result.series);
         legendData.push(...result.legendData);
     }
 

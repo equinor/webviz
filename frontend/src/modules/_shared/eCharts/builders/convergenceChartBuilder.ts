@@ -4,7 +4,7 @@ import { formatConvergenceTooltip } from "../interaction/tooltipFormatters";
 import { buildConvergenceSeries } from "../series/convergenceSeries";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../types";
 
-import { assignSeriesToAxis, buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
+import { buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
 import type { CartesianChartSeries } from "./cartesianSubplotChartBuilder";
 
 export type ConvergenceChartOptions = {
@@ -57,7 +57,7 @@ function buildConvergenceSubplot(
 
     for (const trace of group.traces) {
         const result = buildConvergenceSeries(trace, axisIndex);
-        series.push(...assignSeriesToAxis(result.series, axisIndex));
+        series.push(...result.series);
 
         for (const legendName of result.legendData) {
             if (!seenLegend.has(legendName)) {

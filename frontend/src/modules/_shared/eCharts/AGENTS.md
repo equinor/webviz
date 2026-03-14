@@ -6,6 +6,7 @@
 - Use `postProcessAxes` for any post-build axis modifications. Do not manually call `buildSubplotAxes` + `composeChartOption` in individual builders.
 - Every exported series builder in `series/` must return `SeriesBuildResult` (`{ series, legendData }`), including single-series builders such as heatmap and histogram.
 - `legendData` must only contain names for traces that actually produced series entries.
+- Series builders own axis bindings (`xAxisIndex`, `yAxisIndex`). Chart builders should not remap axis indices after receiving `result.series`.
 - All series must use structured IDs via `utils/seriesId.ts`. Never hardcode series ID strings.
 - When changing a shared API, update all affected modules rather than preserving backwards compatibility. Do not add optional parameters or fallback paths to avoid breaking callers.
 

@@ -134,10 +134,16 @@ export function formatBarTooltip(params: CallbackDataParams | CallbackDataParams
 // Convergence tooltip
 // ---------------------------------------------------------------------------
 
-export function formatConvergenceTooltip(params: unknown): string {
-    if (!Array.isArray(params) || params.length === 0) return "";
+export function formatConvergenceTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
+    const rawParams = Array.isArray(params) ? params : [params];
+    if (rawParams.length === 0) return "";
 
-    const entries = params.filter(isTooltipEntry);
+    const entries: TooltipEntry[] = [];
+    for (const entry of rawParams) {
+        if (isTooltipEntry(entry)) {
+            entries.push(entry);
+        }
+    }
     if (entries.length === 0) return "";
 
     const headerValue = entries[0].axisValueLabel ?? entries[0].axisValue;
@@ -151,7 +157,7 @@ export function formatConvergenceTooltip(params: unknown): string {
         rows.push({
             label: `${entry.seriesName} (${formatConvergenceStatLabel(statKey)})`,
             value: formatNumber(value),
-            color: entry.color,
+            color: typeof entry.color === "string" ? entry.color : undefined,
         });
     }
 

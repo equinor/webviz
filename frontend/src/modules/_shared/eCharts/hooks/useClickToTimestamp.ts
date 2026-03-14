@@ -59,6 +59,5 @@ export function useClickToTimestamp(
         return () => {
             dom.removeEventListener("click", handleClick);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [setActiveTimestampUtcMs, layoutDependency]);
+    }, [chartRef, setActiveTimestampUtcMs, layoutDependency]);
 }

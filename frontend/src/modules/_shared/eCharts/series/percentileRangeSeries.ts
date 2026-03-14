@@ -5,7 +5,8 @@ import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { SeriesBuildResult } from "../builders/composeChartOption";
 import { formatCompactTooltip } from "../interaction/tooltipFormatters";
-import type { DistributionTrace } from "../types";
+import type { DistributionTrace, PointStatistics } from "../types";
+import { makePercentileSeriesId } from "../utils/seriesId";
 import { computePointStatistics } from "../utils/statistics";
 
 export type PercentileRangeCenterStatistic = "mean" | "p50";
@@ -52,7 +53,7 @@ export function buildPercentileRangeSeries(
 
 function createPercentileRangeGlyphSeries(
     trace: DistributionTrace,
-    stats: ReturnType<typeof computePointStatistics>,
+    stats: PointStatistics,
     centerValue: number,
     centerStatistic: PercentileRangeCenterStatistic,
     showWhiskers: boolean,
@@ -62,6 +63,7 @@ function createPercentileRangeGlyphSeries(
     const centerLabel = centerStatistic === "mean" ? "Mean" : "P50";
 
     return {
+        id: makePercentileSeriesId(trace.name, "glyph", axisIndex),
         type: "custom",
         name: trace.name,
         xAxisIndex: axisIndex,
@@ -182,6 +184,7 @@ function createRealizationPointSeries(
     axisIndex: number,
 ): ScatterSeriesOption {
     return {
+        id: makePercentileSeriesId(trace.name, "points", axisIndex),
         type: "scatter",
         name: `${trace.name} points`,
         xAxisIndex: axisIndex,

@@ -17,6 +17,13 @@ export type TimeseriesChartOptions = {
     sharedYAxis?: boolean;
 };
 
+type RealtimeAxisPointer = {
+    show: true;
+    type: "line";
+    triggerTooltip: false;
+    label: { show: true };
+};
+
 export function buildTimeseriesChart(
     subplotGroups: SubplotGroup<TimeseriesTrace>[],
     config: TimeseriesDisplayConfig,
@@ -41,10 +48,7 @@ export function buildTimeseriesChart(
             sharedYAxis: chartOptions.sharedYAxis,
             postProcessAxes: (_axes, allSeries) => {
                 if (activeTimestampUtcMs != null) {
-                    applyActiveTimestampMarker(
-                        allSeries,
-                        timestampUtcMsToCompactIsoString(activeTimestampUtcMs),
-                    );
+                    applyActiveTimestampMarker(allSeries, timestampUtcMsToCompactIsoString(activeTimestampUtcMs));
                 }
             },
             ...buildTimeseriesComposeOverrides(numSubplots, config, containerSize),
@@ -65,7 +69,7 @@ function buildCategoryData(subplotGroups: SubplotGroup<TimeseriesTrace>[]): stri
     return firstTrace ? firstTrace.timestamps.map((timestamp) => timestampUtcMsToCompactIsoString(timestamp)) : [];
 }
 
-function buildRealtimeAxisPointer(config: TimeseriesDisplayConfig) {
+function buildRealtimeAxisPointer(config: TimeseriesDisplayConfig): RealtimeAxisPointer | undefined {
     const showCrosshair = config.showRealizations && !config.showStatistics;
     return showCrosshair
         ? undefined
@@ -78,7 +82,7 @@ function buildTimeseriesSubplot(
     config: TimeseriesDisplayConfig,
     categoryData: string[],
     yAxisLabel: string,
-    realtimePointer: ReturnType<typeof buildRealtimeAxisPointer>,
+    realtimePointer: RealtimeAxisPointer | undefined,
 ): CartesianSubplotBuildResult {
     const series: CartesianChartSeries[] = [];
     const legendData: string[] = [];
@@ -171,7 +175,7 @@ function buildTimeseriesDataZoom(
                       start: 0,
                       end: 100,
                       bottom: 0,
-                      height: 20,
+                      height: 10,
                       filterMode: "none" as const,
                   },
                   {
@@ -180,8 +184,8 @@ function buildTimeseriesDataZoom(
                       yAxisIndex: allAxisIndices,
                       start: 0,
                       end: 100,
-                      right: -10,
-                      width: 20,
+                      right: 0,
+                      width: 10,
                       filterMode: "none" as const,
                   },
               ]

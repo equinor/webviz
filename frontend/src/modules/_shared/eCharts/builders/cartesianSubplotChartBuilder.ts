@@ -30,11 +30,6 @@ export type CartesianChartOptions = CartesianChartComposeOverrides & {
     postProcessAxes?: (axes: SubplotAxesResult, allSeries: ChartSeriesOption[]) => void;
 };
 
-type CartesianAxisBoundSeries = CartesianChartSeries & {
-    xAxisIndex?: number;
-    yAxisIndex?: number;
-};
-
 export function buildCartesianSubplotChart<T>(
     subplotGroups: SubplotGroup<T>[],
     buildSubplot: (group: SubplotGroup<T>, axisIndex: number) => CartesianSubplotBuildResult,
@@ -80,14 +75,6 @@ export function buildCartesianSubplotChart<T>(
         containerSize,
         ...composeOverrides,
     });
-}
-
-export function assignSeriesToAxis<T extends CartesianAxisBoundSeries>(series: T[], axisIndex: number): T[] {
-    return series.map((seriesOption) => ({
-        ...seriesOption,
-        xAxisIndex: axisIndex,
-        yAxisIndex: axisIndex,
-    }));
 }
 
 /**

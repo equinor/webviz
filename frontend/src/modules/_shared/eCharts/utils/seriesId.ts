@@ -58,6 +58,26 @@ export function makeConvergenceSeriesId(traceName: string, qualifier: string, ax
     return makeSeriesId("convergence", traceName, qualifier, axisIndex);
 }
 
+export function makeHistogramSeriesId(traceName: string, qualifier: string, axisIndex: number): string {
+    return makeSeriesId("histogram", traceName, qualifier, axisIndex);
+}
+
+export function makeDensitySeriesId(traceName: string, qualifier: string, axisIndex: number): string {
+    return makeSeriesId("density", traceName, qualifier, axisIndex);
+}
+
+export function makePercentileSeriesId(traceName: string, qualifier: string, axisIndex: number): string {
+    return makeSeriesId("percentile", traceName, qualifier, axisIndex);
+}
+
+export function makeHeatmapSeriesId(traceName: string, qualifier: string, axisIndex: number): string {
+    return makeSeriesId("heatmap", traceName, qualifier, axisIndex);
+}
+
+export function makeBarSeriesId(traceName: string, qualifier: string, axisIndex: number): string {
+    return makeSeriesId("bar", traceName, qualifier, axisIndex);
+}
+
 // ---------------------------------------------------------------------------
 // ID parsing
 // ---------------------------------------------------------------------------

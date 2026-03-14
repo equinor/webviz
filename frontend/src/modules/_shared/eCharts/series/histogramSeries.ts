@@ -6,13 +6,13 @@ import type {
     CustomSeriesRenderItemReturn,
 } from "echarts/types/dist/shared";
 
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
-
 import type { ChartSeriesOption, SeriesBuildResult } from "../builders/composeChartOption";
-import { formatCompactTooltip } from "../interaction/tooltipFormatters";
+import { formatHistogramBarTooltip, formatHistogramRugTooltip } from "../interaction/tooltipFormatters";
 import type { DistributionTrace } from "../types";
 import { HistogramType } from "../types";
 import { computeHistogramLayout, computeHistogramTraceData } from "../utils/histogram";
+import type { HistogramBarGeometry } from "../utils/histogram";
+import { makeHistogramSeriesId } from "../utils/seriesId";
 
 export interface HistogramDisplayOptions {
     numBins?: number;
@@ -24,13 +24,31 @@ export interface HistogramDisplayOptions {
     borderWidth?: number;
 }
 
+export type HistogramBarsSeriesOptions = Omit<HistogramDisplayOptions, "numBins">;
+
 export function buildHistogramSeries(
     trace: DistributionTrace,
     options: HistogramDisplayOptions = {},
     axisIndex = 0,
 ): SeriesBuildResult {
+    const { numBins = 15, ...seriesOptions } = options;
+
+    if (trace.values.length === 0) return { series: [], legendData: [] };
+
+    const traceData = computeHistogramTraceData([trace], numBins);
+    const histogramLayout = computeHistogramLayout(traceData, HistogramType.Overlay);
+    const bars = histogramLayout.barsByTrace[0] ?? [];
+
+    return buildHistogramSeriesFromBars(trace, bars, seriesOptions, axisIndex);
+}
+
+export function buildHistogramSeriesFromBars(
+    trace: DistributionTrace,
+    bars: HistogramBarGeometry[],
+    options: HistogramBarsSeriesOptions = {},
+    axisIndex = 0,
+): SeriesBuildResult {
     const {
-        numBins = 15,
         showRealizationPoints = false,
         showPercentageInBar = false,
         color = trace.color,
@@ -41,13 +59,10 @@ export function buildHistogramSeries(
 
     if (trace.values.length === 0) return { series: [], legendData: [] };
 
-    const traceData = computeHistogramTraceData([trace], numBins);
-    const histogramLayout = computeHistogramLayout(traceData, HistogramType.Overlay);
-    const bars = histogramLayout.barsByTrace[0] ?? [];
-
     const series: ChartSeriesOption[] = [];
 
     series.push({
+        id: makeHistogramSeriesId(trace.name, "bars", axisIndex),
         type: "custom",
         name: trace.name,
         data: bars.map((bar, index) => ({
@@ -97,6 +112,8 @@ export function buildHistogramSeries(
                         text: `${percentage.toFixed(1)}%`,
                         x: rect.x + rect.width / 2,
                         y: rect.y - 4,
+                        textAlign: "center",
+                        textVerticalAlign: "bottom",
                         fontSize: 10,
                         fill: "#333",
                     },
@@ -109,20 +126,14 @@ export function buildHistogramSeries(
             };
         }) as CustomSeriesRenderItem,
         tooltip: {
-            formatter: (params: CallbackDataParams) => {
-                const [startValue, endValue, yStart, yEnd] = params.value as [number, number, number, number];
-                const percentage = yEnd - yStart;
-                return formatCompactTooltip(trace.name, [
-                    { label: "Range", value: `${formatNumber(startValue)} - ${formatNumber(endValue)}` },
-                    { label: "Percentage", value: `${percentage.toFixed(2)}%` },
-                ]);
-            },
+            formatter: (params: CallbackDataParams) => formatHistogramBarTooltip(params, trace.name, color),
         },
         z: 2,
     });
 
     if (showRealizationPoints) {
         series.push({
+            id: makeHistogramSeriesId(trace.name, "rug", axisIndex),
             type: "scatter",
             name: trace.name,
             data: trace.values.map((value, index) => ({
@@ -135,17 +146,7 @@ export function buildHistogramSeries(
             symbolSize: [1.5, 10],
             itemStyle: { color, opacity: 0.6 },
             tooltip: {
-                formatter: (params: CallbackDataParams) => {
-                    const value = Array.isArray(params.value) ? Number(params.value[0]) : Number(params.value);
-                    const realizationId =
-                        params.data && typeof params.data === "object" && "realizationId" in params.data
-                            ? (params.data as { realizationId: number }).realizationId
-                            : params.dataIndex;
-                    return formatCompactTooltip(trace.name, [
-                        { label: "Value", value: formatNumber(value) },
-                        { label: "Realization", value: String(realizationId) },
-                    ]);
-                },
+                formatter: (params: CallbackDataParams) => formatHistogramRugTooltip(params, trace.name, color),
             },
             z: 3,
         });

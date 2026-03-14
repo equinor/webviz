@@ -260,6 +260,11 @@ The base builder accepts a `CartesianChartOptions` object with:
 - `postProcessAxes(axes, allSeries)` — hook for builders that need to modify axes after construction (e.g. histogram y-extent adjustment, timestamp markers)
 - compose overrides for tooltip, axisPointer, dataZoom, visualMap, toolbox
 
+Axis binding convention:
+
+- series builders are responsible for assigning `xAxisIndex` and `yAxisIndex` on each produced series
+- chart builders should consume `result.series` directly and should not remap axis indices afterwards
+
 If you need custom pre- or post-processing of axes or series, use `postProcessAxes` rather than bypassing the base builder.
 
 ### Centralized Tooltip Formatters

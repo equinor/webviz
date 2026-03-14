@@ -6,6 +6,7 @@ import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import type { SeriesBuildResult } from "../builders/composeChartOption";
 import { formatCompactTooltip } from "../interaction/tooltipFormatters";
 import type { BarTrace } from "../types";
+import { makeBarSeriesId } from "../utils/seriesId";
 import { computePointStatistics } from "../utils/statistics";
 
 export type BarSortBy = "categories" | "values";
@@ -25,7 +26,11 @@ export type BuildBarSeriesResult = SeriesBuildResult & {
 
 const MAX_LABELS_FOR_BARS = 20;
 
-export function buildBarSeries(trace: BarTrace, options: BuildBarSeriesOptions = {}): BuildBarSeriesResult {
+export function buildBarSeries(
+    trace: BarTrace,
+    axisIndex: number,
+    options: BuildBarSeriesOptions = {},
+): BuildBarSeriesResult {
     const {
         sortBy = "categories",
         showStatisticalMarkers = false,
@@ -47,8 +52,11 @@ export function buildBarSeries(trace: BarTrace, options: BuildBarSeriesOptions =
     const series: BarChartSeries[] = [];
 
     const barSeries: BarSeriesOption = {
+        id: makeBarSeriesId(trace.name, "bars", axisIndex),
         name: trace.name,
         type: "bar",
+        xAxisIndex: axisIndex,
+        yAxisIndex: axisIndex,
         data: yData,
         itemStyle: { color: trace.color, opacity: 0.8 },
         label: showText
@@ -64,18 +72,26 @@ export function buildBarSeries(trace: BarTrace, options: BuildBarSeriesOptions =
 
     series.push(barSeries);
 
-    if (showStatisticalMarkers) {
+    if (showStatisticalMarkers && xData.length > 0) {
         const stats = computePointStatistics(yData);
-        series.push(createMeanReferenceLine(stats.mean, xData, trace));
+        series.push(createMeanReferenceLine(stats.mean, xData, trace, axisIndex));
     }
 
     return { series, categoryData: xData, legendData: [trace.name] };
 }
 
-function createMeanReferenceLine(mean: number, xData: (string | number)[], trace: BarTrace): LineSeriesOption {
+function createMeanReferenceLine(
+    mean: number,
+    xData: (string | number)[],
+    trace: BarTrace,
+    axisIndex: number,
+): LineSeriesOption {
     return {
+        id: makeBarSeriesId(trace.name, "mean", axisIndex),
         type: "line",
         name: trace.name,
+        xAxisIndex: axisIndex,
+        yAxisIndex: axisIndex,
         data: [
             [xData[0], mean],
             [xData[xData.length - 1], mean],
