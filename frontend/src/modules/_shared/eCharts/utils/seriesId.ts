@@ -23,16 +23,19 @@
 // ID construction
 // ---------------------------------------------------------------------------
 
-export type SeriesCategory =
-    | "realization"
-    | "statistic"
-    | "fanchart"
-    | "convergence"
-    | "histogram"
-    | "density"
-    | "percentile"
-    | "heatmap"
-    | "bar";
+const SERIES_CATEGORIES = [
+    "realization",
+    "statistic",
+    "fanchart",
+    "convergence",
+    "histogram",
+    "density",
+    "percentile",
+    "heatmap",
+    "bar",
+] as const;
+
+export type SeriesCategory = (typeof SERIES_CATEGORIES)[number];
 
 export function makeSeriesId(category: SeriesCategory, name: string, qualifier: string, axisIndex: number): string {
     return `${category}:${name}:${qualifier}:${axisIndex}`;
@@ -89,24 +92,18 @@ export type ParsedSeriesId = {
     axisIndex: number;
 };
 
-const VALID_CATEGORIES = new Set<string>([
-    "realization",
-    "statistic",
-    "fanchart",
-    "convergence",
-    "histogram",
-    "density",
-    "percentile",
-    "heatmap",
-    "bar",
-]);
+const VALID_CATEGORIES = new Set<string>(SERIES_CATEGORIES);
+
+function isSeriesCategory(value: string): value is SeriesCategory {
+    return VALID_CATEGORIES.has(value);
+}
 
 export function parseSeriesId(seriesId: string): ParsedSeriesId | null {
     const parts = seriesId.split(":");
     if (parts.length < 4) return null;
 
     const category = parts[0];
-    if (!VALID_CATEGORIES.has(category)) return null;
+    if (!isSeriesCategory(category)) return null;
 
     // Name may contain colons — everything between category and the last two segments
     const axisIndex = Number(parts[parts.length - 1]);
@@ -115,7 +112,7 @@ export function parseSeriesId(seriesId: string): ParsedSeriesId | null {
 
     if (!name || !qualifier || !Number.isFinite(axisIndex)) return null;
 
-    return { category: category as SeriesCategory, name, qualifier, axisIndex };
+    return { category, name, qualifier, axisIndex };
 }
 
 // ---------------------------------------------------------------------------

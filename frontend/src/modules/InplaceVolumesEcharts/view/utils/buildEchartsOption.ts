@@ -6,13 +6,12 @@ import {
     buildDensityChart,
     buildHistogramChart,
     buildPercentileRangeChart,
+    type HistogramType,
     type BarTrace,
     type ContainerSize,
     type DistributionTrace,
     type SubplotGroup,
-    HistogramType as EChartsHistogramType,
 } from "@modules/_shared/eCharts";
-import type { HistogramType } from "@modules/_shared/histogram";
 import { BarSortBy } from "@modules/_shared/InplaceVolumes/plotOptions";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 
@@ -51,7 +50,7 @@ export function buildEchartsOption(args: BuildEchartsOptionArgs): EChartsOption 
                 toDistributionSubplots(groupedData, args.resultName),
                 {
                     numBins: args.histogramBins,
-                    histogramType: args.histogramType as unknown as EChartsHistogramType,
+                    histogramType: args.histogramType,
                     showRealizationPoints: args.showRealizationPoints,
                     showPercentageInBar: args.showPercentageInHistogram,
                     sharedXAxis: args.sharedXAxis,

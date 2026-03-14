@@ -9,7 +9,6 @@ import type {
     BarTrace,
     ContainerSize,
     DistributionTrace,
-    HistogramType,
     RealizationScatterTrace,
     SubplotGroup,
     TimeseriesDisplayConfig,
@@ -84,16 +83,16 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     sharedYAxis,
                 );
             case PlotType.Histogram:
-                return buildHistogramDemoChart(
-                    numSubplots,
-                    numGroups,
-                    numRealizations,
-                    showRealizationPoints,
-                    histogramBins,
-                    histogramType,
-                    size,
-                    sharedXAxis,
-                    sharedYAxis,
+                return buildHistogramChart(
+                    createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
+                    {
+                        numBins: histogramBins,
+                        histogramType,
+                        showRealizationPoints,
+                        sharedXAxis,
+                        sharedYAxis,
+                    },
+                    containerSize,
                 );
             case PlotType.PercentileRange:
                 return buildPercentileRangeChart(
@@ -213,30 +212,6 @@ function buildTimeseries(
         sharedXAxis,
         sharedYAxis,
     });
-}
-
-function buildHistogramDemoChart(
-    numSubplots: number,
-    numGroups: number,
-    numRealizations: number,
-    showRealizationPoints: boolean,
-    histogramBins: number,
-    histogramType: HistogramType,
-    containerSize?: ContainerSize,
-    sharedXAxis?: boolean,
-    sharedYAxis?: boolean,
-): EChartsOption {
-    return buildHistogramChart(
-        createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
-        {
-            numBins: histogramBins,
-            histogramType,
-            showRealizationPoints,
-            sharedXAxis,
-            sharedYAxis,
-        },
-        containerSize,
-    );
 }
 
 function createDistributionSubplotGroups(
