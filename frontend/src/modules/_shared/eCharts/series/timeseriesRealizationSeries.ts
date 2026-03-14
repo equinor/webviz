@@ -11,6 +11,10 @@ export function buildRealizationsSeries(trace: TimeseriesTrace, axisIndex = 0): 
 
     const series: LineSeriesOption[] = trace.realizationValues.map((realValues, r) => {
         const realId = trace.realizationIds?.[r] ?? r;
+
+        // Potential performance improvements:
+        // sampling:"lttb"
+        // triggerLineEvent: false
         return {
             id: makeRealizationSeriesId(highlightGroupKey, realId, axisIndex),
             name: trace.name,

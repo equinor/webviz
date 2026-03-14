@@ -24,7 +24,7 @@ import {
     buildRealizationScatterChart,
     buildTimeseriesChart,
     computeSubplotGridLayout,
-    useHighlightOnHover,
+    useTimeseriesInteractions,
 } from "@modules/_shared/eCharts";
 
 import type { Interfaces } from "./interfaces";
@@ -61,11 +61,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const containerRef = React.useRef<HTMLDivElement>(null);
     const containerSize = useElementSize(containerRef);
-    const chartRef = React.useRef<ReactECharts>(null);
 
-    const hasRealizations =
-        plotType === PlotType.RealizationScatter || (plotType === PlotType.Timeseries && showRealizations);
-    const onChartEvents = useHighlightOnHover(chartRef, hasRealizations);
+    const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
 
     const echartsOptions = React.useMemo(() => {
         const size: ContainerSize | undefined =
@@ -81,6 +78,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     showStatistics,
                     showFanchart,
                     selectedStatistics,
+                    activeTimestampUtcMs,
                     size,
                     sharedXAxis,
                     sharedYAxis,
@@ -148,8 +146,28 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         histogramType,
         sharedXAxis,
         sharedYAxis,
+        activeTimestampUtcMs,
         containerSize,
     ]);
+    const timestamps = React.useMemo(() => {
+        if (plotType === PlotType.Timeseries) {
+            return (
+                generateTimeseriesGroups(numSubplots, numGroups, numRealizations)
+                    .flatMap((group) => group.traces)
+                    .find((trace) => trace.timestamps.length > 0)?.timestamps ?? []
+            );
+        }
+        return [];
+    }, [plotType, numSubplots, numGroups, numRealizations]);
+    const hasRealizations =
+        plotType === PlotType.RealizationScatter || (plotType === PlotType.Timeseries && showRealizations);
+    const { chartRef, onChartEvents } = useTimeseriesInteractions({
+        enableLinkedHover: hasRealizations,
+        timestamps,
+        activeTimestampUtcMs,
+        setActiveTimestampUtcMs,
+        layoutDependency: echartsOptions,
+    });
 
     const layout = computeSubplotGridLayout(numSubplots);
     const chartHeight = scrollMode ? layout.numRows * ROW_HEIGHT_PX : "100%";
@@ -179,6 +197,7 @@ function buildTimeseries(
     showStatistics: boolean,
     showFanchart: boolean,
     selectedStatistics: string[],
+    activeTimestampUtcMs: number | null,
     containerSize?: ContainerSize,
     sharedXAxis?: boolean,
     sharedYAxis?: boolean,
@@ -190,7 +209,10 @@ function buildTimeseries(
         showFanchart,
         selectedStatistics: selectedStatistics as TimeseriesDisplayConfig["selectedStatistics"],
     };
-    return buildTimeseriesChart(groups, config, "Value", null, containerSize, { sharedXAxis, sharedYAxis });
+    return buildTimeseriesChart(groups, config, "Value", activeTimestampUtcMs, containerSize, {
+        sharedXAxis,
+        sharedYAxis,
+    });
 }
 
 function buildHistogramDemoChart(
