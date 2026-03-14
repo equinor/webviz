@@ -165,6 +165,41 @@ export function formatConvergenceTooltip(params: CallbackDataParams | CallbackDa
 }
 
 // ---------------------------------------------------------------------------
+// Exceedance tooltip
+// ---------------------------------------------------------------------------
+
+type ExceedanceTooltipEntry = CallbackDataParams & {
+    axisValue?: string | number;
+    axisValueLabel?: string | number;
+};
+
+export function formatExceedanceTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
+    const entries = (Array.isArray(params) ? params : [params]).filter(
+        (entry): entry is ExceedanceTooltipEntry => entry.seriesType === "line",
+    );
+    if (entries.length === 0) return "";
+
+    const axisValue = entries[0].axisValueLabel ?? entries[0].axisValue ?? entries[0].name ?? "";
+    const axisPoint = extractPointValue(entries[0].value);
+    const numericAxisValue = axisPoint?.[0] ?? Number(axisValue);
+    const headerValue = Number.isFinite(numericAxisValue) ? formatNumber(numericAxisValue) : String(axisValue);
+
+    return formatCompactTooltip(
+        `Value: ${headerValue}`,
+        entries.map((entry) => {
+            const point = extractPointValue(entry.value);
+            const exceedance = point ? point[1] : extractNumericValue(entry.value);
+
+            return {
+                label: entry.seriesName ?? "",
+                value: `${formatNumber(exceedance)}%`,
+                color: typeof entry.color === "string" ? entry.color : undefined,
+            };
+        }),
+    );
+}
+
+// ---------------------------------------------------------------------------
 // Histogram tooltips
 // ---------------------------------------------------------------------------
 

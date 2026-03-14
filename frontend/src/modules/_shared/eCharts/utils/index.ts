@@ -8,6 +8,7 @@ export {
     makeConvergenceSeriesId,
     makeHistogramSeriesId,
     makeDensitySeriesId,
+    makeExceedanceSeriesId,
     makePercentileSeriesId,
     makeHeatmapSeriesId,
     makeBarSeriesId,

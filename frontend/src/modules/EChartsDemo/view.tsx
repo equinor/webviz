@@ -17,6 +17,7 @@ import {
     buildBarChart,
     buildConvergenceChart,
     buildDensityChart,
+    buildExceedanceChart,
     buildHeatmapChart,
     buildHistogramChart,
     buildPercentileRangeChart,
@@ -104,6 +105,12 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 return buildDensityChart(
                     createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
                     { showRealizationPoints, sharedXAxis, sharedYAxis },
+                    size,
+                );
+            case PlotType.Exceedance:
+                return buildExceedanceChart(
+                    createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
+                    { sharedXAxis, sharedYAxis },
                     size,
                 );
             case PlotType.Convergence:

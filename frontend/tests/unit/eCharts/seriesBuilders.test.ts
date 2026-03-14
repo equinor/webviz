@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { buildExceedanceChart } from "@modules/_shared/eCharts/builders/exceedanceChartBuilder";
 import { buildBarSeries } from "@modules/_shared/eCharts/series/barSeries";
 import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/series/convergenceSeries";
 import { buildDensitySeries } from "@modules/_shared/eCharts/series/densitySeries";
+import { buildExceedanceSeries } from "@modules/_shared/eCharts/series/exceedanceSeries";
 import { buildHeatmapSeries } from "@modules/_shared/eCharts/series/heatmapSeries";
 import { buildHistogramSeries } from "@modules/_shared/eCharts/series/histogramSeries";
 import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/series/percentileRangeSeries";
@@ -46,6 +48,35 @@ describe("series builder contracts", () => {
         const ids = result.series.map((seriesOption) => (seriesOption as { id?: string }).id ?? "");
         expect(ids).toContain("density:DensityTrace:kde:1");
         expect(ids).toContain("density:DensityTrace:points:1");
+    });
+
+    it("buildExceedanceSeries returns an unsmoothed line with structured ID and 100->0 endpoints", () => {
+        const result = buildExceedanceSeries(
+            {
+                name: "ExceedTrace",
+                color: "#115588",
+                values: [40, 10, 30, 20],
+            },
+            2,
+        );
+
+        expect(result.series).toHaveLength(1);
+        const series = result.series[0] as {
+            id?: string;
+            xAxisIndex?: number;
+            yAxisIndex?: number;
+            smooth?: boolean;
+            data?: Array<[number, number]>;
+        };
+
+        expect(series.id).toBe("exceedance:ExceedTrace:curve:2");
+        expect(series.xAxisIndex).toBe(2);
+        expect(series.yAxisIndex).toBe(2);
+        expect(series.smooth).toBe(false);
+
+        const data = series.data ?? [];
+        expect(data[0]).toEqual([10, 100]);
+        expect(data[data.length - 1]).toEqual([40, 0]);
     });
 
     it("buildPercentileRangeSeries returns glyph and point IDs when enabled", () => {
@@ -114,6 +145,22 @@ describe("series builder contracts", () => {
 
         expect(result.series).toEqual([]);
         expect(result.legendData).toEqual([]);
+    });
+
+    it("buildExceedanceChart constrains y-axis to 0..100", () => {
+        const option = buildExceedanceChart([
+            {
+                title: "Subplot 1",
+                traces: [{ name: "Exceed", color: "#224466", values: [1, 2, 3] }],
+            },
+        ]);
+
+        const yAxis = Array.isArray(option.yAxis) ? option.yAxis[0] : option.yAxis;
+        expect((yAxis as { min?: number }).min).toBe(0);
+        expect((yAxis as { max?: number }).max).toBe(100);
+
+        const tooltip = option.tooltip as { trigger?: string };
+        expect(tooltip.trigger).toBe("axis");
     });
 
     it("convergence stat parsing handles trace names with colons", () => {

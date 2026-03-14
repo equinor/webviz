@@ -2,6 +2,7 @@ export { buildRealizationsSeries } from "./timeseriesRealizationSeries";
 export { buildStatisticsSeries, buildFanchartSeries } from "./timeseriesStatisticsSeries";
 export { buildBarSeries, type BarSortBy, type BuildBarSeriesOptions } from "./barSeries";
 export { buildHistogramSeries, type HistogramDisplayOptions } from "./histogramSeries";
+export { buildExceedanceSeries } from "./exceedanceSeries";
 export {
     buildPercentileRangeSeries,
     type PercentileRangeCenterStatistic,

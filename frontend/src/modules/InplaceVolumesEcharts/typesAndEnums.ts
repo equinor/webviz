@@ -4,6 +4,7 @@ import { BarSortBy, type InplaceVolumesPlotOptions } from "@modules/_shared/Inpl
 export enum PlotType {
     HISTOGRAM = "histogram",
     DENSITY = "density",
+    EXCEEDANCE = "exceedance",
     PERCENTILE_RANGE = "percentile_range",
     BAR = "bar",
     CONVERGENCE = "convergence",
@@ -12,6 +13,7 @@ export enum PlotType {
 export const plotTypeToStringMapping: Record<string, string> = {
     [PlotType.HISTOGRAM]: "Histogram",
     [PlotType.DENSITY]: "Density",
+    [PlotType.EXCEEDANCE]: "Exceedance (1-CDF)",
     [PlotType.PERCENTILE_RANGE]: "Percentile Range",
     [PlotType.BAR]: "Bar",
     [PlotType.CONVERGENCE]: "Convergence",

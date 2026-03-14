@@ -3,7 +3,7 @@
  *
  * All series in the shared eCharts layer use colon-delimited IDs so that
  * interaction code (tooltips, hover linking, timestamp markers) can reliably
- * parse series metadata without fragile regex patterns.
+ * parse series metadata.
  *
  * Format: `<category>:<name>:<qualifier>:<axisIndex>`
  *
@@ -14,6 +14,7 @@
  *   convergence  — convergence line or band
  *   histogram    — histogram bar or rug
  *   density      — KDE line or scatter
+ *   exceedance   — exceedance (1-CDF) line
  *   percentile   — percentile range glyph or scatter
  *   heatmap      — heatmap series
  *   bar          — bar chart series
@@ -30,6 +31,7 @@ const SERIES_CATEGORIES = [
     "convergence",
     "histogram",
     "density",
+    "exceedance",
     "percentile",
     "heatmap",
     "bar",
@@ -67,6 +69,10 @@ export function makeHistogramSeriesId(traceName: string, qualifier: string, axis
 
 export function makeDensitySeriesId(traceName: string, qualifier: string, axisIndex: number): string {
     return makeSeriesId("density", traceName, qualifier, axisIndex);
+}
+
+export function makeExceedanceSeriesId(traceName: string, qualifier: string, axisIndex: number): string {
+    return makeSeriesId("exceedance", traceName, qualifier, axisIndex);
 }
 
 export function makePercentileSeriesId(traceName: string, qualifier: string, axisIndex: number): string {

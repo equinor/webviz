@@ -4,6 +4,7 @@ import {
     buildBarChart,
     buildConvergenceChart,
     buildDensityChart,
+    buildExceedanceChart,
     buildHistogramChart,
     buildPercentileRangeChart,
     type HistogramType,
@@ -64,6 +65,17 @@ export function buildEchartsOption(args: BuildEchartsOptionArgs): EChartsOption 
                 toDistributionSubplots(groupedData, args.resultName),
                 {
                     showRealizationPoints: args.showRealizationPoints,
+                    xAxisLabel: args.resultName,
+                    sharedXAxis: args.sharedXAxis,
+                    sharedYAxis: args.sharedYAxis,
+                },
+                containerSize,
+            );
+
+        case PlotType.EXCEEDANCE:
+            return buildExceedanceChart(
+                toDistributionSubplots(groupedData, args.resultName),
+                {
                     xAxisLabel: args.resultName,
                     sharedXAxis: args.sharedXAxis,
                     sharedYAxis: args.sharedYAxis,

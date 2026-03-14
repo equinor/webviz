@@ -96,6 +96,7 @@ Examples:
 
 - `buildTimeseriesChart(...)`
 - `buildDensityChart(...)`
+- `buildExceedanceChart(...)`
 - `buildHistogramChart(...)`
 - `buildBarChart(...)`
 - `buildHeatmapChart(...)`
@@ -227,7 +228,7 @@ All series use structured, colon-delimited IDs created via the `utils/seriesId.t
 <category>:<name>:<qualifier>:<axisIndex>
 ```
 
-Categories: `realization`, `statistic`, `fanchart`, `convergence`, `histogram`, `density`, `percentile`, `heatmap`, `bar`.
+Categories: `realization`, `statistic`, `fanchart`, `convergence`, `histogram`, `density`, `exceedance`, `percentile`, `heatmap`, `bar`.
 
 Use the provided factory functions (`makeRealizationSeriesId`, `makeStatisticSeriesId`, etc.) to create IDs and the parser functions (`parseSeriesId`, `isRealizationSeries`, `getHighlightGroupKey`, etc.) to inspect them.
 

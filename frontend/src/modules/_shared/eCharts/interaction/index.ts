@@ -4,6 +4,7 @@ export {
     formatRealizationItemTooltip,
     formatBarTooltip,
     formatConvergenceTooltip,
+    formatExceedanceTooltip,
     formatHistogramBarTooltip,
     formatHistogramRugTooltip,
     formatRealizationScatterTooltip,

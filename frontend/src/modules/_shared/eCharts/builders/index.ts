@@ -2,6 +2,7 @@ export { buildTimeseriesChart, extractTimeseriesCategoryData } from "./timeserie
 export { buildHeatmapChart } from "./heatmapChartBuilder";
 export { buildBarChart } from "./barChartBuilder";
 export { buildDensityChart } from "./densityChartBuilder";
+export { buildExceedanceChart } from "./exceedanceChartBuilder";
 export { buildPercentileRangeChart } from "./percentileRangeChartBuilder";
 export { buildConvergenceChart } from "./convergenceChartBuilder";
 export { buildRealizationScatterChart } from "./realizationScatterChartBuilder";

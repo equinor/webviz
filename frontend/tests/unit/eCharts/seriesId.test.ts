@@ -8,6 +8,7 @@ import {
     makeConvergenceSeriesId,
     makeHistogramSeriesId,
     makeDensitySeriesId,
+    makeExceedanceSeriesId,
     makePercentileSeriesId,
     makeHeatmapSeriesId,
     makeBarSeriesId,
@@ -54,6 +55,10 @@ describe("factory helpers", () => {
 
     it("makeDensitySeriesId", () => {
         expect(makeDensitySeriesId("trace", "kde", 0)).toBe("density:trace:kde:0");
+    });
+
+    it("makeExceedanceSeriesId", () => {
+        expect(makeExceedanceSeriesId("trace", "curve", 0)).toBe("exceedance:trace:curve:0");
     });
 
     it("makePercentileSeriesId", () => {
