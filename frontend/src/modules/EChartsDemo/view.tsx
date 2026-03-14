@@ -206,7 +206,7 @@ function buildTimeseries(
     const config: TimeseriesDisplayConfig = {
         showRealizations,
         showStatistics,
-        showFanchart,
+        showFanchart: showFanchart && showStatistics,
         selectedStatistics: selectedStatistics as TimeseriesDisplayConfig["selectedStatistics"],
     };
     return buildTimeseriesChart(groups, config, "Value", activeTimestampUtcMs, containerSize, {
