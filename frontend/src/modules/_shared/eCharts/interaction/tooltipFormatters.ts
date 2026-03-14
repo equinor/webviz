@@ -240,13 +240,6 @@ function extractPointValue(value: unknown): [number, number] | null {
     return [Number(value[0]), Number(value[1])];
 }
 
-function extractRealizationIdFromData(params: CallbackDataParams): number {
-    if (params.data && typeof params.data === "object" && "realizationId" in params.data) {
-        return Number((params.data as { realizationId?: number }).realizationId ?? params.dataIndex);
-    }
-    return params.dataIndex;
-}
-
 type HistogramBarValue = [number, number, number, number];
 type RugPointValue = [number, number];
 type RugPointDatum = { value: RugPointValue; realizationId: number };
