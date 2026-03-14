@@ -27,7 +27,7 @@ export function buildConvergenceChart(
             series: buildConvergenceSubplotSeries(group, axisIndex),
             legendData: group.traces.map((trace) => trace.name),
             xAxis: { type: "value", label: xAxisLabel },
-            yAxis: { type: "value", label: yAxisLabel },
+            yAxis: { type: "value", scale: true, label: yAxisLabel },
             title: group.title,
         }),
         {

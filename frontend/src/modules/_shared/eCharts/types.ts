@@ -60,7 +60,7 @@ export interface TimeseriesDisplayConfig {
     selectedStatistics: StatisticKey[];
 }
 
-export interface DistributionDisplayConfig {
+export interface DensityDisplayConfig {
     showStatisticalMarkers: boolean;
     showRealizationPoints: boolean;
 }

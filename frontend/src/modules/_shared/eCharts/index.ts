@@ -10,7 +10,7 @@ export type {
     RealizationScatterTrace,
     SubplotGroup,
     TimeseriesDisplayConfig,
-    DistributionDisplayConfig,
+    DensityDisplayConfig,
     BarDisplayConfig,
     ContainerSize,
 } from "./types";
@@ -37,7 +37,7 @@ export {
     buildBarSeries,
     buildHistogramSeries,
     buildPercentileRangeSeries,
-    buildDistributionSeries,
+    buildDensitySeries,
     buildConvergenceSeries,
     buildHeatmapSeries,
     buildRealizationScatterSeries,
@@ -47,7 +47,7 @@ export type {
     HistogramDisplayOptions,
     PercentileRangeCenterStatistic,
     PercentileRangeDisplayOptions,
-    DistributionDisplayOptions,
+    DensityDisplayOptions,
 } from "./series";
 
 // Chart builders (compose series + layout into final EChartsOption)
@@ -56,7 +56,7 @@ export {
     extractTimeseriesCategoryData,
     buildHeatmapChart,
     buildBarChart,
-    buildDistributionChart,
+    buildDensityChart,
     buildPercentileRangeChart,
     buildConvergenceChart,
     buildRealizationScatterChart,

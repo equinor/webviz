@@ -68,7 +68,7 @@ export function Settings(): React.ReactNode {
     const isPercentileRange = plotType === PlotType.PercentileRange;
     const supportsStatisticalMarkers = plotType === PlotType.Bar;
     const supportsBarLabels = plotType === PlotType.Bar;
-    const supportsRealizationPoints = isHistogram || isPercentileRange || plotType === PlotType.Distribution;
+    const supportsRealizationPoints = isHistogram || isPercentileRange || plotType === PlotType.Density;
 
     function handleStatToggle(key: StatisticKey, checked: boolean) {
         if (checked) {

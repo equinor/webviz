@@ -1,22 +1,22 @@
 import type { EChartsOption } from "echarts";
 
-import { buildDistributionSeries } from "../series/distributionSeries";
-import type { DistributionDisplayOptions } from "../series/distributionSeries";
+import { buildDensitySeries } from "../series/densitySeries";
+import type { DensityDisplayOptions } from "../series/densitySeries";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../types";
 
 import { assignSeriesToAxis, buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
 import type { CartesianChartSeries } from "./cartesianSubplotChartBuilder";
 
-export type DistributionChartOptions = DistributionDisplayOptions & {
+export type DensityChartOptions = DensityDisplayOptions & {
     xAxisLabel?: string;
     yAxisLabel?: string;
     sharedXAxis?: boolean;
     sharedYAxis?: boolean;
 };
 
-export function buildDistributionChart(
+export function buildDensityChart(
     subplotGroups: SubplotGroup<DistributionTrace>[],
-    options: DistributionChartOptions = {},
+    options: DensityChartOptions = {},
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Value", yAxisLabel = "Density", sharedXAxis, sharedYAxis, ...seriesOptions } = options;
@@ -24,9 +24,9 @@ export function buildDistributionChart(
     return buildCartesianSubplotChart(
         subplotGroups,
         (group, axisIndex) => ({
-            series: buildDistributionSubplotSeries(group, axisIndex, seriesOptions),
+            series: buildDensitySubplotSeries(group, axisIndex, seriesOptions),
             legendData: group.traces.map((trace) => trace.name),
-            xAxis: { type: "value", label: xAxisLabel },
+            xAxis: { type: "value", scale: true, label: xAxisLabel },
             yAxis: { type: "value", label: yAxisLabel },
             title: group.title,
         }),
@@ -34,15 +34,15 @@ export function buildDistributionChart(
     );
 }
 
-function buildDistributionSubplotSeries(
+function buildDensitySubplotSeries(
     group: SubplotGroup<DistributionTrace>,
     axisIndex: number,
-    options: DistributionDisplayOptions,
+    options: DensityDisplayOptions,
 ): CartesianChartSeries[] {
     const series: CartesianChartSeries[] = [];
 
     for (const trace of group.traces) {
-        const result = buildDistributionSeries(trace, options, axisIndex);
+        const result = buildDensitySeries(trace, options, axisIndex);
         series.push(...assignSeriesToAxis(result.series, axisIndex));
     }
 

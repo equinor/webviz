@@ -4,7 +4,7 @@ import type { SeriesBuildResult } from "../builders/composeChartOption";
 import type { DistributionTrace } from "../types";
 import { computeKde } from "../utils/kde";
 
-export type DistributionDisplayOptions = {
+export type DensityDisplayOptions = {
     showRealizationPoints?: boolean;
 };
 
@@ -12,9 +12,9 @@ export type DistributionDisplayOptions = {
  * ECharts doesn't have a native violin/KDE series type.
  * This builds a custom KDE-based polygon + optional scatter overlay.
  */
-export function buildDistributionSeries(
+export function buildDensitySeries(
     trace: DistributionTrace,
-    options: DistributionDisplayOptions = {},
+    options: DensityDisplayOptions = {},
     axisIndex = 0,
 ): SeriesBuildResult {
     const { showRealizationPoints = false } = options;

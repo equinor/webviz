@@ -105,7 +105,7 @@ function buildHistogramSubplot(
     return {
         series,
         legendData: traceData.map((entry) => entry.trace.name),
-        xAxis: { type: "value", label: "Value" },
+        xAxis: { type: "value", label: "Value", scale: true },
         yAxis: { type: "value", label: "Percentage (%)" },
         title: group.title,
     };

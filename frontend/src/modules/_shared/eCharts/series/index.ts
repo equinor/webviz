@@ -7,7 +7,7 @@ export {
     type PercentileRangeCenterStatistic,
     type PercentileRangeDisplayOptions,
 } from "./percentileRangeSeries";
-export { buildDistributionSeries, type DistributionDisplayOptions } from "./distributionSeries";
+export { buildDensitySeries, type DensityDisplayOptions } from "./densitySeries";
 export { buildConvergenceSeries } from "./convergenceSeries";
 export { buildHeatmapSeries } from "./heatmapSeries";
 export { buildRealizationScatterSeries } from "./realizationScatterSeries";

@@ -18,9 +18,7 @@ export const preview: DrawPreviewFunc = function (width: number, height: number)
     const fanBot = [0.7, 0.82, 0.88, 0.9, 0.85, 0.88, 0.92, 0.95];
     const meanY = [0.7, 0.65, 0.58, 0.55, 0.5, 0.52, 0.48, 0.45];
 
-    const fanPath = fanTop
-        .map((v, i) => `${tsX0 + (i / (fanTop.length - 1)) * tsW},${tsY0 + v * tsH}`)
-        .join(" L ");
+    const fanPath = fanTop.map((v, i) => `${tsX0 + (i / (fanTop.length - 1)) * tsW},${tsY0 + v * tsH}`).join(" L ");
     const fanPathBot = [...fanBot]
         .reverse()
         .map((v, i) => `${tsX0 + ((fanBot.length - 1 - i) / (fanBot.length - 1)) * tsW},${tsY0 + v * tsH}`)
@@ -45,7 +43,7 @@ export const preview: DrawPreviewFunc = function (width: number, height: number)
     const hist = [0.12, 0.25, 0.55, 0.85, 0.95, 0.78, 0.48, 0.22, 0.08];
     const histBarW = histW / hist.length;
 
-    // --- Bottom-right: distribution / KDE curve ---
+    // --- Bottom-right: density / KDE curve ---
     const kdeX0 = hw + pad;
     const kdeY0 = hh + pad;
     const kdeY1 = height - pad;
@@ -91,12 +89,7 @@ export const preview: DrawPreviewFunc = function (width: number, height: number)
             ))}
 
             {/* Bottom-right: KDE curve */}
-            <path
-                d={`M ${kdePath.join(" L ")}`}
-                fill="none"
-                stroke={colors[3]}
-                strokeWidth={1.5}
-            />
+            <path d={`M ${kdePath.join(" L ")}`} fill="none" stroke={colors[3]} strokeWidth={1.5} />
             <path
                 d={`M ${kdePath[0]} L ${kdePath.join(" L ")} L ${kdeX0 + kdeW},${kdeY1} L ${kdeX0},${kdeY1} Z`}
                 fill={colors[3]}

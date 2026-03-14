@@ -95,7 +95,7 @@ Builders are the normal entry point.
 Examples:
 
 - `buildTimeseriesChart(...)`
-- `buildDistributionChart(...)`
+- `buildDensityChart(...)`
 - `buildHistogramChart(...)`
 - `buildBarChart(...)`
 - `buildHeatmapChart(...)`
@@ -227,7 +227,7 @@ All series use structured, colon-delimited IDs created via the `utils/seriesId.t
 <category>:<name>:<qualifier>:<axisIndex>
 ```
 
-Categories: `realization`, `statistic`, `fanchart`, `convergence`, `histogram`, `distribution`, `percentile`, `heatmap`, `bar`.
+Categories: `realization`, `statistic`, `fanchart`, `convergence`, `histogram`, `density`, `percentile`, `heatmap`, `bar`.
 
 Use the provided factory functions (`makeRealizationSeriesId`, `makeStatisticSeriesId`, etc.) to create IDs and the parser functions (`parseSeriesId`, `isRealizationSeries`, `getHighlightGroupKey`, etc.) to inspect them.
 
@@ -248,7 +248,7 @@ This allows chart builders to compose series uniformly without knowing which spe
 
 ### Builder Architecture
 
-All cartesian chart builders (timeseries, histogram, distribution, convergence, percentile range, bar) go through a single base pipeline in `buildCartesianSubplotChart`. This ensures consistent behavior for cross-cutting features.
+All cartesian chart builders (timeseries, histogram, density, convergence, percentile range, bar) go through a single base pipeline in `buildCartesianSubplotChart`. This ensures consistent behavior for cross-cutting features.
 
 The base builder accepts a `CartesianChartOptions` object with:
 

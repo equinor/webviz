@@ -14,12 +14,12 @@ export function buildRealizationScatterSeries(trace: RealizationScatterTrace, ax
         data: [[trace.xValues[i], trace.yValues[i]]],
         xAxisIndex: axisIndex,
         yAxisIndex: axisIndex,
-        itemStyle: { color: trace.color, opacity: 0.6 },
-        symbolSize: 8,
+        itemStyle: { color: trace.color, opacity: 0.4 },
+        symbolSize: 12,
         emphasis: {
             focus: "none",
-            itemStyle: { color: trace.color, opacity: 1, borderColor: "#000", borderWidth: 2 },
-            symbolSize: 14,
+            itemStyle: { color: trace.color, opacity: 1, borderColor: trace.color, borderWidth: 2 },
+            symbolSize: 16,
         },
         blur: {
             itemStyle: { color: trace.color, opacity: 0.15 },

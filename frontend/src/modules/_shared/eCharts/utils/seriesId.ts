@@ -13,7 +13,7 @@
  *   fanchart     — statistical fan/band area
  *   convergence  — convergence line or band
  *   histogram    — histogram bar or rug
- *   distribution — KDE line or scatter
+ *   density      — KDE line or scatter
  *   percentile   — percentile range glyph or scatter
  *   heatmap      — heatmap series
  *   bar          — bar chart series
@@ -29,7 +29,7 @@ export type SeriesCategory =
     | "fanchart"
     | "convergence"
     | "histogram"
-    | "distribution"
+    | "density"
     | "percentile"
     | "heatmap"
     | "bar";
@@ -75,7 +75,7 @@ const VALID_CATEGORIES = new Set<string>([
     "fanchart",
     "convergence",
     "histogram",
-    "distribution",
+    "density",
     "percentile",
     "heatmap",
     "bar",
