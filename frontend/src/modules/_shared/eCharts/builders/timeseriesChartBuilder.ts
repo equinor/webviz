@@ -92,12 +92,15 @@ function buildTimeseriesSubplot(
         }
 
         if (config.showStatistics && trace.statistics) {
-            series.push(...buildStatisticsSeries(trace, config.selectedStatistics, axisIndex));
-            addLegendEntries(legendData, seenLegend, [trace.name]);
+            const statisticsResult = buildStatisticsSeries(trace, config.selectedStatistics, axisIndex);
+            series.push(...statisticsResult.series);
+            addLegendEntries(legendData, seenLegend, statisticsResult.legendData);
         }
 
         if (config.showFanchart && trace.statistics) {
-            series.push(...buildFanchartSeries(trace, config.selectedStatistics, axisIndex));
+            const fanchartResult = buildFanchartSeries(trace, config.selectedStatistics, axisIndex);
+            series.push(...fanchartResult.series);
+            addLegendEntries(legendData, seenLegend, fanchartResult.legendData);
         }
     }
 

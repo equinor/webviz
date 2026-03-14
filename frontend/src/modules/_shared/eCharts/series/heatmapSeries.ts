@@ -1,13 +1,14 @@
 import type { HeatmapSeriesOption } from "echarts/charts";
 
+import type { SeriesBuildResult } from "../builders/composeChartOption";
 import type { HeatmapTrace } from "../types";
 
 export function buildHeatmapSeries(
     trace: HeatmapTrace,
     axisIndex = 0,
     activeDate?: string | null,
-): HeatmapSeriesOption {
-    return {
+): SeriesBuildResult {
+    const series: HeatmapSeriesOption = {
         type: "heatmap",
         xAxisIndex: axisIndex,
         yAxisIndex: axisIndex,
@@ -31,5 +32,10 @@ export function buildHeatmapSeries(
                 data: [{ xAxis: activeDate }],
             },
         }),
+    };
+
+    return {
+        series: [series],
+        legendData: [],
     };
 }

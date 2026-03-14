@@ -3,6 +3,7 @@ import type { CustomSeriesOption, LineSeriesOption } from "echarts/charts";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
+import type { SeriesBuildResult } from "../builders/composeChartOption";
 import type { DistributionTrace } from "../types";
 import type { ConvergencePoint } from "../utils/convergence";
 import { calcConvergence } from "../utils/convergence";
@@ -14,8 +15,8 @@ type ConvergenceStatisticKey = "p90" | "mean" | "p10";
 
 const CONVERGENCE_SERIES_ID_PREFIX = "convergence";
 
-export function buildConvergenceSeries(trace: DistributionTrace, axisIndex = 0): ConvergenceChartSeries[] {
-    if (!trace.realizationIds || trace.values.length === 0) return [];
+export function buildConvergenceSeries(trace: DistributionTrace, axisIndex = 0): SeriesBuildResult {
+    if (!trace.realizationIds || trace.values.length === 0) return { series: [], legendData: [] };
 
     const pairs = trace.realizationIds.map((realId, i) => ({
         realization: realId,
@@ -31,12 +32,17 @@ export function buildConvergenceSeries(trace: DistributionTrace, axisIndex = 0):
         lightColor = formatRgb(rgbColor);
     }
 
-    return [
+    const series: ConvergenceChartSeries[] = [
         createConvergenceLineSeries(trace, convergence, "p90", axisIndex),
         createConvergenceLineSeries(trace, convergence, "mean", axisIndex),
         createConvergenceLineSeries(trace, convergence, "p10", axisIndex),
         createConvergenceBandSeries(trace, convergence, lightColor, axisIndex),
     ];
+
+    return {
+        series,
+        legendData: series.length > 0 ? [trace.name] : [],
+    };
 }
 
 export function formatConvergenceStatLabel(statKey: string): string {

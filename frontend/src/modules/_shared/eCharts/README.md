@@ -244,6 +244,10 @@ type SeriesBuildResult = {
 };
 ```
 
+This includes single-series builders such as heatmap and histogram.
+
+`legendData` must only include names for traces that actually produced one or more rendered series.
+
 This allows chart builders to compose series uniformly without knowing which specific series builder was used.
 
 ### Builder Architecture

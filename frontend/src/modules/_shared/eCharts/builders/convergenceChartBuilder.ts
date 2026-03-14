@@ -23,13 +23,17 @@ export function buildConvergenceChart(
 
     return buildCartesianSubplotChart(
         subplotGroups,
-        (group, axisIndex) => ({
-            series: buildConvergenceSubplotSeries(group, axisIndex),
-            legendData: group.traces.map((trace) => trace.name),
-            xAxis: { type: "value", label: xAxisLabel },
-            yAxis: { type: "value", scale: true, label: yAxisLabel },
-            title: group.title,
-        }),
+        (group, axisIndex) => {
+            const { series, legendData } = buildConvergenceSubplot(group, axisIndex);
+
+            return {
+                series,
+                legendData,
+                xAxis: { type: "value", label: xAxisLabel },
+                yAxis: { type: "value", scale: true, label: yAxisLabel },
+                title: group.title,
+            };
+        },
         {
             containerSize,
             sharedXAxis,
@@ -43,15 +47,25 @@ export function buildConvergenceChart(
     );
 }
 
-function buildConvergenceSubplotSeries(
+function buildConvergenceSubplot(
     group: SubplotGroup<DistributionTrace>,
     axisIndex: number,
-): CartesianChartSeries[] {
+): { series: CartesianChartSeries[]; legendData: string[] } {
     const series: CartesianChartSeries[] = [];
+    const legendData: string[] = [];
+    const seenLegend = new Set<string>();
 
     for (const trace of group.traces) {
-        series.push(...assignSeriesToAxis(buildConvergenceSeries(trace, axisIndex), axisIndex));
+        const result = buildConvergenceSeries(trace, axisIndex);
+        series.push(...assignSeriesToAxis(result.series, axisIndex));
+
+        for (const legendName of result.legendData) {
+            if (!seenLegend.has(legendName)) {
+                legendData.push(legendName);
+                seenLegend.add(legendName);
+            }
+        }
     }
 
-    return series;
+    return { series, legendData };
 }

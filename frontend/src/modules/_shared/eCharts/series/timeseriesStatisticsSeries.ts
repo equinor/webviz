@@ -1,5 +1,6 @@
 import type { CustomSeriesOption, LineSeriesOption } from "echarts/charts";
 
+import type { SeriesBuildResult } from "../builders/composeChartOption";
 import type { StatisticKey, TimeseriesTrace } from "../types";
 import { makeFanchartSeriesId, makeStatisticSeriesId } from "../utils/seriesId";
 
@@ -22,8 +23,8 @@ export function buildStatisticsSeries(
     trace: TimeseriesTrace,
     selectedStatistics: StatisticKey[],
     axisIndex = 0,
-): LineSeriesOption[] {
-    if (!trace.statistics) return [];
+): SeriesBuildResult {
+    if (!trace.statistics) return { series: [], legendData: [] };
 
     const series: LineSeriesOption[] = [];
 
@@ -45,7 +46,10 @@ export function buildStatisticsSeries(
         }
     }
 
-    return series;
+    return {
+        series,
+        legendData: series.length > 0 ? [trace.name] : [],
+    };
 }
 
 /**
@@ -108,8 +112,8 @@ export function buildFanchartSeries(
     trace: TimeseriesTrace,
     selectedStatistics: StatisticKey[],
     axisIndex = 0,
-): CustomSeriesOption[] {
-    if (!trace.statistics) return [];
+): SeriesBuildResult {
+    if (!trace.statistics) return { series: [], legendData: [] };
 
     const { p10, p90, min, max } = trace.statistics;
     const series: CustomSeriesOption[] = [];
@@ -173,5 +177,8 @@ export function buildFanchartSeries(
         );
     }
 
-    return series;
+    return {
+        series,
+        legendData: [],
+    };
 }

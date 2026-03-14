@@ -8,7 +8,7 @@ import type {
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import type { ChartSeriesOption } from "../builders/composeChartOption";
+import type { ChartSeriesOption, SeriesBuildResult } from "../builders/composeChartOption";
 import { formatCompactTooltip } from "../interaction/tooltipFormatters";
 import type { DistributionTrace } from "../types";
 import { HistogramType } from "../types";
@@ -28,7 +28,7 @@ export function buildHistogramSeries(
     trace: DistributionTrace,
     options: HistogramDisplayOptions = {},
     axisIndex = 0,
-): ChartSeriesOption[] {
+): SeriesBuildResult {
     const {
         numBins = 15,
         showRealizationPoints = false,
@@ -39,7 +39,7 @@ export function buildHistogramSeries(
         borderWidth = 1,
     } = options;
 
-    if (trace.values.length === 0) return [];
+    if (trace.values.length === 0) return { series: [], legendData: [] };
 
     const traceData = computeHistogramTraceData([trace], numBins);
     const histogramLayout = computeHistogramLayout(traceData, HistogramType.Overlay);
@@ -151,5 +151,8 @@ export function buildHistogramSeries(
         });
     }
 
-    return series;
+    return {
+        series,
+        legendData: series.length > 0 ? [trace.name] : [],
+    };
 }

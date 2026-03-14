@@ -1,5 +1,4 @@
 import type { EChartsOption } from "echarts";
-import type { HeatmapSeriesOption } from "echarts/charts";
 import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
@@ -13,6 +12,7 @@ import { buildHeatmapSeries } from "../series";
 import type { ContainerSize, HeatmapTrace, SubplotGroup } from "../types";
 
 import { composeChartOption } from "./composeChartOption";
+import type { ChartSeriesOption } from "./composeChartOption";
 
 type HeatmapDatasetEntry = {
     trace: HeatmapTrace;
@@ -71,11 +71,16 @@ function buildHeatmapAxes(layout: SubplotLayoutResult, datasets: HeatmapDatasetE
 function buildHeatmapSubplotSeries(
     datasets: HeatmapDatasetEntry[],
     activeTimestampUtcMs: number | null,
-): HeatmapSeriesOption[] {
-    return datasets.map(({ trace }, axisIndex) => {
+): ChartSeriesOption[] {
+    const series: ChartSeriesOption[] = [];
+
+    datasets.forEach(({ trace }, axisIndex) => {
         const activeDate = resolveActiveHeatmapDate(trace, activeTimestampUtcMs);
-        return buildHeatmapSeries(trace, axisIndex, activeDate);
+        const result = buildHeatmapSeries(trace, axisIndex, activeDate);
+        series.push(...result.series);
     });
+
+    return series;
 }
 
 function resolveActiveHeatmapDate(trace: HeatmapTrace, activeTimestampUtcMs: number | null): string | null {
