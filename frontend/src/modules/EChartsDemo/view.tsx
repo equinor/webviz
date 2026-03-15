@@ -180,12 +180,20 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     }, [plotType, numSubplots, numGroups, numRealizations]);
     const hasRealizations =
         plotType === PlotType.RealizationScatter || (plotType === PlotType.Timeseries && showRealizations);
+    const handleHoveredRealizationChange = React.useCallback(
+        (info: { realizationId: number; groupKey: string } | null) => {
+            // eslint-disable-next-line no-console
+            console.log("[EChartsDemo] Hovered realization changed:", info);
+        },
+        [],
+    );
     const { chartRef, onChartEvents } = useTimeseriesInteractions({
         enableLinkedHover: hasRealizations,
         timestamps,
         activeTimestampUtcMs,
         setActiveTimestampUtcMs,
         layoutDependency: echartsOptions,
+        onHoveredRealizationChange: handleHoveredRealizationChange,
     });
 
     const layout = computeSubplotGridLayout(numSubplots);

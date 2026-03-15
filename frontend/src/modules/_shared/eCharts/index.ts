@@ -85,7 +85,7 @@ export {
 
 // Hooks
 export { useHighlightOnHover, useClickToTimestamp, useTimeseriesInteractions } from "./hooks";
-export type { TimeseriesInteractionConfig, TimeseriesInteractionResult } from "./hooks";
+export type { TimeseriesInteractionConfig, TimeseriesInteractionResult, HoveredRealizationInfo } from "./hooks";
 
 // Statistics utilities
 export {

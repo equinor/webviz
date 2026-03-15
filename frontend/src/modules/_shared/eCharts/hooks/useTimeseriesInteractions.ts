@@ -4,7 +4,7 @@ import type ReactECharts from "echarts-for-react";
 
 import { useClickToTimestamp } from "./useClickToTimestamp";
 import { useHighlightOnHover } from "./useHighlightOnHover";
-import type { HighlightOnHoverEvents } from "./useHighlightOnHover";
+import type { HighlightOnHoverEvents, HoveredRealizationInfo } from "./useHighlightOnHover";
 
 export type TimeseriesInteractionConfig = {
     /** Enable linked-realization hover highlighting across subplots. */
@@ -17,6 +17,10 @@ export type TimeseriesInteractionConfig = {
     setActiveTimestampUtcMs: (ts: number | null) => void;
     /** Any value that changes when the chart layout changes (usually the option object). */
     layoutDependency: unknown;
+    /** Called when the hovered realization changes (null = nothing hovered). */
+    onHoveredRealizationChange?: (info: HoveredRealizationInfo | null) => void;
+    /** Externally-driven highlighted realization (e.g. from another module via synced settings). */
+    externalHoveredRealization?: HoveredRealizationInfo | null;
 };
 
 export type TimeseriesInteractionResult = {
@@ -34,7 +38,10 @@ export type TimeseriesInteractionResult = {
 export function useTimeseriesInteractions(config: TimeseriesInteractionConfig): TimeseriesInteractionResult {
     const chartRef = React.useRef<ReactECharts>(null);
 
-    const onChartEvents = useHighlightOnHover(chartRef, config.enableLinkedHover);
+    const onChartEvents = useHighlightOnHover(chartRef, config.enableLinkedHover, {
+        onHoveredRealizationChange: config.onHoveredRealizationChange,
+        externalHoveredRealization: config.externalHoveredRealization,
+    });
 
     useClickToTimestamp(
         chartRef,
