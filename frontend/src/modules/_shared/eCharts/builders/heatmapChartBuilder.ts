@@ -3,7 +3,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { formatCompactTooltip } from "../interaction/tooltipFormatters";
+import { formatHeatmapTooltip } from "../interaction/tooltipHeatmapFormatters";
 import type { SubplotAxisDef } from "../layout/subplotAxes";
 import { buildSubplotAxes } from "../layout/subplotAxes";
 import type { SubplotLayoutResult } from "../layout/subplotGridLayout";
@@ -101,31 +101,6 @@ function computeHeatmapValueRange(datasets: HeatmapDatasetEntry[]): HeatmapValue
         min: Number.isFinite(min) ? min : 0,
         max: Number.isFinite(max) ? max : 1,
     };
-}
-
-function formatHeatmapTooltip(params: CallbackDataParams, datasets: HeatmapDatasetEntry[], valueLabel: string): string {
-    const datasetIndex = typeof params.seriesIndex === "number" ? params.seriesIndex : 0;
-    const dataset = datasets[datasetIndex] ?? datasets[0];
-    const point = extractHeatmapPoint(params);
-
-    if (!dataset || !point) return "";
-
-    const [xIndex, yIndex, value] = point;
-    const xLabel = dataset.trace.xLabels[xIndex] ?? "";
-    const yLabel = dataset.trace.yLabels[yIndex] ?? "";
-
-    return formatCompactTooltip(dataset.title, [
-        { label: "X", value: xLabel },
-        { label: "Y", value: yLabel },
-        { label: valueLabel, value: formatNumber(value, 4) },
-    ]);
-}
-
-function extractHeatmapPoint(params: CallbackDataParams): [number, number, number] | null {
-    const point = Array.isArray(params.data) ? params.data : Array.isArray(params.value) ? params.value : null;
-    if (!point || point.length < 3) return null;
-
-    return [Number(point[0]), Number(point[1]), Number(point[2])];
 }
 
 function buildHeatmapVisualMap(valueRange: HeatmapValueRange) {

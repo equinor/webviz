@@ -1,10 +1,11 @@
 import type { CustomSeriesOption, ScatterSeriesOption } from "echarts/charts";
 import type { CallbackDataParams } from "echarts/types/dist/shared";
 
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
-
 import type { SeriesBuildResult } from "../builders/composeChartOption";
-import { formatCompactTooltip } from "../interaction/tooltipFormatters";
+import {
+    formatPercentileGlyphTooltip,
+    formatPercentileRealizationTooltip,
+} from "../interaction/tooltipPercentileFormatters";
 import type { DistributionTrace, PointStatistics } from "../types";
 import { makePercentileSeriesId } from "../utils/seriesId";
 import { computePointStatistics } from "../utils/statistics";
@@ -60,8 +61,6 @@ function createPercentileRangeGlyphSeries(
     yAxisPosition: number,
     axisIndex: number,
 ): CustomSeriesOption {
-    const centerLabel = centerStatistic === "mean" ? "Mean" : "P50";
-
     return {
         id: makePercentileSeriesId(trace.name, "glyph", axisIndex),
         type: "custom",
@@ -163,17 +162,7 @@ function createPercentileRangeGlyphSeries(
             };
         },
         tooltip: {
-            formatter: () =>
-                formatCompactTooltip(trace.name, [
-                    { label: "Min", value: formatNumber(stats.min), color: trace.color },
-                    { label: "P90", value: formatNumber(stats.p90), color: trace.color },
-                    { label: centerLabel, value: formatNumber(centerValue), color: trace.color },
-                    { label: "P10", value: formatNumber(stats.p10), color: trace.color },
-                    { label: "Max", value: formatNumber(stats.max), color: trace.color },
-                    ...(centerStatistic === "p50"
-                        ? [{ label: "Mean", value: formatNumber(stats.mean), color: trace.color }]
-                        : [{ label: "P50", value: formatNumber(stats.p50), color: trace.color }]),
-                ]),
+            formatter: () => formatPercentileGlyphTooltip(trace.name, trace.color, stats, centerValue, centerStatistic),
         },
     };
 }
@@ -198,18 +187,8 @@ function createRealizationPointSeries(
         itemStyle: { color: trace.color, opacity: 0.45 },
         z: 3,
         tooltip: {
-            formatter: (params: CallbackDataParams) => {
-                const value = Array.isArray(params.value) ? Number(params.value[0]) : Number(params.value);
-                const realizationId =
-                    params.data && typeof params.data === "object" && "realizationId" in params.data
-                        ? Number((params.data as { realizationId?: number }).realizationId ?? params.dataIndex)
-                        : params.dataIndex;
-
-                return formatCompactTooltip(trace.name, [
-                    { label: "Value", value: formatNumber(value), color: trace.color },
-                    { label: "Realization", value: String(realizationId), color: trace.color },
-                ]);
-            },
+            formatter: (params: CallbackDataParams) =>
+                formatPercentileRealizationTooltip(params, trace.name, trace.color),
         },
     };
 }

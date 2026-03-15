@@ -4,7 +4,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { SeriesBuildResult } from "../builders/composeChartOption";
-import { formatCompactTooltip } from "../interaction/tooltipFormatters";
+import { formatBarMeanTooltip } from "../interaction/tooltipBarFormatters";
 import type { BarTrace } from "../types";
 import { makeBarSeriesId } from "../utils/seriesId";
 import { computePointStatistics } from "../utils/statistics";
@@ -100,8 +100,7 @@ function createMeanReferenceLine(
         symbol: "none",
         silent: true,
         tooltip: {
-            formatter: () =>
-                formatCompactTooltip(trace.name, [{ label: "Mean", value: formatNumber(mean), color: trace.color }]),
+            formatter: () => formatBarMeanTooltip(trace.name, mean, trace.color),
         },
     };
 }

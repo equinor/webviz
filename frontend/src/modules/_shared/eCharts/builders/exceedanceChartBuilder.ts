@@ -42,7 +42,11 @@ export function buildExceedanceChart(
             postProcessAxes: constrainExceedanceYAxis,
             tooltip: {
                 trigger: "axis" as const,
-                axisPointer: { type: "line" as const },
+                axisPointer: {
+                    axis: "y" as const,
+                    type: "shadow" as const,
+                    snap: true,
+                },
                 formatter: formatExceedanceTooltip,
             },
         },

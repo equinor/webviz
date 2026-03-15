@@ -1,50 +1,41 @@
-# eCharts Shared Module — Agent Instructions
+# eCharts Shared Module - Agent Instructions
 
-## Architecture
+## Core Architecture
 
-- All cartesian chart builders must go through `buildCartesianSubplotChart` in `builders/cartesianSubplotChartBuilder.ts`. Do not bypass the base builder pipeline.
-- Use `postProcessAxes` for any post-build axis modifications. Do not manually call `buildSubplotAxes` + `composeChartOption` in individual builders.
-- Every exported series builder in `series/` must return `SeriesBuildResult` (`{ series, legendData }`), including single-series builders such as heatmap and histogram.
-- `legendData` must only contain names for traces that actually produced series entries.
-- Series builders own axis bindings (`xAxisIndex`, `yAxisIndex`). Chart builders should not remap axis indices after receiving `result.series`.
-- All series must use structured IDs via `utils/seriesId.ts`. Never hardcode series ID strings.
-- When changing a shared API, update all affected modules rather than preserving backwards compatibility. Do not add optional parameters or fallback paths to avoid breaking callers.
+- All cartesian builders must go through `buildCartesianSubplotChart` in `builders/cartesianSubplotChartBuilder.ts`.
+- Use `postProcessAxes` for post-build axis changes. Do not bypass the base pipeline.
+- Every exported series builder in `series/` must return `SeriesBuildResult` (`{ series, legendData }`).
+- `legendData` must only include traces that actually produced series entries.
+- Series builders own `xAxisIndex` and `yAxisIndex`; chart builders must not remap them.
+- Use structured IDs from `utils/seriesId.ts`. Never hardcode ID strings.
+- When shared APIs change, update all callers. Do not add compatibility shims.
 
-## Types
+## Tooltip Ownership
 
-- Place shared types in `types.ts`. Keep builder-internal types in the builder file.
-- Avoid `any`. Use `unknown` only at system boundaries, not for internal code.
-- Prefer `type` over `interface` unless declaration merging is needed.
-
-## Utils
-
-- Pure calculation functions belong in `utils/`, not in builders or series files.
-- Every function in `utils/` must have a unit test in `tests/unit/eCharts/`.
-- When adding or changing a util, update or add the corresponding test.
-
-## Tooltips
-
-- Tooltip formatters must live under `interaction/`.
-- Shared tooltip primitives (`buildCompactTooltipConfig`, `formatCompactTooltip`, and row/header helpers) should stay in `interaction/tooltipFormatters.ts`.
-- Splitting formatters into chart-family files under `interaction/` is allowed when readability or file size warrants it.
+- Global tooltip style is applied in `builders/composeChartOption.ts` via `buildCompactTooltipConfig`.
+- Builder-level tooltip config owns chart-level trigger and axis pointer behavior.
+- Series-level tooltip config is allowed only for item-specific metadata or helper-series suppression (`tooltip.show = false`).
+- Tooltip formatter implementations must live in `interaction/tooltip*Formatters.ts`.
+- Do not inline tooltip formatter logic in builders or series files.
 - Re-export public tooltip formatters through `interaction/index.ts`.
-- Do not inline formatters in builders.
 
-## Statistical Overlays
+## Types and Utils
 
-- Each chart type has one job. Do not overlay point statistics (P10/Mean/P90) on shape-focused plots (Histogram, Density/KDE). Use the Percentile Range chart to show distribution statistics instead.
+- Put shared types in `types.ts`; keep file-local helper types local.
+- Avoid `any`; use `unknown` only at boundaries.
+- Pure calculations belong in `utils/` and must have tests in `tests/unit/eCharts/`.
 
-## ECharts API Workflow
+## Plot Scope
 
-- Before implementing a visual feature, verify that the ECharts API supports the intended behavior for the specific series type and configuration in use. If a feature requires runtime experimentation to validate (e.g., tooltip triggers, hover targets, custom bindable events), implement one isolated proof-of-concept change first. Do not chain multiple speculative API usages in a single commit.
+- Do not overlay point statistics (P10/Mean/P90) on histogram or density charts.
+- Use percentile range charts for distribution statistics.
 
-## Testing
+## Validation
 
-- Run `npx vitest run tests/unit/eCharts/` after changes to utils.
-- Run `npx tsc --noEmit` and `npx eslint src/modules/_shared/eCharts/` before finishing.
-- Tests should be concise: edge cases, known-value correctness, structural invariants.
+- Run `npx vitest run tests/unit/eCharts/`.
+- Run `npx tsc --noEmit`.
+- Run `npx eslint src/modules/_shared/eCharts/`.
 
 ## Documentation
 
-- Keep `README.md` in this folder up to date when adding builders, utils, or conventions.
-- Keep the Folder Map section accurate.
+- Keep `README.md` concise and aligned with implemented behavior.

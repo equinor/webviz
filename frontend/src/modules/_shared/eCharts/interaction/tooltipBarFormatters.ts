@@ -26,3 +26,7 @@ export function formatBarTooltip(params: CallbackDataParams | CallbackDataParams
         })),
     );
 }
+
+export function formatBarMeanTooltip(traceName: string, mean: number, traceColor: string): string {
+    return formatCompactTooltip(traceName, [{ label: "Mean", value: formatNumber(mean), color: traceColor }]);
+}

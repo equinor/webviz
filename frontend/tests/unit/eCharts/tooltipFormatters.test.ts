@@ -1,16 +1,21 @@
 import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { describe, expect, it } from "vitest";
 
-import { formatBarTooltip } from "@modules/_shared/eCharts/interaction/tooltipBarFormatters";
+import { formatBarMeanTooltip, formatBarTooltip } from "@modules/_shared/eCharts/interaction/tooltipBarFormatters";
 import {
     formatConvergenceTooltip,
     formatExceedanceTooltip,
     formatRealizationScatterTooltip,
 } from "@modules/_shared/eCharts/interaction/tooltipDistributionFormatters";
+import { formatHeatmapTooltip } from "@modules/_shared/eCharts/interaction/tooltipHeatmapFormatters";
 import {
     formatHistogramBarTooltip,
     formatHistogramRugTooltip,
 } from "@modules/_shared/eCharts/interaction/tooltipHistogramFormatters";
+import {
+    formatPercentileGlyphTooltip,
+    formatPercentileRealizationTooltip,
+} from "@modules/_shared/eCharts/interaction/tooltipPercentileFormatters";
 import {
     buildCompactTooltipConfig,
     formatCompactTooltip,
@@ -307,6 +312,16 @@ describe("formatBarTooltip", () => {
     });
 });
 
+describe("formatBarMeanTooltip", () => {
+    it("formats a compact mean row", () => {
+        const tooltip = formatBarMeanTooltip("Trace A", 12, "#112233");
+
+        expect(tooltip).toContain("Trace A");
+        expect(tooltip).toContain("Mean");
+        expect(tooltip).toContain("12");
+    });
+});
+
 describe("formatConvergenceTooltip", () => {
     it("formats only convergence statistic entries", () => {
         const tooltip = formatConvergenceTooltip([
@@ -342,29 +357,46 @@ describe("formatConvergenceTooltip", () => {
 });
 
 describe("formatExceedanceTooltip", () => {
-    it("formats exceedance percentages from line point values", () => {
+    it("formats exceedance header and volume values from line point values", () => {
         const tooltip = formatExceedanceTooltip([
             makeParam({
                 seriesType: "line",
                 seriesName: "Trace A",
                 value: [10, 25],
-                axisValueLabel: 10,
+                axisValue: 25,
+                axisValueLabel: 25,
                 color: "#556677",
             }),
             makeParam({
                 seriesType: "line",
                 seriesName: "Trace B",
-                value: [10, 40],
-                axisValueLabel: 10,
+                value: [12, 25],
+                axisValue: 25,
+                axisValueLabel: 25,
                 color: "#778899",
             }),
         ]);
 
-        expect(tooltip).toContain("Value: 10");
+        expect(tooltip).toContain("P25 Exceedance");
         expect(tooltip).toContain("Trace A");
         expect(tooltip).toContain("Trace B");
-        expect(tooltip).toContain("25%");
-        expect(tooltip).toContain("40%");
+        expect(tooltip).toContain("10");
+        expect(tooltip).toContain("12");
+        expect(tooltip).not.toContain("%");
+    });
+
+    it("falls back to point probability when axis value is not numeric", () => {
+        const tooltip = formatExceedanceTooltip(
+            makeParam({
+                seriesType: "line",
+                seriesName: "Trace A",
+                value: [11, 30],
+            }),
+        );
+
+        expect(tooltip).toContain("P30 Exceedance");
+        expect(tooltip).toContain("Trace A");
+        expect(tooltip).toContain("11");
     });
 
     it("returns empty string when no line entries are present", () => {
@@ -415,6 +447,82 @@ describe("histogram tooltip formatters", () => {
 
         expect(tooltip).toContain("Realization");
         expect(tooltip).toContain("5");
+    });
+});
+
+describe("formatHeatmapTooltip", () => {
+    it("formats heatmap x/y labels and value", () => {
+        const tooltip = formatHeatmapTooltip(
+            {
+                seriesIndex: 0,
+                value: [0, 0, 42],
+                data: [0, 0, 42],
+            } as unknown as CallbackDataParams,
+            [{ title: "Map A", trace: { xLabels: ["Jan"], yLabels: ["Layer 1"] } }],
+            "Value",
+        );
+
+        expect(tooltip).toContain("Map A");
+        expect(tooltip).toContain("X");
+        expect(tooltip).toContain("Jan");
+        expect(tooltip).toContain("Y");
+        expect(tooltip).toContain("Layer 1");
+        expect(tooltip).toContain("Value");
+        expect(tooltip).toContain("42");
+    });
+
+    it("returns empty string for invalid data shape", () => {
+        const tooltip = formatHeatmapTooltip(
+            {
+                seriesIndex: 0,
+                value: [0, 0],
+            } as unknown as CallbackDataParams,
+            [{ title: "Map A", trace: { xLabels: ["Jan"], yLabels: ["Layer 1"] } }],
+            "Value",
+        );
+
+        expect(tooltip).toBe("");
+    });
+});
+
+describe("percentile tooltip formatters", () => {
+    it("formats percentile glyph tooltip rows", () => {
+        const tooltip = formatPercentileGlyphTooltip(
+            "Trace A",
+            "#112233",
+            {
+                min: 1,
+                p10: 2,
+                p50: 3,
+                p90: 4,
+                max: 5,
+                mean: 3.5,
+                count: 5,
+                stdDev: 1,
+            },
+            3,
+            "p50",
+        );
+
+        expect(tooltip).toContain("Trace A");
+        expect(tooltip).toContain("Min");
+        expect(tooltip).toContain("P90");
+        expect(tooltip).toContain("P50");
+        expect(tooltip).toContain("Mean");
+    });
+
+    it("formats percentile realization tooltip rows", () => {
+        const tooltip = formatPercentileRealizationTooltip(
+            makeParam({ value: [7, 0], data: { value: [7, 0], realizationId: 8 } }),
+            "Trace A",
+            "#112233",
+        );
+
+        expect(tooltip).toContain("Trace A");
+        expect(tooltip).toContain("Value");
+        expect(tooltip).toContain("7");
+        expect(tooltip).toContain("Realization");
+        expect(tooltip).toContain("8");
     });
 });
 

@@ -1,258 +1,75 @@
 # Shared ECharts Guide
 
-> Agent-facing rules live in [`AGENTS.md`](AGENTS.md) and are loaded automatically by Copilot.
+> Agent-facing rules live in [AGENTS.md](AGENTS.md).
 
-## What This Folder Is
+## Purpose
 
-This folder is the shared charting layer for frontend modules that use ECharts.
+This folder is the shared charting layer for frontend modules using ECharts.
 
-Its job is to keep chart behavior consistent across modules:
+It standardizes:
 
-- common input types
-- common subplot layout
-- common legend and tooltip styling
-- common hover and click interactions
-- common series construction for supported plot types
+- trace input contracts
+- subplot layout and axis composition
+- tooltip and legend styling
+- reusable series builders
+- shared chart interaction behavior
 
-Modules should usually adapt their own domain data into these shared types and call the shared builders. They should not build large ECharts option objects by hand unless they truly need custom behavior.
+Modules should map domain data into shared trace types and call shared builders, instead of constructing large raw ECharts option objects.
 
-## Mental Model
+## Data Flow
 
-The flow is intentionally simple:
-
-1. A module converts domain data into shared trace types.
-2. The module groups traces into one or more subplots.
-3. A shared builder turns that input into an ECharts option.
-4. Optional shared hooks add interaction behavior.
-5. The module renders `ReactECharts`.
-
-```mermaid
-graph TD
-    subgraph "Module Layer"
-        A[Domain Data] -->|Map to| B[Shared Trace Types]
-        B -->|Group into| C[SubplotGroup]
-    end
-
-    subgraph "Shared ECharts Layer"
-        C -->|Input to| D[Chart Builder]
-        E[Display Config / Size] -->|Settings| D
-        D -->|Composes| F[Series / Layout / Tooltips]
-        F -->|Returns| G[EChartsOption]
-    end
-
-    subgraph "React View"
-        G -->|Prop| H[ReactECharts]
-        I[Interaction Hooks] -->|Connects via| J[onEvents]
-        H --- J
-    end
-```
-
-In short:
-
-- module code owns domain mapping and state
-- shared eCharts code owns chart construction and shared behavior
+1. Module maps domain data into shared trace types.
+2. Module groups traces into `SubplotGroup<T>[]`.
+3. Shared builder composes layout, axes, series, legend, and tooltip behavior.
+4. Module renders `ReactECharts` and attaches interaction hooks as needed.
 
 ## Folder Map
 
-- `types.ts`: Common input contracts such as `TimeseriesTrace`, `HistoricalTrace`, `ObservationTrace`, `DistributionTrace`, `SubplotGroup`, and `HistogramType`.
-- `builders/`: High-level chart builders that return `EChartsOption` directly.
-- `series/`: Lower-level ECharts series builders. All return `SeriesBuildResult` (`{ series, legendData }`).
-- `layout/`: Shared subplot grid and axis layout logic.
-- `interaction/`: Shared chart interaction helpers and tooltip formatting modules. Compact tooltip primitives live in `tooltipFormatters.ts`, while chart-family formatter implementations live in dedicated `tooltip*Formatters.ts` files.
-- `hooks/`: React hooks for behaviors such as linked hover, click-to-timestamp, and the combined `useTimeseriesInteractions` hook.
-- `utils/`: Shared statistics, histogram helpers, KDE computation (`kde.ts`), convergence calculation (`convergence.ts`), convergence series metadata helpers (`convergenceSeriesMeta.ts`), and the structured series ID module (`seriesId.ts`).
-- `index.ts`: Public exports for the shared API.
+- `types.ts`: shared trace and display config contracts.
+- `builders/`: high-level chart option builders (`EChartsOption`).
+- `series/`: series builders returning `SeriesBuildResult`.
+- `layout/`: subplot grid and axis helpers.
+- `interaction/`: tooltip and interaction helpers.
+- `hooks/`: React interaction hooks.
+- `utils/`: pure calculations and ID helpers.
+- `index.ts`: public exports.
 
-## Supported Pattern
+## Tooltip Ownership Contract
 
-The shared layer is built around a few reusable concepts.
+### Layer Responsibilities
 
-### Trace Types
+| Layer                    | Owner                                                                 | Responsibility                                                                            |
+| ------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Global style             | `builders/composeChartOption.ts` + `interaction/tooltipFormatters.ts` | Compact tooltip defaults (padding, text style).                                           |
+| Chart-level behavior     | `builders/*`                                                          | Tooltip trigger mode (`axis` vs `item`), axis pointer policy, shared formatter selection. |
+| Series-level override    | `series/*`                                                            | Item-specific rows or helper-series suppression (`tooltip.show = false`).                 |
+| Formatter implementation | `interaction/tooltip*Formatters.ts`                                   | Tooltip content formatting and shared HTML row/header primitives.                         |
 
-Each chart family has a small shared trace type. A module should map its own objects into those types as close to the view layer as possible.
+Rules:
 
-Examples:
+- Keep tooltip formatter logic in `interaction/`.
+- Do not inline tooltip formatter logic in builders or series files.
+- Re-export public formatters from `interaction/index.ts`.
 
-- `TimeseriesTrace`
-- `DistributionTrace`
-- `BarTrace`
-- `HeatmapTrace`
+### Current Chart Family Pattern
 
-### Subplot Groups
+| Chart family        | Primary tooltip owner               | Notes                                                                                              |
+| ------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Timeseries          | Builder + selected series overrides | Builder switches between axis/item tooltip mode; observation series provides item tooltip content. |
+| Bar                 | Builder + series override           | Builder controls axis tooltip for bars; mean reference line uses series-level item tooltip.        |
+| Histogram           | Series                              | Custom bars and rug points use item-specific tooltip formatters.                                   |
+| Heatmap             | Builder                             | Builder uses item trigger and heatmap-specific formatter.                                          |
+| Convergence         | Builder + helper-series suppression | Builder formats axis tooltip; custom band suppresses tooltip.                                      |
+| Exceedance          | Builder                             | Builder formats y-axis based hover semantics.                                                      |
+| Percentile range    | Series                              | Glyph and realization points provide item-specific tooltip rows.                                   |
+| Density             | Default/global                      | No custom formatter unless future requirements demand one.                                         |
+| Realization scatter | Builder                             | Builder uses item tooltip formatter.                                                               |
 
-Most builders accept `SubplotGroup<T>[]`.
+## Core Conventions
 
-That means:
-
-- each subplot has a title
-- each subplot contains one or more traces
-- the shared layout system decides where each subplot goes
-
-### Builders
-
-Builders are the normal entry point.
-
-Examples:
-
-- `buildTimeseriesChart(...)`
-- `buildDensityChart(...)`
-- `buildExceedanceChart(...)`
-- `buildHistogramChart(...)`
-- `buildBarChart(...)`
-- `buildHeatmapChart(...)`
-
-They combine layout, axes, series, legend, tooltip, and other chart-wide settings.
-
-## How To Add A New Module
-
-Use this path unless you have a strong reason not to.
-
-### 1. Map domain data into shared trace types
-
-Keep this in the module, not in the shared folder.
-
-For example, a module with domain-specific timeseries traces should convert them into `TimeseriesTrace` objects with:
-
-- display name
-- color
-- timestamps
-- realizations and or statistics
-
-### 2. Group the traces into subplots
-
-Create `SubplotGroup<T>[]` for the chosen chart type.
-
-This is where the module decides:
-
-- how many subplots to show
-- which traces belong in each subplot
-- what each subplot title should be
-
-### 3. Call the shared chart builder
-
-Pick the builder that matches the plot type and pass in the subplot groups, display config, and optional container size.
-
-### 4. Attach shared interaction hooks when relevant
-
-For timeseries charts, use the composition hook that bundles hover and click-to-timestamp:
-
-```tsx
-const { chartRef, onChartEvents } = useTimeseriesInteractions({
-    enableLinkedHover: showRealizations,
-    timestamps,
-    activeTimestampUtcMs,
-    setActiveTimestampUtcMs,
-    layoutDependency: echartsOptions,
-});
-```
-
-For non-timeseries charts or more granular control, the individual hooks are also available:
-
-- `useHighlightOnHover(...)` for realization-hover behavior
-- `useClickToTimestamp(...)` for timestamp selection
-
-### 5. Render `ReactECharts`
-
-Pass the built option object to the chart component and connect `onEvents` when using shared hooks.
-
-## Minimal Integration Example
-
-```tsx
-const subplotGroups = domainGroups.map((group) => ({
-    title: group.title,
-    traces: group.traces.map((trace) => ({
-        name: trace.label,
-        color: trace.color,
-        timestamps: trace.timestamps,
-        realizationValues: trace.realizations,
-        realizationIds: trace.realizationIds,
-        statistics: trace.statistics,
-    })),
-}));
-
-const subplotOverlays = domainGroups.map((group) => ({
-    historicalTraces: group.history.map((h) => ({
-        name: "History",
-        color: "#111111",
-        timestamps: h.timestamps,
-        values: h.values,
-        lineShape: "linear",
-    })),
-    observationTraces: group.observations.map((obs) => ({
-        name: "Observation",
-        color: "#111111",
-        observations: obs.points,
-    })),
-}));
-
-const echartsOptions = buildTimeseriesChart(
-    subplotGroups,
-    subplotOverlays,
-    displayConfig,
-    yAxisLabel,
-    activeTimestampUtcMs,
-    containerSize,
-);
-
-const { chartRef, onChartEvents } = useTimeseriesInteractions({
-    enableLinkedHover: displayConfig.showRealizations,
-    timestamps,
-    activeTimestampUtcMs,
-    setActiveTimestampUtcMs,
-    layoutDependency: echartsOptions,
-});
-
-return <ReactECharts ref={chartRef} option={echartsOptions} onEvents={onChartEvents} />;
-```
-
-## Important Conventions
-
-### Keep domain logic outside the shared folder
-
-The shared layer should know about chart structure, not module-specific business concepts.
-
-Good pattern:
-
-- module maps domain objects into shared trace types
-- shared layer renders those traces consistently
-
-### Reuse shared styling instead of redoing it per module
-
-Tooltip and legend styling are centralized. If a visual convention should apply across plot types, update the shared logic instead of duplicating formatter code in a module.
-
-In practice, these are the main coordination points:
-
-- `interaction/tooltipFormatters.ts`
-- `builders/composeChartOption.ts`
-
-### Use `highlightGroupKey` for linked timeseries hover
-
-For timeseries realization hover across subplots, traces that represent the same logical group should share the same `highlightGroupKey`.
-
-This is what allows the shared hover hook to treat lines in different subplots as related.
-
-As a rule:
-
-- same ensemble or logical group -> same `highlightGroupKey`
-- different ensemble or logical group -> different `highlightGroupKey`
-
-### Structured Series IDs
-
-All series use structured, colon-delimited IDs created via the `utils/seriesId.ts` module:
-
-```
-<category>:<name>:<qualifier>:<axisIndex>
-```
-
-Categories: `realization`, `statistic`, `fanchart`, `history`, `observation`, `convergence`, `histogram`, `density`, `exceedance`, `percentile`, `heatmap`, `bar`.
-
-Use the provided factory functions (`makeRealizationSeriesId`, `makeStatisticSeriesId`, etc.) to create IDs and the parser functions (`parseSeriesId`, `isRealizationSeries`, `getHighlightGroupKey`, etc.) to inspect them.
-
-This structured scheme allows the hover and tooltip systems to identify series semantics reliably without fragile string matching.
-
-### SeriesBuildResult
-
-All series builders (`series/` folder) return a standard shape:
+- All cartesian chart builders must use `buildCartesianSubplotChart`.
+- Use `postProcessAxes` for post-build axis changes.
+- All exported series builders return `SeriesBuildResult`:
 
 ```ts
 type SeriesBuildResult = {
@@ -261,88 +78,31 @@ type SeriesBuildResult = {
 };
 ```
 
-This includes single-series builders such as heatmap and histogram.
+- Series builders own `xAxisIndex` and `yAxisIndex`.
+- Use structured series IDs from `utils/seriesId.ts` (`category:name:qualifier:axisIndex`).
+- `legendData` should include only names that produced rendered series.
 
-`legendData` must only include names for traces that actually produced one or more rendered series.
+## Adding Or Changing A Chart
 
-This allows chart builders to compose series uniformly without knowing which specific series builder was used.
+1. Map domain data to shared trace types in the module layer.
+2. Build `SubplotGroup<T>[]`.
+3. Use an existing shared builder if possible.
+4. Add or update chart-family tooltip formatter functions under `interaction/`.
+5. Keep chart-level trigger and axis-pointer choices in the builder.
+6. Add/adjust unit tests under `tests/unit/eCharts/`.
 
-### Builder Architecture
+## Validation
 
-All cartesian chart builders (timeseries, histogram, density, convergence, percentile range, bar) go through a single base pipeline in `buildCartesianSubplotChart`. This ensures consistent behavior for cross-cutting features.
+Run before finishing changes:
 
-The base builder accepts a `CartesianChartOptions` object with:
+```bash
+npx vitest run tests/unit/eCharts/
+npx tsc --noEmit
+npx eslint src/modules/_shared/eCharts/
+```
 
-- `sharedXAxis` / `sharedYAxis` — force all subplots to share the same axis range
-- `postProcessAxes(axes, allSeries)` — hook for builders that need to modify axes after construction (e.g. histogram y-extent adjustment, timestamp markers)
-- compose overrides for tooltip, axisPointer, dataZoom, visualMap, toolbox
+## Maintenance
 
-Axis binding convention:
-
-- series builders are responsible for assigning `xAxisIndex` and `yAxisIndex` on each produced series
-- chart builders should consume `result.series` directly and should not remap axis indices afterwards
-
-If you need custom pre- or post-processing of axes or series, use `postProcessAxes` rather than bypassing the base builder.
-
-### Centralized Tooltip Formatters
-
-All tooltip formatting functions live in `interaction/tooltipFormatters.ts`. When adding a new chart type, add its tooltip formatter there rather than inlining it in the builder.
-
-### Prefer builders over manual option assembly
-
-If an existing builder already matches the plot you need, use it.
-
-Only drop down to lower-level series or raw ECharts option work when the existing shared chart families do not fit.
-
-## When To Extend The Shared Layer
-
-Extend the shared layer when the new behavior is useful across multiple modules.
-
-Typical examples:
-
-- a new generic plot type
-- a shared tooltip or legend rule
-- a shared hover or click interaction
-- a shared layout rule
-
-Keep behavior module-local when it is tightly coupled to one module's domain or state model.
-
-## Quick Decision Guide
-
-If you are adding a chart to a new module, usually do this:
-
-1. Map module data into shared trace types.
-2. Build `SubplotGroup[]`.
-3. Use an existing shared builder.
-4. Add shared hooks if the chart needs hover or click behavior.
-5. Only extend the shared layer if the behavior should be reused elsewhere.
-
-## Fast Summary
-
-If you only need the short version:
-
-- this folder is the shared ECharts system
-- modules provide adapted data, not raw option objects
-- builders create the chart options (all return `EChartsOption` directly)
-- series builders return `SeriesBuildResult` for uniform composition
-- series IDs are structured (`category:name:qualifier:axisIndex`) via `utils/seriesId.ts`
-- tooltip formatters are centralized in `interaction/tooltipFormatters.ts`
-- `useTimeseriesInteractions` bundles hover + click-to-timestamp for timeseries charts
-- shared files own common behavior and styling
-- module files own domain mapping and state
-
-## Maintaining This Module
-
-### Keep this README up to date
-
-When adding new builders, utils, or conventions, update the relevant sections here. Future contributors rely on this document to understand the shared layer without reading every file.
-
-### Add unit tests for calculation and utility functions
-
-Pure calculation functions in `utils/` (statistics, KDE, histogram binning, convergence, series ID parsing) must have unit tests in `tests/unit/eCharts/`. When adding or changing a utility function, add or update the corresponding test file.
-
-Tests should be concise and cover:
-
-- edge cases (empty input, single value, zero variance)
-- correctness of computed values against known results
-- structural invariants (e.g. percentages sum to 100%, density integrates to ~1)
+- Keep this README concise and behavior-focused.
+- Update this file when architecture conventions change.
+- Avoid duplicate guidance between README and AGENTS.

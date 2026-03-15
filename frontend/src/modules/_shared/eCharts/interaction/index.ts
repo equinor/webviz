@@ -10,10 +10,12 @@ export {
     formatRealizationItemTooltip,
     formatObservationTooltip,
 } from "./tooltipTimeseriesFormatters";
-export { formatBarTooltip } from "./tooltipBarFormatters";
+export { formatBarTooltip, formatBarMeanTooltip } from "./tooltipBarFormatters";
 export {
     formatConvergenceTooltip,
     formatExceedanceTooltip,
     formatRealizationScatterTooltip,
 } from "./tooltipDistributionFormatters";
 export { formatHistogramBarTooltip, formatHistogramRugTooltip } from "./tooltipHistogramFormatters";
+export { formatHeatmapTooltip } from "./tooltipHeatmapFormatters";
+export { formatPercentileGlyphTooltip, formatPercentileRealizationTooltip } from "./tooltipPercentileFormatters";
