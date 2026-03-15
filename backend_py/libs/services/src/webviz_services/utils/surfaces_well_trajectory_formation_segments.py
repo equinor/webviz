@@ -15,7 +15,6 @@ from .surface_helpers import (
     WellTrajectory,
 )
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -229,7 +228,7 @@ def _create_formation_segments_from_well_trajectory_and_picks(
     # Well started inside if:
     # - Exit up: top + upward
     # - Exit down: bottom + downward
-    (first_pick, first_surface_type) = (categorized_picks[0].pick, categorized_picks[0].surface_type)
+    first_pick, first_surface_type = (categorized_picks[0].pick, categorized_picks[0].surface_type)
     is_exiting_up = first_surface_type == "top" and first_pick.direction == PickDirection.UPWARD
     is_exiting_down = first_surface_type == "bottom" and first_pick.direction == PickDirection.DOWNWARD
     if is_exiting_up or is_exiting_down:
