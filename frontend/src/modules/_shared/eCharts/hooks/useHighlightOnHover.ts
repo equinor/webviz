@@ -77,9 +77,7 @@ export function useHighlightOnHover(
 
                 // Report realization change to consumer
                 const realizationInfo = highlightTarget.realizationInfo;
-                const infoKey = realizationInfo
-                    ? `${realizationInfo.groupKey}:${realizationInfo.realizationId}`
-                    : null;
+                const infoKey = realizationInfo ? `${realizationInfo.groupKey}:${realizationInfo.realizationId}` : null;
                 if (lastReportedRealizationRef.current !== infoKey) {
                     lastReportedRealizationRef.current = infoKey;
                     onHoveredRealizationChange?.(realizationInfo);
@@ -159,15 +157,17 @@ function getHighlightTarget(instance: ECharts, event: ECElementEvent): Highlight
             const realId = getRealizationId(hoveredSeriesId);
             const groupKey = getHighlightGroupKey(hoveredSeriesId);
             const realizationInfo =
-                realId != null && groupKey != null
-                    ? { realizationId: Number(realId), groupKey }
-                    : null;
+                realId != null && groupKey != null ? { realizationId: Number(realId), groupKey } : null;
             return { key: `linked:${hoveredSeriesId}`, actions: linkedSeries, realizationInfo };
         }
     }
 
     if (typeof event?.seriesIndex === "number") {
-        return { key: `index:${event.seriesIndex}`, actions: [{ seriesIndex: event.seriesIndex }], realizationInfo: null };
+        return {
+            key: `index:${event.seriesIndex}`,
+            actions: [{ seriesIndex: event.seriesIndex }],
+            realizationInfo: null,
+        };
     }
 
     if (hoveredSeriesId) {
