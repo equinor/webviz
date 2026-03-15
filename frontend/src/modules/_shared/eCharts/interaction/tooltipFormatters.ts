@@ -3,15 +3,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import { formatConvergenceStatLabel, getConvergenceSeriesStatKey } from "../series/convergenceSeries";
-import {
-    getRealizationId,
-    getStatisticKey,
-    isFanchartSeries,
-    isHistorySeries,
-    isObservationSeries,
-    isRealizationSeries,
-    isStatisticSeries,
-} from "../utils/seriesId";
+import { getRealizationId, parseSeriesId } from "../utils/seriesId";
 
 const COMPACT_TOOLTIP_PADDING: [number, number] = [4, 6];
 const COMPACT_TOOLTIP_TEXT_STYLE = { fontSize: 11, lineHeight: 14 };
@@ -64,30 +56,136 @@ export function formatCompactTooltip(header: string, rows: CompactTooltipRow[]):
 /** ECharts adds axisValue at runtime for axis-trigger tooltips, but it's not in CallbackDataParams. */
 type AxisTooltipParams = CallbackDataParams & { axisValue?: string | number };
 
+type AxisScopedTooltipParams = AxisTooltipParams & {
+    axisIndex?: number;
+    axisId?: string | number;
+    xAxisIndex?: number;
+    xAxisId?: string | number;
+};
+
+const STAT_TOOLTIP_ORDER = ["mean", "p50", "p10", "p90", "min", "max"] as const;
+const STAT_TOOLTIP_ORDER_INDEX = new Map<string, number>(STAT_TOOLTIP_ORDER.map((statKey, index) => [statKey, index]));
+
+type ParsedStatisticSeries = {
+    traceName: string;
+    statKey: string;
+    axisIndex: number;
+};
+
 export function formatStatisticsTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
     if (!Array.isArray(params) || params.length === 0) return "";
     const date = String((params[0] as AxisTooltipParams).axisValue ?? params[0].name);
-    const rows: CompactTooltipRow[] = [];
-    for (const p of params) {
-        const seriesId = typeof p.seriesId === "string" ? p.seriesId : "";
-        // Skip non-statistical overlays and individual realization lines
-        if (isFanchartSeries(seriesId)) continue;
-        if (isHistorySeries(seriesId)) continue;
-        if (isObservationSeries(seriesId)) continue;
-        if (isRealizationSeries(seriesId)) continue;
-        if (!isStatisticSeries(seriesId)) continue;
+    const targetAxisIndex = resolveHoveredAxisIndex(params);
+    const groupedRows = new Map<
+        string,
+        {
+            label: string;
+            color?: string;
+            valuesByStatKey: Map<string, string>;
+        }
+    >();
 
-        const statKey = getStatisticKey(seriesId);
-        const statSuffix = statKey ? ` (${statKey})` : "";
-        const name: string = p.seriesName ?? "";
-        rows.push({
-            label: `${name}${statSuffix}`,
-            value: formatNumber(p.value as number),
-            color: typeof p.color === "string" ? p.color : undefined,
-        });
+    for (const raw of params) {
+        const p = raw as AxisScopedTooltipParams;
+        const seriesId = typeof p.seriesId === "string" ? p.seriesId : "";
+        const parsedStatisticSeries = parseStatisticSeries(seriesId);
+        if (!parsedStatisticSeries) continue;
+        if (!belongsToAxis(p, parsedStatisticSeries.axisIndex, targetAxisIndex)) continue;
+
+        const label = p.seriesName ?? parsedStatisticSeries.traceName;
+        let groupedRow = groupedRows.get(label);
+        if (!groupedRow) {
+            groupedRow = {
+                label,
+                color: typeof p.color === "string" ? p.color : undefined,
+                valuesByStatKey: new Map<string, string>(),
+            };
+            groupedRows.set(label, groupedRow);
+        }
+
+        if (!groupedRow.valuesByStatKey.has(parsedStatisticSeries.statKey)) {
+            groupedRow.valuesByStatKey.set(parsedStatisticSeries.statKey, formatNumber(extractNumericValue(p.value)));
+        }
     }
 
+    const rows: CompactTooltipRow[] = Array.from(groupedRows.values()).map((groupedRow) => ({
+        label: groupedRow.label,
+        value: formatStatisticValuesInline(groupedRow.valuesByStatKey),
+        color: groupedRow.color,
+    }));
+
     return formatCompactTooltip(date, rows);
+}
+
+function parseStatisticSeries(seriesId: string): ParsedStatisticSeries | null {
+    const parsed = parseSeriesId(seriesId);
+    if (!parsed || parsed.category !== "statistic") return null;
+
+    return {
+        traceName: parsed.name,
+        statKey: parsed.qualifier,
+        axisIndex: parsed.axisIndex,
+    };
+}
+
+function formatStatisticValuesInline(valuesByStatKey: Map<string, string>): string {
+    const orderedEntries = Array.from(valuesByStatKey.entries()).sort(([left], [right]) => {
+        const leftOrder = STAT_TOOLTIP_ORDER_INDEX.get(left) ?? Number.MAX_SAFE_INTEGER;
+        const rightOrder = STAT_TOOLTIP_ORDER_INDEX.get(right) ?? Number.MAX_SAFE_INTEGER;
+        if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+        return left.localeCompare(right);
+    });
+
+    return orderedEntries.map(([statKey, value]) => `${formatStatisticLabel(statKey)} ${value}`).join(" | ");
+}
+
+function formatStatisticLabel(statKey: string): string {
+    switch (statKey) {
+        case "mean":
+            return "Mean";
+        case "min":
+            return "Min";
+        case "max":
+            return "Max";
+        default:
+            return statKey.toUpperCase();
+    }
+}
+
+function resolveHoveredAxisIndex(params: CallbackDataParams[]): number | null {
+    for (const raw of params) {
+        const param = raw as AxisScopedTooltipParams;
+        const fromRuntime = firstFiniteNumber(param.axisIndex, param.xAxisIndex);
+        if (fromRuntime != null) return fromRuntime;
+
+        const seriesId = typeof param.seriesId === "string" ? param.seriesId : "";
+        const parsed = seriesId ? parseSeriesId(seriesId) : null;
+        if (parsed) return parsed.axisIndex;
+    }
+
+    return null;
+}
+
+function belongsToAxis(
+    param: AxisScopedTooltipParams,
+    parsedSeriesAxisIndex: number,
+    targetAxisIndex: number | null,
+): boolean {
+    if (targetAxisIndex == null) return true;
+
+    const runtimeAxis = firstFiniteNumber(param.axisIndex, param.xAxisIndex);
+    if (runtimeAxis != null) {
+        return runtimeAxis === targetAxisIndex;
+    }
+
+    return parsedSeriesAxisIndex === targetAxisIndex;
+}
+
+function firstFiniteNumber(...values: Array<number | undefined>): number | null {
+    for (const value of values) {
+        if (typeof value === "number" && Number.isFinite(value)) return value;
+    }
+    return null;
 }
 
 export function formatRealizationItemTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
