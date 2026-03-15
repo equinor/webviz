@@ -65,6 +65,7 @@ export function buildHistogramSeriesFromBars(
         id: makeHistogramSeriesId(trace.name, "bars", axisIndex),
         type: "custom",
         name: trace.name,
+        color: color,
         data: bars.map((bar, index) => ({
             value: [bar.xStart, bar.xEnd, bar.yStart, bar.yEnd],
             binIndex: index,

@@ -25,6 +25,8 @@ import {
     sharedYAxisAtom,
     showBarLabelsAtom,
     showFanchartAtom,
+    showHistoryAtom,
+    showObservationsAtom,
     showRealizationPointsAtom,
     showRealizationsAtom,
     showStatisticalMarkersAtom,
@@ -53,6 +55,8 @@ export function Settings(): React.ReactNode {
     const [showRealizations, setShowRealizations] = useAtom(showRealizationsAtom);
     const [showStatistics, setShowStatistics] = useAtom(showStatisticsAtom);
     const [showFanchart, setShowFanchart] = useAtom(showFanchartAtom);
+    const [showHistory, setShowHistory] = useAtom(showHistoryAtom);
+    const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
     const [selectedStatistics, setSelectedStatistics] = useAtom(selectedStatisticsAtom);
     const [showStatisticalMarkers, setShowStatisticalMarkers] = useAtom(showStatisticalMarkersAtom);
     const [showBarLabels, setShowBarLabels] = useAtom(showBarLabelsAtom);
@@ -139,6 +143,12 @@ export function Settings(): React.ReactNode {
                         label="Show realizations"
                         checked={showRealizations}
                         onChange={(_, c) => setShowRealizations(c)}
+                    />
+                    <Checkbox label="Show history" checked={showHistory} onChange={(_, c) => setShowHistory(c)} />
+                    <Checkbox
+                        label="Show observations"
+                        checked={showObservations}
+                        onChange={(_, c) => setShowObservations(c)}
                     />
                     <Checkbox
                         label="Show statistics"

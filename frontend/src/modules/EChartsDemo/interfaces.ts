@@ -14,6 +14,8 @@ import {
     sharedYAxisAtom,
     showBarLabelsAtom,
     showFanchartAtom,
+    showHistoryAtom,
+    showObservationsAtom,
     showRealizationPointsAtom,
     showRealizationsAtom,
     showStatisticalMarkersAtom,
@@ -29,6 +31,8 @@ export type SettingsToViewInterface = {
     showRealizations: boolean;
     showStatistics: boolean;
     showFanchart: boolean;
+    showHistory: boolean;
+    showObservations: boolean;
     selectedStatistics: StatisticKey[];
     showStatisticalMarkers: boolean;
     showBarLabels: boolean;
@@ -52,6 +56,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     showRealizations: (get) => get(showRealizationsAtom),
     showStatistics: (get) => get(showStatisticsAtom),
     showFanchart: (get) => get(showFanchartAtom),
+    showHistory: (get) => get(showHistoryAtom),
+    showObservations: (get) => get(showObservationsAtom),
     selectedStatistics: (get) => get(selectedStatisticsAtom),
     showStatisticalMarkers: (get) => get(showStatisticalMarkersAtom),
     showBarLabels: (get) => get(showBarLabelsAtom),

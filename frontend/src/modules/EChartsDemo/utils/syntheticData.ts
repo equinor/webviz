@@ -2,8 +2,11 @@ import type {
     BarTrace,
     DistributionTrace,
     HeatmapTrace,
+    HistoricalTrace,
+    ObservationTrace,
     RealizationScatterTrace,
     SubplotGroup,
+    TimeseriesSubplotOverlays,
     TimeseriesTrace,
 } from "@modules/_shared/eCharts";
 import { computeTimeseriesStatistics } from "@modules/_shared/eCharts";
@@ -79,6 +82,88 @@ export function generateTimeseriesGroups(
     }
 
     return subplots;
+}
+
+export function generateHistoricalTraces(timestamps: number[], subplotIndex = 0): HistoricalTrace[] {
+    if (timestamps.length === 0) return [];
+
+    const historyLength = Math.max(2, Math.floor(timestamps.length * 0.7));
+    const historyTimestamps = timestamps.slice(0, historyLength);
+    const rng = seededRandom(6001 + subplotIndex * 73);
+
+    const values: number[] = [];
+    let current = 55 + subplotIndex * 1.5;
+    for (let i = 0; i < historyTimestamps.length; i++) {
+        current += (rng() - 0.52) * 2.4;
+        values.push(current);
+    }
+
+    return [
+        {
+            name: "History",
+            color: "#111111",
+            timestamps: historyTimestamps,
+            values,
+            lineShape: "linear",
+        },
+    ];
+}
+
+export function generateObservationTraces(timestamps: number[], subplotIndex = 0): ObservationTrace[] {
+    if (timestamps.length === 0) return [];
+
+    const historicalTrace = generateHistoricalTraces(timestamps, subplotIndex)[0];
+    if (!historicalTrace || historicalTrace.timestamps.length < 2) return [];
+
+    const rng = seededRandom(6001 + subplotIndex * 97);
+    const numObservations = Math.max(5, Math.min(8, Math.floor(historicalTrace.timestamps.length / 10)));
+    const maxIndex = historicalTrace.timestamps.length - 1;
+    const step = Math.max(1, Math.floor((maxIndex + 1) / (numObservations + 1)));
+
+    const observations: ObservationTrace["observations"] = [];
+    let previousIndex = -1;
+    for (let i = 0; i < numObservations; i++) {
+        const baseIndex = Math.min(maxIndex, (i + 1) * step);
+        const jitter = Math.round((rng() - 0.5) * Math.max(1, step / 2));
+        const candidateIndex = Math.max(0, Math.min(maxIndex, baseIndex + jitter));
+        const index = Math.max(previousIndex + 1, Math.min(maxIndex, candidateIndex));
+        previousIndex = index;
+
+        const baseValue = historicalTrace.values[index] ?? historicalTrace.values[historicalTrace.values.length - 1];
+        const value = baseValue + (rng() - 0.5) * 4;
+        const error = 2 + rng() * 3;
+
+        observations.push({
+            date: historicalTrace.timestamps[index],
+            value,
+            error,
+            label: `Obs ${i + 1}`,
+            comment: "Synthetic observation",
+        });
+
+        if (index >= maxIndex) break;
+    }
+
+    return [
+        {
+            name: "Observation",
+            color: "#111111",
+            observations,
+        },
+    ];
+}
+
+export function generateTimeseriesOverlays(
+    groups: SubplotGroup<TimeseriesTrace>[],
+    numSubplots: number,
+): TimeseriesSubplotOverlays[] {
+    return Array.from({ length: numSubplots }, (_, subplotIndex) => {
+        const timestamps = groups[subplotIndex]?.traces[0]?.timestamps ?? [];
+        return {
+            historicalTraces: generateHistoricalTraces(timestamps, subplotIndex),
+            observationTraces: generateObservationTraces(timestamps, subplotIndex),
+        };
+    });
 }
 
 export function generateDistributionTraces(

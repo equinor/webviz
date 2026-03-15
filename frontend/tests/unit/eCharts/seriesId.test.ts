@@ -5,6 +5,8 @@ import {
     makeRealizationSeriesId,
     makeStatisticSeriesId,
     makeFanchartSeriesId,
+    makeHistorySeriesId,
+    makeObservationSeriesId,
     makeConvergenceSeriesId,
     makeHistogramSeriesId,
     makeDensitySeriesId,
@@ -16,6 +18,8 @@ import {
     isRealizationSeries,
     isStatisticSeries,
     isFanchartSeries,
+    isHistorySeries,
+    isObservationSeries,
     isConvergenceSeries,
     getRealizationId,
     getHighlightGroupKey,
@@ -43,6 +47,14 @@ describe("factory helpers", () => {
 
     it("makeFanchartSeriesId", () => {
         expect(makeFanchartSeriesId("trace", "p10-p90", 0)).toBe("fanchart:trace:p10-p90:0");
+    });
+
+    it("makeHistorySeriesId", () => {
+        expect(makeHistorySeriesId("History", 2)).toBe("history:History:line:2");
+    });
+
+    it("makeObservationSeriesId", () => {
+        expect(makeObservationSeriesId("Observation", "12", 3)).toBe("observation:Observation:12:3");
     });
 
     it("makeConvergenceSeriesId", () => {
@@ -120,6 +132,14 @@ describe("category guards", () => {
 
     it("isFanchartSeries", () => {
         expect(isFanchartSeries("fanchart:t:band:0")).toBe(true);
+    });
+
+    it("isHistorySeries", () => {
+        expect(isHistorySeries("history:t:line:0")).toBe(true);
+    });
+
+    it("isObservationSeries", () => {
+        expect(isObservationSeries("observation:t:1:0")).toBe(true);
     });
 
     it("isConvergenceSeries", () => {

@@ -5,8 +5,20 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 import { applyActiveTimestampMarker } from "../interaction/activeTimestampMarker";
 import { formatRealizationItemTooltip, formatStatisticsTooltip } from "../interaction/tooltipFormatters";
 import { getResponsiveFeatures } from "../layout/responsiveConfig";
-import { buildFanchartSeries, buildRealizationsSeries, buildStatisticsSeries } from "../series";
-import type { ContainerSize, SubplotGroup, TimeseriesDisplayConfig, TimeseriesTrace } from "../types";
+import {
+    buildFanchartSeries,
+    buildHistorySeries,
+    buildObservationSeries,
+    buildRealizationsSeries,
+    buildStatisticsSeries,
+} from "../series";
+import type {
+    ContainerSize,
+    SubplotGroup,
+    TimeseriesDisplayConfig,
+    TimeseriesSubplotOverlays,
+    TimeseriesTrace,
+} from "../types";
 
 import { buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
 import type { CartesianChartSeries, CartesianSubplotBuildResult } from "./cartesianSubplotChartBuilder";
@@ -26,22 +38,44 @@ type RealtimeAxisPointer = {
 
 export function buildTimeseriesChart(
     subplotGroups: SubplotGroup<TimeseriesTrace>[],
+    subplotOverlays: TimeseriesSubplotOverlays[],
     config: TimeseriesDisplayConfig,
     yAxisLabel: string,
     activeTimestampUtcMs: number | null = null,
     containerSize?: ContainerSize,
     chartOptions: TimeseriesChartOptions = {},
 ): EChartsOption {
-    const categoryData = buildCategoryData(subplotGroups);
+    if (subplotOverlays.length !== subplotGroups.length) {
+        throw new Error("Timeseries subplot overlays must match the number of subplot groups.");
+    }
+
+    const groupedData = subplotGroups.map((group, index) => ({
+        group,
+        overlays: subplotOverlays[index],
+    }));
+
+    const nonEmptyGroupedData = groupedData.filter((entry) => entry.group.traces.length > 0);
+    const nonEmptySubplotGroups = nonEmptyGroupedData.map((entry) => entry.group);
+    const nonEmptySubplotOverlays = nonEmptyGroupedData.map((entry) => entry.overlays);
+
+    const categoryData = buildCategoryData(nonEmptySubplotGroups);
     if (categoryData.length === 0) return {};
 
     const realtimePointer = buildRealtimeAxisPointer(config);
-    const numSubplots = subplotGroups.length;
+    const numSubplots = nonEmptySubplotGroups.length;
 
     return buildCartesianSubplotChart(
-        subplotGroups,
+        nonEmptySubplotGroups,
         (group, axisIndex) =>
-            buildTimeseriesSubplot(group, axisIndex, config, categoryData, yAxisLabel, realtimePointer),
+            buildTimeseriesSubplot(
+                group,
+                nonEmptySubplotOverlays[axisIndex],
+                axisIndex,
+                config,
+                categoryData,
+                yAxisLabel,
+                realtimePointer,
+            ),
         {
             containerSize,
             sharedXAxis: chartOptions.sharedXAxis,
@@ -78,6 +112,7 @@ function buildRealtimeAxisPointer(config: TimeseriesDisplayConfig): RealtimeAxis
 
 function buildTimeseriesSubplot(
     group: SubplotGroup<TimeseriesTrace>,
+    subplotOverlays: TimeseriesSubplotOverlays,
     axisIndex: number,
     config: TimeseriesDisplayConfig,
     categoryData: string[],
@@ -105,6 +140,22 @@ function buildTimeseriesSubplot(
             const fanchartResult = buildFanchartSeries(trace, config.selectedStatistics, axisIndex);
             series.push(...fanchartResult.series);
             addLegendEntries(legendData, seenLegend, fanchartResult.legendData);
+        }
+    }
+
+    if (config.showHistorical) {
+        for (const historicalTrace of subplotOverlays.historicalTraces) {
+            const historyResult = buildHistorySeries(historicalTrace, axisIndex);
+            series.push(...historyResult.series);
+            addLegendEntries(legendData, seenLegend, historyResult.legendData);
+        }
+    }
+
+    if (config.showObservations) {
+        for (const observationTrace of subplotOverlays.observationTraces) {
+            const observationResult = buildObservationSeries(observationTrace, axisIndex);
+            series.push(...observationResult.series);
+            addLegendEntries(legendData, seenLegend, observationResult.legendData);
         }
     }
 

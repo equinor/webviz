@@ -11,6 +11,8 @@
  *   realization  — individual realization line
  *   statistic    — statistical summary line (mean, p10, …)
  *   fanchart     — statistical fan/band area
+ *   history      — historical reference line
+ *   observation  — observed point with uncertainty marker
  *   convergence  — convergence line or band
  *   histogram    — histogram bar or rug
  *   density      — KDE line or scatter
@@ -28,6 +30,8 @@ const SERIES_CATEGORIES = [
     "realization",
     "statistic",
     "fanchart",
+    "history",
+    "observation",
     "convergence",
     "histogram",
     "density",
@@ -57,6 +61,14 @@ export function makeStatisticSeriesId(traceName: string, statKey: string, axisIn
 
 export function makeFanchartSeriesId(traceName: string, bandKey: string, axisIndex: number): string {
     return makeSeriesId("fanchart", traceName, bandKey, axisIndex);
+}
+
+export function makeHistorySeriesId(traceName: string, axisIndex: number): string {
+    return makeSeriesId("history", traceName, "line", axisIndex);
+}
+
+export function makeObservationSeriesId(traceName: string, qualifier: string, axisIndex: number): string {
+    return makeSeriesId("observation", traceName, qualifier, axisIndex);
 }
 
 export function makeConvergenceSeriesId(traceName: string, qualifier: string, axisIndex: number): string {
@@ -135,6 +147,14 @@ export function isStatisticSeries(seriesId: string): boolean {
 
 export function isFanchartSeries(seriesId: string): boolean {
     return seriesId.startsWith("fanchart:");
+}
+
+export function isHistorySeries(seriesId: string): boolean {
+    return seriesId.startsWith("history:");
+}
+
+export function isObservationSeries(seriesId: string): boolean {
+    return seriesId.startsWith("observation:");
 }
 
 export function isConvergenceSeries(seriesId: string): boolean {

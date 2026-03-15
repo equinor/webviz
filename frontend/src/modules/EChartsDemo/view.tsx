@@ -35,6 +35,7 @@ import {
     generateHeatmapTraces,
     generateRealizationScatterTraces,
     generateTimeseriesGroups,
+    generateTimeseriesOverlays,
 } from "./utils/syntheticData";
 
 const ROW_HEIGHT_PX = 350;
@@ -49,6 +50,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const showRealizations = viewContext.useSettingsToViewInterfaceValue("showRealizations");
     const showStatistics = viewContext.useSettingsToViewInterfaceValue("showStatistics");
     const showFanchart = viewContext.useSettingsToViewInterfaceValue("showFanchart");
+    const showHistory = viewContext.useSettingsToViewInterfaceValue("showHistory");
+    const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
     const selectedStatistics = viewContext.useSettingsToViewInterfaceValue("selectedStatistics");
     const showStatisticalMarkers = viewContext.useSettingsToViewInterfaceValue("showStatisticalMarkers");
     const showBarLabels = viewContext.useSettingsToViewInterfaceValue("showBarLabels");
@@ -83,6 +86,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     showRealizations,
                     showStatistics,
                     showFanchart,
+                    showHistory,
+                    showObservations,
                     selectedStatistics,
                     activeTimestampUtcMs,
                     size,
@@ -150,6 +155,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         showRealizations,
         showStatistics,
         showFanchart,
+        showHistory,
+        showObservations,
         selectedStatistics,
         showStatisticalMarkers,
         showBarLabels,
@@ -208,6 +215,8 @@ function buildTimeseries(
     showRealizations: boolean,
     showStatistics: boolean,
     showFanchart: boolean,
+    showHistory: boolean,
+    showObservations: boolean,
     selectedStatistics: string[],
     activeTimestampUtcMs: number | null,
     containerSize?: ContainerSize,
@@ -215,13 +224,16 @@ function buildTimeseries(
     sharedYAxis?: boolean,
 ): EChartsOption {
     const groups = generateTimeseriesGroups(numSubplots, numGroups, numRealizations);
+    const overlays = generateTimeseriesOverlays(groups, numSubplots);
     const config: TimeseriesDisplayConfig = {
         showRealizations,
         showStatistics,
         showFanchart: showFanchart && showStatistics,
+        showHistorical: showHistory,
+        showObservations,
         selectedStatistics: selectedStatistics as TimeseriesDisplayConfig["selectedStatistics"],
     };
-    return buildTimeseriesChart(groups, config, "Value", activeTimestampUtcMs, containerSize, {
+    return buildTimeseriesChart(groups, overlays, config, "Value", activeTimestampUtcMs, containerSize, {
         sharedXAxis,
         sharedYAxis,
     });

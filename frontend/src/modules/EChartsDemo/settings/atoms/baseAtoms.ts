@@ -13,6 +13,8 @@ export const numRealizationsAtom = atom<number>(50);
 export const showRealizationsAtom = atom<boolean>(true);
 export const showStatisticsAtom = atom<boolean>(false);
 export const showFanchartAtom = atom<boolean>(false);
+export const showHistoryAtom = atom<boolean>(false);
+export const showObservationsAtom = atom<boolean>(false);
 export const selectedStatisticsAtom = atom<StatisticKey[]>(["mean", "p10", "p90"]);
 
 export const showStatisticalMarkersAtom = atom<boolean>(true);

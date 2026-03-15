@@ -7,6 +7,8 @@ import {
     getRealizationId,
     getStatisticKey,
     isFanchartSeries,
+    isHistorySeries,
+    isObservationSeries,
     isRealizationSeries,
     isStatisticSeries,
 } from "../utils/seriesId";
@@ -68,8 +70,10 @@ export function formatStatisticsTooltip(params: CallbackDataParams | CallbackDat
     const rows: CompactTooltipRow[] = [];
     for (const p of params) {
         const seriesId = typeof p.seriesId === "string" ? p.seriesId : "";
-        // Skip fanchart bands and individual realization lines
+        // Skip non-statistical overlays and individual realization lines
         if (isFanchartSeries(seriesId)) continue;
+        if (isHistorySeries(seriesId)) continue;
+        if (isObservationSeries(seriesId)) continue;
         if (isRealizationSeries(seriesId)) continue;
         if (!isStatisticSeries(seriesId)) continue;
 
@@ -98,7 +102,32 @@ export function formatRealizationItemTooltip(params: CallbackDataParams | Callba
     return formatCompactTooltip(axisValue, [
         {
             label: name,
-            value: formatNumber(p.value as number),
+            value: formatNumber(extractNumericValue(p.value)),
+            color: typeof p.color === "string" ? p.color : undefined,
+        },
+    ]);
+}
+
+type ObservationTooltipDatum = {
+    value: [string, number, number];
+    label: string;
+    comment?: string;
+};
+
+export function formatObservationTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
+    const p = Array.isArray(params) ? params[0] : params;
+    if (!p) return "";
+
+    const data = isObservationTooltipDatum(p.data) ? p.data : null;
+    if (!data) return "";
+
+    const [dateLabel, value, error] = data.value;
+    const description = data.comment ? `${data.label}: ${data.comment}` : data.label;
+
+    return formatCompactTooltip(String(dateLabel), [
+        {
+            label: description,
+            value: `${formatNumber(value)} ± ${formatNumber(Math.abs(error))}`,
             color: typeof p.color === "string" ? p.color : undefined,
         },
     ]);
@@ -267,6 +296,17 @@ type TooltipEntry = {
 
 function isTooltipEntry(value: unknown): value is TooltipEntry {
     return Boolean(value && typeof value === "object");
+}
+
+function isObservationTooltipDatum(value: unknown): value is ObservationTooltipDatum {
+    if (!value || typeof value !== "object") return false;
+    const candidate = value as Partial<ObservationTooltipDatum>;
+    return (
+        typeof candidate.label === "string" &&
+        Array.isArray(candidate.value) &&
+        candidate.value.length >= 3 &&
+        typeof candidate.value[0] === "string"
+    );
 }
 
 function extractNumericValue(value: unknown): number {

@@ -14,6 +14,8 @@ import {
     showRealizationsAtom,
     showStatisticsAtom,
     showFanchartAtom,
+    showHistoryAtom,
+    showObservationsAtom,
     selectedStatisticsAtom,
     showStatisticalMarkersAtom,
     showBarLabelsAtom,
@@ -33,6 +35,8 @@ export type SerializedSettings = {
     showRealizations: boolean;
     showStatistics: boolean;
     showFanchart: boolean;
+    showHistory: boolean;
+    showObservations: boolean;
     selectedStatistics: StatisticKey[];
     showStatisticalMarkers: boolean;
     showBarLabels: boolean;
@@ -55,6 +59,8 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         showRealizations: { type: "boolean" },
         showStatistics: { type: "boolean" },
         showFanchart: { type: "boolean" },
+        showHistory: { type: "boolean" },
+        showObservations: { type: "boolean" },
         selectedStatistics: {
             elements: {
                 enum: [...ALL_STATISTIC_KEYS],
@@ -84,6 +90,8 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         showRealizations: get(showRealizationsAtom),
         showStatistics: get(showStatisticsAtom),
         showFanchart: get(showFanchartAtom),
+        showHistory: get(showHistoryAtom),
+        showObservations: get(showObservationsAtom),
         selectedStatistics: get(selectedStatisticsAtom),
         showStatisticalMarkers: get(showStatisticalMarkersAtom),
         showBarLabels: get(showBarLabelsAtom),
@@ -104,6 +112,8 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, showRealizationsAtom, raw.showRealizations);
     setIfDefined(set, showStatisticsAtom, raw.showStatistics);
     setIfDefined(set, showFanchartAtom, raw.showFanchart);
+    setIfDefined(set, showHistoryAtom, raw.showHistory);
+    setIfDefined(set, showObservationsAtom, raw.showObservations);
     setIfDefined(set, selectedStatisticsAtom, raw.selectedStatistics);
     setIfDefined(set, showStatisticalMarkersAtom, raw.showStatisticalMarkers);
     setIfDefined(set, showBarLabelsAtom, raw.showBarLabels);

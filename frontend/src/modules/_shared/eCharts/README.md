@@ -54,7 +54,7 @@ In short:
 
 ## Folder Map
 
-- `types.ts`: Common input contracts such as `TimeseriesTrace`, `DistributionTrace`, `SubplotGroup`, and `HistogramType`.
+- `types.ts`: Common input contracts such as `TimeseriesTrace`, `HistoricalTrace`, `ObservationTrace`, `DistributionTrace`, `SubplotGroup`, and `HistogramType`.
 - `builders/`: High-level chart builders that return `EChartsOption` directly.
 - `series/`: Lower-level ECharts series builders. All return `SeriesBuildResult` (`{ series, legendData }`).
 - `layout/`: Shared subplot grid and axis layout logic.
@@ -170,8 +170,24 @@ const subplotGroups = domainGroups.map((group) => ({
     })),
 }));
 
+const subplotOverlays = domainGroups.map((group) => ({
+    historicalTraces: group.history.map((h) => ({
+        name: "History",
+        color: "#111111",
+        timestamps: h.timestamps,
+        values: h.values,
+        lineShape: "linear",
+    })),
+    observationTraces: group.observations.map((obs) => ({
+        name: "Observation",
+        color: "#111111",
+        observations: obs.points,
+    })),
+}));
+
 const echartsOptions = buildTimeseriesChart(
     subplotGroups,
+    subplotOverlays,
     displayConfig,
     yAxisLabel,
     activeTimestampUtcMs,
@@ -228,7 +244,7 @@ All series use structured, colon-delimited IDs created via the `utils/seriesId.t
 <category>:<name>:<qualifier>:<axisIndex>
 ```
 
-Categories: `realization`, `statistic`, `fanchart`, `convergence`, `histogram`, `density`, `exceedance`, `percentile`, `heatmap`, `bar`.
+Categories: `realization`, `statistic`, `fanchart`, `history`, `observation`, `convergence`, `histogram`, `density`, `exceedance`, `percentile`, `heatmap`, `bar`.
 
 Use the provided factory functions (`makeRealizationSeriesId`, `makeStatisticSeriesId`, etc.) to create IDs and the parser functions (`parseSeriesId`, `isRealizationSeries`, `getHighlightGroupKey`, etc.) to inspect them.
 

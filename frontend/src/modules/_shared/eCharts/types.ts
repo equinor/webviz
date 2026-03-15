@@ -24,6 +24,35 @@ export interface TimeseriesTrace {
     statistics?: TimeseriesStatistics;
 }
 
+export type HistoricalLineShape = "linear" | "hv" | "vh";
+
+export interface HistoricalTrace {
+    name: string;
+    color: string;
+    timestamps: number[];
+    values: number[];
+    lineShape?: HistoricalLineShape;
+}
+
+export interface ObservationPoint {
+    date: number;
+    value: number;
+    error: number;
+    label: string;
+    comment?: string;
+}
+
+export interface ObservationTrace {
+    name: string;
+    color: string;
+    observations: ObservationPoint[];
+}
+
+export interface TimeseriesSubplotOverlays {
+    historicalTraces: HistoricalTrace[];
+    observationTraces: ObservationTrace[];
+}
+
 export interface DistributionTrace {
     name: string;
     color: string;
@@ -57,6 +86,8 @@ export interface TimeseriesDisplayConfig {
     showRealizations: boolean;
     showStatistics: boolean;
     showFanchart: boolean;
+    showHistorical: boolean;
+    showObservations: boolean;
     selectedStatistics: StatisticKey[];
 }
 

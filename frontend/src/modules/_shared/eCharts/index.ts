@@ -4,6 +4,11 @@ export type {
     TimeseriesStatistics,
     PointStatistics,
     TimeseriesTrace,
+    HistoricalLineShape,
+    HistoricalTrace,
+    ObservationPoint,
+    ObservationTrace,
+    TimeseriesSubplotOverlays,
     DistributionTrace,
     BarTrace,
     HeatmapTrace,
@@ -34,6 +39,8 @@ export {
     buildRealizationsSeries,
     buildStatisticsSeries,
     buildFanchartSeries,
+    buildHistorySeries,
+    buildObservationSeries,
     buildBarSeries,
     buildHistogramSeries,
     buildExceedanceSeries,
@@ -73,6 +80,7 @@ export {
     applyActiveTimestampMarker,
     formatStatisticsTooltip,
     formatRealizationItemTooltip,
+    formatObservationTooltip,
 } from "./interaction";
 
 // Hooks

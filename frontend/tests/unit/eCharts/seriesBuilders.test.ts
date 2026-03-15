@@ -8,6 +8,8 @@ import { buildExceedanceSeries } from "@modules/_shared/eCharts/series/exceedanc
 import { buildHeatmapSeries } from "@modules/_shared/eCharts/series/heatmapSeries";
 import { buildHistogramSeries } from "@modules/_shared/eCharts/series/histogramSeries";
 import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/series/percentileRangeSeries";
+import { buildHistorySeries } from "@modules/_shared/eCharts/series/timeseriesHistorySeries";
+import { buildObservationSeries } from "@modules/_shared/eCharts/series/timeseriesObservationSeries";
 import { makeConvergenceSeriesId } from "@modules/_shared/eCharts/utils/seriesId";
 
 describe("series builder contracts", () => {
@@ -130,6 +132,79 @@ describe("series builder contracts", () => {
         const ids = result.series.map((seriesOption) => (seriesOption as { id?: string }).id ?? "");
         expect(ids).toContain("histogram:HistTrace:bars:5");
         expect(ids).toContain("histogram:HistTrace:rug:5");
+    });
+
+    it("buildHistorySeries returns a line series with structured ID and line-shape mapping", () => {
+        const result = buildHistorySeries(
+            {
+                name: "History",
+                color: "#000000",
+                timestamps: [Date.UTC(2020, 0, 1), Date.UTC(2020, 1, 1)],
+                values: [10, 14],
+                lineShape: "vh",
+            },
+            1,
+        );
+
+        expect(result.series).toHaveLength(1);
+        expect(result.legendData).toEqual(["History"]);
+
+        const series = result.series[0] as {
+            id?: string;
+            step?: string;
+            xAxisIndex?: number;
+            yAxisIndex?: number;
+        };
+
+        expect(series.id).toBe("history:History:line:1");
+        expect(series.step).toBe("start");
+        expect(series.xAxisIndex).toBe(1);
+        expect(series.yAxisIndex).toBe(1);
+    });
+
+    it("buildObservationSeries returns one structured custom series per observation", () => {
+        const result = buildObservationSeries(
+            {
+                name: "Observation",
+                color: "#111111",
+                observations: [
+                    {
+                        date: Date.UTC(2020, 0, 1),
+                        value: 100,
+                        error: 3,
+                        label: "Obs 1",
+                        comment: "Synthetic",
+                    },
+                    {
+                        date: Date.UTC(2020, 1, 1),
+                        value: 104,
+                        error: 4,
+                        label: "Obs 2",
+                    },
+                ],
+            },
+            2,
+        );
+
+        expect(result.series).toHaveLength(2);
+        expect(result.legendData).toEqual(["Observation"]);
+
+        const ids = result.series.map((seriesOption) => (seriesOption as { id?: string }).id ?? "");
+        expect(ids).toContain("observation:Observation:0:2");
+        expect(ids).toContain("observation:Observation:1:2");
+
+        for (const seriesOption of result.series) {
+            const option = seriesOption as {
+                type?: string;
+                xAxisIndex?: number;
+                yAxisIndex?: number;
+                encode?: { x?: number; y?: number };
+            };
+            expect(option.type).toBe("custom");
+            expect(option.xAxisIndex).toBe(2);
+            expect(option.yAxisIndex).toBe(2);
+            expect(option.encode).toEqual({ x: 0, y: 1 });
+        }
     });
 
     it("returns empty legendData when no density series is produced", () => {

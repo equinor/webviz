@@ -2,6 +2,7 @@ export { createTimestampMarkLine, applyActiveTimestampMarker } from "./activeTim
 export {
     formatStatisticsTooltip,
     formatRealizationItemTooltip,
+    formatObservationTooltip,
     formatBarTooltip,
     formatConvergenceTooltip,
     formatExceedanceTooltip,
