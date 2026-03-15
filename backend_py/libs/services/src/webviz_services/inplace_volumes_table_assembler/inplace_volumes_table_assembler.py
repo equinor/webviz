@@ -41,7 +41,6 @@ from ._utils.inplace_volumes_df_utils import (
     validate_inplace_volumes_df_selector_columns,
 )
 
-
 LOGGER = logging.getLogger(__name__)
 
 

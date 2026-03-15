@@ -25,7 +25,6 @@ from .request_types import (
     VdsDirection,
 )
 
-
 LOGGER = logging.getLogger(__name__)
 
 

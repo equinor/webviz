@@ -23,7 +23,6 @@ from .utils.queries import data_model_to_projection_param
 from .stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from ._smda_get_request import smda_get_request_async, smda_get_aggregation_request_async
 
-
 LOGGER = logging.getLogger(__name__)
 
 

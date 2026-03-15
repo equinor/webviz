@@ -42,7 +42,6 @@ from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, 
 
 from .surface_address import decode_surf_addr_str
 
-
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
