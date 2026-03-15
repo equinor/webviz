@@ -28,7 +28,7 @@ import {
 } from "@modules/_shared/eCharts";
 
 import type { Interfaces } from "./interfaces";
-import { PlotType } from "./typesAndEnums";
+import { PLOT_TYPE_LABELS, PlotType } from "./typesAndEnums";
 import {
     generateBarTraces,
     generateDistributionTraces,
@@ -63,6 +63,12 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const containerSize = useElementSize(containerRef);
 
     const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
+
+    React.useEffect(() => {
+        viewContext.setInstanceTitle(
+            `${PLOT_TYPE_LABELS[plotType]} (Plots: ${numSubplots} Groups: ${numGroups} Reals: ${numRealizations})`,
+        );
+    }, [plotType, numSubplots, numGroups, numRealizations, viewContext]);
 
     const echartsOptions = React.useMemo(() => {
         const size: ContainerSize | undefined =
