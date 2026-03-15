@@ -245,7 +245,7 @@ async def post_get_well_trajectories_formation_segments(
         )
     perf_metrics.record_lap("get-bottom-surf")
 
-    per_well_trajectory_formation_segments = []
+    per_well_trajectory_formation_segments: list[schemas.WellTrajectoryFormationSegments] = []
 
     # Validate surfaces
     # - Tolerance for considering top and bottom surfaces to be "collapsed" (i.e. formation is too
