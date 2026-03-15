@@ -8,11 +8,12 @@ export function createTimestampMarkLine(dateLabel: string): MarkLineOption {
         silent: true,
         symbol: "none",
         animation: false,
-        lineStyle: { type: "solid", color: "#333", width: 1.5 },
+        lineStyle: { type: "dashed", color: "#333", width: 1.5 },
         label: {
             show: true,
+
             formatter: dateLabel,
-            position: "insideEndTop",
+            position: "insideEndBottom",
             fontSize: 10,
             color: "#333",
         },
