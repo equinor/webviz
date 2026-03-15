@@ -94,7 +94,7 @@ export function Settings(): React.ReactNode {
                 <Label text={`Subplots: ${numSubplots}`}>
                     <Slider
                         min={1}
-                        max={9}
+                        max={20}
                         step={1}
                         value={numSubplots}
                         onChange={(_, v) => setNumSubplots(v as number)}
