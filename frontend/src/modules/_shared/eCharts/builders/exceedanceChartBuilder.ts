@@ -1,6 +1,6 @@
 import type { EChartsOption } from "echarts";
 
-import { formatExceedanceTooltip } from "../interaction/tooltipFormatters";
+import { formatExceedanceTooltip } from "../interaction/tooltipDistributionFormatters";
 import type { SubplotAxesResult } from "../layout/subplotAxes";
 import { buildExceedanceSeries } from "../series/exceedanceSeries";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../types";

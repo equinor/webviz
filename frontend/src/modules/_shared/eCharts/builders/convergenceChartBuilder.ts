@@ -1,6 +1,6 @@
 import type { EChartsOption } from "echarts";
 
-import { formatConvergenceTooltip } from "../interaction/tooltipFormatters";
+import { formatConvergenceTooltip } from "../interaction/tooltipDistributionFormatters";
 import { buildConvergenceSeries } from "../series/convergenceSeries";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../types";
 

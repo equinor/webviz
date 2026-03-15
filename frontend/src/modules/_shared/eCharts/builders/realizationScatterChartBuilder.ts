@@ -1,6 +1,6 @@
 import type { EChartsOption } from "echarts";
 
-import { formatRealizationScatterTooltip } from "../interaction/tooltipFormatters";
+import { formatRealizationScatterTooltip } from "../interaction/tooltipDistributionFormatters";
 import { buildRealizationScatterSeries } from "../series/realizationScatterSeries";
 import type { ContainerSize, RealizationScatterTrace, SubplotGroup } from "../types";
 

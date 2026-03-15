@@ -1,12 +1,19 @@
 export { createTimestampMarkLine, applyActiveTimestampMarker } from "./activeTimestampMarker";
 export {
+    buildCompactTooltipConfig,
+    formatCompactTooltip,
+    formatCompactTooltipHeader,
+    formatCompactTooltipRow,
+} from "./tooltipFormatters";
+export {
     formatStatisticsTooltip,
     formatRealizationItemTooltip,
     formatObservationTooltip,
-    formatBarTooltip,
+} from "./tooltipTimeseriesFormatters";
+export { formatBarTooltip } from "./tooltipBarFormatters";
+export {
     formatConvergenceTooltip,
     formatExceedanceTooltip,
-    formatHistogramBarTooltip,
-    formatHistogramRugTooltip,
     formatRealizationScatterTooltip,
-} from "./tooltipFormatters";
+} from "./tooltipDistributionFormatters";
+export { formatHistogramBarTooltip, formatHistogramRugTooltip } from "./tooltipHistogramFormatters";

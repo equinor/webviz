@@ -3,7 +3,7 @@ import type { EChartsOption } from "echarts";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
 import { applyActiveTimestampMarker } from "../interaction/activeTimestampMarker";
-import { formatRealizationItemTooltip, formatStatisticsTooltip } from "../interaction/tooltipFormatters";
+import { formatRealizationItemTooltip, formatStatisticsTooltip } from "../interaction/tooltipTimeseriesFormatters";
 import { getResponsiveFeatures } from "../layout/responsiveConfig";
 import {
     buildFanchartSeries,

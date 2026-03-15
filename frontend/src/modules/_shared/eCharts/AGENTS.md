@@ -24,7 +24,11 @@
 
 ## Tooltips
 
-- All tooltip formatters live in `interaction/tooltipFormatters.ts`. Do not inline formatters in builders.
+- Tooltip formatters must live under `interaction/`.
+- Shared tooltip primitives (`buildCompactTooltipConfig`, `formatCompactTooltip`, and row/header helpers) should stay in `interaction/tooltipFormatters.ts`.
+- Splitting formatters into chart-family files under `interaction/` is allowed when readability or file size warrants it.
+- Re-export public tooltip formatters through `interaction/index.ts`.
+- Do not inline formatters in builders.
 
 ## Statistical Overlays
 

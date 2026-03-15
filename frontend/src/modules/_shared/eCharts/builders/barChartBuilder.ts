@@ -1,6 +1,6 @@
 import type { EChartsOption } from "echarts";
 
-import { formatBarTooltip } from "../interaction/tooltipFormatters";
+import { formatBarTooltip } from "../interaction/tooltipBarFormatters";
 import { buildBarSeries } from "../series/barSeries";
 import type { BuildBarSeriesOptions } from "../series/barSeries";
 import type { BarTrace, ContainerSize, SubplotGroup } from "../types";

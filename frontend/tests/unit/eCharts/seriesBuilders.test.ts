@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildExceedanceChart } from "@modules/_shared/eCharts/builders/exceedanceChartBuilder";
 import { buildBarSeries } from "@modules/_shared/eCharts/series/barSeries";
-import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/series/convergenceSeries";
+import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/utils";
 import { buildDensitySeries } from "@modules/_shared/eCharts/series/densitySeries";
 import { buildExceedanceSeries } from "@modules/_shared/eCharts/series/exceedanceSeries";
 import { buildHeatmapSeries } from "@modules/_shared/eCharts/series/heatmapSeries";

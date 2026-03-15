@@ -7,7 +7,7 @@ import type {
 } from "echarts/types/dist/shared";
 
 import type { ChartSeriesOption, SeriesBuildResult } from "../builders/composeChartOption";
-import { formatHistogramBarTooltip, formatHistogramRugTooltip } from "../interaction/tooltipFormatters";
+import { formatHistogramBarTooltip, formatHistogramRugTooltip } from "../interaction/tooltipHistogramFormatters";
 import type { DistributionTrace } from "../types";
 import { HistogramType } from "../types";
 import { computeHistogramLayout, computeHistogramTraceData } from "../utils/histogram";

@@ -58,9 +58,9 @@ In short:
 - `builders/`: High-level chart builders that return `EChartsOption` directly.
 - `series/`: Lower-level ECharts series builders. All return `SeriesBuildResult` (`{ series, legendData }`).
 - `layout/`: Shared subplot grid and axis layout logic.
-- `interaction/`: Shared tooltip formatting (all formatters live in `tooltipFormatters.ts`) and chart interaction helpers.
+- `interaction/`: Shared chart interaction helpers and tooltip formatting modules. Compact tooltip primitives live in `tooltipFormatters.ts`, while chart-family formatter implementations live in dedicated `tooltip*Formatters.ts` files.
 - `hooks/`: React hooks for behaviors such as linked hover, click-to-timestamp, and the combined `useTimeseriesInteractions` hook.
-- `utils/`: Shared statistics, histogram helpers, KDE computation (`kde.ts`), convergence calculation (`convergence.ts`), and the structured series ID module (`seriesId.ts`).
+- `utils/`: Shared statistics, histogram helpers, KDE computation (`kde.ts`), convergence calculation (`convergence.ts`), convergence series metadata helpers (`convergenceSeriesMeta.ts`), and the structured series ID module (`seriesId.ts`).
 - `index.ts`: Public exports for the shared API.
 
 ## Supported Pattern
