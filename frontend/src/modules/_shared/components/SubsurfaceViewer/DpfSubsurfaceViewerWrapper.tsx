@@ -25,7 +25,7 @@ import { PreferredViewLayout } from "./typesAndEnums";
 
 export type DpfSubsurfaceViewerContextType = {
     visualizationMode: "2D" | "3D";
-    getInitialViewState?: () => ViewStateType;
+    viewState?: ViewStateType;
     getInitialVerticalScale?: () => number;
     onViewStateChange?: (viewState: ViewStateType) => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
@@ -51,7 +51,7 @@ export function useDpfSubsurfaceViewerContext() {
 
 export type DpfSubsurfaceViewerWrapperProps = {
     visualizationMode: "2D" | "3D";
-    getInitialViewState?: () => ViewStateType;
+    getInitialViewState?: () => ViewStateType | null;
     getInitialVerticalScale?: () => number;
     onViewStateChange?: (viewState: ViewStateType) => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
@@ -71,8 +71,8 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
 
     const [changingFields, setChangingFields] = React.useState<boolean>(false);
     const [prevFieldId, setPrevFieldId] = React.useState<string | null>(props.fieldId);
-    const [initialViewState, setInitialViewState] = React.useState<ViewStateType | undefined>(
-        props.getInitialViewState?.(),
+    const [viewState, setViewState] = React.useState<ViewStateType | undefined>(
+        props.getInitialViewState?.() ?? undefined,
     );
 
     const statusWriter = useViewStatusWriter(props.viewContext);
@@ -170,7 +170,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     //
     // See: https://github.com/equinor/webviz-subsurface-components/pull/2573
     if (prevFieldId !== props.fieldId) {
-        setInitialViewState(undefined);
+        setViewState(undefined);
         setChangingFields(true);
         setPrevFieldId(props.fieldId);
     }
@@ -188,7 +188,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         function handleViewStateChange(viewState: ViewStateType) {
             onViewStateChange?.(viewState);
             // Clear initial view state after first change to allow user interactions
-            setInitialViewState(undefined);
+            setViewState(undefined);
         },
         [onViewStateChange],
     );
@@ -200,7 +200,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
             value={{
                 ...props,
                 onViewStateChange: handleViewStateChange,
-                viewState: initialViewState,
+                viewState,
                 bounds: props.visualizationMode === "2D" ? bounds2D : undefined,
                 moduleInstanceId: props.moduleInstanceId,
                 hoverService: props.hoverService,

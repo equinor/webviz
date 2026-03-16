@@ -151,8 +151,6 @@ export function VisualizationAssemblerWrapper(props: VisualizationAssemblerWrapp
         options,
     );
 
-    usePublishSubscribeTopicValue(props.dataProviderManager, DataProviderManagerTopic.DATA_REVISION);
-
     return (
         <DpfSubsurfaceViewerWrapper
             {...props}

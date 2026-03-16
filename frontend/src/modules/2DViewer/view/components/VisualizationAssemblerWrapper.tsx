@@ -55,6 +55,7 @@ import { makeDrilledWellborePicksLayer2D } from "../../DataProviderFramework/vis
 import { makeDrilledWellTrajectoriesLayer2D } from "../../DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>(
@@ -160,15 +161,13 @@ export type VisualizationAssemblerWrapperProps = Omit<
 };
 
 export function VisualizationAssemblerWrapper(props: VisualizationAssemblerWrapperProps): React.ReactNode {
-    usePublishSubscribeTopicValue(props.dataProviderManager, DataProviderManagerTopic.DATA_REVISION);
-
-    const visualizationAssemblerProduct = VISUALIZATION_ASSEMBLER.make(props.dataProviderManager);
+    const assemblerProduct = useVisualizationAssemblerProduct(props.dataProviderManager, VISUALIZATION_ASSEMBLER);
 
     return (
         <DpfSubsurfaceViewerWrapper
             {...props}
             visualizationMode="2D"
-            visualizationAssemblerProduct={visualizationAssemblerProduct}
+            visualizationAssemblerProduct={assemblerProduct}
             moduleInstanceId={props.viewContext.getInstanceIdString()}
         />
     );
