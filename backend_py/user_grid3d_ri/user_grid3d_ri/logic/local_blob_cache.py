@@ -109,8 +109,7 @@ class LocalBlobCache:
 
         timer = PerfTimer()
         num_bytes_downloaded = 0
-        num_bytes_written = 0
-        url = f"{self._blob_store_base_uri}/{object_uuid}?{self._sas_token}"
+        full_blob_url = f"{self._blob_store_base_uri}/{object_uuid}?{self._sas_token}"
 
         async with aiofiles.tempfile.NamedTemporaryFile(prefix=f"{local_blob_filename}__", delete=False) as tmp_file:
             # Apparently (from the typings) the name attribute may be a file descriptor, but we don't handle that
@@ -121,20 +120,18 @@ class LocalBlobCache:
             LOGGER.debug(f"Downloading {blob_kind} blob into temp file: {tmp_blob_path}")
             async with httpx.AsyncClient(timeout=self._timeout) as client:
                 try:
-                    async with client.stream("GET", url=url) as response:
+                    num_mb_written: float = 0.0
+                    async with client.stream("GET", url=full_blob_url) as response:
                         response.raise_for_status()
-                        total_size_bytes = int(response.headers["Content-Length"])
-                        total_size_mb = total_size_bytes / (1024 * 1024)
+                        total_size_mb = int(response.headers["Content-Length"]) / (1024 * 1024)
 
                         # What should we do about chunk size here?
                         # Leave it to the content or force a higher value?
                         async for chunk in response.aiter_bytes(chunk_size=5 * 1024 * 1024):
                             await tmp_file.write(chunk)
-                            num_bytes_in_chunk = len(chunk)
-                            num_bytes_written += num_bytes_in_chunk
-                            num_mb_written = num_bytes_written / (1024 * 1024)
+                            num_mb_written += len(chunk) / (1024 * 1024)
                             LOGGER.debug(
-                                f"  - downloading {blob_kind} blob {object_uuid}  {num_mb_written:.2f}MB of {total_size_mb:.2f}MB  {num_bytes_in_chunk=}  {tmp_blob_path=}"
+                                f"  - downloading {blob_kind} blob {object_uuid}  {num_mb_written:.2f}MB of {total_size_mb:.2f}MB  {tmp_blob_path=}"
                             )
 
                         num_bytes_downloaded = response.num_bytes_downloaded
