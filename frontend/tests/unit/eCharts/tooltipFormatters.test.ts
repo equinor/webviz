@@ -7,6 +7,12 @@ import {
     formatExceedanceTooltip,
     formatRealizationScatterTooltip,
 } from "@modules/_shared/eCharts/interaction/tooltipDistributionFormatters";
+import {
+    buildCompactTooltipConfig,
+    formatCompactTooltip,
+    formatCompactTooltipHeader,
+    formatCompactTooltipRow,
+} from "@modules/_shared/eCharts/interaction/tooltipFormatters";
 import { formatHeatmapTooltip } from "@modules/_shared/eCharts/interaction/tooltipHeatmapFormatters";
 import {
     formatHistogramBarTooltip,
@@ -16,12 +22,6 @@ import {
     formatPercentileGlyphTooltip,
     formatPercentileRealizationTooltip,
 } from "@modules/_shared/eCharts/interaction/tooltipPercentileFormatters";
-import {
-    buildCompactTooltipConfig,
-    formatCompactTooltip,
-    formatCompactTooltipHeader,
-    formatCompactTooltipRow,
-} from "@modules/_shared/eCharts/interaction/tooltipFormatters";
 import {
     formatObservationTooltip,
     formatRealizationItemTooltip,

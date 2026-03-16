@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { buildExceedanceChart } from "@modules/_shared/eCharts/builders/exceedanceChartBuilder";
 import { buildBarSeries } from "@modules/_shared/eCharts/series/barSeries";
-import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/utils";
 import { buildDensitySeries } from "@modules/_shared/eCharts/series/densitySeries";
 import { buildExceedanceSeries } from "@modules/_shared/eCharts/series/exceedanceSeries";
 import { buildHeatmapSeries } from "@modules/_shared/eCharts/series/heatmapSeries";
@@ -10,6 +9,7 @@ import { buildHistogramSeries } from "@modules/_shared/eCharts/series/histogramS
 import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/series/percentileRangeSeries";
 import { buildHistorySeries } from "@modules/_shared/eCharts/series/timeseriesHistorySeries";
 import { buildObservationSeries } from "@modules/_shared/eCharts/series/timeseriesObservationSeries";
+import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/utils";
 import { makeConvergenceSeriesId } from "@modules/_shared/eCharts/utils/seriesId";
 
 describe("series builder contracts", () => {
