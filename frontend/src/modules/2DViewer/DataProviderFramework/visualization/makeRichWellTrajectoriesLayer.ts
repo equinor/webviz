@@ -33,8 +33,8 @@ export function makeRichWellTrajectoriesLayer(
 
     const wellboreTrajectoriesData = getData();
     const depthFilterType = getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE) ?? "none";
-    const pdmFilterType = getSetting(Setting.FLOW_FILTER_TYPE) ?? "none";
-    const pdmFilterSettings = getSetting(Setting.FLOW_FILTER);
+    const flowFilterType = getSetting(Setting.FLOW_FILTER_TYPE) ?? "none";
+    const flowFilterSettings = getSetting(Setting.FLOW_FILTER);
     const mdRangeSetting = getSetting(Setting.MD_RANGE);
 
     if (isLoading) {
@@ -52,7 +52,7 @@ export function makeRichWellTrajectoriesLayer(
     let mdFilterRange: WellsLayerProps["mdFilterRange"] = [-1, -1];
     let formationFilter: WellsLayerProps["formationFilter"] = [];
     const filteredWellNames: string[] = [];
-    const filtersEnabled = depthFilterType !== "none" || pdmFilterType !== "none";
+    const filtersEnabled = depthFilterType !== "none" || flowFilterType !== "none";
 
     if (depthFilterType === "md_range" && mdRangeSetting) {
         mdFilterRange = [mdRangeSetting[0] ?? -1, mdRangeSetting[1] ?? -1];
@@ -61,13 +61,13 @@ export function makeRichWellTrajectoriesLayer(
     }
 
     // Filter away trajectories if the trajectory does not have flow data within the configured limits
-    if (pdmFilterType === "production_injection") {
+    if (flowFilterType === "production_injection") {
         // If list is completely empty (aka, no well passes the check), the filter won't apply, so we include one dummy-value to avoid that
         filteredWellNames.push("DUMMY");
 
         // TODO: Finalize flow filter
         wellboreTrajectoriesData.forEach((wt) => {
-            const flowSetting = getApplicableFlowDataSetting(pdmFilterSettings, wt.productionData, wt.injectionData);
+            const flowSetting = getApplicableFlowDataSetting(flowFilterSettings, wt.productionData, wt.injectionData);
 
             if (flowSetting) {
                 filteredWellNames.push(wt.uniqueWellboreIdentifier);
@@ -102,9 +102,9 @@ export function makeRichWellTrajectoriesLayer(
                 const geoWellFeature = d as ExtendedWellFeature;
                 const { productionData, injectionData, color = [128, 128, 128] } = geoWellFeature.properties;
 
-                if (pdmFilterType === "none") return color;
+                if (flowFilterType === "none") return color;
 
-                const flowColor = setColorByFlowData(pdmFilterSettings, productionData, injectionData);
+                const flowColor = setColorByFlowData(flowFilterSettings, productionData, injectionData);
                 // Return color or default gray (shouldn't happen since we filter)
                 return flowColor ?? color;
             },
@@ -197,45 +197,45 @@ function hexToRgb(hex: string): [r: number, g: number, b: number] {
 }
 
 function setColorByFlowData(
-    pdmFilterSettings: SettingTypeDefinitions[Setting.FLOW_FILTER]["externalValue"],
+    flowFilterSettings: SettingTypeDefinitions[Setting.FLOW_FILTER]["externalValue"],
     productionData: ExtendedWellFeatureProperties["productionData"],
     injectionData: ExtendedWellFeatureProperties["injectionData"],
 ): [r: number, g: number, b: number] | null {
     if (!productionData && !injectionData) return null;
-    if (!pdmFilterSettings) return null;
+    if (!flowFilterSettings) return null;
 
-    const flowSetting = getApplicableFlowDataSetting(pdmFilterSettings, productionData, injectionData);
+    const flowSetting = getApplicableFlowDataSetting(flowFilterSettings, productionData, injectionData);
 
     if (!flowSetting) return null;
     return hexToRgb(flowSetting.color);
 }
 
 function getApplicableFlowDataSetting(
-    pdmFilterSettings: SettingTypeDefinitions[Setting.FLOW_FILTER]["externalValue"],
+    flowFilterSettings: SettingTypeDefinitions[Setting.FLOW_FILTER]["externalValue"],
     productionData: ExtendedWellFeatureProperties["productionData"],
     injectionData: ExtendedWellFeatureProperties["injectionData"],
 ) {
-    if (!pdmFilterSettings) return null;
+    if (!flowFilterSettings) return null;
 
-    const { production, injection } = pdmFilterSettings;
+    const { production, injection } = flowFilterSettings;
 
     if (productionData) {
-        if (productionData.oilProductionSm3 > pdmFilterSettings.production.oil.value) {
+        if (productionData.oilProductionSm3 > flowFilterSettings.production.oil.value) {
             return production.oil;
         }
-        if (productionData.gasProductionSm3 > pdmFilterSettings.production.gas.value) {
+        if (productionData.gasProductionSm3 > flowFilterSettings.production.gas.value) {
             return production.gas;
         }
-        if (productionData.waterProductionM3 > pdmFilterSettings.production.water.value) {
+        if (productionData.waterProductionM3 > flowFilterSettings.production.water.value) {
             return production.water;
         }
     }
 
     if (injectionData) {
-        if (injectionData.waterInjection > pdmFilterSettings.injection.water.value) {
+        if (injectionData.waterInjection > flowFilterSettings.injection.water.value) {
             return injection.water;
         }
-        if (injectionData.gasInjection > pdmFilterSettings.injection.gas.value) {
+        if (injectionData.gasInjection > flowFilterSettings.injection.gas.value) {
             return injection.gas;
         }
     }
