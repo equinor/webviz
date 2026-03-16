@@ -81,6 +81,8 @@ export function buildCartesianSubplotChart<T>(
  * Force all value-type axes in the array to share the same min/max range.
  * Category axes are skipped since they share range via their data array.
  */
+
+// TODO: THIS IS A HACK. FIX by getting ranges from series and computing global min/max at build time, then setting explicit min/max on all axes. The current approach relies on ECharts calling the min/max functions in a way that allows them to share state, which is brittle and may not work in all cases (e.g. if ECharts changes its internal implementation).
 function linkValueAxes(axes: SubplotAxesResult["xAxes"]): void {
     const valueAxes = axes.filter((a) => a.type === "value");
     if (valueAxes.length < 2) return;

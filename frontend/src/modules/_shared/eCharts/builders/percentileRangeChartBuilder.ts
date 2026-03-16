@@ -20,12 +20,23 @@ export function buildPercentileRangeChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Value", yAxisLabel, sharedXAxis, sharedYAxis, ...seriesOptions } = options;
+    const buildSubplot = createPercentileRangeSubplotBuilder(seriesOptions, xAxisLabel, yAxisLabel);
 
     return buildCartesianSubplotChart(
         subplotGroups,
-        (group, axisIndex) => buildPercentileRangeSubplot(group, axisIndex, seriesOptions, xAxisLabel, yAxisLabel),
+        buildSubplot,
         { containerSize, sharedXAxis, sharedYAxis },
     );
+}
+
+function createPercentileRangeSubplotBuilder(
+    seriesOptions: PercentileRangeDisplayOptions,
+    xAxisLabel: string,
+    yAxisLabel?: string,
+): (group: SubplotGroup<DistributionTrace>, axisIndex: number) => ReturnType<typeof buildPercentileRangeSubplot> {
+    return function buildPercentileRangeSubplotForAxis(group, axisIndex) {
+        return buildPercentileRangeSubplot(group, axisIndex, seriesOptions, xAxisLabel, yAxisLabel);
+    };
 }
 
 function buildPercentileRangeSubplot(
@@ -56,7 +67,7 @@ function buildPercentileRangeSubplotSeries(
     const legendData: string[] = [];
     const seenLegend = new Set<string>();
 
-    group.traces.forEach((trace, traceIndex) => {
+    for (const [traceIndex, trace] of group.traces.entries()) {
         const result = buildPercentileRangeSeries(trace, { ...options, yAxisPosition: traceIndex }, axisIndex);
         series.push(...result.series);
 
@@ -66,7 +77,7 @@ function buildPercentileRangeSubplotSeries(
                 seenLegend.add(legendName);
             }
         }
-    });
+    }
 
     return { series, legendData };
 }

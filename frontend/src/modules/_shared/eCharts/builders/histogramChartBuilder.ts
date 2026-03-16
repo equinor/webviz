@@ -34,17 +34,37 @@ export function buildHistogramChart(
 
     // Accumulate per-axis yMax during subplot building for post-process y-extent adjustment
     const yMaxByAxis: number[] = [];
+    const buildSubplot = createHistogramSubplotBuilder(config, yMaxByAxis);
+    const postProcessAxes = createHistogramPostProcessAxes(yMaxByAxis, config.showRealizationPoints);
 
     return buildCartesianSubplotChart(
         subplotGroups,
-        (group, axisIndex) => buildHistogramSubplot(group, axisIndex, config, yMaxByAxis),
+        buildSubplot,
         {
             containerSize,
             sharedXAxis,
             sharedYAxis,
-            postProcessAxes: (axes) => applyYAxisExtents(axes, yMaxByAxis, config.showRealizationPoints),
+            postProcessAxes,
         },
     );
+}
+
+function createHistogramSubplotBuilder(
+    config: ResolvedHistogramChartOptions,
+    yMaxByAxis: number[],
+): (group: SubplotGroup<DistributionTrace>, axisIndex: number) => CartesianSubplotBuildResult {
+    return function buildHistogramSubplotForAxis(group, axisIndex): CartesianSubplotBuildResult {
+        return buildHistogramSubplot(group, axisIndex, config, yMaxByAxis);
+    };
+}
+
+function createHistogramPostProcessAxes(
+    yMaxByAxis: number[],
+    showRealizationPoints: boolean,
+): (axes: SubplotAxesResult) => void {
+    return function postProcessHistogramAxes(axes: SubplotAxesResult): void {
+        applyYAxisExtents(axes, yMaxByAxis, showRealizationPoints);
+    };
 }
 
 function resolveHistogramChartOptions(
@@ -72,11 +92,11 @@ function buildHistogramSubplot(
 
     const series: ChartSeriesOption[] = [];
 
-    traceData.forEach((traceDataEntry, traceIndex) => {
+    for (const [traceIndex, traceDataEntry] of traceData.entries()) {
         series.push(
             ...buildTraceSeries(traceDataEntry, barsByTrace[traceIndex] ?? [], axisIndex, group.traces.length, config),
         );
-    });
+    }
 
     return {
         series,
@@ -119,12 +139,12 @@ function computeBarOpacity(config: ResolvedHistogramChartOptions, traceCount: nu
 }
 
 function applyYAxisExtents(axes: SubplotAxesResult, yMaxByAxis: number[], showRealizationPoints: boolean): void {
-    yMaxByAxis.forEach((yMax, axisIndex) => {
+    for (const [axisIndex, yMax] of yMaxByAxis.entries()) {
         const yAxis = axes.yAxes[axisIndex];
         axes.yAxes[axisIndex] = {
             ...yAxis,
             min: showRealizationPoints ? -4 : 0,
             max: Math.max(yMax * 1.1, 1),
         };
-    });
+    }
 }

@@ -6,7 +6,7 @@ import { buildExceedanceSeries } from "../series/exceedanceSeries";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../types";
 
 import { buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
-import type { CartesianChartSeries } from "./cartesianSubplotChartBuilder";
+import type { CartesianChartSeries, CartesianSubplotBuildResult } from "./cartesianSubplotChartBuilder";
 
 export type ExceedanceChartOptions = {
     xAxisLabel?: string;
@@ -21,25 +21,18 @@ export function buildExceedanceChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Value", yAxisLabel = "Exceedance (%)", sharedXAxis, sharedYAxis } = options;
+    const buildSubplot = createExceedanceSubplotBuilder(xAxisLabel, yAxisLabel);
 
     return buildCartesianSubplotChart(
         subplotGroups,
-        (group, axisIndex) => {
-            const { series, legendData } = buildExceedanceSubplotSeries(group, axisIndex);
-
-            return {
-                series,
-                legendData,
-                xAxis: { type: "value", scale: true, label: xAxisLabel },
-                yAxis: { type: "value", label: yAxisLabel },
-                title: group.title,
-            };
-        },
+        buildSubplot,
         {
             containerSize,
             sharedXAxis,
             sharedYAxis,
             postProcessAxes: constrainExceedanceYAxis,
+            // TODO: might have to use item, and e.g. cross for type. 
+            // Add interpolated series?
             tooltip: {
                 trigger: "axis" as const,
                 axisPointer: {
@@ -51,6 +44,23 @@ export function buildExceedanceChart(
             },
         },
     );
+}
+
+function createExceedanceSubplotBuilder(
+    xAxisLabel: string,
+    yAxisLabel: string,
+): (group: SubplotGroup<DistributionTrace>, axisIndex: number) => CartesianSubplotBuildResult {
+    return function buildExceedanceSubplotForAxis(group, axisIndex): CartesianSubplotBuildResult {
+        const { series, legendData } = buildExceedanceSubplotSeries(group, axisIndex);
+
+        return {
+            series,
+            legendData,
+            xAxis: { type: "value", scale: true, label: xAxisLabel },
+            yAxis: { type: "value", label: yAxisLabel },
+            title: group.title,
+        };
+    };
 }
 
 function buildExceedanceSubplotSeries(

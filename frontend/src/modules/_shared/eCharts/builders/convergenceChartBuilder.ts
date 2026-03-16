@@ -5,7 +5,7 @@ import { buildConvergenceSeries } from "../series/convergenceSeries";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../types";
 
 import { buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
-import type { CartesianChartSeries } from "./cartesianSubplotChartBuilder";
+import type { CartesianChartSeries, CartesianSubplotBuildResult } from "./cartesianSubplotChartBuilder";
 
 export type ConvergenceChartOptions = {
     xAxisLabel?: string;
@@ -20,20 +20,11 @@ export function buildConvergenceChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Realizations", yAxisLabel = "Value", sharedXAxis, sharedYAxis } = options;
+    const buildSubplot = createConvergenceSubplotBuilder(xAxisLabel, yAxisLabel);
 
     return buildCartesianSubplotChart(
         subplotGroups,
-        (group, axisIndex) => {
-            const { series, legendData } = buildConvergenceSubplot(group, axisIndex);
-
-            return {
-                series,
-                legendData,
-                xAxis: { type: "value", label: xAxisLabel },
-                yAxis: { type: "value", scale: true, label: yAxisLabel },
-                title: group.title,
-            };
-        },
+        buildSubplot,
         {
             containerSize,
             sharedXAxis,
@@ -45,6 +36,23 @@ export function buildConvergenceChart(
             },
         },
     );
+}
+
+function createConvergenceSubplotBuilder(
+    xAxisLabel: string,
+    yAxisLabel: string,
+): (group: SubplotGroup<DistributionTrace>, axisIndex: number) => CartesianSubplotBuildResult {
+    return function buildConvergenceSubplotForAxis(group, axisIndex): CartesianSubplotBuildResult {
+        const { series, legendData } = buildConvergenceSubplot(group, axisIndex);
+
+        return {
+            series,
+            legendData,
+            xAxis: { type: "value", label: xAxisLabel },
+            yAxis: { type: "value", scale: true, label: yAxisLabel },
+            title: group.title,
+        };
+    };
 }
 
 function buildConvergenceSubplot(

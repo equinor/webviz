@@ -5,7 +5,7 @@ import type { DensityDisplayOptions } from "../series/densitySeries";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../types";
 
 import { buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
-import type { CartesianChartSeries } from "./cartesianSubplotChartBuilder";
+import type { CartesianChartSeries, CartesianSubplotBuildResult } from "./cartesianSubplotChartBuilder";
 
 export type DensityChartOptions = DensityDisplayOptions & {
     xAxisLabel?: string;
@@ -20,22 +20,31 @@ export function buildDensityChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Value", yAxisLabel = "Density", sharedXAxis, sharedYAxis, ...seriesOptions } = options;
+    const buildSubplot = createDensitySubplotBuilder(seriesOptions, xAxisLabel, yAxisLabel);
 
     return buildCartesianSubplotChart(
         subplotGroups,
-        (group, axisIndex) => {
-            const { series, legendData } = buildDensitySubplotSeries(group, axisIndex, seriesOptions);
-
-            return {
-                series,
-                legendData,
-                xAxis: { type: "value", scale: true, label: xAxisLabel },
-                yAxis: { type: "value", label: yAxisLabel },
-                title: group.title,
-            };
-        },
+        buildSubplot,
         { containerSize, sharedXAxis, sharedYAxis },
     );
+}
+
+function createDensitySubplotBuilder(
+    seriesOptions: DensityDisplayOptions,
+    xAxisLabel: string,
+    yAxisLabel: string,
+): (group: SubplotGroup<DistributionTrace>, axisIndex: number) => CartesianSubplotBuildResult {
+    return function buildDensitySubplotForAxis(group, axisIndex): CartesianSubplotBuildResult {
+        const { series, legendData } = buildDensitySubplotSeries(group, axisIndex, seriesOptions);
+
+        return {
+            series,
+            legendData,
+            xAxis: { type: "value", scale: true, label: xAxisLabel },
+            yAxis: { type: "value", label: yAxisLabel },
+            title: group.title,
+        };
+    };
 }
 
 function buildDensitySubplotSeries(

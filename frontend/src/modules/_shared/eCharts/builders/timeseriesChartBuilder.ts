@@ -63,31 +63,56 @@ export function buildTimeseriesChart(
 
     const realtimePointer = buildRealtimeAxisPointer(config);
     const numSubplots = nonEmptySubplotGroups.length;
+    const buildSubplot = createTimeseriesSubplotBuilder(
+        nonEmptySubplotOverlays,
+        config,
+        categoryData,
+        yAxisLabel,
+        realtimePointer,
+    );
+    const postProcessAxes = createTimeseriesPostProcessAxes(activeTimestampUtcMs);
 
     return buildCartesianSubplotChart(
         nonEmptySubplotGroups,
-        (group, axisIndex) =>
-            buildTimeseriesSubplot(
-                group,
-                nonEmptySubplotOverlays[axisIndex],
-                axisIndex,
-                config,
-                categoryData,
-                yAxisLabel,
-                realtimePointer,
-            ),
+        buildSubplot,
         {
             containerSize,
             sharedXAxis: chartOptions.sharedXAxis,
             sharedYAxis: chartOptions.sharedYAxis,
-            postProcessAxes: (_axes, allSeries) => {
-                if (activeTimestampUtcMs != null) {
-                    applyActiveTimestampMarker(allSeries, timestampUtcMsToCompactIsoString(activeTimestampUtcMs));
-                }
-            },
+            postProcessAxes,
             ...buildTimeseriesComposeOverrides(numSubplots, config, containerSize),
         },
     );
+}
+
+function createTimeseriesSubplotBuilder(
+    subplotOverlays: TimeseriesSubplotOverlays[],
+    config: TimeseriesDisplayConfig,
+    categoryData: string[],
+    yAxisLabel: string,
+    realtimePointer: RealtimeAxisPointer | undefined,
+): (group: SubplotGroup<TimeseriesTrace>, axisIndex: number) => CartesianSubplotBuildResult {
+    return function buildTimeseriesSubplotForAxis(group, axisIndex): CartesianSubplotBuildResult {
+        return buildTimeseriesSubplot(
+            group,
+            subplotOverlays[axisIndex],
+            axisIndex,
+            config,
+            categoryData,
+            yAxisLabel,
+            realtimePointer,
+        );
+    };
+}
+
+function createTimeseriesPostProcessAxes(
+    activeTimestampUtcMs: number | null,
+): (_axes: unknown, allSeries: CartesianChartSeries[]) => void {
+    return function postProcessAxesForActiveTimestamp(_axes, allSeries): void {
+        if (activeTimestampUtcMs == null) return;
+
+        applyActiveTimestampMarker(allSeries, timestampUtcMsToCompactIsoString(activeTimestampUtcMs));
+    };
 }
 
 /**
@@ -198,14 +223,14 @@ function buildTimeseriesComposeOverrides(
 function buildTimeseriesTooltip(config: TimeseriesDisplayConfig): ComposeChartConfig["tooltip"] {
     return config.showStatistics
         ? {
-              trigger: "axis",
-              formatter: formatStatisticsTooltip,
-              axisPointer: { type: "cross" },
-          }
+            trigger: "axis",
+            formatter: formatStatisticsTooltip,
+            axisPointer: { type: "cross" },
+        }
         : {
-              trigger: "item",
-              formatter: formatRealizationItemTooltip,
-          };
+            trigger: "item",
+            formatter: formatRealizationItemTooltip,
+        };
 }
 
 function buildTimeseriesDataZoom(
@@ -219,27 +244,27 @@ function buildTimeseriesDataZoom(
     return [
         ...(showSliderControls
             ? [
-                  {
-                      type: "slider" as const,
-                      show: true,
-                      xAxisIndex: allAxisIndices,
-                      start: 0,
-                      end: 100,
-                      bottom: 0,
-                      height: 10,
-                      filterMode: "none" as const,
-                  },
-                  {
-                      type: "slider" as const,
-                      show: true,
-                      yAxisIndex: allAxisIndices,
-                      start: 0,
-                      end: 100,
-                      right: 0,
-                      width: 10,
-                      filterMode: "none" as const,
-                  },
-              ]
+                {
+                    type: "slider" as const,
+                    show: true,
+                    xAxisIndex: allAxisIndices,
+                    start: 0,
+                    end: 100,
+                    bottom: 0,
+                    height: 10,
+                    filterMode: "none" as const,
+                },
+                {
+                    type: "slider" as const,
+                    show: true,
+                    yAxisIndex: allAxisIndices,
+                    start: 0,
+                    end: 100,
+                    right: 0,
+                    width: 10,
+                    filterMode: "none" as const,
+                },
+            ]
             : []),
         { type: "inside" as const, xAxisIndex: allAxisIndices, filterMode: "none" as const },
         { type: "inside" as const, yAxisIndex: allAxisIndices, filterMode: "none" as const },

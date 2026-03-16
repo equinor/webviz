@@ -43,10 +43,19 @@ export function buildHeatmapChart(
         containerSize,
         tooltip: {
             trigger: "item",
-            formatter: (params: CallbackDataParams) => formatHeatmapTooltip(params, datasets, valueLabel),
+            formatter: createHeatmapTooltipFormatter(datasets, valueLabel),
         },
         visualMap: buildHeatmapVisualMap(valueRange),
     });
+}
+
+function createHeatmapTooltipFormatter(
+    datasets: HeatmapDatasetEntry[],
+    valueLabel: string,
+): (params: CallbackDataParams) => string {
+    return function formatHeatmapTooltipItem(params: CallbackDataParams): string {
+        return formatHeatmapTooltip(params, datasets, valueLabel);
+    };
 }
 
 function flattenHeatmapDatasets(subplotGroups: SubplotGroup<HeatmapTrace>[]): HeatmapDatasetEntry[] {
@@ -74,11 +83,11 @@ function buildHeatmapSubplotSeries(
 ): ChartSeriesOption[] {
     const series: ChartSeriesOption[] = [];
 
-    datasets.forEach(({ trace }, axisIndex) => {
+    for (const [axisIndex, { trace }] of datasets.entries()) {
         const activeDate = resolveActiveHeatmapDate(trace, activeTimestampUtcMs);
         const result = buildHeatmapSeries(trace, axisIndex, activeDate);
         series.push(...result.series);
-    });
+    }
 
     return series;
 }
@@ -126,6 +135,10 @@ function buildHeatmapVisualMap(valueRange: HeatmapValueRange) {
                 "#a50026",
             ],
         },
-        formatter: (value: unknown) => formatNumber(Number(value), 3),
+        formatter: formatHeatmapVisualMapValue,
     };
+}
+
+function formatHeatmapVisualMapValue(value: unknown): string {
+    return formatNumber(Number(value), 3);
 }
