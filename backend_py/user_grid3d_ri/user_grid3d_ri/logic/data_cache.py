@@ -5,7 +5,6 @@ import diskcache
 import numpy as np
 from numpy.typing import NDArray
 
-
 LOGGER = logging.getLogger(__name__)
 
 

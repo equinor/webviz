@@ -11,7 +11,6 @@ from .routers import grid_router
 from .routers import intersection_router
 from .routers import dev_router
 
-
 logging.basicConfig(format="%(asctime)s %(levelname)-7s [%(name)s]: %(message)s", datefmt="%H:%M:%S")
 logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("httpcore").setLevel(logging.INFO)
