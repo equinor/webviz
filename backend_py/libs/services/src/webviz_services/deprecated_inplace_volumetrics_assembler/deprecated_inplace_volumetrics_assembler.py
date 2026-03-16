@@ -50,7 +50,6 @@ from ._utils import (
     get_valid_result_names_from_list,
 )
 
-
 LOGGER = logging.getLogger(__name__)
 
 

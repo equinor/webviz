@@ -3,7 +3,6 @@ from astroid import nodes
 from pylint.checkers import BaseChecker
 from pylint.lint import PyLinter
 
-
 # We dont want to enforce the _async suffix on our router methods
 FAST_API_ROUTER_DECORATOR = "fastapi.routing.APIRouter.api_route.decorator"
 

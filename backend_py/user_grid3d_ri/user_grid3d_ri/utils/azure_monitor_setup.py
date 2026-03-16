@@ -9,7 +9,6 @@ from opentelemetry.sdk.resources import Resource
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_core_utils.azure_monitor_destination import AzureMonitorDestination
 
-
 LOGGER = logging.getLogger(__name__)
 
 

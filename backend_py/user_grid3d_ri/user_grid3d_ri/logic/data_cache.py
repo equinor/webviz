@@ -7,7 +7,6 @@ from numpy.typing import NDArray
 
 from rips.generated import GridGeometryExtraction_pb2
 
-
 LOGGER = logging.getLogger(__name__)
 
 
