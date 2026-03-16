@@ -3,6 +3,7 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { TableHeading, TableRow } from "@lib/components/TableDeprecated/table";
+import { PHASE_COLORS } from "@modules/_shared/constants/colors";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import { sortResultNameStrings } from "@modules/_shared/InplaceVolumes/sortResultNames";
 import type { Column, Row } from "@modules/_shared/InplaceVolumes/Table";
@@ -153,13 +154,13 @@ function makeStyleFormattingFunc(column: Column): ((value: number | string | nul
             const style: React.CSSProperties = { textAlign: "right", fontWeight: "bold" };
 
             if (value?.toString().toLowerCase() === "oil") {
-                style.color = "#0b8511";
+                style.color = PHASE_COLORS.oil;
             }
             if (value?.toString().toLowerCase() === "water") {
-                style.color = "#0c24ab";
+                style.color = PHASE_COLORS.water;
             }
             if (value?.toString().toLowerCase() === "gas") {
-                style.color = "#ab110c";
+                style.color = PHASE_COLORS.gas;
             }
 
             return style;
