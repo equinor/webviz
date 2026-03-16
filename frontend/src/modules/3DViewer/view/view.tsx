@@ -7,7 +7,7 @@ import type { ModuleViewProps } from "@framework/Module";
 import type { Interfaces } from "../interfaces";
 
 import { verticalScaleAtom, viewStateAtom } from "./atoms/baseAtoms";
-import { DataProvidersWrapper } from "./components/VisualizationAssemblerWrapper";
+import { VisualizationAssemblerWrapper } from "./components/VisualizationAssemblerWrapper";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
@@ -26,7 +26,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     }
 
     return (
-        <DataProvidersWrapper
+        <VisualizationAssemblerWrapper
             moduleInstanceId={props.viewContext.getInstanceIdString()}
             fieldId={fieldId}
             dataProviderManager={dataProviderManager}

@@ -25,8 +25,8 @@ import { PreferredViewLayout } from "./typesAndEnums";
 
 export type DpfSubsurfaceViewerContextType = {
     visualizationMode: "2D" | "3D";
-    viewState?: ViewStateType;
-    initialVerticalScale: number;
+    getInitialViewState?: () => ViewStateType;
+    getInitialVerticalScale?: () => number;
     onViewStateChange?: (viewState: ViewStateType) => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
     visualizationAssemblerProduct: AssemblerProduct<any>;
@@ -51,8 +51,8 @@ export function useDpfSubsurfaceViewerContext() {
 
 export type DpfSubsurfaceViewerWrapperProps = {
     visualizationMode: "2D" | "3D";
-    viewState?: ViewStateType;
-    initialVerticalScale: number;
+    getInitialViewState?: () => ViewStateType;
+    getInitialVerticalScale?: () => number;
     onViewStateChange?: (viewState: ViewStateType) => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
     fieldId: string;
@@ -71,7 +71,9 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
 
     const [changingFields, setChangingFields] = React.useState<boolean>(false);
     const [prevFieldId, setPrevFieldId] = React.useState<string | null>(props.fieldId);
-    const [initialViewState, setInitialViewState] = React.useState<ViewStateType | undefined>(props.viewState);
+    const [initialViewState, setInitialViewState] = React.useState<ViewStateType | undefined>(
+        props.getInitialViewState?.(),
+    );
 
     const statusWriter = useViewStatusWriter(props.viewContext);
 

@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
@@ -50,6 +50,7 @@ import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visual
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,
@@ -137,12 +138,20 @@ export type VisualizationAssemblerWrapperProps = Omit<
     dataProviderManager: DataProviderManager;
 };
 
-export function DataProvidersWrapper(props: VisualizationAssemblerWrapperProps): React.ReactNode {
-    usePublishSubscribeTopicValue(props.dataProviderManager, DataProviderManagerTopic.DATA_REVISION);
+export function VisualizationAssemblerWrapper(props: VisualizationAssemblerWrapperProps): React.ReactNode {
+    const options = React.useMemo(() => {
+        return {
+            initialAccumulatedData: { polylineIds: [] },
+        };
+    }, []);
 
-    const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.dataProviderManager, {
-        initialAccumulatedData: { polylineIds: [] },
-    });
+    const assemblerProduct = useVisualizationAssemblerProduct(
+        props.dataProviderManager,
+        VISUALIZATION_ASSEMBLER,
+        options,
+    );
+
+    usePublishSubscribeTopicValue(props.dataProviderManager, DataProviderManagerTopic.DATA_REVISION);
 
     return (
         <DpfSubsurfaceViewerWrapper
