@@ -1,6 +1,5 @@
 import React from "react";
 
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
     accumulatePolylineIds,
     type AccumulatedData,
@@ -36,7 +35,7 @@ import type {
     SurfaceStoredData,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
 import { makeDepthColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeDepthColorScaleAnnotation";
 import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makePolygonDataBoundingBox";
@@ -50,7 +49,6 @@ import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visual
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,

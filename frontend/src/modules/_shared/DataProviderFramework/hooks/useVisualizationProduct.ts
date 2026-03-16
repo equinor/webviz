@@ -34,10 +34,9 @@ export function useVisualizationAssemblerProduct<
     const memoizedProduct = React.useMemo(
         function memoizeVisualizationProduct() {
             return visualizationAssembler.make(dataProviderManager, options);
-
-            // ! "latestRevision" is included in the array to trigger recomputes
-            // eslint-disable-next-line react-hooks/exhaustive-deps
         },
+        // ! "latestRevision" is included in the array to trigger recomputes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [latestRevision, dataProviderManager, visualizationAssembler, options],
     );
 

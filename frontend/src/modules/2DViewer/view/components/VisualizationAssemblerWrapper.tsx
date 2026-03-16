@@ -1,6 +1,5 @@
 import type React from "react";
 
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import {
     DpfSubsurfaceViewerWrapper,
@@ -27,10 +26,8 @@ import type {
     SurfaceData,
     SurfaceStoredData,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
-import {
-    DataProviderManagerTopic,
-    type DataProviderManager,
-} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { type DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
 import { makeDepthColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeDepthColorScaleAnnotation";
 import { makeSeismicColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeSeismicColorScaleAnnotation";
@@ -55,7 +52,7 @@ import { makeDrilledWellborePicksLayer2D } from "../../DataProviderFramework/vis
 import { makeDrilledWellTrajectoriesLayer2D } from "../../DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
-import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
+
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>(

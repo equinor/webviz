@@ -1,3 +1,5 @@
+import React from "react";
+
 import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 import type { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@tanstack/react-query";
 import type { Atom, Getter, Setter, WritableAtom } from "jotai";
@@ -6,7 +8,6 @@ import { atomWithReducer, useAtomCallback } from "jotai/utils";
 import { atomEffect } from "jotai-effect";
 import type { AtomWithQueryOptions } from "jotai-tanstack-query";
 import { atomWithQuery } from "jotai-tanstack-query";
-import React from "react";
 
 export function atomWithCompare<Value>(initialValue: Value, areEqualFunc: (prev: Value, next: Value) => boolean) {
     return atomWithReducer(initialValue, (prev: Value, next: Value) => {

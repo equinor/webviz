@@ -1,14 +1,14 @@
-import React from "react";
+import type React from "react";
 
-import { useAtom, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
+import { useStableAtomGetter } from "@framework/utils/atomUtils";
 
 import type { Interfaces } from "../interfaces";
 
 import { verticalScaleAtom, viewStateAtom } from "./atoms/baseAtoms";
 import { VisualizationAssemblerWrapper } from "./components/VisualizationAssemblerWrapper";
-import { useStableAtomGetter } from "@framework/utils/atomUtils";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
@@ -28,8 +28,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     if (!fieldId) {
         return null;
     }
-
-    console.debug("View render with fieldId:", fieldId); // Debug log to trace renders and fieldId changes
 
     return (
         <VisualizationAssemblerWrapper
