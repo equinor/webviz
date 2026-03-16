@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-
 WellCompletionsAttributeType = str | int | bool
 
 

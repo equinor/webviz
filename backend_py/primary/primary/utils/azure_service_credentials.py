@@ -8,7 +8,6 @@ from azure.identity.aio import ClientSecretCredential
 from azure.identity.aio import WorkloadIdentityCredential
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
-
 LOGGER = logging.getLogger(__name__)
 
 

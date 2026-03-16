@@ -4,7 +4,6 @@ import os
 from sumo.wrapper.config import APP_REGISTRATION as sumo_app_reg
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
-
 TENANT_ID = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
 CLIENT_ID = "900ed417-a860-4970-bd37-73b059ca6f0d"
 CLIENT_SECRET = os.environ["WEBVIZ_CLIENT_SECRET"]
