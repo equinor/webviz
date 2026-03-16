@@ -4,8 +4,8 @@
     "version": "0.0.0",
     "type": "module",
     "engines": {
-        "node": "^24.13.0",
-        "npm": "^11.6.2"
+        "node": "^24.14.0",
+        "npm": "^11.9.0"
     },
     "scripts": {
         "dev": "npm run generate:module-states-map && vite --host",
@@ -33,6 +33,7 @@
         "ts-key-enum v2 and v3 are the same, expect that v3 exports it as const enum. We cannot use v3 since we compile typescript with isolatedModules=true"
     ],
     "dependencies": {
+        "@base-ui/react": "^1.2.0",
         "@equinor/eds-core-react": "~0.48.0",
         "@equinor/esv-intersection": "^3.1.4",
         "@mui/base": "^5.0.0-beta.3",
@@ -41,7 +42,7 @@
         "@tanstack/react-query": "^5.63",
         "@tanstack/react-query-devtools": "^5.63",
         "@webviz/group-tree-plot": "^1.6.19",
-        "@webviz/subsurface-viewer": "^1.15.13",
+        "@webviz/subsurface-viewer": "^1.16.0",
         "@webviz/well-completions-plot": "^1.8.9",
         "@webviz/well-log-viewer": "^2.6.10",
         "animate.css": "^4.1.1",
@@ -50,6 +51,7 @@
         "comlink": "^4.4.2",
         "culori": "^4.0.2",
         "error-stack-parser": "^2.1.4",
+        "fflate": "^0.8.2",
         "geojson": "^0.5.0",
         "jotai": "^2.6.2",
         "jotai-effect": "^2.0.5",

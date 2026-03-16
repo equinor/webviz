@@ -6,8 +6,9 @@ import simplify from "simplify-js";
 
 import type { WellboreTrajectory_api } from "@api";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
+import { distance, fromArray } from "@lib/utils/vec3";
 
-import type { GeoWellFeature } from "../DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
+import type { ExtendedWellFeature } from "../types/geojson";
 
 function normalizeVector(vector: number[]): number[] {
     const vectorLength = Math.sqrt(vector[0] ** 2 + vector[1] ** 2);
@@ -150,7 +151,7 @@ export function wellTrajectoryToGeojson(
         /** Highlights a specified wellbore */
         selectedWellboreUuid?: string;
     },
-): GeoWellFeature {
+): ExtendedWellFeature {
     const trajectoryLineString: LineString = {
         type: "LineString",
         coordinates: zipCoords(
@@ -176,7 +177,7 @@ export function wellTrajectoryToGeojson(
         wellHeadSize = 10;
     }
 
-    const geometryCollection: GeoWellFeature = {
+    const geometryCollection: ExtendedWellFeature = {
         type: "Feature",
         geometry: {
             type: "GeometryCollection",
@@ -284,4 +285,60 @@ export function getInterpolatedNormalAtMd(
     const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
     return length === 0 ? [0, 0, 1] : [dx / length, dy / length, -dz / length];
+}
+
+export type MinimalWellboreTrajectory = Pick<
+    WellboreTrajectory_api,
+    "eastingArr" | "mdArr" | "northingArr" | "tvdMslArr"
+>;
+
+type TrajectoryPoint = { easting: number; northing: number; tvdMsl: number };
+
+function defaultRadialDistance(point1: TrajectoryPoint, point2: TrajectoryPoint) {
+    const vec1 = fromArray([point1.easting, point1.northing, point1.tvdMsl]);
+    const vec2 = fromArray([point2.easting, point2.northing, point2.tvdMsl]);
+
+    return distance(vec1, vec2);
+}
+
+export function simplifyWellTrajectoryRadialDist<TTrajectory extends MinimalWellboreTrajectory>(
+    trajectory: TTrajectory,
+    threshold: number,
+    computeDistance = defaultRadialDistance,
+): TTrajectory {
+    const thresholdSquared = threshold * threshold;
+
+    let prevPoint: TrajectoryPoint | null = null;
+
+    const simplifiedTrajectory: TTrajectory = {
+        ...trajectory,
+        eastingArr: [],
+        northingArr: [],
+        tvdMslArr: [],
+        mdArr: [],
+    };
+
+    for (let index = 0; index < trajectory.eastingArr.length; index++) {
+        const point = {
+            easting: trajectory.eastingArr[index],
+            northing: trajectory.northingArr[index],
+            tvdMsl: trajectory.tvdMslArr[index],
+            md: trajectory.mdArr[index],
+        };
+
+        if (
+            // Always include the first and last points
+            !prevPoint ||
+            index === trajectory.eastingArr.length - 1 ||
+            computeDistance(point, prevPoint) > thresholdSquared
+        ) {
+            simplifiedTrajectory.eastingArr.push(point.easting);
+            simplifiedTrajectory.northingArr.push(point.northing);
+            simplifiedTrajectory.tvdMslArr.push(point.tvdMsl);
+            simplifiedTrajectory.mdArr.push(point.md);
+
+            prevPoint = point;
+        }
+    }
+    return simplifiedTrajectory;
 }

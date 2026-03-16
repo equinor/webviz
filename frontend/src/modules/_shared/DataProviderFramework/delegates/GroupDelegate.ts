@@ -217,9 +217,9 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         this.clearChildren();
 
         this._deserializing = true;
-        const factory = new DeserializationAssistant(this._owner.getItemDelegate().getDataProviderManager());
+        const assistant = new DeserializationAssistant(this._owner.getItemDelegate().getDataProviderManager());
         for (const child of children) {
-            const item = factory.makeItem(child);
+            const item = assistant.makeItem(child);
             this.appendChild(item);
         }
         this._deserializing = false;

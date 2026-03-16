@@ -17,16 +17,13 @@ import {
     deleteSession,
     deleteSnapshot,
     deleteSnapshotAccessLog,
-    deprecatedGetStratigraphicUnits,
     getAlive,
     getAliveProtected,
     getCases,
-    getCrosslineSlice,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
     getDeltaEnsembleVectorList,
     getDeltaSurfaceData,
-    getDepthSlice,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
     getFieldPerforations,
@@ -37,7 +34,7 @@ import {
     getGridSurface,
     getHistoricalVectorData,
     getInjectionData,
-    getInlineSlice,
+    getInplaceTableDefinitions,
     getLogCurveData,
     getLoggedInUser,
     getMisfitSurfaceData,
@@ -47,11 +44,12 @@ import {
     getPolygonsData,
     getPolygonsDirectory,
     getProductionData,
-    getRealizationData,
+    getPvtTableData,
     getRealizationFlowNetwork,
     getRealizationSurfacesMetadata,
     getRealizationsVectorData,
-    getRealizationVectorAtTimestamp,
+    getRftRealizationData,
+    getRftTableDefinition,
     getSeismicCubeMetaList,
     getSeismicSlices,
     getSession,
@@ -63,12 +61,7 @@ import {
     getStatisticalSurfaceDataHybrid,
     getStatisticalVectorData,
     getStatisticalVectorDataPerSensitivity,
-    getStratigraphicUnitsForStratColumn,
     getSurfaceData,
-    getTableData,
-    getTableDefinition,
-    getTableDefinitions,
-    getTimestampsList,
     getUserInfo,
     getUserPhoto,
     getVectorList,
@@ -86,12 +79,13 @@ import {
     getWellTrajectories,
     loginRoute,
     type Options,
-    postGetAggregatedPerRealizationTableData,
-    postGetAggregatedStatisticalTableData,
+    postGetAggregatedPerRealizationInplaceTableData,
+    postGetAggregatedStatisticalInplaceTableData,
     postGetPolylineIntersection,
     postGetSampleSurfaceInPoints,
     postGetSeismicFence,
     postGetSurfaceIntersection,
+    postGetWellTrajectoriesFormationSegments,
     postLogout,
     postRefreshFingerprintsForEnsembles,
     root,
@@ -111,9 +105,6 @@ import type {
     DeleteSnapshotAccessLogError_api,
     DeleteSnapshotData_api,
     DeleteSnapshotError_api,
-    DeprecatedGetStratigraphicUnitsData_api,
-    DeprecatedGetStratigraphicUnitsError_api,
-    DeprecatedGetStratigraphicUnitsResponse_api,
     GetAliveData_api,
     GetAliveProtectedData_api,
     GetAliveProtectedResponse_api,
@@ -121,9 +112,6 @@ import type {
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
-    GetCrosslineSliceData_api,
-    GetCrosslineSliceError_api,
-    GetCrosslineSliceResponse_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataError_api,
     GetDeltaEnsembleRealizationsVectorDataResponse_api,
@@ -136,9 +124,6 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataError_api,
     GetDeltaSurfaceDataResponse_api,
-    GetDepthSliceData_api,
-    GetDepthSliceError_api,
-    GetDepthSliceResponse_api,
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersError_api,
     GetDrilledWellboreHeadersResponse_api,
@@ -168,9 +153,9 @@ import type {
     GetInjectionDataData_api,
     GetInjectionDataError_api,
     GetInjectionDataResponse_api,
-    GetInlineSliceData_api,
-    GetInlineSliceError_api,
-    GetInlineSliceResponse_api,
+    GetInplaceTableDefinitionsData_api,
+    GetInplaceTableDefinitionsError_api,
+    GetInplaceTableDefinitionsResponse_api,
     GetLogCurveDataData_api,
     GetLogCurveDataError_api,
     GetLogCurveDataResponse_api,
@@ -198,9 +183,9 @@ import type {
     GetProductionDataData_api,
     GetProductionDataError_api,
     GetProductionDataResponse_api,
-    GetRealizationDataData_api,
-    GetRealizationDataError_api,
-    GetRealizationDataResponse_api,
+    GetPvtTableDataData_api,
+    GetPvtTableDataError_api,
+    GetPvtTableDataResponse_api,
     GetRealizationFlowNetworkData_api,
     GetRealizationFlowNetworkError_api,
     GetRealizationFlowNetworkResponse_api,
@@ -210,9 +195,12 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataError_api,
     GetRealizationsVectorDataResponse_api,
-    GetRealizationVectorAtTimestampData_api,
-    GetRealizationVectorAtTimestampError_api,
-    GetRealizationVectorAtTimestampResponse_api,
+    GetRftRealizationDataData_api,
+    GetRftRealizationDataError_api,
+    GetRftRealizationDataResponse_api,
+    GetRftTableDefinitionData_api,
+    GetRftTableDefinitionError_api,
+    GetRftTableDefinitionResponse_api,
     GetSeismicCubeMetaListData_api,
     GetSeismicCubeMetaListError_api,
     GetSeismicCubeMetaListResponse_api,
@@ -246,24 +234,9 @@ import type {
     GetStatisticalVectorDataPerSensitivityError_api,
     GetStatisticalVectorDataPerSensitivityResponse_api,
     GetStatisticalVectorDataResponse_api,
-    GetStratigraphicUnitsForStratColumnData_api,
-    GetStratigraphicUnitsForStratColumnError_api,
-    GetStratigraphicUnitsForStratColumnResponse_api,
     GetSurfaceDataData_api,
     GetSurfaceDataError_api,
     GetSurfaceDataResponse_api,
-    GetTableDataData_api,
-    GetTableDataError_api,
-    GetTableDataResponse_api,
-    GetTableDefinitionData_api,
-    GetTableDefinitionError_api,
-    GetTableDefinitionResponse_api,
-    GetTableDefinitionsData_api,
-    GetTableDefinitionsError_api,
-    GetTableDefinitionsResponse_api,
-    GetTimestampsListData_api,
-    GetTimestampsListError_api,
-    GetTimestampsListResponse_api,
     GetUserInfoData_api,
     GetUserInfoError_api,
     GetUserInfoResponse_api,
@@ -311,12 +284,12 @@ import type {
     GetWellTrajectoriesResponse_api,
     LoginRouteData_api,
     LoginRouteError_api,
-    PostGetAggregatedPerRealizationTableDataData_api,
-    PostGetAggregatedPerRealizationTableDataError_api,
-    PostGetAggregatedPerRealizationTableDataResponse_api,
-    PostGetAggregatedStatisticalTableDataData_api,
-    PostGetAggregatedStatisticalTableDataError_api,
-    PostGetAggregatedStatisticalTableDataResponse_api,
+    PostGetAggregatedPerRealizationInplaceTableDataData_api,
+    PostGetAggregatedPerRealizationInplaceTableDataError_api,
+    PostGetAggregatedPerRealizationInplaceTableDataResponse_api,
+    PostGetAggregatedStatisticalInplaceTableDataData_api,
+    PostGetAggregatedStatisticalInplaceTableDataError_api,
+    PostGetAggregatedStatisticalInplaceTableDataResponse_api,
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
@@ -329,6 +302,9 @@ import type {
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionError_api,
     PostGetSurfaceIntersectionResponse_api,
+    PostGetWellTrajectoriesFormationSegmentsData_api,
+    PostGetWellTrajectoriesFormationSegmentsError_api,
+    PostGetWellTrajectoriesFormationSegmentsResponse_api,
     PostLogoutData_api,
     PostLogoutResponse_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -639,38 +615,6 @@ export const getDeltaEnsembleRealizationsVectorDataOptions = (
         queryKey: getDeltaEnsembleRealizationsVectorDataQueryKey(options),
     });
 
-export const getTimestampsListQueryKey = (options: Options<GetTimestampsListData_api>) =>
-    createQueryKey("getTimestampsList", options);
-
-/**
- * Get Timestamps List
- *
- * Get the intersection of available timestamps.
- * Note that when resampling_frequency is None, the pure intersection of the
- * stored raw dates will be returned. Thus the returned list of dates will not include
- * dates from long running realizations.
- * For other resampling frequencies, the date range will be expanded to cover the entire
- * time range of all the requested realizations before computing the resampled dates.
- */
-export const getTimestampsListOptions = (options: Options<GetTimestampsListData_api>) =>
-    queryOptions<
-        GetTimestampsListResponse_api,
-        AxiosError<GetTimestampsListError_api>,
-        GetTimestampsListResponse_api,
-        ReturnType<typeof getTimestampsListQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getTimestampsList({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getTimestampsListQueryKey(options),
-    });
-
 export const getHistoricalVectorDataQueryKey = (options: Options<GetHistoricalVectorDataData_api>) =>
     createQueryKey("getHistoricalVectorData", options);
 
@@ -787,48 +731,23 @@ export const getStatisticalVectorDataPerSensitivityOptions = (
         queryKey: getStatisticalVectorDataPerSensitivityQueryKey(options),
     });
 
-export const getRealizationVectorAtTimestampQueryKey = (options: Options<GetRealizationVectorAtTimestampData_api>) =>
-    createQueryKey("getRealizationVectorAtTimestamp", options);
+export const getInplaceTableDefinitionsQueryKey = (options: Options<GetInplaceTableDefinitionsData_api>) =>
+    createQueryKey("getInplaceTableDefinitions", options);
 
 /**
- * Get Realization Vector At Timestamp
- */
-export const getRealizationVectorAtTimestampOptions = (options: Options<GetRealizationVectorAtTimestampData_api>) =>
-    queryOptions<
-        GetRealizationVectorAtTimestampResponse_api,
-        AxiosError<GetRealizationVectorAtTimestampError_api>,
-        GetRealizationVectorAtTimestampResponse_api,
-        ReturnType<typeof getRealizationVectorAtTimestampQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getRealizationVectorAtTimestamp({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getRealizationVectorAtTimestampQueryKey(options),
-    });
-
-export const getTableDefinitionsQueryKey = (options: Options<GetTableDefinitionsData_api>) =>
-    createQueryKey("getTableDefinitions", options);
-
-/**
- * Get Table Definitions
+ * Get Inplace Table Definitions
  *
  * Get the inplace volumes tables definitions for a given ensemble.
  */
-export const getTableDefinitionsOptions = (options: Options<GetTableDefinitionsData_api>) =>
+export const getInplaceTableDefinitionsOptions = (options: Options<GetInplaceTableDefinitionsData_api>) =>
     queryOptions<
-        GetTableDefinitionsResponse_api,
-        AxiosError<GetTableDefinitionsError_api>,
-        GetTableDefinitionsResponse_api,
-        ReturnType<typeof getTableDefinitionsQueryKey>
+        GetInplaceTableDefinitionsResponse_api,
+        AxiosError<GetInplaceTableDefinitionsError_api>,
+        GetInplaceTableDefinitionsResponse_api,
+        ReturnType<typeof getInplaceTableDefinitionsQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getTableDefinitions({
+            const { data } = await getInplaceTableDefinitions({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -836,32 +755,32 @@ export const getTableDefinitionsOptions = (options: Options<GetTableDefinitionsD
             });
             return data;
         },
-        queryKey: getTableDefinitionsQueryKey(options),
+        queryKey: getInplaceTableDefinitionsQueryKey(options),
     });
 
-export const postGetAggregatedPerRealizationTableDataQueryKey = (
-    options: Options<PostGetAggregatedPerRealizationTableDataData_api>,
-) => createQueryKey("postGetAggregatedPerRealizationTableData", options);
+export const postGetAggregatedPerRealizationInplaceTableDataQueryKey = (
+    options: Options<PostGetAggregatedPerRealizationInplaceTableDataData_api>,
+) => createQueryKey("postGetAggregatedPerRealizationInplaceTableData", options);
 
 /**
- * Post Get Aggregated Per Realization Table Data
+ * Post Get Aggregated Per Realization Inplace Table Data
  *
  * Get aggregated inplace volume data for a given table with data per realization based on requested results and categories/index filter.
  *
  * Note: This endpoint is a post endpoint because the list of indices with values can be quite large and may exceed the query string limit.
  * As the endpoint is post, the indices with values object is kept for convenience.
  */
-export const postGetAggregatedPerRealizationTableDataOptions = (
-    options: Options<PostGetAggregatedPerRealizationTableDataData_api>,
+export const postGetAggregatedPerRealizationInplaceTableDataOptions = (
+    options: Options<PostGetAggregatedPerRealizationInplaceTableDataData_api>,
 ) =>
     queryOptions<
-        PostGetAggregatedPerRealizationTableDataResponse_api,
-        AxiosError<PostGetAggregatedPerRealizationTableDataError_api>,
-        PostGetAggregatedPerRealizationTableDataResponse_api,
-        ReturnType<typeof postGetAggregatedPerRealizationTableDataQueryKey>
+        PostGetAggregatedPerRealizationInplaceTableDataResponse_api,
+        AxiosError<PostGetAggregatedPerRealizationInplaceTableDataError_api>,
+        PostGetAggregatedPerRealizationInplaceTableDataResponse_api,
+        ReturnType<typeof postGetAggregatedPerRealizationInplaceTableDataQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGetAggregatedPerRealizationTableData({
+            const { data } = await postGetAggregatedPerRealizationInplaceTableData({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -869,31 +788,31 @@ export const postGetAggregatedPerRealizationTableDataOptions = (
             });
             return data;
         },
-        queryKey: postGetAggregatedPerRealizationTableDataQueryKey(options),
+        queryKey: postGetAggregatedPerRealizationInplaceTableDataQueryKey(options),
     });
 
 /**
- * Post Get Aggregated Per Realization Table Data
+ * Post Get Aggregated Per Realization Inplace Table Data
  *
  * Get aggregated inplace volume data for a given table with data per realization based on requested results and categories/index filter.
  *
  * Note: This endpoint is a post endpoint because the list of indices with values can be quite large and may exceed the query string limit.
  * As the endpoint is post, the indices with values object is kept for convenience.
  */
-export const postGetAggregatedPerRealizationTableDataMutation = (
-    options?: Partial<Options<PostGetAggregatedPerRealizationTableDataData_api>>,
+export const postGetAggregatedPerRealizationInplaceTableDataMutation = (
+    options?: Partial<Options<PostGetAggregatedPerRealizationInplaceTableDataData_api>>,
 ): UseMutationOptions<
-    PostGetAggregatedPerRealizationTableDataResponse_api,
-    AxiosError<PostGetAggregatedPerRealizationTableDataError_api>,
-    Options<PostGetAggregatedPerRealizationTableDataData_api>
+    PostGetAggregatedPerRealizationInplaceTableDataResponse_api,
+    AxiosError<PostGetAggregatedPerRealizationInplaceTableDataError_api>,
+    Options<PostGetAggregatedPerRealizationInplaceTableDataData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        PostGetAggregatedPerRealizationTableDataResponse_api,
-        AxiosError<PostGetAggregatedPerRealizationTableDataError_api>,
-        Options<PostGetAggregatedPerRealizationTableDataData_api>
+        PostGetAggregatedPerRealizationInplaceTableDataResponse_api,
+        AxiosError<PostGetAggregatedPerRealizationInplaceTableDataError_api>,
+        Options<PostGetAggregatedPerRealizationInplaceTableDataData_api>
     > = {
         mutationFn: async (fnOptions) => {
-            const { data } = await postGetAggregatedPerRealizationTableData({
+            const { data } = await postGetAggregatedPerRealizationInplaceTableData({
                 ...options,
                 ...fnOptions,
                 throwOnError: true,
@@ -904,29 +823,29 @@ export const postGetAggregatedPerRealizationTableDataMutation = (
     return mutationOptions;
 };
 
-export const postGetAggregatedStatisticalTableDataQueryKey = (
-    options: Options<PostGetAggregatedStatisticalTableDataData_api>,
-) => createQueryKey("postGetAggregatedStatisticalTableData", options);
+export const postGetAggregatedStatisticalInplaceTableDataQueryKey = (
+    options: Options<PostGetAggregatedStatisticalInplaceTableDataData_api>,
+) => createQueryKey("postGetAggregatedStatisticalInplaceTableData", options);
 
 /**
- * Post Get Aggregated Statistical Table Data
+ * Post Get Aggregated Statistical Inplace Table Data
  *
  * Get statistical inplace volumes data across selected realizations for a given table based on requested results and categories/index filter.
  *
  * Note: This endpoint is a post endpoint because the list of indices with values can be quite large and may exceed the query string limit.
  * As the endpoint is post, the indices with values object is kept for convenience.
  */
-export const postGetAggregatedStatisticalTableDataOptions = (
-    options: Options<PostGetAggregatedStatisticalTableDataData_api>,
+export const postGetAggregatedStatisticalInplaceTableDataOptions = (
+    options: Options<PostGetAggregatedStatisticalInplaceTableDataData_api>,
 ) =>
     queryOptions<
-        PostGetAggregatedStatisticalTableDataResponse_api,
-        AxiosError<PostGetAggregatedStatisticalTableDataError_api>,
-        PostGetAggregatedStatisticalTableDataResponse_api,
-        ReturnType<typeof postGetAggregatedStatisticalTableDataQueryKey>
+        PostGetAggregatedStatisticalInplaceTableDataResponse_api,
+        AxiosError<PostGetAggregatedStatisticalInplaceTableDataError_api>,
+        PostGetAggregatedStatisticalInplaceTableDataResponse_api,
+        ReturnType<typeof postGetAggregatedStatisticalInplaceTableDataQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGetAggregatedStatisticalTableData({
+            const { data } = await postGetAggregatedStatisticalInplaceTableData({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -934,31 +853,31 @@ export const postGetAggregatedStatisticalTableDataOptions = (
             });
             return data;
         },
-        queryKey: postGetAggregatedStatisticalTableDataQueryKey(options),
+        queryKey: postGetAggregatedStatisticalInplaceTableDataQueryKey(options),
     });
 
 /**
- * Post Get Aggregated Statistical Table Data
+ * Post Get Aggregated Statistical Inplace Table Data
  *
  * Get statistical inplace volumes data across selected realizations for a given table based on requested results and categories/index filter.
  *
  * Note: This endpoint is a post endpoint because the list of indices with values can be quite large and may exceed the query string limit.
  * As the endpoint is post, the indices with values object is kept for convenience.
  */
-export const postGetAggregatedStatisticalTableDataMutation = (
-    options?: Partial<Options<PostGetAggregatedStatisticalTableDataData_api>>,
+export const postGetAggregatedStatisticalInplaceTableDataMutation = (
+    options?: Partial<Options<PostGetAggregatedStatisticalInplaceTableDataData_api>>,
 ): UseMutationOptions<
-    PostGetAggregatedStatisticalTableDataResponse_api,
-    AxiosError<PostGetAggregatedStatisticalTableDataError_api>,
-    Options<PostGetAggregatedStatisticalTableDataData_api>
+    PostGetAggregatedStatisticalInplaceTableDataResponse_api,
+    AxiosError<PostGetAggregatedStatisticalInplaceTableDataError_api>,
+    Options<PostGetAggregatedStatisticalInplaceTableDataData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        PostGetAggregatedStatisticalTableDataResponse_api,
-        AxiosError<PostGetAggregatedStatisticalTableDataError_api>,
-        Options<PostGetAggregatedStatisticalTableDataData_api>
+        PostGetAggregatedStatisticalInplaceTableDataResponse_api,
+        AxiosError<PostGetAggregatedStatisticalInplaceTableDataError_api>,
+        Options<PostGetAggregatedStatisticalInplaceTableDataData_api>
     > = {
         mutationFn: async (fnOptions) => {
-            const { data } = await postGetAggregatedStatisticalTableData({
+            const { data } = await postGetAggregatedStatisticalInplaceTableData({
                 ...options,
                 ...fnOptions,
                 throwOnError: true,
@@ -1069,6 +988,89 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
         },
         queryKey: getSurfaceDataQueryKey(options),
     });
+
+export const postGetWellTrajectoriesFormationSegmentsQueryKey = (
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api>,
+) => createQueryKey("postGetWellTrajectoriesFormationSegments", options);
+
+/**
+ * Post Get Well Trajectories Formation Segments
+ *
+ * Get well trajectory formation segments.
+ *
+ * Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
+ * formation (area between two surfaces in depth). If bottom surface is not provided, the formation
+ * is considered to extend down to the end of the well trajectory, i.e. end of well trajectory is
+ * used as lower bound for formation.
+ *
+ * For each well trajectory, the segments where the well is within the formation are calculated and
+ * returned. Each segment contains the measured depth (md) values where the well enters and exits
+ * the formation.
+ *
+ * NOTE: Expecting depth surfaces, no verification is done to ensure that the surfaces are indeed
+ * depth surfaces.
+ */
+export const postGetWellTrajectoriesFormationSegmentsOptions = (
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api>,
+) =>
+    queryOptions<
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        AxiosError<PostGetWellTrajectoriesFormationSegmentsError_api>,
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        ReturnType<typeof postGetWellTrajectoriesFormationSegmentsQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postGetWellTrajectoriesFormationSegments({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postGetWellTrajectoriesFormationSegmentsQueryKey(options),
+    });
+
+/**
+ * Post Get Well Trajectories Formation Segments
+ *
+ * Get well trajectory formation segments.
+ *
+ * Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
+ * formation (area between two surfaces in depth). If bottom surface is not provided, the formation
+ * is considered to extend down to the end of the well trajectory, i.e. end of well trajectory is
+ * used as lower bound for formation.
+ *
+ * For each well trajectory, the segments where the well is within the formation are calculated and
+ * returned. Each segment contains the measured depth (md) values where the well enters and exits
+ * the formation.
+ *
+ * NOTE: Expecting depth surfaces, no verification is done to ensure that the surfaces are indeed
+ * depth surfaces.
+ */
+export const postGetWellTrajectoriesFormationSegmentsMutation = (
+    options?: Partial<Options<PostGetWellTrajectoriesFormationSegmentsData_api>>,
+): UseMutationOptions<
+    PostGetWellTrajectoriesFormationSegmentsResponse_api,
+    AxiosError<PostGetWellTrajectoriesFormationSegmentsError_api>,
+    Options<PostGetWellTrajectoriesFormationSegmentsData_api>
+> => {
+    const mutationOptions: UseMutationOptions<
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        AxiosError<PostGetWellTrajectoriesFormationSegmentsError_api>,
+        Options<PostGetWellTrajectoriesFormationSegmentsData_api>
+    > = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postGetWellTrajectoriesFormationSegments({
+                ...options,
+                ...fnOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
 
 export const getStatisticalSurfaceDataHybridQueryKey = (options: Options<GetStatisticalSurfaceDataHybridData_api>) =>
     createQueryKey("getStatisticalSurfaceDataHybrid", options);
@@ -1259,61 +1261,6 @@ export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDat
         queryKey: getMisfitSurfaceDataQueryKey(options),
     });
 
-export const deprecatedGetStratigraphicUnitsQueryKey = (options: Options<DeprecatedGetStratigraphicUnitsData_api>) =>
-    createQueryKey("deprecatedGetStratigraphicUnits", options);
-
-/**
- * Deprecated Get Stratigraphic Units
- *
- * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
- */
-export const deprecatedGetStratigraphicUnitsOptions = (options: Options<DeprecatedGetStratigraphicUnitsData_api>) =>
-    queryOptions<
-        DeprecatedGetStratigraphicUnitsResponse_api,
-        AxiosError<DeprecatedGetStratigraphicUnitsError_api>,
-        DeprecatedGetStratigraphicUnitsResponse_api,
-        ReturnType<typeof deprecatedGetStratigraphicUnitsQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await deprecatedGetStratigraphicUnits({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: deprecatedGetStratigraphicUnitsQueryKey(options),
-    });
-
-export const getStratigraphicUnitsForStratColumnQueryKey = (
-    options: Options<GetStratigraphicUnitsForStratColumnData_api>,
-) => createQueryKey("getStratigraphicUnitsForStratColumn", options);
-
-/**
- * Get Stratigraphic Units For Strat Column
- */
-export const getStratigraphicUnitsForStratColumnOptions = (
-    options: Options<GetStratigraphicUnitsForStratColumnData_api>,
-) =>
-    queryOptions<
-        GetStratigraphicUnitsForStratColumnResponse_api,
-        AxiosError<GetStratigraphicUnitsForStratColumnError_api>,
-        GetStratigraphicUnitsForStratColumnResponse_api,
-        ReturnType<typeof getStratigraphicUnitsForStratColumnQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getStratigraphicUnitsForStratColumn({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getStratigraphicUnitsForStratColumnQueryKey(options),
-    });
-
 export const getParametersAndSensitivitiesQueryKey = (options: Options<GetParametersAndSensitivitiesData_api>) =>
     createQueryKey("getParametersAndSensitivities", options);
 
@@ -1425,6 +1372,8 @@ export const postGetPolylineIntersectionQueryKey = (options: Options<PostGetPoly
 
 /**
  * Post Get Polyline Intersection
+ *
+ * Get the intersection of a polyline with the grid, including intersected cells and interpolated parameter values at intersection points
  */
 export const postGetPolylineIntersectionOptions = (options: Options<PostGetPolylineIntersectionData_api>) =>
     queryOptions<
@@ -1447,6 +1396,8 @@ export const postGetPolylineIntersectionOptions = (options: Options<PostGetPolyl
 
 /**
  * Post Get Polyline Intersection
+ *
+ * Get the intersection of a polyline with the grid, including intersected cells and interpolated parameter values at intersection points
  */
 export const postGetPolylineIntersectionMutation = (
     options?: Partial<Options<PostGetPolylineIntersectionData_api>>,
@@ -1477,6 +1428,8 @@ export const getRealizationFlowNetworkQueryKey = (options: Options<GetRealizatio
 
 /**
  * Get Realization Flow Network
+ *
+ * Get flow network data for single realization
  */
 export const getRealizationFlowNetworkOptions = (options: Options<GetRealizationFlowNetworkData_api>) =>
     queryOptions<
@@ -1551,22 +1504,23 @@ export const getInjectionDataOptions = (options: Options<GetInjectionDataData_ap
         queryKey: getInjectionDataQueryKey(options),
     });
 
-export const getTableDataQueryKey = (options: Options<GetTableDataData_api>) => createQueryKey("getTableData", options);
+export const getPvtTableDataQueryKey = (options: Options<GetPvtTableDataData_api>) =>
+    createQueryKey("getPvtTableData", options);
 
 /**
- * Get Table Data
+ * Get Pvt Table Data
  *
  * Get pvt table data for a given Sumo ensemble and realization
  */
-export const getTableDataOptions = (options: Options<GetTableDataData_api>) =>
+export const getPvtTableDataOptions = (options: Options<GetPvtTableDataData_api>) =>
     queryOptions<
-        GetTableDataResponse_api,
-        AxiosError<GetTableDataError_api>,
-        GetTableDataResponse_api,
-        ReturnType<typeof getTableDataQueryKey>
+        GetPvtTableDataResponse_api,
+        AxiosError<GetPvtTableDataError_api>,
+        GetPvtTableDataResponse_api,
+        ReturnType<typeof getPvtTableDataQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getTableData({
+            const { data } = await getPvtTableData({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1574,7 +1528,7 @@ export const getTableDataOptions = (options: Options<GetTableDataData_api>) =>
             });
             return data;
         },
-        queryKey: getTableDataQueryKey(options),
+        queryKey: getPvtTableDataQueryKey(options),
     });
 
 export const getWellCompletionsDataQueryKey = (options: Options<GetWellCompletionsDataData_api>) =>
@@ -1986,87 +1940,6 @@ export const getSeismicCubeMetaListOptions = (options: Options<GetSeismicCubeMet
         queryKey: getSeismicCubeMetaListQueryKey(options),
     });
 
-export const getInlineSliceQueryKey = (options: Options<GetInlineSliceData_api>) =>
-    createQueryKey("getInlineSlice", options);
-
-/**
- * Get Inline Slice
- *
- * Get a seismic inline from a seismic cube.
- */
-export const getInlineSliceOptions = (options: Options<GetInlineSliceData_api>) =>
-    queryOptions<
-        GetInlineSliceResponse_api,
-        AxiosError<GetInlineSliceError_api>,
-        GetInlineSliceResponse_api,
-        ReturnType<typeof getInlineSliceQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getInlineSlice({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getInlineSliceQueryKey(options),
-    });
-
-export const getCrosslineSliceQueryKey = (options: Options<GetCrosslineSliceData_api>) =>
-    createQueryKey("getCrosslineSlice", options);
-
-/**
- * Get Crossline Slice
- *
- * Get a seismic crossline from a seismic cube.
- */
-export const getCrosslineSliceOptions = (options: Options<GetCrosslineSliceData_api>) =>
-    queryOptions<
-        GetCrosslineSliceResponse_api,
-        AxiosError<GetCrosslineSliceError_api>,
-        GetCrosslineSliceResponse_api,
-        ReturnType<typeof getCrosslineSliceQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getCrosslineSlice({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getCrosslineSliceQueryKey(options),
-    });
-
-export const getDepthSliceQueryKey = (options: Options<GetDepthSliceData_api>) =>
-    createQueryKey("getDepthSlice", options);
-
-/**
- * Get Depth Slice
- *
- * Get a seismic depth slice from a seismic cube.
- */
-export const getDepthSliceOptions = (options: Options<GetDepthSliceData_api>) =>
-    queryOptions<
-        GetDepthSliceResponse_api,
-        AxiosError<GetDepthSliceError_api>,
-        GetDepthSliceResponse_api,
-        ReturnType<typeof getDepthSliceQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getDepthSlice({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getDepthSliceQueryKey(options),
-    });
-
 export const getSeismicSlicesQueryKey = (options: Options<GetSeismicSlicesData_api>) =>
     createQueryKey("getSeismicSlices", options);
 
@@ -2291,21 +2164,23 @@ export const getObservationsOptions = (options: Options<GetObservationsData_api>
         queryKey: getObservationsQueryKey(options),
     });
 
-export const getTableDefinitionQueryKey = (options: Options<GetTableDefinitionData_api>) =>
-    createQueryKey("getTableDefinition", options);
+export const getRftTableDefinitionQueryKey = (options: Options<GetRftTableDefinitionData_api>) =>
+    createQueryKey("getRftTableDefinition", options);
 
 /**
- * Get Table Definition
+ * Get Rft Table Definition
+ *
+ * Get the RFT table definition for a given ensemble.
  */
-export const getTableDefinitionOptions = (options: Options<GetTableDefinitionData_api>) =>
+export const getRftTableDefinitionOptions = (options: Options<GetRftTableDefinitionData_api>) =>
     queryOptions<
-        GetTableDefinitionResponse_api,
-        AxiosError<GetTableDefinitionError_api>,
-        GetTableDefinitionResponse_api,
-        ReturnType<typeof getTableDefinitionQueryKey>
+        GetRftTableDefinitionResponse_api,
+        AxiosError<GetRftTableDefinitionError_api>,
+        GetRftTableDefinitionResponse_api,
+        ReturnType<typeof getRftTableDefinitionQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getTableDefinition({
+            const { data } = await getRftTableDefinition({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -2313,24 +2188,26 @@ export const getTableDefinitionOptions = (options: Options<GetTableDefinitionDat
             });
             return data;
         },
-        queryKey: getTableDefinitionQueryKey(options),
+        queryKey: getRftTableDefinitionQueryKey(options),
     });
 
-export const getRealizationDataQueryKey = (options: Options<GetRealizationDataData_api>) =>
-    createQueryKey("getRealizationData", options);
+export const getRftRealizationDataQueryKey = (options: Options<GetRftRealizationDataData_api>) =>
+    createQueryKey("getRftRealizationData", options);
 
 /**
- * Get Realization Data
+ * Get Rft Realization Data
+ *
+ * Get a list of RFT data per realization, for a given well and response.
  */
-export const getRealizationDataOptions = (options: Options<GetRealizationDataData_api>) =>
+export const getRftRealizationDataOptions = (options: Options<GetRftRealizationDataData_api>) =>
     queryOptions<
-        GetRealizationDataResponse_api,
-        AxiosError<GetRealizationDataError_api>,
-        GetRealizationDataResponse_api,
-        ReturnType<typeof getRealizationDataQueryKey>
+        GetRftRealizationDataResponse_api,
+        AxiosError<GetRftRealizationDataError_api>,
+        GetRftRealizationDataResponse_api,
+        ReturnType<typeof getRftRealizationDataQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getRealizationData({
+            const { data } = await getRftRealizationData({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -2338,7 +2215,7 @@ export const getRealizationDataOptions = (options: Options<GetRealizationDataDat
             });
             return data;
         },
-        queryKey: getRealizationDataQueryKey(options),
+        queryKey: getRftRealizationDataQueryKey(options),
     });
 
 export const getVfpTableNamesQueryKey = (options: Options<GetVfpTableNamesData_api>) =>
@@ -2346,6 +2223,8 @@ export const getVfpTableNamesQueryKey = (options: Options<GetVfpTableNamesData_a
 
 /**
  * Get Vfp Table Names
+ *
+ * Get the available VFP table names for a given ensemble and realization.
  */
 export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData_api>) =>
     queryOptions<
@@ -2370,6 +2249,8 @@ export const getVfpTableQueryKey = (options: Options<GetVfpTableData_api>) => cr
 
 /**
  * Get Vfp Table
+ *
+ * Get the VFP table for a given ensemble, realization and table name.
  */
 export const getVfpTableOptions = (options: Options<GetVfpTableData_api>) =>
     queryOptions<

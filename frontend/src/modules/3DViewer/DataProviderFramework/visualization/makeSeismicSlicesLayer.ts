@@ -11,10 +11,10 @@ import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProvide
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import type {
-    RealizationSeismicSlicesData,
-    RealizationSeismicSlicesSettings,
-    RealizationSeismicSlicesStoredData,
-} from "../customDataProviderImplementations/RealizationSeismicSlicesProvider";
+    SeismicSlicesData,
+    SeismicSlicesSettings,
+    SeismicSlicesStoredData,
+} from "../../../_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/SeismicSlicesProvider";
 
 function predictDepthSliceGeometry(
     seismicCubeMeta: SeismicCubeMeta_api,
@@ -210,11 +210,7 @@ function interpolateTrace(
 }
 
 export function makeSeismicSlicesLayer(
-    args: TransformerArgs<
-        RealizationSeismicSlicesSettings,
-        RealizationSeismicSlicesData,
-        RealizationSeismicSlicesStoredData
-    >,
+    args: TransformerArgs<SeismicSlicesSettings, SeismicSlicesData, SeismicSlicesStoredData>,
 ): Layer<any> | null {
     const { id, name, getData, getSetting, getStoredData, isLoading, getDataValueRange } = args;
     const data = getData();

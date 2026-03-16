@@ -2,9 +2,10 @@ import type { FetchQueryOptions, QueryClient, QueryKey } from "@tanstack/react-q
 import { isCancelledError } from "@tanstack/react-query";
 import { clone, isEqual } from "lodash";
 
+import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import { StatusMessageStoreTopic, type StatusMessage as GenericStatusMessage } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
-import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { ScopedQueryController } from "@lib/utils/ScopedQueryController";
@@ -18,7 +19,7 @@ import {
 } from "../../delegates/SettingsContextDelegate";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { Item } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
@@ -34,6 +35,7 @@ export enum DataProviderTopic {
     SUBORDINATED = "SUBORDINATED",
     REVISION_NUMBER = "REVISION_NUMBER",
     PROGRESS_MESSAGE = "PROGRESS_MESSAGE",
+    STATUS_MESSAGES = "STATUS_MESSAGES",
 }
 
 export enum DataProviderStatus {
@@ -50,24 +52,15 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.SUBORDINATED]: boolean;
     [DataProviderTopic.REVISION_NUMBER]: number;
     [DataProviderTopic.PROGRESS_MESSAGE]: string | null;
+    [DataProviderTopic.STATUS_MESSAGES]: readonly GenericStatusMessage[];
 };
 
+// Using a unique brand to identify DataProvider objects, since instanceof checks won't work due to potential multiple versions of the module.
+// Using Symbol.for to ensure that even if there are multiple versions of the module, they will all reference the same symbol for the brand.
+const DATA_PROVIDER_BRAND = Symbol.for("dpf/data-provider");
+
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
-    if (!isDevMode()) {
-        return obj instanceof DataProvider;
-    }
-
-    if (typeof obj !== "object" || obj === null) {
-        return false;
-    }
-
-    return (
-        Boolean(obj.getType) &&
-        Boolean(obj.getSettingsContextDelegate) &&
-        Boolean(obj.getStatus) &&
-        Boolean(obj.getData) &&
-        Boolean(obj.getError)
-    );
+    return typeof obj === "object" && obj !== null && DATA_PROVIDER_BRAND in obj;
 }
 
 export type DataProviderParams<
@@ -103,6 +96,8 @@ export class DataProvider<
     >
     implements Item, PublishSubscribe<DataProviderPayloads<TData>>
 {
+    private readonly [DATA_PROVIDER_BRAND] = true;
+
     private _type: string;
     private _customDataProviderImpl: CustomDataProviderImplementation<
         TSettings,
@@ -125,12 +120,14 @@ export class DataProvider<
     private _prevSettings: TSettingTypes | null = null;
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
     private _currentTransactionId: number = 0;
-    private _settingsErrorMessages: string[] = [];
     private _revisionNumber: number = 0;
     private _progressMessage: string | null = null;
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
+
+    private _statusWriter = new GenericStatusMessageStore("DataProvider");
+    private _allStatusMessages: GenericStatusMessage[] = [];
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -155,6 +152,22 @@ export class DataProvider<
             instanceName ?? customDataProviderImplementation.getDefaultName(),
             1,
             dataProviderManager,
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "status-writer",
+            this._statusWriter
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(StatusMessageStoreTopic.STATUS_MESSAGES)(() => this.syncAllStatusMessages()),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "settings-context",
+            this._settingsContextDelegate
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingsContextDelegateTopic.STATUS_MESSAGES)(() => {
+                this.syncAllStatusMessages();
+            }),
         );
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -185,18 +198,12 @@ export class DataProvider<
             return true;
         }
 
-        this._settingsErrorMessages = [];
-        const reportError = (message: string) => {
-            this._settingsErrorMessages.push(message);
-        };
-        return this._customDataProviderImpl.areCurrentSettingsValid({ ...this.makeAccessors(), reportError });
-    }
-
-    getSettingsErrorMessages(): string[] {
-        return this._settingsErrorMessages;
+        return this._customDataProviderImpl.areCurrentSettingsValid(this.makeAccessors());
     }
 
     private handleSettingsAndStoredDataChange(): void {
+        this._statusWriter.clear();
+
         if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
             this.setStatus(DataProviderStatus.LOADING);
             return;
@@ -338,6 +345,9 @@ export class DataProvider<
             if (topic === DataProviderTopic.PROGRESS_MESSAGE) {
                 return this._progressMessage;
             }
+            if (topic === DataProviderTopic.STATUS_MESSAGES) {
+                return this._allStatusMessages;
+            }
             throw new Error(`Unknown topic: ${topic}`);
         };
 
@@ -373,7 +383,7 @@ export class DataProvider<
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.PROGRESS_MESSAGE);
     }
 
-    makeAccessors(): DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey> {
+    makeAccessors(): DataProviderAccessors<TSettings, TData, TStoredData, TSettingKey> {
         return {
             getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
             getSettingValueConstraints: (settingName) =>
@@ -383,6 +393,7 @@ export class DataProvider<
             getData: () => this._data,
             getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
             getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
+            getStatusWriter: () => this._statusWriter,
         };
     }
 
@@ -473,7 +484,10 @@ export class DataProvider<
 
     deserializeState(serializedDataProvider: SerializedDataProvider<TSettings, TSettingKey>): void {
         this.getItemDelegate().deserializeState(serializedDataProvider);
-        this._settingsContextDelegate.deserializeSettings(serializedDataProvider.settings);
+        const reportError = (errorMsg: string) => {
+            this.getItemDelegate().reportDeserializationError(errorMsg);
+        };
+        this._settingsContextDelegate.deserializeSettings(serializedDataProvider.settings, reportError);
     }
 
     beforeDestroy(): void {
@@ -507,5 +521,14 @@ export class DataProvider<
 
     private invalidateValueRange(): void {
         this._valueRange = null;
+    }
+
+    private syncAllStatusMessages(): void {
+        const localMessages = this._statusWriter.getMessages();
+        const settingsContextMessages = this._settingsContextDelegate.getStatusMessages();
+
+        this._allStatusMessages = [...localMessages, ...settingsContextMessages];
+
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS_MESSAGES);
     }
 }

@@ -18,7 +18,7 @@ import { Group } from "../framework/Group/Group";
 import type { GroupType } from "../groups/groupTypes";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
 } from "../interfacesAndTypes/customDataProviderImplementation";
 import type {
     CustomGroupImplementation,
@@ -74,7 +74,7 @@ export type TransformerArgs<
     TData,
     TStoredData extends StoredData = Record<string, never>,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = DataProviderInformationAccessors<TSettings, TData, TStoredData> & {
+> = DataProviderAccessors<TSettings, TData, TStoredData> & {
     id: string;
     name: string;
     isLoading: boolean;
@@ -329,6 +329,15 @@ export class VisualizationAssembler<
 
         for (const child of groupDelegate.getChildren()) {
             if (!child.getItemDelegate().isVisible()) {
+                continue;
+            }
+
+            // Skip items with deserialization errors, but count the errors for error badge and opening all descendants with errors functionality
+            if (child.getItemDelegate().getDeserializationErrors().length) {
+                // Include the name of the item with deserialization errors in the error messages
+                aggregatedErrorMessages.push(
+                    `${child.getItemDelegate().getName()}: ${child.getItemDelegate().getDeserializationErrors().join(", ")}`,
+                );
                 continue;
             }
 
