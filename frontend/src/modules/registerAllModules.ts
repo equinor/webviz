@@ -32,6 +32,5 @@ import "./WellLogViewer/registerModule";
         await import("./MyModule2/registerModule");
         await import("./DbgWorkbenchSpy/registerModule");
         await import("./EChartsDemo/registerModule");
-        await import("./InplaceVolumesEcharts/registerModule");
     }
 })();
