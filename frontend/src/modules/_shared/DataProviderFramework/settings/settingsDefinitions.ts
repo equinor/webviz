@@ -74,6 +74,17 @@ export enum Setting {
     FLOW_FILTER = "flowFilter",
 }
 
+enum ProductionPhase {
+    OIL = "oil",
+    GAS = "gas",
+    WATER = "water",
+}
+
+enum InjectionPhase {
+    WATER = "water",
+    GAS = "gas",
+}
+
 /**
  * Defines the structure of each setting type using a three-part value system:
  *
@@ -391,13 +402,13 @@ export type SettingTypeDefinitions = {
     [Setting.FLOW_FILTER]: {
         internalValue: {
             production: {
-                [key in "oil" | "gas" | "water"]: {
+                [key in ProductionPhase]: {
                     value: number;
                     color: string;
                 };
             };
             injection: {
-                [key in "water" | "gas"]: {
+                [key in InjectionPhase]: {
                     value: number;
                     color: string;
                 };
@@ -406,13 +417,10 @@ export type SettingTypeDefinitions = {
         externalValue: SettingTypeDefinitions[Setting.FLOW_FILTER]["internalValue"];
         valueConstraints: {
             production: {
-                oil: number;
-                gas: number;
-                water: number;
+                [key in ProductionPhase]: number;
             };
             injection: {
-                water: number;
-                gas: number;
+                [key in InjectionPhase]: number;
             };
         } | null;
     };
