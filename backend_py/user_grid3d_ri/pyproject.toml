@@ -22,7 +22,7 @@ azure-storage-blob = { version = "12.28.0", extras = ["aio"] }
 
 # From ResInsight's requirements.txt
 protobuf = "^6.33.5"
-grpcio = "^1.78.0"
+grpcio = "1.78.0" # Pin version temporarily to avoid yanked 1.78.1 version
 
 webviz-core-utils = { path = "../libs/core_utils", develop = true }
 webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
