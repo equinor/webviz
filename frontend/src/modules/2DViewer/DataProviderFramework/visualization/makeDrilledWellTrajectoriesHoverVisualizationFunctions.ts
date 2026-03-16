@@ -4,12 +4,12 @@ import type { Point3D } from "@webviz/subsurface-viewer";
 
 import type { WellboreTrajectory_api } from "@api";
 import { HoverTopic } from "@framework/HoverService";
-import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type {
     HoverVisualizationFunctions,
     TransformerArgs,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { ExtendedWellFeature } from "@modules/_shared/types/geojson";
 import { getInterpolatedPositionAtMd, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
 function findWellboreTrajectory(uuid: string | null | undefined, trajectories: WellboreTrajectory_api[]) {
@@ -30,7 +30,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
 
     return {
         [HoverTopic.WELLBORE]: (wellboreUuid) => {
-            const trajectoryData: GeoWellFeature[] = [];
+            const trajectoryData: ExtendedWellFeature[] = [];
             const wellboreTrajectory = findWellboreTrajectory(wellboreUuid, wellboreTrajectories);
 
             if (wellboreTrajectory) {
