@@ -178,12 +178,13 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         }
         return [];
     }, [plotType, numSubplots, numGroups, numRealizations]);
+
     const hasRealizations =
         plotType === PlotType.RealizationScatter || (plotType === PlotType.Timeseries && showRealizations);
+
     const handleHoveredRealizationChange = React.useCallback(
         (info: { realizationId: number; groupKey: string } | null) => {
-            // eslint-disable-next-line no-console
-            console.log("[EChartsDemo] Hovered realization changed:", info);
+            return info; // => Just for demo. To syncedsettings
         },
         [],
     );

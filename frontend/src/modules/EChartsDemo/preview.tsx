@@ -23,7 +23,7 @@ export const preview: DrawPreviewFunc = function (width: number, height: number)
         .reverse()
         .map((v, i) => `${tsX0 + ((fanBot.length - 1 - i) / (fanBot.length - 1)) * tsW},${tsY0 + v * tsH}`)
         .join(" L ");
-    const meanPath = meanY.map((v, i) => `${tsX0 + (i / (meanY.length - 1)) * tsW},${tsY0 + v * tsH}`).join(" L ");
+    const meanPath = meanY.map((v, i) => `${tsX0 + (i / (meanY.length - 1)) * tsW},${tsY0 + v * tsH}`).join(" ");
 
     // --- Top-right: bar chart ---
     const barX0 = hw + pad;
