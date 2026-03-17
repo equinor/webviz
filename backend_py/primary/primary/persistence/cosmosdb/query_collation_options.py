@@ -5,7 +5,6 @@ from typing import Literal, Type, get_args, get_origin
 
 from pydantic import BaseModel
 
-
 LOGGER = logging.getLogger(__name__)
 
 

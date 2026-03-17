@@ -14,7 +14,6 @@ from webviz_services.service_exceptions import (
 from ._helpers import create_sumo_case_async
 from .sumo_client_factory import create_sumo_client
 
-
 LOGGER = logging.getLogger(__name__)
 
 

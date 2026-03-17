@@ -35,7 +35,6 @@ from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import converters, schemas
 
-
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()

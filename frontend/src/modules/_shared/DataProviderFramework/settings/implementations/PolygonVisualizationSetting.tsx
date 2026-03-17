@@ -35,6 +35,28 @@ export class PolygonVisualizationSetting implements StaticSettingImplementation<
         return true;
     }
 
+    isValueValidStructure(value: unknown): value is ValueType {
+        if (value === null) {
+            return true;
+        }
+
+        if (typeof value !== "object" || Array.isArray(value)) {
+            return false;
+        }
+
+        const v = value as Record<string, unknown>;
+        return (
+            typeof v.color === "string" &&
+            typeof v.lineThickness === "number" &&
+            typeof v.lineOpacity === "number" &&
+            typeof v.fill === "boolean" &&
+            typeof v.fillOpacity === "number" &&
+            typeof v.showLabels === "boolean" &&
+            typeof v.labelPosition === "string" &&
+            typeof v.labelColor === "string"
+        );
+    }
+
     isValueValid(value: ValueType): boolean {
         if (!value) return false;
 
