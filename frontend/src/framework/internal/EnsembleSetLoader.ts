@@ -11,6 +11,7 @@ import { SensitivityType_api, getEnsembleDetailsOptions, getParametersAndSensiti
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
+import type { FipRegionMapping } from "@framework/EnsembleFipRegionsMapping";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { createDeltaEnsembleDisplayName, createRegularEnsembleDisplayName } from "@framework/utils/ensembleUiHelpers";
 import { calcFnv1aHash } from "@lib/utils/hashUtils";
@@ -24,7 +25,6 @@ import { RegularEnsemble } from "../RegularEnsemble";
 import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
-import type { FipRegionMapping } from "@framework/EnsembleFipRegionsMapping";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;

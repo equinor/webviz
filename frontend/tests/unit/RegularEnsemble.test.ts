@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
 
+import type { FipRegionMapping } from "@framework/EnsembleFipRegionsMapping";
 import type { Parameter } from "@framework/EnsembleParameters";
 import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters";
 import type { Sensitivity } from "@framework/EnsembleSensitivities";
 import { EnsembleSensitivities, SensitivityType } from "@framework/EnsembleSensitivities";
-import type { FipRegionMapping } from "@framework/EnsembleFipRegionsMapping";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
 describe("RegularEnsemble", () => {
