@@ -5,6 +5,7 @@ import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters
 import type { Sensitivity } from "@framework/EnsembleSensitivities";
 import { EnsembleSensitivities, SensitivityType } from "@framework/EnsembleSensitivities";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { FipMapping } from "@framework/EnsembleFipMapping";
 
 describe("RegularEnsemble", () => {
     const fieldIdentifier = "field1";
@@ -26,6 +27,7 @@ describe("RegularEnsemble", () => {
         },
     ];
     const sensitivityArray: Sensitivity[] = [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }];
+    const fipArray: FipMapping[] = [];
     const color = "red";
     const customName = "customName1";
 
@@ -38,6 +40,7 @@ describe("RegularEnsemble", () => {
         realizationsArray,
         parameterArray,
         sensitivityArray,
+        fipArray,
         color,
         customName,
     );
@@ -115,6 +118,7 @@ describe("RegularEnsemble", () => {
             realizationsArray,
             parameterArray,
             sensitivityArray,
+            fipArray,
             color,
         );
         expect(ensemble.getDisplayName()).toBe(`${ensembleName} (${caseName})`);

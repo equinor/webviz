@@ -4,7 +4,7 @@ export interface FipMapping {
     readonly region: string;
 }
 
-export class EnsembleFipMapper {
+export class EnsembleFipMapping {
     private _data: FipMapping[];
     // Composite key: "zone|region" -> fipNumber
     private _zoneRegionToFip = new Map<string, number>();

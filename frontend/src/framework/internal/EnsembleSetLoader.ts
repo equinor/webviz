@@ -24,7 +24,7 @@ import { RegularEnsemble } from "../RegularEnsemble";
 import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
-import { FipMapping } from "@framework/EnsembleFipMapper";
+import { FipMapping } from "@framework/EnsembleFipMapping";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;
