@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"surface_query/legacyserver"
+	"surface_query/syncserver"
 	"time"
 
 	"github.com/lmittmann/tint"
@@ -17,7 +18,7 @@ func main() {
 
 	serverMode := os.Getenv("SURFACE_QUERY_SERVER_MODE")
 	if serverMode == "" {
-		serverMode = "legacyserver"
+		serverMode = "syncserver"
 	}
 
 	logger.Info(fmt.Sprintf("Launching surface query service in serverMode: %v", serverMode))
@@ -37,10 +38,13 @@ func main() {
 	logger.Info(fmt.Sprintf("Go runtime version: %v", goRuntimeVersion))
 
 	switch serverMode {
+	case "syncserver":
+		syncserver.Run()
+		os.Exit(0)
 	case "legacyserver":
 		legacyserver.Run()
 		os.Exit(0)
 	default:
-		panic("SURFACE_QUERY_SERVER_MODE must be one: legacyserver")
+		panic("SURFACE_QUERY_SERVER_MODE must be one of: syncserver, legacyserver")
 	}
 }

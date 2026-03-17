@@ -46,8 +46,17 @@ services:
     build:
       context: .
       dockerfile: ./backend_go/surface-query-dev.Dockerfile
-    ports:
-      - 5001:5001
+    environment:
+      - SURFACE_QUERY_SERVER_MODE=syncserver
+    volumes:
+      - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
+
+  surface-query-legacy:
+    build:
+      context: .
+      dockerfile: ./backend_go/surface-query-dev.Dockerfile
+    environment:
+      - SURFACE_QUERY_SERVER_MODE=legacyserver
     volumes:
       - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
 
