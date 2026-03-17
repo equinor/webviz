@@ -190,6 +190,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     );
     const { chartRef, onChartEvents } = useTimeseriesInteractions({
         enableLinkedHover: hasRealizations,
+        enableClosestRealizationTooltip: plotType === PlotType.Timeseries && showRealizations && !showStatistics,
         timestamps,
         activeTimestampUtcMs,
         setActiveTimestampUtcMs,

@@ -3,6 +3,7 @@ import React from "react";
 import type ReactECharts from "echarts-for-react";
 
 import { useClickToTimestamp } from "./useClickToTimestamp";
+import { useClosestRealizationTooltip } from "./useClosestRealizationTooltip";
 import { useHighlightOnHover } from "./useHighlightOnHover";
 import type { HighlightOnHoverEvents, HoveredRealizationInfo } from "./useHighlightOnHover";
 
@@ -21,6 +22,8 @@ export type TimeseriesInteractionConfig = {
     onHoveredRealizationChange?: (info: HoveredRealizationInfo | null) => void;
     /** Externally-driven highlighted realization (e.g. from another module via synced settings). */
     externalHoveredRealization?: HoveredRealizationInfo | null;
+    /** Show only the nearest realization tooltip while hovering the empty chart area. */
+    enableClosestRealizationTooltip?: boolean;
 };
 
 export type TimeseriesInteractionResult = {
@@ -48,6 +51,12 @@ export function useTimeseriesInteractions(config: TimeseriesInteractionConfig): 
         config.timestamps,
         config.activeTimestampUtcMs,
         config.setActiveTimestampUtcMs,
+        config.layoutDependency,
+    );
+    useClosestRealizationTooltip(
+        chartRef,
+        config.enableClosestRealizationTooltip ?? false,
+        config.timestamps,
         config.layoutDependency,
     );
 

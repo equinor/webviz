@@ -25,14 +25,14 @@ type ParsedStatisticSeries = {
 export function buildTimeseriesTooltip(config: TimeseriesDisplayConfig) {
     return config.showStatistics
         ? {
-              trigger: "axis" as const,
-              formatter: formatStatisticsAxisTooltip,
-              axisPointer: { type: "cross" as const },
-          }
+            trigger: "axis" as const,
+            formatter: formatStatisticsAxisTooltip,
+            axisPointer: { type: "cross" as const },
+        }
         : {
-              trigger: "item" as const,
-              formatter: formatRealizationItemTooltip,
-          };
+            trigger: "item" as const,
+            formatter: formatRealizationItemTooltip,
+        };
 }
 
 export function formatStatisticsAxisTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
@@ -85,17 +85,15 @@ export function formatRealizationItemTooltip(params: CallbackDataParams | Callba
     if (!p) return "";
 
     const seriesId = typeof p.seriesId === "string" ? p.seriesId : "";
-    const realId = getRealizationId(seriesId);
-    const name = realId != null ? `Realization ${realId}` : (p.seriesName ?? "");
     const axisValue = String((p as AxisTooltipParams).axisValue ?? p.name ?? "");
 
-    return formatCompactTooltip(axisValue, [
-        {
-            label: name,
-            value: formatNumber(extractNumericValue(p.value)),
-            color: typeof p.color === "string" ? p.color : undefined,
-        },
-    ]);
+    return formatRealizationTooltipContent({
+        axisValue,
+        seriesName: p.seriesName ?? "",
+        seriesId,
+        value: extractNumericValue(p.value),
+        color: typeof p.color === "string" ? p.color : undefined,
+    });
 }
 
 export function formatObservationTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
@@ -186,4 +184,23 @@ function firstFiniteNumber(...values: Array<number | undefined>): number | null 
         if (typeof value === "number" && Number.isFinite(value)) return value;
     }
     return null;
+}
+
+export function formatRealizationTooltipContent(input: {
+    axisValue: string;
+    seriesName: string;
+    seriesId: string;
+    value: number;
+    color?: string;
+}): string {
+    const realId = getRealizationId(input.seriesId);
+    const name = realId != null ? `Realization ${realId}` : input.seriesName;
+
+    return formatCompactTooltip(input.axisValue, [
+        {
+            label: name,
+            value: formatNumber(input.value),
+            color: input.color,
+        },
+    ]);
 }
