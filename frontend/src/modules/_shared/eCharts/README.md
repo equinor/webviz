@@ -53,19 +53,11 @@ Rules:
 - Do not inline tooltip formatter logic in builders or series files.
 - Re-export public tooltip helpers from `interaction/index.ts`.
 
-### Current Chart Family Pattern
+Common exceptions:
 
-| Chart family        | Primary tooltip owner               | Notes                                                                                                       |
-| ------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Timeseries          | Builder + observation series        | Builder switches between axis/item tooltip policy; observation series keeps its own item tooltip content.   |
-| Bar                 | Builder + mean helper series        | Builder owns axis tooltip; the mean reference line uses an item tooltip helper from the bar tooltip module. |
-| Histogram           | Series via histogram tooltip module | Custom bars and rug points are item-only and delegate to histogram tooltip formatter factories.             |
-| Heatmap             | Builder                             | Builder owns item tooltip policy and heatmap-specific rendering.                                            |
-| Convergence         | Builder + helper-series suppression | Builder owns axis tooltip policy; custom band suppresses tooltips.                                          |
-| Exceedance          | Builder                             | Builder owns y-axis hover semantics and formatter selection.                                                |
-| Percentile range    | Series via percentile tooltip module | Glyph and realization points are item-only and delegate to percentile tooltip formatter factories.          |
-| Density             | Default/global                      | No custom formatter unless future requirements demand one.                                                  |
-| Realization scatter | Builder                             | Builder owns item tooltip policy and renderer selection.                                                    |
+- Timeseries uses builder-owned policy plus item-level observation tooltips.
+- Histogram and percentile range are item-heavy and rely on series-level formatters from their chart-family tooltip modules.
+- Helper series such as bands/fancharts should usually suppress tooltips with `tooltip.show = false`.
 
 ## Core Conventions
 
