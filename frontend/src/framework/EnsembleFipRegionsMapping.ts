@@ -1,17 +1,17 @@
-export interface FipMapping {
+export interface FipRegionMapping {
     readonly fipNumber: number;
     readonly zone: string;
     readonly region: string;
 }
 
-export class EnsembleFipMapping {
-    private _data: FipMapping[];
+export class EnsembleFipRegionsMapping {
+    private _data: FipRegionMapping[];
     // Composite key: "zone|region" -> fipNumber
     private _zoneRegionToFip = new Map<string, number>();
     // fipNumber -> {zone, region}
     private _fipToZoneRegion = new Map<number, { zone: string; region: string }>();
 
-    constructor(data: FipMapping[]) {
+    constructor(data: FipRegionMapping[]) {
         this._data = data;
         data.forEach((item) => {
             this._zoneRegionToFip.set(`${item.zone}|${item.region}`, item.fipNumber);
@@ -77,7 +77,7 @@ export class EnsembleFipMapping {
     /**
      * Get the raw FIP mapping array.
      */
-    getFipMappingArr(): readonly FipMapping[] {
+    getFipRegionsMappingArr(): readonly FipRegionMapping[] {
         return this._data;
     }
 }

@@ -88,10 +88,10 @@ async def get_ensemble_details(
         raise NotImplementedError("Multiple field identifiers not supported")
 
     fip_regions: List[schemas.FipRegion] = []
+    fip_regions_mapping = await case_inspector.get_fip_regions_mapping_async(ensemble_name)
 
-    fip_mapping = await case_inspector.get_fip_mapping(ensemble_name)
-    if fip_mapping is not None:
-        for mapping in fip_mapping.root:
+    if fip_regions_mapping is not None:
+        for mapping in fip_regions_mapping.root:
             fip_regions.append(schemas.FipRegion(fipNumber=mapping.FIPNUM, zone=mapping.ZONE, region=mapping.REGION))
 
     return schemas.EnsembleDetails(

@@ -5,7 +5,7 @@ import type {
     EnsembleParameter_api,
     EnsembleParametersAndSensitivities_api,
     EnsembleSensitivity_api,
-    FipRegion_api
+    FipRegion_api,
 } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersAndSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
@@ -24,7 +24,7 @@ import { RegularEnsemble } from "../RegularEnsemble";
 import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
-import { FipMapping } from "@framework/EnsembleFipMapping";
+import type { FipRegionMapping } from "@framework/EnsembleFipRegionsMapping";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;
@@ -135,7 +135,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 
         const parameterArray = buildParameterArrFromApiResponse(ensembleApiData.parameters);
         const sensitivityArray = buildSensitivityArrFromApiResponse(ensembleApiData.sensitivities);
-        const fipMappingArray = buildFipMappingArrFromApiResponse(ensembleApiData.ensembleDetails.fipRegions);
+        const fipRegionsMappingArray = buildFipRegionsMappingArrFromApiResponse(ensembleApiData.ensembleDetails.fipRegions);
         outEnsembleArray.push(
             new RegularEnsemble(
                 ensembleApiData.ensembleDetails.fieldIdentifier,
@@ -146,7 +146,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                 ensembleApiData.ensembleDetails.realizations,
                 parameterArray,
                 sensitivityArray,
-                fipMappingArray,
+                fipRegionsMappingArray,
                 ensembleSetting.color,
                 ensembleSetting.customName,
             ),
@@ -158,7 +158,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     const outDeltaEnsembleArray: DeltaEnsemble[] = [];
     const emptyParameterArray: Parameter[] = [];
     const nullSensitivityArray = null;
-    const emptyFipMappingArray: FipMapping[] = [];
+    const emptyFipRegionsMappingArray: FipRegionMapping[] = [];
     const emptyColor = "";
     for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
         const comparisonEnsembleIdentString = deltaEnsembleSetting.comparisonEnsembleIdent.toString();
@@ -217,7 +217,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                 comparisonEnsembleApiData.ensembleDetails.realizations,
                 emptyParameterArray,
                 nullSensitivityArray,
-                emptyFipMappingArray,
+                emptyFipRegionsMappingArray,
                 emptyColor,
                 comparisonEnsembleCustomName,
             );
@@ -233,7 +233,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                 referenceEnsembleApiData.ensembleDetails.realizations,
                 emptyParameterArray,
                 nullSensitivityArray,
-                emptyFipMappingArray,
+                emptyFipRegionsMappingArray,
                 emptyColor,
                 referenceEnsembleCustomName,
             );
@@ -447,7 +447,7 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
     return retParameterArray;
 }
 
-function buildFipMappingArrFromApiResponse(apiFipRegionArray: FipRegion_api[]): FipMapping[] {
+function buildFipRegionsMappingArrFromApiResponse(apiFipRegionArray: FipRegion_api[]): FipRegionMapping[] {
     return apiFipRegionArray.map((apiItem) => ({
         fipNumber: apiItem.fipNumber,
         zone: apiItem.zone,

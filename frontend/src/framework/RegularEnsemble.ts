@@ -1,4 +1,5 @@
-import { EnsembleFipMapping, FipMapping } from "./EnsembleFipMapping";
+import { EnsembleFipRegionsMapping } from "./EnsembleFipRegionsMapping";
+import type { FipRegionMapping } from "./EnsembleFipRegionsMapping";
 import type { Parameter } from "./EnsembleParameters";
 import { EnsembleParameters } from "./EnsembleParameters";
 import type { Sensitivity } from "./EnsembleSensitivities";
@@ -14,7 +15,7 @@ export class RegularEnsemble {
     private _realizationsArray: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
-    private _fipMapping: EnsembleFipMapping;
+    private _fipRegionsMapping: EnsembleFipRegionsMapping;
     private _color: string;
     private _customName: string | null;
 
@@ -27,7 +28,7 @@ export class RegularEnsemble {
         realizationsArray: number[],
         parameterArray: Parameter[],
         sensitivityArray: Sensitivity[] | null,
-        fipMappingArray: FipMapping[] | null,
+        fipRegionsMappingArray: FipRegionMapping[] | null,
         color: string,
         customName: string | null = null,
     ) {
@@ -37,7 +38,7 @@ export class RegularEnsemble {
         this._stratigraphicColumnIdentifier = stratigraphicColumnIdentifier;
         this._realizationsArray = Array.from(realizationsArray).sort((a, b) => a - b);
         this._parameters = new EnsembleParameters(parameterArray);
-        this._fipMapping = new EnsembleFipMapping(fipMappingArray ?? []);
+        this._fipRegionsMapping = new EnsembleFipRegionsMapping(fipRegionsMappingArray ?? []);
         this._color = color;
         this._customName = customName;
 
@@ -98,8 +99,8 @@ export class RegularEnsemble {
     getSensitivities(): EnsembleSensitivities | null {
         return this._sensitivities;
     }
-    getFipMapping(): EnsembleFipMapping {
-        return this._fipMapping;
+    getFipRegionsMapping(): EnsembleFipRegionsMapping {
+        return this._fipRegionsMapping;
     }
     getColor(): string {
         return this._color;
