@@ -203,17 +203,22 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <div ref={containerRef} className="w-full h-full overflow-auto">
-            {containerSize.width > 0 && containerSize.height > 0 && (
-                <div style={{ height: chartHeight, width: "100%" }}>
-                    <ReactECharts
-                        ref={chartRef}
-                        option={echartsOptions}
-                        style={{ height: "100%", width: "100%" }}
-                        onEvents={onChartEvents}
-                        notMerge
-                    />
-                </div>
-            )}
+            <div
+                style={{
+                    height: chartHeight,
+                    width: "100%",
+                    minHeight: ROW_HEIGHT_PX,
+                    minWidth: 100,
+                }}
+            >
+                <ReactECharts
+                    ref={chartRef}
+                    option={echartsOptions}
+                    style={{ height: "100%", width: "100%" }}
+                    onEvents={onChartEvents}
+                    notMerge
+                />
+            </div>
         </div>
     );
 }
