@@ -65,9 +65,9 @@ export function buildCartesianSubplotChart<T>(
 
     const axes = buildSubplotAxes(layout, axisDefs);
 
-    if (sharedXAxis) linkValueAxes(axes.xAxes);
-    if (sharedYAxis) linkValueAxes(axes.yAxes);
     if (postProcessAxes) postProcessAxes(axes, allSeries);
+    if (sharedXAxis) linkValueAxes(axes.xAxes, allSeries, "x");
+    if (sharedYAxis) linkValueAxes(axes.yAxes, allSeries, "y");
 
     return composeChartOption(layout, axes, {
         series: allSeries,
@@ -81,48 +81,136 @@ export function buildCartesianSubplotChart<T>(
  * Force all value-type axes in the array to share the same min/max range.
  * Category axes are skipped since they share range via their data array.
  */
-
-// TODO: THIS IS A HACK. FIX by getting ranges from series and computing global min/max at build time, then setting explicit min/max on all axes. The current approach relies on ECharts calling the min/max functions in a way that allows them to share state, which is brittle and may not work in all cases (e.g. if ECharts changes its internal implementation).
-function linkValueAxes(axes: SubplotAxesResult["xAxes"]): void {
-    const valueAxes = axes.filter((a) => a.type === "value");
+function linkValueAxes(
+    axes: SubplotAxesResult["xAxes"],
+    allSeries: ChartSeriesOption[],
+    direction: "x" | "y",
+): void {
+    const valueAxes = axes.flatMap((axis, axisIndex) => (axis.type === "value" ? [{ axis, axisIndex }] : []));
     if (valueAxes.length < 2) return;
 
-    // Collect any explicitly-set min/max values across all axes
     let globalMin = Infinity;
     let globalMax = -Infinity;
 
-    for (const axis of valueAxes) {
-        if (typeof axis.min === "number") globalMin = Math.min(globalMin, axis.min);
-        if (typeof axis.max === "number") globalMax = Math.max(globalMax, axis.max);
-    }
+    for (const { axis, axisIndex } of valueAxes) {
+        const seriesExtent = computeAxisExtent(allSeries, axisIndex, direction);
+        const axisMin = typeof axis.min === "number" ? axis.min : seriesExtent?.min;
+        const axisMax = typeof axis.max === "number" ? axis.max : seriesExtent?.max;
 
-    // If no explicit ranges exist, let ECharts compute per-axis then unify via a
-    // function that returns "dataMin"/"dataMax" — but ECharts doesn't cross-reference
-    // axes. The only reliable way is to set a shared min/max function.
-    // We use the special ECharts callback form that will be called with the computed
-    // extent from each axis's own data.
-    if (!Number.isFinite(globalMin) || !Number.isFinite(globalMax)) {
-        // Use ECharts' special "dataMin"/"dataMax" strings — these unify only within
-        // a single axis. To truly share across axes we need a two-pass approach:
-        // first let ECharts compute, then update. Since we're building options
-        // (not running in a live chart), we set functions that will be called at
-        // render time and track the global extent.
-        const sharedExtent = { min: Infinity, max: -Infinity };
-
-        for (const axis of valueAxes) {
-            axis.min = ((value: { min: number; max: number }) => {
-                sharedExtent.min = Math.min(sharedExtent.min, value.min);
-                return sharedExtent.min;
-            }) as unknown as number;
-            axis.max = ((value: { min: number; max: number }) => {
-                sharedExtent.max = Math.max(sharedExtent.max, value.max);
-                return sharedExtent.max;
-            }) as unknown as number;
+        if (typeof axisMin === "number" && Number.isFinite(axisMin)) {
+            globalMin = Math.min(globalMin, axisMin);
         }
-    } else {
-        for (const axis of valueAxes) {
-            axis.min = globalMin;
-            axis.max = globalMax;
+        if (typeof axisMax === "number" && Number.isFinite(axisMax)) {
+            globalMax = Math.max(globalMax, axisMax);
         }
     }
+
+    if (!Number.isFinite(globalMin) || !Number.isFinite(globalMax)) return;
+
+    for (const { axis } of valueAxes) {
+        axis.min = globalMin;
+        axis.max = globalMax;
+    }
+}
+
+type NumericExtent = {
+    min: number;
+    max: number;
+};
+
+function computeAxisExtent(
+    allSeries: ChartSeriesOption[],
+    axisIndex: number,
+    direction: "x" | "y",
+): NumericExtent | null {
+    let min = Infinity;
+    let max = -Infinity;
+
+    for (const series of allSeries) {
+        if (getSeriesAxisIndex(series, direction) !== axisIndex) continue;
+
+        const extent = computeSeriesExtent(series, direction);
+        if (!extent) continue;
+
+        min = Math.min(min, extent.min);
+        max = Math.max(max, extent.max);
+    }
+
+    return Number.isFinite(min) && Number.isFinite(max) ? { min, max } : null;
+}
+
+function computeSeriesExtent(series: ChartSeriesOption, direction: "x" | "y"): NumericExtent | null {
+    const data = getSeriesData(series);
+    if (data.length === 0) return null;
+
+    const encodedIndices = getEncodedIndices(series, direction);
+    let min = Infinity;
+    let max = -Infinity;
+
+    for (const datum of data) {
+        const values = extractDatumValues(datum, direction, encodedIndices);
+        for (const value of values) {
+            min = Math.min(min, value);
+            max = Math.max(max, value);
+        }
+    }
+
+    return Number.isFinite(min) && Number.isFinite(max) ? { min, max } : null;
+}
+
+function getSeriesAxisIndex(series: ChartSeriesOption, direction: "x" | "y"): number {
+    const rawIndex =
+        direction === "x" ? (series as { xAxisIndex?: unknown }).xAxisIndex : (series as { yAxisIndex?: unknown }).yAxisIndex;
+
+    return typeof rawIndex === "number" && Number.isFinite(rawIndex) ? rawIndex : 0;
+}
+
+function getSeriesData(series: ChartSeriesOption): unknown[] {
+    const rawData = (series as { data?: unknown }).data;
+    return Array.isArray(rawData) ? rawData : [];
+}
+
+function getEncodedIndices(series: ChartSeriesOption, direction: "x" | "y"): number[] | null {
+    const encode = (series as { encode?: { x?: unknown; y?: unknown } }).encode;
+    const rawIndices = direction === "x" ? encode?.x : encode?.y;
+    if (rawIndices == null) return null;
+
+    const indices = (Array.isArray(rawIndices) ? rawIndices : [rawIndices]).filter(
+        (value): value is number => typeof value === "number" && Number.isFinite(value),
+    );
+
+    return indices.length > 0 ? indices : null;
+}
+
+function extractDatumValues(datum: unknown, direction: "x" | "y", encodedIndices: number[] | null): number[] {
+    const value = extractDatumValue(datum);
+    if (typeof value === "number") {
+        return direction === "y" && Number.isFinite(value) ? [value] : [];
+    }
+    if (!Array.isArray(value)) return [];
+
+    const indices = encodedIndices ?? getDefaultArrayIndices(value, direction);
+    const numericValues: number[] = [];
+
+    for (const index of indices) {
+        const candidate = Number(value[index]);
+        if (Number.isFinite(candidate)) {
+            numericValues.push(candidate);
+        }
+    }
+
+    return numericValues;
+}
+
+function extractDatumValue(datum: unknown): unknown {
+    if (datum && typeof datum === "object" && "value" in datum) {
+        return (datum as { value?: unknown }).value;
+    }
+    return datum;
+}
+
+function getDefaultArrayIndices(value: unknown[], direction: "x" | "y"): number[] {
+    if (value.length === 0) return [];
+    if (value.length === 1) return direction === "y" ? [0] : [];
+    return direction === "x" ? [0] : [1];
 }
