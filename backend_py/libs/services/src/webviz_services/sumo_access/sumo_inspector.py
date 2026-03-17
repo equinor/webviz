@@ -8,7 +8,6 @@ from webviz_core_utils.perf_metrics import PerfMetrics
 
 from .sumo_client_factory import create_sumo_client
 
-
 LOGGER = logging.getLogger(__name__)
 
 
