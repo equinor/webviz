@@ -12,6 +12,7 @@ import { debounce, isEqual, uniqBy } from "lodash";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import { PositionReadout, type PositionCoordinates } from "@modules/_shared/components/PositionReadout";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
@@ -22,7 +23,6 @@ import {
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
-import { PositionReadout } from "./PositionReadout";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import {
     SubsurfaceViewerWithCameraState,
@@ -60,7 +60,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const ctx = useDpfSubsurfaceViewerContext();
     const id = React.useId();
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
-    const [pickingCoordinate, setPickingCoordinate] = React.useState<number[]>([]);
+    const [pickingCoordinate, setPickingCoordinate] = React.useState<PositionCoordinates | null>(null);
     const [pickingInfoPerView, setPickingInfoPerView] = React.useState<Record<string, PickingInfoWithStaleInfo[]>>({});
     const [readoutMode, setReadoutMode] = React.useState<"hover" | "click">("hover");
 
@@ -182,7 +182,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const clearReadout = React.useCallback(
         function clearReadout() {
             setPickingInfoPerView({});
-            setPickingCoordinate([]);
+            setPickingCoordinate(null);
             onViewerHover?.(null);
             onViewportHover?.(null);
             onPickingInfoChange?.({});
@@ -210,8 +210,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 return;
             }
 
-            const coordinate = event.infos[0]?.coordinate ?? [];
-            setPickingCoordinate(coordinate);
+            const coordinate = event.infos[0]?.coordinate ?? undefined;
+            const pickingCoordinate = coordinate ? { x: coordinate[0], y: coordinate[1], z: coordinate[2] } : null;
+            setPickingCoordinate(pickingCoordinate);
 
             // Cancel any pending debounced picking
             debouncedMultiViewPicking.cancel();
@@ -278,7 +279,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onViewerHover?.(event);
             onViewportHover?.(null);
 
-            setPickingCoordinate(event.infos[0]?.coordinate ?? []);
+            const coordinate = event.infos[0]?.coordinate ?? undefined;
+            const pickingCoordinate = coordinate ? { x: coordinate[0], y: coordinate[1], z: coordinate[2] } : null;
+            setPickingCoordinate(pickingCoordinate);
 
             const pickingInfoWithCoordinates = event.infos.find((pick) => pick.coordinate?.length);
             if (!pickingInfoWithCoordinates?.coordinate) {
@@ -433,7 +436,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            <PositionReadout coordinate={pickingCoordinate} visible={!hideReadout} />
+            <PositionReadout coordinates={pickingCoordinate} visible={!hideReadout} />
             <SubsurfaceViewerWithCameraState
                 {...deckGlProps}
                 layers={layersWithOverlay}

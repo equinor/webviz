@@ -133,6 +133,7 @@ export type EsvIntersectionProps = {
     highlightItems?: HighlightItem[];
     onReadout?: (event: EsvIntersectionReadoutEvent) => void;
     onViewportChange?: (viewport: Viewport) => void;
+    onMousePositionChange?: (position: { x: number; y: number } | null) => void;
 };
 
 function makeLayer<T extends keyof LayerDataTypeMap>(
@@ -210,7 +211,7 @@ function isPixiLayer(layer: Layer<unknown>): boolean {
 }
 
 export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
-    const { onReadout, onViewportChange } = props;
+    const { onReadout, onViewportChange, onMousePositionChange } = props;
 
     const [prevAxesOptions, setPrevAxesOptions] = React.useState<AxisOptions | undefined>(undefined);
     const [prevIntersectionReferenceSystem, setPrevIntersectionReferenceSystem] = React.useState<
@@ -519,6 +520,38 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             };
         },
         [onReadout, interactionHandler],
+    );
+
+    React.useEffect(
+        function handleMousePositionTracking() {
+            if (!esvController || !onMousePositionChange || !containerRef.current) {
+                return;
+            }
+
+            const container = containerRef.current;
+            const controller = esvController;
+
+            function handleMouseMove(event: MouseEvent) {
+                const { xScale, yScale } = controller.currentStateAsEvent;
+                const rect = container.getBoundingClientRect();
+                const pixelX = event.clientX - rect.left;
+                const pixelY = event.clientY - rect.top;
+                onMousePositionChange!({ x: xScale.invert(pixelX), y: yScale.invert(pixelY) });
+            }
+
+            function handleMouseLeave() {
+                onMousePositionChange!(null);
+            }
+
+            container.addEventListener("mousemove", handleMouseMove);
+            container.addEventListener("mouseleave", handleMouseLeave);
+
+            return () => {
+                container.removeEventListener("mousemove", handleMouseMove);
+                container.removeEventListener("mouseleave", handleMouseLeave);
+            };
+        },
+        [esvController, onMousePositionChange],
     );
 
     React.useEffect(

@@ -16,7 +16,7 @@ import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import { positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
 import type { DeckGlInstanceManager } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
-import type { Polyline, PolylinesPlugin } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
+import type { PolylinesPlugin } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { PolylineEditingMode, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { getHoverDataInPicks } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
@@ -58,12 +58,8 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
 
     const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
     const pickingRayLayers = usePickingRayLayers(unscaledCoordinatesPerView, false);
-
-    const polylineEditingMode = usePublishSubscribeTopicValue(props.polylinesPlugin, PolylinesPluginTopic.EDITING_MODE);
-    const availablePolylines = usePublishSubscribeTopicValue(props.polylinesPlugin, PolylinesPluginTopic.POLYLINES);
     const polylineHoverMarkerLayer = usePolylineHoverMarkerLayer(
-        availablePolylines,
-        polylineEditingMode,
+        props.polylinesPlugin,
         ctx.hoverService,
         ctx.moduleInstanceId,
     );
@@ -198,12 +194,13 @@ function useCrosshairLayer(
 const POLYLINE_HOVER_MARKER_LAYER_ID = "polyline-hover-marker";
 
 function usePolylineHoverMarkerLayer(
-    availablePolylines: Polyline[],
-    polylineEditingMode: PolylineEditingMode,
+    polylinesPlugin: PolylinesPlugin,
     hoverService: HoverService,
     instanceId: string,
 ): ScatterplotLayer {
     const hovered = useHoverValue(HoverTopic.POLYLINE_LENGTH_ALONG, hoverService, instanceId);
+    const polylineEditingMode = usePublishSubscribeTopicValue(polylinesPlugin, PolylinesPluginTopic.EDITING_MODE);
+    const availablePolylines = usePublishSubscribeTopicValue(polylinesPlugin, PolylinesPluginTopic.POLYLINES);
 
     let position: [number, number, number] | null = null;
     if (polylineEditingMode !== PolylineEditingMode.DISABLED && hovered) {
