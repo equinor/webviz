@@ -1,3 +1,4 @@
+import { EnsembleFipMapper, FipMapping } from "./EnsembleFipMapper";
 import type { Parameter } from "./EnsembleParameters";
 import { EnsembleParameters } from "./EnsembleParameters";
 import type { Sensitivity } from "./EnsembleSensitivities";
@@ -13,6 +14,7 @@ export class RegularEnsemble {
     private _realizationsArray: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
+    private _fipMapping: EnsembleFipMapper;
     private _color: string;
     private _customName: string | null;
 
@@ -25,6 +27,7 @@ export class RegularEnsemble {
         realizationsArray: number[],
         parameterArray: Parameter[],
         sensitivityArray: Sensitivity[] | null,
+        fipMappingArray: FipMapping[] | null,
         color: string,
         customName: string | null = null,
     ) {
@@ -34,6 +37,7 @@ export class RegularEnsemble {
         this._stratigraphicColumnIdentifier = stratigraphicColumnIdentifier;
         this._realizationsArray = Array.from(realizationsArray).sort((a, b) => a - b);
         this._parameters = new EnsembleParameters(parameterArray);
+        this._fipMapping = new EnsembleFipMapper(fipMappingArray ?? []);
         this._color = color;
         this._customName = customName;
 
@@ -94,7 +98,9 @@ export class RegularEnsemble {
     getSensitivities(): EnsembleSensitivities | null {
         return this._sensitivities;
     }
-
+    getFipMapping(): EnsembleFipMapper {
+        return this._fipMapping;
+    }
     getColor(): string {
         return this._color;
     }
