@@ -2,15 +2,16 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { getRealizationId, parseSeriesId } from "../utils/seriesId";
+import type { TimeseriesDisplayConfig } from "../../types";
+import { getRealizationId, parseSeriesId } from "../../utils/seriesId";
 
-import { formatCompactTooltip } from "./tooltipFormatters";
+import { formatCompactTooltip } from "./core";
 import {
     type AxisScopedTooltipParams,
     type AxisTooltipParams,
     extractNumericValue,
     isObservationTooltipDatum,
-} from "./tooltipValueExtractors";
+} from "./runtime";
 
 const STAT_TOOLTIP_ORDER = ["mean", "p50", "p10", "p90", "min", "max"] as const;
 const STAT_TOOLTIP_ORDER_INDEX = new Map<string, number>(STAT_TOOLTIP_ORDER.map((statKey, index) => [statKey, index]));
@@ -21,7 +22,20 @@ type ParsedStatisticSeries = {
     axisIndex: number;
 };
 
-export function formatStatisticsTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
+export function buildTimeseriesTooltip(config: TimeseriesDisplayConfig) {
+    return config.showStatistics
+        ? {
+              trigger: "axis" as const,
+              formatter: formatStatisticsAxisTooltip,
+              axisPointer: { type: "cross" as const },
+          }
+        : {
+              trigger: "item" as const,
+              formatter: formatRealizationItemTooltip,
+          };
+}
+
+export function formatStatisticsAxisTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
     if (!Array.isArray(params) || params.length === 0) return "";
     const date = String((params[0] as AxisTooltipParams).axisValue ?? params[0].name);
     const targetAxisIndex = resolveHoveredAxisIndex(params);

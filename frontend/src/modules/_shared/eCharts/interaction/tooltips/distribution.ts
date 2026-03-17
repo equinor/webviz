@@ -2,13 +2,32 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { formatConvergenceStatLabel, getConvergenceSeriesStatKey } from "../utils/convergenceSeriesMeta";
-import { getRealizationId } from "../utils/seriesId";
+import { formatConvergenceStatLabel, getConvergenceSeriesStatKey } from "../../utils/convergenceSeriesMeta";
+import { getRealizationId } from "../../utils/seriesId";
 
-import { formatCompactTooltip } from "./tooltipFormatters";
-import { type TooltipEntry, extractNumericValue, extractPointValue, isTooltipEntry } from "./tooltipValueExtractors";
+import { formatCompactTooltip } from "./core";
+import { type TooltipEntry, extractNumericValue, extractPointValue, isTooltipEntry } from "./runtime";
 
-export function formatConvergenceTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
+type ExceedanceTooltipEntry = CallbackDataParams & {
+    axisValue?: string | number;
+    axisValueLabel?: string | number;
+};
+
+function toFiniteNumber(value: string | number | undefined): number | null {
+    if (value == null) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function buildConvergenceTooltip() {
+    return {
+        trigger: "axis" as const,
+        axisPointer: { type: "line" as const },
+        formatter: formatConvergenceAxisTooltip,
+    };
+}
+
+export function formatConvergenceAxisTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
     const rawParams = Array.isArray(params) ? params : [params];
     if (rawParams.length === 0) return "";
 
@@ -38,18 +57,19 @@ export function formatConvergenceTooltip(params: CallbackDataParams | CallbackDa
     return formatCompactTooltip(`Realization: ${headerValue}`, rows);
 }
 
-type ExceedanceTooltipEntry = CallbackDataParams & {
-    axisValue?: string | number;
-    axisValueLabel?: string | number;
-};
-
-function toFiniteNumber(value: string | number | undefined): number | null {
-    if (value == null) return null;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
+export function buildExceedanceTooltip() {
+    return {
+        trigger: "axis" as const,
+        axisPointer: {
+            axis: "y" as const,
+            type: "shadow" as const,
+            snap: true,
+        },
+        formatter: formatExceedanceAxisTooltip,
+    };
 }
 
-export function formatExceedanceTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
+export function formatExceedanceAxisTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
     const entries = (Array.isArray(params) ? params : [params]).filter(
         (entry): entry is ExceedanceTooltipEntry => entry.seriesType === "line",
     );
@@ -67,20 +87,26 @@ export function formatExceedanceTooltip(params: CallbackDataParams | CallbackDat
     return formatCompactTooltip(
         headerValue,
         entries.map((entry) => {
-            // In a [x, y] line chart, value[0] is X (Volume), value[1] is Y (Probability)
             const point = extractPointValue(entry.value);
             const volume = point ? point[0] : extractNumericValue(entry.value);
 
             return {
                 label: entry.seriesName ?? "",
-                value: formatNumber(volume), // Show the volume readout here
+                value: formatNumber(volume),
                 color: typeof entry.color === "string" ? entry.color : undefined,
             };
         }),
     );
 }
 
-export function formatRealizationScatterTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
+export function buildRealizationScatterTooltip() {
+    return {
+        trigger: "item" as const,
+        formatter: formatRealizationScatterItemTooltip,
+    };
+}
+
+export function formatRealizationScatterItemTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
     const p = Array.isArray(params) ? params[0] : params;
     if (!p) return "";
 

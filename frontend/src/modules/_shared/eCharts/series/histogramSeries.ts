@@ -7,7 +7,10 @@ import type {
 } from "echarts/types/dist/shared";
 
 import type { ChartSeriesOption, SeriesBuildResult } from "../builders/composeChartOption";
-import { formatHistogramBarTooltip, formatHistogramRugTooltip } from "../interaction/tooltipHistogramFormatters";
+import {
+    createHistogramBarTooltipFormatter,
+    createHistogramRugTooltipFormatter,
+} from "../interaction/tooltips/histogram";
 import type { DistributionTrace } from "../types";
 import { HistogramType } from "../types";
 import { computeHistogramLayout, computeHistogramTraceData } from "../utils/histogram";
@@ -68,6 +71,8 @@ export function buildHistogramSeriesFromBars(
     if (trace.values.length === 0) return { series: [], legendData: [] };
 
     const series: ChartSeriesOption[] = [];
+    const barTooltipFormatter = createHistogramBarTooltipFormatter(trace.name, color);
+    const rugTooltipFormatter = createHistogramRugTooltipFormatter(trace.name, color);
 
     series.push({
         id: makeHistogramSeriesId(trace.name, "bars", axisIndex),
@@ -91,7 +96,7 @@ export function buildHistogramSeriesFromBars(
             showPercentageInBar,
         }),
         tooltip: {
-            formatter: (params: CallbackDataParams) => formatHistogramBarTooltip(params, trace.name, color),
+            formatter: (params: CallbackDataParams) => barTooltipFormatter(params),
         },
         z: 2,
     });
@@ -111,7 +116,7 @@ export function buildHistogramSeriesFromBars(
             symbolSize: [1.5, 10],
             itemStyle: { color, opacity: 0.6 },
             tooltip: {
-                formatter: (params: CallbackDataParams) => formatHistogramRugTooltip(params, trace.name, color),
+                formatter: (params: CallbackDataParams) => rugTooltipFormatter(params),
             },
             z: 3,
         });

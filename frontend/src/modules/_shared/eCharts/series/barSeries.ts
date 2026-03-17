@@ -4,7 +4,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { SeriesBuildResult } from "../builders/composeChartOption";
-import { formatBarMeanTooltip } from "../interaction/tooltipBarFormatters";
+import { formatBarMeanTooltip } from "../interaction/tooltips/bar";
 import type { BarTrace } from "../types";
 import { makeBarSeriesId } from "../utils/seriesId";
 import { computePointStatistics } from "../utils/statistics";

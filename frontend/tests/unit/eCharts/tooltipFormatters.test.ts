@@ -1,32 +1,32 @@
 import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { describe, expect, it } from "vitest";
 
-import { formatBarMeanTooltip, formatBarTooltip } from "@modules/_shared/eCharts/interaction/tooltipBarFormatters";
-import {
-    formatConvergenceTooltip,
-    formatExceedanceTooltip,
-    formatRealizationScatterTooltip,
-} from "@modules/_shared/eCharts/interaction/tooltipDistributionFormatters";
+import { formatBarAxisTooltip, formatBarMeanTooltip } from "@modules/_shared/eCharts/interaction/tooltips/bar";
 import {
     buildCompactTooltipConfig,
     formatCompactTooltip,
     formatCompactTooltipHeader,
     formatCompactTooltipRow,
-} from "@modules/_shared/eCharts/interaction/tooltipFormatters";
-import { formatHeatmapTooltip } from "@modules/_shared/eCharts/interaction/tooltipHeatmapFormatters";
+} from "@modules/_shared/eCharts/interaction/tooltips/core";
 import {
-    formatHistogramBarTooltip,
-    formatHistogramRugTooltip,
-} from "@modules/_shared/eCharts/interaction/tooltipHistogramFormatters";
+    formatConvergenceAxisTooltip,
+    formatExceedanceAxisTooltip,
+    formatRealizationScatterItemTooltip,
+} from "@modules/_shared/eCharts/interaction/tooltips/distribution";
+import { formatHeatmapItemTooltip } from "@modules/_shared/eCharts/interaction/tooltips/heatmap";
 import {
-    formatPercentileGlyphTooltip,
-    formatPercentileRealizationTooltip,
-} from "@modules/_shared/eCharts/interaction/tooltipPercentileFormatters";
+    createHistogramBarTooltipFormatter,
+    createHistogramRugTooltipFormatter,
+} from "@modules/_shared/eCharts/interaction/tooltips/histogram";
+import {
+    createPercentileGlyphTooltipFormatter,
+    createPercentileRealizationTooltipFormatter,
+} from "@modules/_shared/eCharts/interaction/tooltips/percentileRange";
 import {
     formatObservationTooltip,
     formatRealizationItemTooltip,
-    formatStatisticsTooltip,
-} from "@modules/_shared/eCharts/interaction/tooltipTimeseriesFormatters";
+    formatStatisticsAxisTooltip,
+} from "@modules/_shared/eCharts/interaction/tooltips/timeseries";
 
 type MockParam = {
     componentType: "series";
@@ -97,7 +97,7 @@ describe("compact tooltip primitives", () => {
 
 describe("formatStatisticsTooltip", () => {
     it("shows only statistics from the hovered subplot axis", () => {
-        const tooltip = formatStatisticsTooltip([
+        const tooltip = formatStatisticsAxisTooltip([
             makeParam({
                 seriesId: "statistic:Trace A:mean:0",
                 seriesName: "Trace A",
@@ -122,7 +122,7 @@ describe("formatStatisticsTooltip", () => {
     });
 
     it("falls back to axis index parsed from series ID when runtime axis is missing", () => {
-        const tooltip = formatStatisticsTooltip([
+        const tooltip = formatStatisticsAxisTooltip([
             makeParam({
                 seriesId: "statistic:Trace A:mean:0",
                 seriesName: "Trace A",
@@ -147,7 +147,7 @@ describe("formatStatisticsTooltip", () => {
     });
 
     it("compacts multiple statistics into one row per trace", () => {
-        const tooltip = formatStatisticsTooltip([
+        const tooltip = formatStatisticsAxisTooltip([
             makeParam({
                 seriesId: "statistic:Trace A:p10:0",
                 seriesName: "Trace A",
@@ -176,7 +176,7 @@ describe("formatStatisticsTooltip", () => {
     });
 
     it("still excludes non-statistical series categories", () => {
-        const tooltip = formatStatisticsTooltip([
+        const tooltip = formatStatisticsAxisTooltip([
             makeParam({
                 seriesId: "statistic:Trace A:mean:0",
                 seriesName: "Trace A",
@@ -282,7 +282,7 @@ describe("formatObservationTooltip", () => {
 
 describe("formatBarTooltip", () => {
     it("keeps only bar entries and uses axis value label as header", () => {
-        const tooltip = formatBarTooltip([
+        const tooltip = formatBarAxisTooltip([
             makeParam({
                 componentSubType: "bar",
                 seriesType: "bar",
@@ -307,7 +307,7 @@ describe("formatBarTooltip", () => {
     });
 
     it("returns empty string when there are no bar entries", () => {
-        const tooltip = formatBarTooltip(makeParam({ seriesType: "line" }));
+        const tooltip = formatBarAxisTooltip(makeParam({ seriesType: "line" }));
         expect(tooltip).toBe("");
     });
 });
@@ -324,7 +324,7 @@ describe("formatBarMeanTooltip", () => {
 
 describe("formatConvergenceTooltip", () => {
     it("formats only convergence statistic entries", () => {
-        const tooltip = formatConvergenceTooltip([
+        const tooltip = formatConvergenceAxisTooltip([
             makeParam({
                 seriesId: "convergence:Trace A:p90:0",
                 seriesName: "Trace A",
@@ -358,7 +358,7 @@ describe("formatConvergenceTooltip", () => {
 
 describe("formatExceedanceTooltip", () => {
     it("formats exceedance header and volume values from line point values", () => {
-        const tooltip = formatExceedanceTooltip([
+        const tooltip = formatExceedanceAxisTooltip([
             makeParam({
                 seriesType: "line",
                 seriesName: "Trace A",
@@ -386,7 +386,7 @@ describe("formatExceedanceTooltip", () => {
     });
 
     it("falls back to point probability when axis value is not numeric", () => {
-        const tooltip = formatExceedanceTooltip(
+        const tooltip = formatExceedanceAxisTooltip(
             makeParam({
                 seriesType: "line",
                 seriesName: "Trace A",
@@ -400,14 +400,14 @@ describe("formatExceedanceTooltip", () => {
     });
 
     it("returns empty string when no line entries are present", () => {
-        const tooltip = formatExceedanceTooltip(makeParam({ seriesType: "bar", componentSubType: "bar" }));
+        const tooltip = formatExceedanceAxisTooltip(makeParam({ seriesType: "bar", componentSubType: "bar" }));
         expect(tooltip).toBe("");
     });
 });
 
 describe("histogram tooltip formatters", () => {
     it("formats histogram bar range and percentage", () => {
-        const tooltip = formatHistogramBarTooltip(makeParam({ value: [1, 3, 0, 12.5] }), "Hist", "#112233");
+        const tooltip = createHistogramBarTooltipFormatter("Hist", "#112233")(makeParam({ value: [1, 3, 0, 12.5] }));
 
         expect(tooltip).toContain("Hist");
         expect(tooltip).toContain("Range");
@@ -417,18 +417,16 @@ describe("histogram tooltip formatters", () => {
     });
 
     it("returns trace name when histogram bar value shape is invalid", () => {
-        const tooltip = formatHistogramBarTooltip(makeParam({ value: [1, 2, 3] }), "Hist", "#112233");
+        const tooltip = createHistogramBarTooltipFormatter("Hist", "#112233")(makeParam({ value: [1, 2, 3] }));
         expect(tooltip).toBe("Hist");
     });
 
     it("formats rug tooltip with explicit realization id", () => {
-        const tooltip = formatHistogramRugTooltip(
+        const tooltip = createHistogramRugTooltipFormatter("Hist", "#112233")(
             makeParam({
                 value: [7, 0],
                 data: { value: [7, 0], realizationId: 42 },
             }),
-            "Hist",
-            "#112233",
         );
 
         expect(tooltip).toContain("Hist");
@@ -439,10 +437,8 @@ describe("histogram tooltip formatters", () => {
     });
 
     it("falls back to dataIndex when rug datum has no realization id", () => {
-        const tooltip = formatHistogramRugTooltip(
+        const tooltip = createHistogramRugTooltipFormatter("Hist", "#112233")(
             makeParam({ value: [9, 0], data: 9, dataIndex: 5 }),
-            "Hist",
-            "#112233",
         );
 
         expect(tooltip).toContain("Realization");
@@ -452,7 +448,7 @@ describe("histogram tooltip formatters", () => {
 
 describe("formatHeatmapTooltip", () => {
     it("formats heatmap x/y labels and value", () => {
-        const tooltip = formatHeatmapTooltip(
+        const tooltip = formatHeatmapItemTooltip(
             {
                 seriesIndex: 0,
                 value: [0, 0, 42],
@@ -472,7 +468,7 @@ describe("formatHeatmapTooltip", () => {
     });
 
     it("returns empty string for invalid data shape", () => {
-        const tooltip = formatHeatmapTooltip(
+        const tooltip = formatHeatmapItemTooltip(
             {
                 seriesIndex: 0,
                 value: [0, 0],
@@ -487,7 +483,7 @@ describe("formatHeatmapTooltip", () => {
 
 describe("percentile tooltip formatters", () => {
     it("formats percentile glyph tooltip rows", () => {
-        const tooltip = formatPercentileGlyphTooltip(
+        const tooltip = createPercentileGlyphTooltipFormatter(
             "Trace A",
             "#112233",
             {
@@ -502,7 +498,7 @@ describe("percentile tooltip formatters", () => {
             },
             3,
             "p50",
-        );
+        )();
 
         expect(tooltip).toContain("Trace A");
         expect(tooltip).toContain("Min");
@@ -512,10 +508,8 @@ describe("percentile tooltip formatters", () => {
     });
 
     it("formats percentile realization tooltip rows", () => {
-        const tooltip = formatPercentileRealizationTooltip(
+        const tooltip = createPercentileRealizationTooltipFormatter("Trace A", "#112233")(
             makeParam({ value: [7, 0], data: { value: [7, 0], realizationId: 8 } }),
-            "Trace A",
-            "#112233",
         );
 
         expect(tooltip).toContain("Trace A");
@@ -528,7 +522,7 @@ describe("percentile tooltip formatters", () => {
 
 describe("formatRealizationScatterTooltip", () => {
     it("shows x/y and realization id for realization series", () => {
-        const tooltip = formatRealizationScatterTooltip(
+        const tooltip = formatRealizationScatterItemTooltip(
             makeParam({
                 seriesId: "realization:Group A:9:0",
                 seriesName: "Scatter A",
@@ -547,7 +541,7 @@ describe("formatRealizationScatterTooltip", () => {
     });
 
     it("omits realization row for non-realization series id", () => {
-        const tooltip = formatRealizationScatterTooltip(
+        const tooltip = formatRealizationScatterItemTooltip(
             makeParam({
                 seriesId: "density:Trace A:points:0",
                 seriesName: "Scatter A",

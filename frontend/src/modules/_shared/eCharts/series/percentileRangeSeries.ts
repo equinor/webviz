@@ -3,9 +3,9 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import type { SeriesBuildResult } from "../builders/composeChartOption";
 import {
-    formatPercentileGlyphTooltip,
-    formatPercentileRealizationTooltip,
-} from "../interaction/tooltipPercentileFormatters";
+    createPercentileGlyphTooltipFormatter,
+    createPercentileRealizationTooltipFormatter,
+} from "../interaction/tooltips/percentileRange";
 import type { DistributionTrace, PointStatistics } from "../types";
 import { makePercentileSeriesId } from "../utils/seriesId";
 import { computePointStatistics } from "../utils/statistics";
@@ -66,6 +66,14 @@ function createPercentileRangeGlyphSeries(
     yAxisPosition: number,
     axisIndex: number,
 ): CustomSeriesOption {
+    const tooltipFormatter = createPercentileGlyphTooltipFormatter(
+        trace.name,
+        trace.color,
+        stats,
+        centerValue,
+        centerStatistic,
+    );
+
     return {
         id: makePercentileSeriesId(trace.name, "glyph", axisIndex),
         type: "custom",
@@ -78,7 +86,7 @@ function createPercentileRangeGlyphSeries(
         z: 2,
         renderItem: createPercentileRangeGlyphRenderItem({ color: trace.color, showWhiskers }),
         tooltip: {
-            formatter: () => formatPercentileGlyphTooltip(trace.name, trace.color, stats, centerValue, centerStatistic),
+            formatter: () => tooltipFormatter(),
         },
     };
 }
@@ -88,6 +96,8 @@ function createRealizationPointSeries(
     yAxisPosition: number,
     axisIndex: number,
 ): ScatterSeriesOption {
+    const tooltipFormatter = createPercentileRealizationTooltipFormatter(trace.name, trace.color);
+
     return {
         id: makePercentileSeriesId(trace.name, "points", axisIndex),
         type: "scatter",
@@ -103,8 +113,7 @@ function createRealizationPointSeries(
         itemStyle: { color: trace.color, opacity: 0.45 },
         z: 3,
         tooltip: {
-            formatter: (params: CallbackDataParams) =>
-                formatPercentileRealizationTooltip(params, trace.name, trace.color),
+            formatter: (params: CallbackDataParams) => tooltipFormatter(params),
         },
     };
 }

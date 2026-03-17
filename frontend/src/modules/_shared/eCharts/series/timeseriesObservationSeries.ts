@@ -3,7 +3,7 @@ import type { CustomSeriesOption } from "echarts/charts";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
 import type { SeriesBuildResult } from "../builders/composeChartOption";
-import { formatObservationTooltip } from "../interaction/tooltipTimeseriesFormatters";
+import { formatObservationTooltip } from "../interaction/tooltips/timeseries";
 import type { ObservationTrace } from "../types";
 import { makeObservationSeriesId } from "../utils/seriesId";
 

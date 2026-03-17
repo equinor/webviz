@@ -78,7 +78,7 @@ export type { ComposeChartConfig, ChartSeriesOption, SeriesBuildResult } from ".
 export {
     createTimestampMarkLine,
     applyActiveTimestampMarker,
-    formatStatisticsTooltip,
+    formatStatisticsAxisTooltip as formatStatisticsTooltip,
     formatRealizationItemTooltip,
     formatObservationTooltip,
 } from "./interaction";

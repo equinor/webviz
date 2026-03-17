@@ -2,7 +2,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { formatCompactTooltip } from "./tooltipFormatters";
+import { formatCompactTooltip } from "./core";
 
 export type HeatmapTooltipDataset = {
     title: string;
@@ -12,7 +12,14 @@ export type HeatmapTooltipDataset = {
     };
 };
 
-export function formatHeatmapTooltip(
+export function buildHeatmapTooltip(datasets: HeatmapTooltipDataset[], valueLabel: string) {
+    return {
+        trigger: "item" as const,
+        formatter: (params: CallbackDataParams) => formatHeatmapItemTooltip(params, datasets, valueLabel),
+    };
+}
+
+export function formatHeatmapItemTooltip(
     params: CallbackDataParams,
     datasets: HeatmapTooltipDataset[],
     valueLabel: string,

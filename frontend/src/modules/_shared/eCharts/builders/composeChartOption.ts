@@ -7,7 +7,7 @@ import type {
     ScatterSeriesOption,
 } from "echarts/types/dist/shared";
 
-import { buildCompactTooltipConfig } from "../interaction/tooltipFormatters";
+import { buildCompactTooltipConfig } from "../interaction/tooltips/core";
 import { getResponsiveFeatures } from "../layout/responsiveConfig";
 import type { SubplotAxesResult } from "../layout/subplotAxes";
 import type { SubplotLayoutResult } from "../layout/subplotGridLayout";

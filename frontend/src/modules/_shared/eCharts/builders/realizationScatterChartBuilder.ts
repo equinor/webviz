@@ -1,6 +1,6 @@
 import type { EChartsOption } from "echarts";
 
-import { formatRealizationScatterTooltip } from "../interaction/tooltipDistributionFormatters";
+import { buildRealizationScatterTooltip } from "../interaction/tooltips/distribution";
 import { buildRealizationScatterSeries } from "../series/realizationScatterSeries";
 import type { ContainerSize, RealizationScatterTrace, SubplotGroup } from "../types";
 
@@ -29,7 +29,7 @@ export function buildRealizationScatterChart(
             containerSize,
             sharedXAxis,
             sharedYAxis,
-            tooltip: { trigger: "item" as const, formatter: formatRealizationScatterTooltip },
+            tooltip: buildRealizationScatterTooltip(),
         },
     );
 }

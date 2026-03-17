@@ -3,7 +3,7 @@ import type { EChartsOption } from "echarts";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
 import { applyActiveTimestampMarker } from "../interaction/activeTimestampMarker";
-import { formatRealizationItemTooltip, formatStatisticsTooltip } from "../interaction/tooltipTimeseriesFormatters";
+import { buildTimeseriesTooltip } from "../interaction/tooltips/timeseries";
 import { getResponsiveFeatures } from "../layout/responsiveConfig";
 import {
     buildFanchartSeries,
@@ -23,7 +23,6 @@ import type {
 import { buildCartesianSubplotChart } from "./cartesianSubplotChartBuilder";
 import type { CartesianChartSeries, CartesianSubplotBuildResult } from "./cartesianSubplotChartBuilder";
 import type { ComposeChartConfig } from "./composeChartOption";
-
 export type TimeseriesChartOptions = {
     sharedXAxis?: boolean;
     sharedYAxis?: boolean;
@@ -218,19 +217,6 @@ function buildTimeseriesComposeOverrides(
         },
         dataZoom: buildTimeseriesDataZoom(numSubplots, containerSize),
     };
-}
-
-function buildTimeseriesTooltip(config: TimeseriesDisplayConfig): ComposeChartConfig["tooltip"] {
-    return config.showStatistics
-        ? {
-            trigger: "axis",
-            formatter: formatStatisticsTooltip,
-            axisPointer: { type: "cross" },
-        }
-        : {
-            trigger: "item",
-            formatter: formatRealizationItemTooltip,
-        };
 }
 
 function buildTimeseriesDataZoom(

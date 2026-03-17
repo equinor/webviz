@@ -1,6 +1,6 @@
 import type { EChartsOption } from "echarts";
 
-import { formatExceedanceTooltip } from "../interaction/tooltipDistributionFormatters";
+import { buildExceedanceTooltip } from "../interaction/tooltips/distribution";
 import type { SubplotAxesResult } from "../layout/subplotAxes";
 import { buildExceedanceSeries } from "../series/exceedanceSeries";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../types";
@@ -31,17 +31,7 @@ export function buildExceedanceChart(
             sharedXAxis,
             sharedYAxis,
             postProcessAxes: constrainExceedanceYAxis,
-            // TODO: might have to use item, and e.g. cross for type. 
-            // Add interpolated series?
-            tooltip: {
-                trigger: "axis" as const,
-                axisPointer: {
-                    axis: "y" as const,
-                    type: "shadow" as const,
-                    snap: true,
-                },
-                formatter: formatExceedanceTooltip,
-            },
+            tooltip: buildExceedanceTooltip(),
         },
     );
 }

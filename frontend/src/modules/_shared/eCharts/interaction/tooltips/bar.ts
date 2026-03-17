@@ -2,15 +2,22 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { formatCompactTooltip } from "./tooltipFormatters";
-import { extractNumericValue } from "./tooltipValueExtractors";
+import { formatCompactTooltip } from "./core";
+import { extractNumericValue } from "./runtime";
 
 type BarTooltipEntry = CallbackDataParams & {
     axisValue?: string | number;
     axisValueLabel?: string | number;
 };
 
-export function formatBarTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
+export function buildBarTooltip() {
+    return {
+        trigger: "axis" as const,
+        formatter: formatBarAxisTooltip,
+    };
+}
+
+export function formatBarAxisTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
     const entries = (Array.isArray(params) ? params : [params]).filter(
         (entry): entry is BarTooltipEntry => entry.seriesType === "bar",
     );

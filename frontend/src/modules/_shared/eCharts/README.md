@@ -29,7 +29,7 @@ Modules should map domain data into shared trace types and call shared builders,
 - `builders/`: high-level chart option builders (`EChartsOption`).
 - `series/`: series builders returning `SeriesBuildResult`.
 - `layout/`: subplot grid and axis helpers.
-- `interaction/`: tooltip and interaction helpers.
+- `interaction/`: non-tooltip interaction helpers plus `tooltips/` for tooltip policy/rendering.
 - `hooks/`: React interaction hooks.
 - `utils/`: pure calculations and ID helpers.
 - `index.ts`: public exports.
@@ -38,32 +38,34 @@ Modules should map domain data into shared trace types and call shared builders,
 
 ### Layer Responsibilities
 
-| Layer                    | Owner                                                                 | Responsibility                                                                            |
-| ------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Global style             | `builders/composeChartOption.ts` + `interaction/tooltipFormatters.ts` | Compact tooltip defaults (padding, text style).                                           |
-| Chart-level behavior     | `builders/*`                                                          | Tooltip trigger mode (`axis` vs `item`), axis pointer policy, shared formatter selection. |
-| Series-level override    | `series/*`                                                            | Item-specific rows or helper-series suppression (`tooltip.show = false`).                 |
-| Formatter implementation | `interaction/tooltip*Formatters.ts`                                   | Tooltip content formatting and shared HTML row/header primitives.                         |
+| Layer                    | Owner                                                        | Responsibility                                                                                     |
+| ------------------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| Global style             | `builders/composeChartOption.ts` + `interaction/tooltips/core.ts` | Compact tooltip defaults (padding, text style) and shared HTML row/header primitives.             |
+| Chart-level behavior     | `builders/*`                                                 | Tooltip trigger mode (`axis` vs `item`), axis pointer policy, and selection of chart-family policy. |
+| Chart-family rendering   | `interaction/tooltips/<family>.ts`                           | Tooltip formatting and policy helpers for a single chart family.                                   |
+| Series-level override    | `series/*`                                                   | Helper-series suppression and item-only overrides that delegate back to chart-family tooltip helpers. |
 
 Rules:
 
-- Keep tooltip formatter logic in `interaction/`.
+- Keep tooltip formatting logic in `interaction/tooltips/`.
+- Builders own chart-level tooltip policy, even when a family supports both `axis` and `item` modes.
+- Item-only glyph/point series may attach a formatter in `series/*`, but the formatter must come from the same chart-family tooltip module.
 - Do not inline tooltip formatter logic in builders or series files.
-- Re-export public formatters from `interaction/index.ts`.
+- Re-export public tooltip helpers from `interaction/index.ts`.
 
 ### Current Chart Family Pattern
 
-| Chart family        | Primary tooltip owner               | Notes                                                                                              |
-| ------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Timeseries          | Builder + selected series overrides | Builder switches between axis/item tooltip mode; observation series provides item tooltip content. |
-| Bar                 | Builder + series override           | Builder controls axis tooltip for bars; mean reference line uses series-level item tooltip.        |
-| Histogram           | Series                              | Custom bars and rug points use item-specific tooltip formatters.                                   |
-| Heatmap             | Builder                             | Builder uses item trigger and heatmap-specific formatter.                                          |
-| Convergence         | Builder + helper-series suppression | Builder formats axis tooltip; custom band suppresses tooltip.                                      |
-| Exceedance          | Builder                             | Builder formats y-axis based hover semantics.                                                      |
-| Percentile range    | Series                              | Glyph and realization points provide item-specific tooltip rows.                                   |
-| Density             | Default/global                      | No custom formatter unless future requirements demand one.                                         |
-| Realization scatter | Builder                             | Builder uses item tooltip formatter.                                                               |
+| Chart family        | Primary tooltip owner               | Notes                                                                                                       |
+| ------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Timeseries          | Builder + observation series        | Builder switches between axis/item tooltip policy; observation series keeps its own item tooltip content.   |
+| Bar                 | Builder + mean helper series        | Builder owns axis tooltip; the mean reference line uses an item tooltip helper from the bar tooltip module. |
+| Histogram           | Series via histogram tooltip module | Custom bars and rug points are item-only and delegate to histogram tooltip formatter factories.             |
+| Heatmap             | Builder                             | Builder owns item tooltip policy and heatmap-specific rendering.                                            |
+| Convergence         | Builder + helper-series suppression | Builder owns axis tooltip policy; custom band suppresses tooltips.                                          |
+| Exceedance          | Builder                             | Builder owns y-axis hover semantics and formatter selection.                                                |
+| Percentile range    | Series via percentile tooltip module | Glyph and realization points are item-only and delegate to percentile tooltip formatter factories.          |
+| Density             | Default/global                      | No custom formatter unless future requirements demand one.                                                  |
+| Realization scatter | Builder                             | Builder owns item tooltip policy and renderer selection.                                                    |
 
 ## Core Conventions
 
@@ -87,7 +89,7 @@ type SeriesBuildResult = {
 1. Map domain data to shared trace types in the module layer.
 2. Build `SubplotGroup<T>[]`.
 3. Use an existing shared builder if possible.
-4. Add or update chart-family tooltip formatter functions under `interaction/`.
+4. Add or update chart-family tooltip helpers under `interaction/tooltips/`.
 5. Keep chart-level trigger and axis-pointer choices in the builder.
 6. Add/adjust unit tests under `tests/unit/eCharts/`.
 

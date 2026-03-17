@@ -1,6 +1,6 @@
 import type { EChartsOption } from "echarts";
 
-import { formatConvergenceTooltip } from "../interaction/tooltipDistributionFormatters";
+import { buildConvergenceTooltip } from "../interaction/tooltips/distribution";
 import { buildConvergenceSeries } from "../series/convergenceSeries";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../types";
 
@@ -29,11 +29,7 @@ export function buildConvergenceChart(
             containerSize,
             sharedXAxis,
             sharedYAxis,
-            tooltip: {
-                trigger: "axis" as const,
-                axisPointer: { type: "line" as const },
-                formatter: formatConvergenceTooltip,
-            },
+            tooltip: buildConvergenceTooltip(),
         },
     );
 }

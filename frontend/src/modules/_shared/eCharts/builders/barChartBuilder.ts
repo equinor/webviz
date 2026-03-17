@@ -1,6 +1,6 @@
 import type { EChartsOption } from "echarts";
 
-import { formatBarTooltip } from "../interaction/tooltipBarFormatters";
+import { buildBarTooltip } from "../interaction/tooltips/bar";
 import { buildBarSeries } from "../series/barSeries";
 import type { BuildBarSeriesOptions } from "../series/barSeries";
 import type { BarTrace, ContainerSize, SubplotGroup } from "../types";
@@ -25,7 +25,7 @@ export function buildBarChart(
     return buildCartesianSubplotChart(
         subplotGroups,
         buildSubplot,
-        { containerSize, sharedXAxis, sharedYAxis, tooltip: { trigger: "axis" as const, formatter: formatBarTooltip } },
+        { containerSize, sharedXAxis, sharedYAxis, tooltip: buildBarTooltip() },
     );
 }
 

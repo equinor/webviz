@@ -22,8 +22,8 @@
 
 - Global tooltip style is applied in `builders/composeChartOption.ts` via `buildCompactTooltipConfig`.
 - Builder-level tooltip config owns chart-level trigger and axis pointer behavior.
-- Series-level tooltip config is allowed only for item-specific metadata or helper-series suppression (`tooltip.show = false`).
-- Tooltip formatter implementations must live in `interaction/tooltip*Formatters.ts`.
+- Series-level tooltip config is allowed only for item-specific metadata or helper-series suppression (`tooltip.show = false`), and should delegate to chart-family tooltip helpers.
+- Tooltip formatter implementations must live in `interaction/tooltips/<family>.ts` or `interaction/tooltips/core.ts`.
 - Do not inline tooltip formatter logic in builders or series files.
 - Re-export public tooltip formatters through `interaction/index.ts`.
 

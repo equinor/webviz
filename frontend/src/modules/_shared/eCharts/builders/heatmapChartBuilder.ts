@@ -1,9 +1,8 @@
 import type { EChartsOption } from "echarts";
-import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { formatHeatmapTooltip } from "../interaction/tooltipHeatmapFormatters";
+import { buildHeatmapTooltip, type HeatmapTooltipDataset } from "../interaction/tooltips/heatmap";
 import type { SubplotAxisDef } from "../layout/subplotAxes";
 import { buildSubplotAxes } from "../layout/subplotAxes";
 import type { SubplotLayoutResult } from "../layout/subplotGridLayout";
@@ -14,9 +13,8 @@ import type { ContainerSize, HeatmapTrace, SubplotGroup } from "../types";
 import { composeChartOption } from "./composeChartOption";
 import type { ChartSeriesOption } from "./composeChartOption";
 
-type HeatmapDatasetEntry = {
+type HeatmapDatasetEntry = HeatmapTooltipDataset & {
     trace: HeatmapTrace;
-    title: string;
 };
 
 type HeatmapValueRange = {
@@ -41,21 +39,9 @@ export function buildHeatmapChart(
     return composeChartOption(layout, axes, {
         series,
         containerSize,
-        tooltip: {
-            trigger: "item",
-            formatter: createHeatmapTooltipFormatter(datasets, valueLabel),
-        },
+        tooltip: buildHeatmapTooltip(datasets, valueLabel),
         visualMap: buildHeatmapVisualMap(valueRange),
     });
-}
-
-function createHeatmapTooltipFormatter(
-    datasets: HeatmapDatasetEntry[],
-    valueLabel: string,
-): (params: CallbackDataParams) => string {
-    return function formatHeatmapTooltipItem(params: CallbackDataParams): string {
-        return formatHeatmapTooltip(params, datasets, valueLabel);
-    };
 }
 
 function flattenHeatmapDatasets(subplotGroups: SubplotGroup<HeatmapTrace>[]): HeatmapDatasetEntry[] {
