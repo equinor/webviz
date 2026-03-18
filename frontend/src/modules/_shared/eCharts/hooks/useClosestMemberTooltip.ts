@@ -55,84 +55,130 @@ export function useClosestMemberTooltip(
     timestampsRef.current = timestamps;
     const memberLabel = options.memberLabel;
 
-    React.useEffect(() => {
-        const chart = chartRef.current;
-        if (!chart || !enabled || timestampsRef.current.length === 0) {
-            return;
-        }
-        const instance = chart.getEchartsInstance();
-        const originalTriggerOn = readTooltipTriggerOn(instance);
-        instance.setOption({
-            tooltip: {
-                triggerOn: "none",
-            },
-        });
-
-        const indexedSeries = buildMemberSeriesIndex(instance);
-        if (indexedSeries.size === 0) {
-            restoreTooltipTriggerOn(instance, originalTriggerOn);
-            return;
-        }
-
-        const zr = instance.getZr();
-
-        function clearTooltip() {
-            if (lastShownTooltipKeyRef.current == null) return;
-
-            instance.dispatchAction({ type: "hideTip" });
-            instance.dispatchAction({ type: "updateAxisPointer", currTrigger: "leave" });
-            lastShownTooltipKeyRef.current = null;
-        }
-
-        function handleMouseMove(event: ZrMouseEvent) {
-            const pixelX = typeof event.offsetX === "number" ? event.offsetX : null;
-            const pixelY = typeof event.offsetY === "number" ? event.offsetY : null;
-            if (pixelX == null || pixelY == null) {
-                clearTooltip();
+    React.useEffect(
+        function manageTooltipSnapEffect() {
+            const chart = chartRef.current;
+            if (!chart || !enabled || timestampsRef.current.length === 0) {
                 return;
             }
 
-            const target = resolveClosestMemberTooltipTarget(
-                instance,
-                indexedSeries,
-                pixelX,
-                pixelY,
-                timestampsRef.current.length,
-            );
-            if (!target) {
-                clearTooltip();
+            const instance = chart.getEchartsInstance();
+            const originalTriggerOn = readTooltipTriggerOn(instance);
+
+            disableDefaultTooltipTrigger(instance);
+
+            const indexedSeries = buildMemberSeriesIndex(instance);
+            if (indexedSeries.size === 0) {
+                restoreTooltipTriggerOn(instance, originalTriggerOn);
                 return;
             }
 
-            instance.dispatchAction({
-                type: "updateAxisPointer",
-                currTrigger: "mousemove",
-                x: pixelX,
-                y: pixelY,
-            });
+            const zr = instance.getZr();
 
-            const targetKey = `${target.seriesIndex}:${target.dataIndex}`;
-            instance.dispatchAction({
-                type: "showTip",
-                x: pixelX,
-                y: pixelY,
-                tooltip: {
-                    content: buildTooltipContent(target, indexedSeries, timestampsRef.current, memberLabel),
-                },
-            });
-            lastShownTooltipKeyRef.current = targetKey;
-        }
+            function clearTooltip() {
+                hideTooltip(instance, lastShownTooltipKeyRef);
+            }
 
-        zr.on("mousemove", handleMouseMove);
-        zr.on("globalout", clearTooltip);
+            function onMouseMove(event: ZrMouseEvent) {
+                handlePointerMove(
+                    event,
+                    instance,
+                    indexedSeries,
+                    timestampsRef.current,
+                    memberLabel,
+                    lastShownTooltipKeyRef
+                );
+            }
 
-        return () => {
-            zr.off("mousemove", handleMouseMove);
-            zr.off("globalout", clearTooltip);
-            clearTooltip();
-            restoreTooltipTriggerOn(instance, originalTriggerOn);
-        };
-    }, [chartRef, enabled, layoutDependency, memberLabel]);
+            zr.on("mousemove", onMouseMove);
+            zr.on("globalout", clearTooltip);
+
+            return function cleanupTooltipSnap() {
+                zr.off("mousemove", onMouseMove);
+                zr.off("globalout", clearTooltip);
+                clearTooltip();
+                restoreTooltipTriggerOn(instance, originalTriggerOn);
+            };
+        },
+        [chartRef, enabled, layoutDependency, memberLabel]
+    );
+}
+
+function disableDefaultTooltipTrigger(instance: ECharts): void {
+    instance.setOption({
+        tooltip: {
+            triggerOn: "none",
+        },
+    });
+}
+
+function hideTooltip(instance: ECharts, lastShownRef: React.MutableRefObject<string | null>): void {
+    if (lastShownRef.current == null) return;
+
+    instance.dispatchAction({ type: "hideTip" });
+    instance.dispatchAction({ type: "updateAxisPointer", currTrigger: "leave" });
+    lastShownRef.current = null;
+}
+
+function handlePointerMove(
+    event: ZrMouseEvent,
+    instance: ECharts,
+    indexedSeries: Map<number, MemberSeriesMeta[]>,
+    timestamps: number[],
+    memberLabel: string | undefined,
+    lastShownRef: React.MutableRefObject<string | null>
+): void {
+    const pixelX = typeof event.offsetX === "number" ? event.offsetX : null;
+    const pixelY = typeof event.offsetY === "number" ? event.offsetY : null;
+
+    if (pixelX == null || pixelY == null) {
+        hideTooltip(instance, lastShownRef);
+        return;
+    }
+
+    const target = resolveClosestMemberTooltipTarget(
+        instance,
+        indexedSeries,
+        pixelX,
+        pixelY,
+        timestamps.length
+    );
+
+    if (!target) {
+        hideTooltip(instance, lastShownRef);
+        return;
+    }
+
+    const targetKey = `${target.seriesIndex}:${target.dataIndex}`;
+
+    displaySnappedTooltip(instance, target, indexedSeries, timestamps, memberLabel, pixelX, pixelY);
+    lastShownRef.current = targetKey;
+}
+
+function displaySnappedTooltip(
+    instance: ECharts,
+    target: ClosestTooltipTarget,
+    indexedSeries: Map<number, MemberSeriesMeta[]>,
+    timestamps: number[],
+    memberLabel: string | undefined,
+    pixelX: number,
+    pixelY: number
+): void {
+    instance.dispatchAction({
+        type: "updateAxisPointer",
+        currTrigger: "mousemove",
+        x: pixelX,
+        y: pixelY,
+    });
+
+    instance.dispatchAction({
+        type: "showTip",
+        x: pixelX,
+        y: pixelY,
+        tooltip: {
+            content: buildTooltipContent(target, indexedSeries, timestamps, memberLabel),
+        },
+    });
 }
 
 export function findClosestMemberSeries(

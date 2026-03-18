@@ -3,7 +3,6 @@ import type { EChartsOption } from "echarts";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianChartSeries, CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../../types";
-
 import { getSeriesIdentifier, readSeriesMetadata } from "../../utils/seriesMetadata";
 
 import { buildConvergenceSeries } from "./series";

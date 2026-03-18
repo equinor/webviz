@@ -30,8 +30,6 @@ export interface SubplotAxesResult {
     titles: TitleOption[];
 }
 
-const VALUE_AXIS_FORMATTER = (v: number) => formatNumber(v);
-
 export function buildSubplotAxes(layout: SubplotLayoutResult, axisDefs: SubplotAxisDef[]): SubplotAxesResult {
     const isMultiGrid = layout.grids.length > 1;
     const xAxes: CartesianAxisOption[] = [];
@@ -69,10 +67,10 @@ function buildAxis(def: AxisDef, gridIndex: number, isMultiGrid: boolean, direct
         ...(def.data != null ? { data: def.data } : {}),
         ...(def.label
             ? {
-                  name: isMultiGrid ? "" : def.label,
-                  nameLocation: "middle" as const,
-                  nameGap: def.nameGap ?? defaultNameGap,
-              }
+                name: isMultiGrid ? "" : def.label,
+                nameLocation: "middle" as const,
+                nameGap: def.nameGap ?? defaultNameGap,
+            }
             : {}),
         ...(def.boundaryGap != null ? { boundaryGap: def.boundaryGap } : {}),
         ...(def.scale != null ? { scale: def.scale } : {}),
@@ -83,7 +81,7 @@ function buildAxis(def: AxisDef, gridIndex: number, isMultiGrid: boolean, direct
             show: true,
             fontSize: 11,
             hideOverlap: true,
-            ...(isValue ? { formatter: VALUE_AXIS_FORMATTER } : {}),
+            ...(isValue ? { formatter: (v: number) => formatNumber(v) } : {}),
         },
         axisTick: { show: true },
     } as XAXisOption;

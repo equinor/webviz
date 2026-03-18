@@ -1,106 +1,85 @@
 // Types
+export { ALL_STATISTIC_KEYS, HistogramType } from "./types";
 export type {
-    StatisticKey,
-    TimeseriesStatistics,
-    PointStatistics,
-    TimeseriesTrace,
+    BarDisplayConfig,
+    BarTrace,
+    ContainerSize,
+    DensityDisplayConfig,
+    DistributionTrace,
+    HeatmapTrace,
     HistoricalLineShape,
     HistoricalTrace,
+    MemberScatterTrace,
     ObservationPoint,
     ObservationTrace,
-    TimeseriesSubplotOverlays,
-    DistributionTrace,
-    BarTrace,
-    HeatmapTrace,
-    MemberScatterTrace,
+    PointStatistics,
+    StatisticKey,
     SubplotGroup,
     TimeseriesDisplayConfig,
-    DensityDisplayConfig,
-    BarDisplayConfig,
-    ContainerSize,
+    TimeseriesStatistics,
+    TimeseriesSubplotOverlays,
+    TimeseriesTrace,
 } from "./types";
-export { ALL_STATISTIC_KEYS, HistogramType } from "./types";
 
 // Layout
-export { computeSubplotGridLayout, DEFAULT_LAYOUT_CONFIG, buildSubplotAxes, getResponsiveFeatures } from "./layout";
+export { buildSubplotAxes, computeSubplotGridLayout, DEFAULT_LAYOUT_CONFIG, getResponsiveFeatures } from "./layout";
 export type {
+    AxisDef,
+    GridEntry,
+    ResponsiveFeatures,
+    SubplotAxesResult,
+    SubplotAxisDef,
+    SubplotCell,
     SubplotLayoutConfig,
     SubplotLayoutResult,
-    SubplotCell,
-    GridEntry,
-    AxisDef,
-    SubplotAxisDef,
-    SubplotAxesResult,
-    ResponsiveFeatures,
 } from "./layout";
 
-// Series builders
+// Core
+export { composeChartOption } from "./core";
+export type { ChartSeriesOption, ComposeChartConfig, SeriesBuildResult } from "./core";
+
+// Series Builders & Chart Options
+export { buildBarSeries, type BarSortBy } from "./charts/bar";
+export { buildConvergenceSeries } from "./charts/convergence";
+export { buildDensitySeries, type DensityDisplayOptions } from "./charts/density";
+export { buildExceedanceSeries } from "./charts/exceedance";
+export { buildHeatmapSeries } from "./charts/heatmap";
+export { buildHistogramSeries, type HistogramDisplayOptions } from "./charts/histogram";
+export { buildMemberScatterSeries } from "./charts/memberScatter";
+export { buildPercentileRangeSeries, type PercentileRangeCenterStatistic, type PercentileRangeDisplayOptions } from "./charts/percentileRange";
 export {
-    buildMemberSeries,
-    buildStatisticsSeries,
     buildFanchartSeries,
     buildHistorySeries,
+    buildMemberSeries,
     buildObservationSeries,
-} from "./charts//timeseries";
-export {
-    buildBarSeries,
-} from "./charts//bar";
-export {
-    buildHistogramSeries,
-} from "./charts//histogram";
-export {
-    buildExceedanceSeries,
-} from "./charts//exceedance";
-export {
-    buildPercentileRangeSeries,
-} from "./charts//percentileRange";
-export {
-    buildDensitySeries,
-} from "./charts//density";
-export {
-    buildConvergenceSeries,
-} from "./charts//convergence";
-export {
-    buildHeatmapSeries,
-} from "./charts//heatmap";
-export {
-    buildMemberScatterSeries,
-} from "./charts//memberScatter";
-export type { BarSortBy } from "./charts//bar";
-export type { HistogramDisplayOptions } from "./charts//histogram";
-export type {
-    PercentileRangeCenterStatistic,
-    PercentileRangeDisplayOptions,
-} from "./charts//percentileRange";
-export type { DensityDisplayOptions } from "./charts//density";
+    buildStatisticsSeries,
+} from "./charts/timeseries";
 
-// Chart builders (compose series + layout into final EChartsOption)
+// Chart Composition Builders
 export {
+    buildBarChart,
+    buildConvergenceChart,
+    buildDensityChart,
+    buildExceedanceChart,
+    buildHeatmapChart,
+    buildHistogramChart,
+    buildMemberScatterChart,
+    buildPercentileRangeChart,
     buildTimeseriesChart,
     extractTimeseriesCategoryData,
-    buildHeatmapChart,
-    buildBarChart,
-    buildDensityChart,
-    buildHistogramChart,
-    buildExceedanceChart,
-    buildPercentileRangeChart,
-    buildConvergenceChart,
-    buildMemberScatterChart,
 } from "./charts/";
-export { composeChartOption } from "./core";
-export type { ComposeChartConfig, ChartSeriesOption, SeriesBuildResult } from "./core";
 
-// Overlay helpers
-export { createTimestampMarkLine, applyActiveTimestampMarker } from "./overlays";
+// Overlays
+export { applyActiveTimestampMarker, createTimestampMarkLine } from "./overlays";
 
 // Hooks
-export { useHighlightOnHover, useClickToTimestamp, useClosestMemberTooltip } from "./hooks";
+export { useClickToTimestamp, useClosestMemberTooltip, useHighlightOnHover } from "./hooks";
 export type { HoveredMemberInfo } from "./hooks";
 
-// Statistics utilities
+// Statistics & Math Utilities
 export {
-    computePointStatistics,
-    computeTimeseriesStatistics,
     computeHistogramLayout,
     computeHistogramTraceData,
+    computePointStatistics,
+    computeTimeseriesStatistics,
 } from "./utils";

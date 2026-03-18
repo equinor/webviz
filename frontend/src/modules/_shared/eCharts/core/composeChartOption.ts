@@ -10,9 +10,10 @@ import type {
 import { getResponsiveFeatures } from "../layout/responsiveConfig";
 import type { SubplotAxesResult } from "../layout/subplotAxes";
 import type { SubplotLayoutResult } from "../layout/subplotGridLayout";
-import { buildCompactTooltipConfig } from "./tooltip";
 import type { ContainerSize } from "../types";
 import type { SeriesMetadataCarrier } from "../utils/seriesMetadata";
+
+import { buildCompactTooltipConfig } from "./tooltip";
 
 const LEGEND_RIGHT_PX = 8;
 const LEGEND_BOTTOM_PX = 12;
@@ -57,8 +58,9 @@ export function composeChartOption(
     const { showToolbox, showLegend } = getResponsiveFeatures(config.containerSize);
 
     const defaultToolbox = showToolbox ? { feature: { restore: { title: "Reset" } }, right: 16, top: 4 } : undefined;
+    const finalToolbox = config.toolbox ?? defaultToolbox;
 
-    return {
+    const option: EChartsOption = {
         animation: false,
         title: axes.titles.length > 0 ? axes.titles : undefined,
         tooltip: buildCompactTooltipConfig(config.tooltip ?? { trigger: "item" as const }),
@@ -67,11 +69,14 @@ export function composeChartOption(
         xAxis: (isSingle ? axes.xAxes[0] : axes.xAxes) as EChartsOption["xAxis"],
         yAxis: (isSingle ? axes.yAxes[0] : axes.yAxes) as EChartsOption["yAxis"],
         series: config.series as EChartsOption["series"],
-        ...(config.dataZoom ? { dataZoom: config.dataZoom } : {}),
-        ...(config.visualMap ? { visualMap: config.visualMap } : {}),
-        ...(config.axisPointer ? { axisPointer: config.axisPointer } : {}),
-        ...((config.toolbox ?? defaultToolbox) ? { toolbox: config.toolbox ?? defaultToolbox } : {}),
     };
+
+    if (config.dataZoom) option.dataZoom = config.dataZoom;
+    if (config.visualMap) option.visualMap = config.visualMap;
+    if (config.axisPointer) option.axisPointer = config.axisPointer;
+    if (finalToolbox) option.toolbox = finalToolbox;
+
+    return option;
 }
 
 function buildLegendConfig(legendData: string[], showLegend: boolean) {

@@ -7,9 +7,9 @@ import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { DistributionTrace } from "../../types";
 import type { ConvergencePoint } from "../../utils/convergence";
 import { calcConvergence } from "../../utils/convergence";
-import type { ConvergenceStatisticKey } from "./builder";
 import { withSeriesMetadata, type SeriesMetadata } from "../../utils/seriesMetadata";
 
+import type { ConvergenceStatisticKey } from "./builder";
 import { makeConvergenceSeriesId } from "./ids";
 
 export type ConvergenceChartSeries = LineSeriesOption | CustomSeriesOption;

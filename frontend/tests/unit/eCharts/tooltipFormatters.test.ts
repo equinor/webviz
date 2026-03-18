@@ -6,16 +6,16 @@ import { buildConvergenceTooltip, formatConvergenceAxisTooltip } from "@modules/
 import {
     formatExceedanceAxisTooltip,
 } from "@modules/_shared/eCharts/charts//exceedance";
+import { formatHeatmapItemTooltip } from "@modules/_shared/eCharts/charts//heatmap";
 import {
     createHistogramBarTooltipFormatter,
     createHistogramRugTooltipFormatter,
 } from "@modules/_shared/eCharts/charts//histogram";
+import { formatMemberScatterItemTooltip } from "@modules/_shared/eCharts/charts//memberScatter";
 import {
     createPercentileGlyphTooltipFormatter,
     createPercentileRealizationTooltipFormatter,
 } from "@modules/_shared/eCharts/charts//percentileRange";
-import { formatHeatmapItemTooltip } from "@modules/_shared/eCharts/charts//heatmap";
-import { formatMemberScatterItemTooltip } from "@modules/_shared/eCharts/charts//memberScatter";
 import {
     buildTimeseriesTooltip,
     formatObservationTooltip,

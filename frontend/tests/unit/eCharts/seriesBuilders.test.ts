@@ -4,10 +4,10 @@ import { buildBarSeries } from "@modules/_shared/eCharts/charts//bar";
 import { buildConvergenceSeries, makeConvergenceSeriesId } from "@modules/_shared/eCharts/charts//convergence";
 import { buildDensitySeries } from "@modules/_shared/eCharts/charts//density";
 import { buildExceedanceChart, buildExceedanceSeries } from "@modules/_shared/eCharts/charts//exceedance";
-import { buildHistogramSeries } from "@modules/_shared/eCharts/charts//histogram";
-import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/charts//percentileRange";
 import { buildHeatmapSeries } from "@modules/_shared/eCharts/charts//heatmap";
+import { buildHistogramSeries } from "@modules/_shared/eCharts/charts//histogram";
 import { buildMemberScatterSeries } from "@modules/_shared/eCharts/charts//memberScatter";
+import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/charts//percentileRange";
 import {
     buildFanchartSeries,
     buildHistorySeries,

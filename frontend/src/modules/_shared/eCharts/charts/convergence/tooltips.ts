@@ -3,9 +3,9 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import { extractNumericValue, formatCompactTooltip } from "../../core/tooltip";
-
 import { readSeriesMetadata, getSeriesIdentifier } from "../../utils";
-import { ConvergenceStatisticKey } from "./builder";
+
+import type { ConvergenceStatisticKey } from "./builder";
 
 type TooltipEntry = {
     axisValue?: string | number;
