@@ -3,8 +3,8 @@ import type {
     DistributionTrace,
     HeatmapTrace,
     HistoricalTrace,
+    MemberScatterTrace,
     ObservationTrace,
-    RealizationScatterTrace,
     SubplotGroup,
     TimeseriesSubplotOverlays,
     TimeseriesTrace,
@@ -250,19 +250,19 @@ export function generateHeatmapTraces(numSubplots: number): SubplotGroup<Heatmap
     return subplots;
 }
 
-export function generateRealizationScatterTraces(
+export function generateMemberScatterTraces(
     numGroups: number,
     numRealizations: number,
     subplotIndex = 0,
-): RealizationScatterTrace[] {
-    const traces: RealizationScatterTrace[] = [];
+): MemberScatterTrace[] {
+    const traces: MemberScatterTrace[] = [];
     for (let g = 0; g < numGroups; g++) {
         const rng = seededRandom(g * 1000 + subplotIndex * 100 + 42);
-        const realizationIds: number[] = [];
+        const memberIds: number[] = [];
         const xValues: number[] = [];
         const yValues: number[] = [];
         for (let r = 0; r < numRealizations; r++) {
-            realizationIds.push(r);
+            memberIds.push(r);
             const x = rng() * 100 + g * 20 + subplotIndex * 5;
             // Correlated y with noise
             const noise = (rng() - 0.5) * 30;
@@ -273,7 +273,7 @@ export function generateRealizationScatterTraces(
             name: getEnsembleName(g),
             color: getEnsembleColor(g),
             highlightGroupKey: getEnsembleKey(g),
-            realizationIds,
+            memberIds,
             xValues,
             yValues,
         });

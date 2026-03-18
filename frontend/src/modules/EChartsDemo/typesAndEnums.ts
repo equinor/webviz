@@ -7,7 +7,7 @@ export enum PlotType {
     Convergence = "convergence",
     Bar = "bar",
     Heatmap = "heatmap",
-    RealizationScatter = "realization-scatter",
+    MemberScatter = "member-scatter",
 }
 
 export const PLOT_TYPE_LABELS: Record<PlotType, string> = {
@@ -19,5 +19,5 @@ export const PLOT_TYPE_LABELS: Record<PlotType, string> = {
     [PlotType.Convergence]: "Convergence",
     [PlotType.Bar]: "Bar Chart",
     [PlotType.Heatmap]: "Heatmap",
-    [PlotType.RealizationScatter]: "Realization Scatter",
+    [PlotType.MemberScatter]: "Realization Scatter",
 };

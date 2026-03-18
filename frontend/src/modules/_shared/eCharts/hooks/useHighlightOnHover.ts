@@ -6,16 +6,16 @@ import type ReactECharts from "echarts-for-react";
 
 import { getSeriesLinkGroupKey, getSeriesMemberKey, isMemberSeries } from "../utils/seriesMetadata";
 
-export type HoveredRealizationInfo = {
-    realizationId: number;
+export type HoveredMemberInfo = {
+    memberId: number;
     groupKey: string;
 };
 
 export type HighlightOnHoverOptions = {
-    /** Called when the hovered realization changes (null = nothing hovered). */
-    onHoveredRealizationChange?: (info: HoveredRealizationInfo | null) => void;
-    /** Externally-driven highlighted realization (e.g. from another module via synced settings). */
-    externalHoveredRealization?: HoveredRealizationInfo | null;
+    /** Called when the hovered member changes (null = nothing hovered). */
+    onHoveredMemberChange?: (info: HoveredMemberInfo | null) => void;
+    /** Externally-driven highlighted member (e.g. from another module via synced settings). */
+    externalHoveredMember?: HoveredMemberInfo | null;
 };
 
 export type HighlightOnHoverEvents = {
@@ -30,12 +30,12 @@ export function useHighlightOnHover(
     enabled: boolean,
     options?: HighlightOnHoverOptions,
 ): HighlightOnHoverEvents {
-    const onHoveredRealizationChange = options?.onHoveredRealizationChange;
-    const externalHoveredRealization = options?.externalHoveredRealization;
+    const onHoveredMemberChange = options?.onHoveredMemberChange;
+    const externalHoveredMember = options?.externalHoveredMember;
 
     const highlightedSeriesRef = React.useRef<string | null>(null);
     const clearHighlightTimeoutRef = React.useRef<number | null>(null);
-    const lastReportedRealizationRef = React.useRef<string | null>(null);
+    const lastReportedMemberRef = React.useRef<string | null>(null);
 
     const cancelScheduledClear = React.useCallback(() => {
         if (clearHighlightTimeoutRef.current != null) {
@@ -50,11 +50,11 @@ export function useHighlightOnHover(
         chartRef.current.getEchartsInstance().dispatchAction({ type: "downplay" });
         highlightedSeriesRef.current = null;
 
-        if (lastReportedRealizationRef.current !== null) {
-            lastReportedRealizationRef.current = null;
-            onHoveredRealizationChange?.(null);
+        if (lastReportedMemberRef.current !== null) {
+            lastReportedMemberRef.current = null;
+            onHoveredMemberChange?.(null);
         }
-    }, [enabled, chartRef, onHoveredRealizationChange]);
+    }, [enabled, chartRef, onHoveredMemberChange]);
 
     const applyHighlight = React.useCallback(
         (event: ECElementEvent) => {
@@ -75,27 +75,25 @@ export function useHighlightOnHover(
 
                 highlightedSeriesRef.current = highlightTarget.key;
 
-                // Report realization change to consumer
-                const realizationInfo = highlightTarget.realizationInfo;
-                const infoKey = realizationInfo ? `${realizationInfo.groupKey}:${realizationInfo.realizationId}` : null;
-                if (lastReportedRealizationRef.current !== infoKey) {
-                    lastReportedRealizationRef.current = infoKey;
-                    onHoveredRealizationChange?.(realizationInfo);
+                const memberInfo = highlightTarget.memberInfo;
+                const infoKey = memberInfo ? `${memberInfo.groupKey}:${memberInfo.memberId}` : null;
+                if (lastReportedMemberRef.current !== infoKey) {
+                    lastReportedMemberRef.current = infoKey;
+                    onHoveredMemberChange?.(memberInfo);
                 }
             }
         },
-        [enabled, chartRef, cancelScheduledClear, onHoveredRealizationChange],
+        [enabled, chartRef, cancelScheduledClear, onHoveredMemberChange],
     );
 
-    // Apply external highlight when externally-driven realization changes
     React.useEffect(() => {
-        if (!enabled || !chartRef.current || !externalHoveredRealization) return;
+        if (!enabled || !chartRef.current || !externalHoveredMember) return;
 
         const instance = chartRef.current.getEchartsInstance();
-        const actions = findRealizationSeriesByIdAndGroup(
+        const actions = findMemberSeriesByIdAndGroup(
             instance,
-            String(externalHoveredRealization.realizationId),
-            externalHoveredRealization.groupKey,
+            String(externalHoveredMember.memberId),
+            externalHoveredMember.groupKey,
         );
         if (actions.length === 0) return;
 
@@ -103,15 +101,14 @@ export function useHighlightOnHover(
         for (const action of actions) {
             instance.dispatchAction({ type: "highlight", ...action });
         }
-        highlightedSeriesRef.current = `external:${externalHoveredRealization.groupKey}:${externalHoveredRealization.realizationId}`;
-    }, [enabled, chartRef, externalHoveredRealization]);
+        highlightedSeriesRef.current = `external:${externalHoveredMember.groupKey}:${externalHoveredMember.memberId}`;
+    }, [enabled, chartRef, externalHoveredMember]);
 
-    // Clear external highlight when it becomes null
     React.useEffect(() => {
-        if (externalHoveredRealization === null && highlightedSeriesRef.current?.startsWith("external:")) {
+        if (externalHoveredMember === null && highlightedSeriesRef.current?.startsWith("external:")) {
             clearHighlight();
         }
-    }, [externalHoveredRealization, clearHighlight]);
+    }, [externalHoveredMember, clearHighlight]);
 
     React.useEffect(
         () => () => {
@@ -145,20 +142,19 @@ export function useHighlightOnHover(
 type HighlightTarget = {
     key: string;
     actions: Array<{ seriesIndex: number } | { seriesId: string } | { seriesName: string }>;
-    realizationInfo: HoveredRealizationInfo | null;
+    memberInfo: HoveredMemberInfo | null;
 };
 
 function getHighlightTarget(instance: ECharts, event: ECElementEvent): HighlightTarget | null {
     const hoveredSeriesId = resolveHoveredSeriesId(instance, event);
 
     if (hoveredSeriesId) {
-        const linkedSeries = findLinkedRealizationSeries(instance, hoveredSeriesId);
+        const linkedSeries = findLinkedMemberSeries(instance, hoveredSeriesId);
         if (linkedSeries.length > 0) {
-            const realId = getSeriesMemberKey(hoveredSeriesId);
+            const memberId = getSeriesMemberKey(hoveredSeriesId);
             const groupKey = getSeriesLinkGroupKey(hoveredSeriesId);
-            const realizationInfo =
-                realId != null && groupKey != null ? { realizationId: Number(realId), groupKey } : null;
-            return { key: `linked:${hoveredSeriesId}`, actions: linkedSeries, realizationInfo };
+            const memberInfo = memberId != null && groupKey != null ? { memberId: Number(memberId), groupKey } : null;
+            return { key: `linked:${hoveredSeriesId}`, actions: linkedSeries, memberInfo };
         }
     }
 
@@ -166,16 +162,16 @@ function getHighlightTarget(instance: ECharts, event: ECElementEvent): Highlight
         return {
             key: `index:${event.seriesIndex}`,
             actions: [{ seriesIndex: event.seriesIndex }],
-            realizationInfo: null,
+            memberInfo: null,
         };
     }
 
     if (hoveredSeriesId) {
-        return { key: `id:${hoveredSeriesId}`, actions: [{ seriesId: hoveredSeriesId }], realizationInfo: null };
+        return { key: `id:${hoveredSeriesId}`, actions: [{ seriesId: hoveredSeriesId }], memberInfo: null };
     }
 
     if (typeof event?.seriesName === "string") {
-        return { key: `name:${event.seriesName}`, actions: [{ seriesName: event.seriesName }], realizationInfo: null };
+        return { key: `name:${event.seriesName}`, actions: [{ seriesName: event.seriesName }], memberInfo: null };
     }
 
     return null;
@@ -199,12 +195,12 @@ function resolveHoveredSeriesId(instance: ECharts, event: ECElementEvent): strin
     return typeof hoveredSeries?.id === "string" ? hoveredSeries.id : null;
 }
 
-function findLinkedRealizationSeries(instance: ECharts, hoveredSeriesId: string): Array<{ seriesIndex: number }> {
+function findLinkedMemberSeries(instance: ECharts, hoveredSeriesId: string): Array<{ seriesIndex: number }> {
     if (!isMemberSeries(hoveredSeriesId)) return [];
 
     const groupKey = getSeriesLinkGroupKey(hoveredSeriesId);
-    const realId = getSeriesMemberKey(hoveredSeriesId);
-    if (!groupKey || realId == null) return [];
+    const memberId = getSeriesMemberKey(hoveredSeriesId);
+    if (!groupKey || memberId == null) return [];
 
     const chartSeries = instance.getOption()?.series;
     if (!Array.isArray(chartSeries)) return [];
@@ -215,9 +211,9 @@ function findLinkedRealizationSeries(instance: ECharts, hoveredSeriesId: string)
         if (!isMemberSeries(seriesOption)) return;
 
         const candidateGroupKey = getSeriesLinkGroupKey(seriesOption);
-        const candidateRealId = getSeriesMemberKey(seriesOption);
+        const candidateMemberId = getSeriesMemberKey(seriesOption);
 
-        if (candidateGroupKey === groupKey && candidateRealId === realId) {
+        if (candidateGroupKey === groupKey && candidateMemberId === memberId) {
             actions.push({ seriesIndex });
         }
     });
@@ -225,9 +221,9 @@ function findLinkedRealizationSeries(instance: ECharts, hoveredSeriesId: string)
     return actions;
 }
 
-function findRealizationSeriesByIdAndGroup(
+function findMemberSeriesByIdAndGroup(
     instance: ECharts,
-    realizationId: string,
+    memberId: string,
     groupKey: string,
 ): Array<{ seriesIndex: number }> {
     const chartSeries = instance.getOption()?.series;
@@ -239,9 +235,9 @@ function findRealizationSeriesByIdAndGroup(
         if (!isMemberSeries(seriesOption)) return;
 
         const candidateGroupKey = getSeriesLinkGroupKey(seriesOption);
-        const candidateRealId = getSeriesMemberKey(seriesOption);
+        const candidateMemberId = getSeriesMemberKey(seriesOption);
 
-        if (candidateGroupKey === groupKey && candidateRealId === realizationId) {
+        if (candidateGroupKey === groupKey && candidateMemberId === memberId) {
             actions.push({ seriesIndex });
         }
     });

@@ -9,19 +9,19 @@ import type {
     BarTrace,
     ContainerSize,
     DistributionTrace,
-    RealizationScatterTrace,
+    MemberScatterTrace,
     SubplotGroup,
     TimeseriesDisplayConfig,
 } from "@modules/_shared/eCharts";
 import {
     buildBarChart,
+    buildMemberScatterChart,
     buildConvergenceChart,
     buildDensityChart,
     buildExceedanceChart,
     buildHeatmapChart,
     buildHistogramChart,
     buildPercentileRangeChart,
-    buildRealizationScatterChart,
     buildTimeseriesChart,
     computeSubplotGridLayout,
     useTimeseriesInteractions,
@@ -33,7 +33,7 @@ import {
     generateBarTraces,
     generateDistributionTraces,
     generateHeatmapTraces,
-    generateRealizationScatterTraces,
+    generateMemberScatterTraces,
     generateTimeseriesGroups,
     generateTimeseriesOverlays,
 } from "./utils/syntheticData";
@@ -136,14 +136,14 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     { showStatisticalMarkers, showLabels: showBarLabels, sharedXAxis, sharedYAxis },
                     size,
                 );
-            case PlotType.RealizationScatter:
-                return buildRealizationScatterChart(
-                    createScatterSubplotGroups(numSubplots, numGroups, numRealizations),
-                    { sharedXAxis, sharedYAxis },
+            case PlotType.MemberScatter:
+                return buildMemberScatterChart(
+                    createMemberScatterSubplotGroups(numSubplots, numGroups, numRealizations),
+                    { memberLabel: "Realization", sharedXAxis, sharedYAxis },
                     size,
                 );
             case PlotType.Heatmap:
-                return buildHeatmapChart(generateHeatmapTraces(numSubplots), "Value");
+                return buildHeatmapChart(generateHeatmapTraces(numSubplots), { valueLabel: "Value" });
             default:
                 return {};
         }
@@ -179,23 +179,22 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         return [];
     }, [plotType, numSubplots, numGroups, numRealizations]);
 
-    const hasRealizations =
-        plotType === PlotType.RealizationScatter || (plotType === PlotType.Timeseries && showRealizations);
+    const hasLinkedMembers = plotType === PlotType.MemberScatter || (plotType === PlotType.Timeseries && showRealizations);
 
-    const handleHoveredRealizationChange = React.useCallback(
-        (info: { realizationId: number; groupKey: string } | null) => {
+    const handleHoveredMemberChange = React.useCallback(
+        (info: { memberId: number; groupKey: string } | null) => {
             return info; // => Just for demo. To syncedsettings
         },
         [],
     );
     const { chartRef, onChartEvents } = useTimeseriesInteractions({
-        enableLinkedHover: hasRealizations,
-        enableClosestRealizationTooltip: plotType === PlotType.Timeseries && showRealizations && !showStatistics,
+        enableLinkedHover: hasLinkedMembers,
+        enableClosestMemberTooltip: plotType === PlotType.Timeseries && showRealizations && !showStatistics,
         timestamps,
         activeTimestampUtcMs,
         setActiveTimestampUtcMs,
         layoutDependency: echartsOptions,
-        onHoveredRealizationChange: handleHoveredRealizationChange,
+        onHoveredMemberChange: handleHoveredMemberChange,
     });
 
     const layout = computeSubplotGridLayout(numSubplots);
@@ -248,10 +247,18 @@ function buildTimeseries(
         showObservations,
         selectedStatistics: selectedStatistics as TimeseriesDisplayConfig["selectedStatistics"],
     };
-    return buildTimeseriesChart(groups, overlays, config, "Value", activeTimestampUtcMs, containerSize, {
-        sharedXAxis,
-        sharedYAxis,
-    });
+    return buildTimeseriesChart(
+        groups,
+        {
+            subplotOverlays: overlays,
+            displayConfig: config,
+            yAxisLabel: "Value",
+            activeTimestampUtcMs,
+            sharedXAxis,
+            sharedYAxis,
+        },
+        containerSize,
+    );
 }
 
 function createDistributionSubplotGroups(
@@ -272,13 +279,13 @@ function createBarSubplotGroups(numSubplots: number, numGroups: number): Subplot
     }));
 }
 
-function createScatterSubplotGroups(
+function createMemberScatterSubplotGroups(
     numSubplots: number,
     numGroups: number,
     numRealizations: number,
-): SubplotGroup<RealizationScatterTrace>[] {
+): SubplotGroup<MemberScatterTrace>[] {
     return Array.from({ length: numSubplots }, (_, index) => ({
         title: `Subplot ${index + 1}`,
-        traces: generateRealizationScatterTraces(numGroups, numRealizations, index),
+        traces: generateMemberScatterTraces(numGroups, numRealizations, index),
     }));
 }

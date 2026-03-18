@@ -3,12 +3,12 @@ import React from "react";
 import type ReactECharts from "echarts-for-react";
 
 import { useClickToTimestamp } from "./useClickToTimestamp";
-import { useClosestRealizationTooltip } from "./useClosestRealizationTooltip";
+import { useClosestMemberTooltip } from "./useClosestMemberTooltip";
 import { useHighlightOnHover } from "./useHighlightOnHover";
-import type { HighlightOnHoverEvents, HoveredRealizationInfo } from "./useHighlightOnHover";
+import type { HighlightOnHoverEvents, HoveredMemberInfo } from "./useHighlightOnHover";
 
 export type TimeseriesInteractionConfig = {
-    /** Enable linked-realization hover highlighting across subplots. */
+    /** Enable linked-member hover highlighting across subplots. */
     enableLinkedHover: boolean;
     /** Timestamps for click-to-timestamp selection. Pass empty array to disable. */
     timestamps: number[];
@@ -18,12 +18,12 @@ export type TimeseriesInteractionConfig = {
     setActiveTimestampUtcMs: (ts: number | null) => void;
     /** Any value that changes when the chart layout changes (usually the option object). */
     layoutDependency: unknown;
-    /** Called when the hovered realization changes (null = nothing hovered). */
-    onHoveredRealizationChange?: (info: HoveredRealizationInfo | null) => void;
-    /** Externally-driven highlighted realization (e.g. from another module via synced settings). */
-    externalHoveredRealization?: HoveredRealizationInfo | null;
-    /** Show only the nearest realization tooltip while hovering the empty chart area. */
-    enableClosestRealizationTooltip?: boolean;
+    /** Called when the hovered member changes (null = nothing hovered). */
+    onHoveredMemberChange?: (info: HoveredMemberInfo | null) => void;
+    /** Externally-driven highlighted member (e.g. from another module via synced settings). */
+    externalHoveredMember?: HoveredMemberInfo | null;
+    /** Show only the nearest member tooltip while hovering the empty chart area. */
+    enableClosestMemberTooltip?: boolean;
 };
 
 export type TimeseriesInteractionResult = {
@@ -33,7 +33,7 @@ export type TimeseriesInteractionResult = {
 
 /**
  * Wires up the standard timeseries interaction hooks:
- * - linked realization highlighting on hover
+ * - linked member highlighting on hover
  * - click-to-timestamp selection
  *
  * Returns a `chartRef` and the event handlers to pass to `ReactECharts`.
@@ -42,8 +42,8 @@ export function useTimeseriesInteractions(config: TimeseriesInteractionConfig): 
     const chartRef = React.useRef<ReactECharts>(null);
 
     const onChartEvents = useHighlightOnHover(chartRef, config.enableLinkedHover, {
-        onHoveredRealizationChange: config.onHoveredRealizationChange,
-        externalHoveredRealization: config.externalHoveredRealization,
+        onHoveredMemberChange: config.onHoveredMemberChange,
+        externalHoveredMember: config.externalHoveredMember,
     });
 
     useClickToTimestamp(
@@ -53,9 +53,9 @@ export function useTimeseriesInteractions(config: TimeseriesInteractionConfig): 
         config.setActiveTimestampUtcMs,
         config.layoutDependency,
     );
-    useClosestRealizationTooltip(
+    useClosestMemberTooltip(
         chartRef,
-        config.enableClosestRealizationTooltip ?? false,
+        config.enableClosestMemberTooltip ?? false,
         config.timestamps,
         config.layoutDependency,
     );

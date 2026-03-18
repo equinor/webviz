@@ -25,11 +25,12 @@ Modules should map domain data into shared trace types and call shared builders,
 
 ## Folder Map
 
+- `families/`: primary home for chart slices. Keep chart-specific builder/series/tooltip/ID logic together here.
 - `types.ts`: shared trace and display config contracts.
-- `builders/`: high-level chart option builders (`EChartsOption`).
-- `series/`: series builders returning `SeriesBuildResult`.
+- `builders/`: shared chart composition utilities and export barrel.
+- `series/`: export barrel for public series-builder APIs.
 - `layout/`: subplot grid and axis helpers.
-- `interaction/`: non-tooltip interaction helpers plus `tooltips/` for tooltip policy/rendering.
+- `interaction/`: non-tooltip interaction helpers plus shared `tooltips/` primitives.
 - `hooks/`: React interaction hooks.
 - `utils/`: pure calculations and ID helpers.
 - `index.ts`: public exports.
@@ -41,17 +42,18 @@ Modules should map domain data into shared trace types and call shared builders,
 | Layer                    | Owner                                                        | Responsibility                                                                                     |
 | ------------------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
 | Global style             | `builders/composeChartOption.ts` + `interaction/tooltips/core.ts` | Compact tooltip defaults (padding, text style) and shared HTML row/header primitives.             |
-| Chart-level behavior     | `builders/*`                                                 | Tooltip trigger mode (`axis` vs `item`), axis pointer policy, and selection of chart-family policy. |
-| Chart-family rendering   | `interaction/tooltips/<family>.ts`                           | Tooltip formatting and policy helpers for a single chart family.                                   |
-| Series-level override    | `series/*`                                                   | Helper-series suppression and item-only overrides that delegate back to chart-family tooltip helpers. |
+| Chart-level behavior     | `families/<family>/<chart>/builder.ts`                       | Tooltip trigger mode (`axis` vs `item`), axis pointer policy, and composition of the chart slice. |
+| Chart-family rendering   | `families/<family>/<chart>/tooltips.ts`                      | Tooltip formatting and policy helpers colocated with the owning chart slice.                       |
+| Series-level override    | `families/<family>/<chart>/*Series.ts`                       | Helper-series suppression and item-only overrides that delegate back to chart-family tooltip helpers. |
 
 Rules:
 
-- Keep tooltip formatting logic in `interaction/tooltips/`.
+- Keep only shared tooltip primitives in `interaction/tooltips/`.
+- Colocate all chart-specific tooltip formatting with the chart slice under `families/`.
 - Builders own chart-level tooltip policy, even when a family supports both `axis` and `item` modes.
-- Item-only glyph/point series may attach a formatter in `series/*`, but the formatter must come from the same chart-family tooltip module.
-- Do not inline tooltip formatter logic in builders or series files.
-- Re-export public tooltip helpers from `interaction/index.ts`.
+- Item-only glyph/point series may attach a formatter in the slice series file, but the formatter must come from the same chart-family tooltip module.
+- Do not inline tooltip formatter logic in slice builders or slice series files.
+- Do not re-export chart-specific tooltip helpers through `interaction/index.ts`.
 
 Common exceptions:
 
@@ -63,6 +65,7 @@ Common exceptions:
 
 - All cartesian chart builders must use `buildCartesianSubplotChart`.
 - Use `postProcessAxes` for post-build axis changes.
+- Put builder-specific inputs in a typed options object instead of stacking extra positional arguments.
 - All exported series builders return `SeriesBuildResult`:
 
 ```ts
@@ -73,15 +76,15 @@ type SeriesBuildResult = {
 ```
 
 - Series builders own `xAxisIndex` and `yAxisIndex`.
-- Use structured series IDs from `utils/seriesId.ts` (`category:name:qualifier:axisIndex`).
+- Use structured series IDs from `utils/seriesId.ts` (`category:name:qualifier:axisIndex`). Prefer chart-local wrappers around `makeSeriesId()` for migrated slices.
 - `legendData` should include only names that produced rendered series.
 
 ## Adding Or Changing A Chart
 
 1. Map domain data to shared trace types in the module layer.
 2. Build `SubplotGroup<T>[]`.
-3. Use an existing shared builder if possible.
-4. Add or update chart-family tooltip helpers under `interaction/tooltips/`.
+3. Prefer building inside an existing family/chart slice or adding a new slice under `families/`.
+4. Add or update chart-local tooltip helpers beside the owning chart slice under `families/`.
 5. Keep chart-level trigger and axis-pointer choices in the builder.
 6. Add/adjust unit tests under `tests/unit/eCharts/`.
 

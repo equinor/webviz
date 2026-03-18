@@ -12,7 +12,7 @@ export type {
     DistributionTrace,
     BarTrace,
     HeatmapTrace,
-    RealizationScatterTrace,
+    MemberScatterTrace,
     SubplotGroup,
     TimeseriesDisplayConfig,
     DensityDisplayConfig,
@@ -36,7 +36,7 @@ export type {
 
 // Series builders
 export {
-    buildRealizationsSeries,
+    buildMemberSeries,
     buildStatisticsSeries,
     buildFanchartSeries,
     buildHistorySeries,
@@ -48,7 +48,7 @@ export {
     buildDensitySeries,
     buildConvergenceSeries,
     buildHeatmapSeries,
-    buildRealizationScatterSeries,
+    buildMemberScatterSeries,
 } from "./series";
 export type {
     BarSortBy,
@@ -65,27 +65,21 @@ export {
     buildHeatmapChart,
     buildBarChart,
     buildDensityChart,
+    buildHistogramChart,
     buildExceedanceChart,
     buildPercentileRangeChart,
     buildConvergenceChart,
-    buildRealizationScatterChart,
+    buildMemberScatterChart,
     composeChartOption,
 } from "./builders";
-export { buildHistogramChart } from "./builders/histogramChartBuilder";
 export type { ComposeChartConfig, ChartSeriesOption, SeriesBuildResult } from "./builders";
 
 // Interaction helpers
-export {
-    createTimestampMarkLine,
-    applyActiveTimestampMarker,
-    formatStatisticsAxisTooltip as formatStatisticsTooltip,
-    formatRealizationItemTooltip,
-    formatObservationTooltip,
-} from "./interaction";
+export { createTimestampMarkLine, applyActiveTimestampMarker } from "./interaction";
 
 // Hooks
 export { useHighlightOnHover, useClickToTimestamp, useTimeseriesInteractions } from "./hooks";
-export type { TimeseriesInteractionConfig, TimeseriesInteractionResult, HoveredRealizationInfo } from "./hooks";
+export type { TimeseriesInteractionConfig, TimeseriesInteractionResult, HoveredMemberInfo } from "./hooks";
 
 // Statistics utilities
 export {

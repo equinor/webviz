@@ -1,18 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { buildExceedanceChart } from "@modules/_shared/eCharts/builders/exceedanceChartBuilder";
-import { buildBarSeries } from "@modules/_shared/eCharts/series/barSeries";
-import { buildConvergenceSeries } from "@modules/_shared/eCharts/series/convergenceSeries";
-import { buildDensitySeries } from "@modules/_shared/eCharts/series/densitySeries";
-import { buildExceedanceSeries } from "@modules/_shared/eCharts/series/exceedanceSeries";
-import { buildHeatmapSeries } from "@modules/_shared/eCharts/series/heatmapSeries";
-import { buildHistogramSeries } from "@modules/_shared/eCharts/series/histogramSeries";
-import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/series/percentileRangeSeries";
-import { buildRealizationScatterSeries } from "@modules/_shared/eCharts/series/realizationScatterSeries";
-import { buildHistorySeries } from "@modules/_shared/eCharts/series/timeseriesHistorySeries";
-import { buildObservationSeries } from "@modules/_shared/eCharts/series/timeseriesObservationSeries";
-import { buildRealizationsSeries } from "@modules/_shared/eCharts/series/timeseriesRealizationSeries";
-import { buildFanchartSeries, buildStatisticsSeries } from "@modules/_shared/eCharts/series/timeseriesStatisticsSeries";
+import { buildBarSeries } from "@modules/_shared/eCharts/families/categorical/bar";
+import { buildConvergenceSeries } from "@modules/_shared/eCharts/families/distribution/convergence";
+import { buildDensitySeries } from "@modules/_shared/eCharts/families/distribution/density";
+import { buildExceedanceChart, buildExceedanceSeries } from "@modules/_shared/eCharts/families/distribution/exceedance";
+import { buildHistogramSeries } from "@modules/_shared/eCharts/families/distribution/histogram";
+import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/families/distribution/percentileRange";
+import { buildHeatmapSeries } from "@modules/_shared/eCharts/families/matrix/heatmap";
+import { buildMemberScatterSeries } from "@modules/_shared/eCharts/families/scatter/memberScatter";
+import {
+    buildFanchartSeries,
+    buildHistorySeries,
+    buildMemberSeries,
+    buildObservationSeries,
+    buildStatisticsSeries,
+} from "@modules/_shared/eCharts/families/timeseries/timeseries";
 import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/utils";
 import { makeConvergenceSeriesId } from "@modules/_shared/eCharts/utils/seriesId";
 
@@ -229,7 +231,7 @@ describe("series builder contracts", () => {
             },
         };
 
-        const realizationSeries = buildRealizationsSeries(trace, 3).series[0] as {
+        const memberSeries = buildMemberSeries(trace, 3).series[0] as {
             webvizSeriesMeta?: Record<string, unknown>;
         };
         const summarySeries = buildStatisticsSeries(trace, ["mean"], 3).series[0] as {
@@ -239,7 +241,7 @@ describe("series builder contracts", () => {
             webvizSeriesMeta?: Record<string, unknown>;
         };
 
-        expect(realizationSeries.webvizSeriesMeta).toMatchObject({
+        expect(memberSeries.webvizSeriesMeta).toMatchObject({
             family: "timeseries",
             chart: "timeseries",
             axisIndex: 3,
@@ -278,12 +280,12 @@ describe("series builder contracts", () => {
         const bandSeries = convergenceResult.series.find(
             (seriesOption) => (seriesOption as { id?: string }).id === "convergence:Convergence:band:2",
         ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
-        const scatterSeries = buildRealizationScatterSeries(
+        const scatterSeries = buildMemberScatterSeries(
             {
                 name: "Scatter",
                 color: "#884422",
                 highlightGroupKey: "Pair A",
-                realizationIds: [12],
+                memberIds: [12],
                 xValues: [1],
                 yValues: [2],
             },
@@ -310,6 +312,200 @@ describe("series builder contracts", () => {
             roles: ["member"],
             linkGroupKey: "Pair A",
             memberKey: "12",
+        });
+    });
+
+    it("remaining low-risk builders attach neutral family and role metadata", () => {
+        const barResult = buildBarSeries(
+            {
+                name: "BarTrace",
+                color: "#336699",
+                categories: ["A", "B", "C"],
+                values: [1, 3, 2],
+            },
+            2,
+            { showStatisticalMarkers: true },
+        );
+        const barSeries = barResult.series.find(
+            (seriesOption) => (seriesOption as { id?: string }).id === "bar:BarTrace:bars:2",
+        ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
+        const barMeanSeries = barResult.series.find(
+            (seriesOption) => (seriesOption as { id?: string }).id === "bar:BarTrace:mean:2",
+        ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
+
+        const densityResult = buildDensitySeries(
+            {
+                name: "DensityTrace",
+                color: "#cc3300",
+                values: [1, 2, 3, 4],
+                realizationIds: [10, 11, 12, 13],
+            },
+            { showRealizationPoints: true },
+            1,
+        );
+        const densityKdeSeries = densityResult.series.find(
+            (seriesOption) => (seriesOption as { id?: string }).id === "density:DensityTrace:kde:1",
+        ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
+        const densityPointsSeries = densityResult.series.find(
+            (seriesOption) => (seriesOption as { id?: string }).id === "density:DensityTrace:points:1",
+        ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
+
+        const exceedanceSeries = buildExceedanceSeries(
+            {
+                name: "ExceedTrace",
+                color: "#115588",
+                values: [40, 10, 30, 20],
+            },
+            2,
+        ).series[0] as { webvizSeriesMeta?: Record<string, unknown> };
+
+        const percentileResult = buildPercentileRangeSeries(
+            {
+                name: "PctTrace",
+                color: "#009966",
+                values: [100, 120, 130, 125],
+                realizationIds: [1, 2, 3, 4],
+            },
+            { showRealizationPoints: true },
+            3,
+        );
+        const percentileGlyphSeries = percentileResult.series.find(
+            (seriesOption) => (seriesOption as { id?: string }).id === "percentile:PctTrace:glyph:3",
+        ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
+        const percentilePointsSeries = percentileResult.series.find(
+            (seriesOption) => (seriesOption as { id?: string }).id === "percentile:PctTrace:points:3",
+        ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
+
+        const heatmapSeries = buildHeatmapSeries(
+            {
+                name: "HeatTrace",
+                xLabels: ["T1", "T2"],
+                yLabels: ["Y1"],
+                timestampsUtcMs: [1, 2],
+                data: [[0, 0, 1.23]],
+                minValue: 1.23,
+                maxValue: 1.23,
+            },
+            4,
+            null,
+        ).series[0] as { webvizSeriesMeta?: Record<string, unknown> };
+
+        const histogramResult = buildHistogramSeries(
+            {
+                name: "HistTrace",
+                color: "#663399",
+                values: [1, 2, 2, 3, 4],
+                realizationIds: [1, 2, 3, 4, 5],
+            },
+            { showRealizationPoints: true, numBins: 4 },
+            5,
+        );
+        const histogramBarsSeries = histogramResult.series.find(
+            (seriesOption) => (seriesOption as { id?: string }).id === "histogram:HistTrace:bars:5",
+        ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
+        const histogramRugSeries = histogramResult.series.find(
+            (seriesOption) => (seriesOption as { id?: string }).id === "histogram:HistTrace:rug:5",
+        ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
+
+        const historySeries = buildHistorySeries(
+            {
+                name: "History",
+                color: "#000000",
+                timestamps: [Date.UTC(2020, 0, 1), Date.UTC(2020, 1, 1)],
+                values: [10, 14],
+                lineShape: "vh",
+            },
+            1,
+        ).series[0] as { webvizSeriesMeta?: Record<string, unknown> };
+
+        const observationSeries = buildObservationSeries(
+            {
+                name: "Observation",
+                color: "#111111",
+                observations: [
+                    {
+                        date: Date.UTC(2020, 0, 1),
+                        value: 100,
+                        error: 3,
+                        label: "Obs 1",
+                    },
+                ],
+            },
+            2,
+        ).series[0] as { webvizSeriesMeta?: Record<string, unknown> };
+
+        expect(barSeries?.webvizSeriesMeta).toMatchObject({
+            family: "categorical",
+            chart: "bar",
+            axisIndex: 2,
+            roles: ["primary"],
+        });
+        expect(barMeanSeries?.webvizSeriesMeta).toMatchObject({
+            family: "categorical",
+            chart: "bar",
+            axisIndex: 2,
+            roles: ["reference", "summary"],
+            statKey: "mean",
+        });
+        expect(densityKdeSeries?.webvizSeriesMeta).toMatchObject({
+            family: "distribution",
+            chart: "density",
+            axisIndex: 1,
+            roles: ["primary"],
+        });
+        expect(densityPointsSeries?.webvizSeriesMeta).toMatchObject({
+            family: "distribution",
+            chart: "density",
+            axisIndex: 1,
+            roles: ["memberPoints"],
+        });
+        expect(exceedanceSeries.webvizSeriesMeta).toMatchObject({
+            family: "distribution",
+            chart: "exceedance",
+            axisIndex: 2,
+            roles: ["primary"],
+        });
+        expect(percentileGlyphSeries?.webvizSeriesMeta).toMatchObject({
+            family: "distribution",
+            chart: "percentileRange",
+            axisIndex: 3,
+            roles: ["summary"],
+        });
+        expect(percentilePointsSeries?.webvizSeriesMeta).toMatchObject({
+            family: "distribution",
+            chart: "percentileRange",
+            axisIndex: 3,
+            roles: ["memberPoints"],
+        });
+        expect(heatmapSeries.webvizSeriesMeta).toMatchObject({
+            family: "matrix",
+            chart: "heatmap",
+            axisIndex: 4,
+            roles: ["primary"],
+        });
+        expect(histogramBarsSeries?.webvizSeriesMeta).toMatchObject({
+            family: "distribution",
+            chart: "histogram",
+            axisIndex: 5,
+            roles: ["primary"],
+        });
+        expect(histogramRugSeries?.webvizSeriesMeta).toMatchObject({
+            family: "distribution",
+            chart: "histogram",
+            axisIndex: 5,
+            roles: ["memberPoints"],
+        });
+        expect(historySeries.webvizSeriesMeta).toMatchObject({
+            family: "timeseries",
+            chart: "timeseries",
+            axisIndex: 1,
+            roles: ["reference"],
+        });
+        expect(observationSeries.webvizSeriesMeta).toMatchObject({
+            family: "timeseries",
+            chart: "timeseries",
+            axisIndex: 2,
+            roles: ["measurement"],
         });
     });
 

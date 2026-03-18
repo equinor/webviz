@@ -1,32 +1,32 @@
 import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { describe, expect, it } from "vitest";
 
-import { formatBarAxisTooltip, formatBarMeanTooltip } from "@modules/_shared/eCharts/interaction/tooltips/bar";
+import { formatBarAxisTooltip, formatBarMeanTooltip } from "@modules/_shared/eCharts/families/categorical/bar";
+import { formatConvergenceAxisTooltip } from "@modules/_shared/eCharts/families/distribution/convergence";
+import {
+    formatExceedanceAxisTooltip,
+} from "@modules/_shared/eCharts/families/distribution/exceedance";
+import {
+    createHistogramBarTooltipFormatter,
+    createHistogramRugTooltipFormatter,
+} from "@modules/_shared/eCharts/families/distribution/histogram";
+import {
+    createPercentileGlyphTooltipFormatter,
+    createPercentileRealizationTooltipFormatter,
+} from "@modules/_shared/eCharts/families/distribution/percentileRange";
+import { formatHeatmapItemTooltip } from "@modules/_shared/eCharts/families/matrix/heatmap";
+import { formatMemberScatterItemTooltip } from "@modules/_shared/eCharts/families/scatter/memberScatter";
+import {
+    formatObservationTooltip,
+    formatMemberItemTooltip,
+    formatStatisticsAxisTooltip,
+} from "@modules/_shared/eCharts/families/timeseries/timeseries";
 import {
     buildCompactTooltipConfig,
     formatCompactTooltip,
     formatCompactTooltipHeader,
     formatCompactTooltipRow,
 } from "@modules/_shared/eCharts/interaction/tooltips/core";
-import {
-    formatConvergenceAxisTooltip,
-    formatExceedanceAxisTooltip,
-    formatRealizationScatterItemTooltip,
-} from "@modules/_shared/eCharts/interaction/tooltips/distribution";
-import { formatHeatmapItemTooltip } from "@modules/_shared/eCharts/interaction/tooltips/heatmap";
-import {
-    createHistogramBarTooltipFormatter,
-    createHistogramRugTooltipFormatter,
-} from "@modules/_shared/eCharts/interaction/tooltips/histogram";
-import {
-    createPercentileGlyphTooltipFormatter,
-    createPercentileRealizationTooltipFormatter,
-} from "@modules/_shared/eCharts/interaction/tooltips/percentileRange";
-import {
-    formatObservationTooltip,
-    formatRealizationItemTooltip,
-    formatStatisticsAxisTooltip,
-} from "@modules/_shared/eCharts/interaction/tooltips/timeseries";
 import type { SeriesMetadata } from "@modules/_shared/eCharts/utils/seriesMetadata";
 
 type MockParam = {
@@ -264,9 +264,9 @@ describe("formatStatisticsTooltip", () => {
     });
 });
 
-describe("formatRealizationItemTooltip", () => {
+describe("formatMemberItemTooltip", () => {
     it("uses realization id when available", () => {
-        const tooltip = formatRealizationItemTooltip(
+        const tooltip = formatMemberItemTooltip(
             makeParam({
                 seriesId: "realization:Group A:7:0",
                 seriesName: "Trace A",
@@ -283,7 +283,7 @@ describe("formatRealizationItemTooltip", () => {
     });
 
     it("falls back to series name for non-realization id", () => {
-        const tooltip = formatRealizationItemTooltip(
+        const tooltip = formatMemberItemTooltip(
             makeParam({
                 seriesId: "statistic:Trace A:mean:0",
                 seriesName: "Trace A",
@@ -296,7 +296,7 @@ describe("formatRealizationItemTooltip", () => {
     });
 
     it("uses metadata member keys when present", () => {
-        const tooltip = formatRealizationItemTooltip(
+        const tooltip = formatMemberItemTooltip(
             makeParam({
                 seriesId: "statistic:Trace A:mean:0",
                 seriesName: "Trace A",
@@ -583,9 +583,9 @@ describe("percentile tooltip formatters", () => {
     });
 });
 
-describe("formatRealizationScatterTooltip", () => {
-    it("shows x/y and realization id for realization series", () => {
-        const tooltip = formatRealizationScatterItemTooltip(
+describe("formatMemberScatterTooltip", () => {
+    it("shows x/y and member id for member series", () => {
+        const tooltip = formatMemberScatterItemTooltip(
             makeParam({
                 seriesId: "realization:Group A:9:0",
                 seriesName: "Scatter A",
@@ -599,12 +599,26 @@ describe("formatRealizationScatterTooltip", () => {
         expect(tooltip).toContain("4");
         expect(tooltip).toContain("Y");
         expect(tooltip).toContain("5");
-        expect(tooltip).toContain("Realization");
+        expect(tooltip).toContain("Member");
         expect(tooltip).toContain("9");
     });
 
-    it("omits realization row for non-realization series id", () => {
-        const tooltip = formatRealizationScatterItemTooltip(
+    it("supports overriding the member label", () => {
+        const tooltip = formatMemberScatterItemTooltip(
+            makeParam({
+                seriesId: "realization:Group A:9:0",
+                seriesName: "Scatter A",
+                value: [4, 5],
+            }),
+            { memberLabel: "Realization" },
+        );
+
+        expect(tooltip).toContain("Realization");
+        expect(tooltip).not.toContain("Member");
+    });
+
+    it("omits member row for non-member series id", () => {
+        const tooltip = formatMemberScatterItemTooltip(
             makeParam({
                 seriesId: "density:Trace A:points:0",
                 seriesName: "Scatter A",
@@ -613,6 +627,6 @@ describe("formatRealizationScatterTooltip", () => {
         );
 
         expect(tooltip).toContain("Scatter A");
-        expect(tooltip).not.toContain("Realization");
+        expect(tooltip).not.toContain("Member");
     });
 });

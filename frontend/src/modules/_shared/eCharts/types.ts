@@ -107,11 +107,11 @@ export interface ContainerSize {
     height: number;
 }
 
-export interface RealizationScatterTrace {
+export interface MemberScatterTrace {
     name: string;
     color: string;
     highlightGroupKey?: string;
-    realizationIds: number[];
+    memberIds: number[];
     xValues: number[];
     yValues: number[];
 }
