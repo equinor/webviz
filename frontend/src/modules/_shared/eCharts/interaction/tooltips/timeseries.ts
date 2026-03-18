@@ -3,7 +3,14 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { TimeseriesDisplayConfig } from "../../types";
-import { getRealizationId, parseSeriesId } from "../../utils/seriesId";
+import { parseSeriesId } from "../../utils/seriesId";
+import {
+    getSeriesAxisIndex,
+    getSeriesIdentifier,
+    getSeriesMemberKey,
+    readSeriesMetadata,
+    type SeriesMetadata,
+} from "../../utils/seriesMetadata";
 
 import { formatCompactTooltip } from "./core";
 import {
@@ -50,8 +57,7 @@ export function formatStatisticsAxisTooltip(params: CallbackDataParams | Callbac
 
     for (const raw of params) {
         const p = raw as AxisScopedTooltipParams;
-        const seriesId = typeof p.seriesId === "string" ? p.seriesId : "";
-        const parsedStatisticSeries = parseStatisticSeries(seriesId);
+        const parsedStatisticSeries = parseStatisticSeries(p);
         if (!parsedStatisticSeries) continue;
         if (!belongsToAxis(p, parsedStatisticSeries.axisIndex, targetAxisIndex)) continue;
 
@@ -84,13 +90,13 @@ export function formatRealizationItemTooltip(params: CallbackDataParams | Callba
     const p = Array.isArray(params) ? params[0] : params;
     if (!p) return "";
 
-    const seriesId = typeof p.seriesId === "string" ? p.seriesId : "";
     const axisValue = String((p as AxisTooltipParams).axisValue ?? p.name ?? "");
 
     return formatRealizationTooltipContent({
         axisValue,
         seriesName: p.seriesName ?? "",
-        seriesId,
+        seriesId: getSeriesIdentifier(p) ?? undefined,
+        webvizSeriesMeta: readSeriesMetadata(p) ?? undefined,
         value: extractNumericValue(p.value),
         color: typeof p.color === "string" ? p.color : undefined,
     });
@@ -115,8 +121,18 @@ export function formatObservationTooltip(params: CallbackDataParams | CallbackDa
     ]);
 }
 
-function parseStatisticSeries(seriesId: string): ParsedStatisticSeries | null {
-    const parsed = parseSeriesId(seriesId);
+function parseStatisticSeries(input: { seriesId?: string; webvizSeriesMeta?: SeriesMetadata }): ParsedStatisticSeries | null {
+    const metadata = readSeriesMetadata(input);
+    if (metadata?.chart === "timeseries" && metadata.roles.includes("summary") && metadata.statKey) {
+        return {
+            traceName: "",
+            statKey: metadata.statKey,
+            axisIndex: metadata.axisIndex,
+        };
+    }
+
+    const seriesId = getSeriesIdentifier(input);
+    const parsed = seriesId ? parseSeriesId(seriesId) : null;
     if (!parsed || parsed.category !== "statistic") return null;
 
     return {
@@ -156,7 +172,10 @@ function resolveHoveredAxisIndex(params: CallbackDataParams[]): number | null {
         const fromRuntime = firstFiniteNumber(param.axisIndex, param.xAxisIndex);
         if (fromRuntime != null) return fromRuntime;
 
-        const seriesId = typeof param.seriesId === "string" ? param.seriesId : "";
+        const fromMetadata = getSeriesAxisIndex(param);
+        if (fromMetadata != null) return fromMetadata;
+
+        const seriesId = getSeriesIdentifier(param);
         const parsed = seriesId ? parseSeriesId(seriesId) : null;
         if (parsed) return parsed.axisIndex;
     }
@@ -176,6 +195,11 @@ function belongsToAxis(
         return runtimeAxis === targetAxisIndex;
     }
 
+    const metadataAxis = getSeriesAxisIndex(param);
+    if (metadataAxis != null) {
+        return metadataAxis === targetAxisIndex;
+    }
+
     return parsedSeriesAxisIndex === targetAxisIndex;
 }
 
@@ -189,11 +213,12 @@ function firstFiniteNumber(...values: Array<number | undefined>): number | null 
 export function formatRealizationTooltipContent(input: {
     axisValue: string;
     seriesName: string;
-    seriesId: string;
+    seriesId?: string;
+    webvizSeriesMeta?: SeriesMetadata;
     value: number;
     color?: string;
 }): string {
-    const realId = getRealizationId(input.seriesId);
+    const realId = getSeriesMemberKey(input);
     const name = realId != null ? `Realization ${realId}` : input.seriesName;
 
     return formatCompactTooltip(input.axisValue, [

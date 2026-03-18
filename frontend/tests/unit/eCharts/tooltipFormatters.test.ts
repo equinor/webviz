@@ -27,6 +27,7 @@ import {
     formatRealizationItemTooltip,
     formatStatisticsAxisTooltip,
 } from "@modules/_shared/eCharts/interaction/tooltips/timeseries";
+import type { SeriesMetadata } from "@modules/_shared/eCharts/utils/seriesMetadata";
 
 type MockParam = {
     componentType: "series";
@@ -46,6 +47,7 @@ type MockParam = {
     axisValueLabel?: string | number;
     axisIndex?: number;
     xAxisIndex?: number;
+    webvizSeriesMeta?: SeriesMetadata;
 };
 
 function makeParam(input: Partial<MockParam>): CallbackDataParams {
@@ -138,6 +140,45 @@ describe("formatStatisticsTooltip", () => {
                 axisValue: "2020-01-01",
                 axisIndex: undefined,
                 xAxisIndex: undefined,
+            }),
+        ]);
+
+        expect(tooltip).toContain("Trace A");
+        expect(tooltip).toContain("Mean 10");
+        expect(tooltip).not.toContain("Trace B");
+    });
+
+    it("prefers explicit metadata over unrelated legacy series IDs", () => {
+        const tooltip = formatStatisticsAxisTooltip([
+            makeParam({
+                seriesId: "bar:Trace A:bars:99",
+                seriesName: "Trace A",
+                value: 10,
+                axisValue: "2020-01-01",
+                axisIndex: undefined,
+                xAxisIndex: undefined,
+                webvizSeriesMeta: {
+                    family: "timeseries",
+                    chart: "timeseries",
+                    axisIndex: 0,
+                    roles: ["summary"],
+                    statKey: "mean",
+                },
+            }),
+            makeParam({
+                seriesId: "bar:Trace B:bars:99",
+                seriesName: "Trace B",
+                value: 20,
+                axisValue: "2020-01-01",
+                axisIndex: undefined,
+                xAxisIndex: undefined,
+                webvizSeriesMeta: {
+                    family: "timeseries",
+                    chart: "timeseries",
+                    axisIndex: 1,
+                    roles: ["summary"],
+                    statKey: "mean",
+                },
             }),
         ]);
 
@@ -252,6 +293,28 @@ describe("formatRealizationItemTooltip", () => {
 
         expect(tooltip).toContain("Trace A");
         expect(tooltip).toContain("99");
+    });
+
+    it("uses metadata member keys when present", () => {
+        const tooltip = formatRealizationItemTooltip(
+            makeParam({
+                seriesId: "statistic:Trace A:mean:0",
+                seriesName: "Trace A",
+                value: 15,
+                axisValue: "2020-02-01",
+                webvizSeriesMeta: {
+                    family: "timeseries",
+                    chart: "timeseries",
+                    axisIndex: 0,
+                    roles: ["member"],
+                    memberKey: "42",
+                },
+            }),
+        );
+
+        expect(tooltip).toContain("2020-02-01");
+        expect(tooltip).toContain("Realization 42");
+        expect(tooltip).toContain("15");
     });
 });
 

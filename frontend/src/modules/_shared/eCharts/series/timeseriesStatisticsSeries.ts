@@ -3,6 +3,7 @@ import type { CustomSeriesOption, LineSeriesOption } from "echarts/charts";
 import type { SeriesBuildResult } from "../builders/composeChartOption";
 import type { StatisticKey, TimeseriesTrace } from "../types";
 import { makeFanchartSeriesId, makeStatisticSeriesId } from "../utils/seriesId";
+import { withSeriesMetadata, type SeriesMetadata } from "../utils/seriesMetadata";
 
 type StatSeriesEntry = {
     key: StatisticKey;
@@ -30,19 +31,24 @@ export function buildStatisticsSeries(
 
     for (const def of STAT_SERIES_DEFS) {
         if (selectedStatistics.includes(def.key)) {
-            series.push({
-                id: makeStatisticSeriesId(trace.name, def.key, axisIndex),
-                name: trace.name,
-                type: "line",
-                data: trace.statistics[def.key],
-                xAxisIndex: axisIndex,
-                yAxisIndex: axisIndex,
-                itemStyle: { color: trace.color },
-                lineStyle: { color: trace.color, width: def.width, type: def.dash },
-                symbol: "none",
-                emphasis: { disabled: true },
-                blur: { lineStyle: { opacity: 1 } },
-            });
+            series.push(
+                withSeriesMetadata(
+                    {
+                        id: makeStatisticSeriesId(trace.name, def.key, axisIndex),
+                        name: trace.name,
+                        type: "line",
+                        data: trace.statistics[def.key],
+                        xAxisIndex: axisIndex,
+                        yAxisIndex: axisIndex,
+                        itemStyle: { color: trace.color },
+                        lineStyle: { color: trace.color, width: def.width, type: def.dash },
+                        symbol: "none",
+                        emphasis: { disabled: true },
+                        blur: { lineStyle: { opacity: 1 } },
+                    },
+                    createTimeseriesSummaryMetadata(axisIndex, def.key),
+                ),
+            );
         }
     }
 
@@ -63,49 +69,53 @@ function createBandSeries(
     fillOpacity: number,
     name: string,
     axisIndex: number,
+    metadata: SeriesMetadata,
     seriesId?: string,
 ): CustomSeriesOption {
-    return {
-        type: "custom",
-        ...(seriesId ? { id: seriesId } : {}),
-        name,
-        xAxisIndex: axisIndex,
-        yAxisIndex: axisIndex,
-        data: upperValues.map((u, i) => [i, lowerValues[i], u]),
-        encode: { x: 0, y: [1, 2] },
-        tooltip: { show: false },
-        silent: true,
-        z: 1,
-        renderItem(params, api) {
-            const bandParams = params as typeof params & {
-                dataIndexInside?: number;
-                dataInsideLength?: number;
-                dataIndex?: number;
-            };
+    return withSeriesMetadata(
+        {
+            type: "custom",
+            ...(seriesId ? { id: seriesId } : {}),
+            name,
+            xAxisIndex: axisIndex,
+            yAxisIndex: axisIndex,
+            data: upperValues.map((u, i) => [i, lowerValues[i], u]),
+            encode: { x: 0, y: [1, 2] },
+            tooltip: { show: false },
+            silent: true,
+            z: 1,
+            renderItem(params, api) {
+                const bandParams = params as typeof params & {
+                    dataIndexInside?: number;
+                    dataInsideLength?: number;
+                    dataIndex?: number;
+                };
 
-            if (bandParams.dataIndexInside !== 0) {
-                return { type: "group", children: [] };
-            }
-            const count = bandParams.dataInsideLength ?? 0;
-            const startIdx = bandParams.dataIndex ?? 0;
-            if (count === 0) return { type: "group", children: [] };
+                if (bandParams.dataIndexInside !== 0) {
+                    return { type: "group", children: [] };
+                }
+                const count = bandParams.dataInsideLength ?? 0;
+                const startIdx = bandParams.dataIndex ?? 0;
+                if (count === 0) return { type: "group", children: [] };
 
-            const points: number[][] = [];
+                const points: number[][] = [];
 
-            for (let d = 0; d < count; d++) {
-                points.push(api.coord([startIdx + d, upperValues[startIdx + d]]));
-            }
-            for (let d = count - 1; d >= 0; d--) {
-                points.push(api.coord([startIdx + d, lowerValues[startIdx + d]]));
-            }
+                for (let d = 0; d < count; d++) {
+                    points.push(api.coord([startIdx + d, upperValues[startIdx + d]]));
+                }
+                for (let d = count - 1; d >= 0; d--) {
+                    points.push(api.coord([startIdx + d, lowerValues[startIdx + d]]));
+                }
 
-            return {
-                type: "polygon",
-                shape: { points },
-                style: { fill: fillColor, opacity: fillOpacity },
-            };
+                return {
+                    type: "polygon",
+                    shape: { points },
+                    style: { fill: fillColor, opacity: fillOpacity },
+                };
+            },
         },
-    };
+        metadata,
+    );
 }
 
 export function buildFanchartSeries(
@@ -130,6 +140,7 @@ export function buildFanchartSeries(
                 0.08,
                 `${trace.name} _fan_low`,
                 axisIndex,
+                createTimeseriesBandMetadata(axisIndex),
                 makeFanchartSeriesId(trace.name, "low", axisIndex),
             ),
             createBandSeries(
@@ -139,6 +150,7 @@ export function buildFanchartSeries(
                 0.3,
                 `${trace.name} _fan_mid`,
                 axisIndex,
+                createTimeseriesBandMetadata(axisIndex),
                 makeFanchartSeriesId(trace.name, "mid", axisIndex),
             ),
             createBandSeries(
@@ -148,6 +160,7 @@ export function buildFanchartSeries(
                 0.08,
                 `${trace.name} _fan_high`,
                 axisIndex,
+                createTimeseriesBandMetadata(axisIndex),
                 makeFanchartSeriesId(trace.name, "high", axisIndex),
             ),
         );
@@ -160,6 +173,7 @@ export function buildFanchartSeries(
                 0.1,
                 `${trace.name} _fan_band`,
                 axisIndex,
+                createTimeseriesBandMetadata(axisIndex),
                 makeFanchartSeriesId(trace.name, "band", axisIndex),
             ),
         );
@@ -172,6 +186,7 @@ export function buildFanchartSeries(
                 0.3,
                 `${trace.name} _fan_band`,
                 axisIndex,
+                createTimeseriesBandMetadata(axisIndex),
                 makeFanchartSeriesId(trace.name, "band", axisIndex),
             ),
         );
@@ -180,5 +195,24 @@ export function buildFanchartSeries(
     return {
         series,
         legendData: [],
+    };
+}
+
+function createTimeseriesSummaryMetadata(axisIndex: number, statKey: StatisticKey): SeriesMetadata {
+    return {
+        family: "timeseries",
+        chart: "timeseries",
+        axisIndex,
+        roles: ["summary"],
+        statKey,
+    };
+}
+
+function createTimeseriesBandMetadata(axisIndex: number): SeriesMetadata {
+    return {
+        family: "timeseries",
+        chart: "timeseries",
+        axisIndex,
+        roles: ["band"],
     };
 }

@@ -4,7 +4,7 @@ import type { ECharts } from "echarts";
 import type { ECElementEvent } from "echarts/types/dist/shared";
 import type ReactECharts from "echarts-for-react";
 
-import { getHighlightGroupKey, getRealizationId, isRealizationSeries } from "../utils/seriesId";
+import { getSeriesLinkGroupKey, getSeriesMemberKey, isMemberSeries } from "../utils/seriesMetadata";
 
 export type HoveredRealizationInfo = {
     realizationId: number;
@@ -154,8 +154,8 @@ function getHighlightTarget(instance: ECharts, event: ECElementEvent): Highlight
     if (hoveredSeriesId) {
         const linkedSeries = findLinkedRealizationSeries(instance, hoveredSeriesId);
         if (linkedSeries.length > 0) {
-            const realId = getRealizationId(hoveredSeriesId);
-            const groupKey = getHighlightGroupKey(hoveredSeriesId);
+            const realId = getSeriesMemberKey(hoveredSeriesId);
+            const groupKey = getSeriesLinkGroupKey(hoveredSeriesId);
             const realizationInfo =
                 realId != null && groupKey != null ? { realizationId: Number(realId), groupKey } : null;
             return { key: `linked:${hoveredSeriesId}`, actions: linkedSeries, realizationInfo };
@@ -200,10 +200,10 @@ function resolveHoveredSeriesId(instance: ECharts, event: ECElementEvent): strin
 }
 
 function findLinkedRealizationSeries(instance: ECharts, hoveredSeriesId: string): Array<{ seriesIndex: number }> {
-    if (!isRealizationSeries(hoveredSeriesId)) return [];
+    if (!isMemberSeries(hoveredSeriesId)) return [];
 
-    const groupKey = getHighlightGroupKey(hoveredSeriesId);
-    const realId = getRealizationId(hoveredSeriesId);
+    const groupKey = getSeriesLinkGroupKey(hoveredSeriesId);
+    const realId = getSeriesMemberKey(hoveredSeriesId);
     if (!groupKey || realId == null) return [];
 
     const chartSeries = instance.getOption()?.series;
@@ -211,12 +211,11 @@ function findLinkedRealizationSeries(instance: ECharts, hoveredSeriesId: string)
 
     const actions: Array<{ seriesIndex: number }> = [];
 
-    chartSeries.forEach((seriesOption: { id?: unknown }, seriesIndex: number) => {
-        const seriesId = typeof seriesOption?.id === "string" ? seriesOption.id : null;
-        if (!seriesId || !isRealizationSeries(seriesId)) return;
+    chartSeries.forEach((seriesOption: { id?: unknown; webvizSeriesMeta?: unknown }, seriesIndex: number) => {
+        if (!isMemberSeries(seriesOption)) return;
 
-        const candidateGroupKey = getHighlightGroupKey(seriesId);
-        const candidateRealId = getRealizationId(seriesId);
+        const candidateGroupKey = getSeriesLinkGroupKey(seriesOption);
+        const candidateRealId = getSeriesMemberKey(seriesOption);
 
         if (candidateGroupKey === groupKey && candidateRealId === realId) {
             actions.push({ seriesIndex });
@@ -236,12 +235,11 @@ function findRealizationSeriesByIdAndGroup(
 
     const actions: Array<{ seriesIndex: number }> = [];
 
-    chartSeries.forEach((seriesOption: { id?: unknown }, seriesIndex: number) => {
-        const seriesId = typeof seriesOption?.id === "string" ? seriesOption.id : null;
-        if (!seriesId || !isRealizationSeries(seriesId)) return;
+    chartSeries.forEach((seriesOption: { id?: unknown; webvizSeriesMeta?: unknown }, seriesIndex: number) => {
+        if (!isMemberSeries(seriesOption)) return;
 
-        const candidateGroupKey = getHighlightGroupKey(seriesId);
-        const candidateRealId = getRealizationId(seriesId);
+        const candidateGroupKey = getSeriesLinkGroupKey(seriesOption);
+        const candidateRealId = getSeriesMemberKey(seriesOption);
 
         if (candidateGroupKey === groupKey && candidateRealId === realizationId) {
             actions.push({ seriesIndex });

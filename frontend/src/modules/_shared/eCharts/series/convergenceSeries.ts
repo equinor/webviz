@@ -9,6 +9,7 @@ import type { ConvergencePoint } from "../utils/convergence";
 import { calcConvergence } from "../utils/convergence";
 import type { ConvergenceStatisticKey } from "../utils/convergenceSeriesMeta";
 import { makeConvergenceSeriesId } from "../utils/seriesId";
+import { withSeriesMetadata, type SeriesMetadata } from "../utils/seriesMetadata";
 
 export type ConvergenceChartSeries = LineSeriesOption | CustomSeriesOption;
 
@@ -48,52 +49,55 @@ function createConvergenceBandSeries(
     fillColor: string,
     axisIndex: number,
 ): CustomSeriesOption {
-    return {
-        id: makeConvergenceSeriesId(trace.name, "band", axisIndex),
-        type: "custom",
-        name: trace.name,
-        xAxisIndex: axisIndex,
-        yAxisIndex: axisIndex,
-        itemStyle: { color: trace.color },
-        data: convergence.map((point) => [point.realization, point.p90, point.p10]),
-        encode: { x: 0, y: [1, 2] },
-        tooltip: { show: false },
-        silent: true,
-        z: 1,
-        renderItem(params, api) {
-            const bandParams = params as typeof params & {
-                dataIndexInside?: number;
-                dataInsideLength?: number;
-                dataIndex?: number;
-            };
+    return withSeriesMetadata(
+        {
+            id: makeConvergenceSeriesId(trace.name, "band", axisIndex),
+            type: "custom",
+            name: trace.name,
+            xAxisIndex: axisIndex,
+            yAxisIndex: axisIndex,
+            itemStyle: { color: trace.color },
+            data: convergence.map((point) => [point.realization, point.p90, point.p10]),
+            encode: { x: 0, y: [1, 2] },
+            tooltip: { show: false },
+            silent: true,
+            z: 1,
+            renderItem(params, api) {
+                const bandParams = params as typeof params & {
+                    dataIndexInside?: number;
+                    dataInsideLength?: number;
+                    dataIndex?: number;
+                };
 
-            if (bandParams.dataIndexInside !== 0) {
-                return { type: "group", children: [] };
-            }
+                if (bandParams.dataIndexInside !== 0) {
+                    return { type: "group", children: [] };
+                }
 
-            const count = bandParams.dataInsideLength ?? 0;
-            const startIndex = bandParams.dataIndex ?? 0;
-            if (count === 0) return { type: "group", children: [] };
+                const count = bandParams.dataInsideLength ?? 0;
+                const startIndex = bandParams.dataIndex ?? 0;
+                if (count === 0) return { type: "group", children: [] };
 
-            const points: number[][] = [];
+                const points: number[][] = [];
 
-            for (let index = 0; index < count; index++) {
-                const point = convergence[startIndex + index];
-                points.push(api.coord([point.realization, point.p90]));
-            }
+                for (let index = 0; index < count; index++) {
+                    const point = convergence[startIndex + index];
+                    points.push(api.coord([point.realization, point.p90]));
+                }
 
-            for (let index = count - 1; index >= 0; index--) {
-                const point = convergence[startIndex + index];
-                points.push(api.coord([point.realization, point.p10]));
-            }
+                for (let index = count - 1; index >= 0; index--) {
+                    const point = convergence[startIndex + index];
+                    points.push(api.coord([point.realization, point.p10]));
+                }
 
-            return {
-                type: "polygon",
-                shape: { points },
-                style: { fill: fillColor, opacity: 1 },
-            };
+                return {
+                    type: "polygon",
+                    shape: { points },
+                    style: { fill: fillColor, opacity: 1 },
+                };
+            },
         },
-    };
+        createConvergenceBandMetadata(axisIndex),
+    );
 }
 
 function createConvergenceLineSeries(
@@ -102,23 +106,26 @@ function createConvergenceLineSeries(
     statKey: ConvergenceStatisticKey,
     axisIndex: number,
 ): LineSeriesOption {
-    return {
-        id: makeConvergenceSeriesId(trace.name, statKey, axisIndex),
-        type: "line",
-        name: trace.name,
-        xAxisIndex: axisIndex,
-        yAxisIndex: axisIndex,
-        data: convergence.map((point) => [point.realization, point[statKey]]),
-        itemStyle: { color: trace.color },
-        lineStyle: buildConvergenceLineStyle(trace.color, statKey),
-        symbol: "none",
-        showSymbol: false,
-        z: statKey === "mean" ? 3 : 2,
-        emphasis: { disabled: true },
-        tooltip: {
-            valueFormatter: (value) => formatNumber(Number(value)),
+    return withSeriesMetadata(
+        {
+            id: makeConvergenceSeriesId(trace.name, statKey, axisIndex),
+            type: "line",
+            name: trace.name,
+            xAxisIndex: axisIndex,
+            yAxisIndex: axisIndex,
+            data: convergence.map((point) => [point.realization, point[statKey]]),
+            itemStyle: { color: trace.color },
+            lineStyle: buildConvergenceLineStyle(trace.color, statKey),
+            symbol: "none",
+            showSymbol: false,
+            z: statKey === "mean" ? 3 : 2,
+            emphasis: { disabled: true },
+            tooltip: {
+                valueFormatter: (value) => formatNumber(Number(value)),
+            },
         },
-    };
+        createConvergenceSummaryMetadata(axisIndex, statKey),
+    );
 }
 
 function buildConvergenceLineStyle(color: string, statKey: ConvergenceStatisticKey): LineSeriesOption["lineStyle"] {
@@ -130,4 +137,26 @@ function buildConvergenceLineStyle(color: string, statKey: ConvergenceStatisticK
         default:
             return { color, width: 1 };
     }
+}
+
+function createConvergenceSummaryMetadata(
+    axisIndex: number,
+    statKey: ConvergenceStatisticKey,
+): SeriesMetadata {
+    return {
+        family: "distribution",
+        chart: "convergence",
+        axisIndex,
+        roles: ["summary"],
+        statKey,
+    };
+}
+
+function createConvergenceBandMetadata(axisIndex: number): SeriesMetadata {
+    return {
+        family: "distribution",
+        chart: "convergence",
+        axisIndex,
+        roles: ["band"],
+    };
 }

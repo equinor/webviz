@@ -6,7 +6,12 @@ import type ReactECharts from "echarts-for-react";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
 import { formatRealizationTooltipContent } from "../interaction/tooltips/timeseries";
-import { isRealizationSeries } from "../utils/seriesId";
+import {
+    getSeriesIdentifier,
+    isMemberSeries,
+    readSeriesMetadata,
+    type SeriesMetadata,
+} from "../utils/seriesMetadata";
 
 type ZrMouseEvent = {
     offsetX?: number;
@@ -16,10 +21,11 @@ type ZrMouseEvent = {
 type RealizationSeriesMeta = {
     axisIndex: number;
     color?: string;
-    seriesId: string;
+    seriesId?: string;
     seriesIndex: number;
     seriesName: string;
     values: number[];
+    webvizSeriesMeta?: SeriesMetadata;
 };
 
 type ClosestTooltipTarget = {
@@ -203,14 +209,16 @@ function buildRealizationSeriesIndex(instance: ECharts): Map<number, Realization
                 itemStyle?: unknown;
                 lineStyle?: unknown;
                 name?: unknown;
+                webvizSeriesMeta?: unknown;
                 xAxisIndex?: unknown;
             },
             seriesIndex: number,
         ) => {
-            const seriesId = typeof seriesOption.id === "string" ? seriesOption.id : null;
-            if (!seriesId || !isRealizationSeries(seriesId)) {
+            if (!isMemberSeries(seriesOption)) {
                 return;
             }
+
+            const seriesId = getSeriesIdentifier(seriesOption);
 
             const axisIndex =
                 typeof seriesOption.xAxisIndex === "number" && Number.isFinite(seriesOption.xAxisIndex)
@@ -225,10 +233,11 @@ function buildRealizationSeriesIndex(instance: ECharts): Map<number, Realization
             bucket.push({
                 axisIndex,
                 color: resolveSeriesColor(seriesOption),
-                seriesId,
+                seriesId: seriesId ?? undefined,
                 seriesIndex,
                 seriesName: typeof seriesOption.name === "string" ? seriesOption.name : "",
                 values,
+                webvizSeriesMeta: readSeriesMetadata(seriesOption) ?? undefined,
             });
             indexedSeries.set(axisIndex, bucket);
         },
@@ -275,6 +284,7 @@ function buildTooltipContent(
             axisValue: timestampUtcMsToCompactIsoString(timestamps[target.dataIndex]),
             seriesName: match.seriesName,
             seriesId: match.seriesId,
+            webvizSeriesMeta: match.webvizSeriesMeta,
             value: match.values[target.dataIndex],
             color: match.color,
         });

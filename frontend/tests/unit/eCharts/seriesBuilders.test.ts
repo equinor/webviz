@@ -2,13 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import { buildExceedanceChart } from "@modules/_shared/eCharts/builders/exceedanceChartBuilder";
 import { buildBarSeries } from "@modules/_shared/eCharts/series/barSeries";
+import { buildConvergenceSeries } from "@modules/_shared/eCharts/series/convergenceSeries";
 import { buildDensitySeries } from "@modules/_shared/eCharts/series/densitySeries";
 import { buildExceedanceSeries } from "@modules/_shared/eCharts/series/exceedanceSeries";
 import { buildHeatmapSeries } from "@modules/_shared/eCharts/series/heatmapSeries";
 import { buildHistogramSeries } from "@modules/_shared/eCharts/series/histogramSeries";
 import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/series/percentileRangeSeries";
+import { buildRealizationScatterSeries } from "@modules/_shared/eCharts/series/realizationScatterSeries";
 import { buildHistorySeries } from "@modules/_shared/eCharts/series/timeseriesHistorySeries";
 import { buildObservationSeries } from "@modules/_shared/eCharts/series/timeseriesObservationSeries";
+import { buildRealizationsSeries } from "@modules/_shared/eCharts/series/timeseriesRealizationSeries";
+import { buildFanchartSeries, buildStatisticsSeries } from "@modules/_shared/eCharts/series/timeseriesStatisticsSeries";
 import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/utils";
 import { makeConvergenceSeriesId } from "@modules/_shared/eCharts/utils/seriesId";
 
@@ -205,6 +209,108 @@ describe("series builder contracts", () => {
             expect(option.yAxisIndex).toBe(2);
             expect(option.encode).toEqual({ x: 0, y: 1 });
         }
+    });
+
+    it("timeseries series builders attach metadata for member, summary, and band semantics", () => {
+        const trace = {
+            name: "Trace A",
+            color: "#225588",
+            timestamps: [Date.UTC(2020, 0, 1), Date.UTC(2020, 1, 1)],
+            highlightGroupKey: "Group A",
+            realizationValues: [[10, 11]],
+            realizationIds: [7],
+            statistics: {
+                mean: [10, 11],
+                p10: [8, 9],
+                p50: [10, 11],
+                p90: [12, 13],
+                min: [7, 8],
+                max: [13, 14],
+            },
+        };
+
+        const realizationSeries = buildRealizationsSeries(trace, 3).series[0] as {
+            webvizSeriesMeta?: Record<string, unknown>;
+        };
+        const summarySeries = buildStatisticsSeries(trace, ["mean"], 3).series[0] as {
+            webvizSeriesMeta?: Record<string, unknown>;
+        };
+        const bandSeries = buildFanchartSeries(trace, ["p10", "p90"], 3).series[0] as {
+            webvizSeriesMeta?: Record<string, unknown>;
+        };
+
+        expect(realizationSeries.webvizSeriesMeta).toMatchObject({
+            family: "timeseries",
+            chart: "timeseries",
+            axisIndex: 3,
+            roles: ["member"],
+            linkGroupKey: "Group A",
+            memberKey: "7",
+        });
+        expect(summarySeries.webvizSeriesMeta).toMatchObject({
+            family: "timeseries",
+            chart: "timeseries",
+            axisIndex: 3,
+            roles: ["summary"],
+            statKey: "mean",
+        });
+        expect(bandSeries.webvizSeriesMeta).toMatchObject({
+            family: "timeseries",
+            chart: "timeseries",
+            axisIndex: 3,
+            roles: ["band"],
+        });
+    });
+
+    it("convergence and member scatter builders attach metadata for shared interaction helpers", () => {
+        const convergenceResult = buildConvergenceSeries(
+            {
+                name: "Convergence",
+                color: "#663399",
+                values: [12, 10, 14],
+                realizationIds: [1, 2, 3],
+            },
+            2,
+        );
+        const meanSeries = convergenceResult.series.find(
+            (seriesOption) => (seriesOption as { id?: string }).id === "convergence:Convergence:mean:2",
+        ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
+        const bandSeries = convergenceResult.series.find(
+            (seriesOption) => (seriesOption as { id?: string }).id === "convergence:Convergence:band:2",
+        ) as { webvizSeriesMeta?: Record<string, unknown> } | undefined;
+        const scatterSeries = buildRealizationScatterSeries(
+            {
+                name: "Scatter",
+                color: "#884422",
+                highlightGroupKey: "Pair A",
+                realizationIds: [12],
+                xValues: [1],
+                yValues: [2],
+            },
+            1,
+        ).series[0] as { webvizSeriesMeta?: Record<string, unknown> };
+
+        expect(meanSeries?.webvizSeriesMeta).toMatchObject({
+            family: "distribution",
+            chart: "convergence",
+            axisIndex: 2,
+            roles: ["summary"],
+            statKey: "mean",
+        });
+        expect(bandSeries?.webvizSeriesMeta).toMatchObject({
+            family: "distribution",
+            chart: "convergence",
+            axisIndex: 2,
+            roles: ["band"],
+        });
+        expect(scatterSeries.webvizSeriesMeta).toMatchObject({
+            family: "scatter",
+            chart: "memberScatter",
+            axisIndex: 1,
+            roles: ["member"],
+            linkGroupKey: "Pair A",
+            memberKey: "12",
+        });
     });
 
     it("returns empty legendData when no density series is produced", () => {

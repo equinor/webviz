@@ -28,6 +28,20 @@ describe("getConvergenceSeriesStatKey", () => {
         expect(getConvergenceSeriesStatKey("convergence:trace:with:colons:p90:1")).toBe("p90");
     });
 
+    it("prefers explicit metadata for convergence summaries", () => {
+        expect(
+            getConvergenceSeriesStatKey({
+                webvizSeriesMeta: {
+                    family: "distribution",
+                    chart: "convergence",
+                    axisIndex: 0,
+                    roles: ["summary"],
+                    statKey: "mean",
+                },
+            }),
+        ).toBe("mean");
+    });
+
     it("returns null for non-convergence, non-stat, or missing ids", () => {
         expect(getConvergenceSeriesStatKey("convergence:Trace A:band:0")).toBeNull();
         expect(getConvergenceSeriesStatKey("statistic:Trace A:mean:0")).toBeNull();

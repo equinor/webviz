@@ -3,7 +3,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import { formatConvergenceStatLabel, getConvergenceSeriesStatKey } from "../../utils/convergenceSeriesMeta";
-import { getRealizationId } from "../../utils/seriesId";
+import { getSeriesMemberKey } from "../../utils/seriesMetadata";
 
 import { formatCompactTooltip } from "./core";
 import { type TooltipEntry, extractNumericValue, extractPointValue, isTooltipEntry } from "./runtime";
@@ -43,7 +43,7 @@ export function formatConvergenceAxisTooltip(params: CallbackDataParams | Callba
     const rows: Array<{ label: string; value: string; color?: string }> = [];
 
     for (const entry of entries) {
-        const statKey = getConvergenceSeriesStatKey(entry.seriesId);
+        const statKey = getConvergenceSeriesStatKey(entry);
         if (!statKey) continue;
 
         const value = extractNumericValue(entry.value);
@@ -110,8 +110,7 @@ export function formatRealizationScatterItemTooltip(params: CallbackDataParams |
     const p = Array.isArray(params) ? params[0] : params;
     if (!p) return "";
 
-    const seriesId = typeof p.seriesId === "string" ? p.seriesId : "";
-    const realId = getRealizationId(seriesId);
+    const realId = getSeriesMemberKey(p);
     const point = extractPointValue(p.value);
 
     const rows: Array<{ label: string; value: string; color?: string }> = [];

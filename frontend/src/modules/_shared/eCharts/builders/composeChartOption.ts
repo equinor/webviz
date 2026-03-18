@@ -12,17 +12,20 @@ import { getResponsiveFeatures } from "../layout/responsiveConfig";
 import type { SubplotAxesResult } from "../layout/subplotAxes";
 import type { SubplotLayoutResult } from "../layout/subplotGridLayout";
 import type { ContainerSize } from "../types";
+import type { SeriesMetadataCarrier } from "../utils/seriesMetadata";
 
 const LEGEND_RIGHT_PX = 8;
 const LEGEND_BOTTOM_PX = 12;
 const LEGEND_LEFT_PCT = 55;
 
-export type ChartSeriesOption =
+type BaseChartSeriesOption =
     | BarSeriesOption
     | CustomSeriesOption
     | HeatmapSeriesOption
     | LineSeriesOption
     | ScatterSeriesOption;
+
+export type ChartSeriesOption = BaseChartSeriesOption & SeriesMetadataCarrier;
 
 /**
  * Standard return type for series builders.
