@@ -41,22 +41,38 @@ export {
     buildFanchartSeries,
     buildHistorySeries,
     buildObservationSeries,
+} from "./families/timeseries/timeseries";
+export {
     buildBarSeries,
+} from "./families/categorical/bar";
+export {
     buildHistogramSeries,
+} from "./families/distribution/histogram";
+export {
     buildExceedanceSeries,
+} from "./families/distribution/exceedance";
+export {
     buildPercentileRangeSeries,
+} from "./families/distribution/percentileRange";
+export {
     buildDensitySeries,
+} from "./families/distribution/density";
+export {
     buildConvergenceSeries,
+} from "./families/distribution/convergence";
+export {
     buildHeatmapSeries,
+} from "./families/matrix/heatmap";
+export {
     buildMemberScatterSeries,
-} from "./series";
+} from "./families/scatter/memberScatter";
+export type { BarSortBy } from "./families/categorical/bar";
+export type { HistogramDisplayOptions } from "./families/distribution/histogram";
 export type {
-    BarSortBy,
-    HistogramDisplayOptions,
     PercentileRangeCenterStatistic,
     PercentileRangeDisplayOptions,
-    DensityDisplayOptions,
-} from "./series";
+} from "./families/distribution/percentileRange";
+export type { DensityDisplayOptions } from "./families/distribution/density";
 
 // Chart builders (compose series + layout into final EChartsOption)
 export {
@@ -78,8 +94,8 @@ export type { ComposeChartConfig, ChartSeriesOption, SeriesBuildResult } from ".
 export { createTimestampMarkLine, applyActiveTimestampMarker } from "./interaction";
 
 // Hooks
-export { useHighlightOnHover, useClickToTimestamp, useTimeseriesInteractions } from "./hooks";
-export type { TimeseriesInteractionConfig, TimeseriesInteractionResult, HoveredMemberInfo } from "./hooks";
+export { useHighlightOnHover, useClickToTimestamp, useClosestMemberTooltip } from "./hooks";
+export type { HoveredMemberInfo } from "./hooks";
 
 // Statistics utilities
 export {

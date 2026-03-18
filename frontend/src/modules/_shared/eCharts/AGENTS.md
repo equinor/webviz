@@ -29,7 +29,14 @@
 - `interaction/tooltips/` is reserved for shared tooltip primitives only (`core.ts`, runtime helpers).
 - Do not inline tooltip formatter logic in builders or series files.
 - Do not re-export chart-specific tooltip helpers through `interaction/index.ts`.
-- If timeseries needs a custom member label, thread the same label through both `buildTimeseriesChart()` and `useTimeseriesInteractions()` so the default tooltip and closest-member tooltip cannot diverge.
+- If timeseries needs a custom member label, thread the same label through both `buildTimeseriesChart()` and `useClosestMemberTooltip()` so the default tooltip and closest-member tooltip cannot diverge.
+
+## Interaction Composition
+
+- Prefer composing low-level hooks (`useHighlightOnHover`, `useClickToTimestamp`, `useClosestMemberTooltip`) directly in module views.
+- Do not introduce shared wrapper hooks that bundle unrelated interaction policies unless multiple real consumers prove the composition is stable.
+- Do not add a shared `ReactECharts` wrapper component that owns chart-family-specific hover, click, or tooltip behavior.
+- A thin shared presentational wrapper is acceptable only for repeated sizing/layout boilerplate, and should stay ignorant of chart semantics.
 
 ## Types and Utils
 

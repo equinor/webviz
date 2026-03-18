@@ -21,19 +21,18 @@ Modules should map domain data into shared trace types and call shared builders,
 1. Module maps domain data into shared trace types.
 2. Module groups traces into `SubplotGroup<T>[]`.
 3. Shared builder composes layout, axes, series, legend, and tooltip behavior.
-4. Module renders `ReactECharts` and attaches interaction hooks as needed.
+4. Module renders `ReactECharts` and composes the needed interaction hooks explicitly.
 
 ## Folder Map
 
 - `families/`: primary home for chart slices. Keep chart-specific builder/series/tooltip/ID logic together here.
 - `types.ts`: shared trace and display config contracts.
 - `builders/`: shared chart composition utilities and export barrel.
-- `series/`: export barrel for public series-builder APIs.
 - `layout/`: subplot grid and axis helpers.
 - `interaction/`: non-tooltip interaction helpers plus shared `tooltips/` primitives.
 - `hooks/`: React interaction hooks.
 - `utils/`: pure calculations and ID helpers.
-- `index.ts`: public exports.
+- `index.ts`: public exports, including direct re-exports of series builders from the owning family slices.
 
 ## Tooltip Ownership Contract
 
@@ -54,7 +53,7 @@ Rules:
 - Item-only glyph/point series may attach a formatter in the slice series file, but the formatter must come from the same chart-family tooltip module.
 - Do not inline tooltip formatter logic in slice builders or slice series files.
 - Do not re-export chart-specific tooltip helpers through `interaction/index.ts`.
-- When timeseries uses a custom member label, pass the same label to both `buildTimeseriesChart()` and `useTimeseriesInteractions()` so standard and closest-member tooltips stay aligned.
+- When timeseries uses a custom member label, pass the same label to both `buildTimeseriesChart()` and `useClosestMemberTooltip()` so standard and closest-member tooltips stay aligned.
 
 Common exceptions:
 
@@ -88,6 +87,12 @@ type SeriesBuildResult = {
 4. Add or update chart-local tooltip helpers beside the owning chart slice under `families/`.
 5. Keep chart-level trigger and axis-pointer choices in the builder.
 6. Add/adjust unit tests under `tests/unit/eCharts/`.
+
+Interaction guidance:
+
+- Prefer composing `useHighlightOnHover()`, `useClickToTimestamp()`, and `useClosestMemberTooltip()` directly in module views.
+- Avoid shared wrapper hooks or shared `ReactECharts` wrapper components that mix chart rendering with chart-specific interaction policy.
+- If repeated layout boilerplate eventually appears across several modules, a thin presentational wrapper may be added, but it should not own tooltip, hover-linking, or chart-family behavior.
 
 ## Validation
 

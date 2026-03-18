@@ -9,9 +9,11 @@ import type {
     BarTrace,
     ContainerSize,
     DistributionTrace,
+    HoveredMemberInfo,
     MemberScatterTrace,
     SubplotGroup,
     TimeseriesDisplayConfig,
+    TimeseriesTrace,
 } from "@modules/_shared/eCharts";
 import {
     buildBarChart,
@@ -24,7 +26,9 @@ import {
     buildPercentileRangeChart,
     buildTimeseriesChart,
     computeSubplotGridLayout,
-    useTimeseriesInteractions,
+    useClickToTimestamp,
+    useClosestMemberTooltip,
+    useHighlightOnHover,
 } from "@modules/_shared/eCharts";
 
 import type { Interfaces } from "./interfaces";
@@ -41,16 +45,43 @@ import {
 const ROW_HEIGHT_PX = 350;
 const TIMESERIES_MEMBER_LABEL = "Realization";
 
-type BuildTimeseriesDemoChartOptions = {
+type DemoPlotModel = {
+    echartsOptions: EChartsOption;
+    timestamps: number[];
+    enableLinkedHover: boolean;
+    enableClosestMemberTooltip: boolean;
+    memberLabel?: string;
+};
+
+type DemoPlotBuildContext = {
     numSubplots: number;
     numGroups: number;
     numRealizations: number;
-    displayConfig: TimeseriesDisplayConfig;
-    memberLabel?: string;
+    timeseriesDisplayConfig: TimeseriesDisplayConfig;
+    memberLabel: string;
+    histogramBins: NonNullable<Parameters<typeof buildHistogramChart>[1]>["numBins"];
+    histogramType: NonNullable<Parameters<typeof buildHistogramChart>[1]>["histogramType"];
+    showRealizationPoints: boolean;
+    showStatisticalMarkers: boolean;
+    showBarLabels: boolean;
     activeTimestampUtcMs: number | null;
     containerSize?: ContainerSize;
     sharedXAxis?: boolean;
     sharedYAxis?: boolean;
+};
+
+type DemoPlotBuilder = (context: DemoPlotBuildContext) => DemoPlotModel;
+
+const DEMO_PLOT_BUILDERS: Record<PlotType, DemoPlotBuilder> = {
+    [PlotType.Timeseries]: buildTimeseriesDemoPlot,
+    [PlotType.Histogram]: buildHistogramDemoPlot,
+    [PlotType.PercentileRange]: buildPercentileRangeDemoPlot,
+    [PlotType.Density]: buildDensityDemoPlot,
+    [PlotType.Exceedance]: buildExceedanceDemoPlot,
+    [PlotType.Convergence]: buildConvergenceDemoPlot,
+    [PlotType.Bar]: buildBarDemoPlot,
+    [PlotType.Heatmap]: buildHeatmapDemoPlot,
+    [PlotType.MemberScatter]: buildMemberScatterDemoPlot,
 };
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
@@ -77,6 +108,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const containerRef = React.useRef<HTMLDivElement>(null);
     const containerSize = useElementSize(containerRef);
+    const chartRef = React.useRef<ReactECharts>(null);
 
     const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
 
@@ -98,119 +130,63 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         );
     }, [plotType, numSubplots, numGroups, numRealizations, viewContext]);
 
-    const echartsOptions = React.useMemo(() => {
-        const size: ContainerSize | undefined =
-            containerSize.width > 0 && containerSize.height > 0 ? containerSize : undefined;
-
-        switch (plotType) {
-            case PlotType.Timeseries:
-                return buildTimeseriesDemoChart({
-                    numSubplots,
-                    numGroups,
-                    numRealizations,
-                    displayConfig: timeseriesDisplayConfig,
-                    memberLabel: TIMESERIES_MEMBER_LABEL,
-                    activeTimestampUtcMs,
-                    containerSize: size,
-                    sharedXAxis,
-                    sharedYAxis,
-                });
-            case PlotType.Histogram:
-                return buildHistogramChart(
-                    createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
-                    {
-                        numBins: histogramBins,
-                        histogramType,
-                        showRealizationPoints,
-                        sharedXAxis,
-                        sharedYAxis,
-                    },
-                    containerSize,
-                );
-            case PlotType.PercentileRange:
-                return buildPercentileRangeChart(
-                    createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
-                    { showRealizationPoints, sharedXAxis, sharedYAxis },
-                    size,
-                );
-            case PlotType.Density:
-                return buildDensityChart(
-                    createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
-                    { showRealizationPoints, sharedXAxis, sharedYAxis },
-                    size,
-                );
-            case PlotType.Exceedance:
-                return buildExceedanceChart(
-                    createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
-                    { sharedXAxis, sharedYAxis },
-                    size,
-                );
-            case PlotType.Convergence:
-                return buildConvergenceChart(
-                    createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
-                    { sharedXAxis, sharedYAxis },
-                    size,
-                );
-            case PlotType.Bar:
-                return buildBarChart(
-                    createBarSubplotGroups(numSubplots, numGroups),
-                    { showStatisticalMarkers, showLabels: showBarLabels, sharedXAxis, sharedYAxis },
-                    size,
-                );
-            case PlotType.MemberScatter:
-                return buildMemberScatterChart(
-                    createMemberScatterSubplotGroups(numSubplots, numGroups, numRealizations),
-                    { memberLabel: "Realization", sharedXAxis, sharedYAxis },
-                    size,
-                );
-            case PlotType.Heatmap:
-                return buildHeatmapChart(generateHeatmapTraces(numSubplots), { valueLabel: "Value" });
-            default:
-                return {};
-        }
+    const chartModel = React.useMemo(() => {
+        return buildDemoPlotModel(plotType, {
+            numSubplots,
+            numGroups,
+            numRealizations,
+            timeseriesDisplayConfig,
+            memberLabel: TIMESERIES_MEMBER_LABEL,
+            histogramBins,
+            histogramType,
+            showRealizationPoints,
+            showStatisticalMarkers,
+            showBarLabels,
+            activeTimestampUtcMs,
+            containerSize: resolveContainerSize(containerSize),
+            sharedXAxis,
+            sharedYAxis,
+        });
     }, [
         plotType,
         numSubplots,
         numGroups,
         numRealizations,
-        showStatisticalMarkers,
-        showBarLabels,
-        showRealizationPoints,
+        timeseriesDisplayConfig,
         histogramBins,
         histogramType,
-        sharedXAxis,
-        sharedYAxis,
+        showRealizationPoints,
+        showStatisticalMarkers,
+        showBarLabels,
         activeTimestampUtcMs,
         containerSize,
-        timeseriesDisplayConfig,
+        sharedXAxis,
+        sharedYAxis,
     ]);
-    const timestamps = React.useMemo(() => {
-        if (plotType === PlotType.Timeseries) {
-            return (
-                generateTimeseriesGroups(numSubplots, numGroups, numRealizations)
-                    .flatMap((group) => group.traces)
-                    .find((trace) => trace.timestamps.length > 0)?.timestamps ?? []
-            );
-        }
-        return [];
-    }, [plotType, numSubplots, numGroups, numRealizations]);
 
-    const hasLinkedMembers =
-        plotType === PlotType.MemberScatter || (plotType === PlotType.Timeseries && showRealizations);
-
-    const handleHoveredMemberChange = React.useCallback((info: { memberId: number; groupKey: string } | null) => {
-        return info; // => Just for demo. To syncedsettings
+    const handleHoveredMemberChange = React.useCallback((info: HoveredMemberInfo | null) => {
+        console.log({ realizaton: info?.memberId, ensemble: info?.groupKey });
+        return info;
     }, []);
-    const { chartRef, onChartEvents } = useTimeseriesInteractions({
-        enableLinkedHover: hasLinkedMembers,
-        enableClosestMemberTooltip: plotType === PlotType.Timeseries && showRealizations && !showStatistics,
-        timestamps,
+
+    const onChartEvents = useHighlightOnHover(chartRef, chartModel.enableLinkedHover, {
+        onHoveredMemberChange: handleHoveredMemberChange,
+    });
+
+    useClickToTimestamp(
+        chartRef,
+        chartModel.timestamps,
         activeTimestampUtcMs,
         setActiveTimestampUtcMs,
-        layoutDependency: echartsOptions,
-        onHoveredMemberChange: handleHoveredMemberChange,
-        memberLabel: TIMESERIES_MEMBER_LABEL,
-    });
+        chartModel.echartsOptions,
+    );
+    useClosestMemberTooltip(
+        chartRef,
+        chartModel.enableClosestMemberTooltip,
+        chartModel.timestamps,
+        chartModel.echartsOptions,
+        { memberLabel: chartModel.memberLabel },
+    );
 
     const layout = computeSubplotGridLayout(numSubplots);
     const chartHeight = scrollMode ? layout.numRows * ROW_HEIGHT_PX : "100%";
@@ -227,7 +203,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             >
                 <ReactECharts
                     ref={chartRef}
-                    option={echartsOptions}
+                    option={chartModel.echartsOptions}
                     style={{ height: "100%", width: "100%" }}
                     onEvents={onChartEvents}
                     notMerge
@@ -237,34 +213,170 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     );
 }
 
-function buildTimeseriesDemoChart(options: BuildTimeseriesDemoChartOptions): EChartsOption {
+function buildDemoPlotModel(plotType: PlotType, context: DemoPlotBuildContext): DemoPlotModel {
+    return DEMO_PLOT_BUILDERS[plotType](context);
+}
+
+function buildTimeseriesDemoPlot(context: DemoPlotBuildContext): DemoPlotModel {
     const {
         numSubplots,
         numGroups,
         numRealizations,
-        displayConfig,
+        timeseriesDisplayConfig,
         memberLabel,
         activeTimestampUtcMs,
         containerSize,
         sharedXAxis,
         sharedYAxis,
-    } = options;
+    } = context;
     const groups = generateTimeseriesGroups(numSubplots, numGroups, numRealizations);
     const overlays = generateTimeseriesOverlays(groups, numSubplots);
 
-    return buildTimeseriesChart(
-        groups,
-        {
-            subplotOverlays: overlays,
-            displayConfig,
-            yAxisLabel: "Value",
-            memberLabel,
-            activeTimestampUtcMs,
-            sharedXAxis,
-            sharedYAxis,
-        },
-        containerSize,
+    return {
+        echartsOptions: buildTimeseriesChart(
+            groups,
+            {
+                subplotOverlays: overlays,
+                displayConfig: timeseriesDisplayConfig,
+                yAxisLabel: "Value",
+                memberLabel,
+                activeTimestampUtcMs,
+                sharedXAxis,
+                sharedYAxis,
+            },
+            containerSize,
+        ),
+        timestamps: extractTimeseriesTimestamps(groups),
+        enableLinkedHover: timeseriesDisplayConfig.showRealizations,
+        enableClosestMemberTooltip: timeseriesDisplayConfig.showRealizations && !timeseriesDisplayConfig.showStatistics,
+        memberLabel,
+    };
+}
+
+function buildHistogramDemoPlot(context: DemoPlotBuildContext): DemoPlotModel {
+    return createStaticPlotModel(
+        buildHistogramChart(
+            createDistributionSubplotGroups(context.numSubplots, context.numGroups, context.numRealizations),
+            {
+                numBins: context.histogramBins,
+                histogramType: context.histogramType,
+                showRealizationPoints: context.showRealizationPoints,
+                sharedXAxis: context.sharedXAxis,
+                sharedYAxis: context.sharedYAxis,
+            },
+            context.containerSize,
+        ),
     );
+}
+
+function buildPercentileRangeDemoPlot(context: DemoPlotBuildContext): DemoPlotModel {
+    return createStaticPlotModel(
+        buildPercentileRangeChart(
+            createDistributionSubplotGroups(context.numSubplots, context.numGroups, context.numRealizations),
+            {
+                showRealizationPoints: context.showRealizationPoints,
+                sharedXAxis: context.sharedXAxis,
+                sharedYAxis: context.sharedYAxis,
+            },
+            context.containerSize,
+        ),
+    );
+}
+
+function buildDensityDemoPlot(context: DemoPlotBuildContext): DemoPlotModel {
+    return createStaticPlotModel(
+        buildDensityChart(
+            createDistributionSubplotGroups(context.numSubplots, context.numGroups, context.numRealizations),
+            {
+                showRealizationPoints: context.showRealizationPoints,
+                sharedXAxis: context.sharedXAxis,
+                sharedYAxis: context.sharedYAxis,
+            },
+            context.containerSize,
+        ),
+    );
+}
+
+function buildExceedanceDemoPlot(context: DemoPlotBuildContext): DemoPlotModel {
+    return createStaticPlotModel(
+        buildExceedanceChart(
+            createDistributionSubplotGroups(context.numSubplots, context.numGroups, context.numRealizations),
+            {
+                sharedXAxis: context.sharedXAxis,
+                sharedYAxis: context.sharedYAxis,
+            },
+            context.containerSize,
+        ),
+    );
+}
+
+function buildConvergenceDemoPlot(context: DemoPlotBuildContext): DemoPlotModel {
+    return createStaticPlotModel(
+        buildConvergenceChart(
+            createDistributionSubplotGroups(context.numSubplots, context.numGroups, context.numRealizations),
+            {
+                sharedXAxis: context.sharedXAxis,
+                sharedYAxis: context.sharedYAxis,
+            },
+            context.containerSize,
+        ),
+    );
+}
+
+function buildBarDemoPlot(context: DemoPlotBuildContext): DemoPlotModel {
+    return createStaticPlotModel(
+        buildBarChart(
+            createBarSubplotGroups(context.numSubplots, context.numGroups),
+            {
+                showStatisticalMarkers: context.showStatisticalMarkers,
+                showLabels: context.showBarLabels,
+                sharedXAxis: context.sharedXAxis,
+                sharedYAxis: context.sharedYAxis,
+            },
+            context.containerSize,
+        ),
+    );
+}
+
+function buildHeatmapDemoPlot(context: DemoPlotBuildContext): DemoPlotModel {
+    return createStaticPlotModel(
+        buildHeatmapChart(generateHeatmapTraces(context.numSubplots), { valueLabel: "Value" }),
+    );
+}
+
+function buildMemberScatterDemoPlot(context: DemoPlotBuildContext): DemoPlotModel {
+    return {
+        echartsOptions: buildMemberScatterChart(
+            createMemberScatterSubplotGroups(context.numSubplots, context.numGroups, context.numRealizations),
+            {
+                memberLabel: context.memberLabel,
+                sharedXAxis: context.sharedXAxis,
+                sharedYAxis: context.sharedYAxis,
+            },
+            context.containerSize,
+        ),
+        timestamps: [],
+        enableLinkedHover: true,
+        enableClosestMemberTooltip: false,
+        memberLabel: context.memberLabel,
+    };
+}
+
+function createStaticPlotModel(echartsOptions: EChartsOption): DemoPlotModel {
+    return {
+        echartsOptions,
+        timestamps: [],
+        enableLinkedHover: false,
+        enableClosestMemberTooltip: false,
+    };
+}
+
+function extractTimeseriesTimestamps(groups: SubplotGroup<TimeseriesTrace>[]): number[] {
+    return groups.flatMap((group) => group.traces).find((trace) => trace.timestamps.length > 0)?.timestamps ?? [];
+}
+
+function resolveContainerSize(containerSize: ContainerSize): ContainerSize | undefined {
+    return containerSize.width > 0 && containerSize.height > 0 ? containerSize : undefined;
 }
 
 function createDistributionSubplotGroups(
