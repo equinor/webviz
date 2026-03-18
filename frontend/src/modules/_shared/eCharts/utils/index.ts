@@ -1,11 +1,9 @@
 export { computePointStatistics, computeTimeseriesStatistics } from "./statistics";
 export { computeHistogramLayout, computeHistogramTraceData } from "./histogram";
-export { formatConvergenceStatLabel, getConvergenceSeriesStatKey } from "./convergenceSeriesMeta";
-export type { ConvergenceStatisticKey } from "./convergenceSeriesMeta";
+
 export {
     getSeriesAxisIndex,
     getSeriesChart,
-    getSeriesFamily,
     getSeriesIdentifier,
     getSeriesLinkGroupKey,
     getSeriesMemberKey,

@@ -5,7 +5,7 @@ import type ReactECharts from "echarts-for-react";
 
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
-import { formatMemberTooltipContent } from "../charts/timeseries/timeseries";
+import { formatMemberTooltipContent } from "../charts/timeseries";
 import {
     isMemberSeries,
     readSeriesMetadata,

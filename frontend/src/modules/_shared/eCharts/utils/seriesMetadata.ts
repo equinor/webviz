@@ -1,7 +1,6 @@
 export type SeriesRole = "member" | "summary" | "band" | "reference" | "measurement" | (string & {});
 
 export type SeriesMetadata = {
-    family: string;
     chart: string;
     axisIndex: number;
     roles: SeriesRole[];
@@ -48,10 +47,7 @@ export function getSeriesAxisIndex(value: unknown): number | null {
     return metadata ? metadata.axisIndex : null;
 }
 
-export function getSeriesFamily(value: unknown): string | null {
-    const metadata = readSeriesMetadata(value);
-    return metadata?.family ?? null;
-}
+
 
 export function getSeriesChart(value: unknown): string | null {
     const metadata = readSeriesMetadata(value);
@@ -93,7 +89,6 @@ function isSeriesMetadata(value: unknown): value is SeriesMetadata {
 
     const candidate = value as Partial<SeriesMetadata>;
     return (
-        typeof candidate.family === "string" &&
         typeof candidate.chart === "string" &&
         typeof candidate.axisIndex === "number" &&
         Number.isFinite(candidate.axisIndex) &&

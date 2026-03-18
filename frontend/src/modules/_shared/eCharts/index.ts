@@ -41,38 +41,38 @@ export {
     buildFanchartSeries,
     buildHistorySeries,
     buildObservationSeries,
-} from "./charts/timeseries/timeseries";
+} from "./charts//timeseries";
 export {
     buildBarSeries,
-} from "./charts/categorical/bar";
+} from "./charts//bar";
 export {
     buildHistogramSeries,
-} from "./charts/distribution/histogram";
+} from "./charts//histogram";
 export {
     buildExceedanceSeries,
-} from "./charts/distribution/exceedance";
+} from "./charts//exceedance";
 export {
     buildPercentileRangeSeries,
-} from "./charts/distribution/percentileRange";
+} from "./charts//percentileRange";
 export {
     buildDensitySeries,
-} from "./charts/distribution/density";
+} from "./charts//density";
 export {
     buildConvergenceSeries,
-} from "./charts/distribution/convergence";
+} from "./charts//convergence";
 export {
     buildHeatmapSeries,
-} from "./charts/matrix/heatmap";
+} from "./charts//heatmap";
 export {
     buildMemberScatterSeries,
-} from "./charts/scatter/memberScatter";
-export type { BarSortBy } from "./charts/categorical/bar";
-export type { HistogramDisplayOptions } from "./charts/distribution/histogram";
+} from "./charts//memberScatter";
+export type { BarSortBy } from "./charts//bar";
+export type { HistogramDisplayOptions } from "./charts//histogram";
 export type {
     PercentileRangeCenterStatistic,
     PercentileRangeDisplayOptions,
-} from "./charts/distribution/percentileRange";
-export type { DensityDisplayOptions } from "./charts/distribution/density";
+} from "./charts//percentileRange";
+export type { DensityDisplayOptions } from "./charts//density";
 
 // Chart builders (compose series + layout into final EChartsOption)
 export {
@@ -86,7 +86,7 @@ export {
     buildPercentileRangeChart,
     buildConvergenceChart,
     buildMemberScatterChart,
-} from "./charts/index";
+} from "./charts/";
 export { composeChartOption } from "./core";
 export type { ComposeChartConfig, ChartSeriesOption, SeriesBuildResult } from "./core";
 
