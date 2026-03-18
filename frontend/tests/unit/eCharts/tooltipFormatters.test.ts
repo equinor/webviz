@@ -1,33 +1,33 @@
 import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { describe, expect, it } from "vitest";
 
-import { formatBarAxisTooltip, formatBarMeanTooltip } from "@modules/_shared/eCharts/families/categorical/bar";
-import { formatConvergenceAxisTooltip } from "@modules/_shared/eCharts/families/distribution/convergence";
+import { formatBarAxisTooltip, formatBarMeanTooltip } from "@modules/_shared/eCharts/charts/categorical/bar";
+import { buildConvergenceTooltip, formatConvergenceAxisTooltip } from "@modules/_shared/eCharts/charts/distribution/convergence";
 import {
     formatExceedanceAxisTooltip,
-} from "@modules/_shared/eCharts/families/distribution/exceedance";
+} from "@modules/_shared/eCharts/charts/distribution/exceedance";
 import {
     createHistogramBarTooltipFormatter,
     createHistogramRugTooltipFormatter,
-} from "@modules/_shared/eCharts/families/distribution/histogram";
+} from "@modules/_shared/eCharts/charts/distribution/histogram";
 import {
     createPercentileGlyphTooltipFormatter,
     createPercentileRealizationTooltipFormatter,
-} from "@modules/_shared/eCharts/families/distribution/percentileRange";
-import { formatHeatmapItemTooltip } from "@modules/_shared/eCharts/families/matrix/heatmap";
-import { formatMemberScatterItemTooltip } from "@modules/_shared/eCharts/families/scatter/memberScatter";
+} from "@modules/_shared/eCharts/charts/distribution/percentileRange";
+import { formatHeatmapItemTooltip } from "@modules/_shared/eCharts/charts/matrix/heatmap";
+import { formatMemberScatterItemTooltip } from "@modules/_shared/eCharts/charts/scatter/memberScatter";
 import {
     buildTimeseriesTooltip,
     formatObservationTooltip,
     formatMemberItemTooltip,
     formatStatisticsAxisTooltip,
-} from "@modules/_shared/eCharts/families/timeseries/timeseries";
+} from "@modules/_shared/eCharts/charts/timeseries/timeseries";
 import {
     buildCompactTooltipConfig,
     formatCompactTooltip,
     formatCompactTooltipHeader,
     formatCompactTooltipRow,
-} from "@modules/_shared/eCharts/interaction/tooltips/core";
+} from "@modules/_shared/eCharts/tooltip/core";
 import type { SeriesMetadata } from "@modules/_shared/eCharts/utils/seriesMetadata";
 
 type MockParam = {
@@ -74,6 +74,26 @@ function makeParam(input: Partial<MockParam>): CallbackDataParams {
     return param as unknown as CallbackDataParams;
 }
 
+function makeTimeseriesSummaryMetadata(axisIndex: number, statKey: string): SeriesMetadata {
+    return {
+        family: "timeseries",
+        chart: "timeseries",
+        axisIndex,
+        roles: ["summary"],
+        statKey,
+    };
+}
+
+function makeConvergenceSummaryMetadata(axisIndex: number, statKey: "p90" | "mean" | "p10"): SeriesMetadata {
+    return {
+        family: "distribution",
+        chart: "convergence",
+        axisIndex,
+        roles: ["summary"],
+        statKey,
+    };
+}
+
 describe("compact tooltip primitives", () => {
     it("buildCompactTooltipConfig merges compact defaults", () => {
         const config = buildCompactTooltipConfig({ trigger: "item" as const });
@@ -107,6 +127,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 10,
                 axisValue: "2020-01-01",
                 axisIndex: 0,
+                webvizSeriesMeta: makeTimeseriesSummaryMetadata(0, "mean"),
             }),
             makeParam({
                 seriesId: "statistic:Trace B:mean:1",
@@ -114,6 +135,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 20,
                 axisValue: "2020-01-01",
                 axisIndex: 1,
+                webvizSeriesMeta: makeTimeseriesSummaryMetadata(1, "mean"),
             }),
         ]);
 
@@ -124,8 +146,26 @@ describe("formatStatisticsTooltip", () => {
         expect(tooltip).not.toContain("Mean 20");
     });
 
-    it("falls back to axis index parsed from series ID when runtime axis is missing", () => {
-        const tooltip = formatStatisticsAxisTooltip([
+    it("uses the explicit statistic lookup when runtime axis and param metadata are missing", () => {
+        const tooltipConfig = buildTimeseriesTooltip(
+            {
+                showRealizations: true,
+                showStatistics: true,
+                showFanchart: false,
+                showHistorical: false,
+                showObservations: false,
+                selectedStatistics: ["mean"],
+            },
+            {},
+            {
+                statisticSeriesById: new Map([
+                    ["statistic:Trace A:mean:0", { traceName: "Trace A", statKey: "mean", axisIndex: 0 }],
+                    ["statistic:Trace B:mean:1", { traceName: "Trace B", statKey: "mean", axisIndex: 1 }],
+                ]),
+            },
+        );
+
+        const tooltip = tooltipConfig.formatter?.([
             makeParam({
                 seriesId: "statistic:Trace A:mean:0",
                 seriesName: "Trace A",
@@ -149,8 +189,26 @@ describe("formatStatisticsTooltip", () => {
         expect(tooltip).not.toContain("Trace B");
     });
 
-    it("prefers explicit metadata over unrelated legacy series IDs", () => {
-        const tooltip = formatStatisticsAxisTooltip([
+    it("prefers explicit metadata over unrelated lookup entries", () => {
+        const tooltipConfig = buildTimeseriesTooltip(
+            {
+                showRealizations: true,
+                showStatistics: true,
+                showFanchart: false,
+                showHistorical: false,
+                showObservations: false,
+                selectedStatistics: ["mean"],
+            },
+            {},
+            {
+                statisticSeriesById: new Map([
+                    ["bar:Trace A:bars:99", { traceName: "Trace A", statKey: "mean", axisIndex: 1 }],
+                    ["bar:Trace B:bars:99", { traceName: "Trace B", statKey: "mean", axisIndex: 0 }],
+                ]),
+            },
+        );
+
+        const tooltip = tooltipConfig.formatter?.([
             makeParam({
                 seriesId: "bar:Trace A:bars:99",
                 seriesName: "Trace A",
@@ -196,6 +254,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 8,
                 axisValue: "2020-01-01",
                 axisIndex: 0,
+                webvizSeriesMeta: makeTimeseriesSummaryMetadata(0, "p10"),
             }),
             makeParam({
                 seriesId: "statistic:Trace A:mean:0",
@@ -203,6 +262,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 10,
                 axisValue: "2020-01-01",
                 axisIndex: 0,
+                webvizSeriesMeta: makeTimeseriesSummaryMetadata(0, "mean"),
             }),
             makeParam({
                 seriesId: "statistic:Trace A:p90:0",
@@ -210,6 +270,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 12,
                 axisValue: "2020-01-01",
                 axisIndex: 0,
+                webvizSeriesMeta: makeTimeseriesSummaryMetadata(0, "p90"),
             }),
         ]);
 
@@ -225,6 +286,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 10,
                 axisValue: "2020-01-01",
                 axisIndex: 0,
+                webvizSeriesMeta: makeTimeseriesSummaryMetadata(0, "mean"),
             }),
             makeParam({
                 seriesId: "fanchart:Trace A:band:0",
@@ -274,6 +336,13 @@ describe("formatMemberItemTooltip", () => {
                 value: 12,
                 axisValue: "2020-02-01",
                 color: "#334455",
+                webvizSeriesMeta: {
+                    family: "timeseries",
+                    chart: "timeseries",
+                    axisIndex: 0,
+                    roles: ["member"],
+                    memberKey: "7",
+                },
             }),
         );
 
@@ -325,6 +394,13 @@ describe("formatMemberItemTooltip", () => {
                 seriesName: "Trace A",
                 value: 12,
                 axisValue: "2020-02-01",
+                webvizSeriesMeta: {
+                    family: "timeseries",
+                    chart: "timeseries",
+                    axisIndex: 0,
+                    roles: ["member"],
+                    memberKey: "7",
+                },
             }),
             { memberLabel: "Member" },
         );
@@ -356,6 +432,13 @@ describe("buildTimeseriesTooltip", () => {
                 seriesName: "Trace A",
                 value: 12,
                 axisValue: "2020-02-01",
+                webvizSeriesMeta: {
+                    family: "timeseries",
+                    chart: "timeseries",
+                    axisIndex: 0,
+                    roles: ["member"],
+                    memberKey: "7",
+                },
             }),
         );
 
@@ -432,8 +515,15 @@ describe("formatBarMeanTooltip", () => {
 });
 
 describe("formatConvergenceTooltip", () => {
-    it("formats only convergence statistic entries", () => {
-        const tooltip = formatConvergenceAxisTooltip([
+    it("formats only convergence statistic entries through the explicit lookup", () => {
+        const tooltipConfig = buildConvergenceTooltip({
+            statKeyBySeriesId: new Map([
+                ["convergence:Trace A:p90:0", "p90"],
+                ["convergence:Trace A:mean:0", "mean"],
+            ]),
+        });
+
+        const tooltip = tooltipConfig.formatter?.([
             makeParam({
                 seriesId: "convergence:Trace A:p90:0",
                 seriesName: "Trace A",
@@ -462,6 +552,30 @@ describe("formatConvergenceTooltip", () => {
         expect(tooltip).toContain("14");
         expect(tooltip).toContain("10");
         expect(tooltip).not.toContain("123");
+    });
+
+    it("formats convergence metadata directly when it is available on params", () => {
+        const tooltip = formatConvergenceAxisTooltip([
+            makeParam({
+                seriesId: "convergence:Trace A:p90:0",
+                seriesName: "Trace A",
+                value: 14,
+                axisValueLabel: "12",
+                color: "#223344",
+                webvizSeriesMeta: makeConvergenceSummaryMetadata(0, "p90"),
+            }),
+            makeParam({
+                seriesId: "convergence:Trace A:mean:0",
+                seriesName: "Trace A",
+                value: 10,
+                axisValueLabel: "12",
+                color: "#223344",
+                webvizSeriesMeta: makeConvergenceSummaryMetadata(0, "mean"),
+            }),
+        ]);
+
+        expect(tooltip).toContain("Trace A (P90)");
+        expect(tooltip).toContain("Trace A (Mean)");
     });
 });
 
@@ -637,6 +751,13 @@ describe("formatMemberScatterTooltip", () => {
                 seriesName: "Scatter A",
                 value: [4, 5],
                 color: "#abcdef",
+                webvizSeriesMeta: {
+                    family: "scatter",
+                    chart: "memberScatter",
+                    axisIndex: 0,
+                    roles: ["member"],
+                    memberKey: "9",
+                },
             }),
         );
 
@@ -655,6 +776,13 @@ describe("formatMemberScatterTooltip", () => {
                 seriesId: "realization:Group A:9:0",
                 seriesName: "Scatter A",
                 value: [4, 5],
+                webvizSeriesMeta: {
+                    family: "scatter",
+                    chart: "memberScatter",
+                    axisIndex: 0,
+                    roles: ["member"],
+                    memberKey: "9",
+                },
             }),
             { memberLabel: "Realization" },
         );

@@ -1,22 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { buildBarSeries } from "@modules/_shared/eCharts/families/categorical/bar";
-import { buildConvergenceSeries } from "@modules/_shared/eCharts/families/distribution/convergence";
-import { buildDensitySeries } from "@modules/_shared/eCharts/families/distribution/density";
-import { buildExceedanceChart, buildExceedanceSeries } from "@modules/_shared/eCharts/families/distribution/exceedance";
-import { buildHistogramSeries } from "@modules/_shared/eCharts/families/distribution/histogram";
-import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/families/distribution/percentileRange";
-import { buildHeatmapSeries } from "@modules/_shared/eCharts/families/matrix/heatmap";
-import { buildMemberScatterSeries } from "@modules/_shared/eCharts/families/scatter/memberScatter";
+import { buildBarSeries } from "@modules/_shared/eCharts/charts/categorical/bar";
+import { buildConvergenceSeries, makeConvergenceSeriesId } from "@modules/_shared/eCharts/charts/distribution/convergence";
+import { buildDensitySeries } from "@modules/_shared/eCharts/charts/distribution/density";
+import { buildExceedanceChart, buildExceedanceSeries } from "@modules/_shared/eCharts/charts/distribution/exceedance";
+import { buildHistogramSeries } from "@modules/_shared/eCharts/charts/distribution/histogram";
+import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/charts/distribution/percentileRange";
+import { buildHeatmapSeries } from "@modules/_shared/eCharts/charts/matrix/heatmap";
+import { buildMemberScatterSeries } from "@modules/_shared/eCharts/charts/scatter/memberScatter";
 import {
     buildFanchartSeries,
     buildHistorySeries,
     buildMemberSeries,
     buildObservationSeries,
     buildStatisticsSeries,
-} from "@modules/_shared/eCharts/families/timeseries/timeseries";
+} from "@modules/_shared/eCharts/charts/timeseries/timeseries";
 import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/utils";
-import { makeConvergenceSeriesId } from "@modules/_shared/eCharts/utils/seriesId";
 
 describe("series builder contracts", () => {
     it("buildBarSeries returns axis-bound series with structured IDs", () => {
@@ -542,6 +541,19 @@ describe("series builder contracts", () => {
 
     it("convergence stat parsing handles trace names with colons", () => {
         const id = makeConvergenceSeriesId("trace:with:colon", "p90", 0);
-        expect(getConvergenceSeriesStatKey(id)).toBe("p90");
+        const result = buildConvergenceSeries(
+            {
+                name: "trace:with:colon",
+                color: "#224466",
+                values: [1, 2, 3],
+                realizationIds: [1, 2, 3],
+            },
+            0,
+        );
+
+        const summarySeries = result.series.find((seriesOption) => (seriesOption as { id?: string }).id === id);
+
+        expect(summarySeries).toBeDefined();
+        expect(getConvergenceSeriesStatKey(summarySeries)).toBe("p90");
     });
 });

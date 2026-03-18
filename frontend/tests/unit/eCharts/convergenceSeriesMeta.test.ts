@@ -18,14 +18,55 @@ describe("formatConvergenceStatLabel", () => {
 });
 
 describe("getConvergenceSeriesStatKey", () => {
-    it("extracts valid convergence stat keys", () => {
-        expect(getConvergenceSeriesStatKey("convergence:Trace A:p90:0")).toBe("p90");
-        expect(getConvergenceSeriesStatKey("convergence:Trace A:mean:0")).toBe("mean");
-        expect(getConvergenceSeriesStatKey("convergence:Trace A:p10:0")).toBe("p10");
+    it("extracts valid convergence stat keys from summary metadata", () => {
+        expect(
+            getConvergenceSeriesStatKey({
+                webvizSeriesMeta: {
+                    family: "distribution",
+                    chart: "convergence",
+                    axisIndex: 0,
+                    roles: ["summary"],
+                    statKey: "p90",
+                },
+            }),
+        ).toBe("p90");
+        expect(
+            getConvergenceSeriesStatKey({
+                webvizSeriesMeta: {
+                    family: "distribution",
+                    chart: "convergence",
+                    axisIndex: 0,
+                    roles: ["summary"],
+                    statKey: "mean",
+                },
+            }),
+        ).toBe("mean");
+        expect(
+            getConvergenceSeriesStatKey({
+                webvizSeriesMeta: {
+                    family: "distribution",
+                    chart: "convergence",
+                    axisIndex: 0,
+                    roles: ["summary"],
+                    statKey: "p10",
+                },
+            }),
+        ).toBe("p10");
     });
 
-    it("handles trace names that contain colons", () => {
-        expect(getConvergenceSeriesStatKey("convergence:trace:with:colons:p90:1")).toBe("p90");
+    it("uses metadata even when the legacy id contains colons", () => {
+        expect(
+            getConvergenceSeriesStatKey({
+                id: "convergence:trace:with:colons:p90:1",
+                webvizSeriesMeta: {
+                    family: "distribution",
+                    chart: "convergence",
+                    axisIndex: 1,
+                    roles: ["summary"],
+                    statKey: "p90",
+                },
+            }),
+        ).toBe("p90");
     });
 
     it("prefers explicit metadata for convergence summaries", () => {
@@ -42,9 +83,28 @@ describe("getConvergenceSeriesStatKey", () => {
         ).toBe("mean");
     });
 
-    it("returns null for non-convergence, non-stat, or missing ids", () => {
-        expect(getConvergenceSeriesStatKey("convergence:Trace A:band:0")).toBeNull();
-        expect(getConvergenceSeriesStatKey("statistic:Trace A:mean:0")).toBeNull();
+    it("returns null for non-summary metadata or missing metadata", () => {
+        expect(
+            getConvergenceSeriesStatKey({
+                webvizSeriesMeta: {
+                    family: "distribution",
+                    chart: "convergence",
+                    axisIndex: 0,
+                    roles: ["band"],
+                },
+            }),
+        ).toBeNull();
+        expect(
+            getConvergenceSeriesStatKey({
+                webvizSeriesMeta: {
+                    family: "timeseries",
+                    chart: "timeseries",
+                    axisIndex: 0,
+                    roles: ["summary"],
+                    statKey: "mean",
+                },
+            }),
+        ).toBeNull();
         expect(getConvergenceSeriesStatKey(undefined)).toBeNull();
     });
 });
