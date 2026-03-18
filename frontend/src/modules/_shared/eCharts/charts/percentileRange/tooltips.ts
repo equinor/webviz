@@ -2,7 +2,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { formatCompactTooltip } from "../../tooltip/core";
+import { formatCompactTooltip } from "../../core/tooltip";
 import type { PointStatistics } from "../../types";
 
 type PercentileCenterStatistic = "mean" | "p50";

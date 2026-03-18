@@ -27,7 +27,7 @@ import {
     formatCompactTooltip,
     formatCompactTooltipHeader,
     formatCompactTooltipRow,
-} from "@modules/_shared/eCharts/tooltip/core";
+} from "@modules/_shared/eCharts/core/tooltip";
 import type { SeriesMetadata } from "@modules/_shared/eCharts/utils/seriesMetadata";
 
 type MockParam = {

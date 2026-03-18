@@ -10,7 +10,7 @@ import type {
 import { getResponsiveFeatures } from "../layout/responsiveConfig";
 import type { SubplotAxesResult } from "../layout/subplotAxes";
 import type { SubplotLayoutResult } from "../layout/subplotGridLayout";
-import { buildCompactTooltipConfig } from "../tooltip/core";
+import { buildCompactTooltipConfig } from "./tooltip";
 import type { ContainerSize } from "../types";
 import type { SeriesMetadataCarrier } from "../utils/seriesMetadata";
 

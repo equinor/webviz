@@ -2,7 +2,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { extractNumericValue, formatCompactTooltip } from "../../tooltip/core";
+import { extractNumericValue, formatCompactTooltip } from "../../core/tooltip";
 
 type BarTooltipEntry = CallbackDataParams & {
     axisValue?: string | number;

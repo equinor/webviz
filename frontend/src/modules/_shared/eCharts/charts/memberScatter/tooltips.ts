@@ -2,7 +2,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { extractPointValue, formatCompactTooltip } from "../../tooltip/core";
+import { extractPointValue, formatCompactTooltip } from "../../core/tooltip";
 import { getSeriesMemberKey } from "../../utils/seriesMetadata";
 
 export type MemberScatterTooltipOptions = {

@@ -2,7 +2,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { extractNumericValue, extractPointValue, formatCompactTooltip } from "../../tooltip/core";
+import { extractNumericValue, extractPointValue, formatCompactTooltip } from "../../core/tooltip";
 
 type ExceedanceTooltipEntry = CallbackDataParams & {
     axisValue?: string | number;

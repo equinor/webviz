@@ -2,7 +2,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import { formatCompactTooltip } from "../../tooltip/core";
+import { formatCompactTooltip } from "../../core/tooltip";
 
 type HistogramBarValue = [number, number, number, number];
 type RugPointValue = [number, number];
