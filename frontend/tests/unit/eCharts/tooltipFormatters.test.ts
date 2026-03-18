@@ -1,27 +1,27 @@
 import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { describe, expect, it } from "vitest";
 
-import { formatBarAxisTooltip, formatBarMeanTooltip } from "@modules/_shared/eCharts/charts/categorical/bar";
-import { buildConvergenceTooltip, formatConvergenceAxisTooltip } from "@modules/_shared/eCharts/charts/distribution/convergence";
+import { formatBarAxisTooltip, formatBarMeanTooltip } from "@modules/_shared/eCharts/charts//bar";
+import { buildConvergenceTooltip, formatConvergenceAxisTooltip } from "@modules/_shared/eCharts/charts//convergence";
 import {
     formatExceedanceAxisTooltip,
-} from "@modules/_shared/eCharts/charts/distribution/exceedance";
+} from "@modules/_shared/eCharts/charts//exceedance";
 import {
     createHistogramBarTooltipFormatter,
     createHistogramRugTooltipFormatter,
-} from "@modules/_shared/eCharts/charts/distribution/histogram";
+} from "@modules/_shared/eCharts/charts//histogram";
 import {
     createPercentileGlyphTooltipFormatter,
     createPercentileRealizationTooltipFormatter,
-} from "@modules/_shared/eCharts/charts/distribution/percentileRange";
-import { formatHeatmapItemTooltip } from "@modules/_shared/eCharts/charts/matrix/heatmap";
-import { formatMemberScatterItemTooltip } from "@modules/_shared/eCharts/charts/scatter/memberScatter";
+} from "@modules/_shared/eCharts/charts//percentileRange";
+import { formatHeatmapItemTooltip } from "@modules/_shared/eCharts/charts//heatmap";
+import { formatMemberScatterItemTooltip } from "@modules/_shared/eCharts/charts//memberScatter";
 import {
     buildTimeseriesTooltip,
     formatObservationTooltip,
     formatMemberItemTooltip,
     formatStatisticsAxisTooltip,
-} from "@modules/_shared/eCharts/charts/timeseries/timeseries";
+} from "@modules/_shared/eCharts/charts//timeseries";
 import {
     buildCompactTooltipConfig,
     formatCompactTooltip,
@@ -76,7 +76,6 @@ function makeParam(input: Partial<MockParam>): CallbackDataParams {
 
 function makeTimeseriesSummaryMetadata(axisIndex: number, statKey: string): SeriesMetadata {
     return {
-        family: "timeseries",
         chart: "timeseries",
         axisIndex,
         roles: ["summary"],
@@ -86,7 +85,7 @@ function makeTimeseriesSummaryMetadata(axisIndex: number, statKey: string): Seri
 
 function makeConvergenceSummaryMetadata(axisIndex: number, statKey: "p90" | "mean" | "p10"): SeriesMetadata {
     return {
-        family: "distribution",
+
         chart: "convergence",
         axisIndex,
         roles: ["summary"],
@@ -217,7 +216,7 @@ describe("formatStatisticsTooltip", () => {
                 axisIndex: undefined,
                 xAxisIndex: undefined,
                 webvizSeriesMeta: {
-                    family: "timeseries",
+
                     chart: "timeseries",
                     axisIndex: 0,
                     roles: ["summary"],
@@ -232,7 +231,7 @@ describe("formatStatisticsTooltip", () => {
                 axisIndex: undefined,
                 xAxisIndex: undefined,
                 webvizSeriesMeta: {
-                    family: "timeseries",
+
                     chart: "timeseries",
                     axisIndex: 1,
                     roles: ["summary"],
@@ -337,7 +336,7 @@ describe("formatMemberItemTooltip", () => {
                 axisValue: "2020-02-01",
                 color: "#334455",
                 webvizSeriesMeta: {
-                    family: "timeseries",
+
                     chart: "timeseries",
                     axisIndex: 0,
                     roles: ["member"],
@@ -373,7 +372,7 @@ describe("formatMemberItemTooltip", () => {
                 value: 15,
                 axisValue: "2020-02-01",
                 webvizSeriesMeta: {
-                    family: "timeseries",
+
                     chart: "timeseries",
                     axisIndex: 0,
                     roles: ["member"],
@@ -395,7 +394,7 @@ describe("formatMemberItemTooltip", () => {
                 value: 12,
                 axisValue: "2020-02-01",
                 webvizSeriesMeta: {
-                    family: "timeseries",
+
                     chart: "timeseries",
                     axisIndex: 0,
                     roles: ["member"],
@@ -433,7 +432,7 @@ describe("buildTimeseriesTooltip", () => {
                 value: 12,
                 axisValue: "2020-02-01",
                 webvizSeriesMeta: {
-                    family: "timeseries",
+
                     chart: "timeseries",
                     axisIndex: 0,
                     roles: ["member"],
@@ -752,7 +751,7 @@ describe("formatMemberScatterTooltip", () => {
                 value: [4, 5],
                 color: "#abcdef",
                 webvizSeriesMeta: {
-                    family: "scatter",
+
                     chart: "memberScatter",
                     axisIndex: 0,
                     roles: ["member"],
@@ -777,7 +776,7 @@ describe("formatMemberScatterTooltip", () => {
                 seriesName: "Scatter A",
                 value: [4, 5],
                 webvizSeriesMeta: {
-                    family: "scatter",
+
                     chart: "memberScatter",
                     axisIndex: 0,
                     roles: ["member"],

@@ -1,9 +1,9 @@
 import type { EChartsOption } from "echarts";
 import { describe, expect, it } from "vitest";
 
-import { buildExceedanceChart } from "@modules/_shared/eCharts/charts/distribution/exceedance";
-import { buildHistogramChart } from "@modules/_shared/eCharts/charts/distribution/histogram";
-import { buildPercentileRangeChart } from "@modules/_shared/eCharts/charts/distribution/percentileRange";
+import { buildExceedanceChart } from "@modules/_shared/eCharts/charts//exceedance";
+import { buildHistogramChart } from "@modules/_shared/eCharts/charts//histogram";
+import { buildPercentileRangeChart } from "@modules/_shared/eCharts/charts//percentileRange";
 
 type NumericAxis = {
     min?: number;

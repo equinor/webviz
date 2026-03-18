@@ -16,7 +16,6 @@ describe("series metadata helpers", () => {
         const series = withSeriesMetadata(
             { id: "opaque-id" },
             {
-                family: "timeseries",
                 chart: "timeseries",
                 axisIndex: 2,
                 roles: ["member"],
@@ -26,7 +25,6 @@ describe("series metadata helpers", () => {
         );
 
         expect(readSeriesMetadata(series)).toMatchObject({
-            family: "timeseries",
             chart: "timeseries",
             axisIndex: 2,
             roles: ["member"],
@@ -55,7 +53,6 @@ describe("series metadata helpers", () => {
         const series = withSeriesMetadata(
             { id: "realization:LegacyGroup:1:9" },
             {
-                family: "timeseries",
                 chart: "timeseries",
                 axisIndex: 4,
                 roles: ["member"],

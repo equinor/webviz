@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import {
-    formatConvergenceStatLabel,
-    getConvergenceSeriesStatKey,
-} from "@modules/_shared/eCharts/utils/convergenceSeriesMeta";
+import { formatConvergenceStatLabel, getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/charts/convergence/tooltips";
+
 
 describe("formatConvergenceStatLabel", () => {
     it("maps known convergence keys to display labels", () => {

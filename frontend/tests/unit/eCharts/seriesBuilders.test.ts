@@ -1,21 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { buildBarSeries } from "@modules/_shared/eCharts/charts/categorical/bar";
-import { buildConvergenceSeries, makeConvergenceSeriesId } from "@modules/_shared/eCharts/charts/distribution/convergence";
-import { buildDensitySeries } from "@modules/_shared/eCharts/charts/distribution/density";
-import { buildExceedanceChart, buildExceedanceSeries } from "@modules/_shared/eCharts/charts/distribution/exceedance";
-import { buildHistogramSeries } from "@modules/_shared/eCharts/charts/distribution/histogram";
-import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/charts/distribution/percentileRange";
-import { buildHeatmapSeries } from "@modules/_shared/eCharts/charts/matrix/heatmap";
-import { buildMemberScatterSeries } from "@modules/_shared/eCharts/charts/scatter/memberScatter";
+import { buildBarSeries } from "@modules/_shared/eCharts/charts//bar";
+import { buildConvergenceSeries, makeConvergenceSeriesId } from "@modules/_shared/eCharts/charts//convergence";
+import { buildDensitySeries } from "@modules/_shared/eCharts/charts//density";
+import { buildExceedanceChart, buildExceedanceSeries } from "@modules/_shared/eCharts/charts//exceedance";
+import { buildHistogramSeries } from "@modules/_shared/eCharts/charts//histogram";
+import { buildPercentileRangeSeries } from "@modules/_shared/eCharts/charts//percentileRange";
+import { buildHeatmapSeries } from "@modules/_shared/eCharts/charts//heatmap";
+import { buildMemberScatterSeries } from "@modules/_shared/eCharts/charts//memberScatter";
 import {
     buildFanchartSeries,
     buildHistorySeries,
     buildMemberSeries,
     buildObservationSeries,
     buildStatisticsSeries,
-} from "@modules/_shared/eCharts/charts/timeseries/timeseries";
-import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/utils";
+} from "@modules/_shared/eCharts/charts//timeseries";
+import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/charts/convergence/tooltips";
 
 describe("series builder contracts", () => {
     it("buildBarSeries returns axis-bound series with structured IDs", () => {
