@@ -5,9 +5,8 @@ import type ReactECharts from "echarts-for-react";
 
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
-import { formatMemberTooltipContent } from "../families/timeseries/timeseries";
+import { formatMemberTooltipContent } from "../charts/timeseries/timeseries";
 import {
-    getSeriesIdentifier,
     isMemberSeries,
     readSeriesMetadata,
     type SeriesMetadata,
@@ -21,7 +20,6 @@ type ZrMouseEvent = {
 type MemberSeriesMeta = {
     axisIndex: number;
     color?: string;
-    seriesId?: string;
     seriesIndex: number;
     seriesName: string;
     values: number[];
@@ -219,8 +217,6 @@ function buildMemberSeriesIndex(instance: ECharts): Map<number, MemberSeriesMeta
                 return;
             }
 
-            const seriesId = getSeriesIdentifier(seriesOption);
-
             const axisIndex =
                 typeof seriesOption.xAxisIndex === "number" && Number.isFinite(seriesOption.xAxisIndex)
                     ? seriesOption.xAxisIndex
@@ -234,7 +230,6 @@ function buildMemberSeriesIndex(instance: ECharts): Map<number, MemberSeriesMeta
             bucket.push({
                 axisIndex,
                 color: resolveSeriesColor(seriesOption),
-                seriesId: seriesId ?? undefined,
                 seriesIndex,
                 seriesName: typeof seriesOption.name === "string" ? seriesOption.name : "",
                 values,
@@ -285,7 +280,6 @@ function buildTooltipContent(
         return formatMemberTooltipContent({
             axisValue: timestampUtcMsToCompactIsoString(timestamps[target.dataIndex]),
             seriesName: match.seriesName,
-            seriesId: match.seriesId,
             webvizSeriesMeta: match.webvizSeriesMeta,
             value: match.values[target.dataIndex],
             color: match.color,

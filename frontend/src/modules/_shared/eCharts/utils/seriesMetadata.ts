@@ -1,11 +1,3 @@
-import {
-    getHighlightGroupKey,
-    getRealizationId,
-    getStatisticKey,
-    isFanchartSeries,
-    isRealizationSeries,
-} from "./seriesId";
-
 export type SeriesRole = "member" | "summary" | "band" | "reference" | "measurement" | (string & {});
 
 export type SeriesMetadata = {
@@ -42,7 +34,6 @@ export function readSeriesMetadata(value: unknown): SeriesMetadata | null {
 }
 
 export function getSeriesIdentifier(value: unknown): string | null {
-    if (typeof value === "string") return value;
     if (!value || typeof value !== "object") return null;
 
     const candidate = value as SeriesIdentityLike;
@@ -74,42 +65,27 @@ export function hasSeriesRole(value: unknown, role: SeriesRole): boolean {
 
 export function isMemberSeries(value: unknown): boolean {
     const metadata = readSeriesMetadata(value);
-    if (metadata) return metadata.roles.includes("member");
-
-    const seriesId = getSeriesIdentifier(value);
-    return seriesId ? isRealizationSeries(seriesId) : false;
+    return metadata ? metadata.roles.includes("member") : false;
 }
 
 export function isBandSeries(value: unknown): boolean {
     const metadata = readSeriesMetadata(value);
-    if (metadata) return metadata.roles.includes("band");
-
-    const seriesId = getSeriesIdentifier(value);
-    return seriesId ? isFanchartSeries(seriesId) : false;
+    return metadata ? metadata.roles.includes("band") : false;
 }
 
 export function getSeriesLinkGroupKey(value: unknown): string | null {
     const metadata = readSeriesMetadata(value);
-    if (metadata?.linkGroupKey) return metadata.linkGroupKey;
-
-    const seriesId = getSeriesIdentifier(value);
-    return seriesId ? getHighlightGroupKey(seriesId) : null;
+    return metadata?.linkGroupKey ?? null;
 }
 
 export function getSeriesMemberKey(value: unknown): string | null {
     const metadata = readSeriesMetadata(value);
-    if (metadata?.memberKey) return metadata.memberKey;
-
-    const seriesId = getSeriesIdentifier(value);
-    return seriesId ? getRealizationId(seriesId) : null;
+    return metadata?.memberKey ?? null;
 }
 
 export function getSeriesStatKey(value: unknown): string | null {
     const metadata = readSeriesMetadata(value);
-    if (metadata?.statKey) return metadata.statKey;
-
-    const seriesId = getSeriesIdentifier(value);
-    return seriesId ? getStatisticKey(seriesId) : null;
+    return metadata?.statKey ?? null;
 }
 
 function isSeriesMetadata(value: unknown): value is SeriesMetadata {

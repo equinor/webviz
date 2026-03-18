@@ -41,38 +41,38 @@ export {
     buildFanchartSeries,
     buildHistorySeries,
     buildObservationSeries,
-} from "./families/timeseries/timeseries";
+} from "./charts/timeseries/timeseries";
 export {
     buildBarSeries,
-} from "./families/categorical/bar";
+} from "./charts/categorical/bar";
 export {
     buildHistogramSeries,
-} from "./families/distribution/histogram";
+} from "./charts/distribution/histogram";
 export {
     buildExceedanceSeries,
-} from "./families/distribution/exceedance";
+} from "./charts/distribution/exceedance";
 export {
     buildPercentileRangeSeries,
-} from "./families/distribution/percentileRange";
+} from "./charts/distribution/percentileRange";
 export {
     buildDensitySeries,
-} from "./families/distribution/density";
+} from "./charts/distribution/density";
 export {
     buildConvergenceSeries,
-} from "./families/distribution/convergence";
+} from "./charts/distribution/convergence";
 export {
     buildHeatmapSeries,
-} from "./families/matrix/heatmap";
+} from "./charts/matrix/heatmap";
 export {
     buildMemberScatterSeries,
-} from "./families/scatter/memberScatter";
-export type { BarSortBy } from "./families/categorical/bar";
-export type { HistogramDisplayOptions } from "./families/distribution/histogram";
+} from "./charts/scatter/memberScatter";
+export type { BarSortBy } from "./charts/categorical/bar";
+export type { HistogramDisplayOptions } from "./charts/distribution/histogram";
 export type {
     PercentileRangeCenterStatistic,
     PercentileRangeDisplayOptions,
-} from "./families/distribution/percentileRange";
-export type { DensityDisplayOptions } from "./families/distribution/density";
+} from "./charts/distribution/percentileRange";
+export type { DensityDisplayOptions } from "./charts/distribution/density";
 
 // Chart builders (compose series + layout into final EChartsOption)
 export {
@@ -86,12 +86,12 @@ export {
     buildPercentileRangeChart,
     buildConvergenceChart,
     buildMemberScatterChart,
-    composeChartOption,
-} from "./builders";
-export type { ComposeChartConfig, ChartSeriesOption, SeriesBuildResult } from "./builders";
+} from "./charts/index";
+export { composeChartOption } from "./core";
+export type { ComposeChartConfig, ChartSeriesOption, SeriesBuildResult } from "./core";
 
-// Interaction helpers
-export { createTimestampMarkLine, applyActiveTimestampMarker } from "./interaction";
+// Overlay helpers
+export { createTimestampMarkLine, applyActiveTimestampMarker } from "./overlays";
 
 // Hooks
 export { useHighlightOnHover, useClickToTimestamp, useClosestMemberTooltip } from "./hooks";

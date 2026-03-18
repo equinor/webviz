@@ -1,5 +1,4 @@
-import { parseSeriesId } from "./seriesId";
-import { getSeriesChart, getSeriesIdentifier, getSeriesStatKey, hasSeriesRole } from "./seriesMetadata";
+import { readSeriesMetadata } from "./seriesMetadata";
 
 export type ConvergenceStatisticKey = "p90" | "mean" | "p10";
 
@@ -17,18 +16,11 @@ export function formatConvergenceStatLabel(statKey: string): string {
 }
 
 export function getConvergenceSeriesStatKey(seriesLike: unknown): ConvergenceStatisticKey | null {
-    if (getSeriesChart(seriesLike) === "convergence" && hasSeriesRole(seriesLike, "summary")) {
-        const statKey = getSeriesStatKey(seriesLike);
-        return isConvergenceStatisticKey(statKey) ? statKey : null;
-    }
+    const metadata = readSeriesMetadata(seriesLike);
+    if (!metadata || metadata.chart !== "convergence" || !metadata.roles.includes("summary")) return null;
 
-    const seriesId = getSeriesIdentifier(seriesLike);
-    if (!seriesId) return null;
-
-    const parsed = parseSeriesId(seriesId);
-    if (!parsed || parsed.category !== "convergence") return null;
-
-    return isConvergenceStatisticKey(parsed.qualifier) ? parsed.qualifier : null;
+    const statKey = metadata.statKey ?? null;
+    return isConvergenceStatisticKey(statKey) ? statKey : null;
 }
 
 function isConvergenceStatisticKey(statKey: string | null): statKey is ConvergenceStatisticKey {

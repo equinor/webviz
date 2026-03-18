@@ -17,28 +17,6 @@ export {
     withSeriesMetadata,
 } from "./seriesMetadata";
 export type { SeriesMetadata, SeriesMetadataCarrier, SeriesRole } from "./seriesMetadata";
-export {
-    makeSeriesId,
-    makeRealizationSeriesId,
-    makeStatisticSeriesId,
-    makeFanchartSeriesId,
-    makeConvergenceSeriesId,
-    makeHistogramSeriesId,
-    makeDensitySeriesId,
-    makeExceedanceSeriesId,
-    makePercentileSeriesId,
-    makeHeatmapSeriesId,
-    makeBarSeriesId,
-    parseSeriesId,
-    isRealizationSeries,
-    isStatisticSeries,
-    isFanchartSeries,
-    isConvergenceSeries,
-    getRealizationId,
-    getHighlightGroupKey,
-    getStatisticKey,
-} from "./seriesId";
-export type { SeriesCategory, ParsedSeriesId } from "./seriesId";
 export { computeKde } from "./kde";
 export { calcConvergence } from "./convergence";
 export type { ConvergencePoint } from "./convergence";
