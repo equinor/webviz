@@ -29,6 +29,7 @@
 - `interaction/tooltips/` is reserved for shared tooltip primitives only (`core.ts`, runtime helpers).
 - Do not inline tooltip formatter logic in builders or series files.
 - Do not re-export chart-specific tooltip helpers through `interaction/index.ts`.
+- If timeseries needs a custom member label, thread the same label through both `buildTimeseriesChart()` and `useTimeseriesInteractions()` so the default tooltip and closest-member tooltip cannot diverge.
 
 ## Types and Utils
 

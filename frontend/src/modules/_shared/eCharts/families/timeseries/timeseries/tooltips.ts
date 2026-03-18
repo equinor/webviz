@@ -28,7 +28,14 @@ type ParsedStatisticSeries = {
     axisIndex: number;
 };
 
-export function buildTimeseriesTooltip(config: TimeseriesDisplayConfig) {
+export type TimeseriesMemberTooltipOptions = {
+    memberLabel?: string;
+};
+
+export function buildTimeseriesTooltip(
+    config: TimeseriesDisplayConfig,
+    options: TimeseriesMemberTooltipOptions = {},
+) {
     return config.showStatistics
         ? {
               trigger: "axis" as const,
@@ -37,7 +44,7 @@ export function buildTimeseriesTooltip(config: TimeseriesDisplayConfig) {
           }
         : {
               trigger: "item" as const,
-              formatter: formatMemberItemTooltip,
+              formatter: (params: CallbackDataParams | CallbackDataParams[]) => formatMemberItemTooltip(params, options),
           };
 }
 
@@ -85,7 +92,10 @@ export function formatStatisticsAxisTooltip(params: CallbackDataParams | Callbac
     return formatCompactTooltip(date, rows);
 }
 
-export function formatMemberItemTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
+export function formatMemberItemTooltip(
+    params: CallbackDataParams | CallbackDataParams[],
+    options: TimeseriesMemberTooltipOptions = {},
+): string {
     const p = Array.isArray(params) ? params[0] : params;
     if (!p) return "";
 
@@ -98,6 +108,7 @@ export function formatMemberItemTooltip(params: CallbackDataParams | CallbackDat
         webvizSeriesMeta: readSeriesMetadata(p) ?? undefined,
         value: extractNumericValue(p.value),
         color: typeof p.color === "string" ? p.color : undefined,
+        memberLabel: options.memberLabel,
     });
 }
 

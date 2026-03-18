@@ -5,6 +5,7 @@ export {
     formatMemberTooltipContent,
     formatStatisticsAxisTooltip,
 } from "./tooltips";
+export type { TimeseriesMemberTooltipOptions } from "./tooltips";
 export { buildTimeseriesChart, extractTimeseriesCategoryData, type TimeseriesChartOptions } from "./builder";
 export {
     makeTimeseriesBandSeriesId,

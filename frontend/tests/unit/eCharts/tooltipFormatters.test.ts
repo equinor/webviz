@@ -17,6 +17,7 @@ import {
 import { formatHeatmapItemTooltip } from "@modules/_shared/eCharts/families/matrix/heatmap";
 import { formatMemberScatterItemTooltip } from "@modules/_shared/eCharts/families/scatter/memberScatter";
 import {
+    buildTimeseriesTooltip,
     formatObservationTooltip,
     formatMemberItemTooltip,
     formatStatisticsAxisTooltip,
@@ -315,6 +316,51 @@ describe("formatMemberItemTooltip", () => {
         expect(tooltip).toContain("2020-02-01");
         expect(tooltip).toContain("Realization 42");
         expect(tooltip).toContain("15");
+    });
+
+    it("supports overriding the member label", () => {
+        const tooltip = formatMemberItemTooltip(
+            makeParam({
+                seriesId: "realization:Group A:7:0",
+                seriesName: "Trace A",
+                value: 12,
+                axisValue: "2020-02-01",
+            }),
+            { memberLabel: "Member" },
+        );
+
+        expect(tooltip).toContain("Member 7");
+        expect(tooltip).not.toContain("Realization 7");
+    });
+});
+
+describe("buildTimeseriesTooltip", () => {
+    it("passes member label overrides to item tooltip formatting", () => {
+        const tooltipConfig = buildTimeseriesTooltip(
+            {
+                showRealizations: true,
+                showStatistics: false,
+                showFanchart: false,
+                showHistorical: false,
+                showObservations: false,
+                selectedStatistics: [],
+            },
+            { memberLabel: "Member" },
+        );
+
+        expect(tooltipConfig.formatter).toBeTypeOf("function");
+
+        const tooltip = tooltipConfig.formatter?.(
+            makeParam({
+                seriesId: "realization:Group A:7:0",
+                seriesName: "Trace A",
+                value: 12,
+                axisValue: "2020-02-01",
+            }),
+        );
+
+        expect(tooltip).toContain("Member 7");
+        expect(tooltip).not.toContain("Realization 7");
     });
 });
 

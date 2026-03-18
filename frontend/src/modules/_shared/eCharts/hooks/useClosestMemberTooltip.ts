@@ -35,6 +35,10 @@ type ClosestTooltipTarget = {
 
 type TooltipTriggerOn = "none" | "click" | "mousemove" | "mousemove|click";
 
+type ClosestMemberTooltipOptions = {
+    memberLabel?: string;
+};
+
 /**
  * Replaces the default ECharts tooltip with a "snap-to-closest" behavior for dense time-series charts.
  * Instead of displaying a massive tooltip for every intersecting line on the X-axis,
@@ -46,10 +50,12 @@ export function useClosestMemberTooltip(
     enabled: boolean,
     timestamps: number[],
     layoutDependency: unknown,
+    options: ClosestMemberTooltipOptions = {},
 ): void {
     const timestampsRef = React.useRef(timestamps);
     const lastShownTooltipKeyRef = React.useRef<string | null>(null);
     timestampsRef.current = timestamps;
+    const memberLabel = options.memberLabel;
 
     React.useEffect(() => {
         const chart = chartRef.current;
@@ -113,7 +119,7 @@ export function useClosestMemberTooltip(
                 x: pixelX,
                 y: pixelY,
                 tooltip: {
-                    content: buildTooltipContent(target, indexedSeries, timestampsRef.current),
+                    content: buildTooltipContent(target, indexedSeries, timestampsRef.current, memberLabel),
                 },
             });
             lastShownTooltipKeyRef.current = targetKey;
@@ -128,7 +134,7 @@ export function useClosestMemberTooltip(
             clearTooltip();
             restoreTooltipTriggerOn(instance, originalTriggerOn);
         };
-    }, [chartRef, enabled, layoutDependency]);
+    }, [chartRef, enabled, layoutDependency, memberLabel]);
 }
 
 export function findClosestMemberSeries(
@@ -270,6 +276,7 @@ function buildTooltipContent(
     target: ClosestTooltipTarget,
     indexedSeries: Map<number, MemberSeriesMeta[]>,
     timestamps: number[],
+    memberLabel?: string,
 ): string {
     for (const series of indexedSeries.values()) {
         const match = series.find((candidate) => candidate.seriesIndex === target.seriesIndex);
@@ -282,6 +289,7 @@ function buildTooltipContent(
             webvizSeriesMeta: match.webvizSeriesMeta,
             value: match.values[target.dataIndex],
             color: match.color,
+            memberLabel,
         });
     }
 

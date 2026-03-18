@@ -39,12 +39,12 @@ Modules should map domain data into shared trace types and call shared builders,
 
 ### Layer Responsibilities
 
-| Layer                    | Owner                                                        | Responsibility                                                                                     |
-| ------------------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| Global style             | `builders/composeChartOption.ts` + `interaction/tooltips/core.ts` | Compact tooltip defaults (padding, text style) and shared HTML row/header primitives.             |
-| Chart-level behavior     | `families/<family>/<chart>/builder.ts`                       | Tooltip trigger mode (`axis` vs `item`), axis pointer policy, and composition of the chart slice. |
-| Chart-family rendering   | `families/<family>/<chart>/tooltips.ts`                      | Tooltip formatting and policy helpers colocated with the owning chart slice.                       |
-| Series-level override    | `families/<family>/<chart>/*Series.ts`                       | Helper-series suppression and item-only overrides that delegate back to chart-family tooltip helpers. |
+| Layer                  | Owner                                                             | Responsibility                                                                                        |
+| ---------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Global style           | `builders/composeChartOption.ts` + `interaction/tooltips/core.ts` | Compact tooltip defaults (padding, text style) and shared HTML row/header primitives.                 |
+| Chart-level behavior   | `families/<family>/<chart>/builder.ts`                            | Tooltip trigger mode (`axis` vs `item`), axis pointer policy, and composition of the chart slice.     |
+| Chart-family rendering | `families/<family>/<chart>/tooltips.ts`                           | Tooltip formatting and policy helpers colocated with the owning chart slice.                          |
+| Series-level override  | `families/<family>/<chart>/*Series.ts`                            | Helper-series suppression and item-only overrides that delegate back to chart-family tooltip helpers. |
 
 Rules:
 
@@ -54,6 +54,7 @@ Rules:
 - Item-only glyph/point series may attach a formatter in the slice series file, but the formatter must come from the same chart-family tooltip module.
 - Do not inline tooltip formatter logic in slice builders or slice series files.
 - Do not re-export chart-specific tooltip helpers through `interaction/index.ts`.
+- When timeseries uses a custom member label, pass the same label to both `buildTimeseriesChart()` and `useTimeseriesInteractions()` so standard and closest-member tooltips stay aligned.
 
 Common exceptions:
 

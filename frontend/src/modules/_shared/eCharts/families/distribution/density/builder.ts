@@ -19,21 +19,10 @@ export function buildDensityChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Value", yAxisLabel = "Density", sharedXAxis, sharedYAxis, ...seriesOptions } = options;
-    const buildSubplot = createDensitySubplotBuilder(seriesOptions, xAxisLabel, yAxisLabel);
-
-    return buildCartesianSubplotChart(
-        subplotGroups,
-        buildSubplot,
-        { containerSize, sharedXAxis, sharedYAxis },
-    );
-}
-
-function createDensitySubplotBuilder(
-    seriesOptions: DensityDisplayOptions,
-    xAxisLabel: string,
-    yAxisLabel: string,
-): (group: SubplotGroup<DistributionTrace>, axisIndex: number) => CartesianSubplotBuildResult {
-    return function buildDensitySubplotForAxis(group, axisIndex): CartesianSubplotBuildResult {
+    const buildSubplot = function buildDensitySubplotForAxis(
+        group: SubplotGroup<DistributionTrace>,
+        axisIndex: number,
+    ): CartesianSubplotBuildResult {
         const { series, legendData } = buildDensitySubplotSeries(group, axisIndex, seriesOptions);
 
         return {
@@ -44,6 +33,12 @@ function createDensitySubplotBuilder(
             title: group.title,
         };
     };
+
+    return buildCartesianSubplotChart(
+        subplotGroups,
+        buildSubplot,
+        { containerSize, sharedXAxis, sharedYAxis },
+    );
 }
 
 function buildDensitySubplotSeries(

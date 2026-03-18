@@ -19,23 +19,18 @@ export function buildPercentileRangeChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Value", yAxisLabel, sharedXAxis, sharedYAxis, ...seriesOptions } = options;
-    const buildSubplot = createPercentileRangeSubplotBuilder(seriesOptions, xAxisLabel, yAxisLabel);
+    const buildSubplot = function buildPercentileRangeSubplotForAxis(
+        group: SubplotGroup<DistributionTrace>,
+        axisIndex: number,
+    ) {
+        return buildPercentileRangeSubplot(group, axisIndex, seriesOptions, xAxisLabel, yAxisLabel);
+    };
 
     return buildCartesianSubplotChart(
         subplotGroups,
         buildSubplot,
         { containerSize, sharedXAxis, sharedYAxis },
     );
-}
-
-function createPercentileRangeSubplotBuilder(
-    seriesOptions: PercentileRangeDisplayOptions,
-    xAxisLabel: string,
-    yAxisLabel?: string,
-): (group: SubplotGroup<DistributionTrace>, axisIndex: number) => ReturnType<typeof buildPercentileRangeSubplot> {
-    return function buildPercentileRangeSubplotForAxis(group, axisIndex) {
-        return buildPercentileRangeSubplot(group, axisIndex, seriesOptions, xAxisLabel, yAxisLabel);
-    };
 }
 
 function buildPercentileRangeSubplot(

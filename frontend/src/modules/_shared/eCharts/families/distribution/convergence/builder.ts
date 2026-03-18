@@ -20,7 +20,20 @@ export function buildConvergenceChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Realizations", yAxisLabel = "Value", sharedXAxis, sharedYAxis } = options;
-    const buildSubplot = createConvergenceSubplotBuilder(xAxisLabel, yAxisLabel);
+    const buildSubplot = function buildConvergenceSubplotForAxis(
+        group: SubplotGroup<DistributionTrace>,
+        axisIndex: number,
+    ): CartesianSubplotBuildResult {
+        const { series, legendData } = buildConvergenceSubplot(group, axisIndex);
+
+        return {
+            series,
+            legendData,
+            xAxis: { type: "value", label: xAxisLabel },
+            yAxis: { type: "value", scale: true, label: yAxisLabel },
+            title: group.title,
+        };
+    };
 
     return buildCartesianSubplotChart(
         subplotGroups,
@@ -32,23 +45,6 @@ export function buildConvergenceChart(
             tooltip: buildConvergenceTooltip(),
         },
     );
-}
-
-function createConvergenceSubplotBuilder(
-    xAxisLabel: string,
-    yAxisLabel: string,
-): (group: SubplotGroup<DistributionTrace>, axisIndex: number) => CartesianSubplotBuildResult {
-    return function buildConvergenceSubplotForAxis(group, axisIndex): CartesianSubplotBuildResult {
-        const { series, legendData } = buildConvergenceSubplot(group, axisIndex);
-
-        return {
-            series,
-            legendData,
-            xAxis: { type: "value", label: xAxisLabel },
-            yAxis: { type: "value", scale: true, label: yAxisLabel },
-            title: group.title,
-        };
-    };
 }
 
 function buildConvergenceSubplot(

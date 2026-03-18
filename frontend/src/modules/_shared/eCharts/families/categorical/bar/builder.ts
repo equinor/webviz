@@ -20,22 +20,18 @@ export function buildBarChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { yAxisLabel = "Value", sharedXAxis, sharedYAxis, ...seriesOptions } = options;
-    const buildSubplot = createBarSubplotBuilder(seriesOptions, yAxisLabel);
+    const buildSubplot = function buildBarSubplotForAxis(
+        group: SubplotGroup<BarTrace>,
+        axisIndex: number,
+    ): CartesianSubplotBuildResult {
+        return buildBarSubplot(group, axisIndex, seriesOptions, yAxisLabel);
+    };
 
     return buildCartesianSubplotChart(
         subplotGroups,
         buildSubplot,
         { containerSize, sharedXAxis, sharedYAxis, tooltip: buildBarTooltip() },
     );
-}
-
-function createBarSubplotBuilder(
-    options: BuildBarSeriesOptions,
-    yAxisLabel: string,
-): (group: SubplotGroup<BarTrace>, axisIndex: number) => CartesianSubplotBuildResult {
-    return function buildBarSubplotForAxis(group, axisIndex): CartesianSubplotBuildResult {
-        return buildBarSubplot(group, axisIndex, options, yAxisLabel);
-    };
 }
 
 function buildBarSubplot(

@@ -24,6 +24,8 @@ export type TimeseriesInteractionConfig = {
     externalHoveredMember?: HoveredMemberInfo | null;
     /** Show only the nearest member tooltip while hovering the empty chart area. */
     enableClosestMemberTooltip?: boolean;
+    /** Optional override for the member label shown in timeseries tooltips. */
+    memberLabel?: string;
 };
 
 export type TimeseriesInteractionResult = {
@@ -58,6 +60,7 @@ export function useTimeseriesInteractions(config: TimeseriesInteractionConfig): 
         config.enableClosestMemberTooltip ?? false,
         config.timestamps,
         config.layoutDependency,
+        { memberLabel: config.memberLabel },
     );
 
     return { chartRef, onChartEvents };

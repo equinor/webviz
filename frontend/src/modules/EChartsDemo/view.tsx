@@ -39,6 +39,19 @@ import {
 } from "./utils/syntheticData";
 
 const ROW_HEIGHT_PX = 350;
+const TIMESERIES_MEMBER_LABEL = "Realization";
+
+type BuildTimeseriesDemoChartOptions = {
+    numSubplots: number;
+    numGroups: number;
+    numRealizations: number;
+    displayConfig: TimeseriesDisplayConfig;
+    memberLabel?: string;
+    activeTimestampUtcMs: number | null;
+    containerSize?: ContainerSize;
+    sharedXAxis?: boolean;
+    sharedYAxis?: boolean;
+};
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const { viewContext } = props;
@@ -67,6 +80,18 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
 
+    const timeseriesDisplayConfig = React.useMemo<TimeseriesDisplayConfig>(
+        () => ({
+            showRealizations,
+            showStatistics,
+            showFanchart: showFanchart && showStatistics,
+            showHistorical: showHistory,
+            showObservations,
+            selectedStatistics: selectedStatistics as TimeseriesDisplayConfig["selectedStatistics"],
+        }),
+        [showRealizations, showStatistics, showFanchart, showHistory, showObservations, selectedStatistics],
+    );
+
     React.useEffect(() => {
         viewContext.setInstanceTitle(
             `${PLOT_TYPE_LABELS[plotType]} (Plots: ${numSubplots} Groups: ${numGroups} Reals: ${numRealizations})`,
@@ -79,21 +104,17 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
         switch (plotType) {
             case PlotType.Timeseries:
-                return buildTimeseries(
+                return buildTimeseriesDemoChart({
                     numSubplots,
                     numGroups,
                     numRealizations,
-                    showRealizations,
-                    showStatistics,
-                    showFanchart,
-                    showHistory,
-                    showObservations,
-                    selectedStatistics,
+                    displayConfig: timeseriesDisplayConfig,
+                    memberLabel: TIMESERIES_MEMBER_LABEL,
                     activeTimestampUtcMs,
-                    size,
+                    containerSize: size,
                     sharedXAxis,
                     sharedYAxis,
-                );
+                });
             case PlotType.Histogram:
                 return buildHistogramChart(
                     createDistributionSubplotGroups(numSubplots, numGroups, numRealizations),
@@ -152,12 +173,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         numSubplots,
         numGroups,
         numRealizations,
-        showRealizations,
-        showStatistics,
-        showFanchart,
-        showHistory,
-        showObservations,
-        selectedStatistics,
         showStatisticalMarkers,
         showBarLabels,
         showRealizationPoints,
@@ -167,6 +182,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         sharedYAxis,
         activeTimestampUtcMs,
         containerSize,
+        timeseriesDisplayConfig,
     ]);
     const timestamps = React.useMemo(() => {
         if (plotType === PlotType.Timeseries) {
@@ -179,14 +195,12 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         return [];
     }, [plotType, numSubplots, numGroups, numRealizations]);
 
-    const hasLinkedMembers = plotType === PlotType.MemberScatter || (plotType === PlotType.Timeseries && showRealizations);
+    const hasLinkedMembers =
+        plotType === PlotType.MemberScatter || (plotType === PlotType.Timeseries && showRealizations);
 
-    const handleHoveredMemberChange = React.useCallback(
-        (info: { memberId: number; groupKey: string } | null) => {
-            return info; // => Just for demo. To syncedsettings
-        },
-        [],
-    );
+    const handleHoveredMemberChange = React.useCallback((info: { memberId: number; groupKey: string } | null) => {
+        return info; // => Just for demo. To syncedsettings
+    }, []);
     const { chartRef, onChartEvents } = useTimeseriesInteractions({
         enableLinkedHover: hasLinkedMembers,
         enableClosestMemberTooltip: plotType === PlotType.Timeseries && showRealizations && !showStatistics,
@@ -195,6 +209,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         setActiveTimestampUtcMs,
         layoutDependency: echartsOptions,
         onHoveredMemberChange: handleHoveredMemberChange,
+        memberLabel: TIMESERIES_MEMBER_LABEL,
     });
 
     const layout = computeSubplotGridLayout(numSubplots);
@@ -222,37 +237,28 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     );
 }
 
-function buildTimeseries(
-    numSubplots: number,
-    numGroups: number,
-    numRealizations: number,
-    showRealizations: boolean,
-    showStatistics: boolean,
-    showFanchart: boolean,
-    showHistory: boolean,
-    showObservations: boolean,
-    selectedStatistics: string[],
-    activeTimestampUtcMs: number | null,
-    containerSize?: ContainerSize,
-    sharedXAxis?: boolean,
-    sharedYAxis?: boolean,
-): EChartsOption {
+function buildTimeseriesDemoChart(options: BuildTimeseriesDemoChartOptions): EChartsOption {
+    const {
+        numSubplots,
+        numGroups,
+        numRealizations,
+        displayConfig,
+        memberLabel,
+        activeTimestampUtcMs,
+        containerSize,
+        sharedXAxis,
+        sharedYAxis,
+    } = options;
     const groups = generateTimeseriesGroups(numSubplots, numGroups, numRealizations);
     const overlays = generateTimeseriesOverlays(groups, numSubplots);
-    const config: TimeseriesDisplayConfig = {
-        showRealizations,
-        showStatistics,
-        showFanchart: showFanchart && showStatistics,
-        showHistorical: showHistory,
-        showObservations,
-        selectedStatistics: selectedStatistics as TimeseriesDisplayConfig["selectedStatistics"],
-    };
+
     return buildTimeseriesChart(
         groups,
         {
             subplotOverlays: overlays,
-            displayConfig: config,
+            displayConfig,
             yAxisLabel: "Value",
+            memberLabel,
             activeTimestampUtcMs,
             sharedXAxis,
             sharedYAxis,

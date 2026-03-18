@@ -33,8 +33,15 @@ export function buildHistogramChart(
     const config = resolveHistogramChartOptions(rest);
 
     const yMaxByAxis: number[] = [];
-    const buildSubplot = createHistogramSubplotBuilder(config, yMaxByAxis);
-    const postProcessAxes = createHistogramPostProcessAxes(yMaxByAxis, config.showRealizationPoints);
+    const buildSubplot = function buildHistogramSubplotForAxis(
+        group: SubplotGroup<DistributionTrace>,
+        axisIndex: number,
+    ): CartesianSubplotBuildResult {
+        return buildHistogramSubplot(group, axisIndex, config, yMaxByAxis);
+    };
+    const postProcessAxes = function postProcessHistogramAxes(axes: SubplotAxesResult): void {
+        applyYAxisExtents(axes, yMaxByAxis, config.showRealizationPoints);
+    };
 
     return buildCartesianSubplotChart(
         subplotGroups,
@@ -46,24 +53,6 @@ export function buildHistogramChart(
             postProcessAxes,
         },
     );
-}
-
-function createHistogramSubplotBuilder(
-    config: ResolvedHistogramChartOptions,
-    yMaxByAxis: number[],
-): (group: SubplotGroup<DistributionTrace>, axisIndex: number) => CartesianSubplotBuildResult {
-    return function buildHistogramSubplotForAxis(group, axisIndex): CartesianSubplotBuildResult {
-        return buildHistogramSubplot(group, axisIndex, config, yMaxByAxis);
-    };
-}
-
-function createHistogramPostProcessAxes(
-    yMaxByAxis: number[],
-    showRealizationPoints: boolean,
-): (axes: SubplotAxesResult) => void {
-    return function postProcessHistogramAxes(axes: SubplotAxesResult): void {
-        applyYAxisExtents(axes, yMaxByAxis, showRealizationPoints);
-    };
 }
 
 function resolveHistogramChartOptions(

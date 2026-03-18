@@ -25,6 +25,7 @@ export type TimeseriesChartOptions = {
     subplotOverlays: TimeseriesSubplotOverlays[];
     displayConfig: TimeseriesDisplayConfig;
     yAxisLabel: string;
+    memberLabel?: string;
     activeTimestampUtcMs?: number | null;
     sharedXAxis?: boolean;
     sharedYAxis?: boolean;
@@ -46,6 +47,7 @@ export function buildTimeseriesChart(
         subplotOverlays,
         displayConfig,
         yAxisLabel,
+        memberLabel,
         activeTimestampUtcMs = null,
         sharedXAxis,
         sharedYAxis,
@@ -100,7 +102,7 @@ export function buildTimeseriesChart(
             sharedXAxis,
             sharedYAxis,
             postProcessAxes,
-            ...buildTimeseriesComposeOverrides(numSubplots, displayConfig, containerSize),
+            ...buildTimeseriesComposeOverrides(numSubplots, displayConfig, containerSize, memberLabel),
         },
     );
 }
@@ -183,9 +185,10 @@ function buildTimeseriesComposeOverrides(
     numSubplots: number,
     config: TimeseriesDisplayConfig,
     containerSize?: ContainerSize,
+    memberLabel?: string,
 ) {
     return {
-        tooltip: buildTimeseriesTooltip(config),
+        tooltip: buildTimeseriesTooltip(config, { memberLabel }),
         axisPointer: {
             show: true,
             type: "line" as const,

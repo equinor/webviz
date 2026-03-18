@@ -21,7 +21,20 @@ export function buildExceedanceChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Value", yAxisLabel = "Exceedance (%)", sharedXAxis, sharedYAxis } = options;
-    const buildSubplot = createExceedanceSubplotBuilder(xAxisLabel, yAxisLabel);
+    const buildSubplot = function buildExceedanceSubplotForAxis(
+        group: SubplotGroup<DistributionTrace>,
+        axisIndex: number,
+    ): CartesianSubplotBuildResult {
+        const { series, legendData } = buildExceedanceSubplotSeries(group, axisIndex);
+
+        return {
+            series,
+            legendData,
+            xAxis: { type: "value", scale: true, label: xAxisLabel },
+            yAxis: { type: "value", label: yAxisLabel },
+            title: group.title,
+        };
+    };
 
     return buildCartesianSubplotChart(
         subplotGroups,
@@ -34,23 +47,6 @@ export function buildExceedanceChart(
             tooltip: buildExceedanceTooltip(),
         },
     );
-}
-
-function createExceedanceSubplotBuilder(
-    xAxisLabel: string,
-    yAxisLabel: string,
-): (group: SubplotGroup<DistributionTrace>, axisIndex: number) => CartesianSubplotBuildResult {
-    return function buildExceedanceSubplotForAxis(group, axisIndex): CartesianSubplotBuildResult {
-        const { series, legendData } = buildExceedanceSubplotSeries(group, axisIndex);
-
-        return {
-            series,
-            legendData,
-            xAxis: { type: "value", scale: true, label: xAxisLabel },
-            yAxis: { type: "value", label: yAxisLabel },
-            title: group.title,
-        };
-    };
 }
 
 function buildExceedanceSubplotSeries(
