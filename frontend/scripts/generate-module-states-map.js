@@ -24,6 +24,10 @@ export async function generateModuleSerializedStateMap() {
         const match = folder.match(/src\/modules\/([^/]+)(\/)?$/);
         if (!match) continue;
 
+        // Ignore empty folders that might be left over from deleted modules
+        const folderPath = path.join(process.cwd(), folder);
+        if (fs.readdirSync(folderPath).length === 0) continue;
+
         const moduleName = match[1];
         modules.add(moduleName);
     }
