@@ -12,12 +12,12 @@ import {
     useClosestMemberTooltip,
     useHighlightOnHover,
 } from "@modules/_shared/eCharts";
+import { useEChartsViewState } from "@modules/_shared/eCharts/hooks/useEchartsViewState";
 
 import type { Interfaces } from "../interfaces";
 import { PLOT_TYPE_LABELS } from "../typesAndEnums";
 
 import { useDemoPlotModel } from "./useEcharts";
-import { useEChartsViewState } from "@modules/_shared/eCharts/hooks/useEchartsViewState";
 const ROW_HEIGHT_PX = 350;
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {

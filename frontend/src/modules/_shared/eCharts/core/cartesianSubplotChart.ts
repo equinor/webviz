@@ -1,5 +1,6 @@
 import type { EChartsOption } from "echarts";
 
+import type { BaseChartOptions } from "..";
 import type { AxisDef, SubplotAxesResult } from "../layout/subplotAxes";
 import { buildSubplotAxes } from "../layout/subplotAxes";
 import { computeSubplotGridLayout } from "../layout/subplotGridLayout";
@@ -8,7 +9,6 @@ import type { SubplotGroup } from "../types";
 
 import { composeChartOption } from "./composeChartOption";
 import type { ChartSeriesOption, ComposeChartConfig } from "./composeChartOption";
-import { BaseChartOptions } from "..";
 
 export type CartesianChartSeries = ChartSeriesOption;
 

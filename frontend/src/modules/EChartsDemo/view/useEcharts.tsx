@@ -3,11 +3,11 @@ import React from "react";
 import type { EChartsOption } from "echarts";
 
 import type { ViewContext } from "@framework/ModuleContext";
+import type { ViewState } from "@modules/_shared/eCharts/hooks/useEchartsViewState";
 
 import type { Interfaces } from "../interfaces";
 
 import { DemoChartOrchestrator } from "./plotOrchestrator";
-import type { ViewState } from "@modules/_shared/eCharts/hooks/useEchartsViewState";
 
 const TIMESERIES_MEMBER_LABEL = "Realization";
 

@@ -1,5 +1,6 @@
 import type { EChartsOption } from "echarts";
 
+import type { BaseChartOptions } from "../..";
 import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
@@ -7,7 +8,6 @@ import type { BarTrace, SubplotGroup } from "../../types";
 
 import { buildBarSeries, type BuildBarSeriesOptions } from "./series";
 import { buildBarTooltip } from "./tooltips";
-import { BaseChartOptions } from "../..";
 export interface BarChartOptions {
     base?: BaseChartOptions;
     series?: BuildBarSeriesOptions & {

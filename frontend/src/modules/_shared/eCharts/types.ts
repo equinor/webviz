@@ -1,4 +1,4 @@
-import { ChartZoomState } from "./core/composeChartOption";
+import type { ChartZoomState } from "./core/composeChartOption";
 
 export type StatisticKey = "mean" | "p10" | "p50" | "p90" | "min" | "max";
 

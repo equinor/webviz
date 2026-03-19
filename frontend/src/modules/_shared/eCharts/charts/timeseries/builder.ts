@@ -2,6 +2,7 @@ import type { EChartsOption } from "echarts";
 
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
+import type { BaseChartOptions } from "../..";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianChartSeries, CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { ComposeChartConfig } from "../../core/composeChartOption";
@@ -21,7 +22,6 @@ import { buildMemberSeries } from "./memberSeries";
 import { buildObservationSeries } from "./observationSeries";
 import { buildStatisticsSeries, buildFanchartSeries } from "./statisticsSeries";
 import { buildTimeseriesTooltip } from "./tooltips";
-import { BaseChartOptions } from "../..";
 
 
 export interface TimeseriesChartOptions {

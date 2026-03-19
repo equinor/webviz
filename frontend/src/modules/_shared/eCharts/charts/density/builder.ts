@@ -1,12 +1,12 @@
 import type { EChartsOption } from "echarts";
 
+import type { BaseChartOptions } from "../..";
 import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { DistributionTrace, SubplotGroup } from "../../types";
 
 import { buildDensitySeries, type DensityDisplayOptions } from "./series";
-import { BaseChartOptions } from "../..";
 
 // 1. Clean, nested options structure
 export interface DensityChartOptions {
