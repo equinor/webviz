@@ -11,7 +11,6 @@ import { getResponsiveFeatures } from "../layout/responsiveConfig";
 import type { SubplotAxesResult } from "../layout/subplotAxes";
 import type { SubplotLayoutResult } from "../layout/subplotGridLayout";
 import type { ContainerSize } from "../types";
-import type { SeriesMetadataCarrier } from "../utils/seriesMetadata";
 
 import { buildCompactTooltipConfig } from "./tooltip";
 
@@ -26,7 +25,7 @@ type BaseChartSeriesOption =
     | LineSeriesOption
     | ScatterSeriesOption;
 
-export type ChartSeriesOption = BaseChartSeriesOption & SeriesMetadataCarrier;
+export type ChartSeriesOption = BaseChartSeriesOption;
 
 /**
  * Standard return type for series builders.

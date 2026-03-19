@@ -5,7 +5,6 @@ import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { BarTrace } from "../../types";
-import { withSeriesMetadata } from "../../utils/seriesMetadata";
 import { computePointStatistics } from "../../utils/statistics";
 
 import { makeBarSeriesId } from "./ids";
@@ -54,31 +53,26 @@ export function buildBarSeries(
     const series: BarChartSeries[] = [];
 
     series.push(
-        withSeriesMetadata(
-            {
-                id: makeBarSeriesId(trace.name, "bars", axisIndex),
-                name: trace.name,
-                type: "bar",
-                xAxisIndex: axisIndex,
-                yAxisIndex: axisIndex,
-                data: yData,
-                itemStyle: { color: trace.color, opacity: 0.8 },
-                label: showText
-                    ? {
-                        show: true,
-                        position: "top",
-                        formatter: (params: CallbackDataParams) => formatNumber(params.value as number),
-                        fontSize: 11,
-                    }
-                    : undefined,
-                encode: { x: 0, y: 1 },
-            },
-            {
-                chart: "bar",
-                axisIndex,
-                roles: ["primary"],
-            },
-        ),
+
+        {
+            id: makeBarSeriesId(trace.name, "primary", axisIndex),
+            name: trace.name,
+            type: "bar",
+            xAxisIndex: axisIndex,
+            yAxisIndex: axisIndex,
+            data: yData,
+            itemStyle: { color: trace.color, opacity: 0.8 },
+            label: showText
+                ? {
+                    show: true,
+                    position: "top",
+                    formatter: (params: CallbackDataParams) => formatNumber(params.value as number),
+                    fontSize: 11,
+                }
+                : undefined,
+            encode: { x: 0, y: 1 },
+        }
+
     );
 
     if (showStatisticalMarkers && xData.length > 0) {
@@ -95,9 +89,9 @@ function createMeanReferenceLine(
     trace: BarTrace,
     axisIndex: number,
 ): LineSeriesOption {
-    return withSeriesMetadata(
+    return (
         {
-            id: makeBarSeriesId(trace.name, "mean", axisIndex),
+            id: makeBarSeriesId(trace.name, "reference", axisIndex, "mean"),
             type: "line",
             name: trace.name,
             xAxisIndex: axisIndex,
@@ -112,12 +106,7 @@ function createMeanReferenceLine(
             tooltip: {
                 formatter: () => formatBarMeanTooltip(trace.name, mean, trace.color),
             },
-        },
-        {
-            chart: "bar",
-            axisIndex,
-            roles: ["reference", "summary"],
-            statKey: "mean",
-        },
+        }
+
     );
 }

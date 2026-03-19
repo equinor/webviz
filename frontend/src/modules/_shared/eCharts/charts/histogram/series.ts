@@ -11,7 +11,6 @@ import type { DistributionTrace } from "../../types";
 import { HistogramType } from "../../types";
 import { computeHistogramLayout, computeHistogramTraceData } from "../../utils/histogram";
 import type { HistogramBarGeometry } from "../../utils/histogram";
-import { withSeriesMetadata } from "../../utils/seriesMetadata";
 
 import { makeHistogramSeriesId } from "./ids";
 import { createHistogramBarTooltipFormatter, createHistogramRugTooltipFormatter } from "./tooltips";
@@ -74,9 +73,9 @@ export function buildHistogramSeriesFromBars(
     const rugTooltipFormatter = createHistogramRugTooltipFormatter(trace.name, color);
 
     series.push(
-        withSeriesMetadata(
+        (
             {
-                id: makeHistogramSeriesId(trace.name, "bars", axisIndex),
+                id: makeHistogramSeriesId(trace.name, "primary", axisIndex),
                 type: "custom",
                 name: trace.name,
                 color: color,
@@ -100,20 +99,15 @@ export function buildHistogramSeriesFromBars(
                     formatter: (params: CallbackDataParams) => barTooltipFormatter(params),
                 },
                 z: 2,
-            },
-            {
-                chart: "histogram",
-                axisIndex,
-                roles: ["primary"],
-            },
+            }
         ),
     );
 
     if (showRealizationPoints) {
         series.push(
-            withSeriesMetadata(
+            (
                 {
-                    id: makeHistogramSeriesId(trace.name, "rug", axisIndex),
+                    id: makeHistogramSeriesId(trace.name, "memberPoints", axisIndex),
                     type: "scatter",
                     name: trace.name,
                     data: trace.values.map((value, index) => ({
@@ -129,12 +123,7 @@ export function buildHistogramSeriesFromBars(
                         formatter: (params: CallbackDataParams) => rugTooltipFormatter(params),
                     },
                     z: 3,
-                },
-                {
-                    chart: "histogram",
-                    axisIndex,
-                    roles: ["memberPoints"],
-                },
+                }
             ),
         );
     }

@@ -3,9 +3,8 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import { extractNumericValue, formatCompactTooltip } from "../../core/tooltip";
-import { readSeriesMetadata, getSeriesIdentifier } from "../../utils";
 
-import type { ConvergenceStatisticKey } from "./builder";
+export type ConvergenceStatisticKey = "p90" | "mean" | "p10";
 
 type TooltipEntry = {
     axisValue?: string | number;
@@ -16,27 +15,15 @@ type TooltipEntry = {
     value?: unknown;
 };
 
-type ConvergenceTooltipContext = {
-    statKeyBySeriesId?: ReadonlyMap<string, ConvergenceStatisticKey>;
-};
-
-export function buildConvergenceTooltip(context: ConvergenceTooltipContext = {}) {
+export function buildConvergenceTooltip() {
     return {
         trigger: "axis" as const,
         axisPointer: { type: "line" as const },
-        formatter: (params: CallbackDataParams | CallbackDataParams[]) =>
-            formatConvergenceAxisTooltipWithContext(params, context),
+        formatter: formatConvergenceAxisTooltip,
     };
 }
 
 export function formatConvergenceAxisTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
-    return formatConvergenceAxisTooltipWithContext(params);
-}
-
-function formatConvergenceAxisTooltipWithContext(
-    params: CallbackDataParams | CallbackDataParams[],
-    context: ConvergenceTooltipContext = {},
-): string {
     const rawParams = Array.isArray(params) ? params : [params];
     if (rawParams.length === 0) return "";
 
@@ -52,7 +39,7 @@ function formatConvergenceAxisTooltipWithContext(
     const rows: Array<{ label: string; value: string; color?: string }> = [];
 
     for (const entry of entries) {
-        const statKey = resolveConvergenceSeriesStatKey(entry, context.statKeyBySeriesId);
+        const statKey = resolveConvergenceSeriesStatKey(entry);
         if (!statKey) continue;
 
         const value = extractNumericValue(entry.value);
@@ -70,19 +57,20 @@ function isTooltipEntry(value: unknown): value is TooltipEntry {
     return Boolean(value && typeof value === "object");
 }
 
-function resolveConvergenceSeriesStatKey(
-    entry: TooltipEntry,
-    statKeyBySeriesId?: ReadonlyMap<string, ConvergenceStatisticKey>,
-): ConvergenceStatisticKey | null {
-    const fromMetadata = getConvergenceSeriesStatKey(entry);
-    if (fromMetadata) return fromMetadata;
+function resolveConvergenceSeriesStatKey(entry: TooltipEntry): ConvergenceStatisticKey | null {
+    if (!entry.seriesId) return null;
 
-    const seriesId = getSeriesIdentifier(entry);
-    if (!seriesId) return null;
+    // Parse: "convergence|summary|traceName|axisIndex|statKey"
+    const parts = entry.seriesId.split("|");
+    if (parts[0] !== "convergence" || parts[1] !== "summary") return null;
 
-    return statKeyBySeriesId?.get(seriesId) ?? null;
+    const statKey = parts[4];
+    if (statKey === "p90" || statKey === "mean" || statKey === "p10") {
+        return statKey;
+    }
+
+    return null;
 }
-
 
 export function formatConvergenceStatLabel(statKey: string): string {
     switch (statKey) {
@@ -95,16 +83,4 @@ export function formatConvergenceStatLabel(statKey: string): string {
         default:
             return statKey;
     }
-}
-
-export function getConvergenceSeriesStatKey(seriesLike: unknown): ConvergenceStatisticKey | null {
-    const metadata = readSeriesMetadata(seriesLike);
-    if (!metadata || metadata.chart !== "convergence" || !metadata.roles.includes("summary")) return null;
-
-    const statKey = metadata.statKey ?? null;
-    return isConvergenceStatisticKey(statKey) ? statKey : null;
-}
-
-function isConvergenceStatisticKey(statKey: string | null): statKey is ConvergenceStatisticKey {
-    return statKey === "p90" || statKey === "mean" || statKey === "p10";
 }

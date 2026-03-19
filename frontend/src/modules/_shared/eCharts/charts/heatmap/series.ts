@@ -2,14 +2,13 @@ import type { HeatmapSeriesOption } from "echarts/charts";
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { HeatmapTrace } from "../../types";
-import { withSeriesMetadata } from "../../utils/seriesMetadata";
 
 import { makeHeatmapSeriesId } from "./ids";
 
 export function buildHeatmapSeries(trace: HeatmapTrace, axisIndex = 0): SeriesBuildResult {
-    const series: HeatmapSeriesOption = withSeriesMetadata(
+    const series: HeatmapSeriesOption = (
         {
-            id: makeHeatmapSeriesId(trace.name, "cells", axisIndex),
+            id: makeHeatmapSeriesId(trace.name, "primary", axisIndex),
             type: "heatmap",
             xAxisIndex: axisIndex,
             yAxisIndex: axisIndex,
@@ -18,12 +17,7 @@ export function buildHeatmapSeries(trace: HeatmapTrace, axisIndex = 0): SeriesBu
                 itemStyle: { shadowBlur: 10, shadowColor: "rgba(0, 0, 0, 0.5)" },
             },
 
-        },
-        {
-            chart: "heatmap",
-            axisIndex,
-            roles: ["primary"],
-        },
+        }
     );
 
     return {

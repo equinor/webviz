@@ -6,11 +6,6 @@ import type ReactECharts from "echarts-for-react";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
 import { formatMemberTooltipContent } from "../charts/timeseries";
-import {
-    isMemberSeries,
-    readSeriesMetadata,
-    type SeriesMetadata,
-} from "../utils/seriesMetadata";
 
 type ZrMouseEvent = {
     offsetX?: number;
@@ -23,7 +18,7 @@ type MemberSeriesMeta = {
     seriesIndex: number;
     seriesName: string;
     values: number[];
-    webvizSeriesMeta?: SeriesMetadata;
+    memberId?: string;
 };
 
 type ClosestTooltipTarget = {
@@ -254,13 +249,23 @@ function buildMemberSeriesIndex(instance: ECharts): Map<number, MemberSeriesMeta
                 itemStyle?: unknown;
                 lineStyle?: unknown;
                 name?: unknown;
-                webvizSeriesMeta?: unknown;
                 xAxisIndex?: unknown;
             },
             seriesIndex: number,
         ) => {
-            if (!isMemberSeries(seriesOption)) {
-                return;
+            const id = typeof seriesOption.id === "string" ? seriesOption.id : null;
+            if (!id) return;
+
+            //  identifier scheme: chartType|role|groupKey|axisIndex|memberKey
+            const parts = id.split("|");
+            if (parts.length < 2 || parts[1] !== "member") return;
+
+
+            let memberId: string | undefined;
+            if (parts[0] === "timeseries" && parts.length >= 5) {
+                memberId = parts[4];
+            } else if (parts[0] === "memberScatter" && parts.length >= 5) {
+                memberId = parts[3];
             }
 
             const axisIndex =
@@ -268,6 +273,7 @@ function buildMemberSeriesIndex(instance: ECharts): Map<number, MemberSeriesMeta
                     ? seriesOption.xAxisIndex
                     : 0;
             const values = extractSeriesValues(seriesOption.data);
+
             if (values.length === 0) {
                 return;
             }
@@ -279,7 +285,7 @@ function buildMemberSeriesIndex(instance: ECharts): Map<number, MemberSeriesMeta
                 seriesIndex,
                 seriesName: typeof seriesOption.name === "string" ? seriesOption.name : "",
                 values,
-                webvizSeriesMeta: readSeriesMetadata(seriesOption) ?? undefined,
+                memberId,
             });
             indexedSeries.set(axisIndex, bucket);
         },
@@ -326,7 +332,7 @@ function buildTooltipContent(
         return formatMemberTooltipContent({
             axisValue: timestampUtcMsToCompactIsoString(timestamps[target.dataIndex]),
             seriesName: match.seriesName,
-            webvizSeriesMeta: match.webvizSeriesMeta,
+            memberId: match.memberId,
             value: match.values[target.dataIndex],
             color: match.color,
             memberLabel,

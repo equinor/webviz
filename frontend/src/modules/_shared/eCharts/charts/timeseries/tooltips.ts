@@ -4,12 +4,6 @@ import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import { extractNumericValue, formatCompactTooltip } from "../../core/tooltip";
 import type { TimeseriesDisplayConfig } from "../../types";
-import {
-    getSeriesAxisIndex,
-    getSeriesIdentifier,
-    readSeriesMetadata,
-    type SeriesMetadata,
-} from "../../utils/seriesMetadata";
 
 const STAT_TOOLTIP_ORDER = ["mean", "p50", "p10", "p90", "min", "max"] as const;
 const STAT_TOOLTIP_ORDER_INDEX = new Map<string, number>(STAT_TOOLTIP_ORDER.map((statKey, index) => [statKey, index]));
@@ -27,16 +21,6 @@ type ObservationTooltipDatum = {
     comment?: string;
 };
 
-export type TimeseriesStatisticSeriesInfo = {
-    traceName: string;
-    statKey: string;
-    axisIndex: number;
-};
-
-type TimeseriesTooltipContext = {
-    statisticSeriesById?: ReadonlyMap<string, TimeseriesStatisticSeriesInfo>;
-};
-
 export type TimeseriesMemberTooltipOptions = {
     memberLabel?: string;
 };
@@ -44,13 +28,11 @@ export type TimeseriesMemberTooltipOptions = {
 export function buildTimeseriesTooltip(
     config: TimeseriesDisplayConfig,
     options: TimeseriesMemberTooltipOptions = {},
-    context: TimeseriesTooltipContext = {},
 ) {
     return config.showStatistics
         ? {
             trigger: "axis" as const,
-            formatter: (params: CallbackDataParams | CallbackDataParams[]) =>
-                formatStatisticsAxisTooltipWithContext(params, context),
+            formatter: formatStatisticsAxisTooltip,
             axisPointer: { type: "cross" as const },
         }
         : {
@@ -60,16 +42,9 @@ export function buildTimeseriesTooltip(
 }
 
 export function formatStatisticsAxisTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
-    return formatStatisticsAxisTooltipWithContext(params);
-}
-
-function formatStatisticsAxisTooltipWithContext(
-    params: CallbackDataParams | CallbackDataParams[],
-    context: TimeseriesTooltipContext = {},
-): string {
     if (!Array.isArray(params) || params.length === 0) return "";
     const date = String((params[0] as AxisTooltipParams).axisValue ?? params[0].name);
-    const targetAxisIndex = resolveHoveredAxisIndex(params, context.statisticSeriesById);
+    const targetAxisIndex = resolveHoveredAxisIndex(params);
     const groupedRows = new Map<
         string,
         {
@@ -81,11 +56,19 @@ function formatStatisticsAxisTooltipWithContext(
 
     for (const raw of params) {
         const p = raw as AxisScopedTooltipParams;
-        const statisticSeries = resolveStatisticSeries(p, context.statisticSeriesById);
-        if (!statisticSeries) continue;
-        if (!belongsToAxis(p, statisticSeries.axisIndex, targetAxisIndex)) continue;
+        if (!p.seriesId) continue;
 
-        const label = p.seriesName ?? statisticSeries.traceName;
+        // Parse: "timeseries|summary|traceName|axisIndex|statKey"
+        const parts = p.seriesId.split("|");
+        if (parts[0] !== "timeseries" || parts[1] !== "summary") continue;
+
+        const traceName = parts[2];
+        const axisIndex = Number(parts[3]);
+        const statKey = parts[4];
+
+        if (targetAxisIndex != null && axisIndex !== targetAxisIndex) continue;
+
+        const label = p.seriesName ?? traceName;
         let groupedRow = groupedRows.get(label);
         if (!groupedRow) {
             groupedRow = {
@@ -96,8 +79,8 @@ function formatStatisticsAxisTooltipWithContext(
             groupedRows.set(label, groupedRow);
         }
 
-        if (!groupedRow.valuesByStatKey.has(statisticSeries.statKey)) {
-            groupedRow.valuesByStatKey.set(statisticSeries.statKey, formatNumber(extractNumericValue(p.value)));
+        if (!groupedRow.valuesByStatKey.has(statKey)) {
+            groupedRow.valuesByStatKey.set(statKey, formatNumber(extractNumericValue(p.value)));
         }
     }
 
@@ -118,11 +101,20 @@ export function formatMemberItemTooltip(
     if (!p) return "";
 
     const axisValue = String((p as AxisTooltipParams).axisValue ?? p.name ?? "");
+    let memberId: string | null = null;
+
+    if (p.seriesId) {
+        // Parse: "timeseries|member|highlightGroupKey|axisIndex|memberKey"
+        const parts = p.seriesId.split("|");
+        if (parts[0] === "timeseries" && parts[1] === "member") {
+            memberId = parts[4];
+        }
+    }
 
     return formatMemberTooltipContent({
         axisValue,
         seriesName: p.seriesName ?? "",
-        webvizSeriesMeta: readSeriesMetadata(p) ?? undefined,
+        memberId,
         value: extractNumericValue(p.value),
         color: typeof p.color === "string" ? p.color : undefined,
         memberLabel: options.memberLabel,
@@ -151,14 +143,13 @@ export function formatObservationTooltip(params: CallbackDataParams | CallbackDa
 export function formatMemberTooltipContent(input: {
     axisValue: string;
     seriesName: string;
-    webvizSeriesMeta?: SeriesMetadata;
+    memberId?: string | null;
     value: number;
     color?: string;
     memberLabel?: string;
 }): string {
-    const memberId = input.webvizSeriesMeta?.memberKey ?? null;
     const memberLabel = input.memberLabel ?? "Realization";
-    const name = memberId != null ? `${memberLabel} ${memberId}` : input.seriesName;
+    const name = input.memberId != null ? `${memberLabel} ${input.memberId}` : input.seriesName;
 
     return formatCompactTooltip(input.axisValue, [
         {
@@ -167,25 +158,6 @@ export function formatMemberTooltipContent(input: {
             color: input.color,
         },
     ]);
-}
-
-function resolveStatisticSeries(
-    input: { seriesName?: string; seriesId?: string; webvizSeriesMeta?: SeriesMetadata },
-    statisticSeriesById?: ReadonlyMap<string, TimeseriesStatisticSeriesInfo>,
-): TimeseriesStatisticSeriesInfo | null {
-    const metadata = readSeriesMetadata(input);
-    if (metadata?.chart === "timeseries" && metadata.roles.includes("summary") && metadata.statKey) {
-        return {
-            traceName: input.seriesName ?? "",
-            statKey: metadata.statKey,
-            axisIndex: metadata.axisIndex,
-        };
-    }
-
-    const seriesId = getSeriesIdentifier(input);
-    if (!seriesId) return null;
-
-    return statisticSeriesById?.get(seriesId) ?? null;
 }
 
 function formatStatisticValuesInline(valuesByStatKey: Map<string, string>): string {
@@ -212,46 +184,23 @@ function formatStatisticLabel(statKey: string): string {
     }
 }
 
-function resolveHoveredAxisIndex(
-    params: CallbackDataParams[],
-    statisticSeriesById?: ReadonlyMap<string, TimeseriesStatisticSeriesInfo>,
-): number | null {
+function resolveHoveredAxisIndex(params: CallbackDataParams[]): number | null {
     for (const raw of params) {
         const param = raw as AxisScopedTooltipParams;
         const fromRuntime = firstFiniteNumber(param.axisIndex, param.xAxisIndex);
         if (fromRuntime != null) return fromRuntime;
 
-        const fromMetadata = getSeriesAxisIndex(param);
-        if (fromMetadata != null) return fromMetadata;
-
-        const seriesId = getSeriesIdentifier(param);
-        if (!seriesId) continue;
-
-        const statisticSeries = statisticSeriesById?.get(seriesId);
-        if (statisticSeries) return statisticSeries.axisIndex;
+        if (param.seriesId) {
+            const parts = param.seriesId.split("|");
+            // Assuming format chart|role|name|axisIndex|... for our standard IDs
+            if (parts.length >= 4) {
+                const axisIndex = Number(parts[3]);
+                if (Number.isFinite(axisIndex)) return axisIndex;
+            }
+        }
     }
 
     return null;
-}
-
-function belongsToAxis(
-    param: AxisScopedTooltipParams,
-    parsedSeriesAxisIndex: number,
-    targetAxisIndex: number | null,
-): boolean {
-    if (targetAxisIndex == null) return true;
-
-    const runtimeAxis = firstFiniteNumber(param.axisIndex, param.xAxisIndex);
-    if (runtimeAxis != null) {
-        return runtimeAxis === targetAxisIndex;
-    }
-
-    const metadataAxis = getSeriesAxisIndex(param);
-    if (metadataAxis != null) {
-        return metadataAxis === targetAxisIndex;
-    }
-
-    return parsedSeriesAxisIndex === targetAxisIndex;
 }
 
 function firstFiniteNumber(...values: Array<number | undefined>): number | null {

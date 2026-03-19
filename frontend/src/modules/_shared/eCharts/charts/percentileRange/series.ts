@@ -3,7 +3,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { DistributionTrace, PointStatistics } from "../../types";
-import { withSeriesMetadata } from "../../utils/seriesMetadata";
+
 import { computePointStatistics } from "../../utils/statistics";
 
 import { makePercentileSeriesId } from "./ids";
@@ -76,9 +76,9 @@ function createPercentileRangeGlyphSeries(
         centerStatistic,
     );
 
-    return withSeriesMetadata(
+    return (
         {
-            id: makePercentileSeriesId(trace.name, "glyph", axisIndex),
+            id: makePercentileSeriesId(trace.name, "summary", axisIndex),
             type: "custom",
             name: trace.name,
             xAxisIndex: axisIndex,
@@ -91,12 +91,7 @@ function createPercentileRangeGlyphSeries(
             tooltip: {
                 formatter: () => tooltipFormatter(),
             },
-        },
-        {
-            chart: "percentileRange",
-            axisIndex,
-            roles: ["summary"],
-        },
+        }
     );
 }
 
@@ -107,9 +102,9 @@ function createRealizationPointSeries(
 ): ScatterSeriesOption {
     const tooltipFormatter = createPercentileRealizationTooltipFormatter(trace.name, trace.color);
 
-    return withSeriesMetadata(
+    return (
         {
-            id: makePercentileSeriesId(trace.name, "points", axisIndex),
+            id: makePercentileSeriesId(trace.name, "memberPoints", axisIndex),
             type: "scatter",
             name: `${trace.name} points`,
             xAxisIndex: axisIndex,
@@ -125,12 +120,7 @@ function createRealizationPointSeries(
             tooltip: {
                 formatter: (params: CallbackDataParams) => tooltipFormatter(params),
             },
-        },
-        {
-            chart: "percentileRange",
-            axisIndex,
-            roles: ["memberPoints"],
-        },
+        }
     );
 }
 

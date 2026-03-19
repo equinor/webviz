@@ -2,7 +2,6 @@ import type { ScatterSeriesOption } from "echarts/charts";
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { MemberScatterTrace } from "../../types";
-import { withSeriesMetadata } from "../../utils/seriesMetadata";
 
 import { makeMemberScatterSeriesId } from "./ids";
 
@@ -10,36 +9,29 @@ export function buildMemberScatterSeries(trace: MemberScatterTrace, axisIndex = 
     const highlightGroupKey = trace.highlightGroupKey ?? trace.name;
 
     const series: ScatterSeriesOption[] = trace.memberIds.map((memberId, index) =>
-        withSeriesMetadata(
-            {
-                id: makeMemberScatterSeriesId(highlightGroupKey, memberId, axisIndex),
-                name: trace.name,
-                type: "scatter",
-                data: [{
-                    value: [trace.xValues[index], trace.yValues[index]],
-                    memberId: memberId // ECharts will preserve this!
-                }],
-                xAxisIndex: axisIndex,
-                yAxisIndex: axisIndex,
-                itemStyle: { color: trace.color, opacity: 0.4 },
-                symbolSize: 12,
-                emphasis: {
-                    focus: "none",
-                    itemStyle: { color: trace.color, opacity: 1, borderColor: trace.color, borderWidth: 2 },
-                    symbolSize: 16,
-                },
-                blur: {
-                    itemStyle: { color: trace.color, opacity: 0.15 },
-                },
+    (
+        {
+            id: makeMemberScatterSeriesId(highlightGroupKey, memberId, axisIndex),
+            name: trace.name,
+            type: "scatter",
+            data: [{
+                value: [trace.xValues[index], trace.yValues[index]],
+                memberId: memberId // ECharts will preserve this!
+            }],
+            xAxisIndex: axisIndex,
+            yAxisIndex: axisIndex,
+            itemStyle: { color: trace.color, opacity: 0.4 },
+            symbolSize: 12,
+            emphasis: {
+                focus: "none",
+                itemStyle: { color: trace.color, opacity: 1, borderColor: trace.color, borderWidth: 2 },
+                symbolSize: 16,
             },
-            {
-                chart: "memberScatter",
-                axisIndex,
-                roles: ["member"],
-                linkGroupKey: highlightGroupKey,
-                memberKey: String(memberId),
+            blur: {
+                itemStyle: { color: trace.color, opacity: 0.15 },
             },
-        ),
+        }
+    ),
     );
 
     return { series, legendData: [trace.name] };

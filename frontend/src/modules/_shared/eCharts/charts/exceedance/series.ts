@@ -2,7 +2,6 @@ import type { LineSeriesOption } from "echarts/charts";
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { DistributionTrace } from "../../types";
-import { withSeriesMetadata } from "../../utils/seriesMetadata";
 
 import { makeExceedanceSeriesId } from "./ids";
 
@@ -11,9 +10,9 @@ export function buildExceedanceSeries(trace: DistributionTrace, axisIndex = 0): 
     if (sortedValues.length === 0) return { series: [], legendData: [] };
 
     const series: LineSeriesOption[] = [
-        withSeriesMetadata(
+        (
             {
-                id: makeExceedanceSeriesId(trace.name, "curve", axisIndex),
+                id: makeExceedanceSeriesId(trace.name, "primary", axisIndex),
                 type: "line",
                 name: trace.name,
                 xAxisIndex: axisIndex,
@@ -24,12 +23,7 @@ export function buildExceedanceSeries(trace: DistributionTrace, axisIndex = 0): 
                 symbol: "none",
                 showSymbol: false,
                 smooth: false,
-            },
-            {
-                chart: "exceedance",
-                axisIndex,
-                roles: ["primary"],
-            },
+            }
         ),
     ];
 

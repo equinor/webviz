@@ -4,7 +4,6 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { HistoricalLineShape, HistoricalTrace } from "../../types";
-import { withSeriesMetadata } from "../../utils/seriesMetadata";
 
 import { makeTimeseriesHistorySeriesId } from "./ids";
 
@@ -26,7 +25,7 @@ export function buildHistorySeries(trace: HistoricalTrace, axisIndex = 0): Serie
     const step = mapLineShapeToStep(trace.lineShape);
 
     const series: LineSeriesOption[] = [
-        withSeriesMetadata(
+        (
             {
                 id: makeTimeseriesHistorySeriesId(trace.name, axisIndex),
                 name: trace.name,
@@ -42,12 +41,7 @@ export function buildHistorySeries(trace: HistoricalTrace, axisIndex = 0): Serie
                 blur: { lineStyle: { opacity: 1 } },
                 z: 4,
                 ...(step ? { step } : {}),
-            },
-            {
-                chart: "timeseries",
-                axisIndex,
-                roles: ["reference"],
-            },
+            }
         ),
     ];
 

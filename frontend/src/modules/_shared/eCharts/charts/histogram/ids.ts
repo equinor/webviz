@@ -1,5 +1,14 @@
 export const HISTOGRAM_CATEGORY = "histogram";
 
-export function makeHistogramSeriesId(traceName: string, qualifier: string, axisIndex: number): string {
-    return `${HISTOGRAM_CATEGORY}:${traceName}:${qualifier}:${axisIndex}`;
+export type HistogramRole = "primary" | "memberPoints";
+
+/**
+ * Format: chartType|role|traceName|axisIndex
+ */
+export function makeHistogramSeriesId(
+    traceName: string,
+    role: HistogramRole,
+    axisIndex: number
+): string {
+    return `${HISTOGRAM_CATEGORY}|${role}|${traceName}|${axisIndex}`;
 }

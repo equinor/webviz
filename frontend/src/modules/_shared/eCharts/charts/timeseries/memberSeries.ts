@@ -2,7 +2,6 @@ import type { LineSeriesOption } from "echarts/charts";
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { TimeseriesTrace } from "../../types";
-import { withSeriesMetadata } from "../../utils/seriesMetadata";
 
 import { makeTimeseriesMemberSeriesId } from "./ids";
 
@@ -14,7 +13,7 @@ export function buildMemberSeries(trace: TimeseriesTrace, axisIndex = 0): Series
     const series: LineSeriesOption[] = trace.realizationValues.map((realValues, index) => {
         const realId = trace.realizationIds?.[index] ?? index;
 
-        return withSeriesMetadata(
+        return (
             {
                 id: makeTimeseriesMemberSeriesId(highlightGroupKey, realId, axisIndex),
                 name: trace.name,
@@ -35,14 +34,7 @@ export function buildMemberSeries(trace: TimeseriesTrace, axisIndex = 0): Series
                 blur: {
                     lineStyle: { color: trace.color, opacity: 0.5, width: 0.5 },
                 },
-            },
-            {
-                chart: "timeseries",
-                axisIndex,
-                roles: ["member"],
-                linkGroupKey: highlightGroupKey,
-                memberKey: String(realId),
-            },
+            }
         );
     });
 

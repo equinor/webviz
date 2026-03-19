@@ -14,13 +14,12 @@ import type {
     TimeseriesSubplotOverlays,
     TimeseriesTrace,
 } from "../../types";
-import { getSeriesIdentifier, readSeriesMetadata } from "../../utils/seriesMetadata";
 
 import { buildHistorySeries } from "./historySeries";
 import { buildMemberSeries } from "./memberSeries";
 import { buildObservationSeries } from "./observationSeries";
 import { buildStatisticsSeries, buildFanchartSeries } from "./statisticsSeries";
-import { buildTimeseriesTooltip, type TimeseriesStatisticSeriesInfo } from "./tooltips";
+import { buildTimeseriesTooltip } from "./tooltips";
 
 export type TimeseriesChartOptions = {
     subplotOverlays: TimeseriesSubplotOverlays[];
@@ -71,8 +70,8 @@ export function buildTimeseriesChart(
     if (categoryData.length === 0) return {};
 
     const realtimePointer = buildRealtimeAxisPointer(displayConfig);
-    const statisticSeriesById = new Map<string, TimeseriesStatisticSeriesInfo>();
     const numSubplots = nonEmptySubplotGroups.length;
+
     const buildSubplot = function buildTimeseriesSubplotForAxis(
         group: SubplotGroup<TimeseriesTrace>,
         axisIndex: number,
@@ -85,9 +84,9 @@ export function buildTimeseriesChart(
             categoryData,
             yAxisLabel,
             realtimePointer,
-            statisticSeriesById,
         );
     };
+
     const postProcessAxes = function postProcessAxesForActiveTimestamp(
         _axes: unknown,
         allSeries: CartesianChartSeries[],
@@ -110,7 +109,6 @@ export function buildTimeseriesChart(
                 displayConfig,
                 containerSize,
                 memberLabel,
-                statisticSeriesById,
             ),
         },
     );
@@ -140,7 +138,6 @@ function buildTimeseriesSubplot(
     categoryData: string[],
     yAxisLabel: string,
     realtimePointer: RealtimeAxisPointer | undefined,
-    statisticSeriesById: Map<string, TimeseriesStatisticSeriesInfo>,
 ): CartesianSubplotBuildResult {
     const series: CartesianChartSeries[] = [];
     const legendData: string[] = [];
@@ -155,7 +152,6 @@ function buildTimeseriesSubplot(
 
         if (config.showStatistics && trace.statistics) {
             const statisticsResult = buildStatisticsSeries(trace, config.selectedStatistics, axisIndex);
-            registerTimeseriesStatisticSeries(statisticsResult.series, statisticSeriesById);
             series.push(...statisticsResult.series);
             addLegendEntries(legendData, seenLegend, statisticsResult.legendData);
         }
@@ -197,10 +193,9 @@ function buildTimeseriesComposeOverrides(
     config: TimeseriesDisplayConfig,
     containerSize?: ContainerSize,
     memberLabel?: string,
-    statisticSeriesById?: ReadonlyMap<string, TimeseriesStatisticSeriesInfo>,
 ) {
     return {
-        tooltip: buildTimeseriesTooltip(config, { memberLabel }, { statisticSeriesById }),
+        tooltip: buildTimeseriesTooltip(config, { memberLabel }), // No context map!
         axisPointer: {
             show: true,
             type: "line" as const,
@@ -265,25 +260,5 @@ function addLegendEntries(legendData: string[], seenLegend: Set<string>, entries
             legendData.push(entry);
             seenLegend.add(entry);
         }
-    }
-}
-
-function registerTimeseriesStatisticSeries(
-    series: CartesianChartSeries[],
-    statisticSeriesById: Map<string, TimeseriesStatisticSeriesInfo>,
-): void {
-    for (const seriesOption of series) {
-        const metadata = readSeriesMetadata(seriesOption);
-        if (metadata?.chart !== "timeseries" || !metadata.roles.includes("summary") || !metadata.statKey) continue;
-
-        const seriesId = getSeriesIdentifier(seriesOption);
-        if (!seriesId) continue;
-
-        const traceName = (seriesOption as { name?: unknown }).name;
-        statisticSeriesById.set(seriesId, {
-            traceName: typeof traceName === "string" ? traceName : "",
-            statKey: metadata.statKey,
-            axisIndex: metadata.axisIndex,
-        });
     }
 }

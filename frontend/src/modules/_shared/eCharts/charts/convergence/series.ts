@@ -7,9 +7,9 @@ import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { DistributionTrace } from "../../types";
 import type { ConvergencePoint } from "../../utils/convergence";
 import { calcConvergence } from "../../utils/convergence";
-import { withSeriesMetadata, type SeriesMetadata } from "../../utils/seriesMetadata";
 
-import type { ConvergenceStatisticKey } from "./builder";
+
+import type { ConvergenceStatisticKey } from "./ids";
 import { makeConvergenceSeriesId } from "./ids";
 
 export type ConvergenceChartSeries = LineSeriesOption | CustomSeriesOption;
@@ -50,7 +50,7 @@ function createConvergenceBandSeries(
     fillColor: string,
     axisIndex: number,
 ): CustomSeriesOption {
-    return withSeriesMetadata(
+    return (
         {
             id: makeConvergenceSeriesId(trace.name, "band", axisIndex),
             type: "custom",
@@ -95,9 +95,9 @@ function createConvergenceBandSeries(
                     shape: { points },
                     style: { fill: fillColor, opacity: 1 },
                 };
-            },
-        },
-        createConvergenceBandMetadata(axisIndex),
+            }
+        }
+
     );
 }
 
@@ -107,9 +107,9 @@ function createConvergenceLineSeries(
     statKey: ConvergenceStatisticKey,
     axisIndex: number,
 ): LineSeriesOption {
-    return withSeriesMetadata(
+    return (
         {
-            id: makeConvergenceSeriesId(trace.name, statKey, axisIndex),
+            id: makeConvergenceSeriesId(trace.name, "summary", axisIndex, statKey),
             type: "line",
             name: trace.name,
             xAxisIndex: axisIndex,
@@ -124,8 +124,7 @@ function createConvergenceLineSeries(
             tooltip: {
                 valueFormatter: (value) => formatNumber(Number(value)),
             },
-        },
-        createConvergenceSummaryMetadata(axisIndex, statKey),
+        }
     );
 }
 
@@ -140,19 +139,3 @@ function buildConvergenceLineStyle(color: string, statKey: ConvergenceStatisticK
     }
 }
 
-function createConvergenceSummaryMetadata(axisIndex: number, statKey: ConvergenceStatisticKey): SeriesMetadata {
-    return {
-        chart: "convergence",
-        axisIndex,
-        roles: ["summary"],
-        statKey,
-    };
-}
-
-function createConvergenceBandMetadata(axisIndex: number): SeriesMetadata {
-    return {
-        chart: "convergence",
-        axisIndex,
-        roles: ["band"],
-    };
-}

@@ -4,7 +4,6 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { ObservationTrace } from "../../types";
-import { withSeriesMetadata } from "../../utils/seriesMetadata";
 
 import { makeTimeseriesObservationSeriesId } from "./ids";
 import { formatObservationTooltip } from "./tooltips";
@@ -28,7 +27,7 @@ export function buildObservationSeries(trace: ObservationTrace, axisIndex = 0): 
             comment: observation.comment,
         };
 
-        return withSeriesMetadata(
+        return (
             {
                 id: makeTimeseriesObservationSeriesId(trace.name, String(observationIndex), axisIndex),
                 type: "custom",
@@ -90,12 +89,7 @@ export function buildObservationSeries(trace: ObservationTrace, axisIndex = 0): 
                         ],
                     };
                 },
-            },
-            {
-                chart: "timeseries",
-                axisIndex,
-                roles: ["measurement"],
-            },
+            }
         );
     });
 
