@@ -151,15 +151,20 @@ export class SettingManager<
 
         this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_EXTERNALLY_CONTROLLED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.EXTERNAL_CONTROLLER_PROVIDER);
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
-            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(
-                () => {
-                    this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
-                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
-                },
-            ),
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.INTERNAL_VALUE)(() => {
+                this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+            }),
         );
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
@@ -239,9 +244,12 @@ export class SettingManager<
         this.setInternalValueAndInvalidateCache(newInternalValue);
         this._externalController = null;
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("external-setting-controller");
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_EXTERNALLY_CONTROLLED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.EXTERNAL_CONTROLLER_PROVIDER);
         const shouldNotifyValueChanged = this.applyValueConstraints();
         if (shouldNotifyValueChanged) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
         }
     }
 
@@ -496,14 +504,18 @@ export class SettingManager<
     makeSnapshotGetter<T extends SettingTopic>(
         topic: T,
     ): () => SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstraints>[T] {
-        const externalController = this._externalController;
-        if (externalController) {
-            return (): any => {
+        // The snapshot getter must always read this._externalController at snapshot time, not at
+        // makeSnapshotGetter call time. useSyncExternalStore captures the returned function once
+        // at mount, so branching on this._externalController here would permanently lock the
+        // snapshot to the state at mount — e.g. EXTERNAL_CONTROLLER_PROVIDER would always return
+        // undefined for settings that mount without a controller.
+        return (): any => {
+            if (this._externalController) {
                 if (topic === SettingTopic.IS_EXTERNALLY_CONTROLLED) {
                     return true;
                 }
                 if (topic === SettingTopic.EXTERNAL_CONTROLLER_PROVIDER) {
-                    const controllerParentItem = externalController.getParentItem();
+                    const controllerParentItem = this._externalController.getParentItem();
                     if (controllerParentItem instanceof Group) {
                         return ExternalControllerProviderType.GROUP;
                     }
@@ -515,11 +527,9 @@ export class SettingManager<
                 if (topic === SettingTopic.ATTRIBUTES) {
                     return this._attributes;
                 }
-                return externalController.getSetting().makeSnapshotGetter(topic)();
-            };
-        }
+                return this._externalController.getSetting().makeSnapshotGetter(topic)();
+            }
 
-        const snapshotGetter = (): any => {
             switch (topic) {
                 case SettingTopic.VALUE:
                     return this.getValue();
@@ -532,7 +542,7 @@ export class SettingManager<
                 case SettingTopic.VALUE_CONSTRAINTS:
                     return this._valueConstraints;
                 case SettingTopic.IS_EXTERNALLY_CONTROLLED:
-                    return this._externalController !== null;
+                    return false;
                 case SettingTopic.EXTERNAL_CONTROLLER_PROVIDER:
                     return undefined;
                 case SettingTopic.IS_LOADING:
@@ -549,8 +559,6 @@ export class SettingManager<
                     throw new Error(`Unknown topic: ${topic}`);
             }
         };
-
-        return snapshotGetter;
     }
 
     getPublishSubscribeDelegate() {

@@ -183,14 +183,6 @@ export class ExternalSettingController<
 
     setValueConstraints(settingId: string, valueConstraints: TValueConstraints | null): void {
         this._valueConstraintsMap.set(settingId, valueConstraints);
-        /*
-        if (valueConstraints !== null) {
-            this._valueConstraintsMap.set(settingId, valueConstraints);
-        } else {
-            this._valueConstraintsMap.delete(settingId);
-        }
-            */
-
         this.makeIntersectionOfValueConstraints();
     }
 
@@ -253,7 +245,6 @@ export class ExternalSettingController<
 
         if (!isValid(valueConstraints as any) || isInvalid) {
             this._setting.setValueConstraints(null);
-            // this._setting.setValue(null as any);
             return;
         }
 
