@@ -163,8 +163,15 @@ export class SettingManager<
                 .makeSubscriberFunction(SettingTopic.INTERNAL_VALUE)(() => {
                 this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
-                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
             }),
+        );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(
+                () => {
+                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+                },
+            ),
         );
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
