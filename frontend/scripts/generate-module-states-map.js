@@ -9,28 +9,53 @@ function sanitize(name) {
     return /^[0-9]/.test(sanitized) ? `M_${sanitized}` : sanitized;
 }
 
+const VALID_PERSISTENCE_RE = /^src\/modules\/[^_][^/]*\/(persistence\.ts|(settings|view)\/persistence\.ts)$/;
+
+async function findPersistenceViolations() {
+    const allPersistenceFiles = await glob("src/modules/[^_]*/**/persistence.*", { cwd: process.cwd() });
+    return allPersistenceFiles.filter(f => !VALID_PERSISTENCE_RE.test(f));
+}
+
+function writeViolationsFile(violations, outPath) {
+    const lines = violations.map(f => `//   ${f}`).join("\n");
+    const content =
+        `// AUTO-GENERATED FILE. DO NOT EDIT.\n` +
+        `// ❌ Persistence file convention violations detected — fix these before regenerating:\n` +
+        `//\n` +
+        `${lines}\n` +
+        `//\n` +
+        `// Expected: src/modules/<Module>/(settings|view)/persistence.ts\n\n` +
+        `export type ModuleSerializedStateMap = never;\n`;
+
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, content, "utf-8");
+}
+
 export async function generateModuleSerializedStateMap() {
+    const outPath = path.resolve("src/modules/ModuleSerializedStateMap.ts");
+    const violations = await findPersistenceViolations();
+
+    if (violations.length > 0) {
+        console.error("[CLI] ❌ Persistence file convention violations found:");
+        for (const f of violations) {
+            console.error(`  - ${f}`);
+        }
+        writeViolationsFile(violations, outPath);
+        console.error(`[CLI] ❌ ModuleSerializedStateMap written with errors — fix violations above.`);
+        process.exit(1);
+    }
+
     const settingsFiles = (await glob("src/modules/[^_]*/settings/persistence.ts", { cwd: process.cwd() })).sort();
     const viewFiles = (await glob("src/modules/[^_]*/view/persistence.ts", { cwd: process.cwd() })).sort();
 
     const outputLines = [];
     const viewMap = new Map();
     const settingsMap = new Map();
-    const modules = new Set();
 
-    const moduleFolders = (await glob("src/modules/!(_*)/", { onlyDirectories: true, cwd: process.cwd() })).sort();
-
-    for (const folder of moduleFolders) {
-        const match = folder.match(/src\/modules\/([^/]+)(\/)?$/);
-        if (!match) continue;
-
-        // Ignore empty folders that might be left over from deleted modules
-        const folderPath = path.join(process.cwd(), folder);
-        if (fs.readdirSync(folderPath).length === 0) continue;
-
-        const moduleName = match[1];
-        modules.add(moduleName);
-    }
+    const modules = new Set([
+        ...settingsFiles.map(f => f.match(/src\/modules\/([^/]+)\//)[1]),
+        ...viewFiles.map(f => f.match(/src\/modules\/([^/]+)\//)[1]),
+    ]);
 
     for (const file of settingsFiles) {
         const match = file.match(/src\/modules\/([^/]+)\/settings\/persistence\.ts$/);
@@ -82,7 +107,6 @@ export async function generateModuleSerializedStateMap() {
         `${outputLines.join("\n")}\n\n` +
         `export type ModuleSerializedStateMap = {\n${mapEntries.join("\n")}\n};\n`;
 
-    const outPath = path.resolve("src/modules/ModuleSerializedStateMap.ts");
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, fileContent + "\n", "utf-8");
 
