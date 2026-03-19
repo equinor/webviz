@@ -207,6 +207,8 @@ export class ExternalSettingController<
 
     makeIntersectionOfValueConstraints(): void {
         if (!this.syncStateFromControlledSettings()) {
+            // Not ready yet, but we should avoid exposing deprecated value constraints to the controlled settings
+            this._setting.setValueConstraints(null);
             return;
         }
 

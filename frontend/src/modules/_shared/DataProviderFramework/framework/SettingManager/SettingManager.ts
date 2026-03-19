@@ -150,10 +150,7 @@ export class SettingManager<
         this._externalController = externalController;
 
         this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_EXTERNALLY_CONTROLLED);
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.EXTERNAL_CONTROLLER_PROVIDER);
+        this.notifySnapshotSourceChange();
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
@@ -251,13 +248,8 @@ export class SettingManager<
         this.setInternalValueAndInvalidateCache(newInternalValue);
         this._externalController = null;
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("external-setting-controller");
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_EXTERNALLY_CONTROLLED);
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.EXTERNAL_CONTROLLER_PROVIDER);
-        const shouldNotifyValueChanged = this.applyValueConstraints();
-        if (shouldNotifyValueChanged) {
-            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
-            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
-        }
+        this.applyValueConstraints();
+        this.notifySnapshotSourceChange();
     }
 
     beforeDestroy(): void {
@@ -702,6 +694,23 @@ export class SettingManager<
         }
 
         return customIsValueValidFunction.bind(this._customSettingImplementation)(value, this._valueConstraints as any);
+    }
+
+    /**
+     * Notifies all topics whose snapshot source changes when switching to or from an external controller.
+     * These are all topics that delegate to the external controller's setting in makeSnapshotGetter.
+     */
+    private notifySnapshotSourceChange(): void {
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_EXTERNALLY_CONTROLLED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.EXTERNAL_CONTROLLER_PROVIDER);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_VALID);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CONSTRAINTS);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED_VALUE_VALID);
     }
 
     /**
