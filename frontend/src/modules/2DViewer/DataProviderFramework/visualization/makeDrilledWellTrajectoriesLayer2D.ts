@@ -1,4 +1,5 @@
 import type { WellboreTrajectory_api } from "@api";
+import type { DrilledWellboreTrajectoriesStoredData } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
@@ -6,7 +7,7 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 // The shared visualizer function has all the general settings we want, so
 // we just inject an extra prop to disable the depth test.
 export function makeDrilledWellTrajectoriesLayer2D(
-    args: TransformerArgs<any, WellboreTrajectory_api[], any>,
+    args: TransformerArgs<any, WellboreTrajectory_api[], DrilledWellboreTrajectoriesStoredData>,
 ): ReturnType<typeof makeDrilledWellTrajectoriesLayer> {
     const layer = makeDrilledWellTrajectoriesLayer(args);
 
