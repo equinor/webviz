@@ -3,7 +3,7 @@ export function makeTimeseriesMemberSeriesId(
     memberKey: number | string,
     axisIndex: number,
 ): string {
-    return `realization:${highlightGroupKey}:${String(memberKey)}:${axisIndex}`;
+    return `member:${highlightGroupKey}:${String(memberKey)}:${axisIndex}`;
 }
 
 export function makeTimeseriesStatisticSeriesId(traceName: string, statKey: string, axisIndex: number): string {

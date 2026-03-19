@@ -3,5 +3,5 @@ export function makeMemberScatterSeriesId(
     memberKey: number | string,
     axisIndex: number,
 ): string {
-    return `realization:${highlightGroupKey}:${String(memberKey)}:${axisIndex}`;
+    return `member:${highlightGroupKey}:${String(memberKey)}:${axisIndex}`;
 }

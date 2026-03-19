@@ -6,7 +6,7 @@ import { withSeriesMetadata } from "../../utils/seriesMetadata";
 
 import { makeHeatmapSeriesId } from "./ids";
 
-export function buildHeatmapSeries(trace: HeatmapTrace, axisIndex = 0, activeDate?: string | null): SeriesBuildResult {
+export function buildHeatmapSeries(trace: HeatmapTrace, axisIndex = 0): SeriesBuildResult {
     const series: HeatmapSeriesOption = withSeriesMetadata(
         {
             id: makeHeatmapSeriesId(trace.name, "cells", axisIndex),
@@ -17,22 +17,7 @@ export function buildHeatmapSeries(trace: HeatmapTrace, axisIndex = 0, activeDat
             emphasis: {
                 itemStyle: { shadowBlur: 10, shadowColor: "rgba(0, 0, 0, 0.5)" },
             },
-            ...(activeDate != null && {
-                markLine: {
-                    silent: true,
-                    symbol: "none",
-                    animation: false,
-                    lineStyle: { type: "solid", color: "#333", width: 1.5 },
-                    label: {
-                        show: true,
-                        formatter: activeDate,
-                        position: "insideEndTop",
-                        fontSize: 10,
-                        color: "#333",
-                    },
-                    data: [{ xAxis: activeDate }],
-                },
-            }),
+
         },
         {
             chart: "heatmap",

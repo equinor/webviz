@@ -1,7 +1,8 @@
 import type { EChartsOption } from "echarts";
 
+import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
-import type { CartesianChartSeries, CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
+import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { SubplotAxesResult } from "../../layout/subplotAxes";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../../types";
 
@@ -21,11 +22,20 @@ export function buildExceedanceChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Value", yAxisLabel = "Exceedance (%)", sharedXAxis, sharedYAxis } = options;
+
     const buildSubplot = function buildExceedanceSubplotForAxis(
         group: SubplotGroup<DistributionTrace>,
         axisIndex: number,
     ): CartesianSubplotBuildResult {
-        const { series, legendData } = buildExceedanceSubplotSeries(group, axisIndex);
+
+
+        const { series, legendData } = aggregateSubplotTraces(
+            {
+                traces: group.traces,
+                axisIndex,
+                options,
+                buildFn: buildExceedanceSeries
+            });
 
         return {
             series,
@@ -49,28 +59,6 @@ export function buildExceedanceChart(
     );
 }
 
-function buildExceedanceSubplotSeries(
-    group: SubplotGroup<DistributionTrace>,
-    axisIndex: number,
-): { series: CartesianChartSeries[]; legendData: string[] } {
-    const series: CartesianChartSeries[] = [];
-    const legendData: string[] = [];
-    const seenLegend = new Set<string>();
-
-    for (const trace of group.traces) {
-        const result = buildExceedanceSeries(trace, axisIndex);
-        series.push(...result.series);
-
-        for (const legendName of result.legendData) {
-            if (!seenLegend.has(legendName)) {
-                legendData.push(legendName);
-                seenLegend.add(legendName);
-            }
-        }
-    }
-
-    return { series, legendData };
-}
 
 function constrainExceedanceYAxis(axes: SubplotAxesResult): void {
     for (let index = 0; index < axes.yAxes.length; index++) {

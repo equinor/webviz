@@ -23,7 +23,10 @@ export function formatMemberScatterItemTooltip(
     const p = Array.isArray(params) ? params[0] : params;
     if (!p) return "";
 
-    const memberId = getSeriesMemberKey(p);
+    // Safely extract from p.data, falling back to metadata just in case
+    const dataObj = p.data as { memberId?: string | number } | undefined;
+    const memberId = dataObj?.memberId ?? getSeriesMemberKey(p);
+
     const point = extractPointValue(p.value);
     const memberLabel = options.memberLabel ?? "Member";
 
@@ -33,7 +36,7 @@ export function formatMemberScatterItemTooltip(
         rows.push({ label: "Y", value: formatNumber(point[1]) });
     }
     if (memberId != null) {
-        rows.push({ label: memberLabel, value: memberId, color: typeof p.color === "string" ? p.color : undefined });
+        rows.push({ label: memberLabel, value: String(memberId), color: typeof p.color === "string" ? p.color : undefined });
     }
 
     return formatCompactTooltip(p.seriesName ?? "", rows);

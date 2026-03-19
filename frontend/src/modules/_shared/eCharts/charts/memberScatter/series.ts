@@ -15,7 +15,10 @@ export function buildMemberScatterSeries(trace: MemberScatterTrace, axisIndex = 
                 id: makeMemberScatterSeriesId(highlightGroupKey, memberId, axisIndex),
                 name: trace.name,
                 type: "scatter",
-                data: [[trace.xValues[index], trace.yValues[index]]],
+                data: [{
+                    value: [trace.xValues[index], trace.yValues[index]],
+                    memberId: memberId // ECharts will preserve this!
+                }],
                 xAxisIndex: axisIndex,
                 yAxisIndex: axisIndex,
                 itemStyle: { color: trace.color, opacity: 0.4 },

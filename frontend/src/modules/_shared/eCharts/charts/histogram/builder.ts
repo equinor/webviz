@@ -10,6 +10,7 @@ import { computeHistogramLayout, computeHistogramTraceData } from "../../utils";
 import type { HistogramBarGeometry, HistogramTraceData } from "../../utils/histogram";
 
 import { buildHistogramSeriesFromBars } from "./series";
+import { applyYAxisExtents, computeBarOpacity } from "./utils";
 
 export type HistogramChartOptions = {
     numBins?: number;
@@ -102,7 +103,7 @@ function buildTraceSeries(
     traceCount: number,
     config: ResolvedHistogramChartOptions,
 ): ChartSeriesOption[] {
-    const barOpacity = computeBarOpacity(config, traceCount);
+    const barOpacity = computeBarOpacity(config.histogramType, traceCount);
 
     const result = buildHistogramSeriesFromBars(
         traceDataEntry.trace,
@@ -121,18 +122,3 @@ function buildTraceSeries(
     return result.series;
 }
 
-function computeBarOpacity(config: ResolvedHistogramChartOptions, traceCount: number): number {
-    if (config.histogramType === HistogramType.Overlay && traceCount > 1) return 0.55;
-    return 1;
-}
-
-function applyYAxisExtents(axes: SubplotAxesResult, yMaxByAxis: number[], showRealizationPoints: boolean): void {
-    for (const [axisIndex, yMax] of yMaxByAxis.entries()) {
-        const yAxis = axes.yAxes[axisIndex];
-        axes.yAxes[axisIndex] = {
-            ...yAxis,
-            min: showRealizationPoints ? -4 : 0,
-            max: Math.max(yMax * 1.1, 1),
-        };
-    }
-}

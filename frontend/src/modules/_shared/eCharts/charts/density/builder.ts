@@ -1,7 +1,8 @@
 import type { EChartsOption } from "echarts";
 
+import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
-import type { CartesianChartSeries, CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
+import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../../types";
 
 import { buildDensitySeries, type DensityDisplayOptions } from "./series";
@@ -18,12 +19,19 @@ export function buildDensityChart(
     options: DensityChartOptions = {},
     containerSize?: ContainerSize,
 ): EChartsOption {
-    const { xAxisLabel = "Value", yAxisLabel = "Density", sharedXAxis, sharedYAxis, ...seriesOptions } = options;
+    const { xAxisLabel = "Value", yAxisLabel = "Density", sharedXAxis, sharedYAxis } = options;
     const buildSubplot = function buildDensitySubplotForAxis(
         group: SubplotGroup<DistributionTrace>,
         axisIndex: number,
     ): CartesianSubplotBuildResult {
-        const { series, legendData } = buildDensitySubplotSeries(group, axisIndex, seriesOptions);
+        const { series, legendData } = aggregateSubplotTraces(
+            {
+                traces: group.traces,
+                axisIndex,
+                options,
+                buildFn: buildDensitySeries
+            }
+        );
 
         return {
             series,
@@ -41,26 +49,3 @@ export function buildDensityChart(
     );
 }
 
-function buildDensitySubplotSeries(
-    group: SubplotGroup<DistributionTrace>,
-    axisIndex: number,
-    options: DensityDisplayOptions,
-): { series: CartesianChartSeries[]; legendData: string[] } {
-    const series: CartesianChartSeries[] = [];
-    const legendData: string[] = [];
-    const seenLegend = new Set<string>();
-
-    for (const trace of group.traces) {
-        const result = buildDensitySeries(trace, options, axisIndex);
-        series.push(...result.series);
-
-        for (const legendName of result.legendData) {
-            if (!seenLegend.has(legendName)) {
-                legendData.push(legendName);
-                seenLegend.add(legendName);
-            }
-        }
-    }
-
-    return { series, legendData };
-}

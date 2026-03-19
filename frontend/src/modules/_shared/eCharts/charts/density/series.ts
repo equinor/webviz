@@ -13,8 +13,8 @@ export type DensityDisplayOptions = {
 
 export function buildDensitySeries(
     trace: DistributionTrace,
-    options: DensityDisplayOptions = {},
-    axisIndex = 0,
+
+    axisIndex = 0, options: DensityDisplayOptions = {},
 ): SeriesBuildResult {
     const { showRealizationPoints = false } = options;
 

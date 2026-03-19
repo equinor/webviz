@@ -1,7 +1,8 @@
 import type { EChartsOption } from "echarts";
 
+import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
-import type { CartesianChartSeries, CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
+import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { BarTrace, ContainerSize, SubplotGroup } from "../../types";
 
 import { buildBarSeries } from "./series";
@@ -40,16 +41,24 @@ function buildBarSubplot(
     options: BuildBarSeriesOptions,
     yAxisLabel: string,
 ): CartesianSubplotBuildResult {
-    const series: CartesianChartSeries[] = [];
-    const legendData: string[] = [];
+
     let categoryData: (string | number)[] = [];
 
-    for (const trace of group.traces) {
-        const result = buildBarSeries(trace, axisIndex, options);
-        if (categoryData.length === 0) categoryData = result.categoryData;
-        series.push(...result.series);
-        legendData.push(...result.legendData);
+    function buildAndCaptureCategories(trace: BarTrace, idx: number, opts: BuildBarSeriesOptions) {
+        const result = buildBarSeries(trace, idx, opts);
+        if (categoryData.length === 0) {
+            categoryData = result.categoryData;
+        }
+        return result;
     }
+    const { series, legendData } = aggregateSubplotTraces({
+        traces: group.traces,
+        axisIndex,
+        options,
+        buildFn: buildAndCaptureCategories
+    });
+
+
 
     return {
         series,

@@ -1,7 +1,7 @@
 import type { EChartsOption } from "echarts";
 
+import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
-import type { CartesianChartSeries } from "../../core/cartesianSubplotChart";
 import type { ContainerSize, DistributionTrace, SubplotGroup } from "../../types";
 
 import { buildPercentileRangeSeries, type PercentileRangeDisplayOptions } from "./series";
@@ -19,6 +19,7 @@ export function buildPercentileRangeChart(
     containerSize?: ContainerSize,
 ): EChartsOption {
     const { xAxisLabel = "Value", yAxisLabel, sharedXAxis, sharedYAxis, ...seriesOptions } = options;
+
     const buildSubplot = function buildPercentileRangeSubplotForAxis(
         group: SubplotGroup<DistributionTrace>,
         axisIndex: number,
@@ -41,7 +42,24 @@ function buildPercentileRangeSubplot(
     yAxisLabel?: string,
 ) {
     const categories = group.traces.map((trace) => trace.name);
-    const { series, legendData } = buildPercentileRangeSubplotSeries(group, axisIndex, options);
+    let traceIndex = 0;
+    const buildPercentileSeriesWithIndex = function buildPercentileSeriesWithIndex(trace: DistributionTrace, idx: number) {
+        // Assign the trace's position in the array to the categorical Y-axis position
+        const result = buildPercentileRangeSeries(
+            trace,
+            { ...options, yAxisPosition: traceIndex },
+            idx
+        );
+
+        traceIndex++;
+        return result;
+    }
+    const { series, legendData } = aggregateSubplotTraces({
+        traces: group.traces,
+        axisIndex,
+        options,
+        buildFn: buildPercentileSeriesWithIndex
+    });
 
     return {
         series,
@@ -50,28 +68,4 @@ function buildPercentileRangeSubplot(
         yAxis: { type: "category" as const, data: categories, ...(yAxisLabel ? { label: yAxisLabel } : {}) },
         title: group.title,
     };
-}
-
-function buildPercentileRangeSubplotSeries(
-    group: SubplotGroup<DistributionTrace>,
-    axisIndex: number,
-    options: PercentileRangeDisplayOptions,
-): { series: CartesianChartSeries[]; legendData: string[] } {
-    const series: CartesianChartSeries[] = [];
-    const legendData: string[] = [];
-    const seenLegend = new Set<string>();
-
-    for (const [traceIndex, trace] of group.traces.entries()) {
-        const result = buildPercentileRangeSeries(trace, { ...options, yAxisPosition: traceIndex }, axisIndex);
-        series.push(...result.series);
-
-        for (const legendName of result.legendData) {
-            if (!seenLegend.has(legendName)) {
-                legendData.push(legendName);
-                seenLegend.add(legendName);
-            }
-        }
-    }
-
-    return { series, legendData };
 }
