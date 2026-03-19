@@ -150,7 +150,6 @@ export class SettingManager<
         this._externalController = externalController;
 
         this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
-        this.notifySnapshotSourceChange();
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
@@ -241,6 +240,8 @@ export class SettingManager<
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED_VALUE_VALID);
             }),
         );
+
+        this.notifySnapshotSourceChange();
     }
 
     unregisterExternalSettingController(): void {
@@ -697,7 +698,7 @@ export class SettingManager<
     }
 
     /**
-     * Notifies all topics whose snapshot source changes when switching to or from an external controller.
+     * Notifies all relevant topics whose snapshot source changes when switching to or from an external controller.
      * These are all topics that delegate to the external controller's setting in makeSnapshotGetter.
      */
     private notifySnapshotSourceChange(): void {
