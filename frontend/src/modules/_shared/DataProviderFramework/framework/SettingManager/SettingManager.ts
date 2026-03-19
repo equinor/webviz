@@ -148,13 +148,16 @@ export class SettingManager<
         externalController: ExternalSettingController<TSetting, TInternalValue, TExternalValue, TValueConstraints>,
     ): void {
         this._externalController = externalController;
+
         this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(
                 () => {
-                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
                     this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
+                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
                 },
             ),
         );
