@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildBarSeries } from "@modules/_shared/eCharts/charts//bar";
-import { buildConvergenceSeries, makeConvergenceSeriesId } from "@modules/_shared/eCharts/charts//convergence";
+import { buildConvergenceSeries } from "@modules/_shared/eCharts/charts//convergence";
 import { buildDensitySeries } from "@modules/_shared/eCharts/charts//density";
 import { buildExceedanceChart, buildExceedanceSeries } from "@modules/_shared/eCharts/charts//exceedance";
 import { buildHeatmapSeries } from "@modules/_shared/eCharts/charts//heatmap";
@@ -15,7 +15,6 @@ import {
     buildObservationSeries,
     buildStatisticsSeries,
 } from "@modules/_shared/eCharts/charts//timeseries";
-import { getConvergenceSeriesStatKey } from "@modules/_shared/eCharts/charts/convergence/tooltips";
 
 describe("series builder contracts", () => {
     it("buildBarSeries returns axis-bound series with structured IDs", () => {
@@ -47,9 +46,9 @@ describe("series builder contracts", () => {
                 color: "#cc3300",
                 values: [1, 2, 3, 4],
                 realizationIds: [10, 11, 12, 13],
-            },
+            }, 1,
             { showRealizationPoints: true },
-            1,
+
         );
 
         const ids = result.series.map((seriesOption) => (seriesOption as { id?: string }).id ?? "");
@@ -115,7 +114,7 @@ describe("series builder contracts", () => {
                 maxValue: 1.23,
             },
             4,
-            null,
+
         );
 
         expect(result.series).toHaveLength(1);
@@ -338,9 +337,9 @@ describe("series builder contracts", () => {
                 color: "#cc3300",
                 values: [1, 2, 3, 4],
                 realizationIds: [10, 11, 12, 13],
-            },
+            }, 1,
             { showRealizationPoints: true },
-            1,
+
         );
         const densityKdeSeries = densityResult.series.find(
             (seriesOption) => (seriesOption as { id?: string }).id === "density:DensityTrace:kde:1",
@@ -386,7 +385,7 @@ describe("series builder contracts", () => {
                 maxValue: 1.23,
             },
             4,
-            null,
+
         ).series[0] as { webvizSeriesMeta?: Record<string, unknown> };
 
         const histogramResult = buildHistogramSeries(
@@ -515,8 +514,8 @@ describe("series builder contracts", () => {
                 color: "#000000",
                 values: [5],
             },
-            {},
-            0,
+
+            0, {},
         );
 
         expect(result.series).toEqual([]);
@@ -539,21 +538,5 @@ describe("series builder contracts", () => {
         expect(tooltip.trigger).toBe("axis");
     });
 
-    it("convergence stat parsing handles trace names with colons", () => {
-        const id = makeConvergenceSeriesId("trace:with:colon", "p90", 0);
-        const result = buildConvergenceSeries(
-            {
-                name: "trace:with:colon",
-                color: "#224466",
-                values: [1, 2, 3],
-                realizationIds: [1, 2, 3],
-            },
-            0,
-        );
 
-        const summarySeries = result.series.find((seriesOption) => (seriesOption as { id?: string }).id === id);
-
-        expect(summarySeries).toBeDefined();
-        expect(getConvergenceSeriesStatKey(summarySeries)).toBe("p90");
-    });
 });

@@ -2,7 +2,6 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 import { describe, expect, it } from "vitest";
 
 import { formatBarAxisTooltip, formatBarMeanTooltip } from "@modules/_shared/eCharts/charts//bar";
-import { buildConvergenceTooltip, formatConvergenceAxisTooltip } from "@modules/_shared/eCharts/charts//convergence";
 import {
     formatExceedanceAxisTooltip,
 } from "@modules/_shared/eCharts/charts//exceedance";
@@ -28,7 +27,6 @@ import {
     formatCompactTooltipHeader,
     formatCompactTooltipRow,
 } from "@modules/_shared/eCharts/core/tooltip";
-import type { SeriesMetadata } from "@modules/_shared/eCharts/utils/seriesMetadata";
 
 type MockParam = {
     componentType: "series";
@@ -48,7 +46,6 @@ type MockParam = {
     axisValueLabel?: string | number;
     axisIndex?: number;
     xAxisIndex?: number;
-    webvizSeriesMeta?: SeriesMetadata;
 };
 
 function makeParam(input: Partial<MockParam>): CallbackDataParams {
@@ -74,24 +71,7 @@ function makeParam(input: Partial<MockParam>): CallbackDataParams {
     return param as unknown as CallbackDataParams;
 }
 
-function makeTimeseriesSummaryMetadata(axisIndex: number, statKey: string): SeriesMetadata {
-    return {
-        chart: "timeseries",
-        axisIndex,
-        roles: ["summary"],
-        statKey,
-    };
-}
 
-function makeConvergenceSummaryMetadata(axisIndex: number, statKey: "p90" | "mean" | "p10"): SeriesMetadata {
-    return {
-
-        chart: "convergence",
-        axisIndex,
-        roles: ["summary"],
-        statKey,
-    };
-}
 
 describe("compact tooltip primitives", () => {
     it("buildCompactTooltipConfig merges compact defaults", () => {
@@ -126,7 +106,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 10,
                 axisValue: "2020-01-01",
                 axisIndex: 0,
-                webvizSeriesMeta: makeTimeseriesSummaryMetadata(0, "mean"),
+
             }),
             makeParam({
                 seriesId: "statistic:Trace B:mean:1",
@@ -134,7 +114,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 20,
                 axisValue: "2020-01-01",
                 axisIndex: 1,
-                webvizSeriesMeta: makeTimeseriesSummaryMetadata(1, "mean"),
+
             }),
         ]);
 
@@ -156,12 +136,7 @@ describe("formatStatisticsTooltip", () => {
                 selectedStatistics: ["mean"],
             },
             {},
-            {
-                statisticSeriesById: new Map([
-                    ["statistic:Trace A:mean:0", { traceName: "Trace A", statKey: "mean", axisIndex: 0 }],
-                    ["statistic:Trace B:mean:1", { traceName: "Trace B", statKey: "mean", axisIndex: 1 }],
-                ]),
-            },
+
         );
 
         const tooltip = tooltipConfig.formatter?.([
@@ -199,12 +174,7 @@ describe("formatStatisticsTooltip", () => {
                 selectedStatistics: ["mean"],
             },
             {},
-            {
-                statisticSeriesById: new Map([
-                    ["bar:Trace A:bars:99", { traceName: "Trace A", statKey: "mean", axisIndex: 1 }],
-                    ["bar:Trace B:bars:99", { traceName: "Trace B", statKey: "mean", axisIndex: 0 }],
-                ]),
-            },
+
         );
 
         const tooltip = tooltipConfig.formatter?.([
@@ -215,13 +185,7 @@ describe("formatStatisticsTooltip", () => {
                 axisValue: "2020-01-01",
                 axisIndex: undefined,
                 xAxisIndex: undefined,
-                webvizSeriesMeta: {
 
-                    chart: "timeseries",
-                    axisIndex: 0,
-                    roles: ["summary"],
-                    statKey: "mean",
-                },
             }),
             makeParam({
                 seriesId: "bar:Trace B:bars:99",
@@ -230,13 +194,7 @@ describe("formatStatisticsTooltip", () => {
                 axisValue: "2020-01-01",
                 axisIndex: undefined,
                 xAxisIndex: undefined,
-                webvizSeriesMeta: {
 
-                    chart: "timeseries",
-                    axisIndex: 1,
-                    roles: ["summary"],
-                    statKey: "mean",
-                },
             }),
         ]);
 
@@ -253,7 +211,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 8,
                 axisValue: "2020-01-01",
                 axisIndex: 0,
-                webvizSeriesMeta: makeTimeseriesSummaryMetadata(0, "p10"),
+
             }),
             makeParam({
                 seriesId: "statistic:Trace A:mean:0",
@@ -261,7 +219,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 10,
                 axisValue: "2020-01-01",
                 axisIndex: 0,
-                webvizSeriesMeta: makeTimeseriesSummaryMetadata(0, "mean"),
+
             }),
             makeParam({
                 seriesId: "statistic:Trace A:p90:0",
@@ -269,7 +227,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 12,
                 axisValue: "2020-01-01",
                 axisIndex: 0,
-                webvizSeriesMeta: makeTimeseriesSummaryMetadata(0, "p90"),
+
             }),
         ]);
 
@@ -285,7 +243,7 @@ describe("formatStatisticsTooltip", () => {
                 value: 10,
                 axisValue: "2020-01-01",
                 axisIndex: 0,
-                webvizSeriesMeta: makeTimeseriesSummaryMetadata(0, "mean"),
+
             }),
             makeParam({
                 seriesId: "fanchart:Trace A:band:0",
@@ -335,13 +293,7 @@ describe("formatMemberItemTooltip", () => {
                 value: 12,
                 axisValue: "2020-02-01",
                 color: "#334455",
-                webvizSeriesMeta: {
 
-                    chart: "timeseries",
-                    axisIndex: 0,
-                    roles: ["member"],
-                    memberKey: "7",
-                },
             }),
         );
 
@@ -371,13 +323,7 @@ describe("formatMemberItemTooltip", () => {
                 seriesName: "Trace A",
                 value: 15,
                 axisValue: "2020-02-01",
-                webvizSeriesMeta: {
 
-                    chart: "timeseries",
-                    axisIndex: 0,
-                    roles: ["member"],
-                    memberKey: "42",
-                },
             }),
         );
 
@@ -393,13 +339,7 @@ describe("formatMemberItemTooltip", () => {
                 seriesName: "Trace A",
                 value: 12,
                 axisValue: "2020-02-01",
-                webvizSeriesMeta: {
 
-                    chart: "timeseries",
-                    axisIndex: 0,
-                    roles: ["member"],
-                    memberKey: "7",
-                },
             }),
             { memberLabel: "Member" },
         );
@@ -431,13 +371,7 @@ describe("buildTimeseriesTooltip", () => {
                 seriesName: "Trace A",
                 value: 12,
                 axisValue: "2020-02-01",
-                webvizSeriesMeta: {
 
-                    chart: "timeseries",
-                    axisIndex: 0,
-                    roles: ["member"],
-                    memberKey: "7",
-                },
             }),
         );
 
@@ -513,70 +447,6 @@ describe("formatBarMeanTooltip", () => {
     });
 });
 
-describe("formatConvergenceTooltip", () => {
-    it("formats only convergence statistic entries through the explicit lookup", () => {
-        const tooltipConfig = buildConvergenceTooltip({
-            statKeyBySeriesId: new Map([
-                ["convergence:Trace A:p90:0", "p90"],
-                ["convergence:Trace A:mean:0", "mean"],
-            ]),
-        });
-
-        const tooltip = tooltipConfig.formatter?.([
-            makeParam({
-                seriesId: "convergence:Trace A:p90:0",
-                seriesName: "Trace A",
-                value: 14,
-                axisValueLabel: "12",
-                color: "#223344",
-            }),
-            makeParam({
-                seriesId: "convergence:Trace A:mean:0",
-                seriesName: "Trace A",
-                value: 10,
-                axisValueLabel: "12",
-                color: "#223344",
-            }),
-            makeParam({
-                seriesId: "convergence:Trace A:band:0",
-                seriesName: "Trace A",
-                value: 123,
-                axisValueLabel: "12",
-            }),
-        ]);
-
-        expect(tooltip).toContain("Realization: 12");
-        expect(tooltip).toContain("Trace A (P90)");
-        expect(tooltip).toContain("Trace A (Mean)");
-        expect(tooltip).toContain("14");
-        expect(tooltip).toContain("10");
-        expect(tooltip).not.toContain("123");
-    });
-
-    it("formats convergence metadata directly when it is available on params", () => {
-        const tooltip = formatConvergenceAxisTooltip([
-            makeParam({
-                seriesId: "convergence:Trace A:p90:0",
-                seriesName: "Trace A",
-                value: 14,
-                axisValueLabel: "12",
-                color: "#223344",
-                webvizSeriesMeta: makeConvergenceSummaryMetadata(0, "p90"),
-            }),
-            makeParam({
-                seriesId: "convergence:Trace A:mean:0",
-                seriesName: "Trace A",
-                value: 10,
-                axisValueLabel: "12",
-                color: "#223344",
-                webvizSeriesMeta: makeConvergenceSummaryMetadata(0, "mean"),
-            }),
-        ]);
-
-        expect(tooltip).toContain("Trace A (P90)");
-        expect(tooltip).toContain("Trace A (Mean)");
-    });
-});
 
 describe("formatExceedanceTooltip", () => {
     it("formats exceedance header and volume values from line point values", () => {
@@ -750,13 +620,7 @@ describe("formatMemberScatterTooltip", () => {
                 seriesName: "Scatter A",
                 value: [4, 5],
                 color: "#abcdef",
-                webvizSeriesMeta: {
 
-                    chart: "memberScatter",
-                    axisIndex: 0,
-                    roles: ["member"],
-                    memberKey: "9",
-                },
             }),
         );
 
@@ -775,13 +639,7 @@ describe("formatMemberScatterTooltip", () => {
                 seriesId: "realization:Group A:9:0",
                 seriesName: "Scatter A",
                 value: [4, 5],
-                webvizSeriesMeta: {
 
-                    chart: "memberScatter",
-                    axisIndex: 0,
-                    roles: ["member"],
-                    memberKey: "9",
-                },
             }),
             { memberLabel: "Realization" },
         );

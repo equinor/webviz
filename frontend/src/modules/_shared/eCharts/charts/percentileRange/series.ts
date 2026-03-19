@@ -3,7 +3,6 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { DistributionTrace, PointStatistics } from "../../types";
-
 import { computePointStatistics } from "../../utils/statistics";
 
 import { makePercentileSeriesId } from "./ids";
