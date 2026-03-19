@@ -1,9 +1,11 @@
-import { Icon, Typography } from "@equinor/eds-core-react";
+import { Icon, Typography, Input as EdsInput } from "@equinor/eds-core-react";
 import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+import { Checkbox } from "@lib/components/Checkbox";
+import { Input } from "@lib/components/Input";
 import { Tooltip } from "@lib/components/Tooltip";
 
 import { RecentSessions } from "./private-components/recentSessions";
@@ -45,8 +47,75 @@ export function StartPage(props: StartPageProps) {
 
     return (
         <>
-            <div className="h-full w-full flex items-center justify-center min-h-0">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-8">
+            <div className="p-57 h-full w-full flex items-center justify-center min-h-0">
+                <div className="bg-surface px-selectable-horizontal grid grid-cols-2 gap-x-4 gap-y-8">
+                    <div className="space-y-2 col-span-2">
+                        <Checkbox
+                            label="dark mode"
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    document
+                                        .querySelector<HTMLHtmlElement>("html")
+                                        ?.setAttribute("data-color-scheme", "dark");
+                                } else {
+                                    document
+                                        .querySelector<HTMLHtmlElement>("html")
+                                        ?.removeAttribute("data-color-scheme");
+                                }
+                            }}
+                        />
+
+                        {/* <Input className="w-auto! h-auto!" /> */}
+
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold w-20">Contained: </span>
+                            <Button variant="contained" color="primary">
+                                Primary
+                            </Button>
+                            <Button variant="contained" color="secondary">
+                                Secondary
+                            </Button>
+                            <Button variant="contained" color="success">
+                                Success
+                            </Button>
+                            <Button variant="contained" color="danger">
+                                Danger
+                            </Button>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold w-20">Outlined: </span>
+                            <Button variant="outlined" color="primary">
+                                Primary
+                            </Button>
+                            <Button variant="outlined" color="secondary">
+                                Secondary
+                            </Button>
+                            <Button variant="outlined" color="success">
+                                Success
+                            </Button>
+                            <Button variant="outlined" color="danger">
+                                Danger
+                            </Button>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold w-20">Text: </span>
+                            <Button variant="text" color="primary">
+                                Primary
+                            </Button>
+                            <Button variant="text" color="secondary">
+                                Secondary
+                            </Button>
+                            <Button variant="text" color="success">
+                                Success
+                            </Button>
+                            <Button variant="text" color="danger">
+                                Danger
+                            </Button>
+                        </div>
+                    </div>
+
                     <section className="flex flex-col gap-2">
                         <Typography variant="h3">Start</Typography>
                         <Tooltip
