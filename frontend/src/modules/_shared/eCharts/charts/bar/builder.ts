@@ -3,24 +3,24 @@ import type { EChartsOption } from "echarts";
 import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
-import type { BarTrace, ContainerSize, SubplotGroup } from "../../types";
+import type { BarTrace, SubplotGroup } from "../../types";
 
-import { buildBarSeries } from "./series";
-import type { BuildBarSeriesOptions } from "./series";
+import { buildBarSeries, type BuildBarSeriesOptions } from "./series";
 import { buildBarTooltip } from "./tooltips";
-
-export type BarChartOptions = BuildBarSeriesOptions & {
-    yAxisLabel?: string;
-    sharedXAxis?: boolean;
-    sharedYAxis?: boolean;
-};
-
+import { BaseChartOptions } from "../..";
+export interface BarChartOptions {
+    base?: BaseChartOptions;
+    series?: BuildBarSeriesOptions & {
+        yAxisLabel?: string;
+    };
+}
 export function buildBarChart(
     subplotGroups: SubplotGroup<BarTrace>[],
     options: BarChartOptions = {},
-    containerSize?: ContainerSize,
 ): EChartsOption {
-    const { yAxisLabel = "Value", sharedXAxis, sharedYAxis, ...seriesOptions } = options;
+    const seriesOptions = options.series ?? {};
+    const yAxisLabel = seriesOptions.yAxisLabel ?? "Value";
+
     const buildSubplot = function buildBarSubplotForAxis(
         group: SubplotGroup<BarTrace>,
         axisIndex: number,
@@ -31,7 +31,10 @@ export function buildBarChart(
     return buildCartesianSubplotChart(
         subplotGroups,
         buildSubplot,
-        { containerSize, sharedXAxis, sharedYAxis, tooltip: buildBarTooltip() },
+        {
+            ...options.base,
+            tooltip: buildBarTooltip(),
+        },
     );
 }
 
@@ -41,24 +44,20 @@ function buildBarSubplot(
     options: BuildBarSeriesOptions,
     yAxisLabel: string,
 ): CartesianSubplotBuildResult {
-
     let categoryData: (string | number)[] = [];
 
     function buildAndCaptureCategories(trace: BarTrace, idx: number, opts: BuildBarSeriesOptions) {
         const result = buildBarSeries(trace, idx, opts);
-        if (categoryData.length === 0) {
-            categoryData = result.categoryData;
-        }
+        if (categoryData.length === 0) categoryData = result.categoryData;
         return result;
     }
+
     const { series, legendData } = aggregateSubplotTraces({
         traces: group.traces,
         axisIndex,
         options,
-        buildFn: buildAndCaptureCategories
+        buildFn: buildAndCaptureCategories,
     });
-
-
 
     return {
         series,

@@ -19,6 +19,7 @@ export type {
     TimeseriesStatistics,
     TimeseriesSubplotOverlays,
     TimeseriesTrace,
+    BaseChartOptions
 } from "./types";
 
 // Layout

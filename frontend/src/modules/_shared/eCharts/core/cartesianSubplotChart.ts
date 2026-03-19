@@ -4,10 +4,11 @@ import type { AxisDef, SubplotAxesResult } from "../layout/subplotAxes";
 import { buildSubplotAxes } from "../layout/subplotAxes";
 import { computeSubplotGridLayout } from "../layout/subplotGridLayout";
 import type { SubplotLayoutConfig } from "../layout/subplotGridLayout";
-import type { ContainerSize, SubplotGroup } from "../types";
+import type { SubplotGroup } from "../types";
 
 import { composeChartOption } from "./composeChartOption";
 import type { ChartSeriesOption, ComposeChartConfig } from "./composeChartOption";
+import { BaseChartOptions } from "..";
 
 export type CartesianChartSeries = ChartSeriesOption;
 
@@ -24,10 +25,7 @@ export type CartesianChartComposeOverrides = Pick<
     "tooltip" | "axisPointer" | "dataZoom" | "visualMap" | "toolbox"
 >;
 
-export type CartesianChartOptions = CartesianChartComposeOverrides & {
-    containerSize?: ContainerSize;
-    sharedXAxis?: boolean;
-    sharedYAxis?: boolean;
+export type CartesianChartOptions = CartesianChartComposeOverrides & BaseChartOptions & {
     layoutConfig?: SubplotLayoutConfig;
     postProcessAxes?: (axes: SubplotAxesResult, allSeries: ChartSeriesOption[]) => void;
 };
@@ -40,8 +38,15 @@ export function buildCartesianSubplotChart<T>(
     const groups = subplotGroups.filter((group) => group.traces.length > 0);
     if (groups.length === 0) return {};
 
-    const { containerSize, sharedXAxis, sharedYAxis, layoutConfig, postProcessAxes, ...composeOverrides } = options;
-
+    const {
+        containerSize, sharedXAxis, sharedYAxis, layoutConfig,
+        postProcessAxes, zoomState, dataZoom, ...composeOverrides
+    } = options;
+    let finalDataZoom = dataZoom;
+    if (dataZoom && zoomState) {
+        const dataZoomArray = Array.isArray(dataZoom) ? dataZoom : [dataZoom];
+        finalDataZoom = dataZoomArray.map(dz => ({ ...dz, ...zoomState }));
+    }
     const layout = computeSubplotGridLayout(groups.length, layoutConfig);
     const allSeries: CartesianChartSeries[] = [];
     const axisDefs: Array<{ xAxis: AxisDef; yAxis: AxisDef; title?: string }> = [];
@@ -74,7 +79,7 @@ export function buildCartesianSubplotChart<T>(
     return composeChartOption(layout, axes, {
         series: allSeries,
         legendData: legendData.length > 0 ? legendData : undefined,
-        containerSize,
+        containerSize, dataZoom: finalDataZoom,
         ...composeOverrides,
     });
 }

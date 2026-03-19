@@ -47,6 +47,12 @@ export interface ComposeChartConfig {
     axisPointer?: EChartsOption["axisPointer"];
     toolbox?: EChartsOption["toolbox"];
 }
+export interface ChartZoomState {
+    start?: number;
+    end?: number;
+    startValue?: number | string;
+    endValue?: number | string;
+}
 
 export function composeChartOption(
     layout: SubplotLayoutResult,

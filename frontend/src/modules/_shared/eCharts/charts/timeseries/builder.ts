@@ -8,6 +8,7 @@ import type { ComposeChartConfig } from "../../core/composeChartOption";
 import { getResponsiveFeatures } from "../../layout/responsiveConfig";
 import { applyActiveTimestampMarker } from "../../overlays/activeTimestampMarker";
 import type {
+
     ContainerSize,
     SubplotGroup,
     TimeseriesDisplayConfig,
@@ -20,16 +21,19 @@ import { buildMemberSeries } from "./memberSeries";
 import { buildObservationSeries } from "./observationSeries";
 import { buildStatisticsSeries, buildFanchartSeries } from "./statisticsSeries";
 import { buildTimeseriesTooltip } from "./tooltips";
+import { BaseChartOptions } from "../..";
 
-export type TimeseriesChartOptions = {
-    subplotOverlays: TimeseriesSubplotOverlays[];
-    displayConfig: TimeseriesDisplayConfig;
-    yAxisLabel: string;
-    memberLabel?: string;
-    activeTimestampUtcMs?: number | null;
-    sharedXAxis?: boolean;
-    sharedYAxis?: boolean;
-};
+
+export interface TimeseriesChartOptions {
+    base?: BaseChartOptions;
+    series: {
+        subplotOverlays: TimeseriesSubplotOverlays[];
+        displayConfig: TimeseriesDisplayConfig;
+        yAxisLabel: string;
+        memberLabel?: string;
+        activeTimestampUtcMs?: number | null;
+    };
+}
 
 type RealtimeAxisPointer = {
     show: true;
@@ -41,17 +45,16 @@ type RealtimeAxisPointer = {
 export function buildTimeseriesChart(
     subplotGroups: SubplotGroup<TimeseriesTrace>[],
     options: TimeseriesChartOptions,
-    containerSize?: ContainerSize,
 ): EChartsOption {
+
+    const baseOptions = options.base ?? {};
     const {
         subplotOverlays,
         displayConfig,
         yAxisLabel,
         memberLabel,
         activeTimestampUtcMs = null,
-        sharedXAxis,
-        sharedYAxis,
-    } = options;
+    } = options.series;
 
     if (subplotOverlays.length !== subplotGroups.length) {
         throw new Error("Timeseries subplot overlays must match the number of subplot groups.");
@@ -92,22 +95,20 @@ export function buildTimeseriesChart(
         allSeries: CartesianChartSeries[],
     ): void {
         if (activeTimestampUtcMs == null) return;
-
         applyActiveTimestampMarker(allSeries, timestampUtcMsToCompactIsoString(activeTimestampUtcMs));
     };
+
 
     return buildCartesianSubplotChart(
         nonEmptySubplotGroups,
         buildSubplot,
         {
-            containerSize,
-            sharedXAxis,
-            sharedYAxis,
+            ...baseOptions,
             postProcessAxes,
             ...buildTimeseriesComposeOverrides(
                 numSubplots,
                 displayConfig,
-                containerSize,
+                baseOptions.containerSize,
                 memberLabel,
             ),
         },
@@ -195,7 +196,7 @@ function buildTimeseriesComposeOverrides(
     memberLabel?: string,
 ) {
     return {
-        tooltip: buildTimeseriesTooltip(config, { memberLabel }), // No context map!
+        tooltip: buildTimeseriesTooltip(config, { memberLabel }),
         axisPointer: {
             show: true,
             type: "line" as const,

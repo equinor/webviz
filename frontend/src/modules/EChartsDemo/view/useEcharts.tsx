@@ -7,8 +7,7 @@ import type { ViewContext } from "@framework/ModuleContext";
 import type { Interfaces } from "../interfaces";
 
 import { DemoChartOrchestrator } from "./plotOrchestrator";
-
-// --- Constants & Types ---
+import type { ViewState } from "@modules/_shared/eCharts/hooks/useEchartsViewState";
 
 const TIMESERIES_MEMBER_LABEL = "Realization";
 
@@ -24,6 +23,7 @@ export function useDemoPlotModel(
     viewContext: ViewContext<Interfaces>,
     containerSize: { width: number; height: number },
     activeTimestampUtcMs: number | null,
+    viewState: ViewState,
 ): DemoPlotModel {
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const numSubplots = viewContext.useSettingsToViewInterfaceValue("numSubplots");
@@ -71,6 +71,7 @@ export function useDemoPlotModel(
             containerSize: resolvedSize,
             sharedXAxis,
             sharedYAxis,
+            currentZoom: viewState,
         });
     }, [
         orchestrator,
@@ -93,5 +94,6 @@ export function useDemoPlotModel(
         containerSize,
         sharedXAxis,
         sharedYAxis,
+        viewState,
     ]);
 }

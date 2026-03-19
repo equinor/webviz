@@ -3,35 +3,39 @@ import type { EChartsOption } from "echarts";
 import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
-import type { ContainerSize, DistributionTrace, SubplotGroup } from "../../types";
+import type { DistributionTrace, SubplotGroup } from "../../types";
 
 import { buildDensitySeries, type DensityDisplayOptions } from "./series";
+import { BaseChartOptions } from "../..";
 
-export type DensityChartOptions = DensityDisplayOptions & {
-    xAxisLabel?: string;
-    yAxisLabel?: string;
-    sharedXAxis?: boolean;
-    sharedYAxis?: boolean;
-};
+// 1. Clean, nested options structure
+export interface DensityChartOptions {
+    base?: BaseChartOptions;
+    series?: DensityDisplayOptions & {
+        xAxisLabel?: string;
+        yAxisLabel?: string;
+    };
+}
 
 export function buildDensityChart(
     subplotGroups: SubplotGroup<DistributionTrace>[],
     options: DensityChartOptions = {},
-    containerSize?: ContainerSize,
 ): EChartsOption {
-    const { xAxisLabel = "Value", yAxisLabel = "Density", sharedXAxis, sharedYAxis } = options;
+    // 2. Safely extract series-level configurations
+    const seriesOptions = options.series ?? {};
+    const xAxisLabel = seriesOptions.xAxisLabel ?? "Value";
+    const yAxisLabel = seriesOptions.yAxisLabel ?? "Density";
+
     const buildSubplot = function buildDensitySubplotForAxis(
         group: SubplotGroup<DistributionTrace>,
         axisIndex: number,
     ): CartesianSubplotBuildResult {
-        const { series, legendData } = aggregateSubplotTraces(
-            {
-                traces: group.traces,
-                axisIndex,
-                options,
-                buildFn: buildDensitySeries
-            }
-        );
+        const { series, legendData } = aggregateSubplotTraces({
+            traces: group.traces,
+            axisIndex,
+            options: seriesOptions,
+            buildFn: buildDensitySeries
+        });
 
         return {
             series,
@@ -45,7 +49,6 @@ export function buildDensityChart(
     return buildCartesianSubplotChart(
         subplotGroups,
         buildSubplot,
-        { containerSize, sharedXAxis, sharedYAxis },
+        options.base ?? {}
     );
 }
-

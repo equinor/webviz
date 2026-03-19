@@ -1,13 +1,11 @@
-
 import type { EChartsOption } from "echarts";
 
 import type {
-
     ContainerSize,
     DistributionTrace,
-
     SubplotGroup,
     TimeseriesDisplayConfig,
+    BaseChartOptions,
 } from "@modules/_shared/eCharts";
 import {
     buildBarChart,
@@ -40,7 +38,7 @@ type DemoPlotModel = {
     enableClosestMemberTooltip: boolean;
     memberLabel?: string;
 };
-
+type HistogramSeriesOpts = NonNullable<HistogramChartOptions["series"]>;
 type OrchestratorConfig = {
     plotType: PlotType;
     numSubplots: number;
@@ -48,8 +46,8 @@ type OrchestratorConfig = {
     numRealizations: number;
     timeseriesDisplayConfig: TimeseriesDisplayConfig;
     memberLabel: string;
-    histogramBins: HistogramChartOptions["numBins"];
-    histogramType: HistogramChartOptions["histogramType"];
+    histogramBins: HistogramSeriesOpts["numBins"];
+    histogramType: HistogramSeriesOpts["histogramType"];
     showRealizationPoints: boolean;
     showStatisticalMarkers: boolean;
     showBarLabels: boolean;
@@ -57,6 +55,7 @@ type OrchestratorConfig = {
     containerSize?: ContainerSize;
     sharedXAxis?: boolean;
     sharedYAxis?: boolean;
+    currentZoom?: { zoomStart: number; zoomEnd: number };
 };
 
 export class DemoChartOrchestrator {
@@ -85,24 +84,34 @@ export class DemoChartOrchestrator {
         }
     }
 
+    // --- Helper to extract Cartesian/Base options cleanly ---
+    private getBaseOptions(config: OrchestratorConfig): BaseChartOptions {
+        return {
+            containerSize: config.containerSize,
+            sharedXAxis: config.sharedXAxis,
+            sharedYAxis: config.sharedYAxis,
+            zoomState: config.currentZoom ? {
+                start: config.currentZoom.zoomStart,
+                end: config.currentZoom.zoomEnd
+            } : undefined
+        };
+    }
+
     private buildTimeseries(config: OrchestratorConfig): DemoPlotModel {
         const groups = generateTimeseriesGroups(config.numSubplots, config.numGroups, config.numRealizations);
         const overlays = generateTimeseriesOverlays(groups, config.numSubplots);
         const timestamps = groups.flatMap((g) => g.traces).find((t) => t.timestamps.length > 0)?.timestamps ?? [];
 
-        const echartsOptions = buildTimeseriesChart(
-            groups,
-            {
+        const echartsOptions = buildTimeseriesChart(groups, {
+            base: this.getBaseOptions(config),
+            series: {
                 subplotOverlays: overlays,
                 displayConfig: config.timeseriesDisplayConfig,
                 yAxisLabel: "Value",
                 memberLabel: config.memberLabel,
                 activeTimestampUtcMs: config.activeTimestampUtcMs,
-                sharedXAxis: config.sharedXAxis,
-                sharedYAxis: config.sharedYAxis,
-            },
-            config.containerSize,
-        );
+            }
+        });
 
         return {
             echartsOptions,
@@ -116,65 +125,54 @@ export class DemoChartOrchestrator {
 
     private buildHistogram(config: OrchestratorConfig): DemoPlotModel {
         const groups = this.createDistributionGroups(config);
-        const options = buildHistogramChart(
-            groups,
-            {
+        const options = buildHistogramChart(groups, {
+            base: this.getBaseOptions(config),
+            series: {
                 numBins: config.histogramBins,
                 histogramType: config.histogramType,
                 showRealizationPoints: config.showRealizationPoints,
-                sharedXAxis: config.sharedXAxis,
-                sharedYAxis: config.sharedYAxis,
-            },
-            config.containerSize,
-        );
+            }
+        });
         return this.createStaticPlotModel(options);
     }
 
     private buildPercentileRange(config: OrchestratorConfig): DemoPlotModel {
         const groups = this.createDistributionGroups(config);
-        const options = buildPercentileRangeChart(
-            groups,
-            {
+        const options = buildPercentileRangeChart(groups, {
+            base: this.getBaseOptions(config),
+            series: {
                 showRealizationPoints: config.showRealizationPoints,
-                sharedXAxis: config.sharedXAxis,
-                sharedYAxis: config.sharedYAxis,
-            },
-            config.containerSize,
-        );
+            }
+        });
         return this.createStaticPlotModel(options);
     }
 
     private buildDensity(config: OrchestratorConfig): DemoPlotModel {
         const groups = this.createDistributionGroups(config);
-        const options = buildDensityChart(
-            groups,
-            {
+        const options = buildDensityChart(groups, {
+            base: this.getBaseOptions(config),
+            series: {
                 showRealizationPoints: config.showRealizationPoints,
-                sharedXAxis: config.sharedXAxis,
-                sharedYAxis: config.sharedYAxis,
-            },
-            config.containerSize,
-        );
+            }
+        });
         return this.createStaticPlotModel(options);
     }
 
     private buildExceedance(config: OrchestratorConfig): DemoPlotModel {
         const groups = this.createDistributionGroups(config);
-        const options = buildExceedanceChart(
-            groups,
-            { sharedXAxis: config.sharedXAxis, sharedYAxis: config.sharedYAxis },
-            config.containerSize,
-        );
+        const options = buildExceedanceChart(groups, {
+            base: this.getBaseOptions(config),
+            series: {}
+        });
         return this.createStaticPlotModel(options);
     }
 
     private buildConvergence(config: OrchestratorConfig): DemoPlotModel {
         const groups = this.createDistributionGroups(config);
-        const options = buildConvergenceChart(
-            groups,
-            { sharedXAxis: config.sharedXAxis, sharedYAxis: config.sharedYAxis },
-            config.containerSize,
-        );
+        const options = buildConvergenceChart(groups, {
+            base: this.getBaseOptions(config),
+            series: {}
+        });
         return this.createStaticPlotModel(options);
     }
 
@@ -184,26 +182,24 @@ export class DemoChartOrchestrator {
             traces: generateBarTraces(config.numGroups, index),
         }));
 
-        const options = buildBarChart(
-            groups,
-            {
+        const options = buildBarChart(groups, {
+            base: this.getBaseOptions(config),
+            series: {
                 showStatisticalMarkers: config.showStatisticalMarkers,
                 showLabels: config.showBarLabels,
-                sharedXAxis: config.sharedXAxis,
-                sharedYAxis: config.sharedYAxis,
-            },
-            config.containerSize,
-        );
+            }
+        });
         return this.createStaticPlotModel(options);
     }
 
     private buildHeatmap(config: OrchestratorConfig): DemoPlotModel {
         const traces = generateHeatmapTraces(config.numSubplots);
-        const options = buildHeatmapChart(
-            traces,
-            { valueLabel: "Value" },
-            config.containerSize,
-        );
+        const options = buildHeatmapChart(traces, {
+            base: this.getBaseOptions(config),
+            series: {
+                valueLabel: "Value"
+            }
+        });
         return this.createStaticPlotModel(options);
     }
 
@@ -213,15 +209,12 @@ export class DemoChartOrchestrator {
             traces: generateMemberScatterTraces(config.numGroups, config.numRealizations, index),
         }));
 
-        const echartsOptions = buildMemberScatterChart(
-            groups,
-            {
+        const echartsOptions = buildMemberScatterChart(groups, {
+            base: this.getBaseOptions(config),
+            series: {
                 memberLabel: config.memberLabel,
-                sharedXAxis: config.sharedXAxis,
-                sharedYAxis: config.sharedYAxis,
-            },
-            config.containerSize,
-        );
+            }
+        });
 
         return {
             echartsOptions,
@@ -231,7 +224,6 @@ export class DemoChartOrchestrator {
             memberLabel: config.memberLabel,
         };
     }
-
 
     private createDistributionGroups(config: OrchestratorConfig): SubplotGroup<DistributionTrace>[] {
         return Array.from({ length: config.numSubplots }, (_, index) => ({

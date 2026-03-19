@@ -22,7 +22,7 @@ export function formatMemberScatterItemTooltip(
     if (!p || !p.seriesId) return "";
 
 
-    const [chart, role, groupKey, memberKey, axisIndex] = p.seriesId.split("|");
+    const [, , , memberKey] = p.seriesId.split("|");
 
     const point = extractPointValue(p.value);
     const memberLabel = options.memberLabel ?? "Member";

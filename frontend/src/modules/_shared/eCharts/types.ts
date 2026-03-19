@@ -1,3 +1,5 @@
+import { ChartZoomState } from "./core/composeChartOption";
+
 export type StatisticKey = "mean" | "p10" | "p50" | "p90" | "min" | "max";
 
 export const ALL_STATISTIC_KEYS: readonly StatisticKey[] = ["mean", "p10", "p50", "p90", "min", "max"] as const;
@@ -121,4 +123,10 @@ export enum HistogramType {
     Group = "group",
     Overlay = "overlay",
     Relative = "relative",
+}
+export interface BaseChartOptions {
+    containerSize?: ContainerSize;
+    zoomState?: ChartZoomState;
+    sharedXAxis?: boolean;
+    sharedYAxis?: boolean;
 }

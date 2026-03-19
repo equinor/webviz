@@ -4,38 +4,40 @@ import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { SubplotAxesResult } from "../../layout/subplotAxes";
-import type { ContainerSize, DistributionTrace, SubplotGroup } from "../../types";
+import type { BaseChartOptions, DistributionTrace, SubplotGroup } from "../../types";
 
 import { buildExceedanceSeries } from "./series";
 import { buildExceedanceTooltip } from "./tooltips";
 
-export type ExceedanceChartOptions = {
-    xAxisLabel?: string;
-    yAxisLabel?: string;
-    sharedXAxis?: boolean;
-    sharedYAxis?: boolean;
-};
+
+export interface ExceedanceChartOptions {
+    base?: BaseChartOptions;
+    series?: {
+        xAxisLabel?: string;
+        yAxisLabel?: string;
+    };
+}
 
 export function buildExceedanceChart(
     subplotGroups: SubplotGroup<DistributionTrace>[],
     options: ExceedanceChartOptions = {},
-    containerSize?: ContainerSize,
 ): EChartsOption {
-    const { xAxisLabel = "Value", yAxisLabel = "Exceedance (%)", sharedXAxis, sharedYAxis } = options;
+
+    const seriesOptions = options.series ?? {};
+    const xAxisLabel = seriesOptions.xAxisLabel ?? "Value";
+    const yAxisLabel = seriesOptions.yAxisLabel ?? "Exceedance (%)";
 
     const buildSubplot = function buildExceedanceSubplotForAxis(
         group: SubplotGroup<DistributionTrace>,
         axisIndex: number,
     ): CartesianSubplotBuildResult {
 
-
-        const { series, legendData } = aggregateSubplotTraces(
-            {
-                traces: group.traces,
-                axisIndex,
-                options,
-                buildFn: buildExceedanceSeries
-            });
+        const { series, legendData } = aggregateSubplotTraces({
+            traces: group.traces,
+            axisIndex,
+            options: seriesOptions,
+            buildFn: buildExceedanceSeries
+        });
 
         return {
             series,
@@ -46,19 +48,17 @@ export function buildExceedanceChart(
         };
     };
 
+
     return buildCartesianSubplotChart(
         subplotGroups,
         buildSubplot,
         {
-            containerSize,
-            sharedXAxis,
-            sharedYAxis,
+            ...(options.base ?? {}),
             postProcessAxes: constrainExceedanceYAxis,
             tooltip: buildExceedanceTooltip(),
         },
     );
 }
-
 
 function constrainExceedanceYAxis(axes: SubplotAxesResult): void {
     for (let index = 0; index < axes.yAxes.length; index++) {

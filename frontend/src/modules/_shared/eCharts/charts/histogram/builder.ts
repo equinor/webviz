@@ -4,7 +4,7 @@ import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { ChartSeriesOption } from "../../core/composeChartOption";
 import type { SubplotAxesResult } from "../../layout/subplotAxes";
-import type { ContainerSize, DistributionTrace, SubplotGroup } from "../../types";
+import type { BaseChartOptions, DistributionTrace, SubplotGroup } from "../../types";
 import { HistogramType } from "../../types";
 import { computeHistogramLayout, computeHistogramTraceData } from "../../utils";
 import type { HistogramBarGeometry, HistogramTraceData } from "../../utils/histogram";
@@ -12,67 +12,71 @@ import type { HistogramBarGeometry, HistogramTraceData } from "../../utils/histo
 import { buildHistogramSeriesFromBars } from "./series";
 import { applyYAxisExtents, computeBarOpacity } from "./utils";
 
-export type HistogramChartOptions = {
-    numBins?: number;
-    histogramType?: HistogramType;
-    showRealizationPoints?: boolean;
-    showPercentageInBar?: boolean;
-    borderColor?: string;
-    borderWidth?: number;
-    sharedXAxis?: boolean;
-    sharedYAxis?: boolean;
-};
 
-type ResolvedHistogramChartOptions = Required<Omit<HistogramChartOptions, "sharedXAxis" | "sharedYAxis">>;
+export interface HistogramChartOptions {
+    base?: BaseChartOptions;
+    series?: {
+        numBins?: number;
+        histogramType?: HistogramType;
+        showRealizationPoints?: boolean;
+        showPercentageInBar?: boolean;
+        borderColor?: string;
+        borderWidth?: number;
+    };
+}
+
+
+type ResolvedHistogramSeriesOptions = Required<NonNullable<HistogramChartOptions["series"]>>;
 
 export function buildHistogramChart(
     subplotGroups: SubplotGroup<DistributionTrace>[],
     options: HistogramChartOptions = {},
-    containerSize?: ContainerSize,
 ): EChartsOption {
-    const { sharedXAxis, sharedYAxis, ...rest } = options;
-    const config = resolveHistogramChartOptions(rest);
+
+    const baseOptions = options.base ?? {};
+    const config = resolveHistogramSeriesOptions(options.series);
 
     const yMaxByAxis: number[] = [];
+
     const buildSubplot = function buildHistogramSubplotForAxis(
         group: SubplotGroup<DistributionTrace>,
         axisIndex: number,
     ): CartesianSubplotBuildResult {
         return buildHistogramSubplot(group, axisIndex, config, yMaxByAxis);
     };
+
     const postProcessAxes = function postProcessHistogramAxes(axes: SubplotAxesResult): void {
         applyYAxisExtents(axes, yMaxByAxis, config.showRealizationPoints);
     };
+
 
     return buildCartesianSubplotChart(
         subplotGroups,
         buildSubplot,
         {
-            containerSize,
-            sharedXAxis,
-            sharedYAxis,
+            ...baseOptions,
             postProcessAxes,
         },
     );
 }
 
-function resolveHistogramChartOptions(
-    options: Omit<HistogramChartOptions, "sharedXAxis" | "sharedYAxis">,
-): ResolvedHistogramChartOptions {
+function resolveHistogramSeriesOptions(
+    seriesOptions?: HistogramChartOptions["series"],
+): ResolvedHistogramSeriesOptions {
     return {
-        numBins: options.numBins ?? 15,
-        histogramType: options.histogramType ?? HistogramType.Overlay,
-        showRealizationPoints: options.showRealizationPoints ?? false,
-        showPercentageInBar: options.showPercentageInBar ?? false,
-        borderColor: options.borderColor ?? "black",
-        borderWidth: options.borderWidth ?? 1,
+        numBins: seriesOptions?.numBins ?? 15,
+        histogramType: seriesOptions?.histogramType ?? HistogramType.Overlay,
+        showRealizationPoints: seriesOptions?.showRealizationPoints ?? false,
+        showPercentageInBar: seriesOptions?.showPercentageInBar ?? false,
+        borderColor: seriesOptions?.borderColor ?? "black",
+        borderWidth: seriesOptions?.borderWidth ?? 1,
     };
 }
 
 function buildHistogramSubplot(
     group: SubplotGroup<DistributionTrace>,
     axisIndex: number,
-    config: ResolvedHistogramChartOptions,
+    config: ResolvedHistogramSeriesOptions,
     yMaxByAxis: number[],
 ): CartesianSubplotBuildResult {
     const traceData = computeHistogramTraceData(group.traces, config.numBins);
@@ -101,7 +105,7 @@ function buildTraceSeries(
     bars: HistogramBarGeometry[],
     axisIndex: number,
     traceCount: number,
-    config: ResolvedHistogramChartOptions,
+    config: ResolvedHistogramSeriesOptions,
 ): ChartSeriesOption[] {
     const barOpacity = computeBarOpacity(config.histogramType, traceCount);
 
@@ -121,4 +125,3 @@ function buildTraceSeries(
 
     return result.series;
 }
-

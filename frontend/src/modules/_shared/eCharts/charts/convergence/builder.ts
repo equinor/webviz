@@ -3,26 +3,32 @@ import type { EChartsOption } from "echarts";
 import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
-import type { ContainerSize, DistributionTrace, SubplotGroup } from "../../types";
+import type { BaseChartOptions, DistributionTrace, SubplotGroup } from "../../types";
 
 import { buildConvergenceSeries } from "./series";
 import { buildConvergenceTooltip } from "./tooltips";
 
-export type ConvergenceChartOptions = {
-    xAxisLabel?: string;
-    yAxisLabel?: string;
-    sharedXAxis?: boolean;
-    sharedYAxis?: boolean;
-};
 
-
+export interface ConvergenceChartOptions {
+    base?: BaseChartOptions;
+    series?: {
+        xAxisLabel?: string;
+        yAxisLabel?: string;
+    };
+}
 
 export function buildConvergenceChart(
     subplotGroups: SubplotGroup<DistributionTrace>[],
     options: ConvergenceChartOptions = {},
-    containerSize?: ContainerSize,
 ): EChartsOption {
-    const { xAxisLabel = "Realizations", yAxisLabel = "Value", sharedXAxis, sharedYAxis } = options;
+
+    const baseOptions = options.base ?? {};
+    const seriesOptions = options.series ?? {};
+
+    const {
+        xAxisLabel = "Realizations",
+        yAxisLabel = "Value"
+    } = seriesOptions;
 
     const buildSubplot = function buildConvergenceSubplotForAxis(
         group: SubplotGroup<DistributionTrace>,
@@ -31,6 +37,7 @@ export function buildConvergenceChart(
         const { series, legendData } = aggregateSubplotTraces({
             traces: group.traces,
             axisIndex,
+            options: seriesOptions,
             buildFn: (trace, idx) => buildConvergenceSeries(trace, idx)
         });
 
@@ -43,13 +50,12 @@ export function buildConvergenceChart(
         };
     };
 
+
     return buildCartesianSubplotChart(
         subplotGroups,
         buildSubplot,
         {
-            containerSize,
-            sharedXAxis,
-            sharedYAxis,
+            ...baseOptions,
             tooltip: buildConvergenceTooltip(),
         },
     );

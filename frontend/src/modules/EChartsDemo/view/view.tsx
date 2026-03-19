@@ -17,7 +17,7 @@ import type { Interfaces } from "../interfaces";
 import { PLOT_TYPE_LABELS } from "../typesAndEnums";
 
 import { useDemoPlotModel } from "./useEcharts";
-
+import { useEChartsViewState } from "@modules/_shared/eCharts/hooks/useEchartsViewState";
 const ROW_HEIGHT_PX = 350;
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
@@ -31,9 +31,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         realization: number | null;
         ensemble: string | null;
     } | null>(null);
-
-    const chartModel = useDemoPlotModel(viewContext, containerSize, activeTimestampUtcMs);
-
+    const { viewState, handleDataZoom } = useEChartsViewState();
+    const chartModel = useDemoPlotModel(viewContext, containerSize, activeTimestampUtcMs, viewState);
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const numSubplots = viewContext.useSettingsToViewInterfaceValue("numSubplots");
     const numGroups = viewContext.useSettingsToViewInterfaceValue("numGroups");
@@ -50,10 +49,15 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         setHoveredReal({ realization: info?.memberId ?? null, ensemble: info?.groupKey ?? null });
     }, []);
 
-    const onChartEvents = useHighlightOnHover(chartRef, chartModel.enableLinkedHover, {
+    const hoverEvents = useHighlightOnHover(chartRef, chartModel.enableLinkedHover, {
         onHoveredMemberChange: handleHoveredRealChange,
     });
-
+    const onChartEvents = React.useMemo(() => {
+        return {
+            ...hoverEvents,
+            datazoom: handleDataZoom,
+        };
+    }, [hoverEvents, handleDataZoom]);
     useClickToTimestamp(
         chartRef,
         chartModel.timestamps,

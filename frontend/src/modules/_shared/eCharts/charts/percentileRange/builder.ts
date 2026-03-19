@@ -2,35 +2,42 @@ import type { EChartsOption } from "echarts";
 
 import { aggregateSubplotTraces } from "../../core/aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
-import type { ContainerSize, DistributionTrace, SubplotGroup } from "../../types";
+import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
+import type { BaseChartOptions, DistributionTrace, SubplotGroup } from "../../types";
 
 import { buildPercentileRangeSeries, type PercentileRangeDisplayOptions } from "./series";
 
-export type PercentileRangeChartOptions = PercentileRangeDisplayOptions & {
-    xAxisLabel?: string;
-    yAxisLabel?: string;
-    sharedXAxis?: boolean;
-    sharedYAxis?: boolean;
-};
+
+export interface PercentileRangeChartOptions {
+    base?: BaseChartOptions;
+    series?: PercentileRangeDisplayOptions & {
+        xAxisLabel?: string;
+        yAxisLabel?: string;
+    };
+}
 
 export function buildPercentileRangeChart(
     subplotGroups: SubplotGroup<DistributionTrace>[],
     options: PercentileRangeChartOptions = {},
-    containerSize?: ContainerSize,
 ): EChartsOption {
-    const { xAxisLabel = "Value", yAxisLabel, sharedXAxis, sharedYAxis, ...seriesOptions } = options;
+
+    const baseOptions = options.base ?? {};
+    const seriesOptions = options.series ?? {};
+
+    const { xAxisLabel = "Value", yAxisLabel } = seriesOptions;
 
     const buildSubplot = function buildPercentileRangeSubplotForAxis(
         group: SubplotGroup<DistributionTrace>,
         axisIndex: number,
-    ) {
+    ): CartesianSubplotBuildResult {
         return buildPercentileRangeSubplot(group, axisIndex, seriesOptions, xAxisLabel, yAxisLabel);
     };
+
 
     return buildCartesianSubplotChart(
         subplotGroups,
         buildSubplot,
-        { containerSize, sharedXAxis, sharedYAxis },
+        baseOptions,
     );
 }
 
@@ -40,11 +47,12 @@ function buildPercentileRangeSubplot(
     options: PercentileRangeDisplayOptions,
     xAxisLabel: string,
     yAxisLabel?: string,
-) {
+): CartesianSubplotBuildResult {
     const categories = group.traces.map((trace) => trace.name);
     let traceIndex = 0;
+
     const buildPercentileSeriesWithIndex = function buildPercentileSeriesWithIndex(trace: DistributionTrace, idx: number) {
-        // Assign the trace's position in the array to the categorical Y-axis position
+
         const result = buildPercentileRangeSeries(
             trace,
             { ...options, yAxisPosition: traceIndex },
@@ -53,7 +61,8 @@ function buildPercentileRangeSubplot(
 
         traceIndex++;
         return result;
-    }
+    };
+
     const { series, legendData } = aggregateSubplotTraces({
         traces: group.traces,
         axisIndex,
