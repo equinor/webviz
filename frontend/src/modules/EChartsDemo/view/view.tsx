@@ -3,11 +3,11 @@ import React from "react";
 import ReactECharts from "echarts-for-react";
 
 import type { ModuleViewProps } from "@framework/Module";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
-
+import type { HoveredMemberInfo } from "@modules/_shared/eCharts";
 import {
     computeSubplotGridLayout,
-    HoveredMemberInfo,
     useClickToTimestamp,
     useClosestMemberTooltip,
     useHighlightOnHover,
@@ -17,7 +17,6 @@ import type { Interfaces } from "../interfaces";
 import { PLOT_TYPE_LABELS } from "../typesAndEnums";
 
 import { useDemoPlotModel } from "./useEcharts";
-import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
 const ROW_HEIGHT_PX = 350;
 

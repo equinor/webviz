@@ -2,11 +2,10 @@ import React from "react";
 
 import type { EChartsOption } from "echarts";
 
-import type { TimeseriesDisplayConfig } from "@modules/_shared/eCharts";
+import type { ViewContext } from "@framework/ModuleContext";
 
 import type { Interfaces } from "../interfaces";
 
-import { ViewContext } from "@framework/ModuleContext";
 import { DemoChartOrchestrator } from "./plotOrchestrator";
 
 // --- Constants & Types ---

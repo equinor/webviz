@@ -20,6 +20,7 @@ import {
     buildPercentileRangeChart,
     buildTimeseriesChart,
 } from "@modules/_shared/eCharts";
+import type { HistogramChartOptions } from "@modules/_shared/eCharts/charts/histogram";
 
 import { PlotType } from "../typesAndEnums";
 import {
@@ -30,7 +31,6 @@ import {
     generateTimeseriesGroups,
     generateTimeseriesOverlays,
 } from "../utils/syntheticData";
-import { HistogramChartOptions } from "@modules/_shared/eCharts/charts/histogram";
 
 
 type DemoPlotModel = {
@@ -201,7 +201,7 @@ export class DemoChartOrchestrator {
         const traces = generateHeatmapTraces(config.numSubplots);
         const options = buildHeatmapChart(
             traces,
-            { valueLabel: "Value", activeTimestampUtcMs: config.activeTimestampUtcMs },
+            { valueLabel: "Value" },
             config.containerSize,
         );
         return this.createStaticPlotModel(options);
