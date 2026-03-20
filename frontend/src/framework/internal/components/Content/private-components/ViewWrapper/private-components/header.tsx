@@ -289,26 +289,26 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const channelManager = props.moduleInstance.getChannelManager();
 
-    const dataChannels = React.useSyncExternalStore(
-        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.CHANNELS_CHANGE, cb),
-        () => channelManager.getChannels(),
-    );
-    const dataReceivers = React.useSyncExternalStore(
-        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.RECEIVERS_CHANGE, cb),
-        () => channelManager.getReceivers(),
-    );
+    const channels = usePublishSubscribeTopicValue(channelManager, ChannelManagerNotificationTopic.CHANNELS_CHANGE);
+    const receivers = usePublishSubscribeTopicValue(channelManager, ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
+
+    // We only care about specifics parts of the state, so we write our own sync here
     const numIncomingConnections = React.useSyncExternalStore(
-        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.CONNECTION_STATE_CHANGE, cb),
+        channelManager
+            .getPublishSubscribeDelegate()
+            .makeSubscriberFunction(ChannelManagerNotificationTopic.CONNECTION_STATE_REVISION),
         () => channelManager.getNumberOfIncomingConnections(),
     );
 
     const numOutgoingConnections = React.useSyncExternalStore(
-        (cb) => channelManager.subscribe(ChannelManagerNotificationTopic.CONNECTION_STATE_CHANGE, cb),
+        channelManager
+            .getPublishSubscribeDelegate()
+            .makeSubscriberFunction(ChannelManagerNotificationTopic.CONNECTION_STATE_REVISION),
         () => channelManager.getNumberOfOutgoingConnections(),
     );
 
-    const hasDataChannel = dataChannels.length > 0;
-    const hasDataReceiver = dataReceivers.length > 0;
+    const hasDataChannel = channels.length > 0;
+    const hasDataReceiver = receivers.length > 0;
     const showDataChannelButtons = !props.isMinimized && !props.isMaximized && (hasDataChannel || hasDataReceiver);
 
     function handleDataChannelOriginPointerDown(e: React.PointerEvent<HTMLButtonElement>) {

@@ -1,4 +1,6 @@
 import type { ModuleInstance } from "@framework/ModuleInstance";
+import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import type { ChannelDefinition } from "./Channel";
@@ -13,16 +15,24 @@ import { ChannelReceiver, ChannelReceiverNotificationTopic } from "./ChannelRece
 export enum ChannelManagerNotificationTopic {
     CHANNELS_CHANGE = "channels-change",
     RECEIVERS_CHANGE = "receivers-change",
-    CONNECTION_STATE_CHANGE = "connection_state_change",
+    CONNECTION_STATE_REVISION = "connection_state_revision",
 }
 
-export class ChannelManager {
+export type ChannelManagerNotificationTopicPayload = {
+    [ChannelManagerNotificationTopic.CHANNELS_CHANGE]: readonly Channel[];
+    [ChannelManagerNotificationTopic.RECEIVERS_CHANGE]: readonly ChannelReceiver[];
+    [ChannelManagerNotificationTopic.CONNECTION_STATE_REVISION]: number;
+};
+
+export class ChannelManager implements PublishSubscribe<ChannelManagerNotificationTopicPayload> {
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
 
     private readonly _moduleInstanceId: string;
     private _channels: Channel[] = [];
     private _receivers: ChannelReceiver[] = [];
-    private _subscribersMap: Map<ChannelManagerNotificationTopic, Set<() => void>> = new Map();
+    private _connectionStateRevision = 0;
+
+    private _pubSubDelegate = new PublishSubscribeDelegate<ChannelManagerNotificationTopicPayload>();
 
     constructor(readonly moduleInstanceId: string) {
         this._moduleInstanceId = moduleInstanceId;
@@ -30,8 +40,35 @@ export class ChannelManager {
         this.notifyConnectionStateChange = this.notifyConnectionStateChange.bind(this);
     }
 
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<ChannelManagerNotificationTopicPayload> {
+        return this._pubSubDelegate;
+    }
+
+    makeSnapshotGetter<T extends ChannelManagerNotificationTopic>(
+        topic: T,
+    ): () => ChannelManagerNotificationTopicPayload[T] {
+        switch (topic) {
+            case ChannelManagerNotificationTopic.CHANNELS_CHANGE:
+                return () => this.getChannels() as any;
+            case ChannelManagerNotificationTopic.RECEIVERS_CHANGE:
+                return () => this.getReceivers() as any;
+            case ChannelManagerNotificationTopic.CONNECTION_STATE_REVISION:
+                return () => this._connectionStateRevision as any;
+
+            default:
+                throw new Error(`Unsupported topic: ${topic}`);
+        }
+    }
+
     getChannel(idString: string): Channel | null {
         return this._channels.find((channel) => channel.getIdString() === idString) ?? null;
+    }
+
+    private setChannels(newChannels: Channel[]) {
+        this._channels = newChannels;
+
+        this._pubSubDelegate.notifySubscribers(ChannelManagerNotificationTopic.CHANNELS_CHANGE);
+        this.notifyConnectionStateChange();
     }
 
     getChannels(): readonly Channel[] {
@@ -40,6 +77,13 @@ export class ChannelManager {
 
     getReceiver(idString: string): ChannelReceiver | null {
         return this._receivers.find((receiver) => receiver.getIdString() === idString) ?? null;
+    }
+
+    private setReceivers(newReceivers: ChannelReceiver[]) {
+        this._receivers = newReceivers;
+
+        this._pubSubDelegate.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
+        this.notifyConnectionStateChange();
     }
 
     getReceivers(): readonly ChannelReceiver[] {
@@ -59,20 +103,28 @@ export class ChannelManager {
     }
 
     registerChannels(channelDefinitions: ChannelDefinition[]): void {
+        if (!channelDefinitions.length) return;
+
+        const newChannels = [...this._channels];
+
         for (const channelDefinition of channelDefinitions) {
             const channel = new Channel(this, channelDefinition);
-            this._channels.push(channel);
+            newChannels.push(channel);
 
             channel.subscribe(ChannelNotificationTopic.RECEIVERS_ARRAY_CHANGED, this.notifyConnectionStateChange);
         }
 
-        this.notifySubscribers(ChannelManagerNotificationTopic.CHANNELS_CHANGE);
+        this.setChannels(newChannels);
     }
 
     registerReceivers(receiverDefinitions: ChannelReceiverDefinition[]): void {
+        if (!receiverDefinitions.length) return;
+
+        const newReceivers = [...this._receivers];
+
         for (const receiverDefinition of receiverDefinitions) {
             const receiver = new ChannelReceiver(this, receiverDefinition);
-            this._receivers.push(receiver);
+            newReceivers.push(receiver);
 
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 receiver.getIdString(),
@@ -80,38 +132,24 @@ export class ChannelManager {
             );
         }
 
-        this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
+        this.setReceivers(newReceivers);
     }
 
     unregisterAllChannels(): void {
         for (const channel of this._channels) {
             channel.closeChannel();
         }
-        this._channels = [];
 
-        this.notifySubscribers(ChannelManagerNotificationTopic.CHANNELS_CHANGE);
+        this.setChannels([]);
     }
 
     unregisterAllReceivers(): void {
         for (const receiver of this._receivers) {
             receiver.disconnectFromCurrentChannel();
         }
-        this._receivers = [];
+
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
-
-        this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
-    }
-
-    subscribe(topic: ChannelManagerNotificationTopic, callback: () => void): () => void {
-        const topicSubscribers = this._subscribersMap.get(topic) || new Set();
-
-        topicSubscribers.add(callback);
-
-        this._subscribersMap.set(topic, topicSubscribers);
-
-        return () => {
-            topicSubscribers.delete(callback);
-        };
+        this.setReceivers([]);
     }
 
     serializeState(): SerializedDataChannelManagerState {
@@ -168,22 +206,11 @@ export class ChannelManager {
             receiver.connectToChannel(channel, subscription.contentIdStrings);
         }
 
-        this.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
+        this._pubSubDelegate.notifySubscribers(ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
     }
 
     private notifyConnectionStateChange(): void {
-        this.notifySubscribers(ChannelManagerNotificationTopic.CONNECTION_STATE_CHANGE);
-    }
-
-    private notifySubscribers(topic: ChannelManagerNotificationTopic): void {
-        const topicSubscribers = this._subscribersMap.get(topic);
-
-        if (!topicSubscribers) {
-            return;
-        }
-
-        for (const subscriber of topicSubscribers) {
-            subscriber();
-        }
+        this._connectionStateRevision++;
+        this._pubSubDelegate.notifySubscribers(ChannelManagerNotificationTopic.CONNECTION_STATE_REVISION);
     }
 }
