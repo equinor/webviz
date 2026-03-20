@@ -32,24 +32,39 @@ func RunSampleInPointsPipeline(batchId uint64, fetcher *utils.BlobFetcher, realS
 	logger := slog.Default()
 	prefix := fmt.Sprintf("sample_in_points(batchId=%d) - ", batchId)
 
+	numRealizations := len(realSurfObjArr)
+	if numRealizations == 0 {
+		return nil, nil
+	}
+
 	goMaxParallelism := runtime.GOMAXPROCS(0)
-	numDownloadWorkers := max(10, 4*goMaxParallelism)
+
+	// Let number of download workers range between [8, 32]
+	numDownloadWorkers := max(8, min(32, 4*goMaxParallelism))
 	numProcessingWorkers := goMaxParallelism
 
-	numRealizations := len(realSurfObjArr)
+	// Cap worker counts to number of realizations (no need for more workers than realizations)
+	numDownloadWorkers = min(numDownloadWorkers, numRealizations)
+	numProcessingWorkers = min(numProcessingWorkers, numRealizations)
 
-	logger.Info(prefix + fmt.Sprintf("start sampling %d realization surfaces with workers: download=%d, processing=%d", numRealizations, numDownloadWorkers, numProcessingWorkers))
+	// What buffer size should we use for the downloadedCh channels?
+	//
+	// The approximate worst case memory usage is:
+	//   (numDownloadWorkers +  numProcessingWorkers + maxNumBufferedDownloadPayloads) * surfaceSize
+	//
+	// We want the buffer size for the downloadedCh channel to be large enough to allow the download stage to get sufficiently
+	// ahead of the processing stage to keep all processing workers busy, but not so large that it allows too much memory usage.
+	// Here we go for an approach where it is a multiple of the number of processing workers, which should allow for good
+	// throughput while keeping memory usage under control.
+	maxNumDownloadedSurfsInBuffer := max(8, 2*numProcessingWorkers)
 
+	logger.Info(prefix + fmt.Sprintf("start sampling %d realization surfaces with: downloadWorkers=%d, processingWorkers=%d, maxNumDownloadedSurfsInBuffer=%d", numRealizations, numDownloadWorkers, numProcessingWorkers, maxNumDownloadedSurfsInBuffer))
 	startTime := time.Now()
 
-	// What buffer size should we use for the downloadedCh and resultCh channels?
-	// For the downloadedCh, we want it to be large enough to allow the download stage to get sufficiently ahead of the processing stage to keep all processing workers busy,
-	// but not so large that it allows too much memory usage if the download stage is much faster than the processing stage.
-	// Here we go for an approach where it is a multiple of the number of processing workers, which should allow for good throughput while keeping memory usage under control.
+	// See above for calculation of buffer size for the downloadedCh.
 	// For the resultCh we simply ensure it's large enough to hold results for all realizations, since these objects are relatively small.
-	downloadedCh := make(chan *downloadedSurf, 3*numProcessingWorkers)
+	downloadedCh := make(chan *downloadedSurf, maxNumDownloadedSurfsInBuffer)
 	resultCh := make(chan *pipelineResult, numRealizations)
-
 	runDownloadStage(fetcher, realSurfObjArr, numDownloadWorkers, downloadedCh, resultCh)
 	runProcessStage(pointSet, numProcessingWorkers, downloadedCh, resultCh)
 
