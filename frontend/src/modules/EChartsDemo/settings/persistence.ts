@@ -1,30 +1,23 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
-import { setIfDefined } from "@framework/utils/atomUtils";
 import type { StatisticKey } from "@modules/_shared/eCharts";
 import { ALL_STATISTIC_KEYS, HistogramType } from "@modules/_shared/eCharts";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
 import { PlotType } from "../typesAndEnums";
 
+import type {
+    DataConfig,
+    HistogramDisplayConfig,
+    LayoutConfig,
+    PointsAndLabelsConfig,
+    TimeseriesDisplayConfig,
+} from "./atoms/baseAtoms";
 import {
-    plotTypeAtom,
-    numSubplotsAtom,
-    numGroupsAtom,
-    numRealizationsAtom,
-    showRealizationsAtom,
-    showStatisticsAtom,
-    showFanchartAtom,
-    showHistoryAtom,
-    showObservationsAtom,
-    selectedStatisticsAtom,
-    showStatisticalMarkersAtom,
-    showBarLabelsAtom,
-    showRealizationPointsAtom,
-    histogramBinsAtom,
-    histogramTypeAtom,
-    sharedXAxisAtom,
-    sharedYAxisAtom,
-    scrollModeAtom,
+    dataConfigAtom,
+    histogramDisplayConfigAtom,
+    layoutConfigAtom,
+    pointsAndLabelsConfigAtom,
+    timeseriesDisplayConfigAtom,
 } from "./atoms/baseAtoms";
 
 export type SerializedSettings = {
@@ -82,45 +75,75 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
+    const data = get(dataConfigAtom);
+    const ts = get(timeseriesDisplayConfigAtom);
+    const hist = get(histogramDisplayConfigAtom);
+    const pl = get(pointsAndLabelsConfigAtom);
+    const layout = get(layoutConfigAtom);
+
     return {
-        plotType: get(plotTypeAtom),
-        numSubplots: get(numSubplotsAtom),
-        numGroups: get(numGroupsAtom),
-        numRealizations: get(numRealizationsAtom),
-        showRealizations: get(showRealizationsAtom),
-        showStatistics: get(showStatisticsAtom),
-        showFanchart: get(showFanchartAtom),
-        showHistory: get(showHistoryAtom),
-        showObservations: get(showObservationsAtom),
-        selectedStatistics: get(selectedStatisticsAtom),
-        showStatisticalMarkers: get(showStatisticalMarkersAtom),
-        showBarLabels: get(showBarLabelsAtom),
-        showRealizationPoints: get(showRealizationPointsAtom),
-        histogramBins: get(histogramBinsAtom),
-        histogramType: get(histogramTypeAtom),
-        sharedXAxis: get(sharedXAxisAtom),
-        sharedYAxis: get(sharedYAxisAtom),
-        scrollMode: get(scrollModeAtom),
+        plotType: data.plotType,
+        numSubplots: data.numSubplots,
+        numGroups: data.numGroups,
+        numRealizations: data.numRealizations,
+        showRealizations: ts.showRealizations,
+        showStatistics: ts.showStatistics,
+        showFanchart: ts.showFanchart,
+        showHistory: ts.showHistory,
+        showObservations: ts.showObservations,
+        selectedStatistics: ts.selectedStatistics,
+        showStatisticalMarkers: pl.showStatisticalMarkers,
+        showBarLabels: pl.showBarLabels,
+        showRealizationPoints: pl.showRealizationPoints,
+        histogramBins: hist.histogramBins,
+        histogramType: hist.histogramType,
+        sharedXAxis: layout.sharedXAxis,
+        sharedYAxis: layout.sharedYAxis,
+        scrollMode: layout.scrollMode,
     };
 };
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
-    setIfDefined(set, plotTypeAtom, raw.plotType);
-    setIfDefined(set, numSubplotsAtom, raw.numSubplots);
-    setIfDefined(set, numGroupsAtom, raw.numGroups);
-    setIfDefined(set, numRealizationsAtom, raw.numRealizations);
-    setIfDefined(set, showRealizationsAtom, raw.showRealizations);
-    setIfDefined(set, showStatisticsAtom, raw.showStatistics);
-    setIfDefined(set, showFanchartAtom, raw.showFanchart);
-    setIfDefined(set, showHistoryAtom, raw.showHistory);
-    setIfDefined(set, showObservationsAtom, raw.showObservations);
-    setIfDefined(set, selectedStatisticsAtom, raw.selectedStatistics);
-    setIfDefined(set, showStatisticalMarkersAtom, raw.showStatisticalMarkers);
-    setIfDefined(set, showBarLabelsAtom, raw.showBarLabels);
-    setIfDefined(set, showRealizationPointsAtom, raw.showRealizationPoints);
-    setIfDefined(set, histogramBinsAtom, raw.histogramBins);
-    setIfDefined(set, histogramTypeAtom, raw.histogramType);
-    setIfDefined(set, sharedXAxisAtom, raw.sharedXAxis);
-    setIfDefined(set, sharedYAxisAtom, raw.sharedYAxis);
-    setIfDefined(set, scrollModeAtom, raw.scrollMode);
+    const dataUpdate: Partial<DataConfig> = {};
+    if (raw.plotType !== undefined) dataUpdate.plotType = raw.plotType;
+    if (raw.numSubplots !== undefined) dataUpdate.numSubplots = raw.numSubplots;
+    if (raw.numGroups !== undefined) dataUpdate.numGroups = raw.numGroups;
+    if (raw.numRealizations !== undefined) dataUpdate.numRealizations = raw.numRealizations;
+    if (Object.keys(dataUpdate).length > 0) {
+        set(dataConfigAtom, (prev) => ({ ...prev, ...dataUpdate }));
+    }
+
+    const tsUpdate: Partial<TimeseriesDisplayConfig> = {};
+    if (raw.showRealizations !== undefined) tsUpdate.showRealizations = raw.showRealizations;
+    if (raw.showStatistics !== undefined) tsUpdate.showStatistics = raw.showStatistics;
+    if (raw.showFanchart !== undefined) tsUpdate.showFanchart = raw.showFanchart;
+    if (raw.showHistory !== undefined) tsUpdate.showHistory = raw.showHistory;
+    if (raw.showObservations !== undefined) tsUpdate.showObservations = raw.showObservations;
+    if (raw.selectedStatistics !== undefined) tsUpdate.selectedStatistics = raw.selectedStatistics;
+    if (Object.keys(tsUpdate).length > 0) {
+        set(timeseriesDisplayConfigAtom, (prev) => ({ ...prev, ...tsUpdate }));
+    }
+
+    const histUpdate: Partial<HistogramDisplayConfig> = {};
+    if (raw.histogramBins !== undefined) histUpdate.histogramBins = raw.histogramBins;
+    if (raw.histogramType !== undefined) histUpdate.histogramType = raw.histogramType;
+    if (Object.keys(histUpdate).length > 0) {
+        set(histogramDisplayConfigAtom, (prev) => ({ ...prev, ...histUpdate }));
+    }
+
+    const plUpdate: Partial<PointsAndLabelsConfig> = {};
+    if (raw.showStatisticalMarkers !== undefined) plUpdate.showStatisticalMarkers = raw.showStatisticalMarkers;
+    if (raw.showBarLabels !== undefined) plUpdate.showBarLabels = raw.showBarLabels;
+    if (raw.showRealizationPoints !== undefined) plUpdate.showRealizationPoints = raw.showRealizationPoints;
+    if (Object.keys(plUpdate).length > 0) {
+        set(pointsAndLabelsConfigAtom, (prev) => ({ ...prev, ...plUpdate }));
+    }
+
+    const layoutUpdate: Partial<LayoutConfig> = {};
+    if (raw.sharedXAxis !== undefined) layoutUpdate.sharedXAxis = raw.sharedXAxis;
+    if (raw.sharedYAxis !== undefined) layoutUpdate.sharedYAxis = raw.sharedYAxis;
+    if (raw.scrollMode !== undefined) layoutUpdate.scrollMode = raw.scrollMode;
+    if (Object.keys(layoutUpdate).length > 0) {
+        set(layoutConfigAtom, (prev) => ({ ...prev, ...layoutUpdate }));
+    }
 };

@@ -76,8 +76,8 @@ export {
 export { applyActiveTimestampMarker, createTimestampMarkLine } from "./overlays";
 
 // Hooks
-export { useClickToTimestamp, useClosestMemberTooltip, useHighlightOnHover } from "./hooks";
-export type { HoveredMemberInfo } from "./hooks";
+export { useClickToTimestamp, useMemberInteraction } from "./hooks";
+export type { HoveredMemberInfo, MemberInteractionEvents, MemberInteractionOptions } from "./hooks";
 
 // Statistics & Math Utilities
 export {

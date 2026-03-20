@@ -13,24 +13,11 @@ import { ALL_STATISTIC_KEYS, HistogramType } from "@modules/_shared/eCharts";
 import { PlotType, PLOT_TYPE_LABELS } from "../typesAndEnums";
 
 import {
-    histogramBinsAtom,
-    histogramTypeAtom,
-    numGroupsAtom,
-    numRealizationsAtom,
-    numSubplotsAtom,
-    plotTypeAtom,
-    scrollModeAtom,
-    selectedStatisticsAtom,
-    sharedXAxisAtom,
-    sharedYAxisAtom,
-    showBarLabelsAtom,
-    showFanchartAtom,
-    showHistoryAtom,
-    showObservationsAtom,
-    showRealizationPointsAtom,
-    showRealizationsAtom,
-    showStatisticalMarkersAtom,
-    showStatisticsAtom,
+    dataConfigAtom,
+    histogramDisplayConfigAtom,
+    layoutConfigAtom,
+    pointsAndLabelsConfigAtom,
+    timeseriesDisplayConfigAtom,
 } from "./atoms/baseAtoms";
 
 const plotTypeOptions = Object.values(PlotType).map((pt) => ({ value: pt, label: PLOT_TYPE_LABELS[pt] }));
@@ -48,24 +35,13 @@ const histogramLayoutOptions = [
 ];
 
 export function Settings(): React.ReactNode {
-    const [plotType, setPlotType] = useAtom(plotTypeAtom);
-    const [numSubplots, setNumSubplots] = useAtom(numSubplotsAtom);
-    const [numGroups, setNumGroups] = useAtom(numGroupsAtom);
-    const [numRealizations, setNumRealizations] = useAtom(numRealizationsAtom);
-    const [showRealizations, setShowRealizations] = useAtom(showRealizationsAtom);
-    const [showStatistics, setShowStatistics] = useAtom(showStatisticsAtom);
-    const [showFanchart, setShowFanchart] = useAtom(showFanchartAtom);
-    const [showHistory, setShowHistory] = useAtom(showHistoryAtom);
-    const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
-    const [selectedStatistics, setSelectedStatistics] = useAtom(selectedStatisticsAtom);
-    const [showStatisticalMarkers, setShowStatisticalMarkers] = useAtom(showStatisticalMarkersAtom);
-    const [showBarLabels, setShowBarLabels] = useAtom(showBarLabelsAtom);
-    const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
-    const [histogramBins, setHistogramBins] = useAtom(histogramBinsAtom);
-    const [histogramType, setHistogramType] = useAtom(histogramTypeAtom);
-    const [sharedXAxis, setSharedXAxis] = useAtom(sharedXAxisAtom);
-    const [sharedYAxis, setSharedYAxis] = useAtom(sharedYAxisAtom);
-    const [scrollMode, setScrollMode] = useAtom(scrollModeAtom);
+    const [dataConfig, setDataConfig] = useAtom(dataConfigAtom);
+    const [tsConfig, setTsConfig] = useAtom(timeseriesDisplayConfigAtom);
+    const [histConfig, setHistConfig] = useAtom(histogramDisplayConfigAtom);
+    const [plConfig, setPlConfig] = useAtom(pointsAndLabelsConfigAtom);
+    const [layoutConfig, setLayoutConfig] = useAtom(layoutConfigAtom);
+
+    const { plotType, numSubplots, numGroups, numRealizations } = dataConfig;
 
     const isTimeseries = plotType === PlotType.Timeseries;
     const isHistogram = plotType === PlotType.Histogram;
@@ -75,18 +51,23 @@ export function Settings(): React.ReactNode {
     const supportsRealizationPoints = isHistogram || isPercentileRange || plotType === PlotType.Density;
 
     function handleStatToggle(key: StatisticKey, checked: boolean) {
-        if (checked) {
-            setSelectedStatistics([...selectedStatistics, key]);
-        } else {
-            setSelectedStatistics(selectedStatistics.filter((k) => k !== key));
-        }
+        setTsConfig((prev) => ({
+            ...prev,
+            selectedStatistics: checked
+                ? [...prev.selectedStatistics, key]
+                : prev.selectedStatistics.filter((k) => k !== key),
+        }));
     }
 
     return (
         <div className="flex flex-col gap-2 p-2">
             <CollapsibleGroup title="Plot type" expanded>
                 <Label text="Chart type">
-                    <Dropdown options={plotTypeOptions} value={plotType} onChange={(v) => setPlotType(v as PlotType)} />
+                    <Dropdown
+                        options={plotTypeOptions}
+                        value={plotType}
+                        onChange={(v) => setDataConfig((prev) => ({ ...prev, plotType: v as PlotType }))}
+                    />
                 </Label>
             </CollapsibleGroup>
 
@@ -97,11 +78,17 @@ export function Settings(): React.ReactNode {
                         max={20}
                         step={1}
                         value={numSubplots}
-                        onChange={(_, v) => setNumSubplots(v as number)}
+                        onChange={(_, v) => setDataConfig((prev) => ({ ...prev, numSubplots: v as number }))}
                     />
                 </Label>
                 <Label text={`Groups: ${numGroups}`}>
-                    <Slider min={1} max={6} step={1} value={numGroups} onChange={(_, v) => setNumGroups(v as number)} />
+                    <Slider
+                        min={1}
+                        max={6}
+                        step={1}
+                        value={numGroups}
+                        onChange={(_, v) => setDataConfig((prev) => ({ ...prev, numGroups: v as number }))}
+                    />
                 </Label>
                 <Label text={`Realizations: ${numRealizations}`}>
                     <Slider
@@ -109,17 +96,17 @@ export function Settings(): React.ReactNode {
                         max={200}
                         step={10}
                         value={numRealizations}
-                        onChange={(_, v) => setNumRealizations(v as number)}
+                        onChange={(_, v) => setDataConfig((prev) => ({ ...prev, numRealizations: v as number }))}
                     />
                 </Label>
                 {isHistogram && (
-                    <Label text={`Bins: ${histogramBins}`}>
+                    <Label text={`Bins: ${histConfig.histogramBins}`}>
                         <Slider
                             min={5}
                             max={40}
                             step={1}
-                            value={histogramBins}
-                            onChange={(_, v) => setHistogramBins(v as number)}
+                            value={histConfig.histogramBins}
+                            onChange={(_, v) => setHistConfig((prev) => ({ ...prev, histogramBins: v as number }))}
                         />
                     </Label>
                 )}
@@ -130,8 +117,8 @@ export function Settings(): React.ReactNode {
                     <Label text="Layout">
                         <Dropdown
                             options={histogramLayoutOptions}
-                            value={histogramType}
-                            onChange={(v) => setHistogramType(v as HistogramType)}
+                            value={histConfig.histogramType}
+                            onChange={(v) => setHistConfig((prev) => ({ ...prev, histogramType: v as HistogramType }))}
                         />
                     </Label>
                 </CollapsibleGroup>
@@ -141,33 +128,37 @@ export function Settings(): React.ReactNode {
                 <CollapsibleGroup title="Timeseries display" expanded>
                     <Checkbox
                         label="Show realizations"
-                        checked={showRealizations}
-                        onChange={(_, c) => setShowRealizations(c)}
+                        checked={tsConfig.showRealizations}
+                        onChange={(_, c) => setTsConfig((prev) => ({ ...prev, showRealizations: c }))}
                     />
-                    <Checkbox label="Show history" checked={showHistory} onChange={(_, c) => setShowHistory(c)} />
+                    <Checkbox
+                        label="Show history"
+                        checked={tsConfig.showHistory}
+                        onChange={(_, c) => setTsConfig((prev) => ({ ...prev, showHistory: c }))}
+                    />
                     <Checkbox
                         label="Show observations"
-                        checked={showObservations}
-                        onChange={(_, c) => setShowObservations(c)}
+                        checked={tsConfig.showObservations}
+                        onChange={(_, c) => setTsConfig((prev) => ({ ...prev, showObservations: c }))}
                     />
                     <Checkbox
                         label="Show statistics"
-                        checked={showStatistics}
-                        onChange={(_, c) => setShowStatistics(c)}
+                        checked={tsConfig.showStatistics}
+                        onChange={(_, c) => setTsConfig((prev) => ({ ...prev, showStatistics: c }))}
                     />
                     <Checkbox
                         label="Show fanchart"
-                        checked={showFanchart}
-                        onChange={(_, c) => setShowFanchart(c)}
-                        disabled={!showStatistics}
+                        checked={tsConfig.showFanchart}
+                        onChange={(_, c) => setTsConfig((prev) => ({ ...prev, showFanchart: c }))}
+                        disabled={!tsConfig.showStatistics}
                     />
-                    {showStatistics && (
+                    {tsConfig.showStatistics && (
                         <div className="ml-4 flex flex-col gap-1">
                             {statisticOptions.map((opt) => (
                                 <Checkbox
                                     key={opt.value}
                                     label={opt.label}
-                                    checked={selectedStatistics.includes(opt.value)}
+                                    checked={tsConfig.selectedStatistics.includes(opt.value)}
                                     onChange={(_, c) => handleStatToggle(opt.value, c)}
                                 />
                             ))}
@@ -181,34 +172,42 @@ export function Settings(): React.ReactNode {
                     {supportsStatisticalMarkers && (
                         <Checkbox
                             label="Show statistical markers"
-                            checked={showStatisticalMarkers}
-                            onChange={(_, c) => setShowStatisticalMarkers(c)}
+                            checked={plConfig.showStatisticalMarkers}
+                            onChange={(_, c) => setPlConfig((prev) => ({ ...prev, showStatisticalMarkers: c }))}
                         />
                     )}
                     {supportsBarLabels && (
                         <Checkbox
                             label="Show bar labels"
-                            checked={showBarLabels}
-                            onChange={(_, c) => setShowBarLabels(c)}
+                            checked={plConfig.showBarLabels}
+                            onChange={(_, c) => setPlConfig((prev) => ({ ...prev, showBarLabels: c }))}
                         />
                     )}
                     {supportsRealizationPoints && (
                         <Checkbox
                             label="Show realization points"
-                            checked={showRealizationPoints}
-                            onChange={(_, c) => setShowRealizationPoints(c)}
+                            checked={plConfig.showRealizationPoints}
+                            onChange={(_, c) => setPlConfig((prev) => ({ ...prev, showRealizationPoints: c }))}
                         />
                     )}
                 </CollapsibleGroup>
             )}
 
             <CollapsibleGroup title="Layout" expanded>
-                <Checkbox label="Shared X axis" checked={sharedXAxis} onChange={(_, c) => setSharedXAxis(c)} />
-                <Checkbox label="Shared Y axis" checked={sharedYAxis} onChange={(_, c) => setSharedYAxis(c)} />
+                <Checkbox
+                    label="Shared X axis"
+                    checked={layoutConfig.sharedXAxis}
+                    onChange={(_, c) => setLayoutConfig((prev) => ({ ...prev, sharedXAxis: c }))}
+                />
+                <Checkbox
+                    label="Shared Y axis"
+                    checked={layoutConfig.sharedYAxis}
+                    onChange={(_, c) => setLayoutConfig((prev) => ({ ...prev, sharedYAxis: c }))}
+                />
                 <Checkbox
                     label="Scroll mode (large charts)"
-                    checked={scrollMode}
-                    onChange={(_, c) => setScrollMode(c)}
+                    checked={layoutConfig.scrollMode}
+                    onChange={(_, c) => setLayoutConfig((prev) => ({ ...prev, scrollMode: c }))}
                 />
             </CollapsibleGroup>
         </div>

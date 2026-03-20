@@ -7,12 +7,7 @@ import type { ModuleViewProps } from "@framework/Module";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { HoveredMemberInfo } from "@modules/_shared/eCharts";
-import {
-    computeSubplotGridLayout,
-    useClickToTimestamp,
-    useClosestMemberTooltip,
-    useHighlightOnHover,
-} from "@modules/_shared/eCharts";
+import { computeSubplotGridLayout, useClickToTimestamp, useMemberInteraction } from "@modules/_shared/eCharts";
 import { useEChartsViewState } from "@modules/_shared/eCharts/hooks/useEchartsViewState";
 
 import type { Interfaces } from "../interfaces";
@@ -39,11 +34,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const { handleDataZoom } = useEChartsViewState(setViewState);
 
     const chartModel = useDemoPlotModel(viewContext, containerSize, activeTimestampUtcMs, viewState);
-    const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
-    const numSubplots = viewContext.useSettingsToViewInterfaceValue("numSubplots");
-    const numGroups = viewContext.useSettingsToViewInterfaceValue("numGroups");
-    const numRealizations = viewContext.useSettingsToViewInterfaceValue("numRealizations");
-    const scrollMode = viewContext.useSettingsToViewInterfaceValue("scrollMode");
+    const dataConfig = viewContext.useSettingsToViewInterfaceValue("dataConfig");
+    const layoutConfig = viewContext.useSettingsToViewInterfaceValue("layoutConfig");
+
+    const { plotType, numSubplots, numGroups, numRealizations } = dataConfig;
+    const { scrollMode } = layoutConfig;
 
     viewContext.setInstanceTitle(
         `${PLOT_TYPE_LABELS[plotType]} (Plots: ${numSubplots} Groups: ${numGroups} Reals: ${numRealizations})`,
@@ -53,29 +48,28 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         setHoveredReal({ realization: info?.memberId ?? null, ensemble: info?.groupKey ?? null });
     }, []);
 
-    const hoverEvents = useHighlightOnHover(chartRef, chartModel.enableLinkedHover, {
-        onHoveredMemberChange: handleHoveredRealChange,
-    });
+    const memberEvents = useMemberInteraction(
+        chartRef,
+        chartModel.enableLinkedHover || chartModel.enableClosestMemberTooltip,
+        chartModel.echartsOptions,
+        {
+            onHoveredMemberChange: handleHoveredRealChange,
+            memberLabel: chartModel.memberLabel,
+            timestamps: chartModel.enableClosestMemberTooltip ? chartModel.timestamps : undefined,
+        },
+    );
     const onChartEvents = React.useMemo(() => {
         return {
-            ...hoverEvents,
+            ...memberEvents,
             datazoom: handleDataZoom,
         };
-    }, [hoverEvents, handleDataZoom]);
+    }, [memberEvents, handleDataZoom]);
     useClickToTimestamp(
         chartRef,
         chartModel.timestamps,
         activeTimestampUtcMs,
         setActiveTimestampUtcMs,
         chartModel.echartsOptions,
-    );
-
-    useClosestMemberTooltip(
-        chartRef,
-        chartModel.enableClosestMemberTooltip,
-        chartModel.timestamps,
-        chartModel.echartsOptions,
-        { memberLabel: chartModel.memberLabel },
     );
     const layout = computeSubplotGridLayout(numSubplots);
     const chartHeight = scrollMode ? layout.numRows * ROW_HEIGHT_PX : "100%";

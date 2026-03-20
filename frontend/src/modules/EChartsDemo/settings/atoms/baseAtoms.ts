@@ -5,24 +5,68 @@ import type { StatisticKey } from "@modules/_shared/eCharts";
 
 import { PlotType } from "../../typesAndEnums";
 
-export const plotTypeAtom = atom<PlotType>(PlotType.Timeseries);
-export const numSubplotsAtom = atom<number>(1);
-export const numGroupsAtom = atom<number>(2);
-export const numRealizationsAtom = atom<number>(50);
+export type DataConfig = {
+    plotType: PlotType;
+    numSubplots: number;
+    numGroups: number;
+    numRealizations: number;
+};
 
-export const showRealizationsAtom = atom<boolean>(true);
-export const showStatisticsAtom = atom<boolean>(false);
-export const showFanchartAtom = atom<boolean>(false);
-export const showHistoryAtom = atom<boolean>(false);
-export const showObservationsAtom = atom<boolean>(false);
-export const selectedStatisticsAtom = atom<StatisticKey[]>(["mean", "p10", "p90"]);
+export type TimeseriesDisplayConfig = {
+    showRealizations: boolean;
+    showStatistics: boolean;
+    showFanchart: boolean;
+    showHistory: boolean;
+    showObservations: boolean;
+    selectedStatistics: StatisticKey[];
+};
 
-export const showStatisticalMarkersAtom = atom<boolean>(true);
-export const showBarLabelsAtom = atom<boolean>(false);
-export const showRealizationPointsAtom = atom<boolean>(false);
-export const histogramBinsAtom = atom<number>(10);
-export const histogramTypeAtom = atom<HistogramType>(HistogramType.Overlay);
+export type HistogramDisplayConfig = {
+    histogramBins: number;
+    histogramType: HistogramType;
+};
 
-export const sharedXAxisAtom = atom<boolean>(false);
-export const sharedYAxisAtom = atom<boolean>(false);
-export const scrollModeAtom = atom<boolean>(false);
+export type PointsAndLabelsConfig = {
+    showStatisticalMarkers: boolean;
+    showBarLabels: boolean;
+    showRealizationPoints: boolean;
+};
+
+export type LayoutConfig = {
+    sharedXAxis: boolean;
+    sharedYAxis: boolean;
+    scrollMode: boolean;
+};
+
+export const dataConfigAtom = atom<DataConfig>({
+    plotType: PlotType.Timeseries,
+    numSubplots: 1,
+    numGroups: 2,
+    numRealizations: 50,
+});
+
+export const timeseriesDisplayConfigAtom = atom<TimeseriesDisplayConfig>({
+    showRealizations: true,
+    showStatistics: false,
+    showFanchart: false,
+    showHistory: false,
+    showObservations: false,
+    selectedStatistics: ["mean", "p10", "p90"],
+});
+
+export const histogramDisplayConfigAtom = atom<HistogramDisplayConfig>({
+    histogramBins: 10,
+    histogramType: HistogramType.Overlay,
+});
+
+export const pointsAndLabelsConfigAtom = atom<PointsAndLabelsConfig>({
+    showStatisticalMarkers: true,
+    showBarLabels: false,
+    showRealizationPoints: false,
+});
+
+export const layoutConfigAtom = atom<LayoutConfig>({
+    sharedXAxis: false,
+    sharedYAxis: false,
+    scrollMode: false,
+});
