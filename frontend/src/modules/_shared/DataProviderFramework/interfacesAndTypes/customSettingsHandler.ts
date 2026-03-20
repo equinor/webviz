@@ -25,7 +25,6 @@ export function isSettingEnabled(enabled: boolean | { enabled: false; reason: st
     return enabled === true;
 }
 
-export interface UpdateFunc<
 type MaybePromise<T> = T | Promise<T>;
 
 /**
