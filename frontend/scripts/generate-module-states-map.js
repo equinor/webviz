@@ -24,7 +24,7 @@ function writeViolationsFile(violations, outPath) {
         `//\n` +
         `${lines}\n` +
         `//\n` +
-        `// Expected: src/modules/<Module>/(settings|view)/persistence.ts\n\n` +
+        `// Expected: src/modules/<Module>/persistence.ts or src/modules/<Module>/(settings|view)/persistence.ts\n\n` +
         `export type ModuleSerializedStateMap = never;\n`;
 
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
