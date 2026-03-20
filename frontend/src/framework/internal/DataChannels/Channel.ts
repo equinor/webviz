@@ -26,6 +26,7 @@ export class Channel implements Transmitter {
     private _manager: ChannelManager;
     private _contents: ChannelContent[] = [];
 
+    private _isOpen = true;
     private _receivers: Receiver[] = [];
     private _subscribersMap: Map<ChannelNotificationTopic, Set<() => void>> = new Map();
 
@@ -63,7 +64,9 @@ export class Channel implements Transmitter {
     }
 
     connectReceiver(receiver: Receiver): void {
-        this._receivers.push(receiver);
+        if (!this._isOpen) throw new Error("Cannot connect to a closed channel");
+
+        this._receivers = [...this._receivers, receiver];
         this.notifySubscribers(ChannelNotificationTopic.RECEIVERS_ARRAY_CHANGED);
     }
 
@@ -74,6 +77,9 @@ export class Channel implements Transmitter {
 
     closeChannel() {
         this.notifyChannelAboutToBeRemoved();
+        this.notifySubscribers(ChannelNotificationTopic.RECEIVERS_ARRAY_CHANGED);
+        this._receivers = [];
+        this._isOpen = false;
     }
 
     private notifyChannelContentsArrayChange(): void {
