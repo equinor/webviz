@@ -27,9 +27,6 @@ import type {
     GetCasesData_api,
     GetCasesErrors_api,
     GetCasesResponses_api,
-    GetCrosslineSliceData_api,
-    GetCrosslineSliceErrors_api,
-    GetCrosslineSliceResponses_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataErrors_api,
     GetDeltaEnsembleRealizationsVectorDataResponses_api,
@@ -42,9 +39,6 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataErrors_api,
     GetDeltaSurfaceDataResponses_api,
-    GetDepthSliceData_api,
-    GetDepthSliceErrors_api,
-    GetDepthSliceResponses_api,
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersErrors_api,
     GetDrilledWellboreHeadersResponses_api,
@@ -74,9 +68,9 @@ import type {
     GetInjectionDataData_api,
     GetInjectionDataErrors_api,
     GetInjectionDataResponses_api,
-    GetInlineSliceData_api,
-    GetInlineSliceErrors_api,
-    GetInlineSliceResponses_api,
+    GetInplaceTableDefinitionsData_api,
+    GetInplaceTableDefinitionsErrors_api,
+    GetInplaceTableDefinitionsResponses_api,
     GetLogCurveDataData_api,
     GetLogCurveDataErrors_api,
     GetLogCurveDataResponses_api,
@@ -104,9 +98,9 @@ import type {
     GetProductionDataData_api,
     GetProductionDataErrors_api,
     GetProductionDataResponses_api,
-    GetRealizationDataData_api,
-    GetRealizationDataErrors_api,
-    GetRealizationDataResponses_api,
+    GetPvtTableDataData_api,
+    GetPvtTableDataErrors_api,
+    GetPvtTableDataResponses_api,
     GetRealizationFlowNetworkData_api,
     GetRealizationFlowNetworkErrors_api,
     GetRealizationFlowNetworkResponses_api,
@@ -116,9 +110,12 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataErrors_api,
     GetRealizationsVectorDataResponses_api,
-    GetRealizationVectorAtTimestampData_api,
-    GetRealizationVectorAtTimestampErrors_api,
-    GetRealizationVectorAtTimestampResponses_api,
+    GetRftRealizationDataData_api,
+    GetRftRealizationDataErrors_api,
+    GetRftRealizationDataResponses_api,
+    GetRftTableDefinitionData_api,
+    GetRftTableDefinitionErrors_api,
+    GetRftTableDefinitionResponses_api,
     GetSeismicCubeMetaListData_api,
     GetSeismicCubeMetaListErrors_api,
     GetSeismicCubeMetaListResponses_api,
@@ -155,18 +152,6 @@ import type {
     GetSurfaceDataData_api,
     GetSurfaceDataErrors_api,
     GetSurfaceDataResponses_api,
-    GetTableDataData_api,
-    GetTableDataErrors_api,
-    GetTableDataResponses_api,
-    GetTableDefinitionData_api,
-    GetTableDefinitionErrors_api,
-    GetTableDefinitionResponses_api,
-    GetTableDefinitionsData_api,
-    GetTableDefinitionsErrors_api,
-    GetTableDefinitionsResponses_api,
-    GetTimestampsListData_api,
-    GetTimestampsListErrors_api,
-    GetTimestampsListResponses_api,
     GetUserInfoData_api,
     GetUserInfoErrors_api,
     GetUserInfoResponses_api,
@@ -215,12 +200,12 @@ import type {
     LoginRouteData_api,
     LoginRouteErrors_api,
     LoginRouteResponses_api,
-    PostGetAggregatedPerRealizationTableDataData_api,
-    PostGetAggregatedPerRealizationTableDataErrors_api,
-    PostGetAggregatedPerRealizationTableDataResponses_api,
-    PostGetAggregatedStatisticalTableDataData_api,
-    PostGetAggregatedStatisticalTableDataErrors_api,
-    PostGetAggregatedStatisticalTableDataResponses_api,
+    PostGetAggregatedPerRealizationInplaceTableDataData_api,
+    PostGetAggregatedPerRealizationInplaceTableDataErrors_api,
+    PostGetAggregatedPerRealizationInplaceTableDataResponses_api,
+    PostGetAggregatedStatisticalInplaceTableDataData_api,
+    PostGetAggregatedStatisticalInplaceTableDataErrors_api,
+    PostGetAggregatedStatisticalInplaceTableDataResponses_api,
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionErrors_api,
     PostGetPolylineIntersectionResponses_api,
@@ -233,6 +218,9 @@ import type {
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionErrors_api,
     PostGetSurfaceIntersectionResponses_api,
+    PostGetWellTrajectoriesFormationSegmentsData_api,
+    PostGetWellTrajectoriesFormationSegmentsErrors_api,
+    PostGetWellTrajectoriesFormationSegmentsResponses_api,
     PostLogoutData_api,
     PostLogoutResponses_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -401,25 +389,6 @@ export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends bool
     });
 
 /**
- * Get Timestamps List
- *
- * Get the intersection of available timestamps.
- * Note that when resampling_frequency is None, the pure intersection of the
- * stored raw dates will be returned. Thus the returned list of dates will not include
- * dates from long running realizations.
- * For other resampling frequencies, the date range will be expanded to cover the entire
- * time range of all the requested realizations before computing the resampled dates.
- */
-export const getTimestampsList = <ThrowOnError extends boolean = false>(
-    options: Options<GetTimestampsListData_api, ThrowOnError>,
-) =>
-    (options.client ?? client).get<GetTimestampsListResponses_api, GetTimestampsListErrors_api, ThrowOnError>({
-        responseType: "json",
-        url: "/timeseries/timestamps_list/",
-        ...options,
-    });
-
-/**
  * Get Historical Vector Data
  */
 export const getHistoricalVectorData = <ThrowOnError extends boolean = false>(
@@ -494,53 +463,41 @@ export const getStatisticalVectorDataPerSensitivity = <ThrowOnError extends bool
     });
 
 /**
- * Get Realization Vector At Timestamp
- */
-export const getRealizationVectorAtTimestamp = <ThrowOnError extends boolean = false>(
-    options: Options<GetRealizationVectorAtTimestampData_api, ThrowOnError>,
-) =>
-    (options.client ?? client).get<
-        GetRealizationVectorAtTimestampResponses_api,
-        GetRealizationVectorAtTimestampErrors_api,
-        ThrowOnError
-    >({
-        responseType: "json",
-        url: "/timeseries/realization_vector_at_timestamp/",
-        ...options,
-    });
-
-/**
- * Get Table Definitions
+ * Get Inplace Table Definitions
  *
  * Get the inplace volumes tables definitions for a given ensemble.
  */
-export const getTableDefinitions = <ThrowOnError extends boolean = false>(
-    options: Options<GetTableDefinitionsData_api, ThrowOnError>,
+export const getInplaceTableDefinitions = <ThrowOnError extends boolean = false>(
+    options: Options<GetInplaceTableDefinitionsData_api, ThrowOnError>,
 ) =>
-    (options.client ?? client).get<GetTableDefinitionsResponses_api, GetTableDefinitionsErrors_api, ThrowOnError>({
+    (options.client ?? client).get<
+        GetInplaceTableDefinitionsResponses_api,
+        GetInplaceTableDefinitionsErrors_api,
+        ThrowOnError
+    >({
         responseType: "json",
-        url: "/inplace_volumes/table_definitions/",
+        url: "/inplace_volumes/inplace_table_definitions/",
         ...options,
     });
 
 /**
- * Post Get Aggregated Per Realization Table Data
+ * Post Get Aggregated Per Realization Inplace Table Data
  *
  * Get aggregated inplace volume data for a given table with data per realization based on requested results and categories/index filter.
  *
  * Note: This endpoint is a post endpoint because the list of indices with values can be quite large and may exceed the query string limit.
  * As the endpoint is post, the indices with values object is kept for convenience.
  */
-export const postGetAggregatedPerRealizationTableData = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetAggregatedPerRealizationTableDataData_api, ThrowOnError>,
+export const postGetAggregatedPerRealizationInplaceTableData = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetAggregatedPerRealizationInplaceTableDataData_api, ThrowOnError>,
 ) =>
     (options.client ?? client).post<
-        PostGetAggregatedPerRealizationTableDataResponses_api,
-        PostGetAggregatedPerRealizationTableDataErrors_api,
+        PostGetAggregatedPerRealizationInplaceTableDataResponses_api,
+        PostGetAggregatedPerRealizationInplaceTableDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
-        url: "/inplace_volumes/get_aggregated_per_realization_table_data/",
+        url: "/inplace_volumes/get_aggregated_per_realization_inplace_table_data/",
         ...options,
         headers: {
             "Content-Type": "application/json",
@@ -549,23 +506,23 @@ export const postGetAggregatedPerRealizationTableData = <ThrowOnError extends bo
     });
 
 /**
- * Post Get Aggregated Statistical Table Data
+ * Post Get Aggregated Statistical Inplace Table Data
  *
  * Get statistical inplace volumes data across selected realizations for a given table based on requested results and categories/index filter.
  *
  * Note: This endpoint is a post endpoint because the list of indices with values can be quite large and may exceed the query string limit.
  * As the endpoint is post, the indices with values object is kept for convenience.
  */
-export const postGetAggregatedStatisticalTableData = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetAggregatedStatisticalTableDataData_api, ThrowOnError>,
+export const postGetAggregatedStatisticalInplaceTableData = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetAggregatedStatisticalInplaceTableDataData_api, ThrowOnError>,
 ) =>
     (options.client ?? client).post<
-        PostGetAggregatedStatisticalTableDataResponses_api,
-        PostGetAggregatedStatisticalTableDataErrors_api,
+        PostGetAggregatedStatisticalInplaceTableDataResponses_api,
+        PostGetAggregatedStatisticalInplaceTableDataErrors_api,
         ThrowOnError
     >({
         responseType: "json",
-        url: "/inplace_volumes/get_aggregated_statistical_table_data/",
+        url: "/inplace_volumes/get_aggregated_statistical_inplace_table_data/",
         ...options,
         headers: {
             "Content-Type": "application/json",
@@ -641,6 +598,40 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/surface/surface_data",
         ...options,
+    });
+
+/**
+ * Post Get Well Trajectories Formation Segments
+ *
+ * Get well trajectory formation segments.
+ *
+ * Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
+ * formation (area between two surfaces in depth). If bottom surface is not provided, the formation
+ * is considered to extend down to the end of the well trajectory, i.e. end of well trajectory is
+ * used as lower bound for formation.
+ *
+ * For each well trajectory, the segments where the well is within the formation are calculated and
+ * returned. Each segment contains the measured depth (md) values where the well enters and exits
+ * the formation.
+ *
+ * NOTE: Expecting depth surfaces, no verification is done to ensure that the surfaces are indeed
+ * depth surfaces.
+ */
+export const postGetWellTrajectoriesFormationSegments = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).post<
+        PostGetWellTrajectoriesFormationSegmentsResponses_api,
+        PostGetWellTrajectoriesFormationSegmentsErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/surface/get_well_trajectories_formation_segments",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
     });
 
 /**
@@ -855,16 +846,16 @@ export const getInjectionData = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Get Table Data
+ * Get Pvt Table Data
  *
  * Get pvt table data for a given Sumo ensemble and realization
  */
-export const getTableData = <ThrowOnError extends boolean = false>(
-    options: Options<GetTableDataData_api, ThrowOnError>,
+export const getPvtTableData = <ThrowOnError extends boolean = false>(
+    options: Options<GetPvtTableDataData_api, ThrowOnError>,
 ) =>
-    (options.client ?? client).get<GetTableDataResponses_api, GetTableDataErrors_api, ThrowOnError>({
+    (options.client ?? client).get<GetPvtTableDataResponses_api, GetPvtTableDataErrors_api, ThrowOnError>({
         responseType: "json",
-        url: "/pvt/table_data/",
+        url: "/pvt/pvt_table_data/",
         ...options,
     });
 
@@ -1116,48 +1107,6 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
     );
 
 /**
- * Get Inline Slice
- *
- * Get a seismic inline from a seismic cube.
- */
-export const getInlineSlice = <ThrowOnError extends boolean = false>(
-    options: Options<GetInlineSliceData_api, ThrowOnError>,
-) =>
-    (options.client ?? client).get<GetInlineSliceResponses_api, GetInlineSliceErrors_api, ThrowOnError>({
-        responseType: "json",
-        url: "/seismic/get_inline_slice/",
-        ...options,
-    });
-
-/**
- * Get Crossline Slice
- *
- * Get a seismic crossline from a seismic cube.
- */
-export const getCrosslineSlice = <ThrowOnError extends boolean = false>(
-    options: Options<GetCrosslineSliceData_api, ThrowOnError>,
-) =>
-    (options.client ?? client).get<GetCrosslineSliceResponses_api, GetCrosslineSliceErrors_api, ThrowOnError>({
-        responseType: "json",
-        url: "/seismic/get_crossline_slice/",
-        ...options,
-    });
-
-/**
- * Get Depth Slice
- *
- * Get a seismic depth slice from a seismic cube.
- */
-export const getDepthSlice = <ThrowOnError extends boolean = false>(
-    options: Options<GetDepthSliceData_api, ThrowOnError>,
-) =>
-    (options.client ?? client).get<GetDepthSliceResponses_api, GetDepthSliceErrors_api, ThrowOnError>({
-        responseType: "json",
-        url: "/seismic/get_depth_slice/",
-        ...options,
-    });
-
-/**
  * Get Seismic Slices
  *
  * Get a seismic depth slice from a seismic cube.
@@ -1262,31 +1211,37 @@ export const getObservations = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Get Table Definition
+ * Get Rft Table Definition
+ *
+ * Get the RFT table definition for a given ensemble.
  */
-export const getTableDefinition = <ThrowOnError extends boolean = false>(
-    options: Options<GetTableDefinitionData_api, ThrowOnError>,
+export const getRftTableDefinition = <ThrowOnError extends boolean = false>(
+    options: Options<GetRftTableDefinitionData_api, ThrowOnError>,
 ) =>
-    (options.client ?? client).get<GetTableDefinitionResponses_api, GetTableDefinitionErrors_api, ThrowOnError>({
+    (options.client ?? client).get<GetRftTableDefinitionResponses_api, GetRftTableDefinitionErrors_api, ThrowOnError>({
         responseType: "json",
-        url: "/rft/table_definition",
+        url: "/rft/rft_table_definition",
         ...options,
     });
 
 /**
- * Get Realization Data
+ * Get Rft Realization Data
+ *
+ * Get a list of RFT data per realization, for a given well and response.
  */
-export const getRealizationData = <ThrowOnError extends boolean = false>(
-    options: Options<GetRealizationDataData_api, ThrowOnError>,
+export const getRftRealizationData = <ThrowOnError extends boolean = false>(
+    options: Options<GetRftRealizationDataData_api, ThrowOnError>,
 ) =>
-    (options.client ?? client).get<GetRealizationDataResponses_api, GetRealizationDataErrors_api, ThrowOnError>({
+    (options.client ?? client).get<GetRftRealizationDataResponses_api, GetRftRealizationDataErrors_api, ThrowOnError>({
         responseType: "json",
-        url: "/rft/realization_data",
+        url: "/rft/rft_realization_data",
         ...options,
     });
 
 /**
  * Get Vfp Table Names
+ *
+ * Get the available VFP table names for a given ensemble and realization.
  */
 export const getVfpTableNames = <ThrowOnError extends boolean = false>(
     options: Options<GetVfpTableNamesData_api, ThrowOnError>,
@@ -1299,6 +1254,8 @@ export const getVfpTableNames = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Vfp Table
+ *
+ * Get the VFP table for a given ensemble, realization and table name.
  */
 export const getVfpTable = <ThrowOnError extends boolean = false>(
     options: Options<GetVfpTableData_api, ThrowOnError>,

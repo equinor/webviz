@@ -8,17 +8,11 @@ import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/Workben
 import { Tag } from "@lib/components/Tag";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
+import type { EnsemblePerRealizationResponse } from "@modules/_shared/SensitivityProcessing/types";
 import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
-export interface EnsembleResponse {
-    realizations: number[];
-    values: number[];
-    name: string;
-    unit: string;
-}
-
 export interface ResponseChannelData {
-    ensembleResponse: EnsembleResponse | null;
+    ensemblePerRealResponse: EnsemblePerRealizationResponse | null;
     channelEnsemble: RegularEnsemble | null;
     displayName: string | null;
     warningContent: React.ReactNode | null;
@@ -38,7 +32,7 @@ export function useResponseChannel(
     const hasChannel = !!responseReceiver.channel;
     if (!hasChannel) {
         return {
-            ensembleResponse: null,
+            ensemblePerRealResponse: null,
             channelEnsemble: null,
             displayName: null,
             warningContent: (
@@ -56,7 +50,7 @@ export function useResponseChannel(
 
     if (!hasChannelContents) {
         return {
-            ensembleResponse: null,
+            ensemblePerRealResponse: null,
             channelEnsemble: null,
             displayName: responseReceiver.channel?.displayName ?? null,
             warningContent: (
@@ -75,7 +69,7 @@ export function useResponseChannel(
     if (!channelEnsemble || channelEnsemble instanceof DeltaEnsemble) {
         const ensembleType = !channelEnsemble ? "Invalid" : "Delta";
         return {
-            ensembleResponse: null,
+            ensemblePerRealResponse: null,
             channelEnsemble: null,
             displayName: responseReceiver.channel?.displayName ?? null,
             warningContent: (
@@ -93,7 +87,7 @@ export function useResponseChannel(
         realizations.push(el.key as number);
         values.push(el.value as number);
     });
-    const ensembleResponse = {
+    const ensemblePerRealResponse: EnsemblePerRealizationResponse = {
         realizations,
         values,
         name: content.displayName,
@@ -101,7 +95,7 @@ export function useResponseChannel(
     };
 
     return {
-        ensembleResponse,
+        ensemblePerRealResponse,
         channelEnsemble,
         displayName: responseReceiver.channel?.displayName ?? null,
         warningContent: null,

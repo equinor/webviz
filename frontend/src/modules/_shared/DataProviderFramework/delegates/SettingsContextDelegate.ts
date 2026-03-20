@@ -66,7 +66,13 @@ export class SettingsContextDelegate<
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
-    private _customSettingsHandler: CustomSettingsHandler<TSettings, TStoredData, TSettingTypes, TSettingKey>;
+    private _customSettingsHandler: CustomSettingsHandler<
+        TSettings,
+        TStoredData,
+        TSettingTypes,
+        TSettingKey,
+        TStoredDataKey
+    >;
     private _dataProviderManager: DataProviderManager;
     private _settings: {
         [K in TSettingKey]: SettingManager<K>;
@@ -285,13 +291,17 @@ export class SettingsContextDelegate<
         return serializedSettings;
     }
 
-    deserializeSettings(serializedSettings: SerializedSettingsState<TSettings, TSettingKey>): void {
+    deserializeSettings(
+        serializedSettings: SerializedSettingsState<TSettings, TSettingKey>,
+        reportError: (errorMsg: string) => void,
+    ): void {
         for (const [key, value] of Object.entries(serializedSettings)) {
             const settingDelegate = this._settings[key as TSettingKey];
 
             // Temporary skip undefined settingsDelegate (await persistence versioning)
             // - Setting might have been removed since creation of the serialized state (e.g. session).
             if (settingDelegate === undefined) {
+                reportError(`Setting with key '${key}' does not exist anymore. Cannot apply persisted value.`);
                 continue;
             }
 

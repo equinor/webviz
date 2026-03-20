@@ -1,7 +1,7 @@
 import type React from "react";
 
 import { getSessionsMetadataOptions, SortDirection_api, SessionSortBy_api, type SessionMetadata_api } from "@api";
-import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import { buildSessionUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import { timeAgo } from "@lib/utils/dates";
@@ -14,11 +14,11 @@ export type RecentSessionsProps = {
 };
 
 export function RecentSessions(props: RecentSessionsProps) {
-    const [, setShowOverviewDialog] = useGuiState(
+    const setShowOverviewDialog = useSetGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogOpen,
     );
-    const [, setOverviewContentMode] = useGuiState(
+    const setOverviewContentMode = useSetGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogMode,
     );

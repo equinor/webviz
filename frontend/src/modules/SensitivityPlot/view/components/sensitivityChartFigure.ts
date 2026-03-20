@@ -3,8 +3,8 @@ import type { PlotData } from "plotly.js";
 import { SensitivityType } from "@framework/EnsembleSensitivities";
 import { makeSubplots, type Figure } from "@modules/_shared/Figure";
 import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
+import type { SensitivityResponseDataset, SensitivityResponse } from "@modules/_shared/SensitivityProcessing";
 
-import type { SensitivityResponseDataset, SensitivityResponse } from "../../../_shared/SensitivityProcessing/types";
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 import {
     createHighBarTrace,

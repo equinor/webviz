@@ -12,9 +12,20 @@ import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "./utils";
 
 export type SettingAttributes = {
     visible: boolean;
-    enabled: boolean;
+    enabled: boolean | { enabled: false; reason: string };
 };
 
+export function isEnabledObject(
+    enabled: boolean | { enabled: false; reason: string },
+): enabled is { enabled: false; reason: string } {
+    return typeof enabled === "object" && "enabled" in enabled && "reason" in enabled;
+}
+
+export function isSettingEnabled(enabled: boolean | { enabled: false; reason: string }): enabled is true {
+    return enabled === true;
+}
+
+export interface UpdateFunc<
 type MaybePromise<T> = T | Promise<T>;
 
 /**

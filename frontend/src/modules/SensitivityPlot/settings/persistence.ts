@@ -1,7 +1,7 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
-import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing/types";
+import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 
 import { DisplayComponentType, SensitivityScaling } from "../typesAndEnums";
 import { ColorBy } from "../view/components/sensitivityChartFigure";

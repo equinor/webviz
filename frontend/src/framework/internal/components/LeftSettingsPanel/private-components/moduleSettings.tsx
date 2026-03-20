@@ -1,6 +1,5 @@
 import type React from "react";
 
-import { Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
@@ -26,8 +25,8 @@ import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
-    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
+    moduleInstance: ModuleInstance<any, any>;
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
@@ -46,8 +45,6 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         props.moduleInstance,
         ModuleInstanceTopic.HAS_INVALID_PERSISTED_SETTINGS,
     );
-
-    const isSerializable = props.moduleInstance.getModule().canBeSerialized();
 
     if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;
@@ -110,36 +107,29 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         }
 
         return (
-            <>
-                {!isSerializable && (
-                    <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
-                        <strong>Note:</strong> This module cannot be persisted yet. State changes will not be saved.
-                    </div>
-                )}
-                <DebugProfiler
-                    id={`${props.moduleInstance.getId()}-settings`}
-                    source={StatusSource.Settings}
-                    statusController={props.moduleInstance.getStatusController()}
-                    guiMessageBroker={props.workbench.getGuiMessageBroker()}
-                >
-                    <Provider store={atomStore}>
-                        <HydrateQueryClientAtom>
-                            <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
-                                <Settings
-                                    settingsContext={props.moduleInstance.getContext()}
-                                    workbenchSession={props.workbench.getSessionManager().getActiveSession()}
-                                    workbenchServices={props.workbench.getWorkbenchServices()}
-                                    workbenchSettings={props.workbench
-                                        .getSessionManager()
-                                        .getActiveSession()
-                                        .getWorkbenchSettings()}
-                                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                />
-                            </ApplyInterfaceEffectsToSettings>
-                        </HydrateQueryClientAtom>
-                    </Provider>
-                </DebugProfiler>
-            </>
+            <DebugProfiler
+                id={`${props.moduleInstance.getId()}-settings`}
+                source={StatusSource.Settings}
+                statusController={props.moduleInstance.getStatusController()}
+                guiMessageBroker={props.workbench.getGuiMessageBroker()}
+            >
+                <Provider store={atomStore}>
+                    <HydrateQueryClientAtom>
+                        <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
+                            <Settings
+                                settingsContext={props.moduleInstance.getContext()}
+                                workbenchSession={props.workbench.getSessionManager().getActiveSession()}
+                                workbenchServices={props.workbench.getWorkbenchServices()}
+                                workbenchSettings={props.workbench
+                                    .getSessionManager()
+                                    .getActiveSession()
+                                    .getWorkbenchSettings()}
+                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                            />
+                        </ApplyInterfaceEffectsToSettings>
+                    </HydrateQueryClientAtom>
+                </Provider>
+            </DebugProfiler>
         );
     }
 
@@ -149,20 +139,11 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
                 activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
-                "flex-col h-full w-full relative",
+                "flex-col h-full w-full relative grow",
             )}
             style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
-                <div className="flex justify-center items-center p-2 bg-slate-100 h-10 shadow-sm">
-                    <SettingsIcon fontSize="small" className="mr-2" />{" "}
-                    <span
-                        title={props.moduleInstance.getTitle()}
-                        className="font-bold grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm"
-                    >
-                        {props.moduleInstance.getTitle()}
-                    </span>
-                </div>
                 <div className="flex flex-col gap-4 overflow-auto grow">
                     <div className="p-2 grow">{makeContent()}</div>
                 </div>

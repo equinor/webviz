@@ -1,14 +1,13 @@
-import type { EnsembleScalarResponse_api } from "@api";
 import { SensitivityType, type Sensitivity } from "@framework/EnsembleSensitivities";
 import { computeQuantile } from "@modules/_shared/utils/math/statistics";
 
-import { extractResponseValues, extractSensitivityRealizations } from "./helpers";
-import type { SensitivityResponse } from "./types";
+import { extractResponseValues, extractSensitivityRealizations } from "./_helpers";
+import type { EnsemblePerRealizationResponse, SensitivityResponse } from "./types";
 
 // Monte Carlo sensitivity processor
 export const processMonteCarloSensitivity = (
     sensitivity: Sensitivity,
-    ensembleResponse: EnsembleScalarResponse_api,
+    ensemblePerRealResponse: EnsemblePerRealizationResponse,
     referenceAverage: number,
 ): SensitivityResponse => {
     if (sensitivity.cases.length !== 1) {
@@ -16,12 +15,12 @@ export const processMonteCarloSensitivity = (
     }
 
     const sensitivityCase = sensitivity.cases[0];
-    const responseValues = extractResponseValues(ensembleResponse, sensitivityCase.realizations);
+    const responseValues = extractResponseValues(ensemblePerRealResponse, sensitivityCase.realizations);
     const p90 = computeP90(responseValues);
     const p10 = computeP10(responseValues);
 
     const allRealizations = extractSensitivityRealizations(sensitivity);
-    const partitioned = partitionRealizationsByThreshold(ensembleResponse, allRealizations, referenceAverage);
+    const partitioned = partitionRealizationsByThreshold(ensemblePerRealResponse, allRealizations, referenceAverage);
 
     return {
         sensitivityName: sensitivity.name,
@@ -46,9 +45,10 @@ export function computeP10(values: number[]): number {
 export function computeP90(values: number[]): number {
     return computeQuantile(values, 0.1);
 }
+
 // Partitioning functions
 function partitionRealizationsByThreshold(
-    ensembleResponse: EnsembleScalarResponse_api,
+    ensemblePerRealResponse: EnsemblePerRealizationResponse,
     realizations: number[],
     threshold: number,
 ): { below: number[]; above: number[]; belowValues: number[]; aboveValues: number[] } {
@@ -58,9 +58,9 @@ function partitionRealizationsByThreshold(
     const aboveValues: number[] = [];
 
     realizations.forEach((real) => {
-        const idx = ensembleResponse.realizations.indexOf(real);
+        const idx = ensemblePerRealResponse.realizations.indexOf(real);
         if (idx !== -1) {
-            const value = ensembleResponse.values[idx];
+            const value = ensemblePerRealResponse.values[idx];
             if (value <= threshold) {
                 below.push(real);
                 belowValues.push(value);

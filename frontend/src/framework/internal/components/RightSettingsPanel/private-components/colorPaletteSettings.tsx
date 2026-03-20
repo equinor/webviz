@@ -2,7 +2,7 @@ import React from "react";
 
 import { Palette } from "@mui/icons-material";
 
-import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
@@ -14,11 +14,16 @@ import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorPaletteSettingsProps = {
     workbench: Workbench;
+    onClose: () => void;
 };
 
 export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props) => {
-    const colorPalettes = props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings().getColorPalettes();
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
+    const colorPalettes = props.workbench
+        .getSessionManager()
+        .getActiveSession()
+        .getWorkbenchSettings()
+        .getColorPalettes();
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
     const [selectedColorPaletteIds, setSelectedColorPaletteIds] = React.useState<Record<ColorPaletteType, string>>(
         props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings().getSelectedColorPaletteIds(),
     );
@@ -28,7 +33,8 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
 
     function handleColorPaletteSelected(colorPalette: ColorPalette, type: ColorPaletteType) {
         props.workbench
-            .getSessionManager().getActiveSession()
+            .getSessionManager()
+            .getActiveSession()
             .getWorkbenchSettings()
             .setSelectedColorPaletteId(type, colorPalette.getId());
         setSelectedColorPaletteIds({
@@ -49,7 +55,8 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
         <Drawer
             title="Color palette settings"
             icon={<Palette />}
-            visible={drawerContent === LeftDrawerContent.ColorPaletteSettings}
+            visible={drawerContent === RightDrawerContent.ColorPaletteSettings}
+            onClose={props.onClose}
         >
             <div className="flex flex-col gap-2 m-2">
                 <Label text="Categorical colors">
