@@ -1,6 +1,5 @@
 import type React from "react";
 
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makeRichWellTrajectoriesLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRichWellTrajectoriesLayer";
 import {
@@ -28,10 +27,8 @@ import type {
     SurfaceData,
     SurfaceStoredData,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
-import {
-    DataProviderManagerTopic,
-    type DataProviderManager,
-} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { type DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
 import { makeDepthColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeDepthColorScaleAnnotation";
 import { makeSeismicColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeSeismicColorScaleAnnotation";
@@ -161,15 +158,13 @@ export type VisualizationAssemblerWrapperProps = Omit<
 };
 
 export function VisualizationAssemblerWrapper(props: VisualizationAssemblerWrapperProps): React.ReactNode {
-    usePublishSubscribeTopicValue(props.dataProviderManager, DataProviderManagerTopic.DATA_REVISION);
-
-    const visualizationAssemblerProduct = VISUALIZATION_ASSEMBLER.make(props.dataProviderManager);
+    const assemblerProduct = useVisualizationAssemblerProduct(props.dataProviderManager, VISUALIZATION_ASSEMBLER);
 
     return (
         <DpfSubsurfaceViewerWrapper
             {...props}
             visualizationMode="2D"
-            visualizationAssemblerProduct={visualizationAssemblerProduct}
+            visualizationAssemblerProduct={assemblerProduct}
             moduleInstanceId={props.viewContext.getInstanceIdString()}
         />
     );
