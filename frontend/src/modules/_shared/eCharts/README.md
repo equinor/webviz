@@ -1,10 +1,66 @@
-# Shared ECharts Guide
+# Shared ECharts Module
 
 > Agent-facing rules live in [AGENTS.md](AGENTS.md).
 
 ## Purpose
 
-This folder is the shared charting layer for frontend modules using ECharts.
+Shared charting layer for frontend modules using [Apache ECharts](https://echarts.apache.org/) via `echarts-for-react`. Provides trace-based chart builders, subplot layout, and interactive hooks so that consumer modules only need to supply data and options.
+
+## Architecture
+
+### Trace → Builder → Option
+
+Every chart type follows the same pattern:
+
+1. **Define traces** — typed data objects (`TimeseriesTrace`, `DistributionTrace`, `BarTrace`, etc.) grouped into `SubplotGroup[]`.
+2. **Call a chart builder** — e.g. `buildTimeseriesChart(groups, options)`. The builder generates ECharts series, axes, grids, and legend, then composes them into a single `EChartsOption`.
+3. **Render** — pass the option to `<ReactECharts option={...} />`.
+
+```ts
+const groups: SubplotGroup<TimeseriesTrace>[] = [{ title: "Plot 1", traces }];
+const option = buildTimeseriesChart(groups, { base: { containerSize }, series: { displayConfig } });
+// → ready for <ReactECharts option={option} />
+```
+
+### Chart families
+
+| Family | Builder | Trace type |
+|--------|---------|------------|
+| Timeseries | `buildTimeseriesChart` | `TimeseriesTrace` |
+| Histogram | `buildHistogramChart` | `DistributionTrace` |
+| Density (KDE) | `buildDensityChart` | `DistributionTrace` |
+| Percentile range | `buildPercentileRangeChart` | `DistributionTrace` |
+| Exceedance | `buildExceedanceChart` | `DistributionTrace` |
+| Convergence | `buildConvergenceChart` | `DistributionTrace` |
+| Bar | `buildBarChart` | `BarTrace` |
+| Heatmap | `buildHeatmapChart` | `HeatmapTrace` |
+| Member scatter | `buildMemberScatterChart` | `MemberScatterTrace` |
+
+### Subplot layout
+
+`computeSubplotGridLayout(numSubplots)` computes a row×col grid. `buildSubplotAxes` creates ECharts grid/xAxis/yAxis entries for each cell. Shared axes are supported via `sharedXAxis` / `sharedYAxis` options.
+
+### Series IDs
+
+Every series gets a structured ID via `makeSeriesId({ chartType, role, name, subKey, axisIndex })`. Use `parseSeriesId(id)` to extract fields. This powers tooltip formatting and member interaction.
+
+### Hooks
+
+| Hook | Purpose |
+|------|---------|
+| `useMemberInteraction` | Closest-member highlighting and tooltip for timeseries and scatter charts. Finds the member series nearest to the cursor and atomically highlights it across all subplots. |
+| `useClickToTimestamp` | Converts chart clicks to timestamp selection (timeseries). |
+
+### Core pipeline
+
+Under the hood, each chart builder calls `buildCartesianSubplotChart` which:
+1. Calls the family's series builder per subplot to get `SeriesBuildResult { series, legendData }`.
+2. Calls `buildSubplotAxes` to create grids and axes.
+3. Calls `composeChartOption` to merge everything into a final `EChartsOption` with legend, tooltip, and dataZoom.
+
+## Consuming the module
+
+Import from `@modules/_shared/eCharts` for all public symbols. See `EChartsDemo` for a working example of every chart type with interactive features.
 
 ## Maintenance
 
