@@ -25,10 +25,7 @@ import {
     SurfaceAttributeType_api,
 } from "@api";
 import { sortStringArray } from "@lib/utils/arrays";
-import {
-    Setting,
-    type SettingTypeDefinitions,
-} from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
@@ -38,8 +35,8 @@ import type {
     DataProviderAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
+import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
-import { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 
 const drilledWellboreTrajectoriesSettings = [
     Setting.ENSEMBLE,
@@ -275,7 +272,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         workbenchSession,
     }: SetupBindingsContext<DrilledWellboreTrajectoriesSettings, DrilledWellboreTrajectoriesStoredData>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -290,7 +287,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const wellboreHeaders = makeSharedResult({
             debugName: "WellboreHeaders",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -319,7 +316,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.WELLBORES).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeaders),
                 };
@@ -335,7 +332,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const realizationSurfaceMetadata = makeSharedResult({
             debugName: "RealizationSurfaceMetadata",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -358,7 +355,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.MD_RANGE).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
                 };
@@ -371,7 +368,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.MD_RANGE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeaders),
                     selectedWellbores: read.localSetting(Setting.WELLBORES),
@@ -411,7 +408,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.TVD_RANGE).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
                 };
@@ -424,7 +421,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.TVD_RANGE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeaders),
                     selectedWellbores: read.localSetting(Setting.WELLBORES),
@@ -464,7 +461,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
                 };
@@ -477,7 +474,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     realizationSurfaceMetadata: read.sharedResult(realizationSurfaceMetadata),
                 };
@@ -502,7 +499,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.WELLBORE_DEPTH_FORMATION_FILTER).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
                 };
@@ -515,7 +512,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.WELLBORE_DEPTH_FORMATION_FILTER).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realizationFilterFunc: read.globalSetting("realizationFilterFunction"),
@@ -558,7 +555,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const observedSurfaceMetadata = makeSharedResult({
             debugName: "ObservedSurfaceMetadata",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -580,7 +577,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.TIME_INTERVAL).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     filterType: read.localSetting(Setting.FLOW_FILTER_TYPE),
                     observedSurfaceMetadata: read.sharedResult(observedSurfaceMetadata),
@@ -597,7 +594,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.TIME_INTERVAL).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     observedSurfaceMetadata: read.sharedResult(observedSurfaceMetadata),
                 };
@@ -611,7 +608,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.FLOW_FILTER).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     filterType: read.localSetting(Setting.FLOW_FILTER_TYPE),
                     observedSurfaceMetadata: read.sharedResult(observedSurfaceMetadata),
@@ -629,7 +626,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const productionData = makeSharedResult({
             debugName: "ProductionData",
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     timeInterval: read.localSetting(Setting.TIME_INTERVAL),
@@ -657,7 +654,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         storedData("productionData").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     productionData: read.sharedResult(productionData),
                 };
@@ -669,7 +666,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const injectionData = makeSharedResult({
             debugName: "InjectionData",
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     timeInterval: read.localSetting(Setting.TIME_INTERVAL),
@@ -697,7 +694,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         storedData("injectionData").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     injectionData: read.sharedResult(injectionData),
                 };
@@ -708,7 +705,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         });
 
         setting(Setting.FLOW_FILTER).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     productionData: read.sharedResult(productionData),
                     injectionData: read.sharedResult(injectionData),

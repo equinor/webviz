@@ -40,9 +40,11 @@ type StoredData = {
     };
 };
 
-export class RealizationGridProvider
-    implements CustomDataProviderImplementation<RealizationGridSettings, RealizationGridData, StoredData>
-{
+export class RealizationGridProvider implements CustomDataProviderImplementation<
+    RealizationGridSettings,
+    RealizationGridData,
+    StoredData
+> {
     settings = realizationGridSettings;
 
     getDefaultSettingsValues() {
@@ -160,7 +162,7 @@ export class RealizationGridProvider
         queryClient,
     }: SetupBindingsContext<RealizationGridSettings, StoredData>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -176,7 +178,7 @@ export class RealizationGridProvider
         });
 
         setting(Setting.REALIZATION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
@@ -193,7 +195,7 @@ export class RealizationGridProvider
 
         const gridData = makeSharedResult({
             debugName: "RealizationGridData",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realization: read.localSetting(Setting.REALIZATION),
@@ -219,7 +221,7 @@ export class RealizationGridProvider
         });
 
         setting(Setting.GRID_NAME).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     gridData: read.sharedResult(gridData),
                 };
@@ -236,7 +238,7 @@ export class RealizationGridProvider
         });
 
         setting(Setting.ATTRIBUTE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     gridName: read.localSetting(Setting.GRID_NAME),
                     gridData: read.sharedResult(gridData),
@@ -257,7 +259,7 @@ export class RealizationGridProvider
         });
 
         setting(Setting.GRID_LAYER_K).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     gridName: read.localSetting(Setting.GRID_NAME),
                     gridData: read.sharedResult(gridData),
@@ -280,7 +282,7 @@ export class RealizationGridProvider
         });
 
         setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     gridName: read.localSetting(Setting.GRID_NAME),
                     gridAttribute: read.localSetting(Setting.ATTRIBUTE),
@@ -310,7 +312,7 @@ export class RealizationGridProvider
         });
 
         storedData("availableGridDimensions").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     gridData: read.sharedResult(gridData),
                 };

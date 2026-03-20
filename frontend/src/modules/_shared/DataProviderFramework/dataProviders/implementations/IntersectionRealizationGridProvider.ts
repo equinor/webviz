@@ -51,14 +51,11 @@ export type IntersectionRealizationGridProviderArgs = {
     enableWellboreExtensionLength: boolean;
 };
 
-export class IntersectionRealizationGridProvider
-    implements
-        CustomDataProviderImplementation<
-            IntersectionRealizationGridSettings,
-            IntersectionRealizationGridData,
-            IntersectionRealizationGridStoredData
-        >
-{
+export class IntersectionRealizationGridProvider implements CustomDataProviderImplementation<
+    IntersectionRealizationGridSettings,
+    IntersectionRealizationGridData,
+    IntersectionRealizationGridStoredData
+> {
     settings = intersectionRealizationGridSettings;
 
     private _isWellboreExtensionLengthEnabled = false;
@@ -150,7 +147,7 @@ export class IntersectionRealizationGridProvider
         const isWellboreExtensionLengthEnabled = this._isWellboreExtensionLengthEnabled;
 
         setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     intersection: read.localSetting(Setting.INTERSECTION),
                 };
@@ -166,7 +163,7 @@ export class IntersectionRealizationGridProvider
         });
 
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -178,7 +175,7 @@ export class IntersectionRealizationGridProvider
         });
 
         setting(Setting.REALIZATION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realizationFilterFunc: read.globalSetting("realizationFilterFunction"),
@@ -191,7 +188,7 @@ export class IntersectionRealizationGridProvider
 
         const realizationGridDataDep = makeSharedResult({
             debugName: "RealizationGridData",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realization: read.localSetting(Setting.REALIZATION),
@@ -217,7 +214,7 @@ export class IntersectionRealizationGridProvider
         });
 
         setting(Setting.GRID_NAME).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     data: read.sharedResult(realizationGridDataDep),
                 };
@@ -236,7 +233,7 @@ export class IntersectionRealizationGridProvider
         });
 
         setting(Setting.ATTRIBUTE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     gridName: read.localSetting(Setting.GRID_NAME),
                     data: read.sharedResult(realizationGridDataDep),
@@ -260,7 +257,7 @@ export class IntersectionRealizationGridProvider
 
         const wellboreHeadersDep = makeSharedResult({
             debugName: "WellboreHeaders",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -271,7 +268,7 @@ export class IntersectionRealizationGridProvider
         });
 
         setting(Setting.INTERSECTION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeadersDep),
                     intersectionPolylines: read.globalSetting("intersectionPolylines"),
@@ -290,7 +287,7 @@ export class IntersectionRealizationGridProvider
         });
 
         setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     gridName: read.localSetting(Setting.GRID_NAME),
                     gridAttribute: read.localSetting(Setting.ATTRIBUTE),
@@ -324,7 +321,7 @@ export class IntersectionRealizationGridProvider
         // Create intersection polyline and actual section lengths data asynchronously
         const intersectionPolylineWithSectionLengthsDep = makeSharedResult({
             debugName: "IntersectionPolylineWithSectionLengths",
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     intersection: read.localSetting(Setting.INTERSECTION),
@@ -344,7 +341,7 @@ export class IntersectionRealizationGridProvider
         });
 
         storedData("polylineWithSectionLengths").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     intersectionPolylineWithSectionLengths: read.sharedResult(
                         intersectionPolylineWithSectionLengthsDep,

@@ -55,14 +55,11 @@ export type IntersectionSeismicStoredData = {
 
 export type IntersectionSeismicData = SeismicFenceData_trans;
 
-export class IntersectionSeismicProvider
-    implements
-        CustomDataProviderImplementation<
-            IntersectionSeismicSettings,
-            IntersectionSeismicData,
-            IntersectionSeismicStoredData
-        >
-{
+export class IntersectionSeismicProvider implements CustomDataProviderImplementation<
+    IntersectionSeismicSettings,
+    IntersectionSeismicData,
+    IntersectionSeismicStoredData
+> {
     settings = intersectionSeismicSettings;
 
     getDefaultSettingsValues() {
@@ -154,7 +151,7 @@ export class IntersectionSeismicProvider
         workbenchSession,
     }: SetupBindingsContext<IntersectionSeismicSettings, IntersectionSeismicStoredData>): void {
         setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     intersection: read.localSetting(Setting.INTERSECTION),
                 };
@@ -166,7 +163,7 @@ export class IntersectionSeismicProvider
         });
 
         setting(Setting.REALIZATION).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     representation: read.localSetting(Setting.REPRESENTATION),
                 };
@@ -180,7 +177,7 @@ export class IntersectionSeismicProvider
         });
 
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldId: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -192,7 +189,7 @@ export class IntersectionSeismicProvider
         });
 
         setting(Setting.REALIZATION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
@@ -215,7 +212,7 @@ export class IntersectionSeismicProvider
 
         const seismicCubeMetaList = makeSharedResult({
             debugName: "seismicCubeMetaList",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -240,7 +237,7 @@ export class IntersectionSeismicProvider
         });
 
         setting(Setting.ATTRIBUTE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
                     representation: read.localSetting(Setting.REPRESENTATION),
@@ -267,7 +264,7 @@ export class IntersectionSeismicProvider
 
         const wellboreHeader = makeSharedResult({
             debugName: "wellboreHeaders",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -278,7 +275,7 @@ export class IntersectionSeismicProvider
         });
 
         setting(Setting.INTERSECTION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeader) ?? [],
                     intersectionPolylines: read.globalSetting("intersectionPolylines") ?? [],
@@ -295,7 +292,7 @@ export class IntersectionSeismicProvider
         });
 
         setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
                     attribute: read.localSetting(Setting.ATTRIBUTE),
@@ -318,7 +315,7 @@ export class IntersectionSeismicProvider
 
         const intersectionPolylineWithSectionLengths = makeSharedResult({
             debugName: "intersectionPolylineWithSectionLengths",
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     intersection: read.localSetting(Setting.INTERSECTION),
@@ -338,7 +335,7 @@ export class IntersectionSeismicProvider
         });
 
         storedData("sourcePolylineWithSectionLengths").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     intersectionPolylineWithSectionLengths: read.sharedResult(intersectionPolylineWithSectionLengths),
                 };
@@ -357,7 +354,7 @@ export class IntersectionSeismicProvider
         });
 
         storedData("seismicFencePolylineWithSectionLengths").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     intersectionPolylineWithSectionLengths: read.sharedResult(intersectionPolylineWithSectionLengths),
                     seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),

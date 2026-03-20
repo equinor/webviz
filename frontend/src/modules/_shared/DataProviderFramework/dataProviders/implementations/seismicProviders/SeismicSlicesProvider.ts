@@ -43,9 +43,11 @@ export type SeismicSlicesStoredData = {
     seismicSlices: [number, number, number];
 };
 
-export class SeismicSlicesProvider
-    implements CustomDataProviderImplementation<SeismicSlicesSettings, SeismicSlicesData, SeismicSlicesStoredData>
-{
+export class SeismicSlicesProvider implements CustomDataProviderImplementation<
+    SeismicSlicesSettings,
+    SeismicSlicesData,
+    SeismicSlicesStoredData
+> {
     settings = seismicSlicesSettings;
 
     getDefaultSettingsValues() {
@@ -166,7 +168,7 @@ export class SeismicSlicesProvider
         queryClient,
     }: SetupBindingsContext<SeismicSlicesSettings, SeismicSlicesStoredData>): void {
         setting(Setting.REALIZATION).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     representation: read.localSetting(Setting.REPRESENTATION),
                 };
@@ -180,7 +182,7 @@ export class SeismicSlicesProvider
         });
 
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldId: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -198,7 +200,7 @@ export class SeismicSlicesProvider
         });
 
         setting(Setting.REALIZATION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
@@ -225,7 +227,7 @@ export class SeismicSlicesProvider
 
         const seismicCubeMetaList = makeSharedResult({
             debugName: "seismicCubeMetaList",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -250,7 +252,7 @@ export class SeismicSlicesProvider
         });
 
         setting(Setting.ATTRIBUTE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
                     representation: read.localSetting(Setting.REPRESENTATION),
@@ -276,7 +278,7 @@ export class SeismicSlicesProvider
         });
 
         storedData("seismicCubeMeta").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
                     attribute: read.localSetting(Setting.ATTRIBUTE),
@@ -299,7 +301,7 @@ export class SeismicSlicesProvider
         });
 
         setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     seismicAttribute: read.localSetting(Setting.ATTRIBUTE),
                     seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
@@ -323,7 +325,7 @@ export class SeismicSlicesProvider
         });
 
         setting(Setting.SEISMIC_SLICES).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     seismicAttribute: read.localSetting(Setting.ATTRIBUTE),
                     timeOrInterval: read.localSetting(Setting.TIME_OR_INTERVAL),
@@ -367,7 +369,7 @@ export class SeismicSlicesProvider
         });
 
         storedData("seismicSlices").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     seismicSlices: read.localSetting(Setting.SEISMIC_SLICES),
                 };

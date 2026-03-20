@@ -24,9 +24,10 @@ export type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;
 
 export type RealizationPolygonsData = PolygonData_api[];
-export class RealizationPolygonsProvider
-    implements CustomDataProviderImplementation<RealizationPolygonsSettings, RealizationPolygonsData>
-{
+export class RealizationPolygonsProvider implements CustomDataProviderImplementation<
+    RealizationPolygonsSettings,
+    RealizationPolygonsData
+> {
     settings = realizationPolygonsSettings;
 
     getDefaultName(): string {
@@ -39,7 +40,7 @@ export class RealizationPolygonsProvider
 
     setupBindings({ setting, makeSharedResult, queryClient }: SetupBindingsContext<RealizationPolygonsSettings>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -53,7 +54,7 @@ export class RealizationPolygonsProvider
         });
 
         setting(Setting.REALIZATION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
@@ -69,7 +70,7 @@ export class RealizationPolygonsProvider
 
         const polygonsMetadataDep = makeSharedResult({
             debugName: "PolygonsMetadata",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -93,7 +94,7 @@ export class RealizationPolygonsProvider
         });
 
         setting(Setting.POLYGONS_ATTRIBUTE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     data: read.sharedResult(polygonsMetadataDep),
                 };
@@ -110,7 +111,7 @@ export class RealizationPolygonsProvider
         });
 
         setting(Setting.POLYGONS_NAME).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     attribute: read.localSetting(Setting.POLYGONS_ATTRIBUTE),
                     data: read.sharedResult(polygonsMetadataDep),

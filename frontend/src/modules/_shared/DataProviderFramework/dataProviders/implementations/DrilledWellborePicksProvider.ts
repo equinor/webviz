@@ -23,9 +23,10 @@ export type DrilledWellborePicksData = WellborePick_api[];
 
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellborePicksSettings>;
 
-export class DrilledWellborePicksProvider
-    implements CustomDataProviderImplementation<DrilledWellborePicksSettings, DrilledWellborePicksData>
-{
+export class DrilledWellborePicksProvider implements CustomDataProviderImplementation<
+    DrilledWellborePicksSettings,
+    DrilledWellborePicksData
+> {
     settings = drilledWellborePicksSettings;
 
     getDefaultName() {
@@ -79,7 +80,7 @@ export class DrilledWellborePicksProvider
         workbenchSession,
     }: SetupBindingsContext<DrilledWellborePicksSettings>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -94,7 +95,7 @@ export class DrilledWellborePicksProvider
 
         const wellboreHeadersDep = makeSharedResult({
             debugName: "WellboreHeaders",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -124,7 +125,7 @@ export class DrilledWellborePicksProvider
 
         const pickIdentifiersDep = makeSharedResult({
             debugName: "PickIdentifiers",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -153,7 +154,7 @@ export class DrilledWellborePicksProvider
         });
 
         setting(Setting.SMDA_WELLBORE_HEADERS).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeadersDep),
                 };
@@ -167,7 +168,7 @@ export class DrilledWellborePicksProvider
         });
 
         setting(Setting.SURFACE_NAME).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     pickIdentifiers: read.sharedResult(pickIdentifiersDep),
                 };

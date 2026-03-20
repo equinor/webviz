@@ -55,14 +55,11 @@ export type SurfacesPerRealizationValuesStoredData = {
 // Key is surface name, value is surface sample values per selected realization
 export type SurfacesPerRealizationValuesData = Record<string, SurfaceRealizationSampleValues_api[]>;
 
-export class SurfacesPerRealizationValuesProvider
-    implements
-        CustomDataProviderImplementation<
-            SurfacesPerRealizationValuesSettings,
-            SurfacesPerRealizationValuesData,
-            SurfacesPerRealizationValuesStoredData
-        >
-{
+export class SurfacesPerRealizationValuesProvider implements CustomDataProviderImplementation<
+    SurfacesPerRealizationValuesSettings,
+    SurfacesPerRealizationValuesData,
+    SurfacesPerRealizationValuesStoredData
+> {
     settings = surfacesPerRealizationValuesSettings;
 
     getDefaultName() {
@@ -117,7 +114,7 @@ export class SurfacesPerRealizationValuesProvider
         workbenchSession,
     }: SetupBindingsContext<SurfacesPerRealizationValuesSettings, SurfacesPerRealizationValuesStoredData>): void {
         setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return { intersection: read.localSetting(Setting.INTERSECTION) };
             },
             resolve({ intersection }) {
@@ -126,7 +123,7 @@ export class SurfacesPerRealizationValuesProvider
         });
 
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -138,7 +135,7 @@ export class SurfacesPerRealizationValuesProvider
         });
 
         setting(Setting.REALIZATIONS).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
@@ -151,7 +148,7 @@ export class SurfacesPerRealizationValuesProvider
 
         const wellboreHeadersDep = makeSharedResult({
             debugName: "WellboreHeaders",
-            read({ read }) {
+            read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             async resolve({ ensembleIdent }, { abortSignal }) {
@@ -160,7 +157,7 @@ export class SurfacesPerRealizationValuesProvider
         });
 
         setting(Setting.INTERSECTION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeadersDep),
                     intersectionPolylines: read.globalSetting("intersectionPolylines"),
@@ -177,7 +174,7 @@ export class SurfacesPerRealizationValuesProvider
 
         const surfaceMetadataSetDep = makeSharedResult({
             debugName: "SurfaceMetadata",
-            read({ read }) {
+            read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             async resolve({ ensembleIdent }, { abortSignal }) {
@@ -199,7 +196,7 @@ export class SurfacesPerRealizationValuesProvider
         });
 
         setting(Setting.ATTRIBUTE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { surfaceMetadataSet: read.sharedResult(surfaceMetadataSetDep) };
             },
             resolve({ surfaceMetadataSet }) {
@@ -214,7 +211,7 @@ export class SurfacesPerRealizationValuesProvider
         });
 
         setting(Setting.SURFACE_NAMES).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     attribute: read.localSetting(Setting.ATTRIBUTE),
                     surfaceMetadataSet: read.sharedResult(surfaceMetadataSetDep),
@@ -239,7 +236,7 @@ export class SurfacesPerRealizationValuesProvider
         // Create intersection polyline and actual section lengths data asynchronously
         const intersectionPolylineWithSectionLengthsDep = makeSharedResult({
             debugName: "IntersectionPolylineWithSectionLengths",
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     intersection: read.localSetting(Setting.INTERSECTION),
@@ -259,7 +256,7 @@ export class SurfacesPerRealizationValuesProvider
         });
 
         storedData("requestedPolylineWithCumulatedLengths").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     intersectionPolylineWithSectionLengths: read.sharedResult(
                         intersectionPolylineWithSectionLengthsDep,

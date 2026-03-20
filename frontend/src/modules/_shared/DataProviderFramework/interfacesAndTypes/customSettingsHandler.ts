@@ -38,7 +38,7 @@ export type ResolverSpec<
     TKey extends SettingsKeysFromTuple<TSettings>,
     TReads extends Record<string, Read<any>> = Record<string, never>,
 > = {
-    read?: (readArgs: { read: Accessors<TSettings, TSettingTypes, TKey> }) => TReads;
+    read?: (readArgs: Accessors<TSettings, TSettingTypes, TKey>) => TReads;
     resolve: (
         values: { [K in keyof TReads]: UnwrapRead<TReads[K]> },
         utils: {

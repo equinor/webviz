@@ -79,9 +79,11 @@ export type SurfaceProviderArgs = {
     surfaceType: AttributeSurfaceType;
 };
 
-export class AttributeSurfaceProvider
-    implements CustomDataProviderImplementation<AttributeSurfaceSettings, SurfaceData, SurfaceStoredData>
-{
+export class AttributeSurfaceProvider implements CustomDataProviderImplementation<
+    AttributeSurfaceSettings,
+    SurfaceData,
+    SurfaceStoredData
+> {
     settings = surfaceSettings;
 
     private _dataFormat: SurfaceDataFormat = SurfaceDataFormat.FLOAT;
@@ -131,7 +133,7 @@ export class AttributeSurfaceProvider
         const surfaceType = this._surfaceType;
 
         setting(Setting.REALIZATION).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {
@@ -141,7 +143,7 @@ export class AttributeSurfaceProvider
         });
 
         setting(Setting.SENSITIVITY).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {
@@ -151,7 +153,7 @@ export class AttributeSurfaceProvider
         });
 
         setting(Setting.STATISTIC_FUNCTION).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {
@@ -189,7 +191,7 @@ export class AttributeSurfaceProvider
         });
 
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -201,7 +203,7 @@ export class AttributeSurfaceProvider
         });
 
         setting(Setting.SENSITIVITY).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             resolve({ ensembleIdent }) {
@@ -211,7 +213,7 @@ export class AttributeSurfaceProvider
 
         const surfaceMetadataDep = makeSharedResult({
             debugName: "SurfaceMetadata",
-            read({ read }) {
+            read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             async resolve({ ensembleIdent }, { abortSignal }) {
@@ -233,7 +235,7 @@ export class AttributeSurfaceProvider
         });
 
         setting(Setting.REALIZATION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
@@ -248,7 +250,7 @@ export class AttributeSurfaceProvider
         });
 
         setting(Setting.ATTRIBUTE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { data: read.sharedResult(surfaceMetadataDep) };
             },
             resolve({ data }) {
@@ -282,7 +284,7 @@ export class AttributeSurfaceProvider
         });
 
         setting(Setting.FORMATION_NAME).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     attribute: read.localSetting(Setting.ATTRIBUTE),
                     data: read.sharedResult(surfaceMetadataDep),
@@ -303,7 +305,7 @@ export class AttributeSurfaceProvider
         });
 
         setting(Setting.TIME_POINT).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     attribute: read.localSetting(Setting.ATTRIBUTE),
                     formationName: read.localSetting(Setting.FORMATION_NAME),
@@ -324,7 +326,7 @@ export class AttributeSurfaceProvider
         });
 
         setting(Setting.TIME_INTERVAL).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     attribute: read.localSetting(Setting.ATTRIBUTE),
                     formationName: read.localSetting(Setting.FORMATION_NAME),
@@ -345,7 +347,7 @@ export class AttributeSurfaceProvider
         });
 
         storedData("realizations").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     filterFunction: read.globalSetting("realizationFilterFunction"),
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
@@ -361,7 +363,7 @@ export class AttributeSurfaceProvider
 
         //Needed to trigger updates when switching between realization and ensemble statistics
         storedData("realizationMode").bindValue({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {

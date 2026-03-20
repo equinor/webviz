@@ -65,7 +65,7 @@ export class DrilledWellTrajectoriesProvider implements CustomDataProviderImplem
         workbenchSession,
     }: SetupBindingsContext<DrilledWellTrajectoriesSettings>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -80,7 +80,7 @@ export class DrilledWellTrajectoriesProvider implements CustomDataProviderImplem
 
         const wellboreHeadersDep = makeSharedResult({
             debugName: "WellboreHeaders",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
@@ -109,7 +109,7 @@ export class DrilledWellTrajectoriesProvider implements CustomDataProviderImplem
         });
 
         setting(Setting.SMDA_WELLBORE_HEADERS).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeadersDep),
                 };

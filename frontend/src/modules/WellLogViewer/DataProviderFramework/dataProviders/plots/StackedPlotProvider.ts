@@ -16,9 +16,10 @@ export const stackedPlotSettings = [...baseDiscreteSettings, Setting.LABEL_ROTAT
 export type StackedPlotSettingTypes = typeof stackedPlotSettings;
 type SettingsTypeMap = MakeSettingTypesMap<StackedPlotSettingTypes>;
 
-export class StackedPlotProvider
-    implements CustomDataProviderImplementation<StackedPlotSettingTypes, WellboreLogCurveData_api>
-{
+export class StackedPlotProvider implements CustomDataProviderImplementation<
+    StackedPlotSettingTypes,
+    WellboreLogCurveData_api
+> {
     doSettingsChangesRequireDataRefetch = doSettingsChangesRequireDataRefetch;
     areCurrentSettingsValid = verifyBasePlotSettings<StackedPlotSettingTypes>;
     fetchData = fetchLogCurveData<StackedPlotSettingTypes>;
@@ -36,7 +37,7 @@ export class StackedPlotProvider
         const makeCurveHeaderDep = (source: WellLogCurveSourceEnum_api) =>
             makeSharedResult({
                 debugName: `CurveHeaders_${source}`,
-                read({ read }) {
+                read(read) {
                     return { wellboreId: read.globalSetting("wellboreUuid") };
                 },
                 async resolve({ wellboreId }, { abortSignal }) {
@@ -56,7 +57,7 @@ export class StackedPlotProvider
         const stratigraphyDep = makeCurveHeaderDep(WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY);
 
         setting(Setting.LOG_CURVE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreId: read.globalSetting("wellboreUuid"),
                     ssdlHeaders: read.sharedResult(ssdlDep),

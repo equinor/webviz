@@ -323,7 +323,7 @@ export class Dependency<
         if (!this._resolverSpec.read) return;
 
         // Calling read establishes subscriptions via the accessors
-        this._resolverSpec.read({ read: this.makeAccessors() });
+        this._resolverSpec.read(this.makeAccessors());
     }
 
     private async runResolver(): Promise<Awaited<TReturnValue> | NoUpdate | Pending> {
@@ -342,7 +342,7 @@ export class Dependency<
             })) as any;
         }
 
-        const reads = this._resolverSpec.read({ read: this.makeAccessors() });
+        const reads = this._resolverSpec.read(this.makeAccessors());
 
         if (!allReady(reads)) {
             return PENDING;

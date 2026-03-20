@@ -24,7 +24,7 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
         queryClient,
     }: SetupBasicBindingsContext<IntersectionViewSettings, SettingTypes>): void {
         setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return {
                     intersection: read.localSetting(Setting.INTERSECTION),
                 };
@@ -37,7 +37,7 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
 
         const wellboreHeaders = makeSharedResult({
             debugName: "wellboreHeaders",
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                 };
@@ -57,7 +57,7 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
         });
 
         setting(Setting.INTERSECTION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     intersectionPolylines: read.globalSetting("intersectionPolylines"),

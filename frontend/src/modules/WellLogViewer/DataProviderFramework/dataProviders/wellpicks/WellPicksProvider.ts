@@ -15,15 +15,16 @@ export const wellPickSettings = [Setting.STRAT_COLUMN, Setting.SMDA_INTERPRETER,
 export type WellPickSettingTypes = typeof wellPickSettings;
 type SettingsTypeMap = MakeSettingTypesMap<WellPickSettingTypes>;
 
-export class WellborePicksProvider
-    implements CustomDataProviderImplementation<WellPickSettingTypes, WellborePick_api[]>
-{
+export class WellborePicksProvider implements CustomDataProviderImplementation<
+    WellPickSettingTypes,
+    WellborePick_api[]
+> {
     settings = wellPickSettings;
 
     setupBindings({ setting, makeSharedResult, queryClient }: SetupBasicBindingsContext<WellPickSettingTypes>) {
         const columnOptionsDep = makeSharedResult({
             debugName: "StratigraphicColumns",
-            read({ read }) {
+            read(read) {
                 return { wellboreUuid: read.globalSetting("wellboreUuid") };
             },
             async resolve({ wellboreUuid }, { abortSignal }) {
@@ -40,7 +41,7 @@ export class WellborePicksProvider
 
         const wellPickOptionsDep = makeSharedResult({
             debugName: "WellPickOptions",
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreUuid: read.globalSetting("wellboreUuid"),
                     stratColumn: read.localSetting(Setting.STRAT_COLUMN),
@@ -59,7 +60,7 @@ export class WellborePicksProvider
         });
 
         setting(Setting.STRAT_COLUMN).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { columns: read.sharedResult(columnOptionsDep) };
             },
             resolve({ columns }) {
@@ -69,7 +70,7 @@ export class WellborePicksProvider
         });
 
         setting(Setting.SMDA_INTERPRETER).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { wellPicks: read.sharedResult(wellPickOptionsDep) };
             },
             resolve({ wellPicks }) {
@@ -79,7 +80,7 @@ export class WellborePicksProvider
         });
 
         setting(Setting.WELLBORE_PICKS).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellPicks: read.sharedResult(wellPickOptionsDep),
                     interpreter: read.localSetting(Setting.SMDA_INTERPRETER),

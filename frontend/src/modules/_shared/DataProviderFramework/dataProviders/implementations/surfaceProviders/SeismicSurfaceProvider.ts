@@ -66,9 +66,11 @@ export type SurfaceProviderArgs = {
     surfaceType: SeismicSurfaceType;
 };
 
-export class SeismicSurfaceProvider
-    implements CustomDataProviderImplementation<SeismicSurfaceSettings, SurfaceData, SurfaceStoredData>
-{
+export class SeismicSurfaceProvider implements CustomDataProviderImplementation<
+    SeismicSurfaceSettings,
+    SurfaceData,
+    SurfaceStoredData
+> {
     settings = surfaceSettings;
 
     private _dataFormat: SurfaceDataFormat = SurfaceDataFormat.FLOAT;
@@ -119,7 +121,7 @@ export class SeismicSurfaceProvider
         const surfaceType = this._surfaceType;
 
         setting(Setting.REALIZATION).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {
@@ -129,7 +131,7 @@ export class SeismicSurfaceProvider
         });
 
         setting(Setting.SENSITIVITY).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {
@@ -139,7 +141,7 @@ export class SeismicSurfaceProvider
         });
 
         setting(Setting.STATISTIC_FUNCTION).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {
@@ -184,7 +186,7 @@ export class SeismicSurfaceProvider
         });
 
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -196,7 +198,7 @@ export class SeismicSurfaceProvider
         });
 
         setting(Setting.SENSITIVITY).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             resolve({ ensembleIdent }) {
@@ -206,7 +208,7 @@ export class SeismicSurfaceProvider
 
         const surfaceMetadataDep = makeSharedResult({
             debugName: "SurfaceMetadata",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     representation: read.localSetting(Setting.REPRESENTATION),
@@ -245,7 +247,7 @@ export class SeismicSurfaceProvider
         });
 
         setting(Setting.REALIZATION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
@@ -260,7 +262,7 @@ export class SeismicSurfaceProvider
         });
 
         setting(Setting.SEISMIC_ATTRIBUTE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { data: read.sharedResult(surfaceMetadataDep) };
             },
             resolve({ data }) {
@@ -288,7 +290,7 @@ export class SeismicSurfaceProvider
         });
 
         setting(Setting.FORMATION_NAME).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     attribute: read.localSetting(Setting.SEISMIC_ATTRIBUTE),
                     data: read.sharedResult(surfaceMetadataDep),
@@ -309,7 +311,7 @@ export class SeismicSurfaceProvider
         });
 
         setting(Setting.TIME_POINT).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     attribute: read.localSetting(Setting.SEISMIC_ATTRIBUTE),
                     surfaceName: read.localSetting(Setting.FORMATION_NAME),
@@ -330,7 +332,7 @@ export class SeismicSurfaceProvider
         });
 
         setting(Setting.TIME_INTERVAL).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     attribute: read.localSetting(Setting.SEISMIC_ATTRIBUTE),
                     surfaceName: read.localSetting(Setting.FORMATION_NAME),
@@ -351,7 +353,7 @@ export class SeismicSurfaceProvider
         });
 
         storedData("realizations").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     filterFunction: read.globalSetting("realizationFilterFunction"),
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
@@ -367,7 +369,7 @@ export class SeismicSurfaceProvider
 
         //Needed to trigger updates when switching between realization and ensemble statistics
         storedData("realizationMode").bindValue({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {

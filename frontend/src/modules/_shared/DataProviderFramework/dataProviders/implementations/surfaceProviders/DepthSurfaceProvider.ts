@@ -57,9 +57,11 @@ export type SurfaceProviderArgs = {
     surfaceType: SurfaceType;
 };
 
-export class DepthSurfaceProvider
-    implements CustomDataProviderImplementation<DepthSurfaceSettings, SurfaceData, SurfaceStoredData>
-{
+export class DepthSurfaceProvider implements CustomDataProviderImplementation<
+    DepthSurfaceSettings,
+    SurfaceData,
+    SurfaceStoredData
+> {
     settings = surfaceSettings;
 
     private _dataFormat: SurfaceDataFormat = SurfaceDataFormat.FLOAT;
@@ -97,7 +99,7 @@ export class DepthSurfaceProvider
         workbenchSession,
     }: SetupBindingsContext<DepthSurfaceSettings, SurfaceStoredData>) {
         setting(Setting.REALIZATION).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {
@@ -107,7 +109,7 @@ export class DepthSurfaceProvider
         });
 
         setting(Setting.SENSITIVITY).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {
@@ -117,7 +119,7 @@ export class DepthSurfaceProvider
         });
 
         setting(Setting.STATISTIC_FUNCTION).bindAttributes({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {
@@ -139,7 +141,7 @@ export class DepthSurfaceProvider
         });
 
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { fieldId: read.globalSetting("fieldId"), ensembles: read.globalSetting("ensembles") ?? [] };
             },
             resolve({ fieldId, ensembles }) {
@@ -152,7 +154,7 @@ export class DepthSurfaceProvider
         });
 
         setting(Setting.SENSITIVITY).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             resolve({ ensembleIdent }) {
@@ -162,7 +164,7 @@ export class DepthSurfaceProvider
 
         const surfaceMetadataDep = makeSharedResult({
             debugName: "SurfaceMetadata",
-            read({ read }) {
+            read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             async resolve({ ensembleIdent }, { abortSignal }) {
@@ -184,7 +186,7 @@ export class DepthSurfaceProvider
         });
 
         setting(Setting.REALIZATION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                     realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
@@ -199,7 +201,7 @@ export class DepthSurfaceProvider
         });
 
         setting(Setting.DEPTH_ATTRIBUTE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { data: read.sharedResult(surfaceMetadataDep) };
             },
             resolve({ data }) {
@@ -216,7 +218,7 @@ export class DepthSurfaceProvider
         });
 
         setting(Setting.SURFACE_NAME).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     attribute: read.localSetting(Setting.DEPTH_ATTRIBUTE),
                     data: read.sharedResult(surfaceMetadataDep),
@@ -237,7 +239,7 @@ export class DepthSurfaceProvider
         });
 
         storedData("realizations").bindValue({
-            read({ read }) {
+            read(read) {
                 return {
                     filterFunction: read.globalSetting("realizationFilterFunction"),
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
@@ -253,7 +255,7 @@ export class DepthSurfaceProvider
 
         //Needed to trigger updates when switching between realization and ensemble statistics
         storedData("realizationMode").bindValue({
-            read({ read }) {
+            read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };
             },
             resolve({ representation }) {

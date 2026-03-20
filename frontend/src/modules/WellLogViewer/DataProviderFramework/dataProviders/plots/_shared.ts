@@ -37,7 +37,7 @@ export function setupBaseContinuousBindings<T extends readonly Setting[]>({
 }: SetupBasicBindingsContext<T>) {
     const curveHeaders = makeSharedResult({
         debugName: "CurveHeaders",
-        read({ read }) {
+        read(read) {
             return { wellboreId: read.globalSetting("wellboreUuid") };
         },
         async resolve({ wellboreId }, { abortSignal, statusWriter }) {
@@ -69,7 +69,7 @@ export function setupBaseContinuousBindings<T extends readonly Setting[]>({
     });
 
     setting(Setting.LOG_CURVE).bindValueConstraints({
-        read({ read }) {
+        read(read) {
             return {
                 wellboreId: read.globalSetting("wellboreUuid"),
                 headerData: read.sharedResult(curveHeaders),

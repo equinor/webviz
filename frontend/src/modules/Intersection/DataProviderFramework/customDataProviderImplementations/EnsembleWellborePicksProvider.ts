@@ -26,9 +26,10 @@ type SettingsWithTypes = MakeSettingTypesMap<EnsembleWellborePicksSettings>;
 
 export type EnsembleWellborePicksData = WellborePick_api[];
 
-export class EnsembleWellborePicksProvider
-    implements CustomDataProviderImplementation<EnsembleWellborePicksSettings, EnsembleWellborePicksData>
-{
+export class EnsembleWellborePicksProvider implements CustomDataProviderImplementation<
+    EnsembleWellborePicksSettings,
+    EnsembleWellborePicksData
+> {
     settings = ensembleWellborePicksSettings;
 
     getDefaultName() {
@@ -46,7 +47,7 @@ export class EnsembleWellborePicksProvider
         workbenchSession,
     }: SetupBindingsContext<EnsembleWellborePicksSettings>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     ensembles: read.globalSetting("ensembles"),
@@ -59,7 +60,7 @@ export class EnsembleWellborePicksProvider
 
         const wellboreHeadersDep = makeSharedResult({
             debugName: "WellboreHeaders",
-            read({ read }) {
+            read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             async resolve({ ensembleIdent }, { abortSignal }) {
@@ -68,7 +69,7 @@ export class EnsembleWellborePicksProvider
         });
 
         setting(Setting.INTERSECTION).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeadersDep),
                     intersectionPolylines: read.globalSetting("intersectionPolylines"),
@@ -85,7 +86,7 @@ export class EnsembleWellborePicksProvider
 
         const wellborePicksDep = makeSharedResult({
             debugName: "WellborePicks",
-            read({ read }) {
+            read(read) {
                 return {
                     ensembles: read.globalSetting("ensembles"),
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
@@ -112,7 +113,7 @@ export class EnsembleWellborePicksProvider
         });
 
         setting(Setting.SMDA_INTERPRETER).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return { wellborePicks: read.sharedResult(wellborePicksDep) };
             },
             resolve({ wellborePicks }) {
@@ -124,7 +125,7 @@ export class EnsembleWellborePicksProvider
         });
 
         setting(Setting.WELLBORE_PICKS).bindValueConstraints({
-            read({ read }) {
+            read(read) {
                 return {
                     wellborePicks: read.sharedResult(wellborePicksDep),
                     selectedInterpreter: read.localSetting(Setting.SMDA_INTERPRETER),
