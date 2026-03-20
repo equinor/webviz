@@ -42,8 +42,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             workbenchServices={props.workbenchServices}
             getInitialVerticalScale={getVerticalScale}
             onVerticalScaleChange={setVerticalScale}
-            onViewStateChange={setViewState}
             getInitialViewState={getViewState}
+            onViewStateChange={setViewState}
         />
     );
 }
