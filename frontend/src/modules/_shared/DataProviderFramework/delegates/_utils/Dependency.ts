@@ -271,7 +271,7 @@ export class Dependency<
         }, true);
         this._unsubscribers.push(unsubscribe);
 
-        dep.subscribeLoading((loading) => {
+        const unsubscribeLoading = dep.subscribeLoading((loading) => {
             if (loading) {
                 this.setLoadingState(true);
             }
@@ -279,6 +279,7 @@ export class Dependency<
             // be set when this dependency is updated
             // #Waterfall
         });
+        this._unsubscribers.push(unsubscribeLoading);
 
         return value;
     }

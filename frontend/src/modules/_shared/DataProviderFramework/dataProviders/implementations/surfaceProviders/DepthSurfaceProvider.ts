@@ -142,7 +142,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
 
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read(read) {
-                return { fieldId: read.globalSetting("fieldId"), ensembles: read.globalSetting("ensembles") ?? [] };
+                return { fieldId: read.globalSetting("fieldId"), ensembles: read.globalSetting("ensembles") };
             },
             resolve({ fieldId, ensembles }) {
                 if (!fieldId || ensembles.length === 0) {

@@ -277,8 +277,8 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         setting(Setting.INTERSECTION).bindValueConstraints({
             read(read) {
                 return {
-                    wellboreHeaders: read.sharedResult(wellboreHeader) ?? [],
-                    intersectionPolylines: read.globalSetting("intersectionPolylines") ?? [],
+                    wellboreHeaders: read.sharedResult(wellboreHeader),
+                    intersectionPolylines: read.globalSetting("intersectionPolylines"),
                     fieldId: read.globalSetting("fieldId"),
                 };
             },
