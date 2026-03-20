@@ -3,11 +3,11 @@ import React from "react";
 import type { EChartsOption } from "echarts";
 
 import type { ViewContext } from "@framework/ModuleContext";
+import type { ChartZoomState } from "@modules/_shared/eCharts/core/composeChartOption";
 
 import type { Interfaces } from "../interfaces";
 
 import { DemoChartOrchestrator } from "./plotOrchestrator";
-import { ChartZoomState } from "@modules/_shared/eCharts/core/composeChartOption";
 
 const TIMESERIES_MEMBER_LABEL = "Realization";
 

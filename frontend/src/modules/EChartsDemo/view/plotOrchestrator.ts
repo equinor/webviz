@@ -19,6 +19,7 @@ import {
     buildTimeseriesChart,
 } from "@modules/_shared/eCharts";
 import type { HistogramChartOptions } from "@modules/_shared/eCharts/charts/histogram";
+import type { ChartZoomState } from "@modules/_shared/eCharts/core/composeChartOption";
 
 import { PlotType } from "../typesAndEnums";
 import {
@@ -29,7 +30,6 @@ import {
     generateTimeseriesGroups,
     generateTimeseriesOverlays,
 } from "../utils/syntheticData";
-import { ChartZoomState } from "@modules/_shared/eCharts/core/composeChartOption";
 
 type DemoPlotModel = {
     echartsOptions: EChartsOption;
@@ -160,7 +160,6 @@ export class DemoChartOrchestrator {
         const groups = this.createDistributionGroups(config);
         const options = buildExceedanceChart(groups, {
             base: this.getBaseOptions(config),
-            series: {}
         });
         return this.createStaticPlotModel(options);
     }
@@ -169,7 +168,6 @@ export class DemoChartOrchestrator {
         const groups = this.createDistributionGroups(config);
         const options = buildConvergenceChart(groups, {
             base: this.getBaseOptions(config),
-            series: {}
         });
         return this.createStaticPlotModel(options);
     }

@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
-import { ChartZoomState } from "../core/composeChartOption";
+
+import type { ChartZoomState } from "../core/composeChartOption";
 
 
 export function useEChartsViewState(

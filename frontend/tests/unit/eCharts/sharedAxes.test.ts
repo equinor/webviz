@@ -30,7 +30,7 @@ describe("shared cartesian axes", () => {
                     traces: [{ name: "Trace B", color: "#993333", values: [10, 20, 30] }],
                 },
             ],
-            { sharedXAxis: true },
+            { base: { sharedXAxis: true } },
         );
 
         const xAxes = toAxisArray(option.xAxis);
@@ -51,7 +51,7 @@ describe("shared cartesian axes", () => {
                     traces: [{ name: "Trace B", color: "#993333", values: [50, 60, 70, 80] }],
                 },
             ],
-            { sharedXAxis: true },
+            { base: { sharedXAxis: true } },
         );
 
         const xAxes = toAxisArray(option.xAxis);
@@ -72,7 +72,7 @@ describe("shared cartesian axes", () => {
                     traces: [{ name: "Trace B", color: "#993333", values: [1, 2, 3, 4, 5] }],
                 },
             ],
-            { sharedYAxis: true },
+            { base: { sharedYAxis: true } },
         );
 
         const yAxes = toAxisArray(option.yAxis);

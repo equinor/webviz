@@ -206,14 +206,11 @@ function parseMemberId(seriesId: string): { groupKey: string; memberKey: string 
     const chartType = parts[0];
 
 
-    if (chartType === "timeseries" && parts.length >= 5) {
-        return { groupKey: parts[2], memberKey: parts[4] };
-    }
-
-
-    if (chartType === "memberScatter" && parts.length >= 5) {
+    if ((chartType === "timeseries" || chartType === "memberScatter") && parts.length >= 5) {
         return { groupKey: parts[2], memberKey: parts[3] };
     }
+
+
 
     return null;
 }

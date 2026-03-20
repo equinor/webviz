@@ -1,11 +1,11 @@
 
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { setIfDefined } from "@framework/utils/atomUtils";
-
+import type { ChartZoomState } from "@modules/_shared/eCharts/core/composeChartOption";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
 import { chartZoomAtom, INITIAL_ZOOM } from "./atoms/baseAtoms";
-import { ChartZoomState } from "@modules/_shared/eCharts/core/composeChartOption";
+
 
 
 

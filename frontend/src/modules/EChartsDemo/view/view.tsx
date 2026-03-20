@@ -1,6 +1,7 @@
 import React from "react";
 
 import ReactECharts from "echarts-for-react";
+import { useAtom } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
@@ -17,10 +18,9 @@ import { useEChartsViewState } from "@modules/_shared/eCharts/hooks/useEchartsVi
 import type { Interfaces } from "../interfaces";
 import { PLOT_TYPE_LABELS, PlotType } from "../typesAndEnums";
 
+import { chartZoomAtom } from "./atoms/baseAtoms";
 import { useDemoPlotModel } from "./useEcharts";
 
-import { chartZoomAtom } from "./atoms/baseAtoms";
-import { useAtom } from "jotai";
 const ROW_HEIGHT_PX = 350;
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {

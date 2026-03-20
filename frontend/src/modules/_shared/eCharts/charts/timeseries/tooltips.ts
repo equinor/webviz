@@ -58,13 +58,13 @@ export function formatStatisticsAxisTooltip(params: CallbackDataParams | Callbac
         const p = raw as AxisScopedTooltipParams;
         if (!p.seriesId) continue;
 
-        // Parse: "timeseries|summary|traceName|axisIndex|statKey"
+        // Parse: "timeseries|summary|traceName|statKey|axisIndex"
         const parts = p.seriesId.split("|");
         if (parts[0] !== "timeseries" || parts[1] !== "summary") continue;
 
         const traceName = parts[2];
-        const axisIndex = Number(parts[3]);
-        const statKey = parts[4];
+        const axisIndex = Number(parts[4]);
+        const statKey = parts[3];
 
         if (targetAxisIndex != null && axisIndex !== targetAxisIndex) continue;
 
@@ -104,7 +104,7 @@ export function formatMemberItemTooltip(
     let memberId: string | null = null;
 
     if (p.seriesId) {
-        // Parse: "timeseries|member|highlightGroupKey|axisIndex|memberKey"
+        // Parse: "timeseries|member|highlightGroupKey|memberKey|axisIndex"
         const parts = p.seriesId.split("|");
         if (parts[0] === "timeseries" && parts[1] === "member") {
             memberId = parts[4];
@@ -192,9 +192,9 @@ function resolveHoveredAxisIndex(params: CallbackDataParams[]): number | null {
 
         if (param.seriesId) {
             const parts = param.seriesId.split("|");
-            // Assuming format chart|role|name|axisIndex|... for our standard IDs
-            if (parts.length >= 4) {
-                const axisIndex = Number(parts[3]);
+            // Assuming format chart|role|name|...|axisIndex for our standard IDs
+            if (parts.length >= 5) {
+                const axisIndex = Number(parts[4]);
                 if (Number.isFinite(axisIndex)) return axisIndex;
             }
         }

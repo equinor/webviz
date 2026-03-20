@@ -256,15 +256,13 @@ function buildMemberSeriesIndex(instance: ECharts): Map<number, MemberSeriesMeta
             const id = typeof seriesOption.id === "string" ? seriesOption.id : null;
             if (!id) return;
 
-            //  identifier scheme: chartType|role|groupKey|axisIndex|memberKey
+            //  identifier scheme: chartType|role|groupKey|memberKey|axisIndex
             const parts = id.split("|");
             if (parts.length < 2 || parts[1] !== "member") return;
 
 
             let memberId: string | undefined;
             if (parts[0] === "timeseries" && parts.length >= 5) {
-                memberId = parts[4];
-            } else if (parts[0] === "memberScatter" && parts.length >= 5) {
                 memberId = parts[3];
             }
 

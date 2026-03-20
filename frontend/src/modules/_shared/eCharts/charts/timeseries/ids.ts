@@ -1,7 +1,7 @@
 export const TIMESERIES_CATEGORY = "timeseries";
 
 /**
- * Format: chartType|role|traceNameOrGroupKey|axisIndex|subKey
+ * Format: chartType|role|traceNameOrGroupKey|subKey|axisIndex
  */
 
 export function makeTimeseriesMemberSeriesId(
@@ -9,7 +9,7 @@ export function makeTimeseriesMemberSeriesId(
     memberKey: number | string,
     axisIndex: number,
 ): string {
-    return `${TIMESERIES_CATEGORY}|member|${highlightGroupKey}|${axisIndex}|${String(memberKey)}`;
+    return `${TIMESERIES_CATEGORY}|member|${highlightGroupKey}|${String(memberKey)}|${axisIndex}`;
 }
 
 export function makeTimeseriesStatisticSeriesId(
@@ -17,7 +17,7 @@ export function makeTimeseriesStatisticSeriesId(
     statKey: string,
     axisIndex: number
 ): string {
-    return `${TIMESERIES_CATEGORY}|summary|${traceName}|${axisIndex}|${statKey}`;
+    return `${TIMESERIES_CATEGORY}|summary|${traceName}|${statKey}|${axisIndex}`;
 }
 
 export function makeTimeseriesBandSeriesId(
@@ -25,14 +25,14 @@ export function makeTimeseriesBandSeriesId(
     bandKey: string,
     axisIndex: number
 ): string {
-    return `${TIMESERIES_CATEGORY}|band|${traceName}|${axisIndex}|${bandKey}`;
+    return `${TIMESERIES_CATEGORY}|band|${traceName}|${bandKey}|${axisIndex}`;
 }
 
 export function makeTimeseriesHistorySeriesId(
     traceName: string,
     axisIndex: number
 ): string {
-    return `${TIMESERIES_CATEGORY}|reference|${traceName}|${axisIndex}|`; // Empty subKey
+    return `${TIMESERIES_CATEGORY}|reference|${traceName}||${axisIndex}`; // Empty subKey
 }
 
 export function makeTimeseriesObservationSeriesId(
@@ -40,5 +40,5 @@ export function makeTimeseriesObservationSeriesId(
     qualifier: string,
     axisIndex: number
 ): string {
-    return `${TIMESERIES_CATEGORY}|measurement|${traceName}|${axisIndex}|${qualifier}`;
+    return `${TIMESERIES_CATEGORY}|measurement|${traceName}|${qualifier}|${axisIndex}`;
 }
