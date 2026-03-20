@@ -6,6 +6,7 @@ import type ReactECharts from "echarts-for-react";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
 import { formatMemberTooltipContent } from "../charts/timeseries";
+import { parseSeriesId } from "../core/seriesId";
 
 type ZrMouseEvent = {
     offsetX?: number;
@@ -256,15 +257,10 @@ function buildMemberSeriesIndex(instance: ECharts): Map<number, MemberSeriesMeta
             const id = typeof seriesOption.id === "string" ? seriesOption.id : null;
             if (!id) return;
 
-            //  identifier scheme: chartType|role|groupKey|memberKey|axisIndex
-            const parts = id.split("|");
-            if (parts.length < 2 || parts[1] !== "member") return;
+            const parsed = parseSeriesId(id);
+            if (!parsed || parsed.role !== "member") return;
 
-
-            let memberId: string | undefined;
-            if (parts[0] === "timeseries" && parts.length >= 5) {
-                memberId = parts[3];
-            }
+            const memberId = parsed.subKey || undefined;
 
             const axisIndex =
                 typeof seriesOption.xAxisIndex === "number" && Number.isFinite(seriesOption.xAxisIndex)

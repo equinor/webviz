@@ -2,6 +2,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
+import { parseSeriesId } from "../../core/seriesId";
 import { extractNumericValue, formatCompactTooltip } from "../../core/tooltip";
 
 export type ConvergenceStatisticKey = "p90" | "mean" | "p10";
@@ -60,11 +61,10 @@ function isTooltipEntry(value: unknown): value is TooltipEntry {
 function resolveConvergenceSeriesStatKey(entry: TooltipEntry): ConvergenceStatisticKey | null {
     if (!entry.seriesId) return null;
 
-    // Parse: "convergence|summary|traceName|axisIndex|statKey"
-    const parts = entry.seriesId.split("|");
-    if (parts[0] !== "convergence" || parts[1] !== "summary") return null;
+    const parsed = parseSeriesId(entry.seriesId);
+    if (!parsed || parsed.chartType !== "convergence" || parsed.role !== "summary") return null;
 
-    const statKey = parts[4];
+    const statKey = parsed.subKey;
     if (statKey === "p90" || statKey === "mean" || statKey === "p10") {
         return statKey;
     }

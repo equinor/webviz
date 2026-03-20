@@ -1,14 +1,13 @@
+import { makeSeriesId } from "../../core/seriesId";
+
 export const DENSITY_CATEGORY = "density";
 
 export type DensityRole = "primary" | "memberPoints";
 
-/**
- * Format: chartType|role|traceName|axisIndex
- */
 export function makeDensitySeriesId(
     traceName: string,
     role: DensityRole,
     axisIndex: number
 ): string {
-    return `${DENSITY_CATEGORY}|${role}|${traceName}|${axisIndex}`;
+    return makeSeriesId({ chartType: DENSITY_CATEGORY, role, name: traceName, subKey: "", axisIndex });
 }

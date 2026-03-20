@@ -38,6 +38,8 @@ export type {
 // Core
 export { composeChartOption } from "./core";
 export type { ChartSeriesOption, ComposeChartConfig, SeriesBuildResult } from "./core";
+export { makeSeriesId, parseSeriesId } from "./core";
+export type { SeriesIdFields } from "./core";
 
 // Series Builders & Chart Options
 export { buildBarSeries, type BarSortBy } from "./charts/bar";

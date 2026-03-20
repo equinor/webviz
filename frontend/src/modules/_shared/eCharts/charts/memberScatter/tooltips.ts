@@ -2,6 +2,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
+import { parseSeriesId } from "../../core/seriesId";
 import { extractPointValue, formatCompactTooltip } from "../../core/tooltip";
 
 export type MemberScatterTooltipOptions = {
@@ -21,8 +22,8 @@ export function formatMemberScatterItemTooltip(
     const p = Array.isArray(params) ? params[0] : params;
     if (!p || !p.seriesId) return "";
 
-
-    const [, , , memberKey] = p.seriesId.split("|");
+    const parsed = parseSeriesId(p.seriesId);
+    const memberKey = parsed?.subKey;
 
     const point = extractPointValue(p.value);
     const memberLabel = options.memberLabel ?? "Member";

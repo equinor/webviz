@@ -1,15 +1,13 @@
-export const TIMESERIES_CATEGORY = "timeseries";
+import { makeSeriesId } from "../../core/seriesId";
 
-/**
- * Format: chartType|role|traceNameOrGroupKey|subKey|axisIndex
- */
+export const TIMESERIES_CATEGORY = "timeseries";
 
 export function makeTimeseriesMemberSeriesId(
     highlightGroupKey: string,
     memberKey: number | string,
     axisIndex: number,
 ): string {
-    return `${TIMESERIES_CATEGORY}|member|${highlightGroupKey}|${String(memberKey)}|${axisIndex}`;
+    return makeSeriesId({ chartType: TIMESERIES_CATEGORY, role: "member", name: highlightGroupKey, subKey: String(memberKey), axisIndex });
 }
 
 export function makeTimeseriesStatisticSeriesId(
@@ -17,7 +15,7 @@ export function makeTimeseriesStatisticSeriesId(
     statKey: string,
     axisIndex: number
 ): string {
-    return `${TIMESERIES_CATEGORY}|summary|${traceName}|${statKey}|${axisIndex}`;
+    return makeSeriesId({ chartType: TIMESERIES_CATEGORY, role: "summary", name: traceName, subKey: statKey, axisIndex });
 }
 
 export function makeTimeseriesBandSeriesId(
@@ -25,14 +23,14 @@ export function makeTimeseriesBandSeriesId(
     bandKey: string,
     axisIndex: number
 ): string {
-    return `${TIMESERIES_CATEGORY}|band|${traceName}|${bandKey}|${axisIndex}`;
+    return makeSeriesId({ chartType: TIMESERIES_CATEGORY, role: "band", name: traceName, subKey: bandKey, axisIndex });
 }
 
 export function makeTimeseriesHistorySeriesId(
     traceName: string,
     axisIndex: number
 ): string {
-    return `${TIMESERIES_CATEGORY}|reference|${traceName}||${axisIndex}`; // Empty subKey
+    return makeSeriesId({ chartType: TIMESERIES_CATEGORY, role: "reference", name: traceName, subKey: "", axisIndex });
 }
 
 export function makeTimeseriesObservationSeriesId(
@@ -40,5 +38,5 @@ export function makeTimeseriesObservationSeriesId(
     qualifier: string,
     axisIndex: number
 ): string {
-    return `${TIMESERIES_CATEGORY}|measurement|${traceName}|${qualifier}|${axisIndex}`;
+    return makeSeriesId({ chartType: TIMESERIES_CATEGORY, role: "measurement", name: traceName, subKey: qualifier, axisIndex });
 }

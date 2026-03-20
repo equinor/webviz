@@ -1,14 +1,13 @@
+import { makeSeriesId } from "../../core/seriesId";
+
 export const HISTOGRAM_CATEGORY = "histogram";
 
 export type HistogramRole = "primary" | "memberPoints";
 
-/**
- * Format: chartType|role|traceName|axisIndex
- */
 export function makeHistogramSeriesId(
     traceName: string,
     role: HistogramRole,
     axisIndex: number
 ): string {
-    return `${HISTOGRAM_CATEGORY}|${role}|${traceName}|${axisIndex}`;
+    return makeSeriesId({ chartType: HISTOGRAM_CATEGORY, role, name: traceName, subKey: "", axisIndex });
 }

@@ -2,6 +2,7 @@ import type { CallbackDataParams } from "echarts/types/dist/shared";
 
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
+import { parseSeriesId } from "../../core/seriesId";
 import { extractNumericValue, formatCompactTooltip } from "../../core/tooltip";
 import type { TimeseriesDisplayConfig } from "../../types";
 
@@ -58,13 +59,12 @@ export function formatStatisticsAxisTooltip(params: CallbackDataParams | Callbac
         const p = raw as AxisScopedTooltipParams;
         if (!p.seriesId) continue;
 
-        // Parse: "timeseries|summary|traceName|statKey|axisIndex"
-        const parts = p.seriesId.split("|");
-        if (parts[0] !== "timeseries" || parts[1] !== "summary") continue;
+        const parsed = parseSeriesId(p.seriesId);
+        if (!parsed || parsed.chartType !== "timeseries" || parsed.role !== "summary") continue;
 
-        const traceName = parts[2];
-        const axisIndex = Number(parts[4]);
-        const statKey = parts[3];
+        const traceName = parsed.name;
+        const axisIndex = parsed.axisIndex;
+        const statKey = parsed.subKey;
 
         if (targetAxisIndex != null && axisIndex !== targetAxisIndex) continue;
 
@@ -104,10 +104,9 @@ export function formatMemberItemTooltip(
     let memberId: string | null = null;
 
     if (p.seriesId) {
-        // Parse: "timeseries|member|highlightGroupKey|memberKey|axisIndex"
-        const parts = p.seriesId.split("|");
-        if (parts[0] === "timeseries" && parts[1] === "member") {
-            memberId = parts[4];
+        const parsed = parseSeriesId(p.seriesId);
+        if (parsed && parsed.chartType === "timeseries" && parsed.role === "member") {
+            memberId = parsed.subKey;
         }
     }
 
@@ -191,12 +190,8 @@ function resolveHoveredAxisIndex(params: CallbackDataParams[]): number | null {
         if (fromRuntime != null) return fromRuntime;
 
         if (param.seriesId) {
-            const parts = param.seriesId.split("|");
-            // Assuming format chart|role|name|...|axisIndex for our standard IDs
-            if (parts.length >= 5) {
-                const axisIndex = Number(parts[4]);
-                if (Number.isFinite(axisIndex)) return axisIndex;
-            }
+            const parsed = parseSeriesId(param.seriesId);
+            if (parsed) return parsed.axisIndex;
         }
     }
 

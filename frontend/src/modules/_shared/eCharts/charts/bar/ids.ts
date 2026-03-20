@@ -1,3 +1,5 @@
+import { makeSeriesId } from "../../core/seriesId";
+
 export const BAR_CATEGORY = "bar";
 
 export function makeBarSeriesId(
@@ -6,5 +8,5 @@ export function makeBarSeriesId(
     axisIndex: number,
     statKey: string = ""
 ): string {
-    return `${BAR_CATEGORY}|${role}|${traceName}|${axisIndex}|${statKey}`;
+    return makeSeriesId({ chartType: BAR_CATEGORY, role, name: traceName, subKey: statKey, axisIndex });
 }

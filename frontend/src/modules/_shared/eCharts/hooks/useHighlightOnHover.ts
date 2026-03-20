@@ -4,6 +4,8 @@ import type { ECharts } from "echarts";
 import type { ECElementEvent } from "echarts/types/dist/shared";
 import type ReactECharts from "echarts-for-react";
 
+import { parseSeriesId } from "../core/seriesId";
+
 export type HoveredMemberInfo = {
     memberId: number;
     groupKey: string;
@@ -200,17 +202,8 @@ function findMatchingMemberActions(instance: ECharts, targetMemberKey: string, t
 
 
 function parseMemberId(seriesId: string): { groupKey: string; memberKey: string } | null {
-    const parts = seriesId.split("|");
-    if (parts.length < 4 || parts[1] !== "member") return null;
+    const parsed = parseSeriesId(seriesId);
+    if (!parsed || parsed.role !== "member") return null;
 
-    const chartType = parts[0];
-
-
-    if ((chartType === "timeseries" || chartType === "memberScatter") && parts.length >= 5) {
-        return { groupKey: parts[2], memberKey: parts[3] };
-    }
-
-
-
-    return null;
-}
+    return { groupKey: parsed.name, memberKey: parsed.subKey };
+}   
