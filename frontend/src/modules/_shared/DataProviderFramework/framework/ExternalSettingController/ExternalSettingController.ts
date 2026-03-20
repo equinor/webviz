@@ -108,7 +108,7 @@ export class ExternalSettingController<
                 const setting = child.getSharedSettingsDelegate().getWrappedSettings()[this._setting.getType()];
                 if (setting) {
                     foundSettings.push(setting);
-                    break;
+                    continue;
                 }
             } else if (child instanceof Group) {
                 const sharedSettingsDelegate = child.getSharedSettingsDelegate();
@@ -116,7 +116,7 @@ export class ExternalSettingController<
                     const setting = sharedSettingsDelegate.getWrappedSettings()[this._setting.getType()];
                     if (setting) {
                         foundSettings.push(setting);
-                        break;
+                        continue;
                     }
                 }
                 foundSettings.push(...this.findControlledSettingsRecursively(child.getGroupDelegate()));
@@ -132,12 +132,16 @@ export class ExternalSettingController<
     }
 
     private updateControlledSettings(): void {
+        this.unregisterAllControlledSettings();
+
         let parentGroup = this._parentItem.getItemDelegate().getParentGroup();
         if (this._parentItem instanceof Group) {
             parentGroup = this._parentItem.getGroupDelegate();
         }
 
         if (!parentGroup) {
+            this._setting.setLoading(false);
+            this._setting.setValueConstraints(null);
             return;
         }
 
@@ -152,13 +156,17 @@ export class ExternalSettingController<
             if (setting.isExternallyControlled()) {
                 continue;
             }
-            this._controlledSettings.set(setting.getId(), setting);
-            this._valueConstraintsMap.set(setting.getId(), setting.getValueConstraints());
-            setting.registerExternalSettingController(this);
+            // This order is paramount as we need to get the setting's value constraints before registering it
+            // to not get the external setting controller's value constraints which are based on the controlled settings' value constraints -
+            // which are not registered yet at this point.
+            const valueConstraints = setting.getValueConstraints();
+            this.registerSetting(setting);
+            this._valueConstraintsMap.set(setting.getId(), valueConstraints);
         }
 
         if (this._controlledSettings.size === 0) {
             this._setting.setValueConstraints(null);
+            this._setting.setLoading(false);
             return;
         }
 
@@ -174,21 +182,36 @@ export class ExternalSettingController<
     }
 
     setValueConstraints(settingId: string, valueConstraints: TValueConstraints | null): void {
-        if (valueConstraints !== null) {
-            this._valueConstraintsMap.set(settingId, valueConstraints);
-        } else {
-            this._valueConstraintsMap.delete(settingId);
-        }
-
+        this._valueConstraintsMap.set(settingId, valueConstraints);
         this.makeIntersectionOfValueConstraints();
     }
 
-    makeIntersectionOfValueConstraints(): void {
+    private syncStateFromControlledSettings(): boolean {
+        let hasLoading = false;
+        let hasUninitialized = false;
+
         for (const setting of this._controlledSettings.values()) {
-            if (!setting.isInitialized(true) || setting.isLoading(true)) {
-                return;
+            if (setting.isLoading(true)) {
+                hasLoading = true;
+            }
+            if (!setting.isInitialized(true)) {
+                hasUninitialized = true;
             }
         }
+
+        const shouldBeLoading = hasLoading || hasUninitialized;
+        this._setting.setLoading(shouldBeLoading);
+
+        return !shouldBeLoading;
+    }
+
+    makeIntersectionOfValueConstraints(): void {
+        if (!this.syncStateFromControlledSettings()) {
+            // Not ready yet, but we should avoid exposing deprecated value constraints to the controlled settings
+            this._setting.setValueConstraints(null);
+            return;
+        }
+
         const reducerDefinition = this._setting.getValueConstraintsReducerDefinition();
 
         if (this._setting.isStatic()) {
@@ -198,10 +221,12 @@ export class ExternalSettingController<
             // and setAvailableValues is not called in this case - which would notify the subscribers
             // of a possible value change.
             this._setting.getPublishSubscribeDelegate().notifySubscribers(SettingTopic.VALUE);
+            this._setting.setLoading(false);
             return;
         }
 
         if (!reducerDefinition) {
+            this._setting.setLoading(false);
             return;
         }
 
@@ -218,9 +243,10 @@ export class ExternalSettingController<
             valueConstraints = reducer(valueConstraints, value, index++);
         }
 
+        this._setting.setLoading(false);
+
         if (!isValid(valueConstraints as any) || isInvalid) {
             this._setting.setValueConstraints(null);
-            this._setting.setValue(null as any);
             return;
         }
 
