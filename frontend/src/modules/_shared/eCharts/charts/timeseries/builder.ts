@@ -2,13 +2,14 @@ import type { EChartsOption } from "echarts";
 
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
-import type { BaseChartOptions } from "../..";
+
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianChartSeries, CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { ComposeChartConfig } from "../../core/composeChartOption";
 import { applyActiveTimestampMarker } from "../../overlays/activeTimestampMarker";
 import type {
 
+    BaseChartOptions,
     SubplotGroup,
     TimeseriesDisplayConfig,
     TimeseriesSubplotOverlays,
