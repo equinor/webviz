@@ -9,7 +9,7 @@ import (
 	"surface_query/utils"
 )
 
-// Surface fro a single realization; surface object UUID along with its realization number
+// Surface for a single realization; surface object UUID along with its realization number
 type RealSurfObj struct {
 	Realization int
 	ObjectUuid  string
@@ -24,12 +24,13 @@ type PointSet struct {
 // Sampled values for a single realization
 type SamplesForReal struct {
 	Realization   int
-	SampledValues []float32
+	SampledValues []float32 // This will be empty if there was an error processing this realization; the error will be in the Err field
+	Err           error     // Will be non-nil if there was an error processing this realization
 }
 
-func RunSampleInPointsPipeline(fetcher *utils.BlobFetcher, realSurfObjArr []RealSurfObj, pointSet PointSet) ([]SamplesForReal, error) {
+func RunSampleInPointsPipeline(batchId uint64, fetcher *utils.BlobFetcher, realSurfObjArr []RealSurfObj, pointSet PointSet) ([]SamplesForReal, error) {
 	logger := slog.Default()
-	prefix := "sample_in_points - "
+	prefix := fmt.Sprintf("sample_in_points(batchId=%d) - ", batchId)
 
 	goMaxParallelism := runtime.GOMAXPROCS(0)
 	numDownloadWorkers := max(10, 4*goMaxParallelism)
@@ -53,11 +54,24 @@ func RunSampleInPointsPipeline(fetcher *utils.BlobFetcher, realSurfObjArr []Real
 	runProcessStage(pointSet, numProcessingWorkers, downloadedCh, resultCh)
 
 	totDownloadSizeMb := float32(0)
+	numFailedRealizations := int(0)
 	perRealSamples := make([]SamplesForReal, 0, numRealizations)
 
 	for plRes := range resultCh {
+		totDownloadSizeMb += plRes.downloadSizeMb
+
+		if plRes.err != nil {
+			logger.Error(prefix+"error processing realization", "realization", plRes.realization, "err", plRes.err)
+			perRealSamples = append(perRealSamples, SamplesForReal{
+				Realization: plRes.realization,
+				Err:         plRes.err,
+			})
+			numFailedRealizations++
+			continue
+		}
+
 		processingDur := plRes.sampleDur + plRes.decodeDur
-		logger.Debug(prefix + fmt.Sprintf("realization %d done in %dms, %.2fMB, %.2fMB/s (download=%dms, processing=%dms(%d+%d), queueDownload=%dms, queueProcessing=%dms)",
+		logger.Debug(prefix + fmt.Sprintf("realization %d done in %dms, %.2fMB, %.2fMB/s (download=%dms, processing=%dms(%d+%d), queueForDl=%dms, queueForProc=%dms)",
 			plRes.realization,
 			plRes.totalDur.Milliseconds(),
 			plRes.downloadSizeMb, plRes.downloadSizeMb/float32(plRes.totalDur.Seconds()),
@@ -67,12 +81,6 @@ func RunSampleInPointsPipeline(fetcher *utils.BlobFetcher, realSurfObjArr []Real
 			plRes.queueForProcessingDur.Milliseconds(),
 		))
 
-		if plRes.err != nil {
-			logger.Error("Error processing realization", "realization", plRes.realization, "err", plRes.err)
-		}
-
-		totDownloadSizeMb += plRes.downloadSizeMb
-
 		perRealSamples = append(perRealSamples, SamplesForReal{
 			Realization:   plRes.realization,
 			SampledValues: plRes.sampledValues,
@@ -80,7 +88,12 @@ func RunSampleInPointsPipeline(fetcher *utils.BlobFetcher, realSurfObjArr []Real
 	}
 
 	totDuration := time.Since(startTime)
-	logger.Info(prefix + fmt.Sprintf("finished processing %d realization surfaces in %.2fs (download totals: %.2fMB, %.2fMB/s)", numRealizations, totDuration.Seconds(), totDownloadSizeMb, totDownloadSizeMb/(float32(totDuration.Milliseconds())/1000)))
+	statString := fmt.Sprintf("%.2fs (download totals: %.2fMB, %.2fMB/s)", totDuration.Seconds(), totDownloadSizeMb, totDownloadSizeMb/(float32(totDuration.Milliseconds())/1000))
+	if numFailedRealizations > 0 {
+		logger.Warn(prefix + fmt.Sprintf("finished processing %d realization surfaces with %d failures in: %s", numRealizations, numFailedRealizations, statString))
+	} else {
+		logger.Info(prefix + fmt.Sprintf("finished processing %d realization surfaces in: %s", numRealizations, statString))
+	}
 
 	return perRealSamples, nil
 }

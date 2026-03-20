@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"surface_query/syncserver/logic/sample_in_points"
 	"surface_query/utils"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -30,9 +31,12 @@ type RealizationSampleResult struct {
 }
 
 type PointSamplingResponse struct {
-	SampleResultArr []RealizationSampleResult `json:"sampleResultArr" binding:"required"`
-	UndefLimit      float32                   `json:"undefLimit" binding:"required"`
+	SampleResultArr    []RealizationSampleResult `json:"sampleResultArr" binding:"required"`
+	UndefLimit         float32                   `json:"undefLimit" binding:"required"`
+	FailedRealizations []int                     `json:"failedRealizations" binding:"required"`
 }
+
+var nextBatchId uint64
 
 func HandleSampleInPoints(c *gin.Context) {
 	logger := slog.Default()
@@ -59,26 +63,39 @@ func HandleSampleInPoints(c *gin.Context) {
 		YCoords: requestBody.YCoords,
 	}
 
+	batchId := atomic.AddUint64(&nextBatchId, 1)
 	blobFetcher := utils.NewBlobFetcher(requestBody.SasToken, requestBody.BlobStoreBaseUri)
-	perRealSamplesArr, err := sample_in_points.RunSampleInPointsPipeline(blobFetcher, perRealSurfObjs, pointSet)
+	perRealSamplesArr, err := sample_in_points.RunSampleInPointsPipeline(batchId, blobFetcher, perRealSurfObjs, pointSet)
 	if err != nil {
-		logger.Error("Error during bulk processing of surfaces:", slog.Any("error", err))
+		logger.Error("Error during point sampling of surfaces:", "batchId", batchId, slog.Any("error", err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Construct the response body
-	retResultArr := make([]RealizationSampleResult, len(perRealSamplesArr))
-	for i := range retResultArr {
-		retResultArr[i] = RealizationSampleResult(perRealSamplesArr[i])
+	// How should we handle the case where some realizations failed to download or process?
+	// The solution now is to report a separate list of the failed realizations, maybe we want to include error messages as well?
+	retResultArr := make([]RealizationSampleResult, 0, len(perRealSamplesArr))
+	retFailedRealizations := make([]int, 0)
+	for _, item := range perRealSamplesArr {
+		if item.Err != nil {
+			retFailedRealizations = append(retFailedRealizations, item.Realization)
+			continue
+		}
+
+		retResultArr = append(retResultArr, RealizationSampleResult{
+			Realization:   item.Realization,
+			SampledValues: item.SampledValues,
+		})
 	}
 
 	responseBody := PointSamplingResponse{
-		SampleResultArr: retResultArr,
-		UndefLimit:      0.99e30,
+		SampleResultArr:    retResultArr,
+		UndefLimit:         0.99e30,
+		FailedRealizations: retFailedRealizations,
 	}
 	c.JSON(http.StatusOK, responseBody)
 
 	duration := time.Since(startTime)
-	logger.Info(fmt.Sprintf("Total time: %.2fs", duration.Seconds()))
+	logger.Info(fmt.Sprintf("Total time (batchId=%d): %.2fs", batchId, duration.Seconds()))
 }
