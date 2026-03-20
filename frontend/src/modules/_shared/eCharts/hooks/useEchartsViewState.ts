@@ -1,49 +1,33 @@
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef } from "react";
+import { ChartZoomState } from "../core/composeChartOption";
 
-import type ReactECharts from "echarts-for-react";
 
-export interface ViewState {
-    zoomStart: number;
-    zoomEnd: number;
-}
-
-export function useEChartsViewState(initialView: ViewState = { zoomStart: 0, zoomEnd: 100 }) {
-    const [viewState, setViewState] = useState<ViewState>(initialView);
-
-    // Deboune to prevent jittering during zoom interactions - we only want to update React state after the user has stopped zooming for 250ms
+export function useEChartsViewState(
+    setZoomState: React.Dispatch<React.SetStateAction<ChartZoomState>>
+) {
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     const handleDataZoom = useCallback((params: any) => {
-        const batch = params.batch?.[0] ?? params;
-        const { start, end } = batch;
+        const updates = params.batch ?? [params];
 
-        if (start != null && end != null) {
-            // Clear the existing timer if the user is still zooming
-            if (debounceTimer.current) {
-                clearTimeout(debounceTimer.current);
-            }
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
-            // Wait 250ms after the last zoom event before telling React to re-render
-            debounceTimer.current = setTimeout(() => {
-                setViewState({ zoomStart: start, zoomEnd: end });
-            }, 250);
-        }
-    }, []);
+        debounceTimer.current = setTimeout(() => {
+            setZoomState((prev) => {
+                const next = { ...prev };
+                updates.forEach((item: any) => {
+                    const axisKey = item.dataZoomId === "y" ? "y" : "x";
+                    next[axisKey] = {
+                        start: item.start,
+                        end: item.end,
+                        startValue: item.startValue,
+                        endValue: item.endValue,
+                    };
+                });
+                return next;
+            });
+        }, 150);
+    }, [setZoomState]);
 
-    const applyZoom = useCallback((chartRef: React.RefObject<ReactECharts | null>, start: number, end: number) => {
-        const instance = chartRef.current?.getEchartsInstance();
-        if (!instance) return;
-
-        instance.dispatchAction({
-            type: "dataZoom",
-            start,
-            end,
-        });
-    }, []);
-
-    return {
-        viewState,
-        handleDataZoom,
-        applyZoom,
-    };
+    return { handleDataZoom };
 }

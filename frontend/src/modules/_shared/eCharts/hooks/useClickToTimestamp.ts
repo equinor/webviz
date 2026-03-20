@@ -58,7 +58,9 @@ function handleChartClick(
     setActiveTimestampUtcMs: (ts: number | null) => void,
 ): void {
     if (!(event instanceof MouseEvent)) return;
-
+    if (!event.ctrlKey && !event.metaKey) {
+        return;
+    }
     const chart = chartRef.current?.getEchartsInstance();
     if (!chart) return;
 

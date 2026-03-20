@@ -43,9 +43,24 @@ export function buildCartesianSubplotChart<T>(
         postProcessAxes, zoomState, dataZoom, ...composeOverrides
     } = options;
     let finalDataZoom = dataZoom;
+
     if (dataZoom && zoomState) {
         const dataZoomArray = Array.isArray(dataZoom) ? dataZoom : [dataZoom];
-        finalDataZoom = dataZoomArray.map(dz => ({ ...dz, ...zoomState }));
+
+        finalDataZoom = dataZoomArray.map(dz => {
+            const state = dz.id === "y" ? zoomState.y : zoomState.x;
+
+            if (!state) return dz;
+
+
+            return {
+                ...dz,
+                start: state.start,
+                end: state.end,
+                ...(state.startValue != null && { startValue: state.startValue }),
+                ...(state.endValue != null && { endValue: state.endValue }),
+            };
+        });
     }
     const layout = computeSubplotGridLayout(groups.length, layoutConfig);
     const allSeries: CartesianChartSeries[] = [];

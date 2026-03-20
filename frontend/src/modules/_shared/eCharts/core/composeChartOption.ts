@@ -47,11 +47,21 @@ export interface ComposeChartConfig {
     axisPointer?: EChartsOption["axisPointer"];
     toolbox?: EChartsOption["toolbox"];
 }
-export interface ChartZoomState {
-    start?: number;
-    end?: number;
+export interface AxisZoomState {
+    start: number;
+    end: number;
     startValue?: number | string;
     endValue?: number | string;
+}
+
+/**
+ * Represents the persisted view state for both dimensions.
+ * Using optional 'x' and 'y' allows the orchestrator/builders 
+ * to only apply updates to one axis if the other hasn't changed.
+ */
+export interface ChartZoomState {
+    x?: AxisZoomState;
+    y?: AxisZoomState;
 }
 
 export function composeChartOption(

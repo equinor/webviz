@@ -3,11 +3,11 @@ import React from "react";
 import type { EChartsOption } from "echarts";
 
 import type { ViewContext } from "@framework/ModuleContext";
-import type { ViewState } from "@modules/_shared/eCharts/hooks/useEchartsViewState";
 
 import type { Interfaces } from "../interfaces";
 
 import { DemoChartOrchestrator } from "./plotOrchestrator";
+import { ChartZoomState } from "@modules/_shared/eCharts/core/composeChartOption";
 
 const TIMESERIES_MEMBER_LABEL = "Realization";
 
@@ -23,7 +23,7 @@ export function useDemoPlotModel(
     viewContext: ViewContext<Interfaces>,
     containerSize: { width: number; height: number },
     activeTimestampUtcMs: number | null,
-    viewState: ViewState,
+    zoomState: ChartZoomState,
 ): DemoPlotModel {
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const numSubplots = viewContext.useSettingsToViewInterfaceValue("numSubplots");
@@ -71,7 +71,7 @@ export function useDemoPlotModel(
             containerSize: resolvedSize,
             sharedXAxis,
             sharedYAxis,
-            currentZoom: viewState,
+            currentZoom: zoomState,
         });
     }, [
         orchestrator,
@@ -94,6 +94,6 @@ export function useDemoPlotModel(
         containerSize,
         sharedXAxis,
         sharedYAxis,
-        viewState,
+        zoomState,
     ]);
 }

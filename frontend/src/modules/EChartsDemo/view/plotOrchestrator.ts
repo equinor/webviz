@@ -29,7 +29,7 @@ import {
     generateTimeseriesGroups,
     generateTimeseriesOverlays,
 } from "../utils/syntheticData";
-
+import { ChartZoomState } from "@modules/_shared/eCharts/core/composeChartOption";
 
 type DemoPlotModel = {
     echartsOptions: EChartsOption;
@@ -55,7 +55,7 @@ type OrchestratorConfig = {
     containerSize?: ContainerSize;
     sharedXAxis?: boolean;
     sharedYAxis?: boolean;
-    currentZoom?: { zoomStart: number; zoomEnd: number };
+    currentZoom?: ChartZoomState;
 };
 
 export class DemoChartOrchestrator {
@@ -90,10 +90,8 @@ export class DemoChartOrchestrator {
             containerSize: config.containerSize,
             sharedXAxis: config.sharedXAxis,
             sharedYAxis: config.sharedYAxis,
-            zoomState: config.currentZoom ? {
-                start: config.currentZoom.zoomStart,
-                end: config.currentZoom.zoomEnd
-            } : undefined
+            zoomState: config.currentZoom
+
         };
     }
 

@@ -15,9 +15,12 @@ import {
 import { useEChartsViewState } from "@modules/_shared/eCharts/hooks/useEchartsViewState";
 
 import type { Interfaces } from "../interfaces";
-import { PLOT_TYPE_LABELS } from "../typesAndEnums";
+import { PLOT_TYPE_LABELS, PlotType } from "../typesAndEnums";
 
 import { useDemoPlotModel } from "./useEcharts";
+
+import { chartZoomAtom } from "./atoms/baseAtoms";
+import { useAtom } from "jotai";
 const ROW_HEIGHT_PX = 350;
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
@@ -31,7 +34,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         realization: number | null;
         ensemble: string | null;
     } | null>(null);
-    const { viewState, handleDataZoom } = useEChartsViewState();
+
+    const [viewState, setViewState] = useAtom(chartZoomAtom);
+    const { handleDataZoom } = useEChartsViewState(setViewState);
+
     const chartModel = useDemoPlotModel(viewContext, containerSize, activeTimestampUtcMs, viewState);
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const numSubplots = viewContext.useSettingsToViewInterfaceValue("numSubplots");
@@ -39,11 +45,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const numRealizations = viewContext.useSettingsToViewInterfaceValue("numRealizations");
     const scrollMode = viewContext.useSettingsToViewInterfaceValue("scrollMode");
 
-    React.useEffect(() => {
-        viewContext.setInstanceTitle(
-            `${PLOT_TYPE_LABELS[plotType]} (Plots: ${numSubplots} Groups: ${numGroups} Reals: ${numRealizations})`,
-        );
-    }, [plotType, numSubplots, numGroups, numRealizations, viewContext]);
+    viewContext.setInstanceTitle(
+        `${PLOT_TYPE_LABELS[plotType]} (Plots: ${numSubplots} Groups: ${numGroups} Reals: ${numRealizations})`,
+    );
 
     const handleHoveredRealChange = React.useCallback((info: HoveredMemberInfo | null) => {
         setHoveredReal({ realization: info?.memberId ?? null, ensemble: info?.groupKey ?? null });
@@ -79,16 +83,28 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     return (
         <div ref={containerRef} className="w-full h-full overflow-auto relative">
             <div className="absolute top-2 left-2 z-10 flex gap-4 p-2 bg-white/80 backdrop-blur border rounded shadow-sm text-xs">
+                {plotType === PlotType.Timeseries && (
+                    <div>
+                        <span className="font-bold">Timestamp: </span>
+                        {activeTimestampUtcMs
+                            ? timestampUtcMsToCompactIsoString(activeTimestampUtcMs)
+                            : "Ctrl + Click  to select"}
+                    </div>
+                )}
+                {(plotType === PlotType.Timeseries || plotType === PlotType.MemberScatter) && (
+                    <div>
+                        <span className="font-bold">Hovered Real: </span>
+                        {hoveredReal?.realization ?? "None"}
+                        {hoveredReal?.ensemble && ` (Group: ${hoveredReal.ensemble})`}
+                    </div>
+                )}
                 <div>
-                    <span className="font-bold">Timestamp: </span>
-                    {activeTimestampUtcMs
-                        ? timestampUtcMsToCompactIsoString(activeTimestampUtcMs)
-                        : "Click chart (timeseries) to select"}
+                    <span className="font-bold">Zoom X: </span>
+                    {Math.round(viewState.x?.start ?? 0)}% - {Math.round(viewState.x?.end ?? 100)}%
                 </div>
                 <div>
-                    <span className="font-bold">Hovered Real: </span>
-                    {hoveredReal?.realization ?? "None"}
-                    {hoveredReal?.ensemble && ` (Group: ${hoveredReal.ensemble})`}
+                    <span className="font-bold">Zoom Y: </span>
+                    {Math.round(viewState.y?.start ?? 0)}% - {Math.round(viewState.y?.end ?? 100)}%
                 </div>
             </div>
 
@@ -106,6 +122,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     style={{ height: "100%", width: "100%" }}
                     onEvents={onChartEvents}
                     notMerge
+                    lazyUpdate={true}
                 />
             </div>
         </div>

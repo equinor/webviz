@@ -6,11 +6,9 @@ import type { BaseChartOptions } from "../..";
 import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianChartSeries, CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { ComposeChartConfig } from "../../core/composeChartOption";
-import { getResponsiveFeatures } from "../../layout/responsiveConfig";
 import { applyActiveTimestampMarker } from "../../overlays/activeTimestampMarker";
 import type {
 
-    ContainerSize,
     SubplotGroup,
     TimeseriesDisplayConfig,
     TimeseriesSubplotOverlays,
@@ -108,7 +106,6 @@ export function buildTimeseriesChart(
             ...buildTimeseriesComposeOverrides(
                 numSubplots,
                 displayConfig,
-                baseOptions.containerSize,
                 memberLabel,
             ),
         },
@@ -192,7 +189,6 @@ function buildTimeseriesSubplot(
 function buildTimeseriesComposeOverrides(
     numSubplots: number,
     config: TimeseriesDisplayConfig,
-    containerSize?: ContainerSize,
     memberLabel?: string,
 ) {
     return {
@@ -213,45 +209,21 @@ function buildTimeseriesComposeOverrides(
             right: 16,
             top: 4,
         },
-        dataZoom: buildTimeseriesDataZoom(numSubplots, containerSize),
+        dataZoom: buildTimeseriesDataZoom(numSubplots),
     };
 }
 
 function buildTimeseriesDataZoom(
-    numSubplots: number,
-    containerSize?: ContainerSize,
+    numSubplots: number
+
 ): NonNullable<ComposeChartConfig["dataZoom"]> {
-    const { showSliders } = getResponsiveFeatures(containerSize);
+
     const allAxisIndices = Array.from({ length: numSubplots }, (_, index) => index);
-    const showSliderControls = numSubplots === 1 && showSliders;
 
     return [
-        ...(showSliderControls
-            ? [
-                {
-                    type: "slider" as const,
-                    show: true,
-                    xAxisIndex: allAxisIndices,
-                    start: 0,
-                    end: 100,
-                    bottom: 0,
-                    height: 10,
-                    filterMode: "none" as const,
-                },
-                {
-                    type: "slider" as const,
-                    show: true,
-                    yAxisIndex: allAxisIndices,
-                    start: 0,
-                    end: 100,
-                    right: 0,
-                    width: 10,
-                    filterMode: "none" as const,
-                },
-            ]
-            : []),
-        { type: "inside" as const, xAxisIndex: allAxisIndices, filterMode: "none" as const },
-        { type: "inside" as const, yAxisIndex: allAxisIndices, filterMode: "none" as const },
+
+        { type: "inside" as const, id: "x", xAxisIndex: allAxisIndices, filterMode: "none" as const },
+        { type: "inside" as const, id: "y", yAxisIndex: allAxisIndices, filterMode: "none" as const },
     ];
 }
 
