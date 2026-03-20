@@ -12,7 +12,6 @@ from .routers import grid_router
 from .routers import intersection_router
 from .routers import dev_router
 
-
 # Load environment variables from .env file,
 # Note that values set in the system environment will override those in the .env file
 load_dotenv()

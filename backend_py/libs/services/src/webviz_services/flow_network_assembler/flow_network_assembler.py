@@ -35,7 +35,6 @@ from .flow_network_types import (
     TreeType,
 )
 
-
 LOGGER = logging.getLogger(__name__)
 
 

@@ -82,10 +82,16 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                 {/* Header */}
                 <div
                     className={resolveClassNames("flex justify-between p-4 border-b", {
-                        "bg-red-200 border-red-400 ": variantOrDefault === "error",
+                        "bg-red-200 border-red-400": variantOrDefault === "error",
                     })}
                 >
-                    <h2 className="text-slate-800 font-bold text-lg">{props.title}</h2>
+                    <h2
+                        className={resolveClassNames("text-slate-800 font-bold text-lg", {
+                            "text-red-900!": variantOrDefault === "error",
+                        })}
+                    >
+                        {props.title}
+                    </h2>
                     {props.showCloseCross && (
                         <div
                             className="hover:text-slate-500 cursor-pointer ml-4"

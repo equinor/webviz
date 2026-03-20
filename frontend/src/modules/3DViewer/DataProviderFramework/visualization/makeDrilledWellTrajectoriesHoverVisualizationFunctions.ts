@@ -3,12 +3,12 @@ import { GeoJsonLayer } from "@deck.gl/layers";
 import type { WellboreTrajectory_api } from "@api";
 import { HoverTopic } from "@framework/HoverService";
 import { BiconeLayer } from "@modules/3DViewer/customDeckGlLayers/BiconeLayer";
-import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type {
     HoverVisualizationFunctions,
     TransformerArgs,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { ExtendedWellFeature } from "@modules/_shared/types/geojson";
 import {
     getInterpolatedNormalAtMd,
     getInterpolatedPositionAtMd,
@@ -34,7 +34,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
 
     return {
         [HoverTopic.WELLBORE]: (wellboreUuid) => {
-            const trajectoryData: GeoWellFeature[] = [];
+            const trajectoryData: ExtendedWellFeature[] = [];
             const wellboreTrajectory = findWellboreTrajectory(wellboreUuid, wellboreTrajectories);
 
             if (wellboreTrajectory) {

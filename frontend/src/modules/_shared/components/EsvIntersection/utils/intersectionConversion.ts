@@ -106,85 +106,63 @@ export function getColorFromLayerData(layer: Layer<unknown>, index: number): str
     return "#000";
 }
 
-export function makeHighlightItemFromIntersectionResult(
+export function makeHighlightItemsFromIntersectionResult(
     intersectionResult: IntersectedItem,
     layer: Layer<unknown>,
     index: number,
-): HighlightItem {
+): HighlightItem[] {
     const color = getColorFromLayerData(layer, index);
     if (isPointIntersectionResult(intersectionResult)) {
-        return {
-            shape: HighlightItemShape.POINT,
-            point: intersectionResult.point,
-            paintOrder: layer.order,
-            color,
-        };
+        return [{ shape: HighlightItemShape.POINT, point: intersectionResult.point, paintOrder: layer.order, color }];
     }
     if (isLineIntersectionResult(intersectionResult)) {
-        return {
-            shape: HighlightItemShape.POINT,
-            point: intersectionResult.point,
-            paintOrder: layer.order,
-            color,
-        };
+        return [{ shape: HighlightItemShape.POINT, point: intersectionResult.point, paintOrder: layer.order, color }];
     }
     if (isLineSetIntersectionResult(intersectionResult)) {
-        return {
-            shape: HighlightItemShape.POINTS,
-            points: intersectionResult.points,
-            paintOrder: layer.order,
-            color,
-        };
+        return [
+            { shape: HighlightItemShape.POINTS, points: intersectionResult.points, paintOrder: layer.order, color },
+        ];
     }
     if (isPolygonIntersectionResult(intersectionResult)) {
-        return {
-            shape: HighlightItemShape.POLYGON,
-            polygon: intersectionResult.polygon,
-            paintOrder: layer.order,
-            color,
-        };
-    }
-    if (isPolygonsIntersectionResult(intersectionResult)) {
-        if (!isPolylineIntersectionLayer(layer) || !layer.data) {
-            return {
+        return [
+            {
                 shape: HighlightItemShape.POLYGON,
                 polygon: intersectionResult.polygon,
                 paintOrder: layer.order,
                 color,
-            };
-        }
-        const cellIndex = layer.data.fenceMeshSections[index].polySourceCellIndicesArr[intersectionResult.polygonIndex];
-        const polygons = layer.extractPolygonsForCellIndex(cellIndex);
-        return {
-            shape: HighlightItemShape.POLYGONS,
-            polygons,
-            paintOrder: layer.order,
-            color,
-        };
+            },
+        ];
     }
-    if (isWellborePathIntersectionResult(intersectionResult)) {
-        return {
-            shape: HighlightItemShape.POINT,
-            point: intersectionResult.point,
-            paintOrder: layer.order,
-            color,
-        };
-    }
-    if (isFanchartIntersectionResult(intersectionResult)) {
-        return {
-            shape: HighlightItemShape.LINE,
-            line: intersectionResult.line,
-            paintOrder: layer.order,
-            color,
-        };
-    }
-    if (isRectangleIntersectionResult(intersectionResult)) {
-        return {
+    if (isPolygonsIntersectionResult(intersectionResult)) {
+        const cursorCross: HighlightItem = {
             shape: HighlightItemShape.CROSS,
             center: intersectionResult.point,
             paintOrder: layer.order,
-            color,
+            color: "rgba(0, 0, 0, 0.6)",
         };
+        if (!isPolylineIntersectionLayer(layer) || !layer.data) {
+            return [
+                {
+                    shape: HighlightItemShape.POLYGON,
+                    polygon: intersectionResult.polygon,
+                    paintOrder: layer.order,
+                    color,
+                },
+                cursorCross,
+            ];
+        }
+        const cellIndex = layer.data.fenceMeshSections[index].polySourceCellIndicesArr[intersectionResult.polygonIndex];
+        const polygons = layer.extractPolygonsForCellIndex(cellIndex);
+        return [{ shape: HighlightItemShape.POLYGONS, polygons, paintOrder: layer.order, color }, cursorCross];
+    }
+    if (isWellborePathIntersectionResult(intersectionResult)) {
+        return [{ shape: HighlightItemShape.POINT, point: intersectionResult.point, paintOrder: layer.order, color }];
+    }
+    if (isFanchartIntersectionResult(intersectionResult)) {
+        return [{ shape: HighlightItemShape.LINE, line: intersectionResult.line, paintOrder: layer.order, color }];
+    }
+    if (isRectangleIntersectionResult(intersectionResult)) {
+        return [{ shape: HighlightItemShape.CROSS, center: intersectionResult.point, paintOrder: layer.order, color }];
     }
     throw new Error("Invalid intersection result");
 }

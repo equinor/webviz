@@ -133,6 +133,7 @@ export type EsvIntersectionProps = {
     highlightItems?: HighlightItem[];
     onReadout?: (event: EsvIntersectionReadoutEvent) => void;
     onViewportChange?: (viewport: Viewport) => void;
+    onMousePositionChange?: (position: { x: number; y: number } | null) => void;
 };
 
 function makeLayer<T extends keyof LayerDataTypeMap>(
@@ -210,7 +211,7 @@ function isPixiLayer(layer: Layer<unknown>): boolean {
 }
 
 export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
-    const { onReadout, onViewportChange } = props;
+    const { onReadout, onViewportChange, onMousePositionChange } = props;
 
     const [prevAxesOptions, setPrevAxesOptions] = React.useState<AxisOptions | undefined>(undefined);
     const [prevIntersectionReferenceSystem, setPrevIntersectionReferenceSystem] = React.useState<
@@ -521,6 +522,30 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         [onReadout, interactionHandler],
     );
 
+    const handleMouseMove = React.useCallback(
+        function handleMouseMove(event: React.MouseEvent) {
+            if (!esvController || !onMousePositionChange || !containerRef.current) {
+                return;
+            }
+
+            const { xScale, yScale } = esvController.currentStateAsEvent;
+            const rect = containerRef.current.getBoundingClientRect();
+            const pixelX = event.clientX - rect.left;
+            const pixelY = event.clientY - rect.top;
+            onMousePositionChange({ x: xScale.invert(pixelX), y: yScale.invert(pixelY) });
+        },
+        [esvController, onMousePositionChange],
+    );
+
+    const handleMouseLeave = React.useCallback(
+        function handleMouseLeave() {
+            if (onMousePositionChange) {
+                onMousePositionChange(null);
+            }
+        },
+        [onMousePositionChange],
+    );
+
     React.useEffect(
         function propagateViewportChange() {
             if (onViewportChange && currentViewport) {
@@ -557,6 +582,8 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 ref={containerRef}
                 className={resolveClassNames({ "w-full h-full": props.size === undefined })}
                 style={{ ...props.size }}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
             ></div>
         </>
     );

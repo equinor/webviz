@@ -332,6 +332,15 @@ export class VisualizationAssembler<
                 continue;
             }
 
+            // Skip items with deserialization errors, but count the errors for error badge and opening all descendants with errors functionality
+            if (child.getItemDelegate().getDeserializationErrors().length) {
+                // Include the name of the item with deserialization errors in the error messages
+                aggregatedErrorMessages.push(
+                    `${child.getItemDelegate().getName()}: ${child.getItemDelegate().getDeserializationErrors().join(", ")}`,
+                );
+                continue;
+            }
+
             // Skip DeltaSurface for now
             if (child instanceof DeltaSurface) {
                 continue;

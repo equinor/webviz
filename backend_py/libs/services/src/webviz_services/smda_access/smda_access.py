@@ -23,7 +23,6 @@ from .utils.queries import data_model_to_projection_param
 from .stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from ._smda_get_request import smda_get_request_async, smda_get_aggregation_request_async
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -175,8 +174,12 @@ class SmdaAccess:
             "well_northing",
             "depth_reference_point",
             "depth_reference_elevation",
+            "tvd_min",
             "tvd_max",
+            "tvd_unit",
+            "md_min",
             "md_max",
+            "md_unit",
         ]
         params = {
             "_projection": ",".join(projection),
@@ -199,6 +202,7 @@ class SmdaAccess:
             "kickoff_depth_tvd",
             "parent_wellbore",
         ]
+
         params = {
             "_projection": ",".join(projection),
             "_sort": "unique_wellbore_identifier",

@@ -9,7 +9,6 @@ from webviz_services.service_exceptions import InvalidDataError, ServiceLayerExc
 from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client
 
-
 LOGGER = logging.getLogger(__name__)
 
 
