@@ -292,20 +292,15 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
     const channels = usePublishSubscribeTopicValue(channelManager, ChannelManagerNotificationTopic.CHANNELS_CHANGE);
     const receivers = usePublishSubscribeTopicValue(channelManager, ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
 
-    // We only care about specifics parts of the state, so we write our own sync here
-    const numIncomingConnections = React.useSyncExternalStore(
-        channelManager
-            .getPublishSubscribeDelegate()
-            .makeSubscriberFunction(ChannelManagerNotificationTopic.CONNECTION_STATE_REVISION),
-        () => channelManager.getNumberOfIncomingConnections(),
+    // We can cheaply count connection numbers each render, so we subscribe to the revision number here just to trigger re-renders
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _connectionStateRevision = usePublishSubscribeTopicValue(
+        channelManager,
+        ChannelManagerNotificationTopic.CONNECTION_STATE_REVISION,
     );
 
-    const numOutgoingConnections = React.useSyncExternalStore(
-        channelManager
-            .getPublishSubscribeDelegate()
-            .makeSubscriberFunction(ChannelManagerNotificationTopic.CONNECTION_STATE_REVISION),
-        () => channelManager.getNumberOfOutgoingConnections(),
-    );
+    const numIncomingConnections = channelManager.getNumberOfIncomingConnections();
+    const numOutgoingConnections = channelManager.getNumberOfOutgoingConnections();
 
     const hasDataChannel = channels.length > 0;
     const hasDataReceiver = receivers.length > 0;
@@ -345,18 +340,18 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
     function makeChannelOutButtonTitle(): string {
         const msg = props.isSnapshotMode
             ? "Cannot change data channels in snapshot mode"
-            : "Connect data channels to other module instances";
+            : "Drag to connect data channels to other modules";
 
-        return prependConnectionCount(msg, numOutgoingConnections);
+        return appendConnectionCount(msg, numOutgoingConnections);
     }
 
     function makeChannelInButtonTitle(): string {
         const message = props.isSnapshotMode ? "Show input data channels" : "Edit input data channels";
 
-        return prependConnectionCount(message, numIncomingConnections);
+        return appendConnectionCount(message, numIncomingConnections);
     }
 
-    function prependConnectionCount(title: string, connectionCount: number): string {
+    function appendConnectionCount(title: string, connectionCount: number): string {
         if (connectionCount === 0) return title;
 
         return `${title} (${connectionCount} active ${connectionCount === 1 ? "connection" : "connections"})`;

@@ -109,20 +109,21 @@ export class ChannelReceiver implements Receiver {
     }
 
     onChannelAboutToBeRemoved(): void {
-        this._channel = null;
-        this._contentIdStrings = [];
-        this._subscribedToAllContents = false;
-        this.notifySubscribers(ChannelReceiverNotificationTopic.CHANNEL_CHANGE);
+        this.resetChannelSettings();
     }
 
     disconnectFromCurrentChannel(): void {
         if (this._channel) {
             this._channel.disconnectReceiver(this);
-            this._channel = null;
-            this._contentIdStrings = [];
-            this._subscribedToAllContents = false;
-            this.notifySubscribers(ChannelReceiverNotificationTopic.CHANNEL_CHANGE);
+            this.resetChannelSettings();
         }
+    }
+
+    private resetChannelSettings(): void {
+        this._channel = null;
+        this._contentIdStrings = [];
+        this._subscribedToAllContents = false;
+        this.notifySubscribers(ChannelReceiverNotificationTopic.CHANNEL_CHANGE);
     }
 
     subscribe(topic: ChannelReceiverNotificationTopic, callback: () => void): () => void {

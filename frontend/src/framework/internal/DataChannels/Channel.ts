@@ -15,10 +15,6 @@ export enum ChannelNotificationTopic {
     RECEIVERS_ARRAY_CHANGED = "receivers-array-changed",
 }
 
-export type ChannelNotificationTopicPayload = {
-    [ChannelNotificationTopic.RECEIVERS_ARRAY_CHANGED]: Receiver[];
-};
-
 export class Channel implements Transmitter {
     private _idString: string;
     private _displayName: string;
@@ -55,7 +51,7 @@ export class Channel implements Transmitter {
         return this._kindOfKey;
     }
 
-    numberOfReceivers(): number {
+    getNumberOfReceivers(): number {
         return this._receivers.length;
     }
 

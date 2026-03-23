@@ -95,7 +95,7 @@ export class ChannelManager implements PublishSubscribe<ChannelManagerNotificati
     }
 
     getNumberOfOutgoingConnections(): number {
-        return this._channels.reduce((acc, channel) => acc + channel.numberOfReceivers(), 0);
+        return this._channels.reduce((acc, channel) => acc + channel.getNumberOfReceivers(), 0);
     }
 
     getNumberOfIncomingConnections(): number {
