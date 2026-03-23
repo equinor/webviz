@@ -1,6 +1,5 @@
-import type React from "react";
+import React from "react";
 
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
     accumulatePolylineIds,
     type AccumulatedData,
@@ -36,7 +35,7 @@ import type {
     SurfaceStoredData,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
 import { makeDepthColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeDepthColorScaleAnnotation";
 import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makePolygonDataBoundingBox";
@@ -137,12 +136,18 @@ export type VisualizationAssemblerWrapperProps = Omit<
     dataProviderManager: DataProviderManager;
 };
 
-export function DataProvidersWrapper(props: VisualizationAssemblerWrapperProps): React.ReactNode {
-    usePublishSubscribeTopicValue(props.dataProviderManager, DataProviderManagerTopic.DATA_REVISION);
+export function VisualizationAssemblerWrapper(props: VisualizationAssemblerWrapperProps): React.ReactNode {
+    const options = React.useMemo(() => {
+        return {
+            initialAccumulatedData: { polylineIds: [] },
+        };
+    }, []);
 
-    const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.dataProviderManager, {
-        initialAccumulatedData: { polylineIds: [] },
-    });
+    const assemblerProduct = useVisualizationAssemblerProduct(
+        props.dataProviderManager,
+        VISUALIZATION_ASSEMBLER,
+        options,
+    );
 
     return (
         <DpfSubsurfaceViewerWrapper
