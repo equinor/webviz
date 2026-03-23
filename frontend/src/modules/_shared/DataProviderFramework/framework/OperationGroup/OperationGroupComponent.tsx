@@ -230,7 +230,7 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
             content={
                 props.operationGroup.getSharedSettingsDelegate() ? (
                     <SortableList.NoDropZone>
-                        <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
+                        <div className="bg-slate-100! border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
                             {makeSettings(Object.values(props.operationGroup.getWrappedSettings()))}
                         </div>
                     </SortableList.NoDropZone>
