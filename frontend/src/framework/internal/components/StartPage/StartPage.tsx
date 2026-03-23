@@ -48,7 +48,7 @@ export function StartPage(props: StartPageProps) {
     return (
         <>
             <div className="p-57 h-full w-full flex items-center justify-center min-h-0">
-                <div className="bg-surface px-selectable-horizontal grid grid-cols-2 gap-x-4 gap-y-8">
+                <div className="px-selectable-horizontal grid grid-cols-2 gap-x-4 gap-y-8">
                     <div className="space-y-2 col-span-2">
                         <Checkbox
                             label="dark mode"
@@ -69,48 +69,39 @@ export function StartPage(props: StartPageProps) {
 
                         <div className="flex items-center gap-2">
                             <span className="font-bold w-20">Contained: </span>
-                            <Button variant="contained" color="primary">
-                                Primary
+                            <Button variant="contained" tone="accent">
+                                Accent
                             </Button>
-                            <Button variant="contained" color="secondary">
-                                Secondary
+                            <Button variant="contained" tone="neutral">
+                                Neutral
                             </Button>
-                            <Button variant="contained" color="success">
-                                Success
-                            </Button>
-                            <Button variant="contained" color="danger">
+                            <Button variant="contained" tone="danger">
                                 Danger
                             </Button>
                         </div>
 
                         <div className="flex items-center gap-2">
                             <span className="font-bold w-20">Outlined: </span>
-                            <Button variant="outlined" color="primary">
-                                Primary
+                            <Button variant="outlined" tone="accent">
+                                Accent
                             </Button>
-                            <Button variant="outlined" color="secondary">
-                                Secondary
+                            <Button variant="outlined" tone="neutral">
+                                Neutral
                             </Button>
-                            <Button variant="outlined" color="success">
-                                Success
-                            </Button>
-                            <Button variant="outlined" color="danger">
+                            <Button variant="outlined" tone="danger">
                                 Danger
                             </Button>
                         </div>
 
                         <div className="flex items-center gap-2">
                             <span className="font-bold w-20">Text: </span>
-                            <Button variant="text" color="primary">
-                                Primary
+                            <Button variant="text" tone="accent">
+                                Accent
                             </Button>
-                            <Button variant="text" color="secondary">
-                                Secondary
+                            <Button variant="text" tone="neutral">
+                                Neutral
                             </Button>
-                            <Button variant="text" color="success">
-                                Success
-                            </Button>
-                            <Button variant="text" color="danger">
+                            <Button variant="text" tone="danger">
                                 Danger
                             </Button>
                         </div>
