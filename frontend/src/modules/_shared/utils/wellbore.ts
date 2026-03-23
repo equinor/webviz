@@ -8,7 +8,7 @@ import type { WellboreTrajectory_api } from "@api";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 import { distance, fromArray } from "@lib/utils/vec3";
 
-import type { ExtendedWellFeature } from "../types/geojson";
+import type { ExtendedWellFeature } from "./subsurfaceViewerLayers";
 
 function normalizeVector(vector: number[]): number[] {
     const vectorLength = Math.sqrt(vector[0] ** 2 + vector[1] ** 2);
