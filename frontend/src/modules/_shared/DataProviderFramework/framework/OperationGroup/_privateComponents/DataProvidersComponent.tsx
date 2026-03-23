@@ -9,16 +9,16 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { SortableListItem } from "../../components/item";
-import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import type { SettingManager } from "../SettingManager/SettingManager";
-import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
-import { EditName } from "../utilityComponents/EditName";
-import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
-import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
+import { SortableListItem } from "../../../components/item";
+import { ItemDelegateTopic } from "../../../delegates/ItemDelegate";
+import type { SettingManager } from "../../SettingManager/SettingManager";
+import { SettingManagerComponent } from "../../SettingManager/SettingManagerComponent";
+import { EditName } from "../../utilityComponents/EditName";
+import { RemoveItemButton } from "../../utilityComponents/RemoveItemButton";
+import { VisibilityToggle } from "../../utilityComponents/VisibilityToggle";
 
-import { DataProviderStatus, DataProviderTopic } from "../DataProvider/DataProvider";
-import type { DataProvider } from "../DataProvider/DataProvider";
+import { DataProviderStatus, DataProviderTopic } from "../../DataProvider/DataProvider";
+import type { DataProvider } from "../../DataProvider/DataProvider";
 
 export type OperationGroupDataProvidersComponentProps = {
     dataProviders: DataProvider<any, any>[];
@@ -27,6 +27,11 @@ export type OperationGroupDataProvidersComponentProps = {
 export function OperationGroupDataProvidersComponent(
     props: OperationGroupDataProvidersComponentProps,
 ): React.ReactNode {
+    function makeName(): React.ReactNode {
+        const name = props.dataProviders[0].getItemDelegate().getName();
+        return name;
+    }
+
     function makeSetting(setting: SettingManager<any>) {
         const manager = props.dataProviders[0].getItemDelegate().getDataProviderManager();
         if (!manager) {
@@ -49,12 +54,9 @@ export function OperationGroupDataProvidersComponent(
         <SortableListItem
             key={props.dataProviders[0].getItemDelegate().getId()}
             id={props.dataProviders[0].getItemDelegate().getId()}
-            title={
-                <div className="flex gap-2 items-center">
-                    <EditName item={props.dataProviders[0]} />
-                </div>
-            }
-            startAdornment={<StartActions dataProvider={props.dataProviders[0]} />}
+            title={<div className="flex gap-2 items-center font-bold">{makeName()}</div>}
+            isNotDragable
+            endAdornment={<EndActions dataProvider={props.dataProviders[0]} />}
         >
             <div
                 className={resolveClassNames(
@@ -67,27 +69,6 @@ export function OperationGroupDataProvidersComponent(
     );
 }
 
-type StartActionProps = {
-    dataProvider: DataProvider<any, any>;
-};
-
-function StartActions(props: StartActionProps): React.ReactNode {
-    const isExpanded = usePublishSubscribeTopicValue(props.dataProvider.getItemDelegate(), ItemDelegateTopic.EXPANDED);
-    const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
-
-    function handleToggleExpanded() {
-        props.dataProvider.getItemDelegate().setExpanded(!isExpanded);
-    }
-    return (
-        <div className="flex items-center">
-            <DenseIconButton onClick={handleToggleExpanded} title={isExpanded ? "Hide settings" : "Show settings"}>
-                {isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-            </DenseIconButton>
-            {!isSubordinated && <VisibilityToggle item={props.dataProvider} />}
-        </div>
-    );
-}
-
 type EndActionProps = {
     dataProvider: DataProvider<any, any>;
 };
@@ -95,16 +76,8 @@ type EndActionProps = {
 function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS);
     const progressMessage = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.PROGRESS_MESSAGE);
-    const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
 
     function makeStatus(): React.ReactNode {
-        if (isSubordinated) {
-            return (
-                <Tooltip title="Subordinated">
-                    <Difference fontSize="small" />
-                </Tooltip>
-            );
-        }
         if (status === DataProviderStatus.LOADING) {
             return (
                 <Tooltip title={progressMessage ?? "Loading"}>

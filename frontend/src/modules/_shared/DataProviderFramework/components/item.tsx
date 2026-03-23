@@ -11,6 +11,7 @@ export type SortableListItemProps = {
     headerClassNames?: string;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
+    isNotDragable?: boolean;
     children?: React.ReactNode;
 };
 
@@ -21,6 +22,7 @@ export type SortableListItemProps = {
  * @param {React.ReactNode} props.title Title component of the list item.
  * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
  * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
+ * @param {boolean} props.isNotDragable Whether the item should be draggable or not. Defaults to false (i.e. draggable).
  * @param {React.ReactNode} props.children Child components to display as the content of the list item.
  *
  * @returns {React.ReactNode} A sortable list item component.
@@ -38,6 +40,7 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
 
 type HeaderProps = {
     title: React.ReactNode;
+    isNotDragable?: boolean;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     headerClassNames?: string;
@@ -51,9 +54,11 @@ function Header(props: HeaderProps): React.ReactNode {
                 props.headerClassNames ?? "",
             )}
         >
-            <SortableList.DragHandle>
-                <DragIndicator fontSize="inherit" className="pointer-events-none" />
-            </SortableList.DragHandle>
+            {!props.isNotDragable && (
+                <SortableList.DragHandle>
+                    <DragIndicator fontSize="inherit" className="pointer-events-none" />
+                </SortableList.DragHandle>
+            )}
             <div className="flex items-center gap-2 grow min-w-0">
                 {props.startAdornment}
                 <div className="grow min-w-0">{props.title}</div>

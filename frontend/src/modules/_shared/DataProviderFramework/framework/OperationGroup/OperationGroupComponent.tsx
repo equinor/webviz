@@ -15,7 +15,7 @@ import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { Operation } from "../../interfacesAndTypes/customOperationGroupImplementation";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
-import { isDataProvider } from "../DataProvider/DataProvider";
+import { DataProvider, isDataProvider } from "../DataProvider/DataProvider";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
@@ -27,6 +27,7 @@ import { makeSortableListItemComponent } from "../utils/makeSortableListItemComp
 
 import type { OperationGroup } from "./OperationGroup";
 import { OperationGroupStatus, OperationGroupTopic } from "./OperationGroup";
+import { OperationGroupDataProvidersComponent } from "./_privateComponents/DataProvidersComponent";
 
 export type OperationGroupComponentProps = {
     operationGroup: OperationGroup<any, any>;
@@ -37,7 +38,7 @@ export type OperationGroupComponentProps = {
 export function OperationGroupComponent(props: OperationGroupComponentProps): React.ReactNode {
     const { makeActionsForGroup } = props;
 
-    const children = usePublishSubscribeTopicValue(
+    const childProviders = usePublishSubscribeTopicValue(
         props.operationGroup.getGroupDelegate(),
         GroupDelegateTopic.CHILDREN,
     );
@@ -203,6 +204,16 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
         return settingNodes;
     }
 
+    function makeContent() {
+        if (childProviders.length === 0) {
+            return <EmptyContent>{makePlaceholder()}</EmptyContent>;
+        }
+        if (childProviders.some((child) => !isDataProvider(child))) {
+            return <EmptyContent>Unsupported child item found. Please check the error message.</EmptyContent>;
+        }
+        return <OperationGroupDataProvidersComponent dataProviders={childProviders as DataProvider<any, any>[]} />;
+    }
+
     return (
         <SortableListGroup
             key={props.operationGroup.getItemDelegate().getId()}
@@ -227,19 +238,8 @@ export function OperationGroupComponent(props: OperationGroupComponentProps): Re
             }
             contentWhenEmpty={<EmptyContent>{makePlaceholder()}</EmptyContent>}
             expanded={isExpanded}
-            content={
-                props.operationGroup.getSharedSettingsDelegate() ? (
-                    <SortableList.NoDropZone>
-                        <div className="bg-slate-100! border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
-                            {makeSettings(Object.values(props.operationGroup.getWrappedSettings()))}
-                        </div>
-                    </SortableList.NoDropZone>
-                ) : undefined
-            }
         >
-            {children.map((child: Item) =>
-                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick),
-            )}
+            {makeContent()}
         </SortableListGroup>
     );
 }

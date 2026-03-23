@@ -17,7 +17,7 @@ export type SortableListGroupProps = {
     content?: React.ReactNode;
     contentStyle?: React.CSSProperties;
     contentWhenEmpty?: React.ReactNode;
-    children?: React.ReactElement[];
+    children?: React.ReactNode;
 };
 
 /**
@@ -49,7 +49,7 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
         setIsExpanded(!isExpanded);
     }
 
-    const hasContent = props.children !== undefined && props.children.length > 0;
+    const hasContent = props.children !== undefined && React.Children.count(props.children) > 0;
 
     return (
         <SortableList.Group id={props.id}>
