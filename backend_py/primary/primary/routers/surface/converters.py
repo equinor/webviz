@@ -205,7 +205,6 @@ def to_api_stratigraphic_unit(
         colorR=stratigraphic_unit.color_r,
         colorG=stratigraphic_unit.color_g,
         colorB=stratigraphic_unit.color_b,
-        lithologyType=stratigraphic_unit.lithology_type,
     )
 
 
