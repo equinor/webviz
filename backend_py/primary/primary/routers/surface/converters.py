@@ -15,7 +15,6 @@ from webviz_services.utils.surface_helpers import (
     WellTrajectory,
 )
 from webviz_services.utils.surface_to_png import surface_to_png_bytes_optimized
-from webviz_services.smda_access import StratigraphicUnit
 from webviz_services.utils.surfaces_well_trajectory_formation_segments import FormationSegment
 
 from . import schemas
