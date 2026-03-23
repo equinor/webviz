@@ -17,7 +17,6 @@ def get_drogon_strat_units() -> List[StratigraphicUnit]:
             strat_unit_parent="VOLANTIS GP.",
             top_age=1,
             base_age=2,
-            lithology_type="unknown",
         ),
         StratigraphicUnit(
             identifier="Therys Fm.",
@@ -31,7 +30,6 @@ def get_drogon_strat_units() -> List[StratigraphicUnit]:
             strat_unit_parent="VOLANTIS GP.",
             top_age=2,
             base_age=3,
-            lithology_type="unknown",
         ),
         StratigraphicUnit(
             identifier="Volon Fm.",
@@ -45,7 +43,6 @@ def get_drogon_strat_units() -> List[StratigraphicUnit]:
             strat_unit_parent="VOLANTIS GP.",
             top_age=3,
             base_age=4,
-            lithology_type="unknown",
         ),
         StratigraphicUnit(
             identifier="VOLANTIS GP.",
@@ -59,6 +56,5 @@ def get_drogon_strat_units() -> List[StratigraphicUnit]:
             strat_unit_parent=None,
             top_age=4,
             base_age=5,
-            lithology_type="unknown",
         ),
     ]
