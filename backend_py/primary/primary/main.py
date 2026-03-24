@@ -166,13 +166,17 @@ configure_service_level_exception_handlers(app)
 override_default_fastapi_exception_handlers(app)
 
 
+# Note that FastAPI/Starlette middleware is executed in reverse order of addition:
+#  Last added -> runs first (outermost) on request
+#  First added -> runs last (innermost) on request
+
 # This middleware instance approximately measures execution time of the route handler itself
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-exec-route")
 
-# Enrich telemetry spans with end user information (must be after the EnforceLoggedInMiddleware to have access to the user info)
+# Enrich telemetry spans with end user information (must run after the EnforceLoggedInMiddleware to have access to the user info)
 app.add_middleware(OtelSpanEndUserEnrichmentMiddleware)
 
-# Add out custom middleware to enforce that user is logged in
+# Add our custom middleware to enforce that user is logged in
 # Also redirects to /login endpoint for some select paths
 unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json"]
 paths_redirected_to_login = ["/", "/alive_protected"]
@@ -186,7 +190,7 @@ app.add_middleware(
 session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="auth-sessions:")
 app.add_middleware(SessionMiddleware, store=session_store)
 
-# Enrich telemetry spans with client address information (must be after ProxyHeadersMiddleware)
+# Enrich telemetry spans with client address information (must run after ProxyHeadersMiddleware)
 app.add_middleware(OtelSpanClientAddressEnrichmentMiddleware)
 
 # As of mypy 1.16 and Starlette 47, the ProxyHeadersMiddleware gives an incorrect type error here
