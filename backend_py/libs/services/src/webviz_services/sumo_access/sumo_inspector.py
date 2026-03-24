@@ -177,6 +177,8 @@ def _create_case_info_from_case_bucket(case_bucket: dict) -> CaseInfo:
     # The assumption here is that a case should only have one model name and revision.
     # If there are multiple or none, we will default to user None for both model name and revision.
     # Missing model name/revision has the string value "undefined", so we will also default to None in that case.
+    model_name = None
+    model_revision = None
     try:
         model_name = _get_single_bucket_key_as_str(case_bucket, "model_name")
         model_name = None if model_name == "undefined" else model_name
