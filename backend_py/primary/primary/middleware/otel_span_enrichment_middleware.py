@@ -33,7 +33,7 @@ class OtelSpanClientAddressEnrichmentMiddleware:
         if curr_span.is_recording():
             request = Request(scope)
             if request.client:
-                LOGGER.debug(f"-------------------- OtelSpanClientAddressEnrichmentMiddleware: {request.client.host=}")
+                LOGGER.debug(f"------ OtelSpanClientAddressEnrichmentMiddleware: {request.client.host=}")
 
                 # Which span attribute(s) should we use for client IP visibility in Application Insights?
                 #
@@ -85,11 +85,11 @@ class OtelSpanEndUserEnrichmentMiddleware:
                     user_name = maybe_authenticated_user_obj.get_username()
 
                     pseudonym = _pseudonymize_user_id(user_id)
-                    
+
                     # Could use something like this to get a more human readable pseudonym
                     human_readable_pseudonym = nemony.encode(pseudonym, sep="-")
 
-                    LOGGER.debug(f"-------------------- OtelSpanEndUserEnrichmentMiddleware: {user_id=}, {user_name=}, {pseudonym=}, {human_readable_pseudonym=}")
+                    LOGGER.debug(f"------ OtelSpanEndUserEnrichmentMiddleware: {user_id=}, {user_name=}, {pseudonym=}")
 
                     # Shows up as "Auth Id", "Authenticated user Id" or user_AuthenticatedId in Application Insights
                     curr_span.set_attribute("enduser.id", pseudonym)
@@ -111,12 +111,12 @@ class OtelSpanEndUserEnrichmentMiddleware:
         await self.app(scope, receive, send)
 
 
-
 # !!!!!!!!!!!!!!!!!!!!!!!!!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!
 SECRET_KEY = b"TO_BE_REPLACED_WITH_A_REAL_KEY"
+
 
 def _pseudonymize_user_id(user_id: str) -> str:
     # Create an HMAC digest of the user ID which is irreversible without the secret key.
