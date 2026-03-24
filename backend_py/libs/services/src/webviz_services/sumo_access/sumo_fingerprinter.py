@@ -14,7 +14,6 @@ from .queries.doc_checksum_agg import build_case_level_docs_query_dict, build_en
 from .queries.doc_checksum_agg import run_query_and_do_checksum_agg_async
 from .sumo_client_factory import create_sumo_client
 
-
 _REDIS_KEY_PREFIX = "sumo_fingerprinter"
 
 LOGGER = logging.getLogger(__name__)

@@ -9,7 +9,6 @@ from webviz_services.sumo_access.inplace_volumes_table_types import (
 
 from . import schemas
 
-
 #########################################################################################################################
 #
 #

@@ -150,6 +150,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const handleShowPercentageInHistogramChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
         handleOptionChange("showPercentageInHistogram", checked);
     };
+    const handleShowStatisticalLabelsChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+        handleOptionChange("showStatisticalLabels", checked);
+    };
 
     const plotSettings = (
         <div className="flex flex-col gap-2">
@@ -176,36 +179,41 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 <SettingWrapper label="Plot Type">
                     <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
                 </SettingWrapper>
-
                 <Checkbox
                     label="Show statistics table below plot"
                     checked={showTable}
                     onChange={(_e, checked) => setShowTable(checked)}
                 />
-
                 <Checkbox
                     label="Hide plots where all values are equal"
                     checked={plotOptions.hideConstants}
                     onChange={handleHideConstantsChange}
                 />
-
-                <Checkbox label="Shared X Axis" checked={plotOptions.sharedXAxis} onChange={handleSharedXAxisChange} />
-                <Checkbox label="Shared Y Axis" checked={plotOptions.sharedYAxis} onChange={handleSharedYAxisChange} />
-
+                <Checkbox label="Shared x axis" checked={plotOptions.sharedXAxis} onChange={handleSharedXAxisChange} />
+                <Checkbox label="Shared y axis" checked={plotOptions.sharedYAxis} onChange={handleSharedYAxisChange} />
                 {selectedPlotType === PlotType.HISTOGRAM ||
                 selectedPlotType === PlotType.BAR ||
-                selectedPlotType === PlotType.BOX ? (
+                selectedPlotType === PlotType.BOX ||
+                selectedPlotType === PlotType.DISTRIBUTION ? (
                     <Checkbox
-                        label="Show Statistical Markers"
+                        label="Show statistical markers"
                         checked={plotOptions.showStatisticalMarkers}
                         onChange={handleShowStatisticalMarkersChange}
                     />
                 ) : null}
+                {(selectedPlotType === PlotType.HISTOGRAM || selectedPlotType === PlotType.DISTRIBUTION) && (
+                    <Checkbox
+                        label="Show statistical marker labels"
+                        checked={plotOptions.showStatisticalLabels}
+                        onChange={handleShowStatisticalLabelsChange}
+                        disabled={!plotOptions.showStatisticalMarkers}
+                    />
+                )}
                 {selectedPlotType === PlotType.HISTOGRAM ||
                 selectedPlotType === PlotType.DISTRIBUTION ||
                 selectedPlotType === PlotType.BOX ? (
                     <Checkbox
-                        label="Show Realization Points"
+                        label="Show realization points"
                         checked={plotOptions.showRealizationPoints}
                         onChange={handleShowRealizationPointsChange}
                     />
@@ -215,10 +223,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         label="Show labels"
                         checked={plotOptions.showPercentageInHistogram}
                         onChange={handleShowPercentageInHistogramChange}
-                        disabled={selectedPlotType !== PlotType.HISTOGRAM}
                     />
                 )}
-
                 {selectedPlotType === PlotType.HISTOGRAM && (
                     <div>
                         <div className="mb-2">
@@ -254,7 +260,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         </div>
                     </div>
                 )}
-
                 {selectedPlotType === PlotType.BAR && (
                     <div>
                         <div className="mb-2">
