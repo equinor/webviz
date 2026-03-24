@@ -298,12 +298,10 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                     gridData.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
 
                 const availableTimeOrIntervals = [
-                    ...Array.from(
-                        new Set(
-                            gridAttributeArr
-                                .filter((attr) => attr.property_name === gridAttribute)
-                                .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
-                        ),
+                    ...new Set(
+                        gridAttributeArr
+                            .filter((attr) => attr.property_name === gridAttribute)
+                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
                     ),
                 ];
 

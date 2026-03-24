@@ -225,9 +225,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                     return [];
                 }
 
-                const availableGridNames = [
-                    ...Array.from(new Set(gridData.map((gridModelInfo) => gridModelInfo.grid_name))),
-                ];
+                const availableGridNames = [...new Set(gridData.map((gridModelInfo) => gridModelInfo.grid_name))];
 
                 return availableGridNames;
             },
@@ -249,7 +247,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                     gridData.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
 
                 const availableGridAttributes = [
-                    ...Array.from(new Set(gridAttributeArr.map((gridAttribute) => gridAttribute.property_name))),
+                    ...new Set(gridAttributeArr.map((gridAttribute) => gridAttribute.property_name)),
                 ];
 
                 return availableGridAttributes;
@@ -302,12 +300,10 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                     gridData.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
 
                 const availableTimeOrIntervals = [
-                    ...Array.from(
-                        new Set(
-                            gridAttributeArr
-                                .filter((attr) => attr.property_name === gridAttribute)
-                                .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
-                        ),
+                    ...new Set(
+                        gridAttributeArr
+                            .filter((attr) => attr.property_name === gridAttribute)
+                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
                     ),
                 ];
 

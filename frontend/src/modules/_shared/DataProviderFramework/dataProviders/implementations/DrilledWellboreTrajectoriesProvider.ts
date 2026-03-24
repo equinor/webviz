@@ -485,12 +485,10 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                 }
 
                 const availableAttributes = [
-                    ...Array.from(
-                        new Set(
-                            realizationSurfaceMetadata.surfaces
-                                .filter((surface) => surface.attribute_type === SurfaceAttributeType_api.DEPTH)
-                                .map((surface) => surface.attribute_name),
-                        ),
+                    ...new Set(
+                        realizationSurfaceMetadata.surfaces
+                            .filter((surface) => surface.attribute_type === SurfaceAttributeType_api.DEPTH)
+                            .map((surface) => surface.attribute_name),
                     ),
                 ];
 
@@ -530,12 +528,10 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
                 if (attribute && realizationSurfaceMetadata) {
                     const availableSurfaceNames = [
-                        ...Array.from(
-                            new Set(
-                                realizationSurfaceMetadata.surfaces
-                                    .filter((surface) => surface.attribute_name === attribute)
-                                    .map((el) => el.name),
-                            ),
+                        ...new Set(
+                            realizationSurfaceMetadata.surfaces
+                                .filter((surface) => surface.attribute_name === attribute)
+                                .map((el) => el.name),
                         ),
                     ];
                     surfaceNamesInStratOrder.push(
