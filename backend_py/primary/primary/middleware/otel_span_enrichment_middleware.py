@@ -1,4 +1,7 @@
 import logging
+import base64
+import hashlib
+import hmac
 
 from opentelemetry import trace
 from starlette.requests import Request
@@ -31,13 +34,29 @@ class OtelSpanClientAddressEnrichmentMiddleware:
             request = Request(scope)
             if request.client:
                 LOGGER.debug(f"-------------------- OtelSpanClientAddressEnrichmentMiddleware: {request.client.host=}")
-                # curr_span.set_attribute("http.client_ip", request.client.host)      # legacy-ish but widely used
-                # curr_span.set_attribute("net.peer.ip", request.client.host)         # also commonly recognized
-                curr_span.set_attribute("client.address", request.client.host)  # newer semconv
 
+                # Which span attribute(s) should we use for client IP visibility in Application Insights?
+                #
+                # OpenTelemetry semantic conventions use "client.address" for the client IP.
+                # Azure Monitor / Application Insights can use this to populate request IP data and derive
+                # geolocation, but OTel-to-Azure field mapping can be a bit unreliable in practice.
+                #
+                # Therefore we set:
+                # - "client.address" as the modern semconv-compliant attribute
+                # - "http.client_ip" as a pragmatic compatibility attribute for Azure visibility
+                #
+                # Note: this only works correctly if request.client.host contains the real client IP, e.g. when proxy
+                # headers are trusted and parsed correctly.
+                curr_span.set_attribute("client.address", request.client.host)
+                curr_span.set_attribute("http.client_ip", request.client.host)
+                # curr_span.set_attribute("net.peer.ip", request.client.host)  # optional fallback
+
+                # !!!!!!!!!!!!!!!!!
+                # !!!!!!!!!!!!!!!!!
+                # For DEBUGGING, attach the actual observed IP
                 curr_span.set_attribute("app.client_ip_observed", request.client.host)
             else:
-                LOGGER.warning("!!!!!!!!!!!!!!!!!!!!! Could not get client IP from request")
+                LOGGER.warning("OtelSpanClientAddressEnrichmentMiddleware: Could not get client IP from request")
 
         await self.app(scope, receive, send)
 
@@ -65,21 +84,45 @@ class OtelSpanEndUserEnrichmentMiddleware:
                     user_id = maybe_authenticated_user_obj.get_user_id()
                     user_name = maybe_authenticated_user_obj.get_username()
 
-                    pseudonym = nemony.encode(user_id, sep="-")
-                    LOGGER.debug(f"-------------------- OtelSpanEndUserEnrichmentMiddleware: {user_id=}, {user_name=}, {pseudonym=}")
+                    pseudonym = _pseudonymize_user_id(user_id)
+                    
+                    # Could use something like this to get a more human readable pseudonym
+                    human_readable_pseudonym = nemony.encode(pseudonym, sep="-")
+
+                    LOGGER.debug(f"-------------------- OtelSpanEndUserEnrichmentMiddleware: {user_id=}, {user_name=}, {pseudonym=}, {human_readable_pseudonym=}")
 
                     # Shows up as "Auth Id", "Authenticated user Id" or user_AuthenticatedId in Application Insights
-                    curr_span.set_attribute("enduser.id", f"auth__{pseudonym}")
+                    curr_span.set_attribute("enduser.id", pseudonym)
 
                     # Shows up as "User Id" or user_Id in Application Insights
-                    curr_span.set_attribute("enduser.pseudo.id", f"pseudo__{pseudonym}")
+                    curr_span.set_attribute("enduser.pseudo.id", pseudonym)
 
+                    # !!!!!!!!!!!!!!!!!
+                    # !!!!!!!!!!!!!!!!!
+                    # For DEBUGGING, attach these custom attributes also
                     curr_span.set_attribute("app.user_name_raw", f"cust__{user_name}")
                     curr_span.set_attribute("app.user_id_raw", f"cust__{user_id}")
                     curr_span.set_attribute("app.user_id_pseudonym", f"cust__{pseudonym}")
+                    curr_span.set_attribute("app.user_id_human_readable_pseudonym", f"cust__{human_readable_pseudonym}")
 
             except:  # nosec # pylint: disable=bare-except
-                LOGGER.warning("!!!!!!!!!!!!!!!!!!!!! OtelSpanEndUserEnrichmentMiddleware: Could not get end user information from request")
-                pass
+                LOGGER.warning("OtelSpanEndUserEnrichmentMiddleware: Could not get end user information from request")
 
         await self.app(scope, receive, send)
+
+
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!
+SECRET_KEY = b"TO_BE_REPLACED_WITH_A_REAL_KEY"
+
+def _pseudonymize_user_id(user_id: str) -> str:
+    # Create an HMAC digest of the user ID which is irreversible without the secret key.
+    # This way we can have a consistent pseudonym for the same user ID, but it cannot be traced back to the original user ID without the secret key.
+    digest_bytes = hmac.digest(key=SECRET_KEY, msg=user_id.encode("utf-8"), digest=hashlib.sha256)
+
+    # Encode the digest using base32 (all caps + digits, no special characters) and take the first 12 characters for a shorter pseudonym.
+    encoded_digest = base64.b32encode(digest_bytes).decode("ascii").rstrip("=")
+    return f"usr_{encoded_digest[:12]}"
