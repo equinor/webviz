@@ -72,8 +72,8 @@ class GridPropertiesExtractor:
     def get_discrete_undef_value(self) -> int | None:
         if self._is_discrete:
             return _DISCRETE_PROP_UNDEF_VALUE
-        else:
-            return None
+
+        return None
 
     def get_prop_values_for_cells_as_float_list(self, cell_indices: NDArray[np.integer] | list[int]) -> list[float]:
         ret_arr = np.take(self._flat_prop_arr, cell_indices)

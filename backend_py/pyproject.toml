@@ -33,11 +33,20 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["fmu.sumo.*", "sumo.wrapper.*", "requests_toolbelt.*", "msal"]
+module = [
+    "fmu.sumo.*",
+    "sumo.wrapper.*",
+    "requests_toolbelt.*",
+    "msal",
+    "diskcache" # Used by user_grid3d_ri
+]
 follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
-module = ["xtgeo.*"]
+module = [
+    "xtgeo.*",
+    "rips.generated" # Used by user_grid3d_ri
+]
 ignore_missing_imports = true
 
 
@@ -59,7 +68,10 @@ disable = [
 
 [tool.pylint.typecheck]
 extension-pkg-allow-list = ["pydantic"]
-ignored-modules = ["pyarrow.compute"]
+ignored-modules = [
+    "pyarrow.compute",
+    "rips.generated" # Used by user_grid3d_ri
+]
 
 [tool.pylint.design]
 min-public-methods = 0
