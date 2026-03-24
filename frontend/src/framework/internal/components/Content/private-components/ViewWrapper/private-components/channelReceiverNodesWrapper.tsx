@@ -196,7 +196,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
                 return;
             }
 
-            receiver.subscribeToChannel(channel, "All");
+            receiver.connectToChannel(channel, "all");
 
             guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
@@ -206,7 +206,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
 
     const handleChannelDisconnect = React.useCallback(
         function handleChannelDisconnect(receiverIdString: string) {
-            props.moduleInstance.getChannelManager().getReceiver(receiverIdString)?.unsubscribeFromCurrentChannel();
+            props.moduleInstance.getChannelManager().getReceiver(receiverIdString)?.disconnectFromCurrentChannel();
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         },
         [props.moduleInstance, guiMessageBroker],
@@ -251,11 +251,11 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
         }
 
         if (contentIdStrings.length === 0) {
-            receiver.subscribeToChannel(channel, "All");
+            receiver.connectToChannel(channel, "all");
             return;
         }
 
-        receiver.subscribeToChannel(channel, contentIdStrings);
+        receiver.connectToChannel(channel, contentIdStrings);
     }
 
     const channelSelectorVisible = channelSelectorCenterPoint !== null && currentReceiver !== null;
