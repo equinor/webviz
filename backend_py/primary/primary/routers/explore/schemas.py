@@ -29,8 +29,8 @@ class CaseInfo(BaseModel):
     user: str
     updatedAtUtcMs: int
     description: str
-    modelName: str
-    modelRevision: str
+    modelName: str | None
+    modelRevision: str | None
     ensembles: Sequence[EnsembleInfo]
 
 

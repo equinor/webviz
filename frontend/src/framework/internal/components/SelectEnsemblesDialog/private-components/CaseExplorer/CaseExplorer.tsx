@@ -4,7 +4,7 @@ import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
-import { getCasesOptions, getAssetNamesOptions, type EnsembleInfo_api } from "@api";
+import { getCasesOptions, getAssetInfosOptions, type EnsembleInfo_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
@@ -40,7 +40,7 @@ export type CaseSelection = {
 };
 
 export type CaseExplorerProps = {
-    disableQueries: boolean;
+    queriesDisabled: boolean;
     onCaseSelectionChange: (caseSelection: CaseSelection | null) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
@@ -75,8 +75,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
     // --- Queries ---
     const assetsQuery = useQuery({
-        ...getAssetNamesOptions(),
-        enabled: !props.disableQueries,
+        ...getAssetInfosOptions(),
+        enabled: !props.queriesDisabled,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
         refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
@@ -91,7 +91,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
     const casesQuery = useQuery({
         ...getCasesOptions({ query: { asset_name: selectedAsset ?? "" } }),
-        enabled: !!selectedAsset && !props.disableQueries,
+        enabled: !!selectedAsset && !props.queriesDisabled,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
         refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
@@ -179,7 +179,9 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
         const modelNames = new Set<string>();
         for (const c of sortedCasesQueryData) {
-            modelNames.add(c.modelName);
+            if (c.modelName) {
+                modelNames.add(c.modelName);
+            }
         }
 
         return Array.from(modelNames).sort();
@@ -192,7 +194,9 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
         const modelRevisions = new Set<string>();
         for (const c of sortedCasesQueryData) {
-            modelRevisions.add(c.modelRevision);
+            if (c.modelRevision) {
+                modelRevisions.add(c.modelRevision);
+            }
         }
 
         return Array.from(modelRevisions).sort();
@@ -293,12 +297,12 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const handleManualRefetch = React.useCallback(
         function handleManualRefetch() {
             // Checking if queries are disabled or already isFetching (covers both fetching and re-fetching state)
-            if (props.disableQueries || casesQuery.isFetching || assetsQuery.isFetching) return;
+            if (props.queriesDisabled || casesQuery.isFetching || assetsQuery.isFetching) return;
 
             refreshAssets();
             refreshCases();
         },
-        [refreshCases, refreshAssets, props.disableQueries, casesQuery.isFetching, assetsQuery.isFetching],
+        [refreshCases, refreshAssets, props.queriesDisabled, casesQuery.isFetching, assetsQuery.isFetching],
     );
 
     return (

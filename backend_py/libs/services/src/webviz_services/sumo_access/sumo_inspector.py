@@ -32,8 +32,8 @@ class CaseInfo(BaseModel):
     user: str
     updated_at_utc_ms: int
     description: str
-    model_name: str
-    model_revision: str
+    model_name: str | None
+    model_revision: str | None
     ensembles: list[EnsembleInfo]
 
 
@@ -41,7 +41,7 @@ class SumoInspector:
     def __init__(self, access_token: str):
         self._sumo_client: SumoClient = create_sumo_client(access_token)
 
-    async def get_asset_names_async(self) -> List[SumoAsset]:
+    async def get_asset_infos_async(self) -> List[SumoAsset]:
         """Get list of assets"""
         timer = PerfMetrics()
         search_context = SearchContext(self._sumo_client)
@@ -55,11 +55,11 @@ class SumoInspector:
         """Get list of field identifiers"""
         timer = PerfMetrics()
         search_context = SearchContext(self._sumo_client)
-        field_identifiers_arr = await search_context.fieldidentifiers_async
+        field_identifiers = await search_context.fieldidentifiers_async
         timer.record_lap("get_field_identifiers")
-        field_identifiers = sorted(list(set(field_identifiers_arr)))
+        field_identifiers_sorted = sorted(list(set(field_identifiers)))
         LOGGER.debug(timer.to_string())
-        return [FieldIdentifier(field_identifier=field_identifier) for field_identifier in field_identifiers]
+        return [FieldIdentifier(field_identifier=field_identifier) for field_identifier in field_identifiers_sorted]
 
     async def get_cases_async(self, asset_name: str) -> list[CaseInfo]:
         """
@@ -175,15 +175,18 @@ def _create_case_info_from_case_bucket(case_bucket: dict) -> CaseInfo:
 
     # Populate model name and revision.
     # The assumption here is that a case should only have one model name and revision.
-    # If there are multiple or none, we will default to user-facing placeholder strings.
+    # If there are multiple or none, we will default to user None for both model name and revision.
+    # Missing model name/revision has the string value "undefined", so we will also default to None in that case.
     try:
-        model_name_str = _get_single_bucket_key_as_str(case_bucket, "model_name")
+        model_name = _get_single_bucket_key_as_str(case_bucket, "model_name")
+        model_name = None if model_name == "undefined" else model_name
     except ValueError:
-        model_name_str = "No model name"
+        model_name = None
     try:
-        model_revision_str = _get_single_bucket_key_as_str(case_bucket, "model_revision")
+        model_revision = _get_single_bucket_key_as_str(case_bucket, "model_revision")
+        model_revision = None if model_revision == "undefined" else model_revision
     except ValueError:
-        model_revision_str = "No revision"
+        model_revision = None
 
     ensemble_buckets = case_bucket.get("ensemble_names", {}).get("buckets", [])
 
@@ -200,8 +203,8 @@ def _create_case_info_from_case_bucket(case_bucket: dict) -> CaseInfo:
         user=user,
         updated_at_utc_ms=case_timestamp_max,
         description=description[0] if description else "",
-        model_name=model_name_str,
-        model_revision=model_revision_str,
+        model_name=model_name,
+        model_revision=model_revision,
         ensembles=ensemble_info_arr,
     )
 

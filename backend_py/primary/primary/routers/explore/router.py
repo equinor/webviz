@@ -20,13 +20,13 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/asset_names")
-async def get_asset_names(
+@router.get("/asset_infos")
+async def get_asset_infos(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.AssetInfo]:
-    """Get list of asset names"""
+    """Get list of asset infos"""
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
-    asset_arr = await sumo_inspector.get_asset_names_async()
+    asset_arr = await sumo_inspector.get_asset_infos_async()
     ret_arr = [schemas.AssetInfo(name=asset.asset_name) for asset in asset_arr]
 
     return ret_arr

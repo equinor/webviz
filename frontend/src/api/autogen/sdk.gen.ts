@@ -24,8 +24,8 @@ import type {
     GetAliveProtectedData_api,
     GetAliveProtectedResponses_api,
     GetAliveResponses_api,
-    GetAssetNamesData_api,
-    GetAssetNamesResponses_api,
+    GetAssetInfosData_api,
+    GetAssetInfosResponses_api,
     GetCasesData_api,
     GetCasesErrors_api,
     GetCasesResponses_api,
@@ -253,16 +253,16 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * Get Asset Names
+ * Get Asset Infos
  *
- * Get list of asset names
+ * Get list of asset infos
  */
-export const getAssetNames = <ThrowOnError extends boolean = false>(
-    options?: Options<GetAssetNamesData_api, ThrowOnError>,
+export const getAssetInfos = <ThrowOnError extends boolean = false>(
+    options?: Options<GetAssetInfosData_api, ThrowOnError>,
 ) =>
-    (options?.client ?? client).get<GetAssetNamesResponses_api, unknown, ThrowOnError>({
+    (options?.client ?? client).get<GetAssetInfosResponses_api, unknown, ThrowOnError>({
         responseType: "json",
-        url: "/asset_names",
+        url: "/asset_infos",
         ...options,
     });
 

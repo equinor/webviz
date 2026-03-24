@@ -19,7 +19,7 @@ import {
     deleteSnapshotAccessLog,
     getAlive,
     getAliveProtected,
-    getAssetNames,
+    getAssetInfos,
     getCases,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
@@ -110,8 +110,8 @@ import type {
     GetAliveProtectedData_api,
     GetAliveProtectedResponse_api,
     GetAliveResponse_api,
-    GetAssetNamesData_api,
-    GetAssetNamesResponse_api,
+    GetAssetInfosData_api,
+    GetAssetInfosResponse_api,
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
@@ -359,23 +359,23 @@ const createQueryKey = <TOptions extends Options>(
     return [params];
 };
 
-export const getAssetNamesQueryKey = (options?: Options<GetAssetNamesData_api>) =>
-    createQueryKey("getAssetNames", options);
+export const getAssetInfosQueryKey = (options?: Options<GetAssetInfosData_api>) =>
+    createQueryKey("getAssetInfos", options);
 
 /**
- * Get Asset Names
+ * Get Asset Infos
  *
- * Get list of asset names
+ * Get list of asset infos
  */
-export const getAssetNamesOptions = (options?: Options<GetAssetNamesData_api>) =>
+export const getAssetInfosOptions = (options?: Options<GetAssetInfosData_api>) =>
     queryOptions<
-        GetAssetNamesResponse_api,
+        GetAssetInfosResponse_api,
         AxiosError<DefaultError>,
-        GetAssetNamesResponse_api,
-        ReturnType<typeof getAssetNamesQueryKey>
+        GetAssetInfosResponse_api,
+        ReturnType<typeof getAssetInfosQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getAssetNames({
+            const { data } = await getAssetInfos({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -383,7 +383,7 @@ export const getAssetNamesOptions = (options?: Options<GetAssetNamesData_api>) =
             });
             return data;
         },
-        queryKey: getAssetNamesQueryKey(options),
+        queryKey: getAssetInfosQueryKey(options),
     });
 
 export const getFieldIdentifiersQueryKey = (options?: Options<GetFieldIdentifiersData_api>) =>

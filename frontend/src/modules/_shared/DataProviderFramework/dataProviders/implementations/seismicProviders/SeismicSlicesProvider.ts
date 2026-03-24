@@ -178,7 +178,7 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
-            if (!fieldIdentifier || !ensembles) {
+            if (!fieldIdentifier) {
                 return [];
             }
             const ensembleIdents = ensembles

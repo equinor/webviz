@@ -11,7 +11,7 @@ import type { ColumnFilterImplementationProps, TableColumns } from "@lib/compone
 import { TagPicker } from "@lib/components/TagPicker";
 import { formatDate } from "@lib/utils/dates";
 
-import { AuthorCell, CaseNameAndIdCell, DescriptionCell, ModelNameCell, ModelRevisionCell } from "./_components";
+import { AuthorCell, CaseNameAndIdCell, DescriptionCell } from "./_components";
 import type { CaseRowData } from "./_types";
 
 export function storeStateInLocalStorage(stateName: string, value: string) {
@@ -90,11 +90,29 @@ export function makeCaseTableColumns(
             },
         },
         {
+            label: "Date",
+            _type: "data",
+            columnId: "dateUtcMs",
+            sizeInPercent: 18,
+            formatValue: (value) => formatDate(value),
+            filter: {
+                render: (props) => (
+                    <DateRangePicker
+                        className="overflow-hidden border border-gray-300 rounded focus-within:border-indigo-500 webviz-eds-date-range-picker --compact"
+                        value={props.value ?? { from: null, to: null }}
+                        onChange={props.onFilterChange}
+                    />
+                ),
+                predicate: (filterValue, dataValue) => predicateDateRangePick(filterValue, dataValue),
+            },
+        },
+        {
             label: "Model",
             _type: "data",
             columnId: "modelName",
-            sizeInPercent: 12,
-            renderData: (value) => <ModelNameCell modelName={value} />,
+            sizeInPercent: 11,
+            formatValue: (value) => formatNullableText(value),
+            showTooltip: true,
             filter: {
                 render: (props) => (
                     <TagPicker
@@ -111,8 +129,9 @@ export function makeCaseTableColumns(
             label: "Revision",
             _type: "data",
             columnId: "modelRevision",
-            sizeInPercent: 10,
-            renderData: (value) => <ModelRevisionCell modelRevision={value} />,
+            sizeInPercent: 9,
+            formatValue: (value) => formatNullableText(value),
+            showTooltip: true,
             filter: {
                 render: (props) => (
                     <TagPicker
@@ -123,23 +142,6 @@ export function makeCaseTableColumns(
                     />
                 ),
                 predicate: (selectedItems: string[], dataValue) => predicateStatusSelection(selectedItems, dataValue),
-            },
-        },
-        {
-            label: "Date",
-            _type: "data",
-            columnId: "dateUtcMs",
-            sizeInPercent: 16,
-            formatValue: (value) => formatDate(value),
-            filter: {
-                render: (props) => (
-                    <DateRangePicker
-                        className="overflow-hidden border border-gray-300 rounded focus-within:border-indigo-500 webviz-eds-date-range-picker --compact"
-                        value={props.value ?? { from: null, to: null }}
-                        onChange={props.onFilterChange}
-                    />
-                ),
-                predicate: (filterValue, dataValue) => predicateDateRangePick(filterValue, dataValue),
             },
         },
     ];
@@ -168,11 +170,15 @@ function predicateCaseNameAndIdFilter(filterValue: string, dataValue: string, ca
     return caseNameAndId === filterValue;
 }
 
-function predicateStatusSelection(filterValues: string[], dataValue: string): boolean {
-    if (typeof dataValue !== "string") return true;
+function predicateStatusSelection(filterValues: string[], dataValue: string | null): boolean {
+    if (typeof dataValue !== "string") return false;
     if (!filterValues || filterValues.length === 0) return true;
 
     return filterValues.some((filterValue) => filterValue.toLowerCase() === dataValue.toLowerCase());
+}
+
+function formatNullableText(value: string | null): string {
+    return value ?? "";
 }
 
 function predicateDateRangePick(dateRange: { from: Date | null; to: Date | null }, dataValue: number): boolean {

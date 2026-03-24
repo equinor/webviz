@@ -207,11 +207,11 @@ export type CaseInfo_api = {
     /**
      * Modelname
      */
-    modelName: string;
+    modelName: string | null;
     /**
      * Modelrevision
      */
-    modelRevision: string;
+    modelRevision: string | null;
     /**
      * Ensembles
      */
@@ -3267,25 +3267,25 @@ export type WellboreTrajectory_api = {
     northingArr: Array<number>;
 };
 
-export type GetAssetNamesData_api = {
+export type GetAssetInfosData_api = {
     body?: never;
     path?: never;
     query?: {
         zCacheBust?: string;
     };
-    url: "/asset_names";
+    url: "/asset_infos";
 };
 
-export type GetAssetNamesResponses_api = {
+export type GetAssetInfosResponses_api = {
     /**
-     * Response Get Asset Names
+     * Response Get Asset Infos
      *
      * Successful Response
      */
     200: Array<AssetInfo_api>;
 };
 
-export type GetAssetNamesResponse_api = GetAssetNamesResponses_api[keyof GetAssetNamesResponses_api];
+export type GetAssetInfosResponse_api = GetAssetInfosResponses_api[keyof GetAssetInfosResponses_api];
 
 export type GetFieldIdentifiersData_api = {
     body?: never;
