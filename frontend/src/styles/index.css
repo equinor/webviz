@@ -1,0 +1,34 @@
+/* Importing additional animations. Imported first, so potential name conflicts prioritizes tailwind  */
+@import "animate.css/animate.css";
+
+@import "tailwindcss";
+@import "@equinor/eds-tokens/css/variables";
+
+/* Theme (tokens) */
+@import "./theme/foundation.css";
+@import "./theme/colors.css";
+@import "./theme/spacing.css";
+@import "./theme/typography.css";
+@import "./theme/sizes.css";
+@import "./theme/animations.css";
+
+/* Utilities */
+@import "./utilities/sizes.css";
+@import "./utilities/forms.css";
+
+/* Components */
+@import "./components/button.css";
+
+/* Base styles */
+@import "./base/app.css";
+@import "./base/tailwind-compat.css";
+@import "./base/scrollbar.css";
+
+/* Overrides */
+@import "./overrides/eds-date-range-picker.css";
+
+/* Safelist for semantic utilities you know you'll use dynamically */
+@source inline("bg-{canvas,surface,elevated,backdrop,input}");
+@source inline("bg-fill-{neutral,accent,success,info,warning,danger}{,-hover,-active,-strong,-strong-hover,-strong-active}");
+@source inline("text-{text,text-subtle,text-on-strong,text-subtle-on-strong,text-accent,text-success,text-info,text-warning,text-danger}");
+@source inline("border-{border,border-subtle,border-strong,border-focus,border-accent,border-success,border-info,border-warning,border-danger}");

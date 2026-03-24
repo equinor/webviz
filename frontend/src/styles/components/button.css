@@ -1,0 +1,24 @@
+@layer components {
+    .button {
+        @apply inline-flex items-center;
+        gap: var(--spacing-space-xs);
+        padding-inline: var(--spacing-selectable-x);
+        padding-block: var(--spacing-selectable-y);
+        border-radius: var(--radius-rounded);
+        transition:
+            background-color 0.15s ease-in-out,
+            border-color 0.15s ease-in-out,
+            color 0.15s ease-in-out;
+        cursor: pointer;
+    }
+
+    .button-sm {
+        min-height: var(--size-selectable-sm);
+    }
+    .button-md {
+        min-height: var(--size-selectable-md);
+    }
+    .button-lg {
+        min-height: var(--size-selectable-lg);
+    }
+}

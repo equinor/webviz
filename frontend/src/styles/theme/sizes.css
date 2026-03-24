@@ -1,0 +1,11 @@
+@theme inline {
+    --size-selectable-sm: 1.5rem; /* 24px */
+    --size-selectable-md: 2.25rem; /* 36px */
+    --size-selectable-lg: 2.75rem; /* 44px */
+}
+
+:where([data-density="comfortable"]) {
+    --size-selectable-sm: 1.25rem; /* 20px */
+    --size-selectable-md: 1.5rem; /* 24px */
+    --size-selectable-lg: 2.25rem; /* 36px */
+}

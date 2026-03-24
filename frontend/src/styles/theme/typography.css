@@ -1,0 +1,4 @@
+@theme inline {
+    --font-sans: "Inter", ui-sans-serif, system-ui;
+    --font-heading: "Equinor", "Inter", sans-serif;
+}

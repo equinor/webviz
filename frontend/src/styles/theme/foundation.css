@@ -1,0 +1,16 @@
+/* Dark mode selector */
+@custom-variant dark (&:where([data-color-scheme=dark], [data-color-scheme=dark] *));
+
+/* Densitiy selector */
+@custom-variant comfortable (&:where([data-density=comfortable], [data-density=comfortable] *));
+
+/* Root-level defaults */
+:root {
+    --background: var(--color-surface);
+    --foreground: var(--color-text);
+}
+
+/* Global semantic tokens */
+@theme inline {
+    --radius-rounded: var(--eds-spacing-border-radius-rounded);
+}

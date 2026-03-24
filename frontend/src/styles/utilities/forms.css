@@ -1,0 +1,3 @@
+@utility form-element {
+    @apply hover:outline-1 hover:outline-stroke-subtle focus-within:outline-1 focus-within:outline-stroke-strong;
+}
