@@ -6,7 +6,6 @@ import hmac
 from opentelemetry import trace
 from starlette.requests import Request
 from starlette.types import ASGIApp, Scope, Receive, Send
-import nemony
 
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
@@ -86,9 +85,6 @@ class OtelSpanEndUserEnrichmentMiddleware:
 
                     pseudonym = _pseudonymize_user_id(user_id)
 
-                    # Could use something like this to get a more human readable pseudonym
-                    human_readable_pseudonym = nemony.encode(pseudonym, sep="-")
-
                     LOGGER.debug(f"------ OtelSpanEndUserEnrichmentMiddleware: {user_id=}, {user_name=}, {pseudonym=}")
 
                     # Shows up as "Auth Id", "Authenticated user Id" or user_AuthenticatedId in Application Insights
@@ -103,7 +99,6 @@ class OtelSpanEndUserEnrichmentMiddleware:
                     curr_span.set_attribute("app.user_name_raw", f"cust__{user_name}")
                     curr_span.set_attribute("app.user_id_raw", f"cust__{user_id}")
                     curr_span.set_attribute("app.user_id_pseudonym", f"cust__{pseudonym}")
-                    curr_span.set_attribute("app.user_id_human_readable_pseudonym", f"cust__{human_readable_pseudonym}")
 
             except:  # nosec # pylint: disable=bare-except
                 LOGGER.warning("OtelSpanEndUserEnrichmentMiddleware: Could not get end user information from request")
