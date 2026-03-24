@@ -62,14 +62,14 @@
 
     /* Borders */
     --color-stroke-subtle: var(--eds-color-border-neutral-subtle);
-    --color-stroke: var(--eds-color-border-neutral-medium);
+    --color-stroke: var(--eds-color-border-neutral-strong);
     --color-stroke-strong: var(--eds-color-border-neutral-strong);
 
-    --color-stroke-accent: var(--eds-color-border-accent-medium);
-    --color-stroke-success: var(--eds-color-border-success-medium);
-    --color-stroke-info: var(--eds-color-border-info-medium);
-    --color-stroke-warning: var(--eds-color-border-warning-medium);
-    --color-stroke-danger: var(--eds-color-border-danger-medium);
+    --color-stroke-accent: var(--eds-color-border-accent-strong);
+    --color-stroke-success: var(--eds-color-border-success-strong);
+    --color-stroke-info: var(--eds-color-border-info-strong);
+    --color-stroke-warning: var(--eds-color-border-warning-strong);
+    --color-stroke-danger: var(--eds-color-border-danger-strong);
 
     --color-focus: var(--eds-color-border-focus);
 
@@ -84,4 +84,10 @@
     --color-text-info: var(--eds-color-text-info-subtle);
     --color-text-warning: var(--eds-color-text-warning-subtle);
     --color-text-danger: var(--eds-color-text-danger-subtle);
+
+     /* Disabled */
+    --color-fill-disabled: var(--eds-color-bg-fill-emphasis-disabled);
+
+    --color-text-disabled: var(--eds-color-text-neutral-subtle);
+    --color-stroke-disabled: var(--eds-color-border-neutral-subtle);
 }

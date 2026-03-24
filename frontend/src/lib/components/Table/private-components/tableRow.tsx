@@ -39,8 +39,8 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
     return (
         <tr
             className={resolveClassNames("group/tr border-b-2 last:border-b-0", {
-                "hover:bg-blue-100": !props.selected && isLoaded,
-                "bg-blue-600 hover:bg-blue-700 text-white": props.selected && isLoaded,
+                "hover:bg-fill-accent": !props.selected && isLoaded,
+                "bg-fill-accent-strong hover:bg-fill-accent-strong-hover text-text-on-strong": props.selected && isLoaded,
             })}
             onMouseDown={handleMouseDown}
             onClick={(evt) => isLoaded && props.onClick(row, evt)}

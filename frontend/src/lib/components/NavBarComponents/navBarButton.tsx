@@ -47,10 +47,8 @@ function NavBarButtonComponent(
                 <Button
                     {...baseProps}
                     ref={ref}
-                    className={resolveClassNames(
-                        "w-full h-10 text-center px-3!",
-                        active ? "bg-blue-500! text-white" : "text-slate-800!",
-                    )}
+                    variant="text"
+                    tone="neutral"
                 >
                     {buttonIcon}
                 </Button>

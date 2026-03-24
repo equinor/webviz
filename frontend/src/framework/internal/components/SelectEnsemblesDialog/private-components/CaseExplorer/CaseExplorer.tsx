@@ -335,7 +335,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         </div>
                         <div className="flex flex-col items-center">
                             <Tooltip title="Refresh fields and cases lists" enterDelay="medium">
-                                <Button color="primary" onClick={handleManualRefetch} size="medium">
+                                <Button tone="accent" onClick={handleManualRefetch} size="small" variant="text">
                                     {isFieldsQueryRefreshing || isCasesQueryRefreshing ? (
                                         <CircularProgress size="small" />
                                     ) : (

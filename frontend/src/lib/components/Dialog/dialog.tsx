@@ -109,7 +109,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     <div className="p-4 grow overflow-auto">{props.children}</div>
 
                     {/* Actions */}
-                    {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4">{props.actions}</div>}
+                    {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4 gap-2">{props.actions}</div>}
 
                     {/* Drawer overlay + content */}
                     {props.drawer && (

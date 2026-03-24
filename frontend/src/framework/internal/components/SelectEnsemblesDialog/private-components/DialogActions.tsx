@@ -24,12 +24,12 @@ export const DialogActions: React.FC<DialogActionsProps> = (props: DialogActions
 
     return (
         <div className="flex gap-4">
-            <Button onClick={props.onDiscard} color="danger" disabled={props.disableDiscard}>
+            <Button onClick={props.onDiscard} tone="danger" variant="text" disabled={props.disableDiscard}>
                 Discard changes
             </Button>
             <div title={props.hasDuplicatedDeltaEnsembles ? "Duplicate Delta Ensembles (marked blue)" : ""}>
-                <Button onClick={props.onApply} disabled={props.disableApply} startIcon={makeApplyButtonStartIcon()}>
-                    {props.isLoading ? "Loading ensembles..." : "Apply"}
+                <Button onClick={props.onApply} disabled={props.disableApply}>
+                    {makeApplyButtonStartIcon()}{props.isLoading ? "Loading ensembles..." : "Apply"}
                 </Button>
             </div>
         </div>

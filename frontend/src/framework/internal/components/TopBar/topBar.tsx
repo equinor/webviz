@@ -8,6 +8,7 @@ import {
     ArrowDropDown,
     Category,
     Close,
+    DarkMode,
     Edit,
     Fullscreen,
     FullscreenExit,
@@ -18,7 +19,7 @@ import {
     SaveAs,
 } from "@mui/icons-material";
 
-import FmuLogo from "@assets/fmu.svg";
+import { FmuLogo } from "@assets/FmuLogo";
 
 import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
@@ -51,13 +52,22 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
     );
 
+    const toggleDarkMode = React.useCallback(function toggleDarkMode() {
+        const htmlElement = document.querySelector<HTMLHtmlElement>("html");
+        if (htmlElement) {
+            const currentScheme = htmlElement.getAttribute("data-color-scheme");
+            const newScheme = currentScheme === "dark" ? "light" : "dark";
+            htmlElement.setAttribute("data-color-scheme", newScheme);
+        }
+    }, []);
+
     return (
         <>
             <div
                 className={resolveClassNames(
-                    "bg-surface  p-0.5 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-4 pl-6 items-center min-h-16",
+                    "p-0.5 border-b-2 border-slate-200 z-50 shadow-elevation-raised flex flex-row gap-12 px-4 pl-6 items-center min-h-16",
                     {
-                        "bg-white": hasActiveSession,
+                        "bg-elevated": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
                     },
                 )}
@@ -73,6 +83,9 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                         <div className="grow" />
                     )}
                     <TopBarDivider />
+                    <Button variant="text" tone="neutral" iconOnly onClick={toggleDarkMode}>
+                        <DarkMode fontSize="inherit" />
+                    </Button>
                     <LoginButton showText={false} />
                 </div>
             </div>
@@ -82,10 +95,10 @@ export function TopBar(props: TopBarProps): React.ReactNode {
 function LogoWithText(): React.ReactNode {
     return (
         <div className="flex flex-row items-center gap-4">
-            <img src={FmuLogo} alt="FMU Analysis logo" className="w-8 h-8" />
-            <h1 className="text-md text-slate-800 whitespace-nowrap">FMU Analysis</h1>
+            <FmuLogo className="h-8 w-8" />
+            <h1 className="text-md text-accent whitespace-nowrap">FMU Analysis</h1>
             <div
-                className="bg-orange-600 text-white p-1 rounded-sm text-xs text-center cursor-help shadow-sm"
+                className="bg-fill-warning-strong text-white p-1 rounded-sm text-xs text-center cursor-help shadow-sm"
                 title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
             >
                 BETA
@@ -411,10 +424,8 @@ function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef
             <Button
                 {...baseProps}
                 ref={ref}
-                className={resolveClassNames("w-full h-10 text-center px-3!", {
-                    "text-cyan-600": active,
-                    "!text-slate-800": props.variant === "text" || props.variant === undefined,
-                })}
+                variant="text"
+                tone="neutral"
                 onClick={onClick}
                 disabled={disabled}
             >

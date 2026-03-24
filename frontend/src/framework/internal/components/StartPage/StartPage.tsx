@@ -1,5 +1,5 @@
 import { Icon, Typography, Input as EdsInput } from "@equinor/eds-core-react";
-import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
+import { category, dashboard, folder_open, github, external_link, add } from "@equinor/eds-icons";
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
@@ -10,8 +10,9 @@ import { Tooltip } from "@lib/components/Tooltip";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
+import { Add } from "@mui/icons-material";
 
-Icon.add({ dashboard, category, folder_open, github, external_link });
+Icon.add({ dashboard, category, folder_open, github, external_link, add });
 
 export type StartPageProps = {
     workbench: Workbench;
@@ -78,6 +79,12 @@ export function StartPage(props: StartPageProps) {
                             <Button variant="contained" tone="danger">
                                 Danger
                             </Button>
+                            <Button variant="contained" tone="accent" iconOnly>
+                                <Add fontSize="inherit" />
+                            </Button>
+                            <Button variant="contained" tone="accent" iconOnly round>
+                                <Add fontSize="inherit" />
+                            </Button>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -90,6 +97,12 @@ export function StartPage(props: StartPageProps) {
                             </Button>
                             <Button variant="outlined" tone="danger">
                                 Danger
+                            </Button>
+                            <Button variant="outlined" tone="accent" iconOnly>
+                                <Add fontSize="inherit" />
+                            </Button>
+                            <Button variant="outlined" tone="accent" iconOnly round>
+                                <Add fontSize="inherit" />
                             </Button>
                         </div>
 
@@ -104,7 +117,14 @@ export function StartPage(props: StartPageProps) {
                             <Button variant="text" tone="danger">
                                 Danger
                             </Button>
+                            <Button variant="text" tone="accent" iconOnly>
+                                <Add fontSize="inherit" />
+                            </Button>
+                            <Button variant="text" tone="accent" iconOnly round>
+                                <Add fontSize="inherit" />
+                            </Button>
                         </div>
+                        <Input placeholder="input" />
                     </div>
 
                     <section className="flex flex-col gap-2">

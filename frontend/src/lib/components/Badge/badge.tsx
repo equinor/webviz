@@ -16,7 +16,7 @@ export const Badge: React.FC<BadgeProps> = (props) => {
                 },
                 badge: {
                     className: resolveClassNames(
-                        props.color || "bg-blue-500",
+                        props.color || "bg-fill-accent-strong",
                         "rounded-full",
                         "text-white",
                         "h-4",

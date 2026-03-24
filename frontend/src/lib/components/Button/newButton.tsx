@@ -9,6 +9,7 @@ export type ButtonProps = {
     tone?: "accent" | "neutral" | "danger";
     disabled?: boolean;
     round?: boolean;
+    iconOnly?: boolean;
 } & ButtonPropsBase;
 
 const DEFAULT_VALUES = {
@@ -19,24 +20,28 @@ const DEFAULT_VALUES = {
 
 const VARIANT_TONE_CLASSES: Record<
     NonNullable<ButtonProps["variant"]>,
-    Record<NonNullable<ButtonProps["tone"]>, string>
+    Record<NonNullable<ButtonProps["tone"] | "disabled">, string>
 > = {
     contained: {
         accent: "bg-fill-accent-strong text-text-on-strong hover:bg-fill-accent-strong-hover active:bg-fill-accent-strong-active border-transparent",
         neutral:
             "bg-fill-neutral-strong text-text-on-strong hover:bg-fill-neutral-strong-hover active:bg-fill-neutral-strong-active  border-transparent",
         danger: "bg-fill-danger-strong text-text-on-strong hover:bg-fill-danger-strong-hover active:bg-fill-danger-strong-active border-transparent",
+        disabled: "bg-fill-disabled text-text-disabled border-disabled cursor-not-allowed opacity-50",
     },
     outlined: {
-        accent: "border border-stroke-accent text-text-accent hover:bg-fill-accent-hover active:bg-accent-fill-muted-active bg-transparent",
+        accent: "outline -outline-offset-1 outline-stroke-accent text-text-accent hover:bg-fill-accent-hover active:bg-accent-fill-muted-active bg-transparent",
         neutral:
-            "border border-stroke-neutral text-text-neutral hover:bg-fill-neutral-hover active:bg-neutral-fill-muted-active bg-transparent",
-        danger: "border border-stroke-danger text-text-danger hover:bg-fill-danger-hover active:bg-danger-fill-muted-active bg-transparent",
+            "outline -outline-offset-1 outline-stroke text-text-neutral hover:bg-fill-neutral-hover active:bg-neutral-fill-muted-active bg-transparent",
+        danger: "outline -outline-offset-1 outline-stroke-danger text-text-danger hover:bg-fill-danger-hover active:bg-danger-fill-muted-active bg-transparent",
+        disabled: "outline -outline-offset-1 outline-stroke-disabled text-text-disabled cursor-not-allowed opacity-50 bg-transparent",
+
     },
     text: {
         accent: "text-text-accent hover:bg-fill-accent-hover active:bg-accent-fill-muted-active bg-transparent",
         neutral: "text-text-neutral hover:bg-fill-neutral-hover active:bg-neutral-fill-muted-active bg-transparent",
         danger: "text-text-danger hover:bg-fill-danger-hover active:bg-danger-fill-muted-active bg-transparent",
+        disabled: "text-text-disabled bg-fill-disabled cursor-not-allowed opacity-50",
     },
 };
 
@@ -57,10 +62,13 @@ export function Button(props: ButtonProps) {
                 {
                     "rounded-full": props.round,
                     rounded: !props.round,
+                    "aspect-square justify-center button__icon": props.iconOnly,
                 },
                 SIZE_CLASSES[defaultedProps.size],
-                VARIANT_TONE_CLASSES[defaultedProps.variant][defaultedProps.tone],
+                VARIANT_TONE_CLASSES[defaultedProps.variant][defaultedProps.disabled ? "disabled" : defaultedProps.tone],
             )}
-        />
+        >
+            {props.iconOnly ? props.children : <span className="button__label">{props.children}</span>}
+        </ButtonBase>
     );
 }

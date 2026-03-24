@@ -121,13 +121,13 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
             {/* Regular ensemble table */}
             <div className="flex flex-1 flex-col min-h-0">
                 <div className="flex justify-between items-center shrink-0 pt-1 pb-1">
-                    <div className="font-medium text-lg">Regular Ensembles</div>
+                    <div className="font-medium text-ui-lg">Regular Ensembles</div>
                     <Button
-                        variant="contained"
+                        variant="text"
                         onClick={handleAddRegularEnsemble}
-                        size="medium"
-                        startIcon={<Add fontSize="inherit" />}
+                        size="small"
                     >
+                        <Add fontSize="inherit" />
                         Add Ensemble
                     </Button>
                 </div>
@@ -140,7 +140,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                     >
                         <SortableList.ScrollContainer>
                             <div className="grow overflow-auto">
-                                <table className="w-full border border-collapse table-fixed text-sm">
+                                <table className="w-full border border-collapse table-fixed text-ui-sm">
                                     <SortableList.NoDropZone>
                                         <thead className="sticky top-0 z-10">
                                             <tr>
@@ -170,7 +170,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         </SortableList.ScrollContainer>
                     </SortableList>
                     {props.selectedRegularEnsembles.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-ui-md">
                             No regular ensembles selected.
                         </div>
                     )}
@@ -181,7 +181,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
             <div className="flex flex-col flex-1 min-h-0">
                 <div className="flex justify-between items-center shrink-0 pt-1 pb-1">
                     <div className="flex items-center">
-                        <div className="font-medium text-lg">Delta Ensembles</div>
+                        <div className="font-medium text-ui-lg">Delta Ensembles</div>
                         <div className="fill-indigo-600">
                             <InfoOutlined
                                 fontSize="medium"
@@ -191,11 +191,11 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         </div>
                     </div>
                     <Button
-                        variant="contained"
-                        size="medium"
-                        startIcon={<Add fontSize="inherit" />}
+                        variant="text"
+                        size="small"
                         onClick={handleCreateDeltaEnsemble}
                     >
+                        <Add fontSize="inherit" />
                         Create Delta Ensemble
                     </Button>
                 </div>
@@ -208,7 +208,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                     >
                         <SortableList.ScrollContainer>
                             <div className="grow overflow-auto">
-                                <table className="w-full border border-collapse table-fixed text-sm">
+                                <table className="w-full border border-collapse table-fixed text-ui-sm">
                                     <SortableList.NoDropZone>
                                         <thead className="sticky top-0 z-10">
                                             <tr>
@@ -252,7 +252,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         </SortableList.ScrollContainer>
                     </SortableList>
                     {props.selectedDeltaEnsembles.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-ui-md">
                             No delta ensembles created.
                         </div>
                     )}

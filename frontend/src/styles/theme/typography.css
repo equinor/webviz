@@ -2,3 +2,9 @@
     --font-sans: "Inter", ui-sans-serif, system-ui;
     --font-heading: "Equinor", "Inter", sans-serif;
 }
+
+@theme {
+  --text-ui-sm: 0.75rem;   /* 12px */
+  --text-ui-md: 0.875rem;  /* 14px → default */
+  --text-ui-lg: 1rem;      /* 16px */
+}
