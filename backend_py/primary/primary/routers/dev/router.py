@@ -27,7 +27,7 @@ router = APIRouter()
 
 
 @router.get("/whoami")
-async def whoami(request: Request):
+async def whoami(request: Request) -> dict:
     return {
         "client_host": request.client.host if request.client else None,
         "xff": request.headers.get("x-forwarded-for"),
