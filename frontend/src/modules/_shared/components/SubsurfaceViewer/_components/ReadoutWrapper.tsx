@@ -447,7 +447,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
                     <DeckGlView key={viewport.id} id={viewport.id}>
-                        <ViewportLabel viewport={viewport} />
+                        <ViewportLabel name={viewport.name ?? ""} color={viewport.color} />
                         <ColorLegendsContainer
                             colorScales={viewport.colorScales}
                             height={((mainDivSize.height / 3) * 2) / numRows - 20}

@@ -7,6 +7,7 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 
 import type {
     CustomSettingImplementation,
+    OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
@@ -183,5 +184,13 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 </div>
             );
         };
+    }
+
+    overriddenValueRepresentation(args: OverriddenValueRepresentationArgs<ValueType>): React.ReactNode {
+        const { value } = args;
+        if (value === null) {
+            return "-";
+        }
+        return `${value.type === IntersectionType.WELLBORE ? "Wellbore" : "Polyline"}: "${value.name}"`;
     }
 }

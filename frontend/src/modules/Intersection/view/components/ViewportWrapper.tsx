@@ -18,6 +18,7 @@ import {
     isValidNumber,
     isValidViewport,
 } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
+import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
@@ -26,6 +27,8 @@ import { ReadoutWrapper } from "./ReadoutWrapper";
 const DISPLACEMENT_FACTOR = 1.4; // Factor to increase the viewport displacement when fitting in view
 
 export type ViewportWrapperProps = {
+    name: string;
+    color: string | null;
     intersectionSource: IntersectionSettingValue | null;
     referenceSystem?: IntersectionReferenceSystem;
     layerItems: LayerItem[];
@@ -230,6 +233,9 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
             <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
+                <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pointer-events-none pt-1">
+                    <ViewportLabel name={props.name} color={props.color} />
+                </div>
                 <ReadoutWrapper
                     intersectionSource={props.intersectionSource}
                     showGrid={showGrid}

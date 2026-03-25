@@ -22,9 +22,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
             type: "string",
             nullable: true,
         },
-        preferredViewLayout: {
-            enum: [PreferredViewLayout.VERTICAL, PreferredViewLayout.HORIZONTAL],
-        },
+        preferredViewLayout: { enum: Object.values(PreferredViewLayout) },
     },
 }));
 
