@@ -54,9 +54,9 @@ export const Dialog: React.FC<DialogProps> = (props) => {
     return createPortal(
         <div
             ref={wrapperRef}
-            className={resolveClassNames("fixed inset-0 w-full h-full", {
+            className={resolveClassNames("fixed inset-0 h-full w-full", {
                 "pointer-events-none": !props.modal,
-                "bg-slate-600/50": props.modal,
+                "bg-backdrop": props.modal,
                 hidden: !props.open,
             })}
             style={{ zIndex: props.zIndex ?? 50 }}
@@ -66,7 +66,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             <div
                 ref={dialogRef}
                 className={resolveClassNames(
-                    "fixed left-1/2 top-1/2 rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col overflow-hidden",
+                    "bg-floating pointer-events-auto fixed top-1/2 left-1/2 flex max-w-[75vw] min-w-lg flex-col overflow-hidden rounded-sm shadow-sm",
                     { border: !props.modal },
                 )}
                 style={{
@@ -81,12 +81,12 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             >
                 {/* Header */}
                 <div
-                    className={resolveClassNames("flex justify-between p-4 border-b", {
-                        "bg-red-200 border-red-400": variantOrDefault === "error",
+                    className={resolveClassNames("flex justify-between border-b p-4", {
+                        "border-red-400 bg-red-200": variantOrDefault === "error",
                     })}
                 >
                     <h2
-                        className={resolveClassNames("text-slate-800 font-bold text-lg", {
+                        className={resolveClassNames("text-lg font-bold text-slate-800", {
                             "text-red-900!": variantOrDefault === "error",
                         })}
                     >
@@ -94,7 +94,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     </h2>
                     {props.showCloseCross && (
                         <div
-                            className="hover:text-slate-500 cursor-pointer ml-4"
+                            className="ml-4 cursor-pointer hover:text-slate-500"
                             onClick={handleClose}
                             title="Close dialog"
                         >
@@ -104,12 +104,14 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                 </div>
 
                 {/* Body */}
-                <div className="flex flex-col h-full relative overflow-hidden">
+                <div className="relative flex h-full flex-col overflow-hidden">
                     {/* Main content */}
-                    <div className="p-4 grow overflow-auto">{props.children}</div>
+                    <div className="grow overflow-auto p-4">{props.children}</div>
 
                     {/* Actions */}
-                    {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4 gap-2">{props.actions}</div>}
+                    {props.actions && (
+                        <div className="mt-4 flex justify-end gap-2 bg-slate-100 p-4">{props.actions}</div>
+                    )}
 
                     {/* Drawer overlay + content */}
                     {props.drawer && (
@@ -117,7 +119,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                             {/* Semi-transparent overlay*/}
                             {props.drawer.open && (
                                 <div
-                                    className="absolute top-0 left-0 w-full h-full bg-black/25 z-10"
+                                    className="absolute top-0 left-0 z-10 h-full w-full bg-black/25"
                                     onClick={props.drawer.onClose}
                                 />
                             )}
@@ -125,7 +127,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                             {/* Drawer content */}
                             <div
                                 className={resolveClassNames(
-                                    "absolute top-0 left-0 pl-2 h-full bg-white shadow-lg transition-transform duration-300 z-20",
+                                    "absolute top-0 left-0 z-20 h-full bg-white pl-2 shadow-lg transition-transform duration-300",
                                     {
                                         "translate-x-0": props.drawer.open,
                                         "-translate-x-full": !props.drawer.open,

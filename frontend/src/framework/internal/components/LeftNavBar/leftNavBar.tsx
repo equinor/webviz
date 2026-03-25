@@ -36,7 +36,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "bg-elevated p-2 pt-4 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col",
+                "bg-surface p-2 pt-4 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col",
             )}
         >
             <div className="flex flex-col gap-2 grow">

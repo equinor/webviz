@@ -4,7 +4,83 @@
 }
 
 @theme {
-  --text-ui-sm: 0.75rem;   /* 12px */
-  --text-ui-md: 0.875rem;  /* 14px → default */
-  --text-ui-lg: 1rem;      /* 16px */
+    /* Reset all text-related variables to ensure they are derived from EDS tokens. */
+    --text-*: initial;
+    --leading-*: initial;
+    --font-weight-*: initial;
+
+    /* Font sizes */
+
+    /* Body text */
+    --text-body-xs: var(--eds-typography-ui-body-xs-font-size);
+    --text-body-sm: var(--eds-typography-ui-body-sm-font-size);
+    --text-body-md: var(--eds-typography-ui-body-md-font-size);
+    --text-body-lg: var(--eds-typography-ui-body-lg-font-size);
+    --text-body-xl: var(--eds-typography-ui-body-xl-font-size);
+    --text-body-2xl: var(--eds-typography-ui-body-2xl-font-size);
+    --text-body-3xl: var(--eds-typography-ui-body-3xl-font-size);
+    --text-body-4xl: var(--eds-typography-ui-body-4xl-font-size);
+    --text-body-5xl: var(--eds-typography-ui-body-5xl-font-size);
+    --text-body-6xl: var(--eds-typography-ui-body-6xl-font-size);
+
+    /* Heading text */
+    --text-header-xs: var(--eds-typography-header-xs-font-size);
+    --text-header-sm: var(--eds-typography-header-sm-font-size);
+    --text-header-md: var(--eds-typography-header-md-font-size);
+    --text-header-lg: var(--eds-typography-header-lg-font-size);
+    --text-header-xl: var(--eds-typography-header-xl-font-size);
+    --text-header-2xl: var(--eds-typography-header-2xl-font-size);
+    --text-header-3xl: var(--eds-typography-header-3xl-font-size);
+    --text-header-4xl: var(--eds-typography-header-4xl-font-size);
+    --text-header-5xl: var(--eds-typography-header-5xl-font-size);
+    --text-header-6xl: var(--eds-typography-header-6xl-font-size);
+
+    /* Font weights */
+    --font-weight-light: var(--eds-typography-ui-body-md-font-weight-lighter);
+    --font-weight-normal: var(--eds-typography-ui-body-md-font-weight-normal);
+    --font-weight-medium: var(--eds-typography-ui-body-md-font-weight-bolder);
+
+    /* Line heights — body */
+    --leading-body-xs: var(--eds-typography-ui-body-xs-line-height-default);
+    --leading-body-xs-squished: var(--eds-typography-ui-body-xs-line-height-squished);
+    --leading-body-sm: var(--eds-typography-ui-body-sm-line-height-default);
+    --leading-body-sm-squished: var(--eds-typography-ui-body-sm-line-height-squished);
+    --leading-body-md: var(--eds-typography-ui-body-md-line-height-default);
+    --leading-body-md-squished: var(--eds-typography-ui-body-md-line-height-squished);
+    --leading-body-lg: var(--eds-typography-ui-body-lg-line-height-default);
+    --leading-body-lg-squished: var(--eds-typography-ui-body-lg-line-height-squished);
+    --leading-body-xl: var(--eds-typography-ui-body-xl-line-height-default);
+    --leading-body-xl-squished: var(--eds-typography-ui-body-xl-line-height-squished);
+    --leading-body-2xl: var(--eds-typography-ui-body-2xl-line-height-default);
+    --leading-body-2xl-squished: var(--eds-typography-ui-body-2xl-line-height-squished);
+    --leading-body-3xl: var(--eds-typography-ui-body-3xl-line-height-default);
+    --leading-body-3xl-squished: var(--eds-typography-ui-body-3xl-line-height-squished);
+    --leading-body-4xl: var(--eds-typography-ui-body-4xl-line-height-default);
+    --leading-body-4xl-squished: var(--eds-typography-ui-body-4xl-line-height-squished);
+    --leading-body-5xl: var(--eds-typography-ui-body-5xl-line-height-default);
+    --leading-body-5xl-squished: var(--eds-typography-ui-body-5xl-line-height-squished);
+    --leading-body-6xl: var(--eds-typography-ui-body-6xl-line-height-default);
+    --leading-body-6xl-squished: var(--eds-typography-ui-body-6xl-line-height-squished);
+
+    /* Line heights — header */
+    --leading-header-xs: var(--eds-typography-header-xs-line-height-default);
+    --leading-header-xs-squished: var(--eds-typography-header-xs-line-height-squished);
+    --leading-header-sm: var(--eds-typography-header-sm-line-height-default);
+    --leading-header-sm-squished: var(--eds-typography-header-sm-line-height-squished);
+    --leading-header-md: var(--eds-typography-header-md-line-height-default);
+    --leading-header-md-squished: var(--eds-typography-header-md-line-height-squished);
+    --leading-header-lg: var(--eds-typography-header-lg-line-height-default);
+    --leading-header-lg-squished: var(--eds-typography-header-lg-line-height-squished);
+    --leading-header-xl: var(--eds-typography-header-xl-line-height-default);
+    --leading-header-xl-squished: var(--eds-typography-header-xl-line-height-squished);
+    --leading-header-2xl: var(--eds-typography-header-2xl-line-height-default);
+    --leading-header-2xl-squished: var(--eds-typography-header-2xl-line-height-squished);
+    --leading-header-3xl: var(--eds-typography-header-3xl-line-height-default);
+    --leading-header-3xl-squished: var(--eds-typography-header-3xl-line-height-squished);
+    --leading-header-4xl: var(--eds-typography-header-4xl-line-height-default);
+    --leading-header-4xl-squished: var(--eds-typography-header-4xl-line-height-squished);
+    --leading-header-5xl: var(--eds-typography-header-5xl-line-height-default);
+    --leading-header-5xl-squished: var(--eds-typography-header-5xl-line-height-squished);
+    --leading-header-6xl: var(--eds-typography-header-6xl-line-height-default);
+    --leading-header-6xl-squished: var(--eds-typography-header-6xl-line-height-squished);
 }

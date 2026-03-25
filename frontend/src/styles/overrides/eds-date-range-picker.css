@@ -4,7 +4,7 @@
         @apply h-3.5;
     }
     & [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply shadow-none! rounded;
+        @apply rounded shadow-none!;
     }
 
     & [class*="FieldWrapper__StyledInputFieldWrapper"]:focus-within {
@@ -12,11 +12,11 @@
     }
 
     & [class*="Segment"]:focus-visible {
-        @apply outline-1! rounded-xs;
+        @apply rounded-xs outline-1!;
     }
 
     & [class*="Toggle__StyledButton"]:focus-visible {
-        @apply outline-indigo-500;
+        @apply outline-focus;
     }
 
     /* outline-width: 1px; */

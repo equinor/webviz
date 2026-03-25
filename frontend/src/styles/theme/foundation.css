@@ -6,7 +6,7 @@
 
 /* Root-level defaults */
 :root {
-    --background: var(--color-surface);
+    --background: var(--color-canvas);
     --foreground: var(--color-text);
 }
 

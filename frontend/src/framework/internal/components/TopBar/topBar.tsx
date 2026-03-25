@@ -65,9 +65,9 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         <>
             <div
                 className={resolveClassNames(
-                    "p-0.5 border-b-2 border-slate-200 z-50 shadow-elevation-raised flex flex-row gap-12 px-4 pl-6 items-center min-h-16",
+                    "p-0.5 border-b-2 border-stroke-subtle z-50 shadow-elevation-raised flex flex-row gap-12 px-4 pl-6 items-center min-h-16",
                     {
-                        "bg-elevated": hasActiveSession,
+                        "bg-surface": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
                     },
                 )}
@@ -421,14 +421,7 @@ function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef
     const { active, title, onClick, disabled, ...baseProps } = props;
     return (
         <Tooltip title={title} placement="bottom">
-            <Button
-                {...baseProps}
-                ref={ref}
-                variant="text"
-                tone="neutral"
-                onClick={onClick}
-                disabled={disabled}
-            >
+            <Button {...baseProps} ref={ref} variant="text" tone="neutral" onClick={onClick} disabled={disabled}>
                 {props.children}
             </Button>
         </Tooltip>
@@ -469,5 +462,5 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
 }
 
 function TopBarDivider(): React.ReactNode {
-    return <div className="bg-slate-200 w-px h-10 mx-2" />;
+    return <div className="bg-stroke-subtle w-px h-10 mx-2" />;
 }

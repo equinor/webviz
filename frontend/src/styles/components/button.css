@@ -11,21 +11,21 @@
 
     .button-sm {
         min-height: var(--size-selectable-sm);
-        font-size: var(--text-ui-sm);
+        font-size: var(--text-body-sm);
     }
 
     .button-md {
         min-height: var(--size-selectable-md);
-        font-size: var(--text-ui-md);
+        font-size: var(--text-body-md);
     }
 
     .button-lg {
         min-height: var(--size-selectable-lg);
-        font-size: var(--text-ui-lg);
+        font-size: var(--text-body-lg);
     }
 
     .button__label {
-        @apply inline-flex items-center w-full h-full;
+        @apply inline-flex h-full w-full items-center;
         gap: var(--spacing-space-xs);
         padding-inline: var(--spacing-selectable-x);
     }
