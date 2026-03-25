@@ -51,15 +51,6 @@ services:
     volumes:
       - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
 
-  surface-query-legacy:
-    build:
-      context: .
-      dockerfile: ./backend_go/surface_query/Dockerfile.dev
-    environment:
-      - SURFACE_QUERY_SERVER_MODE=legacyserver
-    volumes:
-      - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
-
   user-mock:
     build:
       context: .
