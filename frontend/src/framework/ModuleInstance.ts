@@ -134,7 +134,12 @@ export class ModuleInstance<
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "channel-manager",
-            this._channelManager.subscribe(ChannelManagerNotificationTopic.STATE, this.handleStateChange.bind(this)),
+            this._channelManager
+                .getPublishSubscribeDelegate()
+                .subscribe(
+                    ChannelManagerNotificationTopic.CONNECTION_STATE_REVISION,
+                    this.handleStateChange.bind(this),
+                ),
         );
     }
 
