@@ -132,14 +132,14 @@ export function Settings(): React.ReactNode {
                         onChange={(_, c) => setTsConfig((prev) => ({ ...prev, showRealizations: c }))}
                     />
                     <Checkbox
-                        label="Show history"
-                        checked={tsConfig.showHistory}
-                        onChange={(_, c) => setTsConfig((prev) => ({ ...prev, showHistory: c }))}
+                        label="Show reference lines"
+                        checked={tsConfig.showReferenceLines}
+                        onChange={(_, c) => setTsConfig((prev) => ({ ...prev, showReferenceLines: c }))}
                     />
                     <Checkbox
-                        label="Show observations"
-                        checked={tsConfig.showObservations}
-                        onChange={(_, c) => setTsConfig((prev) => ({ ...prev, showObservations: c }))}
+                        label="Show point annotations"
+                        checked={tsConfig.showPointAnnotations}
+                        onChange={(_, c) => setTsConfig((prev) => ({ ...prev, showPointAnnotations: c }))}
                     />
                     <Checkbox
                         label="Show statistics"

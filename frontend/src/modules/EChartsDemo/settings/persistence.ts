@@ -28,8 +28,8 @@ export type SerializedSettings = {
     showRealizations: boolean;
     showStatistics: boolean;
     showFanchart: boolean;
-    showHistory: boolean;
-    showObservations: boolean;
+    showReferenceLines: boolean;
+    showPointAnnotations: boolean;
     selectedStatistics: StatisticKey[];
     showStatisticalMarkers: boolean;
     showBarLabels: boolean;
@@ -52,8 +52,8 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         showRealizations: { type: "boolean" },
         showStatistics: { type: "boolean" },
         showFanchart: { type: "boolean" },
-        showHistory: { type: "boolean" },
-        showObservations: { type: "boolean" },
+        showReferenceLines: { type: "boolean" },
+        showPointAnnotations: { type: "boolean" },
         selectedStatistics: {
             elements: {
                 enum: [...ALL_STATISTIC_KEYS],
@@ -89,8 +89,8 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         showRealizations: ts.showRealizations,
         showStatistics: ts.showStatistics,
         showFanchart: ts.showFanchart,
-        showHistory: ts.showHistory,
-        showObservations: ts.showObservations,
+        showReferenceLines: ts.showReferenceLines,
+        showPointAnnotations: ts.showPointAnnotations,
         selectedStatistics: ts.selectedStatistics,
         showStatisticalMarkers: pl.showStatisticalMarkers,
         showBarLabels: pl.showBarLabels,
@@ -117,8 +117,8 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     if (raw.showRealizations !== undefined) tsUpdate.showRealizations = raw.showRealizations;
     if (raw.showStatistics !== undefined) tsUpdate.showStatistics = raw.showStatistics;
     if (raw.showFanchart !== undefined) tsUpdate.showFanchart = raw.showFanchart;
-    if (raw.showHistory !== undefined) tsUpdate.showHistory = raw.showHistory;
-    if (raw.showObservations !== undefined) tsUpdate.showObservations = raw.showObservations;
+    if (raw.showReferenceLines !== undefined) tsUpdate.showReferenceLines = raw.showReferenceLines;
+    if (raw.showPointAnnotations !== undefined) tsUpdate.showPointAnnotations = raw.showPointAnnotations;
     if (raw.selectedStatistics !== undefined) tsUpdate.selectedStatistics = raw.selectedStatistics;
     if (Object.keys(tsUpdate).length > 0) {
         set(timeseriesDisplayConfigAtom, (prev) => ({ ...prev, ...tsUpdate }));

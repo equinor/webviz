@@ -26,14 +26,14 @@ export function makeTimeseriesBandSeriesId(
     return makeSeriesId({ chartType: TIMESERIES_CATEGORY, role: "band", name: traceName, subKey: bandKey, axisIndex });
 }
 
-export function makeTimeseriesHistorySeriesId(
+export function makeTimeseriesReferenceLineSeriesId(
     traceName: string,
     axisIndex: number
 ): string {
     return makeSeriesId({ chartType: TIMESERIES_CATEGORY, role: "reference", name: traceName, subKey: "", axisIndex });
 }
 
-export function makeTimeseriesObservationSeriesId(
+export function makeTimeseriesPointAnnotationSeriesId(
     traceName: string,
     qualifier: string,
     axisIndex: number

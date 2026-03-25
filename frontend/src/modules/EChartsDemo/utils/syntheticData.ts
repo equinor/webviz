@@ -2,9 +2,9 @@ import type {
     BarTrace,
     DistributionTrace,
     HeatmapTrace,
-    HistoricalTrace,
     MemberScatterTrace,
-    ObservationTrace,
+    PointAnnotationTrace,
+    ReferenceLineTrace,
     SubplotGroup,
     TimeseriesSubplotOverlays,
     TimeseriesTrace,
@@ -84,61 +84,61 @@ export function generateTimeseriesGroups(
     return subplots;
 }
 
-export function generateHistoricalTraces(timestamps: number[], subplotIndex = 0): HistoricalTrace[] {
+export function generateReferenceLineTraces(timestamps: number[], subplotIndex = 0): ReferenceLineTrace[] {
     if (timestamps.length === 0) return [];
 
-    const historyLength = Math.max(2, Math.floor(timestamps.length * 0.7));
-    const historyTimestamps = timestamps.slice(0, historyLength);
+    const referenceLineLength = Math.max(2, Math.floor(timestamps.length * 0.7));
+    const referenceLineTimestamps = timestamps.slice(0, referenceLineLength);
     const rng = seededRandom(6001 + subplotIndex * 73);
 
     const values: number[] = [];
     let current = 55 + subplotIndex * 1.5;
-    for (let i = 0; i < historyTimestamps.length; i++) {
+    for (let i = 0; i < referenceLineTimestamps.length; i++) {
         current += (rng() - 0.52) * 2.4;
         values.push(current);
     }
 
     return [
         {
-            name: "History",
+            name: "Reference line",
             color: "#111111",
-            timestamps: historyTimestamps,
+            timestamps: referenceLineTimestamps,
             values,
             lineShape: "linear",
         },
     ];
 }
 
-export function generateObservationTraces(timestamps: number[], subplotIndex = 0): ObservationTrace[] {
+export function generatePointAnnotationTraces(timestamps: number[], subplotIndex = 0): PointAnnotationTrace[] {
     if (timestamps.length === 0) return [];
 
-    const historicalTrace = generateHistoricalTraces(timestamps, subplotIndex)[0];
-    if (!historicalTrace || historicalTrace.timestamps.length < 2) return [];
+    const referenceLineTrace = generateReferenceLineTraces(timestamps, subplotIndex)[0];
+    if (!referenceLineTrace || referenceLineTrace.timestamps.length < 2) return [];
 
     const rng = seededRandom(6001 + subplotIndex * 97);
-    const numObservations = Math.max(5, Math.min(8, Math.floor(historicalTrace.timestamps.length / 10)));
-    const maxIndex = historicalTrace.timestamps.length - 1;
-    const step = Math.max(1, Math.floor((maxIndex + 1) / (numObservations + 1)));
+    const numAnnotations = Math.max(5, Math.min(8, Math.floor(referenceLineTrace.timestamps.length / 10)));
+    const maxIndex = referenceLineTrace.timestamps.length - 1;
+    const step = Math.max(1, Math.floor((maxIndex + 1) / (numAnnotations + 1)));
 
-    const observations: ObservationTrace["observations"] = [];
+    const annotations: PointAnnotationTrace["annotations"] = [];
     let previousIndex = -1;
-    for (let i = 0; i < numObservations; i++) {
+    for (let i = 0; i < numAnnotations; i++) {
         const baseIndex = Math.min(maxIndex, (i + 1) * step);
         const jitter = Math.round((rng() - 0.5) * Math.max(1, step / 2));
         const candidateIndex = Math.max(0, Math.min(maxIndex, baseIndex + jitter));
         const index = Math.max(previousIndex + 1, Math.min(maxIndex, candidateIndex));
         previousIndex = index;
 
-        const baseValue = historicalTrace.values[index] ?? historicalTrace.values[historicalTrace.values.length - 1];
+        const baseValue = referenceLineTrace.values[index] ?? referenceLineTrace.values[referenceLineTrace.values.length - 1];
         const value = baseValue + (rng() - 0.5) * 4;
         const error = 2 + rng() * 3;
 
-        observations.push({
-            date: historicalTrace.timestamps[index],
+        annotations.push({
+            date: referenceLineTrace.timestamps[index],
             value,
             error,
-            label: `Obs ${i + 1}`,
-            comment: "Synthetic observation",
+            label: `Point ${i + 1}`,
+            comment: "Synthetic point annotation",
         });
 
         if (index >= maxIndex) break;
@@ -146,9 +146,9 @@ export function generateObservationTraces(timestamps: number[], subplotIndex = 0
 
     return [
         {
-            name: "Observation",
+            name: "Point annotation",
             color: "#111111",
-            observations,
+            annotations,
         },
     ];
 }
@@ -160,8 +160,8 @@ export function generateTimeseriesOverlays(
     return Array.from({ length: numSubplots }, (_, subplotIndex) => {
         const timestamps = groups[subplotIndex]?.traces[0]?.timestamps ?? [];
         return {
-            historicalTraces: generateHistoricalTraces(timestamps, subplotIndex),
-            observationTraces: generateObservationTraces(timestamps, subplotIndex),
+            referenceLineTraces: generateReferenceLineTraces(timestamps, subplotIndex),
+            pointAnnotationTraces: generatePointAnnotationTraces(timestamps, subplotIndex),
         };
     });
 }

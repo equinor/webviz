@@ -24,17 +24,17 @@ const option = buildTimeseriesChart(groups, { base: { containerSize }, series: {
 
 ### Chart families
 
-| Family | Builder | Trace type |
-|--------|---------|------------|
-| Timeseries | `buildTimeseriesChart` | `TimeseriesTrace` |
-| Histogram | `buildHistogramChart` | `DistributionTrace` |
-| Density (KDE) | `buildDensityChart` | `DistributionTrace` |
-| Percentile range | `buildPercentileRangeChart` | `DistributionTrace` |
-| Exceedance | `buildExceedanceChart` | `DistributionTrace` |
-| Convergence | `buildConvergenceChart` | `DistributionTrace` |
-| Bar | `buildBarChart` | `BarTrace` |
-| Heatmap | `buildHeatmapChart` | `HeatmapTrace` |
-| Member scatter | `buildMemberScatterChart` | `MemberScatterTrace` |
+| Family           | Builder                     | Trace type           |
+| ---------------- | --------------------------- | -------------------- |
+| Timeseries       | `buildTimeseriesChart`      | `TimeseriesTrace`    |
+| Histogram        | `buildHistogramChart`       | `DistributionTrace`  |
+| Density (KDE)    | `buildDensityChart`         | `DistributionTrace`  |
+| Percentile range | `buildPercentileRangeChart` | `DistributionTrace`  |
+| Exceedance       | `buildExceedanceChart`      | `DistributionTrace`  |
+| Convergence      | `buildConvergenceChart`     | `DistributionTrace`  |
+| Bar              | `buildBarChart`             | `BarTrace`           |
+| Heatmap          | `buildHeatmapChart`         | `HeatmapTrace`       |
+| Member scatter   | `buildMemberScatterChart`   | `MemberScatterTrace` |
 
 ### Subplot layout
 
@@ -42,18 +42,30 @@ const option = buildTimeseriesChart(groups, { base: { containerSize }, series: {
 
 ### Series IDs
 
-Every series gets a structured ID via `makeSeriesId({ chartType, role, name, subKey, axisIndex })`. Use `parseSeriesId(id)` to extract fields. This powers tooltip formatting and member interaction.
+Every series gets a structured ID via `makeSeriesId({ chartType, role, name, subKey, axisIndex })`. Use `parseSeriesId(id)` to extract fields. This powers chart-specific tooltip formatting and other series-level metadata lookups.
 
 ### Hooks
 
-| Hook | Purpose |
-|------|---------|
-| `useMemberInteraction` | Closest-member highlighting and tooltip for timeseries and scatter charts. Finds the member series nearest to the cursor and atomically highlights it across all subplots. |
-| `useClickToTimestamp` | Converts chart clicks to timestamp selection (timeseries). |
+| Hook                   | Purpose                                                                                                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useChartZoomSync`     | Synchronizes persisted `ChartZoomState` with ECharts `datazoom` events while suppressing immediate feedback of chart-originated zoom into the next option rebuild.                |
+| `useSeriesInteraction` | Nearest-series highlighting and tooltip for timeseries and scatter charts. Consumes explicit interaction metadata and atomically highlights the hovered entry across all subplots. |
+| `useClickToTimestamp`  | Converts chart clicks to timestamp selection (timeseries).                                                                                                                         |
+
+### Timeseries pipeline
+
+The timeseries family uses a shared subplot assembly step to keep rendering and interaction aligned:
+
+1. `buildTimeseriesSubplotArtifacts(...)` decides which subplot series are emitted and in what order.
+2. `buildTimeseriesChart(...)` uses those artifacts to build visual series, legend data, axes, and the final `EChartsOption`.
+3. `buildTimeseriesInteractionSeries(...)` reuses the same artifacts and converts subplot-local series positions into absolute ECharts series indices for hover/highlight coordination.
+
+This avoids duplicating series-ordering logic between the visual chart builder and the interaction index builder.
 
 ### Core pipeline
 
 Under the hood, each chart builder calls `buildCartesianSubplotChart` which:
+
 1. Calls the family's series builder per subplot to get `SeriesBuildResult { series, legendData }`.
 2. Calls `buildSubplotAxes` to create grids and axes.
 3. Calls `composeChartOption` to merge everything into a final `EChartsOption` with legend, tooltip, and dataZoom.

@@ -8,7 +8,6 @@ import type { CartesianChartSeries, CartesianSubplotBuildResult } from "../../co
 import type { ComposeChartConfig } from "../../core/composeChartOption";
 import { applyActiveTimestampMarker } from "../../overlays/activeTimestampMarker";
 import type {
-
     BaseChartOptions,
     SubplotGroup,
     TimeseriesDisplayConfig,
@@ -16,10 +15,7 @@ import type {
     TimeseriesTrace,
 } from "../../types";
 
-import { buildHistorySeries } from "./historySeries";
-import { buildMemberSeries } from "./memberSeries";
-import { buildObservationSeries } from "./observationSeries";
-import { buildStatisticsSeries, buildFanchartSeries } from "./statisticsSeries";
+import { buildTimeseriesSubplotArtifacts } from "./subplotArtifacts";
 import { buildTimeseriesTooltip } from "./tooltips";
 
 
@@ -45,7 +41,6 @@ export function buildTimeseriesChart(
     subplotGroups: SubplotGroup<TimeseriesTrace>[],
     options: TimeseriesChartOptions,
 ): EChartsOption {
-
     const baseOptions = options.base ?? {};
     const {
         subplotOverlays,
@@ -97,7 +92,6 @@ export function buildTimeseriesChart(
         applyActiveTimestampMarker(allSeries, timestampUtcMsToCompactIsoString(activeTimestampUtcMs));
     };
 
-
     return buildCartesianSubplotChart(
         nonEmptySubplotGroups,
         buildSubplot,
@@ -138,49 +132,13 @@ function buildTimeseriesSubplot(
     yAxisLabel: string,
     realtimePointer: RealtimeAxisPointer | undefined,
 ): CartesianSubplotBuildResult {
-    const series: CartesianChartSeries[] = [];
-    const legendData: string[] = [];
-    const seenLegend = new Set<string>();
-
-    for (const trace of group.traces) {
-        if (config.showRealizations && trace.realizationValues) {
-            const memberResult = buildMemberSeries(trace, axisIndex);
-            series.push(...memberResult.series);
-            addLegendEntries(legendData, seenLegend, memberResult.legendData);
-        }
-
-        if (config.showStatistics && trace.statistics) {
-            const statisticsResult = buildStatisticsSeries(trace, config.selectedStatistics, axisIndex);
-            series.push(...statisticsResult.series);
-            addLegendEntries(legendData, seenLegend, statisticsResult.legendData);
-        }
-
-        if (config.showFanchart && trace.statistics) {
-            const fanchartResult = buildFanchartSeries(trace, config.selectedStatistics, axisIndex);
-            series.push(...fanchartResult.series);
-            addLegendEntries(legendData, seenLegend, fanchartResult.legendData);
-        }
-    }
-
-    if (config.showHistorical) {
-        for (const historicalTrace of subplotOverlays.historicalTraces) {
-            const historyResult = buildHistorySeries(historicalTrace, axisIndex);
-            series.push(...historyResult.series);
-            addLegendEntries(legendData, seenLegend, historyResult.legendData);
-        }
-    }
-
-    if (config.showObservations) {
-        for (const observationTrace of subplotOverlays.observationTraces) {
-            const observationResult = buildObservationSeries(observationTrace, axisIndex);
-            series.push(...observationResult.series);
-            addLegendEntries(legendData, seenLegend, observationResult.legendData);
-        }
-    }
+    // The subplot artifact builder owns the emitted series order so visual rendering
+    // and interaction index generation stay coupled through a single path.
+    const subplotArtifacts = buildTimeseriesSubplotArtifacts(group, subplotOverlays, axisIndex, config);
 
     return {
-        series,
-        legendData,
+        series: subplotArtifacts.series,
+        legendData: subplotArtifacts.legendData,
         xAxis: { type: "category", data: categoryData, boundaryGap: false, axisPointer: realtimePointer },
         yAxis: { type: "value", label: yAxisLabel, scale: true, splitLine: false, axisPointer: realtimePointer },
         title: group.title,
@@ -216,23 +174,11 @@ function buildTimeseriesComposeOverrides(
 
 function buildTimeseriesDataZoom(
     numSubplots: number
-
 ): NonNullable<ComposeChartConfig["dataZoom"]> {
-
     const allAxisIndices = Array.from({ length: numSubplots }, (_, index) => index);
 
     return [
-
         { type: "inside" as const, id: "x", xAxisIndex: allAxisIndices, filterMode: "none" as const },
         { type: "inside" as const, id: "y", yAxisIndex: allAxisIndices, filterMode: "none" as const },
     ];
-}
-
-function addLegendEntries(legendData: string[], seenLegend: Set<string>, entries: string[]): void {
-    for (const entry of entries) {
-        if (entry && !seenLegend.has(entry)) {
-            legendData.push(entry);
-            seenLegend.add(entry);
-        }
-    }
 }

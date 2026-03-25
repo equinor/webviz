@@ -16,8 +16,8 @@ export type TimeseriesDisplayConfig = {
     showRealizations: boolean;
     showStatistics: boolean;
     showFanchart: boolean;
-    showHistory: boolean;
-    showObservations: boolean;
+    showReferenceLines: boolean;
+    showPointAnnotations: boolean;
     selectedStatistics: StatisticKey[];
 };
 
@@ -49,8 +49,8 @@ export const timeseriesDisplayConfigAtom = atom<TimeseriesDisplayConfig>({
     showRealizations: true,
     showStatistics: false,
     showFanchart: false,
-    showHistory: false,
-    showObservations: false,
+    showReferenceLines: false,
+    showPointAnnotations: false,
     selectedStatistics: ["mean", "p10", "p90"],
 });
 

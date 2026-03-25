@@ -26,17 +26,17 @@ export interface TimeseriesTrace {
     statistics?: TimeseriesStatistics;
 }
 
-export type HistoricalLineShape = "linear" | "hv" | "vh";
+export type ReferenceLineShape = "linear" | "hv" | "vh";
 
-export interface HistoricalTrace {
+export interface ReferenceLineTrace {
     name: string;
     color: string;
     timestamps: number[];
     values: number[];
-    lineShape?: HistoricalLineShape;
+    lineShape?: ReferenceLineShape;
 }
 
-export interface ObservationPoint {
+export interface PointAnnotation {
     date: number;
     value: number;
     error: number;
@@ -44,15 +44,15 @@ export interface ObservationPoint {
     comment?: string;
 }
 
-export interface ObservationTrace {
+export interface PointAnnotationTrace {
     name: string;
     color: string;
-    observations: ObservationPoint[];
+    annotations: PointAnnotation[];
 }
 
 export interface TimeseriesSubplotOverlays {
-    historicalTraces: HistoricalTrace[];
-    observationTraces: ObservationTrace[];
+    referenceLineTraces: ReferenceLineTrace[];
+    pointAnnotationTraces: PointAnnotationTrace[];
 }
 
 export interface DistributionTrace {
@@ -88,8 +88,8 @@ export interface TimeseriesDisplayConfig {
     showRealizations: boolean;
     showStatistics: boolean;
     showFanchart: boolean;
-    showHistorical: boolean;
-    showObservations: boolean;
+    showReferenceLines: boolean;
+    showPointAnnotations: boolean;
     selectedStatistics: StatisticKey[];
 }
 

@@ -1,6 +1,6 @@
 export {
     buildTimeseriesTooltip,
-    formatObservationTooltip,
+    formatPointAnnotationTooltip,
     formatMemberItemTooltip,
     formatMemberTooltipContent,
     formatStatisticsAxisTooltip,
@@ -9,12 +9,13 @@ export type { TimeseriesMemberTooltipOptions } from "./tooltips";
 export { buildTimeseriesChart, extractTimeseriesCategoryData, type TimeseriesChartOptions } from "./builder";
 export {
     makeTimeseriesBandSeriesId,
-    makeTimeseriesHistorySeriesId,
+    makeTimeseriesReferenceLineSeriesId,
     makeTimeseriesMemberSeriesId,
-    makeTimeseriesObservationSeriesId,
+    makeTimeseriesPointAnnotationSeriesId,
     makeTimeseriesStatisticSeriesId,
 } from "./ids";
 export { buildMemberSeries } from "./memberSeries";
 export { buildStatisticsSeries, buildFanchartSeries } from "./statisticsSeries";
-export { buildHistorySeries } from "./historySeries";
-export { buildObservationSeries } from "./observationSeries";
+export { buildReferenceLineSeries } from "./referenceLineSeries";
+export { buildPointAnnotationSeries } from "./pointAnnotationSeries";
+export { buildTimeseriesInteractionSeries } from "./interaction";

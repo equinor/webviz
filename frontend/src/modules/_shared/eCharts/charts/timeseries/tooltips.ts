@@ -4,7 +4,9 @@ import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import { parseSeriesId } from "../../core/seriesId";
 import { extractNumericValue, formatCompactTooltip } from "../../core/tooltip";
-import type { TimeseriesDisplayConfig } from "../../types";
+import type { StatisticKey, TimeseriesDisplayConfig } from "../../types";
+
+import { formatStatisticLabel } from "./statisticsSeries";
 
 const STAT_TOOLTIP_ORDER = ["mean", "p50", "p10", "p90", "min", "max"] as const;
 const STAT_TOOLTIP_ORDER_INDEX = new Map<string, number>(STAT_TOOLTIP_ORDER.map((statKey, index) => [statKey, index]));
@@ -16,7 +18,7 @@ type AxisScopedTooltipParams = AxisTooltipParams & {
     xAxisIndex?: number;
 };
 
-type ObservationTooltipDatum = {
+type PointAnnotationTooltipDatum = {
     value: [string, number, number];
     label: string;
     comment?: string;
@@ -120,11 +122,11 @@ export function formatMemberItemTooltip(
     });
 }
 
-export function formatObservationTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
+export function formatPointAnnotationTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
     const p = Array.isArray(params) ? params[0] : params;
     if (!p) return "";
 
-    const data = isObservationTooltipDatum(p.data) ? p.data : null;
+    const data = isPointAnnotationTooltipDatum(p.data) ? p.data : null;
     if (!data) return "";
 
     const [dateLabel, value, error] = data.value;
@@ -167,20 +169,7 @@ function formatStatisticValuesInline(valuesByStatKey: Map<string, string>): stri
         return left.localeCompare(right);
     });
 
-    return orderedEntries.map(([statKey, value]) => `${formatStatisticLabel(statKey)} ${value}`).join(" | ");
-}
-
-function formatStatisticLabel(statKey: string): string {
-    switch (statKey) {
-        case "mean":
-            return "Mean";
-        case "min":
-            return "Min";
-        case "max":
-            return "Max";
-        default:
-            return statKey.toUpperCase();
-    }
+    return orderedEntries.map(([statKey, value]) => `${formatStatisticLabel(statKey as StatisticKey)} ${value}`).join(" | ");
 }
 
 function resolveHoveredAxisIndex(params: CallbackDataParams[]): number | null {
@@ -205,9 +194,9 @@ function firstFiniteNumber(...values: Array<number | undefined>): number | null 
     return null;
 }
 
-function isObservationTooltipDatum(value: unknown): value is ObservationTooltipDatum {
+function isPointAnnotationTooltipDatum(value: unknown): value is PointAnnotationTooltipDatum {
     if (!value || typeof value !== "object") return false;
-    const candidate = value as Partial<ObservationTooltipDatum>;
+    const candidate = value as Partial<PointAnnotationTooltipDatum>;
     return (
         typeof candidate.label === "string" &&
         Array.isArray(candidate.value) &&

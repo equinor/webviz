@@ -23,7 +23,7 @@ export function useDemoPlotModel(
     viewContext: ViewContext<Interfaces>,
     containerSize: { width: number; height: number },
     activeTimestampUtcMs: number | null,
-    zoomState: ChartZoomState,
+    zoomState: ChartZoomState | undefined,
 ): DemoPlotModel {
     const dataConfig = viewContext.useSettingsToViewInterfaceValue("dataConfig");
     const tsConfig = viewContext.useSettingsToViewInterfaceValue("timeseriesDisplayConfig");
@@ -42,8 +42,8 @@ export function useDemoPlotModel(
                     showRealizations: tsConfig.showRealizations,
                     showStatistics: tsConfig.showStatistics,
                     showFanchart: tsConfig.showFanchart && tsConfig.showStatistics,
-                    showHistorical: tsConfig.showHistory,
-                    showObservations: tsConfig.showObservations,
+                    showReferenceLines: tsConfig.showReferenceLines,
+                    showPointAnnotations: tsConfig.showPointAnnotations,
                     selectedStatistics: tsConfig.selectedStatistics,
                 },
                 memberLabel: TIMESERIES_MEMBER_LABEL,

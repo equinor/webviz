@@ -11,7 +11,7 @@ type StatSeriesEntry = {
     dash: "solid" | "dashed" | "dotted";
 };
 
-const STAT_SERIES_DEFS: StatSeriesEntry[] = [
+export const STAT_SERIES_DEFS: StatSeriesEntry[] = [
     { key: "mean", width: 2, dash: "solid" },
     { key: "p50", width: 1.5, dash: "dashed" },
     { key: "p10", width: 1.5, dash: "dashed" },
@@ -19,6 +19,25 @@ const STAT_SERIES_DEFS: StatSeriesEntry[] = [
     { key: "min", width: 1.5, dash: "dotted" },
     { key: "max", width: 1.5, dash: "dotted" },
 ];
+
+export function getOrderedStatisticKeys(selectedStatistics: StatisticKey[]): StatisticKey[] {
+    return STAT_SERIES_DEFS.filter((definition) => selectedStatistics.includes(definition.key)).map(
+        (definition) => definition.key,
+    );
+}
+
+export function formatStatisticLabel(statKey: StatisticKey): string {
+    switch (statKey) {
+        case "mean":
+            return "Mean";
+        case "min":
+            return "Min";
+        case "max":
+            return "Max";
+        default:
+            return statKey.toUpperCase();
+    }
+}
 
 export function buildStatisticsSeries(
     trace: TimeseriesTrace,

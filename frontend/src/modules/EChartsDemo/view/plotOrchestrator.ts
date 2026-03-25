@@ -4,6 +4,7 @@ import type {
     BaseChartOptions,
     ContainerSize,
     DistributionTrace,
+    InteractionSeries,
     SubplotGroup,
     TimeseriesDisplayConfig as SharedTimeseriesDisplayConfig,
 } from "@modules/_shared/eCharts";
@@ -15,8 +16,10 @@ import {
     buildHeatmapChart,
     buildHistogramChart,
     buildMemberScatterChart,
+    buildMemberScatterInteractionSeries,
     buildPercentileRangeChart,
     buildTimeseriesChart,
+    buildTimeseriesInteractionSeries,
 } from "@modules/_shared/eCharts";
 import type { ChartZoomState } from "@modules/_shared/eCharts/core/composeChartOption";
 
@@ -38,11 +41,18 @@ import {
 
 export type DemoPlotModel = {
     echartsOptions: EChartsOption;
+    interactionSeries: InteractionSeries;
     timestamps: number[];
-    enableLinkedHover: boolean;
-    enableClosestMemberTooltip: boolean;
     memberLabel?: string;
 };
+
+function makeEmptyInteractionSeries(): InteractionSeries {
+    return {
+        matchingSeriesIndicesByKey: new Map(),
+        resolutionMode: "scatter",
+        seriesByAxisIndex: new Map(),
+    };
+}
 
 // ---------------------------------------------------------------------------
 // Common helpers
@@ -74,9 +84,8 @@ function createDistributionGroups(data: DataConfig): SubplotGroup<DistributionTr
 function staticPlotModel(echartsOptions: EChartsOption): DemoPlotModel {
     return {
         echartsOptions,
+        interactionSeries: makeEmptyInteractionSeries(),
         timestamps: [],
-        enableLinkedHover: false,
-        enableClosestMemberTooltip: false,
     };
 }
 
@@ -110,10 +119,11 @@ export function buildTimeseriesDemo(config: TimeseriesConfig): DemoPlotModel {
 
     return {
         echartsOptions,
+        interactionSeries: buildTimeseriesInteractionSeries(groups, {
+            displayConfig: config.displayConfig,
+            subplotOverlays: overlays,
+        }),
         timestamps,
-        enableLinkedHover: config.displayConfig.showRealizations,
-        enableClosestMemberTooltip:
-            config.displayConfig.showRealizations && !config.displayConfig.showStatistics,
         memberLabel: config.memberLabel,
     };
 }
@@ -205,9 +215,8 @@ export function buildMiscDemo(config: MiscConfig): DemoPlotModel {
                     base,
                     series: { memberLabel: config.memberLabel },
                 }),
+                interactionSeries: buildMemberScatterInteractionSeries(groups),
                 timestamps: [],
-                enableLinkedHover: true,
-                enableClosestMemberTooltip: false,
                 memberLabel: config.memberLabel,
             };
         }

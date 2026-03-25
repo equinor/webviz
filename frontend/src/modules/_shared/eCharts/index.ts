@@ -7,11 +7,11 @@ export type {
     DensityDisplayConfig,
     DistributionTrace,
     HeatmapTrace,
-    HistoricalLineShape,
-    HistoricalTrace,
+    ReferenceLineShape,
+    ReferenceLineTrace,
     MemberScatterTrace,
-    ObservationPoint,
-    ObservationTrace,
+    PointAnnotation,
+    PointAnnotationTrace,
     PointStatistics,
     StatisticKey,
     SubplotGroup,
@@ -48,13 +48,13 @@ export { buildDensitySeries, type DensityDisplayOptions } from "./charts/density
 export { buildExceedanceSeries } from "./charts/exceedance";
 export { buildHeatmapSeries } from "./charts/heatmap";
 export { buildHistogramSeries, type HistogramDisplayOptions } from "./charts/histogram";
-export { buildMemberScatterSeries } from "./charts/memberScatter";
+export { buildMemberScatterInteractionSeries, buildMemberScatterSeries } from "./charts/memberScatter";
 export { buildPercentileRangeSeries, type PercentileRangeCenterStatistic, type PercentileRangeDisplayOptions } from "./charts/percentileRange";
 export {
     buildFanchartSeries,
-    buildHistorySeries,
+    buildPointAnnotationSeries,
     buildMemberSeries,
-    buildObservationSeries,
+    buildReferenceLineSeries,
     buildStatisticsSeries,
 } from "./charts/timeseries";
 
@@ -75,9 +75,26 @@ export {
 // Overlays
 export { applyActiveTimestampMarker, createTimestampMarkLine } from "./overlays";
 
+// Interaction
+export { makeInteractionLookupKey } from "./interaction";
+export type {
+    HoveredSeriesInfo,
+    InteractionSeries,
+    InteractionSeriesEntry,
+    MemberSeriesInteractionEntry,
+    PointAnnotationInteractionSeriesEntry,
+    ReferenceLineInteractionSeriesEntry,
+    StatisticInteractionSeriesEntry,
+} from "./interaction";
+
 // Hooks
-export { useClickToTimestamp, useMemberInteraction } from "./hooks";
-export type { HoveredMemberInfo, MemberInteractionEvents, MemberInteractionOptions } from "./hooks";
+export { useChartZoomSync, useClickToTimestamp, useSeriesInteraction } from "./hooks";
+export type {
+    SeriesInteractionEvents,
+    SeriesInteractionOptions,
+} from "./hooks";
+
+export { buildTimeseriesInteractionSeries } from "./charts/timeseries";
 
 // Statistics & Math Utilities
 export {
