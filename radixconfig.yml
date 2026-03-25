@@ -147,11 +147,14 @@ spec:
       horizontalScaling:
         minReplicas: 1
         maxReplicas: 4
-        resources:
-          memory:
-            averageUtilization: 60
+        pollingInterval: 15
+        triggers:
+        - name: cpu
           cpu:
-            averageUtilization: 80
+            value: 20
+        - name: memory
+          memory:
+            value: 20
 
     - name: redis-user-session
       image: redis:7.2
