@@ -1,6 +1,7 @@
 package sample_in_points
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"runtime"
@@ -28,9 +29,9 @@ type SamplesForReal struct {
 	Err           error     // Will be non-nil if there was an error processing this realization
 }
 
-func RunSampleInPointsPipeline(batchId uint64, fetcher *utils.BlobFetcher, realSurfObjArr []RealSurfObj, pointSet PointSet) ([]SamplesForReal, error) {
+func RunSampleInPointsPipeline(ctx context.Context, batchId uint64, fetcher *utils.BlobFetcher, realSurfObjArr []RealSurfObj, pointSet PointSet) ([]SamplesForReal, error) {
 	logger := slog.Default()
-	prefix := fmt.Sprintf("sample_in_points(batchId=%d) - ", batchId)
+	prefix := fmt.Sprintf("RunSampleInPointsPipeline(batchId=%d) - ", batchId)
 
 	numRealizations := len(realSurfObjArr)
 	if numRealizations == 0 {
@@ -65,50 +66,59 @@ func RunSampleInPointsPipeline(batchId uint64, fetcher *utils.BlobFetcher, realS
 	// For the resultCh we simply ensure it's large enough to hold results for all realizations, since these objects are relatively small.
 	downloadedCh := make(chan *downloadedSurf, maxNumDownloadedSurfsInBuffer)
 	resultCh := make(chan *pipelineResult, numRealizations)
-	runDownloadStage(fetcher, realSurfObjArr, numDownloadWorkers, downloadedCh, resultCh)
-	runProcessStage(pointSet, numProcessingWorkers, downloadedCh, resultCh)
+	runDownloadStage(ctx, fetcher, realSurfObjArr, numDownloadWorkers, downloadedCh)
+	runProcessStage(ctx, pointSet, numProcessingWorkers, downloadedCh, resultCh)
 
 	totDownloadSizeMb := float32(0)
 	numFailedRealizations := int(0)
 	perRealSamples := make([]SamplesForReal, 0, numRealizations)
 
-	for plRes := range resultCh {
-		totDownloadSizeMb += plRes.downloadSizeMb
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("RunSampleInPointsPipeline canceled: %w", ctx.Err())
 
-		if plRes.err != nil {
-			logger.Error(prefix+"error processing realization", "realization", plRes.realization, "err", plRes.err)
+		case plRes, ok := <-resultCh:
+			if !ok {
+				// No more results available -> we are done
+				totDuration := time.Since(startTime)
+				statString := fmt.Sprintf("%.2fs (download totals: %.2fMB, %.2fMB/s)", totDuration.Seconds(), totDownloadSizeMb, totDownloadSizeMb/(float32(totDuration.Milliseconds())/1000))
+				if numFailedRealizations > 0 {
+					logger.Warn(prefix + fmt.Sprintf("finished processing %d realization surfaces with %d failures in: %s", numRealizations, numFailedRealizations, statString))
+				} else {
+					logger.Info(prefix + fmt.Sprintf("finished processing %d realization surfaces in: %s", numRealizations, statString))
+				}
+
+				return perRealSamples, nil
+			}
+
+			totDownloadSizeMb += plRes.downloadSizeMb
+
+			if plRes.err != nil {
+				logger.Error(prefix+"error processing realization", "realization", plRes.realization, "err", plRes.err)
+				perRealSamples = append(perRealSamples, SamplesForReal{
+					Realization: plRes.realization,
+					Err:         plRes.err,
+				})
+				numFailedRealizations++
+				continue
+			}
+
+			processingDur := plRes.sampleDur + plRes.decodeDur
+			logger.Debug(prefix + fmt.Sprintf("realization %d done in %dms, %.2fMB, %.2fMB/s (download=%dms, processing=%dms(%d+%d), queueForDl=%dms, queueForProc=%dms)",
+				plRes.realization,
+				plRes.totalDur.Milliseconds(),
+				plRes.downloadSizeMb, plRes.downloadSizeMb/float32(plRes.totalDur.Seconds()),
+				plRes.downloadDur.Milliseconds(),
+				processingDur.Milliseconds(), plRes.decodeDur.Milliseconds(), plRes.sampleDur.Milliseconds(),
+				plRes.queueForDownloadDur.Milliseconds(),
+				plRes.queueForProcessingDur.Milliseconds(),
+			))
+
 			perRealSamples = append(perRealSamples, SamplesForReal{
-				Realization: plRes.realization,
-				Err:         plRes.err,
+				Realization:   plRes.realization,
+				SampledValues: plRes.sampledValues,
 			})
-			numFailedRealizations++
-			continue
 		}
-
-		processingDur := plRes.sampleDur + plRes.decodeDur
-		logger.Debug(prefix + fmt.Sprintf("realization %d done in %dms, %.2fMB, %.2fMB/s (download=%dms, processing=%dms(%d+%d), queueForDl=%dms, queueForProc=%dms)",
-			plRes.realization,
-			plRes.totalDur.Milliseconds(),
-			plRes.downloadSizeMb, plRes.downloadSizeMb/float32(plRes.totalDur.Seconds()),
-			plRes.downloadDur.Milliseconds(),
-			processingDur.Milliseconds(), plRes.decodeDur.Milliseconds(), plRes.sampleDur.Milliseconds(),
-			plRes.queueForDownloadDur.Milliseconds(),
-			plRes.queueForProcessingDur.Milliseconds(),
-		))
-
-		perRealSamples = append(perRealSamples, SamplesForReal{
-			Realization:   plRes.realization,
-			SampledValues: plRes.sampledValues,
-		})
 	}
-
-	totDuration := time.Since(startTime)
-	statString := fmt.Sprintf("%.2fs (download totals: %.2fMB, %.2fMB/s)", totDuration.Seconds(), totDownloadSizeMb, totDownloadSizeMb/(float32(totDuration.Milliseconds())/1000))
-	if numFailedRealizations > 0 {
-		logger.Warn(prefix + fmt.Sprintf("finished processing %d realization surfaces with %d failures in: %s", numRealizations, numFailedRealizations, statString))
-	} else {
-		logger.Info(prefix + fmt.Sprintf("finished processing %d realization surfaces in: %s", numRealizations, statString))
-	}
-
-	return perRealSamples, nil
 }

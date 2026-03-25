@@ -63,9 +63,10 @@ func HandleSampleInPoints(c *gin.Context) {
 		YCoords: requestBody.YCoords,
 	}
 
+	ctx := c.Request.Context()
 	batchId := atomic.AddUint64(&nextBatchId, 1)
 	blobFetcher := utils.NewBlobFetcher(requestBody.SasToken, requestBody.BlobStoreBaseUri)
-	perRealSamplesArr, err := sample_in_points.RunSampleInPointsPipeline(batchId, blobFetcher, perRealSurfObjs, pointSet)
+	perRealSamplesArr, err := sample_in_points.RunSampleInPointsPipeline(ctx, batchId, blobFetcher, perRealSurfObjs, pointSet)
 	if err != nil {
 		logger.Error("Error during point sampling of surfaces:", "batchId", batchId, slog.Any("error", err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

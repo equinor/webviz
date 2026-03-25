@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,10 +20,22 @@ var sharedHttpClient = &http.Client{
 	},
 }
 
-func GetBytesHTTP(url string) ([]byte, error) {
-	res, err := sharedHttpClient.Get(url)
+func GetBytesHTTP(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
+	}
+
+	res, err := sharedHttpClient.Do(req)
+	if err != nil {
+		switch {
+		case errors.Is(err, context.Canceled):
+			return nil, fmt.Errorf("http request canceled by context: %w", err)
+		case errors.Is(err, context.DeadlineExceeded):
+			return nil, fmt.Errorf("http request exceeded context deadline: %w", err)
+		default:
+			return nil, fmt.Errorf("http request failed: %w", err)
+		}
 	}
 
 	defer res.Body.Close()
@@ -32,7 +46,14 @@ func GetBytesHTTP(url string) ([]byte, error) {
 
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, context.Canceled):
+			return nil, fmt.Errorf("http read canceled by context: %w", err)
+		case errors.Is(err, context.DeadlineExceeded):
+			return nil, fmt.Errorf("http read exceeded context deadline: %w", err)
+		default:
+			return nil, fmt.Errorf("http read failed: %w", err)
+		}
 	}
 
 	return bodyBytes, nil
