@@ -45,7 +45,7 @@ services:
   surface-query:
     build:
       context: .
-      dockerfile: ./backend_go/surface-query-dev.Dockerfile
+      dockerfile: ./backend_go/surface_query/Dockerfile.dev
     environment:
       - SURFACE_QUERY_SERVER_MODE=syncserver
     volumes:
@@ -54,7 +54,7 @@ services:
   surface-query-legacy:
     build:
       context: .
-      dockerfile: ./backend_go/surface-query-dev.Dockerfile
+      dockerfile: ./backend_go/surface_query/Dockerfile.dev
     environment:
       - SURFACE_QUERY_SERVER_MODE=legacyserver
     volumes:

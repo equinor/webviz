@@ -129,10 +129,12 @@ spec:
                 averageUtilization: 80
 
     - name: surface-query
-      dockerFileName: ./backend_go/surface-query-prod.Dockerfile
+      dockerFileName: ./backend_go/surface_query/Dockerfile.prod
       ports:
         - name: http
           port: 5001
+      variables:
+        SURFACE_QUERY_SERVER_MODE: syncserver
       resources:
         requests:
           memory: 8Gi
