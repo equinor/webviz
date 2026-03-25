@@ -53,7 +53,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
         >
             <a
                 className={resolveClassNames(
-                    "gap-y-space-xs px-selectable-x py-selectable-y text-text-accent-subtle text-body-md flex items-center rounded",
+                    "gap-y-space-xs px-selectable-x py-selectable-y h-selectable-md text-text-accent-subtle text-body-md flex items-center rounded",
                     {
                         "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
                         "hover:bg-fill-accent-hover": !props.isDeleted,
