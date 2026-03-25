@@ -18,17 +18,70 @@ import { useDemoPlotModel } from "./useEcharts";
 
 const ROW_HEIGHT_PX = 350;
 
+type HoveredRealInfo = {
+    realization: number | null;
+    ensemble: string | null;
+};
+
+type HoveredRealStore = {
+    getSnapshot: () => HoveredRealInfo | null;
+    setValue: (value: HoveredRealInfo | null) => void;
+    subscribe: (listener: () => void) => () => void;
+};
+
+function createHoveredRealStore(): HoveredRealStore {
+    let value: HoveredRealInfo | null = null;
+    const listeners = new Set<() => void>();
+
+    function isSameHoveredReal(left: HoveredRealInfo | null, right: HoveredRealInfo | null): boolean {
+        return left?.realization === right?.realization && left?.ensemble === right?.ensemble;
+    }
+
+    return {
+        getSnapshot: () => value,
+        setValue(nextValue) {
+            if (isSameHoveredReal(value, nextValue)) {
+                return;
+            }
+
+            value = nextValue;
+            listeners.forEach(function notifyListener(listener) {
+                listener();
+            });
+        },
+        subscribe(listener) {
+            listeners.add(listener);
+            return function unsubscribe() {
+                listeners.delete(listener);
+            };
+        },
+    };
+}
+
+const HoveredRealReadout = React.memo(function HoveredRealReadout({
+    store,
+}: {
+    store: HoveredRealStore;
+}): React.ReactNode {
+    const hoveredReal = React.useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+
+    return (
+        <div>
+            <span className="font-bold">Hovered Real: </span>
+            {hoveredReal?.realization ?? "None"}
+            {hoveredReal?.ensemble && ` (Group: ${hoveredReal.ensemble})`}
+        </div>
+    );
+});
+
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const { viewContext } = props;
 
     const containerRef = React.useRef<HTMLDivElement>(null);
     const containerSize = useElementSize(containerRef);
     const chartRef = React.useRef<ReactECharts>(null);
+    const hoveredRealStore = React.useMemo(createHoveredRealStore, []);
     const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
-    const [hoveredReal, setHoveredReal] = React.useState<{
-        realization: number | null;
-        ensemble: string | null;
-    } | null>(null);
 
     const [viewState, setViewState] = useAtom(chartZoomAtom);
     const { handleDataZoom } = useEChartsViewState(setViewState);
@@ -45,8 +98,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     );
 
     const handleHoveredRealChange = React.useCallback((info: HoveredMemberInfo | null) => {
-        setHoveredReal({ realization: info?.memberId ?? null, ensemble: info?.groupKey ?? null });
-    }, []);
+        hoveredRealStore.setValue({ realization: info?.memberId ?? null, ensemble: info?.groupKey ?? null });
+    }, [hoveredRealStore]);
 
     const memberEvents = useMemberInteraction(
         chartRef,
@@ -86,11 +139,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     </div>
                 )}
                 {(plotType === PlotType.Timeseries || plotType === PlotType.MemberScatter) && (
-                    <div>
-                        <span className="font-bold">Hovered Real: </span>
-                        {hoveredReal?.realization ?? "None"}
-                        {hoveredReal?.ensemble && ` (Group: ${hoveredReal.ensemble})`}
-                    </div>
+                    <HoveredRealReadout store={hoveredRealStore} />
                 )}
                 <div>
                     <span className="font-bold">Zoom X: </span>

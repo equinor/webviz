@@ -37,6 +37,11 @@ type ResolvedTarget = {
     matchingSeriesIndices: number[];
 };
 
+type MemberInteractionIndex = {
+    matchingSeriesIndicesByMemberKey: Map<string, number[]>;
+    seriesByAxisIndex: Map<number, MemberSeriesMeta[]>;
+};
+
 type TooltipTriggerOn = "none" | "click" | "mousemove" | "mousemove|click";
 
 export type MemberInteractionOptions = {
@@ -77,6 +82,7 @@ export function useMemberInteraction(
 
     const lastTargetKeyRef = React.useRef<string | null>(null);
     const lastReportedMemberRef = React.useRef<string | null>(null);
+    const highlightedSeriesIndicesRef = React.useRef<number[]>([]);
     const rafIdRef = React.useRef<number | null>(null);
 
     const clearAll = React.useCallback(
@@ -90,6 +96,7 @@ export function useMemberInteraction(
             instance.dispatchAction({ type: "updateAxisPointer", currTrigger: "leave" });
 
             lastTargetKeyRef.current = null;
+            clearHighlightedSeries(instance, highlightedSeriesIndicesRef);
 
             if (lastReportedMemberRef.current !== null) {
                 lastReportedMemberRef.current = null;
@@ -107,8 +114,8 @@ export function useMemberInteraction(
 
             const instance = chart.getEchartsInstance();
 
-            const indexedSeries = buildMemberSeriesIndex(instance);
-            if (indexedSeries.size === 0) return;
+            const interactionIndex = buildMemberInteractionIndex(instance);
+            if (interactionIndex.seriesByAxisIndex.size === 0) return;
 
             // Take over tooltip so the hook controls it atomically with highlighting
             const originalTriggerOn = readTooltipTriggerOn(instance);
@@ -123,11 +130,12 @@ export function useMemberInteraction(
                     handlePointerMove(
                         event,
                         instance,
-                        indexedSeries,
+                        interactionIndex,
                         timestampsRef.current,
                         memberLabel,
                         lastTargetKeyRef,
                         lastReportedMemberRef,
+                        highlightedSeriesIndicesRef,
                         onHoveredMemberChange,
                     );
                 });
@@ -139,6 +147,7 @@ export function useMemberInteraction(
                     instance,
                     lastTargetKeyRef,
                     lastReportedMemberRef,
+                    highlightedSeriesIndicesRef,
                     onHoveredMemberChange,
                 );
             }
@@ -161,6 +170,7 @@ export function useMemberInteraction(
                     instance,
                     lastTargetKeyRef,
                     lastReportedMemberRef,
+                    highlightedSeriesIndicesRef,
                     onHoveredMemberChange,
                 );
                 restoreTooltipTriggerOn(instance, originalTriggerOn);
@@ -175,13 +185,19 @@ export function useMemberInteraction(
             if (!enabled || !chartRef.current || !externalHoveredMember) return;
 
             const instance = chartRef.current.getEchartsInstance();
-            const actions = findMatchingMemberIndices(instance, String(externalHoveredMember.memberId), externalHoveredMember.groupKey);
+            const interactionIndex = buildMemberInteractionIndex(instance);
+            const actions = getMatchingMemberIndices(
+                interactionIndex,
+                String(externalHoveredMember.memberId),
+                externalHoveredMember.groupKey,
+            );
             if (actions.length === 0) return;
 
-            instance.dispatchAction({ type: "downplay" });
+            clearHighlightedSeries(instance, highlightedSeriesIndicesRef);
             for (const seriesIndex of actions) {
                 instance.dispatchAction({ type: "highlight", seriesIndex });
             }
+            highlightedSeriesIndicesRef.current = actions;
             lastTargetKeyRef.current = `external:${externalHoveredMember.groupKey}:${externalHoveredMember.memberId}`;
         },
         [enabled, chartRef, externalHoveredMember],
@@ -230,24 +246,37 @@ export function useMemberInteraction(
 function handlePointerMove(
     event: ZrMouseEvent,
     instance: ECharts,
-    indexedSeries: Map<number, MemberSeriesMeta[]>,
+    interactionIndex: MemberInteractionIndex,
     timestamps: number[] | undefined,
     memberLabel: string | undefined,
     lastTargetKeyRef: React.MutableRefObject<string | null>,
     lastReportedMemberRef: React.MutableRefObject<string | null>,
+    highlightedSeriesIndicesRef: React.MutableRefObject<number[]>,
     onHoveredMemberChange: ((info: HoveredMemberInfo | null) => void) | undefined,
 ): void {
     const pixelX = typeof event.offsetX === "number" ? event.offsetX : null;
     const pixelY = typeof event.offsetY === "number" ? event.offsetY : null;
 
     if (pixelX == null || pixelY == null) {
-        clearAllFromInstance(instance, lastTargetKeyRef, lastReportedMemberRef, onHoveredMemberChange);
+        clearAllFromInstance(
+            instance,
+            lastTargetKeyRef,
+            lastReportedMemberRef,
+            highlightedSeriesIndicesRef,
+            onHoveredMemberChange,
+        );
         return;
     }
 
-    const target = resolveClosestMember(instance, indexedSeries, pixelX, pixelY, timestamps?.length ?? 0);
+    const target = resolveClosestMember(instance, interactionIndex, pixelX, pixelY, timestamps?.length ?? 0);
     if (!target) {
-        clearAllFromInstance(instance, lastTargetKeyRef, lastReportedMemberRef, onHoveredMemberChange);
+        clearAllFromInstance(
+            instance,
+            lastTargetKeyRef,
+            lastReportedMemberRef,
+            highlightedSeriesIndicesRef,
+            onHoveredMemberChange,
+        );
         return;
     }
 
@@ -256,10 +285,11 @@ function handlePointerMove(
     lastTargetKeyRef.current = targetKey;
 
     // Highlight across all subplots
-    instance.dispatchAction({ type: "downplay" });
+    clearHighlightedSeries(instance, highlightedSeriesIndicesRef);
     for (const seriesIndex of target.matchingSeriesIndices) {
         instance.dispatchAction({ type: "highlight", seriesIndex });
     }
+    highlightedSeriesIndicesRef.current = target.matchingSeriesIndices;
 
     // Show tooltip
     if (timestamps && timestamps.length > 0) {
@@ -311,9 +341,10 @@ function clearAllFromInstance(
     instance: ECharts,
     lastTargetKeyRef: React.MutableRefObject<string | null>,
     lastReportedMemberRef: React.MutableRefObject<string | null>,
+    highlightedSeriesIndicesRef: React.MutableRefObject<number[]>,
     onHoveredMemberChange: ((info: HoveredMemberInfo | null) => void) | undefined,
 ): void {
-    instance.dispatchAction({ type: "downplay" });
+    clearHighlightedSeries(instance, highlightedSeriesIndicesRef);
     instance.dispatchAction({ type: "hideTip" });
     instance.dispatchAction({ type: "updateAxisPointer", currTrigger: "leave" });
 
@@ -325,18 +356,28 @@ function clearAllFromInstance(
     }
 }
 
+function clearHighlightedSeries(
+    instance: ECharts,
+    highlightedSeriesIndicesRef: React.MutableRefObject<number[]>,
+): void {
+    for (const seriesIndex of highlightedSeriesIndicesRef.current) {
+        instance.dispatchAction({ type: "downplay", seriesIndex });
+    }
+    highlightedSeriesIndicesRef.current = [];
+}
+
 // ---------------------------------------------------------------------------
 // Closest-member resolution
 // ---------------------------------------------------------------------------
 
 function resolveClosestMember(
     instance: ECharts,
-    indexedSeries: Map<number, MemberSeriesMeta[]>,
+    interactionIndex: MemberInteractionIndex,
     pixelX: number,
     pixelY: number,
     timestampCount: number,
 ): ResolvedTarget | null {
-    for (const [axisIndex, series] of indexedSeries.entries()) {
+    for (const [axisIndex, series] of interactionIndex.seriesByAxisIndex.entries()) {
         if (!instance.containPixel({ gridIndex: axisIndex }, [pixelX, pixelY])) {
             continue;
         }
@@ -363,7 +404,7 @@ function resolveClosestMember(
             return {
                 member: closest,
                 dataIndex: categoryIndex,
-                matchingSeriesIndices: findMatchingMemberIndices(instance, closest.memberId, closest.groupKey),
+                matchingSeriesIndices: getMatchingMemberIndices(interactionIndex, closest.memberId, closest.groupKey),
             };
         } else {
             // Scatter mode: find closest point by pixel distance
@@ -373,7 +414,7 @@ function resolveClosestMember(
             return {
                 member: closest,
                 dataIndex: 0,
-                matchingSeriesIndices: findMatchingMemberIndices(instance, closest.memberId, closest.groupKey),
+                matchingSeriesIndices: getMatchingMemberIndices(interactionIndex, closest.memberId, closest.groupKey),
             };
         }
     }
@@ -436,11 +477,12 @@ function findClosestScatterMember(
 // Series index building & lookup
 // ---------------------------------------------------------------------------
 
-function buildMemberSeriesIndex(instance: ECharts): Map<number, MemberSeriesMeta[]> {
-    const indexedSeries = new Map<number, MemberSeriesMeta[]>();
+function buildMemberInteractionIndex(instance: ECharts): MemberInteractionIndex {
+    const seriesByAxisIndex = new Map<number, MemberSeriesMeta[]>();
+    const matchingSeriesIndicesByMemberKey = new Map<string, number[]>();
     const optionSeries = instance.getOption()?.series;
     if (!Array.isArray(optionSeries)) {
-        return indexedSeries;
+        return { matchingSeriesIndicesByMemberKey, seriesByAxisIndex };
     }
 
     optionSeries.forEach(
@@ -472,8 +514,7 @@ function buildMemberSeriesIndex(instance: ECharts): Map<number, MemberSeriesMeta
 
             if (values.length === 0) return;
 
-            const bucket = indexedSeries.get(axisIndex) ?? [];
-            bucket.push({
+            const memberSeriesMeta = {
                 axisIndex,
                 color: resolveSeriesColor(seriesOption),
                 groupKey: parsed.name,
@@ -482,33 +523,34 @@ function buildMemberSeriesIndex(instance: ECharts): Map<number, MemberSeriesMeta
                 seriesName: typeof seriesOption.name === "string" ? seriesOption.name : "",
                 values,
                 xValues,
-            });
-            indexedSeries.set(axisIndex, bucket);
+            };
+
+            const axisBucket = seriesByAxisIndex.get(axisIndex) ?? [];
+            axisBucket.push(memberSeriesMeta);
+            seriesByAxisIndex.set(axisIndex, axisBucket);
+
+            const memberKey = makeMemberLookupKey(parsed.name, parsed.subKey);
+            const seriesIndices = matchingSeriesIndicesByMemberKey.get(memberKey) ?? [];
+            seriesIndices.push(seriesIndex);
+            matchingSeriesIndicesByMemberKey.set(memberKey, seriesIndices);
         },
     );
 
-    return indexedSeries;
+    return { matchingSeriesIndicesByMemberKey, seriesByAxisIndex };
 }
 
-function findMatchingMemberIndices(instance: ECharts, targetMemberKey: string, targetGroupKey: string): number[] {
-    const chartSeries = instance.getOption()?.series;
-    if (!Array.isArray(chartSeries)) return [];
+function getMatchingMemberIndices(
+    interactionIndex: MemberInteractionIndex,
+    targetMemberKey: string,
+    targetGroupKey: string,
+): number[] {
+    return interactionIndex.matchingSeriesIndicesByMemberKey.get(
+        makeMemberLookupKey(targetGroupKey, targetMemberKey),
+    ) ?? [];
+}
 
-    const indices: number[] = [];
-
-    chartSeries.forEach((seriesOption, seriesIndex) => {
-        const id = (seriesOption as { id?: string }).id;
-        if (typeof id !== "string") return;
-
-        const parsed = parseSeriesId(id);
-        if (!parsed || parsed.role !== "member") return;
-
-        if (parsed.name === targetGroupKey && parsed.subKey === targetMemberKey) {
-            indices.push(seriesIndex);
-        }
-    });
-
-    return indices;
+function makeMemberLookupKey(groupKey: string, memberId: string): string {
+    return `${groupKey}:${memberId}`;
 }
 
 // ---------------------------------------------------------------------------

@@ -21,7 +21,6 @@ export function buildMemberSeries(trace: TimeseriesTrace, axisIndex = 0): Series
                 data: realValues,
                 xAxisIndex: axisIndex,
                 yAxisIndex: axisIndex,
-                triggerLineEvent: true,
                 itemStyle: { color: trace.color },
                 lineStyle: { color: trace.color, width: 0.8, opacity: 0.4 },
                 symbol: "circle",
