@@ -8,6 +8,7 @@ import {
     Settings as SettingsIcon,
     TableRowsOutlined,
     ViewColumnOutlined,
+    GridView,
 } from "@mui/icons-material";
 import { useAtom } from "jotai";
 
@@ -24,6 +25,7 @@ import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataPro
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { ContextBoundary } from "@modules/_shared/DataProviderFramework/framework/ContextBoundary/ContextBoundary";
+import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
@@ -33,7 +35,7 @@ import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTy
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { CustomDataProviderType } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
-import { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
+import { MAX_INTERSECTION_VIEWS, PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
@@ -53,12 +55,11 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
 
     function handleAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
-            case "intersection-view": {
-                const hasIntersectionView =
-                    groupDelegate.getDescendantItems(
-                        (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
-                    ).length > 0;
-                if (!hasIntersectionView) {
+            case "view": {
+                const viewCount = groupDelegate.getDescendantItems(
+                    (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
+                ).length;
+                if (viewCount < MAX_INTERSECTION_VIEWS) {
                     groupDelegate.appendChild(
                         GroupRegistry.makeGroup(
                             GroupType.INTERSECTION_VIEW,
@@ -118,6 +119,9 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                     ),
                 );
                 return;
+            case "intersection-source":
+                groupDelegate.appendChild(new SharedSetting(Setting.INTERSECTION, null, props.dataProviderManager));
+                return;
             case "ensemble":
                 groupDelegate.appendChild(new SharedSetting(Setting.ENSEMBLE, null, props.dataProviderManager));
                 return;
@@ -133,32 +137,51 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
         }
     }
 
-    function checkIfItemMoveIsAllowed(_: Item, destinationItem: ItemGroup): boolean {
-        if (destinationItem instanceof ContextBoundary || destinationItem instanceof Group) {
-            return true;
+    function checkIfItemMoveIsAllowed(item: Item, destinationItem: ItemGroup): boolean {
+        const itemIsView = item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW;
+        const destinationIsView =
+            destinationItem instanceof Group && destinationItem.getGroupType() === GroupType.INTERSECTION_VIEW;
+
+        if (itemIsView && destinationIsView) {
+            return false;
         }
 
-        return false;
+        const destinationIsContextBoundaryWithViewAncestor =
+            destinationItem instanceof ContextBoundary &&
+            destinationItem
+                .getGroupDelegate()
+                .getAncestors(
+                    (ancestor) => ancestor instanceof Group && ancestor.getGroupType() === GroupType.INTERSECTION_VIEW,
+                ).length > 0;
+
+        if (itemIsView && destinationIsContextBoundaryWithViewAncestor) {
+            return false;
+        }
+
+        // If the item is CustomDataProviderType it can only be moved to a view or a context boundary in a view
+        if (item instanceof DataProvider) {
+            return destinationIsView || destinationIsContextBoundaryWithViewAncestor;
+        }
+
+        return true;
     }
 
     function makeActionsForGroup(group: ItemGroup): ActionGroup[] {
-        const hasIntersectionView =
-            groupDelegate.getDescendantItems(
-                (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
-            ).length > 0;
+        const numViews = groupDelegate.getDescendantItems(
+            (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
+        ).length;
+        const isAtMax = numViews >= MAX_INTERSECTION_VIEWS;
 
-        if (!hasIntersectionView) {
-            return INITIAL_ACTIONS;
+        if (group instanceof ContextBoundary) {
+            return isAtMax ? CONTEXT_BOUNDARY_ACTIONS_AT_MAX_VIEWS : CONTEXT_BOUNDARY_ACTIONS;
         }
 
-        if (
-            group instanceof ContextBoundary ||
-            (group instanceof Group && group.getGroupType() === GroupType.INTERSECTION_VIEW)
-        ) {
-            return ACTIONS;
+        if (group instanceof Group && group.getGroupType() === GroupType.INTERSECTION_VIEW) {
+            return VIEW_ACTIONS;
         }
 
-        return [];
+        // Root level
+        return isAtMax ? ROOT_ACTIONS_AT_MAX : ROOT_ACTIONS;
     }
 
     return (
@@ -172,6 +195,12 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                     </MenuButton>
                     <Menu>
                         <MenuHeading>Preferred view layout</MenuHeading>
+                        <ViewLayoutMenuItem
+                            checked={preferredViewLayout === PreferredViewLayout.GRID}
+                            onClick={() => setPreferredViewLayout(PreferredViewLayout.GRID)}
+                        >
+                            <GridView fontSize="inherit" /> Grid
+                        </ViewLayoutMenuItem>
                         <ViewLayoutMenuItem
                             checked={preferredViewLayout === PreferredViewLayout.HORIZONTAL}
                             onClick={() => setPreferredViewLayout(PreferredViewLayout.HORIZONTAL)}
@@ -211,30 +240,81 @@ function ViewLayoutMenuItem(props: ViewLayoutMenuItemProps): React.ReactNode {
     );
 }
 
-const INITIAL_ACTIONS: ActionGroup[] = [
+const ADD_VIEW_ACTION = {
+    identifier: "view",
+    icon: <Panorama fontSize="small" />,
+    label: "View",
+};
+
+const ADD_CONTEXT_BOUNDARY_ACTION = {
+    identifier: "context-boundary",
+    icon: <SettingsApplications fontSize="small" />,
+    label: "Context Boundary",
+};
+
+const SHARED_SETTINGS_CHILDREN = [
     {
-        label: "Groups",
-        children: [
-            {
-                identifier: "intersection-view",
-                icon: <Panorama fontSize="small" />,
-                label: "Intersection View",
-            },
-        ],
+        identifier: "intersection-source",
+        icon: <Icon data={settings} fontSize="small" />,
+        label: "Intersection source",
+    },
+    {
+        identifier: "ensemble",
+        icon: <Icon data={settings} fontSize="small" />,
+        label: "Ensemble",
+    },
+    {
+        identifier: "realization",
+        icon: <Icon data={settings} fontSize="small" />,
+        label: "Realization",
+    },
+    {
+        identifier: "attribute",
+        icon: <Icon data={settings} fontSize="small" />,
+        label: "Attribute",
+    },
+    {
+        identifier: "date",
+        icon: <Icon data={settings} fontSize="small" />,
+        label: "Date",
     },
 ];
 
-const ACTIONS: ActionGroup[] = [
-    {
-        label: "Groups",
-        children: [
-            {
-                identifier: "context-boundary",
-                icon: <SettingsApplications fontSize="small" />,
-                label: "Context Boundary",
-            },
-        ],
-    },
+const SHARED_SETTINGS_ACTION_GROUP: ActionGroup = {
+    label: "Shared Settings",
+    children: SHARED_SETTINGS_CHILDREN,
+};
+
+// Intersection source is already a fixed view-level setting, so exclude it from view actions
+const VIEW_SHARED_SETTINGS_ACTION_GROUP: ActionGroup = {
+    label: "Shared Settings",
+    children: SHARED_SETTINGS_CHILDREN.filter((c) => c.identifier !== "intersection-source"),
+};
+
+// Root level: View + Context Boundary
+const ROOT_ACTIONS: ActionGroup[] = [
+    { label: "Groups", children: [ADD_VIEW_ACTION, ADD_CONTEXT_BOUNDARY_ACTION] },
+    SHARED_SETTINGS_ACTION_GROUP,
+];
+
+// Root level at max views: Context Boundary only
+const ROOT_ACTIONS_AT_MAX: ActionGroup[] = [
+    { label: "Groups", children: [ADD_CONTEXT_BOUNDARY_ACTION] },
+    SHARED_SETTINGS_ACTION_GROUP,
+];
+
+// Context boundary: View + Shared Settings
+const CONTEXT_BOUNDARY_ACTIONS: ActionGroup[] = [
+    { label: "Groups", children: [ADD_VIEW_ACTION] },
+    SHARED_SETTINGS_ACTION_GROUP,
+];
+
+// Context boundary at max views: Shared Settings only
+const CONTEXT_BOUNDARY_ACTIONS_AT_MAX_VIEWS: ActionGroup[] = [SHARED_SETTINGS_ACTION_GROUP];
+
+// View: Context Boundary + all data layers + Shared Settings + Utilities
+const VIEW_ACTIONS: ActionGroup[] = [
+    { label: "Groups", children: [ADD_CONTEXT_BOUNDARY_ACTION] },
     {
         label: "Intersections",
         children: [
@@ -285,31 +365,7 @@ const ACTIONS: ActionGroup[] = [
             },
         ],
     },
-    {
-        label: "Shared Settings",
-        children: [
-            {
-                identifier: "ensemble",
-                icon: <Icon data={settings} fontSize="small" />,
-                label: "Ensemble",
-            },
-            {
-                identifier: "realization",
-                icon: <Icon data={settings} fontSize="small" />,
-                label: "Realization",
-            },
-            {
-                identifier: "attribute",
-                icon: <Icon data={settings} fontSize="small" />,
-                label: "Attribute",
-            },
-            {
-                identifier: "date",
-                icon: <Icon data={settings} fontSize="small" />,
-                label: "Date",
-            },
-        ],
-    },
+    VIEW_SHARED_SETTINGS_ACTION_GROUP,
     {
         label: "Utilities",
         children: [

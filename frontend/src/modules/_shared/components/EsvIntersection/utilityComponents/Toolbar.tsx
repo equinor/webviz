@@ -1,7 +1,18 @@
-import { Add, FilterCenterFocus, GridOn, Remove } from "@mui/icons-material";
+import React from "react";
 
+import {
+    Add,
+    FilterCenterFocus,
+    GridOn,
+    KeyboardDoubleArrowLeft,
+    KeyboardDoubleArrowRight,
+    Remove,
+} from "@mui/icons-material";
+
+import { Button } from "@lib/components/Button";
 import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
 import { ToggleButton } from "@lib/components/ToggleButton";
+import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
 
 export enum FitInViewStatus {
     ON = "ON",
@@ -20,6 +31,8 @@ export type ToolbarProps = {
 };
 
 export function Toolbar(props: ToolbarProps): React.ReactNode {
+    const [expanded, setExpanded] = React.useState<boolean>(false);
+
     function handleFitInViewToggle(active: boolean) {
         props.onFitInViewStatusToggle(active ? FitInViewStatus.ON : FitInViewStatus.OFF);
     }
@@ -41,39 +54,49 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
     }
 
     return (
-        <div className="absolute left-0 top-0 bg-white p-1 rounded-sm border-gray-300 border shadow-sm z-30 text-sm flex flex-col gap-1 items-center">
-            <ToggleButton
-                onToggle={handleFitInViewToggle}
-                title="Fit in view"
-                active={props.fitInViewStatus === FitInViewStatus.ON}
-            >
-                <FilterCenterFocus fontSize="inherit" />
-            </ToggleButton>
-            <ToggleButton
-                onToggle={handleGridVisibilityToggle}
-                title="Toggle grid visibility"
-                active={props.gridVisible}
-            >
-                <GridOn fontSize="inherit" />
-            </ToggleButton>
-            <ToolBarDivider />
-            <HoldPressedIntervalCallbackButton
-                onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
-                title="Increase vertical scale"
-            >
-                <Add fontSize="inherit" />
-            </HoldPressedIntervalCallbackButton>
-            <span title="Vertical scale">{props.zFactor}</span>
-            <HoldPressedIntervalCallbackButton
-                onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
-                title="Decrease vertical scale"
-            >
-                <Remove fontSize="inherit" />
-            </HoldPressedIntervalCallbackButton>
-        </div>
+        <GenericToolbar>
+            <div className="flex items-center gap-1 justify-start">
+                <ToggleButton
+                    onToggle={handleFitInViewToggle}
+                    title="Fit in view"
+                    active={props.fitInViewStatus === FitInViewStatus.ON}
+                >
+                    <FilterCenterFocus fontSize="inherit" />
+                </ToggleButton>
+                {expanded && (
+                    <>
+                        <ToggleButton
+                            onToggle={handleGridVisibilityToggle}
+                            title="Toggle grid visibility"
+                            active={props.gridVisible}
+                        >
+                            <GridOn fontSize="inherit" />
+                        </ToggleButton>
+                        <ToolBarDivider />
+                        <HoldPressedIntervalCallbackButton
+                            onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
+                            title="Increase vertical scale"
+                        >
+                            <Add fontSize="inherit" />
+                        </HoldPressedIntervalCallbackButton>
+                        <span title="Vertical scale">{props.zFactor}</span>
+                        <HoldPressedIntervalCallbackButton
+                            onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
+                            title="Decrease vertical scale"
+                        >
+                            <Remove fontSize="inherit" />
+                        </HoldPressedIntervalCallbackButton>
+                    </>
+                )}
+                <ToolBarDivider />
+                <Button title={expanded ? "Collapse toolbar" : "Expand toolbar"} onClick={() => setExpanded(!expanded)}>
+                    {expanded ? (
+                        <KeyboardDoubleArrowLeft fontSize="inherit" />
+                    ) : (
+                        <KeyboardDoubleArrowRight fontSize="inherit" />
+                    )}
+                </Button>
+            </div>
+        </GenericToolbar>
     );
-}
-
-function ToolBarDivider(): React.ReactNode {
-    return <div className="w-full h-px bg-gray-300" />;
 }
