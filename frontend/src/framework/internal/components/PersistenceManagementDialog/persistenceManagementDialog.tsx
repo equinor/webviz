@@ -35,7 +35,7 @@ export function PersistenceManagementDialog(props: PersistenceManagementDialogPr
 
     return (
         <Dialog.Popup open={isDialogOpen} onOpenChange={setIsOpen} width={1200} height={700}>
-            <Dialog.Header isCloseIconVisible>
+            <Dialog.Header closeIconVisible>
                 <div className="-mb-4 flex items-end text-lg font-bold">
                     <button
                         className={resolveClassNames("hover:bg-fill-accent-hover -mb-0.5 rounded-t px-2 pt-1 pb-1.5", {
