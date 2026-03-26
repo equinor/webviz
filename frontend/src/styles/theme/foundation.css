@@ -14,3 +14,14 @@
 @theme inline {
     --radius-rounded: var(--eds-spacing-border-radius-rounded);
 }
+
+@theme inline {
+    --z-base: 0; /* Default stacking context, used for most elements */
+    --z-elevated: 5; /* Elevated elements like cards */
+    --z-overlay: 10; /* Overlays like dropdowns and popovers */
+    --z-sticky: 20; /* Sticky elements like headers and navbars */
+    --z-scrim: 30; /* Scrims and backdrops */
+    --z-modal: 40; /* Modals and dialogs */
+    --z-toast: 50; /* Toasts and notifications */
+    --z-tooltip: 60; /* Tooltips and popovers that should appear above modals */
+}

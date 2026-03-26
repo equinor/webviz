@@ -15,9 +15,11 @@
 /* Utilities */
 @import "./utilities/sizes.css";
 @import "./utilities/forms.css";
+@import "./utilities/z-index.css";
 
 /* Components */
 @import "./components/button.css";
+@import "./components/popup.css";
 
 /* Base styles */
 @import "./base/app.css";

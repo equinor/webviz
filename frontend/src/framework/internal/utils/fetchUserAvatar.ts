@@ -1,15 +1,6 @@
 import { getUserPhoto } from "@api";
-import type { AvatarUserData } from "@lib/components/Avatar";
-
-function getInitials(displayName: string): string {
-    return displayName
-        .split(" ")
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0])
-        .join("")
-        .toUpperCase();
-}
+import type { AvatarUserData } from "@lib/newComponents/Avatar";
+import { makeInitials } from "@lib/utils/userNames";
 
 export function fetchUserAvatar(userIdOrEmail: string, displayName?: string): () => Promise<AvatarUserData> {
     return async () => {
@@ -18,7 +9,7 @@ export function fetchUserAvatar(userIdOrEmail: string, displayName?: string): ()
             throwOnError: true,
         });
 
-        const initials = displayName ? getInitials(displayName) : undefined;
+        const initials = displayName ? (makeInitials(displayName) ?? "") : undefined;
 
         return {
             imageSrc: data?.avatar_b64str ? `data:image/png;base64,${data.avatar_b64str}` : undefined,

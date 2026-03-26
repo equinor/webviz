@@ -3,11 +3,11 @@
     --color-*: initial;
 
     /* Surface/background */
-    --color-canvas: var(--eds-color-bg-neutral-canvas);
-    --color-surface: var(--eds-color-bg-neutral-surface);
-    --color-floating: var(--eds-color-bg-floating);
-    --color-backdrop: var(--eds-color-bg-backdrop);
-    --color-input: var(--eds-color-bg-input);
+    --color-fill-canvas: var(--eds-color-bg-neutral-canvas);
+    --color-fill-surface: var(--eds-color-bg-neutral-surface);
+    --color-fill-floating: var(--eds-color-bg-floating);
+    --color-fill-backdrop: var(--eds-color-bg-backdrop);
+    --color-fill-input: var(--eds-color-bg-input);
 
     /* Neutral fills */
     --color-fill-neutral-canvas: var(--eds-color-bg-neutral-canvas);

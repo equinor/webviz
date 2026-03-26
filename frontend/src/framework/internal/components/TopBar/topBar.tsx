@@ -9,6 +9,7 @@ import {
     Category,
     Close,
     DarkMode,
+    DensitySmall,
     Edit,
     Fullscreen,
     FullscreenExit,
@@ -61,19 +62,28 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         }
     }, []);
 
+    const toggleDenseMode = React.useCallback(function toggleDenseMode() {
+        const htmlElement = document.querySelector<HTMLHtmlElement>("html");
+        if (htmlElement) {
+            const currentDensity = htmlElement.getAttribute("data-density");
+            const newDensity = currentDensity === "comfortable" ? "spacious" : "comfortable";
+            htmlElement.setAttribute("data-density", newDensity);
+        }
+    }, []);
+
     return (
         <>
             <div
                 className={resolveClassNames(
-                    "p-0.5 border-b-2 border-stroke-subtle z-50 shadow-elevation-raised flex flex-row gap-12 px-4 pl-6 items-center min-h-16",
+                    "border-stroke-neutral-subtle shadow-elevation-raised z-sticky flex min-h-16 flex-row items-center gap-12 border-b-2 p-0.5 px-4 pl-6",
                     {
-                        "bg-surface": hasActiveSession,
+                        "bg-fill-surface": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
                     },
                 )}
             >
                 <LogoWithText />
-                <div className="flex gap-2 items-center grow min-w-0">
+                <div className="flex min-w-0 grow items-center gap-2">
                     {hasActiveSession ? (
                         <>
                             <Title workbench={props.workbench} />
@@ -85,6 +95,9 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                     <TopBarDivider />
                     <Button variant="text" tone="neutral" iconOnly onClick={toggleDarkMode}>
                         <DarkMode fontSize="inherit" />
+                    </Button>
+                    <Button variant="text" tone="neutral" iconOnly onClick={toggleDenseMode}>
+                        <DensitySmall fontSize="inherit" />
                     </Button>
                     <LoginButton showText={false} />
                 </div>
@@ -98,7 +111,7 @@ function LogoWithText(): React.ReactNode {
             <FmuLogo className="h-8 w-8" />
             <h1 className="text-md text-accent whitespace-nowrap">FMU Analysis</h1>
             <div
-                className="bg-fill-warning-strong text-white p-1 rounded-sm text-xs text-center cursor-help shadow-sm"
+                className="bg-fill-warning-strong text-text-neutral-strong-on-emphasis cursor-help rounded-sm p-1 text-center text-xs text-white shadow-sm"
                 title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
             >
                 BETA
@@ -210,7 +223,7 @@ function Title(props: TitleProps): React.ReactNode {
         content = <SnapshotTitle workbench={props.workbench} />;
     }
 
-    return <div className="grow flex gap-2 overflow-hidden items-center">{content}</div>;
+    return <div className="flex grow items-center gap-2 overflow-hidden">{content}</div>;
 }
 
 type SnapshotTitleProps = {
@@ -229,11 +242,11 @@ function SnapshotTitle(props: SnapshotTitleProps): React.ReactNode {
             <Link fontSize="inherit" className="mr-1" />
             <Tooltip
                 title={
-                    <div className="whitespace-normal text-base">
+                    <div className="text-base whitespace-normal">
                         <h3 className="text-lg">{metadata.title}</h3>
                         {metadata.description && (
                             <>
-                                <hr className="h-px mb-2 bg-white/25" />
+                                <hr className="mb-2 h-px bg-white/25" />
                                 <p className="text-sm whitespace-pre-wrap">{metadata.description}</p>
                             </>
                         )}
@@ -280,17 +293,17 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
             <Category fontSize="inherit" className="mr-1" />
             <Typography
                 variant="h5"
-                className={resolveClassNames("overflow-ellipsis min-w-0 whitespace-nowrap flex items-center gap-4", {
+                className={resolveClassNames("flex min-w-0 items-center gap-4 overflow-ellipsis whitespace-nowrap", {
                     italic: !isPersisted,
                 })}
             >
                 <Tooltip
                     title={
-                        <div className="whitespace-normal text-base">
+                        <div className="text-base whitespace-normal">
                             <h3 className="text-lg">{metadata.title}</h3>
                             {metadata.description && (
                                 <>
-                                    <hr className="h-px mb-2 bg-white/25" />
+                                    <hr className="mb-2 h-px bg-white/25" />
                                     <p className="text-sm whitespace-pre-wrap">{metadata.description}</p>
                                 </>
                             )}
@@ -317,7 +330,7 @@ function SessionFromSnapshotButton(props: SessionFromSnapshotButtonProps): React
     };
 
     return (
-        <div className="p-2 flex items-center text-sm gap-4">
+        <div className="flex items-center gap-4 p-2 text-sm">
             <TopBarButton onClick={handleClick} title="Make a new session of the current snapshot" variant="contained">
                 Make session
             </TopBarButton>
@@ -337,7 +350,7 @@ function SnapshotButton(props: SnapshotButtonProps): React.ReactNode {
     };
 
     return (
-        <div className="p-2 flex items-center text-sm gap-4">
+        <div className="flex items-center gap-4 p-2 text-sm">
             <TopBarButton onClick={handleClick} title="Make a snapshot of the current session">
                 <AddLink fontSize="small" />
             </TopBarButton>
@@ -382,13 +395,13 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     const saveEnabled = persistenceInfo.hasChanges && isPersisted;
 
     return (
-        <div className={resolveClassNames("p-2 flex items-center justify-center text-sm gap-4 w-14")}>
+        <div className={resolveClassNames("flex w-14 items-center justify-center gap-4 p-2 text-sm")}>
             {isSaving ? (
                 <CircularProgress size="medium-small" className="text-amber-600" />
             ) : (
                 <Dropdown>
                     <Tooltip title="Save session options">
-                        <MenuButton className="flex items-center gap-2 hover:bg-indigo-100 p-2 font-medium rounded-md">
+                        <MenuButton className="flex items-center gap-2 rounded-md p-2 font-medium hover:bg-indigo-100">
                             <Save fontSize="small" />
                             <ArrowDropDown fontSize="small" />
                         </MenuButton>
@@ -452,7 +465,7 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
     }
 
     return (
-        <div className={"p-1 px-3 flex items-center text-sm gap-4 bg-amber-100"}>
+        <div className={"flex items-center gap-4 bg-amber-100 p-1 px-3 text-sm"}>
             Out of sync with server.
             <TopBarButton onClick={handleRefreshClick} title="Reload session from server">
                 <Refresh fontSize="small" />
@@ -462,5 +475,5 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
 }
 
 function TopBarDivider(): React.ReactNode {
-    return <div className="bg-stroke-subtle w-px h-10 mx-2" />;
+    return <div className="bg-stroke-subtle mx-2 h-10 w-px" />;
 }

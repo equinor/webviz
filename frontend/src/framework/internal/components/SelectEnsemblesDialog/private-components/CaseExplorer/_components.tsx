@@ -1,8 +1,8 @@
 import type React from "react";
 
 import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
-import { Avatar } from "@lib/components/Avatar";
 import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
+import { Avatar } from "@lib/newComponents/Avatar";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /**

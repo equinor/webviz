@@ -9,10 +9,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Heading } from "@lib/components/Heading";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Typography } from "@lib/components/Typography";
+import { Heading } from "@lib/newComponents/Heading";
+import { Typography } from "@lib/newComponents/Typography";
 
 Icon.add({ folder_open });
 

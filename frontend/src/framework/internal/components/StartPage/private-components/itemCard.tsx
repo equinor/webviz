@@ -4,11 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
+import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Avatar } from "@lib/newComponents/Avatar";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { UserAvatar } from "../../UserAvatar";
+import { makeInitials } from "@lib/utils/userNames";
 
 export type ItemCardProps = {
     id: string;
@@ -53,7 +54,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
         >
             <a
                 className={resolveClassNames(
-                    "gap-y-space-xs px-selectable-x py-selectable-y h-selectable-md text-text-accent-subtle text-body-md flex items-center rounded",
+                    "gap-space-xs px-selectable-x py-selectable-y h-selectable-md text-text-accent-subtle text-body-md flex items-center rounded",
                     {
                         "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
                         "hover:bg-fill-accent-hover": !props.isDeleted,
@@ -66,8 +67,8 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                     <span>{props.title}</span>
                 </div>
                 {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="ml-auto w-20 text-xs whitespace-nowrap text-gray-500">
-                    ~ <TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
+                <span className="ml-auto w-20 text-xs whitespace-nowrap">
+                    ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
                 </span>
             </a>
         </Tooltip>
@@ -78,11 +79,17 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const name = props.owner?.principal_name?.split("@")?.[0].toLocaleLowerCase();
 
     return (
-        <div className="flex items-center gap-1 text-sm text-gray-500 italic">
-            <UserAvatar
-                userIdOrEmail={props.owner?.id ?? ""}
-                className="inline shrink-0"
-                userDisplayName={props.owner?.display_name}
+        <div className="gap-space-xs text-body-sm flex items-center italic">
+            <Avatar
+                size="small"
+                image={
+                    name
+                        ? fetchUserAvatar(name, props.owner?.display_name ?? "")
+                        : {
+                              initials: props.owner ? (makeInitials(props.owner.display_name) ?? "") : undefined,
+                              title: props.owner?.display_name,
+                          }
+                }
             />
             <span className="truncate">{name}</span>
         </div>
@@ -118,7 +125,7 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="mt-4 block text-sm text-gray-400 italic">Click to open</span>
+            <span className="text-text-neutral-subtle mt-4 block text-sm italic">Click to open</span>
         </div>
     );
 }

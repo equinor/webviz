@@ -36,10 +36,10 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "bg-surface p-2 pt-4 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col",
+                "bg-fill-surface z-base border-stroke-neutral-subtle flex flex-col border-r-2 p-2 pt-4 shadow-lg",
             )}
         >
-            <div className="flex flex-col gap-2 grow">
+            <div className="flex grow flex-col gap-2">
                 <NavBarButton
                     tooltip={"Open ensemble selection dialog"}
                     disabledTooltip={"Ensembles cannot be changed in snapshot mode"}
@@ -69,7 +69,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     disabled={isSnapshot}
                     disabledTooltip="Templates cannot be applied in snapshot mode"
                 />
-                <div className="grow h-5" />
+                <div className="h-5 grow" />
             </div>
         </div>
     );
