@@ -112,7 +112,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     }
 
     return (
-        <div className="flex flex-col h-full gap-4 p-4 bg-slate-100">
+        <div className="bg-surface flex h-full flex-col gap-4 p-4">
             <CaseExplorer disableQueries={props.disableQueries} onCaseSelectionChange={handleCaseSelectedChange} />
             <Label text="Ensemble">
                 <StatusWrapper
@@ -130,17 +130,26 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                     />
                 </StatusWrapper>
             </Label>
-            <div className="flex gap-4 justify-end">
-                <Button onClick={() => props.onRequestClose?.()} tone="neutral" variant="text">Close</Button>
+            <div className="flex justify-end gap-4">
+                <Button onClick={() => props.onRequestClose?.()} tone="neutral" variant="text">
+                    Close
+                </Button>
                 <Button
                     variant="contained"
                     onClick={handleSelectRegularEnsemble}
                     tone="accent"
                     disabled={ensembleAlreadySelected || ensembleOptions.length === 0}
                 >
-                    {ensembleAlreadySelected
-                        ? <><Check fontSize="small" /> Ensemble already selected</>
-                        : <><Add fontSize="small" />{props.selectButtonLabel ?? "Select Ensemble"}</>}
+                    {ensembleAlreadySelected ? (
+                        <>
+                            <Check fontSize="small" /> Ensemble already selected
+                        </>
+                    ) : (
+                        <>
+                            <Add fontSize="small" />
+                            {props.selectButtonLabel ?? "Select Ensemble"}
+                        </>
+                    )}
                 </Button>
             </div>
         </div>

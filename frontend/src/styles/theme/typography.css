@@ -7,6 +7,7 @@
     /* Reset all text-related variables to ensure they are derived from EDS tokens. */
     --text-*: initial;
     --leading-*: initial;
+    --tracking-*: initial;
     --font-weight-*: initial;
 
     /* Font sizes */
@@ -61,6 +62,70 @@
     --leading-body-5xl-squished: var(--eds-typography-ui-body-5xl-line-height-squished);
     --leading-body-6xl: var(--eds-typography-ui-body-6xl-line-height-default);
     --leading-body-6xl-squished: var(--eds-typography-ui-body-6xl-line-height-squished);
+
+    /* Tracking (letter-spacing) — body */
+    --tracking-body-xs-tight: var(--eds-typography-ui-body-xs-tracking-tight);
+    --tracking-body-xs-normal: var(--eds-typography-ui-body-xs-tracking-normal);
+    --tracking-body-xs-wide: var(--eds-typography-ui-body-xs-tracking-wide);
+    --tracking-body-sm-tight: var(--eds-typography-ui-body-sm-tracking-tight);
+    --tracking-body-sm-normal: var(--eds-typography-ui-body-sm-tracking-normal);
+    --tracking-body-sm-wide: var(--eds-typography-ui-body-sm-tracking-wide);
+    --tracking-body-md-tight: var(--eds-typography-ui-body-md-tracking-tight);
+    --tracking-body-md-normal: var(--eds-typography-ui-body-md-tracking-normal);
+    --tracking-body-md-wide: var(--eds-typography-ui-body-md-tracking-wide);
+    --tracking-body-lg-tight: var(--eds-typography-ui-body-lg-tracking-tight);
+    --tracking-body-lg-normal: var(--eds-typography-ui-body-lg-tracking-normal);
+    --tracking-body-lg-wide: var(--eds-typography-ui-body-lg-tracking-wide);
+    --tracking-body-xl-tight: var(--eds-typography-ui-body-xl-tracking-tight);
+    --tracking-body-xl-normal: var(--eds-typography-ui-body-xl-tracking-normal);
+    --tracking-body-xl-wide: var(--eds-typography-ui-body-xl-tracking-wide);
+    --tracking-body-2xl-tight: var(--eds-typography-ui-body-2xl-tracking-tight);
+    --tracking-body-2xl-normal: var(--eds-typography-ui-body-2xl-tracking-normal);
+    --tracking-body-2xl-wide: var(--eds-typography-ui-body-2xl-tracking-wide);
+    --tracking-body-3xl-tight: var(--eds-typography-ui-body-3xl-tracking-tight);
+    --tracking-body-3xl-normal: var(--eds-typography-ui-body-3xl-tracking-normal);
+    --tracking-body-3xl-wide: var(--eds-typography-ui-body-3xl-tracking-wide);
+    --tracking-body-4xl-tight: var(--eds-typography-ui-body-4xl-tracking-tight);
+    --tracking-body-4xl-normal: var(--eds-typography-ui-body-4xl-tracking-normal);
+    --tracking-body-4xl-wide: var(--eds-typography-ui-body-4xl-tracking-wide);
+    --tracking-body-5xl-tight: var(--eds-typography-ui-body-5xl-tracking-tight);
+    --tracking-body-5xl-normal: var(--eds-typography-ui-body-5xl-tracking-normal);
+    --tracking-body-5xl-wide: var(--eds-typography-ui-body-5xl-tracking-wide);
+    --tracking-body-6xl-tight: var(--eds-typography-ui-body-6xl-tracking-tight);
+    --tracking-body-6xl-normal: var(--eds-typography-ui-body-6xl-tracking-normal);
+    --tracking-body-6xl-wide: var(--eds-typography-ui-body-6xl-tracking-wide);
+
+    /* Tracking (letter-spacing) — header */
+    --tracking-header-xs-tight: var(--eds-typography-header-xs-tracking-tight);
+    --tracking-header-xs-normal: var(--eds-typography-header-xs-tracking-normal);
+    --tracking-header-xs-wide: var(--eds-typography-header-xs-tracking-wide);
+    --tracking-header-sm-tight: var(--eds-typography-header-sm-tracking-tight);
+    --tracking-header-sm-normal: var(--eds-typography-header-sm-tracking-normal);
+    --tracking-header-sm-wide: var(--eds-typography-header-sm-tracking-wide);
+    --tracking-header-md-tight: var(--eds-typography-header-md-tracking-tight);
+    --tracking-header-md-normal: var(--eds-typography-header-md-tracking-normal);
+    --tracking-header-md-wide: var(--eds-typography-header-md-tracking-wide);
+    --tracking-header-lg-tight: var(--eds-typography-header-lg-tracking-tight);
+    --tracking-header-lg-normal: var(--eds-typography-header-lg-tracking-normal);
+    --tracking-header-lg-wide: var(--eds-typography-header-lg-tracking-wide);
+    --tracking-header-xl-tight: var(--eds-typography-header-xl-tracking-tight);
+    --tracking-header-xl-normal: var(--eds-typography-header-xl-tracking-normal);
+    --tracking-header-xl-wide: var(--eds-typography-header-xl-tracking-wide);
+    --tracking-header-2xl-tight: var(--eds-typography-header-2xl-tracking-tight);
+    --tracking-header-2xl-normal: var(--eds-typography-header-2xl-tracking-normal);
+    --tracking-header-2xl-wide: var(--eds-typography-header-2xl-tracking-wide);
+    --tracking-header-3xl-tight: var(--eds-typography-header-3xl-tracking-tight);
+    --tracking-header-3xl-normal: var(--eds-typography-header-3xl-tracking-normal);
+    --tracking-header-3xl-wide: var(--eds-typography-header-3xl-tracking-wide);
+    --tracking-header-4xl-tight: var(--eds-typography-header-4xl-tracking-tight);
+    --tracking-header-4xl-normal: var(--eds-typography-header-4xl-tracking-normal);
+    --tracking-header-4xl-wide: var(--eds-typography-header-4xl-tracking-wide);
+    --tracking-header-5xl-tight: var(--eds-typography-header-5xl-tracking-tight);
+    --tracking-header-5xl-normal: var(--eds-typography-header-5xl-tracking-normal);
+    --tracking-header-5xl-wide: var(--eds-typography-header-5xl-tracking-wide);
+    --tracking-header-6xl-tight: var(--eds-typography-header-6xl-tracking-tight);
+    --tracking-header-6xl-normal: var(--eds-typography-header-6xl-tracking-normal);
+    --tracking-header-6xl-wide: var(--eds-typography-header-6xl-tracking-wide);
 
     /* Line heights — header */
     --leading-header-xs: var(--eds-typography-header-xs-line-height-default);

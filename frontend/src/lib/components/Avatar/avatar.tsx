@@ -1,96 +1,115 @@
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Avatar } from "@base-ui/react/avatar";
-import PersonIcon from "@mui/icons-material/Person";
 import React from "react";
 
-export type AvatarImageData = {
-    src: string;
-    initials?: string;
-};
+import { Avatar as AvatarBase } from "@base-ui/react/avatar";
+import PersonIcon from "@mui/icons-material/Person";
 
-export type AvatarProps = {
-    image?: AvatarImageData | (() => Promise<AvatarImageData>);
-    size?: "small" | "medium" | "large";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+export type AvatarUserData = {
+    imageSrc?: string;
+    initials?: string;
+    title?: string;
     alt?: string;
 };
 
+export type AvatarProps = {
+    image?: AvatarUserData | (() => Promise<AvatarUserData>);
+    size?: "small" | "medium" | "large";
+};
+
 type ImageState =
-    | { status: "direct"; data: AvatarImageData }
+    | { status: "direct"; data: AvatarUserData }
     | { status: "loading" }
-    | { status: "loaded"; data: AvatarImageData }
+    | { status: "loaded"; data: AvatarUserData }
     | { status: "rejected" };
+
+const SIZE_CLASSES: Record<NonNullable<AvatarProps["size"]>, string> = {
+    small: "h-8 aspect-square text-body-md tracking-body-md-tight",
+    medium: "h-12 aspect-square text-body-xl tracking-body-xl-tight",
+    large: "h-16 aspect-square text-body-4xl tracking-body-4xl-tight",
+};
 
 const DEFAULT_PROPS = {
     size: "medium",
-};
+} satisfies Partial<AvatarProps>;
 
-export function MyAvatar(props: AvatarProps): React.ReactNode {
+export function Avatar(props: AvatarProps): React.ReactNode {
     const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const { image } = defaultedProps;
 
     const [imageState, setImageState] = React.useState<ImageState>(() => {
-        if (defaultedProps.image && typeof defaultedProps.image !== "function")
-            return { status: "direct", data: defaultedProps.image };
-        if (typeof defaultedProps.image === "function") return { status: "loading" };
+        if (image && typeof image !== "function") return { status: "direct", data: image };
+        if (typeof image === "function") return { status: "loading" };
         return { status: "rejected" };
     });
 
-    React.useEffect(() => {
-        if (defaultedProps.image && typeof defaultedProps.image !== "function") {
-            setImageState({ status: "direct", data: defaultedProps.image });
-            return;
-        }
-        if (typeof defaultedProps.image === "function") {
-            let isMounted = true;
-            setImageState({ status: "loading" });
-            defaultedProps
-                .image()
-                .then((data) => {
-                    if (isMounted) setImageState({ status: "loaded", data });
-                })
-                .catch(() => {
-                    if (isMounted) setImageState({ status: "rejected" });
-                });
-            return () => {
-                isMounted = false;
-            };
-        }
-        setImageState({ status: "rejected" });
-    }, [defaultedProps.image]);
+    React.useEffect(
+        function loadImageEffect() {
+            if (image && typeof image !== "function") {
+                setImageState({ status: "direct", data: image });
+                return;
+            }
+            if (typeof image === "function") {
+                let isMounted = true;
+                setImageState({ status: "loading" });
+                image()
+                    .then((data) => {
+                        if (isMounted) setImageState({ status: "loaded", data });
+                    })
+                    .catch(() => {
+                        if (isMounted) setImageState({ status: "rejected" });
+                    });
+                return () => {
+                    isMounted = false;
+                };
+            }
+            setImageState({ status: "rejected" });
+        },
+        [image],
+    );
 
     const imageData = imageState.status === "direct" || imageState.status === "loaded" ? imageState.data : undefined;
 
     const showImage = imageData !== undefined;
 
     return (
-        <Avatar.Root
-            className={resolveClassNames("overflow-hidden rounded-full", {
-                "h-8 w-8 text-sm": defaultedProps.size === "small",
-                "h-10 w-10 text-base": defaultedProps.size === "medium",
-                "h-14 w-14 text-xl": defaultedProps.size === "large",
-            })}
-            render={<span />}
-        >
-            {showImage && (
-                <Avatar.Image
-                    src={imageData.src}
-                    alt={defaultedProps.alt}
-                    className="h-full w-full object-cover"
-                    render={<img />}
-                />
-            )}
-            <Avatar.Fallback
+        <span className="relative inline-flex align-middle">
+            <AvatarBase.Root
                 className={resolveClassNames(
-                    "flex h-full w-full items-center justify-center bg-gray-300 font-medium text-gray-700 uppercase",
-                    {},
+                    "inline-flex items-center justify-center overflow-hidden rounded-full",
+                    SIZE_CLASSES[defaultedProps.size],
                 )}
                 render={<span />}
             >
-                {imageState.status === "rejected" ? (
-                    <PersonIcon fontSize="inherit" />
-                ) : (
-                    (imageData?.initials ?? <PersonIcon fontSize="inherit" />)
+                {showImage && (
+                    <AvatarBase.Image
+                        src={imageData.imageSrc}
+                        alt={imageData.alt}
+                        className="h-full w-full object-cover"
+                        render={<img />}
+                    />
                 )}
-            </Avatar.Fallback>
-        </Avatar.Root>
+                <AvatarBase.Fallback
+                    className={resolveClassNames(
+                        "bg-fill-neutral text-text-neutral-subtle flex h-full w-full items-center justify-center leading-px font-medium uppercase",
+                        {},
+                    )}
+                    render={<span />}
+                >
+                    {imageState.status === "rejected" ? (
+                        <PersonIcon fontSize="inherit" />
+                    ) : (
+                        (imageData?.initials ?? <PersonIcon fontSize="inherit" />)
+                    )}
+                </AvatarBase.Fallback>
+            </AvatarBase.Root>
+            {imageState.status === "loading" && (
+                <span
+                    className={resolveClassNames(
+                        "border-t-stroke-accent-strong pointer-events-none absolute inset-0 animate-spin rounded-full border-4 border-transparent",
+                    )}
+                />
+            )}
+        </span>
     );
 }
