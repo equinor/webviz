@@ -4,6 +4,8 @@ export type PopupProps = {
     children?: React.ReactNode;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    width?: number | string;
+    height?: number | string;
 };
 
 const DEFAULT_PROPS = {
@@ -16,7 +18,12 @@ export function Popup(props: PopupProps) {
         <DialogBase.Root open={defaultedProps.open} onOpenChange={defaultedProps.onOpenChange}>
             <DialogBase.Portal>
                 <DialogBase.Backdrop className="bg-fill-backdrop fixed inset-0 min-h-screen touch-none opacity-60 transition-opacity" />
-                <DialogBase.Popup className="popup">{defaultedProps.children}</DialogBase.Popup>
+                <DialogBase.Popup
+                    className="popup"
+                    style={{ width: defaultedProps.width, height: defaultedProps.height }}
+                >
+                    {defaultedProps.children}
+                </DialogBase.Popup>
             </DialogBase.Portal>
         </DialogBase.Root>
     );

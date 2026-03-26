@@ -7,6 +7,6 @@ export const NEXT_PAGE_THRESHOLD = 3;
 // - Table styling config ---- --- --- --- ---
 // Table style config
 export const USE_ALTERNATING_COLUMN_COLORS = false;
-export const ROW_HEIGHT = 46;
-export const HEADER_HEIGHT = 50;
+export const ROW_HEIGHT = 32;
+export const HEADER_HEIGHT = 32;
 export const TABLE_HEIGHT = ROW_HEIGHT * 10;

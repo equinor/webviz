@@ -44,7 +44,7 @@ function makeColumnSortingIcons(columnId: string, columnSortSettings: ColumnSort
         >
             <div
                 className={resolveClassNames(
-                    "text-white bg-slate-300 rounded-full aspect-square h-5 text-center align-middle text-xs flex items-center justify-center",
+                    "flex aspect-square h-5 items-center justify-center rounded-full bg-slate-300 text-center align-middle text-xs text-white",
                     {
                         invisible: columnSortSettings.length < 2,
                     },
@@ -76,8 +76,9 @@ type HeaderCellProps = {
 } & HeaderCellDef;
 
 function HeaderCell(props: HeaderCellProps) {
-    const colorIndex = props.alternatingColumnColors ? props.colGroupIndex % 2 : 1;
-    const headerColorClass = ALTERNATING_COLUMN_HEADING_COLORS[colorIndex];
+    const headerColorClass = props.alternatingColumnColors
+        ? ALTERNATING_COLUMN_HEADING_COLORS[props.colGroupIndex % 2]
+        : "";
     const columnSort = getSortingForColumn(props.columnId, props.columnSortSettings);
 
     function handleHeaderClick(evt: React.MouseEvent<HTMLTableCellElement, MouseEvent>) {
@@ -94,8 +95,8 @@ function HeaderCell(props: HeaderCellProps) {
 
     return (
         <th
-            className={resolveClassNames(headerColorClass, "border-b-2 border-slate-200 px-2", {
-                "hover:brightness-95 cursor-pointer": props.sortable,
+            className={resolveClassNames(headerColorClass, "border-stroke-neutral-subtle border-b-2 px-2", {
+                "cursor-pointer hover:brightness-95": props.sortable,
             })}
             rowSpan={props.rowSpan}
             colSpan={props.colSpan}
@@ -168,7 +169,7 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
     return (
         // ! Border styles. border-collapse and sticky headers doesn't play nice, so the borders
         // ! vanish when it floats. Using outlines here instead as a workaround
-        <thead className="select-none border-b-2 border-slate-400 shadow sticky top-0 z-10 [&_th]:outline [&_th]:outline-slate-300">
+        <thead className="bg-fill-neutral text-text-neutral-strong [&_th]:outline-stroke-neutral-subtle sticky top-0 z-10 border-b-2 shadow select-none [&_th]:outline">
             {props.headerCellDefinitions.map((headerRow, index) => (
                 <tr key={`header-row-depth${index}`} style={{ height: props.headerHeight }}>
                     {headerRow.map((cellDef) => {
@@ -186,7 +187,7 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
             ))}
 
             {hasFilters && (
-                <tr className="bg-slate-200" style={{ height: props.headerHeight }}>
+                <tr className="bg-fill-neutral-subtle" style={{ height: props.headerHeight }}>
                     {props.filterCellDefinitions.map((filterDef) => {
                         return (
                             <FilterCell
@@ -245,7 +246,7 @@ function defaultFilterRender(props: ColumnFilterImplementationProps<string>) {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.onFilterChange(e.target.value || null)}
             endAdornment={
                 <div
-                    className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
+                    className="cursor-pointer text-sm text-gray-600 hover:text-gray-500"
                     onClick={() => props.onFilterChange(null)}
                 >
                     <Close fontSize="inherit" />

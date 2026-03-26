@@ -111,7 +111,7 @@ function LogoWithText(): React.ReactNode {
             <FmuLogo className="h-8 w-8" />
             <h1 className="text-md text-accent whitespace-nowrap">FMU Analysis</h1>
             <div
-                className="bg-fill-warning-strong text-text-neutral-strong-on-emphasis cursor-help rounded-sm p-1 text-center text-xs text-white shadow-sm"
+                className="bg-fill-warning-strong text-text-neutral-strong-on-emphasis text-body-sm cursor-help rounded-sm p-1 text-center"
                 title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
             >
                 BETA

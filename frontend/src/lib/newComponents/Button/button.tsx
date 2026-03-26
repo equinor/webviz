@@ -42,7 +42,7 @@ const VARIANT_TONE_CLASSES: Record<
         neutral:
             "text-text-neutral-subtle hover:bg-fill-neutral-hover active:bg-neutral-fill-muted-active bg-transparent",
         danger: "text-text-danger-subtle hover:bg-fill-danger-hover active:bg-danger-fill-muted-active bg-transparent",
-        disabled: "text-text-disabled bg-fill-disabled cursor-not-allowed opacity-50",
+        disabled: "text-text-disabled cursor-not-allowed opacity-50",
     },
 };
 
