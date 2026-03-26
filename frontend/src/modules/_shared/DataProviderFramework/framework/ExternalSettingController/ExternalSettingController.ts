@@ -108,7 +108,10 @@ export class ExternalSettingController<
                 const setting = child.getSharedSettingsDelegate().getWrappedSettings()[this._setting.getType()];
                 if (setting) {
                     foundSettings.push(setting);
-                    continue;
+                    // A SharedSetting of the same type intercepts all subsequent siblings in this
+                    // group: they are managed through that SharedSetting's own controller. Stop
+                    // looking further in this group so we don't double-register those siblings.
+                    break;
                 }
             } else if (child instanceof Group) {
                 const sharedSettingsDelegate = child.getSharedSettingsDelegate();
@@ -207,8 +210,10 @@ export class ExternalSettingController<
 
     makeIntersectionOfValueConstraints(): void {
         if (!this.syncStateFromControlledSettings()) {
-            // Not ready yet, but we should avoid exposing deprecated value constraints to the controlled settings
-            this._setting.setValueConstraints(null);
+            // Not ready yet — syncStateFromControlledSettings has already set loading=true on the
+            // output setting. Do NOT call setValueConstraints(null) here: doing so would
+            // force-initialize intermediate controlled settings with null, which cascades a fake
+            // "ready" signal back up the chain before async dependencies have resolved.
             return;
         }
 
