@@ -23,6 +23,7 @@ import { useActiveSession } from "../../ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
+import { Collapsible } from "@lib/newComponents/Collapsible";
 
 type ModuleSettingsProps = {
     workbench: Workbench;
@@ -139,13 +140,13 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
                 activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
-                "relative h-full w-full grow flex-col",
+                "relative h-full min-h-0 w-full grow flex-col",
             )}
             style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
-                <div className="flex grow flex-col gap-4 overflow-auto">
-                    <div className="grow p-2">{makeContent()}</div>
+                <div className="flex min-h-0 grow flex-col">
+                    <Collapsible.ScrollArea>{makeContent()}</Collapsible.ScrollArea>
                 </div>
             </ErrorBoundary>
         </div>
