@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 
+import type { FipRegionMapping } from "@framework/EnsembleFipRegionsMapping";
 import type { Parameter } from "@framework/EnsembleParameters";
 import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters";
 import type { Sensitivity } from "@framework/EnsembleSensitivities";
@@ -26,6 +27,7 @@ describe("RegularEnsemble", () => {
         },
     ];
     const sensitivityArray: Sensitivity[] = [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }];
+    const fipRegionsMappingArray: FipRegionMapping[] = [];
     const color = "red";
     const customName = "customName1";
 
@@ -38,6 +40,7 @@ describe("RegularEnsemble", () => {
         realizationsArray,
         parameterArray,
         sensitivityArray,
+        fipRegionsMappingArray,
         color,
         customName,
     );
@@ -115,6 +118,7 @@ describe("RegularEnsemble", () => {
             realizationsArray,
             parameterArray,
             sensitivityArray,
+            fipRegionsMappingArray,
             color,
         );
         expect(ensemble.getDisplayName()).toBe(`${ensembleName} (${caseName})`);

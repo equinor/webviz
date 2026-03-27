@@ -307,6 +307,7 @@ export {
     type EnsembleSensitivityCase_api,
     type FenceMeshSection_api,
     type FieldInfo_api,
+    type FipRegion_api,
     type FlowNetworkData_api,
     type FlowNetworkMetadata_api,
     type FlowNetworkPerTreeType_api,
