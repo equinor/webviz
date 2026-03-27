@@ -65,7 +65,7 @@ logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
 logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
-logging.getLogger("primary.middleware").setLevel(logging.DEBUG)
+# logging.getLogger("primary.middleware").setLevel(logging.DEBUG)
 # logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
@@ -174,13 +174,14 @@ override_default_fastapi_exception_handlers(app)
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-exec-route")
 
 # Enrich telemetry spans with end user information (must run after the EnforceLoggedInMiddleware to have access to the user info)
-app.add_middleware(OtelSpanEndUserEnrichmentMiddleware)
+if config.PSEUDONYM_HMAC_KEY is not None:
+    LOGGER.info("Adding OtelSpanEndUserEnrichmentMiddleware to enrich telemetry spans with end user information")
+    app.add_middleware(OtelSpanEndUserEnrichmentMiddleware, hmac_secret_key=config.PSEUDONYM_HMAC_KEY)
 
 # Add our custom middleware to enforce that user is logged in
 # Also redirects to /login endpoint for some select paths
 unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json"]
 paths_redirected_to_login = ["/", "/alive_protected"]
-
 app.add_middleware(
     EnforceLoggedInMiddleware,
     unprotected_paths=unprotected_paths,

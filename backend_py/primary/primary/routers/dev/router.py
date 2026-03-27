@@ -4,7 +4,7 @@ import logging
 from typing import Annotated, Literal
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response
 
 from webviz_core_utils.background_tasks import run_in_background_task
 from webviz_services.user_session_manager.user_session_manager import UserSessionManager
@@ -24,17 +24,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 router = APIRouter()
-
-
-@router.get("/whoami")
-async def whoami(request: Request) -> dict:
-    return {
-        "client_host": request.client.host if request.client else None,
-        "xff": request.headers.get("x-forwarded-for"),
-        "xreal": request.headers.get("x-real-ip"),
-        "proto": request.headers.get("x-forwarded-proto"),
-        "host": request.headers.get("host"),
-    }
 
 
 ErrorTypes = Literal[
@@ -325,3 +314,15 @@ async def get_ri_isect(
     )
 
     return "OK"
+
+
+# Used for troubleshooting and testing, to what the client IP is as seen by this service
+# @router.get("/whoami")
+# async def whoami(request: Request) -> dict:
+#     return {
+#         "client_host": request.client.host if request.client else None,
+#         "xff": request.headers.get("x-forwarded-for"),
+#         "xreal": request.headers.get("x-real-ip"),
+#         "proto": request.headers.get("x-forwarded-proto"),
+#         "host": request.headers.get("host"),
+#     }
