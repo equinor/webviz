@@ -48,8 +48,8 @@ class OtelSpanClientAddressEnrichmentMiddleware:
                 # curr_span.set_attribute("net.peer.ip", request.client.host)  # optional fallback
 
                 # Logging and setting the actual values as custom attributes on app.* is useful for troubleshooting
-                LOGGER.debug(f"OtelSpanClientAddressEnrichmentMiddleware: Added otel attribute: {request.client.host}")
-                curr_span.set_attribute("app.client_ip_observed", request.client.host)
+                # LOGGER.debug(f"OtelSpanClientAddressEnrichmentMiddleware: Added otel attribute: {request.client.host}")
+                # curr_span.set_attribute("app.client_ip_observed", request.client.host)
             else:
                 LOGGER.debug("OtelSpanClientAddressEnrichmentMiddleware: Could not get client IP from request")
 
@@ -80,7 +80,7 @@ class OtelSpanEndUserEnrichmentMiddleware:
             request = Request(scope)
             maybe_authenticated_user_obj = getattr(request.state, "authenticated_user_obj", None)
             if maybe_authenticated_user_obj and isinstance(maybe_authenticated_user_obj, AuthenticatedUser):
-                user_name = maybe_authenticated_user_obj.get_username()
+                # user_name = maybe_authenticated_user_obj.get_username()
                 user_id = maybe_authenticated_user_obj.get_user_id()
                 pseudonym = _pseudonymize_user_id(self.hmac_secret_key, user_id)
 
@@ -91,10 +91,10 @@ class OtelSpanEndUserEnrichmentMiddleware:
                 curr_span.set_attribute("enduser.pseudo.id", pseudonym)
 
                 # Logging and setting the actual values as custom attributes on app.* is useful for troubleshooting
-                LOGGER.debug(f"OtelSpanEndUserEnrichmentMiddleware: Added end user otel attribute: {pseudonym=}")
-                curr_span.set_attribute("app.user_name_raw", f"cust__{user_name}")
-                curr_span.set_attribute("app.user_id_raw", f"cust__{user_id}")
-                curr_span.set_attribute("app.user_id_pseudonym", f"cust__{pseudonym}")
+                # LOGGER.debug(f"OtelSpanEndUserEnrichmentMiddleware: Added end user otel attribute: {pseudonym=}")
+                # curr_span.set_attribute("app.user_name_raw", f"cust__{user_name}")
+                # curr_span.set_attribute("app.user_id_raw", f"cust__{user_id}")
+                # curr_span.set_attribute("app.user_id_pseudonym", f"cust__{pseudonym}")
             else:
                 LOGGER.debug("OtelSpanEndUserEnrichmentMiddleware: Could not get end user information from request")
 
