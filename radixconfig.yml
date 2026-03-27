@@ -48,6 +48,8 @@ spec:
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
               - name: WEBVIZ-ENTERPRISE-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
+              - name: WEBVIZ-PSEUDONYM-HMAC-KEY
+                envVar: WEBVIZ_PSEUDONYM_HMAC_KEY
               # Inject all app insights connection strings as env vars.
               # Our azure monitor setup code will pick the right one based on the radix environment
               - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD

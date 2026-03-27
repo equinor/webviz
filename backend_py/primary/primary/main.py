@@ -20,6 +20,8 @@ from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
 from primary.middleware.cache_control_middleware import CacheControlMiddleware
+from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAddressEnrichmentMiddleware
+from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
 from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.routers.dev.router import router as dev_router
 from primary.routers.explore.router import router as explore_router
@@ -63,6 +65,7 @@ logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
 logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
+# logging.getLogger("primary.middleware").setLevel(logging.DEBUG)
 # logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
@@ -163,14 +166,22 @@ configure_service_level_exception_handlers(app)
 override_default_fastapi_exception_handlers(app)
 
 
+# Note that FastAPI/Starlette middleware is executed in reverse order of addition:
+#  Last added -> runs first (outermost) on request
+#  First added -> runs last (innermost) on request
+
 # This middleware instance approximately measures execution time of the route handler itself
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-exec-route")
 
-# Add out custom middleware to enforce that user is logged in
+# Enrich telemetry spans with end user information (must run after the EnforceLoggedInMiddleware to have access to the user info)
+if config.PSEUDONYM_HMAC_KEY is not None:
+    LOGGER.info("Adding OtelSpanEndUserEnrichmentMiddleware to enrich telemetry spans with end user information")
+    app.add_middleware(OtelSpanEndUserEnrichmentMiddleware, hmac_secret_key=config.PSEUDONYM_HMAC_KEY)
+
+# Add our custom middleware to enforce that user is logged in
 # Also redirects to /login endpoint for some select paths
 unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json"]
 paths_redirected_to_login = ["/", "/alive_protected"]
-
 app.add_middleware(
     EnforceLoggedInMiddleware,
     unprotected_paths=unprotected_paths,
@@ -180,14 +191,16 @@ app.add_middleware(
 session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="auth-sessions:")
 app.add_middleware(SessionMiddleware, store=session_store)
 
+# Enrich telemetry spans with client address information (must run after ProxyHeadersMiddleware)
+app.add_middleware(OtelSpanClientAddressEnrichmentMiddleware)
 
 # As of mypy 1.16 and Starlette 47, the ProxyHeadersMiddleware gives an incorrect type error here
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")  # type: ignore[arg-type]
 
+app.add_middleware(CacheControlMiddleware)
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
-app.add_middleware(CacheControlMiddleware)
 
 
 @app.get("/")
