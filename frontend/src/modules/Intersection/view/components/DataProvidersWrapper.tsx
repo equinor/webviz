@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -45,6 +45,7 @@ import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 
+import { LinkViewManager } from "./LinkViewManager";
 import { MultiViewLayout } from "./MultiViewLayout";
 import { SingleViewDataProcessor } from "./SingleViewDataProcessor";
 
@@ -67,7 +68,7 @@ export type TargetViewReturnTypes = {
     [GroupType.INTERSECTION_VIEW]: EsvView;
 
     // Need to specify typing for all existing group-types, otherwise we get a typing error
-    [GroupType.VIEW]: Record<string, never>; // No data needed for the view?
+    [GroupType.VIEW]: Record<string, never>;
     [GroupType.WELL_LOG_TRACK_CONT]: Record<string, never>;
     [GroupType.WELL_LOG_TRACK_DISC]: Record<string, never>;
     [GroupType.WELL_LOG_DIFF_GROUP]: Record<string, never>;
@@ -171,20 +172,22 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     }
 
     return (
-        <MultiViewLayout viewCount={intersectionViews.length} preferredViewLayout={props.preferredViewLayout}>
-            {intersectionViews.map((view) => (
-                <SingleViewDataProcessor
-                    key={view.id}
-                    view={view}
-                    fieldIdentifier={fieldIdentifier}
-                    isLoading={isLoading}
-                    wellboreHeadersQuery={wellboreHeadersQuery}
-                    workbenchSession={props.workbenchSession}
-                    workbenchServices={props.workbenchServices}
-                    hoverService={props.hoverService}
-                    viewContext={props.viewContext}
-                />
-            ))}
-        </MultiViewLayout>
+        <LinkViewManager intersectionViews={intersectionViews}>
+            <MultiViewLayout viewCount={intersectionViews.length} preferredViewLayout={props.preferredViewLayout}>
+                {intersectionViews.map((view) => (
+                    <SingleViewDataProcessor
+                        key={view.id}
+                        view={view}
+                        fieldIdentifier={fieldIdentifier}
+                        isLoading={isLoading}
+                        wellboreHeadersQuery={wellboreHeadersQuery}
+                        workbenchSession={props.workbenchSession}
+                        workbenchServices={props.workbenchServices}
+                        hoverService={props.hoverService}
+                        viewContext={props.viewContext}
+                    />
+                ))}
+            </MultiViewLayout>
+        </LinkViewManager>
     );
 }

@@ -39,6 +39,7 @@ import {
     makeViewProvidersVisualizationLayerItems,
 } from "../utils/createLayerItemsUtils";
 
+import { useViewLinkProps } from "./LinkViewManager";
 import { ViewportWrapper } from "./ViewportWrapper";
 
 // State for request of view refocus
@@ -60,6 +61,8 @@ export type SingleViewDataProcessorProps = {
 
 export function SingleViewDataProcessor(props: SingleViewDataProcessorProps): React.ReactNode {
     const { view, fieldIdentifier, isLoading, wellboreHeadersQuery } = props;
+
+    const viewLinkProps = useViewLinkProps(view.id);
 
     const [prevReferenceSystem, setPrevReferenceSystem] = React.useState<IntersectionReferenceSystem | null>(null);
     const [layersBounds, setLayersBounds] = React.useState<Bounds>(DEFAULT_INTERSECTION_VIEW_BOUNDS);
@@ -250,6 +253,7 @@ export function SingleViewDataProcessor(props: SingleViewDataProcessorProps): Re
             viewContext={props.viewContext}
             intersectionSource={viewIntersection}
             onViewportRefocused={handleOnViewportRefocused}
+            viewLinkProps={viewLinkProps}
         />
     );
 }

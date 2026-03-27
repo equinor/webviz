@@ -212,7 +212,13 @@ function isPixiLayer(layer: Layer<unknown>): boolean {
 }
 
 export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
-    const { onReadout, onViewportChange, onMousePositionChange } = props;
+    const { onReadout, onMousePositionChange } = props;
+
+    // Keep onViewportChange in a ref so that propagateViewportChange only fires when
+    // the canvas viewport actually changes (user interaction), not when the callback prop
+    // is recreated on each parent render (which would re-fire with stale currentViewport).
+    const onViewportChangeRef = React.useRef(props.onViewportChange);
+    onViewportChangeRef.current = props.onViewportChange;
 
     const [prevAxesOptions, setPrevAxesOptions] = React.useState<AxisOptions | undefined>(undefined);
     const [prevIntersectionReferenceSystem, setPrevIntersectionReferenceSystem] = React.useState<
@@ -559,12 +565,12 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
 
     React.useEffect(
         function propagateViewportChange() {
-            if (onViewportChange && currentViewport) {
-                onViewportChange(currentViewport);
+            if (onViewportChangeRef.current && currentViewport) {
+                onViewportChangeRef.current(currentViewport);
                 setPrevViewport(currentViewport);
             }
         },
-        [currentViewport, onViewportChange],
+        [currentViewport],
     );
 
     React.useEffect(
