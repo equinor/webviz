@@ -12,8 +12,6 @@ export const DEFAULT_INTERSECTION_VIEW_BOUNDS: Bounds = {
 export function createBoundsForIntersectionReferenceSystem(
     intersectionReferenceSystem: IntersectionReferenceSystem,
 ): Bounds {
-    const bounds = DEFAULT_INTERSECTION_VIEW_BOUNDS;
-
     // The intersection uz-coordinate system correspond to the esv intersection internal xy-coordinate system.
     // Create bound from intersectionReferenceSystem (i.e. the polyline)
     const firstPoint = intersectionReferenceSystem.projectedPath[0];
@@ -24,12 +22,9 @@ export function createBoundsForIntersectionReferenceSystem(
     const zMax = Math.max(firstPoint[1], lastPoint[1]);
     const zMin = Math.min(firstPoint[1], lastPoint[1]);
 
-    // Set the (x,y)-bounds of esv intersection with uz-coordinates
-    bounds.x = [uMin, uMax];
-    bounds.y = [zMin, zMax];
-
-    return bounds;
+    return { x: [uMin, uMax], y: [zMin, zMax] };
 }
+
 /**
  * Create data bounds for the intersection view based on the provided bounding box or intersection reference system.
  */
@@ -38,12 +33,11 @@ export function createBoundsForIntersectionView(
     intersectionReferenceSystem: IntersectionReferenceSystem | null,
     prevBounds: Bounds | null,
 ): Bounds {
-    const bounds = DEFAULT_INTERSECTION_VIEW_BOUNDS;
-
     if (dataBoundingBox) {
-        bounds.x = [dataBoundingBox.min.x, dataBoundingBox.max.x];
-        bounds.y = [dataBoundingBox.min.y, dataBoundingBox.max.y];
-        return bounds;
+        return {
+            x: [dataBoundingBox.min.x, dataBoundingBox.max.x],
+            y: [dataBoundingBox.min.y, dataBoundingBox.max.y],
+        };
     }
 
     if (intersectionReferenceSystem) {
@@ -52,10 +46,8 @@ export function createBoundsForIntersectionView(
 
     if (prevBounds) {
         // If no bounding box or intersection reference system is provided, return the previous bounds
-        bounds.x = prevBounds.x;
-        bounds.y = prevBounds.y;
-        return bounds;
+        return { x: [prevBounds.x[0], prevBounds.x[1]], y: [prevBounds.y[0], prevBounds.y[1]] };
     }
 
-    return bounds;
+    return { x: [...DEFAULT_INTERSECTION_VIEW_BOUNDS.x], y: [...DEFAULT_INTERSECTION_VIEW_BOUNDS.y] };
 }
