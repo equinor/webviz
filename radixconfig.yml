@@ -48,6 +48,8 @@ spec:
                 envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
               - name: WEBVIZ-ENTERPRISE-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
+              - name: WEBVIZ-PSEUDONYM-HMAC-KEY
+                envVar: WEBVIZ_PSEUDONYM_HMAC_KEY
               # Inject all app insights connection strings as env vars.
               # Our azure monitor setup code will pick the right one based on the radix environment
               - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
@@ -58,10 +60,6 @@ spec:
                 envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV
               - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
                 envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW
-
-      # TEMPORARY!! - to be added to KeyVault
-      secrets:
-        - WEBVIZ_PSEUDONYM_HMAC_KEY
 
       variables:
         UVICORN_PORT: 5000
