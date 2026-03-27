@@ -59,6 +59,10 @@ spec:
               - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
                 envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW
 
+      # TEMPORARY!! - to be added to KeyVault
+      secrets:
+        - WEBVIZ_PSEUDONYM_HMAC_KEY
+
       variables:
         UVICORN_PORT: 5000
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"

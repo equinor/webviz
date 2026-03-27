@@ -47,10 +47,11 @@ class OtelSpanClientAddressEnrichmentMiddleware:
                 curr_span.set_attribute("http.client_ip", request.client.host)
                 # curr_span.set_attribute("net.peer.ip", request.client.host)  # optional fallback
 
-                # Setting the actual values as custom attributes on app.* is useful for troubleshooting
-                # curr_span.set_attribute("app.client_ip_observed", request.client.host)
+                # Logging and setting the actual values as custom attributes on app.* is useful for troubleshooting
+                LOGGER.debug(f"OtelSpanClientAddressEnrichmentMiddleware: Added otel attribute: {request.client.host}")
+                curr_span.set_attribute("app.client_ip_observed", request.client.host)
             else:
-                LOGGER.warning("OtelSpanClientAddressEnrichmentMiddleware: Could not get client IP from request")
+                LOGGER.debug("OtelSpanClientAddressEnrichmentMiddleware: Could not get client IP from request")
 
         await self.app(scope, receive, send)
 
@@ -79,10 +80,9 @@ class OtelSpanEndUserEnrichmentMiddleware:
             request = Request(scope)
             maybe_authenticated_user_obj = getattr(request.state, "authenticated_user_obj", None)
             if maybe_authenticated_user_obj and isinstance(maybe_authenticated_user_obj, AuthenticatedUser):
-                # user_name = maybe_authenticated_user_obj.get_username()
+                user_name = maybe_authenticated_user_obj.get_username()
                 user_id = maybe_authenticated_user_obj.get_user_id()
                 pseudonym = _pseudonymize_user_id(self.hmac_secret_key, user_id)
-                # LOGGER.debug(f" OtelSpanEndUserEnrichmentMiddleware: {user_name=}, {user_id=}, {pseudonym=}")
 
                 # Shows up as "Auth Id", "Authenticated user Id" or user_AuthenticatedId in Application Insights
                 curr_span.set_attribute("enduser.id", pseudonym)
@@ -90,12 +90,13 @@ class OtelSpanEndUserEnrichmentMiddleware:
                 # Shows up as "User Id" or "user_Id" in Application Insights
                 curr_span.set_attribute("enduser.pseudo.id", pseudonym)
 
-                # Setting the actual values as custom attributes on app.* is useful for troubleshooting
-                # curr_span.set_attribute("app.user_name_raw", f"cust__{user_name}")
-                # curr_span.set_attribute("app.user_id_raw", f"cust__{user_id}")
-                # curr_span.set_attribute("app.user_id_pseudonym", f"cust__{pseudonym}")
+                # Logging and setting the actual values as custom attributes on app.* is useful for troubleshooting
+                LOGGER.debug(f"OtelSpanEndUserEnrichmentMiddleware: Added end user otel attribute: {pseudonym=}")
+                curr_span.set_attribute("app.user_name_raw", f"cust__{user_name}")
+                curr_span.set_attribute("app.user_id_raw", f"cust__{user_id}")
+                curr_span.set_attribute("app.user_id_pseudonym", f"cust__{pseudonym}")
             else:
-                LOGGER.warning("OtelSpanEndUserEnrichmentMiddleware: Could not get end user information from request")
+                LOGGER.debug("OtelSpanEndUserEnrichmentMiddleware: Could not get end user information from request")
 
         await self.app(scope, receive, send)
 
