@@ -77,27 +77,24 @@ class OtelSpanEndUserEnrichmentMiddleware:
         curr_span = trace.get_current_span()
         if curr_span.is_recording():
             request = Request(scope)
-            try:
-                maybe_authenticated_user_obj = request.state.authenticated_user_obj
-                if maybe_authenticated_user_obj and isinstance(maybe_authenticated_user_obj, AuthenticatedUser):
+            maybe_authenticated_user_obj = getattr(request.state, "authenticated_user_obj", None)
+            if maybe_authenticated_user_obj and isinstance(maybe_authenticated_user_obj, AuthenticatedUser):
+                # user_name = maybe_authenticated_user_obj.get_username()
+                user_id = maybe_authenticated_user_obj.get_user_id()
+                pseudonym = _pseudonymize_user_id(self.hmac_secret_key, user_id)
+                # LOGGER.debug(f" OtelSpanEndUserEnrichmentMiddleware: {user_name=}, {user_id=}, {pseudonym=}")
 
-                    # user_name = maybe_authenticated_user_obj.get_username()
-                    user_id = maybe_authenticated_user_obj.get_user_id()
-                    pseudonym = _pseudonymize_user_id(self.hmac_secret_key, user_id)
-                    # LOGGER.debug(f" OtelSpanEndUserEnrichmentMiddleware: {user_name=}, {user_id=}, {pseudonym=}")
+                # Shows up as "Auth Id", "Authenticated user Id" or user_AuthenticatedId in Application Insights
+                curr_span.set_attribute("enduser.id", pseudonym)
 
-                    # Shows up as "Auth Id", "Authenticated user Id" or user_AuthenticatedId in Application Insights
-                    curr_span.set_attribute("enduser.id", pseudonym)
+                # Shows up as "User Id" or "user_Id" in Application Insights
+                curr_span.set_attribute("enduser.pseudo.id", pseudonym)
 
-                    # Shows up as "User Id" or "user_Id" in Application Insights
-                    curr_span.set_attribute("enduser.pseudo.id", pseudonym)
-
-                    # Setting the actual values as custom attributes on app.* is useful for troubleshooting
-                    # curr_span.set_attribute("app.user_name_raw", f"cust__{user_name}")
-                    # curr_span.set_attribute("app.user_id_raw", f"cust__{user_id}")
-                    # curr_span.set_attribute("app.user_id_pseudonym", f"cust__{pseudonym}")
-
-            except:  # nosec # pylint: disable=bare-except
+                # Setting the actual values as custom attributes on app.* is useful for troubleshooting
+                # curr_span.set_attribute("app.user_name_raw", f"cust__{user_name}")
+                # curr_span.set_attribute("app.user_id_raw", f"cust__{user_id}")
+                # curr_span.set_attribute("app.user_id_pseudonym", f"cust__{pseudonym}")
+            else:
                 LOGGER.warning("OtelSpanEndUserEnrichmentMiddleware: Could not get end user information from request")
 
         await self.app(scope, receive, send)
