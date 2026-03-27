@@ -75,6 +75,8 @@ import {
     useVectorListQueriesErrorAnnotation,
 } from "./hooks/settingAnnotationHooks";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Combobox } from "@lib/newComponents/Combobox";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -116,7 +118,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
-    function handleSubplotLimitDirectionChange(newLimitDirection: SubplotLimitDirection) {
+    function handleSubplotLimitDirectionChange(newLimitDirection: SubplotLimitDirection | null) {
+        if (newLimitDirection === null) {
+            return;
+        }
+
         setSubplotLimitDirection(newLimitDirection);
     }
 
@@ -262,176 +268,188 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const vectorListQueriesErrorAnnotation = useVectorListQueriesErrorAnnotation();
 
     return (
-        <div className="flex flex-col gap-2 overflow-y-auto">
-            <CollapsibleGroup expanded={true} title="Plot settings">
-                <Label text="Limit subplots by">
-                    <div className="flex flex-row gap-2">
+        <>
+            <Collapsible.Group title="Plot settings">
+                <Collapsible.Content>
+                    <Label text="Limit subplots by">
+                        <div className="flex flex-row gap-2">
+                            <Combobox
+                                items={Object.values(SubplotLimitDirection).map((val: SubplotLimitDirection) => {
+                                    return { value: val, label: SubplotLimitDirectionEnumToStringMapping[val] };
+                                })}
+                                value={subplotLimitDirection}
+                                onValueChange={handleSubplotLimitDirectionChange}
+                            />
+                            <Input
+                                type="number"
+                                value={subplotMaxDirectionElements}
+                                disabled={subplotLimitDirection === SubplotLimitDirection.NONE}
+                                min={1}
+                                max={12}
+                                debounceTimeMs={150}
+                                onChange={handleSubplotMaxDirectionElementsChange}
+                            />
+                        </div>
+                    </Label>
+                </Collapsible.Content>
+            </Collapsible.Group>
+            <Collapsible.Group title="Group by">
+                <Collapsible.Content>
+                    <RadioGroup
+                        value={groupBy}
+                        options={Object.values(GroupBy).map((val: GroupBy) => {
+                            return { value: val, label: GroupByEnumToStringMapping[val] };
+                        })}
+                        onChange={(_, value) => handleGroupByChange(value)}
+                    />
+                </Collapsible.Content>
+            </Collapsible.Group>
+            <Collapsible.Group title="Resampling frequency">
+                <Collapsible.Content>
+                    <SettingWrapper warningAnnotation={resampleFrequencyWarningAnnotation}>
                         <Dropdown
-                            options={Object.values(SubplotLimitDirection).map((val: SubplotLimitDirection) => {
-                                return { value: val, label: SubplotLimitDirectionEnumToStringMapping[val] };
-                            })}
-                            value={subplotLimitDirection}
-                            onChange={handleSubplotLimitDirectionChange}
-                        />
-                        <Input
-                            type="number"
-                            value={subplotMaxDirectionElements}
-                            disabled={subplotLimitDirection === SubplotLimitDirection.NONE}
-                            min={1}
-                            max={12}
-                            debounceTimeMs={150}
-                            onChange={handleSubplotMaxDirectionElementsChange}
-                        />
-                    </div>
-                </Label>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={false} title="Group by">
-                <RadioGroup
-                    value={groupBy}
-                    options={Object.values(GroupBy).map((val: GroupBy) => {
-                        return { value: val, label: GroupByEnumToStringMapping[val] };
-                    })}
-                    onChange={(_, value) => handleGroupByChange(value)}
-                />
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={false} title="Resampling frequency">
-                <SettingWrapper warningAnnotation={resampleFrequencyWarningAnnotation}>
-                    <Dropdown
-                        options={[
-                            { value: "RAW", label: "None (Raw)" },
-                            ...Object.values(Frequency_api).map((val: Frequency_api) => {
-                                return { value: val, label: FrequencyEnumToStringMapping[val] };
-                            }),
-                        ]}
-                        value={resampleFrequency ?? "RAW"}
-                        onChange={handleFrequencySelectionChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Ensembles">
-                <SettingWrapper annotations={selectedEnsembleIdentsAnnotations}>
-                    <EnsemblePicker
-                        ensembles={ensembleSet.getEnsembleArray()}
-                        value={selectedEnsembleIdents.value ?? []}
-                        allowDeltaEnsembles={true}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                        onChange={handleEnsembleSelectChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Vectors">
-                <Checkbox
-                    label="Show historical"
-                    checked={showHistorical}
-                    disabled={!selectedVectorNamesHasHistorical}
-                    onChange={(_, checked) => handleShowHistorical(checked)}
-                />
-                <Checkbox label="Show observations" checked={showObservations} onChange={handleShowObservations} />
-                <div
-                    className={resolveClassNames({
-                        "pointer-events-none opacity-80": vectorListQueries.some((query) => query.isLoading),
-                    })}
-                >
-                    <SettingWrapper
-                        loadingOverlay={isVectorListQueriesFetching}
-                        errorAnnotation={vectorListQueriesErrorAnnotation}
-                    >
-                        <VectorSelector
-                            data={vectorSelectorData}
-                            placeholder="Add new vector..."
-                            maxNumSelectedNodes={50}
-                            numSecondsUntilSuggestionsAreShown={0.5}
-                            lineBreakAfterTag={true}
-                            onChange={handleVectorSelectionChange}
-                            customVectorDefinitions={customVectorDefinitions ?? undefined}
-                            selectedTags={selectedVectorTags}
+                            options={[
+                                { value: "RAW", label: "None (Raw)" },
+                                ...Object.values(Frequency_api).map((val: Frequency_api) => {
+                                    return { value: val, label: FrequencyEnumToStringMapping[val] };
+                                }),
+                            ]}
+                            value={resampleFrequency ?? "RAW"}
+                            onChange={handleFrequencySelectionChange}
                         />
                     </SettingWrapper>
-                </div>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={false} title="Visualization">
-                <RadioGroup
-                    value={visualizationMode}
-                    options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
-                        return { value: val, label: VisualizationModeEnumToStringMapping[val] };
-                    })}
-                    onChange={(_, value) => handleVisualizationModeChange(value)}
-                />
-                <div className="mt-6 p-2 rounded-md outline-1 outline-slate-300">
-                    <div
-                        className={resolveClassNames("", {
-                            hidden: visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS,
-                        })}
-                    >
-                        <Label text="Statistics Options">
-                            <div>{makeStatisticCheckboxes()}</div>
-                        </Label>
-                    </div>
+                </Collapsible.Content>
+            </Collapsible.Group>
+            <Collapsible.Group title="Ensembles">
+                <Collapsible.Content>
+                    <SettingWrapper annotations={selectedEnsembleIdentsAnnotations}>
+                        <EnsemblePicker
+                            ensembles={ensembleSet.getEnsembleArray()}
+                            value={selectedEnsembleIdents.value ?? []}
+                            allowDeltaEnsembles={true}
+                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                            onChange={handleEnsembleSelectChange}
+                        />
+                    </SettingWrapper>
+                </Collapsible.Content>
+            </Collapsible.Group>
+            <Collapsible.Group title="Vectors">
+                <Collapsible.Content>
+                    <Checkbox
+                        label="Show historical"
+                        checked={showHistorical}
+                        disabled={!selectedVectorNamesHasHistorical}
+                        onChange={(_, checked) => handleShowHistorical(checked)}
+                    />
+                    <Checkbox label="Show observations" checked={showObservations} onChange={handleShowObservations} />
                     <div
                         className={resolveClassNames({
-                            hidden: visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                            "pointer-events-none opacity-80": vectorListQueries.some((query) => query.isLoading),
                         })}
                     >
-                        <Label text="Color realization by parameter" position="left" wrapperClassName="mt-2 mb-2">
-                            <Switch
-                                checked={colorRealizationsByParameter}
-                                disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
-                                onChange={(event) => setColorRealizationsByParameter(event.target.checked)}
+                        <SettingWrapper
+                            loadingOverlay={isVectorListQueriesFetching}
+                            errorAnnotation={vectorListQueriesErrorAnnotation}
+                        >
+                            <VectorSelector
+                                data={vectorSelectorData}
+                                placeholder="Add new vector..."
+                                maxNumSelectedNodes={50}
+                                numSecondsUntilSuggestionsAreShown={0.5}
+                                lineBreakAfterTag={true}
+                                onChange={handleVectorSelectionChange}
+                                customVectorDefinitions={customVectorDefinitions ?? undefined}
+                                selectedTags={selectedVectorTags}
                             />
-                        </Label>
+                        </SettingWrapper>
+                    </div>
+                </Collapsible.Content>
+            </Collapsible.Group>
+            <Collapsible.Group title="Visualization">
+                <Collapsible.Content>
+                    <RadioGroup
+                        value={visualizationMode}
+                        options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
+                            return { value: val, label: VisualizationModeEnumToStringMapping[val] };
+                        })}
+                        onChange={(_, value) => handleVisualizationModeChange(value)}
+                    />
+                    <div className="mt-6 rounded-md p-2 outline-1 outline-slate-300">
                         <div
-                            className={resolveClassNames({
-                                "pointer-events-none opacity-70":
-                                    !colorRealizationsByParameter ||
-                                    visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                            className={resolveClassNames("", {
+                                hidden: visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS,
                             })}
                         >
-                            <div className="flex flex-col">
-                                <div className="flex flex-row justify-center items-center p-2 bg-slate-100 shadow-xs border-b">
-                                    <h3 className="text-sm font-semibold grow leading-none">Select Parameter</h3>
-                                    <IconButton
-                                        color="secondary"
-                                        title="Filter list of parameters"
-                                        onClick={() => setShowParameterListFilter((prev) => !prev)}
+                            <Label text="Statistics Options">
+                                <div>{makeStatisticCheckboxes()}</div>
+                            </Label>
+                        </div>
+                        <div
+                            className={resolveClassNames({
+                                hidden: visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                            })}
+                        >
+                            <Label text="Color realization by parameter" position="left" wrapperClassName="mt-2 mb-2">
+                                <Switch
+                                    checked={colorRealizationsByParameter}
+                                    disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
+                                    onChange={(event) => setColorRealizationsByParameter(event.target.checked)}
+                                />
+                            </Label>
+                            <div
+                                className={resolveClassNames({
+                                    "pointer-events-none opacity-70":
+                                        !colorRealizationsByParameter ||
+                                        visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                                })}
+                            >
+                                <div className="flex flex-col">
+                                    <div className="flex flex-row items-center justify-center border-b bg-slate-100 p-2 shadow-xs">
+                                        <h3 className="grow text-sm leading-none font-semibold">Select Parameter</h3>
+                                        <IconButton
+                                            color="secondary"
+                                            title="Filter list of parameters"
+                                            onClick={() => setShowParameterListFilter((prev) => !prev)}
+                                        >
+                                            <FilterAlt fontSize="small" />
+                                        </IconButton>
+                                    </div>
+                                    <div
+                                        className={resolveClassNames("border p-2 shadow-md", {
+                                            hidden: !showParameterListFilter,
+                                        })}
                                     >
-                                        <FilterAlt fontSize="small" />
-                                    </IconButton>
-                                </div>
-                                <div
-                                    className={resolveClassNames("p-2 border shadow-md", {
-                                        hidden: !showParameterListFilter,
-                                    })}
-                                >
-                                    <Label text="Filter parameters on selection">
-                                        <ParameterListFilter
-                                            parameters={continuousAndNonConstantParametersUnion}
-                                            initialFilters={["Continuous", "Nonconstant"]}
-                                            onChange={handleParameterListFilterChange}
-                                        />
-                                    </Label>
-                                </div>
-                                <div className={`${showParameterListFilter ? "pt-3" : "pt-1"}`}>
-                                    <SettingWrapper annotations={selectedParameterIdentStringAnnotations}>
-                                        <Select
-                                            options={filteredParameterIdentList.map((elm) => ({
-                                                value: elm.toString(),
-                                                label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
-                                            }))}
-                                            size={6}
-                                            value={
-                                                selectedParameterIdentStr.value
-                                                    ? [selectedParameterIdentStr.value]
-                                                    : undefined
-                                            }
-                                            onChange={handleColorByParameterChange}
-                                        />
-                                    </SettingWrapper>
+                                        <Label text="Filter parameters on selection">
+                                            <ParameterListFilter
+                                                parameters={continuousAndNonConstantParametersUnion}
+                                                initialFilters={["Continuous", "Nonconstant"]}
+                                                onChange={handleParameterListFilterChange}
+                                            />
+                                        </Label>
+                                    </div>
+                                    <div className={`${showParameterListFilter ? "pt-3" : "pt-1"}`}>
+                                        <SettingWrapper annotations={selectedParameterIdentStringAnnotations}>
+                                            <Select
+                                                options={filteredParameterIdentList.map((elm) => ({
+                                                    value: elm.toString(),
+                                                    label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
+                                                }))}
+                                                size={6}
+                                                value={
+                                                    selectedParameterIdentStr.value
+                                                        ? [selectedParameterIdentStr.value]
+                                                        : undefined
+                                                }
+                                                onChange={handleColorByParameterChange}
+                                            />
+                                        </SettingWrapper>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </CollapsibleGroup>
-        </div>
+                </Collapsible.Content>
+            </Collapsible.Group>
+        </>
     );
 }

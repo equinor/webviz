@@ -23,7 +23,7 @@ import {
     type IsoStringRange,
 } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
+import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
@@ -342,46 +342,54 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                 </Label>
                 <Label text="Updated at" wrapperClassName="min-w-2xs">
                     <DateRangePicker
-                        className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300"
+                        className="webviz-eds-date-range-picker --compact rounded border border-gray-300 focus-within:outline-0"
                         value={isoRangeToEdsDateRange(tableFilter.updatedAt ?? null)}
                         onChange={handleDateFilterRangeChange}
                     />
                 </Label>
             </div>
-            <div className="flex gap-2 mb-2">
+            <div className="mb-2 flex gap-2">
                 <Tooltip title="Start and open new session" placement="bottom" enterDelay="medium">
-                    <Button color="primary" onClick={handleNewSessionClick} variant="contained" size="medium">
+                    <Button tone="accent" onClick={handleNewSessionClick} variant="contained" size="small">
                         <Add fontSize="inherit" /> New session
                     </Button>
                 </Tooltip>
                 <span className="grow" />
                 <Tooltip title="Edit the selected session" placement="bottom" enterDelay="medium">
-                    <Button color="primary" disabled={!selectedSessionId} onClick={handleEditClick} size="medium">
+                    <Button
+                        tone="accent"
+                        variant="text"
+                        disabled={!selectedSessionId}
+                        onClick={handleEditClick}
+                        size="small"
+                    >
                         <Edit fontSize="inherit" /> Edit
                     </Button>
                 </Tooltip>
                 <Tooltip title="Open the selected session" placement="bottom" enterDelay="medium">
                     <Button
-                        color="primary"
+                        tone="accent"
+                        variant="text"
                         disabled={!selectedSessionId}
                         onClick={handleOpenSessionClick}
-                        size="medium"
+                        size="small"
                     >
                         <FileOpen fontSize="inherit" /> Open
                     </Button>
                 </Tooltip>
                 <Tooltip title="Delete the selected session" placement="bottom" enterDelay="medium">
                     <Button
-                        color="danger"
+                        tone="danger"
                         disabled={!selectedSessionId || deletePending}
                         onClick={handleDeleteClick}
-                        size="medium"
+                        size="small"
+                        variant="text"
                     >
                         {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
                     </Button>
                 </Tooltip>
                 <Tooltip title="Refresh list" placement="top" enterDelay="medium">
-                    <Button color="primary" onClick={refresh} size="medium">
+                    <Button tone="accent" onClick={refresh} size="small" variant="text">
                         {isRefreshing ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />} Refresh
                     </Button>
                 </Tooltip>

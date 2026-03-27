@@ -34,7 +34,7 @@ export const SelectEnsemblesConfirmationDialogs: React.FC<SelectEnsemblesConfirm
                 actions={
                     <div className="flex gap-4">
                         <Button onClick={() => setShowCancelDialog(false)}>No, don&apos;t cancel</Button>
-                        <Button onClick={props.onConfirmCancel} color="danger">
+                        <Button onClick={props.onConfirmCancel} tone="danger">
                             Yes, cancel
                         </Button>
                     </div>
@@ -55,10 +55,10 @@ export const SelectEnsemblesConfirmationDialogs: React.FC<SelectEnsemblesConfirm
                 ensembleLoadingErrorInfoMap={props.ensembleLoadingErrorInfoMap}
                 actions={
                     <div className="flex gap-4">
-                        <Button onClick={() => setShowLoadingErrorsDialog(false)} color="secondary">
+                        <Button onClick={() => setShowLoadingErrorsDialog(false)} tone="neutral">
                             No, don&apos;t continue
                         </Button>
-                        <Button onClick={props.onConfirmContinue} color="primary">
+                        <Button onClick={props.onConfirmContinue} tone="accent">
                             Yes, continue
                         </Button>
                     </div>

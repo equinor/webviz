@@ -1,0 +1,165 @@
+@theme inline {
+    /* Remove all default colors from the theme, to ensure that all colors are derived from EDS tokens. */
+    --color-*: initial;
+
+    /* Surface/background */
+    --color-fill-canvas: var(--eds-color-bg-neutral-canvas);
+    --color-fill-surface: var(--eds-color-bg-neutral-surface);
+    --color-fill-floating: var(--eds-color-bg-floating);
+    --color-fill-backdrop: var(--eds-color-bg-backdrop);
+    --color-fill-input: var(--eds-color-bg-input);
+
+    /* Neutral fills */
+    --color-fill-neutral-canvas: var(--eds-color-bg-neutral-canvas);
+    --color-fill-neutral-surface: var(--eds-color-bg-neutral-surface);
+
+    --color-fill-neutral: var(--eds-color-bg-neutral-fill-muted-default);
+    --color-fill-neutral-hover: var(--eds-color-bg-neutral-fill-muted-hover);
+    --color-fill-neutral-active: var(--eds-color-bg-neutral-fill-muted-active);
+
+    --color-fill-neutral-strong: var(--eds-color-bg-neutral-fill-emphasis-default);
+    --color-fill-neutral-strong-hover: var(--eds-color-bg-neutral-fill-emphasis-hover);
+    --color-fill-neutral-strong-active: var(--eds-color-bg-neutral-fill-emphasis-active);
+
+    /* Accent fills */
+    --color-fill-accent-canvas: var(--eds-color-bg-accent-canvas);
+    --color-fill-accent-surface: var(--eds-color-bg-accent-surface);
+
+    --color-fill-accent: var(--eds-color-bg-accent-fill-muted-default);
+    --color-fill-accent-hover: var(--eds-color-bg-accent-fill-muted-hover);
+    --color-fill-accent-active: var(--eds-color-bg-accent-fill-muted-active);
+
+    --color-fill-accent-strong: var(--eds-color-bg-accent-fill-emphasis-default);
+    --color-fill-accent-strong-hover: var(--eds-color-bg-accent-fill-emphasis-hover);
+    --color-fill-accent-strong-active: var(--eds-color-bg-accent-fill-emphasis-active);
+
+    /* Success fills */
+    --color-fill-success-canvas: var(--eds-color-bg-success-canvas);
+    --color-fill-success-surface: var(--eds-color-bg-success-surface);
+
+    --color-fill-success: var(--eds-color-bg-success-fill-muted-default);
+    --color-fill-success-hover: var(--eds-color-bg-success-fill-muted-hover);
+    --color-fill-success-active: var(--eds-color-bg-success-fill-muted-active);
+
+    --color-fill-success-strong: var(--eds-color-bg-success-fill-emphasis-default);
+    --color-fill-success-strong-hover: var(--eds-color-bg-success-fill-emphasis-hover);
+    --color-fill-success-strong-active: var(--eds-color-bg-success-fill-emphasis-active);
+
+    /* Info fills */
+    --color-fill-info-canvas: var(--eds-color-bg-info-canvas);
+    --color-fill-info-surface: var(--eds-color-bg-info-surface);
+
+    --color-fill-info: var(--eds-color-bg-info-fill-muted-default);
+    --color-fill-info-hover: var(--eds-color-bg-info-fill-muted-hover);
+    --color-fill-info-active: var(--eds-color-bg-info-fill-muted-active);
+
+    --color-fill-info-strong: var(--eds-color-bg-info-fill-emphasis-default);
+    --color-fill-info-strong-hover: var(--eds-color-bg-info-fill-emphasis-hover);
+    --color-fill-info-strong-active: var(--eds-color-bg-info-fill-emphasis-active);
+
+    /* Warning fills */
+    --color-fill-warning-canvas: var(--eds-color-bg-warning-canvas);
+    --color-fill-warning-surface: var(--eds-color-bg-warning-surface);
+
+    --color-fill-warning: var(--eds-color-bg-warning-fill-muted-default);
+    --color-fill-warning-hover: var(--eds-color-bg-warning-fill-muted-hover);
+    --color-fill-warning-active: var(--eds-color-bg-warning-fill-muted-active);
+
+    --color-fill-warning-strong: var(--eds-color-bg-warning-fill-emphasis-default);
+    --color-fill-warning-strong-hover: var(--eds-color-bg-warning-fill-emphasis-hover);
+    --color-fill-warning-strong-active: var(--eds-color-bg-warning-fill-emphasis-active);
+
+    /* Danger fills */
+    --color-fill-danger-canvas: var(--eds-color-bg-danger-canvas);
+    --color-fill-danger-surface: var(--eds-color-bg-danger-surface);
+
+    --color-fill-danger: var(--eds-color-bg-danger-fill-muted-default);
+    --color-fill-danger-hover: var(--eds-color-bg-danger-fill-muted-hover);
+    --color-fill-danger-active: var(--eds-color-bg-danger-fill-muted-active);
+
+    --color-fill-danger-strong: var(--eds-color-bg-danger-fill-emphasis-default);
+    --color-fill-danger-strong-hover: var(--eds-color-bg-danger-fill-emphasis-hover);
+    --color-fill-danger-strong-active: var(--eds-color-bg-danger-fill-emphasis-active);
+
+    /* Neutral borders */
+    --color-stroke-neutral-subtle: var(--eds-color-border-neutral-subtle);
+    --color-stroke-neutral: var(--eds-color-border-neutral-medium);
+    --color-stroke-neutral-strong: var(--eds-color-border-neutral-strong);
+
+    /* Accent borders */
+    --color-stroke-accent-subtle: var(--eds-color-border-accent-subtle);
+    --color-stroke-accent: var(--eds-color-border-accent-medium);
+    --color-stroke-accent-strong: var(--eds-color-border-accent-strong);
+
+    /* Success borders */
+    --color-stroke-success-subtle: var(--eds-color-border-success-subtle);
+    --color-stroke-success: var(--eds-color-border-success-medium);
+    --color-stroke-success-strong: var(--eds-color-border-success-strong);
+
+    /* Info borders */
+    --color-stroke-info-subtle: var(--eds-color-border-info-subtle);
+    --color-stroke-info: var(--eds-color-border-info-medium);
+    --color-stroke-info-strong: var(--eds-color-border-info-strong);
+
+    /* Warning borders */
+    --color-stroke-warning-subtle: var(--eds-color-border-warning-subtle);
+    --color-stroke-warning: var(--eds-color-border-warning-medium);
+    --color-stroke-warning-strong: var(--eds-color-border-warning-strong);
+
+    /* Danger borders */
+    --color-stroke-danger-subtle: var(--eds-color-border-danger-subtle);
+    --color-stroke-danger: var(--eds-color-border-danger-medium);
+    --color-stroke-danger-strong: var(--eds-color-border-danger-strong);
+
+    --color-focus: var(--eds-color-border-focus);
+
+    /* Text neutral */
+    --color-text-neutral-subtle: var(--eds-color-text-neutral-subtle);
+    --color-text-neutral: var(--eds-color-text-neutral-default);
+    --color-text-neutral-strong: var(--eds-color-text-neutral-strong);
+    --color-text-neutral-subtle-on-emphasis: var(--eds-color-text-neutral-subtle-on-emphasis);
+    --color-text-neutral-strong-on-emphasis: var(--eds-color-text-neutral-strong-on-emphasis);
+
+    /* Text accent */
+    --color-text-accent-subtle: var(--eds-color-text-accent-subtle);
+    --color-text-accent: var(--eds-color-text-accent-default);
+    --color-text-accent-strong: var(--eds-color-text-accent-strong);
+    --color-text-accent-subtle-on-emphasis: var(--eds-color-text-accent-subtle-on-emphasis);
+    --color-text-accent-strong-on-emphasis: var(--eds-color-text-accent-strong-on-emphasis);
+
+    /* Text success */
+    --color-text-success-subtle: var(--eds-color-text-success-subtle);
+    --color-text-success: var(--eds-color-text-success-default);
+    --color-text-success-strong: var(--eds-color-text-success-strong);
+    --color-text-success-subtle-on-emphasis: var(--eds-color-text-success-subtle-on-emphasis);
+    --color-text-success-strong-on-emphasis: var(--eds-color-text-success-strong-on-emphasis);
+
+    /* Text info */
+    --color-text-info-subtle: var(--eds-color-text-info-subtle);
+    --color-text-info: var(--eds-color-text-info-default);
+    --color-text-info-strong: var(--eds-color-text-info-strong);
+    --color-text-info-subtle-on-emphasis: var(--eds-color-text-info-subtle-on-emphasis);
+    --color-text-info-strong-on-emphasis: var(--eds-color-text-info-strong-on-emphasis);
+
+    /* Text warning */
+    --color-text-warning-subtle: var(--eds-color-text-warning-subtle);
+    --color-text-warning: var(--eds-color-text-warning-default);
+    --color-text-warning-strong: var(--eds-color-text-warning-strong);
+    --color-text-warning-subtle-on-emphasis: var(--eds-color-text-warning-subtle-on-emphasis);
+    --color-text-warning-strong-on-emphasis: var(--eds-color-text-warning-strong-on-emphasis);
+
+    /* Text danger */
+    --color-text-danger-subtle: var(--eds-color-text-danger-subtle);
+    --color-text-danger: var(--eds-color-text-danger-default);
+    --color-text-danger-strong: var(--eds-color-text-danger-strong);
+    --color-text-danger-subtle-on-emphasis: var(--eds-color-text-danger-subtle-on-emphasis);
+    --color-text-danger-strong-on-emphasis: var(--eds-color-text-danger-strong-on-emphasis);
+
+    /* Text link */
+    --color-text-link: var(--eds-color-text-link);
+
+    /* Disabled */
+    --color-fill-disabled: var(--eds-color-bg-fill-emphasis-disabled);
+    --color-text-disabled: var(--eds-color-text-neutral-subtle);
+    --color-stroke-disabled: var(--eds-color-border-neutral-subtle);
+}

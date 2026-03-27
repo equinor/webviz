@@ -85,13 +85,13 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames("bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col w-16")}
+            className={resolveClassNames("bg-elevated border-stroke-subtle border-l p-2 z-50 shadow-lg flex flex-col")}
         >
             <div className="flex flex-col gap-2 grow">
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.ModulesList}
                     tooltip="Show modules list"
-                    icon={<WebAsset fontSize="small" className="size-5" />}
+                    icon={<WebAsset fontSize="small" />}
                     onClick={handleModulesListClick}
                     disabled={isSnapshot}
                     disabledTooltip="Modules cannot be changed in snapshot mode"
@@ -113,7 +113,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     disabledTooltip="Realization filters cannot be changed in snapshot mode"
                 />
                 <NavBarButton
-                    icon={<History fontSize="small" className="size-5 mr-2" />}
+                    icon={<History fontSize="small" />}
                     active={drawerContent === RightDrawerContent.ModuleInstanceLog}
                     tooltip="Open module log"
                     onClick={handleModuleInstanceLogClick}
@@ -122,7 +122,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.ColorPaletteSettings}
                     tooltip="Show color settings"
-                    icon={<Palette fontSize="small" className="size-5" />}
+                    icon={<Palette fontSize="small" />}
                     onClick={handleColorPaletteSettingsClick}
                 />
             </div>
@@ -163,10 +163,10 @@ function RealizationFilterButtonIcon(
     return (
         <Badge
             badgeContent={numberOfUnsavedRealizationFilters ? "!" : numberOfEffectiveRealizationFilters || undefined}
-            color={numberOfUnsavedRealizationFilters ? "bg-orange-500" : "bg-blue-500"}
+            color={numberOfUnsavedRealizationFilters ? "bg-fill-warning-strong" : "bg-fill-accent-strong"}
             invisible={!numberOfUnsavedRealizationFilters && !numberOfEffectiveRealizationFilters}
         >
-            <FilterAlt fontSize="small" className="size-5 mr-2" />
+            <FilterAlt fontSize="small" />
         </Badge>
     );
 }

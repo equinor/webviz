@@ -1,16 +1,18 @@
 import React from "react";
 
-import { Icon, Typography } from "@equinor/eds-core-react";
+import { Icon } from "@equinor/eds-core-react";
 import { folder_open } from "@equinor/eds-icons";
 import { Refresh } from "@mui/icons-material";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Heading } from "@lib/newComponents/Heading";
+import { Typography } from "@lib/newComponents/Typography";
 
 Icon.add({ folder_open });
 
@@ -52,7 +54,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
         if (isFirstTimeFetching) {
             if (itemsQuery.status === "pending") {
                 return (
-                    <span className="text-gray-500 flex gap-2">
+                    <span className="flex gap-2 text-gray-500">
                         <CircularProgress size="extra-small" /> Loading recent items...
                     </span>
                 );
@@ -67,7 +69,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
             const transformedData = props.transformData(itemsQuery.data);
 
             if (transformedData.length === 0) {
-                return <span className="text-gray-400 italic h-full flex flex-col justify-center">None found.</span>;
+                return <span className="flex h-full flex-col justify-center text-gray-400 italic">None found.</span>;
             }
             return (
                 <>
@@ -82,31 +84,31 @@ export function RecentList<TItemType, TQueryData = unknown>(
     }
 
     return (
-        <section className="flex gap-1 flex-col">
-            <div className="flex items-center gap-2">
-                <Typography variant="h3" className="grow">
+        <section className="flex flex-col gap-1">
+            <div className="gap-space-xs flex items-center">
+                <Heading as="h4" className="grow">
                     {props.title}
-                </Typography>
+                </Heading>
                 <Tooltip title="Refresh" placement="bottom" enterDelay="medium">
-                    <DenseIconButton onClick={refresh}>
+                    <Button size="small" tone="neutral" variant="text" iconOnly onClick={refresh}>
                         {isRefreshing ? (
                             <CircularProgress size="medium-small" color="fill-indigo-800" />
                         ) : (
                             <Refresh fontSize="small" className="text-indigo-800" />
                         )}
-                    </DenseIconButton>
+                    </Button>
                 </Tooltip>
                 <Tooltip title="Show all" placement="bottom" enterDelay="medium">
-                    <DenseIconButton onClick={props.onDialogIconClick}>
-                        <Icon name="folder_open" className="text-indigo-800 h-5" />
-                    </DenseIconButton>
+                    <Button size="small" tone="neutral" variant="text" iconOnly onClick={props.onDialogIconClick}>
+                        <Icon name="folder_open" className="h-5 text-indigo-800" />
+                    </Button>
                 </Tooltip>
             </div>
-            <span className="text-gray-500 text-xs">
+            <Typography size="sm" family="body" className="text-text-neutral-subtle">
                 Last updated:{" "}
                 {lastUpdatedMs ? <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} /> : "Never"}
-            </span>
-            <div className="flex flex-col gap-2 mt-2 min-h-16">{makeContent()}</div>
+            </Typography>
+            <div className="mt-2 flex min-h-16 flex-col gap-2">{makeContent()}</div>
         </section>
     );
 }

@@ -1,8 +1,9 @@
 import React from "react";
 
-import { type ConfirmOptions, ConfirmationService } from "@framework/ConfirmationService";
+import { ConfirmActionColor, type ConfirmOptions, ConfirmationService } from "@framework/ConfirmationService";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
+import { ButtonProps } from "@lib/components/Button/newButton";
 
 export function GlobalConfirmationDialog(): React.ReactNode {
     const [visible, setVisible] = React.useState<boolean>(false);
@@ -36,7 +37,8 @@ export function GlobalConfirmationDialog(): React.ReactNode {
                     {options.actions.map((action) => (
                         <Button
                             key={action.id}
-                            color={action.color ?? "primary"}
+                            variant="text"
+                            tone={mapActionColorToButtonTone(action.color)}
                             onClick={() => handleAction(action.id)}
                         >
                             {action.label}
@@ -49,4 +51,17 @@ export function GlobalConfirmationDialog(): React.ReactNode {
             {options.message}
         </Dialog>
     );
+}
+
+function mapActionColorToButtonTone(color: ConfirmActionColor | undefined): ButtonProps["tone"] {
+    switch (color) {
+        case "primary":
+            return "accent";
+        case "danger":
+            return "danger";
+        case "secondary":
+            return "neutral";
+        default:
+            return "accent";
+    }
 }

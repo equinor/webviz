@@ -2,6 +2,7 @@ import React from "react";
 
 import { createRoot } from "react-dom/client";
 import { ToastContainer } from "react-toastify";
+import "@fontsource-variable/inter/wght.css";
 
 import { client } from "@api";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";

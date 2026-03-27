@@ -4,11 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
+import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Avatar } from "@lib/newComponents/Avatar";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { UserAvatar } from "../../UserAvatar";
+import { makeInitials } from "@lib/utils/userNames";
 
 export type ItemCardProps = {
     id: string;
@@ -52,19 +53,22 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
             enterDelay="medium"
         >
             <a
-                className={resolveClassNames("flex gap-4 items-center px-2 py-1 rounded text-indigo-600 font-medium", {
-                    "opacity-50 italic line-through cursor-not-allowed": props.isDeleted,
-                    "hover:bg-indigo-100": !props.isDeleted,
-                })}
+                className={resolveClassNames(
+                    "gap-space-xs px-selectable-x py-selectable-y h-selectable-md text-text-accent-subtle text-body-md flex items-center rounded",
+                    {
+                        "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
+                        "hover:bg-fill-accent-hover": !props.isDeleted,
+                    },
+                )}
                 href={props.href}
                 onClick={handleClick}
             >
-                <div className="w-60 overflow-hidden truncate grow">
+                <div className="w-60 grow truncate overflow-hidden">
                     <span>{props.title}</span>
                 </div>
                 {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="w-20 ml-auto text-gray-500 whitespace-nowrap text-xs">
-                    ~ <TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
+                <span className="ml-auto w-20 text-xs whitespace-nowrap">
+                    ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
                 </span>
             </a>
         </Tooltip>
@@ -75,11 +79,17 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const name = props.owner?.principal_name?.split("@")?.[0].toLocaleLowerCase();
 
     return (
-        <div className="flex gap-1 items-center text-sm italic text-gray-500">
-            <UserAvatar
-                userIdOrEmail={props.owner?.id ?? ""}
-                className="shrink-0 inline"
-                userDisplayName={props.owner?.display_name}
+        <div className="gap-space-xs text-body-sm flex items-center italic">
+            <Avatar
+                size="small"
+                image={
+                    name
+                        ? fetchUserAvatar(name, props.owner?.display_name ?? "")
+                        : {
+                              initials: props.owner ? (makeInitials(props.owner.display_name) ?? "") : undefined,
+                              title: props.owner?.display_name,
+                          }
+                }
             />
             <span className="truncate">{name}</span>
         </div>
@@ -102,12 +112,12 @@ function TooltipContent(
         return "This item has been deleted.";
     }
     return (
-        <div className="w-2xs whitespace-normal text-base">
+        <div className="w-2xs text-base whitespace-normal">
             <h3 className="text-lg">{props.title}</h3>
-            <hr className="h-px mb-2 bg-white/25" />
+            <hr className="mb-2 h-px bg-white/25" />
             {props.description && <p className="text-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
-                <ul className="mt-6 text-sm truncate">
+                <ul className="mt-6 truncate text-sm">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
                         <li key={k} className="truncate">
                             {k}: <strong>{v}</strong>
@@ -115,7 +125,7 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="italic mt-4 block text-gray-400 text-sm">Click to open</span>
+            <span className="text-text-neutral-subtle mt-4 block text-sm italic">Click to open</span>
         </div>
     );
 }

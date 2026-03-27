@@ -23,7 +23,7 @@ import {
     type IsoStringRange,
 } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
+import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
@@ -47,6 +47,8 @@ import {
     TABLE_HEIGHT,
     USE_ALTERNATING_COLUMN_COLORS,
 } from "./constants";
+import { Avatar } from "@lib/newComponents/Avatar";
+import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -134,7 +136,7 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
 
             return (
                 <CopyCellValue onCopyRequested={handleCopyRequested}>
-                    <div className="h-full group relative flex items-center min-w-0" style={style} title={url}>
+                    <div className="group relative flex h-full min-w-0 items-center" style={style} title={url}>
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
                     </div>
                 </CopyCellValue>
@@ -154,7 +156,7 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
             const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
             return (
                 <div className="flex gap-1" style={style}>
-                    <UserAvatar userIdOrEmail={userId} userDisplayName={ownerInfo?.display_name} />
+                    <Avatar image={fetchUserAvatar(name ?? "", ownerInfo?.display_name)} size="small" />
                     {name}
                 </div>
             );
@@ -417,13 +419,13 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 </Label>
                 <Label text="Last visited at" wrapperClassName="min-w-2xs">
                     <DateRangePicker
-                        className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300"
+                        className="webviz-eds-date-range-picker --compact rounded border border-gray-300 focus-within:outline-0"
                         value={isoRangeToEdsDateRange(tableFilter.visitedAt ?? null)}
                         onChange={handleDateFilterRangeChange}
                     />
                 </Label>
             </div>
-            <div className="flex gap-4 mb-2 items-center">
+            <div className="mb-2 flex items-center gap-4">
                 <Label text="Show my snapshots only" wrapperClassName="flex items-center" position="right">
                     <Switch checked={tableFilter.ownerId === userId} onChange={handleShowMySnapshotsOnlyChange} />
                 </Label>
@@ -436,27 +438,29 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 <span className="grow" />
                 <Tooltip title={"Open selected snapshot"} placement="top" enterDelay="medium">
                     <Button
-                        color="primary"
+                        variant="text"
+                        tone="accent"
                         disabled={!selectedSnapshotId || selectedSnapshot?.snapshotDeleted}
                         onClick={handleOpenSnapshotClick}
-                        size="medium"
+                        size="small"
                     >
                         <FileOpen fontSize="inherit" /> Open
                     </Button>
                 </Tooltip>
                 <Tooltip title={deleteButtonTooltip} placement="top" enterDelay="medium">
                     <Button
-                        color="danger"
+                        variant="text"
+                        tone="danger"
                         disabled={!selectedSnapshotId || deletePending || !userId}
                         onClick={handleDeleteClick}
-                        size="medium"
+                        size="small"
                     >
                         {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />}{" "}
                         {deleteButtonText}
                     </Button>
                 </Tooltip>
                 <Tooltip title="Refresh list" placement="top" enterDelay="medium">
-                    <Button color="primary" onClick={refresh} size="medium">
+                    <Button variant="text" tone="accent" onClick={refresh} size="small">
                         {isRefreshing ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />} Refresh
                     </Button>
                 </Tooltip>

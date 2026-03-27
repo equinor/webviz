@@ -1,21 +1,30 @@
-import { Icon, Typography } from "@equinor/eds-core-react";
-import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
+import React from "react";
+
+import { Icon } from "@equinor/eds-core-react";
+import { category, dashboard, folder_open, github, external_link, add } from "@equinor/eds-icons";
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Heading } from "@lib/newComponents/Heading";
+import { Paragraph } from "@lib/newComponents/Paragraph/paragraph";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Error } from "@mui/icons-material";
+import { Combobox } from "@lib/newComponents/Combobox";
 
-Icon.add({ dashboard, category, folder_open, github, external_link });
+Icon.add({ dashboard, category, folder_open, github, external_link, add });
 
 export type StartPageProps = {
     workbench: Workbench;
 };
 
 export function StartPage(props: StartPageProps) {
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+
     const setShowOverviewDialog = useSetGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogOpen,
@@ -45,10 +54,10 @@ export function StartPage(props: StartPageProps) {
 
     return (
         <>
-            <div className="h-full w-full flex items-center justify-center min-h-0">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-8">
+            <div className="flex h-full min-h-0 w-full items-center justify-center p-57">
+                <div className="px-selectable-horizontal grid grid-cols-2 gap-x-4 gap-y-8">
                     <section className="flex flex-col gap-2">
-                        <Typography variant="h3">Start</Typography>
+                        <Heading as="h3">Start</Heading>
                         <Tooltip
                             placement="right"
                             title="Create a new free session and save it later on demand."
@@ -78,17 +87,23 @@ export function StartPage(props: StartPageProps) {
                     </section>
                     <RecentSessions workbench={props.workbench} />
                     <section className="flex flex-col gap-4">
-                        <Typography variant="h3">Resources</Typography>
+                        <Heading as="h3">Resources</Heading>
                         <a
                             href="https://github.com/equinor/webviz"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-indigo-600 hover:bg-indigo-100 rounded px-4 py-2 font-medium w-max"
+                            className="flex w-max items-center gap-2 rounded px-4 py-2 font-medium text-indigo-600 hover:bg-indigo-100"
                         >
                             <Icon name="github" />
                             Webviz on GitHub
                             <Icon name="external_link" className="h-4" />
                         </a>
+                        <Combobox
+                            items={["User guide", "API reference"]}
+                            placeholder="Documentation"
+                            itemToStringLabel={(item: string) => item}
+                            itemToStringValue={(item: string) => item}
+                        />
                     </section>
                     <RecentSnapshots workbench={props.workbench} />
                 </div>

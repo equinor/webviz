@@ -3,7 +3,7 @@ import type React from "react";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Workbench } from "@framework/Workbench";
-import { Dialog } from "@lib/components/Dialog";
+import { Dialog } from "@lib/newComponents/Dialog";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -34,14 +34,13 @@ export function PersistenceManagementDialog(props: PersistenceManagementDialogPr
     const isDialogOpen = isOpen && !hasActiveSession;
 
     return (
-        <Dialog
-            title={
-                // Padding an border sizes are a bit weird here; this is to align with the close-cross and modal heading border
-                <div className="-mb-4 font-bold text-lg flex items-end">
+        <Dialog.Popup open={isDialogOpen} onOpenChange={setIsOpen} width={1200} height={700}>
+            <Dialog.Header closeIconVisible>
+                <div className="-mb-4 flex items-end text-lg font-bold">
                     <button
-                        className={resolveClassNames("-mb-[2px] px-2 pt-1 pb-2.5 hover:bg-blue-50 rounded-t", {
-                            "border-blue-500 border-b-[3px]": contentMode === "sessions",
-                            "text-gray-500 border-b-[3px] border-transparent hover:border-gray-200":
+                        className={resolveClassNames("hover:bg-fill-accent-hover -mb-0.5 rounded-t px-2 pt-1 pb-1.5", {
+                            "border-stroke-accent-strong border-b-[3px]": contentMode === "sessions",
+                            "border-b-[3px] border-transparent text-gray-500 hover:border-gray-200":
                                 contentMode !== "sessions",
                         })}
                         onClick={() => setContentMode("sessions")}
@@ -49,36 +48,34 @@ export function PersistenceManagementDialog(props: PersistenceManagementDialogPr
                         Sessions
                     </button>
                     <button
-                        className={resolveClassNames("-mb-[2px] px-2 pt-1 pb-2.5 hover:bg-blue-50 rounded-t ml-2 ", {
-                            "border-blue-500 border-b-[3px]": contentMode === "snapshots",
-                            "text-gray-500 border-b-[3px] border-transparent hover:border-gray-200":
-                                contentMode !== "snapshots",
-                        })}
+                        className={resolveClassNames(
+                            "hover:bg-fill-accent-hover -mb-0.5 ml-2 rounded-t px-2 pt-1 pb-1.5",
+                            {
+                                "border-stroke-accent-strong border-b-[3px]": contentMode === "snapshots",
+                                "border-b-[3px] border-transparent text-gray-500 hover:border-gray-200":
+                                    contentMode !== "snapshots",
+                            },
+                        )}
                         onClick={() => setContentMode("snapshots")}
                     >
                         Snapshots
                     </button>
                 </div>
-            }
-            modal
-            open={isDialogOpen}
-            onClose={() => setIsOpen(false)}
-            width={1500}
-            showCloseCross
-            height={700}
-        >
-            {contentMode === "sessions" && (
-                <SessionManagementContent
-                    workbench={props.workbench}
-                    active={isDialogOpen && contentMode === "sessions"}
-                />
-            )}
-            {contentMode === "snapshots" && (
-                <SnapshotManagementContent
-                    workbench={props.workbench}
-                    active={isDialogOpen && contentMode === "snapshots"}
-                />
-            )}
-        </Dialog>
+            </Dialog.Header>
+            <Dialog.Content>
+                {contentMode === "sessions" && (
+                    <SessionManagementContent
+                        workbench={props.workbench}
+                        active={isDialogOpen && contentMode === "sessions"}
+                    />
+                )}
+                {contentMode === "snapshots" && (
+                    <SnapshotManagementContent
+                        workbench={props.workbench}
+                        active={isDialogOpen && contentMode === "snapshots"}
+                    />
+                )}
+            </Dialog.Content>
+        </Dialog.Popup>
     );
 }
