@@ -59,7 +59,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 ? "Initializing..."
                 : "Resetting...";
         return (
-            <div className="h-full w-full flex flex-col justify-center items-center m-2">
+            <div className="m-2 flex h-full w-full flex-col items-center justify-center">
                 <CircularProgress />
                 <div className="mt-4">{text}</div>
             </div>
@@ -71,7 +71,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         if (errorObject) {
             return (
                 <div
-                    className="text-red-600 m-2"
+                    className="m-2 text-red-600"
                     style={{
                         display: activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
                     }}
@@ -85,8 +85,8 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     function makeContent() {
         if (moduleInstanceSettingsStateInvalid) {
             return (
-                <div className="flex flex-col gap-4 h-full w-full justify-center items-center">
-                    <div className="text-red-600 m-2 text-center">
+                <div className="flex h-full w-full flex-col items-center justify-center gap-4">
+                    <div className="m-2 text-center text-red-600">
                         The persisted settings for this module&apos;s settings are invalid and could not be applied.
                         They have most likely been outdated by a module update. You can reset the module to its default
                         values to continue using it.
@@ -139,13 +139,13 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
                 activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
-                "flex-col h-full w-full relative grow",
+                "relative h-full w-full grow flex-col",
             )}
             style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
-                <div className="flex flex-col gap-4 overflow-auto grow">
-                    <div className="p-2 grow">{makeContent()}</div>
+                <div className="flex grow flex-col gap-4 overflow-auto">
+                    <div className="grow p-2">{makeContent()}</div>
                 </div>
             </ErrorBoundary>
         </div>

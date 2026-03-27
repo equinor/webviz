@@ -39,7 +39,7 @@
     /* Font weights */
     --font-weight-light: var(--eds-typography-ui-body-md-font-weight-lighter);
     --font-weight-normal: var(--eds-typography-ui-body-md-font-weight-normal);
-    --font-weight-medium: var(--eds-typography-ui-body-md-font-weight-bolder);
+    --font-weight-bolder: var(--eds-typography-ui-body-md-font-weight-bolder);
 
     /* Line heights — body */
     --leading-body-xs: var(--eds-typography-ui-body-xs-line-height-default);

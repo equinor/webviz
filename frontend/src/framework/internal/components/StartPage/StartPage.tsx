@@ -7,12 +7,14 @@ import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
-import Dialog from "@lib/newComponents/Dialog";
 import { Heading } from "@lib/newComponents/Heading";
 import { Paragraph } from "@lib/newComponents/Paragraph/paragraph";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Error } from "@mui/icons-material";
+import { Combobox } from "@lib/newComponents/Combobox";
 
 Icon.add({ dashboard, category, folder_open, github, external_link, add });
 
@@ -82,21 +84,6 @@ export function StartPage(props: StartPageProps) {
                                 Start from template...
                             </Button>
                         </Tooltip>
-                        <Button variant="text" onClick={() => setDialogOpen(true)}>
-                            <Icon name="add" />
-                            Create ensemble set...
-                        </Button>
-                        <Dialog.Popup open={dialogOpen} onOpenChange={setDialogOpen}>
-                            <Dialog.Header isCloseIconVisible>
-                                <Dialog.Title>Session and snapshot overview</Dialog.Title>
-                            </Dialog.Header>
-                            <Dialog.Content>
-                                <Paragraph size="lg">This dialog is under construction.</Paragraph>
-                            </Dialog.Content>
-                            <Dialog.Actions>
-                                <Button onClick={() => setDialogOpen(false)}>Close </Button>
-                            </Dialog.Actions>
-                        </Dialog.Popup>
                     </section>
                     <RecentSessions workbench={props.workbench} />
                     <section className="flex flex-col gap-4">
@@ -111,6 +98,12 @@ export function StartPage(props: StartPageProps) {
                             Webviz on GitHub
                             <Icon name="external_link" className="h-4" />
                         </a>
+                        <Combobox
+                            items={["User guide", "API reference"]}
+                            placeholder="Documentation"
+                            itemToStringLabel={(item: string) => item}
+                            itemToStringValue={(item: string) => item}
+                        />
                     </section>
                     <RecentSnapshots workbench={props.workbench} />
                 </div>

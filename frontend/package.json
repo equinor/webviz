@@ -35,7 +35,7 @@
         "ts-key-enum v2 and v3 are the same, expect that v3 exports it as const enum. We cannot use v3 since we compile typescript with isolatedModules=true"
     ],
     "dependencies": {
-        "@base-ui/react": "^1.2.0",
+        "@base-ui/react": "^1.3.0",
         "@equinor/eds-core-react": "~0.48.0",
         "@equinor/eds-tokens": "^2.2.0",
         "@equinor/esv-intersection": "^3.1.4",
