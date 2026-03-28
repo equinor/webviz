@@ -1,6 +1,6 @@
 import type { Settings } from "../settings/settingsDefinitions";
 
-import type { DefineBasicDependenciesArgs } from "./customSettingsHandler";
+import type { SetupBasicBindingsContext } from "./customSettingsHandler";
 import type { MakeSettingTypesMap } from "./utils";
 
 /**
@@ -34,10 +34,7 @@ export interface CustomGroupImplementationWithSettings<
      */
     getDefaultSettingsValues?(): Partial<TSettingTypes>;
 
-    /**
-     * Defines dependencies related to this group's settings
-     */
-    defineDependencies?(args: DefineBasicDependenciesArgs<TSettings, TSettingTypes>): void;
+    setupBindings?(args: SetupBasicBindingsContext<TSettings, TSettingTypes>): void;
 }
 
 export function includesSettings(obj: any): obj is CustomGroupImplementationWithSettings {

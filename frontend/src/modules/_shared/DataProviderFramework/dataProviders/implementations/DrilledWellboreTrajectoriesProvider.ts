@@ -25,10 +25,7 @@ import {
     SurfaceAttributeType_api,
 } from "@api";
 import { sortStringArray } from "@lib/utils/arrays";
-import {
-    Setting,
-    type SettingTypeDefinitions,
-} from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
@@ -38,7 +35,7 @@ import type {
     DataProviderAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const drilledWellboreTrajectoriesSettings = [
@@ -72,14 +69,11 @@ export type DrilledWellboreTrajectoriesStoredData = {
     injectionData: WellInjectionData_api[];
 };
 
-export class DrilledWellboreTrajectoriesProvider
-    implements
-        CustomDataProviderImplementation<
-            DrilledWellboreTrajectoriesSettings,
-            DrilledWellboreTrajectoriesData,
-            DrilledWellboreTrajectoriesStoredData
-        >
-{
+export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderImplementation<
+    DrilledWellboreTrajectoriesSettings,
+    DrilledWellboreTrajectoriesData,
+    DrilledWellboreTrajectoriesStoredData
+> {
     settings = drilledWellboreTrajectoriesSettings;
 
     getDefaultName() {
@@ -270,203 +264,261 @@ export class DrilledWellboreTrajectoriesProvider
         return result;
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
-        settingAttributesUpdater,
-        storedDataUpdater,
-        workbenchSession,
+    setupBindings({
+        setting,
+        storedData,
+        makeSharedResult,
         queryClient,
-    }: DefineDependenciesArgs<DrilledWellboreTrajectoriesSettings, DrilledWellboreTrajectoriesStoredData>) {
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-
-            const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent());
-
-            return ensembleIdents;
+        workbenchSession,
+    }: SetupBindingsContext<DrilledWellboreTrajectoriesSettings, DrilledWellboreTrajectoriesStoredData>) {
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                return ensembles
+                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                    .map((ensemble) => ensemble.getIdent());
+            },
         });
 
-        const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            const ensembleSet = workbenchSession.getEnsembleSet();
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-            if (!ensemble) {
-                return null;
-            }
-
-            const fieldIdentifier = ensemble.getFieldIdentifier();
-
-            return await queryClient.fetchQuery({
-                ...getDrilledWellboreHeadersOptions({
-                    query: { field_identifier: fieldIdentifier },
-                    signal: abortSignal,
-                }),
-            });
-        });
-
-        valueConstraintsUpdater(Setting.WELLBORES, ({ getHelperDependency }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
-
-            if (!wellboreHeaders) {
-                return [];
-            }
-
-            return wellboreHeaders;
-        });
-
-        const realizationSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            return await queryClient.fetchQuery({
-                ...getRealizationSurfacesMetadataOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                    },
-                    signal: abortSignal,
-                }),
-            });
-        });
-
-        settingAttributesUpdater(Setting.MD_RANGE, ({ getLocalSetting }) => {
-            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
-            return {
-                visible: filterType === "md_range",
-            };
-        });
-
-        valueConstraintsUpdater(Setting.MD_RANGE, ({ getHelperDependency, getLocalSetting }) => {
-            const data = getHelperDependency(wellboreHeadersDep);
-            const selectedWellboreHeaders = getLocalSetting(Setting.WELLBORES);
-
-            if (!data || !selectedWellboreHeaders) {
-                return NO_UPDATE;
-            }
-
-            const filteredData = data.filter((header) =>
-                selectedWellboreHeaders.some((wb) => wb.wellboreUuid === header.wellboreUuid),
-            );
-
-            if (filteredData.length === 0) {
-                return [0, 0, 1];
-            }
-
-            let globalMin = Number.POSITIVE_INFINITY;
-            let globalMax = Number.NEGATIVE_INFINITY;
-
-            for (const header of filteredData) {
-                if (header.mdMin !== null && header.mdMin !== undefined) {
-                    globalMin = Math.min(globalMin, header.mdMin);
+        const wellboreHeaders = makeSharedResult({
+            debugName: "WellboreHeaders",
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            async resolve({ ensembleIdent }, { abortSignal }) {
+                if (!ensembleIdent) {
+                    return null;
                 }
-                if (header.mdMax !== null && header.mdMax !== undefined) {
-                    globalMax = Math.max(globalMax, header.mdMax);
+
+                const ensembleSet = workbenchSession.getEnsembleSet();
+                const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+
+                if (!ensemble) {
+                    return null;
                 }
-            }
 
-            if (globalMin === Number.POSITIVE_INFINITY || globalMax === Number.NEGATIVE_INFINITY) {
-                return [0, 0, 1];
-            }
+                const fieldIdentifier = ensemble.getFieldIdentifier();
 
-            return [globalMin, globalMax, 1];
+                return await queryClient.fetchQuery({
+                    ...getDrilledWellboreHeadersOptions({
+                        query: { field_identifier: fieldIdentifier },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        settingAttributesUpdater(Setting.TVD_RANGE, ({ getLocalSetting }) => {
-            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
-            return {
-                visible: filterType === "tvd_range",
-            };
-        });
-
-        valueConstraintsUpdater(Setting.TVD_RANGE, ({ getHelperDependency, getLocalSetting }) => {
-            const data = getHelperDependency(wellboreHeadersDep);
-            const selectedWellboreHeaders = getLocalSetting(Setting.WELLBORES);
-
-            if (!data || !selectedWellboreHeaders) {
-                return NO_UPDATE;
-            }
-
-            const filteredData = data.filter((header) =>
-                selectedWellboreHeaders.some((wb) => wb.wellboreUuid === header.wellboreUuid),
-            );
-
-            if (filteredData.length === 0) {
-                return [0, 0, 1];
-            }
-
-            let globalMin = Number.POSITIVE_INFINITY;
-            let globalMax = Number.NEGATIVE_INFINITY;
-
-            for (const header of filteredData) {
-                if (header.tvdMin !== null && header.tvdMin !== undefined) {
-                    globalMin = Math.min(globalMin, header.tvdMin);
+        setting(Setting.WELLBORES).bindValueConstraints({
+            read(read) {
+                return {
+                    wellboreHeaders: read.sharedResult(wellboreHeaders),
+                };
+            },
+            resolve({ wellboreHeaders }) {
+                if (!wellboreHeaders) {
+                    return [];
                 }
-                if (header.tvdMax !== null && header.tvdMax !== undefined) {
-                    globalMax = Math.max(globalMax, header.tvdMax);
+
+                return wellboreHeaders;
+            },
+        });
+
+        const realizationSurfaceMetadata = makeSharedResult({
+            debugName: "RealizationSurfaceMetadata",
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            async resolve({ ensembleIdent }, { abortSignal }) {
+                if (!ensembleIdent) {
+                    return null;
                 }
-            }
 
-            if (globalMin === Number.POSITIVE_INFINITY || globalMax === Number.NEGATIVE_INFINITY) {
-                return [0, 0, 1];
-            }
-
-            return [globalMin, globalMax, 1];
+                return await queryClient.fetchQuery({
+                    ...getRealizationSurfacesMetadataOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getLocalSetting }) => {
-            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
-            return {
-                visible: filterType === "surface_based",
-            };
+        setting(Setting.MD_RANGE).bindAttributes({
+            read(read) {
+                return {
+                    filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
+                };
+            },
+            resolve({ filterType }) {
+                return {
+                    visible: filterType === "md_range",
+                };
+            },
         });
 
-        valueConstraintsUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(realizationSurfaceMetadataDep);
+        setting(Setting.MD_RANGE).bindValueConstraints({
+            read(read) {
+                return {
+                    wellboreHeaders: read.sharedResult(wellboreHeaders),
+                    selectedWellbores: read.localSetting(Setting.WELLBORES),
+                };
+            },
+            resolve({ wellboreHeaders, selectedWellbores }) {
+                if (!wellboreHeaders || !selectedWellbores) {
+                    return NO_UPDATE;
+                }
 
-            if (!data) {
-                return [];
-            }
+                const filteredHeaders = wellboreHeaders.filter((header) =>
+                    selectedWellbores.some((wb) => wb.wellboreUuid === header.wellboreUuid),
+                );
 
-            const availableAttributes = [
-                ...Array.from(
-                    new Set(
-                        data.surfaces
+                if (filteredHeaders.length === 0) {
+                    return [0, 0, 1];
+                }
+
+                let globalMin = Number.POSITIVE_INFINITY;
+                let globalMax = Number.NEGATIVE_INFINITY;
+
+                for (const header of filteredHeaders) {
+                    if (header.mdMin !== null && header.mdMin !== undefined) {
+                        globalMin = Math.min(globalMin, header.mdMin);
+                    }
+                    if (header.mdMax !== null && header.mdMax !== undefined) {
+                        globalMax = Math.max(globalMax, header.mdMax);
+                    }
+                }
+
+                if (globalMin === Number.POSITIVE_INFINITY || globalMax === Number.NEGATIVE_INFINITY) {
+                    return [0, 0, 1];
+                }
+
+                return [globalMin, globalMax, 1];
+            },
+        });
+
+        setting(Setting.TVD_RANGE).bindAttributes({
+            read(read) {
+                return {
+                    filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
+                };
+            },
+            resolve({ filterType }) {
+                return {
+                    visible: filterType === "tvd_range",
+                };
+            },
+        });
+
+        setting(Setting.TVD_RANGE).bindValueConstraints({
+            read(read) {
+                return {
+                    wellboreHeaders: read.sharedResult(wellboreHeaders),
+                    selectedWellbores: read.localSetting(Setting.WELLBORES),
+                };
+            },
+            resolve({ wellboreHeaders, selectedWellbores }) {
+                if (!wellboreHeaders || !selectedWellbores) {
+                    return NO_UPDATE;
+                }
+
+                const filteredHeaders = wellboreHeaders.filter((header) =>
+                    selectedWellbores.some((wb) => wb.wellboreUuid === header.wellboreUuid),
+                );
+
+                if (filteredHeaders.length === 0) {
+                    return [0, 0, 1];
+                }
+
+                let globalMin = Number.POSITIVE_INFINITY;
+                let globalMax = Number.NEGATIVE_INFINITY;
+
+                for (const header of filteredHeaders) {
+                    if (header.tvdMin !== null && header.tvdMin !== undefined) {
+                        globalMin = Math.min(globalMin, header.tvdMin);
+                    }
+                    if (header.tvdMax !== null && header.tvdMax !== undefined) {
+                        globalMax = Math.max(globalMax, header.tvdMax);
+                    }
+                }
+
+                if (globalMin === Number.POSITIVE_INFINITY || globalMax === Number.NEGATIVE_INFINITY) {
+                    return [0, 0, 1];
+                }
+
+                return [globalMin, globalMax, 1];
+            },
+        });
+
+        setting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE).bindAttributes({
+            read(read) {
+                return {
+                    filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
+                };
+            },
+            resolve({ filterType }) {
+                return {
+                    visible: filterType === "surface_based",
+                };
+            },
+        });
+
+        setting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE).bindValueConstraints({
+            read(read) {
+                return {
+                    realizationSurfaceMetadata: read.sharedResult(realizationSurfaceMetadata),
+                };
+            },
+            resolve({ realizationSurfaceMetadata }) {
+                if (!realizationSurfaceMetadata) {
+                    return [];
+                }
+
+                const availableAttributes = [
+                    ...new Set(
+                        realizationSurfaceMetadata.surfaces
                             .filter((surface) => surface.attribute_type === SurfaceAttributeType_api.DEPTH)
                             .map((surface) => surface.attribute_name),
                     ),
-                ),
-            ];
+                ];
 
-            return availableAttributes;
+                return availableAttributes;
+            },
         });
 
-        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FORMATION_FILTER, ({ getLocalSetting }) => {
-            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
-            return {
-                visible: filterType === "surface_based",
-            };
+        setting(Setting.WELLBORE_DEPTH_FORMATION_FILTER).bindAttributes({
+            read(read) {
+                return {
+                    filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
+                };
+            },
+            resolve({ filterType }) {
+                return {
+                    visible: filterType === "surface_based",
+                };
+            },
         });
 
-        valueConstraintsUpdater(
-            Setting.WELLBORE_DEPTH_FORMATION_FILTER,
-            ({ getLocalSetting, getGlobalSetting, getHelperDependency }) => {
-                const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-                const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
-                const attribute = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE);
-                const data = getHelperDependency(realizationSurfaceMetadataDep);
-
+        setting(Setting.WELLBORE_DEPTH_FORMATION_FILTER).bindValueConstraints({
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunc: read.globalSetting("realizationFilterFunction"),
+                    attribute: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE),
+                    realizationSurfaceMetadata: read.sharedResult(realizationSurfaceMetadata),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunc, attribute, realizationSurfaceMetadata }) {
                 const realizationNums: number[] = [];
                 const surfaceNamesInStratOrder: string[] = [];
 
@@ -474,18 +526,19 @@ export class DrilledWellboreTrajectoriesProvider
                     realizationNums.push(...realizationFilterFunc(ensembleIdent));
                 }
 
-                if (attribute && data) {
+                if (attribute && realizationSurfaceMetadata) {
                     const availableSurfaceNames = [
-                        ...Array.from(
-                            new Set(
-                                data.surfaces
-                                    .filter((surface) => surface.attribute_name === attribute)
-                                    .map((el) => el.name),
-                            ),
+                        ...new Set(
+                            realizationSurfaceMetadata.surfaces
+                                .filter((surface) => surface.attribute_name === attribute)
+                                .map((el) => el.name),
                         ),
                     ];
                     surfaceNamesInStratOrder.push(
-                        ...sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order),
+                        ...sortStringArray(
+                            availableSurfaceNames,
+                            realizationSurfaceMetadata.surface_names_in_strat_order,
+                        ),
                     );
                 }
 
@@ -494,154 +547,200 @@ export class DrilledWellboreTrajectoriesProvider
                     realizationNums,
                 };
             },
-        );
-
-        const observedSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            return await queryClient.fetchQuery({
-                ...getObservedSurfacesMetadataOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                    },
-                    signal: abortSignal,
-                }),
-            });
         });
 
-        settingAttributesUpdater(Setting.TIME_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const flowFilterType = getLocalSetting(Setting.FLOW_FILTER_TYPE);
-            const data = getHelperDependency(observedSurfaceMetadataDep);
-            return {
-                enabled: data?.time_intervals_iso_str.length
-                    ? true
-                    : { enabled: false, reason: "No time intervals available" },
-                visible: flowFilterType === "production_injection",
-            };
-        });
-
-        valueConstraintsUpdater(Setting.TIME_INTERVAL, ({ getHelperDependency }) => {
-            const data = getHelperDependency(observedSurfaceMetadataDep);
-
-            if (!data) {
-                return [];
-            }
-
-            return data.time_intervals_iso_str;
-        });
-
-        settingAttributesUpdater(Setting.FLOW_FILTER, ({ getLocalSetting, getHelperDependency }) => {
-            const flowFilterType = getLocalSetting(Setting.FLOW_FILTER_TYPE);
-            const data = getHelperDependency(observedSurfaceMetadataDep);
-            return {
-                enabled: data?.time_intervals_iso_str.length
-                    ? true
-                    : { enabled: false, reason: "No time intervals available" },
-                visible: flowFilterType === "production_injection",
-            };
-        });
-
-        const productionDataDep = helperDependency(async function fetchData({
-            getGlobalSetting,
-            getLocalSetting,
-            abortSignal,
-        }) {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const timeInterval = getLocalSetting(Setting.TIME_INTERVAL);
-            const startDate = timeInterval ? timeInterval.split("/")[0] : undefined;
-            const endDate = timeInterval ? timeInterval.split("/")[1] : undefined;
-            if (!fieldIdentifier || !startDate || !endDate) {
-                return [];
-            }
-            return await queryClient.fetchQuery({
-                ...getProductionDataOptions({
-                    query: {
-                        field_identifier: fieldIdentifier ?? "",
-                        start_date: startDate ?? "",
-                        end_date: endDate ?? "",
-                    },
-                    signal: abortSignal,
-                }),
-            });
-        });
-
-        storedDataUpdater("productionData", ({ getHelperDependency }) => {
-            const productionData = getHelperDependency(productionDataDep);
-            return productionData || [];
-        });
-
-        // Injection data dependency
-        const injectionDataDep = helperDependency(async function fetchData({
-            getGlobalSetting,
-            getLocalSetting,
-            abortSignal,
-        }) {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const timeInterval = getLocalSetting(Setting.TIME_INTERVAL);
-            const startDate = timeInterval ? timeInterval.split("/")[0] : undefined;
-            const endDate = timeInterval ? timeInterval.split("/")[1] : undefined;
-            if (!fieldIdentifier || !startDate || !endDate) {
-                return [];
-            }
-            return await queryClient.fetchQuery({
-                ...getInjectionDataOptions({
-                    query: {
-                        field_identifier: fieldIdentifier ?? "",
-                        start_date: startDate ?? "",
-                        end_date: endDate ?? "",
-                    },
-                    signal: abortSignal,
-                }),
-            });
-        });
-
-        storedDataUpdater("injectionData", ({ getHelperDependency }) => {
-            const injectionData = getHelperDependency(injectionDataDep);
-            return injectionData || [];
-        });
-
-        valueConstraintsUpdater(Setting.FLOW_FILTER, ({ getHelperDependency }) => {
-            const productionData = getHelperDependency(productionDataDep);
-            const injectionData = getHelperDependency(injectionDataDep);
-
-            let maxOilProduction = 0;
-            let maxGasProduction = 0;
-            let maxWaterProduction = 0;
-            let maxGasInjection = 0;
-            let maxWaterInjection = 0;
-
-            if (productionData) {
-                for (const record of productionData) {
-                    maxOilProduction = Math.max(maxOilProduction, record.oilProductionSm3);
-                    maxGasProduction = Math.max(maxGasProduction, record.gasProductionSm3);
-                    maxWaterProduction = Math.max(maxWaterProduction, record.waterProductionM3);
+        const observedSurfaceMetadata = makeSharedResult({
+            debugName: "ObservedSurfaceMetadata",
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            async resolve({ ensembleIdent }, { abortSignal }) {
+                if (!ensembleIdent) {
+                    return null;
                 }
-            }
 
-            if (injectionData) {
-                for (const record of injectionData) {
-                    maxGasInjection = Math.max(maxGasInjection, record.gasInjection);
-                    maxWaterInjection = Math.max(maxWaterInjection, record.waterInjection);
+                return await queryClient.fetchQuery({
+                    ...getObservedSurfacesMetadataOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
+        });
+
+        setting(Setting.TIME_INTERVAL).bindAttributes({
+            read(read) {
+                return {
+                    filterType: read.localSetting(Setting.FLOW_FILTER_TYPE),
+                    observedSurfaceMetadata: read.sharedResult(observedSurfaceMetadata),
+                };
+            },
+            resolve({ filterType, observedSurfaceMetadata }) {
+                return {
+                    visible: filterType === "production_injection",
+                    enabled: observedSurfaceMetadata?.time_intervals_iso_str.length
+                        ? true
+                        : { enabled: false, reason: "No time intervals available" },
+                };
+            },
+        });
+
+        setting(Setting.TIME_INTERVAL).bindValueConstraints({
+            read(read) {
+                return {
+                    observedSurfaceMetadata: read.sharedResult(observedSurfaceMetadata),
+                };
+            },
+            resolve({ observedSurfaceMetadata }) {
+                if (!observedSurfaceMetadata) {
+                    return [];
                 }
-            }
+                return observedSurfaceMetadata.time_intervals_iso_str;
+            },
+        });
 
-            const valueConstraints: SettingTypeDefinitions[Setting.FLOW_FILTER]["valueConstraints"] = {
-                production: {
-                    oil: maxOilProduction,
-                    gas: maxGasProduction,
-                    water: maxWaterProduction,
-                },
-                injection: {
-                    gas: maxGasInjection,
-                    water: maxWaterInjection,
-                },
-            };
+        setting(Setting.FLOW_FILTER).bindAttributes({
+            read(read) {
+                return {
+                    filterType: read.localSetting(Setting.FLOW_FILTER_TYPE),
+                    observedSurfaceMetadata: read.sharedResult(observedSurfaceMetadata),
+                };
+            },
+            resolve({ filterType, observedSurfaceMetadata }) {
+                return {
+                    visible: filterType === "production_injection",
+                    enabled: observedSurfaceMetadata?.time_intervals_iso_str.length
+                        ? true
+                        : { enabled: false, reason: "No time intervals available" },
+                };
+            },
+        });
 
-            return valueConstraints;
+        const productionData = makeSharedResult({
+            debugName: "ProductionData",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    timeInterval: read.localSetting(Setting.TIME_INTERVAL),
+                };
+            },
+            async resolve({ fieldIdentifier, timeInterval }, { abortSignal }) {
+                if (!fieldIdentifier || !timeInterval) {
+                    return [];
+                }
+
+                const startDate = timeInterval.split("/")[0];
+                const endDate = timeInterval.split("/")[1];
+
+                return await queryClient.fetchQuery({
+                    ...getProductionDataOptions({
+                        query: {
+                            field_identifier: fieldIdentifier,
+                            start_date: startDate,
+                            end_date: endDate,
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
+        });
+
+        storedData("productionData").bindValue({
+            read(read) {
+                return {
+                    productionData: read.sharedResult(productionData),
+                };
+            },
+            resolve({ productionData }) {
+                return productionData || [];
+            },
+        });
+
+        const injectionData = makeSharedResult({
+            debugName: "InjectionData",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    timeInterval: read.localSetting(Setting.TIME_INTERVAL),
+                };
+            },
+            async resolve({ fieldIdentifier, timeInterval }, { abortSignal }) {
+                if (!fieldIdentifier || !timeInterval) {
+                    return [];
+                }
+
+                const startDate = timeInterval.split("/")[0];
+                const endDate = timeInterval.split("/")[1];
+
+                return await queryClient.fetchQuery({
+                    ...getInjectionDataOptions({
+                        query: {
+                            field_identifier: fieldIdentifier,
+                            start_date: startDate,
+                            end_date: endDate,
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
+        });
+
+        storedData("injectionData").bindValue({
+            read(read) {
+                return {
+                    injectionData: read.sharedResult(injectionData),
+                };
+            },
+            resolve({ injectionData }) {
+                return injectionData || [];
+            },
+        });
+
+        setting(Setting.FLOW_FILTER).bindValueConstraints({
+            read(read) {
+                return {
+                    productionData: read.sharedResult(productionData),
+                    injectionData: read.sharedResult(injectionData),
+                };
+            },
+            resolve({ productionData, injectionData }) {
+                let maxOilProduction = 0;
+                let maxGasProduction = 0;
+                let maxWaterProduction = 0;
+                let maxGasInjection = 0;
+                let maxWaterInjection = 0;
+
+                if (productionData) {
+                    for (const record of productionData) {
+                        maxOilProduction = Math.max(maxOilProduction, record.oilProductionSm3);
+                        maxGasProduction = Math.max(maxGasProduction, record.gasProductionSm3);
+                        maxWaterProduction = Math.max(maxWaterProduction, record.waterProductionM3);
+                    }
+                }
+
+                if (injectionData) {
+                    for (const record of injectionData) {
+                        maxGasInjection = Math.max(maxGasInjection, record.gasInjection);
+                        maxWaterInjection = Math.max(maxWaterInjection, record.waterInjection);
+                    }
+                }
+
+                return {
+                    production: {
+                        oil: maxOilProduction,
+                        gas: maxGasProduction,
+                        water: maxWaterProduction,
+                    },
+                    injection: {
+                        gas: maxGasInjection,
+                        water: maxWaterInjection,
+                    },
+                };
+            },
         });
     }
 }

@@ -14,7 +14,7 @@ import type {
     DataProviderAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
@@ -137,162 +137,228 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
         );
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
-        settingAttributesUpdater,
-        storedDataUpdater,
+    setupBindings({
+        setting,
+        storedData,
+        makeSharedResult,
         queryClient,
         workbenchSession,
-    }: DefineDependenciesArgs<IntersectionRealizationGridSettings, IntersectionRealizationGridStoredData>): void {
+    }: SetupBindingsContext<IntersectionRealizationGridSettings, IntersectionRealizationGridStoredData>): void {
         const isWellboreExtensionLengthEnabled = this._isWellboreExtensionLengthEnabled;
 
-        settingAttributesUpdater(Setting.WELLBORE_EXTENSION_LENGTH, ({ getLocalSetting }) => {
-            const intersection = getLocalSetting(Setting.INTERSECTION);
-            if (!isWellboreExtensionLengthEnabled) {
-                return { enabled: false, visible: false };
-            }
+        setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
+            read(read) {
+                return {
+                    intersection: read.localSetting(Setting.INTERSECTION),
+                };
+            },
+            resolve({ intersection }) {
+                if (!isWellboreExtensionLengthEnabled) {
+                    return { enabled: false, visible: false };
+                }
 
-            const isEnabled = intersection?.type === IntersectionType.WELLBORE;
-            return { enabled: isEnabled, visible: true };
+                const isEnabled = intersection?.type === IntersectionType.WELLBORE;
+                return { enabled: isEnabled, visible: true };
+            },
         });
 
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-            return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
+            },
         });
 
-        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
-            return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
+        setting(Setting.REALIZATION).bindValueConstraints({
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunc: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunc }) {
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
+            },
         });
 
-        const realizationGridDataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realization = getLocalSetting(Setting.REALIZATION);
+        const realizationGridDataDep = makeSharedResult({
+            debugName: "RealizationGridData",
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realization: read.localSetting(Setting.REALIZATION),
+                };
+            },
+            async resolve({ ensembleIdent, realization }, { abortSignal }) {
+                if (!ensembleIdent || realization === null) {
+                    return null;
+                }
 
-            if (!ensembleIdent || realization === null) {
-                return null;
-            }
-
-            return await queryClient.fetchQuery({
-                ...getGridModelsInfoOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                        realization_num: realization,
-                        ...makeCacheBustingQueryParam(ensembleIdent),
-                    },
-                    signal: abortSignal,
-                }),
-            });
+                return await queryClient.fetchQuery({
+                    ...getGridModelsInfoOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
+                            realization_num: realization,
+                            ...makeCacheBustingQueryParam(ensembleIdent),
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        valueConstraintsUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
-            const data = getHelperDependency(realizationGridDataDep);
+        setting(Setting.GRID_NAME).bindValueConstraints({
+            read(read) {
+                return {
+                    data: read.sharedResult(realizationGridDataDep),
+                };
+            },
+            resolve({ data }) {
+                if (!data) {
+                    return [];
+                }
 
-            if (!data) {
-                return [];
-            }
+                const availableGridNames = Array.from(
+                    new Set(data.map((gridModelInfo) => gridModelInfo.grid_name)),
+                ).sort();
 
-            const availableGridNames = Array.from(new Set(data.map((gridModelInfo) => gridModelInfo.grid_name))).sort();
-
-            return availableGridNames;
+                return availableGridNames;
+            },
         });
 
-        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(Setting.GRID_NAME);
-            const data = getHelperDependency(realizationGridDataDep);
+        setting(Setting.ATTRIBUTE).bindValueConstraints({
+            read(read) {
+                return {
+                    gridName: read.localSetting(Setting.GRID_NAME),
+                    data: read.sharedResult(realizationGridDataDep),
+                };
+            },
+            resolve({ gridName, data }) {
+                if (!gridName || !data) {
+                    return [];
+                }
 
-            if (!gridName || !data) {
-                return [];
-            }
+                const gridAttributeArr =
+                    data.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
 
-            const gridAttributeArr =
-                data.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
+                const availableGridAttributes = Array.from(
+                    new Set(gridAttributeArr.map((gridAttribute) => gridAttribute.property_name)),
+                ).sort();
 
-            const availableGridAttributes = Array.from(
-                new Set(gridAttributeArr.map((gridAttribute) => gridAttribute.property_name)),
-            ).sort();
-
-            return availableGridAttributes;
+                return availableGridAttributes;
+            },
         });
 
-        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+        const wellboreHeadersDep = makeSharedResult({
+            debugName: "WellboreHeaders",
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            resolve({ ensembleIdent }, { abortSignal }) {
+                return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+            },
         });
 
-        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
-            const intersectionPolylines = getGlobalSetting("intersectionPolylines");
-            const fieldIdentifier = getGlobalSetting("fieldId");
+        setting(Setting.INTERSECTION).bindValueConstraints({
+            read(read) {
+                return {
+                    wellboreHeaders: read.sharedResult(wellboreHeadersDep),
+                    intersectionPolylines: read.globalSetting("intersectionPolylines"),
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                };
+            },
+            resolve({ wellboreHeaders, intersectionPolylines, fieldIdentifier }) {
+                const headers = wellboreHeaders ?? [];
 
-            const fieldIntersectionPolylines = intersectionPolylines.filter(
-                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
-            );
+                const fieldIntersectionPolylines = intersectionPolylines.filter(
+                    (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
+                );
 
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+                return getAvailableIntersectionOptions(headers, fieldIntersectionPolylines);
+            },
         });
 
-        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(Setting.GRID_NAME);
-            const gridAttribute = getLocalSetting(Setting.ATTRIBUTE);
-            const data = getHelperDependency(realizationGridDataDep);
+        setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
+            read(read) {
+                return {
+                    gridName: read.localSetting(Setting.GRID_NAME),
+                    gridAttribute: read.localSetting(Setting.ATTRIBUTE),
+                    data: read.sharedResult(realizationGridDataDep),
+                };
+            },
+            resolve({ gridName, gridAttribute, data }) {
+                if (!gridName || !gridAttribute || !data) {
+                    return [];
+                }
 
-            if (!gridName || !gridAttribute || !data) {
-                return [];
-            }
+                const gridAttributeArr =
+                    data.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
 
-            const gridAttributeArr =
-                data.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
+                const availableTimeOrIntervals = Array.from(
+                    new Set(
+                        gridAttributeArr
+                            .filter((attr) => attr.property_name === gridAttribute)
+                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                    ),
+                ).sort((a, b) => {
+                    if (a === "NO_TIME") return -1;
+                    if (b === "NO_TIME") return 1;
+                    return a.localeCompare(b);
+                });
 
-            const availableTimeOrIntervals = Array.from(
-                new Set(
-                    gridAttributeArr
-                        .filter((attr) => attr.property_name === gridAttribute)
-                        .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
-                ),
-            ).sort((a, b) => {
-                if (a === "NO_TIME") return -1;
-                if (b === "NO_TIME") return 1;
-                return a.localeCompare(b);
-            });
-
-            return availableTimeOrIntervals;
+                return availableTimeOrIntervals;
+            },
         });
 
         // Create intersection polyline and actual section lengths data asynchronously
-        const intersectionPolylineWithSectionLengthsDep = helperDependency(({ getLocalSetting, getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const intersection = getLocalSetting(Setting.INTERSECTION);
-            const wellboreExtensionLength = getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
-
-            return createIntersectionPolylineWithSectionLengthsForField(
-                fieldIdentifier,
-                intersection,
-                wellboreExtensionLength,
-                workbenchSession,
-                queryClient,
-            );
+        const intersectionPolylineWithSectionLengthsDep = makeSharedResult({
+            debugName: "IntersectionPolylineWithSectionLengths",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    intersection: read.localSetting(Setting.INTERSECTION),
+                    wellboreExtensionLength: read.localSetting(Setting.WELLBORE_EXTENSION_LENGTH),
+                };
+            },
+            resolve({ fieldIdentifier, intersection, wellboreExtensionLength }, { abortSignal }) {
+                return createIntersectionPolylineWithSectionLengthsForField(
+                    fieldIdentifier,
+                    intersection,
+                    wellboreExtensionLength ?? 0,
+                    workbenchSession,
+                    queryClient,
+                    abortSignal,
+                );
+            },
         });
 
-        storedDataUpdater("polylineWithSectionLengths", ({ getHelperDependency }) => {
-            const intersectionPolylineWithSectionLengths = getHelperDependency(
-                intersectionPolylineWithSectionLengthsDep,
-            );
+        storedData("polylineWithSectionLengths").bindValue({
+            read(read) {
+                return {
+                    intersectionPolylineWithSectionLengths: read.sharedResult(
+                        intersectionPolylineWithSectionLengthsDep,
+                    ),
+                };
+            },
+            resolve({ intersectionPolylineWithSectionLengths }) {
+                // If no intersection is selected, or polyline is empty, cancel update
+                if (
+                    !intersectionPolylineWithSectionLengths ||
+                    intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
+                ) {
+                    return { polylineUtmXy: [], actualSectionLengths: [] };
+                }
 
-            // If no intersection is selected, or polyline is empty, cancel update
-            if (
-                !intersectionPolylineWithSectionLengths ||
-                intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
-            ) {
-                return { polylineUtmXy: [], actualSectionLengths: [] };
-            }
-
-            return intersectionPolylineWithSectionLengths;
+                return intersectionPolylineWithSectionLengths;
+            },
         });
     }
 

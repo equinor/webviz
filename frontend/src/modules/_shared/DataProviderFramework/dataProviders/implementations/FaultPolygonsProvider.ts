@@ -7,7 +7,7 @@ import type {
     CustomDataProviderImplementation,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
@@ -24,9 +24,10 @@ export type FaultPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<FaultPolygonsSettings>;
 
 export type FaultPolygonsData = PolygonData_api[];
-export class FaultPolygonsProvider
-    implements CustomDataProviderImplementation<FaultPolygonsSettings, FaultPolygonsData>
-{
+export class FaultPolygonsProvider implements CustomDataProviderImplementation<
+    FaultPolygonsSettings,
+    FaultPolygonsData
+> {
     settings = realizationPolygonsSettings;
 
     getDefaultName(): string {
@@ -37,87 +38,95 @@ export class FaultPolygonsProvider
         return !isEqual(prevSettings, newSettings);
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
-        queryClient,
-    }: DefineDependenciesArgs<FaultPolygonsSettings>) {
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-
-            const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent());
-
-            return ensembleIdents;
+    setupBindings({ setting, makeSharedResult, queryClient }: SetupBindingsContext<FaultPolygonsSettings>) {
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                return ensembles
+                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                    .map((ensemble) => ensemble.getIdent());
+            },
         });
 
-        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
-
-            if (!ensembleIdent) {
-                return [];
-            }
-
-            const realizations = realizationFilterFunc(ensembleIdent);
-
-            return [...realizations];
+        setting(Setting.REALIZATION).bindValueConstraints({
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunction }) {
+                if (!ensembleIdent) {
+                    return [];
+                }
+                return [...realizationFilterFunction(ensembleIdent)];
+            },
         });
 
-        const realizationPolygonsMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+        const polygonsMetadataDep = makeSharedResult({
+            debugName: "PolygonsMetadata",
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            async resolve({ ensembleIdent }, { abortSignal }) {
+                if (!ensembleIdent) {
+                    return null;
+                }
 
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            return await queryClient.fetchQuery({
-                ...getPolygonsDirectoryOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                        ...makeCacheBustingQueryParam(ensembleIdent),
-                    },
-                    signal: abortSignal,
-                }),
-            });
+                return await queryClient.fetchQuery({
+                    ...getPolygonsDirectoryOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
+                            ...makeCacheBustingQueryParam(ensembleIdent),
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        valueConstraintsUpdater(Setting.POLYGONS_ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(realizationPolygonsMetadataDep);
-
-            if (!data) {
-                return [];
-            }
-            const filteredPolygonsMeta = data.filter((polygonsMeta) =>
-                ALLOWED_SURFACE_TYPES_FROM_API.includes(polygonsMeta.attribute_type),
-            );
-
-            const availableAttributes = [
-                ...Array.from(new Set(filteredPolygonsMeta.map((polygonsMeta) => polygonsMeta.attribute_name))),
-            ];
-            return availableAttributes;
+        setting(Setting.POLYGONS_ATTRIBUTE).bindValueConstraints({
+            read(read) {
+                return {
+                    data: read.sharedResult(polygonsMetadataDep),
+                };
+            },
+            resolve({ data }) {
+                if (!data) {
+                    return [];
+                }
+                const filteredPolygonsMeta = data.filter((polygonsMeta) =>
+                    ALLOWED_SURFACE_TYPES_FROM_API.includes(polygonsMeta.attribute_type),
+                );
+                return [...new Set(filteredPolygonsMeta.map((polygonsMeta) => polygonsMeta.attribute_name))];
+            },
         });
 
-        valueConstraintsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
-            const attribute = getLocalSetting(Setting.POLYGONS_ATTRIBUTE);
-            const data = getHelperDependency(realizationPolygonsMetadataDep);
-
-            if (!attribute || !data) {
-                return [];
-            }
-
-            const availableSurfaceNames = [
-                ...Array.from(
-                    new Set(
+        setting(Setting.SURFACE_NAME).bindValueConstraints({
+            read(read) {
+                return {
+                    attribute: read.localSetting(Setting.POLYGONS_ATTRIBUTE),
+                    data: read.sharedResult(polygonsMetadataDep),
+                };
+            },
+            resolve({ attribute, data }) {
+                if (!attribute || !data) {
+                    return [];
+                }
+                return [
+                    ...new Set(
                         data.filter((polygonsMeta) => polygonsMeta.attribute_name === attribute).map((el) => el.name),
                     ),
-                ),
-            ];
-
-            return availableSurfaceNames;
+                ];
+            },
         });
     }
 

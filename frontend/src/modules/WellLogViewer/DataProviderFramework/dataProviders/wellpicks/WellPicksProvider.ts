@@ -7,7 +7,7 @@ import type {
     DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBasicBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
@@ -15,66 +15,81 @@ export const wellPickSettings = [Setting.STRAT_COLUMN, Setting.SMDA_INTERPRETER,
 export type WellPickSettingTypes = typeof wellPickSettings;
 type SettingsTypeMap = MakeSettingTypesMap<WellPickSettingTypes>;
 
-export class WellborePicksProvider
-    implements CustomDataProviderImplementation<WellPickSettingTypes, WellborePick_api[]>
-{
+export class WellborePicksProvider implements CustomDataProviderImplementation<
+    WellPickSettingTypes,
+    WellborePick_api[]
+> {
     settings = wellPickSettings;
 
-    // Uses the same external things as the other types
-    defineDependencies(args: DefineDependenciesArgs<WellPickSettingTypes>) {
-        const { helperDependency, valueConstraintsUpdater, queryClient } = args;
+    setupBindings({ setting, makeSharedResult, queryClient }: SetupBasicBindingsContext<WellPickSettingTypes>) {
+        const columnOptionsDep = makeSharedResult({
+            debugName: "StratigraphicColumns",
+            read(read) {
+                return { wellboreUuid: read.globalSetting("wellboreUuid") };
+            },
+            async resolve({ wellboreUuid }, { abortSignal }) {
+                if (!wellboreUuid) return null;
 
-        const columnOptions = helperDependency(({ getGlobalSetting, abortSignal }) => {
-            const wellboreUuid = getGlobalSetting("wellboreUuid");
-
-            if (!wellboreUuid) return null;
-
-            return queryClient.fetchQuery({
-                ...getWellboreStratigraphicColumnsOptions({
-                    query: { wellbore_uuid: wellboreUuid },
-                    signal: abortSignal,
-                }),
-            });
+                return queryClient.fetchQuery({
+                    ...getWellboreStratigraphicColumnsOptions({
+                        query: { wellbore_uuid: wellboreUuid },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        const wellPickOptions = helperDependency(({ getGlobalSetting, getLocalSetting, abortSignal }) => {
-            const wellboreUuid = getGlobalSetting("wellboreUuid");
-            const stratColumn = getLocalSetting(Setting.STRAT_COLUMN);
+        const wellPickOptionsDep = makeSharedResult({
+            debugName: "WellPickOptions",
+            read(read) {
+                return {
+                    wellboreUuid: read.globalSetting("wellboreUuid"),
+                    stratColumn: read.localSetting(Setting.STRAT_COLUMN),
+                };
+            },
+            async resolve({ wellboreUuid, stratColumn }, { abortSignal }) {
+                if (!wellboreUuid || !stratColumn) return null;
 
-            if (!wellboreUuid || !stratColumn) return null;
-
-            return queryClient.fetchQuery({
-                ...getWellborePicksInStratColumnOptions({
-                    query: { wellbore_uuid: wellboreUuid, strat_column_identifier: stratColumn },
-                    signal: abortSignal,
-                }),
-            });
+                return queryClient.fetchQuery({
+                    ...getWellborePicksInStratColumnOptions({
+                        query: { wellbore_uuid: wellboreUuid, strat_column_identifier: stratColumn },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        valueConstraintsUpdater(Setting.STRAT_COLUMN, ({ getHelperDependency }) => {
-            const columns = getHelperDependency(columnOptions);
-
-            if (!columns) return [];
-            return map(columns, "identifier");
+        setting(Setting.STRAT_COLUMN).bindValueConstraints({
+            read(read) {
+                return { columns: read.sharedResult(columnOptionsDep) };
+            },
+            resolve({ columns }) {
+                if (!columns) return [];
+                return map(columns, "identifier");
+            },
         });
 
-        valueConstraintsUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
-            const wellPicks = getHelperDependency(wellPickOptions);
-
-            if (!wellPicks) return [];
-
-            const picksByInterpreter = groupBy(wellPicks, "interpreter");
-
-            return keys(picksByInterpreter);
+        setting(Setting.SMDA_INTERPRETER).bindValueConstraints({
+            read(read) {
+                return { wellPicks: read.sharedResult(wellPickOptionsDep) };
+            },
+            resolve({ wellPicks }) {
+                if (!wellPicks) return [];
+                return keys(groupBy(wellPicks, "interpreter"));
+            },
         });
 
-        valueConstraintsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
-            const wellPicks = getHelperDependency(wellPickOptions);
-            const interpreter = getLocalSetting(Setting.SMDA_INTERPRETER);
-
-            if (!wellPicks || !interpreter) return [];
-
-            return filter(wellPicks, ["interpreter", interpreter]);
+        setting(Setting.WELLBORE_PICKS).bindValueConstraints({
+            read(read) {
+                return {
+                    wellPicks: read.sharedResult(wellPickOptionsDep),
+                    interpreter: read.localSetting(Setting.SMDA_INTERPRETER),
+                };
+            },
+            resolve({ wellPicks, interpreter }) {
+                if (!wellPicks || !interpreter) return [];
+                return filter(wellPicks, ["interpreter", interpreter]);
+            },
         });
     }
 

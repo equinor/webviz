@@ -6,6 +6,7 @@ import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorP
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
 import { createSectionWiseResampledPolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineUtils";
 import type { SeismicFenceData_trans } from "@modules/_shared/Intersection/seismicIntersectionTransform";
@@ -17,7 +18,6 @@ import type {
     DataProviderAccessors,
     FetchDataParams,
 } from "../../../interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "../../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../../interfacesAndTypes/utils";
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 import { Setting } from "../../../settings/settingsDefinitions";
@@ -143,186 +143,257 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         );
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
-        settingAttributesUpdater,
+    setupBindings({
+        setting,
+        makeSharedResult,
+        storedData,
         queryClient,
         workbenchSession,
-        storedDataUpdater,
-    }: DefineDependenciesArgs<IntersectionSeismicSettings, IntersectionSeismicStoredData>): void {
-        settingAttributesUpdater(Setting.WELLBORE_EXTENSION_LENGTH, ({ getLocalSetting }) => {
-            const intersection = getLocalSetting(Setting.INTERSECTION);
-
-            const isEnabled = intersection?.type === IntersectionType.WELLBORE;
-            return { enabled: isEnabled };
-        });
-        settingAttributesUpdater(Setting.REALIZATION, ({ getLocalSetting }) => {
-            const representation = getLocalSetting(Setting.REPRESENTATION);
-            const enabled =
-                representation === Representation.REALIZATION ||
-                representation === Representation.OBSERVATION_PER_REALIZATION;
-            return { enabled, visible: enabled };
-        });
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-            return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
+    }: SetupBindingsContext<IntersectionSeismicSettings, IntersectionSeismicStoredData>): void {
+        setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
+            read(read) {
+                return {
+                    intersection: read.localSetting(Setting.INTERSECTION),
+                };
+            },
+            resolve({ intersection }) {
+                const isEnabled = intersection?.type === IntersectionType.WELLBORE;
+                return { enabled: isEnabled };
+            },
         });
 
-        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
-            return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
-        });
-        valueConstraintsUpdater(Setting.REPRESENTATION, () => {
-            return [Representation.REALIZATION, Representation.OBSERVATION, Representation.OBSERVATION_PER_REALIZATION];
-        });
-        const seismicCubeMetaListDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            return await queryClient.fetchQuery({
-                ...getSeismicCubeMetaListOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid() ?? "",
-                        ensemble_name: ensembleIdent.getEnsembleName() ?? "",
-                        ...makeCacheBustingQueryParam(ensembleIdent ?? null),
-                    },
-
-                    signal: abortSignal,
-                }),
-            });
+        setting(Setting.REALIZATION).bindAttributes({
+            read(read) {
+                return {
+                    representation: read.localSetting(Setting.REPRESENTATION),
+                };
+            },
+            resolve({ representation }) {
+                const enabled =
+                    representation === Representation.REALIZATION ||
+                    representation === Representation.OBSERVATION_PER_REALIZATION;
+                return { enabled, visible: enabled };
+            },
         });
 
-        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency, getLocalSetting }) => {
-            const seismicCubeMetaList = getHelperDependency(seismicCubeMetaListDep);
-
-            if (!seismicCubeMetaList) {
-                return [];
-            }
-
-            const representation = getLocalSetting(Setting.REPRESENTATION);
-            const apiRepresentation = representationToApiRepresentation(representation ?? Representation.REALIZATION);
-
-            return Array.from(
-                new Set(
-                    seismicCubeMetaList
-                        .filter((el) => el.isDepth && el.representation === apiRepresentation)
-                        .map((el) => el.seismicAttribute),
-                ),
-            ).sort();
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read(read) {
+                return {
+                    fieldId: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldId, ensembles }) {
+                return getAvailableEnsembleIdentsForField(fieldId, ensembles);
+            },
         });
 
-        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+        setting(Setting.REALIZATION).bindValueConstraints({
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunction }) {
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
+            },
         });
 
-        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
-            const intersectionPolylines = getGlobalSetting("intersectionPolylines");
-            const fieldIdentifier = getGlobalSetting("fieldId");
-
-            const fieldIntersectionPolylines = intersectionPolylines.filter(
-                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
-            );
-
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+        setting(Setting.REPRESENTATION).bindValueConstraints({
+            resolve() {
+                return [
+                    Representation.REALIZATION,
+                    Representation.OBSERVATION,
+                    Representation.OBSERVATION_PER_REALIZATION,
+                ];
+            },
         });
 
-        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const seismicCubeMetaList = getHelperDependency(seismicCubeMetaListDep);
-            const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
+        const seismicCubeMetaList = makeSharedResult({
+            debugName: "seismicCubeMetaList",
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            async resolve({ ensembleIdent }, { abortSignal }) {
+                if (!ensembleIdent) {
+                    return null;
+                }
 
-            if (!seismicAttribute || !seismicCubeMetaList) {
-                return [];
-            }
+                return await queryClient.fetchQuery({
+                    ...getSeismicCubeMetaListOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid() ?? "",
+                            ensemble_name: ensembleIdent.getEnsembleName() ?? "",
+                            ...makeCacheBustingQueryParam(ensembleIdent ?? null),
+                        },
 
-            const availableTimeOrIntervals = [
-                ...Array.from(
+                        signal: abortSignal,
+                    }),
+                });
+            },
+        });
+
+        setting(Setting.ATTRIBUTE).bindValueConstraints({
+            read(read) {
+                return {
+                    seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
+                    representation: read.localSetting(Setting.REPRESENTATION),
+                };
+            },
+            resolve({ seismicCubeMetaList, representation }) {
+                if (!seismicCubeMetaList) {
+                    return [];
+                }
+
+                const apiRepresentation = representationToApiRepresentation(
+                    representation ?? Representation.REALIZATION,
+                );
+
+                return Array.from(
                     new Set(
                         seismicCubeMetaList
-                            .filter((surface) => surface.seismicAttribute === seismicAttribute)
+                            .filter((el) => el.isDepth && el.representation === apiRepresentation)
+                            .map((el) => el.seismicAttribute),
+                    ),
+                ).sort();
+            },
+        });
+
+        const wellboreHeader = makeSharedResult({
+            debugName: "wellboreHeaders",
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            async resolve({ ensembleIdent }, { abortSignal }) {
+                return await fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+            },
+        });
+
+        setting(Setting.INTERSECTION).bindValueConstraints({
+            read(read) {
+                return {
+                    wellboreHeaders: read.sharedResult(wellboreHeader),
+                    intersectionPolylines: read.globalSetting("intersectionPolylines"),
+                    fieldId: read.globalSetting("fieldId"),
+                };
+            },
+            resolve({ wellboreHeaders, intersectionPolylines, fieldId }) {
+                const fieldIntersectionPolylines = intersectionPolylines.filter(
+                    (intersectionPolyline) => intersectionPolyline.fieldId === fieldId,
+                );
+
+                return getAvailableIntersectionOptions(wellboreHeaders ?? [], fieldIntersectionPolylines);
+            },
+        });
+
+        setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
+            read(read) {
+                return {
+                    seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
+                    attribute: read.localSetting(Setting.ATTRIBUTE),
+                };
+            },
+            resolve({ seismicCubeMetaList, attribute }) {
+                if (!seismicCubeMetaList || !attribute) {
+                    return [];
+                }
+
+                return Array.from(
+                    new Set(
+                        seismicCubeMetaList
+                            .filter((el) => el.seismicAttribute === attribute)
                             .map((el) => el.isoDateOrInterval),
                     ),
-                ).sort(),
-            ];
-
-            return availableTimeOrIntervals;
+                ).sort();
+            },
         });
 
-        // Create intersection polyline and actual section lengths data asynchronously
-        const intersectionPolylineWithSectionLengthsDep = helperDependency(({ getLocalSetting, getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const intersection = getLocalSetting(Setting.INTERSECTION);
-            const wellboreExtensionLength = getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
-
-            return createIntersectionPolylineWithSectionLengthsForField(
-                fieldIdentifier,
-                intersection,
-                wellboreExtensionLength,
-                workbenchSession,
-                queryClient,
-            );
+        const intersectionPolylineWithSectionLengths = makeSharedResult({
+            debugName: "intersectionPolylineWithSectionLengths",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    intersection: read.localSetting(Setting.INTERSECTION),
+                    wellboreExtensionLength: read.localSetting(Setting.WELLBORE_EXTENSION_LENGTH),
+                };
+            },
+            async resolve({ fieldIdentifier, intersection, wellboreExtensionLength }, { abortSignal }) {
+                return await createIntersectionPolylineWithSectionLengthsForField(
+                    fieldIdentifier,
+                    intersection,
+                    wellboreExtensionLength ?? 0,
+                    workbenchSession,
+                    queryClient,
+                    abortSignal,
+                );
+            },
         });
 
-        storedDataUpdater("sourcePolylineWithSectionLengths", ({ getHelperDependency }) => {
-            const intersectionPolylineWithSectionLengths = getHelperDependency(
-                intersectionPolylineWithSectionLengthsDep,
-            );
+        storedData("sourcePolylineWithSectionLengths").bindValue({
+            read(read) {
+                return {
+                    intersectionPolylineWithSectionLengths: read.sharedResult(intersectionPolylineWithSectionLengths),
+                };
+            },
+            resolve({ intersectionPolylineWithSectionLengths }) {
+                // If no intersection is selected, or polyline is empty, cancel update
+                if (
+                    !intersectionPolylineWithSectionLengths ||
+                    intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
+                ) {
+                    return { polylineUtmXy: [], actualSectionLengths: [] };
+                }
 
-            // If no intersection is selected, or polyline is empty, cancel update
-            if (
-                !intersectionPolylineWithSectionLengths ||
-                intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
-            ) {
-                return { polylineUtmXy: [], actualSectionLengths: [] };
-            }
-
-            return intersectionPolylineWithSectionLengths;
+                return intersectionPolylineWithSectionLengths;
+            },
         });
 
-        storedDataUpdater("seismicFencePolylineWithSectionLengths", ({ getHelperDependency, getLocalSetting }) => {
-            const intersectionPolylineWithSectionLengths = getHelperDependency(
-                intersectionPolylineWithSectionLengthsDep,
-            );
+        storedData("seismicFencePolylineWithSectionLengths").bindValue({
+            read(read) {
+                return {
+                    intersectionPolylineWithSectionLengths: read.sharedResult(intersectionPolylineWithSectionLengths),
+                    seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
+                    attribute: read.localSetting(Setting.ATTRIBUTE),
+                    timeOrInterval: read.localSetting(Setting.TIME_OR_INTERVAL),
+                };
+            },
+            resolve({ intersectionPolylineWithSectionLengths, seismicCubeMetaList, attribute, timeOrInterval }) {
+                // If no intersection is selected, or polyline is empty, cancel update
+                if (
+                    !intersectionPolylineWithSectionLengths ||
+                    intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
+                ) {
+                    return { polylineUtmXy: [], actualSectionLengths: [] };
+                }
 
-            const seismicCubeMetaList = getHelperDependency(seismicCubeMetaListDep);
-            const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
-            const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
+                // Find step size for resampling
+                let sampleResolutionInMeters = 25.0; // Default value
+                const matchingSeismicCubeMeta = seismicCubeMetaList?.find(
+                    (meta) => meta.seismicAttribute === attribute && meta.isoDateOrInterval === timeOrInterval,
+                );
+                if (matchingSeismicCubeMeta) {
+                    // Use the smallest increment in x- and y-direction from seismic cube spec, and divide by 2.0 as sample
+                    // resolution for resampling the polyline.
+                    sampleResolutionInMeters =
+                        Math.min(
+                            Math.abs(matchingSeismicCubeMeta.spec.xInc),
+                            Math.abs(matchingSeismicCubeMeta.spec.yInc),
+                        ) / 2.0;
+                }
 
-            // If no intersection is selected, or polyline is empty, cancel update
-            if (
-                !intersectionPolylineWithSectionLengths ||
-                intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
-            ) {
-                return { polylineUtmXy: [], actualSectionLengths: [] };
-            }
+                // Resample the polyline, as seismic fence is created by one trace per (x,y) point in the polyline
+                const resampledPolylineWithSectionLengths = createSectionWiseResampledPolylineWithSectionLengths(
+                    intersectionPolylineWithSectionLengths,
+                    sampleResolutionInMeters,
+                );
 
-            // Find step size for resampling
-            let sampleResolutionInMeters = 25.0; // Default value
-            const matchingSeismicCubeMeta = seismicCubeMetaList?.find(
-                (meta) => meta.seismicAttribute === seismicAttribute && meta.isoDateOrInterval === timeOrInterval,
-            );
-            if (matchingSeismicCubeMeta) {
-                // Use the smallest increment in x- and y-direction from seismic cube spec, and divide by 2.0 as sample
-                // resolution for resampling the polyline.
-                sampleResolutionInMeters =
-                    Math.min(Math.abs(matchingSeismicCubeMeta.spec.xInc), Math.abs(matchingSeismicCubeMeta.spec.yInc)) /
-                    2.0;
-            }
-
-            // Resample the polyline, as seismic fence is created by one trace per (x,y) point in the polyline
-            const resampledPolylineWithSectionLengths = createSectionWiseResampledPolylineWithSectionLengths(
-                intersectionPolylineWithSectionLengths,
-                sampleResolutionInMeters,
-            );
-
-            return resampledPolylineWithSectionLengths;
+                return resampledPolylineWithSectionLengths;
+            },
         });
     }
 
