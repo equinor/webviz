@@ -27,7 +27,7 @@ export const Badge: React.FC<BadgeProps> = (props) => {
                         "place-content-center",
                         "items-center",
                         "font-bold",
-                        "min-w-[1rem]",
+                        "min-w-4",
                         "box-border",
 
                         // Refer to MuI state class to hide badge when prop.invisible = true

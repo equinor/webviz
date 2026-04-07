@@ -1,7 +1,6 @@
 import datetime
 import logging
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
@@ -11,11 +10,6 @@ from .routers import health_router
 from .routers import grid_router
 from .routers import intersection_router
 from .routers import dev_router
-
-# Load environment variables from .env file,
-# Note that values set in the system environment will override those in the .env file
-load_dotenv()
-
 
 logging.basicConfig(format="%(asctime)s %(levelname)-7s [%(name)s]: %(message)s", datefmt="%H:%M:%S")
 logging.getLogger().setLevel(logging.DEBUG)
