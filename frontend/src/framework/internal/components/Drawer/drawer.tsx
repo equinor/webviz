@@ -3,11 +3,11 @@ import React from "react";
 import { Dropdown, MenuButton } from "@mui/base";
 import { Check, Close, MoreVert, Search } from "@mui/icons-material";
 
-import { Input } from "@lib/components/Input";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem/menuItem";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Button } from "@lib/newComponents/Button";
+import { TextInput } from "@lib/newComponents/TextInput";
 
 export type DrawerFilterItem<T extends string | number> = {
     label: React.ReactNode;
@@ -90,7 +90,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                     <div className="bg-fill-subtle flex gap-2 p-2">
                         {props.showSearch && (
                             <div className="grow">
-                                <Input
+                                <TextInput
                                     placeholder={props.searchInputPlaceholder}
                                     startAdornment={<Search fontSize="small" />}
                                     onChange={props.onSearchQueryChange}

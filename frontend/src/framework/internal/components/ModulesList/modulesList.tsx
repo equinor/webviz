@@ -482,7 +482,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
             >
                 <Collapsible.ScrollArea>
                     {visibleModuleCategories.map((el) => (
-                        <Collapsible.Group key={el.category} title={el.label} open>
+                        <Collapsible.Group key={el.category} title={el.label} defaultOpen>
                             {filteredModules
                                 .filter((mod) => mod.getCategory() === el.category)
                                 .map((mod) => (
