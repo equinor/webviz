@@ -8,9 +8,10 @@ export type TypographyProps = {
     lineHeight?: "default" | "squished";
     weight?: "lighter" | "normal" | "bolder";
     tracking?: "tight" | "normal" | "wide";
+    italic?: boolean;
     className?: string;
     children?: React.ReactNode;
-};
+} & Omit<React.HTMLAttributes<HTMLElement>, "children" | "className">;
 
 const FONT_SIZE_CLASSES: Record<
     TypographyProps["family"],
@@ -288,18 +289,32 @@ const DEFAULT_VALUES = {
 } satisfies Partial<TypographyProps>;
 
 export function Typography(props: TypographyProps) {
-    const defaultedProps = { ...DEFAULT_VALUES, ...props };
+    const {
+        family,
+        size,
+        tone,
+        as = DEFAULT_VALUES.as,
+        lineHeight = DEFAULT_VALUES.lineHeight,
+        weight = DEFAULT_VALUES.weight,
+        tracking = DEFAULT_VALUES.tracking,
+        className,
+        children,
+        ...htmlProps
+    } = props;
 
-    const Component = defaultedProps.as;
+    const Component = as;
 
-    const className = resolveClassNames(
-        FONT_SIZE_CLASSES[defaultedProps.family][defaultedProps.size][defaultedProps.lineHeight][
-            defaultedProps.tracking
-        ],
-        WEIGHT_CLASSES[defaultedProps.weight],
-        defaultedProps.tone ? TONE_CLASSES[defaultedProps.tone] : "text-text-neutral",
-        defaultedProps.className,
+    const resolvedClassName = resolveClassNames(
+        FONT_SIZE_CLASSES[family][size][lineHeight][tracking],
+        WEIGHT_CLASSES[weight],
+        tone ? TONE_CLASSES[tone] : "text-text-neutral",
+        className,
+        { italic: props.italic },
     );
 
-    return <Component className={className}>{defaultedProps.children}</Component>;
+    return (
+        <Component className={resolvedClassName} {...htmlProps}>
+            {children}
+        </Component>
+    );
 }

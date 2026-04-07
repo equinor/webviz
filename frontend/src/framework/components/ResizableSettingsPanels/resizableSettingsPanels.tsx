@@ -339,9 +339,9 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps): Re
     }
 
     return (
-        <div className="flex flex-row w-full h-full relative" ref={containerRef}>
+        <div className="relative flex h-full w-full flex-row" ref={containerRef}>
             <div
-                className={resolveClassNames("absolute z-50 bg-transparent cursor-ew-resize", {
+                className={resolveClassNames("z-overlay absolute cursor-ew-resize bg-transparent", {
                     hidden: !isDragging,
                 })}
                 style={{
@@ -385,16 +385,16 @@ function SettingsDragBar(props: SettingsDragBarProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "relative z-40 transition-colors ease-in-out duration-100 hover:bg-sky-500 outline-sky-500 hover:outline-2 touch-none cursor-ew-resize w-px",
+                "z-overlay hover:bg-fill-accent-strong outline-stroke-accent relative w-px cursor-ew-resize touch-none transition-colors duration-100 ease-in-out hover:outline-2",
                 {
-                    "bg-sky-500 outline-2 outline-sky-500": props.isDragging,
-                    "border-transparent bg-gray-300": !props.isDragging,
+                    "bg-fill-accent-strong outline-stroke-accent outline-2": props.isDragging,
+                    "bg-fill-neutral border-transparent": !props.isDragging,
                 },
             )}
         >
             <div
                 data-settings-handle={props.panel}
-                className="z-40 touch-none absolute bg-transparent cursor-ew-resize w-1 -left-px top-0 h-full"
+                className="absolute top-0 -left-px z-40 h-full w-1 cursor-ew-resize touch-none bg-transparent"
             />
         </div>
     );

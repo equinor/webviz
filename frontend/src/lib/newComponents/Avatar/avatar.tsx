@@ -13,7 +13,7 @@ export type AvatarUserData = {
 };
 
 export type AvatarProps = {
-    image?: AvatarUserData | (() => Promise<AvatarUserData>);
+    userData?: AvatarUserData | (() => Promise<AvatarUserData>);
     size?: "small" | "medium" | "large";
 };
 
@@ -35,7 +35,7 @@ const DEFAULT_PROPS = {
 
 export function Avatar(props: AvatarProps): React.ReactNode {
     const defaultedProps = { ...DEFAULT_PROPS, ...props };
-    const { image } = defaultedProps;
+    const { userData: image } = defaultedProps;
 
     const [userDataState, setUserDataState] = React.useState<UserDataState>(() => {
         if (image && typeof image !== "function") return { status: "direct", data: image };

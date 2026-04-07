@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Dropdown, MenuButton } from "@mui/base";
-import { AccountCircle, Login, Logout } from "@mui/icons-material";
+import { Login, Logout } from "@mui/icons-material";
 
 import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
@@ -11,21 +11,10 @@ import { MenuDivider } from "@lib/components/MenuDivider";
 import { MenuItem } from "@lib/components/MenuItem";
 import { MenuText } from "@lib/components/MenuText/menuText";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Avatar } from "@lib/newComponents/Avatar";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
-
-function makeInitials(name: string): string | null {
-    const regExp = new RegExp(/([^()]+)(\([\w ]+\))/);
-    const match = regExp.exec(name);
-
-    if (match) {
-        const names = match[1].trim().split(" ");
-        if (names.length > 1) {
-            return names[0].charAt(0) + names[names.length - 1].charAt(0);
-        }
-    }
-    return null;
-}
+import { makeInitials } from "@lib/utils/userNames";
 
 export type LoginButtonProps = {
     className?: string;
@@ -47,28 +36,19 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     function makeIcon() {
         if (authState === AuthState.LoggedIn) {
-            if (userInfo?.avatar_b64str) {
-                return (
-                    <img
-                        src={`data:image/png;base64,${userInfo.avatar_b64str}`}
-                        alt="Avatar"
-                        className="w-5 h-5 rounded-full mr-1"
-                    />
-                );
-            }
-            if (userInfo?.display_name) {
-                const initials = makeInitials(userInfo.display_name);
-                if (initials) {
-                    return (
-                        <div className="w-5 h-5 rounded-full bg-slate-300 text-[0.5em] flex items-center justify-center mr-1">
-                            {initials}
-                        </div>
-                    );
-                }
-            }
-            return <AccountCircle className="w-5 h-5 mr-1" />;
+            return (
+                <Avatar
+                    size="small"
+                    userData={{
+                        imageSrc: `data:image/png;base64,${userInfo?.avatar_b64str}`,
+                        initials: userInfo?.display_name
+                            ? (makeInitials(userInfo?.display_name ?? "") ?? undefined)
+                            : undefined,
+                    }}
+                />
+            );
         } else if (authState === AuthState.NotLoggedIn) {
-            return <Login fontSize="small" className=" mr-1" />;
+            return <Login fontSize="small" className="mr-1" />;
         } else {
             return <CircularProgress size="medium-small" className="mr-1" />;
         }
@@ -104,7 +84,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
                 <MenuButton
                     className={resolveClassNames(
                         props.className ?? "",
-                        "items-center p-2 font-medium rounded-md hover:bg-indigo-100",
+                        "items-center rounded-md p-2 font-medium hover:bg-indigo-100",
                     )}
                 >
                     {makeIcon()}

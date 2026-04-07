@@ -26,7 +26,7 @@ export const NoImage: Story = {
 
 export const WithImage: Story = {
     args: {
-        image: {
+        userData: {
             imageSrc: "https://i.pravatar.cc/150?img=3",
             alt: "User avatar",
         },
@@ -35,7 +35,7 @@ export const WithImage: Story = {
 
 export const WithInitials: Story = {
     args: {
-        image: {
+        userData: {
             imageSrc: "https://i.pravatar.cc/150?img=5",
             alt: "Jane Doe",
             initials: "JD",
@@ -45,7 +45,7 @@ export const WithInitials: Story = {
 
 export const AsyncImage: Story = {
     args: {
-        image: () =>
+        userData: () =>
             new Promise((resolve) =>
                 setTimeout(
                     () =>
@@ -62,14 +62,14 @@ export const AsyncImage: Story = {
 
 export const AsyncFailed: Story = {
     args: {
-        image: () => new Promise((_, reject) => setTimeout(reject, 1000)),
+        userData: () => new Promise((_, reject) => setTimeout(reject, 1000)),
     },
 };
 
 export const InitialsFallback: Story = {
     name: "Broken Image with Initials Fallback",
     args: {
-        image: {
+        userData: {
             imageSrc: "https://example.invalid/broken.jpg",
             alt: "Broken image",
             initials: "AB",
@@ -80,7 +80,7 @@ export const InitialsFallback: Story = {
 export const Small: Story = {
     args: {
         size: "small",
-        image: {
+        userData: {
             imageSrc: "https://i.pravatar.cc/150?img=3",
             alt: "User avatar",
             initials: "SM",
@@ -91,7 +91,7 @@ export const Small: Story = {
 export const Medium: Story = {
     args: {
         size: "medium",
-        image: {
+        userData: {
             imageSrc: "https://i.pravatar.cc/150?img=3",
             alt: "User avatar",
             initials: "MD",
@@ -102,7 +102,7 @@ export const Medium: Story = {
 export const Large: Story = {
     args: {
         size: "large",
-        image: {
+        userData: {
             imageSrc: "https://i.pravatar.cc/150?img=3",
             alt: "User avatar",
             initials: "LG",

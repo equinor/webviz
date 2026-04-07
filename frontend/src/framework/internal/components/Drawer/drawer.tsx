@@ -3,11 +3,11 @@ import React from "react";
 import { Dropdown, MenuButton } from "@mui/base";
 import { Check, Close, MoreVert, Search } from "@mui/icons-material";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem/menuItem";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Button } from "@lib/newComponents/Button";
 
 export type DrawerFilterItem<T extends string | number> = {
     label: React.ReactNode;
@@ -72,15 +72,15 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
     return (
         <div className={`bg-fill-surface flex min-h-0 flex-col h-full${props.visible ? "" : "hidden"}`}>
             {showHeader && (
-                <div className="bg-fill-subtle flex h-10 items-center justify-center p-2 shadow-sm">
+                <div className="bg-fill-surface p-space-xs border-stroke-neutral-subtle flex items-center justify-center border-b">
                     {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
                     <span className="grow p-0 text-sm font-bold">{props.title}</span>
                     {props.actions}
                     {props.onClose && (
                         <Tooltip title="Close">
-                            <DenseIconButton onClick={props.onClose}>
+                            <Button variant="text" tone="neutral" iconOnly onClick={props.onClose} size="small">
                                 <Close fontSize="inherit" />
-                            </DenseIconButton>
+                            </Button>
                         </Tooltip>
                     )}
                 </div>

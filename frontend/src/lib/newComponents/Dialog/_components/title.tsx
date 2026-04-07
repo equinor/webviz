@@ -1,3 +1,5 @@
+import { Dialog as DialogBase } from "@base-ui/react";
+
 import { Heading } from "@lib/newComponents/Heading";
 
 export type TitleProps = {
@@ -5,5 +7,7 @@ export type TitleProps = {
 };
 
 export function Title(props: TitleProps) {
-    return <Heading as="h6">{props.children}</Heading>;
+    return (
+        <DialogBase.Title render={(baseProps) => <Heading as="h6" {...baseProps}>{props.children}</Heading>} />
+    );
 }

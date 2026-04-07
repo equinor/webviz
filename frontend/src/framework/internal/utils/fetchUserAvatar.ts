@@ -3,7 +3,7 @@ import type { AvatarUserData } from "@lib/newComponents/Avatar";
 import { makeInitials } from "@lib/utils/userNames";
 
 export function fetchUserAvatar(userIdOrEmail: string, displayName?: string): () => Promise<AvatarUserData> {
-    return async () => {
+    return async function fetchUserAvatarInner() {
         const { data } = await getUserPhoto({
             query: { user_id_or_email: userIdOrEmail },
             throwOnError: true,

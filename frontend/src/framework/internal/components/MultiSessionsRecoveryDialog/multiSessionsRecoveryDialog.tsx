@@ -79,7 +79,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
             <Dialog.Header>
                 <Dialog.Title>Do you want to recover your session?</Dialog.Title>
             </Dialog.Header>
-            <Dialog.Content>
+            <Dialog.Body>
                 <div className="gap-space-sm flex flex-col">
                     <Dialog.Description>
                         We found one or more previous sessions with unsaved changes. You can either discard them or open
@@ -93,7 +93,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                         rows={rowData}
                     />
                 </div>
-            </Dialog.Content>
+            </Dialog.Body>
             <Dialog.Actions>
                 <Button onClick={handleCancel} variant="text">
                     Cancel

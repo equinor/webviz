@@ -62,7 +62,7 @@ export function PersistenceManagementDialog(props: PersistenceManagementDialogPr
                     </button>
                 </div>
             </Dialog.Header>
-            <Dialog.Content>
+            <Dialog.Body>
                 {contentMode === "sessions" && (
                     <SessionManagementContent
                         workbench={props.workbench}
@@ -75,7 +75,7 @@ export function PersistenceManagementDialog(props: PersistenceManagementDialogPr
                         active={isDialogOpen && contentMode === "snapshots"}
                     />
                 )}
-            </Dialog.Content>
+            </Dialog.Body>
         </Dialog.Popup>
     );
 }

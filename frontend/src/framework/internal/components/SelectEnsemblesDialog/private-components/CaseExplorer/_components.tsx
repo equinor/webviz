@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
 import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
@@ -65,9 +65,12 @@ type AuthorCellProps = {
     author: string;
 };
 export function AuthorCell(props: AuthorCellProps): React.ReactNode {
+    // @eslint-disable-next-line react-hooks/exhaustive-deps
+    const avatarSrc = React.useCallback(fetchUserAvatar(`${props.author}@equinor.com`, props.author), [props.author]);
+
     return (
         <div className="flex justify-center gap-1">
-            <Avatar size="small" image={fetchUserAvatar(`${props.author}@equinor.com`, props.author)} />
+            <Avatar key={props.author} size="small" userData={avatarSrc} />
             <span className="block w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" title={props.author}>
                 {props.author}
             </span>

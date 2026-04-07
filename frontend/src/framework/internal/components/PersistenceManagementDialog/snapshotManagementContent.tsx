@@ -37,8 +37,6 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { formatDate } from "@lib/utils/dates";
 
-import { UserAvatar } from "../UserAvatar";
-
 import {
     HEADER_HEIGHT,
     NEXT_PAGE_THRESHOLD,
@@ -156,7 +154,7 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
             const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
             return (
                 <div className="flex gap-1" style={style}>
-                    <Avatar image={fetchUserAvatar(name ?? "", ownerInfo?.display_name)} size="small" />
+                    <Avatar userData={fetchUserAvatar(name ?? "", ownerInfo?.display_name)} size="small" />
                     {name}
                 </div>
             );

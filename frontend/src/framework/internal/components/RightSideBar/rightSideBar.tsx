@@ -6,20 +6,21 @@ import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
-import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
+import { NavBarButton } from "@lib/components/NavBarComponents";
+import { Separator } from "@lib/newComponents/Separator";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
     SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
 } from "../SettingsContentPanels";
+import { SideBar } from "../SideBar/sideBar";
 
-type RightNavBarProps = {
+type RightSideBarProps = {
     workbench: Workbench;
 };
 
-export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
+export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
     const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
@@ -84,10 +85,8 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     }
 
     return (
-        <div
-            className={resolveClassNames("bg-elevated border-stroke-subtle border-l p-2 z-50 shadow-lg flex flex-col")}
-        >
-            <div className="flex flex-col gap-2 grow">
+        <SideBar position="right">
+            <div className="flex grow flex-col gap-2">
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.ModulesList}
                     tooltip="Show modules list"
@@ -96,8 +95,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     disabled={isSnapshot}
                     disabledTooltip="Modules cannot be changed in snapshot mode"
                 />
-
-                <NavBarDivider />
+                <Separator orientation="horizontal" />
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.RealizationFilterSettings}
                     tooltip={RealizationFilterButtonTooltip(
@@ -118,7 +116,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     tooltip="Open module log"
                     onClick={handleModuleInstanceLogClick}
                 />
-                <NavBarDivider />
+                <Separator orientation="horizontal" />
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.ColorPaletteSettings}
                     tooltip="Show color settings"
@@ -126,7 +124,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     onClick={handleColorPaletteSettingsClick}
                 />
             </div>
-        </div>
+        </SideBar>
     );
 };
 

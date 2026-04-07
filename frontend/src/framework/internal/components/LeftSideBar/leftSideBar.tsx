@@ -8,15 +8,17 @@ import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
+import { NavBarButton } from "@lib/components/NavBarComponents";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-type LeftNavBarProps = {
+import { SideBar } from "../SideBar/sideBar";
+import { Separator } from "@lib/newComponents/Separator";
+
+type LeftSideBarProps = {
     workbench: Workbench;
 };
 
-export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
+export const LeftSideBar: React.FC<LeftSideBarProps> = (props) => {
     const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
@@ -34,11 +36,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     }
 
     return (
-        <div
-            className={resolveClassNames(
-                "bg-fill-surface z-base border-stroke-neutral-subtle flex flex-col border-r-2 p-2 pt-4 shadow-lg",
-            )}
-        >
+        <SideBar position="left">
             <div className="flex grow flex-col gap-2">
                 <NavBarButton
                     tooltip={"Open ensemble selection dialog"}
@@ -61,7 +59,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     }
                     onClick={handleEnsembleDialogOpenClick}
                 />
-                <NavBarDivider />
+                <Separator orientation="horizontal" />
                 <NavBarButton
                     tooltip="Show templates dialog"
                     icon={<GridView fontSize="small" className="size-5" />}
@@ -71,6 +69,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 />
                 <div className="h-5 grow" />
             </div>
-        </div>
+        </SideBar>
     );
 };

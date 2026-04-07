@@ -82,7 +82,7 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
         <div className="gap-space-xs text-body-sm flex items-center italic">
             <Avatar
                 size="small"
-                image={
+                userData={
                     name
                         ? fetchUserAvatar(name, props.owner?.display_name ?? "")
                         : {

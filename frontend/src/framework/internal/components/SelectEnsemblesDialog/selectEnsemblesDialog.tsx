@@ -165,6 +165,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 }}
                 width={`${dialogSizePercent.width}%`}
                 height={`${dialogSizePercent.height}%`}
+                modal
             >
                 <Dialog.Header closeIconVisible>
                     <ExplorerTitle
@@ -173,7 +174,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         onClose={handleCloseEnsembleExplorer}
                     />
                 </Dialog.Header>
-                <Dialog.Content>
+                <Dialog.Body>
                     <div className="relative flex h-full w-full flex-col">
                         {hasExplorerBeenOpened ? (
                             <EnsembleExplorer
@@ -215,7 +216,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             />
                         )}
                     </div>
-                </Dialog.Content>
+                </Dialog.Body>
                 <Dialog.Actions>
                     <DialogActions
                         isLoading={isEnsembleSetLoading}

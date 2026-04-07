@@ -1,12 +1,11 @@
 import React from "react";
 
-import { Icon, Typography } from "@equinor/eds-core-react";
+import { Icon } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
 import { Dropdown, MenuButton } from "@mui/base";
 import {
     AddLink,
     ArrowDropDown,
-    Category,
     Close,
     DarkMode,
     DensitySmall,
@@ -35,6 +34,9 @@ import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChan
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Heading } from "@lib/newComponents/Heading";
+import { Separator } from "@lib/newComponents/Separator";
+import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -75,7 +77,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         <>
             <div
                 className={resolveClassNames(
-                    "border-stroke-neutral-subtle shadow-elevation-raised z-sticky flex min-h-16 flex-row items-center gap-12 border-b-2 p-0.5 px-4 pl-6",
+                    "border-stroke-neutral-subtle shadow-elevation-raised z-sticky gap-space-xl py-space-xxs px-space-xs flex flex-row items-center border-b-2",
                     {
                         "bg-fill-surface": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
@@ -83,7 +85,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                 )}
             >
                 <LogoWithText />
-                <div className="flex min-w-0 grow items-center gap-2">
+                <div className="gap-space-sm flex min-w-0 grow items-center">
                     {hasActiveSession ? (
                         <>
                             <Title workbench={props.workbench} />
@@ -92,7 +94,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                     ) : (
                         <div className="grow" />
                     )}
-                    <TopBarDivider />
+                    <Separator orientation="vertical" />
                     <Button variant="text" tone="neutral" iconOnly onClick={toggleDarkMode}>
                         <DarkMode fontSize="inherit" />
                     </Button>
@@ -145,11 +147,11 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
             ) : (
                 <>
                     <EditSessionButton workbench={props.workbench} />
-                    <TopBarDivider />
+                    <Separator orientation="vertical" />
                     <RefreshSessionButton workbench={props.workbench} />
                     <SessionSaveButton workbench={props.workbench} />
                     <SnapshotButton workbench={props.workbench} />
-                    <TopBarDivider />
+                    <Separator orientation="vertical" />
                 </>
             )}
             <Tooltip title={fullscreenButtonTitle} placement="bottom">
@@ -255,11 +257,9 @@ function SnapshotTitle(props: SnapshotTitleProps): React.ReactNode {
                 placement="bottom"
                 enterDelay="medium"
             >
-                <Typography variant="h5" className="min-w-0 truncate">
-                    {metadata.title}
-                </Typography>
+                <Heading as="h5">{metadata.title}</Heading>
             </Tooltip>
-            <Typography variant="body_short" className="font-light">
+            <Typography family="body" size="sm" as="span">
                 (snapshot)
             </Typography>
             <Tooltip title="This session is a snapshot and cannot be edited.">
@@ -290,13 +290,7 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
 
     return (
         <>
-            <Category fontSize="inherit" className="mr-1" />
-            <Typography
-                variant="h5"
-                className={resolveClassNames("flex min-w-0 items-center gap-4 overflow-ellipsis whitespace-nowrap", {
-                    italic: !isPersisted,
-                })}
-            >
+            <Heading as="h6" italic={!isPersisted}>
                 <Tooltip
                     title={
                         <div className="text-base whitespace-normal">
@@ -314,8 +308,8 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                 >
                     <span className="truncate">{metadata.title}</span>
                 </Tooltip>
-                <HasChangesIndicator visible={hasChanges} />
-            </Typography>
+            </Heading>
+            <HasChangesIndicator visible={hasChanges} />
         </>
     );
 }
@@ -472,8 +466,4 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
             </TopBarButton>
         </div>
     );
-}
-
-function TopBarDivider(): React.ReactNode {
-    return <div className="bg-stroke-subtle mx-2 h-10 w-px" />;
 }

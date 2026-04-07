@@ -1,7 +1,9 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import React from "react";
 
+import type { Meta, StoryObj } from "@storybook/react";
+
 import { Button } from "../Button";
+
 import { Dialog } from "./index";
 
 const meta: Meta<typeof Dialog.Popup> = {
@@ -22,8 +24,8 @@ independently or combined to build up the dialog you need.
 | \`Dialog.Popup\` | The root container. Manages open/close state and renders the backdrop and portal. |
 | \`Dialog.Header\` | Top section with a bottom border. Accepts an optional close icon via \`closeIconVisible\`. |
 | \`Dialog.Title\` | Renders a styled heading inside \`Dialog.Header\`. |
-| \`Dialog.Content\` | Scrollable middle section for the main body. |
-| \`Dialog.Description\` | Styled paragraph inside \`Dialog.Content\`. |
+| \`Dialog.Body\` | Scrollable middle section for the main body. |
+| \`Dialog.Description\` | Styled paragraph inside \`Dialog.Body\`. |
 | \`Dialog.Actions\` | Bottom section that right-aligns action buttons. |
 
 ## Composition
@@ -36,9 +38,9 @@ include what the dialog needs:
     <Dialog.Header>
         <Dialog.Title>Title</Dialog.Title>
     </Dialog.Header>
-    <Dialog.Content>
+    <Dialog.Body>
         <Dialog.Description>Description</Dialog.Description>
-    </Dialog.Content>
+    </Dialog.Body>
     <Dialog.Actions>
         <Button onClick={() => setOpen(false)}>Close</Button>
     </Dialog.Actions>
@@ -71,7 +73,7 @@ export const SubHeader: Story = {
     parameters: {
         docs: {
             description: {
-                story: "The `Dialog.Header` wraps the title area and draws a bottom border to separate it from the content.",
+                story: "The `Dialog.Header` wraps the title area and draws a bottom border to separate it from the Body.",
             },
         },
     },
@@ -82,21 +84,21 @@ export const SubHeader: Story = {
     ),
 };
 
-export const SubContent: Story = {
-    name: "Sub-component: Content",
+export const SubBody: Story = {
+    name: "Sub-component: Body",
     parameters: {
         docs: {
             description: {
-                story: "The `Dialog.Content` wraps the main body. Use `Dialog.Description` inside it for styled text, or supply any custom content.",
+                story: "The `Dialog.Body` wraps the main body. Use `Dialog.Description` inside it for styled text, or supply any custom Body.",
             },
         },
     },
     render: () => (
-        <Dialog.Content>
+        <Dialog.Body>
             <Dialog.Description>
                 This is the dialog description. It provides context about the action the user is about to perform.
             </Dialog.Description>
-        </Dialog.Content>
+        </Dialog.Body>
     ),
 };
 
@@ -139,11 +141,11 @@ export const PopupOnly: Story = {
                     Open Dialog
                 </Button>
                 <Dialog.Popup open={open} onOpenChange={setOpen}>
-                    <Dialog.Content>
+                    <Dialog.Body>
                         <Dialog.Description>
-                            This popup has no header or actions — just raw content inside the popup container.
+                            This popup has no header or actions — just raw Body inside the popup container.
                         </Dialog.Description>
-                    </Dialog.Content>
+                    </Dialog.Body>
                 </Dialog.Popup>
             </>
         );
@@ -169,11 +171,11 @@ export const WithHeader: Story = {
                     <Dialog.Header>
                         <Dialog.Title>Informational Dialog</Dialog.Title>
                     </Dialog.Header>
-                    <Dialog.Content>
+                    <Dialog.Body>
                         <Dialog.Description>
                             This dialog has a header but no action bar. Dismiss it by clicking outside.
                         </Dialog.Description>
-                    </Dialog.Content>
+                    </Dialog.Body>
                 </Dialog.Popup>
             </>
         );
@@ -199,11 +201,11 @@ export const WithHeaderAndCloseIcon: Story = {
                     <Dialog.Header closeIconVisible>
                         <Dialog.Title>Dialog with Close Icon</Dialog.Title>
                     </Dialog.Header>
-                    <Dialog.Content>
+                    <Dialog.Body>
                         <Dialog.Description>
                             The close icon in the header gives users an explicit dismiss affordance.
                         </Dialog.Description>
-                    </Dialog.Content>
+                    </Dialog.Body>
                 </Dialog.Popup>
             </>
         );
@@ -214,7 +216,7 @@ export const WithActionsNoHeader: Story = {
     parameters: {
         docs: {
             description: {
-                story: "Content and actions without a header — useful for simple confirmations that don't need a title.",
+                story: "Body and actions without a header — useful for simple confirmations that don't need a title.",
             },
         },
     },
@@ -226,11 +228,11 @@ export const WithActionsNoHeader: Story = {
                     Open Dialog
                 </Button>
                 <Dialog.Popup open={open} onOpenChange={setOpen}>
-                    <Dialog.Content>
+                    <Dialog.Body>
                         <Dialog.Description>
                             Are you sure you want to proceed? This dialog has no header, just a message and actions.
                         </Dialog.Description>
-                    </Dialog.Content>
+                    </Dialog.Body>
                     <Dialog.Actions>
                         <Button variant="outlined" tone="neutral" onClick={() => setOpen(false)}>
                             Cancel
@@ -249,7 +251,7 @@ export const FullDialog: Story = {
     parameters: {
         docs: {
             description: {
-                story: "The full composition: header with title, content with description, and an actions bar.",
+                story: "The full composition: header with title, Body with description, and an actions bar.",
             },
         },
     },
@@ -264,14 +266,14 @@ export const FullDialog: Story = {
                     <Dialog.Header closeIconVisible>
                         <Dialog.Title>Dialog Title</Dialog.Title>
                     </Dialog.Header>
-                    <Dialog.Content>
+                    <Dialog.Body>
                         <Dialog.Description>
                             This is the dialog description. It provides context about the action the user is about to
                             perform.
                         </Dialog.Description>
-                    </Dialog.Content>
+                    </Dialog.Body>
                     <Dialog.Actions>
-                        <Button variant="outlined" tone="neutral" onClick={() => setOpen(false)}>
+                        <Button variant="text" tone="neutral" onClick={() => setOpen(false)}>
                             Cancel
                         </Button>
                         <Button variant="contained" tone="accent" onClick={() => setOpen(false)}>
@@ -288,7 +290,7 @@ export const ConfirmDelete: Story = {
     parameters: {
         docs: {
             description: {
-                story: "A destructive confirmation dialog — uses `tone=\"danger\"` on the primary action to signal irreversibility.",
+                story: 'A destructive confirmation dialog — uses `tone="danger"` on the primary action to signal irreversibility.',
             },
         },
     },
@@ -303,13 +305,13 @@ export const ConfirmDelete: Story = {
                     <Dialog.Header closeIconVisible>
                         <Dialog.Title>Confirm Deletion</Dialog.Title>
                     </Dialog.Header>
-                    <Dialog.Content>
+                    <Dialog.Body>
                         <Dialog.Description>
                             Are you sure you want to delete this item? This action cannot be undone.
                         </Dialog.Description>
-                    </Dialog.Content>
+                    </Dialog.Body>
                     <Dialog.Actions>
-                        <Button variant="outlined" tone="neutral" onClick={() => setOpen(false)}>
+                        <Button variant="text" tone="neutral" onClick={() => setOpen(false)}>
                             Cancel
                         </Button>
                         <Button variant="contained" tone="danger" onClick={() => setOpen(false)}>

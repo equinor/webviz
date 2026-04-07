@@ -21,7 +21,7 @@ export function Combobox<TValue, TMultiple extends boolean | undefined = false>(
 
     return (
         <ComboboxBase.Root {...restRootProps}>
-            <ComboboxBase.InputGroup className="form-element border-stroke-neutral-strong bg-fill-canvas text-body-sm relative flex items-center rounded border [&:has(.Clear)_input]:pr-[calc(2*(var(--text-body-sm)+var(--spacing-selectable-x)))]">
+            <ComboboxBase.InputGroup className="form-element border-stroke-neutral-strong bg-fill-canvas text-body-sm relative flex items-center border [&:has(.Clear)_input]:pr-[calc(2*(var(--text-body-sm)+var(--spacing-selectable-x)))]">
                 <ComboboxBase.Input
                     placeholder={placeholder}
                     className="pl-selectable-x py-selectable-y box-border w-full grow border-0 bg-transparent pr-[calc(var(--text-body-sm)+var(--spacing-selectable-x))] focus:outline-0"
