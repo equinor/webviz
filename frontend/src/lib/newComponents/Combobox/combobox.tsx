@@ -38,7 +38,7 @@ export function Combobox<TValue, TMultiple extends boolean | undefined = false>(
             <ComboboxBase.Portal>
                 <ComboboxBase.Positioner className="outline-0" sideOffset={4}>
                     <ComboboxBase.Popup className="bg-fill-floating shadow-elevation-overlay box-border max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) rounded transition-transform data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
-                        <ComboboxBase.Empty className="">No items found.</ComboboxBase.Empty>
+                        <ComboboxBase.Empty className="">{defaultedProps.placeholder}</ComboboxBase.Empty>
                         <ComboboxBase.List className="">
                             {(item) => (
                                 <ComboboxBase.Item
