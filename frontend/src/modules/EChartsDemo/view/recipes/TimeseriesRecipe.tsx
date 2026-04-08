@@ -24,6 +24,7 @@ import {
 
 import { generateTimeseriesGroups, generateTimeseriesOverlays } from "../../utils/syntheticData";
 import { createHoveredSeriesStore, HoveredSeriesReadout } from "../hoveredSeriesReadout";
+
 import { makeBaseOptions, type RecipeProps } from "./types";
 
 const MEMBER_LABEL = "Member";

@@ -1,5 +1,4 @@
-import type { ChartSeriesOption } from "../../core/composeChartOption";
-import type { SeriesBuildResult } from "../../core/composeChartOption";
+import type { ChartSeriesOption , SeriesBuildResult } from "../../core/composeChartOption";
 import type {
     MemberSeriesInteractionEntry,
     PointAnnotationInteractionSeriesEntry,

@@ -9,7 +9,8 @@ import React from "react";
 
 import type { EChartsOption } from "echarts";
 
-import type { BaseChartOptions, DistributionTrace, SubplotGroup } from "@modules/_shared/eCharts";
+import type { BaseChartOptions, DistributionTrace, SubplotGroup ,
+    HistogramType} from "@modules/_shared/eCharts";
 import {
     buildConvergenceChart,
     buildDensityChart,
@@ -17,12 +18,12 @@ import {
     buildHistogramChart,
     buildPercentileRangeChart,
     Chart,
-    computeSubplotGridLayout,
-    HistogramType,
+    computeSubplotGridLayout
 } from "@modules/_shared/eCharts";
 
 import { PlotType } from "../../typesAndEnums";
 import { generateDistributionTraces } from "../../utils/syntheticData";
+
 import { makeBaseOptions, type RecipeProps } from "./types";
 
 const ROW_HEIGHT_PX = 350;

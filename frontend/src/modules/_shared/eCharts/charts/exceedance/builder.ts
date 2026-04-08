@@ -1,5 +1,5 @@
-import type { SubplotAxesResult } from "../../layout/subplotAxes";
 import { createSimpleChartBuilder, type SimpleChartOptions } from "../../core/simpleChartFactory";
+import type { SubplotAxesResult } from "../../layout/subplotAxes";
 import type { DistributionTrace } from "../../types";
 
 import { buildExceedanceSeries, type ExceedanceDisplayOptions } from "./series";

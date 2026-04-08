@@ -8,6 +8,7 @@ import React from "react";
 import { buildBarChart, Chart, computeSubplotGridLayout } from "@modules/_shared/eCharts";
 
 import { generateBarTraces } from "../../utils/syntheticData";
+
 import { makeBaseOptions, type RecipeProps } from "./types";
 
 const ROW_HEIGHT_PX = 350;

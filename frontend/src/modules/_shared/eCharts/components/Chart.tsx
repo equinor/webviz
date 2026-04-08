@@ -1,7 +1,7 @@
 import React from "react";
 
-import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
+import ReactECharts from "echarts-for-react";
 
 export interface ChartProps {
     option: EChartsOption;

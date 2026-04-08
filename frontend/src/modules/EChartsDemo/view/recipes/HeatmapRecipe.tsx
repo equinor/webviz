@@ -8,6 +8,7 @@ import React from "react";
 import { buildHeatmapChart, Chart, computeSubplotGridLayout } from "@modules/_shared/eCharts";
 
 import { generateHeatmapTraces } from "../../utils/syntheticData";
+
 import { makeBaseOptions, type RecipeProps } from "./types";
 
 const ROW_HEIGHT_PX = 350;

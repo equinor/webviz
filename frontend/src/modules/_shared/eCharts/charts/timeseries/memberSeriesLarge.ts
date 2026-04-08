@@ -2,9 +2,9 @@ import type { CustomSeriesOption } from "echarts/charts";
 import type { CustomSeriesRenderItemAPI, CustomSeriesRenderItemParams } from "echarts/types/dist/shared";
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
+import { makeSeriesId } from "../../core/seriesId";
 import type { TimeseriesTrace } from "../../types";
 
-import { makeSeriesId } from "../../core/seriesId";
 import { TIMESERIES_CATEGORY } from "./ids";
 
 /**

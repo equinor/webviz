@@ -1,10 +1,11 @@
 import type { EChartsOption } from "echarts";
 
+import type { BaseChartOptions, SubplotGroup } from "../types";
+
 import { aggregateSubplotTraces } from "./aggregateSubplotTraces";
 import { buildCartesianSubplotChart } from "./cartesianSubplotChart";
 import type { CartesianChartOptions, CartesianSubplotBuildResult } from "./cartesianSubplotChart";
 import type { ChartSeriesOption, SeriesBuildResult } from "./composeChartOption";
-import type { BaseChartOptions, SubplotGroup } from "../types";
 
 export interface SimpleChartFactoryConfig<TTrace, TSeriesOptions> {
     /** Default x-axis label when not provided in options. */
