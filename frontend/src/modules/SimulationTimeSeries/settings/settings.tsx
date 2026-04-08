@@ -42,6 +42,8 @@ import {
     SubplotLimitDirectionEnumToStringMapping,
     VisualizationMode,
     VisualizationModeEnumToStringMapping,
+    SUBPLOT_MAX_DIRECTION_ELEMENTS_MIN,
+    SUBPLOT_MAX_DIRECTION_ELEMENTS_MAX,
 } from "../typesAndEnums";
 
 import {
@@ -121,7 +123,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     }
 
     function handleSubplotMaxDirectionElementsChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setSubplotMaxDirectionElements(parseInt(event.target.value));
+        const newValue = parseInt(event.target.value, 10);
+        if (!isNaN(newValue) && newValue >= SUBPLOT_MAX_DIRECTION_ELEMENTS_MIN && newValue <= SUBPLOT_MAX_DIRECTION_ELEMENTS_MAX) {
+            setSubplotMaxDirectionElements(newValue);
+        }
     }
 
     function handleGroupByChange(newValue: GroupBy) {
@@ -277,8 +282,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             type="number"
                             value={subplotMaxDirectionElements}
                             disabled={subplotLimitDirection === SubplotLimitDirection.NONE}
-                            min={1}
-                            max={12}
+                            min={SUBPLOT_MAX_DIRECTION_ELEMENTS_MIN}
+                            max={SUBPLOT_MAX_DIRECTION_ELEMENTS_MAX}
                             debounceTimeMs={150}
                             onChange={handleSubplotMaxDirectionElementsChange}
                         />

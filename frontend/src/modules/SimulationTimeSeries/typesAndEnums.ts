@@ -146,4 +146,7 @@ export const SubplotLimitDirectionEnumToStringMapping = {
     [SubplotLimitDirection.ROWS]: "Rows",
 };
 
+export const SUBPLOT_MAX_DIRECTION_ELEMENTS_MIN = 1;
+export const SUBPLOT_MAX_DIRECTION_ELEMENTS_MAX = 12;
+
 export type VectorHexColorMap = { [vectorName: string]: string };
