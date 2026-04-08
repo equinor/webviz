@@ -34,6 +34,7 @@ export function buildPointAnnotationSeries(trace: PointAnnotationTrace, axisInde
             name: trace.name,
             xAxisIndex: axisIndex,
             yAxisIndex: axisIndex,
+            clip: true,
             itemStyle: { color: trace.color },
             data: [datum],
             encode: { x: 0, y: 1 },

@@ -64,6 +64,7 @@ export function buildTimeseriesChart(
     const useLargeMemberSeries = shouldUseLargeMemberSeries(nonEmptySubplotGroups, displayConfig);
     const realtimePointer = buildRealtimeAxisPointer(displayConfig);
     const numSubplots = nonEmptySubplotGroups.length;
+    const enableZoom = options.zoomable === true || options.zoomState != null;
 
     const buildSubplot = function buildTimeseriesSubplotForAxis(
         group: SubplotGroup<TimeseriesTrace>,
@@ -90,6 +91,7 @@ export function buildTimeseriesChart(
                 numSubplots,
                 displayConfig,
                 memberLabel,
+                enableZoom,
             ),
         },
     );
@@ -161,7 +163,17 @@ function buildTimeseriesComposeOverrides(
     numSubplots: number,
     config: TimeseriesDisplayConfig,
     memberLabel?: string,
+    enableZoom = false,
 ) {
+    const toolboxFeature = enableZoom
+        ? {
+            dataZoom: { yAxisIndex: "none" as const, title: { zoom: "Box zoom", back: "Reset zoom" } },
+            restore: { title: "Reset" },
+        }
+        : {
+            restore: { title: "Reset" },
+        };
+
     return {
         tooltip: buildTimeseriesTooltip(config, { memberLabel }),
         axisPointer: {
@@ -173,14 +185,11 @@ function buildTimeseriesComposeOverrides(
             link: [{ xAxisIndex: "all" as const }],
         },
         toolbox: {
-            feature: {
-                dataZoom: { yAxisIndex: "none" as const, title: { zoom: "Box zoom", back: "Reset zoom" } },
-                restore: { title: "Reset" },
-            },
+            feature: toolboxFeature,
             right: 16,
             top: 4,
         },
-        dataZoom: buildTimeseriesDataZoom(numSubplots),
+        ...(enableZoom ? { dataZoom: buildTimeseriesDataZoom(numSubplots) } : {}),
     };
 }
 

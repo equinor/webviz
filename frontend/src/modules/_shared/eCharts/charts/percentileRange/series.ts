@@ -82,6 +82,7 @@ function createPercentileRangeGlyphSeries(
             name: trace.name,
             xAxisIndex: axisIndex,
             yAxisIndex: axisIndex,
+            clip: true,
             itemStyle: { color: trace.color, borderColor: trace.color },
             data: [[yAxisPosition, stats.min, stats.p90, centerValue, stats.p10, stats.max]],
             encode: { x: [1, 2, 3, 4, 5], y: 0 },
@@ -119,6 +120,7 @@ function createMemberPointSeries(
             symbolSize: 7,
             symbolOffset: [0, 12],
             itemStyle: { color: trace.color, opacity: 0.55 },
+            clip: true,
             z: 3,
             tooltip: {
                 formatter: (params: CallbackDataParams) => tooltipFormatter(params),

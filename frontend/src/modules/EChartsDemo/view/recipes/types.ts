@@ -14,7 +14,7 @@ export type RecipeProps = {
 };
 
 export type BaseOptions = {
-    layoutConfig: { sharedXAxis: boolean; sharedYAxis: boolean };
+    layoutConfig: { sharedXAxis: boolean; sharedYAxis: boolean; zoomEnabled: boolean };
     appliedZoomState: ChartZoomState | undefined;
 };
 
@@ -22,6 +22,7 @@ export function makeBaseOptions(opts: BaseOptions): BaseChartOptions {
     return {
         sharedXAxis: opts.layoutConfig.sharedXAxis,
         sharedYAxis: opts.layoutConfig.sharedYAxis,
-        zoomState: opts.appliedZoomState,
+        zoomable: opts.layoutConfig.zoomEnabled,
+        zoomState: opts.layoutConfig.zoomEnabled ? opts.appliedZoomState : undefined,
     };
 }

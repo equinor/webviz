@@ -21,7 +21,6 @@ export function useChartZoomSync(
     setZoomState: React.Dispatch<React.SetStateAction<ChartZoomState>>
 ) {
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const lastChartZoomStateRef = useRef<ChartZoomState | null>(null);
 
     const handleDataZoom = useCallback(function handleDataZoomEvent(params: unknown) {
         const updates = extractZoomUpdates(params);
@@ -34,7 +33,6 @@ export function useChartZoomSync(
         debounceTimer.current = setTimeout(function applyDebouncedZoomUpdate() {
             setZoomState(function mergeZoomState(prev) {
                 const next = mergeZoomUpdates(prev, updates);
-                lastChartZoomStateRef.current = next;
                 return areZoomStatesEqual(prev, next) ? prev : next;
             });
         }, 150);
@@ -52,17 +50,20 @@ export function useChartZoomSync(
         [],
     );
 
-    const appliedZoomState = useMemo(function computeAppliedZoomState() {
-        if (lastChartZoomStateRef.current && areZoomStatesEqual(zoomState, lastChartZoomStateRef.current)) {
-            return undefined;
-        }
-
-        return zoomState;
-    }, [zoomState]);
+    const appliedZoomState = useMemo(
+        function computeAppliedZoomState() {
+            return hasAnyZoomState(zoomState) ? zoomState : undefined;
+        },
+        [zoomState],
+    );
 
     return useMemo(function buildZoomSyncResult() {
         return { appliedZoomState, handleDataZoom };
     }, [appliedZoomState, handleDataZoom]);
+}
+
+function hasAnyZoomState(zoomState: ChartZoomState | null | undefined): boolean {
+    return zoomState?.x != null || zoomState?.y != null;
 }
 
 function extractZoomUpdates(params: unknown): Array<{ axisKey: "x" | "y"; zoom: AxisZoomState }> {

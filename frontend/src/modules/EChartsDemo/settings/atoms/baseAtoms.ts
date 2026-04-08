@@ -38,6 +38,7 @@ export type PointsAndLabelsConfig = {
 export type LayoutConfig = {
     sharedXAxis: boolean;
     sharedYAxis: boolean;
+    zoomEnabled: boolean;
     scrollMode: boolean;
 };
 
@@ -74,5 +75,6 @@ export const pointsAndLabelsConfigAtom = atom<PointsAndLabelsConfig>({
 export const layoutConfigAtom = atom<LayoutConfig>({
     sharedXAxis: false,
     sharedYAxis: false,
+    zoomEnabled: true,
     scrollMode: false,
 });

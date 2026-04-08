@@ -90,6 +90,7 @@ export function buildHistogramSeriesFromBars(
                 encode: { x: [0, 1], y: [2, 3] },
                 xAxisIndex: axisIndex,
                 yAxisIndex: axisIndex,
+                clip: true,
                 renderItem: createHistogramBarRenderItem({
                     color,
                     opacity,
@@ -125,7 +126,7 @@ export function buildHistogramSeriesFromBars(
                     symbolSize: [1.5, 10],
                     symbolOffset: [0, 12],
                     itemStyle: { color, opacity: 0.6 },
-                    clip: false,
+                    clip: true,
                     tooltip: {
                         formatter: (params: CallbackDataParams) => rugTooltipFormatter(params),
                     },

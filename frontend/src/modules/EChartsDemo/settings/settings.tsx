@@ -216,6 +216,11 @@ export function Settings(): React.ReactNode {
 
             <CollapsibleGroup title="Layout" expanded>
                 <Checkbox
+                    label="Enable zoom"
+                    checked={layoutConfig.zoomEnabled}
+                    onChange={(_, c) => setLayoutConfig((prev) => ({ ...prev, zoomEnabled: c }))}
+                />
+                <Checkbox
                     label="Shared X axis"
                     checked={layoutConfig.sharedXAxis}
                     onChange={(_, c) => setLayoutConfig((prev) => ({ ...prev, sharedXAxis: c }))}

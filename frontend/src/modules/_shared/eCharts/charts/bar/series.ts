@@ -28,6 +28,7 @@ export type BuildBarSeriesResult = SeriesBuildResult & {
 };
 
 const MAX_LABELS_FOR_BARS = 20;
+type BarDataValue = number | null;
 
 export function buildBarSeries(
     trace: BarTrace,
@@ -43,14 +44,16 @@ export function buildBarSeries(
     } = options;
 
     let xData: (string | number)[];
-    let yData: number[];
+    let yData: BarDataValue[];
 
     if (categoryOrder) {
         // Align values to the pre-computed category order shared across all traces.
         const valueByCategory = new Map<string | number, number>();
         trace.categories.forEach((cat, i) => valueByCategory.set(cat, trace.values[i]));
         xData = categoryOrder;
-        yData = categoryOrder.map((cat) => valueByCategory.get(cat) ?? 0);
+        yData = categoryOrder.map(function mapCategoryToAlignedValue(cat) {
+            return valueByCategory.has(cat) ? (valueByCategory.get(cat) ?? null) : null;
+        });
     } else {
         const dataPoints = trace.categories.map((cat, i) => ({ x: cat, y: trace.values[i] }));
         const sorted =
@@ -79,7 +82,7 @@ export function buildBarSeries(
                 ? {
                     show: true,
                     position: "top",
-                    formatter: (params: CallbackDataParams) => formatNumber(params.value as number),
+                    formatter: formatBarLabel,
                     fontSize: 11,
                 }
                 : undefined,
@@ -87,12 +90,35 @@ export function buildBarSeries(
 
     );
 
-    if (showStatisticalMarkers && xData.length > 0) {
-        const stats = computePointStatistics(yData);
+    const numericValues = collectNumericBarValues(yData);
+    if (showStatisticalMarkers && numericValues.length > 0 && xData.length > 0) {
+        const stats = computePointStatistics(numericValues);
         series.push(createMeanReferenceLine(stats.mean, xData, trace, axisIndex));
     }
 
     return { series, categoryData: xData, legendData: [trace.name] };
+}
+
+function formatBarLabel(params: CallbackDataParams): string {
+    const value = extractBarDataValue(params.value);
+    return value == null ? "" : formatNumber(value);
+}
+
+function collectNumericBarValues(values: BarDataValue[]): number[] {
+    return values.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+}
+
+function extractBarDataValue(value: unknown): number | null {
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+    }
+
+    if (Array.isArray(value)) {
+        const candidate = value[value.length - 1] ?? value[1] ?? value[0];
+        return typeof candidate === "number" && Number.isFinite(candidate) ? candidate : null;
+    }
+
+    return null;
 }
 
 function createMeanReferenceLine(

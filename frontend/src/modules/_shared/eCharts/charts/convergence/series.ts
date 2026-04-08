@@ -59,6 +59,7 @@ function createConvergenceBandSeries(
             name: trace.name,
             xAxisIndex: axisIndex,
             yAxisIndex: axisIndex,
+            clip: true,
             itemStyle: { color: trace.color },
             data: convergence.map((point) => [point.member, point.p90, point.p10]),
             encode: { x: 0, y: [1, 2] },

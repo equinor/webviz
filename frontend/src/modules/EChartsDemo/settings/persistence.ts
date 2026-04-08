@@ -39,6 +39,7 @@ export type SerializedSettings = {
     histogramType: HistogramType;
     sharedXAxis: boolean;
     sharedYAxis: boolean;
+    zoomEnabled: boolean;
     scrollMode: boolean;
 };
 
@@ -70,6 +71,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         },
         sharedXAxis: { type: "boolean" },
         sharedYAxis: { type: "boolean" },
+        zoomEnabled: { type: "boolean" },
         scrollMode: { type: "boolean" },
     },
 }));
@@ -102,6 +104,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         histogramType: hist.histogramType,
         sharedXAxis: layout.sharedXAxis,
         sharedYAxis: layout.sharedYAxis,
+        zoomEnabled: layout.zoomEnabled,
         scrollMode: layout.scrollMode,
     };
 };
@@ -146,6 +149,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     const layoutUpdate: Partial<LayoutConfig> = {};
     if (raw.sharedXAxis !== undefined) layoutUpdate.sharedXAxis = raw.sharedXAxis;
     if (raw.sharedYAxis !== undefined) layoutUpdate.sharedYAxis = raw.sharedYAxis;
+    if (raw.zoomEnabled !== undefined) layoutUpdate.zoomEnabled = raw.zoomEnabled;
     if (raw.scrollMode !== undefined) layoutUpdate.scrollMode = raw.scrollMode;
     if (Object.keys(layoutUpdate).length > 0) {
         set(layoutConfigAtom, (prev) => ({ ...prev, ...layoutUpdate }));

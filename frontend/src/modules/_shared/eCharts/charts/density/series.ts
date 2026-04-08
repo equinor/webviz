@@ -52,6 +52,7 @@ export function buildDensitySeries(
                 name: `${trace.name} points`,
                 xAxisIndex: axisIndex,
                 yAxisIndex: axisIndex,
+                clip: true,
                 data: trace.values.map(function buildDensityMemberPoint(value, index) {
                     return {
                         value: [value, 0],
@@ -63,7 +64,6 @@ export function buildDensitySeries(
                 symbolSize: [1.5, 10],
                 symbolOffset: [0, 5],
                 itemStyle: { color: trace.color, opacity: 0.6 },
-                clip: false,
             },
 
 

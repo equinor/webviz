@@ -4,7 +4,7 @@ import { buildCartesianSubplotChart } from "../../core/cartesianSubplotChart";
 import type { CartesianSubplotBuildResult } from "../../core/cartesianSubplotChart";
 import type { BarTrace, BaseChartOptions, SubplotGroup } from "../../types";
 
-import { buildBarSeries, type BuildBarSeriesOptions } from "./series";
+import { buildBarSeries, type BarSortBy, type BuildBarSeriesOptions } from "./series";
 import { buildBarTooltip } from "./tooltips";
 export type BarChartOptions = BaseChartOptions & BuildBarSeriesOptions & {
     yAxisLabel?: string;
@@ -34,9 +34,9 @@ export function buildBarChart(
 }
 
 /**
- * Computes a unified category order from the first trace in the subplot,
- * then builds all traces aligned to that order. This prevents misalignment
- * when multiple traces share categories but sortBy is "values".
+ * Computes a unified category order across all traces in the subplot,
+ * then builds all traces aligned to that order. Missing categories render
+ * as gaps instead of zero-height bars.
  */
 function buildBarSubplot(
     group: SubplotGroup<BarTrace>,
@@ -44,23 +44,18 @@ function buildBarSubplot(
     options: BuildBarSeriesOptions,
     yAxisLabel: string,
 ): CartesianSubplotBuildResult {
-    const firstTrace = group.traces[0];
-    if (!firstTrace) {
+    if (group.traces.length === 0) {
         return { series: [], legendData: [], xAxis: { type: "category", data: [] }, yAxis: { type: "value", label: yAxisLabel } };
     }
 
-    // Compute category order once from the first trace.
-    const firstResult = buildBarSeries(firstTrace, axisIndex, options);
-    const categoryOrder = firstResult.categoryData;
-
-    // Build remaining traces aligned to the shared category order.
+    const categoryOrder = computeCategoryOrder(group.traces, options.sortBy ?? "categories");
     const optionsWithOrder: BuildBarSeriesOptions = { ...options, categoryOrder };
-    const series = [...firstResult.series];
-    const legendData = [...firstResult.legendData];
-    const seenLegend = new Set(legendData);
+    const series = [];
+    const legendData: string[] = [];
+    const seenLegend = new Set<string>();
 
-    for (let i = 1; i < group.traces.length; i++) {
-        const result = buildBarSeries(group.traces[i], axisIndex, optionsWithOrder);
+    for (const trace of group.traces) {
+        const result = buildBarSeries(trace, axisIndex, optionsWithOrder);
         series.push(...result.series);
         for (const name of result.legendData) {
             if (!seenLegend.has(name)) {
@@ -77,4 +72,44 @@ function buildBarSubplot(
         yAxis: { type: "value", label: yAxisLabel },
         title: group.title,
     };
+}
+
+function computeCategoryOrder(traces: BarTrace[], sortBy: BarSortBy): Array<string | number> {
+    const categoryStats = new Map<string | number, { total: number; firstIndex: number }>();
+    let nextIndex = 0;
+
+    for (const trace of traces) {
+        trace.categories.forEach(function collectCategoryStats(category, index) {
+            const value = trace.values[index];
+            const existing = categoryStats.get(category);
+
+            if (existing) {
+                if (Number.isFinite(value)) {
+                    existing.total += value;
+                }
+                return;
+            }
+
+            categoryStats.set(category, {
+                total: Number.isFinite(value) ? value : 0,
+                firstIndex: nextIndex,
+            });
+            nextIndex += 1;
+        });
+    }
+
+    return [...categoryStats.entries()]
+        .sort(function sortCategories([leftCategory, leftStats], [rightCategory, rightStats]) {
+            if (sortBy === "values") {
+                if (rightStats.total !== leftStats.total) {
+                    return rightStats.total - leftStats.total;
+                }
+                return leftStats.firstIndex - rightStats.firstIndex;
+            }
+
+            return String(leftCategory).localeCompare(String(rightCategory));
+        })
+        .map(function pluckCategory([category]) {
+            return category;
+        });
 }

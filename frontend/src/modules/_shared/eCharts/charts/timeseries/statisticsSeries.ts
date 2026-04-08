@@ -87,6 +87,7 @@ function createBandSeries(
         name,
         xAxisIndex: axisIndex,
         yAxisIndex: axisIndex,
+        clip: true,
         data: upperValues.map((upperValue, index) => [index, lowerValues[index], upperValue]),
         encode: { x: 0, y: [1, 2] },
         tooltip: { show: false },

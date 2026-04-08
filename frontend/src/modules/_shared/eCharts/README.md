@@ -51,12 +51,11 @@ All builders accept `base: BaseChartOptions`. Every field is optional.
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `zoomState` | `ChartZoomState` | — | Persisted zoom state applied via `dataZoom` |
+| `zoomable` | `boolean` | `false` | Enable wheel / pinch zoom and box-zoom controls for families that support shared cartesian zoom |
 | `sharedXAxis` | `boolean` | `false` | Hide x-axis labels on all but the bottom subplot |
 | `sharedYAxis` | `boolean` | `false` | Hide y-axis labels on all but the left subplot |
 | `xAxisLabel` | `string` | builder-specific | Override x-axis label |
 | `yAxisLabel` | `string` | builder-specific | Override y-axis label |
-| `xAxisScale` | `boolean` | builder-specific | `true` = auto-scale; `false` = start at zero |
-| `yAxisScale` | `boolean` | builder-specific | `true` = auto-scale; `false` = start at zero |
 | `showLegend` | `boolean` | auto | Force legend on/off |
 
 Override priority: series-level > `BaseChartOptions` > builder default.
@@ -68,10 +67,8 @@ Override priority: series-level > `BaseChartOptions` > builder default.
 | `useChartZoomSync` | Syncs persisted `ChartZoomState` with ECharts `datazoom` events. |
 | `useSeriesInteraction` | Nearest-series highlight + tooltip for timeseries and scatter. |
 | `useTimestampSelection` | Convenience: bundles click-to-timestamp + markLine with internal state. |
-| `useClickToTimestamp` | Primitive: converts Ctrl/Cmd + click to timestamp. |
-| `useActiveTimestampMarker` | Primitive: imperatively patches markLine without full option rebuild. |
 
-`useTimestampSelection` is for the common case where the module owns the timestamp. Use the two primitives when the timestamp is driven externally.
+`useTimestampSelection` is the public hook for the common case where the module owns the timestamp. The lower-level primitives `useClickToTimestamp` and `useActiveTimestampMarker` exist inside the module internals but are not exported from the public `@modules/_shared/eCharts` barrel.
 
 ## Consuming the module
 
@@ -85,7 +82,7 @@ Import from `@modules/_shared/eCharts`. The `EChartsDemo` module has one recipe 
 | `HeatmapRecipe.tsx` | Heatmap | — |
 | `ScatterRecipe.tsx` | Member scatter | `useSeriesInteraction` |
 
-Zoom is owned by the parent view (`view.tsx`), not by recipes. Recipes receive `appliedZoomState` + `handleDataZoom` via `RecipeProps`.
+Zoom is owned by the parent view (`view.tsx`), not by recipes. Recipes receive `appliedZoomState` + `handleDataZoom` via `RecipeProps`, and the parent decides whether zoom is enabled by passing `zoomable` in the base options.
 
 ### Custom series (bring your own)
 
@@ -101,6 +98,9 @@ interface PvtLine {
     xValues: number[];
     yValues: number[];
 }
+
+const xAxisLabel = "Pressure";
+const yAxisLabel = "Volume factor";
 
 function buildPvtSubplot(group: SubplotGroup<PvtLine>, axisIndex: number): CartesianSubplotBuildResult {
     const series: LineSeriesOption[] = group.traces.map(function buildTrace(trace) {
@@ -119,15 +119,17 @@ function buildPvtSubplot(group: SubplotGroup<PvtLine>, axisIndex: number): Carte
     return {
         series,
         legendData: group.traces.map((t) => t.name),
-        xAxis: { type: "value", name: group.xAxisLabel },
-        yAxis: { type: "value", name: group.yAxisLabel },
+        xAxis: { type: "value", label: xAxisLabel },
+        yAxis: { type: "value", label: yAxisLabel },
     };
 }
 
-const option = buildCartesianSubplotChart(subplotGroups, buildPvtSubplot);
+const option = buildCartesianSubplotChart(subplotGroups, buildPvtSubplot, { zoomable: true });
 ```
 
 The shared pipeline handles subplot grid layout, axis wiring, legend dedup, and option composition. The consumer only writes the series factory.
+
+Bar charts align categories across every trace in a subplot before rendering. If one trace is missing a category that appears in another trace, the missing value renders as a gap rather than a zero-height bar.
 
 ## Design decisions
 

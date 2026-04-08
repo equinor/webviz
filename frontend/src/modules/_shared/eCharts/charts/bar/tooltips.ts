@@ -18,7 +18,7 @@ export function buildBarTooltip() {
 
 export function formatBarAxisTooltip(params: CallbackDataParams | CallbackDataParams[]): string {
     const entries = (Array.isArray(params) ? params : [params]).filter(
-        (entry): entry is BarTooltipEntry => entry.seriesType === "bar",
+        (entry): entry is BarTooltipEntry => entry.seriesType === "bar" && extractBarTooltipValue(entry.value) != null,
     );
     if (entries.length === 0) return "";
 
@@ -28,7 +28,7 @@ export function formatBarAxisTooltip(params: CallbackDataParams | CallbackDataPa
         entries.map(function mapEntryToTooltipRow(entry) {
             return {
                 label: entry.seriesName ?? "",
-                value: formatNumber(extractNumericValue(entry.value)),
+                value: formatNumber(extractBarTooltipValue(entry.value) ?? 0),
                 color: typeof entry.color === "string" ? entry.color : undefined,
             };
         }),
@@ -37,4 +37,13 @@ export function formatBarAxisTooltip(params: CallbackDataParams | CallbackDataPa
 
 export function formatBarMeanTooltip(traceName: string, mean: number, traceColor: string): string {
     return formatCompactTooltip(traceName, [{ label: "Mean", value: formatNumber(mean), color: traceColor }]);
+}
+
+function extractBarTooltipValue(value: unknown): number | null {
+    if (value == null) {
+        return null;
+    }
+
+    const numericValue = extractNumericValue(value);
+    return Number.isFinite(numericValue) ? numericValue : null;
 }
