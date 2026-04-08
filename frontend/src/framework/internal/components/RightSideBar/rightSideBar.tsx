@@ -7,7 +7,7 @@ import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSessi
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { NavBarButton } from "@lib/components/NavBarComponents";
-import { Separator } from "@lib/newComponents/Separator";
+import { Tabs } from "@lib/newComponents/Tabs";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
@@ -68,62 +68,42 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
         ensureSettingsPanelIsVisible();
     }
 
-    function handleModulesListClick() {
-        handleSelectPanelContent(RightDrawerContent.ModulesList);
-    }
-
-    function handleRealizationFilterClick() {
-        handleSelectPanelContent(RightDrawerContent.RealizationFilterSettings);
-    }
-
-    function handleModuleInstanceLogClick() {
-        handleSelectPanelContent(RightDrawerContent.ModuleInstanceLog);
-    }
-
-    function handleColorPaletteSettingsClick() {
-        handleSelectPanelContent(RightDrawerContent.ColorPaletteSettings);
-    }
-
     return (
-        <SideBar position="right">
-            <div className="flex grow flex-col gap-2">
-                <NavBarButton
-                    active={drawerContent === RightDrawerContent.ModulesList}
-                    tooltip="Show modules list"
-                    icon={<WebAsset fontSize="small" />}
-                    onClick={handleModulesListClick}
-                    disabled={isSnapshot}
-                    disabledTooltip="Modules cannot be changed in snapshot mode"
-                />
-                <Separator orientation="horizontal" />
-                <NavBarButton
-                    active={drawerContent === RightDrawerContent.RealizationFilterSettings}
-                    tooltip={RealizationFilterButtonTooltip(
-                        numberOfUnsavedRealizationFilters,
-                        numberOfEffectiveRealizationFilters,
-                    )}
-                    icon={RealizationFilterButtonIcon(
-                        numberOfUnsavedRealizationFilters,
-                        numberOfEffectiveRealizationFilters,
-                    )}
-                    onClick={handleRealizationFilterClick}
-                    disabled={isSnapshot}
-                    disabledTooltip="Realization filters cannot be changed in snapshot mode"
-                />
-                <NavBarButton
-                    icon={<History fontSize="small" />}
-                    active={drawerContent === RightDrawerContent.ModuleInstanceLog}
-                    tooltip="Open module log"
-                    onClick={handleModuleInstanceLogClick}
-                />
-                <Separator orientation="horizontal" />
-                <NavBarButton
-                    active={drawerContent === RightDrawerContent.ColorPaletteSettings}
-                    tooltip="Show color settings"
-                    icon={<Palette fontSize="small" />}
-                    onClick={handleColorPaletteSettingsClick}
-                />
-            </div>
+        <SideBar position="right" className="">
+            <Tabs.Root value={drawerContent} onValueChange={handleSelectPanelContent} orientation="vertical">
+                <Tabs.List indicatorPosition="start">
+                    <NavBarButton
+                        value={RightDrawerContent.ModulesList}
+                        tooltip="Show modules list"
+                        icon={<WebAsset fontSize="small" />}
+                        disabled={isSnapshot}
+                        disabledTooltip="Modules cannot be changed in snapshot mode"
+                    />
+                    <NavBarButton
+                        value={RightDrawerContent.RealizationFilterSettings}
+                        tooltip={RealizationFilterButtonTooltip(
+                            numberOfUnsavedRealizationFilters,
+                            numberOfEffectiveRealizationFilters,
+                        )}
+                        icon={RealizationFilterButtonIcon(
+                            numberOfUnsavedRealizationFilters,
+                            numberOfEffectiveRealizationFilters,
+                        )}
+                        disabled={isSnapshot}
+                        disabledTooltip="Realization filters cannot be changed in snapshot mode"
+                    />
+                    <NavBarButton
+                        value={RightDrawerContent.ModuleInstanceLog}
+                        icon={<History fontSize="small" />}
+                        tooltip="Open module log"
+                    />
+                    <NavBarButton
+                        value={RightDrawerContent.ColorPaletteSettings}
+                        tooltip="Show color settings"
+                        icon={<Palette fontSize="small" />}
+                    />
+                </Tabs.List>
+            </Tabs.Root>
         </SideBar>
     );
 };
@@ -157,7 +137,7 @@ function RealizationFilterButtonTooltip(
 function RealizationFilterButtonIcon(
     numberOfUnsavedRealizationFilters: number,
     numberOfEffectiveRealizationFilters: number,
-): React.ReactNode {
+): React.ReactElement {
     return (
         <Badge
             badgeContent={numberOfUnsavedRealizationFilters ? "!" : numberOfEffectiveRealizationFilters || undefined}

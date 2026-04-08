@@ -70,7 +70,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
     }
 
     return (
-        <div className="bg-white border-r-2 flex flex-col w-full h-full">
+        <div className="flex h-full w-full flex-col bg-white">
             <ModulesList workbench={props.workbench} onClose={handleOnClose} />
             <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
             <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />

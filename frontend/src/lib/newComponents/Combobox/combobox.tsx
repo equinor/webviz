@@ -1,3 +1,5 @@
+import React from "react";
+
 import { Combobox as ComboboxBase } from "@base-ui/react";
 import type { ComboboxRootProps } from "@base-ui/react";
 import { Check, Clear, UnfoldMore } from "@mui/icons-material";
@@ -13,8 +15,9 @@ const DEFAULT_PROPS = {
     placeholder: "Select an option",
 } satisfies Partial<ComboboxProps<any>>;
 
-export function Combobox<TValue, TMultiple extends boolean | undefined = false>(
+function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false>(
     props: ComboboxProps<TValue, TMultiple>,
+    ref: React.ForwardedRef<HTMLInputElement>,
 ) {
     const defaultedProps = { ...DEFAULT_PROPS, ...props };
     const { placeholder, ...restRootProps } = defaultedProps;
@@ -23,6 +26,7 @@ export function Combobox<TValue, TMultiple extends boolean | undefined = false>(
         <ComboboxBase.Root {...restRootProps}>
             <ComboboxBase.InputGroup className="form-element border-stroke-neutral-strong bg-fill-canvas text-body-sm relative flex items-center border [&:has(.Clear)_input]:pr-[calc(2*(var(--text-body-sm)+var(--spacing-selectable-x)))]">
                 <ComboboxBase.Input
+                    ref={ref}
                     placeholder={placeholder}
                     className="pl-selectable-x py-selectable-y box-border w-full grow border-0 bg-transparent pr-[calc(var(--text-body-sm)+var(--spacing-selectable-x))] focus:outline-0"
                 />
@@ -59,3 +63,10 @@ export function Combobox<TValue, TMultiple extends boolean | undefined = false>(
         </ComboboxBase.Root>
     );
 }
+
+export const Combobox = React.forwardRef(ComboboxComponent as any) as <
+    TValue,
+    TMultiple extends boolean | undefined = false,
+>(
+    props: ComboboxProps<TValue, TMultiple> & { ref?: React.Ref<HTMLInputElement> },
+) => React.ReactElement;

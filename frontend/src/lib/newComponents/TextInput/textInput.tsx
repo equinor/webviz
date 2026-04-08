@@ -1,3 +1,5 @@
+import React from "react";
+
 import { Input, type InputProps as InputBaseProps } from "@base-ui/react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -7,7 +9,7 @@ export type TextInputProps = Omit<InputBaseProps, "className"> & {
     endAdornment?: React.ReactNode;
 };
 
-export function TextInput(props: TextInputProps) {
+export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(function TextInput(props, ref) {
     return (
         <div
             className={resolveClassNames(
@@ -20,9 +22,9 @@ export function TextInput(props: TextInputProps) {
         >
             {props.startAdornment}
 
-            <Input {...props} className={resolveClassNames("grow p-0 outline-0")} disabled={props.disabled} />
+            <Input {...props} ref={ref} className={resolveClassNames("grow p-0 outline-0")} disabled={props.disabled} />
 
             {props.endAdornment}
         </div>
     );
-}
+});

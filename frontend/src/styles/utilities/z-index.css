@@ -1,11 +1,14 @@
 @utility z-base {
     z-index: var(--z-base);
 }
-@utility z-sticky {
-    z-index: var(--z-sticky);
+@utility z-elevated {
+    z-index: var(--z-elevated);
 }
 @utility z-overlay {
     z-index: var(--z-overlay);
+}
+@utility z-sticky {
+    z-index: var(--z-sticky);
 }
 @utility z-scrim {
     z-index: var(--z-scrim);

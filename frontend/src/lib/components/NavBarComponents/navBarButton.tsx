@@ -1,20 +1,18 @@
 import React from "react";
 
 import { Tooltip } from "@lib/components/Tooltip";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Tabs, type TabsProps } from "@lib/newComponents/Tabs";
 
-import { Button } from "../Button";
-import type { ButtonProps } from "../Button/button";
-
-export type NavBarButtonProps = {
+export type NavBarButtonProps<TValue extends string> = {
+    value: TValue;
     /**
      * The icon rendered on the left side of the text
      */
-    icon: React.ReactNode;
+    icon: React.ReactElement;
     /**
      * An alternate icon to use when the button is in it's "active" state
      */
-    activeIcon?: React.ReactNode;
+    activeIcon?: React.ReactElement;
     /**
      * Renders the button in it's active state
      */
@@ -29,13 +27,13 @@ export type NavBarButtonProps = {
     disabledTooltip?: React.ReactNode;
 };
 
-function NavBarButtonComponent(
-    props: NavBarButtonProps & ButtonProps,
-    ref: React.ForwardedRef<HTMLDivElement>,
+function NavBarButtonComponent<TValue extends string>(
+    props: NavBarButtonProps<TValue> & TabsProps["Tab"],
+    ref: React.ForwardedRef<HTMLButtonElement>,
 ): React.ReactNode {
     const { icon, activeIcon, active, disabledTooltip, tooltip, ...baseProps } = props;
 
-    let buttonIcon: React.ReactNode;
+    let buttonIcon: React.ReactElement;
 
     if (active && activeIcon) buttonIcon = activeIcon;
     else buttonIcon = icon;
@@ -44,14 +42,9 @@ function NavBarButtonComponent(
         <Tooltip title={props.disabled ? disabledTooltip : tooltip} placement="right">
             {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
             <span>
-                <Button
-                    {...baseProps}
-                    ref={ref}
-                    variant="text"
-                    tone="neutral"
-                >
+                <Tabs.Tab {...baseProps} ref={ref}>
                     {buttonIcon}
-                </Button>
+                </Tabs.Tab>
             </span>
         </Tooltip>
     );

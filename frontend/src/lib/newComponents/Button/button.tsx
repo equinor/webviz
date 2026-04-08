@@ -1,3 +1,5 @@
+import React from "react";
+
 import { Button as ButtonBase } from "@base-ui/react/button";
 import type { ButtonProps as ButtonPropsBase } from "@base-ui/react/button";
 
@@ -52,12 +54,13 @@ const SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
     large: "button-lg",
 };
 
-export function Button(props: ButtonProps) {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
     const defaultedProps = { ...DEFAULT_VALUES, ...props };
 
     return (
         <ButtonBase
             {...defaultedProps}
+            ref={ref}
             className={resolveClassNames(
                 "button",
                 {
@@ -74,4 +77,4 @@ export function Button(props: ButtonProps) {
             {props.iconOnly ? props.children : <span className="button__label">{props.children}</span>}
         </ButtonBase>
     );
-}
+});

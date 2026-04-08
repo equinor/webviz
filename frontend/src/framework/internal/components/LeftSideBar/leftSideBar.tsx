@@ -8,11 +8,12 @@ import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { NavBarButton } from "@lib/components/NavBarComponents";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Button } from "@lib/newComponents/Button";
+import { Separator } from "@lib/newComponents/Separator";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { SideBar } from "../SideBar/sideBar";
-import { Separator } from "@lib/newComponents/Separator";
 
 type LeftSideBarProps = {
     workbench: Workbench;
@@ -36,37 +37,57 @@ export const LeftSideBar: React.FC<LeftSideBarProps> = (props) => {
     }
 
     return (
-        <SideBar position="left">
-            <div className="flex grow flex-col gap-2">
-                <NavBarButton
-                    tooltip={"Open ensemble selection dialog"}
-                    disabledTooltip={"Ensembles cannot be changed in snapshot mode"}
-                    disabled={isSnapshot}
-                    icon={
-                        <Badge
-                            invisible={ensembleSet.getEnsembleArray().length === 0 && !isEnsembleSetLoading}
-                            color="bg-blue-500"
-                            badgeContent={
-                                isEnsembleSetLoading ? (
-                                    <CircularProgress size="extra-small" color="inherit" />
-                                ) : (
-                                    ensembleSet.getEnsembleArray().length
-                                )
-                            }
-                        >
-                            <List fontSize="small" className="size-5" />
-                        </Badge>
+        <SideBar position="left" className="p-space-xs">
+            <div className="gap-space-xs flex grow flex-col">
+                <Tooltip
+                    title={
+                        isSnapshot ? "Ensembles cannot be changed in snapshot mode" : "Open ensemble selection dialog"
                     }
-                    onClick={handleEnsembleDialogOpenClick}
-                />
+                    placement="right"
+                >
+                    {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                    <span>
+                        <Button
+                            disabled={isSnapshot}
+                            iconOnly
+                            onClick={handleEnsembleDialogOpenClick}
+                            tone="accent"
+                            variant="text"
+                        >
+                            <Badge
+                                invisible={ensembleSet.getEnsembleArray().length === 0 && !isEnsembleSetLoading}
+                                color="bg-blue-500"
+                                badgeContent={
+                                    isEnsembleSetLoading ? (
+                                        <CircularProgress size="extra-small" color="inherit" />
+                                    ) : (
+                                        ensembleSet.getEnsembleArray().length
+                                    )
+                                }
+                            >
+                                <List fontSize="small" className="size-5" />
+                            </Badge>
+                        </Button>
+                    </span>
+                </Tooltip>
                 <Separator orientation="horizontal" />
-                <NavBarButton
-                    tooltip="Show templates dialog"
-                    icon={<GridView fontSize="small" className="size-5" />}
-                    onClick={handleTemplatesListClick}
-                    disabled={isSnapshot}
-                    disabledTooltip="Templates cannot be applied in snapshot mode"
-                />
+                <Tooltip
+                    title={isSnapshot ? "Templates cannot be applied in snapshot mode" : "Show templates dialog"}
+                    placement="right"
+                >
+                    {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                    <span>
+                        <Button
+                            disabled={isSnapshot}
+                            iconOnly
+                            onClick={handleTemplatesListClick}
+                            tone="accent"
+                            variant="text"
+                        >
+                            <GridView fontSize="small" className="size-5" />
+                        </Button>
+                    </span>
+                </Tooltip>
                 <div className="h-5 grow" />
             </div>
         </SideBar>

@@ -1,0 +1,53 @@
+@layer components {
+    .tabs__tab {
+        &[data-orientation="horizontal"] {
+            [data-position="start"] & {
+                border-top: 2px solid var(--eds-color-bg-neutral-fill-muted-default);
+            }
+            [data-position="end"] & {
+                border-bottom: 2px solid var(--eds-color-bg-neutral-fill-muted-default);
+            }
+        }
+
+        &[data-orientation="vertical"] {
+            [data-position="start"] & {
+                border-left: 2px solid var(--eds-color-bg-neutral-fill-muted-default);
+            }
+            [data-position="end"] & {
+                border-right: 2px solid var(--eds-color-bg-neutral-fill-muted-default);
+            }
+        }
+    }
+    .tabs__indicator {
+        @apply absolute top-0 left-0 rounded transition-all duration-150;
+        transition-property: translate, width, height;
+        transition-duration: 200ms;
+        transition-timing-function: ease-in-out;
+
+        &[data-hidden] {
+            display: none;
+        }
+
+        &[data-orientation="horizontal"] {
+            width: var(--active-tab-width);
+            height: 2px;
+            [data-position="start"] & {
+                translate: var(--active-tab-left);
+            }
+            [data-position="end"] & {
+                translate: var(--active-tab-left) var(--active-tab-height);
+            }
+        }
+
+        &[data-orientation="vertical"] {
+            height: var(--active-tab-height);
+            width: 2px;
+            [data-position="start"] & {
+                translate: 0 var(--active-tab-top);
+            }
+            [data-position="end"] & {
+                translate: var(--active-tab-width) var(--active-tab-top);
+            }
+        }
+    }
+}
