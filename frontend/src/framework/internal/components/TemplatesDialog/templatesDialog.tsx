@@ -223,9 +223,9 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
         <>
             <div
                 className={resolveClassNames(
-                    "box-border text-sm text-gray-700 w-full select-none flex items-center cursor-pointer hover:bg-blue-100 p-2",
+                    "box-border text-sm w-full select-none flex items-center cursor-pointer hover:bg-fill-accent p-2",
                     {
-                        "bg-blue-200": props.selected,
+                        "bg-fill-accent-strong text-text-on-strong hover:bg-fill-accent-strong-hover": props.selected,
                     },
                 )}
                 onClick={props.onClick}
@@ -251,7 +251,7 @@ function makeDataTags(tagIds: ModuleDataTagId[]): React.ReactNode[] {
         const tagObj = ModuleDataTags.find((el) => el.id === tag);
         if (tagObj) {
             tags.push(
-                <div key={tag} className="text-indigo-600">
+                <div key={tag} className="text-text-accent">
                     #{tagObj.name}
                 </div>,
             );

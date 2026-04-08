@@ -6,7 +6,7 @@ import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { Dialog } from "@lib/components/Dialog";
+import { Dialog } from "@lib/newComponents/Dialog";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
@@ -156,24 +156,68 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     return (
         <>
-            <Dialog
+            <Dialog.Popup
                 open={isOpen}
-                onClose={handleCancel}
-                title={
+                onOpenChange={(open) => {
+                    if (!open) {
+                        handleCancel();
+                    }
+                }}
+                width={`${dialogSizePercent.width}%`}
+                height={`${dialogSizePercent.height}%`}
+                modal
+            >
+                <Dialog.Header closeIconVisible>
                     <ExplorerTitle
                         showExplorer={showEnsembleExplorer}
                         explorerMode={ensembleExplorerMode}
                         onClose={handleCloseEnsembleExplorer}
                     />
-                }
-                modal
-                showCloseCross
-                width={`${dialogSizePercent.width}%`}
-                height={`${dialogSizePercent.height}%`}
-                maxWidth={"100%"}
-                minWidth={800}
-                minHeight={600}
-                actions={
+                </Dialog.Header>
+                <Dialog.Body>
+                    <div className="relative flex h-full w-full flex-col">
+                        {hasExplorerBeenOpened ? (
+                            <EnsembleExplorer
+                                disableQueries={!showEnsembleExplorer}
+                                nextEnsembleColor={nextEnsembleColor}
+                                selectedEnsembles={
+                                    ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
+                                        ? selectedRegularEnsembles
+                                        : []
+                                }
+                                onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
+                                selectButtonLabel={
+                                    ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
+                                        ? "Add Ensemble"
+                                        : "Select Ensemble"
+                                }
+                                onRequestClose={handleCloseEnsembleExplorer}
+                            />
+                        ) : (
+                            <EnsembleTables
+                                nextEnsembleColor={nextEnsembleColor}
+                                selectedRegularEnsembles={selectedRegularEnsembles}
+                                selectedDeltaEnsembles={selectedDeltaEnsembles}
+                                selectableEnsemblesForDelta={selectableEnsemblesForDelta}
+                                onAddRegularEnsemble={selectionHandlers.handleExploreRegularEnsemble}
+                                onUpdateRegularEnsemble={selectionHandlers.handleUpdateRegularEnsemble}
+                                onRemoveRegularEnsemble={selectionHandlers.handleRemoveRegularEnsemble}
+                                onMoveRegularEnsemble={selectionHandlers.handleMoveRegularEnsemble}
+                                onCreateDeltaEnsemble={selectionHandlers.handleAddDeltaEnsemble}
+                                onUpdateDeltaEnsemble={selectionHandlers.handleUpdateDeltaEnsemble}
+                                onRemoveDeltaEnsemble={selectionHandlers.handleRemoveDeltaEnsemble}
+                                onMoveDeltaEnsemble={selectionHandlers.handleMoveDeltaEnsemble}
+                                onRequestOtherComparisonEnsemble={
+                                    selectionHandlers.handleOnRequestOtherComparisonEnsemble
+                                }
+                                onRequestOtherReferenceEnsemble={
+                                    selectionHandlers.handleOnRequestOtherReferenceEnsemble
+                                }
+                            />
+                        )}
+                    </div>
+                </Dialog.Body>
+                <Dialog.Actions>
                     <DialogActions
                         isLoading={isEnsembleSetLoading}
                         disableDiscard={isEnsembleSetLoading || !hasUnappliedChanges}
@@ -187,50 +231,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         onDiscard={handleClose}
                         onApply={handleApplyEnsembleSelection}
                     />
-                }
-                drawer={{
-                    open: showEnsembleExplorer,
-                    onClose: handleCloseEnsembleExplorer,
-                    width: "85%",
-                    content: hasExplorerBeenOpened ? (
-                        <EnsembleExplorer
-                            disableQueries={!showEnsembleExplorer}
-                            nextEnsembleColor={nextEnsembleColor}
-                            selectedEnsembles={
-                                ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                    ? selectedRegularEnsembles
-                                    : []
-                            }
-                            onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
-                            selectButtonLabel={
-                                ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                    ? "Add Ensemble"
-                                    : "Select Ensemble"
-                            }
-                            onRequestClose={handleCloseEnsembleExplorer}
-                        />
-                    ) : undefined,
-                }}
-            >
-                <div className="relative flex flex-col w-full h-full">
-                    <EnsembleTables
-                        nextEnsembleColor={nextEnsembleColor}
-                        selectedRegularEnsembles={selectedRegularEnsembles}
-                        selectedDeltaEnsembles={selectedDeltaEnsembles}
-                        selectableEnsemblesForDelta={selectableEnsemblesForDelta}
-                        onAddRegularEnsemble={selectionHandlers.handleExploreRegularEnsemble}
-                        onUpdateRegularEnsemble={selectionHandlers.handleUpdateRegularEnsemble}
-                        onRemoveRegularEnsemble={selectionHandlers.handleRemoveRegularEnsemble}
-                        onMoveRegularEnsemble={selectionHandlers.handleMoveRegularEnsemble}
-                        onCreateDeltaEnsemble={selectionHandlers.handleAddDeltaEnsemble}
-                        onUpdateDeltaEnsemble={selectionHandlers.handleUpdateDeltaEnsemble}
-                        onRemoveDeltaEnsemble={selectionHandlers.handleRemoveDeltaEnsemble}
-                        onMoveDeltaEnsemble={selectionHandlers.handleMoveDeltaEnsemble}
-                        onRequestOtherComparisonEnsemble={selectionHandlers.handleOnRequestOtherComparisonEnsemble}
-                        onRequestOtherReferenceEnsemble={selectionHandlers.handleOnRequestOtherReferenceEnsemble}
-                    />
-                </div>
-            </Dialog>
+                </Dialog.Actions>
+            </Dialog.Popup>
             <SelectEnsemblesConfirmationDialogs
                 ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
                 showCancelDialogState={[showCancelDialog, setShowCancelDialog]}

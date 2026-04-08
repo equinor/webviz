@@ -1,0 +1,75 @@
+@theme inline {
+    /* Icon sizes */
+    --size-icon-xs: var(--eds-sizing-icon-xs);
+    --size-icon-sm: var(--eds-sizing-icon-sm);
+    --size-icon-md: var(--eds-sizing-icon-md);
+    --size-icon-lg: var(--eds-sizing-icon-lg);
+    --size-icon-xl: var(--eds-sizing-icon-xl);
+    --size-icon-2xl: var(--eds-sizing-icon-2xl);
+    --size-icon-3xl: var(--eds-sizing-icon-3xl);
+    --size-icon-4xl: var(--eds-sizing-icon-4xl);
+    --size-icon-5xl: var(--eds-sizing-icon-5xl);
+    --size-icon-6xl: var(--eds-sizing-icon-6xl);
+
+    /* Selectable sizes */
+    --size-selectable-xs: var(--eds-sizing-selectable-xs);
+    --size-selectable-sm: var(--eds-sizing-selectable-sm);
+    --size-selectable-md: var(--eds-sizing-selectable-md);
+    --size-selectable-lg: var(--eds-sizing-selectable-lg);
+    --size-selectable-xl: var(--eds-sizing-selectable-xl);
+    --size-selectable-2xl: var(--eds-sizing-selectable-2xl);
+
+    /* Strokes */
+    --size-stroke-thin: var(--eds-sizing-stroke-thin);
+    --size-stroke-thick: var(--eds-sizing-stroke-thick);
+    --size-stroke-none: var(--eds-sizing-stroke-none);
+
+    /* Spacing */
+    --size-horizontal-4xs: var(--eds-spacing-horizontal-4xs);
+    --size-horizontal-3xs: var(--eds-spacing-horizontal-3xs);
+    --size-horizontal-2xs: var(--eds-spacing-horizontal-2xs);
+    --size-horizontal-xs: var(--eds-spacing-horizontal-xs);
+    --size-horizontal-sm: var(--eds-spacing-horizontal-sm);
+    --size-horizontal-md: var(--eds-spacing-horizontal-md);
+    --size-horizontal-lg: var(--eds-spacing-horizontal-lg);
+    --size-horizontal-xl: var(--eds-spacing-horizontal-xl);
+    --size-horizontal-2xl: var(--eds-spacing-horizontal-2xl);
+    --size-horizontal-3xl: var(--eds-spacing-horizontal-3xl);
+
+    --size-vertical-4xs: var(--eds-spacing-vertical-4xs);
+    --size-vertical-3xs: var(--eds-spacing-vertical-3xs);
+    --size-vertical-2xs: var(--eds-spacing-vertical-2xs);
+    --size-vertical-xs: var(--eds-spacing-vertical-xs);
+    --size-vertical-sm: var(--eds-spacing-vertical-sm);
+    --size-vertical-md: var(--eds-spacing-vertical-md);
+    --size-vertical-lg: var(--eds-spacing-vertical-lg);
+    --size-vertical-xl: var(--eds-spacing-vertical-xl);
+    --size-vertical-2xl: var(--eds-spacing-vertical-2xl);
+    --size-vertical-3xl: var(--eds-spacing-vertical-3xl);
+
+    /* Inset spacing */
+    --size-inset-xs-horizontal: var(--eds-spacing-inset-xs-horizontal);
+    --size-inset-xs-vertical-squished: var(--eds-spacing-inset-xs-vertical-squished);
+    --size-inset-xs-vertical-squared: var(--eds-spacing-inset-xs-vertical-squared);
+    --size-inset-xs-vertical-stretched: var(--eds-spacing-inset-xs-vertical-stretched);
+
+    --size-inset-sm-horizontal: var(--eds-spacing-inset-sm-horizontal);
+    --size-inset-sm-vertical-squished: var(--eds-spacing-inset-sm-vertical-squished);
+    --size-inset-sm-vertical-squared: var(--eds-spacing-inset-sm-vertical-squared);
+    --size-inset-sm-vertical-stretched: var(--eds-spacing-inset-sm-vertical-stretched);
+
+    --size-inset-md-horizontal: var(--eds-spacing-inset-md-horizontal);
+    --size-inset-md-vertical-squished: var(--eds-spacing-inset-md-vertical-squished);
+    --size-inset-md-vertical-squared: var(--eds-spacing-inset-md-vertical-squared);
+    --size-inset-md-vertical-stretched: var(--eds-spacing-inset-md-vertical-stretched);
+
+    --size-inset-lg-horizontal: var(--eds-spacing-inset-lg-horizontal);
+    --size-inset-lg-vertical-squished: var(--eds-spacing-inset-lg-vertical-squished);
+    --size-inset-lg-vertical-squared: var(--eds-spacing-inset-lg-vertical-squared);
+    --size-inset-lg-vertical-stretched: var(--eds-spacing-inset-lg-vertical-stretched);
+
+    --size-inset-xl-horizontal: var(--eds-spacing-inset-xl-horizontal);
+    --size-inset-xl-vertical-squished: var(--eds-spacing-inset-xl-vertical-squished);
+    --size-inset-xl-vertical-squared: var(--eds-spacing-inset-xl-vertical-squared);
+    --size-inset-xl-vertical-stretched: var(--eds-spacing-inset-xl-vertical-stretched);
+}

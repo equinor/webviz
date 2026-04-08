@@ -6,20 +6,21 @@ import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
-import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
+import { NavBarButton } from "@lib/components/NavBarComponents";
+import { Separator } from "@lib/newComponents/Separator";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
     SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
 } from "../SettingsContentPanels";
+import { SideBar } from "../SideBar/sideBar";
 
-type RightNavBarProps = {
+type RightSideBarProps = {
     workbench: Workbench;
 };
 
-export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
+export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
     const workbenchSession = props.workbench.getSessionManager().getActiveSession();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
@@ -84,20 +85,17 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     }
 
     return (
-        <div
-            className={resolveClassNames("bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col w-16")}
-        >
-            <div className="flex flex-col gap-2 grow">
+        <SideBar position="right">
+            <div className="flex grow flex-col gap-2">
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.ModulesList}
                     tooltip="Show modules list"
-                    icon={<WebAsset fontSize="small" className="size-5" />}
+                    icon={<WebAsset fontSize="small" />}
                     onClick={handleModulesListClick}
                     disabled={isSnapshot}
                     disabledTooltip="Modules cannot be changed in snapshot mode"
                 />
-
-                <NavBarDivider />
+                <Separator orientation="horizontal" />
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.RealizationFilterSettings}
                     tooltip={RealizationFilterButtonTooltip(
@@ -113,20 +111,20 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     disabledTooltip="Realization filters cannot be changed in snapshot mode"
                 />
                 <NavBarButton
-                    icon={<History fontSize="small" className="size-5 mr-2" />}
+                    icon={<History fontSize="small" />}
                     active={drawerContent === RightDrawerContent.ModuleInstanceLog}
                     tooltip="Open module log"
                     onClick={handleModuleInstanceLogClick}
                 />
-                <NavBarDivider />
+                <Separator orientation="horizontal" />
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.ColorPaletteSettings}
                     tooltip="Show color settings"
-                    icon={<Palette fontSize="small" className="size-5" />}
+                    icon={<Palette fontSize="small" />}
                     onClick={handleColorPaletteSettingsClick}
                 />
             </div>
-        </div>
+        </SideBar>
     );
 };
 
@@ -163,10 +161,10 @@ function RealizationFilterButtonIcon(
     return (
         <Badge
             badgeContent={numberOfUnsavedRealizationFilters ? "!" : numberOfEffectiveRealizationFilters || undefined}
-            color={numberOfUnsavedRealizationFilters ? "bg-orange-500" : "bg-blue-500"}
+            color={numberOfUnsavedRealizationFilters ? "bg-fill-warning-strong" : "bg-fill-accent-strong"}
             invisible={!numberOfUnsavedRealizationFilters && !numberOfEffectiveRealizationFilters}
         >
-            <FilterAlt fontSize="small" className="size-5 mr-2" />
+            <FilterAlt fontSize="small" />
         </Badge>
     );
 }

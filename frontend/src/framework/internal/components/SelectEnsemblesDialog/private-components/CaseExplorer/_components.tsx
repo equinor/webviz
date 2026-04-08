@@ -1,7 +1,8 @@
-import type React from "react";
+import React from "react";
 
-import { UserAvatar } from "@framework/internal/components/UserAvatar";
+import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
 import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
+import { Avatar } from "@lib/newComponents/Avatar";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /**
@@ -20,7 +21,7 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
     return (
         <CopyCellValue onCopyRequested={handleCopyRequested}>
             <div
-                className="h-full group relative flex items-center min-w-0"
+                className="group relative flex h-full min-w-0 items-center"
                 title={`${props.caseName} - ${props.caseId}`}
             >
                 <div className="overflow-hidden text-ellipsis whitespace-nowrap">
@@ -50,7 +51,7 @@ export function DescriptionCell(props: DescriptionCellProps): React.ReactNode {
 
     return (
         <CopyCellValue onCopyRequested={handleCopyRequested}>
-            <div className="flex h-full items-center min-w-0" title={props.description}>
+            <div className="flex h-full min-w-0 items-center" title={props.description}>
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap">{props.description}</span>
             </div>
         </CopyCellValue>
@@ -64,10 +65,13 @@ type AuthorCellProps = {
     author: string;
 };
 export function AuthorCell(props: AuthorCellProps): React.ReactNode {
+    // @eslint-disable-next-line react-hooks/exhaustive-deps
+    const avatarSrc = React.useCallback(fetchUserAvatar(`${props.author}@equinor.com`, props.author), [props.author]);
+
     return (
         <div className="flex justify-center gap-1">
-            <UserAvatar userIdOrEmail={`${props.author}@equinor.com`} />
-            <span className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block" title={props.author}>
+            <Avatar key={props.author} size="small" userData={avatarSrc} />
+            <span className="block w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" title={props.author}>
                 {props.author}
             </span>
         </div>

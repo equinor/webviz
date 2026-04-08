@@ -1,0 +1,31 @@
+/* Importing additional animations. Imported first, so potential name conflicts prioritizes tailwind  */
+/* @import "animate.css/animate.css"; */
+
+@import "tailwindcss";
+@import "@equinor/eds-tokens/css/variables.css";
+
+/* Theme (tokens) */
+@import "./theme/foundation.css";
+@import "./theme/colors.css";
+@import "./theme/spacing.css";
+@import "./theme/typography.css";
+@import "./theme/shadows.css";
+@import "./theme/sizes.css";
+@import "./theme/animations.css";
+
+/* Utilities */
+@import "./utilities/sizes.css";
+@import "./utilities/forms.css";
+@import "./utilities/z-index.css";
+
+/* Components */
+@import "./components/button.css";
+@import "./components/popup.css";
+
+/* Base styles */
+@import "./base/app.css";
+@import "./base/tailwind-compat.css";
+@import "./base/scrollbar.css";
+
+/* Overrides */
+@import "./overrides/eds-date-range-picker.css";

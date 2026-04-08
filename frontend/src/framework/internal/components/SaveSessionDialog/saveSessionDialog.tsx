@@ -91,15 +91,15 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         <Dialog
             open={isOpen}
             onClose={handleCancel}
-            title="Save Session as ..."
+            title="Save session as ..."
             modal
             showCloseCross
             actions={
                 <>
-                    <Button variant="text" disabled={isSaving} onClick={handleCancel}>
+                    <Button variant="text" tone="neutral" disabled={isSaving} onClick={handleCancel}>
                         Cancel
                     </Button>
-                    <Button variant="text" color="success" disabled={isSaving} type="submit" form={formId}>
+                    <Button tone="accent" disabled={isSaving} type="submit" form={formId}>
                         {isSaving && <CircularProgress size="small" />} Save
                     </Button>
                 </>

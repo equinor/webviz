@@ -19,10 +19,10 @@ import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
-import { LeftNavBar } from "../LeftNavBar";
+import { LeftSideBar } from "../LeftSideBar";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
-import { RightNavBar } from "../RightNavBar";
+import { RightSideBar } from "../RightSideBar";
 import { SaveSessionDialog } from "../SaveSessionDialog";
 import { SessionErrorDialog } from "../SessionErrorDialog";
 import { StartPage } from "../StartPage/StartPage";
@@ -77,11 +77,11 @@ export function WorkbenchWrapper() {
                     <SaveSessionDialog workbench={workbench} saveAsNew />
                     <CreateSnapshotDialog workbench={workbench} />
                     <ActiveSessionRecoveryDialog workbench={workbench} />
-                    <div className="grow min-h-0">
-                        <div className="w-full h-full flex flex-row">
-                            <LeftNavBar workbench={workbench} />
+                    <div className="min-h-0 grow">
+                        <div className="flex h-full w-full flex-row">
+                            <LeftSideBar workbench={workbench} />
                             <SettingsContentPanels workbench={workbench} />
-                            <RightNavBar workbench={workbench} />
+                            <RightSideBar workbench={workbench} />
                         </div>
                     </div>
                 </ActiveDashboardBoundary>

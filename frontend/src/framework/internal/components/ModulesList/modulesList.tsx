@@ -1,16 +1,7 @@
 import React from "react";
 
-import {
-    Close,
-    CloudDone,
-    CloudOff,
-    ExpandLess,
-    ExpandMore,
-    Help,
-    HistoryToggleOff,
-    Science,
-    WebAsset,
-} from "@mui/icons-material";
+import type { BaseUIEvent } from "@base-ui/react";
+import { Close, CloudDone, CloudOff, Help, HistoryToggleOff, Science, WebAsset } from "@mui/icons-material";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
@@ -22,7 +13,10 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import type { DrawPreviewFunc } from "@framework/Preview";
 import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/utils/debug";
 import type { Workbench } from "@framework/Workbench";
+import { Tooltip } from "@lib/components/Tooltip";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { Button } from "@lib/newComponents/Button";
+import { Collapsible } from "@lib/newComponents/Collapsible";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
 import type { Size2D } from "@lib/utils/geometry";
@@ -162,7 +156,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         [props.guiMessageBroker, props.name, onDraggingStart],
     );
 
-    function handleShowDetails(e: React.MouseEvent<HTMLDivElement>) {
+    function handleShowDetails(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement, MouseEvent>>) {
         e.stopPropagation();
         const target = e.currentTarget.parentElement;
         if (!(target instanceof HTMLElement)) {
@@ -189,7 +183,9 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 </svg>
             );
         }
-        return <div className="border bg-slate-200 border-slate-300 flex items-center justify-center w-full h-full" />;
+        return (
+            <div className="border-stroke-neutral-subtle bg-fill-neutral flex h-full w-full items-center justify-center border" />
+        );
     }
 
     function makeItem() {
@@ -197,7 +193,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             <div
                 ref={isDragged ? undefined : ref}
                 className={resolveClassNames(
-                    "touch-none flex flex-col text-sm text-gray-700 w-full h-12 select-none hover:bg-blue-100 bg-white",
+                    "hover:bg-fill-accent-hover text-body-md flex h-12 w-full touch-none flex-col select-none",
                     {
                         "cursor-move": !isDragged,
                         "cursor-grabbing": isDragged,
@@ -206,29 +202,31 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 style={makeStyle(isDragged, dragSize, dragPosition)}
                 onMouseOver={handleHover}
             >
-                <div className="px-2 flex items-center h-full text-sm gap-2" title={props.displayName}>
-                    <div className="h-12 w-12 min-w-12 overflow-hidden p-1 shrink-0">{makePreviewImage()}</div>
-                    <span className="grow text-ellipsis whitespace-nowrap overflow-hidden">{props.displayName}</span>
+                <div className="flex h-full items-center gap-2 px-2 text-sm" title={props.displayName}>
+                    <div className="h-12 w-12 min-w-12 shrink-0 overflow-hidden p-1">{makePreviewImage()}</div>
+                    <span className="grow overflow-hidden text-ellipsis whitespace-nowrap">{props.displayName}</span>
                     <span
                         className={resolveClassNames({
-                            "text-yellow-500": props.devState === ModuleDevState.DEV,
-                            "text-orange-600": props.devState === ModuleDevState.DEPRECATED,
+                            "text-fill-warning-strong": props.devState === ModuleDevState.DEV,
+                            "text-fill-danger-strong": props.devState === ModuleDevState.DEPRECATED,
                         })}
                     >
                         {makeDevStateIcon(props.devState)}
                     </span>
                     <span
                         className={resolveClassNames({
-                            "text-green-600": props.isSerializable,
-                            "text-gray-400": !props.isSerializable,
+                            "text-fill-success-strong": props.isSerializable,
+                            "text-fill-neutral-strong": !props.isSerializable,
                         })}
                         title={props.isSerializable ? "This module is persistable" : "This module is not persistable"}
                     >
                         {props.isSerializable ? <CloudDone fontSize="inherit" /> : <CloudOff fontSize="inherit" />}
                     </span>
-                    <span className="cursor-pointer text-blue-800" title="Show details" onClick={handleShowDetails}>
-                        <Help fontSize="inherit" />
-                    </span>
+                    <Tooltip title="Show details">
+                        <Button variant="text" tone="accent" size="small" onClick={handleShowDetails}>
+                            <Help fontSize="inherit" />
+                        </Button>
+                    </Tooltip>
                 </div>
             </div>
         );
@@ -237,43 +235,13 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     if (isDragged) {
         return (
             <>
-                <div ref={ref} className="bg-blue-300 w-full h-12" />
+                <div ref={ref} className="h-12 w-full bg-blue-300" />
                 {createPortal(makeItem())}
             </>
         );
     }
     return makeItem();
 };
-
-type ModulesListCategoryProps = {
-    title: string;
-    children: React.ReactNode[];
-};
-
-function ModulesListCategory(props: ModulesListCategoryProps): React.ReactNode {
-    const [expanded, setExpanded] = React.useState(true);
-
-    function toggleExpanded() {
-        setExpanded(!expanded);
-    }
-
-    if (props.children.length === 0) {
-        return null;
-    }
-
-    return (
-        <div className="flex flex-col gap-1">
-            <div
-                className="flex gap-2 cursor-pointer items-center bg-slate-100 p-2 text-sm shadow-sm sticky top-0 z-20"
-                onClick={toggleExpanded}
-            >
-                <span className="grow font-bold">{props.title}</span>
-                {expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-            </div>
-            {expanded && <div className="flex flex-col bg-slate-100 gap-0.5">{props.children}</div>}
-        </div>
-    );
-}
 
 function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
     if (devState === ModuleDevState.DEPRECATED) {
@@ -305,7 +273,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makeDevState(devState: ModuleDevState): React.ReactNode {
         if (devState === ModuleDevState.DEPRECATED) {
             return (
-                <div className="flex gap-2 text-orange-600 text-xs items-center">
+                <div className="text-fill-danger-strong flex items-center gap-2 text-xs">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Deprecated</span>
                 </div>
@@ -313,7 +281,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         }
         if (devState === ModuleDevState.DEV) {
             return (
-                <div className="flex items-center gap-2 text-yellow-500 text-xs">
+                <div className="text-fill-warning-strong flex items-center gap-2 text-xs">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Experimental</span>
                 </div>
@@ -324,14 +292,14 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makePersistenceState(isSerializable: boolean): React.ReactNode {
         if (isSerializable) {
             return (
-                <div className="flex gap-2 text-green-600 text-xs items-center">
+                <div className="text-fill-success-strong flex items-center gap-2 text-xs">
                     <CloudDone fontSize="inherit" />
                     <span className="mt-[0.2rem]">Module is persistable</span>
                 </div>
             );
         }
         return (
-            <div className="flex gap-2 text-gray-400 text-xs items-center">
+            <div className="text-fill-disabled flex items-center gap-2 text-xs">
                 <CloudOff fontSize="inherit" />
                 <span className="mt-[0.2rem]">Module is not persistable</span>
             </div>
@@ -364,7 +332,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
 
     return (
         <div
-            className="absolute bg-white border border-gray-300 shadow-lg p-4 z-50 w-96 text-sm flex gap-4"
+            className="z-tooltip border-stroke-neutral-subtle bg-fill-floating p-space-sm text-body-md absolute flex w-96 gap-4 border shadow-lg"
             style={style}
         >
             <svg width={64} height={64} viewBox={`0 0 ${64} ${64}`}>
@@ -372,7 +340,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             </svg>
             <div className="grow">
                 <div className="flex items-center">
-                    <span className="font-bold grow">{props.module.getDefaultTitle()}</span>
+                    <span className="grow font-bold">{props.module.getDefaultTitle()}</span>
                     <div className="cursor-pointer hover:text-blue-600" onClick={props.onClose} title="Close popup">
                         <Close fontSize="inherit" />
                     </div>
@@ -381,8 +349,8 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
                     {makeDevState(props.module.getDevState())}
                     {makePersistenceState(props.module.canBeSerialized())}
                 </span>
-                <div className="text-xs mt-2">{props.module.getDescription()}</div>
-                <div className="text-xs mt-2 flex gap-2 text-bold flex-wrap">{makeDataTags()}</div>
+                <div className="mt-2 text-xs">{props.module.getDescription()}</div>
+                <div className="text-bold mt-2 flex flex-wrap gap-2 text-xs">{makeDataTags()}</div>
             </div>
         </div>
     );
@@ -475,7 +443,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     );
 
     return (
-        <div ref={ref} className={resolveClassNames("w-full h-full relative", { hidden: !isVisible })}>
+        <div ref={ref} className={resolveClassNames("relative h-full w-full", { hidden: !isVisible })}>
             <Drawer
                 visible={true}
                 onClose={handleClose}
@@ -489,7 +457,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                         value: ModuleDevState.DEPRECATED,
                         label: (
                             <>
-                                <span className="text-orange-600 inline-block align-middle">
+                                <span className="inline-block align-middle text-orange-600">
                                     {makeDevStateIcon(ModuleDevState.DEPRECATED)}
                                 </span>
                                 <span className="mt-[0.2rem]">Show deprecated</span>
@@ -501,7 +469,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                         value: ModuleDevState.DEV,
                         label: (
                             <>
-                                <span className="text-yellow-500 inline-block align-middle">
+                                <span className="inline-block align-middle text-yellow-500">
                                     {makeDevStateIcon(ModuleDevState.DEV)}
                                 </span>
                                 <span className="mt-[0.2rem]">Show experimental</span>
@@ -512,9 +480,9 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 ]}
                 onFilterItemSelectionChange={setOptionalDevStates}
             >
-                <>
+                <Collapsible.ScrollArea>
                     {visibleModuleCategories.map((el) => (
-                        <ModulesListCategory key={el.category} title={el.label}>
+                        <Collapsible.Group key={el.category} title={el.label} defaultOpen>
                             {filteredModules
                                 .filter((mod) => mod.getCategory() === el.category)
                                 .map((mod) => (
@@ -532,9 +500,9 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                                         onDraggingStart={handleDraggingStart}
                                     />
                                 ))}
-                        </ModulesListCategory>
+                        </Collapsible.Group>
                     ))}
-                </>
+                </Collapsible.ScrollArea>
             </Drawer>
             {showDetailsForModule &&
                 isVisible &&

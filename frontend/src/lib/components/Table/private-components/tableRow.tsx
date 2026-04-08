@@ -38,9 +38,10 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
 
     return (
         <tr
-            className={resolveClassNames("group/tr border-b-2 last:border-b-0", {
-                "hover:bg-blue-100": !props.selected && isLoaded,
-                "bg-blue-600 hover:bg-blue-700 text-white": props.selected && isLoaded,
+            className={resolveClassNames("group/tr border-b last:border-b-0", {
+                "hover:bg-fill-accent": !props.selected && isLoaded,
+                "bg-fill-accent-strong hover:bg-fill-accent-strong-hover text-text-accent-strong-on-emphasis":
+                    props.selected && isLoaded,
             })}
             onMouseDown={handleMouseDown}
             onClick={(evt) => isLoaded && props.onClick(row, evt)}
@@ -51,12 +52,12 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                     return (
                         <td
                             key={String(cellDef.columnId)}
-                            className=" border-slate-200 p-2 whitespace-nowrap truncate"
+                            className="border-stroke-neutral-subtle truncate p-2 whitespace-nowrap"
                             title="Data is pending..."
                             style={{ height: props.height }}
                         >
                             <div
-                                className="rounded-4xl bg-slate-300/50 h-full w-full animate-pulse transition-opacity"
+                                className="h-full w-full animate-pulse rounded-4xl bg-slate-300/50 transition-opacity"
                                 style={{ animationDelay }}
                             />
                         </td>
@@ -71,7 +72,7 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                 return (
                     <td
                         key={String(cellDef.columnId)}
-                        className=" border-slate-200 p-1 whitespace-nowrap truncate"
+                        className="border-stroke-neutral-subtle p-space-xs truncate border whitespace-nowrap"
                         title={cellDef.showTooltip ? cellData : undefined}
                         style={{ height: props.height, ...style }}
                     >

@@ -68,10 +68,10 @@ export function CopyCellValue(props: CopyCellValueProps): React.ReactNode {
     }
 
     return (
-        <div className="w-full h-full relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <div className="relative h-full w-full" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             <div
                 className={resolveClassNames(
-                    "absolute top-1/2 transform transition-transform duration-200 -translate-y-1/2 right-1 z-10 bg-gray-100 text-black rounded-full",
+                    "bg-fill-neutral absolute top-1/2 right-1 z-10 -translate-y-1/2 transform rounded-full transition-transform duration-200",
                     { "scale-100": isHovered || status !== "idle", "scale-0": !isHovered && status === "idle" },
                 )}
             >

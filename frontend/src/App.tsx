@@ -7,7 +7,7 @@ import "./templates/registerAllTemplates";
 
 function App() {
     return (
-        <div className="bg-gray-100">
+        <div className="bg-fill-canvas h-screen w-screen">
             <GlobalConfirmationDialog />
             <AuthenticationBoundary>
                 <WorkbenchWrapper />

@@ -3,11 +3,11 @@ import React from "react";
 import { Dropdown, MenuButton } from "@mui/base";
 import { Check, Close, MoreVert, Search } from "@mui/icons-material";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Input } from "@lib/components/Input";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem/menuItem";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Button } from "@lib/newComponents/Button";
+import { TextInput } from "@lib/newComponents/TextInput";
 
 export type DrawerFilterItem<T extends string | number> = {
     label: React.ReactNode;
@@ -70,27 +70,27 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
     const showHeader = props.icon || props.title || props.onClose || props.actions;
 
     return (
-        <div className={`flex flex-col bg-white min-h-0 h-full${props.visible ? "" : " hidden"}`}>
+        <div className={`bg-fill-surface flex min-h-0 flex-col h-full${props.visible ? "" : "hidden"}`}>
             {showHeader && (
-                <div className="flex justify-center items-center p-2 bg-slate-100 h-10 shadow-sm">
+                <div className="bg-fill-surface p-space-xs border-stroke-neutral-subtle flex items-center justify-center border-b">
                     {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
-                    <span className="font-bold grow p-0 text-sm">{props.title}</span>
+                    <span className="grow p-0 text-sm font-bold">{props.title}</span>
                     {props.actions}
                     {props.onClose && (
                         <Tooltip title="Close">
-                            <DenseIconButton onClick={props.onClose}>
+                            <Button variant="text" tone="neutral" iconOnly onClick={props.onClose} size="small">
                                 <Close fontSize="inherit" />
-                            </DenseIconButton>
+                            </Button>
                         </Tooltip>
                     )}
                 </div>
             )}
-            <div className="grow flex flex-col h-auto">
+            <div className="flex h-auto grow flex-col">
                 {(props.showSearch || showFilter) && (
-                    <div className="flex gap-2 bg-slate-50 p-2">
+                    <div className="bg-fill-subtle flex gap-2 p-2">
                         {props.showSearch && (
                             <div className="grow">
-                                <Input
+                                <TextInput
                                     placeholder={props.searchInputPlaceholder}
                                     startAdornment={<Search fontSize="small" />}
                                     onChange={props.onSearchQueryChange}
@@ -99,7 +99,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                         )}
                         {showFilter && (
                             <Dropdown open={open} onOpenChange={handleOpenChange}>
-                                <MenuButton className="p-1 rounded-sm hover:bg-blue-200 focus:outline-blue-600">
+                                <MenuButton className="rounded-sm p-1 hover:bg-blue-200 focus:outline-blue-600">
                                     <MoreVert fontSize="small" />
                                 </MenuButton>
                                 <Menu anchorOrigin="bottom-end">
@@ -109,7 +109,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                                             onClick={(e) => handleFilterItemClick(e, item)}
                                             className="text-sm"
                                         >
-                                            <div className="flex gap-2 items-center">
+                                            <div className="flex items-center gap-2">
                                                 <span className="w-6">
                                                     {selectedFilterItems.includes(item.value) && (
                                                         <Check fontSize="small" />
@@ -124,8 +124,8 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                         )}
                     </div>
                 )}
-                {props.headerChildren && <div className="p-2 bg-slate-50">{props.headerChildren}</div>}
-                <div className="grow min-h-0 overflow-y-auto max-h-full h-0">{props.children}</div>
+                {props.headerChildren && <div className="bg-slate-50 p-2">{props.headerChildren}</div>}
+                <div className="h-0 max-h-full min-h-0 grow overflow-y-auto">{props.children}</div>
             </div>
         </div>
     );

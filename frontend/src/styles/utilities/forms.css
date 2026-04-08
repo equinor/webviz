@@ -1,0 +1,13 @@
+@utility form-element {
+    opacity: 0.75;
+    &:hover {
+        opacity: 1;
+    }
+
+    &:focus-within {
+        opacity: 1;
+        box-shadow:
+            0 0 0 1px var(--color-fill-canvas),
+            0 0 0 2px var(--color-focus);
+    }
+}

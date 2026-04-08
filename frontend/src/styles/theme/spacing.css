@@ -1,0 +1,17 @@
+@theme inline {
+    --spacing-space-xxs: 0.25rem;
+    --spacing-space-xs: 0.5rem;
+    --spacing-space-sm: 1rem;
+    --spacing-space-md: 1.5rem;
+    --spacing-space-lg: 2rem;
+    --spacing-space-xl: 2.5rem;
+    --spacing-space-2xl: 3rem;
+    --spacing-space-3xl: 4rem;
+
+    --spacing-selectable-x: var(--eds-selectable-space-horizontal);
+    --spacing-selectable-y: var(--eds-selectable-space-vertical);
+}
+
+:where([data-density="comfortable"]) {
+    --spacing-selectable-y: var(--eds-spacing-proportions-xs-vertical);
+}

@@ -112,7 +112,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     }
 
     return (
-        <div className="flex flex-col h-full gap-4 p-4 bg-slate-100">
+        <div className="bg-fill-surface flex h-full flex-col gap-4 p-4">
             <CaseExplorer disableQueries={props.disableQueries} onCaseSelectionChange={handleCaseSelectedChange} />
             <Label text="Ensemble">
                 <StatusWrapper
@@ -130,18 +130,26 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                     />
                 </StatusWrapper>
             </Label>
-            <div className="flex gap-4 justify-end">
-                <Button onClick={() => props.onRequestClose?.()}>Close</Button>
+            <div className="flex justify-end gap-4">
+                <Button onClick={() => props.onRequestClose?.()} tone="neutral" variant="text">
+                    Close
+                </Button>
                 <Button
                     variant="contained"
                     onClick={handleSelectRegularEnsemble}
-                    color={ensembleAlreadySelected ? "success" : "primary"}
+                    tone="accent"
                     disabled={ensembleAlreadySelected || ensembleOptions.length === 0}
-                    startIcon={ensembleAlreadySelected ? <Check fontSize="small" /> : <Add fontSize="small" />}
                 >
-                    {ensembleAlreadySelected
-                        ? "Ensemble already selected"
-                        : (props.selectButtonLabel ?? "Select Ensemble")}
+                    {ensembleAlreadySelected ? (
+                        <>
+                            <Check fontSize="small" /> Ensemble already selected
+                        </>
+                    ) : (
+                        <>
+                            <Add fontSize="small" />
+                            {props.selectButtonLabel ?? "Select Ensemble"}
+                        </>
+                    )}
                 </Button>
             </div>
         </div>
