@@ -37,7 +37,7 @@ export function Popup(props: PopupProps) {
             defaultOpen={defaultedProps.defaultOpen}
         >
             <DialogBase.Portal keepMounted={defaultedProps.keepMounted}>
-                <DialogBase.Backdrop className="z-scrim bg-fill-backdrop fixed inset-0 min-h-screen touch-none opacity-60 transition-opacity" />
+                <DialogBase.Backdrop className="z-scrim bg-backdrop fixed inset-0 min-h-screen touch-none opacity-60 transition-opacity" />
                 <DialogBase.Popup
                     className="popup z-modal"
                     style={{ width: defaultedProps.width, height: defaultedProps.height }}

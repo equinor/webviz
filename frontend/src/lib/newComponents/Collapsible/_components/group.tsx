@@ -16,12 +16,12 @@ export type GroupProps = {
 };
 
 const TONE_TO_CLASSNAMES: Record<NonNullable<GroupProps["tone"] | "disabled">, string> = {
-    default: "bg-fill-neutral hover:bg-fill-neutral-hover border-stroke-neutral ",
-    warning: "bg-fill-warning hover:bg-fill-warning-hover border-stroke-warning ",
-    danger: "bg-fill-danger hover:bg-fill-danger-hover border-stroke-danger ",
-    success: "bg-fill-success hover:bg-fill-success-hover border-stroke-success ",
-    info: "bg-fill-info hover:bg-fill-info-hover border-stroke-info",
-    disabled: "bg-fill-disabled hover:bg-fill-disabled-hover border-stroke-disabled",
+    default: "bg-neutral hover:bg-neutral-hover border-neutral ",
+    warning: "bg-warning hover:bg-warning-hover border-warning ",
+    danger: "bg-danger hover:bg-danger-hover border-danger ",
+    success: "bg-success hover:bg-success-hover border-success ",
+    info: "bg-info hover:bg-info-hover border-info",
+    disabled: "bg-disabled hover:bg-disabled border-disabled",
 };
 
 const DEFAULT_PROPS = {
@@ -42,12 +42,12 @@ export function Group(props: GroupProps) {
         >
             <div
                 className={resolveClassNames(
-                    "group-data-collapsible-scroll-area:z-sticky gap-space-sm px-selectable-x py-selectable-y shadow-elevation-raised flex items-center justify-between border-b group-data-collapsible-scroll-area:sticky group-data-collapsible-scroll-area:top-0",
+                    "group-data-collapsible-scroll-area:z-sticky gap-vertical-md px-selectable-x py-selectable-y shadow-elevation-raised flex items-center justify-between border-b group-data-collapsible-scroll-area:sticky group-data-collapsible-scroll-area:top-0",
                     TONE_TO_CLASSNAMES[defaultedProps.disabled ? "disabled" : defaultedProps.tone],
                     { "pointer-events-none cursor-not-allowed": defaultedProps.disabled },
                 )}
             >
-                <Collapsible.Trigger className="gap-space-xs flex cursor-pointer items-center">
+                <Collapsible.Trigger className="gap-vertical-xs flex cursor-pointer items-center">
                     <ExpandMore className="transition-transform group-data-closed:-rotate-90" fontSize="inherit" />
                     <Typography family="body" as="span" size="sm" weight="bolder">
                         {defaultedProps.title}

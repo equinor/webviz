@@ -9,7 +9,7 @@ export type DescriptionProps = {
 export function Description(props: DescriptionProps) {
     return (
         <FieldBase.Description
-            className="text-text-neutral-subtle"
+            className="text-neutral-subtle"
             render={(htmlProps) => (
                 <Paragraph size="sm" {...htmlProps}>
                     {props.children}

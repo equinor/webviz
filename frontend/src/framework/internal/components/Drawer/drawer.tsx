@@ -70,9 +70,9 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
     const showHeader = props.icon || props.title || props.onClose || props.actions;
 
     return (
-        <div className={`bg-fill-surface flex min-h-0 flex-col h-full${props.visible ? "" : "hidden"}`}>
+        <div className={`bg-surface flex h-full min-h-0 flex-col ${props.visible ? "" : "hidden"}`}>
             {showHeader && (
-                <div className="bg-fill-surface p-space-xs border-stroke-neutral-subtle flex items-center justify-center border-b">
+                <div className="bg-surface p-vertical-xs border-neutral-subtle flex items-center justify-center border-b">
                     {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
                     <span className="grow p-0 text-sm font-bold">{props.title}</span>
                     {props.actions}
@@ -87,7 +87,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
             )}
             <div className="flex h-auto grow flex-col">
                 {(props.showSearch || showFilter) && (
-                    <div className="bg-fill-subtle flex gap-2 p-2">
+                    <div className="bg-neutral flex gap-2 p-2">
                         {props.showSearch && (
                             <div className="grow">
                                 <TextInput

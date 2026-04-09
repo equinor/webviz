@@ -12,7 +12,7 @@ export function List(props: ListProps) {
             className="relative flex data-[orientation=vertical]:flex-col"
         >
             {props.children}
-            <TabsBase.Indicator className="tabs__indicator bg-fill-accent-strong" />
+            <TabsBase.Indicator className="tabs__indicator bg-accent-strong" />
         </TabsBase.List>
     );
 }

@@ -54,7 +54,7 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
 
     return (
         <div
-            className={resolveClassNames("h-full", isCollapsed ? "bg-fill-surface" : "bg-white")}
+            className={resolveClassNames("h-full", isCollapsed ? "bg-surface" : "bg-white")}
             style={{ boxShadow: "4px 0px 4px 1px rgba(0, 0, 0, 0.05)" }}
         >
             <ModuleSettingsHeader

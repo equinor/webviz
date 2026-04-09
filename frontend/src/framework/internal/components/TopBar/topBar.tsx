@@ -8,10 +8,12 @@ import {
     ArrowDropDown,
     Close,
     DarkMode,
+    DensityMedium,
     DensitySmall,
     Edit,
     Fullscreen,
     FullscreenExit,
+    LightMode,
     Link,
     Lock,
     Refresh,
@@ -49,43 +51,55 @@ export type TopBarProps = {
 
 Icon.add({ category });
 
+function getMainDataAttribute(attributeName: string) {
+    const htmlElement = document.querySelector<HTMLHtmlElement>("html");
+    console.debug(htmlElement?.getAttribute(`data-${attributeName}`));
+    return htmlElement ? htmlElement.getAttribute(`data-${attributeName}`) : null;
+}
+
+function setMainDataAttribute(attributeName: string, value: string) {
+    const htmlElement = document.querySelector<HTMLHtmlElement>("html");
+    if (htmlElement) {
+        htmlElement.setAttribute(`data-${attributeName}`, value);
+    }
+}
+
 export function TopBar(props: TopBarProps): React.ReactNode {
+    const [colorScheme, setColorScheme] = React.useState<string | null>(getMainDataAttribute("color-scheme"));
+    const [density, setDensity] = React.useState<string | null>(getMainDataAttribute("density"));
+
     const hasActiveSession = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager(),
         WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
     );
 
     const toggleDarkMode = React.useCallback(function toggleDarkMode() {
-        const htmlElement = document.querySelector<HTMLHtmlElement>("html");
-        if (htmlElement) {
-            const currentScheme = htmlElement.getAttribute("data-color-scheme");
-            const newScheme = currentScheme === "dark" ? "light" : "dark";
-            htmlElement.setAttribute("data-color-scheme", newScheme);
-        }
+        const currentScheme = getMainDataAttribute("color-scheme");
+        const newScheme = currentScheme === "dark" ? "light" : "dark";
+        setMainDataAttribute("color-scheme", newScheme);
+        setColorScheme(newScheme);
     }, []);
 
     const toggleDenseMode = React.useCallback(function toggleDenseMode() {
-        const htmlElement = document.querySelector<HTMLHtmlElement>("html");
-        if (htmlElement) {
-            const currentDensity = htmlElement.getAttribute("data-density");
-            const newDensity = currentDensity === "comfortable" ? "spacious" : "comfortable";
-            htmlElement.setAttribute("data-density", newDensity);
-        }
+        const currentDensity = getMainDataAttribute("density");
+        const newDensity = currentDensity === "comfortable" ? "spacious" : "comfortable";
+        setMainDataAttribute("density", newDensity);
+        setDensity(newDensity);
     }, []);
 
     return (
         <>
             <div
                 className={resolveClassNames(
-                    "border-stroke-neutral-subtle shadow-elevation-raised z-sticky gap-space-xl py-space-xxs px-space-xs flex flex-row items-center border-b-2",
+                    "border-neutral-subtle shadow-elevation-raised z-sticky gap-vertical-3xl py-vertical-3xs px-vertical-xs flex flex-row items-center border-b-2",
                     {
-                        "bg-fill-surface": hasActiveSession,
+                        "bg-surface": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
                     },
                 )}
             >
                 <LogoWithText />
-                <div className="gap-space-sm flex min-w-0 grow items-center">
+                <div className="gap-vertical-md flex min-w-0 grow items-center">
                     {hasActiveSession ? (
                         <>
                             <Title workbench={props.workbench} />
@@ -95,11 +109,15 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                         <div className="grow" />
                     )}
                     <Separator orientation="vertical" />
-                    <Button variant="text" tone="neutral" iconOnly onClick={toggleDarkMode}>
-                        <DarkMode fontSize="inherit" />
+                    <Button variant="text" tone="accent" iconOnly onClick={toggleDarkMode}>
+                        {colorScheme === "dark" ? <LightMode fontSize="inherit" /> : <DarkMode fontSize="inherit" />}
                     </Button>
-                    <Button variant="text" tone="neutral" iconOnly onClick={toggleDenseMode}>
-                        <DensitySmall fontSize="inherit" />
+                    <Button variant="text" tone="accent" iconOnly onClick={toggleDenseMode}>
+                        {density === "comfortable" ? (
+                            <DensityMedium fontSize="inherit" />
+                        ) : (
+                            <DensitySmall fontSize="inherit" />
+                        )}
                     </Button>
                     <LoginButton showText={false} />
                 </div>
@@ -113,7 +131,7 @@ function LogoWithText(): React.ReactNode {
             <FmuLogo className="h-8 w-8" />
             <h1 className="text-md text-accent whitespace-nowrap">FMU Analysis</h1>
             <div
-                className="bg-fill-warning-strong text-text-neutral-strong-on-emphasis text-body-sm cursor-help rounded-sm p-1 text-center"
+                className="bg-warning-strong text-neutral-strong-on-emphasis text-body-sm cursor-help rounded-sm p-1 text-center"
                 title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
             >
                 BETA
@@ -428,7 +446,7 @@ function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef
     const { active, title, onClick, disabled, ...baseProps } = props;
     return (
         <Tooltip title={title} placement="bottom">
-            <Button {...baseProps} ref={ref} variant="text" tone="neutral" onClick={onClick} disabled={disabled}>
+            <Button {...baseProps} ref={ref} variant="text" tone="accent" onClick={onClick} disabled={disabled}>
                 {props.children}
             </Button>
         </Tooltip>

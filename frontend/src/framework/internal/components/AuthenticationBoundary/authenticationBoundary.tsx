@@ -24,7 +24,7 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
     let content: React.ReactNode = null;
     if (authState === AuthState.NotLoggedIn) {
         content = (
-            <div className="gap-space-md flex w-1/2 flex-col items-center">
+            <div className="gap-vertical-xl flex w-1/2 flex-col items-center">
                 <img src={FmuLogo} alt="FMU Analysis logo" className="h-32 w-32" />
                 <Heading as="h1">FMU Analysis</Heading>
                 <DataSharingLabel />

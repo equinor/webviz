@@ -1,5 +1,7 @@
 @layer components {
     .tabs__tab {
+        min-height: var(--size-selectable-md);
+        font-size: var(--text-body-md);
         &[data-orientation="horizontal"] {
             [data-position="start"] & {
                 border-top: 2px solid var(--eds-color-bg-neutral-fill-muted-default);
@@ -35,7 +37,7 @@
                 translate: var(--active-tab-left);
             }
             [data-position="end"] & {
-                translate: var(--active-tab-left) var(--active-tab-height);
+                translate: var(--active-tab-left) calc(var(--active-tab-height) - 1px);
             }
         }
 
@@ -46,7 +48,7 @@
                 translate: 0 var(--active-tab-top);
             }
             [data-position="end"] & {
-                translate: var(--active-tab-width) var(--active-tab-top);
+                translate: calc(var(--active-tab-width) - 1px) var(--active-tab-top);
             }
         }
     }

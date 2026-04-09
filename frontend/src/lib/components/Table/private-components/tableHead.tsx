@@ -95,7 +95,7 @@ function HeaderCell(props: HeaderCellProps) {
 
     return (
         <th
-            className={resolveClassNames(headerColorClass, "border-stroke-neutral-subtle border-b-2 px-2", {
+            className={resolveClassNames(headerColorClass, "border-neutral-subtle border-b-2 px-2", {
                 "cursor-pointer hover:brightness-95": props.sortable,
             })}
             rowSpan={props.rowSpan}
@@ -169,7 +169,7 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
     return (
         // ! Border styles. border-collapse and sticky headers doesn't play nice, so the borders
         // ! vanish when it floats. Using outlines here instead as a workaround
-        <thead className="bg-fill-neutral text-text-neutral-strong [&_th]:outline-stroke-neutral-subtle sticky top-0 z-10 border-b-2 shadow select-none [&_th]:outline">
+        <thead className="bg-neutral text-neutral-strong [&_th]:outline-neutral-subtle sticky top-0 z-10 border-b-2 shadow select-none [&_th]:outline">
             {props.headerCellDefinitions.map((headerRow, index) => (
                 <tr key={`header-row-depth${index}`} style={{ height: props.headerHeight }}>
                     {headerRow.map((cellDef) => {
@@ -187,7 +187,7 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
             ))}
 
             {hasFilters && (
-                <tr className="bg-fill-neutral-subtle" style={{ height: props.headerHeight }}>
+                <tr className="bg-neutral" style={{ height: props.headerHeight }}>
                     {props.filterCellDefinitions.map((filterDef) => {
                         return (
                             <FilterCell

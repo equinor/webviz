@@ -267,12 +267,12 @@ const FONT_SIZE_CLASSES: Record<
 };
 
 const TONE_CLASSES: Record<NonNullable<TypographyProps["tone"]>, string> = {
-    accent: "text-text-accent-subtle",
-    neutral: "text-text-neutral-subtle",
-    danger: "text-text-danger-subtle",
-    success: "text-text-success-subtle",
-    warning: "text-text-warning-subtle",
-    info: "text-text-info-subtle",
+    accent: "text-accent-subtle",
+    neutral: "text-neutral-subtle",
+    danger: "text-danger-subtle",
+    success: "text-success-subtle",
+    warning: "text-warning-subtle",
+    info: "text-info-subtle",
 };
 
 const WEIGHT_CLASSES: Record<Required<TypographyProps>["weight"], string> = {
@@ -307,7 +307,7 @@ export function Typography(props: TypographyProps) {
     const resolvedClassName = resolveClassNames(
         FONT_SIZE_CLASSES[family][size][lineHeight][tracking],
         WEIGHT_CLASSES[weight],
-        tone ? TONE_CLASSES[tone] : "text-text-neutral",
+        tone ? TONE_CLASSES[tone] : "text-neutral",
         className,
         { italic: props.italic },
     );

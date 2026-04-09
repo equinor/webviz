@@ -39,8 +39,8 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
     return (
         <tr
             className={resolveClassNames("group/tr border-b last:border-b-0", {
-                "hover:bg-fill-accent": !props.selected && isLoaded,
-                "bg-fill-accent-strong hover:bg-fill-accent-strong-hover text-text-accent-strong-on-emphasis":
+                "hover:bg-accent": !props.selected && isLoaded,
+                "bg-accent-strong hover:bg-accent-strong-hover text-accent-strong-on-emphasis":
                     props.selected && isLoaded,
             })}
             onMouseDown={handleMouseDown}
@@ -52,7 +52,7 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                     return (
                         <td
                             key={String(cellDef.columnId)}
-                            className="border-stroke-neutral-subtle truncate p-2 whitespace-nowrap"
+                            className="border-neutral-subtle truncate p-2 whitespace-nowrap"
                             title="Data is pending..."
                             style={{ height: props.height }}
                         >
@@ -72,7 +72,7 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                 return (
                     <td
                         key={String(cellDef.columnId)}
-                        className="border-stroke-neutral-subtle p-space-xs truncate border whitespace-nowrap"
+                        className="border-neutral-subtle p-vertical-xs truncate border whitespace-nowrap"
                         title={cellDef.showTooltip ? cellData : undefined}
                         style={{ height: props.height, ...style }}
                     >

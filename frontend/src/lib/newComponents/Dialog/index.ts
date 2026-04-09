@@ -1,4 +1,5 @@
 import { Actions, type ActionsProps } from "./_components/actions";
+import { Close } from "./_components/close";
 import { Body, type BodyProps } from "./_components/content";
 import type { DescriptionProps } from "./_components/description";
 import { Description } from "./_components/description";
@@ -13,6 +14,7 @@ export const Dialog = {
     Body,
     Actions,
     Description,
+    Close,
 };
 
 export type Dialog = {

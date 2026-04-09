@@ -25,26 +25,26 @@ const VARIANT_TONE_CLASSES: Record<
     Record<NonNullable<ButtonProps["tone"] | "disabled">, string>
 > = {
     contained: {
-        accent: "bg-fill-accent-strong text-text-accent-strong-on-emphasis hover:bg-fill-accent-strong-hover active:bg-fill-accent-strong-active border-transparent",
+        accent: "bg-accent-strong text-accent-strong-on-emphasis hover:bg-accent-strong-hover active:bg-accent-strong-active border-transparent",
         neutral:
-            "bg-fill-neutral-strong text-text-neutral-strong-on-emphasis hover:bg-fill-neutral-strong-hover active:bg-fill-neutral-strong-active  border-transparent",
-        danger: "bg-fill-danger-strong text-text-danger-strong-on-emphasis hover:bg-fill-danger-strong-hover active:bg-fill-danger-strong-active border-transparent",
-        disabled: "bg-fill-disabled text-text-disabled border-disabled cursor-not-allowed opacity-50",
+            "bg-neutral-strong text-neutral-strong-on-emphasis hover:bg-neutral-strong-hover active:bg-neutral-strong-active  border-transparent",
+        danger: "bg-danger-strong text-danger-strong-on-emphasis hover:bg-danger-strong-hover active:bg-danger-strong-active border-transparent",
+        disabled: "bg-disabled text-disabled border-disabled cursor-not-allowed opacity-50",
     },
     outlined: {
-        accent: "outline -outline-offset-1 outline-stroke-accent text-text-accent-subtle hover:bg-fill-accent-hover active:bg-accent-fill-muted-active bg-transparent",
+        accent: "outline -outline-offset-1 outline-accent text-accent-subtle hover:bg-accent-hover active:bg-accent-active bg-transparent",
         neutral:
-            "outline -outline-offset-1 outline-stroke-neutral text-text-neutral-subtle hover:bg-fill-neutral-hover active:bg-neutral-fill-muted-active bg-transparent",
-        danger: "outline -outline-offset-1 outline-stroke-danger text-text-danger-subtle hover:bg-fill-danger-hover active:bg-danger-fill-muted-active bg-transparent",
+            "outline -outline-offset-1 outline-neutral text-neutral-subtle hover:bg-neutral-hover active:bg-neutral-active bg-transparent",
+        danger: "outline -outline-offset-1 outline-danger text-danger-subtle hover:bg-danger-hover active:bg-danger-active bg-transparent",
         disabled:
-            "outline -outline-offset-1 outline-stroke-disabled text-text-disabled cursor-not-allowed opacity-50 bg-transparent",
+            "outline -outline-offset-1 outline-disabled text-disabled cursor-not-allowed opacity-50 bg-transparent",
     },
     text: {
-        accent: "text-text-accent-subtle hover:bg-fill-accent-hover active:bg-accent-fill-muted-active bg-transparent",
+        accent: "text-accent-subtle hover:bg-accent-hover active:bg-accent-active bg-transparent",
         neutral:
-            "text-text-neutral-subtle hover:bg-fill-neutral-hover active:bg-neutral-fill-muted-active bg-transparent",
-        danger: "text-text-danger-subtle hover:bg-fill-danger-hover active:bg-danger-fill-muted-active bg-transparent",
-        disabled: "text-text-disabled cursor-not-allowed opacity-50",
+            "text-neutral-subtle hover:bg-neutral-hover active:bg-neutral-active bg-transparent",
+        danger: "text-danger-subtle hover:bg-danger-hover active:bg-danger-active bg-transparent",
+        disabled: "text-disabled cursor-not-allowed opacity-50",
     },
 };
 

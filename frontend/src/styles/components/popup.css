@@ -2,8 +2,8 @@
     .popup {
         @apply fixed top-1/2 left-1/2 box-border touch-none rounded shadow-lg transition-all duration-150;
         border-radius: var(--radius-rounded);
-        background-color: var(--color-fill-floating);
-        outline: 1px solid var(--color-stroke-neutral-subtle);
+        background-color: var(--eds-color-bg-floating);
+        outline: 1px solid var(--eds-color-border-neutral-subtle);
         transform: translate(-50%, -50%);
 
         &[data-starting-style],

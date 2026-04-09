@@ -112,7 +112,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     }
 
     return (
-        <div className="bg-fill-surface flex h-full flex-col gap-4 p-4">
+        <div className="bg-surface flex h-full flex-col gap-4 p-4">
             <CaseExplorer disableQueries={props.disableQueries} onCaseSelectionChange={handleCaseSelectedChange} />
             <Label text="Ensemble">
                 <StatusWrapper

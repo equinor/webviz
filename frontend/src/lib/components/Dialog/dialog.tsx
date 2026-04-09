@@ -56,7 +56,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             ref={wrapperRef}
             className={resolveClassNames("z-scrim fixed inset-0 h-full w-full", {
                 "pointer-events-none": !props.modal,
-                "bg-fill-backdrop": props.modal,
+                "bg-backdrop": props.modal,
                 hidden: !props.open,
             })}
             onClick={handleBackgroundClick}
@@ -65,7 +65,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             <div
                 ref={dialogRef}
                 className={resolveClassNames(
-                    "bg-fill-floating pointer-events-auto fixed top-1/2 left-1/2 flex max-w-[75vw] min-w-lg flex-col overflow-hidden rounded-sm shadow-sm",
+                    "bg-floating pointer-events-auto fixed top-1/2 left-1/2 flex max-w-[75vw] min-w-lg flex-col overflow-hidden rounded-sm shadow-sm",
                     { border: !props.modal },
                 )}
                 style={{

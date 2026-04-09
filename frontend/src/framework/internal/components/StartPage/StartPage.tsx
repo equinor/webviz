@@ -1,5 +1,3 @@
-import React from "react";
-
 import { Icon } from "@equinor/eds-core-react";
 import { category, dashboard, folder_open, github, external_link, add } from "@equinor/eds-icons";
 
@@ -7,14 +5,11 @@ import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Combobox } from "@lib/newComponents/Combobox";
 import { Heading } from "@lib/newComponents/Heading";
-import { Paragraph } from "@lib/newComponents/Paragraph/paragraph";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Error } from "@mui/icons-material";
-import { Combobox } from "@lib/newComponents/Combobox";
 
 Icon.add({ dashboard, category, folder_open, github, external_link, add });
 
@@ -23,8 +18,6 @@ export type StartPageProps = {
 };
 
 export function StartPage(props: StartPageProps) {
-    const [dialogOpen, setDialogOpen] = React.useState(false);
-
     const setShowOverviewDialog = useSetGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.SessionSnapshotOverviewDialogOpen,

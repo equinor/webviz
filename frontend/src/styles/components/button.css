@@ -26,7 +26,7 @@
 
     .button__label {
         @apply inline-flex h-full w-full items-center;
-        gap: var(--spacing-space-xs);
+        gap: var(--eds-spacing-vertical-xs);
         padding-inline: var(--spacing-selectable-x);
     }
 

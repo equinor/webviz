@@ -100,7 +100,7 @@ export function Avatar(props: AvatarProps): React.ReactNode {
                 )}
                 <AvatarBase.Fallback
                     className={resolveClassNames(
-                        "bg-fill-neutral text-text-neutral-subtle flex h-full w-full items-center justify-center leading-px font-medium uppercase not-italic no-underline",
+                        "bg-neutral text-neutral-subtle flex h-full w-full items-center justify-center leading-px font-medium uppercase not-italic no-underline",
                         {},
                     )}
                     render={<span />}
@@ -114,7 +114,7 @@ export function Avatar(props: AvatarProps): React.ReactNode {
             </AvatarBase.Root>
             <span
                 className={resolveClassNames(
-                    "border-t-stroke-accent-strong pointer-events-none absolute inset-0 animate-spin rounded-full border-4 border-transparent transition-all",
+                    "border-t-accent-strong pointer-events-none absolute inset-0 animate-spin rounded-full border-4 border-transparent transition-all",
                     {
                         "opacity-0": userDataState.status !== "loading" || imageLoadingStatus === "loaded",
                         "opacity-100": userDataState.status === "loading" && imageLoadingStatus !== "loaded",

@@ -1,6 +1,15 @@
 import type React from "react";
 
-import { FilterAlt, History, Palette, WebAsset } from "@mui/icons-material";
+import {
+    FilterAlt,
+    FilterAltOutlined,
+    History,
+    HistoryOutlined,
+    Palette,
+    PaletteOutlined,
+    WebAsset,
+    WebAssetOutlined,
+} from "@mui/icons-material";
 
 import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
@@ -75,7 +84,8 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
                     <NavBarButton
                         value={RightDrawerContent.ModulesList}
                         tooltip="Show modules list"
-                        icon={<WebAsset fontSize="small" />}
+                        icon={<WebAssetOutlined fontSize="small" />}
+                        activeIcon={<WebAsset fontSize="small" />}
                         disabled={isSnapshot}
                         disabledTooltip="Modules cannot be changed in snapshot mode"
                     />
@@ -88,19 +98,27 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
                         icon={RealizationFilterButtonIcon(
                             numberOfUnsavedRealizationFilters,
                             numberOfEffectiveRealizationFilters,
+                            false,
+                        )}
+                        activeIcon={RealizationFilterButtonIcon(
+                            numberOfUnsavedRealizationFilters,
+                            numberOfEffectiveRealizationFilters,
+                            true,
                         )}
                         disabled={isSnapshot}
                         disabledTooltip="Realization filters cannot be changed in snapshot mode"
                     />
                     <NavBarButton
                         value={RightDrawerContent.ModuleInstanceLog}
-                        icon={<History fontSize="small" />}
+                        icon={<HistoryOutlined fontSize="small" />}
+                        activeIcon={<History fontSize="small" />}
                         tooltip="Open module log"
                     />
                     <NavBarButton
                         value={RightDrawerContent.ColorPaletteSettings}
                         tooltip="Show color settings"
-                        icon={<Palette fontSize="small" />}
+                        icon={<PaletteOutlined fontSize="small" />}
+                        activeIcon={<Palette fontSize="small" />}
                     />
                 </Tabs.List>
             </Tabs.Root>
@@ -137,14 +155,15 @@ function RealizationFilterButtonTooltip(
 function RealizationFilterButtonIcon(
     numberOfUnsavedRealizationFilters: number,
     numberOfEffectiveRealizationFilters: number,
+    active: boolean,
 ): React.ReactElement {
     return (
         <Badge
             badgeContent={numberOfUnsavedRealizationFilters ? "!" : numberOfEffectiveRealizationFilters || undefined}
-            color={numberOfUnsavedRealizationFilters ? "bg-fill-warning-strong" : "bg-fill-accent-strong"}
+            color={numberOfUnsavedRealizationFilters ? "bg-warning-strong" : "bg-accent-strong"}
             invisible={!numberOfUnsavedRealizationFilters && !numberOfEffectiveRealizationFilters}
         >
-            <FilterAlt fontSize="small" />
+            {active ? <FilterAlt fontSize="small" /> : <FilterAltOutlined fontSize="small" />}
         </Badge>
     );
 }

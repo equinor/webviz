@@ -7,7 +7,7 @@ export type HeaderProps = {
 
 export function Header(props: HeaderProps) {
     return (
-        <div className="popup__child gap-space-sm border-fill-neutral flex items-start justify-between border-b">
+        <div className="popup__child gap-vertical-md border-neutral flex items-start justify-between border-b">
             {props.children}
             {props.closeIconVisible && <Close />}
         </div>

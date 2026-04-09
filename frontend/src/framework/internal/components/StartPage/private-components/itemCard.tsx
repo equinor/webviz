@@ -54,10 +54,10 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
         >
             <a
                 className={resolveClassNames(
-                    "gap-space-xs px-selectable-x py-selectable-y h-selectable-md text-text-accent-subtle text-body-md flex items-center rounded",
+                    "gap-vertical-xs px-selectable-x py-selectable-y h-selectable-md text-accent-subtle text-body-md flex items-center rounded",
                     {
                         "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
-                        "hover:bg-fill-accent-hover": !props.isDeleted,
+                        "hover:bg-accent-hover": !props.isDeleted,
                     },
                 )}
                 href={props.href}
@@ -79,7 +79,7 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const name = props.owner?.principal_name?.split("@")?.[0].toLocaleLowerCase();
 
     return (
-        <div className="gap-space-xs text-body-sm flex items-center italic">
+        <div className="gap-vertical-xs text-body-sm flex items-center italic">
             <Avatar
                 size="small"
                 userData={
@@ -125,7 +125,7 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="text-text-neutral-subtle mt-4 block text-sm italic">Click to open</span>
+            <span className="text-neutral-subtle mt-4 block text-sm italic">Click to open</span>
         </div>
     );
 }

@@ -13,10 +13,10 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
     return (
         <div
             className={resolveClassNames(
-                "gap-space-xs bg-fill-canvas py-space-xs px-space-sm text-body-lg data-invalid:outline-stroke-danger data-invalid:bg-fill-danger-subtle flex items-center",
+                "gap-vertical-xs bg-canvas py-vertical-3xs px-vertical-xs text-body-lg data-invalid:outline-danger data-invalid:bg-danger-surface flex items-center",
                 {
-                    "form-element outline-stroke-neutral text-text-neutral outline -outline-offset-2": !props.disabled,
-                    "text-text-disabled cursor-not-allowed outline-transparent": props.disabled,
+                    "form-element outline-neutral text-neutral outline -outline-offset-2": !props.disabled,
+                    "text-disabled cursor-not-allowed outline-transparent": props.disabled,
                 },
             )}
         >

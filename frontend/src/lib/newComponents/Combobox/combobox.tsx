@@ -24,7 +24,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
 
     return (
         <ComboboxBase.Root {...restRootProps}>
-            <ComboboxBase.InputGroup className="form-element border-stroke-neutral-strong bg-fill-canvas text-body-sm relative flex items-center border [&:has(.Clear)_input]:pr-[calc(2*(var(--text-body-sm)+var(--spacing-selectable-x)))]">
+            <ComboboxBase.InputGroup className="form-element border-neutral-strong bg-canvas text-body-sm relative flex items-center border [&:has(.Clear)_input]:pr-[calc(2*(var(--text-body-sm)+var(--spacing-selectable-x)))]">
                 <ComboboxBase.Input
                     ref={ref}
                     placeholder={placeholder}
@@ -41,16 +41,16 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
             </ComboboxBase.InputGroup>
             <ComboboxBase.Portal>
                 <ComboboxBase.Positioner className="outline-0" sideOffset={4}>
-                    <ComboboxBase.Popup className="bg-fill-floating shadow-elevation-overlay box-border max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) rounded transition-transform data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+                    <ComboboxBase.Popup className="bg-floating shadow-elevation-overlay box-border max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) rounded transition-transform data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
                         <ComboboxBase.Empty className="">{defaultedProps.placeholder}</ComboboxBase.Empty>
                         <ComboboxBase.List className="">
                             {(item) => (
                                 <ComboboxBase.Item
                                     key={props.itemToStringValue?.(item) ?? item.value}
                                     value={item}
-                                    className="user-select-none py-selectable-y px-selectable-x gap-space-xs data-highlighted:text-text-accent-strong data-highlighted:bg-fill-accent-hover box-border grid grid-cols-[0.75rem_1fr] items-center outline-0 data-highlighted:relative data-highlighted:z-0 data-highlighted:before:absolute data-highlighted:before:-z-1 data-highlighted:before:content-['']"
+                                    className="user-select-none py-selectable-y px-selectable-x gap-vertical-xs data-highlighted:text-accent-strong data-highlighted:bg-accent-hover box-border grid grid-cols-[0.75rem_1fr] items-center outline-0 data-highlighted:relative data-highlighted:z-0 data-highlighted:before:absolute data-highlighted:before:-z-1 data-highlighted:before:content-['']"
                                 >
-                                    <ComboboxBase.ItemIndicator className="text-text-accent-subtle col-start-1">
+                                    <ComboboxBase.ItemIndicator className="text-accent-subtle col-start-1">
                                         <Check fontSize="inherit" />
                                     </ComboboxBase.ItemIndicator>
                                     <div className="col-start-2">{props.itemToStringLabel?.(item) ?? item.label}</div>

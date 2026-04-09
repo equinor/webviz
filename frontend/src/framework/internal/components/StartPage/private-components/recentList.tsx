@@ -85,7 +85,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
 
     return (
         <section className="flex flex-col gap-1">
-            <div className="gap-space-xs flex items-center">
+            <div className="gap-vertical-xs flex items-center">
                 <Heading as="h4" className="grow">
                     {props.title}
                 </Heading>
@@ -104,7 +104,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
                     </Button>
                 </Tooltip>
             </div>
-            <Typography size="sm" family="body" className="text-text-neutral-subtle">
+            <Typography size="sm" family="body" className="text-neutral-subtle">
                 Last updated:{" "}
                 {lastUpdatedMs ? <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} /> : "Never"}
             </Typography>

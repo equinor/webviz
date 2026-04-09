@@ -6,7 +6,7 @@ export type SeparatorProps = Pick<SeparatorBaseProps, "orientation">;
 
 export function Separator(props: SeparatorProps) {
     const resolvedClassNames = resolveClassNames(
-        "bg-fill-neutral [:where(&+&)]:hidden flex-shrink-0",
+        "bg-neutral [:where(&+&)]:hidden flex-shrink-0",
         props.orientation === "vertical" ? "w-px self-stretch mx-1" : "h-px w-full my-1",
     );
     return <SeparatorBase {...props} className={resolvedClassNames} />;

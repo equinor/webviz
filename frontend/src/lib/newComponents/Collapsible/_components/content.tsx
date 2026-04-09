@@ -4,7 +4,7 @@ export type ContentProps = {
 
 export function Content(props: ContentProps) {
     return (
-        <div className="group-data-[state=open]:animate-slideDown group-data-[state=closed]:animate-slideUp p-space-xs">
+        <div className="group-data-[state=open]:animate-slideDown group-data-[state=closed]:animate-slideUp p-vertical-xs">
             {props.children}
         </div>
     );

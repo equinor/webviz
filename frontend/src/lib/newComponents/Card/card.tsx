@@ -12,11 +12,11 @@ const DEFAULT_PROPS = {
 } satisfies Partial<CardProps>;
 
 const TONE_TO_CLASSNAMES: Record<NonNullable<CardProps["tone"]>, string> = {
-    default: "bg-fill-neutral-surface border-stroke-default-strong",
-    warning: "bg-fill-warning-surface border-stroke-warning-strong",
-    danger: "bg-fill-danger-surface border-stroke-danger-strong",
-    success: "bg-fill-success-surface border-stroke-success-strong",
-    info: "bg-fill-info-surface border-stroke-info-str",
+    default: "bg-neutral-surface border-neutral-strong",
+    warning: "bg-warning-surface border-warning-strong",
+    danger: "bg-danger-surface border-danger-strong",
+    success: "bg-success-surface border-success-strong",
+    info: "bg-info-surface border-info-strong",
 };
 
 const ELEVATION_TO_CLASSNAMES: Record<NonNullable<CardProps["elevation"]>, string> = {
@@ -31,7 +31,7 @@ export function Card(props: CardProps) {
     return (
         <div
             className={resolveClassNames(
-                "p-space-sm rounded border",
+                "p-vertical-md rounded border",
                 TONE_TO_CLASSNAMES[defaultedProps.tone],
                 ELEVATION_TO_CLASSNAMES[defaultedProps.elevation],
             )}

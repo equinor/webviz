@@ -184,7 +184,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             );
         }
         return (
-            <div className="border-stroke-neutral-subtle bg-fill-neutral flex h-full w-full items-center justify-center border" />
+            <div className="border-neutral-subtle bg-neutral flex h-full w-full items-center justify-center border" />
         );
     }
 
@@ -193,7 +193,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             <div
                 ref={isDragged ? undefined : ref}
                 className={resolveClassNames(
-                    "hover:bg-fill-accent-hover text-body-md flex h-12 w-full touch-none flex-col select-none",
+                    "hover:bg-accent-hover text-body-md flex h-12 w-full touch-none flex-col select-none",
                     {
                         "cursor-move": !isDragged,
                         "cursor-grabbing": isDragged,
@@ -207,16 +207,16 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     <span className="grow overflow-hidden text-ellipsis whitespace-nowrap">{props.displayName}</span>
                     <span
                         className={resolveClassNames({
-                            "text-fill-warning-strong": props.devState === ModuleDevState.DEV,
-                            "text-fill-danger-strong": props.devState === ModuleDevState.DEPRECATED,
+                            "text-warning-strong": props.devState === ModuleDevState.DEV,
+                            "text-danger-strong": props.devState === ModuleDevState.DEPRECATED,
                         })}
                     >
                         {makeDevStateIcon(props.devState)}
                     </span>
                     <span
                         className={resolveClassNames({
-                            "text-fill-success-strong": props.isSerializable,
-                            "text-fill-neutral-strong": !props.isSerializable,
+                            "text-success-strong": props.isSerializable,
+                            "text-neutral-strong": !props.isSerializable,
                         })}
                         title={props.isSerializable ? "This module is persistable" : "This module is not persistable"}
                     >
@@ -273,7 +273,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makeDevState(devState: ModuleDevState): React.ReactNode {
         if (devState === ModuleDevState.DEPRECATED) {
             return (
-                <div className="text-fill-danger-strong flex items-center gap-2 text-xs">
+                <div className="text-danger-strong flex items-center gap-2 text-xs">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Deprecated</span>
                 </div>
@@ -281,7 +281,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         }
         if (devState === ModuleDevState.DEV) {
             return (
-                <div className="text-fill-warning-strong flex items-center gap-2 text-xs">
+                <div className="text-warning-strong flex items-center gap-2 text-xs">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Experimental</span>
                 </div>
@@ -292,14 +292,14 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makePersistenceState(isSerializable: boolean): React.ReactNode {
         if (isSerializable) {
             return (
-                <div className="text-fill-success-strong flex items-center gap-2 text-xs">
+                <div className="text-success-strong flex items-center gap-2 text-xs">
                     <CloudDone fontSize="inherit" />
                     <span className="mt-[0.2rem]">Module is persistable</span>
                 </div>
             );
         }
         return (
-            <div className="text-fill-disabled flex items-center gap-2 text-xs">
+            <div className="text-disabled flex items-center gap-2 text-xs">
                 <CloudOff fontSize="inherit" />
                 <span className="mt-[0.2rem]">Module is not persistable</span>
             </div>
@@ -332,7 +332,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
 
     return (
         <div
-            className="z-tooltip border-stroke-neutral-subtle bg-fill-floating p-space-sm text-body-md absolute flex w-96 gap-4 border shadow-lg"
+            className="z-tooltip border-neutral-subtle bg-floating p-vertical-md text-body-md absolute flex w-96 gap-4 border shadow-lg"
             style={style}
         >
             <svg width={64} height={64} viewBox={`0 0 ${64} ${64}`}>

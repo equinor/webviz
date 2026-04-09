@@ -385,10 +385,10 @@ function SettingsDragBar(props: SettingsDragBarProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "z-overlay hover:bg-fill-accent-strong outline-stroke-accent relative w-px cursor-ew-resize touch-none transition-colors duration-100 ease-in-out hover:outline-2",
+                "z-overlay hover:bg-accent-strong outline-accent relative w-px cursor-ew-resize touch-none transition-colors duration-100 ease-in-out hover:outline-2",
                 {
-                    "bg-fill-accent-strong outline-stroke-accent outline-2": props.isDragging,
-                    "bg-fill-neutral border-transparent": !props.isDragging,
+                    "bg-accent-strong outline-accent outline-2": props.isDragging,
+                    "bg-neutral border-transparent": !props.isDragging,
                 },
             )}
         >

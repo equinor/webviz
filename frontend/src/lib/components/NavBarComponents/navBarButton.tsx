@@ -14,10 +14,6 @@ export type NavBarButtonProps<TValue extends string> = {
      */
     activeIcon?: React.ReactElement;
     /**
-     * Renders the button in it's active state
-     */
-    active?: boolean;
-    /**
      * Tooltip text
      */
     tooltip?: React.ReactNode;
@@ -27,23 +23,27 @@ export type NavBarButtonProps<TValue extends string> = {
     disabledTooltip?: React.ReactNode;
 };
 
+function resolveTabIcon(
+    icon: React.ReactElement,
+    activeIcon: React.ReactElement | undefined,
+    isActive: boolean,
+): React.ReactNode {
+    if (isActive) return activeIcon ?? icon;
+    return icon;
+}
+
 function NavBarButtonComponent<TValue extends string>(
     props: NavBarButtonProps<TValue> & TabsProps["Tab"],
     ref: React.ForwardedRef<HTMLButtonElement>,
 ): React.ReactNode {
-    const { icon, activeIcon, active, disabledTooltip, tooltip, ...baseProps } = props;
-
-    let buttonIcon: React.ReactElement;
-
-    if (active && activeIcon) buttonIcon = activeIcon;
-    else buttonIcon = icon;
+    const { icon, activeIcon, disabledTooltip, tooltip, ...baseProps } = props;
 
     return (
         <Tooltip title={props.disabled ? disabledTooltip : tooltip} placement="right">
             {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
             <span>
                 <Tabs.Tab {...baseProps} ref={ref}>
-                    {buttonIcon}
+                    {({ isActive }) => resolveTabIcon(icon, activeIcon, isActive)}
                 </Tabs.Tab>
             </span>
         </Tooltip>

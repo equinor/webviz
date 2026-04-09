@@ -37,8 +37,8 @@ export const LeftSideBar: React.FC<LeftSideBarProps> = (props) => {
     }
 
     return (
-        <SideBar position="left" className="p-space-xs">
-            <div className="gap-space-xs flex grow flex-col">
+        <SideBar position="left" className="p-vertical-xs">
+            <div className="gap-vertical-xs flex grow flex-col">
                 <Tooltip
                     title={
                         isSnapshot ? "Ensembles cannot be changed in snapshot mode" : "Open ensemble selection dialog"

@@ -80,7 +80,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                 <Dialog.Title>Do you want to recover your session?</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
-                <div className="gap-space-sm flex flex-col">
+                <div className="gap-vertical-md flex flex-col">
                     <Dialog.Description>
                         We found one or more previous sessions with unsaved changes. You can either discard them or open
                         one of the sessions below to recover your work.
