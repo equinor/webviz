@@ -12,10 +12,6 @@ from webviz_core_utils.time_countdown import TimeCountdown
 LOGGER = logging.getLogger(__name__)
 
 
-# This is a bit of a hack, but it's one way to know if we're running in Radix or locally
-IS_ON_RADIX_PLATFORM = os.getenv("RADIX_APP") is not None
-
-
 # Notes on RadixResourceRequests:
 #  * cpu: typical units are 'm' or no unit. '100m' means 100 milli-cpu, which is 0.1 cpu. 1000m is 1 cpu
 #  * memory: typical units are 'Mi' or 'Gi'. 500Mi means 500 Mebibytes, 4Gi means 4 Gibibyte (i.e. 4 * 1024^3 bytes)

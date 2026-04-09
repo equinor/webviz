@@ -3,9 +3,8 @@ import { isEqual } from "lodash";
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
-    AreSettingsValidArgs,
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -63,9 +62,7 @@ export class RealizationGridProvider
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>):
-        | [number, number]
-        | null {
+    }: DataProviderAccessors<RealizationGridSettings, RealizationGridData, StoredData>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -145,7 +142,7 @@ export class RealizationGridProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: AreSettingsValidArgs<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
+    }: DataProviderAccessors<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
@@ -165,9 +162,11 @@ export class RealizationGridProvider
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
-
+            if (!fieldIdentifier || !ensembles) {
+                return [];
+            }
             const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .filter((ensemble) => ensemble.getFieldIdentifiers().includes(fieldIdentifier))
                 .map((ensemble) => ensemble.getIdent());
 
             return ensembleIdents;

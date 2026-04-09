@@ -11,7 +11,7 @@ import {
 } from "@api";
 import { ConfirmationService } from "@framework/ConfirmationService";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
-import { GuiEvent, GuiState, LeftDrawerContent, RightDrawerContent } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, RightDrawerContent } from "@framework/GuiMessageBroker";
 import type { Template } from "@framework/TemplateRegistry";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type { Workbench } from "@framework/Workbench";
@@ -44,6 +44,8 @@ import {
     UrlError,
 } from "./utils/url";
 import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
+
+const SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT = 15;
 
 export enum SessionPersistenceAction {
     SAVE = "save",
@@ -285,10 +287,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             await this.setActiveSession(snapshot);
 
-            // Update GUI state for snapshots
-            if (this._guiMessageBroker.getState(GuiState.LeftDrawerContent) !== LeftDrawerContent.ModuleSettings) {
-                this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
-            }
             if (this._guiMessageBroker.getState(GuiState.RightDrawerContent) === RightDrawerContent.ModulesList) {
                 this._guiMessageBroker.setState(
                     GuiState.RightDrawerContent,
@@ -575,13 +573,14 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 this._guiMessageBroker.setState(GuiState.EnsembleDialogOpen, true);
             }
 
-            this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
-
             const activeDashboard = session.getActiveDashboard();
             if (activeDashboard && activeDashboard.getLayout().length === 0) {
                 this._guiMessageBroker.setState(GuiState.RightDrawerContent, RightDrawerContent.ModulesList);
                 if (this._guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) === 0) {
-                    this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 20);
+                    this._guiMessageBroker.setState(
+                        GuiState.RightSettingsPanelWidthInPercent,
+                        SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
+                    );
                 }
             }
 
@@ -625,6 +624,13 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this._ensembleUpdateMonitor.stopPolling();
 
         this._activeSession = null;
+
+        this.resetGuiStates();
+    }
+
+    private resetGuiStates(): void {
+        this._guiMessageBroker.setState(GuiState.NumberOfEffectiveRealizationFilters, 0);
+        this._guiMessageBroker.setState(GuiState.NumberOfUnsavedRealizationFilters, 0);
     }
 
     // ========== Persistence Operations ==========

@@ -229,13 +229,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     makeAndAddModuleInstance(moduleName: string): ModuleInstance<any, any> {
         const moduleInstance = this.makeAndRegisterModuleInstance(moduleName);
 
-        if (this._moduleInstances.length === 1) {
-            this._activeModuleInstanceId = moduleInstance.getId();
-        }
-        this._activeModuleInstanceId = moduleInstance.getId();
-
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.MODULE_INSTANCES);
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);
+
+        this.setActiveModuleInstanceId(moduleInstance.getId());
 
         return moduleInstance;
     }
@@ -245,14 +242,16 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
         this.setLayout(newLayout);
-        if (this._activeModuleInstanceId === moduleInstanceId) {
-            this._activeModuleInstanceId = null;
-        }
+
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.MODULE_INSTANCES);
+        if (this._activeModuleInstanceId === moduleInstanceId) {
+            const lastModuleInstanceId = this._moduleInstances.at(-1)?.getId() ?? null;
+            this.setActiveModuleInstanceId(lastModuleInstanceId);
+        }
     }
 
-    getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
-        return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
+    getModuleInstance(id: string): ModuleInstance<any, any> | null {
+        return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id) ?? null;
     }
 
     setActiveModuleInstanceId(moduleInstanceId: string | null): void {
@@ -391,7 +390,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
                         );
                     }
 
-                    receiver.subscribeToChannel(channel, "All");
+                    receiver.connectToChannel(channel, "all");
                 }
             }
         }

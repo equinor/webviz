@@ -17,9 +17,9 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/table_data/")
+@router.get("/pvt_table_data/")
 @cache_time(CacheTime.LONG)
-async def get_table_data(
+async def get_pvt_table_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),

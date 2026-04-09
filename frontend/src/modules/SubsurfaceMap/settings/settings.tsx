@@ -382,7 +382,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedEnsembleIdent.getCaseUuid(),
             computedEnsembleIdent.getEnsembleName(),
         );
-        fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null;
+        fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifiers().at(0) ?? null;
     }
     const wellHeadersQuery = useDrilledWellboreHeadersQuery(fieldIdentifier ?? "");
     let wellHeaderOptions: SelectOption[] = [];

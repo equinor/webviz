@@ -17,7 +17,7 @@ import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersect
 import { isValidBounds } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
-import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
+import { IntersectionSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
 import { type DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import { IntersectionView } from "@modules/_shared/DataProviderFramework/groups/implementations/IntersectionView";
@@ -115,18 +115,8 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 );
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.INTERSECTION_REALIZATION_SIMULATED_SEISMIC,
-    IntersectionRealizationSeismicProvider,
-    {
-        transformToVisualization: createSeismicLayerItemsMaker,
-        transformToBoundingBox: makeSeismicBoundingBox,
-        transformToAnnotations: makeSeismicColorScaleAnnotation,
-    },
-);
-
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.INTERSECTION_REALIZATION_OBSERVED_SEISMIC,
-    IntersectionRealizationSeismicProvider,
+    DataProviderType.INTERSECTION_SEISMIC,
+    IntersectionSeismicProvider,
     {
         transformToVisualization: createSeismicLayerItemsMaker,
         transformToBoundingBox: makeSeismicBoundingBox,
@@ -208,17 +198,17 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     // View of interest when supporting only one view
     const view = assemblerProduct.children.find((child) => child.itemType === VisualizationItemType.GROUP);
-    const viewIntersection = view?.customProps.intersection ?? null;
-    const viewExtensionLength = view?.customProps.extensionLength ?? null;
+    const intersectionSource = view?.customProps.intersection ?? null;
+    const intersectionExtensionLength = view?.customProps.extensionLength ?? null;
 
     // Additional visualization for wellbore
     const wellboreHeadersQuery = useDrilledWellboreHeadersQuery(fieldIdentifier ?? undefined);
-    const wellboreUuid = viewIntersection?.type === IntersectionType.WELLBORE ? viewIntersection.uuid : null;
+    const wellboreUuid = intersectionSource?.type === IntersectionType.WELLBORE ? intersectionSource.uuid : null;
     const wellboreCasingsQuery = useWellboreCasingsQuery(wellboreUuid);
 
     // Create intersection reference system for view
     const intersectionReferenceSystem: IntersectionReferenceSystem | null = useCreateIntersectionReferenceSystem(
-        viewIntersection,
+        intersectionSource,
         fieldIdentifier ?? null,
         props.workbenchSession,
     );
@@ -238,13 +228,13 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     }
 
     // Update focus bounds if intersection or extension length changes
-    if (!isEqual(viewIntersection, previousIntersection)) {
-        setPreviousIntersection(viewIntersection);
+    if (!isEqual(intersectionSource, previousIntersection)) {
+        setPreviousIntersection(intersectionSource);
         setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
         setViewportFocusTarget({ bounds: null, requestRefocus: false });
     }
-    if (!isEqual(viewExtensionLength, previousExtensionLength)) {
-        setPreviousExtensionLength(viewExtensionLength);
+    if (!isEqual(intersectionExtensionLength, previousExtensionLength)) {
+        setPreviousExtensionLength(intersectionExtensionLength);
         setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
         setViewportFocusTarget({ bounds: null, requestRefocus: false });
     }
@@ -279,12 +269,12 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     // - LayerItems for intersection type
     // - Bounding box for wellbore path
     let wellborePathBoundingBox: BBox | null = null;
-    if (viewIntersection && intersectionReferenceSystem) {
+    if (intersectionSource && intersectionReferenceSystem) {
         // Place layers on top of view provider layers
         const intersectionTypeLayerOrder = visualizationLayerItems.length + 1;
         visualizationLayerItems.push(
             ...createLayerItemsForIntersectionType(
-                viewIntersection.type,
+                intersectionSource.type,
                 intersectionReferenceSystem,
                 intersectionTypeLayerOrder,
                 wellboreHeadersQuery,
@@ -293,10 +283,10 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         );
 
         // Bound box for wellbore path (uz-coordinates)
-        if (viewIntersection.type === IntersectionType.WELLBORE) {
+        if (intersectionSource.type === IntersectionType.WELLBORE) {
             wellborePathBoundingBox = createBBoxForWellborePath(
                 intersectionReferenceSystem.projectedPath,
-                viewExtensionLength ?? 0,
+                intersectionExtensionLength ?? 0,
             );
         }
     }
@@ -376,7 +366,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
             workbenchServices={props.workbenchServices}
             hoverService={props.hoverService}
             viewContext={props.viewContext}
-            wellboreHeaderUuid={wellboreUuid}
+            intersectionSource={intersectionSource}
             onViewportRefocused={handleOnViewportRefocused}
         />
     );

@@ -86,9 +86,12 @@ class WellboreHeader(BaseModel):
     depth_reference_elevation: float
     wellbore_purpose: str | None
     wellbore_status: str | None
-    current_track: int
-    tvd_max: float
-    md_max: float
+    md_min: float | None = None
+    md_max: float | None = None
+    md_unit: str | None = None
+    tvd_min: float | None = None
+    tvd_max: float | None = None
+    tvd_unit: str | None = None
     kickoff_depth_md: float | None
     kickoff_depth_tvd: float | None
     parent_wellbore: str | None
@@ -123,7 +126,6 @@ class StratigraphicUnit(BaseModel):
     color_r: int
     color_g: int
     color_b: int
-    lithology_type: int | float | str = "unknown"
 
 
 class WellboreStratigraphicUnit(BaseModel):

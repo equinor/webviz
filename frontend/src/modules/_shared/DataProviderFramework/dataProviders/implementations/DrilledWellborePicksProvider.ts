@@ -10,7 +10,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
@@ -62,7 +62,7 @@ export class DrilledWellborePicksProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataProviderInformationAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>): boolean {
+    }: DataProviderAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>): boolean {
         const smdaWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
@@ -81,30 +81,21 @@ export class DrilledWellborePicksProvider
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
-
+            if (!fieldIdentifier) {
+                return [];
+            }
             const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .filter((ensemble) => ensemble.getFieldIdentifiers().includes(fieldIdentifier))
                 .map((ensemble) => ensemble.getIdent());
 
             return ensembleIdents;
         });
 
-        const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
+        const wellboreHeadersDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            if (!fieldIdentifier) {
                 return null;
             }
-
-            const ensembleSet = workbenchSession.getEnsembleSet();
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-            if (!ensemble) {
-                return null;
-            }
-
-            const fieldIdentifier = ensemble.getFieldIdentifier();
-
             return await queryClient.fetchQuery({
                 ...getDrilledWellboreHeadersOptions({
                     query: { field_identifier: fieldIdentifier },

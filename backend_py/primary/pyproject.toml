@@ -18,9 +18,8 @@ pyjwt = "^2.6.0"
 # orjson is installed to allow the use of ORJSONResponse from fastapi
 orjson = "^3.8.10"
 httpx = "^0.28.1"
-azure-monitor-opentelemetry = "^1.6.13"
 
-aiohttp = "^3.11.18"
+aiohttp = "^3.13.4"
 azure-cosmos = "^4.9.0"
 nanoid = "^2.0.0"
 
@@ -34,7 +33,9 @@ pydantic = "~2.12.0"
 fastapi = "~0.129.0"
 uvicorn = "~0.41.0"
 
-### Telemetry version will be pinned by `azure-monitor-opentelemetry` 
+### We have experienced unexpected behavioral changes in patch versions of 'azure-monitor-opentelemetry', so pin it.
+### The 'opentelemetry-instrumentation-...' versions will be pinned by `azure-monitor-opentelemetry` 
+azure-monitor-opentelemetry = "1.8.6"
 opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-redis = "*"
 

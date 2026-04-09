@@ -18,7 +18,7 @@ import { Group } from "../framework/Group/Group";
 import type { GroupType } from "../groups/groupTypes";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
 } from "../interfacesAndTypes/customDataProviderImplementation";
 import type {
     CustomGroupImplementation,
@@ -74,7 +74,7 @@ export type TransformerArgs<
     TData,
     TStoredData extends StoredData = Record<string, never>,
     TInjectedData extends Record<string, any> = Record<string, never>,
-> = DataProviderInformationAccessors<TSettings, TData, TStoredData> & {
+> = DataProviderAccessors<TSettings, TData, TStoredData> & {
     id: string;
     name: string;
     isLoading: boolean;
@@ -222,6 +222,18 @@ type DataProviderObjects<TTarget extends VisualizationTarget, TAccumulatedData e
     accumulatedData: TAccumulatedData | null;
 };
 
+export type VisualizationAssemblerMakeOptions<
+    TInjectedData extends Record<string, any>,
+    TAccumulatedData extends Record<string, any>,
+> = {
+    injectedData?: TInjectedData;
+    initialAccumulatedData?: TAccumulatedData;
+    /**
+     * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
+     */
+    disableCache?: boolean;
+};
+
 export class VisualizationAssembler<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
@@ -278,14 +290,7 @@ export class VisualizationAssembler<
 
     make(
         dataProviderManager: DataProviderManager,
-        options?: {
-            injectedData?: TInjectedData;
-            initialAccumulatedData?: TAccumulatedData;
-            /**
-             * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
-             */
-            disableCache?: boolean;
-        },
+        options?: VisualizationAssemblerMakeOptions<TInjectedData, TAccumulatedData>,
     ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
         return this.makeRecursively(
             dataProviderManager.getGroupDelegate(),
@@ -329,6 +334,15 @@ export class VisualizationAssembler<
 
         for (const child of groupDelegate.getChildren()) {
             if (!child.getItemDelegate().isVisible()) {
+                continue;
+            }
+
+            // Skip items with deserialization errors, but count the errors for error badge and opening all descendants with errors functionality
+            if (child.getItemDelegate().getDeserializationErrors().length) {
+                // Include the name of the item with deserialization errors in the error messages
+                aggregatedErrorMessages.push(
+                    `${child.getItemDelegate().getName()}: ${child.getItemDelegate().getDeserializationErrors().join(", ")}`,
+                );
                 continue;
             }
 

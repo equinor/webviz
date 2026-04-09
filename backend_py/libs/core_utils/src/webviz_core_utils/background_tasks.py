@@ -2,7 +2,6 @@ import logging
 import asyncio
 from typing import Coroutine
 
-
 LOGGER = logging.getLogger(__name__)
 
 _background_tasks: set[asyncio.Task] = set()

@@ -1,7 +1,6 @@
 from enum import StrEnum
 from dataclasses import dataclass
 
-
 # NOTE:
 # - AccumulateByEach -> InplaceVolumetricsIndexNames
 # - Later on: InplaceVolumetricsIndexNames -> InplaceVolumetricsIdentifier

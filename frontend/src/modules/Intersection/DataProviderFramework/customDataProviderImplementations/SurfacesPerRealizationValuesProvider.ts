@@ -21,7 +21,7 @@ import {
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type {
     CustomDataProviderImplementation,
-    DataProviderInformationAccessors,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -86,7 +86,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataProviderInformationAccessors<
+    }: DataProviderAccessors<
         SurfacesPerRealizationValuesSettings,
         SurfacesPerRealizationValuesData,
         SurfacesPerRealizationValuesStoredData
@@ -133,9 +133,9 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
             return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
         });
 
-        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+        const wellboreHeadersDep = helperDependency(({ getGlobalSetting, abortSignal }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
         });
 
         valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
