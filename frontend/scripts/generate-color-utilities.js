@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generates src/styles/theme/colors.css from color-tokens.config.js.
+ * Generates src/styles/generated/colors.css from color-tokens.config.js.
  *
  * Usage:
  *   npm run generate:color-utilities
@@ -12,7 +12,7 @@ import { fileURLToPath } from "url";
 import { fills, borders, text } from "../src/styles/theme/color-tokens.config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUTPUT = resolve(__dirname, "../src/styles/theme/colors.css");
+const OUTPUT = resolve(__dirname, "../src/styles/generated/colors.css");
 
 const BORDER_SIDES = [
     ["", "border-color"],

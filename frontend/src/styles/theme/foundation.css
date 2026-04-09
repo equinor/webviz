@@ -8,6 +8,18 @@
 :root {
     --background: var(--color-canvas);
     --foreground: var(--color-text);
+
+    --spacing-selectable-x: var(--eds-selectable-space-horizontal);
+    --spacing-selectable-y: var(--eds-selectable-space-vertical);
+}
+
+:where([data-density="comfortable"]) {
+    --spacing-selectable-y: var(--eds-spacing-proportions-xs-vertical);
+}
+
+/* Remove default Tailwind spacing scale so only project-defined utilities are used. */
+@theme {
+    --spacing: initial;
 }
 
 /* Global semantic tokens */

@@ -48,8 +48,8 @@ export function StartPage(props: StartPageProps) {
     return (
         <>
             <div className="flex h-full min-h-0 w-full items-center justify-center p-57">
-                <div className="px-selectable-horizontal grid grid-cols-2 gap-x-4 gap-y-8">
-                    <section className="flex flex-col gap-2">
+                <div className="px-selectable-horizontal gap-x-horizontal-3xl gap-y-vertical-sm grid grid-cols-2">
+                    <section className="gap-vertical-xs flex flex-col">
                         <Heading as="h3">Start</Heading>
                         <Tooltip
                             placement="right"
@@ -79,13 +79,13 @@ export function StartPage(props: StartPageProps) {
                         </Tooltip>
                     </section>
                     <RecentSessions workbench={props.workbench} />
-                    <section className="flex flex-col gap-4">
+                    <section className="gap-vertical-sm flex flex-col">
                         <Heading as="h3">Resources</Heading>
                         <a
                             href="https://github.com/equinor/webviz"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex w-max items-center gap-2 rounded px-4 py-2 font-medium text-indigo-600 hover:bg-indigo-100"
+                            className="gap-selectable-x text-link flex w-max items-center rounded px-4 py-2 font-medium"
                         >
                             <Icon name="github" />
                             Webviz on GitHub

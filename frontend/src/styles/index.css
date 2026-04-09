@@ -6,12 +6,16 @@
 
 /* Theme (tokens) */
 @import "./theme/foundation.css";
-@import "./theme/colors.css";
-@import "./theme/spacing.css";
 @import "./theme/typography.css";
 @import "./theme/shadows.css";
 @import "./theme/sizes.css";
 @import "./theme/animations.css";
+
+/* Generated utilities */
+@import "./generated/colors.css";
+@import "./generated/spacing.css";
+@import "./generated/sizing.css";
+@import "./generated/position.css";
 
 /* Utilities */
 @import "./utilities/sizes.css";
