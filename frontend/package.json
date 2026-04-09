@@ -85,7 +85,7 @@
         "@deck.gl/react": "~9.1.15"
     },
     "devDependencies": {
-        "@hey-api/openapi-ts": "~0.92.4",
+        "@hey-api/openapi-ts": "~0.95.0",
         "@playwright/experimental-ct-react": "~1.58.2",
         "@playwright/test": "~1.58.2",
         "@tailwindcss/vite": "^4.0.9",
