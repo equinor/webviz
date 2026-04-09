@@ -1,4 +1,4 @@
-ARG NODE_TAG="24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b181aa49e22c14383e"
+ARG NODE_TAG="24.14.0-alpine@sha256:7fddd9ddeae8196abf4a3ef2de34e11f7b1a722119f91f28ddf1e99dcafdf114"
 ARG NGINX_TAG="1.23-alpine@sha256:b5fe08305969d68f9d44309ea30f02a7dfbefe6e429f8c3f3f348fa45600f8b2"
 
 ###########################################
