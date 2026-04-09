@@ -10,7 +10,7 @@ import type {
     DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { NullableStoredData } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Representation } from "@modules/_shared/DataProviderFramework/settings/implementations/RepresentationSetting";
@@ -161,190 +161,230 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
         }));
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
-        storedDataUpdater,
-        settingAttributesUpdater,
+    setupBindings({
+        setting,
+        storedData,
+        makeSharedResult,
         queryClient,
-    }: DefineDependenciesArgs<SeismicSlicesSettings, SeismicSlicesStoredData>): void {
-        settingAttributesUpdater(Setting.REALIZATION, ({ getLocalSetting }) => {
-            const representation = getLocalSetting(Setting.REPRESENTATION);
-            const enabled =
-                representation === Representation.REALIZATION ||
-                representation === Representation.OBSERVATION_PER_REALIZATION;
-            return { enabled, visible: enabled };
-        });
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-
-            const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent());
-
-            return ensembleIdents;
+    }: SetupBindingsContext<SeismicSlicesSettings, SeismicSlicesStoredData>): void {
+        setting(Setting.REALIZATION).bindAttributes({
+            read(read) {
+                return {
+                    representation: read.localSetting(Setting.REPRESENTATION),
+                };
+            },
+            resolve({ representation }) {
+                const enabled =
+                    representation === Representation.REALIZATION ||
+                    representation === Representation.OBSERVATION_PER_REALIZATION;
+                return { enabled, visible: enabled };
+            },
         });
 
-        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read(read) {
+                return {
+                    fieldId: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldId, ensembles }) {
+                if (!fieldId || !ensembles) {
+                    return [];
+                }
 
-            if (!ensembleIdent) {
-                return [];
-            }
-
-            const realizations = realizationFilterFunc(ensembleIdent);
-
-            return [...realizations];
-        });
-        valueConstraintsUpdater(Setting.REPRESENTATION, () => {
-            return [Representation.REALIZATION, Representation.OBSERVATION, Representation.OBSERVATION_PER_REALIZATION];
-        });
-
-        const seismicCubeMetaListDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            return await queryClient.fetchQuery({
-                ...getSeismicCubeMetaListOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid() ?? "",
-                        ensemble_name: ensembleIdent.getEnsembleName() ?? "",
-                        ...makeCacheBustingQueryParam(ensembleIdent ?? null),
-                    },
-
-                    signal: abortSignal,
-                }),
-            });
-        });
-        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency, getLocalSetting }) => {
-            const seismicCubeMetaList = getHelperDependency(seismicCubeMetaListDep);
-
-            if (!seismicCubeMetaList) {
-                return [];
-            }
-
-            const representation = getLocalSetting(Setting.REPRESENTATION);
-            const apiRepresentation = representationToApiRepresentation(representation ?? Representation.REALIZATION);
-
-            return Array.from(
-                new Set(
-                    seismicCubeMetaList
-                        .filter((el) => el.isDepth && el.representation === apiRepresentation)
-                        .map((el) => el.seismicAttribute),
-                ),
-            ).sort();
+                return ensembles
+                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldId)
+                    .map((ensemble) => ensemble.getIdent());
+            },
         });
 
-        storedDataUpdater("seismicCubeMeta", ({ getHelperDependency, getLocalSetting }) => {
-            const data = getHelperDependency(seismicCubeMetaListDep);
-            const attribute = getLocalSetting(Setting.ATTRIBUTE);
-            const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
+        setting(Setting.REALIZATION).bindValueConstraints({
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunction }) {
+                if (!ensembleIdent || !realizationFilterFunction) {
+                    return [];
+                }
 
-            if (!data || !attribute || !timeOrInterval) {
-                return null;
-            }
-
-            return (
-                data.find(
-                    (seismicCubeMeta) =>
-                        seismicCubeMeta.seismicAttribute === attribute &&
-                        seismicCubeMeta.isoDateOrInterval === timeOrInterval,
-                ) ?? null
-            );
+                return [...realizationFilterFunction(ensembleIdent)];
+            },
         });
 
-        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(seismicCubeMetaListDep);
-
-            if (!data) {
-                return [];
-            }
-
-            const availableSeismicAttributes = Array.from(
-                new Set(data.filter((el) => el.isDepth).map((el) => el.seismicAttribute)),
-            ).sort();
-
-            return availableSeismicAttributes;
+        setting(Setting.REPRESENTATION).bindValueConstraints({
+            resolve() {
+                return [
+                    Representation.REALIZATION,
+                    Representation.OBSERVATION,
+                    Representation.OBSERVATION_PER_REALIZATION,
+                ];
+            },
         });
 
-        valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
+        const seismicCubeMetaList = makeSharedResult({
+            debugName: "seismicCubeMetaList",
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                };
+            },
+            async resolve({ ensembleIdent }, { abortSignal }) {
+                if (!ensembleIdent) {
+                    return null;
+                }
 
-            const data = getHelperDependency(seismicCubeMetaListDep);
+                return await queryClient.fetchQuery({
+                    ...getSeismicCubeMetaListOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid() ?? "",
+                            ensemble_name: ensembleIdent.getEnsembleName() ?? "",
+                            ...makeCacheBustingQueryParam(ensembleIdent ?? null),
+                        },
 
-            if (!seismicAttribute || !data) {
-                return [];
-            }
+                        signal: abortSignal,
+                    }),
+                });
+            },
+        });
 
-            const availableTimeOrIntervals = [
-                ...Array.from(
+        setting(Setting.ATTRIBUTE).bindValueConstraints({
+            read(read) {
+                return {
+                    seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
+                    representation: read.localSetting(Setting.REPRESENTATION),
+                };
+            },
+            resolve({ seismicCubeMetaList, representation }) {
+                if (!seismicCubeMetaList) {
+                    return [];
+                }
+
+                const apiRepresentation = representationToApiRepresentation(
+                    representation ?? Representation.REALIZATION,
+                );
+
+                return Array.from(
                     new Set(
-                        data
+                        seismicCubeMetaList
+                            .filter((el) => el.isDepth && el.representation === apiRepresentation)
+                            .map((el) => el.seismicAttribute),
+                    ),
+                ).sort();
+            },
+        });
+
+        storedData("seismicCubeMeta").bindValue({
+            read(read) {
+                return {
+                    seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
+                    attribute: read.localSetting(Setting.ATTRIBUTE),
+                    timeOrInterval: read.localSetting(Setting.TIME_OR_INTERVAL),
+                };
+            },
+            resolve({ seismicCubeMetaList, attribute, timeOrInterval }) {
+                if (!seismicCubeMetaList || !attribute || !timeOrInterval) {
+                    return null;
+                }
+
+                return (
+                    seismicCubeMetaList.find(
+                        (seismicCubeMeta) =>
+                            seismicCubeMeta.seismicAttribute === attribute &&
+                            seismicCubeMeta.isoDateOrInterval === timeOrInterval,
+                    ) ?? null
+                );
+            },
+        });
+
+        setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
+            read(read) {
+                return {
+                    seismicAttribute: read.localSetting(Setting.ATTRIBUTE),
+                    seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
+                };
+            },
+            resolve({ seismicAttribute, seismicCubeMetaList }) {
+                if (!seismicAttribute || !seismicCubeMetaList) {
+                    return [];
+                }
+
+                const availableTimeOrIntervals = [
+                    ...new Set(
+                        seismicCubeMetaList
                             .filter((surface) => surface.seismicAttribute === seismicAttribute)
                             .map((el) => el.isoDateOrInterval),
                     ),
-                ),
-            ];
-
-            return availableTimeOrIntervals;
-        });
-
-        valueConstraintsUpdater(Setting.SEISMIC_SLICES, ({ getLocalSetting, getHelperDependency }) => {
-            const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
-            const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
-            const data = getHelperDependency(seismicCubeMetaListDep);
-
-            if (!seismicAttribute || !timeOrInterval || !data) {
-                return [
-                    [0, 0, 1],
-                    [0, 0, 1],
-                    [0, 0, 1],
                 ];
-            }
-            const seismicInfo = data.filter(
-                (seismicInfos) =>
-                    seismicInfos.seismicAttribute === seismicAttribute &&
-                    seismicInfos.isoDateOrInterval === timeOrInterval,
-            )[0];
 
-            const xMin = 0;
-            const xMax = seismicInfo.spec.numCols - 1;
-            const xInc = 1;
-
-            const yMin = 0;
-            const yMax = seismicInfo.spec.numRows - 1;
-            const yInc = 1;
-
-            const zMin = seismicInfo.spec.zOrigin;
-            const zMax =
-                seismicInfo.spec.zOrigin +
-                seismicInfo.spec.zInc * seismicInfo.spec.zFlip * (seismicInfo.spec.numLayers - 1);
-            const zInc = seismicInfo.spec.zInc;
-
-            return [
-                [xMin, xMax, xInc],
-                [yMin, yMax, yInc],
-                [zMin, zMax, zInc],
-            ];
+                return availableTimeOrIntervals;
+            },
         });
 
-        storedDataUpdater("seismicSlices", ({ getLocalSetting }) => {
-            const slices = getLocalSetting(Setting.SEISMIC_SLICES);
+        setting(Setting.SEISMIC_SLICES).bindValueConstraints({
+            read(read) {
+                return {
+                    seismicAttribute: read.localSetting(Setting.ATTRIBUTE),
+                    timeOrInterval: read.localSetting(Setting.TIME_OR_INTERVAL),
+                    seismicCubeMetaList: read.sharedResult(seismicCubeMetaList),
+                };
+            },
+            resolve({ seismicAttribute, timeOrInterval, seismicCubeMetaList }) {
+                if (!seismicAttribute || !timeOrInterval || !seismicCubeMetaList) {
+                    return [
+                        [0, 0, 1],
+                        [0, 0, 1],
+                        [0, 0, 1],
+                    ];
+                }
+                const seismicInfo = seismicCubeMetaList.filter(
+                    (seismicInfos) =>
+                        seismicInfos.seismicAttribute === seismicAttribute &&
+                        seismicInfos.isoDateOrInterval === timeOrInterval,
+                )[0];
 
-            if (!slices) {
-                return null;
-            }
+                const xMin = 0;
+                const xMax = seismicInfo.spec.numCols - 1;
+                const xInc = 1;
 
-            if (slices.applied) {
-                return slices.value;
-            }
+                const yMin = 0;
+                const yMax = seismicInfo.spec.numRows - 1;
+                const yInc = 1;
 
-            return NO_UPDATE;
+                const zMin = seismicInfo.spec.zOrigin;
+                const zMax =
+                    seismicInfo.spec.zOrigin +
+                    seismicInfo.spec.zInc * seismicInfo.spec.zFlip * (seismicInfo.spec.numLayers - 1);
+                const zInc = seismicInfo.spec.zInc;
+
+                return [
+                    [xMin, xMax, xInc],
+                    [yMin, yMax, yInc],
+                    [zMin, zMax, zInc],
+                ];
+            },
+        });
+
+        storedData("seismicSlices").bindValue({
+            read(read) {
+                return {
+                    seismicSlices: read.localSetting(Setting.SEISMIC_SLICES),
+                };
+            },
+            resolve({ seismicSlices }) {
+                if (!seismicSlices) {
+                    return null;
+                }
+
+                if (seismicSlices.applied) {
+                    return seismicSlices.value;
+                }
+
+                return NO_UPDATE;
+            },
         });
     }
 }

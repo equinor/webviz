@@ -9,7 +9,7 @@ import type {
     CustomGroupImplementationWithSettings,
 } from "../../interfacesAndTypes/customGroupImplementation";
 import { includesSettings } from "../../interfacesAndTypes/customGroupImplementation";
-import type { DefineBasicDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { SetupBasicBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 import type { SerializedGroup, SerializedSettingsState } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
@@ -68,8 +68,8 @@ export class Group<
                     customGroupImplementation.settings as unknown as TSettings,
                     customGroupImplementation.getDefaultSettingsValues?.() ?? {},
                 ),
-                customGroupImplementation.defineDependencies as unknown as
-                    | ((args: DefineBasicDependenciesArgs<TSettings, TSettingTypes>) => void)
+                customGroupImplementation.setupBindings as unknown as
+                    | ((args: SetupBasicBindingsContext<TSettings, TSettingTypes>) => void)
                     | undefined,
             );
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
