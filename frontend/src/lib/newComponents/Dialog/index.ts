@@ -1,11 +1,10 @@
-import { Actions, type ActionsProps } from "./_components/actions";
+import { Actions } from "./_components/actions";
 import { Close } from "./_components/close";
-import { Body, type BodyProps } from "./_components/content";
-import type { DescriptionProps } from "./_components/description";
+import { Body } from "./_components/content";
 import { Description } from "./_components/description";
-import { Header, type HeaderProps } from "./_components/header";
-import { Popup, type PopupProps } from "./_components/popup";
-import { Title, type TitleProps } from "./_components/title";
+import { Header } from "./_components/header";
+import { Popup } from "./_components/popup";
+import { Title } from "./_components/title";
 
 export const Dialog = {
     Popup,
@@ -17,11 +16,9 @@ export const Dialog = {
     Close,
 };
 
-export type Dialog = {
-    Popup: PopupProps;
-    Title: TitleProps;
-    Header: HeaderProps;
-    Body: BodyProps;
-    Actions: ActionsProps;
-    Description: DescriptionProps;
-};
+export type { ActionsProps as DialogActionsProps } from "./_components/actions";
+export type { BodyProps as DialogBodyProps } from "./_components/content";
+export type { DescriptionProps as DialogDescriptionProps } from "./_components/description";
+export type { HeaderProps as DialogHeaderProps } from "./_components/header";
+export type { PopupProps as DialogPopupProps } from "./_components/popup";
+export type { TitleProps as DialogTitleProps } from "./_components/title";

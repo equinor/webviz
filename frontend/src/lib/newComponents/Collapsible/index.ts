@@ -1,8 +1,6 @@
 import { Group } from "./_components/group";
 import { ScrollArea } from "./_components/scrollArea";
-import { GroupProps } from "./_components/group";
-import { ScrollAreaProps } from "./_components/scrollArea";
-import { Content, ContentProps } from "./_components/content";
+import { Content } from "./_components/content";
 
 export const Collapsible = {
     Group,
@@ -10,8 +8,6 @@ export const Collapsible = {
     Content,
 };
 
-export type CollapsibleProps = {
-    Group: GroupProps;
-    ScrollArea: ScrollAreaProps;
-    Content: ContentProps;
-};
+export type { GroupProps as CollapsibleGroupProps } from "./_components/group";
+export type { ScrollAreaProps as CollapsibleScrollAreaProps } from "./_components/scrollArea";
+export type { ContentProps as CollapsibleContentProps } from "./_components/content";
