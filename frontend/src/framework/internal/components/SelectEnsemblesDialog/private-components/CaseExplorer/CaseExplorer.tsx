@@ -14,7 +14,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
-import { Switch } from "@lib/components/Switch";
+import { Switch } from "@lib/newComponents/Switch";
 import { Table } from "@lib/components/Table";
 import { SortDirection, type TableSorting, type TableFilters } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
@@ -234,8 +234,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         setSelectedField(fieldIdentifier);
     }
 
-    function handleOfficialCasesSwitchChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const checked = e.target.checked;
+    function handleOfficialCasesSwitchChange(checked: boolean) {
         setShowOnlyOfficialCases(checked);
         storeStateInLocalStorage("showOfficialCases", checked.toString());
 
@@ -246,8 +245,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     }
 
     const handleCasesByMeChange = React.useCallback(
-        function handleCasesByMeChange(e: React.ChangeEvent<HTMLInputElement>) {
-            const checked = e.target.checked;
+        function handleCasesByMeChange(checked: boolean) {
             setShowOnlyMyCases(checked);
             storeStateInLocalStorage("showOnlyMyCases", checked.toString());
 
@@ -271,7 +269,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     return (
-        <div className="flex flex-col h-full gap-4 min-h-0">
+        <div className="flex h-full min-h-0 flex-col gap-4">
             <div className="flex flex-row gap-4">
                 <Label text="Field" position="left">
                     <PendingWrapper
@@ -286,21 +284,21 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         />
                     </PendingWrapper>
                 </Label>
-                <div className="grow flex flex-row gap-4 items-center">
+                <div className="flex grow flex-row items-center gap-4">
                     <Label position="left" text="Only my cases">
                         <Tooltip title="Show only cases authored by me" enterDelay="medium">
-                            <Switch checked={showOnlyMyCases} onChange={handleCasesByMeChange} />
+                            <Switch checked={showOnlyMyCases} onCheckedChange={handleCasesByMeChange} />
                         </Tooltip>
                     </Label>
                     <Label position="left" text="Only official cases">
                         <Tooltip title="Show only cases marked as official" enterDelay="medium">
-                            <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
+                            <Switch checked={showOnlyOfficialCases} onCheckedChange={handleOfficialCasesSwitchChange} />
                         </Tooltip>
                     </Label>
                     <PendingWrapper
                         isPending={casesQuery.isFetching && !casesQuery.isRefetching}
                         errorMessage={casesQuery.error ? "Error loading cases" : undefined}
-                        className="h-full flex-1 min-h-0 min-w-56"
+                        className="h-full min-h-0 min-w-56 flex-1"
                     >
                         <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
                             <TagPicker
@@ -315,12 +313,12 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                 </div>
             </div>
             <StatusWrapper
-                className="grow min-h-0"
+                className="min-h-0 grow"
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
             >
-                <div className="flex flex-col h-full">
-                    <div className="flex justify-end gap-4 items-center mb-1">
-                        <div className="grow flex flex-col">
+                <div className="flex h-full flex-col">
+                    <div className="mb-1 flex items-center justify-end gap-4">
+                        <div className="flex grow flex-col">
                             <span className="text-sm text-slate-500">Select from {numberOfCases} cases</span>
                             <span className="text-xs text-slate-400 italic">
                                 Last updated:{" "}
@@ -346,7 +344,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             </Tooltip>
                         </div>
                     </div>
-                    <div className="grow min-h-0">
+                    <div className="min-h-0 grow">
                         <Table
                             rowIdentifier="caseId"
                             height={"100%"}

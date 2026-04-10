@@ -55,7 +55,7 @@ const semanticSpacingTokens = {
 const rem = (n) => `${n}rem`;
 
 const numericLengthTokens = {
-    zero: { className: "0", value: "0px", groups: ["dimension", "position"] },
+    zero: { className: "0", value: "0px", groups: ["semantic-spacing", "dimension", "position"] },
     px: { className: "px", value: "1px", groups: ["dimension", "position"] },
 
     s0_5: { className: "0.5", value: rem(0.125), groups: ["dimension", "position"], negative: true },

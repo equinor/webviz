@@ -424,3 +424,22 @@
 @utility gap-x-selectable-y { column-gap: var(--spacing-selectable-y); }
 @utility gap-y-selectable-y { row-gap: var(--spacing-selectable-y); }
 
+/* 0 */
+@utility p-0 { padding: 0px; }
+@utility pt-0 { padding-top: 0px; }
+@utility pr-0 { padding-right: 0px; }
+@utility pb-0 { padding-bottom: 0px; }
+@utility pl-0 { padding-left: 0px; }
+@utility px-0 { padding-inline: 0px; }
+@utility py-0 { padding-block: 0px; }
+@utility m-0 { margin: 0px; }
+@utility mt-0 { margin-top: 0px; }
+@utility mr-0 { margin-right: 0px; }
+@utility mb-0 { margin-bottom: 0px; }
+@utility ml-0 { margin-left: 0px; }
+@utility mx-0 { margin-inline: 0px; }
+@utility my-0 { margin-block: 0px; }
+@utility gap-0 { gap: 0px; }
+@utility gap-x-0 { column-gap: 0px; }
+@utility gap-y-0 { row-gap: 0px; }
+
