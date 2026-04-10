@@ -17,6 +17,7 @@ import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIn
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { ToggleButton } from "@lib/components/ToggleButton";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
 
@@ -25,9 +26,15 @@ export enum FitInViewStatus {
     OFF = "OFF",
 }
 
+export type ViewOption = {
+    id: string;
+    name: string;
+    color: string | null;
+};
+
 export type ViewLinkOption = {
     id: string;
-    views: { id: string; name: string; color: string | null }[];
+    views: ViewOption[];
     containsThisView: boolean;
 };
 
@@ -41,7 +48,7 @@ export type ToolbarProps = {
     onVerticalScaleIncrease: () => void;
     onVerticalScaleDecrease: () => void;
     viewLinks?: ViewLinkOption[];
-    unlinkedViews?: { id: string; name: string; color: string | null }[];
+    unlinkedViews?: ViewOption[];
     onToggleViewLink?: (viewId: string) => void;
 };
 
@@ -76,26 +83,28 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
     return (
         <GenericToolbar>
             <div className="flex items-center gap-1 justify-start">
-                <ToggleButton
-                    onToggle={handleFitInViewToggle}
-                    title="Fit in view"
-                    active={props.fitInViewStatus === FitInViewStatus.ON}
-                >
-                    <FilterCenterFocus fontSize="inherit" />
-                </ToggleButton>
+                <Tooltip title="Fit all data in view" placement="bottom">
+                    <ToggleButton
+                        onToggle={handleFitInViewToggle}
+                        active={props.fitInViewStatus === FitInViewStatus.ON}
+                    >
+                        <FilterCenterFocus fontSize="inherit" />
+                    </ToggleButton>
+                </Tooltip>
                 {showLinkButton && (
                     <Dropdown>
-                        <MuiMenuButton
-                            label="Link this view with others"
-                            className={resolveClassNames(
-                                "inline-flex items-center px-4 py-2 font-medium rounded-md",
-                                isAnyLinked
-                                    ? "bg-indigo-500 text-white hover:bg-indigo-400"
-                                    : "bg-transparent text-indigo-600 hover:bg-indigo-100",
-                            )}
-                        >
-                            <Link fontSize="inherit" />
-                        </MuiMenuButton>
+                        <Tooltip title="Link this view with others" placement="bottom">
+                            <MuiMenuButton
+                                className={resolveClassNames(
+                                    "inline-flex items-center px-4 py-2 font-medium rounded-md",
+                                    isAnyLinked
+                                        ? "bg-indigo-500 text-white hover:bg-indigo-400"
+                                        : "bg-transparent text-indigo-600 hover:bg-indigo-100",
+                                )}
+                            >
+                                <Link fontSize="inherit" />
+                            </MuiMenuButton>
+                        </Tooltip>
                         <Menu anchorOrigin="bottom-start" className="text-sm p-1 min-w-40">
                             {viewLinks.map((group) => (
                                 <MenuItem
@@ -141,37 +150,39 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                 )}
                 {expanded && (
                     <>
-                        <ToggleButton
-                            onToggle={handleGridVisibilityToggle}
-                            title="Toggle grid visibility"
-                            active={props.gridVisible}
-                        >
-                            <GridOn fontSize="inherit" />
-                        </ToggleButton>
+                        <Tooltip title="Toggle grid visibility" placement="bottom">
+                            <ToggleButton onToggle={handleGridVisibilityToggle} active={props.gridVisible}>
+                                <GridOn fontSize="inherit" />
+                            </ToggleButton>
+                        </Tooltip>
                         <ToolBarDivider />
-                        <HoldPressedIntervalCallbackButton
-                            onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
-                            title="Increase vertical scale"
-                        >
-                            <Add fontSize="inherit" />
-                        </HoldPressedIntervalCallbackButton>
+                        <Tooltip title="Increase vertical scale" placement="bottom">
+                            <HoldPressedIntervalCallbackButton
+                                onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
+                            >
+                                <Add fontSize="inherit" />
+                            </HoldPressedIntervalCallbackButton>
+                        </Tooltip>
                         <span title="Vertical scale">{props.zFactor}</span>
-                        <HoldPressedIntervalCallbackButton
-                            onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
-                            title="Decrease vertical scale"
-                        >
-                            <Remove fontSize="inherit" />
-                        </HoldPressedIntervalCallbackButton>
+                        <Tooltip title="Decrease vertical scale" placement="bottom">
+                            <HoldPressedIntervalCallbackButton
+                                onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
+                            >
+                                <Remove fontSize="inherit" />
+                            </HoldPressedIntervalCallbackButton>
+                        </Tooltip>
                     </>
                 )}
                 <ToolBarDivider />
-                <Button title={expanded ? "Collapse toolbar" : "Expand toolbar"} onClick={() => setExpanded(!expanded)}>
-                    {expanded ? (
-                        <KeyboardDoubleArrowLeft fontSize="inherit" />
-                    ) : (
-                        <KeyboardDoubleArrowRight fontSize="inherit" />
-                    )}
-                </Button>
+                <Tooltip title={expanded ? "Collapse toolbar" : "Expand toolbar"} placement="bottom">
+                    <Button onClick={() => setExpanded(!expanded)}>
+                        {expanded ? (
+                            <KeyboardDoubleArrowLeft fontSize="inherit" />
+                        ) : (
+                            <KeyboardDoubleArrowRight fontSize="inherit" />
+                        )}
+                    </Button>
+                </Tooltip>
             </div>
         </GenericToolbar>
     );

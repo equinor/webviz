@@ -212,13 +212,7 @@ function isPixiLayer(layer: Layer<unknown>): boolean {
 }
 
 export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
-    const { onReadout, onMousePositionChange } = props;
-
-    // Keep onViewportChange in a ref so that propagateViewportChange only fires when
-    // the canvas viewport actually changes (user interaction), not when the callback prop
-    // is recreated on each parent render (which would re-fire with stale currentViewport).
-    const onViewportChangeRef = React.useRef(props.onViewportChange);
-    onViewportChangeRef.current = props.onViewportChange;
+    const { onReadout, onMousePositionChange, onViewportChange } = props;
 
     const [prevAxesOptions, setPrevAxesOptions] = React.useState<AxisOptions | undefined>(undefined);
     const [prevIntersectionReferenceSystem, setPrevIntersectionReferenceSystem] = React.useState<
@@ -238,7 +232,14 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     const [esvController, setEsvController] = React.useState<Controller | null>(null);
     const [interactionHandler, setInteractionHandler] = React.useState<InteractionHandler | null>(null);
     const [pixiRenderApplication, setPixiRenderApplication] = React.useState<PixiRenderApplication | null>(null);
-    const [currentViewport, setCurrentViewport] = React.useState<Viewport | null>(null);
+
+    // Viewport originating from user interaction (drag/pan/zoom).
+    // - Only this state triggers onViewportChange propagation — external (prop-driven) viewport applications never touch it.
+    const [internalViewport, setInternalViewport] = React.useState<Viewport | null>(null);
+
+    // Tracks what is currently applied to the canvas (both user and prop-driven)
+    // - Used as the guard in the render body to avoid redundant esvController.setViewport() calls.
+    const canvasViewportRef = React.useRef<Viewport | null>(null);
 
     const containerRef = React.useRef<HTMLDivElement>(null);
     const automaticChanges = React.useRef<boolean>(false);
@@ -322,15 +323,16 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                     !fuzzyCompare(prevViewport[2], props.viewport[2], 0.0001)))
         ) {
             if (props.viewport) {
+                const canvas = canvasViewportRef.current;
                 if (
-                    !currentViewport ||
-                    !fuzzyCompare(currentViewport[0], props.viewport[0], 0.0001) ||
-                    !fuzzyCompare(currentViewport[1], props.viewport[1], 0.0001) ||
-                    !fuzzyCompare(currentViewport[2], props.viewport[2], 0.0001)
+                    !canvas ||
+                    !fuzzyCompare(canvas[0], props.viewport[0], 0.0001) ||
+                    !fuzzyCompare(canvas[1], props.viewport[1], 0.0001) ||
+                    !fuzzyCompare(canvas[2], props.viewport[2], 0.0001)
                 ) {
                     automaticChanges.current = true;
+                    canvasViewportRef.current = props.viewport;
                     esvController.setViewport(...props.viewport);
-                    setCurrentViewport(props.viewport);
                 }
             }
             setPrevViewport(props.viewport);
@@ -470,7 +472,8 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                     if (!isValidViewport(candidateViewport)) {
                         return;
                     }
-                    setCurrentViewport(candidateViewport);
+                    canvasViewportRef.current = candidateViewport;
+                    setInternalViewport(candidateViewport);
                 }
                 automaticChanges.current = false;
                 oldOnRescaleFunction(event);
@@ -563,14 +566,16 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         [onMousePositionChange],
     );
 
+    const onViewportChangeRef = React.useRef(onViewportChange);
+    onViewportChangeRef.current = onViewportChange;
     React.useEffect(
         function propagateViewportChange() {
-            if (onViewportChangeRef.current && currentViewport) {
-                onViewportChangeRef.current(currentViewport);
-                setPrevViewport(currentViewport);
+            if (onViewportChangeRef.current && internalViewport) {
+                onViewportChangeRef.current(internalViewport);
+                setPrevViewport(internalViewport);
             }
         },
-        [currentViewport],
+        [internalViewport],
     );
 
     React.useEffect(
