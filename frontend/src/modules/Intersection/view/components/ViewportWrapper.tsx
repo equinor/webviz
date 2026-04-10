@@ -12,7 +12,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
-import { FitInViewStatus, Toolbar, type ViewLinkOption } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
+import { FitInViewStatus, Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 import {
     isValidBounds,
     isValidNumber,
@@ -23,22 +23,12 @@ import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFram
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
+import { useViewLinkResult } from "./ViewLinkManager";
 
 const DISPLACEMENT_FACTOR = 1.4; // Factor to increase the viewport displacement when fitting in view
 
-export type ViewLinkProps = {
-    viewLinks: ViewLinkOption[];
-    unlinkedViews: { id: string; name: string; color: string | null }[];
-    isLinked: boolean;
-    sharedViewport: Viewport | null;
-    sharedVerticalScale: number | null;
-    sharedFocusBounds: Bounds | null;
-    onToggleViewLink: (otherViewId: string, initiatorViewport?: Viewport | null) => void;
-    onLinkedViewportChange: (viewport: Viewport) => void;
-    onLinkedVerticalScaleChange: (scale: number) => void;
-};
-
 export type ViewportWrapperProps = {
+    viewId: string;
     name: string;
     color: string | null;
     intersectionSource: IntersectionSettingValue | null;
@@ -53,23 +43,34 @@ export type ViewportWrapperProps = {
     hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
     onViewportRefocused?: () => void;
-    viewLinkProps: ViewLinkProps;
 };
 
 export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
-    const { onViewportRefocused, viewLinkProps } = props;
-    const { isLinked, sharedViewport, sharedVerticalScale, sharedFocusBounds } = viewLinkProps;
+    const { onViewportRefocused, viewId } = props;
+
+    // View link state and handlers
+    const viewLinkResult = useViewLinkResult(viewId);
+    const {
+        isLinked,
+        viewport: linkedViewport,
+        viewportSourceViewId: linkedViewportSourceViewId,
+        verticalScale: linkedVerticalScale,
+        focusBounds: linkedFocusBounds,
+        onLinkedViewportChange,
+        onLinkedVerticalScaleChange,
+        onToggleViewLink,
+    } = viewLinkResult;
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
     const [prevFocusBounds, setPrevFocusBounds] = React.useState<Bounds | null>(null);
 
     const [viewport, setViewport] = React.useState<Viewport | null>(null);
-    const [prevViewport, setPrevViewport] = React.useState<Viewport | null>(null);
-    const [prevSyncedViewport, setPrevSyncedViewport] = React.useState<Viewport | null>(null);
+    const lastPublishedViewportRef = React.useRef<Viewport | null>(null);
+    const lastAppliedSyncedViewportRef = React.useRef<Viewport | null>(null);
 
     const [verticalScale, setVerticalScale] = React.useState<number>(10.0);
-    const [prevSyncedVerticalScale, setPrevSyncedVerticalScale] = React.useState<number | null>(null);
+    const lastAppliedSyncedVerticalScaleRef = React.useRef<number | null>(null);
 
     const [fitInViewStatus, setFitInViewStatus] = React.useState<FitInViewStatus>(FitInViewStatus.ON);
 
@@ -86,10 +87,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     );
     const syncedVerticalScale = syncHelper.useValue(SyncSettingKey.VERTICAL_SCALE, "global.syncValue.verticalScale");
 
-    // When linked, prefer shared values; fall back to local state
-    const effectiveViewport = isLinked && sharedViewport ? sharedViewport : viewport;
-    const effectiveVerticalScale = isLinked && sharedVerticalScale !== null ? sharedVerticalScale : verticalScale;
-    const effectiveFocusBounds = isLinked && sharedFocusBounds ? sharedFocusBounds : props.focusBounds;
+    // Render from local viewport only. Linked peers update this value through guarded sync.
+    const effectiveViewport = viewport;
+    const effectiveVerticalScale = isLinked && linkedVerticalScale !== null ? linkedVerticalScale : verticalScale;
+    const effectiveFocusBounds = isLinked && linkedFocusBounds ? linkedFocusBounds : props.focusBounds;
 
     // Vertical scaling factor uses both the viewport size and the effective vertical scale
     const verticalScalingFactor = React.useMemo(() => {
@@ -98,31 +99,94 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         return widthHeightRatio * effectiveVerticalScale;
     }, [mainDivSize, effectiveVerticalScale]);
 
-    // Refs for values used inside refocusViewport that should NOT trigger re-creation of the callback.
-    // refocusViewport is a dep of handleRefocus/handleFocusBoundsChange effects, so any dep that changes
-    // on every render (viewLinkProps is a new object each render, onViewportRefocused is an inline function)
-    // would cause those effects to re-run on every render — overriding pans from linked peers.
-    const effectiveViewportRef = React.useRef<Viewport | null>(effectiveViewport);
-    effectiveViewportRef.current = effectiveViewport;
-    const isLinkedRef = React.useRef<boolean>(isLinked);
-    isLinkedRef.current = isLinked;
-    const onLinkedViewportChangeRef = React.useRef(viewLinkProps.onLinkedViewportChange);
-    onLinkedViewportChangeRef.current = viewLinkProps.onLinkedViewportChange;
-    const onViewportRefocusedRef = React.useRef(onViewportRefocused);
-    onViewportRefocusedRef.current = onViewportRefocused;
-    const localViewportRef = React.useRef(viewport);
-    localViewportRef.current = viewport;
-
     // When a brand-new ViewLink is created, sharedViewport is null and neither view syncs until
     // someone interacts. Detect this case (isLinked but no sharedViewport yet) and push the local
     // viewport so both views snap to a common state immediately.
     React.useEffect(
         function syncViewportOnNewLink() {
-            if (isLinked && !sharedViewport && localViewportRef.current && isValidViewport(localViewportRef.current)) {
-                onLinkedViewportChangeRef.current(localViewportRef.current);
+            // Only the designated source view (the one that initiated the link) is allowed to
+            // push its viewport when sharedViewport is not yet set. This prevents both views
+            // from racing to push their viewports and swapping positions.
+            if (
+                isLinked &&
+                !linkedViewport &&
+                linkedViewportSourceViewId === viewId &&
+                viewport &&
+                isValidViewport(viewport)
+            ) {
+                onLinkedViewportChange(viewport);
             }
         },
-        [isLinked, sharedViewport],
+        [isLinked, linkedViewport, linkedViewportSourceViewId, viewId, viewport, onLinkedViewportChange],
+    );
+
+    React.useLayoutEffect(
+        function syncLocalViewportFromSharedViewport() {
+            if (!isLinked || !linkedViewport || !isValidViewport(linkedViewport)) {
+                return;
+            }
+            if (linkedViewportSourceViewId === viewId) {
+                return;
+            }
+            setViewport((prev) => {
+                if (!prev || !isEqual(prev, linkedViewport)) {
+                    return cloneDeep(linkedViewport);
+                }
+                return prev;
+            });
+        },
+        [isLinked, linkedViewport, linkedViewportSourceViewId, viewId],
+    );
+
+    React.useEffect(
+        function syncLocalViewportFromGlobal() {
+            if (!syncedCameraPosition || !isValidViewport(syncedCameraPosition)) {
+                return;
+            }
+            if (isEqual(syncedCameraPosition, lastAppliedSyncedViewportRef.current)) {
+                return;
+            }
+            lastAppliedSyncedViewportRef.current = cloneDeep(syncedCameraPosition);
+            setViewport((prev) => {
+                if (!prev || !isEqual(prev, syncedCameraPosition)) {
+                    return cloneDeep(syncedCameraPosition);
+                }
+                return prev;
+            });
+        },
+        [syncedCameraPosition],
+    );
+
+    React.useEffect(
+        function syncLocalVerticalScaleFromGlobal() {
+            if (syncedVerticalScale === null) {
+                return;
+            }
+            if (syncedVerticalScale === lastAppliedSyncedVerticalScaleRef.current) {
+                return;
+            }
+            lastAppliedSyncedVerticalScaleRef.current = syncedVerticalScale;
+            setVerticalScale((prev) => (prev === syncedVerticalScale ? prev : syncedVerticalScale));
+        },
+        [syncedVerticalScale],
+    );
+
+    React.useEffect(
+        function publishViewportToGlobalSync() {
+            if (!viewport || !isValidViewport(viewport)) {
+                return;
+            }
+            if (isEqual(viewport, lastPublishedViewportRef.current)) {
+                return;
+            }
+            lastPublishedViewportRef.current = cloneDeep(viewport);
+            props.workbenchServices.publishGlobalData(
+                "global.syncValue.cameraPositionIntersection",
+                viewport,
+                props.viewContext.getInstanceIdString(),
+            );
+        },
+        [viewport, props.workbenchServices, props.viewContext],
     );
 
     const refocusViewport = React.useCallback(
@@ -139,17 +203,24 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 ) * DISPLACEMENT_FACTOR,
             ];
 
-            if (isValidViewport(candidateViewport) && !isEqual(candidateViewport, effectiveViewportRef.current)) {
+            if (isValidViewport(candidateViewport) && !isEqual(candidateViewport, effectiveViewport)) {
                 setViewport(candidateViewport);
-                if (isLinkedRef.current) {
-                    onLinkedViewportChangeRef.current(candidateViewport);
+                if (isLinked) {
+                    onLinkedViewportChange(candidateViewport);
                 }
-                if (onViewportRefocusedRef.current) {
-                    onViewportRefocusedRef.current();
+                if (onViewportRefocused) {
+                    onViewportRefocused();
                 }
             }
         },
-        [effectiveFocusBounds, verticalScalingFactor],
+        [
+            effectiveFocusBounds,
+            verticalScalingFactor,
+            effectiveViewport,
+            isLinked,
+            onLinkedViewportChange,
+            onViewportRefocused,
+        ],
     );
 
     React.useEffect(
@@ -176,30 +247,6 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         [effectiveFocusBounds, fitInViewStatus, prevFocusBounds, refocusViewport],
     );
 
-    if (viewport && isValidViewport(viewport) && !isEqual(viewport, prevViewport)) {
-        setPrevViewport(cloneDeep(viewport));
-        setPrevSyncedViewport(cloneDeep(viewport));
-        props.workbenchServices.publishGlobalData(
-            "global.syncValue.cameraPositionIntersection",
-            viewport,
-            props.viewContext.getInstanceIdString(),
-        );
-    }
-
-    if (!isEqual(syncedCameraPosition, prevSyncedViewport)) {
-        setPrevSyncedViewport(cloneDeep(syncedCameraPosition));
-        if (syncedCameraPosition) {
-            setViewport(cloneDeep(syncedCameraPosition));
-        }
-    }
-
-    if (syncedVerticalScale !== prevSyncedVerticalScale) {
-        setPrevSyncedVerticalScale(syncedVerticalScale);
-        if (syncedVerticalScale !== null) {
-            setVerticalScale(syncedVerticalScale);
-        }
-    }
-
     const handleViewportChange = React.useCallback(
         function handleViewportChange(newViewport: Viewport) {
             if (!isValidViewport(newViewport)) {
@@ -214,15 +261,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 return prev;
             });
             if (isLinked) {
-                viewLinkProps.onLinkedViewportChange(newViewport);
+                onLinkedViewportChange(newViewport);
             }
-            props.workbenchServices.publishGlobalData(
-                "global.syncValue.cameraPositionIntersection",
-                newViewport,
-                props.viewContext.getInstanceIdString(),
-            );
         },
-        [isLinked, viewLinkProps, props.workbenchServices, props.viewContext],
+        [isLinked, onLinkedViewportChange],
     );
 
     const handleFitInViewToggle = React.useCallback(
@@ -248,11 +290,11 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 ];
                 setViewport(newViewport);
                 if (isLinked) {
-                    viewLinkProps.onLinkedViewportChange(newViewport);
+                    onLinkedViewportChange(newViewport);
                 }
             }
         },
-        [effectiveFocusBounds, isLinked, verticalScalingFactor, viewLinkProps],
+        [effectiveFocusBounds, isLinked, verticalScalingFactor, onLinkedViewportChange],
     );
 
     const handleShowGridToggle = React.useCallback(function handleGridLinesToggle(active: boolean): void {
@@ -264,7 +306,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
             setVerticalScale((prev) => {
                 const newVerticalScale = Math.floor(prev + 1.0);
                 if (isLinked) {
-                    viewLinkProps.onLinkedVerticalScaleChange(newVerticalScale);
+                    onLinkedVerticalScaleChange(newVerticalScale);
                 }
                 props.workbenchServices.publishGlobalData(
                     "global.syncValue.verticalScale",
@@ -274,7 +316,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 return newVerticalScale;
             });
         },
-        [isLinked, viewLinkProps, props.viewContext, props.workbenchServices],
+        [isLinked, onLinkedVerticalScaleChange, props.viewContext, props.workbenchServices],
     );
 
     const handleVerticalScaleDecrease = React.useCallback(
@@ -282,7 +324,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
             setVerticalScale((prev) => {
                 const newVerticalScale = Math.max(1.0, Math.ceil(prev - 1.0));
                 if (isLinked) {
-                    viewLinkProps.onLinkedVerticalScaleChange(newVerticalScale);
+                    onLinkedVerticalScaleChange(newVerticalScale);
                 }
                 props.workbenchServices.publishGlobalData(
                     "global.syncValue.verticalScale",
@@ -292,7 +334,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 return newVerticalScale;
             });
         },
-        [isLinked, viewLinkProps, props.viewContext, props.workbenchServices],
+        [isLinked, onLinkedVerticalScaleChange, props.viewContext, props.workbenchServices],
     );
 
     return (
@@ -323,9 +365,13 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     onGridLinesToggle={handleShowGridToggle}
                     onVerticalScaleIncrease={handleVerticalScaleIncrease}
                     onVerticalScaleDecrease={handleVerticalScaleDecrease}
-                    viewLinks={viewLinkProps.viewLinks}
-                    unlinkedViews={viewLinkProps.unlinkedViews}
-                    onToggleViewLink={(otherViewId) => viewLinkProps.onToggleViewLink(otherViewId, effectiveViewport)}
+                    viewLinks={viewLinkResult.availableViewLinks.map((link) => ({
+                        id: link.id,
+                        views: link.views,
+                        containsThisView: link.views.some((v) => v.id === viewId),
+                    }))}
+                    unlinkedViews={viewLinkResult.unlinkedViews}
+                    onToggleViewLink={(otherViewId) => onToggleViewLink(otherViewId, effectiveViewport)}
                 />
                 <ColorLegendsContainer colorScales={props.colorScales} height={mainDivSize.height / 2 - 50} />
             </div>

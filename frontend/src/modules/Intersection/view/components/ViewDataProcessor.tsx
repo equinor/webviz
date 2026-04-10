@@ -39,7 +39,6 @@ import {
     makeViewProvidersVisualizationLayerItems,
 } from "../utils/createLayerItemsUtils";
 
-import { useViewLinkProps } from "./LinkViewManager";
 import { ViewportWrapper } from "./ViewportWrapper";
 
 // State for request of view refocus
@@ -48,7 +47,7 @@ const enum RefocusRequestState {
     AWAITING_PROVIDERS = "Awaiting providers",
 }
 
-export type SingleViewDataProcessorProps = {
+export type ViewDataProcessorProps = {
     view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>;
     fieldIdentifier: string | null;
     isLoading: boolean;
@@ -59,10 +58,8 @@ export type SingleViewDataProcessorProps = {
     viewContext: ViewContext<Interfaces>;
 };
 
-export function SingleViewDataProcessor(props: SingleViewDataProcessorProps): React.ReactNode {
+export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNode {
     const { view, fieldIdentifier, isLoading, wellboreHeadersQuery } = props;
-
-    const viewLinkProps = useViewLinkProps(view.id);
 
     const [prevReferenceSystem, setPrevReferenceSystem] = React.useState<IntersectionReferenceSystem | null>(null);
     const [layersBounds, setLayersBounds] = React.useState<Bounds>(DEFAULT_INTERSECTION_VIEW_BOUNDS);
@@ -225,20 +222,21 @@ export function SingleViewDataProcessor(props: SingleViewDataProcessorProps): Re
         });
     }
 
-    function handleOnViewportRefocused(): void {
+    const handleOnViewportRefocused = React.useCallback(function handleOnViewportRefocused(): void {
         setViewportFocusTarget((prev) => {
             return {
                 ...prev,
                 requestRefocus: false,
             };
         });
-    }
+    }, []);
 
     const layerIdToNameMap = Object.fromEntries(visualizationLayerItems.map((layer) => [layer.id, layer.name]));
     const colorScales = view.annotations.filter((elm) => isColorScaleWithId(elm)) ?? [];
 
     return (
         <ViewportWrapper
+            viewId={view.id}
             name={view.name}
             color={view.color}
             referenceSystem={intersectionReferenceSystem ?? undefined}
@@ -253,7 +251,6 @@ export function SingleViewDataProcessor(props: SingleViewDataProcessorProps): Re
             viewContext={props.viewContext}
             intersectionSource={viewIntersection}
             onViewportRefocused={handleOnViewportRefocused}
-            viewLinkProps={viewLinkProps}
         />
     );
 }

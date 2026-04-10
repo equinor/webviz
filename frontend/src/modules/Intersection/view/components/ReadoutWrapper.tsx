@@ -165,6 +165,14 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         });
     }
 
+    const { onViewportChange } = props;
+    const handleViewportChange = React.useCallback(
+        function handleViewportChange(viewport: Viewport): void {
+            onViewportChange(viewport);
+        },
+        [onViewportChange],
+    );
+
     return (
         <>
             <EsvIntersection
@@ -184,7 +192,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 highlightItems={highlightItems}
                 onReadout={handleReadoutItemsChange}
                 onMousePositionChange={handleMousePositionChange}
-                onViewportChange={props.onViewportChange}
+                onViewportChange={handleViewportChange}
             />
             <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} />
             <PositionReadout
