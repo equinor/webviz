@@ -1,14 +1,15 @@
 .webviz-eds-date-range-picker {
+    @apply form-element bg-canvas border-neutral px-horizontal-sm py-vertical-xs rounded-none;
     &.--compact [class*="Icon"] {
         /* Adjust size of icon for compact view*/
         @apply h-3.5;
     }
     & [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply rounded shadow-none!;
+        @apply h-3 shadow-none!;
     }
 
     & [class*="FieldWrapper__StyledInputFieldWrapper"]:focus-within {
-        @apply outline-1!;
+        @apply outline-0!;
     }
 
     & [class*="Segment"]:focus-visible {

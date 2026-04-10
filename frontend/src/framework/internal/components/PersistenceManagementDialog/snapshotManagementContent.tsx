@@ -28,7 +28,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { Switch } from "@lib/components/Switch";
+import { Switch } from "@lib/newComponents/Switch";
 import { Table } from "@lib/components/Table";
 import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
 import type { TableColumns, TableSorting, TContext } from "@lib/components/Table/types";
@@ -47,6 +47,7 @@ import {
 } from "./constants";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
+import { TextInput } from "@lib/newComponents/TextInput";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -318,9 +319,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         });
     }
 
-    function handleShowMySnapshotsOnlyChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const checked = e.target.checked;
-
+    function handleShowMySnapshotsOnlyChange(checked: boolean) {
         if (!userId) return;
         setTableFilter((prev) => {
             return {
@@ -330,9 +329,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         });
     }
 
-    function handleHideDeletedSnapshotsChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const checked = e.target.checked;
-
+    function handleHideDeletedSnapshotsChange(checked: boolean) {
         setTableFilter((prev) => {
             return {
                 ...prev,
@@ -402,8 +399,8 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         <>
             <div className="mb-4 flex gap-4">
                 <Label text="Title" wrapperClassName="grow">
-                    <Input
-                        startAdornment={<Search fontSize="small" />}
+                    <TextInput
+                        startAdornment={<Search fontSize="inherit" />}
                         endAdornment={
                             <DenseIconButton onClick={handleClearTitleFilter} title="Clear filter">
                                 <Close fontSize="inherit" />
@@ -412,7 +409,6 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         value={tableFilter.title ?? ""}
                         placeholder="Search title"
                         onChange={handleTitleFilterValueChange}
-                        className="h-6"
                     />
                 </Label>
                 <Label text="Last visited at" wrapperClassName="min-w-2xs">
@@ -423,14 +419,19 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     />
                 </Label>
             </div>
-            <div className="mb-2 flex items-center gap-4">
+            <div className="gap-horizontal-sm mb-2 flex items-center">
                 <Label text="Show my snapshots only" wrapperClassName="flex items-center" position="right">
-                    <Switch checked={tableFilter.ownerId === userId} onChange={handleShowMySnapshotsOnlyChange} />
+                    <Switch
+                        checked={tableFilter.ownerId === userId}
+                        onCheckedChange={handleShowMySnapshotsOnlyChange}
+                        size="small"
+                    />
                 </Label>
                 <Label text="Hide deleted snapshots" wrapperClassName="flex items-center" position="right">
                     <Switch
                         checked={tableFilter.snapshotDeleted === false}
-                        onChange={handleHideDeletedSnapshotsChange}
+                        onCheckedChange={handleHideDeletedSnapshotsChange}
+                        size="small"
                     />
                 </Label>
                 <span className="grow" />
