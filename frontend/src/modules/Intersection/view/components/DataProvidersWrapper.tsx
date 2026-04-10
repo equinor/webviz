@@ -45,9 +45,9 @@ import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 
-import { LinkViewManager } from "./LinkViewManager";
 import { MultiViewLayout } from "./MultiViewLayout";
-import { SingleViewDataProcessor } from "./SingleViewDataProcessor";
+import { ViewDataProcessor } from "./ViewDataProcessor";
+import { ViewLinkManager } from "./ViewLinkManager";
 
 export type DataProvidersWrapperProps = {
     dataProviderManager: DataProviderManager;
@@ -172,10 +172,10 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     }
 
     return (
-        <LinkViewManager intersectionViews={intersectionViews}>
+        <ViewLinkManager intersectionViews={intersectionViews}>
             <MultiViewLayout viewCount={intersectionViews.length} preferredViewLayout={props.preferredViewLayout}>
                 {intersectionViews.map((view) => (
-                    <SingleViewDataProcessor
+                    <ViewDataProcessor
                         key={view.id}
                         view={view}
                         fieldIdentifier={fieldIdentifier}
@@ -188,6 +188,6 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
                     />
                 ))}
             </MultiViewLayout>
-        </LinkViewManager>
+        </ViewLinkManager>
     );
 }
