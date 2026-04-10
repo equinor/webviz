@@ -8,7 +8,8 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 
 describe("DeltaEnsemble", () => {
     const COMPARISON_ENSEMBLE = new RegularEnsemble(
-        "field1",
+        "assetname",
+        ["field1"],
         "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
         "case1",
         "ensemble1",
@@ -32,7 +33,8 @@ describe("DeltaEnsemble", () => {
     );
 
     const REFERENCE_ENSEMBLE = new RegularEnsemble(
-        "field1",
+        "assetname",
+        ["field1"],
         "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa",
         "case2",
         "ensemble2",

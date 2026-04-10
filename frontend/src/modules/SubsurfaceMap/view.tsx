@@ -109,7 +109,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
     let fieldIdentifier: null | string = null;
     if (meshSurfAddr) {
         const ensembleIdent = new RegularEnsembleIdent(meshSurfAddr.caseUuid, meshSurfAddr.ensemble);
-        fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null;
+        fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifiers().at(0) ?? null;
     }
     const wellTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(fieldIdentifier ?? undefined);
     const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);

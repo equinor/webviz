@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"surface_query/operations"
+	"surface_query/legacyserver/operations"
 	"surface_query/utils"
 	"time"
 
