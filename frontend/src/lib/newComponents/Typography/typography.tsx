@@ -281,7 +281,7 @@ const WEIGHT_CLASSES: Record<Required<TypographyProps>["weight"], string> = {
     bolder: "font-bolder",
 };
 
-const DEFAULT_VALUES = {
+const DEFAULT_PROPS = {
     as: "span",
     lineHeight: "default",
     weight: "normal",
@@ -293,10 +293,10 @@ export function Typography(props: TypographyProps) {
         family,
         size,
         tone,
-        as = DEFAULT_VALUES.as,
-        lineHeight = DEFAULT_VALUES.lineHeight,
-        weight = DEFAULT_VALUES.weight,
-        tracking = DEFAULT_VALUES.tracking,
+        as = DEFAULT_PROPS.as,
+        lineHeight = DEFAULT_PROPS.lineHeight,
+        weight = DEFAULT_PROPS.weight,
+        tracking = DEFAULT_PROPS.tracking,
         className,
         children,
         ...htmlProps

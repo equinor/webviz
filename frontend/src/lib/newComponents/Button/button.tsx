@@ -14,7 +14,7 @@ export type ButtonProps = {
     iconOnly?: boolean;
 } & ButtonPropsBase;
 
-const DEFAULT_VALUES = {
+const DEFAULT_PROPS = {
     variant: "contained",
     size: "default",
     tone: "accent",
@@ -41,8 +41,7 @@ const VARIANT_TONE_CLASSES: Record<
     },
     text: {
         accent: "text-accent-subtle hover:bg-accent-hover active:bg-accent-active bg-transparent",
-        neutral:
-            "text-neutral-subtle hover:bg-neutral-hover active:bg-neutral-active bg-transparent",
+        neutral: "text-neutral-subtle hover:bg-neutral-hover active:bg-neutral-active bg-transparent",
         danger: "text-danger-subtle hover:bg-danger-hover active:bg-danger-active bg-transparent",
         disabled: "text-disabled cursor-not-allowed opacity-50",
     },
@@ -55,7 +54,7 @@ const SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
-    const defaultedProps = { ...DEFAULT_VALUES, ...props };
+    const defaultedProps = { ...DEFAULT_PROPS, ...props };
 
     return (
         <ButtonBase

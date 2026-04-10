@@ -17,7 +17,7 @@ export type ToggleButtonProps = {
         | ((props: React.ComponentPropsWithoutRef<typeof ToggleBase>, state: { pressed: boolean }) => React.ReactNode);
 } & Omit<React.ComponentPropsWithoutRef<typeof Button>, "variant">;
 
-const DEFAULT_VALUES = {
+const DEFAULT_PROPS = {
     baseVariant: "outlined",
 } satisfies Partial<ToggleButtonProps>;
 
@@ -30,7 +30,7 @@ export const ToggleButton = React.forwardRef<HTMLButtonElement, ToggleButtonProp
         onPressedChange,
         disabled,
         children,
-        baseVariant = DEFAULT_VALUES.baseVariant,
+        baseVariant = DEFAULT_PROPS.baseVariant,
         ...restButtonProps
     } = props;
     return (
