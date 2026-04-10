@@ -9,7 +9,7 @@
 import { writeFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { fills, borders, text } from "../src/styles/theme/color-tokens.config.js";
+import { fills, borders, text } from "../src/styles/theme/generator-configs/color-tokens.config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT = resolve(__dirname, "../src/styles/generated/colors.css");
@@ -22,9 +22,7 @@ const BORDER_SIDES = [
     ["-l", "border-left-color"],
 ];
 
-const OUTLINE_SIDES = [
-    ["", "outline-color"],
-];
+const OUTLINE_SIDES = [["", "outline-color"]];
 
 function utilityLine(name, property, variable) {
     return `@utility ${name} { ${property}: var(${variable}); }`;

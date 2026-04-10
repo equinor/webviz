@@ -14,7 +14,7 @@
 import { writeFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { tokens, propertyGroups } from "../src/styles/theme/spacing-tokens.config.js";
+import { tokens, propertyGroups } from "../src/styles/theme/generator-configs/spacing-tokens.config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -129,7 +129,6 @@ function validateConfig() {
         }
     }
 }
-
 
 function generateGroupFile(groupName) {
     const titleMap = {
