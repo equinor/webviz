@@ -45,14 +45,6 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<FlowNetworkSettings>,
     view?: never,
   },
-  "Grid3D": {
-    settings?: never,
-    view?: never,
-  },
-  "Grid3DIntersection": {
-    settings?: never,
-    view?: never,
-  },
   "InplaceVolumesNew": {
     settings?: Partial<InplaceVolumesNewSettings>,
     view?: never,
@@ -63,10 +55,6 @@ export type ModuleSerializedStateMap = {
   },
   "InplaceVolumesTable": {
     settings?: Partial<InplaceVolumesTableSettings>,
-    view?: never,
-  },
-  "InplaceVolumetrics": {
-    settings?: never,
     view?: never,
   },
   "Intersection": {
@@ -82,10 +70,6 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "MyModule2": {
-    settings?: never,
-    view?: never,
-  },
-  "ParameterDistributionMatrix": {
     settings?: never,
     view?: never,
   },
@@ -134,10 +118,6 @@ export type ModuleSerializedStateMap = {
     view?: Partial<SimulationTimeSeriesSensitivityView>,
   },
   "SubsurfaceMap": {
-    settings?: never,
-    view?: never,
-  },
-  "TimeSeriesParameterDistribution": {
     settings?: never,
     view?: never,
   },
