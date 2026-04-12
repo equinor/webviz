@@ -3,5 +3,5 @@ export type BodyProps = {
 };
 
 export function Body(props: BodyProps) {
-    return <div className="popup__child">{props.children}</div>;
+    return <div className="dialog__popup__child">{props.children}</div>;
 }

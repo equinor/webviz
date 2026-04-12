@@ -3,5 +3,5 @@ export type ActionsProps = {
 };
 
 export function Actions(props: ActionsProps) {
-    return <div className="popup__child gap-vertical-xs flex justify-end">{props.children}</div>;
+    return <div className="dialog__popup__child gap-vertical-xs flex justify-end">{props.children}</div>;
 }

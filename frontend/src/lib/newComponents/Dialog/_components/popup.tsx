@@ -1,5 +1,7 @@
 import type { DialogPopupProps } from "@base-ui/react";
 import { Dialog as DialogBase } from "@base-ui/react";
+import { AlertDialogProps } from "@lib/newComponents/AlertDialog";
+import React from "react";
 
 export type PopupProps = {
     children?: React.ReactNode;
@@ -19,6 +21,8 @@ export type PopupProps = {
     keepMounted?: boolean;
     /** Initial focus element when the dialog opens. False to disable initial focus. True to use default. */
     initialFocus?: DialogPopupProps["initialFocus"];
+    /** Array of alert dialogs to be rendered within the popup. */
+    alertDialogs?: React.ReactElement<AlertDialogProps>[];
 };
 
 const DEFAULT_PROPS = {
@@ -37,14 +41,15 @@ export function Popup(props: PopupProps) {
             defaultOpen={defaultedProps.defaultOpen}
         >
             <DialogBase.Portal keepMounted={defaultedProps.keepMounted}>
-                <DialogBase.Backdrop className="z-scrim bg-backdrop fixed inset-0 min-h-screen touch-none opacity-60 transition-opacity" />
+                <DialogBase.Backdrop className="dialog__backdrop" />
                 <DialogBase.Popup
-                    className="popup z-modal"
+                    className="dialog__popup"
                     style={{ width: defaultedProps.width, height: defaultedProps.height }}
                 >
                     {defaultedProps.children}
                 </DialogBase.Popup>
             </DialogBase.Portal>
+            {defaultedProps.alertDialogs}
         </DialogBase.Root>
     );
 }

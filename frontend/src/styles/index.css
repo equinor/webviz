@@ -24,7 +24,7 @@
 
 /* Components */
 @import "./components/button.css";
-@import "./components/popup.css";
+@import "./components/dialog.css";
 @import "./components/tabs.css";
 
 /* Base styles */
