@@ -56,8 +56,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         viewportSourceViewId: linkedViewportSourceViewId,
         verticalScale: linkedVerticalScale,
         focusBounds: linkedFocusBounds,
+        bounds: linkedBounds,
         onLinkedViewportChange,
         onLinkedVerticalScaleChange,
+        onLinkedBoundsChange,
         onToggleViewLink,
     } = viewLinkResult;
 
@@ -91,6 +93,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const effectiveViewport = viewport;
     const effectiveVerticalScale = isLinked && linkedVerticalScale !== null ? linkedVerticalScale : verticalScale;
     const effectiveFocusBounds = isLinked && linkedFocusBounds ? linkedFocusBounds : props.focusBounds;
+    const effectiveLayerItemsBounds = isLinked && linkedBounds ? linkedBounds : props.layerItemsBounds;
 
     // Vertical scaling factor uses both the viewport size and the effective vertical scale
     const verticalScalingFactor = React.useMemo(() => {
@@ -118,6 +121,15 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
             }
         },
         [isLinked, linkedViewport, linkedViewportSourceViewId, viewId, viewport, onLinkedViewportChange],
+    );
+
+    React.useEffect(
+        function reportBoundsToLink() {
+            if (isLinked) {
+                onLinkedBoundsChange(props.layerItemsBounds);
+            }
+        },
+        [isLinked, props.layerItemsBounds, onLinkedBoundsChange],
     );
 
     React.useLayoutEffect(
@@ -350,7 +362,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     referenceSystem={props.referenceSystem ?? undefined}
                     layers={props.layerItems}
                     layerIdToNameMap={props.layerItemIdToNameMap}
-                    bounds={props.layerItemsBounds}
+                    bounds={effectiveLayerItemsBounds}
                     viewport={effectiveViewport ?? undefined}
                     onViewportChange={handleViewportChange}
                     hoverService={props.hoverService}
