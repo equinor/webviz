@@ -8,6 +8,7 @@ import { DensityModeToggle } from "../src/framework/internal/components/DensityM
 
 import "@fontsource-variable/inter/wght.css";
 import "../src/styles/index.css";
+import "./preview.css";
 
 const preview: Preview = {
     decorators: [

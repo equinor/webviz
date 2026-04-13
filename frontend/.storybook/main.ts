@@ -10,8 +10,6 @@ import aliases from "../aliases.json" with { type: "json" };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const bodyClassName = "bg-canvas";
-
 const config: StorybookConfig = {
     stories: ["../src/**/*.stories.@(js|jsx|ts|tsx)"],
     docs: {},
@@ -19,11 +17,6 @@ const config: StorybookConfig = {
         name: "@storybook/react-vite",
         options: {},
     },
-    // Hacky solution to add tailwind class name to the body tag, so we get the tailwind canvas color for light/dark mode.
-    previewBody: (body) => `
-        <script>setTimeout(function () { document.body.classList.add("${bodyClassName}"); }, 0);</script>
-        ${body}
-    `,
     viteFinal: async (config) => {
         return mergeConfig(config, {
             plugins: [
