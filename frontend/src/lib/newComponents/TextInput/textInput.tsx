@@ -16,13 +16,18 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                 "gap-vertical-xs bg-canvas py-vertical-3xs px-vertical-xs text-body-lg data-invalid:outline-danger data-invalid:bg-danger-surface flex items-center",
                 {
                     "form-element outline-neutral text-neutral outline -outline-offset-2": !props.disabled,
-                    "text-disabled cursor-not-allowed outline-transparent": props.disabled,
+                    "text-disabled bg-disabled": props.disabled,
                 },
             )}
         >
             {props.startAdornment}
 
-            <Input {...props} ref={ref} className={resolveClassNames("grow p-0 outline-0")} disabled={props.disabled} />
+            <Input
+                {...props}
+                ref={ref}
+                className={resolveClassNames("grow p-0 outline-0 data-disabled:cursor-not-allowed")}
+                disabled={props.disabled}
+            />
 
             {props.endAdornment}
         </div>

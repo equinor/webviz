@@ -164,4 +164,5 @@ export const text = {
     // Special
     link: "--eds-color-text-link",
     disabled: "--eds-color-text-neutral-subtle",
+    "fill-disabled": "--eds-color-bg-fill-emphasis-disabled",
 };

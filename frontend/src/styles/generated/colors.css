@@ -274,3 +274,6 @@
 
 /* Disabled */
 @utility text-disabled { color: var(--eds-color-text-neutral-subtle); }
+
+/* Fill */
+@utility text-fill-disabled { color: var(--eds-color-bg-fill-emphasis-disabled); }

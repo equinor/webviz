@@ -7,6 +7,7 @@ import { Collapsible } from "./index";
 const meta: Meta<typeof Collapsible.Group> = {
     title: "Components/Collapsible",
     component: Collapsible.Group,
+    decorators: [(Story) => <div className="w-full max-w-[500px]"><Story /></div>],
     parameters: {
         layout: "padded",
         docs: {
@@ -146,7 +147,7 @@ export const MultipleGroups: Story = {
         },
     },
     render: () => (
-        <div className="w-80">
+        <>
             <Collapsible.Group title="Section A">
                 <p className="p-4">Content for section A.</p>
             </Collapsible.Group>
@@ -156,7 +157,7 @@ export const MultipleGroups: Story = {
             <Collapsible.Group title="Section C">
                 <p className="p-4">Content for section C.</p>
             </Collapsible.Group>
-        </div>
+        </>
     ),
 };
 

@@ -24,7 +24,7 @@ export function AlertDialog(props: AlertDialogProps) {
         <AlertDialogBase.Root {...rest}>
             <AlertDialogBase.Portal>
                 <AlertDialogBase.Backdrop className="dialog__backdrop" />
-                <AlertDialogBase.Popup className="dialog__popup z-sticky">
+                <AlertDialogBase.Popup className="dialog__popup z-toast">
                     <AlertDialogBase.Title
                         className="dialog__popup__child"
                         render={(baseProps) => (

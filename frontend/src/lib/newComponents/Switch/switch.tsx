@@ -34,7 +34,7 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(function 
             {...defaultedProps}
             ref={ref}
             className={resolveClassNames(
-                "focus-visible:outline-accent-strong group p-selectable-y hover:bg-accent-canvas relative box-border flex aspect-square cursor-pointer appearance-none rounded-full border-0 bg-transparent focus-visible:outline-2 focus-visible:outline-dashed data-disabled:cursor-not-allowed data-disabled:hover:bg-transparent",
+                "focus-visible:outline-accent-strong group p-selectable-y hover:bg-accent-hover active:bg-accent-active relative box-border flex aspect-square cursor-pointer appearance-none rounded-full border-0 bg-transparent focus-visible:outline-2 focus-visible:outline-dashed data-disabled:cursor-not-allowed data-disabled:hover:bg-transparent",
                 ROOT_SIZE_CLASSNAMES[defaultedProps.size],
             )}
         >
