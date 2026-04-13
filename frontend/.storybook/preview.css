@@ -1,0 +1,6 @@
+@reference "../src/styles/index.css";
+
+body {
+    /* background-color: purple; */
+    @apply bg-canvas;
+}
