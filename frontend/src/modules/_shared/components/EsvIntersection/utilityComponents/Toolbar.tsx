@@ -50,6 +50,7 @@ export type ToolbarProps = {
     viewLinks?: ViewLinkOption[];
     unlinkedViews?: ViewOption[];
     onToggleViewLink?: (viewId: string) => void;
+    onHoverViewLink?: (viewIds: string[] | null) => void;
 };
 
 export function Toolbar(props: ToolbarProps): React.ReactNode {
@@ -92,7 +93,13 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                     </ToggleButton>
                 </Tooltip>
                 {showLinkButton && (
-                    <Dropdown>
+                    <Dropdown
+                        onOpenChange={(_event, open) => {
+                            if (!open) {
+                                props.onHoverViewLink?.(null);
+                            }
+                        }}
+                    >
                         <Tooltip title="Link this view with others" placement="bottom">
                             <MuiMenuButton
                                 className={resolveClassNames(
@@ -115,6 +122,8 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                     )}
                                     title={group.views.map((v) => v.name).join(", ")}
                                     onClick={() => props.onToggleViewLink!(group.views[0].id)}
+                                    onMouseEnter={() => props.onHoverViewLink?.(group.views.map((v) => v.id))}
+                                    onMouseLeave={() => props.onHoverViewLink?.(null)}
                                 >
                                     <Link fontSize="inherit" className="shrink-0 text-blue-600" />
                                     {group.views.map((v) => (
@@ -137,6 +146,8 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                     key={view.id}
                                     className="flex items-center gap-2"
                                     onClick={() => props.onToggleViewLink!(view.id)}
+                                    onMouseEnter={() => props.onHoverViewLink?.([view.id])}
+                                    onMouseLeave={() => props.onHoverViewLink?.(null)}
                                 >
                                     <span
                                         className="inline-block w-3 h-3 rounded-full shrink-0"

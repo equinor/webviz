@@ -309,6 +309,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
 
         if (!isEqual(prevBounds, props.bounds)) {
             if (props.bounds && isValidBounds(props.bounds)) {
+                automaticChanges.current = true;
                 esvController.setBounds(props.bounds.x, props.bounds.y);
             }
             setPrevBounds(props.bounds);

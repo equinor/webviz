@@ -52,6 +52,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const viewLinkResult = useViewLinkResult(viewId);
     const {
         isLinked,
+        isHoverHighlighted,
         viewport: linkedViewport,
         viewportSourceViewId: linkedViewportSourceViewId,
         verticalScale: linkedVerticalScale,
@@ -61,6 +62,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         onLinkedVerticalScaleChange,
         onLinkedBoundsChange,
         onToggleViewLink,
+        onHoverViewLink,
     } = viewLinkResult;
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
@@ -142,6 +144,8 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
             }
             setViewport((prev) => {
                 if (!prev || !isEqual(prev, linkedViewport)) {
+                    // A linked peer changed the viewport — stop fighting with refocus
+                    setFitInViewStatus(FitInViewStatus.OFF);
                     return cloneDeep(linkedViewport);
                 }
                 return prev;
@@ -350,7 +354,15 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     );
 
     return (
-        <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
+        <div
+            ref={mainDivRef}
+            className="relative w-full h-full flex flex-col"
+            style={
+                isHoverHighlighted
+                    ? { outline: "2px solid #3b82f6", outlineOffset: "-2px", borderRadius: "4px" }
+                    : undefined
+            }
+        >
             <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
                 <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pointer-events-none pt-1">
                     <ViewportLabel name={props.name} color={props.color} />
@@ -384,6 +396,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     }))}
                     unlinkedViews={viewLinkResult.unlinkedViews}
                     onToggleViewLink={(otherViewId) => onToggleViewLink(otherViewId, effectiveViewport)}
+                    onHoverViewLink={onHoverViewLink}
                 />
                 <ColorLegendsContainer colorScales={props.colorScales} height={mainDivSize.height / 2 - 50} />
             </div>

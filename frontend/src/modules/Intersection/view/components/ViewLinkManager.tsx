@@ -26,6 +26,8 @@ export type IntersectionViewInfo = {
 type ViewLinkManagerContextValue = {
     viewLinks: ViewLink[];
     intersectionViews: IntersectionViewInfo[];
+    hoveredViewIds: ReadonlySet<string>;
+    setHoveredViewIds: (viewIds: ReadonlySet<string>) => void;
     toggleViewLink: (
         thisView: IntersectionViewInfo,
         otherView: IntersectionViewInfo,
@@ -54,9 +56,12 @@ export type ViewLinkManagerProps = {
     children: React.ReactNode;
 };
 
+const EMPTY_HOVERED_VIEW_IDS: ReadonlySet<string> = new Set<string>();
+
 export function ViewLinkManager({ intersectionViews, children }: ViewLinkManagerProps): React.ReactNode {
     const [viewLinks, setViewLinks] = React.useState<ViewLink[]>([]);
     const [prevViewIds, setPrevViewIds] = React.useState<string[]>([]);
+    const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(EMPTY_HOVERED_VIEW_IDS);
 
     // Clean up ViewLinks when views are added or removed, and refresh stored view info (name/color)
     const currentViewIds = intersectionViews.map((v) => v.id);
@@ -198,6 +203,8 @@ export function ViewLinkManager({ intersectionViews, children }: ViewLinkManager
         () => ({
             viewLinks,
             intersectionViews,
+            hoveredViewIds,
+            setHoveredViewIds,
             toggleViewLink,
             onLinkedViewportChange,
             onLinkedVerticalScaleChange,
@@ -206,6 +213,7 @@ export function ViewLinkManager({ intersectionViews, children }: ViewLinkManager
         [
             viewLinks,
             intersectionViews,
+            hoveredViewIds,
             toggleViewLink,
             onLinkedViewportChange,
             onLinkedVerticalScaleChange,
@@ -220,11 +228,13 @@ export type ViewLinkResult = {
     availableViewLinks: ViewLink[];
     unlinkedViews: IntersectionViewInfo[];
     isLinked: boolean;
+    isHoverHighlighted: boolean;
     viewport: Viewport | null;
     viewportSourceViewId: string | null;
     verticalScale: number | null;
     focusBounds: Bounds | null;
     onToggleViewLink: (otherViewId: string, initiatorViewport?: Viewport | null) => void;
+    onHoverViewLink: (viewIds: string[] | null) => void;
     onLinkedViewportChange: (viewport: Viewport) => void;
     onLinkedVerticalScaleChange: (scale: number) => void;
     onLinkedBoundsChange: (bounds: Bounds) => void;
@@ -236,6 +246,8 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
 
     const viewLinks = ctx?.viewLinks ?? EMPTY_VIEW_LINKS;
     const intersectionViews = ctx?.intersectionViews ?? EMPTY_INTERSECTION_VIEWS;
+    const hoveredViewIds = ctx?.hoveredViewIds ?? EMPTY_HOVERED_VIEW_IDS;
+    const setHoveredViewIds = ctx?.setHoveredViewIds;
     const toggleViewLink = ctx?.toggleViewLink;
     const onLinkedViewportChange = ctx?.onLinkedViewportChange;
     const onLinkedVerticalScaleChange = ctx?.onLinkedVerticalScaleChange;
@@ -273,6 +285,17 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
         [viewId, onLinkedBoundsChange],
     );
 
+    const onHoverViewLink = React.useCallback(
+        (viewIds: string[] | null) => {
+            if (!viewIds) {
+                setHoveredViewIds?.(EMPTY_HOVERED_VIEW_IDS);
+            } else {
+                setHoveredViewIds?.(new Set(viewIds));
+            }
+        },
+        [setHoveredViewIds],
+    );
+
     const availableViewLinks: ViewLink[] = !multipleViews ? [] : viewLinks;
 
     // Views not in any ViewLink, excluding self
@@ -282,16 +305,19 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
         : intersectionViews.filter((v) => v.id !== viewId && !viewIdsInAnyLink.has(v.id));
 
     const focusBounds = viewLink ? computeViewLinkFocusBounds(viewLink.views) : null;
+    const isHoverHighlighted = hoveredViewIds.has(viewId);
 
     return {
         availableViewLinks,
         unlinkedViews,
         isLinked,
+        isHoverHighlighted,
         viewport: viewLink?.viewport ?? null,
         viewportSourceViewId: viewLink?.viewportSourceViewId ?? null,
         verticalScale: viewLink?.verticalScale ?? null,
         focusBounds,
         onToggleViewLink,
+        onHoverViewLink,
         onLinkedViewportChange: onLinkedViewportChangeForView,
         onLinkedVerticalScaleChange: onLinkedVerticalScaleChangeForView,
         onLinkedBoundsChange: onLinkedBoundsChangeForView,
