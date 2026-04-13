@@ -26,9 +26,14 @@ export type IntersectionViewInfo = {
 type ViewLinkManagerContextValue = {
     viewLinks: ViewLink[];
     intersectionViews: IntersectionViewInfo[];
-    toggleViewLink: (thisView: IntersectionViewInfo, otherView: IntersectionViewInfo, initiatorViewport?: Viewport | null) => void;
+    toggleViewLink: (
+        thisView: IntersectionViewInfo,
+        otherView: IntersectionViewInfo,
+        initiatorViewport?: Viewport | null,
+    ) => void;
     onLinkedViewportChange: (viewId: string, viewport: Viewport) => void;
     onLinkedVerticalScaleChange: (viewId: string, scale: number) => void;
+    onLinkedBoundsChange: (viewId: string, bounds: Bounds) => void;
 };
 
 const ViewLinkManagerContext = React.createContext<ViewLinkManagerContextValue | null>(null);
@@ -59,12 +64,18 @@ export function ViewLinkManager({ intersectionViews, children }: ViewLinkManager
         setPrevViewIds(currentViewIds);
         const currentIdSet = new Set(currentViewIds);
         const cleanedLinks = viewLinks
-            .map((link) => ({
-                ...link,
-                views: link.views
+            .map((link) => {
+                const updatedViews = link.views
                     .filter((v) => currentIdSet.has(v.id))
-                    .map((v) => intersectionViews.find((iv) => iv.id === v.id) ?? v),
-            }))
+                    .map((v) => intersectionViews.find((iv) => iv.id === v.id) ?? v);
+                const membershipChanged = updatedViews.length !== link.views.length;
+                return {
+                    ...link,
+                    views: updatedViews,
+                    // Reset bounds when membership changes so remaining views re-report fresh bounds
+                    bounds: membershipChanged ? null : link.bounds,
+                };
+            })
             .filter((link) => link.views.length > 1);
         if (cleanedLinks.length !== viewLinks.length) {
             setViewLinks(cleanedLinks);
@@ -158,15 +169,48 @@ export function ViewLinkManager({ intersectionViews, children }: ViewLinkManager
         scale: number,
     ) {
         setViewLinks((prev) =>
-            prev.map((link) =>
-                link.views.some((v) => v.id === viewId) ? { ...link, verticalScale: scale } : link,
-            ),
+            prev.map((link) => (link.views.some((v) => v.id === viewId) ? { ...link, verticalScale: scale } : link)),
+        );
+    }, []);
+
+    const onLinkedBoundsChange = React.useCallback(function onLinkedBoundsChange(viewId: string, bounds: Bounds) {
+        setViewLinks((prev) =>
+            prev.map((link) => {
+                if (!link.views.some((v) => v.id === viewId)) return link;
+                const union = link.bounds
+                    ? {
+                          x: [Math.min(link.bounds.x[0], bounds.x[0]), Math.max(link.bounds.x[1], bounds.x[1])] as [
+                              number,
+                              number,
+                          ],
+                          y: [Math.min(link.bounds.y[0], bounds.y[0]), Math.max(link.bounds.y[1], bounds.y[1])] as [
+                              number,
+                              number,
+                          ],
+                      }
+                    : bounds;
+                return isEqual(union, link.bounds) ? link : { ...link, bounds: union };
+            }),
         );
     }, []);
 
     const contextValue = React.useMemo(
-        () => ({ viewLinks, intersectionViews, toggleViewLink, onLinkedViewportChange, onLinkedVerticalScaleChange }),
-        [viewLinks, intersectionViews, toggleViewLink, onLinkedViewportChange, onLinkedVerticalScaleChange],
+        () => ({
+            viewLinks,
+            intersectionViews,
+            toggleViewLink,
+            onLinkedViewportChange,
+            onLinkedVerticalScaleChange,
+            onLinkedBoundsChange,
+        }),
+        [
+            viewLinks,
+            intersectionViews,
+            toggleViewLink,
+            onLinkedViewportChange,
+            onLinkedVerticalScaleChange,
+            onLinkedBoundsChange,
+        ],
     );
 
     return <ViewLinkManagerContext.Provider value={contextValue}>{children}</ViewLinkManagerContext.Provider>;
@@ -183,6 +227,8 @@ export type ViewLinkResult = {
     onToggleViewLink: (otherViewId: string, initiatorViewport?: Viewport | null) => void;
     onLinkedViewportChange: (viewport: Viewport) => void;
     onLinkedVerticalScaleChange: (scale: number) => void;
+    onLinkedBoundsChange: (bounds: Bounds) => void;
+    bounds: Bounds | null;
 };
 
 export function useViewLinkResult(viewId: string): ViewLinkResult {
@@ -193,6 +239,7 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
     const toggleViewLink = ctx?.toggleViewLink;
     const onLinkedViewportChange = ctx?.onLinkedViewportChange;
     const onLinkedVerticalScaleChange = ctx?.onLinkedVerticalScaleChange;
+    const onLinkedBoundsChange = ctx?.onLinkedBoundsChange;
 
     const viewLink = viewLinks.find((l) => l.views.some((v) => v.id === viewId));
     const isLinked = viewLink !== undefined;
@@ -221,6 +268,11 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
         [viewId, onLinkedVerticalScaleChange],
     );
 
+    const onLinkedBoundsChangeForView = React.useCallback(
+        (bounds: Bounds) => onLinkedBoundsChange?.(viewId, bounds),
+        [viewId, onLinkedBoundsChange],
+    );
+
     const availableViewLinks: ViewLink[] = !multipleViews ? [] : viewLinks;
 
     // Views not in any ViewLink, excluding self
@@ -242,5 +294,7 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
         onToggleViewLink,
         onLinkedViewportChange: onLinkedViewportChangeForView,
         onLinkedVerticalScaleChange: onLinkedVerticalScaleChangeForView,
+        onLinkedBoundsChange: onLinkedBoundsChangeForView,
+        bounds: viewLink?.bounds ?? null,
     };
 }
