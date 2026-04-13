@@ -1,7 +1,10 @@
 import React from "react";
 
-import type { NumberFieldInputProps, NumberFieldRootProps as NumberFieldRootBaseProps } from "@base-ui/react";
-import { NumberField as NumberFieldBase } from "@base-ui/react";
+import type {
+    NumberFieldInputProps as NumberFieldInputBaseProps,
+    NumberFieldRootProps as NumberFieldRootBaseProps,
+} from "@base-ui/react/number-field";
+import { NumberField as NumberFieldBase } from "@base-ui/react/number-field";
 import { Add, Remove } from "@mui/icons-material";
 import _ from "lodash";
 
@@ -20,7 +23,7 @@ export type NumberInputProps = Omit<NumberFieldRootBaseProps, "className"> & {
     unitPlacement?: "start" | "end";
 
     // Exposed parts-props
-    placeholder?: NumberFieldInputProps["placeholder"];
+    placeholder?: NumberFieldInputBaseProps["placeholder"];
 };
 
 const DEFAULT_PROPS = {
@@ -53,12 +56,12 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
             )}
             {...baseRootProps}
         >
-            <NumberFieldBase.Group className="gap-vertical-3xs pl-vertical-xs flex items-center">
+            <NumberFieldBase.Group className="gap-vertical-3xs pl-vertical-xs flex grow items-center">
                 {defaultedProps.startAdornment}
                 {defaultedProps.unitPlacement === "start" && wrappedUnitIcon}
 
                 <NumberFieldBase.Input
-                    className="py-vertical-3xs outline-0 data-disabled:cursor-not-allowed"
+                    className="py-vertical-3xs grow outline-0 data-disabled:cursor-not-allowed"
                     ref={ref}
                     placeholder={defaultedProps.placeholder}
                 />

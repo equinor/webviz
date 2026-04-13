@@ -32,6 +32,23 @@ export const Default: Story = {
     },
 };
 
+export const Sizing: Story = {
+    args: {
+        placeholder: "Enter a number...",
+    },
+    render: (args) => (
+        <div className="gap-horizontal-xs grid max-w-full grid-cols-[auto_1fr]">
+            <NumberInput {...args} defaultValue={0} unitIcon={<Percent fontSize="inherit" color="inherit" />} />
+            <div className="w-md">
+                <NumberInput {...args} defaultValue={0} unitIcon={<Percent fontSize="inherit" color="inherit" />} />
+            </div>
+            <div className="col-span-2">
+                <NumberInput {...args} defaultValue={0} unitIcon={<Percent fontSize="inherit" color="inherit" />} />
+            </div>
+        </div>
+    ),
+};
+
 export const ScrubAdornment: Story = {
     args: {
         min: 0,
