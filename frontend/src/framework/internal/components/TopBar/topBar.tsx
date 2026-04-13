@@ -7,13 +7,9 @@ import {
     AddLink,
     ArrowDropDown,
     Close,
-    DarkMode,
-    DensityMedium,
-    DensitySmall,
     Edit,
     Fullscreen,
     FullscreenExit,
-    LightMode,
     Link,
     Lock,
     Refresh,
@@ -42,6 +38,8 @@ import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { DarkModeButton } from "../DarkModeButton";
+import { DensityModeToggle } from "../DensityModeToggle/densityModeToggle";
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
 
@@ -51,41 +49,11 @@ export type TopBarProps = {
 
 Icon.add({ category });
 
-function getMainDataAttribute(attributeName: string) {
-    const htmlElement = document.querySelector<HTMLHtmlElement>("html");
-    console.debug(htmlElement?.getAttribute(`data-${attributeName}`));
-    return htmlElement ? htmlElement.getAttribute(`data-${attributeName}`) : null;
-}
-
-function setMainDataAttribute(attributeName: string, value: string) {
-    const htmlElement = document.querySelector<HTMLHtmlElement>("html");
-    if (htmlElement) {
-        htmlElement.setAttribute(`data-${attributeName}`, value);
-    }
-}
-
 export function TopBar(props: TopBarProps): React.ReactNode {
-    const [colorScheme, setColorScheme] = React.useState<string | null>(getMainDataAttribute("color-scheme"));
-    const [density, setDensity] = React.useState<string | null>(getMainDataAttribute("density"));
-
     const hasActiveSession = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager(),
         WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
     );
-
-    const toggleDarkMode = React.useCallback(function toggleDarkMode() {
-        const currentScheme = getMainDataAttribute("color-scheme");
-        const newScheme = currentScheme === "dark" ? "light" : "dark";
-        setMainDataAttribute("color-scheme", newScheme);
-        setColorScheme(newScheme);
-    }, []);
-
-    const toggleDenseMode = React.useCallback(function toggleDenseMode() {
-        const currentDensity = getMainDataAttribute("density");
-        const newDensity = currentDensity === "comfortable" ? "spacious" : "comfortable";
-        setMainDataAttribute("density", newDensity);
-        setDensity(newDensity);
-    }, []);
 
     return (
         <>
@@ -109,16 +77,8 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                         <div className="grow" />
                     )}
                     <Separator orientation="vertical" />
-                    <Button variant="text" tone="accent" iconOnly onClick={toggleDarkMode}>
-                        {colorScheme === "dark" ? <LightMode fontSize="inherit" /> : <DarkMode fontSize="inherit" />}
-                    </Button>
-                    <Button variant="text" tone="accent" iconOnly onClick={toggleDenseMode}>
-                        {density === "comfortable" ? (
-                            <DensityMedium fontSize="inherit" />
-                        ) : (
-                            <DensitySmall fontSize="inherit" />
-                        )}
-                    </Button>
+                    <DarkModeButton />
+                    <DensityModeToggle />
                     <LoginButton showText={false} />
                 </div>
             </div>
