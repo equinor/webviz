@@ -17,8 +17,8 @@ export class ExternalSettingController<
     TExternalValue extends SettingTypeDefinitions[TSetting]["externalValue"] | null =
         | SettingTypeDefinitions[TSetting]["externalValue"]
         | null,
-    TValueConstraints extends
-        SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
+    TValueConstraints extends SettingTypeDefinitions[TSetting]["valueConstraints"] =
+        SettingTypeDefinitions[TSetting]["valueConstraints"],
 > {
     private _parentItem: Item;
     private _setting: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>;
@@ -210,10 +210,8 @@ export class ExternalSettingController<
 
     makeIntersectionOfValueConstraints(): void {
         if (!this.syncStateFromControlledSettings()) {
-            // Not ready yet — syncStateFromControlledSettings has already set loading=true on the
-            // output setting. Do NOT call setValueConstraints(null) here: doing so would
-            // force-initialize intermediate controlled settings with null, which cascades a fake
-            // "ready" signal back up the chain before async dependencies have resolved.
+            // Not ready yet — syncStateFromControlledSettings has already set loading=true
+            // on the output setting, so just wait for dependencies to resolve.
             return;
         }
 
