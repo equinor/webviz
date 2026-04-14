@@ -26,6 +26,7 @@
 @import "./components/button.css";
 @import "./components/dialog.css";
 @import "./components/tabs.css";
+@import "./components/toast.css";
 
 /* Base styles */
 @import "./base/app.css";

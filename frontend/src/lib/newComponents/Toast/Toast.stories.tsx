@@ -1,9 +1,8 @@
-import { Toast as ToastBase } from "@base-ui/react";
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { Button } from "../Button";
 
-import { Toast } from "./index";
+import { Toast, createToastManager } from "./index";
 
 const meta: Meta<typeof Toast> = {
     title: "Components/Toast",
@@ -22,10 +21,9 @@ Create a manager with \`Toast.createToastManager()\` outside the component tree,
 and call \`manager.add()\` from anywhere to show a toast:
 
 \`\`\`tsx
-import { Toast as ToastBase } from "@base-ui/react";
-import { Toast } from "@/lib/newComponents/Toast";
+import { Toast, createToastManager } from "@/lib/newComponents/Toast";
 
-const manager = ToastBase.createToastManager();
+const manager = createToastManager();
 
 function App() {
     return (
@@ -52,7 +50,7 @@ function App() {
 export default meta;
 type Story = StoryObj<typeof Toast>;
 
-const manager = ToastBase.createToastManager();
+const manager = createToastManager();
 
 export const TitleOnly: Story = {
     parameters: {
@@ -146,7 +144,11 @@ export const DifferentActions: Story = {
                     variant="contained"
                     tone="accent"
                     onClick={() =>
-                        manager.add({ title: "Saved", description: "Your changes were saved successfully." })
+                        manager.add({
+                            type: "success",
+                            title: "Saved",
+                            description: "Your changes were saved successfully.",
+                        })
                     }
                 >
                     Save
@@ -156,6 +158,7 @@ export const DifferentActions: Story = {
                     tone="neutral"
                     onClick={() =>
                         manager.add({
+                            type: "warning",
                             title: "Warning",
                             description: "Storage is almost full. Free up space to continue.",
                         })
@@ -168,6 +171,7 @@ export const DifferentActions: Story = {
                     tone="danger"
                     onClick={() =>
                         manager.add({
+                            type: "error",
                             title: "Error",
                             description: "Failed to connect. Check your network and try again.",
                         })
