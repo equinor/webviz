@@ -105,8 +105,20 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
         setPrevNumberOfProviders(numberOfProvidersToVisualize);
     }
 
+    // Cache visualization layer items to prevent layers from popping in/out during transient loading states.
+    // - The DataProviderFramework enters a loading state for all data providers in a view when shared
+    //   settings change (e.g. the Intersection setting) or when views are reordered/added/removed - even if
+    //   underlying query results are already cached. This causes layers list to temporarily omit layers,
+    //   resulting EsvIntersection to remove and re-add as new instances. Re-adding triggers expensive init
+    //   that blocks the UI.
+    const cachedVisualizationLayerItemsRef = React.useRef<LayerItem[]>([]);
+
     // Update focus bounds if intersection or extension length changes
     if (!isEqual(viewIntersection, previousIntersection)) {
+        // Clear cached layer items when intersection source changes
+        cachedVisualizationLayerItemsRef.current = [];
+
+        // Update states
         setPreviousIntersection(viewIntersection);
         setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
         setViewportFocusTarget({ bounds: null, requestRefocus: false });
@@ -137,13 +149,24 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
     }
 
     // Make layer items for the view providers using intersection reference system
-    const visualizationLayerItems: LayerItem[] = [];
+    const newVisualizationLayerItems: LayerItem[] = [];
     if (view && intersectionReferenceSystem) {
         // LayerItem elements for the view providers
-        visualizationLayerItems.push(
+        newVisualizationLayerItems.push(
             ...makeViewProvidersVisualizationLayerItems(view as ViewGroup, intersectionReferenceSystem),
         );
     }
+
+    // Only update cached provider layer items when no providers are loading
+    const hasLoadingProviders = (view.numLoadingDataProviders ?? 0) > 0;
+    if (!hasLoadingProviders) {
+        cachedVisualizationLayerItemsRef.current = newVisualizationLayerItems;
+    }
+
+    // Use cached items when providers are loading, fresh items otherwise
+    const visualizationLayerItems: LayerItem[] = hasLoadingProviders
+        ? [...cachedVisualizationLayerItemsRef.current]
+        : [...newVisualizationLayerItems];
 
     // Create elements based on intersection type
     // - LayerItems for intersection type
@@ -171,55 +194,59 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
         }
     }
 
-    // Create data bounds for the layers, by use of bounding box for the visualization layers (per-view)
-    let layersBoundingBox = wellborePathBoundingBox;
-    if (layersBoundingBox && view.combinedBoundingBox) {
-        layersBoundingBox = combine(layersBoundingBox, view.combinedBoundingBox);
-    } else if (view.combinedBoundingBox) {
-        layersBoundingBox = view.combinedBoundingBox;
-    }
+    // Only update bounding box, bounds, and focus bounds when no providers are loading
+    // to prevent transient loading states from causing jumpy bounds
+    if (!hasLoadingProviders) {
+        // Create data bounds for the layers, by use of bounding box for the visualization layers (per-view)
+        let layersBoundingBox = wellborePathBoundingBox;
+        if (layersBoundingBox && view.combinedBoundingBox) {
+            layersBoundingBox = combine(layersBoundingBox, view.combinedBoundingBox);
+        } else if (view.combinedBoundingBox) {
+            layersBoundingBox = view.combinedBoundingBox;
+        }
 
-    // Create bounds for the layers
-    const newLayersBounds = createBoundsForIntersectionView(
-        layersBoundingBox,
-        intersectionReferenceSystem,
-        prevLayersBounds,
-    );
-    if (!isValidBounds(newLayersBounds)) {
-        newLayersBounds.x = DEFAULT_INTERSECTION_VIEW_BOUNDS.x;
-        newLayersBounds.y = DEFAULT_INTERSECTION_VIEW_BOUNDS.y;
-    }
+        // Create bounds for the layers
+        const newLayersBounds = createBoundsForIntersectionView(
+            layersBoundingBox,
+            intersectionReferenceSystem,
+            prevLayersBounds,
+        );
+        if (!isValidBounds(newLayersBounds)) {
+            newLayersBounds.x = DEFAULT_INTERSECTION_VIEW_BOUNDS.x;
+            newLayersBounds.y = DEFAULT_INTERSECTION_VIEW_BOUNDS.y;
+        }
 
-    // Check if bounds have changed
-    if (!isEqual(newLayersBounds, layersBounds)) {
-        setPrevLayersBounds(layersBounds);
-        setLayersBounds(newLayersBounds);
-    }
+        // Check if bounds have changed
+        if (!isEqual(newLayersBounds, layersBounds)) {
+            setPrevLayersBounds(layersBounds);
+            setLayersBounds(newLayersBounds);
+        }
 
-    // Update focus bounds
-    // - Get bounds for the layers to focus on, neglect wellpath and wellpicks
-    // - If no layers are visible: focus on wellpath/reference system
-    let focusBoundsCandidate: Bounds | null = null;
-    const focusBoundingBox = view.combinedBoundingBox;
-    if (focusBoundingBox) {
-        focusBoundsCandidate = {
-            x: [focusBoundingBox.min.x, focusBoundingBox.max.x],
-            y: [focusBoundingBox.min.y, focusBoundingBox.max.y],
-        };
-    } else if (!focusBoundingBox && !isLoading && intersectionReferenceSystem) {
-        // Bounds are created from the intersection reference system if no layers are visible
-        focusBoundsCandidate = createBoundsForIntersectionReferenceSystem(intersectionReferenceSystem);
-    }
+        // Update focus bounds
+        // - Get bounds for the layers to focus on, neglect wellpath and wellpicks
+        // - If no layers are visible: focus on wellpath/reference system
+        let focusBoundsCandidate: Bounds | null = null;
+        const focusBoundingBox = view.combinedBoundingBox;
+        if (focusBoundingBox) {
+            focusBoundsCandidate = {
+                x: [focusBoundingBox.min.x, focusBoundingBox.max.x],
+                y: [focusBoundingBox.min.y, focusBoundingBox.max.y],
+            };
+        } else if (!focusBoundingBox && !isLoading && intersectionReferenceSystem) {
+            // Bounds are created from the intersection reference system if no layers are visible
+            focusBoundsCandidate = createBoundsForIntersectionReferenceSystem(intersectionReferenceSystem);
+        }
 
-    // Update focus bounds if they are valid, independent of the focus state
-    if (
-        focusBoundsCandidate &&
-        isValidBounds(focusBoundsCandidate) &&
-        !isEqual(focusBoundsCandidate, viewportFocusTarget.bounds)
-    ) {
-        setViewportFocusTarget((prev) => {
-            return { ...prev, bounds: focusBoundsCandidate };
-        });
+        // Update focus bounds if they are valid, independent of the focus state
+        if (
+            focusBoundsCandidate &&
+            isValidBounds(focusBoundsCandidate) &&
+            !isEqual(focusBoundsCandidate, viewportFocusTarget.bounds)
+        ) {
+            setViewportFocusTarget((prev) => {
+                return { ...prev, bounds: focusBoundsCandidate };
+            });
+        }
     }
 
     const handleOnViewportRefocused = React.useCallback(function handleOnViewportRefocused(): void {
