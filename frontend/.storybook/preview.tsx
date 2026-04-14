@@ -25,7 +25,7 @@ const preview: Preview = {
                     <DarkModeButton />
                     <DensityModeToggle />
                 </div>
-                <div className="bg-canvas h-full w-full">
+                <div className="bg-surface border-neutral-subtle py-horizontal-2xl px-horizontal-xl h-full w-full rounded border">
                     <Story />
                 </div>
             </>
