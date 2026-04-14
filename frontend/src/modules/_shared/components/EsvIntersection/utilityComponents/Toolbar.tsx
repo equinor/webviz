@@ -34,6 +34,7 @@ export type ViewOption = {
 
 export type ViewLinkOption = {
     id: string;
+    color: string;
     views: ViewOption[];
     containsThisView: boolean;
 };
@@ -125,7 +126,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                     onMouseEnter={() => props.onHoverViewLink?.(group.views.map((v) => v.id))}
                                     onMouseLeave={() => props.onHoverViewLink?.(null)}
                                 >
-                                    <Link fontSize="inherit" className="shrink-0 text-blue-600" />
+                                    <Link fontSize="inherit" className="shrink-0" style={{ color: group.color }} />
                                     {group.views.map((v) => (
                                         <span
                                             key={v.id}
