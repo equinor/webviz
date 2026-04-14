@@ -6,6 +6,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ColorPaletteType } from "@framework/WorkbenchSettings";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { IntersectionSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
@@ -172,7 +173,10 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     }
 
     return (
-        <ViewLinkManager intersectionViews={intersectionViews}>
+        <ViewLinkManager
+            intersectionViews={intersectionViews}
+            linkColors={props.workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical).getColors()}
+        >
             <MultiViewLayout viewCount={intersectionViews.length} preferredViewLayout={props.preferredViewLayout}>
                 {intersectionViews.map((view) => (
                     <ViewDataProcessor

@@ -9,6 +9,7 @@ import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncS
 import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
@@ -53,6 +54,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const {
         isLinked,
         isHoverHighlighted,
+        highlightColor,
         viewport: linkedViewport,
         viewportSourceViewId: linkedViewportSourceViewId,
         verticalScale: linkedVerticalScale,
@@ -356,12 +358,11 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     return (
         <div
             ref={mainDivRef}
-            className="relative w-full h-full flex flex-col"
-            style={
-                isHoverHighlighted
-                    ? { outline: "2px solid #3b82f6", outlineOffset: "-2px", borderRadius: "4px" }
-                    : undefined
-            }
+            className={resolveClassNames("relative w-full h-full flex flex-col", {
+                "outline-2 -outline-offset-2 rounded": isHoverHighlighted,
+                "outline-gray-400": isHoverHighlighted && !highlightColor,
+            })}
+            style={isHoverHighlighted && highlightColor ? { outlineColor: highlightColor } : undefined}
         >
             <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
                 <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pointer-events-none pt-1">
@@ -391,6 +392,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     onVerticalScaleDecrease={handleVerticalScaleDecrease}
                     viewLinks={viewLinkResult.availableViewLinks.map((link) => ({
                         id: link.id,
+                        color: link.color,
                         views: link.views,
                         containsThisView: link.views.some((v) => v.id === viewId),
                     }))}
