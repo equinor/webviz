@@ -1,4 +1,5 @@
-import { ContextMenu as ContextMenuBase, ContextMenuRadioItemProps } from "@base-ui/react";
+import type { ContextMenuRadioItemProps } from "@base-ui/react";
+import { ContextMenu as ContextMenuBase } from "@base-ui/react";
 
 export type RadioItemProps = Omit<ContextMenuRadioItemProps, "className" | "style">;
 

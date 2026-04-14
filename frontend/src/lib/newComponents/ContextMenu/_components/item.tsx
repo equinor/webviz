@@ -1,4 +1,5 @@
-import { ContextMenu as ContextMenuBase, ContextMenuItemProps } from "@base-ui/react";
+import type { ContextMenuItemProps } from "@base-ui/react";
+import { ContextMenu as ContextMenuBase } from "@base-ui/react";
 
 export type ItemProps = Omit<ContextMenuItemProps, "className" | "style">;
 

@@ -1,0 +1,12 @@
+@layer components {
+    .menu__popup {
+        @apply bg-floating shadow-elevation-overlay py-vertical-xs transform-origin: var(--transform-origin) min-w-20 rounded outline-0 transition-all;
+
+        &[data-ending-style] {
+            opacity: 0;
+        }
+    }
+
+    .menu__item {
+    }
+}
