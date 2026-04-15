@@ -92,6 +92,9 @@ export function Avatar(props: AvatarProps): React.ReactNode {
                 className={resolveClassNames(
                     "inline-flex items-center justify-center overflow-hidden rounded-full",
                     SIZE_CLASSES[defaultedProps.size],
+                    {
+                        "opacity-50": defaultedProps.disabled,
+                    },
                 )}
                 render={<span />}
             >
