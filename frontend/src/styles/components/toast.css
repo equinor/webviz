@@ -51,6 +51,22 @@
             &[data-swipe-direction="left"] {
                 transform: translateX(calc(var(--toast-swipe-movement-x) - 150%)) translateY(var(--offset-y));
             }
+
+            &[data-swipe-direction="right"] {
+                transform: translateX(calc(var(--toast-swipe-movement-x) + 150%)) translateY(var(--offset-y));
+            }
+            &[data-swipe-direction="down"] {
+                transform: translateY(calc(var(--toast-swipe-movement-y) + 150%));
+            }
+        }
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            width: 100%;
+            left: 0;
+            height: calc(var(--gap) + 1px);
         }
     }
 

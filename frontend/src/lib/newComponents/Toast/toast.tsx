@@ -24,7 +24,7 @@ export function ToastViewport({ toastManager, ...rest }: ToastViewportProps) {
     return (
         <ToastBase.Provider toastManager={toastManager as ToastProviderProps["toastManager"]} {...rest}>
             <ToastBase.Portal>
-                <ToastBase.Viewport className="z-toast fixed top-auto bottom-0 left-1/2 h-24 w-60 -translate-1/2">
+                <ToastBase.Viewport className="z-toast fixed top-auto right-auto bottom-0 left-1/2 w-60 -translate-1/2">
                     <ToastList />
                 </ToastBase.Viewport>
             </ToastBase.Portal>
