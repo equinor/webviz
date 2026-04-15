@@ -14,6 +14,7 @@
 @utility bg-canvas { background-color: var(--eds-color-bg-neutral-canvas); }
 @utility bg-surface { background-color: var(--eds-color-bg-neutral-surface); }
 @utility bg-floating { background-color: var(--eds-color-bg-floating); }
+@utility bg-floating-inverted { background-color: var(--eds-color-text-strong); }
 @utility bg-backdrop { background-color: var(--eds-color-bg-backdrop); }
 @utility bg-input { background-color: var(--eds-color-bg-input); }
 @utility bg-neutral-canvas { background-color: var(--eds-color-bg-neutral-canvas); }
@@ -277,3 +278,173 @@
 
 /* Fill */
 @utility text-fill-disabled { color: var(--eds-color-bg-fill-emphasis-disabled); }
+
+/* ====== SVG fill utilities (bg tokens) ======================= */
+
+@utility fill-canvas { fill: var(--eds-color-bg-neutral-canvas); }
+@utility fill-surface { fill: var(--eds-color-bg-neutral-surface); }
+@utility fill-floating { fill: var(--eds-color-bg-floating); }
+@utility fill-floating-inverted { fill: var(--eds-color-text-strong); }
+@utility fill-backdrop { fill: var(--eds-color-bg-backdrop); }
+@utility fill-input { fill: var(--eds-color-bg-input); }
+@utility fill-neutral-canvas { fill: var(--eds-color-bg-neutral-canvas); }
+@utility fill-neutral-surface { fill: var(--eds-color-bg-neutral-surface); }
+@utility fill-neutral { fill: var(--eds-color-bg-neutral-fill-muted-default); }
+@utility fill-neutral-hover { fill: var(--eds-color-bg-neutral-fill-muted-hover); }
+@utility fill-neutral-active { fill: var(--eds-color-bg-neutral-fill-muted-active); }
+@utility fill-neutral-strong { fill: var(--eds-color-bg-neutral-fill-emphasis-default); }
+@utility fill-neutral-strong-hover { fill: var(--eds-color-bg-neutral-fill-emphasis-hover); }
+@utility fill-neutral-strong-active { fill: var(--eds-color-bg-neutral-fill-emphasis-active); }
+@utility fill-accent-canvas { fill: var(--eds-color-bg-accent-canvas); }
+@utility fill-accent-surface { fill: var(--eds-color-bg-accent-surface); }
+@utility fill-accent { fill: var(--eds-color-bg-accent-fill-muted-default); }
+@utility fill-accent-hover { fill: var(--eds-color-bg-accent-fill-muted-hover); }
+@utility fill-accent-active { fill: var(--eds-color-bg-accent-fill-muted-active); }
+@utility fill-accent-strong { fill: var(--eds-color-bg-accent-fill-emphasis-default); }
+@utility fill-accent-strong-hover { fill: var(--eds-color-bg-accent-fill-emphasis-hover); }
+@utility fill-accent-strong-active { fill: var(--eds-color-bg-accent-fill-emphasis-active); }
+@utility fill-success-canvas { fill: var(--eds-color-bg-success-canvas); }
+@utility fill-success-surface { fill: var(--eds-color-bg-success-surface); }
+@utility fill-success { fill: var(--eds-color-bg-success-fill-muted-default); }
+@utility fill-success-hover { fill: var(--eds-color-bg-success-fill-muted-hover); }
+@utility fill-success-active { fill: var(--eds-color-bg-success-fill-muted-active); }
+@utility fill-success-strong { fill: var(--eds-color-bg-success-fill-emphasis-default); }
+@utility fill-success-strong-hover { fill: var(--eds-color-bg-success-fill-emphasis-hover); }
+@utility fill-success-strong-active { fill: var(--eds-color-bg-success-fill-emphasis-active); }
+@utility fill-info-canvas { fill: var(--eds-color-bg-info-canvas); }
+@utility fill-info-surface { fill: var(--eds-color-bg-info-surface); }
+@utility fill-info { fill: var(--eds-color-bg-info-fill-muted-default); }
+@utility fill-info-hover { fill: var(--eds-color-bg-info-fill-muted-hover); }
+@utility fill-info-active { fill: var(--eds-color-bg-info-fill-muted-active); }
+@utility fill-info-strong { fill: var(--eds-color-bg-info-fill-emphasis-default); }
+@utility fill-info-strong-hover { fill: var(--eds-color-bg-info-fill-emphasis-hover); }
+@utility fill-info-strong-active { fill: var(--eds-color-bg-info-fill-emphasis-active); }
+@utility fill-warning-canvas { fill: var(--eds-color-bg-warning-canvas); }
+@utility fill-warning-surface { fill: var(--eds-color-bg-warning-surface); }
+@utility fill-warning { fill: var(--eds-color-bg-warning-fill-muted-default); }
+@utility fill-warning-hover { fill: var(--eds-color-bg-warning-fill-muted-hover); }
+@utility fill-warning-active { fill: var(--eds-color-bg-warning-fill-muted-active); }
+@utility fill-warning-strong { fill: var(--eds-color-bg-warning-fill-emphasis-default); }
+@utility fill-warning-strong-hover { fill: var(--eds-color-bg-warning-fill-emphasis-hover); }
+@utility fill-warning-strong-active { fill: var(--eds-color-bg-warning-fill-emphasis-active); }
+@utility fill-danger-canvas { fill: var(--eds-color-bg-danger-canvas); }
+@utility fill-danger-surface { fill: var(--eds-color-bg-danger-surface); }
+@utility fill-danger { fill: var(--eds-color-bg-danger-fill-muted-default); }
+@utility fill-danger-hover { fill: var(--eds-color-bg-danger-fill-muted-hover); }
+@utility fill-danger-active { fill: var(--eds-color-bg-danger-fill-muted-active); }
+@utility fill-danger-strong { fill: var(--eds-color-bg-danger-fill-emphasis-default); }
+@utility fill-danger-strong-hover { fill: var(--eds-color-bg-danger-fill-emphasis-hover); }
+@utility fill-danger-strong-active { fill: var(--eds-color-bg-danger-fill-emphasis-active); }
+@utility fill-disabled { fill: var(--eds-color-bg-fill-emphasis-disabled); }
+
+/* ====== SVG stroke utilities ================================= */
+
+@utility stroke-canvas { stroke: var(--eds-color-bg-neutral-canvas); }
+@utility stroke-surface { stroke: var(--eds-color-bg-neutral-surface); }
+@utility stroke-floating { stroke: var(--eds-color-bg-floating); }
+@utility stroke-floating-inverted { stroke: var(--eds-color-text-strong); }
+@utility stroke-backdrop { stroke: var(--eds-color-bg-backdrop); }
+@utility stroke-input { stroke: var(--eds-color-bg-input); }
+@utility stroke-neutral-canvas { stroke: var(--eds-color-bg-neutral-canvas); }
+@utility stroke-neutral-surface { stroke: var(--eds-color-bg-neutral-surface); }
+@utility stroke-neutral { stroke: var(--eds-color-bg-neutral-fill-muted-default); }
+@utility stroke-neutral-hover { stroke: var(--eds-color-bg-neutral-fill-muted-hover); }
+@utility stroke-neutral-active { stroke: var(--eds-color-bg-neutral-fill-muted-active); }
+@utility stroke-neutral-strong { stroke: var(--eds-color-bg-neutral-fill-emphasis-default); }
+@utility stroke-neutral-strong-hover { stroke: var(--eds-color-bg-neutral-fill-emphasis-hover); }
+@utility stroke-neutral-strong-active { stroke: var(--eds-color-bg-neutral-fill-emphasis-active); }
+@utility stroke-accent-canvas { stroke: var(--eds-color-bg-accent-canvas); }
+@utility stroke-accent-surface { stroke: var(--eds-color-bg-accent-surface); }
+@utility stroke-accent { stroke: var(--eds-color-bg-accent-fill-muted-default); }
+@utility stroke-accent-hover { stroke: var(--eds-color-bg-accent-fill-muted-hover); }
+@utility stroke-accent-active { stroke: var(--eds-color-bg-accent-fill-muted-active); }
+@utility stroke-accent-strong { stroke: var(--eds-color-bg-accent-fill-emphasis-default); }
+@utility stroke-accent-strong-hover { stroke: var(--eds-color-bg-accent-fill-emphasis-hover); }
+@utility stroke-accent-strong-active { stroke: var(--eds-color-bg-accent-fill-emphasis-active); }
+@utility stroke-success-canvas { stroke: var(--eds-color-bg-success-canvas); }
+@utility stroke-success-surface { stroke: var(--eds-color-bg-success-surface); }
+@utility stroke-success { stroke: var(--eds-color-bg-success-fill-muted-default); }
+@utility stroke-success-hover { stroke: var(--eds-color-bg-success-fill-muted-hover); }
+@utility stroke-success-active { stroke: var(--eds-color-bg-success-fill-muted-active); }
+@utility stroke-success-strong { stroke: var(--eds-color-bg-success-fill-emphasis-default); }
+@utility stroke-success-strong-hover { stroke: var(--eds-color-bg-success-fill-emphasis-hover); }
+@utility stroke-success-strong-active { stroke: var(--eds-color-bg-success-fill-emphasis-active); }
+@utility stroke-info-canvas { stroke: var(--eds-color-bg-info-canvas); }
+@utility stroke-info-surface { stroke: var(--eds-color-bg-info-surface); }
+@utility stroke-info { stroke: var(--eds-color-bg-info-fill-muted-default); }
+@utility stroke-info-hover { stroke: var(--eds-color-bg-info-fill-muted-hover); }
+@utility stroke-info-active { stroke: var(--eds-color-bg-info-fill-muted-active); }
+@utility stroke-info-strong { stroke: var(--eds-color-bg-info-fill-emphasis-default); }
+@utility stroke-info-strong-hover { stroke: var(--eds-color-bg-info-fill-emphasis-hover); }
+@utility stroke-info-strong-active { stroke: var(--eds-color-bg-info-fill-emphasis-active); }
+@utility stroke-warning-canvas { stroke: var(--eds-color-bg-warning-canvas); }
+@utility stroke-warning-surface { stroke: var(--eds-color-bg-warning-surface); }
+@utility stroke-warning { stroke: var(--eds-color-bg-warning-fill-muted-default); }
+@utility stroke-warning-hover { stroke: var(--eds-color-bg-warning-fill-muted-hover); }
+@utility stroke-warning-active { stroke: var(--eds-color-bg-warning-fill-muted-active); }
+@utility stroke-warning-strong { stroke: var(--eds-color-bg-warning-fill-emphasis-default); }
+@utility stroke-warning-strong-hover { stroke: var(--eds-color-bg-warning-fill-emphasis-hover); }
+@utility stroke-warning-strong-active { stroke: var(--eds-color-bg-warning-fill-emphasis-active); }
+@utility stroke-danger-canvas { stroke: var(--eds-color-bg-danger-canvas); }
+@utility stroke-danger-surface { stroke: var(--eds-color-bg-danger-surface); }
+@utility stroke-danger { stroke: var(--eds-color-bg-danger-fill-muted-default); }
+@utility stroke-danger-hover { stroke: var(--eds-color-bg-danger-fill-muted-hover); }
+@utility stroke-danger-active { stroke: var(--eds-color-bg-danger-fill-muted-active); }
+@utility stroke-danger-strong { stroke: var(--eds-color-bg-danger-fill-emphasis-default); }
+@utility stroke-danger-strong-hover { stroke: var(--eds-color-bg-danger-fill-emphasis-hover); }
+@utility stroke-danger-strong-active { stroke: var(--eds-color-bg-danger-fill-emphasis-active); }
+@utility stroke-disabled { stroke: var(--eds-color-bg-fill-emphasis-disabled); }
+
+/* ====== SVG fill utilities (text tokens) ===================== */
+
+
+/* Neutral */
+@utility fill-text-neutral-subtle { fill: var(--eds-color-text-neutral-subtle); }
+@utility fill-text-neutral { fill: var(--eds-color-text-neutral-default); }
+@utility fill-text-neutral-strong { fill: var(--eds-color-text-neutral-strong); }
+@utility fill-text-neutral-subtle-on-emphasis { fill: var(--eds-color-text-neutral-subtle-on-emphasis); }
+@utility fill-text-neutral-strong-on-emphasis { fill: var(--eds-color-text-neutral-strong-on-emphasis); }
+
+/* Accent */
+@utility fill-text-accent-subtle { fill: var(--eds-color-text-accent-subtle); }
+@utility fill-text-accent { fill: var(--eds-color-text-accent-default); }
+@utility fill-text-accent-strong { fill: var(--eds-color-text-accent-strong); }
+@utility fill-text-accent-subtle-on-emphasis { fill: var(--eds-color-text-accent-subtle-on-emphasis); }
+@utility fill-text-accent-strong-on-emphasis { fill: var(--eds-color-text-accent-strong-on-emphasis); }
+
+/* Success */
+@utility fill-text-success-subtle { fill: var(--eds-color-text-success-subtle); }
+@utility fill-text-success { fill: var(--eds-color-text-success-default); }
+@utility fill-text-success-strong { fill: var(--eds-color-text-success-strong); }
+@utility fill-text-success-subtle-on-emphasis { fill: var(--eds-color-text-success-subtle-on-emphasis); }
+@utility fill-text-success-strong-on-emphasis { fill: var(--eds-color-text-success-strong-on-emphasis); }
+
+/* Info */
+@utility fill-text-info-subtle { fill: var(--eds-color-text-info-subtle); }
+@utility fill-text-info { fill: var(--eds-color-text-info-default); }
+@utility fill-text-info-strong { fill: var(--eds-color-text-info-strong); }
+@utility fill-text-info-subtle-on-emphasis { fill: var(--eds-color-text-info-subtle-on-emphasis); }
+@utility fill-text-info-strong-on-emphasis { fill: var(--eds-color-text-info-strong-on-emphasis); }
+
+/* Warning */
+@utility fill-text-warning-subtle { fill: var(--eds-color-text-warning-subtle); }
+@utility fill-text-warning { fill: var(--eds-color-text-warning-default); }
+@utility fill-text-warning-strong { fill: var(--eds-color-text-warning-strong); }
+@utility fill-text-warning-subtle-on-emphasis { fill: var(--eds-color-text-warning-subtle-on-emphasis); }
+@utility fill-text-warning-strong-on-emphasis { fill: var(--eds-color-text-warning-strong-on-emphasis); }
+
+/* Danger */
+@utility fill-text-danger-subtle { fill: var(--eds-color-text-danger-subtle); }
+@utility fill-text-danger { fill: var(--eds-color-text-danger-default); }
+@utility fill-text-danger-strong { fill: var(--eds-color-text-danger-strong); }
+@utility fill-text-danger-subtle-on-emphasis { fill: var(--eds-color-text-danger-subtle-on-emphasis); }
+@utility fill-text-danger-strong-on-emphasis { fill: var(--eds-color-text-danger-strong-on-emphasis); }
+
+/* Link */
+@utility fill-text-link { fill: var(--eds-color-text-link); }
+
+/* Disabled */
+@utility fill-text-disabled { fill: var(--eds-color-text-neutral-subtle); }
+
+/* Fill */
+@utility fill-text-fill-disabled { fill: var(--eds-color-bg-fill-emphasis-disabled); }

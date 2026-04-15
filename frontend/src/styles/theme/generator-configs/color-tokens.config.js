@@ -13,6 +13,82 @@ export const fills = {
     canvas: "--eds-color-bg-neutral-canvas",
     surface: "--eds-color-bg-neutral-surface",
     floating: "--eds-color-bg-floating",
+    // EDS uses --eds-color-text-strong as the background for snackbars and tooltips
+    "floating-inverted": "--eds-color-text-strong",
+    backdrop: "--eds-color-bg-backdrop",
+    input: "--eds-color-bg-input",
+
+    // Neutral
+    "neutral-canvas": "--eds-color-bg-neutral-canvas",
+    "neutral-surface": "--eds-color-bg-neutral-surface",
+    neutral: "--eds-color-bg-neutral-fill-muted-default",
+    "neutral-hover": "--eds-color-bg-neutral-fill-muted-hover",
+    "neutral-active": "--eds-color-bg-neutral-fill-muted-active",
+    "neutral-strong": "--eds-color-bg-neutral-fill-emphasis-default",
+    "neutral-strong-hover": "--eds-color-bg-neutral-fill-emphasis-hover",
+    "neutral-strong-active": "--eds-color-bg-neutral-fill-emphasis-active",
+
+    // Accent
+    "accent-canvas": "--eds-color-bg-accent-canvas",
+    "accent-surface": "--eds-color-bg-accent-surface",
+    accent: "--eds-color-bg-accent-fill-muted-default",
+    "accent-hover": "--eds-color-bg-accent-fill-muted-hover",
+    "accent-active": "--eds-color-bg-accent-fill-muted-active",
+    "accent-strong": "--eds-color-bg-accent-fill-emphasis-default",
+    "accent-strong-hover": "--eds-color-bg-accent-fill-emphasis-hover",
+    "accent-strong-active": "--eds-color-bg-accent-fill-emphasis-active",
+
+    // Success
+    "success-canvas": "--eds-color-bg-success-canvas",
+    "success-surface": "--eds-color-bg-success-surface",
+    success: "--eds-color-bg-success-fill-muted-default",
+    "success-hover": "--eds-color-bg-success-fill-muted-hover",
+    "success-active": "--eds-color-bg-success-fill-muted-active",
+    "success-strong": "--eds-color-bg-success-fill-emphasis-default",
+    "success-strong-hover": "--eds-color-bg-success-fill-emphasis-hover",
+    "success-strong-active": "--eds-color-bg-success-fill-emphasis-active",
+
+    // Info
+    "info-canvas": "--eds-color-bg-info-canvas",
+    "info-surface": "--eds-color-bg-info-surface",
+    info: "--eds-color-bg-info-fill-muted-default",
+    "info-hover": "--eds-color-bg-info-fill-muted-hover",
+    "info-active": "--eds-color-bg-info-fill-muted-active",
+    "info-strong": "--eds-color-bg-info-fill-emphasis-default",
+    "info-strong-hover": "--eds-color-bg-info-fill-emphasis-hover",
+    "info-strong-active": "--eds-color-bg-info-fill-emphasis-active",
+
+    // Warning
+    "warning-canvas": "--eds-color-bg-warning-canvas",
+    "warning-surface": "--eds-color-bg-warning-surface",
+    warning: "--eds-color-bg-warning-fill-muted-default",
+    "warning-hover": "--eds-color-bg-warning-fill-muted-hover",
+    "warning-active": "--eds-color-bg-warning-fill-muted-active",
+    "warning-strong": "--eds-color-bg-warning-fill-emphasis-default",
+    "warning-strong-hover": "--eds-color-bg-warning-fill-emphasis-hover",
+    "warning-strong-active": "--eds-color-bg-warning-fill-emphasis-active",
+
+    // Danger
+    "danger-canvas": "--eds-color-bg-danger-canvas",
+    "danger-surface": "--eds-color-bg-danger-surface",
+    danger: "--eds-color-bg-danger-fill-muted-default",
+    "danger-hover": "--eds-color-bg-danger-fill-muted-hover",
+    "danger-active": "--eds-color-bg-danger-fill-muted-active",
+    "danger-strong": "--eds-color-bg-danger-fill-emphasis-default",
+    "danger-strong-hover": "--eds-color-bg-danger-fill-emphasis-hover",
+    "danger-strong-active": "--eds-color-bg-danger-fill-emphasis-active",
+
+    // Disabled
+    disabled: "--eds-color-bg-fill-emphasis-disabled",
+};
+
+/** @type {Record<string, string>} */
+export const strokes = {
+    // Surface / background
+    canvas: "--eds-color-bg-neutral-canvas",
+    surface: "--eds-color-bg-neutral-surface",
+    floating: "--eds-color-bg-floating",
+    "floating-inverted": "--eds-color-text-strong",
     backdrop: "--eds-color-bg-backdrop",
     input: "--eds-color-bg-input",
 

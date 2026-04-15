@@ -1,21 +1,30 @@
 import type { ToastProviderProps } from "@base-ui/react";
 import { Toast as ToastBase } from "@base-ui/react";
-import { Check, Close, Error, Info, Warning, X } from "@mui/icons-material";
-import { Button } from "../Button";
-import { Typography } from "../Typography";
-import { Paragraph } from "../Paragraph";
-import { ToastManager, useToastManager, type ToastType } from "./toastManager";
+import { CheckCircle, Error, Warning } from "@mui/icons-material";
+
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type ToastProps = Omit<ToastProviderProps, "toastManager"> & {
+import { Button } from "../Button";
+import { CircularProgress } from "../CircularProgress";
+
+import { type ToastManager, useToastManager, type ToastType } from "./toastManager";
+
+export type ToastViewportProps = Omit<ToastProviderProps, "toastManager"> & {
     toastManager?: ToastManager<any>;
 };
 
-export function Toast({ toastManager, ...rest }: ToastProps) {
+/**
+ * EDS is using "Snackbar" as the canonical component name for both snackbars and toasts.
+ * We are using "Toast" as the component name in order to reflect the fact that these are toasts, and not snackbars (which have different behavior and use cases).
+ * However, we are styling the component in a way that is consistent with EDS snackbars, in order to maintain visual consistency with EDS components.
+ * EDS is using "--eds-color-text-strong" as the background color for both snackbars and tooltips, which seems a bit odd, but we are following their lead in order to maintain visual consistency.
+ */
+
+export function ToastViewport({ toastManager, ...rest }: ToastViewportProps) {
     return (
         <ToastBase.Provider toastManager={toastManager as ToastProviderProps["toastManager"]} {...rest}>
             <ToastBase.Portal>
-                <ToastBase.Viewport className="bottom-vertical-xs right-horizontal-xs z-toast fixed top-auto left-auto h-24 w-60">
+                <ToastBase.Viewport className="z-toast fixed top-auto bottom-0 left-1/2 h-24 w-60 -translate-1/2">
                     <ToastList />
                 </ToastBase.Viewport>
             </ToastBase.Portal>
@@ -23,20 +32,20 @@ export function Toast({ toastManager, ...rest }: ToastProps) {
     );
 }
 
-const TOAST_TYPE_TO_TONE: Record<ToastType, Parameters<NonNullable<typeof Typography>["props"]["color"]>[0]> = {
-    default: undefined,
-    success: "success",
-    error: "danger",
-    warning: "warning",
-    info: "info",
+const TOAST_TYPE_TO_TONE_CLASSNAME: Record<ToastType, string> = {
+    default: "",
+    loading: "bg-accent-strong",
+    success: "bg-success-strong",
+    error: "bg-danger-strong",
+    warning: "bg-warning-strong",
 };
 
 const TOAST_TYPE_TO_ICON: Record<ToastType, React.ReactNode> = {
     default: undefined,
-    success: <Check fontSize="inherit" />,
-    error: <Error fontSize="inherit" />,
-    warning: <Warning fontSize="inherit" />,
-    info: <Info fontSize="inherit" />,
+    loading: <CircularProgress size={16} tone="on-emphasis" />,
+    success: <CheckCircle fontSize="small" />,
+    error: <Error fontSize="small" />,
+    warning: <Warning fontSize="small" />,
 };
 
 function ToastList() {
@@ -46,37 +55,40 @@ function ToastList() {
         <ToastBase.Root
             key={toast.id}
             toast={toast}
-            className={resolveClassNames("toast__popup gap-vertical-xs bg-floating flex flex-col")}
+            swipeDirection="down"
+            className="toast__popup flex items-center justify-center gap-0"
         >
-            <ToastBase.Title
-                render={(subProps) => (
-                    <span className="mr-horizontal-2xl">
-                        <Typography
-                            family="header"
-                            weight="bolder"
-                            size="md"
-                            tone={TOAST_TYPE_TO_TONE[toast.type || "default"]}
-                            {...subProps}
-                        >
-                            <span className="gap-horizontal-xs flex items-center">
-                                {TOAST_TYPE_TO_ICON[toast.type || "default"]}
-                                {toast.title}
-                            </span>
-                        </Typography>
-                    </span>
+            {toast.type && toast.type !== "default" && (
+                <span
+                    className={resolveClassNames(
+                        "px-horizontal-sm py-vertical-sm rounded-l-rounded flex h-full items-center justify-center",
+                        TOAST_TYPE_TO_TONE_CLASSNAME[toast.type],
+                    )}
+                >
+                    {TOAST_TYPE_TO_ICON[toast.type]}
+                </span>
+            )}
+            <ToastBase.Content className="toast__content text-header-sm font-heading gap-horizontal-sm flex items-center">
+                <ToastBase.Title
+                    render={(subProps) => (
+                        <span {...subProps} className="px-horizontal-sm py-vertical-sm whitespace-nowrap">
+                            {toast.title}
+                        </span>
+                    )}
+                />
+                {toast.actionProps && (
+                    <ToastBase.Action
+                        render={(subProps) => (
+                            <Button
+                                variant="text"
+                                tone="accent"
+                                {...subProps}
+                                className={resolveClassNames(subProps.className, "ml-auto")}
+                            />
+                        )}
+                    />
                 )}
-            />
-            <ToastBase.Description render={(subProps) => <Paragraph size="sm" {...subProps} />} />
-            <ToastBase.Close
-                aria-label="Close"
-                render={(subProps) => (
-                    <span className="top-vertical-xs right-horizontal-xs absolute">
-                        <Button iconOnly round {...subProps} variant="text" tone="neutral" size="small">
-                            <Close fontSize="inherit" />
-                        </Button>
-                    </span>
-                )}
-            />
+            </ToastBase.Content>
         </ToastBase.Root>
     ));
 }

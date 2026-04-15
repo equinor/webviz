@@ -109,10 +109,6 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<SimulationTimeSeriesSettings>,
     view?: Partial<SimulationTimeSeriesView>,
   },
-  "SimulationTimeSeriesMatrix": {
-    settings?: never,
-    view?: never,
-  },
   "SimulationTimeSeriesSensitivity": {
     settings?: Partial<SimulationTimeSeriesSensitivitySettings>,
     view?: Partial<SimulationTimeSeriesSensitivityView>,

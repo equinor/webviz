@@ -1,9 +1,9 @@
-import { Card } from "@lib/newComponents/Card/card";
+import { Banner } from "@lib/newComponents/Banner/banner";
 import { Paragraph } from "@lib/newComponents/Paragraph";
 
 export function DevLabel() {
     return (
-        <Card tone="warning">
+        <Banner tone="warning">
             <Paragraph size="md">
                 <strong>NOTE:</strong> This application is still under heavy development; bugs and occasional downtime
                 should be expected. Please help us improve Webviz by reporting any undesired behaviour either on{" "}
@@ -26,6 +26,6 @@ export function DevLabel() {
                 </a>
                 .
             </Paragraph>
-        </Card>
+        </Banner>
     );
 }

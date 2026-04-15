@@ -1,4 +1,4 @@
-import { Card } from "@lib/newComponents/Card";
+import { Card } from "@lib/newComponents/Banner";
 import { Paragraph } from "@lib/newComponents/Paragraph/paragraph";
 
 export function DataSharingLabel() {
