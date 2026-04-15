@@ -32,6 +32,7 @@ import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { MenuText } from "@lib/components/MenuText/menuText";
 import { Tooltip } from "@lib/components/Tooltip";
+import { LinearProgress } from "@lib/newComponents/LinearProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -124,7 +125,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "flex items-center gap-0.5 px-1 select-none shadow-sm relative touch-none text-lg",
+                "relative flex touch-none items-center gap-0.5 px-1 text-lg shadow-sm select-none",
                 {
                     "bg-red-100": hasErrors || invalidPersistedState,
                     "bg-slate-300": !hasErrors && props.isMinimized && !invalidPersistedState,
@@ -190,7 +191,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
 function HeaderSeparator(): React.ReactNode {
     // The funky-looking class selector hides all separators that directly follows another separator
-    return <div className="[:where(&+&)]:hidden bg-slate-300 w-px h-1/2 mx-1" />;
+    return <div className="mx-1 h-1/2 w-px bg-slate-300 [:where(&+&)]:hidden" />;
 }
 
 type ModuleLoadingBarProps = {
@@ -202,11 +203,11 @@ function ModuleLoadingBar(props: ModuleLoadingBarProps) {
 
     return (
         <div
-            className={resolveClassNames("absolute -bottom-0.5 left-0 w-full overflow-hidden", {
+            className={resolveClassNames("absolute -bottom-0.5 left-0 w-full", {
                 hidden: !isLoading,
             })}
         >
-            <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
+            <LinearProgress variant="indeterminate" />
         </div>
     );
 }
@@ -231,19 +232,19 @@ function ModuleTitle(props: ModuleTitleProps) {
 
     return (
         <div
-            className={resolveClassNames("grow flex items-center text-sm font-bold min-w-0 p-1.5", {
+            className={resolveClassNames("flex min-w-0 grow items-center p-1.5 text-sm font-bold", {
                 "cursor-grabbing": props.isDragged,
                 "cursor-move": !props.isDragged && !props.isSnapshotMode,
             })}
             onPointerDown={handlePointerDown}
         >
-            <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0" title={title}>
+            <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap" title={title}>
                 {title}
             </span>
             {devToolsVisible && (
                 <span
                     title={props.moduleInstance.getId()}
-                    className="font-light text-xs ml-2 mr-1 text-ellipsis whitespace-nowrap overflow-hidden min-w-0"
+                    className="mr-1 ml-2 min-w-0 overflow-hidden text-xs font-light text-ellipsis whitespace-nowrap"
                 >
                     {props.moduleInstance.getId()}
                 </span>
@@ -266,7 +267,7 @@ function SyncedSettingsIndicator(props: SyncedSettingsIndicatorProps) {
                     title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
                     key={setting}
                 >
-                    <span className="flex items-center justify-center rounded-sm p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help font-bold">
+                    <span className="mr-1 ml-1 flex cursor-help items-center justify-center rounded-sm bg-indigo-700 p-1 text-xs leading-none font-bold text-white">
                         {SyncSettingsMeta[setting].abbreviation}
                     </span>
                 </Tooltip>
@@ -424,13 +425,13 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     function makeHotStatusMessages(): React.ReactNode {
         return (
-            <div className="flex flex-col p-2 gap-2">
+            <div className="flex flex-col gap-2 p-2">
                 {hotStatusMessages.map((entry, i) => (
                     <MenuText key={`${entry.message}-${i}`}>
                         {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
                         {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}
                         <span
-                            className="ml-2 overflow-hidden text-ellipsis min-w-0 whitespace-nowrap"
+                            className="ml-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
                             title={entry.message}
                         >
                             {entry.message}
@@ -446,7 +447,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     if (isLoading) {
         stateIndicators.push(
             <Tooltip key="header-loading" title="This module is currently loading new content.">
-                <div className="flex items-center justify-center px-1 cursor-help">
+                <div className="flex cursor-help items-center justify-center px-1">
                     <CircularProgress size="small" />
                 </div>
             </Tooltip>,
@@ -468,7 +469,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         stateIndicators.push(
             <Dropdown key="header-status-messages">
                 <Tooltip title="Show status messages" placement="bottom">
-                    <MenuButton className="flex items-center rounded-sm justify-center p-1 hover:bg-blue-200 text-sm">
+                    <MenuButton className="flex items-center justify-center rounded-sm p-1 text-sm hover:bg-blue-200">
                         <Badge
                             badgeContent={numErrors + numWarnings}
                             className="flex p-0.5"
@@ -497,7 +498,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
                     {makeHotStatusMessages()}
                     {log.length > 0 && (
                         <>
-                            <div className="bg-gray-300 h-0.5 w-full my-1" />
+                            <div className="my-1 h-0.5 w-full bg-gray-300" />
                             <MenuItem onClick={handleShowLogClick} className="text-sm">
                                 <History fontSize="inherit" /> Show complete log
                             </MenuItem>
