@@ -55,6 +55,8 @@ function computeViewLinkFocusBounds(views: IntersectionViewInfo[]): Bounds | nul
 export type ViewLinkManagerProps = {
     intersectionViews: IntersectionViewInfo[];
     linkColors: string[];
+    initialViewLinks?: ViewLink[];
+    onViewLinksChange?: (viewLinks: ViewLink[]) => void;
     children: React.ReactNode;
 };
 
@@ -65,10 +67,21 @@ function pickNextLinkColor(existingLinks: ViewLink[], colors: string[]): string 
     return colors.find((c) => !usedColors.has(c)) ?? colors[existingLinks.length % colors.length];
 }
 
-export function ViewLinkManager({ intersectionViews, linkColors, children }: ViewLinkManagerProps): React.ReactNode {
-    const [viewLinks, setViewLinks] = React.useState<ViewLink[]>([]);
+export function ViewLinkManager({
+    intersectionViews,
+    linkColors,
+    initialViewLinks,
+    onViewLinksChange,
+    children,
+}: ViewLinkManagerProps): React.ReactNode {
+    const [viewLinks, setViewLinks] = React.useState<ViewLink[]>(initialViewLinks ?? []);
     const [prevViewIds, setPrevViewIds] = React.useState<string[]>([]);
     const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(EMPTY_HOVERED_VIEW_IDS);
+
+    // Notify parent of view link changes for persistence
+    React.useEffect(() => {
+        onViewLinksChange?.(viewLinks);
+    }, [viewLinks, onViewLinksChange]);
 
     // Clean up ViewLinks when views are added or removed, and refresh stored view info (name/color)
     const currentViewIds = intersectionViews.map((v) => v.id);

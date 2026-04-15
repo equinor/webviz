@@ -1,4 +1,6 @@
-import type React from "react";
+import React from "react";
+
+import { useAtomValue, useSetAtom } from "jotai";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -46,8 +48,11 @@ import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 
+import { toPersistedViewLinks, toViewLinks, viewLinksAtom } from "../atoms/baseAtoms";
+
 import { MultiViewLayout } from "./MultiViewLayout";
 import { ViewDataProcessor } from "./ViewDataProcessor";
+import type { ViewLink } from "./ViewLinkManager";
 import { ViewLinkManager } from "./ViewLinkManager";
 
 export type DataProvidersWrapperProps = {
@@ -135,6 +140,15 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 
 export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
+    const persistedViewLinks = useAtomValue(viewLinksAtom);
+    const setPersistedViewLinks = useSetAtom(viewLinksAtom);
+
+    const handleViewLinksChange = React.useCallback(
+        (viewLinks: ViewLink[]) => {
+            setPersistedViewLinks(toPersistedViewLinks(viewLinks));
+        },
+        [setPersistedViewLinks],
+    );
 
     const fieldIdentifier = props.dataProviderManager.getGlobalSetting("fieldId");
 
@@ -176,6 +190,8 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         <ViewLinkManager
             intersectionViews={intersectionViews}
             linkColors={props.workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical).getColors()}
+            initialViewLinks={toViewLinks(persistedViewLinks, intersectionViews)}
+            onViewLinksChange={handleViewLinksChange}
         >
             <MultiViewLayout viewCount={intersectionViews.length} preferredViewLayout={props.preferredViewLayout}>
                 {intersectionViews.map((view) => (
