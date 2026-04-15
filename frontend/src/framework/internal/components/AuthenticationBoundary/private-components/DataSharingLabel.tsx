@@ -1,9 +1,9 @@
-import { Card } from "@lib/newComponents/Banner";
+import { Banner } from "@lib/newComponents/Banner";
 import { Paragraph } from "@lib/newComponents/Paragraph/paragraph";
 
 export function DataSharingLabel() {
     return (
-        <Card tone="warning">
+        <Banner tone="warning">
             <div className="gap-vertical-md flex flex-col">
                 <Paragraph size="md">
                     <strong>Disclaimer:</strong> Webviz is a service provided by Equinor and is not a way of sharing
@@ -15,6 +15,6 @@ export function DataSharingLabel() {
                     there is no guarantee given as of now that calculations are error-free.
                 </Paragraph>
             </div>
-        </Card>
+        </Banner>
     );
 }

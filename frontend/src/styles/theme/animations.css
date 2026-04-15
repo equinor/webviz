@@ -1,15 +1,18 @@
 @theme {
-    --animate-linear-indefinite: linear-indefinite 3s cubic-bezier(1, 0.1, 0.1, 1) infinite;
+    --animate-linear-indefinite: linear-indefinite 1.5s cubic-bezier(0.165, 0.84, 0.44, 1) 1s infinite;
 
     @keyframes linear-indefinite {
         0% {
-            transform: translateX(-100%) scaleX(1);
+            left: -200%;
+            right: 100%;
         }
-        50% {
-            transform: translateX(0%) scaleX(0.25);
+        60% {
+            left: 107%;
+            right: -8%;
         }
         100% {
-            transform: translateX(100%);
+            left: 107%;
+            right: -8%;
         }
     }
 }

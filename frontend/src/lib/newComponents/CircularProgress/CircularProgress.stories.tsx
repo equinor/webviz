@@ -50,9 +50,34 @@ export const OnEmphasis: Story = {
     ),
 };
 
+export const Determinate: Story = {
+    args: {
+        variant: "determinate",
+        value: 65,
+    },
+};
+
+export const DeterminateSteps: Story = {
+    render: () => (
+        <div className="flex items-center gap-6">
+            <CircularProgress variant="determinate" value={0} />
+            <CircularProgress variant="determinate" value={25} />
+            <CircularProgress variant="determinate" value={50} />
+            <CircularProgress variant="determinate" value={75} />
+            <CircularProgress variant="determinate" value={100} />
+        </div>
+    ),
+};
+
 export const Playground: Story = {
     args: {
         size: 48,
         tone: "default",
+        variant: "indeterminate",
+    },
+    argTypes: {
+        value: {
+            control: { type: "range", min: 0, max: 100, step: 1 },
+        },
     },
 };

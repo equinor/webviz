@@ -5,7 +5,7 @@ html {
 body {
     overflow: hidden;
     font-family: var(--font-sans);
-    font-size: var(--font-size-);
+    font-size: var(--text-body-sm);
 }
 
 h1,

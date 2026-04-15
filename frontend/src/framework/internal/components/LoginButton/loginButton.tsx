@@ -38,7 +38,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
         if (authState === AuthState.LoggedIn) {
             return (
                 <Avatar
-                    size="small"
+                    size={24}
                     userData={{
                         imageSrc: `data:image/png;base64,${userInfo?.avatar_b64str}`,
                         initials: userInfo?.display_name

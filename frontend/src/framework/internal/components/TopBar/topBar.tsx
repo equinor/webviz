@@ -25,13 +25,12 @@ import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/co
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import type { ButtonProps } from "@lib/components/Button/button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { Heading } from "@lib/newComponents/Heading";
 import { Separator } from "@lib/newComponents/Separator";
 import { Typography } from "@lib/newComponents/Typography";
@@ -59,7 +58,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         <>
             <div
                 className={resolveClassNames(
-                    "border-neutral-subtle shadow-elevation-raised z-sticky gap-vertical-3xl py-vertical-3xs px-vertical-xs flex flex-row items-center border-b-2",
+                    "border-neutral-subtle shadow-elevation-raised z-sticky gap-horizontal-3xl py-vertical-2xs px-vertical-xs flex flex-row items-center border-b-2",
                     {
                         "bg-surface": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
@@ -67,7 +66,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                 )}
             >
                 <LogoWithText />
-                <div className="gap-vertical-md flex min-w-0 grow items-center">
+                <div className="gap-horizontal-xs flex min-w-0 grow items-center">
                     {hasActiveSession ? (
                         <>
                             <Title workbench={props.workbench} />
@@ -79,6 +78,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                     <Separator orientation="vertical" />
                     <DarkModeButton />
                     <DensityModeToggle />
+                    <Separator orientation="vertical" />
                     <LoginButton showText={false} />
                 </div>
             </div>
@@ -87,11 +87,13 @@ export function TopBar(props: TopBarProps): React.ReactNode {
 }
 function LogoWithText(): React.ReactNode {
     return (
-        <div className="flex flex-row items-center gap-4">
+        <div className="gap-horizontal-sm flex flex-row items-center">
             <FmuLogo className="h-8 w-8" />
-            <h1 className="text-md text-accent whitespace-nowrap">FMU Analysis</h1>
+            <Heading as="h6" weight="bolder">
+                FMU Analysis
+            </Heading>
             <div
-                className="bg-warning-strong text-neutral-strong-on-emphasis text-body-sm cursor-help rounded-sm p-1 text-center"
+                className="bg-warning-strong text-neutral-strong-on-emphasis text-body-sm px-horizontal-xs py-vertical-3xs cursor-help rounded-sm text-center"
                 title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
             >
                 BETA
@@ -203,7 +205,7 @@ function Title(props: TitleProps): React.ReactNode {
         content = <SnapshotTitle workbench={props.workbench} />;
     }
 
-    return <div className="flex grow items-center gap-2 overflow-hidden">{content}</div>;
+    return <div className="gap-horizontal-sm flex grow items-center overflow-hidden">{content}</div>;
 }
 
 type SnapshotTitleProps = {
@@ -402,8 +404,8 @@ type TopBarButtonProps = {
     disabled?: boolean;
 } & ButtonProps;
 
-function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
-    const { active, title, onClick, disabled, ...baseProps } = props;
+function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef<HTMLButtonElement>): React.ReactNode {
+    const { title, onClick, disabled, ...baseProps } = props;
     return (
         <Tooltip title={title} placement="bottom">
             <Button {...baseProps} ref={ref} variant="text" tone="accent" onClick={onClick} disabled={disabled}>

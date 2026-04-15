@@ -15,11 +15,11 @@ import "../../../../modules/registerAllModules";
 import "../../../../templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { ActionBar } from "../ActionBar/actionBar";
 import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
-import { LeftSideBar } from "../LeftSideBar";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
 import { RightSideBar } from "../RightSideBar";
@@ -72,6 +72,7 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <ActiveDashboardBoundary>
+                    <ActionBar workbench={workbench} />
                     <SelectEnsemblesDialog workbench={workbench} />
                     <InitialEnsemblesLoadingErrorInfoDialog workbench={workbench} />
                     <SaveSessionDialog workbench={workbench} saveAsNew />
@@ -79,7 +80,6 @@ export function WorkbenchWrapper() {
                     <ActiveSessionRecoveryDialog workbench={workbench} />
                     <div className="min-h-0 grow">
                         <div className="flex h-full w-full flex-row">
-                            <LeftSideBar workbench={workbench} />
                             <SettingsContentPanels workbench={workbench} />
                             <RightSideBar workbench={workbench} />
                         </div>
