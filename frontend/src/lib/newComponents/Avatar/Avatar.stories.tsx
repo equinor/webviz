@@ -12,7 +12,7 @@ const meta: Meta<typeof Avatar> = {
     argTypes: {
         size: {
             control: "select",
-            options: ["small", "medium", "large"],
+            options: [16, 24, 32, 40, 48],
         },
     },
 };
@@ -77,35 +77,3 @@ export const InitialsFallback: Story = {
     },
 };
 
-export const Small: Story = {
-    args: {
-        size: "small",
-        userData: {
-            imageSrc: "https://i.pravatar.cc/150?img=3",
-            alt: "User avatar",
-            initials: "SM",
-        },
-    },
-};
-
-export const Medium: Story = {
-    args: {
-        size: "medium",
-        userData: {
-            imageSrc: "https://i.pravatar.cc/150?img=3",
-            alt: "User avatar",
-            initials: "MD",
-        },
-    },
-};
-
-export const Large: Story = {
-    args: {
-        size: "large",
-        userData: {
-            imageSrc: "https://i.pravatar.cc/150?img=3",
-            alt: "User avatar",
-            initials: "LG",
-        },
-    },
-};

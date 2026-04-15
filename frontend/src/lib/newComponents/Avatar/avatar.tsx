@@ -5,6 +5,9 @@ import PersonIcon from "@mui/icons-material/Person";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import type { PixelSize } from "../_shared/size";
+import { CircularProgress } from "../CircularProgress";
+
 export type AvatarUserData = {
     imageSrc?: string;
     initials?: string;
@@ -14,7 +17,8 @@ export type AvatarUserData = {
 
 export type AvatarProps = {
     userData?: AvatarUserData | (() => Promise<AvatarUserData>);
-    size?: "small" | "medium" | "large";
+    size?: PixelSize;
+    disabled?: boolean;
 };
 
 type UserDataState =
@@ -24,13 +28,15 @@ type UserDataState =
     | { status: "rejected" };
 
 const SIZE_CLASSES: Record<NonNullable<AvatarProps["size"]>, string> = {
-    small: "h-6 aspect-square text-body-xs tracking-body-xs-tight",
-    medium: "h-12 aspect-square text-body-xl tracking-body-xl-tight",
-    large: "h-16 aspect-square text-body-4xl tracking-body-4xl-tight",
+    16: "h-4 aspect-square text-body-xs tracking-body-xs-tight",
+    24: "h-6 aspect-square text-body-sm tracking-body-sm-tight",
+    32: "h-8 aspect-square text-body-md tracking-body-md-tight",
+    40: "h-10 aspect-square text-body-xl tracking-body-xl-tight",
+    48: "h-12 aspect-square text-body-2xl tracking-body-2xl-tight",
 };
 
 const DEFAULT_PROPS = {
-    size: "medium",
+    size: 48,
 } satisfies Partial<AvatarProps>;
 
 export function Avatar(props: AvatarProps): React.ReactNode {
@@ -114,13 +120,15 @@ export function Avatar(props: AvatarProps): React.ReactNode {
             </AvatarBase.Root>
             <span
                 className={resolveClassNames(
-                    "border-t-accent-strong pointer-events-none absolute inset-0 animate-spin rounded-full border-4 border-transparent transition-all",
+                    "pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
                     {
                         "opacity-0": userDataState.status !== "loading" || imageLoadingStatus === "loaded",
                         "opacity-100": userDataState.status === "loading" && imageLoadingStatus !== "loaded",
                     },
                 )}
-            />
+            >
+                <CircularProgress size={defaultedProps.size} />
+            </span>
         </span>
     );
 }
