@@ -1,21 +1,25 @@
 import type React from "react";
 
-import { useAtom } from "jotai";
+import { useSetAtom } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
+import { useStableAtomGetter } from "@framework/utils/atomUtils";
 
 import type { Interfaces } from "../interfaces";
 
 import { verticalScaleAtom, viewStateAtom } from "./atoms/baseAtoms";
-import { DataProvidersWrapper } from "./components/VisualizationAssemblerWrapper";
+import { VisualizationAssemblerWrapper } from "./components/VisualizationAssemblerWrapper";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
     const dataProviderManager = props.viewContext.useSettingsToViewInterfaceValue("dataProviderManager");
     const fieldId = props.viewContext.useSettingsToViewInterfaceValue("fieldId");
 
-    const [verticalScale, setVerticalScale] = useAtom(verticalScaleAtom);
-    const [viewState, setViewState] = useAtom(viewStateAtom);
+    const getVerticalScale = useStableAtomGetter(verticalScaleAtom);
+    const setVerticalScale = useSetAtom(verticalScaleAtom);
+
+    const getViewState = useStableAtomGetter(viewStateAtom);
+    const setViewState = useSetAtom(viewStateAtom);
 
     if (!dataProviderManager) {
         return null;
@@ -26,7 +30,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     }
 
     return (
-        <DataProvidersWrapper
+        <VisualizationAssemblerWrapper
             moduleInstanceId={props.viewContext.getInstanceIdString()}
             fieldId={fieldId}
             dataProviderManager={dataProviderManager}
@@ -36,10 +40,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
             workbenchServices={props.workbenchServices}
-            initialVerticalScale={verticalScale}
+            getInitialVerticalScale={getVerticalScale}
             onVerticalScaleChange={setVerticalScale}
+            getInitialViewState={getViewState}
             onViewStateChange={setViewState}
-            viewState={viewState ?? undefined}
         />
     );
 }
