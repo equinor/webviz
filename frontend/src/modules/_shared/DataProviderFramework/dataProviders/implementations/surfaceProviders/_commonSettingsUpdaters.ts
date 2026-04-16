@@ -1,6 +1,5 @@
 import { SurfaceStatisticFunction_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import type { Sensitivity, SensitivityCase } from "@framework/EnsembleSensitivities";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { UpdateFuncWithNoUpdate } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -23,10 +22,12 @@ export function createEnsembleUpdater<
     return ({ getGlobalSetting }) => {
         const fieldIdentifier = getGlobalSetting("fieldId");
         const ensembles = getGlobalSetting("ensembles");
-
+        if (!fieldIdentifier) {
+            return [];
+        }
         const ensembleIdents = ensembles
-            .filter((ensemble: any) => ensemble.getFieldIdentifier() === fieldIdentifier)
-            .map((ensemble: any) => ensemble.getIdent());
+            .filter((ensemble) => ensemble.getFieldIdentifiers().includes(fieldIdentifier))
+            .map((ensemble) => ensemble.getIdent());
 
         return ensembleIdents;
     };
@@ -60,8 +61,8 @@ export function createSensitivityUpdater<
             return [];
         }
         const availableSensitivityPairs: SensitivityNameCasePair[] = [];
-        sensitivities.map((sensitivity: Sensitivity) =>
-            sensitivity.cases.map((sensitivityCase: SensitivityCase) => {
+        sensitivities.map((sensitivity) =>
+            sensitivity.cases.map((sensitivityCase) => {
                 availableSensitivityPairs.push({
                     sensitivityName: sensitivity.name,
                     sensitivityCase: sensitivityCase.name,

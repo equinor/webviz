@@ -71,8 +71,8 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
     }
 
     function handleTogglePolylineEditing() {
-        if (polylineEditingMode !== PolylineEditingMode.NONE) {
-            props.polylinesPlugin.setEditingMode(PolylineEditingMode.NONE);
+        if (polylineEditingMode !== PolylineEditingMode.DISABLED) {
+            props.polylinesPlugin.setEditingMode(PolylineEditingMode.DISABLED);
             return;
         }
         props.polylinesPlugin.setEditingMode(PolylineEditingMode.DRAW);
@@ -112,7 +112,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                         <ToggleButton
                             onToggle={handleTogglePolylineEditing}
                             title="Edit polylines"
-                            active={polylineEditingMode !== PolylineEditingMode.NONE}
+                            active={polylineEditingMode !== PolylineEditingMode.DISABLED}
                         >
                             <Polyline fontSize="inherit" />
                         </ToggleButton>
@@ -149,7 +149,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                         )}
                     </Button>
                 </div>
-                {polylineEditingMode !== PolylineEditingMode.NONE && expanded && (
+                {polylineEditingMode !== PolylineEditingMode.DISABLED && expanded && (
                     <>
                         <div className="flex w-full items-center gap-1 text-md py-1 bg-slate-100">
                             <ToggleButton

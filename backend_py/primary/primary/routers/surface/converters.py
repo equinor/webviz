@@ -15,7 +15,6 @@ from webviz_services.utils.surface_helpers import (
     WellTrajectory,
 )
 from webviz_services.utils.surface_to_png import surface_to_png_bytes_optimized
-from webviz_services.smda_access import StratigraphicUnit
 from webviz_services.utils.surfaces_well_trajectory_formation_segments import FormationSegment
 
 from . import schemas
@@ -187,25 +186,6 @@ def to_api_surface_intersection(
         name=xtgeo_surface_intersection.name,
         z_points=xtgeo_surface_intersection.zval,
         cum_lengths=xtgeo_surface_intersection.distance,
-    )
-
-
-def to_api_stratigraphic_unit(
-    stratigraphic_unit: StratigraphicUnit,
-) -> schemas.StratigraphicUnit:
-    return schemas.StratigraphicUnit(
-        identifier=stratigraphic_unit.identifier,
-        top=stratigraphic_unit.top,
-        base=stratigraphic_unit.base,
-        stratUnitLevel=stratigraphic_unit.strat_unit_level,
-        stratUnitType=stratigraphic_unit.strat_unit_type,
-        topAge=stratigraphic_unit.top_age,
-        baseAge=stratigraphic_unit.base_age,
-        stratUnitParent=stratigraphic_unit.strat_unit_parent,
-        colorR=stratigraphic_unit.color_r,
-        colorG=stratigraphic_unit.color_g,
-        colorB=stratigraphic_unit.color_b,
-        lithologyType=stratigraphic_unit.lithology_type,
     )
 
 
