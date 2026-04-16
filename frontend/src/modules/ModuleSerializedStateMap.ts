@@ -35,6 +35,10 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<M_3DViewerSettings>,
     view?: Partial<M_3DViewerView>,
   },
+  "DbgWorkbenchSpy": {
+    settings?: never,
+    view?: never,
+  },
   "DistributionPlot": {
     settings?: Partial<DistributionPlotSettings>,
     view?: never,
@@ -57,6 +61,18 @@ export type ModuleSerializedStateMap = {
   },
   "Intersection": {
     settings?: Partial<IntersectionSettings>,
+    view?: never,
+  },
+  "Map": {
+    settings?: never,
+    view?: never,
+  },
+  "MyModule": {
+    settings?: never,
+    view?: never,
+  },
+  "MyModule2": {
+    settings?: never,
     view?: never,
   },
   "ParameterDistributions": {
@@ -83,6 +99,10 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<PvtSettings>,
     view?: never,
   },
+  "Rft": {
+    settings?: never,
+    view?: never,
+  },
   "SensitivityPlot": {
     settings?: Partial<SensitivityPlotSettings>,
     view?: never,
@@ -94,6 +114,10 @@ export type ModuleSerializedStateMap = {
   "SimulationTimeSeriesSensitivity": {
     settings?: Partial<SimulationTimeSeriesSensitivitySettings>,
     view?: Partial<SimulationTimeSeriesSensitivityView>,
+  },
+  "SubsurfaceMap": {
+    settings?: never,
+    view?: never,
   },
   "Vfp": {
     settings?: Partial<VfpSettings>,
