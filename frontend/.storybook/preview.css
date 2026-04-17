@@ -2,5 +2,6 @@
 
 body {
     /* background-color: purple; */
+    overflow: unset;
     @apply bg-canvas;
 }

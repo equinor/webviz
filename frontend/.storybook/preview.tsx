@@ -11,20 +11,25 @@ import "../src/styles/index.css";
 import "./preview.css";
 
 const preview: Preview = {
+    tags: ["autodocs"],
+
     decorators: [
-        (Story) => (
+        (Story, ctx) => (
             <>
-                <div
-                    className="bg-canvas gap-horizontal-sm px-horizontal-2xs py-horizontal-3xs fixed top-1 right-1 flex rounded"
-                    style={{
-                        position: "fixed",
-                        top: "1rem",
-                        right: "1rem",
-                    }}
-                >
-                    <DarkModeButton />
-                    <DensityModeToggle />
-                </div>
+                {/* TODO: Dark-mode buttons overlap content too much in doc-view. Hide it for now*/}
+                {ctx.viewMode !== "docs" && (
+                    <div
+                        className="bg-canvas gap-horizontal-sm px-horizontal-2xs py-horizontal-3xs fixed top-1 right-1 flex rounded"
+                        style={{
+                            position: "fixed",
+                            top: "1rem",
+                            right: "1rem",
+                        }}
+                    >
+                        <DarkModeButton />
+                        <DensityModeToggle />
+                    </div>
+                )}
                 <div className="bg-surface border-neutral-subtle py-horizontal-2xl px-horizontal-xl h-full w-full rounded border">
                     <Story />
                 </div>

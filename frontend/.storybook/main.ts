@@ -11,6 +11,7 @@ import aliases from "../aliases.json" with { type: "json" };
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const config: StorybookConfig = {
+    addons: ["@storybook/addon-docs"],
     stories: ["../src/**/*.stories.@(js|jsx|ts|tsx)"],
     docs: {},
     framework: {

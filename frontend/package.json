@@ -97,6 +97,7 @@
         "@playwright/experimental-ct-react": "~1.58.2",
         "@playwright/test": "~1.58.2",
         "@storybook/react-vite": "^10.3.3",
+        "@storybook/addon-docs": "^10.3.3",
         "@tailwindcss/vite": "^4.0.9",
         "@types/culori": "^4.0.0",
         "@types/geojson": "^7946.0.16",
