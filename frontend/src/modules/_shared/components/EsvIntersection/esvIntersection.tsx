@@ -38,6 +38,7 @@ import type { ColorScale } from "@lib/utils/ColorScale";
 import { fuzzyCompare } from "@lib/utils/fuzzyCompare";
 import type { Size2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { useIsMountedRef } from "@modules/_shared/hooks/useIsMountedRef";
 
 import type { InteractionHandlerTopicPayload } from "./interaction/InteractionHandler";
 import { InteractionHandler, InteractionHandlerTopic } from "./interaction/InteractionHandler";
@@ -235,6 +236,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
 
     const containerRef = React.useRef<HTMLDivElement>(null);
     const automaticChanges = React.useRef<boolean>(false);
+    const isMountedRef = useIsMountedRef();
 
     const containerSize = useElementSize(containerRef);
 
@@ -401,21 +403,26 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         }
     }
 
-    const initializePixiApplication = React.useCallback(async function initializePixiApplication() {
-        const newPixiRenderApplication = new PixiRenderApplication();
-        await newPixiRenderApplication.init({
-            context: null,
-            antialias: true,
-            hello: false,
-            premultipliedAlpha: false,
-            preserveDrawingBuffer: false,
-            backgroundColor: "#fff",
-            clearBeforeRender: true,
-            backgroundAlpha: 0,
-        });
+    const initializePixiApplication = React.useCallback(
+        async function initializePixiApplication() {
+            const newPixiRenderApplication = new PixiRenderApplication();
+            await newPixiRenderApplication.init({
+                context: null,
+                antialias: true,
+                hello: false,
+                premultipliedAlpha: false,
+                preserveDrawingBuffer: false,
+                backgroundColor: "#fff",
+                clearBeforeRender: true,
+                backgroundAlpha: 0,
+            });
 
-        setPixiRenderApplication(newPixiRenderApplication);
-    }, []);
+            if (isMountedRef.current) {
+                setPixiRenderApplication(newPixiRenderApplication);
+            }
+        },
+        [isMountedRef],
+    );
 
     React.useEffect(
         function handleMount() {
@@ -492,6 +499,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 setPrevShowAxesLabels(undefined);
                 setPrevShowAxes(undefined);
                 setInteractionHandler(null);
+                setPixiRenderApplication(null);
                 newInteractionHandler.destroy();
                 newEsvController.destroy();
             };
