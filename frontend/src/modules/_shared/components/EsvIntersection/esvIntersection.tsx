@@ -31,7 +31,6 @@ import {
     WellborepathLayer,
 } from "@equinor/esv-intersection";
 import { cloneDeep, isEqual } from "lodash";
-import { Renderer, RENDERER_TYPE, utils } from "pixi.js";
 
 import type { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -39,6 +38,7 @@ import type { ColorScale } from "@lib/utils/ColorScale";
 import { fuzzyCompare } from "@lib/utils/fuzzyCompare";
 import type { Size2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { useIsMountedRef } from "@modules/_shared/hooks/useIsMountedRef";
 
 import type { InteractionHandlerTopicPayload } from "./interaction/InteractionHandler";
 import { InteractionHandler, InteractionHandlerTopic } from "./interaction/InteractionHandler";
@@ -197,9 +197,10 @@ function makeLayer<T extends keyof LayerDataTypeMap>(
                 id,
                 options as WellborepathLayerOptions<[number, number][]>,
             ) as unknown as Layer<LayerDataTypeMap[T]>;
-    }
 
-    throw new Error("Unsupported layer type");
+        default:
+            throw new Error("Unsupported layer type");
+    }
 }
 
 function isPixiLayer(layer: Layer<unknown>): boolean {
@@ -235,6 +236,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
 
     const containerRef = React.useRef<HTMLDivElement>(null);
     const automaticChanges = React.useRef<boolean>(false);
+    const isMountedRef = useIsMountedRef();
 
     const containerSize = useElementSize(containerRef);
 
@@ -401,6 +403,27 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         }
     }
 
+    const initializePixiApplication = React.useCallback(
+        async function initializePixiApplication() {
+            const newPixiRenderApplication = new PixiRenderApplication();
+            await newPixiRenderApplication.init({
+                context: null,
+                antialias: true,
+                hello: false,
+                premultipliedAlpha: false,
+                preserveDrawingBuffer: false,
+                backgroundColor: "#fff",
+                clearBeforeRender: true,
+                backgroundAlpha: 0,
+            });
+
+            if (isMountedRef.current) {
+                setPixiRenderApplication(newPixiRenderApplication);
+            }
+        },
+        [isMountedRef],
+    );
+
     React.useEffect(
         function handleMount() {
             if (!containerRef.current) {
@@ -453,20 +476,8 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             newEsvController.addLayer(gridLayer);
             newEsvController.hideLayer("grid");
 
-            const newPixiRenderApplication = new CustomPixiRenderApplication({
-                context: null,
-                antialias: true,
-                hello: false,
-                powerPreference: "default",
-                premultipliedAlpha: false,
-                preserveDrawingBuffer: false,
-                backgroundColor: "#fff",
-                clearBeforeRender: true,
-                backgroundAlpha: 0,
-            });
-
+            initializePixiApplication();
             setEsvController(newEsvController);
-            setPixiRenderApplication(newPixiRenderApplication);
 
             const newInteractionHandler = new InteractionHandler(newEsvController, containerRef.current, {
                 intersectionOptions: {
@@ -488,12 +499,12 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 setPrevShowAxesLabels(undefined);
                 setPrevShowAxes(undefined);
                 setInteractionHandler(null);
-                newPixiRenderApplication.destroy();
+                setPixiRenderApplication(null);
                 newInteractionHandler.destroy();
                 newEsvController.destroy();
             };
         },
-        [props.intersectionThreshold],
+        [initializePixiApplication, props.intersectionThreshold],
     );
 
     React.useEffect(
@@ -587,40 +598,4 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             ></div>
         </>
     );
-}
-
-class CustomPixiRenderApplication extends PixiRenderApplication {
-    constructor(options: any) {
-        super(options);
-    }
-
-    destroy() {
-        this.stage?.destroy({
-            children: true,
-            texture: true,
-            baseTexture: true,
-        });
-
-        this.stage = undefined;
-
-        const renderType = this.renderer?.type;
-        const glContext = this.renderer instanceof Renderer ? this.renderer?.gl : undefined;
-
-        this.renderer?.destroy(true);
-
-        if (renderType === RENDERER_TYPE.WEBGL && glContext) {
-            const loseContextExt = glContext.getExtension("WEBGL_lose_context");
-            if (loseContextExt && !glContext.isContextLost()) {
-                loseContextExt.loseContext();
-            }
-        }
-
-        utils.clearTextureCache();
-
-        if (this.renderer?.view?.parentNode) {
-            this.renderer.view.parentNode.removeChild(this.renderer.view);
-        }
-
-        this.renderer = undefined;
-    }
 }
