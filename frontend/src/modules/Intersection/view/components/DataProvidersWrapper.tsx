@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -142,7 +142,8 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     const fieldIdentifier = props.dataProviderManager.getGlobalSetting("fieldId");
 
-    const [persistedViewLinks, setPersistedViewLinks] = useAtom(viewLinksAtom);
+    const persistedViewLinks = useAtomValue(viewLinksAtom);
+    const setPersistedViewLinks = useSetAtom(viewLinksAtom);
 
     // Assemble visualization of providers
     const assemblerProduct = useVisualizationAssemblerProduct(props.dataProviderManager, VISUALIZATION_ASSEMBLER);

@@ -75,6 +75,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const lastPublishedViewportRef = React.useRef<Viewport | null>(null);
     const lastAppliedSyncedViewportRef = React.useRef<Viewport | null>(null);
     const hasRestoredLinkedViewportRef = React.useRef(false);
+    const skipRefocusDueToRestoreRef = React.useRef(false);
 
     const [verticalScale, setVerticalScale] = React.useState<number>(10.0);
     const lastAppliedSyncedVerticalScaleRef = React.useRef<number | null>(null);
@@ -149,6 +150,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 return;
             }
             hasRestoredLinkedViewportRef.current = true;
+            skipRefocusDueToRestoreRef.current = true;
             setViewport((prev) => {
                 if (!prev || !isEqual(prev, linkedViewport)) {
                     // A linked peer changed the viewport — stop fighting with refocus
@@ -241,6 +243,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     React.useEffect(
         function handleRefocus() {
+            if (skipRefocusDueToRestoreRef.current) {
+                skipRefocusDueToRestoreRef.current = false;
+                return;
+            }
             if (!effectiveFocusBounds || !isValidBounds(effectiveFocusBounds)) return;
             if (fitInViewStatus === FitInViewStatus.ON || props.doRefocus) {
                 refocusViewport();
