@@ -32,7 +32,8 @@ export function Title(props: TitleProps): React.ReactNode {
                     </PopoverBase.Close>
                 )}
             </div>
-            <Separator />
+
+            <Separator className="-mx-horizontal-sm" />
         </>
     );
 }
