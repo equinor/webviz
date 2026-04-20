@@ -1,13 +1,22 @@
+import type { JTDSchemaType } from "ajv/dist/jtd";
+
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
+import type { Viewport } from "@framework/types/viewport";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import type { PersistedViewLink } from "./atoms/baseAtoms";
 import { viewLinksAtom } from "./atoms/baseAtoms";
+import type { ViewLink } from "./components/ViewLinkManager";
 
 export type SerializedView = {
-    viewLinks: PersistedViewLink[];
+    viewLinks: ViewLink[];
 };
+
+// JTD has no tuple type — use elements with a cast for fixed-length arrays
+const NULLABLE_VIEWPORT_SCHEMA = {
+    nullable: true,
+    elements: { type: "float64" },
+} as JTDSchemaType<Viewport | null>;
 
 const schemaBuilder = new SchemaBuilder<SerializedView>(() => ({
     properties: {
@@ -17,7 +26,7 @@ const schemaBuilder = new SchemaBuilder<SerializedView>(() => ({
                     id: { type: "string" },
                     color: { type: "string" },
                     viewIds: { elements: { type: "string" } },
-                    viewport: { nullable: true, elements: { type: "float64" as const } },
+                    viewport: NULLABLE_VIEWPORT_SCHEMA,
                     viewportSourceViewId: { nullable: true, type: "string" },
                     verticalScale: { type: "float64" },
                     bounds: {
@@ -36,11 +45,13 @@ const schemaBuilder = new SchemaBuilder<SerializedView>(() => ({
 export const SERIALIZED_VIEW = schemaBuilder.build();
 
 export const serializeView: SerializeStateFunction<SerializedView> = (get) => {
+    const viewLinks = get(viewLinksAtom);
+
     return {
-        viewLinks: get(viewLinksAtom),
+        viewLinks: viewLinks ?? [],
     };
 };
 
 export const deserializeView: DeserializeStateFunction<SerializedView> = (raw, set) => {
-    setIfDefined(set, viewLinksAtom, raw.viewLinks);
+    setIfDefined(set, viewLinksAtom, raw.viewLinks ?? []);
 };

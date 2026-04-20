@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -48,12 +48,11 @@ import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 
-import { toPersistedViewLinks, toViewLinks, viewLinksAtom } from "../atoms/baseAtoms";
+import { viewLinksAtom } from "../atoms/baseAtoms";
 
 import { MultiViewLayout } from "./MultiViewLayout";
 import { ViewDataProcessor } from "./ViewDataProcessor";
-import type { ViewLink } from "./ViewLinkManager";
-import { ViewLinkManager } from "./ViewLinkManager";
+import { ViewLinkManager, type ViewLink } from "./ViewLinkManager";
 
 export type DataProvidersWrapperProps = {
     dataProviderManager: DataProviderManager;
@@ -140,20 +139,18 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 
 export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
-    const persistedViewLinks = useAtomValue(viewLinksAtom);
-    const setPersistedViewLinks = useSetAtom(viewLinksAtom);
-
-    const handleViewLinksChange = React.useCallback(
-        (viewLinks: ViewLink[]) => {
-            setPersistedViewLinks(toPersistedViewLinks(viewLinks));
-        },
-        [setPersistedViewLinks],
-    );
 
     const fieldIdentifier = props.dataProviderManager.getGlobalSetting("fieldId");
 
+    const [persistedViewLinks, setPersistedViewLinks] = useAtom(viewLinksAtom);
+
     // Assemble visualization of providers
     const assemblerProduct = useVisualizationAssemblerProduct(props.dataProviderManager, VISUALIZATION_ASSEMBLER);
+
+    // if (assemblerProduct === null) {
+    //     return null;
+    // }
+
     if (assemblerProduct.children.length === 0) {
         statusWriter.addWarning("Create intersection view to visualize");
     }
@@ -182,6 +179,13 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     const intersectionViews = allIntersectionViews.slice(0, MAX_INTERSECTION_VIEWS);
 
+    const handleViewLinksChange = React.useCallback(
+        function handleViewLinksChange(viewLinks: ViewLink[]) {
+            setPersistedViewLinks(viewLinks);
+        },
+        [setPersistedViewLinks],
+    );
+
     if (intersectionViews.length === 0) {
         return null;
     }
@@ -190,7 +194,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         <ViewLinkManager
             intersectionViews={intersectionViews}
             linkColors={props.workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical).getColors()}
-            initialViewLinks={toViewLinks(persistedViewLinks, intersectionViews)}
+            initialViewLinks={persistedViewLinks}
             onViewLinksChange={handleViewLinksChange}
         >
             <MultiViewLayout viewCount={intersectionViews.length} preferredViewLayout={props.preferredViewLayout}>

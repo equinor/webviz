@@ -1,6 +1,7 @@
 import React from "react";
 
 import { isEqual } from "lodash";
+import { v4 } from "uuid";
 
 import type { Viewport } from "@framework/types/viewport";
 import type { BBox } from "@lib/utils/bbox";
@@ -10,7 +11,7 @@ import type { Bounds } from "@modules/_shared/components/EsvIntersection";
 export type ViewLink = {
     id: string;
     color: string;
-    views: IntersectionViewInfo[];
+    viewIds: string[];
     viewport: Viewport | null;
     viewportSourceViewId: string | null;
     verticalScale: number;
@@ -29,11 +30,7 @@ type ViewLinkManagerContextValue = {
     intersectionViews: IntersectionViewInfo[];
     hoveredViewIds: ReadonlySet<string>;
     setHoveredViewIds: (viewIds: ReadonlySet<string>) => void;
-    toggleViewLink: (
-        thisView: IntersectionViewInfo,
-        otherView: IntersectionViewInfo,
-        initiatorViewport?: Viewport | null,
-    ) => void;
+    toggleViewLink: (thisViewId: string, otherViewId: string, initiatorViewport?: Viewport | null) => void;
     onLinkedViewportChange: (viewId: string, viewport: Viewport) => void;
     onLinkedVerticalScaleChange: (viewId: string, scale: number) => void;
     onLinkedBoundsChange: (viewId: string, bounds: Bounds) => void;
@@ -44,9 +41,10 @@ const ViewLinkManagerContext = React.createContext<ViewLinkManagerContextValue |
 const EMPTY_VIEW_LINKS: ViewLink[] = [];
 const EMPTY_INTERSECTION_VIEWS: IntersectionViewInfo[] = [];
 
-function computeViewLinkFocusBounds(views: IntersectionViewInfo[]): Bounds | null {
+function computeViewLinkFocusBounds(viewIds: string[], intersectionViews: IntersectionViewInfo[]): Bounds | null {
+    const views = viewIds.map((id) => intersectionViews.find((v) => v.id === id)).filter(Boolean);
     const unionBBox = views.reduce<BBox | null>((acc, view) => {
-        if (!view.combinedBoundingBox) return acc;
+        if (!view?.combinedBoundingBox) return acc;
         return acc ? combine(acc, view.combinedBoundingBox) : view.combinedBoundingBox;
     }, null);
     return unionBBox ? { x: [unionBBox.min.x, unionBBox.max.x], y: [unionBBox.min.y, unionBBox.max.y] } : null;
@@ -55,7 +53,7 @@ function computeViewLinkFocusBounds(views: IntersectionViewInfo[]): Bounds | nul
 export type ViewLinkManagerProps = {
     intersectionViews: IntersectionViewInfo[];
     linkColors: string[];
-    initialViewLinks?: ViewLink[];
+    initialViewLinks: ViewLink[] | null;
     onViewLinksChange?: (viewLinks: ViewLink[]) => void;
     children: React.ReactNode;
 };
@@ -74,82 +72,83 @@ export function ViewLinkManager({
     onViewLinksChange,
     children,
 }: ViewLinkManagerProps): React.ReactNode {
-    const [viewLinks, setViewLinks] = React.useState<ViewLink[]>(initialViewLinks ?? []);
+    const [viewLinks, setViewLinks] = React.useState<ViewLink[]>([]);
     const [prevViewIds, setPrevViewIds] = React.useState<string[]>([]);
     const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(EMPTY_HOVERED_VIEW_IDS);
+    const hasAppliedInitialRef = React.useRef(false);
 
-    // Notify parent of view link changes for persistence
+    // Apply initial view links once they become defined.
+    // null = intersectionViews not yet available from DPF, so we wait.
+    if (!hasAppliedInitialRef.current && initialViewLinks !== null) {
+        hasAppliedInitialRef.current = true;
+        if (initialViewLinks.length > 0) {
+            setViewLinks(initialViewLinks);
+        }
+    }
+
+    // Notify parent of view link changes for persistence (only after initialization)
     React.useEffect(() => {
+        if (!hasAppliedInitialRef.current) return;
         onViewLinksChange?.(viewLinks);
     }, [viewLinks, onViewLinksChange]);
 
-    // Clean up ViewLinks when views are added or removed, and refresh stored view info (name/color)
+    // Clean up ViewLinks when views are added or removed
     const currentViewIds = intersectionViews.map((v) => v.id);
     if (!isEqual(currentViewIds, prevViewIds)) {
         setPrevViewIds(currentViewIds);
         const currentIdSet = new Set(currentViewIds);
         const cleanedLinks = viewLinks
-            .map((link) => {
-                const updatedViews = link.views
-                    .filter((v) => currentIdSet.has(v.id))
-                    .map((v) => intersectionViews.find((iv) => iv.id === v.id) ?? v);
-                const membershipChanged = updatedViews.length !== link.views.length;
-                return {
-                    ...link,
-                    views: updatedViews,
-                    // Reset bounds when membership changes so remaining views re-report fresh bounds
-                    bounds: membershipChanged ? null : link.bounds,
-                };
-            })
-            .filter((link) => link.views.length > 1);
-        if (cleanedLinks.length !== viewLinks.length) {
+            .map((link) => ({
+                ...link,
+                viewIds: link.viewIds.filter((id) => currentIdSet.has(id)),
+                // Reset bounds when membership changes so remaining views re-report fresh bounds
+                bounds: link.viewIds.some((id) => !currentIdSet.has(id)) ? null : link.bounds,
+            }))
+            .filter((link) => link.viewIds.length > 1);
+        if (!isEqual(cleanedLinks, viewLinks)) {
             setViewLinks(cleanedLinks);
         }
     }
 
     // Stable callbacks — use functional state updates so no external deps are needed
     const toggleViewLink = React.useCallback(
-        function toggleViewLink(
-            thisView: IntersectionViewInfo,
-            otherView: IntersectionViewInfo,
-            initiatorViewport?: Viewport | null,
-        ) {
+        function toggleViewLink(thisViewId: string, otherViewId: string, initiatorViewport?: Viewport | null) {
             setViewLinks((prev) => {
-                const thisLinkIdx = prev.findIndex((l) => l.views.some((v) => v.id === thisView.id));
-                const otherLinkIdx = prev.findIndex((l) => l.views.some((v) => v.id === otherView.id));
+                const thisLinkIdx = prev.findIndex((l) => l.viewIds.includes(thisViewId));
+                const otherLinkIdx = prev.findIndex((l) => l.viewIds.includes(otherViewId));
 
                 // Already in the same ViewLink → remove thisView
                 if (thisLinkIdx !== -1 && thisLinkIdx === otherLinkIdx) {
-                    const updatedViews = prev[thisLinkIdx].views.filter((v) => v.id !== thisView.id);
-                    if (updatedViews.length <= 1) {
+                    const updatedViewIds = prev[thisLinkIdx].viewIds.filter((id) => id !== thisViewId);
+                    if (updatedViewIds.length <= 1) {
                         return prev.filter((_, i) => i !== thisLinkIdx);
                     }
-                    return prev.map((link, i) => (i === thisLinkIdx ? { ...link, views: updatedViews } : link));
+                    return prev.map((link, i) => (i === thisLinkIdx ? { ...link, viewIds: updatedViewIds } : link));
                 }
 
                 if (thisLinkIdx !== -1) {
                     // This view is already in a different link → leave it first
-                    const prunedViews = prev[thisLinkIdx].views.filter((v) => v.id !== thisView.id);
+                    const prunedViewIds = prev[thisLinkIdx].viewIds.filter((id) => id !== thisViewId);
                     const newLinks =
-                        prunedViews.length <= 1
+                        prunedViewIds.length <= 1
                             ? prev.filter((_, i) => i !== thisLinkIdx)
-                            : prev.map((link, i) => (i === thisLinkIdx ? { ...link, views: prunedViews } : link));
+                            : prev.map((link, i) => (i === thisLinkIdx ? { ...link, viewIds: prunedViewIds } : link));
 
                     // Now join otherView's link (if it has one) or create a new link
-                    const updatedOtherLinkIdx = newLinks.findIndex((l) => l.views.some((v) => v.id === otherView.id));
+                    const updatedOtherLinkIdx = newLinks.findIndex((l) => l.viewIds.includes(otherViewId));
                     if (updatedOtherLinkIdx !== -1) {
                         return newLinks.map((link, i) =>
-                            i === updatedOtherLinkIdx ? { ...link, views: [...link.views, thisView] } : link,
+                            i === updatedOtherLinkIdx ? { ...link, viewIds: [...link.viewIds, thisViewId] } : link,
                         );
                     }
                     return [
                         ...newLinks,
                         {
-                            id: `view-link-${Date.now()}`,
+                            id: `view-link-${v4()}`,
                             color: pickNextLinkColor(newLinks, linkColors),
-                            views: [thisView, otherView],
+                            viewIds: [thisViewId, otherViewId],
                             viewport: initiatorViewport ?? null,
-                            viewportSourceViewId: thisView.id,
+                            viewportSourceViewId: thisViewId,
                             verticalScale: 10.0,
                             bounds: null,
                         },
@@ -159,7 +158,7 @@ export function ViewLinkManager({
                 if (otherLinkIdx !== -1) {
                     // Other view is in a link → join it
                     return prev.map((link, i) =>
-                        i === otherLinkIdx ? { ...link, views: [...link.views, thisView] } : link,
+                        i === otherLinkIdx ? { ...link, viewIds: [...link.viewIds, thisViewId] } : link,
                     );
                 }
 
@@ -167,11 +166,11 @@ export function ViewLinkManager({
                 return [
                     ...prev,
                     {
-                        id: `view-link-${Date.now()}`,
+                        id: `view-link-${v4()}`,
                         color: pickNextLinkColor(prev, linkColors),
-                        views: [thisView, otherView],
+                        viewIds: [thisViewId, otherViewId],
                         viewport: initiatorViewport ?? null,
-                        viewportSourceViewId: initiatorViewport ? thisView.id : null,
+                        viewportSourceViewId: initiatorViewport ? thisViewId : null,
                         verticalScale: 10.0,
                         bounds: null,
                     },
@@ -187,9 +186,7 @@ export function ViewLinkManager({
     ) {
         setViewLinks((prev) =>
             prev.map((link) =>
-                link.views.some((v) => v.id === viewId)
-                    ? { ...link, viewport: viewport, viewportSourceViewId: viewId }
-                    : link,
+                link.viewIds.includes(viewId) ? { ...link, viewport: viewport, viewportSourceViewId: viewId } : link,
             ),
         );
     }, []);
@@ -199,14 +196,14 @@ export function ViewLinkManager({
         scale: number,
     ) {
         setViewLinks((prev) =>
-            prev.map((link) => (link.views.some((v) => v.id === viewId) ? { ...link, verticalScale: scale } : link)),
+            prev.map((link) => (link.viewIds.includes(viewId) ? { ...link, verticalScale: scale } : link)),
         );
     }, []);
 
     const onLinkedBoundsChange = React.useCallback(function onLinkedBoundsChange(viewId: string, bounds: Bounds) {
         setViewLinks((prev) =>
             prev.map((link) => {
-                if (!link.views.some((v) => v.id === viewId)) return link;
+                if (!link.viewIds.includes(viewId)) return link;
                 const union = link.bounds
                     ? {
                           x: [Math.min(link.bounds.x[0], bounds.x[0]), Math.max(link.bounds.x[1], bounds.x[1])] as [
@@ -251,6 +248,7 @@ export function ViewLinkManager({
 
 export type ViewLinkResult = {
     availableViewLinks: ViewLink[];
+    intersectionViews: IntersectionViewInfo[];
     unlinkedViews: IntersectionViewInfo[];
     isLinked: boolean;
     isHoverHighlighted: boolean;
@@ -279,21 +277,15 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
     const onLinkedVerticalScaleChange = ctx?.onLinkedVerticalScaleChange;
     const onLinkedBoundsChange = ctx?.onLinkedBoundsChange;
 
-    const viewLink = viewLinks.find((l) => l.views.some((v) => v.id === viewId));
+    const viewLink = viewLinks.find((l) => l.viewIds.includes(viewId));
     const isLinked = viewLink !== undefined;
     const multipleViews = intersectionViews.length > 1;
 
-    // Looks up both views from intersectionViews so toggleViewLink receives full IntersectionViewInfo objects.
-    // intersectionViews is in deps because the lookup needs current name/color.
     const onToggleViewLink = React.useCallback(
         (otherViewId: string, initiatorViewport?: Viewport | null) => {
-            const thisView = intersectionViews.find((v) => v.id === viewId);
-            const otherView = intersectionViews.find((v) => v.id === otherViewId);
-            if (thisView && otherView) {
-                toggleViewLink?.(thisView, otherView, initiatorViewport);
-            }
+            toggleViewLink?.(viewId, otherViewId, initiatorViewport);
         },
-        [viewId, intersectionViews, toggleViewLink],
+        [viewId, toggleViewLink],
     );
 
     const onLinkedViewportChangeForView = React.useCallback(
@@ -325,22 +317,23 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
     const availableViewLinks: ViewLink[] = !multipleViews ? [] : viewLinks;
 
     // Views not in any ViewLink, excluding self
-    const viewIdsInAnyLink = new Set(viewLinks.flatMap((l) => l.views.map((v) => v.id)));
+    const viewIdsInAnyLink = new Set(viewLinks.flatMap((l) => l.viewIds));
     const unlinkedViews = !multipleViews
         ? []
         : intersectionViews.filter((v) => v.id !== viewId && !viewIdsInAnyLink.has(v.id));
 
-    const focusBounds = viewLink ? computeViewLinkFocusBounds(viewLink.views) : null;
+    const focusBounds = viewLink ? computeViewLinkFocusBounds(viewLink.viewIds, intersectionViews) : null;
     const isHoverHighlighted = hoveredViewIds.has(viewId);
 
     // Use the link's color when highlighted via a link group, otherwise null (default blue for unlinked hover)
     const hoveredLink = isHoverHighlighted
-        ? viewLinks.find((l) => l.views.some((v) => v.id === viewId) || l.views.some((v) => hoveredViewIds.has(v.id)))
+        ? viewLinks.find((l) => l.viewIds.includes(viewId) || l.viewIds.some((id) => hoveredViewIds.has(id)))
         : null;
     const highlightColor = hoveredLink?.color ?? null;
 
     return {
         availableViewLinks,
+        intersectionViews,
         unlinkedViews,
         isLinked,
         isHoverHighlighted,

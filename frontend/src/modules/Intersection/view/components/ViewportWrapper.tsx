@@ -74,6 +74,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const [viewport, setViewport] = React.useState<Viewport | null>(null);
     const lastPublishedViewportRef = React.useRef<Viewport | null>(null);
     const lastAppliedSyncedViewportRef = React.useRef<Viewport | null>(null);
+    const hasRestoredLinkedViewportRef = React.useRef(false);
 
     const [verticalScale, setVerticalScale] = React.useState<number>(10.0);
     const lastAppliedSyncedVerticalScaleRef = React.useRef<number | null>(null);
@@ -94,7 +95,6 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const syncedVerticalScale = syncHelper.useValue(SyncSettingKey.VERTICAL_SCALE, "global.syncValue.verticalScale");
 
     // Render from local viewport only. Linked peers update this value through guarded sync.
-    const effectiveViewport = viewport;
     const effectiveVerticalScale = isLinked && linkedVerticalScale !== null ? linkedVerticalScale : verticalScale;
     const effectiveFocusBounds = isLinked && linkedFocusBounds ? linkedFocusBounds : props.focusBounds;
     const effectiveLayerItemsBounds = isLinked && linkedBounds ? linkedBounds : props.layerItemsBounds;
@@ -139,11 +139,16 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     React.useLayoutEffect(
         function syncLocalViewportFromSharedViewport() {
             if (!isLinked || !linkedViewport || !isValidViewport(linkedViewport)) {
+                hasRestoredLinkedViewportRef.current = false;
                 return;
             }
-            if (linkedViewportSourceViewId === viewId) {
+            // During normal operation the source view already has the viewport locally,
+            // so re-applying from the link is unnecessary. But on session restore the
+            // local viewport starts as null — allow the first application through.
+            if (linkedViewportSourceViewId === viewId && hasRestoredLinkedViewportRef.current) {
                 return;
             }
+            hasRestoredLinkedViewportRef.current = true;
             setViewport((prev) => {
                 if (!prev || !isEqual(prev, linkedViewport)) {
                     // A linked peer changed the viewport — stop fighting with refocus
@@ -221,7 +226,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 ) * DISPLACEMENT_FACTOR,
             ];
 
-            if (isValidViewport(candidateViewport) && !isEqual(candidateViewport, effectiveViewport)) {
+            if (isValidViewport(candidateViewport) && !isEqual(candidateViewport, viewport)) {
                 setViewport(candidateViewport);
                 if (isLinked) {
                     onLinkedViewportChange(candidateViewport);
@@ -231,14 +236,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 }
             }
         },
-        [
-            effectiveFocusBounds,
-            verticalScalingFactor,
-            effectiveViewport,
-            isLinked,
-            onLinkedViewportChange,
-            onViewportRefocused,
-        ],
+        [effectiveFocusBounds, verticalScalingFactor, viewport, isLinked, onLinkedViewportChange, onViewportRefocused],
     );
 
     React.useEffect(
@@ -376,7 +374,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     layers={props.layerItems}
                     layerIdToNameMap={props.layerItemIdToNameMap}
                     bounds={effectiveLayerItemsBounds}
-                    viewport={effectiveViewport ?? undefined}
+                    viewport={viewport ?? undefined}
                     onViewportChange={handleViewportChange}
                     hoverService={props.hoverService}
                     viewContext={props.viewContext}
@@ -390,14 +388,20 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     onGridLinesToggle={handleShowGridToggle}
                     onVerticalScaleIncrease={handleVerticalScaleIncrease}
                     onVerticalScaleDecrease={handleVerticalScaleDecrease}
-                    viewLinks={viewLinkResult.availableViewLinks.map((link) => ({
-                        id: link.id,
-                        color: link.color,
-                        views: link.views,
-                        containsThisView: link.views.some((v) => v.id === viewId),
-                    }))}
+                    viewLinks={viewLinkResult.availableViewLinks.map((link) => {
+                        const views = link.viewIds
+                            .map((id) => viewLinkResult.intersectionViews.find((v) => v.id === id))
+                            .filter((v): v is NonNullable<typeof v> => v != null)
+                            .map((v) => ({ id: v.id, name: v.name, color: v.color }));
+                        return {
+                            id: link.id,
+                            color: link.color,
+                            views,
+                            containsThisView: link.viewIds.includes(viewId),
+                        };
+                    })}
                     unlinkedViews={viewLinkResult.unlinkedViews}
-                    onToggleViewLink={(otherViewId) => onToggleViewLink(otherViewId, effectiveViewport)}
+                    onToggleViewLink={(otherViewId) => onToggleViewLink(otherViewId, viewport)}
                     onHoverViewLink={onHoverViewLink}
                 />
                 <ColorLegendsContainer colorScales={props.colorScales} height={mainDivSize.height / 2 - 50} />
