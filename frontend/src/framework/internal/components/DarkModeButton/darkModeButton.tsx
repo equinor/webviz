@@ -3,7 +3,7 @@ import React from "react";
 import { DarkMode, LightMode } from "@mui/icons-material";
 
 import { getMainDataAttribute, setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
-import { Button } from "@lib/components/Button";
+import { Button } from "@lib/newComponents/Button";
 
 export function DarkModeButton(): React.ReactNode {
     const [colorScheme, setColorScheme] = React.useState<string | null>(getMainDataAttribute("color-scheme"));

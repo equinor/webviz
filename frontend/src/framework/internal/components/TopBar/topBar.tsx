@@ -375,10 +375,10 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
             ) : (
                 <Dropdown>
                     <Tooltip title="Save session options">
-                        <MenuButton className="flex items-center gap-2 rounded-md p-2 font-medium hover:bg-indigo-100">
+                        <Button variant="text" tone="accent" render={<MenuButton />}>
                             <Save fontSize="small" />
                             <ArrowDropDown fontSize="small" />
-                        </MenuButton>
+                        </Button>
                     </Tooltip>
                     <Menu anchorOrigin="bottom-start">
                         <MenuItem onClick={handleSaveClick} disabled={!saveEnabled}>
@@ -408,7 +408,15 @@ function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef
     const { title, onClick, disabled, ...baseProps } = props;
     return (
         <Tooltip title={title} placement="bottom">
-            <Button {...baseProps} ref={ref} variant="text" tone="accent" onClick={onClick} disabled={disabled}>
+            <Button
+                {...baseProps}
+                ref={ref}
+                variant="text"
+                tone="accent"
+                iconOnly
+                onClick={onClick}
+                disabled={disabled}
+            >
                 {props.children}
             </Button>
         </Tooltip>

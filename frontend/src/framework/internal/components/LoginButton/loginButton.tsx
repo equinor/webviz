@@ -1,18 +1,13 @@
 import React from "react";
 
-import { Dropdown, MenuButton } from "@mui/base";
 import { Login, Logout } from "@mui/icons-material";
 
 import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Menu } from "@lib/components/Menu";
-import { MenuDivider } from "@lib/components/MenuDivider";
-import { MenuItem } from "@lib/components/MenuItem";
-import { MenuText } from "@lib/components/MenuText/menuText";
-import { Tooltip } from "@lib/components/Tooltip";
 import { Avatar } from "@lib/newComponents/Avatar";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Button } from "@lib/newComponents/Button";
+import { Popover } from "@lib/newComponents/Popover";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { makeInitials } from "@lib/utils/userNames";
 
@@ -48,9 +43,9 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
                 />
             );
         } else if (authState === AuthState.NotLoggedIn) {
-            return <Login fontSize="small" className="mr-1" />;
+            return <Login fontSize="small" />;
         } else {
-            return <CircularProgress size="medium-small" className="mr-1" />;
+            return <CircularProgress size="medium-small" />;
         }
     }
 
@@ -79,25 +74,21 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
     }
 
     return (
-        <Dropdown>
-            <Tooltip title={makeText()} placement="bottom">
-                <MenuButton
-                    className={resolveClassNames(
-                        props.className ?? "",
-                        "items-center rounded-md p-2 font-medium hover:bg-indigo-100",
-                    )}
-                >
-                    {makeIcon()}
-                </MenuButton>
-            </Tooltip>
-            <Menu anchorOrigin="bottom-start">
-                <MenuText>{text}</MenuText>
-                <MenuDivider />
-                <MenuItem onClick={handleLogout}>
-                    <Logout fontSize="small" className="mr-2" />
-                    Sign out
-                </MenuItem>
-            </Menu>
-        </Dropdown>
+        <Popover.Root>
+            <Popover.Trigger variant="text" tone="neutral" iconOnly>
+                {makeIcon()}
+            </Popover.Trigger>
+            <Popover.Popup>
+                <div className="flex flex-col">
+                    <Popover.Title fontSize="sm" hideCloseButton>
+                        {text}
+                    </Popover.Title>
+                    <Button variant="text" tone="neutral" onClick={handleLogout}>
+                        <Logout fontSize="inherit" />
+                        Sign out
+                    </Button>
+                </div>
+            </Popover.Popup>
+        </Popover.Root>
     );
 };

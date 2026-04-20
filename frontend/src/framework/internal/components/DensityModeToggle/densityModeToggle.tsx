@@ -3,7 +3,7 @@ import React from "react";
 import { DensityMedium, DensitySmall } from "@mui/icons-material";
 
 import { getMainDataAttribute, setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
-import { Button } from "@lib/components/Button";
+import { Button } from "@lib/newComponents/Button";
 
 export function DensityModeToggle(): React.ReactNode {
     const [density, setDensity] = React.useState<string | null>(getMainDataAttribute("density"));

@@ -2,6 +2,7 @@ import React from "react";
 
 import { Button as ButtonBase } from "@base-ui/react/button";
 import type { ButtonProps as ButtonPropsBase } from "@base-ui/react/button";
+import { defaults } from "lodash";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -64,7 +65,7 @@ const SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const defaultedProps = defaults({}, props, DEFAULT_PROPS);
     const { pressed, iconOnly, ...rest } = defaultedProps;
 
     return (
