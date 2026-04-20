@@ -8,201 +8,355 @@
 
 /* vertical-4xs */
 @utility top-vertical-4xs { top: var(--eds-spacing-vertical-4xs); }
+@utility -top-vertical-4xs { top: calc(var(--eds-spacing-vertical-4xs) * -1); }
 @utility right-vertical-4xs { right: var(--eds-spacing-vertical-4xs); }
+@utility -right-vertical-4xs { right: calc(var(--eds-spacing-vertical-4xs) * -1); }
 @utility bottom-vertical-4xs { bottom: var(--eds-spacing-vertical-4xs); }
+@utility -bottom-vertical-4xs { bottom: calc(var(--eds-spacing-vertical-4xs) * -1); }
 @utility left-vertical-4xs { left: var(--eds-spacing-vertical-4xs); }
+@utility -left-vertical-4xs { left: calc(var(--eds-spacing-vertical-4xs) * -1); }
 @utility inset-vertical-4xs { inset: var(--eds-spacing-vertical-4xs); }
+@utility -inset-vertical-4xs { inset: calc(var(--eds-spacing-vertical-4xs) * -1); }
 @utility inset-x-vertical-4xs { inset-inline: var(--eds-spacing-vertical-4xs); }
+@utility -inset-x-vertical-4xs { inset-inline: calc(var(--eds-spacing-vertical-4xs) * -1); }
 @utility inset-y-vertical-4xs { inset-block: var(--eds-spacing-vertical-4xs); }
+@utility -inset-y-vertical-4xs { inset-block: calc(var(--eds-spacing-vertical-4xs) * -1); }
 
 /* vertical-3xs */
 @utility top-vertical-3xs { top: var(--eds-spacing-vertical-3xs); }
+@utility -top-vertical-3xs { top: calc(var(--eds-spacing-vertical-3xs) * -1); }
 @utility right-vertical-3xs { right: var(--eds-spacing-vertical-3xs); }
+@utility -right-vertical-3xs { right: calc(var(--eds-spacing-vertical-3xs) * -1); }
 @utility bottom-vertical-3xs { bottom: var(--eds-spacing-vertical-3xs); }
+@utility -bottom-vertical-3xs { bottom: calc(var(--eds-spacing-vertical-3xs) * -1); }
 @utility left-vertical-3xs { left: var(--eds-spacing-vertical-3xs); }
+@utility -left-vertical-3xs { left: calc(var(--eds-spacing-vertical-3xs) * -1); }
 @utility inset-vertical-3xs { inset: var(--eds-spacing-vertical-3xs); }
+@utility -inset-vertical-3xs { inset: calc(var(--eds-spacing-vertical-3xs) * -1); }
 @utility inset-x-vertical-3xs { inset-inline: var(--eds-spacing-vertical-3xs); }
+@utility -inset-x-vertical-3xs { inset-inline: calc(var(--eds-spacing-vertical-3xs) * -1); }
 @utility inset-y-vertical-3xs { inset-block: var(--eds-spacing-vertical-3xs); }
+@utility -inset-y-vertical-3xs { inset-block: calc(var(--eds-spacing-vertical-3xs) * -1); }
 
 /* vertical-2xs */
 @utility top-vertical-2xs { top: var(--eds-spacing-vertical-2xs); }
+@utility -top-vertical-2xs { top: calc(var(--eds-spacing-vertical-2xs) * -1); }
 @utility right-vertical-2xs { right: var(--eds-spacing-vertical-2xs); }
+@utility -right-vertical-2xs { right: calc(var(--eds-spacing-vertical-2xs) * -1); }
 @utility bottom-vertical-2xs { bottom: var(--eds-spacing-vertical-2xs); }
+@utility -bottom-vertical-2xs { bottom: calc(var(--eds-spacing-vertical-2xs) * -1); }
 @utility left-vertical-2xs { left: var(--eds-spacing-vertical-2xs); }
+@utility -left-vertical-2xs { left: calc(var(--eds-spacing-vertical-2xs) * -1); }
 @utility inset-vertical-2xs { inset: var(--eds-spacing-vertical-2xs); }
+@utility -inset-vertical-2xs { inset: calc(var(--eds-spacing-vertical-2xs) * -1); }
 @utility inset-x-vertical-2xs { inset-inline: var(--eds-spacing-vertical-2xs); }
+@utility -inset-x-vertical-2xs { inset-inline: calc(var(--eds-spacing-vertical-2xs) * -1); }
 @utility inset-y-vertical-2xs { inset-block: var(--eds-spacing-vertical-2xs); }
+@utility -inset-y-vertical-2xs { inset-block: calc(var(--eds-spacing-vertical-2xs) * -1); }
 
 /* vertical-xs */
 @utility top-vertical-xs { top: var(--eds-spacing-vertical-xs); }
+@utility -top-vertical-xs { top: calc(var(--eds-spacing-vertical-xs) * -1); }
 @utility right-vertical-xs { right: var(--eds-spacing-vertical-xs); }
+@utility -right-vertical-xs { right: calc(var(--eds-spacing-vertical-xs) * -1); }
 @utility bottom-vertical-xs { bottom: var(--eds-spacing-vertical-xs); }
+@utility -bottom-vertical-xs { bottom: calc(var(--eds-spacing-vertical-xs) * -1); }
 @utility left-vertical-xs { left: var(--eds-spacing-vertical-xs); }
+@utility -left-vertical-xs { left: calc(var(--eds-spacing-vertical-xs) * -1); }
 @utility inset-vertical-xs { inset: var(--eds-spacing-vertical-xs); }
+@utility -inset-vertical-xs { inset: calc(var(--eds-spacing-vertical-xs) * -1); }
 @utility inset-x-vertical-xs { inset-inline: var(--eds-spacing-vertical-xs); }
+@utility -inset-x-vertical-xs { inset-inline: calc(var(--eds-spacing-vertical-xs) * -1); }
 @utility inset-y-vertical-xs { inset-block: var(--eds-spacing-vertical-xs); }
+@utility -inset-y-vertical-xs { inset-block: calc(var(--eds-spacing-vertical-xs) * -1); }
 
 /* vertical-sm */
 @utility top-vertical-sm { top: var(--eds-spacing-vertical-sm); }
+@utility -top-vertical-sm { top: calc(var(--eds-spacing-vertical-sm) * -1); }
 @utility right-vertical-sm { right: var(--eds-spacing-vertical-sm); }
+@utility -right-vertical-sm { right: calc(var(--eds-spacing-vertical-sm) * -1); }
 @utility bottom-vertical-sm { bottom: var(--eds-spacing-vertical-sm); }
+@utility -bottom-vertical-sm { bottom: calc(var(--eds-spacing-vertical-sm) * -1); }
 @utility left-vertical-sm { left: var(--eds-spacing-vertical-sm); }
+@utility -left-vertical-sm { left: calc(var(--eds-spacing-vertical-sm) * -1); }
 @utility inset-vertical-sm { inset: var(--eds-spacing-vertical-sm); }
+@utility -inset-vertical-sm { inset: calc(var(--eds-spacing-vertical-sm) * -1); }
 @utility inset-x-vertical-sm { inset-inline: var(--eds-spacing-vertical-sm); }
+@utility -inset-x-vertical-sm { inset-inline: calc(var(--eds-spacing-vertical-sm) * -1); }
 @utility inset-y-vertical-sm { inset-block: var(--eds-spacing-vertical-sm); }
+@utility -inset-y-vertical-sm { inset-block: calc(var(--eds-spacing-vertical-sm) * -1); }
 
 /* vertical-md */
 @utility top-vertical-md { top: var(--eds-spacing-vertical-md); }
+@utility -top-vertical-md { top: calc(var(--eds-spacing-vertical-md) * -1); }
 @utility right-vertical-md { right: var(--eds-spacing-vertical-md); }
+@utility -right-vertical-md { right: calc(var(--eds-spacing-vertical-md) * -1); }
 @utility bottom-vertical-md { bottom: var(--eds-spacing-vertical-md); }
+@utility -bottom-vertical-md { bottom: calc(var(--eds-spacing-vertical-md) * -1); }
 @utility left-vertical-md { left: var(--eds-spacing-vertical-md); }
+@utility -left-vertical-md { left: calc(var(--eds-spacing-vertical-md) * -1); }
 @utility inset-vertical-md { inset: var(--eds-spacing-vertical-md); }
+@utility -inset-vertical-md { inset: calc(var(--eds-spacing-vertical-md) * -1); }
 @utility inset-x-vertical-md { inset-inline: var(--eds-spacing-vertical-md); }
+@utility -inset-x-vertical-md { inset-inline: calc(var(--eds-spacing-vertical-md) * -1); }
 @utility inset-y-vertical-md { inset-block: var(--eds-spacing-vertical-md); }
+@utility -inset-y-vertical-md { inset-block: calc(var(--eds-spacing-vertical-md) * -1); }
 
 /* vertical-lg */
 @utility top-vertical-lg { top: var(--eds-spacing-vertical-lg); }
+@utility -top-vertical-lg { top: calc(var(--eds-spacing-vertical-lg) * -1); }
 @utility right-vertical-lg { right: var(--eds-spacing-vertical-lg); }
+@utility -right-vertical-lg { right: calc(var(--eds-spacing-vertical-lg) * -1); }
 @utility bottom-vertical-lg { bottom: var(--eds-spacing-vertical-lg); }
+@utility -bottom-vertical-lg { bottom: calc(var(--eds-spacing-vertical-lg) * -1); }
 @utility left-vertical-lg { left: var(--eds-spacing-vertical-lg); }
+@utility -left-vertical-lg { left: calc(var(--eds-spacing-vertical-lg) * -1); }
 @utility inset-vertical-lg { inset: var(--eds-spacing-vertical-lg); }
+@utility -inset-vertical-lg { inset: calc(var(--eds-spacing-vertical-lg) * -1); }
 @utility inset-x-vertical-lg { inset-inline: var(--eds-spacing-vertical-lg); }
+@utility -inset-x-vertical-lg { inset-inline: calc(var(--eds-spacing-vertical-lg) * -1); }
 @utility inset-y-vertical-lg { inset-block: var(--eds-spacing-vertical-lg); }
+@utility -inset-y-vertical-lg { inset-block: calc(var(--eds-spacing-vertical-lg) * -1); }
 
 /* vertical-xl */
 @utility top-vertical-xl { top: var(--eds-spacing-vertical-xl); }
+@utility -top-vertical-xl { top: calc(var(--eds-spacing-vertical-xl) * -1); }
 @utility right-vertical-xl { right: var(--eds-spacing-vertical-xl); }
+@utility -right-vertical-xl { right: calc(var(--eds-spacing-vertical-xl) * -1); }
 @utility bottom-vertical-xl { bottom: var(--eds-spacing-vertical-xl); }
+@utility -bottom-vertical-xl { bottom: calc(var(--eds-spacing-vertical-xl) * -1); }
 @utility left-vertical-xl { left: var(--eds-spacing-vertical-xl); }
+@utility -left-vertical-xl { left: calc(var(--eds-spacing-vertical-xl) * -1); }
 @utility inset-vertical-xl { inset: var(--eds-spacing-vertical-xl); }
+@utility -inset-vertical-xl { inset: calc(var(--eds-spacing-vertical-xl) * -1); }
 @utility inset-x-vertical-xl { inset-inline: var(--eds-spacing-vertical-xl); }
+@utility -inset-x-vertical-xl { inset-inline: calc(var(--eds-spacing-vertical-xl) * -1); }
 @utility inset-y-vertical-xl { inset-block: var(--eds-spacing-vertical-xl); }
+@utility -inset-y-vertical-xl { inset-block: calc(var(--eds-spacing-vertical-xl) * -1); }
 
 /* vertical-2xl */
 @utility top-vertical-2xl { top: var(--eds-spacing-vertical-2xl); }
+@utility -top-vertical-2xl { top: calc(var(--eds-spacing-vertical-2xl) * -1); }
 @utility right-vertical-2xl { right: var(--eds-spacing-vertical-2xl); }
+@utility -right-vertical-2xl { right: calc(var(--eds-spacing-vertical-2xl) * -1); }
 @utility bottom-vertical-2xl { bottom: var(--eds-spacing-vertical-2xl); }
+@utility -bottom-vertical-2xl { bottom: calc(var(--eds-spacing-vertical-2xl) * -1); }
 @utility left-vertical-2xl { left: var(--eds-spacing-vertical-2xl); }
+@utility -left-vertical-2xl { left: calc(var(--eds-spacing-vertical-2xl) * -1); }
 @utility inset-vertical-2xl { inset: var(--eds-spacing-vertical-2xl); }
+@utility -inset-vertical-2xl { inset: calc(var(--eds-spacing-vertical-2xl) * -1); }
 @utility inset-x-vertical-2xl { inset-inline: var(--eds-spacing-vertical-2xl); }
+@utility -inset-x-vertical-2xl { inset-inline: calc(var(--eds-spacing-vertical-2xl) * -1); }
 @utility inset-y-vertical-2xl { inset-block: var(--eds-spacing-vertical-2xl); }
+@utility -inset-y-vertical-2xl { inset-block: calc(var(--eds-spacing-vertical-2xl) * -1); }
 
 /* vertical-3xl */
 @utility top-vertical-3xl { top: var(--eds-spacing-vertical-3xl); }
+@utility -top-vertical-3xl { top: calc(var(--eds-spacing-vertical-3xl) * -1); }
 @utility right-vertical-3xl { right: var(--eds-spacing-vertical-3xl); }
+@utility -right-vertical-3xl { right: calc(var(--eds-spacing-vertical-3xl) * -1); }
 @utility bottom-vertical-3xl { bottom: var(--eds-spacing-vertical-3xl); }
+@utility -bottom-vertical-3xl { bottom: calc(var(--eds-spacing-vertical-3xl) * -1); }
 @utility left-vertical-3xl { left: var(--eds-spacing-vertical-3xl); }
+@utility -left-vertical-3xl { left: calc(var(--eds-spacing-vertical-3xl) * -1); }
 @utility inset-vertical-3xl { inset: var(--eds-spacing-vertical-3xl); }
+@utility -inset-vertical-3xl { inset: calc(var(--eds-spacing-vertical-3xl) * -1); }
 @utility inset-x-vertical-3xl { inset-inline: var(--eds-spacing-vertical-3xl); }
+@utility -inset-x-vertical-3xl { inset-inline: calc(var(--eds-spacing-vertical-3xl) * -1); }
 @utility inset-y-vertical-3xl { inset-block: var(--eds-spacing-vertical-3xl); }
+@utility -inset-y-vertical-3xl { inset-block: calc(var(--eds-spacing-vertical-3xl) * -1); }
 
 /* horizontal-4xs */
 @utility top-horizontal-4xs { top: var(--eds-spacing-horizontal-4xs); }
+@utility -top-horizontal-4xs { top: calc(var(--eds-spacing-horizontal-4xs) * -1); }
 @utility right-horizontal-4xs { right: var(--eds-spacing-horizontal-4xs); }
+@utility -right-horizontal-4xs { right: calc(var(--eds-spacing-horizontal-4xs) * -1); }
 @utility bottom-horizontal-4xs { bottom: var(--eds-spacing-horizontal-4xs); }
+@utility -bottom-horizontal-4xs { bottom: calc(var(--eds-spacing-horizontal-4xs) * -1); }
 @utility left-horizontal-4xs { left: var(--eds-spacing-horizontal-4xs); }
+@utility -left-horizontal-4xs { left: calc(var(--eds-spacing-horizontal-4xs) * -1); }
 @utility inset-horizontal-4xs { inset: var(--eds-spacing-horizontal-4xs); }
+@utility -inset-horizontal-4xs { inset: calc(var(--eds-spacing-horizontal-4xs) * -1); }
 @utility inset-x-horizontal-4xs { inset-inline: var(--eds-spacing-horizontal-4xs); }
+@utility -inset-x-horizontal-4xs { inset-inline: calc(var(--eds-spacing-horizontal-4xs) * -1); }
 @utility inset-y-horizontal-4xs { inset-block: var(--eds-spacing-horizontal-4xs); }
+@utility -inset-y-horizontal-4xs { inset-block: calc(var(--eds-spacing-horizontal-4xs) * -1); }
 
 /* horizontal-3xs */
 @utility top-horizontal-3xs { top: var(--eds-spacing-horizontal-3xs); }
+@utility -top-horizontal-3xs { top: calc(var(--eds-spacing-horizontal-3xs) * -1); }
 @utility right-horizontal-3xs { right: var(--eds-spacing-horizontal-3xs); }
+@utility -right-horizontal-3xs { right: calc(var(--eds-spacing-horizontal-3xs) * -1); }
 @utility bottom-horizontal-3xs { bottom: var(--eds-spacing-horizontal-3xs); }
+@utility -bottom-horizontal-3xs { bottom: calc(var(--eds-spacing-horizontal-3xs) * -1); }
 @utility left-horizontal-3xs { left: var(--eds-spacing-horizontal-3xs); }
+@utility -left-horizontal-3xs { left: calc(var(--eds-spacing-horizontal-3xs) * -1); }
 @utility inset-horizontal-3xs { inset: var(--eds-spacing-horizontal-3xs); }
+@utility -inset-horizontal-3xs { inset: calc(var(--eds-spacing-horizontal-3xs) * -1); }
 @utility inset-x-horizontal-3xs { inset-inline: var(--eds-spacing-horizontal-3xs); }
+@utility -inset-x-horizontal-3xs { inset-inline: calc(var(--eds-spacing-horizontal-3xs) * -1); }
 @utility inset-y-horizontal-3xs { inset-block: var(--eds-spacing-horizontal-3xs); }
+@utility -inset-y-horizontal-3xs { inset-block: calc(var(--eds-spacing-horizontal-3xs) * -1); }
 
 /* horizontal-2xs */
 @utility top-horizontal-2xs { top: var(--eds-spacing-horizontal-2xs); }
+@utility -top-horizontal-2xs { top: calc(var(--eds-spacing-horizontal-2xs) * -1); }
 @utility right-horizontal-2xs { right: var(--eds-spacing-horizontal-2xs); }
+@utility -right-horizontal-2xs { right: calc(var(--eds-spacing-horizontal-2xs) * -1); }
 @utility bottom-horizontal-2xs { bottom: var(--eds-spacing-horizontal-2xs); }
+@utility -bottom-horizontal-2xs { bottom: calc(var(--eds-spacing-horizontal-2xs) * -1); }
 @utility left-horizontal-2xs { left: var(--eds-spacing-horizontal-2xs); }
+@utility -left-horizontal-2xs { left: calc(var(--eds-spacing-horizontal-2xs) * -1); }
 @utility inset-horizontal-2xs { inset: var(--eds-spacing-horizontal-2xs); }
+@utility -inset-horizontal-2xs { inset: calc(var(--eds-spacing-horizontal-2xs) * -1); }
 @utility inset-x-horizontal-2xs { inset-inline: var(--eds-spacing-horizontal-2xs); }
+@utility -inset-x-horizontal-2xs { inset-inline: calc(var(--eds-spacing-horizontal-2xs) * -1); }
 @utility inset-y-horizontal-2xs { inset-block: var(--eds-spacing-horizontal-2xs); }
+@utility -inset-y-horizontal-2xs { inset-block: calc(var(--eds-spacing-horizontal-2xs) * -1); }
 
 /* horizontal-xs */
 @utility top-horizontal-xs { top: var(--eds-spacing-horizontal-xs); }
+@utility -top-horizontal-xs { top: calc(var(--eds-spacing-horizontal-xs) * -1); }
 @utility right-horizontal-xs { right: var(--eds-spacing-horizontal-xs); }
+@utility -right-horizontal-xs { right: calc(var(--eds-spacing-horizontal-xs) * -1); }
 @utility bottom-horizontal-xs { bottom: var(--eds-spacing-horizontal-xs); }
+@utility -bottom-horizontal-xs { bottom: calc(var(--eds-spacing-horizontal-xs) * -1); }
 @utility left-horizontal-xs { left: var(--eds-spacing-horizontal-xs); }
+@utility -left-horizontal-xs { left: calc(var(--eds-spacing-horizontal-xs) * -1); }
 @utility inset-horizontal-xs { inset: var(--eds-spacing-horizontal-xs); }
+@utility -inset-horizontal-xs { inset: calc(var(--eds-spacing-horizontal-xs) * -1); }
 @utility inset-x-horizontal-xs { inset-inline: var(--eds-spacing-horizontal-xs); }
+@utility -inset-x-horizontal-xs { inset-inline: calc(var(--eds-spacing-horizontal-xs) * -1); }
 @utility inset-y-horizontal-xs { inset-block: var(--eds-spacing-horizontal-xs); }
+@utility -inset-y-horizontal-xs { inset-block: calc(var(--eds-spacing-horizontal-xs) * -1); }
 
 /* horizontal-sm */
 @utility top-horizontal-sm { top: var(--eds-spacing-horizontal-sm); }
+@utility -top-horizontal-sm { top: calc(var(--eds-spacing-horizontal-sm) * -1); }
 @utility right-horizontal-sm { right: var(--eds-spacing-horizontal-sm); }
+@utility -right-horizontal-sm { right: calc(var(--eds-spacing-horizontal-sm) * -1); }
 @utility bottom-horizontal-sm { bottom: var(--eds-spacing-horizontal-sm); }
+@utility -bottom-horizontal-sm { bottom: calc(var(--eds-spacing-horizontal-sm) * -1); }
 @utility left-horizontal-sm { left: var(--eds-spacing-horizontal-sm); }
+@utility -left-horizontal-sm { left: calc(var(--eds-spacing-horizontal-sm) * -1); }
 @utility inset-horizontal-sm { inset: var(--eds-spacing-horizontal-sm); }
+@utility -inset-horizontal-sm { inset: calc(var(--eds-spacing-horizontal-sm) * -1); }
 @utility inset-x-horizontal-sm { inset-inline: var(--eds-spacing-horizontal-sm); }
+@utility -inset-x-horizontal-sm { inset-inline: calc(var(--eds-spacing-horizontal-sm) * -1); }
 @utility inset-y-horizontal-sm { inset-block: var(--eds-spacing-horizontal-sm); }
+@utility -inset-y-horizontal-sm { inset-block: calc(var(--eds-spacing-horizontal-sm) * -1); }
 
 /* horizontal-md */
 @utility top-horizontal-md { top: var(--eds-spacing-horizontal-md); }
+@utility -top-horizontal-md { top: calc(var(--eds-spacing-horizontal-md) * -1); }
 @utility right-horizontal-md { right: var(--eds-spacing-horizontal-md); }
+@utility -right-horizontal-md { right: calc(var(--eds-spacing-horizontal-md) * -1); }
 @utility bottom-horizontal-md { bottom: var(--eds-spacing-horizontal-md); }
+@utility -bottom-horizontal-md { bottom: calc(var(--eds-spacing-horizontal-md) * -1); }
 @utility left-horizontal-md { left: var(--eds-spacing-horizontal-md); }
+@utility -left-horizontal-md { left: calc(var(--eds-spacing-horizontal-md) * -1); }
 @utility inset-horizontal-md { inset: var(--eds-spacing-horizontal-md); }
+@utility -inset-horizontal-md { inset: calc(var(--eds-spacing-horizontal-md) * -1); }
 @utility inset-x-horizontal-md { inset-inline: var(--eds-spacing-horizontal-md); }
+@utility -inset-x-horizontal-md { inset-inline: calc(var(--eds-spacing-horizontal-md) * -1); }
 @utility inset-y-horizontal-md { inset-block: var(--eds-spacing-horizontal-md); }
+@utility -inset-y-horizontal-md { inset-block: calc(var(--eds-spacing-horizontal-md) * -1); }
 
 /* horizontal-lg */
 @utility top-horizontal-lg { top: var(--eds-spacing-horizontal-lg); }
+@utility -top-horizontal-lg { top: calc(var(--eds-spacing-horizontal-lg) * -1); }
 @utility right-horizontal-lg { right: var(--eds-spacing-horizontal-lg); }
+@utility -right-horizontal-lg { right: calc(var(--eds-spacing-horizontal-lg) * -1); }
 @utility bottom-horizontal-lg { bottom: var(--eds-spacing-horizontal-lg); }
+@utility -bottom-horizontal-lg { bottom: calc(var(--eds-spacing-horizontal-lg) * -1); }
 @utility left-horizontal-lg { left: var(--eds-spacing-horizontal-lg); }
+@utility -left-horizontal-lg { left: calc(var(--eds-spacing-horizontal-lg) * -1); }
 @utility inset-horizontal-lg { inset: var(--eds-spacing-horizontal-lg); }
+@utility -inset-horizontal-lg { inset: calc(var(--eds-spacing-horizontal-lg) * -1); }
 @utility inset-x-horizontal-lg { inset-inline: var(--eds-spacing-horizontal-lg); }
+@utility -inset-x-horizontal-lg { inset-inline: calc(var(--eds-spacing-horizontal-lg) * -1); }
 @utility inset-y-horizontal-lg { inset-block: var(--eds-spacing-horizontal-lg); }
+@utility -inset-y-horizontal-lg { inset-block: calc(var(--eds-spacing-horizontal-lg) * -1); }
 
 /* horizontal-xl */
 @utility top-horizontal-xl { top: var(--eds-spacing-horizontal-xl); }
+@utility -top-horizontal-xl { top: calc(var(--eds-spacing-horizontal-xl) * -1); }
 @utility right-horizontal-xl { right: var(--eds-spacing-horizontal-xl); }
+@utility -right-horizontal-xl { right: calc(var(--eds-spacing-horizontal-xl) * -1); }
 @utility bottom-horizontal-xl { bottom: var(--eds-spacing-horizontal-xl); }
+@utility -bottom-horizontal-xl { bottom: calc(var(--eds-spacing-horizontal-xl) * -1); }
 @utility left-horizontal-xl { left: var(--eds-spacing-horizontal-xl); }
+@utility -left-horizontal-xl { left: calc(var(--eds-spacing-horizontal-xl) * -1); }
 @utility inset-horizontal-xl { inset: var(--eds-spacing-horizontal-xl); }
+@utility -inset-horizontal-xl { inset: calc(var(--eds-spacing-horizontal-xl) * -1); }
 @utility inset-x-horizontal-xl { inset-inline: var(--eds-spacing-horizontal-xl); }
+@utility -inset-x-horizontal-xl { inset-inline: calc(var(--eds-spacing-horizontal-xl) * -1); }
 @utility inset-y-horizontal-xl { inset-block: var(--eds-spacing-horizontal-xl); }
+@utility -inset-y-horizontal-xl { inset-block: calc(var(--eds-spacing-horizontal-xl) * -1); }
 
 /* horizontal-2xl */
 @utility top-horizontal-2xl { top: var(--eds-spacing-horizontal-2xl); }
+@utility -top-horizontal-2xl { top: calc(var(--eds-spacing-horizontal-2xl) * -1); }
 @utility right-horizontal-2xl { right: var(--eds-spacing-horizontal-2xl); }
+@utility -right-horizontal-2xl { right: calc(var(--eds-spacing-horizontal-2xl) * -1); }
 @utility bottom-horizontal-2xl { bottom: var(--eds-spacing-horizontal-2xl); }
+@utility -bottom-horizontal-2xl { bottom: calc(var(--eds-spacing-horizontal-2xl) * -1); }
 @utility left-horizontal-2xl { left: var(--eds-spacing-horizontal-2xl); }
+@utility -left-horizontal-2xl { left: calc(var(--eds-spacing-horizontal-2xl) * -1); }
 @utility inset-horizontal-2xl { inset: var(--eds-spacing-horizontal-2xl); }
+@utility -inset-horizontal-2xl { inset: calc(var(--eds-spacing-horizontal-2xl) * -1); }
 @utility inset-x-horizontal-2xl { inset-inline: var(--eds-spacing-horizontal-2xl); }
+@utility -inset-x-horizontal-2xl { inset-inline: calc(var(--eds-spacing-horizontal-2xl) * -1); }
 @utility inset-y-horizontal-2xl { inset-block: var(--eds-spacing-horizontal-2xl); }
+@utility -inset-y-horizontal-2xl { inset-block: calc(var(--eds-spacing-horizontal-2xl) * -1); }
 
 /* horizontal-3xl */
 @utility top-horizontal-3xl { top: var(--eds-spacing-horizontal-3xl); }
+@utility -top-horizontal-3xl { top: calc(var(--eds-spacing-horizontal-3xl) * -1); }
 @utility right-horizontal-3xl { right: var(--eds-spacing-horizontal-3xl); }
+@utility -right-horizontal-3xl { right: calc(var(--eds-spacing-horizontal-3xl) * -1); }
 @utility bottom-horizontal-3xl { bottom: var(--eds-spacing-horizontal-3xl); }
+@utility -bottom-horizontal-3xl { bottom: calc(var(--eds-spacing-horizontal-3xl) * -1); }
 @utility left-horizontal-3xl { left: var(--eds-spacing-horizontal-3xl); }
+@utility -left-horizontal-3xl { left: calc(var(--eds-spacing-horizontal-3xl) * -1); }
 @utility inset-horizontal-3xl { inset: var(--eds-spacing-horizontal-3xl); }
+@utility -inset-horizontal-3xl { inset: calc(var(--eds-spacing-horizontal-3xl) * -1); }
 @utility inset-x-horizontal-3xl { inset-inline: var(--eds-spacing-horizontal-3xl); }
+@utility -inset-x-horizontal-3xl { inset-inline: calc(var(--eds-spacing-horizontal-3xl) * -1); }
 @utility inset-y-horizontal-3xl { inset-block: var(--eds-spacing-horizontal-3xl); }
+@utility -inset-y-horizontal-3xl { inset-block: calc(var(--eds-spacing-horizontal-3xl) * -1); }
 
 /* selectable-x */
 @utility top-selectable-x { top: var(--spacing-selectable-x); }
+@utility -top-selectable-x { top: calc(var(--spacing-selectable-x) * -1); }
 @utility right-selectable-x { right: var(--spacing-selectable-x); }
+@utility -right-selectable-x { right: calc(var(--spacing-selectable-x) * -1); }
 @utility bottom-selectable-x { bottom: var(--spacing-selectable-x); }
+@utility -bottom-selectable-x { bottom: calc(var(--spacing-selectable-x) * -1); }
 @utility left-selectable-x { left: var(--spacing-selectable-x); }
+@utility -left-selectable-x { left: calc(var(--spacing-selectable-x) * -1); }
 @utility inset-selectable-x { inset: var(--spacing-selectable-x); }
+@utility -inset-selectable-x { inset: calc(var(--spacing-selectable-x) * -1); }
 @utility inset-x-selectable-x { inset-inline: var(--spacing-selectable-x); }
+@utility -inset-x-selectable-x { inset-inline: calc(var(--spacing-selectable-x) * -1); }
 @utility inset-y-selectable-x { inset-block: var(--spacing-selectable-x); }
+@utility -inset-y-selectable-x { inset-block: calc(var(--spacing-selectable-x) * -1); }
 
 /* selectable-y */
 @utility top-selectable-y { top: var(--spacing-selectable-y); }
+@utility -top-selectable-y { top: calc(var(--spacing-selectable-y) * -1); }
 @utility right-selectable-y { right: var(--spacing-selectable-y); }
+@utility -right-selectable-y { right: calc(var(--spacing-selectable-y) * -1); }
 @utility bottom-selectable-y { bottom: var(--spacing-selectable-y); }
+@utility -bottom-selectable-y { bottom: calc(var(--spacing-selectable-y) * -1); }
 @utility left-selectable-y { left: var(--spacing-selectable-y); }
+@utility -left-selectable-y { left: calc(var(--spacing-selectable-y) * -1); }
 @utility inset-selectable-y { inset: var(--spacing-selectable-y); }
+@utility -inset-selectable-y { inset: calc(var(--spacing-selectable-y) * -1); }
 @utility inset-x-selectable-y { inset-inline: var(--spacing-selectable-y); }
+@utility -inset-x-selectable-y { inset-inline: calc(var(--spacing-selectable-y) * -1); }
 @utility inset-y-selectable-y { inset-block: var(--spacing-selectable-y); }
+@utility -inset-y-selectable-y { inset-block: calc(var(--spacing-selectable-y) * -1); }
 
 /* 0 */
 @utility top-0 { top: 0px; }
