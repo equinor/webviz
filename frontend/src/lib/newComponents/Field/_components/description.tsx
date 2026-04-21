@@ -7,14 +7,5 @@ export type DescriptionProps = {
 };
 
 export function Description(props: DescriptionProps) {
-    return (
-        <FieldBase.Description
-            className="text-neutral-subtle"
-            render={(htmlProps) => (
-                <Paragraph size="sm" {...htmlProps}>
-                    {props.children}
-                </Paragraph>
-            )}
-        />
-    );
+    return <FieldBase.Description {...props} className="text-neutral-subtle" render={<Paragraph size="sm" />} />;
 }

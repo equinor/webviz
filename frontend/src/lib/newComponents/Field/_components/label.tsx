@@ -1,22 +1,21 @@
 import { Field as FieldBase } from "@base-ui/react";
-import { Info } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
+import { Typography } from "@lib/newComponents/Typography";
 
 export type LabelProps = {
     children: React.ReactNode;
-    info?: string;
+    required?: boolean;
 };
 
 export function Label(props: LabelProps) {
     return (
-        <FieldBase.Label className="flex w-full items-center justify-between gap-2">
+        <FieldBase.Label
+            className="text-neutral"
+            aria-required={props.required}
+            render={<Typography as="label" family="body" size="md" />}
+        >
             {props.children}
-            {props.info && (
-                <Button variant="text" tone="neutral" size="small" iconOnly round>
-                    <Info fontSize="inherit" />
-                </Button>
-            )}
+            {props.required && <span className="text-neutral-subtle"> (Required)</span>}
         </FieldBase.Label>
     );
 }

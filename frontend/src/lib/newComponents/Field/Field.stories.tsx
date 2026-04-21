@@ -1,3 +1,6 @@
+import React from "react";
+
+import type { FieldRootActions } from "@base-ui/react";
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { Combobox } from "@lib/newComponents/Combobox";
@@ -18,10 +21,28 @@ export default meta;
 type Story = StoryObj<typeof Field.Root>;
 
 export const Default: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: 'Errors can either be controlled by an external state and `Root["invalid"]` and `Error["match"]=true`. Alternatively, you can use `Root["invalid"]` and return a custom error message. This message can then be show by `Error["match"]="customError" />`. Further customization can be done with the `Validity` component',
+            },
+        },
+    },
     render: () => (
-        <Field.Root>
-            <Field.Label>Username</Field.Label>
-            <TextInput placeholder="Enter username..." />
+        <Field.Root
+            validationMode="onChange"
+            validate={(v) => {
+                if (typeof v === "string" && v.includes(" ")) return "Name cannot include space";
+                return null;
+            }}
+        >
+            <Field.Label>New Username</Field.Label>
+            <Field.Description>Name cannot contain spaces </Field.Description>
+            <TextInput placeholder="Enter username..." minLength={4} maxLength={10} />
+            <Field.Error match="tooShort" />
+            <Field.Error match="tooLong" />
+            {/* "customError" will return whatever gets returned from validate */}
+            <Field.Error match="customError" />
         </Field.Root>
     ),
 };
@@ -49,7 +70,11 @@ export const WithDescription: Story = {
 export const WithInfo: Story = {
     render: () => (
         <Field.Root>
-            <Field.Label info="Your secret API key. Keep this safe and never share it.">API Key</Field.Label>
+            <div className="gap-horizontal-xs flex w-full justify-between">
+                <Field.Label>API Key</Field.Label>
+                <Field.Info>Your secret API key. Keep this safe and never share it.</Field.Info>
+            </div>
+
             <Field.Details>Found in your account settings.</Field.Details>
             <TextInput placeholder="sk-..." />
         </Field.Root>
@@ -57,14 +82,23 @@ export const WithInfo: Story = {
 };
 
 export const WithError: Story = {
-    render: () => (
-        <Field.Root>
-            <Field.Label>Username</Field.Label>
-            <Field.Details>Maximum 10 characters.</Field.Details>
-            <TextInput defaultValue="this-is-too-long" maxLength={10} />
-            <Field.Error match="tooLong">Must be 10 characters or fewer.</Field.Error>
-        </Field.Root>
-    ),
+    render: function WithErrorComp() {
+        const actionRef = React.useRef<FieldRootActions | null>(null);
+
+        React.useEffect(() => {
+            actionRef.current?.validate?.();
+        }, []);
+
+        return (
+            <Field.Root actionsRef={actionRef} validationMode="onChange" dirty touched>
+                <Field.Label required>Username</Field.Label>
+                <Field.Details>Maximum 10 characters.</Field.Details>
+                <TextInput required maxLength={10} />
+                <Field.Error match="valueMissing">Value is required.</Field.Error>
+                <Field.Error match="tooLong">Must be 10 characters or fewer.</Field.Error>
+            </Field.Root>
+        );
+    },
 };
 
 export const WithCombobox: Story = {
@@ -94,22 +128,44 @@ export const Disabled: Story = {
     ),
 };
 
-export const FullForm: Story = {
+export const Inline: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: "For labels and controllers that should connect without a wrapping div, use the `inline` prop. The story shows the correct setup for a grid layout",
+            },
+        },
+    },
     render: () => (
-        <div className="flex w-80 flex-col gap-4">
-            <Field.Root>
-                <Field.Label>Full name</Field.Label>
-                <TextInput placeholder="Jane Doe" />
+        <div className="gap-x-horizontal-sm gap-y-vertical-xs grid w-sm grid-cols-2 items-center">
+            <Field.Root inline validationMode="onChange">
+                <Field.Label required>Password</Field.Label>
+                <div className="gap-horizontal-2xs flex items-center">
+                    <TextInput
+                        minLength={8}
+                        required
+                        type="password"
+                        placeholder="••••••••"
+                        pattern="^(?=.*[a-zA-Z])(?=.*\d).+$"
+                    />
+                    <Field.Info>
+                        The password should:
+                        <ul className="list-inside list-disc">
+                            <li>Be at least 8 characters long</li>
+                            <li>Contain both letters and numbers</li>
+                        </ul>
+                    </Field.Info>
+                </div>
+                <div className="col-span-2 flex">
+                    <Field.Error />
+                </div>
             </Field.Root>
-            <Field.Root>
-                <Field.Label>Email</Field.Label>
-                <Field.Details>Used for login and notifications.</Field.Details>
-                <TextInput placeholder="jane@example.com" />
-                <Field.Description>We will never share your email.</Field.Description>
-            </Field.Root>
-            <Field.Root>
-                <Field.Label info="Select the team this user belongs to.">Team</Field.Label>
-                <Field.Details>You can change this later.</Field.Details>
+
+            <Field.Root inline>
+                <div>
+                    <Field.Label>Team</Field.Label>
+                    <Field.Details>You can change this later.</Field.Details>
+                </div>
                 <Combobox
                     items={[
                         { value: "eng", label: "Engineering" },
@@ -118,12 +174,62 @@ export const FullForm: Story = {
                     ]}
                 />
             </Field.Root>
+        </div>
+    ),
+};
+
+export const FullForm: Story = {
+    render: () => (
+        <div className="gap-vertical-lg flex flex-col">
             <Field.Root>
-                <Field.Label>Password</Field.Label>
-                <Field.Details>Minimum 8 characters.</Field.Details>
-                <TextInput placeholder="••••••••" maxLength={7} />
-                <Field.Error match="tooLong">Password must be at least 8 characters.</Field.Error>
+                <Field.Label required>Full name</Field.Label>
+                <TextInput required placeholder="Jane Doe" />
             </Field.Root>
+            <Field.Root>
+                <Field.Label>Email</Field.Label>
+                <Field.Details>Used for login and notifications.</Field.Details>
+                <TextInput placeholder="jane@example.com" />
+                <Field.Description>We will never share your email.</Field.Description>
+            </Field.Root>
+
+            <div className="gap-x-horizontal-sm gap-y-vertical-xs grid w-sm grid-cols-2 items-center">
+                <Field.Root inline validationMode="onChange">
+                    <Field.Label required>Password</Field.Label>
+                    <div className="gap-horizontal-2xs flex items-center">
+                        <TextInput
+                            minLength={8}
+                            required
+                            type="password"
+                            placeholder="••••••••"
+                            pattern="^(?=.*[a-zA-Z])(?=.*\d).+$"
+                        />
+                        <Field.Info>
+                            The password should:
+                            <ul className="list-inside list-disc">
+                                <li>Be at least 8 characters long</li>
+                                <li>Contain both letters and numbers</li>
+                            </ul>
+                        </Field.Info>
+                    </div>
+                    <div className="col-span-2 flex">
+                        <Field.Error />
+                    </div>
+                </Field.Root>
+
+                <Field.Root inline>
+                    <div>
+                        <Field.Label>Team</Field.Label>
+                        <Field.Details>You can change this later.</Field.Details>
+                    </div>
+                    <Combobox
+                        items={[
+                            { value: "eng", label: "Engineering" },
+                            { value: "design", label: "Design" },
+                            { value: "product", label: "Product" },
+                        ]}
+                    />
+                </Field.Root>
+            </div>
         </div>
     ),
 };

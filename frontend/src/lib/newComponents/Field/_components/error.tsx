@@ -1,11 +1,9 @@
 import { Field as FieldBase, type FieldErrorProps } from "@base-ui/react";
 
+import { Paragraph } from "@lib/newComponents/Paragraph";
+
 export type ErrorProps = Omit<FieldErrorProps, "className">;
 
 export function Error(props: ErrorProps) {
-    return (
-        <FieldBase.Error className="" match={props.match}>
-            {props.children}
-        </FieldBase.Error>
-    );
+    return <FieldBase.Error {...props} className="text-neutral-subtle" render={<Paragraph size="sm" />} />;
 }
