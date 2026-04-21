@@ -242,7 +242,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     const canvasViewportRef = React.useRef<Viewport | null>(null);
 
     const containerRef = React.useRef<HTMLDivElement>(null);
-    const automaticChanges = React.useRef<boolean>(false);
+    const automaticChanges = React.useRef<boolean>(true);
     const isMountedRef = useIsMountedRef();
 
     const containerSize = useElementSize(containerRef);

@@ -1,6 +1,7 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { useAtomValue, useSetAtom } from "jotai";
 import { cloneDeep, isEqual } from "lodash";
 
 import type { HoverService } from "@framework/HoverService";
@@ -22,6 +23,8 @@ import {
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import type { Interfaces } from "@modules/Intersection/interfaces";
+
+import { standaloneViewportsAtom } from "../atoms/baseAtoms";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 import { useViewLinkResult } from "./ViewLinkManager";
@@ -67,6 +70,11 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         onHoverViewLink,
     } = viewLinkResult;
 
+    // Read standalone viewport directly from atom
+    const persistedStandaloneViewports = useAtomValue(standaloneViewportsAtom);
+    const setPersistedStandaloneViewports = useSetAtom(standaloneViewportsAtom);
+    const storedStandaloneViewport = !isLinked ? (persistedStandaloneViewports?.[viewId] ?? null) : null;
+
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
     const [prevFocusBounds, setPrevFocusBounds] = React.useState<Bounds | null>(null);
@@ -75,6 +83,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const lastPublishedViewportRef = React.useRef<Viewport | null>(null);
     const lastAppliedSyncedViewportRef = React.useRef<Viewport | null>(null);
     const hasRestoredLinkedViewportRef = React.useRef(false);
+    const hasRestoredStandaloneViewportRef = React.useRef(false);
     const skipRefocusDueToRestoreRef = React.useRef(false);
 
     const [verticalScale, setVerticalScale] = React.useState<number>(10.0);
@@ -163,6 +172,26 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         [isLinked, linkedViewport, linkedViewportSourceViewId, viewId],
     );
 
+    // Restore standalone viewport from persisted state (non-linked views)
+    React.useLayoutEffect(
+        function restoreStandaloneViewport() {
+            if (isLinked || !storedStandaloneViewport || hasRestoredStandaloneViewportRef.current) return;
+            if (!isValidViewport(storedStandaloneViewport.viewport)) return;
+
+            hasRestoredStandaloneViewportRef.current = true;
+            skipRefocusDueToRestoreRef.current = true;
+            setVerticalScale(storedStandaloneViewport.verticalScale);
+            setViewport((prev) => {
+                if (!prev || !isEqual(prev, storedStandaloneViewport.viewport)) {
+                    setFitInViewStatus(FitInViewStatus.OFF);
+                    return cloneDeep(storedStandaloneViewport.viewport);
+                }
+                return prev;
+            });
+        },
+        [isLinked, storedStandaloneViewport],
+    );
+
     React.useEffect(
         function syncLocalViewportFromGlobal() {
             if (!syncedCameraPosition || !isValidViewport(syncedCameraPosition)) {
@@ -214,6 +243,21 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         [viewport, props.workbenchServices, props.viewContext],
     );
 
+    // Report viewport changes for non-linked views so they get persisted
+    React.useEffect(
+        function reportStandaloneViewportChange() {
+            if (isLinked || !viewport || !isValidViewport(viewport)) return;
+            setPersistedStandaloneViewports((prev) => {
+                const existing = prev?.[viewId];
+                if (existing && isEqual(existing.viewport, viewport) && existing.verticalScale === verticalScale) {
+                    return prev;
+                }
+                return { ...prev, [viewId]: { viewport, verticalScale } };
+            });
+        },
+        [isLinked, viewport, verticalScale, viewId, setPersistedStandaloneViewports],
+    );
+
     const refocusViewport = React.useCallback(
         function refocusViewport(): void {
             if (!effectiveFocusBounds) {
@@ -243,8 +287,14 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     React.useEffect(
         function handleRefocus() {
+            // After a viewport restore (linked or standalone), suppress the first
+            // auto-refocus that fires when data providers finish loading.
             if (skipRefocusDueToRestoreRef.current) {
-                skipRefocusDueToRestoreRef.current = false;
+                if (props.doRefocus) {
+                    // Consume the skip and acknowledge the refocus request
+                    skipRefocusDueToRestoreRef.current = false;
+                    onViewportRefocused?.();
+                }
                 return;
             }
             if (!effectiveFocusBounds || !isValidBounds(effectiveFocusBounds)) return;
@@ -252,7 +302,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 refocusViewport();
             }
         },
-        [mainDivSize, fitInViewStatus, effectiveFocusBounds, props.doRefocus, refocusViewport],
+        [mainDivSize, fitInViewStatus, effectiveFocusBounds, props.doRefocus, refocusViewport, onViewportRefocused],
     );
 
     React.useEffect(
