@@ -252,9 +252,9 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             !isEqual(prevIntersectionReferenceSystem, props.intersectionReferenceSystem) &&
             props.intersectionReferenceSystem
         ) {
+            automaticChanges.current = true;
             esvController.setReferenceSystem(props.intersectionReferenceSystem);
             setPrevIntersectionReferenceSystem(props.intersectionReferenceSystem);
-            automaticChanges.current = true;
         }
 
         if (!isEqual(prevAxesOptions, props.axesOptions)) {
@@ -451,7 +451,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             const oldOnRescaleFunction = newEsvController.zoomPanHandler.onRescale;
 
             newEsvController.zoomPanHandler.onRescale = function handleRescale(event: OnRescaleEvent) {
-                if (!automaticChanges.current) {
+                if (!automaticChanges.current && canvasViewportRef.current !== null) {
                     const k = event.transform.k;
 
                     // Prevent division by zero
@@ -582,6 +582,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     React.useEffect(
         function handleResize() {
             if (esvController && containerSize.width && containerSize.height) {
+                automaticChanges.current = true;
                 esvController.adjustToSize(containerSize.width, containerSize.height);
                 const size = {
                     width: esvController.currentStateAsEvent.width,

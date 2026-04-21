@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -142,8 +142,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     const fieldIdentifier = props.dataProviderManager.getGlobalSetting("fieldId");
 
-    const persistedViewLinks = useAtomValue(viewLinksAtom);
-    const setPersistedViewLinks = useSetAtom(viewLinksAtom);
+    const [persistedViewLinks, setPersistedViewLinks] = useAtom(viewLinksAtom);
 
     // Assemble visualization of providers
     const assemblerProduct = useVisualizationAssemblerProduct(props.dataProviderManager, VISUALIZATION_ASSEMBLER);
@@ -191,15 +190,21 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         return null;
     }
 
+    // TEMPORARY: For some reason, the DPF gives an empty view, without children a couple of renders while deserializing
+    let tempIntersectionViews = intersectionViews;
+    if (intersectionViews.length === 1 && intersectionViews[0].children.length === 0) {
+        tempIntersectionViews = [];
+    }
+
     return (
         <ViewLinkManager
-            intersectionViews={intersectionViews}
+            intersectionViews={tempIntersectionViews}
             linkColors={props.workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical).getColors()}
             initialViewLinks={persistedViewLinks}
             onViewLinksChange={handleViewLinksChange}
         >
-            <MultiViewLayout viewCount={intersectionViews.length} preferredViewLayout={props.preferredViewLayout}>
-                {intersectionViews.map((view) => (
+            <MultiViewLayout viewCount={tempIntersectionViews.length} preferredViewLayout={props.preferredViewLayout}>
+                {tempIntersectionViews.map((view) => (
                     <ViewDataProcessor
                         key={view.id}
                         view={view}

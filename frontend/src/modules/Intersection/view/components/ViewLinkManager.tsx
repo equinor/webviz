@@ -7,6 +7,7 @@ import type { Viewport } from "@framework/types/viewport";
 import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";
+import { FitInViewStatus } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 
 export type ViewLink = {
     id: string;
@@ -15,6 +16,7 @@ export type ViewLink = {
     viewport: Viewport | null;
     viewportSourceViewId: string | null;
     verticalScale: number;
+    fitInViewStatus: FitInViewStatus;
     bounds: Bounds | null;
 };
 
@@ -39,6 +41,7 @@ type ViewLinkManagerContextValue = {
     onLinkedViewportChange: (viewId: string, viewport: Viewport) => void;
     onLinkedVerticalScaleChange: (viewId: string, scale: number) => void;
     onLinkedBoundsChange: (viewId: string, bounds: Bounds) => void;
+    onLinkedFitInViewStatusChange: (viewId: string, status: FitInViewStatus) => void;
 };
 
 const ViewLinkManagerContext = React.createContext<ViewLinkManagerContextValue | null>(null);
@@ -78,12 +81,15 @@ export function ViewLinkManager({
     children,
 }: ViewLinkManagerProps): React.ReactNode {
     const [viewLinks, setViewLinks] = React.useState<ViewLink[]>([]);
-    const [prevViewIds, setPrevViewIds] = React.useState<string[]>([]);
     const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(EMPTY_HOVERED_VIEW_IDS);
+
+    const prevViewIdsRef = React.useRef<string[]>([]);
     const hasAppliedInitialRef = React.useRef(false);
 
-    // Apply initial view links once they become defined.
-    // null = intersectionViews not yet available from DPF, so we wait.
+    // TEMPORARY SOLUTION:
+    // - Apply initial view links once they become defined. As DPF uses a couple of renders, without loading state
+    // when deserializing the settings. We cannot utilize the initial intersectionView attribute as intersectionViews
+    // is null from DPF - so we have to wait.
     if (!hasAppliedInitialRef.current && initialViewLinks !== null) {
         hasAppliedInitialRef.current = true;
         if (initialViewLinks.length > 0) {
@@ -91,29 +97,41 @@ export function ViewLinkManager({
         }
     }
 
-    // Notify parent of view link changes for persistence (only after initialization)
+    // TEMPORARY SOLUTION:
+    // - Notify parent of view link changes for persistence (only after initialization)
+    // - If initial intersectionViews is fixed, this should be removed
     React.useEffect(() => {
         if (!hasAppliedInitialRef.current) return;
         onViewLinksChange?.(viewLinks);
     }, [viewLinks, onViewLinksChange]);
 
     // Clean up ViewLinks when views are added or removed
-    const currentViewIds = intersectionViews.map((v) => v.id);
-    if (!isEqual(currentViewIds, prevViewIds)) {
-        setPrevViewIds(currentViewIds);
-        const currentIdSet = new Set(currentViewIds);
-        const cleanedLinks = viewLinks
-            .map((link) => ({
-                ...link,
-                viewIds: link.viewIds.filter((id) => currentIdSet.has(id)),
-                // Reset bounds when membership changes so remaining views re-report fresh bounds
-                bounds: link.viewIds.some((id) => !currentIdSet.has(id)) ? null : link.bounds,
-            }))
-            .filter((link) => link.viewIds.length > 1);
-        if (!isEqual(cleanedLinks, viewLinks)) {
-            setViewLinks(cleanedLinks);
-        }
-    }
+    React.useEffect(
+        function handleIntersectionViewsChange() {
+            if (!hasAppliedInitialRef.current) {
+                return;
+            }
+            const currentViewIds = intersectionViews.map((v) => v.id);
+            if (isEqual(currentViewIds, prevViewIdsRef.current)) {
+                return;
+            }
+
+            prevViewIdsRef.current = currentViewIds;
+            const currentIdSet = new Set(currentViewIds);
+            setViewLinks((prev) => {
+                const cleanedLinks = prev
+                    .map((link) => ({
+                        ...link,
+                        viewIds: link.viewIds.filter((id) => currentIdSet.has(id)),
+                        // Reset bounds when membership changes so remaining views re-report fresh bounds
+                        bounds: link.viewIds.some((id) => !currentIdSet.has(id)) ? null : link.bounds,
+                    }))
+                    .filter((link) => link.viewIds.length > 1);
+                return isEqual(cleanedLinks, prev) ? prev : cleanedLinks;
+            });
+        },
+        [intersectionViews],
+    );
 
     // Stable callbacks — use functional state updates so no external deps are needed
     const toggleViewLink = React.useCallback(
@@ -155,6 +173,7 @@ export function ViewLinkManager({
                             viewport: initiatorViewport ?? null,
                             viewportSourceViewId: thisViewId,
                             verticalScale: 10.0,
+                            fitInViewStatus: FitInViewStatus.OFF,
                             bounds: null,
                         },
                     ];
@@ -177,6 +196,7 @@ export function ViewLinkManager({
                         viewport: initiatorViewport ?? null,
                         viewportSourceViewId: initiatorViewport ? thisViewId : null,
                         verticalScale: 10.0,
+                        fitInViewStatus: FitInViewStatus.OFF,
                         bounds: null,
                     },
                 ];
@@ -202,6 +222,15 @@ export function ViewLinkManager({
     ) {
         setViewLinks((prev) =>
             prev.map((link) => (link.viewIds.includes(viewId) ? { ...link, verticalScale: scale } : link)),
+        );
+    }, []);
+
+    const onLinkedFitInViewStatusChange = React.useCallback(function onLinkedFitInViewStatusChange(
+        viewId: string,
+        status: FitInViewStatus,
+    ) {
+        setViewLinks((prev) =>
+            prev.map((link) => (link.viewIds.includes(viewId) ? { ...link, fitInViewStatus: status } : link)),
         );
     }, []);
 
@@ -236,6 +265,7 @@ export function ViewLinkManager({
             onLinkedViewportChange,
             onLinkedVerticalScaleChange,
             onLinkedBoundsChange,
+            onLinkedFitInViewStatusChange,
         }),
         [
             viewLinks,
@@ -245,6 +275,7 @@ export function ViewLinkManager({
             onLinkedViewportChange,
             onLinkedVerticalScaleChange,
             onLinkedBoundsChange,
+            onLinkedFitInViewStatusChange,
         ],
     );
 
@@ -267,6 +298,8 @@ export type ViewLinkResult = {
     onLinkedViewportChange: (viewport: Viewport) => void;
     onLinkedVerticalScaleChange: (scale: number) => void;
     onLinkedBoundsChange: (bounds: Bounds) => void;
+    onLinkedFitInViewStatusChange: (status: FitInViewStatus) => void;
+    fitInViewStatus: FitInViewStatus | null;
     bounds: Bounds | null;
 };
 
@@ -281,35 +314,49 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
     const onLinkedViewportChange = ctx?.onLinkedViewportChange;
     const onLinkedVerticalScaleChange = ctx?.onLinkedVerticalScaleChange;
     const onLinkedBoundsChange = ctx?.onLinkedBoundsChange;
+    const onLinkedFitInViewStatusChange = ctx?.onLinkedFitInViewStatusChange;
 
     const viewLink = viewLinks.find((l) => l.viewIds.includes(viewId));
     const isLinked = viewLink !== undefined;
     const multipleViews = intersectionViews.length > 1;
 
     const onToggleViewLink = React.useCallback(
-        (otherViewId: string, initiatorViewport?: Viewport | null) => {
+        function onToggleViewLink(otherViewId: string, initiatorViewport?: Viewport | null) {
             toggleViewLink?.(viewId, otherViewId, initiatorViewport);
         },
         [viewId, toggleViewLink],
     );
 
     const onLinkedViewportChangeForView = React.useCallback(
-        (viewport: Viewport) => onLinkedViewportChange?.(viewId, viewport),
+        function onLinkedViewportChangeForView(viewport: Viewport) {
+            onLinkedViewportChange?.(viewId, viewport);
+        },
         [viewId, onLinkedViewportChange],
     );
 
     const onLinkedVerticalScaleChangeForView = React.useCallback(
-        (scale: number) => onLinkedVerticalScaleChange?.(viewId, scale),
+        function onLinkedVerticalScaleChangeForView(scale: number) {
+            onLinkedVerticalScaleChange?.(viewId, scale);
+        },
         [viewId, onLinkedVerticalScaleChange],
     );
 
     const onLinkedBoundsChangeForView = React.useCallback(
-        (bounds: Bounds) => onLinkedBoundsChange?.(viewId, bounds),
+        function onLinkedBoundsChangeForView(bounds: Bounds) {
+            onLinkedBoundsChange?.(viewId, bounds);
+        },
         [viewId, onLinkedBoundsChange],
     );
 
+    const onLinkedFitInViewStatusChangeForView = React.useCallback(
+        function onLinkedFitInViewStatusChangeForView(status: FitInViewStatus) {
+            onLinkedFitInViewStatusChange?.(viewId, status);
+        },
+        [viewId, onLinkedFitInViewStatusChange],
+    );
+
     const onHoverViewLink = React.useCallback(
-        (viewIds: string[] | null) => {
+        function onHoverViewLink(viewIds: string[] | null) {
             if (!viewIds) {
                 setHoveredViewIds?.(EMPTY_HOVERED_VIEW_IDS);
             } else {
@@ -352,6 +399,8 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
         onLinkedViewportChange: onLinkedViewportChangeForView,
         onLinkedVerticalScaleChange: onLinkedVerticalScaleChangeForView,
         onLinkedBoundsChange: onLinkedBoundsChangeForView,
+        onLinkedFitInViewStatusChange: onLinkedFitInViewStatusChangeForView,
+        fitInViewStatus: viewLink?.fitInViewStatus ?? null,
         bounds: viewLink?.bounds ?? null,
     };
 }
