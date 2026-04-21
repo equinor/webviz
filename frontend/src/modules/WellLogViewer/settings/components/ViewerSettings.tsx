@@ -10,7 +10,7 @@ import { horizontalLayoutAtom, limitDomainToDataAtom } from "../atoms/baseAtoms"
 export function ViewerSettings(): React.ReactNode {
     // Well log selection
     const [horizontal, setHorizontal] = useAtom(horizontalLayoutAtom);
-    const [padWithEmptyRows, setPadWithEmptyRows] = useAtom(limitDomainToDataAtom);
+    const [limitDomainToData, setLimitDomainToData] = useAtom(limitDomainToDataAtom);
 
     return (
         <div className="space-y-2">
@@ -20,7 +20,7 @@ export function ViewerSettings(): React.ReactNode {
             </Label>
 
             <Label text="Limit zoom to data:" position="left" labelClassName="mb-0!">
-                <Checkbox checked={!padWithEmptyRows} onChange={(e, checked) => setPadWithEmptyRows(!checked)} />
+                <Checkbox checked={limitDomainToData} onChange={(e, checked) => setLimitDomainToData(checked)} />
             </Label>
         </div>
     );
