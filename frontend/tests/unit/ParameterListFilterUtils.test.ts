@@ -39,6 +39,7 @@ const DISCRETE_PARAMETER: DiscreteParameter = {
     groupName: "group2",
     description: "discrete parameter description",
     isConstant: true,
+    isNumerical: true,
     realizations: [1, 2, 3],
     values: [10, 11, 12],
 };

@@ -205,34 +205,34 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const comparisonEnsemble = existingComparisonEnsemble
             ? existingComparisonEnsemble
             : new RegularEnsemble(
-                  comparisonEnsembleApiData.ensembleDetails.assetName,
-                  comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
-                  comparisonEnsembleApiData.ensembleDetails.caseUuid,
-                  comparisonEnsembleApiData.ensembleDetails.caseName,
-                  comparisonEnsembleApiData.ensembleDetails.name,
-                  comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
-                  comparisonEnsembleApiData.ensembleDetails.realizations,
-                  emptyParameterArray,
-                  nullSensitivityArray,
-                  emptyColor,
-                  comparisonEnsembleCustomName,
-              );
+                comparisonEnsembleApiData.ensembleDetails.assetName,
+                comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
+                comparisonEnsembleApiData.ensembleDetails.caseUuid,
+                comparisonEnsembleApiData.ensembleDetails.caseName,
+                comparisonEnsembleApiData.ensembleDetails.name,
+                comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
+                comparisonEnsembleApiData.ensembleDetails.realizations,
+                emptyParameterArray,
+                nullSensitivityArray,
+                emptyColor,
+                comparisonEnsembleCustomName,
+            );
 
         const referenceEnsemble = existingReferenceEnsemble
             ? existingReferenceEnsemble
             : new RegularEnsemble(
-                  referenceEnsembleApiData.ensembleDetails.assetName,
-                  referenceEnsembleApiData.ensembleDetails.fieldIdentifiers,
-                  referenceEnsembleApiData.ensembleDetails.caseUuid,
-                  referenceEnsembleApiData.ensembleDetails.caseName,
-                  referenceEnsembleApiData.ensembleDetails.name,
-                  referenceEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
-                  referenceEnsembleApiData.ensembleDetails.realizations,
-                  emptyParameterArray,
-                  nullSensitivityArray,
-                  emptyColor,
-                  referenceEnsembleCustomName,
-              );
+                referenceEnsembleApiData.ensembleDetails.assetName,
+                referenceEnsembleApiData.ensembleDetails.fieldIdentifiers,
+                referenceEnsembleApiData.ensembleDetails.caseUuid,
+                referenceEnsembleApiData.ensembleDetails.caseName,
+                referenceEnsembleApiData.ensembleDetails.name,
+                referenceEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
+                referenceEnsembleApiData.ensembleDetails.realizations,
+                emptyParameterArray,
+                nullSensitivityArray,
+                emptyColor,
+                referenceEnsembleCustomName,
+            );
 
         outDeltaEnsembleArray.push(
             new DeltaEnsemble(
@@ -421,6 +421,7 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
                 groupName: apiPar.groupName ?? null,
                 description: apiPar.descriptiveName ?? null,
                 isConstant: apiPar.isConstant,
+                isNumerical: apiPar.isNumerical,
                 realizations: apiPar.realizations,
                 values: apiPar.values,
             };

@@ -391,6 +391,10 @@ export type EnsembleParameter_api = {
      */
     isConstant: boolean;
     /**
+     * Isnumerical
+     */
+    isNumerical: boolean;
+    /**
      * Groupname
      */
     groupName?: string | null;
