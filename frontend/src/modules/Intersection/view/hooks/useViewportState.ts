@@ -16,7 +16,7 @@ import {
 } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
-import { viewportMapAtom } from "../atoms/baseAtoms";
+import { unlinkedViewStateMapAtom } from "../atoms/baseAtoms";
 import type { ViewLinkResult } from "../components/ViewLinkManager";
 
 const DISPLACEMENT_FACTOR = 1.4;
@@ -74,11 +74,11 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
     } = viewLinkResult;
 
     // --- Source of truth for viewport ---
-    const [viewportMap, setViewportMap] = useAtom(viewportMapAtom);
-    const storedViewportInfo = viewportMap?.[viewId] ?? null;
+    const [unlinkedViewStateMap, setUnlinkedViewStateMap] = useAtom(unlinkedViewStateMapAtom);
+    const unlinkedViewState = unlinkedViewStateMap?.[viewId] ?? null;
 
     const viewport: Viewport | null =
-        isLinked && linkedViewport ? linkedViewport : (storedViewportInfo?.viewport ?? null);
+        isLinked && linkedViewport ? linkedViewport : (unlinkedViewState?.viewport ?? null);
 
     const hasPersistedViewport = viewport !== null && isValidViewport(viewport);
 
@@ -88,7 +88,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
     const lastAppliedSyncedViewportRef = React.useRef<Viewport | null>(null);
     const skipRefocusDueToRestoreRef = React.useRef(hasPersistedViewport);
 
-    const [verticalScale, setVerticalScale] = React.useState<number>(storedViewportInfo?.verticalScale ?? 10.0);
+    const [verticalScale, setVerticalScale] = React.useState<number>(unlinkedViewState?.verticalScale ?? 10.0);
     const lastAppliedSyncedVerticalScaleRef = React.useRef<number | null>(null);
 
     const [localFitInViewStatus, setLocalFitInViewStatus] = React.useState<FitInViewStatus>(
@@ -138,7 +138,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
             if (isLinked) {
                 onLinkedViewportChange(newViewport);
             }
-            setViewportMap((prev) => {
+            setUnlinkedViewStateMap((prev) => {
                 const existing = prev?.[viewId];
                 if (existing && isEqual(existing.viewport, newViewport) && existing.verticalScale === verticalScale) {
                     return prev;
@@ -146,7 +146,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
                 return { ...prev, [viewId]: { viewport: newViewport, verticalScale } };
             });
         },
-        [isLinked, viewId, verticalScale, onLinkedViewportChange, setViewportMap],
+        [isLinked, viewId, verticalScale, onLinkedViewportChange, setUnlinkedViewStateMap],
     );
 
     const updateVerticalScale = React.useCallback(

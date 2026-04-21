@@ -1,6 +1,8 @@
 import { atom } from "jotai";
 
-import type { StandaloneViewportInfo, ViewLink } from "../components/ViewLinkManager";
+import type { UnlinkedViewState } from "@modules/Intersection/typesAndEnums";
+
+import type { ViewLink } from "../components/ViewLinkManager";
 
 export const viewLinksAtom = atom<ViewLink[] | null>(null);
-export const viewportMapAtom = atom<Record<string, StandaloneViewportInfo> | null>(null);
+export const unlinkedViewStateMapAtom = atom<Record<string, UnlinkedViewState> | null>(null);

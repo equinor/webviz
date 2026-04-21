@@ -27,11 +27,6 @@ export type IntersectionViewInfo = {
     combinedBoundingBox?: BBox | null;
 };
 
-export type StandaloneViewportInfo = {
-    viewport: Viewport;
-    verticalScale: number;
-};
-
 type ViewLinkManagerContextValue = {
     viewLinks: ViewLink[];
     intersectionViews: IntersectionViewInfo[];

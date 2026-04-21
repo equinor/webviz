@@ -6,12 +6,14 @@ import { setIfDefined } from "@framework/utils/atomUtils";
 import { FitInViewStatus } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { viewportMapAtom, viewLinksAtom } from "./atoms/baseAtoms";
-import type { StandaloneViewportInfo, ViewLink } from "./components/ViewLinkManager";
+import type { UnlinkedViewState } from "../typesAndEnums";
+
+import { unlinkedViewStateMapAtom, viewLinksAtom } from "./atoms/baseAtoms";
+import type { ViewLink } from "./components/ViewLinkManager";
 
 export type SerializedView = {
     viewLinks: ViewLink[];
-    standaloneViewports: Record<string, StandaloneViewportInfo>;
+    unlinkedViewStateMap: Record<string, UnlinkedViewState>;
 };
 
 // JTD has no tuple type — use elements with a cast for fixed-length arrays
@@ -48,7 +50,7 @@ const schemaBuilder = new SchemaBuilder<SerializedView>(() => ({
         viewLinks: {
             elements: VIEW_LINK_SCHEMA,
         },
-        standaloneViewports: {
+        unlinkedViewStateMap: {
             values: {
                 properties: {
                     viewport: VIEWPORT_SCHEMA,
@@ -63,11 +65,11 @@ export const SERIALIZED_VIEW = schemaBuilder.build();
 
 export const serializeView: SerializeStateFunction<SerializedView> = (get) => {
     const viewLinks = get(viewLinksAtom);
-    const standaloneViewports = get(viewportMapAtom);
+    const unlinkedViewStateMap = get(unlinkedViewStateMapAtom);
 
     return {
         viewLinks: viewLinks ?? [],
-        standaloneViewports: standaloneViewports ?? {},
+        unlinkedViewStateMap: unlinkedViewStateMap ?? {},
     };
 };
 
@@ -77,5 +79,5 @@ export const deserializeView: DeserializeStateFunction<SerializedView> = (raw, s
         fitInViewStatus: link.fitInViewStatus ?? FitInViewStatus.OFF,
     }));
     setIfDefined(set, viewLinksAtom, viewLinks);
-    setIfDefined(set, viewportMapAtom, raw.standaloneViewports ?? {});
+    setIfDefined(set, unlinkedViewStateMapAtom, raw.unlinkedViewStateMap ?? {});
 };
