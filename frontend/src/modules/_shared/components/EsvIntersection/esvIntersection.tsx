@@ -34,11 +34,11 @@ import { cloneDeep, isEqual } from "lodash";
 
 import type { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { useIsMountedRef } from "@lib/hooks/useIsMountedRef";
 import type { ColorScale } from "@lib/utils/ColorScale";
 import { fuzzyCompare } from "@lib/utils/fuzzyCompare";
 import type { Size2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { useIsMountedRef } from "@lib/hooks/useIsMountedRef";
 
 import type { InteractionHandlerTopicPayload } from "./interaction/InteractionHandler";
 import { InteractionHandler, InteractionHandlerTopic } from "./interaction/InteractionHandler";

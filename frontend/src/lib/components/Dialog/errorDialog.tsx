@@ -2,9 +2,9 @@ import React from "react";
 
 import { BugReport, Error } from "@mui/icons-material";
 
+import { useIsMountedRef } from "@lib/hooks/useIsMountedRef";
 import { reportErrorToGithub } from "@lib/utils/errors";
 import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
-import { useIsMountedRef } from "@lib/hooks/useIsMountedRef";
 
 import { Button } from "../Button";
 
