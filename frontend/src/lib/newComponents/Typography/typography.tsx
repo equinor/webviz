@@ -1,3 +1,5 @@
+import React from "react";
+
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type TypographyProps = {
@@ -288,7 +290,10 @@ const DEFAULT_PROPS = {
     tracking: "normal",
 } satisfies Partial<TypographyProps>;
 
-export function Typography(props: TypographyProps) {
+function TypographyComponent<Element extends HTMLElement>(
+    props: TypographyProps,
+    ref: React.ForwardedRef<Element>,
+): React.ReactNode {
     const {
         family,
         size,
@@ -313,8 +318,10 @@ export function Typography(props: TypographyProps) {
     );
 
     return (
-        <Component className={resolvedClassName} {...htmlProps}>
+        <Component ref={ref} className={resolvedClassName} {...htmlProps}>
             {children}
         </Component>
     );
 }
+
+export const Typography = React.forwardRef(TypographyComponent);

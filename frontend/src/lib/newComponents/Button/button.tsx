@@ -66,7 +66,7 @@ const SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
     const defaultedProps = defaults({}, props, DEFAULT_PROPS);
-    const { pressed, iconOnly, ...rest } = defaultedProps;
+    const { pressed, iconOnly, round, ...rest } = defaultedProps;
 
     return (
         <ButtonBase
@@ -76,8 +76,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             className={resolveClassNames(
                 "button",
                 {
-                    "rounded-full": props.round,
-                    rounded: !props.round,
+                    "rounded-full": round,
+                    rounded: !round,
                     "button__icon aspect-square justify-center": iconOnly,
                 },
                 SIZE_CLASSES[defaultedProps.size],

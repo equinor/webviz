@@ -56,10 +56,10 @@ export const PersistentPopover: Story = {
         },
     },
     decorators: [
+        // TODO: Portal needed for legacy dropdown. Remove once a new dropdown is used
         (Story) => (
             <>
                 <Story />
-                {/* // TODO: Remove portal migrated dropdown is used */}
                 <div id="portal-root"></div>
             </>
         ),
@@ -79,16 +79,14 @@ export const PersistentPopover: Story = {
                 </Popover.Trigger>
                 <Popover.Popup>
                     <Popover.Title hideCloseButton>A persistent popover</Popover.Title>
-                    <Popover.Content>
-                        {/* // TODO: Use the new base-ui dropdown once that's implemented */}
-                        <Dropdown
-                            options={[
-                                { label: "Option 1", value: "option1" },
-                                { label: "Option 2", value: "option2" },
-                                { label: "Option 3", value: "option3" },
-                            ]}
-                        />
-                    </Popover.Content>
+                    {/* // TODO: Use the new base-ui dropdown once that's implemented */}
+                    <Dropdown
+                        options={[
+                            { label: "Option 1", value: "option1" },
+                            { label: "Option 2", value: "option2" },
+                            { label: "Option 3", value: "option3" },
+                        ]}
+                    />
 
                     <div className="mt-vertical-md flex">
                         <Button className="w-full" onClick={() => setPopoverOpen(false)}>
