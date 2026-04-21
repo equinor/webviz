@@ -55,7 +55,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                     )}
                 >
                     {makeStartAdornment(state)}
-                    <input className="min-w-0 grow p-0 outline-0 data-disabled:cursor-not-allowed" {...p} />
+                    <input className="w-full min-w-0 flex-auto p-0 outline-0 data-disabled:cursor-not-allowed" {...p} />
                     {props.endAdornment}
                 </div>
             )}
