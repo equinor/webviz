@@ -9,6 +9,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { ContextHelp } from "@lib/components/ContextHelp";
 import { Dropdown } from "@lib/components/Dropdown";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
@@ -32,6 +33,7 @@ import {
     showConstantParametersAtom,
     showIndividualRealizationValuesAtom,
     showLogParametersAtom,
+    showNumericDiscreteParametersAtom,
     showPercentilesAndMeanLinesAtom,
     selectedEnsembleModeAtom,
 } from "./atoms/baseAtoms";
@@ -53,6 +55,9 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const [selectedParameterIdents, setSelectedParameterIdents] = useAtom(selectedParameterIdentsAtom);
     const [showConstantParameters, setShowConstantParameters] = useAtom(showConstantParametersAtom);
     const [showLogParameters, setShowLogParameters] = useAtom(showLogParametersAtom);
+    const [showNumericDiscreteParameters, setShowNumericDiscreteParameters] = useAtom(
+        showNumericDiscreteParametersAtom,
+    );
     const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
     const [selectedEnsembleMode, setSelectedEnsembleMode] = useAtom(selectedEnsembleModeAtom);
     const [showIndividualRealizationValues, setShowIndividualRealizationValues] = useAtom(
@@ -78,6 +83,9 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     }
     function handleShowLogParametersChange() {
         setShowLogParameters((prev) => !prev);
+    }
+    function handleShowNumericDiscreteParametersChange() {
+        setShowNumericDiscreteParameters((prev) => !prev);
     }
 
     function handleShowIndividualRealizationValuesChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
@@ -237,6 +245,37 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                         checked={showLogParameters}
                         onChange={handleShowLogParametersChange}
                     />
+                    <div className="flex flex-row gap-2">
+                        <Checkbox
+                            label="Show discrete parameters"
+                            checked={showNumericDiscreteParameters}
+                            onChange={handleShowNumericDiscreteParametersChange}
+                        />
+                        <ContextHelp
+                            title="Show discrete parameters"
+                            content={
+                                <>
+                                    Includes parameters tagged as discrete in the available parameter list.
+                                    <br />A parameter is tagged as discrete when it comes from a non-continuous ERT
+                                    distribution such as <b>DUNIF</b>, <b>DERRF</b>, or <b>RAW</b>.
+                                    <br />
+                                    See{" "}
+                                    <a
+                                        href="https://fmu-docs.equinor.com/docs/ert/reference/configuration/data_types.html"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-indigo-600 underline"
+                                    >
+                                        the ERT data types documentation
+                                    </a>
+                                    .
+                                    <br />
+                                    In this plot, only numeric discrete parameters are included. String-based discrete
+                                    parameters are still excluded.
+                                </>
+                            }
+                        />
+                    </div>
                     <SettingWrapper annotations={selectedParameterIdentsAnnotation}>
                         <ParametersSelector
                             allParameterIdents={intersectedParameterIdents}

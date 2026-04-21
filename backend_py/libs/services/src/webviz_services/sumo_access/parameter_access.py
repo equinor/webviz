@@ -295,6 +295,7 @@ def create_ensemble_parameter_from_standard_result(
         group_name=parameter_meta.group_name,
         is_logarithmic=is_logarithmic_distribution(parameter_meta.distribution),
         is_discrete=is_discrete_column(field.type, parameter_meta.distribution),
+        is_numerical=is_numerical_column(field.type),
         is_constant=len(set(column)) == 1,
         descriptive_name=parameter_name,
         values=column.to_numpy().tolist(),
@@ -350,20 +351,25 @@ def is_logarithmic_distribution(distribution: ErtDistribution) -> bool:
 def is_discrete_column(column_type: pa.DataType, distribution: ErtDistribution) -> bool:
     """Check if a column represents discrete data.
 
-    Discrete parameters are defined as parameters that are either strings or integers,
-    or have a distribution type of const or raw.
+    Discrete parameters are identified from non-continuous ERT distributions.
+    The current rule tags DERRF, DUNIF, and RAW distributions as discrete.
 
     Args:
         column_type: PyArrow data type to check
         distribution: ErtDistribution enum value
 
     Returns:
-        True if the column type is discrete (string or integer) or distribution is const/raw
+        True if the distribution is tagged as discrete
 
     """
-    if distribution in [ErtDistribution.const, ErtDistribution.raw]:
+    if distribution in [ErtDistribution.derrf, ErtDistribution.dunif, ErtDistribution.raw]:
         return True
-    return pa.types.is_integer(column_type) or pa.types.is_string(column_type) or pa.types.is_large_string(column_type)
+    return False
+
+
+def is_numerical_column(column_type: pa.DataType) -> bool:
+    """Check if a column represents numerical data."""
+    return pa.types.is_integer(column_type) or pa.types.is_floating(column_type)
 
 
 def _cast_datetime_columns_to_string(parameter_table: pa.Table) -> pa.Table:
@@ -435,6 +441,7 @@ def _create_ensemble_parameter_from_custom_result(
         group_name=f"LOG10_{group_name}" if is_logarithmic else group_name,
         is_logarithmic=is_logarithmic,
         is_discrete=_is_discrete_column_custom_result(parameter_table.schema.field(table_column_name).type),
+        is_numerical=is_numerical_column(parameter_table.schema.field(table_column_name).type),
         is_constant=len(set(parameter_table[table_column_name])) == 1,
         descriptive_name=parameter_name,
         values=parameter_table[table_column_name].to_numpy().tolist(),
