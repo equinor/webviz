@@ -38,7 +38,7 @@ import type { ColorScale } from "@lib/utils/ColorScale";
 import { fuzzyCompare } from "@lib/utils/fuzzyCompare";
 import type { Size2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { useIsMountedRef } from "@modules/_shared/hooks/useIsMountedRef";
+import { useIsMountedRef } from "@lib/hooks/useIsMountedRef";
 
 import type { InteractionHandlerTopicPayload } from "./interaction/InteractionHandler";
 import { InteractionHandler, InteractionHandlerTopic } from "./interaction/InteractionHandler";

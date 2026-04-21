@@ -4,7 +4,7 @@ import { BugReport, Error } from "@mui/icons-material";
 
 import { reportErrorToGithub } from "@lib/utils/errors";
 import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
-import { useIsMountedRef } from "@modules/_shared/hooks/useIsMountedRef";
+import { useIsMountedRef } from "@lib/hooks/useIsMountedRef";
 
 import { Button } from "../Button";
 
