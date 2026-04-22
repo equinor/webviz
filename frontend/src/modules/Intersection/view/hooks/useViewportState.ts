@@ -123,8 +123,20 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
 
     // --- Effective values (linked vs unlinked) ---
     const effectiveVerticalScale = isLinked && linkedVerticalScale !== null ? linkedVerticalScale : verticalScale;
-    const effectiveFocusBounds = isLinked && linkedFocusBounds ? linkedFocusBounds : focusBounds;
-    const effectiveLayerItemsBounds = isLinked && linkedBounds ? linkedBounds : layerItemsBounds;
+
+    const candidateFocusBounds = isLinked && linkedFocusBounds ? linkedFocusBounds : focusBounds;
+    const effectiveFocusBoundsRef = React.useRef<Bounds | null>(candidateFocusBounds);
+    if (!isEqual(effectiveFocusBoundsRef.current, candidateFocusBounds)) {
+        effectiveFocusBoundsRef.current = candidateFocusBounds;
+    }
+    const effectiveFocusBounds = effectiveFocusBoundsRef.current;
+
+    const candidateLayerItemsBounds = isLinked && linkedBounds ? linkedBounds : layerItemsBounds;
+    const effectiveLayerItemsBoundsRef = React.useRef<Bounds>(candidateLayerItemsBounds);
+    if (!isEqual(effectiveLayerItemsBoundsRef.current, candidateLayerItemsBounds)) {
+        effectiveLayerItemsBoundsRef.current = candidateLayerItemsBounds;
+    }
+    const effectiveLayerItemsBounds = effectiveLayerItemsBoundsRef.current;
 
     const verticalScalingFactor = React.useMemo(() => {
         let widthHeightRatio = containerSize.width / containerSize.height;

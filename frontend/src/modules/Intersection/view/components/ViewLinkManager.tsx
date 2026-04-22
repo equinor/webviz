@@ -131,6 +131,9 @@ export function ViewLinkManager({
     // Stable callbacks — use functional state updates so no external deps are needed
     const toggleViewLink = React.useCallback(
         function toggleViewLink(thisViewId: string, otherViewId: string, initiatorViewport?: Viewport | null) {
+            // User-initiated action — mark initialization complete so persistence effects run
+            hasAppliedInitialRef.current = true;
+
             setViewLinks((prev) => {
                 const thisLinkIdx = prev.findIndex((l) => l.viewIds.includes(thisViewId));
                 const otherLinkIdx = prev.findIndex((l) => l.viewIds.includes(otherViewId));
