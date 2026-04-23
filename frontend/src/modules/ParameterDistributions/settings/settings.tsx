@@ -261,7 +261,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     <br />
                                     See{" "}
                                     <a
-                                        href="https://fmu-docs.equinor.com/docs/ert/reference/configuration/data_types.html"
+                                        href="https://ert.readthedocs.io/en/latest/reference/configuration/data_types.html"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-indigo-600 underline"
