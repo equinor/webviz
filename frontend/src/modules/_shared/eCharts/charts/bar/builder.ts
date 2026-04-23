@@ -8,19 +8,21 @@ import { buildBarSeries, type BarSortBy, type BuildBarSeriesOptions } from "./se
 import { buildBarTooltip } from "./tooltips";
 export type BarChartOptions = BaseChartOptions & BuildBarSeriesOptions & {
     yAxisLabel?: string;
+    maxCategoryLabels?: number;
 };
 
 export function buildBarChart(
     subplotGroups: SubplotGroup<BarTrace>[],
     options: BarChartOptions = {},
 ): EChartsOption {
+    const xAxisLabel = options.xAxisLabel;
     const yAxisLabel = options.yAxisLabel ?? "Value";
 
     const buildSubplot = function buildBarSubplotForAxis(
         group: SubplotGroup<BarTrace>,
         axisIndex: number,
     ): CartesianSubplotBuildResult {
-        return buildBarSubplot(group, axisIndex, options, yAxisLabel);
+        return buildBarSubplot(group, axisIndex, options, xAxisLabel, yAxisLabel);
     };
 
     return buildCartesianSubplotChart(
@@ -42,6 +44,7 @@ function buildBarSubplot(
     group: SubplotGroup<BarTrace>,
     axisIndex: number,
     options: BuildBarSeriesOptions,
+    xAxisLabel: string | undefined,
     yAxisLabel: string,
 ): CartesianSubplotBuildResult {
     if (group.traces.length === 0) {
@@ -50,6 +53,7 @@ function buildBarSubplot(
 
     const categoryOrder = computeCategoryOrder(group.traces, options.sortBy ?? "categories");
     const optionsWithOrder: BuildBarSeriesOptions = { ...options, categoryOrder };
+    const maxCategoryLabels = options.maxCategoryLabels ?? 20;
     const series = [];
     const legendData: string[] = [];
     const seenLegend = new Set<string>();
@@ -68,10 +72,27 @@ function buildBarSubplot(
     return {
         series,
         legendData,
-        xAxis: { type: "category", data: categoryOrder },
+        xAxis: {
+            type: "category",
+            data: categoryOrder,
+            axisLabelShow: categoryOrder.length <= maxCategoryLabels,
+            label: resolveXAxisLabel(xAxisLabel, categoryOrder.length > maxCategoryLabels),
+        },
         yAxis: { type: "value", label: yAxisLabel },
         title: group.title,
     };
+}
+
+function resolveXAxisLabel(xAxisLabel: string | undefined, hasManyCategories: boolean): string | undefined {
+    if (!hasManyCategories) {
+        return xAxisLabel;
+    }
+
+    if (xAxisLabel) {
+        return `${xAxisLabel} (hover to see values)`;
+    }
+
+    return "Category (hover to see values)";
 }
 
 function computeCategoryOrder(traces: BarTrace[], sortBy: BarSortBy): Array<string | number> {

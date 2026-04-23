@@ -39,6 +39,15 @@ export function formatBarMeanTooltip(traceName: string, mean: number, traceColor
     return formatCompactTooltip(traceName, [{ label: "Mean", value: formatNumber(mean), color: traceColor }]);
 }
 
+export function formatBarStatisticTooltip(
+    traceName: string,
+    statisticLabel: string,
+    value: number,
+    traceColor: string,
+): string {
+    return formatCompactTooltip(traceName, [{ label: statisticLabel, value: formatNumber(value), color: traceColor }]);
+}
+
 function extractBarTooltipValue(value: unknown): number | null {
     if (value == null) {
         return null;

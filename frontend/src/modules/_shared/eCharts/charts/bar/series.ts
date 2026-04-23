@@ -8,7 +8,7 @@ import type { BarTrace } from "../../types";
 import { computePointStatistics } from "../../utils/statistics";
 
 import { makeBarSeriesId } from "./ids";
-import { formatBarMeanTooltip } from "./tooltips";
+import { formatBarStatisticTooltip } from "./tooltips";
 
 export type BarSortBy = "categories" | "values";
 
@@ -17,6 +17,7 @@ export type BuildBarSeriesOptions = {
     showStatisticalMarkers?: boolean;
     showLabels?: boolean;
     maxLabelsForText?: number;
+    maxCategoryLabels?: number;
     /** When provided, values are aligned to this category order instead of sorting per-trace. */
     categoryOrder?: (string | number)[];
 };
@@ -93,7 +94,7 @@ export function buildBarSeries(
     const numericValues = collectNumericBarValues(yData);
     if (showStatisticalMarkers && numericValues.length > 0 && xData.length > 0) {
         const stats = computePointStatistics(numericValues);
-        series.push(createMeanReferenceLine(stats.mean, xData, trace, axisIndex));
+        series.push(...createStatisticReferenceLines(stats, xData, trace, axisIndex));
     }
 
     return { series, categoryData: xData, legendData: [trace.name] };
@@ -121,31 +122,36 @@ function extractBarDataValue(value: unknown): number | null {
     return null;
 }
 
-function createMeanReferenceLine(
-    mean: number,
+function createStatisticReferenceLines(
+    stats: ReturnType<typeof computePointStatistics>,
     xData: (string | number)[],
     trace: BarTrace,
     axisIndex: number,
-): LineSeriesOption {
-    return (
-        {
-            id: makeBarSeriesId(trace.name, "reference", axisIndex, "mean"),
+): LineSeriesOption[] {
+    const definitions = [
+        { key: "p10", label: "P10", value: stats.p10, type: "dashed" as const },
+        { key: "mean", label: "Mean", value: stats.mean, type: "solid" as const },
+        { key: "p90", label: "P90", value: stats.p90, type: "dashed" as const },
+    ];
+
+    return definitions.map(function buildReferenceLine(definition) {
+        return {
+            id: makeBarSeriesId(trace.name, "reference", axisIndex, definition.key),
             type: "line",
             name: trace.name,
             xAxisIndex: axisIndex,
             yAxisIndex: axisIndex,
             itemStyle: { color: trace.color },
             data: [
-                [xData[0], mean],
-                [xData[xData.length - 1], mean],
+                [xData[0], definition.value],
+                [xData[xData.length - 1], definition.value],
             ],
-            lineStyle: { color: trace.color, width: 1.5, type: "dashed", opacity: 0.7 },
+            lineStyle: { color: trace.color, width: definition.key === "mean" ? 1.5 : 1.25, type: definition.type, opacity: 0.7 },
             symbol: "none",
             silent: true,
             tooltip: {
-                formatter: () => formatBarMeanTooltip(trace.name, mean, trace.color),
+                formatter: () => formatBarStatisticTooltip(trace.name, definition.label, definition.value, trace.color),
             },
-        }
-
-    );
+        };
+    });
 }

@@ -20,6 +20,9 @@ export interface GridEntry {
     width: string;
     height: string;
     containLabel: boolean;
+    show?: boolean;
+    borderColor?: string;
+    borderWidth?: number;
 }
 
 export interface SubplotLayoutResult {

@@ -54,11 +54,22 @@ All builders accept `base: BaseChartOptions`. Every field is optional.
 | `zoomable` | `boolean` | `false` | Enable wheel / pinch zoom and box-zoom controls for families that support shared cartesian zoom |
 | `sharedXAxis` | `boolean` | `false` | Hide x-axis labels on all but the bottom subplot |
 | `sharedYAxis` | `boolean` | `false` | Hide y-axis labels on all but the left subplot |
+| `highlightedSubplotIndices` | `number[]` | — | Draw a border around selected subplot grids. Indices are zero-based after empty subplots are filtered out. |
 | `xAxisLabel` | `string` | builder-specific | Override x-axis label |
 | `yAxisLabel` | `string` | builder-specific | Override y-axis label |
 | `showLegend` | `boolean` | auto | Force legend on/off |
 
 Override priority: series-level > `BaseChartOptions` > builder default.
+
+### Selected family options
+
+The families expose additional typed options on top of `BaseChartOptions`. The most migration-relevant ones today are:
+
+| Family | Options |
+|---|---|
+| Histogram | `numBins`, `histogramType`, `showMemberPoints`, `showPercentageInBar`, `showStatisticalMarkers`, `showStatisticalLabels` |
+| Bar | `sortBy`, `showStatisticalMarkers`, `showLabels`, `maxCategoryLabels` |
+| Percentile range | `showMemberPoints`, `centerStatistic`, `showWhiskers` |
 
 ### Hooks
 

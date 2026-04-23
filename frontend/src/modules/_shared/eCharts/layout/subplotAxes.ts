@@ -9,6 +9,7 @@ export interface AxisDef {
     data?: (string | number)[];
     label?: string;
     nameGap?: number;
+    axisLabelShow?: boolean;
     boundaryGap?: boolean;
     scale?: boolean;
     splitLine?: boolean;
@@ -79,7 +80,7 @@ function buildAxis(def: AxisDef, gridIndex: number, direction: "x" | "y"): XAXis
         ...(def.splitArea != null ? { splitArea: { show: def.splitArea } } : {}),
         ...(def.axisPointer != null ? { axisPointer: def.axisPointer } : {}),
         axisLabel: {
-            show: true,
+            show: def.axisLabelShow ?? true,
             fontSize: 11,
             hideOverlap: true,
             ...(isValue ? { formatter: (v: number) => formatNumber(v) } : {}),

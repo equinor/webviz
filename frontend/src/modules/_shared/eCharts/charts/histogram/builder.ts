@@ -18,6 +18,8 @@ export type HistogramChartOptions = BaseChartOptions & {
     histogramType?: HistogramType;
     showMemberPoints?: boolean;
     showPercentageInBar?: boolean;
+    showStatisticalMarkers?: boolean;
+    showStatisticalLabels?: boolean;
     borderColor?: string;
     borderWidth?: number;
 };
@@ -32,8 +34,8 @@ export function buildHistogramChart(
 ): EChartsOption {
 
     const config = resolveHistogramSeriesOptions(options);
-    const xAxisLabel = "Value";
-    const yAxisLabel = "Percentage (%)";
+    const xAxisLabel = options.xAxisLabel ?? "Value";
+    const yAxisLabel = options.yAxisLabel ?? "Percentage (%)";
 
     const yMaxByAxis: number[] = [];
 
@@ -67,6 +69,8 @@ function resolveHistogramSeriesOptions(
         histogramType: options?.histogramType ?? HistogramType.Overlay,
         showMemberPoints: options?.showMemberPoints ?? false,
         showPercentageInBar: options?.showPercentageInBar ?? false,
+        showStatisticalMarkers: options?.showStatisticalMarkers ?? false,
+        showStatisticalLabels: options?.showStatisticalLabels ?? false,
         borderColor: options?.borderColor ?? "black",
         borderWidth: options?.borderWidth ?? 1,
     };

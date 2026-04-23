@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { buildHistogramChart } from "@modules/_shared/eCharts";
 import { HistogramType } from "@modules/_shared/eCharts/types";
 import {
     computeHistogramLayout,
@@ -95,5 +96,33 @@ describe("computeHistogramLayout", () => {
     it("yMax is positive when there is data", () => {
         const layout = computeHistogramLayout(traceData, HistogramType.Overlay);
         expect(layout.yMax).toBeGreaterThan(0);
+    });
+});
+
+describe("buildHistogramChart", () => {
+    it("adds p10, mean and p90 guides when statistical markers are enabled", () => {
+        const option = buildHistogramChart(
+            [{ title: "Subplot 1", traces: [makeTrace("A", [10, 20, 30, 40, 50])] }],
+            { showStatisticalMarkers: true, showStatisticalLabels: true },
+        );
+
+        const series = (option.series ?? []) as Array<{ type?: string; label?: { show?: boolean } }>;
+        const lineSeries = series.filter((entry) => entry.type === "line");
+
+        expect(lineSeries).toHaveLength(3);
+        expect(lineSeries.every((entry) => entry.label?.show)).toBe(true);
+    });
+
+    it("highlights requested subplot grids", () => {
+        const option = buildHistogramChart(
+            [
+                { title: "Subplot 1", traces: [makeTrace("A", [1, 2, 3])] },
+                { title: "Subplot 2", traces: [makeTrace("B", [4, 5, 6])] },
+            ],
+            { highlightedSubplotIndices: [1] },
+        );
+
+        const grids = Array.isArray(option.grid) ? option.grid : [option.grid];
+        expect(grids[1]).toMatchObject({ show: true, borderColor: "#2563eb", borderWidth: 1 });
     });
 });

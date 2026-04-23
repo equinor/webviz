@@ -39,7 +39,7 @@ export function buildCartesianSubplotChart<T>(
     const {
         sharedXAxis, sharedYAxis, layoutConfig,
         postProcessAxes, zoomState, zoomable, dataZoom,
-        showLegend,
+        showLegend, highlightedSubplotIndices,
         ...composeOverrides
     } = options;
     let finalDataZoom = dataZoom;
@@ -72,6 +72,7 @@ export function buildCartesianSubplotChart<T>(
         });
     }
     const layout = computeSubplotGridLayout(groups.length, layoutConfig);
+    applyHighlightedSubplots(layout, highlightedSubplotIndices);
     const allSeries: ChartSeriesOption[] = [];
     const axisDefs: Array<{ xAxis: AxisDef; yAxis: AxisDef; title?: string }> = [];
     const legendData: string[] = [];
@@ -107,6 +108,26 @@ export function buildCartesianSubplotChart<T>(
         showLegend,
         ...composeOverrides,
     });
+}
+
+function applyHighlightedSubplots(
+    layout: ReturnType<typeof computeSubplotGridLayout>,
+    highlightedSubplotIndices?: number[],
+): void {
+    if (!highlightedSubplotIndices || highlightedSubplotIndices.length === 0) {
+        return;
+    }
+
+    for (const subplotIndex of highlightedSubplotIndices) {
+        const grid = layout.grids[subplotIndex];
+        if (!grid) {
+            continue;
+        }
+
+        grid.show = true;
+        grid.borderColor = "#2563eb";
+        grid.borderWidth = 1;
+    }
 }
 
 /**

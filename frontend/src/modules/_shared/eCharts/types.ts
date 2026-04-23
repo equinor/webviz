@@ -127,6 +127,8 @@ export interface BaseChartOptions {
     zoomable?: boolean;
     sharedXAxis?: boolean;
     sharedYAxis?: boolean;
+    /** Draw a border around matching subplot grids. Indices are zero-based and refer to the filtered non-empty subplot order. */
+    highlightedSubplotIndices?: number[];
     /** X-axis label override. Builders provide their own defaults when omitted. */
     xAxisLabel?: string;
     /** Y-axis label override. Builders provide their own defaults when omitted. */

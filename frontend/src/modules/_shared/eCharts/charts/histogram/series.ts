@@ -1,3 +1,4 @@
+import type { LineSeriesOption } from "echarts/charts";
 import type {
     CallbackDataParams,
     CustomSeriesRenderItem,
@@ -11,14 +12,22 @@ import type { DistributionTrace } from "../../types";
 import { HistogramType } from "../../types";
 import { computeHistogramLayout, computeHistogramTraceData } from "../../utils/histogram";
 import type { HistogramBarGeometry } from "../../utils/histogram";
+import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+import { computePointStatistics } from "../../utils/statistics";
 
 import { makeHistogramSeriesId } from "./ids";
-import { createHistogramBarTooltipFormatter, createHistogramRugTooltipFormatter } from "./tooltips";
+import {
+    createHistogramBarTooltipFormatter,
+    createHistogramRugTooltipFormatter,
+    createHistogramStatisticTooltipFormatter,
+} from "./tooltips";
 
 export interface HistogramDisplayOptions {
     numBins?: number;
     showMemberPoints?: boolean;
     showPercentageInBar?: boolean;
+    showStatisticalMarkers?: boolean;
+    showStatisticalLabels?: boolean;
     color?: string;
     opacity?: number;
     borderColor?: string;
@@ -60,6 +69,8 @@ export function buildHistogramSeriesFromBars(
     const {
         showMemberPoints = false,
         showPercentageInBar = false,
+        showStatisticalMarkers = false,
+        showStatisticalLabels = false,
         color = trace.color,
         opacity = 1,
         borderColor = "black",
@@ -136,10 +147,77 @@ export function buildHistogramSeriesFromBars(
         );
     }
 
+    if (showStatisticalMarkers) {
+        const stats = computePointStatistics(trace.values);
+        const yMax = bars.reduce(function computeBarsMax(acc, bar) {
+            return Math.max(acc, bar.yEnd);
+        }, 0);
+
+        if (yMax > 0) {
+            series.push(
+                ...createHistogramStatisticSeries(trace, axisIndex, yMax * 1.05, showStatisticalLabels, [
+                    { key: "p10", label: "P10", value: stats.p10, lineType: "dashed" },
+                    { key: "mean", label: "Mean", value: stats.mean, lineType: "solid" },
+                    { key: "p90", label: "P90", value: stats.p90, lineType: "dashed" },
+                ]),
+            );
+        }
+    }
+
     return {
         series,
         legendData: series.length > 0 ? [trace.name] : [],
     };
+}
+
+type HistogramStatisticSeriesDef = {
+    key: string;
+    label: string;
+    value: number;
+    lineType: "solid" | "dashed";
+};
+
+function createHistogramStatisticSeries(
+    trace: DistributionTrace,
+    axisIndex: number,
+    lineHeight: number,
+    showLabels: boolean,
+    definitions: HistogramStatisticSeriesDef[],
+): LineSeriesOption[] {
+    return definitions.map(function buildHistogramStatisticSeries(definition) {
+        return {
+            id: makeHistogramSeriesId(trace.name, "stat", axisIndex, definition.key),
+            type: "line",
+            name: trace.name,
+            xAxisIndex: axisIndex,
+            yAxisIndex: axisIndex,
+            itemStyle: { color: trace.color },
+            lineStyle: { color: trace.color, width: 2, type: definition.lineType },
+            symbol: "none",
+            silent: true,
+            data: [
+                [definition.value, 0],
+                [definition.value, lineHeight],
+            ],
+            label: showLabels
+                ? {
+                    show: true,
+                    position: "top",
+                    formatter: `${definition.label}: ${formatNumber(definition.value)}`,
+                    color: "#111",
+                    fontSize: 11,
+                }
+                : undefined,
+            tooltip: {
+                formatter: createHistogramStatisticTooltipFormatter(
+                    trace.name,
+                    trace.color,
+                    definition.label,
+                    definition.value,
+                ),
+            },
+        };
+    });
 }
 
 function createHistogramBarRenderItem(options: HistogramBarRenderItemOptions): CustomSeriesRenderItem {

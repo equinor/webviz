@@ -37,6 +37,19 @@ export function createHistogramRugTooltipFormatter(traceName: string, traceColor
     };
 }
 
+export function createHistogramStatisticTooltipFormatter(
+    traceName: string,
+    traceColor: string,
+    statisticLabel: string,
+    value: number,
+) {
+    return function formatHistogramStatisticTooltip(): string {
+        return formatCompactTooltip(traceName, [
+            { label: statisticLabel, value: formatNumber(value), color: traceColor },
+        ]);
+    };
+}
+
 function toHistogramBarValue(value: CallbackDataParams["value"]): HistogramBarValue | null {
     if (!Array.isArray(value) || value.length < 4) return null;
     return [Number(value[0]), Number(value[1]), Number(value[2]), Number(value[3])];
