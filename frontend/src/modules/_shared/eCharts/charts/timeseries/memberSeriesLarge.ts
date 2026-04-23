@@ -6,6 +6,7 @@ import { makeSeriesId } from "../../core/seriesId";
 import type { TimeseriesTrace } from "../../types";
 
 import { TIMESERIES_CATEGORY } from "./ids";
+import { mapLineShapeToStep } from "./lineShape";
 
 /**
  * Builds a single custom series per trace that renders all members as polylines
@@ -62,7 +63,7 @@ export function buildMemberSeriesLarge(trace: TimeseriesTrace, axisIndex = 0): S
         yAxisIndex: axisIndex,
         // Tell ECharts that dimensions 1 and 2 map to y so it computes axis range.
         encode: { y: [1, 2] },
-        renderItem: createRenderItem(memberValues, numTimesteps, trace.color, trace.memberColors),
+        renderItem: createRenderItem(memberValues, numTimesteps, trace.color, mapLineShapeToStep(trace.lineShape), trace.memberColors),
         // Explicit color so legend swatch matches renderItem stroke.
         // Without this, ECharts falls back to the palette for the legend icon.
         itemStyle: { color: trace.color },
@@ -83,6 +84,7 @@ function createRenderItem(
     memberValues: number[][],
     numTimesteps: number,
     defaultColor: string,
+    step: "start" | "end" | null,
     memberColors?: string[],
 ): CustomSeriesOption["renderItem"] {
     return function renderMemberPolyline(
@@ -115,10 +117,30 @@ function createRenderItem(
         }
 
         const points: number[][] = [];
+        let prevX = 0;
+        let prevY = 0;
+        let havePrev = false;
         for (let t = tStart; t < tEnd; t++) {
             const val = values[t];
-            if (!Number.isFinite(val)) continue;
-            points.push([ox + t * pxPerT, oy + val * pxPerVal]);
+            if (!Number.isFinite(val)) {
+                havePrev = false;
+                continue;
+            }
+            const x = ox + t * pxPerT;
+            const y = oy + val * pxPerVal;
+            if (havePrev && step !== null) {
+                if (step === "end") {
+                    // hv: horizontal hold at previous value until current x.
+                    points.push([x, prevY]);
+                } else {
+                    // vh: vertical jump at previous x to current value.
+                    points.push([prevX, y]);
+                }
+            }
+            points.push([x, y]);
+            prevX = x;
+            prevY = y;
+            havePrev = true;
         }
 
         if (points.length < 2) return undefined;

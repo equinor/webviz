@@ -3,15 +3,10 @@ import type { LineSeriesOption } from "echarts/charts";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
 import type { SeriesBuildResult } from "../../core/composeChartOption";
-import type { ReferenceLineShape, ReferenceLineTrace } from "../../types";
+import type { ReferenceLineTrace } from "../../types";
 
 import { makeTimeseriesReferenceLineSeriesId } from "./ids";
-
-function mapLineShapeToStep(lineShape: ReferenceLineShape | undefined): "start" | "end" | null {
-    if (lineShape === "vh") return "start";
-    if (lineShape === "hv") return "end";
-    return null;
-}
+import { mapLineShapeToStep } from "./lineShape";
 
 export function buildReferenceLineSeries(trace: ReferenceLineTrace, axisIndex = 0): SeriesBuildResult {
     const pointCount = Math.min(trace.timestamps.length, trace.values.length);

@@ -4,11 +4,13 @@ import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { TimeseriesTrace } from "../../types";
 
 import { makeTimeseriesMemberSeriesId } from "./ids";
+import { mapLineShapeToStep } from "./lineShape";
 
 export function buildMemberSeries(trace: TimeseriesTrace, axisIndex = 0): SeriesBuildResult {
     if (!trace.memberValues) return { series: [], legendData: [] };
 
     const highlightGroupKey = trace.highlightGroupKey ?? trace.name;
+    const step = mapLineShapeToStep(trace.lineShape);
 
     const series: LineSeriesOption[] = trace.memberValues.map(function buildMemberLineSeries(memberValues, index) {
         const memberId = trace.memberIds?.[index] ?? index;
@@ -34,6 +36,7 @@ export function buildMemberSeries(trace: TimeseriesTrace, axisIndex = 0): Series
                 blur: {
                     lineStyle: { color, opacity: 0.5, width: 0.5 },
                 },
+                ...(step ? { step } : {}),
             }
         );
     });

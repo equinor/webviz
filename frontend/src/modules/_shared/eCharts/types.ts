@@ -16,6 +16,8 @@ export type PointStatistics = Record<StatisticKey, number> & {
  * Can carry both memberValues AND statistics simultaneously.
  * The display config controls what gets rendered.
  */
+export type ReferenceLineShape = "linear" | "hv" | "vh";
+
 export interface TimeseriesTrace {
     name: string;
     color: string;
@@ -26,9 +28,12 @@ export interface TimeseriesTrace {
     /** Per-member colors. Length must match memberValues. Overrides trace.color per member. */
     memberColors?: string[];
     statistics?: TimeseriesStatistics;
+    /**
+     * Line interpolation shape for all lines rendered from this trace (members,
+     * statistics, fanchart band edges). Defaults to "linear".
+     */
+    lineShape?: ReferenceLineShape;
 }
-
-export type ReferenceLineShape = "linear" | "hv" | "vh";
 
 export interface ReferenceLineTrace {
     name: string;

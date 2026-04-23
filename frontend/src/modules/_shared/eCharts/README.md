@@ -70,6 +70,7 @@ The families expose additional typed options on top of `BaseChartOptions`. The m
 | Histogram | `numBins`, `histogramType`, `showMemberPoints`, `showPercentageInBar`, `showStatisticalMarkers`, `showStatisticalLabels` |
 | Bar | `sortBy`, `showStatisticalMarkers`, `showLabels`, `maxCategoryLabels` |
 | Percentile range | `showMemberPoints`, `centerStatistic`, `showWhiskers` |
+| Timeseries | `displayConfig`, `subplotOverlays`, `memberLabel`; per-trace `lineShape: "linear" \| "hv" \| "vh"` applied to members, statistics, and fanchart bands |
 
 ### Hooks
 
@@ -160,13 +161,12 @@ Target modules for replacing Plotly with this shared ECharts module.
 
 ### SimulationTimeSeries — ready now
 
-Near 1:1 feature match. Members, fan chart, statistics lines, click-to-timestamp, zoom persistence, multi-subplot with shared x-axis, and cross-subplot hover are all supported.
+Near 1:1 feature match. Members, fan chart, statistics lines, click-to-timestamp, zoom persistence, multi-subplot with shared x-axis, cross-subplot hover, and per-trace step-line shapes (`linear` / `hv` / `vh`) are all supported.
 
-Small additions needed before migration:
+Remaining enhancement before a colorbar-complete migration:
 
 | Feature | Effort | Notes |
 |---|---|---|
-| Step-line shapes (hv/vh) | Low | Add optional `step` field on `TimeseriesTrace`. ECharts supports `step: 'start'`/`'end'`/`'middle'`. |
 | Parameter-colored members with colorbar | Medium | `memberColors` already supports per-member coloring. Missing piece is a `visualMap` colorbar legend for continuous parameter scales. |
 
 Observation markers with error bars are already covered by `PointAnnotationTrace`. Historical lines are covered by `ReferenceLineTrace`.

@@ -85,3 +85,62 @@ describe("timeseries zoom controls", () => {
         expect(dataZoom.find((entry) => entry.id === "x")).toMatchObject({ start: 10, end: 90 });
     });
 });
+
+describe("timeseries trace line shape", () => {
+    const STAT_DISPLAY_CONFIG: TimeseriesDisplayConfig = {
+        showMembers: true,
+        showStatistics: true,
+        showFanchart: false,
+        showReferenceLines: false,
+        showPointAnnotations: false,
+        selectedStatistics: ["mean"],
+    };
+
+    function buildGroups(lineShape: TimeseriesTrace["lineShape"]) {
+        return [{
+            title: "Subplot 1",
+            traces: [{
+                name: "Trace A",
+                color: "#336699",
+                timestamps: [1, 2, 3],
+                memberValues: [[10, 20, 30]],
+                memberIds: [1],
+                statistics: { mean: [10, 20, 30], p10: [], p50: [], p90: [], min: [], max: [] },
+                lineShape,
+            } satisfies TimeseriesTrace],
+        }];
+    }
+
+    function stepValues(option: EChartsOption): Array<string | undefined> {
+        const series = (option.series ?? []) as Array<{ type?: string; step?: string }>;
+        return series.filter((entry) => entry.type === "line").map((entry) => entry.step);
+    }
+
+    it("omits step on line series when lineShape is linear or absent", () => {
+        const option = buildTimeseriesChart(buildGroups(undefined), {
+            subplotOverlays: OVERLAYS,
+            displayConfig: STAT_DISPLAY_CONFIG,
+        });
+        expect(stepValues(option).every((step) => step === undefined)).toBe(true);
+    });
+
+    it('maps lineShape "hv" to step "end" on member and statistics series', () => {
+        const option = buildTimeseriesChart(buildGroups("hv"), {
+            subplotOverlays: OVERLAYS,
+            displayConfig: STAT_DISPLAY_CONFIG,
+        });
+        const steps = stepValues(option);
+        expect(steps.length).toBeGreaterThan(0);
+        expect(steps.every((step) => step === "end")).toBe(true);
+    });
+
+    it('maps lineShape "vh" to step "start" on member and statistics series', () => {
+        const option = buildTimeseriesChart(buildGroups("vh"), {
+            subplotOverlays: OVERLAYS,
+            displayConfig: STAT_DISPLAY_CONFIG,
+        });
+        const steps = stepValues(option);
+        expect(steps.length).toBeGreaterThan(0);
+        expect(steps.every((step) => step === "start")).toBe(true);
+    });
+});

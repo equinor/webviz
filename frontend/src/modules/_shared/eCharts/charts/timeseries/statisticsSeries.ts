@@ -4,6 +4,7 @@ import type { SeriesBuildResult } from "../../core/composeChartOption";
 import type { StatisticKey, TimeseriesTrace } from "../../types";
 
 import { makeTimeseriesBandSeriesId, makeTimeseriesStatisticSeriesId } from "./ids";
+import { makeSteppedCategoryCoords, mapLineShapeToStep } from "./lineShape";
 
 type StatSeriesEntry = {
     key: StatisticKey;
@@ -47,6 +48,7 @@ export function buildStatisticsSeries(
     if (!trace.statistics) return { series: [], legendData: [] };
 
     const series: LineSeriesOption[] = [];
+    const step = mapLineShapeToStep(trace.lineShape);
 
     for (const def of STAT_SERIES_DEFS) {
         if (selectedStatistics.includes(def.key)) {
@@ -62,6 +64,7 @@ export function buildStatisticsSeries(
                 symbol: "none",
                 emphasis: { disabled: true },
                 blur: { lineStyle: { opacity: 1 } },
+                ...(step ? { step } : {}),
             });
         }
     }
@@ -80,6 +83,7 @@ function createBandSeries(
     name: string,
     axisIndex: number,
     seriesId: string,
+    step: "start" | "end" | null,
 ): CustomSeriesOption {
     return {
         type: "custom",
@@ -93,7 +97,7 @@ function createBandSeries(
         tooltip: { show: false },
         silent: true,
         z: 1,
-        renderItem: createBandRenderItem(upperValues, lowerValues, fillColor, fillOpacity),
+        renderItem: createBandRenderItem(upperValues, lowerValues, fillColor, fillOpacity, step),
     };
 }
 
@@ -102,28 +106,25 @@ function createBandRenderItem(
     lowerValues: number[],
     fillColor: string,
     fillOpacity: number,
+    step: "start" | "end" | null,
 ): CustomSeriesOption["renderItem"] {
+    const upperCoords = makeSteppedCategoryCoords(upperValues, step);
+    const lowerCoords = makeSteppedCategoryCoords(lowerValues, step);
     return function renderStatisticsBand(params, api) {
         const bandParams = params as typeof params & {
             dataIndexInside?: number;
-            dataInsideLength?: number;
-            dataIndex?: number;
         };
 
         if (bandParams.dataIndexInside !== 0) {
             return { type: "group", children: [] };
         }
-        const count = bandParams.dataInsideLength ?? 0;
-        const startIndex = bandParams.dataIndex ?? 0;
-        if (count === 0) return { type: "group", children: [] };
 
         const points: number[][] = [];
-
-        for (let index = 0; index < count; index++) {
-            points.push(api.coord([startIndex + index, upperValues[startIndex + index]]));
+        for (let index = 0; index < upperCoords.length; index++) {
+            points.push(api.coord(upperCoords[index]));
         }
-        for (let index = count - 1; index >= 0; index--) {
-            points.push(api.coord([startIndex + index, lowerValues[startIndex + index]]));
+        for (let index = lowerCoords.length - 1; index >= 0; index--) {
+            points.push(api.coord(lowerCoords[index]));
         }
 
         return {
@@ -143,6 +144,7 @@ export function buildFanchartSeries(
 
     const { p10, p90, min, max } = trace.statistics;
     const series: CustomSeriesOption[] = [];
+    const step = mapLineShapeToStep(trace.lineShape);
 
     const hasPercentiles = selectedStatistics.includes("p10") && selectedStatistics.includes("p90");
     const hasMinMax = selectedStatistics.includes("min") && selectedStatistics.includes("max");
@@ -157,6 +159,7 @@ export function buildFanchartSeries(
                 `${trace.name} _fan_low`,
                 axisIndex,
                 makeTimeseriesBandSeriesId(trace.name, "low", axisIndex),
+                step,
             ),
             createBandSeries(
                 p90,
@@ -166,6 +169,7 @@ export function buildFanchartSeries(
                 `${trace.name} _fan_mid`,
                 axisIndex,
                 makeTimeseriesBandSeriesId(trace.name, "mid", axisIndex),
+                step,
             ),
             createBandSeries(
                 max,
@@ -175,6 +179,7 @@ export function buildFanchartSeries(
                 `${trace.name} _fan_high`,
                 axisIndex,
                 makeTimeseriesBandSeriesId(trace.name, "high", axisIndex),
+                step,
             ),
         );
     } else if (hasMinMax) {
@@ -187,6 +192,7 @@ export function buildFanchartSeries(
                 `${trace.name} _fan_band`,
                 axisIndex,
                 makeTimeseriesBandSeriesId(trace.name, "band", axisIndex),
+                step,
             ),
         );
     } else if (hasPercentiles) {
@@ -199,6 +205,7 @@ export function buildFanchartSeries(
                 `${trace.name} _fan_band`,
                 axisIndex,
                 makeTimeseriesBandSeriesId(trace.name, "band", axisIndex),
+                step,
             ),
         );
     }
