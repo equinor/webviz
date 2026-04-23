@@ -3,8 +3,8 @@ import React from "react";
 import {
     Add,
     Check,
+    CropSquare,
     FilterCenterFocus,
-    GridOn,
     KeyboardDoubleArrowLeft,
     KeyboardDoubleArrowRight,
     Polyline,
@@ -105,8 +105,8 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                     <div
                         className={resolveClassNames("gap-1 items-center justify-start", expanded ? "flex" : "hidden")}
                     >
-                        <ToggleButton onToggle={handleGridToggle} title="Toggle grid" active={gridVisible}>
-                            <GridOn fontSize="inherit" />
+                        <ToggleButton onToggle={handleGridToggle} title="Toggle bounding box" active={gridVisible}>
+                            <CropSquare fontSize="inherit" />
                         </ToggleButton>
                         <ToolBarDivider />
                         <ToggleButton
