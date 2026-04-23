@@ -116,6 +116,7 @@ class Property(StrEnum):
     SW = "SW"
     BO = "BO"
     BG = "BG"
+    FACIES_FRACTION = "FACIES_FRACTION"
 
 
 class Statistic(StrEnum):
