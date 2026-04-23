@@ -70,6 +70,7 @@ class MappedGridPropertiesResponse(BaseModel):
     undefined_int_value: int | None
     min_grid_prop_value: float | int
     max_grid_prop_value: float | int
+    discrete_codes_map: dict[int, str] | None
     stats: Stats | None
 
 

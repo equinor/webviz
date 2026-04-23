@@ -18,11 +18,13 @@ class GridPropertiesExtractor:
         is_discrete: bool,
         min_global_prop_val: float | int,
         max_global_prop_val: float | int,
+        discrete_codes_map: dict[int, str] | None = None,
     ) -> None:
         self._flat_prop_arr: NDArray[np.floating] | NDArray[np.integer] = flat_prop_arr
         self._is_discrete: bool = is_discrete
         self._min_global_prop_val: float | int = min_global_prop_val
         self._max_global_prop_val: float | int = max_global_prop_val
+        self._discrete_codes_map: dict[int, str] | None = discrete_codes_map
 
     @classmethod
     async def from_roff_property_file_async(cls, roff_prop_file: str) -> "GridPropertiesExtractor":
@@ -38,6 +40,7 @@ class GridPropertiesExtractor:
         # Note that the values array is masked
         # What is the correct fill value for discrete data?
         is_discrete = xtg_grid_prop.isdiscrete
+        discrete_codes_map = xtg_grid_prop.codes
         fill_value = _DISCRETE_PROP_UNDEF_VALUE if is_discrete else np.nan
         unmasked_value_arr = xtg_grid_prop.values.filled(fill_value=fill_value)
 
@@ -49,6 +52,7 @@ class GridPropertiesExtractor:
             is_discrete=is_discrete,
             min_global_prop_val=min_prop_val,
             max_global_prop_val=max_prop_val,
+            discrete_codes_map=discrete_codes_map if is_discrete else None,
         )
         return new_object
 
@@ -88,3 +92,6 @@ class GridPropertiesExtractor:
 
     def get_max_global_val(self) -> float | int:
         return self._max_global_prop_val
+
+    def get_discrete_codes_map(self) -> dict[int, str] | None:
+        return self._discrete_codes_map
