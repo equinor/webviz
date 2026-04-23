@@ -294,7 +294,7 @@ def create_ensemble_parameter_from_standard_result(
         name=parameter_name,
         group_name=parameter_meta.group_name,
         is_logarithmic=is_logarithmic_distribution(parameter_meta.distribution),
-        is_discrete=is_discrete_column(field.type, parameter_meta.distribution),
+        is_discrete=is_discrete_distribution(parameter_meta.distribution),
         is_numerical=is_numerical_column(field.type),
         is_constant=len(set(column)) == 1,
         descriptive_name=parameter_name,
@@ -348,14 +348,13 @@ def is_logarithmic_distribution(distribution: ErtDistribution) -> bool:
     return distribution in [ErtDistribution.lognormal, ErtDistribution.logunif]
 
 
-def is_discrete_column(column_type: pa.DataType, distribution: ErtDistribution) -> bool:
-    """Check if a column represents discrete data.
+def is_discrete_distribution(distribution: ErtDistribution) -> bool:
+    """Check if a distribution is discrete.
 
     Discrete parameters are identified from non-continuous ERT distributions.
     The current rule tags DERRF, DUNIF, and RAW distributions as discrete.
 
     Args:
-        column_type: PyArrow data type to check
         distribution: ErtDistribution enum value
 
     Returns:
