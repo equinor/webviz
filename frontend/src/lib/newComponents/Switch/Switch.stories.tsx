@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Switch } from "./index";
+import { Switch, SwitchItem } from "./index";
 
 const meta: Meta<typeof Switch> = {
     title: "Components/Switch",
@@ -20,8 +20,7 @@ There are three supported approaches — choose the one that fits your layout.
 ### 1. Wrapping \`<label>\` (recommended)
 
 Wrap the \`<Switch>\` inside a \`<label>\`. The browser automatically associates the
-label text with the control — no extra attributes needed. This is the simplest and
-most robust approach.
+label text with the control — no extra attributes needed.
 
 \`\`\`tsx
 <label className="flex items-center gap-2">
@@ -32,10 +31,8 @@ most robust approach.
 
 ### 2. Sibling \`<label>\` with \`htmlFor\` / \`id\`
 
-When the label and switch cannot be co-located (e.g. a table row or settings list),
-link them with a matching \`id\` and \`htmlFor\`. The Switch renders a visually hidden
-\`<input>\` alongside the visible track — the \`id\` is placed on that input, so
-\`htmlFor\` targets it directly.
+When the label and switch cannot be co-located (e.g. a settings row),
+link them with a matching \`id\` and \`htmlFor\`.
 
 \`\`\`tsx
 <label htmlFor="wifi-switch">Wi-Fi</label>
@@ -50,6 +47,11 @@ Use this sparingly — a visible label is always preferable.
 \`\`\`tsx
 <Switch aria-label="Enable dark mode" />
 \`\`\`
+
+## Convenience: \`SwitchItem\`
+
+\`SwitchItem\` wraps \`Switch\` with a built-in \`<label>\`, removing the wrapping
+boilerplate for the common case of a switch with a plain text label.
                 `.trim(),
             },
         },
@@ -72,6 +74,8 @@ Use this sparingly — a visible label is always preferable.
 export default meta;
 type Story = StoryObj<typeof Switch>;
 
+// ─── Primitives ───────────────────────────────────────────────────────────────
+
 export const Default: Story = {
     parameters: {
         docs: {
@@ -87,7 +91,7 @@ export const Default: Story = {
 export const Small: Story = {
     parameters: {
         docs: {
-            description: { story: "The `small` size variant, pre-checked." },
+            description: { story: "The `small` size variant." },
         },
     },
     args: {
@@ -110,28 +114,12 @@ export const Disabled: Story = {
     },
 };
 
-export const DisabledChecked: Story = {
-    parameters: {
-        docs: {
-            description: { story: "Disabled and pre-checked." },
-        },
-    },
-    args: {
-        disabled: true,
-        defaultChecked: true,
-        "aria-label": "Toggle",
-    },
-};
-
-/**
- * Wrapping label — recommended approach.
- */
 export const WrappingLabel: Story = {
     parameters: {
         docs: {
             description: {
                 story:
-                    "The `<Switch>` is placed inside a `<label>`. " +
+                    "The `<Switch>` placed inside a `<label>`. " +
                     "The browser associates the label text with the control natively — no extra attributes required. " +
                     "This is the recommended approach for most layouts.",
             },
@@ -145,17 +133,13 @@ export const WrappingLabel: Story = {
     ),
 };
 
-/**
- * Sibling label — linked via htmlFor / id.
- */
 export const SiblingLabel: Story = {
     parameters: {
         docs: {
             description: {
                 story:
-                    "The label is a separate element linked to the switch via `htmlFor` / `id`. " +
-                    "The Switch places its `id` on the underlying hidden `<input>`, so `htmlFor` targets it directly — no extra props needed. " +
-                    "Use this pattern when the label and switch are structurally separated (e.g. a settings row).",
+                    "Label and switch linked via `htmlFor` / `id`. " +
+                    "Use this when they are structurally separated, e.g. a settings row.",
             },
         },
     },
@@ -169,26 +153,6 @@ export const SiblingLabel: Story = {
     ),
 };
 
-/**
- * aria-label — accessible name with no visible label.
- */
-export const AriaLabelOnly: Story = {
-    parameters: {
-        docs: {
-            description: {
-                story:
-                    "When no visible label is shown, supply an `aria-label` directly on the switch. " +
-                    "Screen readers will announce it, but sighted users see no text. " +
-                    "Prefer a visible label whenever possible.",
-            },
-        },
-    },
-    render: () => <Switch aria-label="Enable dark mode" defaultChecked />,
-};
-
-/**
- * Settings list — realistic usage with sibling labels.
- */
 export const SettingsList: Story = {
     parameters: {
         docs: {
@@ -201,10 +165,10 @@ export const SettingsList: Story = {
         <div className="flex w-72 flex-col divide-y">
             {(
                 [
-                    { id: "setting-notifications", label: "Push notifications" },
-                    { id: "setting-emails", label: "Email digest", defaultChecked: true },
-                    { id: "setting-sms", label: "SMS alerts" },
-                    { id: "setting-beta", label: "Beta features", disabled: true },
+                    { id: "setting-notifications", label: "Push notifications", defaultChecked: false, disabled: false },
+                    { id: "setting-emails", label: "Email digest", defaultChecked: true, disabled: false },
+                    { id: "setting-sms", label: "SMS alerts", defaultChecked: false, disabled: false },
+                    { id: "setting-beta", label: "Beta features", defaultChecked: false, disabled: true },
                 ] as const
             ).map(({ id, label, defaultChecked, disabled }) => (
                 <div key={id} className="flex items-center justify-between py-3">
@@ -214,6 +178,27 @@ export const SettingsList: Story = {
                     <Switch id={id} defaultChecked={defaultChecked} disabled={disabled} />
                 </div>
             ))}
+        </div>
+    ),
+};
+
+// ─── Convenience: SwitchItem ──────────────────────────────────────────────────
+
+export const WithSwitchItem: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "`SwitchItem` wraps `Switch` with a built-in `<label>`, removing boilerplate " +
+                    "for the common case of a switch with a plain text label.",
+            },
+        },
+    },
+    render: () => (
+        <div className="flex flex-col gap-1">
+            <SwitchItem label="Enable notifications" />
+            <SwitchItem label="Email digest" defaultChecked />
+            <SwitchItem label="Beta features" disabled />
         </div>
     ),
 };

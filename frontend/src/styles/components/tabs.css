@@ -1,7 +1,13 @@
 @layer components {
     .tabs__tab {
+        @apply font-bolder p-vertical-xs hover:bg-accent-hover active:bg-accent-active data-active:text-accent-subtle flex cursor-pointer items-center justify-center;
         min-height: var(--size-selectable-md);
         font-size: var(--text-body-md);
+
+        &[data-disabled] {
+            @apply text-disabled cursor-not-allowed bg-transparent;
+        }
+
         &[data-orientation="horizontal"] {
             [data-position="start"] & {
                 border-top: 2px solid var(--eds-color-bg-neutral-fill-muted-default);

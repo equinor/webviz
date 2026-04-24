@@ -1,0 +1,23 @@
+@layer components {
+    .selectable {
+        @apply hover:bg-accent-hover active:bg-accent-active py-vertical-xs px-horizontal-sm cursor-pointer rounded group-data-selectable-wrapped:p-0 focus:outline-0;
+
+        &[data-disabled] {
+            @apply text-disabled cursor-not-allowed bg-transparent;
+        }
+
+        &[data-readonly] {
+            @apply cursor-not-allowed bg-transparent;
+        }
+
+        & .selectable {
+            @apply p-0!;
+        }
+
+        &:has(:focus-visible) {
+            box-shadow:
+                0 0 0 1px var(--eds-color-bg-neutral-canvas),
+                0 0 0 2px var(--eds-color-border-focus);
+        }
+    }
+}

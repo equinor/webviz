@@ -6,6 +6,22 @@
 
 /* Generated sizing utilities. */
 
+/* selectable-x */
+@utility w-selectable-x { width: var(--spacing-selectable-x); }
+@utility h-selectable-x { height: var(--spacing-selectable-x); }
+@utility min-w-selectable-x { min-width: var(--spacing-selectable-x); }
+@utility max-w-selectable-x { max-width: var(--spacing-selectable-x); }
+@utility min-h-selectable-x { min-height: var(--spacing-selectable-x); }
+@utility max-h-selectable-x { max-height: var(--spacing-selectable-x); }
+
+/* selectable-y */
+@utility w-selectable-y { width: var(--spacing-selectable-y); }
+@utility h-selectable-y { height: var(--spacing-selectable-y); }
+@utility min-w-selectable-y { min-width: var(--spacing-selectable-y); }
+@utility max-w-selectable-y { max-width: var(--spacing-selectable-y); }
+@utility min-h-selectable-y { min-height: var(--spacing-selectable-y); }
+@utility max-h-selectable-y { max-height: var(--spacing-selectable-y); }
+
 /* 0 */
 @utility w-0 { width: 0px; }
 @utility h-0 { height: 0px; }

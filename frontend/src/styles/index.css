@@ -25,6 +25,7 @@
 /* Components */
 @import "./components/button.css";
 @import "./components/dialog.css";
+@import "./components/selectable.css";
 @import "./components/tabs.css";
 @import "./components/toast.css";
 

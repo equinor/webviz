@@ -10,7 +10,7 @@ export function Tab({ children, ...props }: TabProps) {
     return (
         <TabsBase.Tab
             {...props}
-            className="tabs__tab font-bolder p-vertical-xs hover:bg-accent-hover data-active:text-accent-subtle flex cursor-pointer items-center justify-center"
+            className="tabs__tab"
             render={(htmlProps, state) => (
                 <button {...htmlProps}>
                     {typeof children === "function" ? children({ isActive: state.active }) : children}

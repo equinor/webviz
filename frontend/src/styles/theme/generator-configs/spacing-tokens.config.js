@@ -44,13 +44,13 @@ const semanticSpacingTokens = {
         value: "var(--eds-selectable-space-horizontal)",
         dynamic: true,
         negative: true,
-        groups: ["semantic-spacing", "position"],
+        groups: ["semantic-spacing", "dimension", "position"],
     },
     "selectable-y": {
         value: "var(--eds-selectable-space-vertical)",
         dynamic: true,
         negative: true,
-        groups: ["semantic-spacing", "position"],
+        groups: ["semantic-spacing", "dimension", "position"],
     },
 };
 
