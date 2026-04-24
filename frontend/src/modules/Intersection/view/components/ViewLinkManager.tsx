@@ -207,34 +207,54 @@ export function ViewLinkManager({
         viewId: string,
         viewport: Viewport,
     ) {
-        setViewLinks((prev) =>
-            prev.map((link) =>
-                link.viewIds.includes(viewId) ? { ...link, viewport: viewport, viewportSourceViewId: viewId } : link,
-            ),
-        );
+        setViewLinks((prev) => {
+            let changed = false;
+            const next = prev.map((link) => {
+                if (!link.viewIds.includes(viewId)) return link;
+                if (isEqual(link.viewport, viewport)) return link;
+                changed = true;
+                return { ...link, viewport: viewport, viewportSourceViewId: viewId };
+            });
+            return changed ? next : prev;
+        });
     }, []);
 
     const onLinkedVerticalScaleChange = React.useCallback(function onLinkedVerticalScaleChange(
         viewId: string,
         scale: number,
     ) {
-        setViewLinks((prev) =>
-            prev.map((link) => (link.viewIds.includes(viewId) ? { ...link, verticalScale: scale } : link)),
-        );
+        setViewLinks((prev) => {
+            let changed = false;
+            const next = prev.map((link) => {
+                if (!link.viewIds.includes(viewId)) return link;
+                if (link.verticalScale === scale) return link;
+                changed = true;
+                return { ...link, verticalScale: scale };
+            });
+            return changed ? next : prev;
+        });
     }, []);
 
     const onLinkedFitInViewStatusChange = React.useCallback(function onLinkedFitInViewStatusChange(
         viewId: string,
         status: FitInViewStatus,
     ) {
-        setViewLinks((prev) =>
-            prev.map((link) => (link.viewIds.includes(viewId) ? { ...link, fitInViewStatus: status } : link)),
-        );
+        setViewLinks((prev) => {
+            let changed = false;
+            const next = prev.map((link) => {
+                if (!link.viewIds.includes(viewId)) return link;
+                if (link.fitInViewStatus === status) return link;
+                changed = true;
+                return { ...link, fitInViewStatus: status };
+            });
+            return changed ? next : prev;
+        });
     }, []);
 
     const onLinkedBoundsChange = React.useCallback(function onLinkedBoundsChange(viewId: string, bounds: Bounds) {
-        setViewLinks((prev) =>
-            prev.map((link) => {
+        setViewLinks((prev) => {
+            let changed = false;
+            const next = prev.map((link) => {
                 if (!link.viewIds.includes(viewId)) return link;
                 const union = link.bounds
                     ? {
@@ -248,9 +268,12 @@ export function ViewLinkManager({
                           ],
                       }
                     : bounds;
-                return isEqual(union, link.bounds) ? link : { ...link, bounds: union };
-            }),
-        );
+                if (isEqual(union, link.bounds)) return link;
+                changed = true;
+                return { ...link, bounds: union };
+            });
+            return changed ? next : prev;
+        });
     }, []);
 
     const contextValue = React.useMemo(

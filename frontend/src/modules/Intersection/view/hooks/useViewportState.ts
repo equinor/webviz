@@ -204,9 +204,17 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
         [isLinked, layerItemsBounds, onLinkedBoundsChange],
     );
 
-    // Sync viewport from global sync setting
+    // Sync viewport from global sync setting.
+    // Linked views receive viewport through the link, so they skip global sync reception.
     React.useEffect(
         function syncLocalViewportFromGlobal() {
+            if (isLinked) {
+                // Keep the ref in sync so we don't stale-apply when unlinking
+                if (syncedCameraPosition && isValidViewport(syncedCameraPosition)) {
+                    lastAppliedSyncedViewportRef.current = cloneDeep(syncedCameraPosition);
+                }
+                return;
+            }
             if (!syncedCameraPosition || !isValidViewport(syncedCameraPosition)) {
                 return;
             }
@@ -216,7 +224,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
             lastAppliedSyncedViewportRef.current = cloneDeep(syncedCameraPosition);
             updateViewport(syncedCameraPosition);
         },
-        [syncedCameraPosition, updateViewport],
+        [isLinked, syncedCameraPosition, updateViewport],
     );
 
     // Sync vertical scale from global sync setting
@@ -234,10 +242,16 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
         [syncedVerticalScale],
     );
 
-    // Publish viewport to global sync setting
+    // Publish viewport to global sync setting.
+    // Only the source view publishes — linked follower views skip to avoid a feedback loop.
     React.useEffect(
         function publishViewportToGlobalSync() {
             if (!viewport || !isValidViewport(viewport)) {
+                return;
+            }
+            if (isLinked && linkedViewportSourceViewId !== null && linkedViewportSourceViewId !== viewId) {
+                // Keep the ref in sync so we don't stale-publish when unlinking
+                lastPublishedViewportRef.current = cloneDeep(viewport);
                 return;
             }
             if (isEqual(viewport, lastPublishedViewportRef.current)) {
@@ -250,7 +264,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
                 viewContext.getInstanceIdString(),
             );
         },
-        [viewport, workbenchServices, viewContext],
+        [viewport, isLinked, linkedViewportSourceViewId, viewId, workbenchServices, viewContext],
     );
 
     // --- Refocus logic ---

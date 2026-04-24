@@ -171,6 +171,7 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
         ).length;
         const isAtMax = numViews >= MAX_INTERSECTION_VIEWS;
+        const hasViews = numViews > 0;
 
         if (group instanceof ContextBoundary) {
             return isAtMax ? CONTEXT_BOUNDARY_ACTIONS_AT_MAX_VIEWS : CONTEXT_BOUNDARY_ACTIONS;
@@ -180,7 +181,9 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             return VIEW_ACTIONS;
         }
 
-        // Root level
+        if (!hasViews) {
+            return ROOT_ACTIONS_NO_VIEWS;
+        }
         return isAtMax ? ROOT_ACTIONS_AT_MAX : ROOT_ACTIONS;
     }
 
@@ -291,7 +294,12 @@ const VIEW_SHARED_SETTINGS_ACTION_GROUP: ActionGroup = {
     children: SHARED_SETTINGS_CHILDREN.filter((c) => c.identifier !== "intersection-source"),
 };
 
-// Root level: View + Context Boundary
+// Root level with no views: only View + Context Boundary
+const ROOT_ACTIONS_NO_VIEWS: ActionGroup[] = [
+    { label: "Groups", children: [ADD_VIEW_ACTION, ADD_CONTEXT_BOUNDARY_ACTION] },
+];
+
+// Root level: View + Context Boundary + Shared Settings
 const ROOT_ACTIONS: ActionGroup[] = [
     { label: "Groups", children: [ADD_VIEW_ACTION, ADD_CONTEXT_BOUNDARY_ACTION] },
     SHARED_SETTINGS_ACTION_GROUP,
