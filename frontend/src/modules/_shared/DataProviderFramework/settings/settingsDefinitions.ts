@@ -66,7 +66,6 @@ export enum Setting {
     TVD_RANGE = "tvdRange",
     WELLBORE_DEPTH_FORMATION_FILTER = "wellboreDepthFormationFilter",
     WELLBORE_DEPTH_FILTER_TYPE = "wellboreDepthFilterType",
-    WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
     REPRESENTATION = "representation",
@@ -121,11 +120,6 @@ export type SettingTypeDefinitions = {
         valueConstraints: [number, number];
     };
     [Setting.GRID_LAYER_K]: {
-        internalValue: number | null;
-        externalValue: number | null;
-        valueConstraints: [number, number];
-    };
-    [Setting.WELLBORE_EXTENSION_LENGTH]: {
         internalValue: number | null;
         externalValue: number | null;
         valueConstraints: [number, number];
