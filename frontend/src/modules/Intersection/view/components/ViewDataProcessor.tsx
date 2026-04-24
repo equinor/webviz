@@ -63,7 +63,6 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
 
     const [prevReferenceSystem, setPrevReferenceSystem] = React.useState<IntersectionReferenceSystem | null>(null);
     const [layersBounds, setLayersBounds] = React.useState<Bounds>(DEFAULT_INTERSECTION_VIEW_BOUNDS);
-    const [prevLayersBounds, setPrevLayersBounds] = React.useState<Bounds | null>(null);
     const [previousIntersection, setPreviousIntersection] = React.useState<IntersectionSettingValue | null>(null);
     const [previousExtensionLength, setPreviousExtensionLength] = React.useState<number | null>(null);
     const [prevNumberOfProviders, setPrevNumberOfProviders] = React.useState<number>(0);
@@ -209,7 +208,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
         const newLayersBounds = createBoundsForIntersectionView(
             layersBoundingBox,
             intersectionReferenceSystem,
-            prevLayersBounds,
+            layersBounds,
         );
         if (!isValidBounds(newLayersBounds)) {
             newLayersBounds.x = DEFAULT_INTERSECTION_VIEW_BOUNDS.x;
@@ -218,7 +217,6 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
 
         // Check if bounds have changed
         if (!isEqual(newLayersBounds, layersBounds)) {
-            setPrevLayersBounds(layersBounds);
             setLayersBounds(newLayersBounds);
         }
 

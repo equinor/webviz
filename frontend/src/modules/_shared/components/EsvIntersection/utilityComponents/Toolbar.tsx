@@ -4,12 +4,13 @@ import { Dropdown } from "@mui/base";
 import { MenuButton as MuiMenuButton } from "@mui/base/MenuButton";
 import {
     Add,
+    AddToQueue,
     FilterCenterFocus,
     GridOn,
     KeyboardDoubleArrowLeft,
     KeyboardDoubleArrowRight,
-    Link,
     Remove,
+    Tv,
 } from "@mui/icons-material";
 
 import { Button } from "@lib/components/Button";
@@ -75,7 +76,8 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     const viewLinks = props.viewLinks ?? [];
     const unlinkedViews = props.unlinkedViews ?? [];
-    const isAnyLinked = viewLinks.some((g) => g.containsThisView);
+    const activeLink = viewLinks.find((l) => l.containsThisView);
+    const isAnyLinked = activeLink !== undefined;
     const showLinkButton = (viewLinks.length > 0 || unlinkedViews.length > 0) && props.onToggleViewLink;
 
     if (!props.visible) {
@@ -105,29 +107,32 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                             <MuiMenuButton
                                 className={resolveClassNames(
                                     "inline-flex items-center px-4 py-2 font-medium rounded-md",
-                                    isAnyLinked
-                                        ? "bg-indigo-500 text-white hover:bg-indigo-400"
-                                        : "bg-transparent text-indigo-600 hover:bg-indigo-100",
+                                    isAnyLinked ? "text-white" : "bg-transparent text-indigo-600 hover:bg-indigo-100",
                                 )}
+                                slotProps={{
+                                    root: {
+                                        style: isAnyLinked ? { backgroundColor: activeLink.color } : undefined,
+                                    },
+                                }}
                             >
-                                <Link fontSize="inherit" />
+                                {isAnyLinked ? <Tv fontSize="inherit" /> : <AddToQueue fontSize="inherit" />}
                             </MuiMenuButton>
                         </Tooltip>
                         <Menu anchorOrigin="bottom-start" className="text-sm p-1 min-w-40">
-                            {viewLinks.map((group) => (
+                            {viewLinks.map((viewLink) => (
                                 <MenuItem
-                                    key={group.id}
+                                    key={viewLink.id}
                                     className={resolveClassNames(
                                         "flex items-center gap-2 overflow-hidden",
-                                        group.containsThisView ? "bg-indigo-50" : "",
+                                        viewLink.containsThisView ? "bg-indigo-50" : "",
                                     )}
-                                    title={group.views.map((v) => v.name).join(", ")}
-                                    onClick={() => props.onToggleViewLink!(group.views[0].id)}
-                                    onMouseEnter={() => props.onHoverViewLink?.(group.views.map((v) => v.id))}
+                                    title={viewLink.views.map((v) => v.name).join(", ")}
+                                    onClick={() => props.onToggleViewLink!(viewLink.views[0].id)}
+                                    onMouseEnter={() => props.onHoverViewLink?.(viewLink.views.map((v) => v.id))}
                                     onMouseLeave={() => props.onHoverViewLink?.(null)}
                                 >
-                                    <Link fontSize="inherit" className="shrink-0" style={{ color: group.color }} />
-                                    {group.views.map((v) => (
+                                    <Tv fontSize="inherit" className="shrink-0" style={{ color: viewLink.color }} />
+                                    {viewLink.views.map((v) => (
                                         <span
                                             key={v.id}
                                             className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
@@ -135,7 +140,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                         />
                                     ))}
                                     <span className="truncate min-w-0">
-                                        {group.views.map((v) => v.name).join(", ")}
+                                        {viewLink.views.map((v) => v.name).join(", ")}
                                     </span>
                                 </MenuItem>
                             ))}
