@@ -52,8 +52,8 @@ export type SettingManagerParams<
     TExternalValue extends SettingTypeDefinitions[TSetting]["externalValue"] | null =
         | SettingTypeDefinitions[TSetting]["externalValue"]
         | null,
-    TValueConstraints extends
-        SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
+    TValueConstraints extends SettingTypeDefinitions[TSetting]["valueConstraints"] =
+        SettingTypeDefinitions[TSetting]["valueConstraints"],
 > = {
     type: TSetting;
     label: string;
@@ -83,10 +83,9 @@ export class SettingManager<
     TExternalValue extends SettingTypeDefinitions[TSetting]["externalValue"] | null =
         | SettingTypeDefinitions[TSetting]["externalValue"]
         | null,
-    TValueConstraints extends
-        SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
-> implements PublishSubscribe<SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstraints>>
-{
+    TValueConstraints extends SettingTypeDefinitions[TSetting]["valueConstraints"] =
+        SettingTypeDefinitions[TSetting]["valueConstraints"],
+> implements PublishSubscribe<SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstraints>> {
     private _id: string;
     private _type: TSetting;
     private _label: string;

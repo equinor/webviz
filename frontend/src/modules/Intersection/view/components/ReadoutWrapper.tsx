@@ -181,6 +181,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 zFactor={props.verticalScale}
                 intersectionReferenceSystem={props.referenceSystem ?? undefined}
                 showAxes
+                showAxesLabels
                 axesOptions={{
                     xLabel: AXES_LABELS.xLabel,
                     yLabel: AXES_LABELS.yLabel,
