@@ -16,11 +16,13 @@ import type { SerializedSettings as ParameterResponseCorrelationBarPlotSettings 
 import type { SerializedSettings as ParameterResponseCorrelationMatrixPlotSettings } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationParallelCoordsPlotSettings } from "@modules/ParameterResponseCorrelationParallelCoordsPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCrossPlotSettings } from "@modules/ParameterResponseCrossPlot/settings/persistence";
+import type { SerializedSettings as PvtSettings } from "@modules/Pvt/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSensitivitySettings } from "@modules/SimulationTimeSeriesSensitivity/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesSensitivityView } from "@modules/SimulationTimeSeriesSensitivity/view/persistence";
+import type { SerializedSettings as VfpSettings } from "@modules/Vfp/settings/persistence";
 import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
 import type { SerializedSettings as WellLogViewerSettings } from "@modules/WellLogViewer/settings/persistence";
 
@@ -94,7 +96,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "Pvt": {
-    settings?: never,
+    settings?: Partial<PvtSettings>,
     view?: never,
   },
   "Rft": {
@@ -118,7 +120,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "Vfp": {
-    settings?: never,
+    settings?: Partial<VfpSettings>,
     view?: never,
   },
   "WellCompletions": {
