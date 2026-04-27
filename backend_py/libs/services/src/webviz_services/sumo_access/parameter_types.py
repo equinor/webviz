@@ -9,8 +9,9 @@ class EnsembleParameter:
     # pylint: disable=too-many-instance-attributes
     name: str
     is_logarithmic: bool
-    is_discrete: bool  # values are string or integer
+    is_discrete: bool  # values are from a discrete distribution derrf/dunif/raw
     is_constant: bool  # all values are equal
+    is_numerical: bool  # values are numerical (int or float)
     realizations: list[int]
     values: list[float] | list[int] | list[str]
     group_name: str | None = None

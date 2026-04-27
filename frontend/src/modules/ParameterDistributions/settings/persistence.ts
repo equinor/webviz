@@ -13,6 +13,7 @@ import {
     showConstantParametersAtom,
     showIndividualRealizationValuesAtom,
     showLogParametersAtom,
+    showNumericDiscreteParametersAtom,
     showPercentilesAndMeanLinesAtom,
     selectedEnsembleModeAtom,
 } from "./atoms/baseAtoms";
@@ -30,6 +31,7 @@ export type SerializedSettings = {
     showPercentilesAndMeanLines: boolean;
     showConstantParameters: boolean;
     showLogParameters: boolean;
+    showNumericDiscreteParameters: boolean;
     histogramMode: HistogramMode;
     selectedEnsembleIdentStrings: string[];
     selectedPriorEnsembleIdentString: string | null;
@@ -48,6 +50,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         showPercentilesAndMeanLines: { type: "boolean" },
         showConstantParameters: { type: "boolean" },
         showLogParameters: { type: "boolean" },
+        showNumericDiscreteParameters: { type: "boolean" },
         histogramMode: {
             enum: Object.values(HistogramMode),
         },
@@ -77,6 +80,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         showPercentilesAndMeanLines: get(showPercentilesAndMeanLinesAtom),
         showConstantParameters: get(showConstantParametersAtom),
         showLogParameters: get(showLogParametersAtom),
+        showNumericDiscreteParameters: get(showNumericDiscreteParametersAtom),
         histogramMode: get(histogramModeAtom),
         selectedEnsembleIdentStrings,
         selectedPriorEnsembleIdentString: selectedPriorEnsembleIdent,
@@ -102,6 +106,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, showPercentilesAndMeanLinesAtom, raw.showPercentilesAndMeanLines);
     setIfDefined(set, showConstantParametersAtom, raw.showConstantParameters);
     setIfDefined(set, showLogParametersAtom, raw.showLogParameters);
+    setIfDefined(set, showNumericDiscreteParametersAtom, raw.showNumericDiscreteParameters);
     setIfDefined(set, histogramModeAtom, raw.histogramMode);
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, selectedPriorEnsembleIdentAtom, priorEnsembleIdent);
